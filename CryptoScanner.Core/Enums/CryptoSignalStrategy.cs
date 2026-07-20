@@ -14,6 +14,8 @@ public enum CryptoSignalStrategy
     StoRsi = 10, // WGHM - STOSCH en RSI momentum indicator
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
     Nwe = 25,
+    NweNp = 26,
+    NweBb = 27,
 
     // Baba Bands macro-band hit — long on the lower band, short on the upper band
     // (the same events the chart prints as percentage labels).

@@ -50,7 +50,7 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
     private bool _useSmcZone = false;
 
 
-    public void LoadConfig(StorsiSettings settings)
+    public void LoadConfig(SettingsSignalStrategyStoRsi settings)
     {
         BbMinPercentage = settings.BBMinPercentage;
         BbMaxPercentage = settings.BBMaxPercentage;
@@ -69,7 +69,7 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         UseSmcZone = settings.UseSmcZone;
     }
 
-    public void SaveConfig(StorsiSettings settings)
+    public void SaveConfig(SettingsSignalStrategyStoRsi settings)
     {
         settings.BBMinPercentage = BbMinPercentage;
         settings.BBMaxPercentage = BbMaxPercentage;

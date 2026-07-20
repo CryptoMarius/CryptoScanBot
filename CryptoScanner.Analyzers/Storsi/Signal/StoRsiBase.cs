@@ -38,7 +38,7 @@ public class StoRsiBase : SignalCreateBase
     /// </summary>
     protected bool CheckEnabledZoneRejections(out string zoneInfo)
     {
-        var settings = StoRsiPlugin.Settings;
+        var settings = StorsiPlugin.Settings;
         if (!settings.UseDlzZone && !settings.UseFvgZone && !settings.UseSmcZone)
         {
             zoneInfo = "";

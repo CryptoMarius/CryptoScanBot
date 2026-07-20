@@ -10,19 +10,26 @@ public static class AnalyzerRegistration
 {
     public static void RegisterAll()
     {
-        //PluginManager.Register(new AtrRb.AtrRbPlugin());
+        PluginManager.Register(new AtrRb.AtrRbPlugin()); // does not perform well enough
         PluginManager.Register(new Baba.BabaPlugin());
         PluginManager.Register(new Bre.BrePlugin());
-
-        PluginManager.Register(new Storsi.StoRsiPlugin());
+        PluginManager.Register(new Jump.JumpPlugin());
+        PluginManager.Register(new Sbm.SbmPlugin());
+        PluginManager.Register(new Stobb.StobbPlugin());
+        PluginManager.Register(new Storsi.StorsiPlugin());
 
 #if DEBUG
-        // BBMA is DEBUG-only (the signal classes are guarded with #if DEBUG).
-        PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
+        // Experimental strategies (not yet fully tested or documented)
         PluginManager.Register(new Bbma.BbmaPlugin());
+        PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
+        PluginManager.Register(new Choch.ChochPlugin());
+        PluginManager.Register(new DoubleTopBottom.DoubleTopBottomPlugin());
+        PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
+        PluginManager.Register(new Nwe.NwePlugin());
+        PluginManager.Register(new Trend.TrendPlugin());
 #endif
 
-        // Stand-alone overlay (not a strategy): TradingBuddy's own served BABA bands, so they can be
+        // Stand-alone overlay (not a strategy!): TradingBuddy's own served BABA bands, so they can be
         // toggled independently and compared with the scanner's "Baba Bands" overlay.
         PluginManager.RegisterOverlay(new Baba.Chart.TradingBuddyBabaOverlay());
     }

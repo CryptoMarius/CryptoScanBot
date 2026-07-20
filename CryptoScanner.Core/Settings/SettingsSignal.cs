@@ -41,12 +41,6 @@ public class SettingsSignal
     // STOBB signals
     public SettingsSignalStrategyStobb Stobb = new();
 
-    // SBM signals
-    public SettingsSignalStrategySbm Sbm = new();
-
-    // JUMP
-    public SettingsSignalStrategyJump Jump = new();
-
     // Dominant zones
     public SettingsSignalStrategyZones ZonesDlz = new();
 
@@ -55,14 +49,6 @@ public class SettingsSignal
 
     // SMC (Smart Money Concepts) supply/demand order blocks
     public SettingsSignalStrategySmc ZonesSmc = new();
-
-    // Nadaraya Watson Envelope
-    public SettingsSignalStrategyNwe Nwe = new();
-
-#if DEBUG
-    // CHoCH (Change of Character) — ZigZag structure reversal signals
-    public SettingsSignalStrategyChoch Choch = new();
-#endif
 
     // Baba, AtrRb, Bre and Bbma settings have been migrated to the Analyzers plugin architecture
     // and are now managed by PluginManager (BabaPlugin.Settings, AtrRbPlugin.Settings, BrePlugin.Settings,

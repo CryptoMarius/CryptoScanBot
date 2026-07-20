@@ -52,6 +52,7 @@ public static class SignalCreateBaseHelper
 
     public static bool HadStobbInThelastXCandlesOversold(this SignalCreateBase myBase, int candleCount)
     {
+
         MyData? last = myBase.CandleLast;
         while (candleCount > 0)
         {

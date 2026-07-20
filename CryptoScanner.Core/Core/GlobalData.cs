@@ -775,17 +775,6 @@ public static class GlobalData
     public static void IndexStrategySettings()
     {
         StrategiesSettings = [];
-        StrategiesSettings.Add(CryptoSignalStrategy.Jump, (Settings.Signal.Jump, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.Stobb, (Settings.Signal.Stobb, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.StobbMulti, (Settings.Signal.Stobb, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.Sbm1, (Settings.Signal.Sbm, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.Sbm2, (Settings.Signal.Sbm, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.Sbm3, (Settings.Signal.Sbm, DateTime.Today));
-        //StrategiesSettings.Add(CryptoSignalStrategy.StoRsi, (Settings.Signal.StoRsi, DateTime.Today));
-        //StrategiesSettings.Add(CryptoSignalStrategy.StoRsiMulti, (Settings.Signal.StoRsi, DateTime.Today));
-
-        // Not sure what to do with the NWE
-        StrategiesSettings.Add(CryptoSignalStrategy.Nwe, (Settings.Signal.Nwe, DateTime.Today));
 
         // DLZ, FVG and SMC
         StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, DateTime.Today));
@@ -793,15 +782,6 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlock, (Settings.Signal.ZonesSmc, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlockRejection, (Settings.Signal.ZonesSmc, DateTime.Today));
-
-        // Baba, AtrRb, Bre and Bbma are now registered dynamically via PluginManager below.
-#if DEBUG
-        // ChOCh strategy with different options
-        StrategiesSettings.Add(CryptoSignalStrategy.ChochPrimary, (Settings.Signal.Choch, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.ChochPrimaryPullback, (Settings.Signal.Choch, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.ChochSecondary, (Settings.Signal.Choch, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.ChochSecondaryPullback, (Settings.Signal.Choch, DateTime.Today));
-#endif
 
         // Merge settings from dynamically loaded strategy plugins
         foreach (var (strategy, plugin) in PluginManager.LoadedPlugins)

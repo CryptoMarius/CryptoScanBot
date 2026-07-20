@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="280"
+             xmlns:vm="using:CryptoScanner.Analyzers.Nwe.Config"
+             x:DataType="vm:StrategyNweSettingsViewModel"
+             x:Class="CryptoScanner.Analyzers.Nwe.Config.StrategyNweSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+            
+            <!-- With RSI oversold/overbought conditions -->
+            <CheckBox IsChecked="{Binding IncludeRsi, Mode=TwoWay}"
+                      Content="With RSI oversold/overbought conditions" FontSize="12"/>
+
+            <!-- With SBM conditions MA-lines -->
+            <CheckBox IsChecked="{Binding IncludeSoftSbm, Mode=TwoWay}"
+                      Content="With SBM conditions MA-lines" FontSize="12"/>
+
+            <!-- With SBM conditions percentages/crossings -->
+            <CheckBox IsChecked="{Binding IncludeSbmPercAndCrossing, Mode=TwoWay}"
+                      Content="With SBM conditions percentages/crossings" FontSize="12"/>
+
+            <!-- Only if lux 5m at the configured threshold -->
+            <Grid ColumnDefinitions="Auto,*,80,Auto" RowDefinitions="Auto"
+                  ToolTip.Tip="Long needs Lux5mValue ≤ -threshold; short needs Lux5mValue ≥ +threshold. 50 = previous default; raise toward 100 for stricter signals.">
+                <CheckBox Grid.Column="0"
+                          IsChecked="{Binding OnlyIfLux5m, Mode=TwoWay}"
+                          Content="Only if lux 5m at"
+                          VerticalAlignment="Center"
+                          FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding Lux5mPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="8,0,4,0"
+                         IsEnabled="{Binding OnlyIfLux5m}"/>
+                <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
+            </Grid>
+
+            <!-- Require volume climax on the signal candle -->
+            <CheckBox IsChecked="{Binding RequireVolumeClimax, Mode=TwoWay}"
+                      Content="Require volume climax on signal candle" FontSize="12"/>
+
+            <Grid ColumnDefinitions="*,110" RowDefinitions="Auto,Auto" RowSpacing="2" ColumnSpacing="8" Margin="20,0,0,0">
+                <!-- Lookback -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Lookback (candles):"
+                           VerticalAlignment="Center" FontSize="12"/>
+                <NumericUpDown Grid.Row="0" Grid.Column="1"
+                               Value="{Binding VolumeClimaxLookback, Mode=TwoWay}"
+                               IsEnabled="{Binding RequireVolumeClimax}"
+                               Minimum="1" Maximum="200" Increment="1"
+                               Height="26" FontSize="12" Padding="4,2"
+                               CornerRadius="4"
+                               FormatString="0"/>
+
+                <!-- Multiplier -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Multiplier (x avg):"
+                           VerticalAlignment="Center" FontSize="12"/>
+                <NumericUpDown Grid.Row="1" Grid.Column="1"
+                               Value="{Binding VolumeClimaxMultiplier, Mode=TwoWay}"
+                               IsEnabled="{Binding RequireVolumeClimax}"
+                               Minimum="1" Maximum="10" Increment="0.1"
+                               Height="26" FontSize="12" Padding="4,2"
+                               CornerRadius="4"
+                               FormatString="0.00"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

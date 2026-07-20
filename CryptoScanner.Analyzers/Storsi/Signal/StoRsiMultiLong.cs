@@ -14,7 +14,7 @@ public class StoRsiMultiLong : StoRsiBase
 {
     public override bool AdditionalChecks(MyData data, out string response)
     {
-        var settings = StoRsiPlugin.Settings;
+        var settings = StorsiPlugin.Settings;
         if (settings.OnlyIfLux5m)
         {
             int needed = settings.Lux5mPercentage;
@@ -51,7 +51,7 @@ public class StoRsiMultiLong : StoRsiBase
     public override bool IsSignal()
     {
         ExtraText = "";
-        var settings = StoRsiPlugin.Settings;
+        var settings = StorsiPlugin.Settings;
 
         if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
         {

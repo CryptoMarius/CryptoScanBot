@@ -19,4 +19,10 @@
     <ProjectReference Include="..\CryptoScanner.Config\CryptoScanner.Config.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Sbm\Documentation\" />
+    <Folder Include="Stobb\Config\" />
+    <Folder Include="Trend\Config\" />
+  </ItemGroup>
+
 </Project>

@@ -1,15 +1,7 @@
 ﻿using CryptoScanner.Core.Enums;
-#if DEBUG
-using CryptoScanner.Core.Signal.Choch;
-#endif
 using CryptoScanner.Core.Signal.Dlz;
 using CryptoScanner.Core.Signal.Fvg;
-using CryptoScanner.Core.Signal.Jump;
-using CryptoScanner.Core.Signal.Sbm;
 using CryptoScanner.Core.Signal.Smc;
-using CryptoScanner.Core.Signal.Stobb;
-using CryptoScanner.Core.Signal.Trend;
-using CryptoScanner.Core.Signal.Experiment;
 
 namespace CryptoScanner.Core.Signal;
 
@@ -40,65 +32,8 @@ public static class RegisterAlgorithms
 
     static RegisterAlgorithms()
     {
-        //***************************************************
-        // Jump
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "jump",
-            Strategy = CryptoSignalStrategy.Jump,
-            AnalyzeLongType = typeof(SignalCandleJumpLong),
-            AnalyzeShortType = typeof(SignalCandleJumpShort),
-        });
-
-        //***************************************************
-        // SBMx (a special kind of STOBB)
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "sbm1",
-            Strategy = CryptoSignalStrategy.Sbm1,
-            AnalyzeLongType = typeof(SignalSbm1Long),
-            AnalyzeShortType = typeof(SignalSbm1Short),
-        });
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "sbm2",
-            Strategy = CryptoSignalStrategy.Sbm2,
-            AnalyzeLongType = typeof(SignalSbm2Long),
-            AnalyzeShortType = typeof(SignalSbm2Short),
-        });
 
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "sbm3",
-            Strategy = CryptoSignalStrategy.Sbm3,
-            AnalyzeLongType = typeof(SignalSbm3Long),
-            AnalyzeShortType = typeof(SignalSbm3Short),
-        });
-
-
-
-        //***************************************************
-        // STOBB
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb",
-            Strategy = CryptoSignalStrategy.Stobb,
-            AnalyzeLongType = typeof(SignalStobbLong),
-            AnalyzeShortType = typeof(SignalStobbShort),
-        });
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb.multi",
-            Strategy = CryptoSignalStrategy.StobbMulti,
-            AnalyzeLongType = typeof(SignalStobbMultiLong),
-            AnalyzeShortType = typeof(SignalStobbMultiShort),
-        });
 
 
         //***************************************************
@@ -119,17 +54,6 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalDominantLevelNearLong),
             AnalyzeShortType = typeof(SignalDominantLevelNearShort),
         });
-
-
-#if DEBUG
-        Register(new AlgorithmDefinition()
-        {
-            Name = "BbRsiEngulf",
-            Strategy = CryptoSignalStrategy.BbRsiEngulfing,
-            AnalyzeLongType = typeof(SignalBbRsiEngulfingLong),
-            AnalyzeShortType = typeof(SignalBbRsiEngulfingShort),
-        });
-#endif
 
 
         Register(new AlgorithmDefinition()
@@ -158,95 +82,6 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalOrderBlockRejectionLong),
             AnalyzeShortType = typeof(SignalOrderBlockRejectionShort),
         });
-
-        //// NWE Repaining
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "nwe",
-        //    Strategy = CryptoSignalStrategy.Nwe,
-        //    AnalyzeLongType = typeof(SignalNwe),
-        //    AnalyzeShortType = typeof(SignalNwe),
-        //});
-
-        //#if DEBUG
-        //// NWE not repainting
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "nwe.np",
-        //    Strategy = CryptoSignalStrategy.NweNp,
-        //    AnalyzeLongType = typeof(SignalNweNp),
-        //    AnalyzeShortType = typeof(SignalNweNp),
-        //});
-        //#endif
-
-        //#if DEBUG
-        //// NWE × BB crossover: NWE curls through the BB band after extending beyond it
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "nwe.bb",
-        //    Strategy = CryptoSignalStrategy.NweBb,
-        //    AnalyzeLongType = typeof(SignalNweBbLong),
-        //    AnalyzeShortType = typeof(SignalNweBbShort),
-        //});
-
-        //#endif
-
-
-
-#if DEBUG
-        // Trend reversal (Dow Theory)
-        Register(new AlgorithmDefinition()
-        {
-            Name = "trend",
-            Strategy = CryptoSignalStrategy.Trend,
-            AnalyzeLongType = typeof(SignalTrendLong),
-            AnalyzeShortType = typeof(SignalTrendShort),
-        });
-#endif
-
-
-        // Baba, AtrRb and Bre strategies have been migrated to the Analyzers plugin architecture
-        // and are now registered dynamically via PluginManager.
-
-#if DEBUG
-        //***************************************************
-        // CHoCH — fires on a Change of Character of the ZigZag-derived structure.
-        // Primary / Secondary chooses which trend slot is read. The .pullback variants
-        // additionally require an opposite zigzag pivot + breakthrough before stepping in.
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "choch.primary",
-            Strategy = CryptoSignalStrategy.ChochPrimary,
-            AnalyzeLongType = typeof(SignalChochPrimaryLong),
-            AnalyzeShortType = typeof(SignalChochPrimaryShort),
-        });
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "choch.primary.pullback",
-            Strategy = CryptoSignalStrategy.ChochPrimaryPullback,
-            AnalyzeLongType = typeof(SignalChochPrimaryPullbackLong),
-            AnalyzeShortType = typeof(SignalChochPrimaryPullbackShort),
-        });
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "choch.secondary",
-            Strategy = CryptoSignalStrategy.ChochSecondary,
-            AnalyzeLongType = typeof(SignalChochSecondaryLong),
-            AnalyzeShortType = typeof(SignalChochSecondaryShort),
-        });
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "choch.secondary.pullback",
-            Strategy = CryptoSignalStrategy.ChochSecondaryPullback,
-            AnalyzeLongType = typeof(SignalChochSecondaryPullbackLong),
-            AnalyzeShortType = typeof(SignalChochSecondaryPullbackShort),
-        });
-#endif
-
     }
 
 

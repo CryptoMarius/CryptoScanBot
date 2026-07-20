@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="290" d:DesignHeight="120"
+             xmlns:vm="using:CryptoScanner.Analyzers.Nwe.Config"
+             x:DataType="vm:StrategyNweSettingsNweViewModel"
+             x:Class="CryptoScanner.Analyzers.Nwe.Config.StrategyNweSettingsNweView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings Nadaraya Watson Envelope">
+        <StackPanel Margin="8" Spacing="8">
+            
+            <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto, Auto" RowSpacing="2">
+                <!-- BandWidth -->
+                <TextBlock Grid.Column="0" Text="BandWidth:" VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" Text="{Binding BandWidth, Mode=TwoWay}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                
+                <!-- Multiplication -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Multiplication:" VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding Multiplication, Mode=TwoWay}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

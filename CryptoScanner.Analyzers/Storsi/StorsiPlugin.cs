@@ -1,39 +1,36 @@
-using CryptoScanner.Analyzers.Storsi.Signal;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Storsi;
 
-public class StoRsiPlugin : IStrategyPlugin
+public class StorsiPlugin : IStrategyPlugin
 {
     public const string StrategyInternal = "StoRsi";
     public string StrategyName => StrategyInternal.ToLower();
     public string StrategyNameCamelCase => StrategyInternal;
 
-    private const string StrategyInternalMulti = "StoRsi.Multi";
-
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
         new(CryptoSignalStrategy.StoRsi,
-            StrategyInternal.ToLower(),
-            typeof(StoRsiLong),
-            typeof(StoRsiShort)
+            "storsi",
+            typeof(Signal.StoRsiLong),
+            typeof(Signal.StoRsiShort)
         ),
         new(CryptoSignalStrategy.StoRsiMulti,
-            StrategyInternalMulti.ToLower(),
-            typeof(StoRsiMultiLong),
-            typeof(StoRsiMultiShort)
+            "storsi.multi",
+            typeof(Signal.StoRsiMultiLong),
+            typeof(Signal.StoRsiMultiShort)
         ),
     ];
 
-    public static StorsiSettings Settings { get; internal set; } = new();
+    public static SettingsSignalStrategyStoRsi Settings { get; internal set; } = new();
     public SettingsSignalStrategyBase SettingsBase
     {
         get => Settings;
         set
         {
-            if (value is not StorsiSettings s)
+            if (value is not SettingsSignalStrategyStoRsi s)
                 throw new NotImplementedException();
             Settings = s;
         }
@@ -41,7 +38,7 @@ public class StoRsiPlugin : IStrategyPlugin
 
     public static SettingsSignalStrategyBase CreateSettings()
     {
-        Settings = new StorsiSettings();
+        Settings = new SettingsSignalStrategyStoRsi();
         return Settings;
     }
 
