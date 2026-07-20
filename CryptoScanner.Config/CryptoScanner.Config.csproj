@@ -36,9 +36,6 @@
     <Compile Update="Views\ConfigurationWindow.axaml.cs">
       <DependentUpon>ConfigurationWindow.axaml</DependentUpon>
     </Compile>
-    <Compile Update="Views\StrategyBbmaSettingsView.axaml.cs">
-      <DependentUpon>StrategyBbmaSettingsView.axaml</DependentUpon>
-    </Compile>
   </ItemGroup>
 
 </Project>

@@ -19,19 +19,5 @@
     <Copyright>Copyright © 2026 Marius</Copyright>
   </PropertyGroup>
 
-  <!--
-    EXPERIMENTAL define: enables experimental strategies (Baba, AtrRb, BRE, ...) that are
-    hidden from end-user Release builds but available for testers.
-
-    - Debug builds:   always on (DEBUG implies EXPERIMENTAL).
-    - Release builds: off by default. Use  -c Experimental  on the command line.
-  -->
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug' Or '$(Configuration)' == 'Experimental'">
-    <DefineConstants>$(DefineConstants);EXPERIMENTAL</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)' == 'Experimental'">
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
 
 </Project>

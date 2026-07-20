@@ -106,15 +106,6 @@
 	  <Compile Update="Settings\Views\IndicatorStochView.axaml.cs">
 	    <DependentUpon>IndicatorStochView.axaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="Settings\Views\StrategyDlzSettingsView.axaml.cs">
-	    <DependentUpon>StrategyDlzSettingsView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyDlzTabView.axaml.cs">
-	    <DependentUpon>StrategyDlzTabView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyFvgTabView.axaml.cs">
-	    <DependentUpon>StrategyFvgTabView.axaml</DependentUpon>
-	  </Compile>
 	  <Compile Update="Settings\Views\StrategyView.axaml.cs">
 	    <DependentUpon>StrategyView.axaml</DependentUpon>
 	  </Compile>

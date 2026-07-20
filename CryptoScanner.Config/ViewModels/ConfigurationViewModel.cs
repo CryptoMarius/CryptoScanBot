@@ -112,7 +112,7 @@ public partial class ConfigurationViewModel : ObservableObject
         QuoteTabViewModel.LoadConfig(settings.QuoteCoins);
 
         // Strategies
-        StrategyTabViewModel.LoadConfig(settings.Signal);
+        StrategyTabViewModel.LoadConfig();
 
         // Analyzer
         AnalyzerTabViewModel.LoadConfig(settings.Signal);
@@ -148,7 +148,7 @@ public partial class ConfigurationViewModel : ObservableObject
         QuoteTabViewModel.SaveConfig();
 
         // Strategies
-        StrategyTabViewModel.SaveConfig(settings.Signal);
+        StrategyTabViewModel.SaveConfig();
 
         // Analyzer
         AnalyzerTabViewModel.SaveConfig(settings.Signal);
