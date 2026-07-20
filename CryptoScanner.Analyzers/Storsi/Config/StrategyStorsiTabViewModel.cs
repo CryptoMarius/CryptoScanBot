@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Config.ViewModels;
+using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Storsi.Config;
 

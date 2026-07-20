@@ -27,7 +27,7 @@ public class StoRsiMultiLong : StoRsiBase
 
         if (settings.CheckBollingerBandsCondition)
         {
-            if (!InLowerPartOfBollingerBands(3, 5.0m))
+            if (!InLowerPartOfBollingerBands(3, 5.0m, false))
             {
                 response = "not in lower part of bb";
                 return false;

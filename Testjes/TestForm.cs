@@ -5,6 +5,7 @@ using Binance.Net.Objects.Models.Spot;
 
 using CryptoExchange.Net.Objects;
 
+using CryptoScanner.Analyzers.Stobb;
 using CryptoScanner.BackTest;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -1428,8 +1429,8 @@ public partial class TestForm : Form
 
         GlobalData.Settings.Signal.Sbm.BBMinPercentage = 1.5;
         GlobalData.Settings.Signal.Sbm.BBMaxPercentage = 100.0;
-        GlobalData.Settings.Signal.Stobb.BBMinPercentage = 1.5;
-        GlobalData.Settings.Signal.Stobb.BBMaxPercentage = 5.0;
+        StobbPlugin.Settings.BBMinPercentage = 1.5;
+        StobbPlugin.Settings.BBMaxPercentage = 5.0;
 
         GlobalData.Settings.Signal.AboveBollingerBandsSma = 0;
         GlobalData.Settings.Signal.AboveBollingerBandsUpper = 0;

@@ -8,6 +8,8 @@ namespace CryptoScanner.Analyzers.Sbm.Signal;
 
 public class SignalSbmBase : SignalCreateBase
 {
+    public override int MacdRecoveryBarCount => SbmPlugin.Settings.CandlesForMacdRecovery;
+
     public override bool IndicatorsOkay(MyData data)
     {
         if (data == null
@@ -35,43 +37,48 @@ public class SignalSbmBase : SignalCreateBase
         switch (SignalSide)
         {
             case CryptoTradeSide.Long:
-                if (!this.IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+                if (!this.IsMacdRecoveryOversold(SbmPlugin.Settings.CandlesForMacdRecovery))
                 {
                     response = "no macd recovery";
                     return false;
                 }
 
-                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
-                    !candle.IsPercentageSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+                if (SbmPlugin.Settings.CheckMa200AndMa50Percentage &&
+                    !candle.IsPercentageSma200AndSma50OkayOversold(SbmPlugin.Settings.Ma200AndMa50Percentage, out response))
                     return false;
-                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
-                    !candle.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+                if (SbmPlugin.Settings.CheckMa200AndMa20Percentage &&
+                    !candle.IsPercentageSma200AndSma20OkayOversold(SbmPlugin.Settings.Ma200AndMa20Percentage, out response))
                     return false;
-                if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
-                    !candle.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+                if (SbmPlugin.Settings.CheckMa50AndMa20Percentage &&
+                    !candle.IsPercentageSma50AndSma20OkayOversold(SbmPlugin.Settings.Ma50AndMa20Percentage, out response))
                     return false;
 
                 break;
             case CryptoTradeSide.Short:
-                if (!this.IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+                if (!this.IsMacdRecoveryOverbought(SbmPlugin.Settings.CandlesForMacdRecovery))
                 {
                     response = "no macd recovery";
                     return false;
                 }
 
-                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
-                    !candle.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+                if (SbmPlugin.Settings.CheckMa200AndMa50Percentage &&
+                    !candle.IsPercentageSma200AndSma50OkayOverbought(SbmPlugin.Settings.Ma200AndMa50Percentage, out response))
                     return false;
-                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
-                    !candle.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+                if (SbmPlugin.Settings.CheckMa200AndMa20Percentage &&
+                    !candle.IsPercentageSma200AndSma20OkayOverbought(SbmPlugin.Settings.Ma200AndMa20Percentage, out response))
                     return false;
-                if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
-                    !candle.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+                if (SbmPlugin.Settings.CheckMa50AndMa20Percentage &&
+                    !candle.IsPercentageSma50AndSma20OkayOverbought(SbmPlugin.Settings.Ma50AndMa20Percentage, out response))
                     return false;
                 break;
         }
 
-        if (!CheckMaCrossings(out response))
+        var sbm = SbmPlugin.Settings;
+        if (!CheckMaCrossings(
+            sbm.Ma200AndMa20Crossing, sbm.Ma200AndMa20Lookback,
+            sbm.Ma200AndMa50Crossing, sbm.Ma200AndMa50Lookback,
+            sbm.Ma50AndMa20Crossing, sbm.Ma50AndMa20Lookback,
+            out response))
             return false;
 
         return true;

@@ -1,5 +1,4 @@
-﻿using CryptoScanner.Analyzers.Sbm.Signal;
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
@@ -7,7 +6,7 @@ using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Analyzers.Stobb.Signal;
 
-public class SignalStobbBase : SignalSbmBase
+public class SignalStobbBase : SignalCreateBase
 {
     /// <summary>
     /// Verifies the optional DLZ / FVG / SMC zone-rejection filters from the STOBB settings.
@@ -18,24 +17,24 @@ public class SignalStobbBase : SignalSbmBase
     /// </summary>
     protected bool CheckEnabledZoneRejections(out string zoneInfo)
     {
-        var settings = GlobalData.Settings.Signal.Stobb;
+        var settings = StobbPlugin.Settings;
         if (!settings.UseDlzZone && !settings.UseFvgZone && !settings.UseSmcZone)
         {
             zoneInfo = "";
             return true;
         }
 
-        if (settings.UseDlzZone && this.WasRejectedAtDlzZone(out string dlzInfo))
+        if (settings.UseDlzZone && this.WasRejectedAtDlzZone(out var dlzInfo))
         {
             zoneInfo = dlzInfo;
             return true;
         }
-        if (settings.UseFvgZone && this.WasRejectedAtFvgZone(out string fvgInfo))
+        if (settings.UseFvgZone && this.WasRejectedAtFvgZone(out var fvgInfo))
         {
             zoneInfo = fvgInfo;
             return true;
         }
-        if (settings.UseSmcZone && this.WasRejectedAtSmcZone(out string smcInfo))
+        if (settings.UseSmcZone && this.WasRejectedAtSmcZone(out var smcInfo))
         {
             zoneInfo = smcInfo;
             return true;

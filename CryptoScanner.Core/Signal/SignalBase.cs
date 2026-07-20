@@ -68,6 +68,8 @@ public class SignalCreateBase
     /// </summary>
     public virtual decimal? OverrideSlPercentage => null;
 
+    public virtual int MacdRecoveryBarCount => 1;
+
 
     public virtual bool AdditionalChecks(MyData candle, out string response)
     {
@@ -164,11 +166,7 @@ public class SignalCreateBase
         // MACD recovering
         if (settings.CheckIncreasingMacd)
         {
-            int barCount = 1;
-            if (SignalStrategy == CryptoSignalStrategy.Sbm1 ||
-                SignalStrategy == CryptoSignalStrategy.Sbm2 ||
-                SignalStrategy == CryptoSignalStrategy.Sbm3)
-                barCount = GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery;
+            int barCount = MacdRecoveryBarCount;
 
             switch (SignalSide)
             {
@@ -470,15 +468,15 @@ public class SignalCreateBase
     }
 
 
-    protected MyData? HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
+    protected MyData? HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount, bool useHighLow)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
         MyData? candle = CandleLast;
         while (candleCount > 0)
         {
             skipCandleCount--;
-            bool isOverSold = candle is not null && candle.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh) && candle.StochOversold();
-            bool isOverBought = candle is not null && candle.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh) && candle.StochOverbought();
+            bool isOverSold = candle is not null && candle.IsBelowBollingerBands(useHighLow) && candle.StochOversold();
+            bool isOverBought = candle is not null && candle.IsAboveBollingerBands(useHighLow) && candle.StochOverbought();
 
             if (side == CryptoTradeSide.Long)
             {
@@ -538,7 +536,7 @@ public class SignalCreateBase
         return null;
     }
 
-    protected bool InLowerPartOfBollingerBands(int candleCount, decimal percentage)
+    protected bool InLowerPartOfBollingerBands(int candleCount, decimal percentage, bool useLowHigh)
     {
         // Was the price near the lower bb?
 
@@ -549,7 +547,7 @@ public class SignalCreateBase
             band += (decimal)last!.CandleData?.BollingerBandsDeviation! * percentage / 100m;
 
             decimal value;
-            if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
+            if (useLowHigh)
                 value = last.Candle.Low;
             else
                 value = Math.Max(last.Candle.Open, last.Candle.Close);
@@ -565,7 +563,7 @@ public class SignalCreateBase
     }
 
 
-    protected bool InUpperPartOfBollingerBands(int candleCount, decimal percentage)
+    protected bool InUpperPartOfBollingerBands(int candleCount, decimal percentage, bool useLowHigh)
     {
         // Was the price near the upper bb?
 
@@ -576,7 +574,7 @@ public class SignalCreateBase
             band -= (decimal)last!.CandleData?.BollingerBandsDeviation! * percentage / 100m;
 
             decimal value;
-            if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
+            if (useLowHigh)
                 value = last.Candle.High;
             else
                 value = Math.Max(last.Candle.Open, last.Candle.Close);
@@ -790,19 +788,23 @@ public class SignalCreateBase
     }
 
 
-    public bool CheckMaCrossings(out string response)
+    public bool CheckMaCrossings(
+        bool ma200AndMa20Crossing, int ma200AndMa20Lookback,
+        bool ma200AndMa50Crossing, int ma200AndMa50Lookback,
+        bool ma50AndMa20Crossing, int ma50AndMa20Lookback,
+        out string response)
     {
-        if (GlobalData.Settings.Signal.Sbm.Ma200AndMa20Crossing && HasCrossed200and20(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Lookback, out int candlesAgo))
+        if (ma200AndMa20Crossing && HasCrossed200and20(ma200AndMa20Lookback, out int candlesAgo))
         {
             response = string.Format("ma200 and ma20 crossed ({0} candles)", candlesAgo);
             return false;
         }
-        if (GlobalData.Settings.Signal.Sbm.Ma200AndMa50Crossing && HasCrossed200and50(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Lookback, out candlesAgo))
+        if (ma200AndMa50Crossing && HasCrossed200and50(ma200AndMa50Lookback, out candlesAgo))
         {
             response = string.Format("ma200 and ma50 crossed ({0} candles)", candlesAgo);
             return false;
         }
-        if (GlobalData.Settings.Signal.Sbm.Ma50AndMa20Crossing && HasCrossed50and20(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Lookback, out candlesAgo))
+        if (ma50AndMa20Crossing && HasCrossed50and20(ma50AndMa20Lookback, out candlesAgo))
         {
             response = string.Format("ma50 and ma20 crossed ({0} candles)", candlesAgo);
             return false;

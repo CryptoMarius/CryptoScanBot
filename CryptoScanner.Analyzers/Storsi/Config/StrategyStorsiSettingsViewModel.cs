@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using CryptoScanner.Core.Settings.Strategy;
+
 namespace CryptoScanner.Analyzers.Storsi.Config;
 
 public partial class StrategyStorsiSettingsViewModel : ObservableObject

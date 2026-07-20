@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Analyzers.Stobb;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
 
@@ -26,7 +27,7 @@ public class BbRsiEngulfingLong : SignalCreateBase
         ExtraText = "";
 
         // BB width must be at least 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 0)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
+        if (!CandleLast.CheckBollingerBandsWidth(StobbPlugin.Settings.BBMinPercentage, 0)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
@@ -58,7 +59,7 @@ public class BbRsiEngulfingLong : SignalCreateBase
             return false;
         }
 
-        if (HadStorsiInThelastXCandles(SignalSide, 0, 25, 4) == null && HadStobbInThelastXCandles(SignalSide, 0, 25) == null)
+        if (HadStorsiInThelastXCandles(SignalSide, 0, 25, 4) == null && HadStobbInThelastXCandles(SignalSide, 0, 25, StobbPlugin.Settings.UseLowHigh) == null)
         {
             ExtraText = "no previous storsi/stobb found";
             return false;

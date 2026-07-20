@@ -115,12 +115,6 @@
 	  <Compile Update="Settings\Views\StrategyFvgTabView.axaml.cs">
 	    <DependentUpon>StrategyFvgTabView.axaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="Settings\Views\StrategyNweTabView.axaml.cs">
-	    <DependentUpon>StrategyNweTabView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyStobbTabView.axaml.cs">
-	    <DependentUpon>StrategyStobbTabView.axaml</DependentUpon>
-	  </Compile>
 	  <Compile Update="Settings\Views\StrategyView.axaml.cs">
 	    <DependentUpon>StrategyView.axaml</DependentUpon>
 	  </Compile>

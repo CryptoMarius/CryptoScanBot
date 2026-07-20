@@ -50,14 +50,14 @@ public static class SignalCreateBaseHelper
     }
 
 
-    public static bool HadStobbInThelastXCandlesOversold(this SignalCreateBase myBase, int candleCount)
+    public static bool HadStobbInThelastXCandlesOversold(this SignalCreateBase myBase, int candleCount, bool useLowHigh)
     {
 
         MyData? last = myBase.CandleLast;
         while (candleCount > 0)
         {
-            // Closes or opens below the bb & stochastic oversold situation 
-            if (last!.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last!.StochOversold())
+            // Closes or opens below the bb & stochastic oversold situation
+            if (last!.IsBelowBollingerBands(useLowHigh) && last!.StochOversold())
                 return true;
 
             if (!myBase.GetPrevCandle(last, out last))
@@ -69,15 +69,15 @@ public static class SignalCreateBaseHelper
     }
 
 
-    public static bool IsStobbInThelastXCandlesOverbought(this SignalCreateBase myBase, int candleCount)
+    public static bool IsStobbInThelastXCandlesOverbought(this SignalCreateBase myBase, int candleCount, bool useLowHigh)
     {
         MyData? last = myBase.CandleLast;
         while (candleCount > 0)
         {
             if (last == null)
                 return false;
-            // Closes or opens above the bb & stochastic overbought situation 
-            if (last!.IsAboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.StochOverbought())
+            // Closes or opens above the bb & stochastic overbought situation
+            if (last!.IsAboveBollingerBands(useLowHigh) && last.StochOverbought())
                 return true;
 
             if (!myBase.GetPrevCandle(last, out last))

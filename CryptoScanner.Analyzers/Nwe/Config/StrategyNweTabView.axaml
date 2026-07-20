@@ -4,16 +4,16 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
              xmlns:vm="using:CryptoScanner.Analyzers.Nwe.Config"
-             xmlns:settings="using:CryptoScanner.Config.Views"
+             xmlns:configviews="using:CryptoScanner.Config.Views"
              x:DataType="vm:StrategyNweTabViewModel"
              x:Class="CryptoScanner.Analyzers.Nwe.Config.StrategyNweTabView">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="5">
-            <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
-            <settings:StrategyNweSettingsNweView DataContext="{Binding StrategyNweSettingsNweViewModel}" />
-            <settings:StrategyNweSettingsView DataContext="{Binding StrategyNweSettingsViewModel}" />
-            <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+            <vm:StrategyNweSettingsNweView DataContext="{Binding StrategyNweSettingsNweViewModel}" />
+            <vm:StrategyNweSettingsView DataContext="{Binding StrategyNweSettingsViewModel}" />
+            <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
         </StackPanel>
     </ScrollViewer>
 

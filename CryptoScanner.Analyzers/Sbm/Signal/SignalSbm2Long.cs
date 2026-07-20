@@ -11,7 +11,7 @@ public class SignalSbm2Long : SignalSbmBase
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast!.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
+        if (!CandleLast!.CheckBollingerBandsWidth(SbmPlugin.Settings.BBMinPercentage, SbmPlugin.Settings.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
@@ -31,13 +31,13 @@ public class SignalSbm2Long : SignalSbmBase
             return false;
         }
 
-        if (!InLowerPartOfBollingerBands(GlobalData.Settings.Signal.Sbm.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm2BbPercentage))
+        if (!InLowerPartOfBollingerBands(SbmPlugin.Settings.Sbm2CandlesLookbackCount, SbmPlugin.Settings.Sbm2BbPercentage, SbmPlugin.Settings.Sbm2UseLowHigh))
         {
             ExtraText = "no low price in the last x candles";
             return false;
         }
 
-        if (!this.IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        if (!this.IsMacdRecoveryOversold(SbmPlugin.Settings.CandlesForMacdRecovery))
         {
             ExtraText = "no macd recovery";
             return false;

@@ -1,3 +1,4 @@
+using CryptoScanner.Analyzers.Stobb;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
@@ -24,7 +25,7 @@ public class SignalNweBbLong : SignalNweBbBase
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
+        if (!CandleLast.CheckBollingerBandsWidth(StobbPlugin.Settings.BBMinPercentage, 100))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;

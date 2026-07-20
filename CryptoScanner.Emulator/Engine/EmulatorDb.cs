@@ -1,3 +1,6 @@
+#if DEBUG
+using CryptoScanner.Analyzers.Choch.Signal;
+#endif
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;

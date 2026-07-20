@@ -1,6 +1,4 @@
-﻿using CryptoScanner.Core.Settings.Strategy;
-
-namespace CryptoScanner.Analyzers.Stobb;
+﻿namespace CryptoScanner.Core.Settings.Strategy;
 
 [Serializable]
 public class SettingsSignalStrategyStobb : SettingsSignalStrategyBase

@@ -25,7 +25,7 @@ public class StoRsiShort : StoRsiBase
 
         if (settings.CheckBollingerBandsCondition)
         {
-            if (!InUpperPartOfBollingerBands(3, 5.0m))
+            if (!InUpperPartOfBollingerBands(3, 5.0m, false))
             {
                 response = "not in upper part of bb";
                 return false;

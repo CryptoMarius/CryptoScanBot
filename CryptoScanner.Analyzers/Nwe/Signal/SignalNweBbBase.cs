@@ -57,8 +57,8 @@ public abstract class SignalNweBbBase : SignalCreateBase
 
         // Repainting NWE computed on the full candle list (matches the chart NWE display)
         var nweIndicator = new NweIndicator(
-            bandwidth: GlobalData.Settings.Signal.Nwe.BandWidth,
-            multiplier: GlobalData.Settings.Signal.Nwe.Multiplication,
+            bandwidth: NwePlugin.Settings.BandWidth,
+            multiplier: NwePlugin.Settings.Multiplication,
             smoothRepainting: true);
         var nweResults = nweIndicator.Calculate(SymbolInterval.CandleList);
 

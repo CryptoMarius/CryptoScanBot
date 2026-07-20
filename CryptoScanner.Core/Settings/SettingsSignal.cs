@@ -38,11 +38,8 @@ public class SettingsSignal
     public float AnalysisEffectivePercentage { get; set; } = 35;
     public bool AnalysisMaxEffectiveLog { get; set; } = false;
 
-    // STOBB signals
-    public SettingsSignalStrategyStobb Stobb = new();
-
     // Dominant zones
-    public SettingsSignalStrategyZones ZonesDlz = new();
+    public SettingsSignalStrategyDlz ZonesDlz = new();
 
     // Fair Value gap zones
     public SettingsSignalStrategyFvg ZonesFvg = new();

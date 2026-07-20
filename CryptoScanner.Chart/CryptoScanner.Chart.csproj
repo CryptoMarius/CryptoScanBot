@@ -19,6 +19,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\CryptoScanner.Analyzers\CryptoScanner.Analyzers.csproj" />
 		<ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
 	</ItemGroup>
 </Project>

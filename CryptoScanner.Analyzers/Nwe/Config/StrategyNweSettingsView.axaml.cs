@@ -1,7 +1,5 @@
 using Avalonia.Controls;
 
-using CryptoScanner.Config.ViewModels;
-
 namespace CryptoScanner.Analyzers.Nwe.Config;
 
 public partial class StrategyNweSettingsView : UserControl

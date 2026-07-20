@@ -61,7 +61,7 @@ public abstract class SignalChochLongBase : SignalCreateBase
         CryptoTrendData trendData = GetBosTrend();
         bool debugLog = GlobalData.Settings.General.DebugSignalCreate;
 
-        bool requireBos = RequirePullback && GlobalData.Settings.Signal.Choch.RequireBosConfirmation;
+        bool requireBos = RequirePullback && ChochPlugin.Settings.RequireBosConfirmation;
         var lastChoCh = trendData.LastChoCh();
         if (lastChoCh == null)
         {

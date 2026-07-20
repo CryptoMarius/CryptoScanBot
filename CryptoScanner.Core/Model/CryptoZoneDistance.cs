@@ -8,11 +8,11 @@
         /// <summary>
         /// The distance to nearest long zone (percentage)
         /// </summary>
-        public decimal? BestLongZone { get; internal set; } = 100m;
+        public decimal? BestLongZone { get; set; } = 100m;
         /// <summary>
         /// The distance to nearest short zone (percentage)
         /// </summary>
-        public decimal? BestShortZone { get; internal set; } = 100m;
+        public decimal? BestShortZone { get; set; } = 100m;
     }
 
 }

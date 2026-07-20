@@ -1,3 +1,4 @@
+using CryptoScanner.Analyzers.Stobb;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -84,7 +85,7 @@ public static class NweBbDetector
                 (decimal)(sma - dev)));
         }
 
-        double bbMin = GlobalData.Settings.Signal.Stobb.BBMinPercentage;
+        double bbMin = StobbPlugin.Settings.BBMinPercentage;
 
         for (int j = 2; j < bars.Count; j++)
         {

@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Analyzers.Stobb;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
 
@@ -29,7 +30,7 @@ public class IchimokuKumoBreakoutLong : SignalCreateBase
 
         // BB width filter: only enforce minimum; skip the Stobb maximum (5%) because Kumo Breakout
         // is a momentum strategy that fires after a breakout — typically at higher volatility.
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 0))
+        if (!CandleLast.CheckBollingerBandsWidth(StobbPlugin.Settings.BBMinPercentage, 0))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;

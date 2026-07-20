@@ -1,6 +1,4 @@
-﻿using CryptoScanner.Core.Settings.Strategy;
-
-namespace CryptoScanner.Analyzers.Storsi;
+﻿namespace CryptoScanner.Core.Settings.Strategy;
 
 [Serializable]
 public class SettingsSignalStrategyStoRsi : SettingsSignalStrategyBase

@@ -12,6 +12,9 @@ public static class AnalyzerRegistration
     {
         PluginManager.Register(new AtrRb.AtrRbPlugin()); // does not perform well enough
         PluginManager.Register(new Baba.BabaPlugin());
+        PluginManager.Register(new Dlz.DlzPlugin());
+        PluginManager.Register(new Fvg.FvgPlugin());
+        PluginManager.Register(new Smc.SmcPlugin());
         PluginManager.Register(new Bre.BrePlugin());
         PluginManager.Register(new Jump.JumpPlugin());
         PluginManager.Register(new Sbm.SbmPlugin());

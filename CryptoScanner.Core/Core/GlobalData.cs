@@ -776,13 +776,6 @@ public static class GlobalData
     {
         StrategiesSettings = [];
 
-        // DLZ, FVG and SMC
-        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.OrderBlock, (Settings.Signal.ZonesSmc, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.OrderBlockRejection, (Settings.Signal.ZonesSmc, DateTime.Today));
-
         // Merge settings from dynamically loaded strategy plugins
         foreach (var (strategy, plugin) in PluginManager.LoadedPlugins)
         {

@@ -1,0 +1,98 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
+using CryptoScanner.Core.Settings.Strategy;
+
+namespace CryptoScanner.Analyzers.Stobb.Config;
+
+public partial class StrategyStobbSettingsViewModel : ObservableObject
+{
+    [ObservableProperty]
+    private double _bbMinPercentage = 1.50;
+
+    [ObservableProperty]
+    private double _bbMaxPercentage = 6.0;
+
+    [ObservableProperty]
+    private bool _useLowHigh = false;
+
+    [ObservableProperty]
+    private bool _includeRsi = false;
+
+    [ObservableProperty]
+    private bool _includeSbmMaLines = false;
+
+    [ObservableProperty]
+    private bool _includeSbmPercAndCrossing = false;
+
+    [ObservableProperty]
+    private bool _onlyIfPreviousStobb = false;
+
+    [ObservableProperty]
+    private bool _onlyIfLux5m = false;
+
+    [ObservableProperty]
+    private int _lux5mPercentage = 50;
+
+    [ObservableProperty]
+    private bool _checkTrendPrimaryDirection = false;
+
+    [ObservableProperty]
+    private int _TrendPrimaryDirectionCount = 2;
+
+    [ObservableProperty]
+    private bool _checkTrendSecondaryDirection = false;
+
+    [ObservableProperty]
+    private int _trendSecondaryDirectionCount = 2;
+
+    [ObservableProperty]
+    private bool _useDlzZone = false;
+
+    [ObservableProperty]
+    private bool _useFvgZone = false;
+
+    [ObservableProperty]
+    private bool _useSmcZone = false;
+
+
+
+    public void LoadConfig(SettingsSignalStrategyStobb settings)
+    {
+        BbMinPercentage = settings.BBMinPercentage;
+        BbMaxPercentage = settings.BBMaxPercentage;
+        UseLowHigh = settings.UseLowHigh;
+        IncludeRsi = settings.IncludeRsi;
+        IncludeSbmMaLines = settings.IncludeSoftSbm;
+        IncludeSbmPercAndCrossing = settings.IncludeSbmPercAndCrossing;
+        OnlyIfPreviousStobb = settings.OnlyIfPreviousStobb;
+        OnlyIfLux5m = settings.OnlyIfLux5m;
+        Lux5mPercentage = settings.Lux5mPercentage;
+        CheckTrendPrimaryDirection = settings.CheckTrendPrimaryDirection;
+        TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
+        CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
+        TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
+        UseDlzZone = settings.UseDlzZone;
+        UseFvgZone = settings.UseFvgZone;
+        UseSmcZone = settings.UseSmcZone;
+    }
+
+    public void SaveConfig(SettingsSignalStrategyStobb settings)
+    {
+        settings.BBMinPercentage = BbMinPercentage;
+        settings.BBMaxPercentage = BbMaxPercentage;
+        settings.UseLowHigh = UseLowHigh;
+        settings.IncludeRsi = IncludeRsi;
+        settings.IncludeSoftSbm = IncludeSbmMaLines;
+        settings.IncludeSbmPercAndCrossing = IncludeSbmPercAndCrossing;
+        settings.OnlyIfPreviousStobb = OnlyIfPreviousStobb;
+        settings.OnlyIfLux5m = OnlyIfLux5m;
+        settings.Lux5mPercentage = Lux5mPercentage;
+        settings.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;
+        settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
+        settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
+        settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
+        settings.UseDlzZone = UseDlzZone;
+        settings.UseFvgZone = UseFvgZone;
+        settings.UseSmcZone = UseSmcZone;
+    }
+}

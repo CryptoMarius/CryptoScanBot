@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Chart.ViewModels.Chart;
+﻿using CryptoScanner.Analyzers.Nwe;
+using CryptoScanner.Chart.ViewModels.Chart;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Indicators;
@@ -81,8 +82,8 @@ public class Nwe
         }
 
         NweIndicator nwe = new(
-            bandwidth: GlobalData.Settings.Signal.Nwe.BandWidth,
-            multiplier: GlobalData.Settings.Signal.Nwe.Multiplication,
+            bandwidth: NwePlugin.Settings.BandWidth,
+            multiplier: NwePlugin.Settings.Multiplication,
             smoothRepainting: smoothRepainting
            );
         var result = nwe.Calculate(candles);

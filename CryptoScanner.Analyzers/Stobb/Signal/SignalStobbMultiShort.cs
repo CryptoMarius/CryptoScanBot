@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Analyzers.Sbm;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
@@ -11,9 +12,9 @@ public class SignalStobbMultiShort : SignalStobbBase
 
     public override bool AdditionalChecks(MyData data, out string response)
     {
-        if (GlobalData.Settings.Signal.Stobb.OnlyIfLux5m)
+        if (StobbPlugin.Settings.OnlyIfLux5m)
         {
-            int needed = GlobalData.Settings.Signal.Stobb.Lux5mPercentage;
+            int needed = StobbPlugin.Settings.Lux5mPercentage;
             if (CandleLast.CandleData!.Lux5mValue < needed)
             {
                 response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%, need >= {needed}%)";
@@ -22,7 +23,7 @@ public class SignalStobbMultiShort : SignalStobbBase
         }
 
         // Controle op de ma-lijnen
-        if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
+        if (StobbPlugin.Settings.IncludeSoftSbm)
         {
             // Check ma lines
             if (!CandleLast!.IsSbmConditionsOverbought())
@@ -33,30 +34,35 @@ public class SignalStobbMultiShort : SignalStobbBase
         }
 
         // Controle op de ma-kruisingen
-        if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
+        if (StobbPlugin.Settings.IncludeSbmPercAndCrossing)
         {
-            if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
-                !data.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+            var sbm = SbmPlugin.Settings;
+            if (sbm.CheckMa200AndMa50Percentage &&
+                !data.IsPercentageSma200AndSma50OkayOverbought(sbm.Ma200AndMa50Percentage, out response))
                 return false;
-            if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
-                !data.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+            if (sbm.CheckMa200AndMa20Percentage &&
+                !data.IsPercentageSma200AndSma20OkayOverbought(sbm.Ma200AndMa20Percentage, out response))
                 return false;
-            if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
-                !data.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+            if (sbm.CheckMa50AndMa20Percentage &&
+                !data.IsPercentageSma50AndSma20OkayOverbought(sbm.Ma50AndMa20Percentage, out response))
                 return false;
 
-            if (!CheckMaCrossings(out response))
+            if (!CheckMaCrossings(
+                sbm.Ma200AndMa20Crossing, sbm.Ma200AndMa20Lookback,
+                sbm.Ma200AndMa50Crossing, sbm.Ma200AndMa50Lookback,
+                sbm.Ma50AndMa20Crossing, sbm.Ma50AndMa20Lookback,
+                out response))
                 return false;
         }
 
         // Controle op de RSI
-        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.RsiOverbought())
+        if (StobbPlugin.Settings.IncludeRsi && !CandleLast.RsiOverbought())
         {
             response = "rsi niet overbought";
             return false;
         }
 
-        if (GlobalData.Settings.Signal.Stobb.OnlyIfPreviousStobb && HadStobbInThelastXCandles(SignalSide, 5, 60) == null)
+        if (StobbPlugin.Settings.OnlyIfPreviousStobb && HadStobbInThelastXCandles(SignalSide, 5, 60, StobbPlugin.Settings.UseLowHigh) == null)
         {
             response = "geen voorgaande stobb gevonden";
             return false;
@@ -69,7 +75,7 @@ public class SignalStobbMultiShort : SignalStobbBase
     public override bool IsSignal()
     {
         ExtraText = "";
-        var settings = GlobalData.Settings.Signal.Stobb;
+        var settings = StobbPlugin.Settings;
 
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
@@ -91,7 +97,7 @@ public class SignalStobbMultiShort : SignalStobbBase
                 return false;
 
             if (IndicatorsOkay(result.candle!) && result.candle!.StochOverbought()
-                && result.candle!.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+                && result.candle!.IsAboveBollingerBands(StobbPlugin.Settings.UseLowHigh))
             {
                 if (ExtraText != "")
                     ExtraText += ',';

@@ -3,30 +3,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
-             xmlns:controls="using:Avalonia.Controls"
              xmlns:vm="using:CryptoScanner.Config.ViewModels"
-             xmlns:settings="using:CryptoScanner.Config.Views"
              x:DataType="vm:StrategyTabViewModel"
              x:Class="CryptoScanner.Config.Views.StrategyTabView">
 
     <TabControl x:Name="StrategyTabControl" Grid.Row="2" Margin="0" >
-		<TabItem Header="DLZ" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-			<settings:StrategyDlzTabView DataContext="{Binding StrategyDlzTabViewModel}" />
-		</TabItem>
-		<TabItem Header="FVG" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-			<settings:StrategyFvgTabView DataContext="{Binding StrategyFvgTabViewModel}" />
-		</TabItem>
-		<TabItem Header="SMC" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-			<settings:StrategySmcTabView DataContext="{Binding StrategySmcTabViewModel}" />
-		</TabItem>
-		<TabItem Header="STOBB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-            <settings:StrategyStobbTabView DataContext="{Binding StrategyStobbTabViewModel}" />
-        </TabItem>
-		<!-- The Nwe, Sbm, Jump, StoRsi, Baba, AtrRb, Bre and Bbma tabs 
-		      are added  dynamically from the plugin ConfigViews (see the code-behind); 
-			  hardcoded TabItems for them would show detached viewmodels 
-			  whose values are never loaded or saved. 
-		-->
+		<!-- All strategy tabs are added dynamically from the plugin ConfigViews (see the code-behind). -->
 	</TabControl>
 
 </UserControl>

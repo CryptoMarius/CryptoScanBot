@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="290" d:DesignHeight="140"
+             xmlns:vm="using:CryptoScanner.Analyzers.Dlz.Config"
+             x:DataType="vm:StrategyDlzSettingsUnzoomedBoxViewModel"
+             x:Class="CryptoScanner.Analyzers.Dlz.Config.StrategyDlzSettingsUnzoomedBoxView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings unzoomed box">
+        <StackPanel Margin="8" Spacing="8">
+
+            <!-- Apply unzoomed filter -->
+            <CheckBox IsChecked="{Binding ZonesApplyUnzoomed, Mode=TwoWay}"
+                      Content="Apply unzoomed filter"
+                      FontSize="12"/>
+
+            <!-- Minimum unzoomed percentage -->
+            <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Minimum unzoomed percentage:" VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" Text="{Binding MinimumUnZoomedPercentage, Mode=TwoWay, StringFormat=N2}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Maximum unzoomed percentage -->
+            <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Maximum unzoomed percentage:" VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" Text="{Binding MaximumUnZoomedPercentage, Mode=TwoWay, StringFormat=N2}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

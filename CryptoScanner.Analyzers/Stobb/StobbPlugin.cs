@@ -44,5 +44,5 @@ public class StobbPlugin : IStrategyPlugin
     }
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = null; // new Config.StorsiConfigView();
+    public IConfigView? ConfigView { get; } = new Config.StobbConfigView();
 }

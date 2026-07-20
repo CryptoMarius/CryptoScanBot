@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="1000"
+             xmlns:vm="using:CryptoScanner.Analyzers.Dlz.Config"
+             xmlns:configviews="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyDlzTabViewModel"
+             x:Class="CryptoScanner.Analyzers.Dlz.Config.StrategyDlzTabView">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+        <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto" RowSpacing="5">
+           <configviews:SoundAndColorsView Grid.Row="0" DataContext="{Binding SoundAndColorsViewModel}" />
+            <HeaderedContentControl Grid.Row="0" Grid.Column="1" Classes="groupbox" Header="Zone calculation" HorizontalAlignment="Left"
+									 IsVisible="false">
+                <configviews:IndicatorZigZagView DataContext="{Binding IndicatorZigZagViewModel}" />
+            </HeaderedContentControl>
+        </Grid>
+        <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,Auto,Auto" Margin="5" RowSpacing="5">
+            <vm:StrategyDlzSettingsView Grid.Row="0" DataContext="{Binding StrategyDlzSettingsViewModel}" />
+            <vm:StrategyDlzSettingsZoneFilterView Grid.Row="0" Grid.Column="1" DataContext="{Binding StrategyDlzSettingsZoneFilterViewModel}" />
+
+            <vm:StrategyDlzSettingsUnzoomedBoxView Grid.Row="1" Grid.Column="0" DataContext="{Binding StrategyDlzSettingsUnzoomedBoxViewModel}" />
+            <vm:StrategyDlzSettingsZoomedBoxView Grid.Row="1" Grid.Column="1" DataContext="{Binding StrategyDlzSettingsZoomedBoxViewModel}" />
+
+            <configviews:IntervalView Grid.Row="0" Grid.Column="3" Grid.RowSpan="2" DataContext="{Binding IntervalViewModel}" />
+        </Grid>
+        <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+    </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

@@ -1,7 +1,4 @@
 ﻿using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Signal.Dlz;
-using CryptoScanner.Core.Signal.Fvg;
-using CryptoScanner.Core.Signal.Smc;
 
 namespace CryptoScanner.Core.Signal;
 
@@ -26,64 +23,6 @@ public static class RegisterAlgorithms
     {
         AlgorithmDefinitionList.Add(algorithmDefinition.Strategy, algorithmDefinition);
     }
-
-    // a class contructor get called later (when something of the class is touched, cannot use it to register something)
-
-
-    static RegisterAlgorithms()
-    {
-
-
-
-
-        //***************************************************
-        // Level approaching
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "dlz",
-            Strategy = CryptoSignalStrategy.DominantLevel,
-            AnalyzeLongType = typeof(SignalDominantLevelLong),
-            AnalyzeShortType = typeof(SignalDominantLevelShort),
-        });
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "dlz.near",
-            Strategy = CryptoSignalStrategy.DominantLevelNear,
-            AnalyzeLongType = typeof(SignalDominantLevelNearLong),
-            AnalyzeShortType = typeof(SignalDominantLevelNearShort),
-        });
-
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "fvg",
-            Strategy = CryptoSignalStrategy.FairValueGap,
-            AnalyzeLongType = typeof(SignalFairValueGapLong),
-            AnalyzeShortType = typeof(SignalFairValueGapShort),
-        });
-
-        // SMC supply/demand order block — price returns to a fresh/strong base zone.
-        // "smc" fires on a touch into the zone.
-        Register(new AlgorithmDefinition()
-        {
-            Name = "smc",
-            Strategy = CryptoSignalStrategy.OrderBlock,
-            AnalyzeLongType = typeof(SignalOrderBlockLong),
-            AnalyzeShortType = typeof(SignalOrderBlockShort),
-        });
-
-        // smc.rejection — entry-grade: fires on the confirmed bounce/rejection off the zone.
-        Register(new AlgorithmDefinition()
-        {
-            Name = "smc.rejection",
-            Strategy = CryptoSignalStrategy.OrderBlockRejection,
-            AnalyzeLongType = typeof(SignalOrderBlockRejectionLong),
-            AnalyzeShortType = typeof(SignalOrderBlockRejectionShort),
-        });
-    }
-
 
     /// <summary>
     /// Return the algorithm definition
