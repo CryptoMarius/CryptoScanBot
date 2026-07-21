@@ -9,17 +9,11 @@ $ mexc/spot werkt
 $ okx spot en futures werkt
 
 TODO:
-- Hoe krijg ik de instelling schermen dynamisch (en gesorteerd) naar de config UI?
 - Defaults voor de strategien (zodat je terug kan naar de fabrieksinstellingen)
-
-- Emulator blijft candles ophalen terwijl ze in de database zitten (voor zover ik dat weet)
- (lijkt nu eventjes goed, maar mwel meerdere keren gezien!)
-
-- Beslissing maken over de zogenaamde entry conditions (wat ook signal conditions zou kunnen heten)
-  Wanneer worden ze nu toegepast? Pas bij de entry of zijn ze in principe gelijk??
-
+- TODO: Chart venster, de 1e 4 opties zijn goed, daarna moeten de andere gesorteerd worden
 
 *****
+- De Entry conditions versimpeld en de overlappende opties verwijderd
 - Bij het toevoegen van een DCA komen we in een deadlock situatie.
 - Intern is er versimpeld en geschoven met strategien waardoor deze opnieuw ingesteld moeten worden
 - Aanvullend: De papertrading vult ook orders die qua datum tijd niet eens gevuld kunnen worden

@@ -318,9 +318,9 @@
 
   <ItemGroup>
 	  <PackageReference Include="Alpaca.Markets" Version="7.2.2" />
-	  <PackageReference Include="Avalonia" Version="11.3.17" />
-	  <PackageReference Include="Avalonia.Desktop" Version="11.3.17" />
-	  <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.17" />
+	  <PackageReference Include="Avalonia" Version="11.3.18" />
+	  <PackageReference Include="Avalonia.Desktop" Version="11.3.18" />
+	  <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.18" />
 	  <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
 	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 	  <PackageReference Include="NAudio" Version="2.3.0" />
