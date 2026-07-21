@@ -94,34 +94,33 @@
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowPoints, Mode=TwoWay}" Content="Pivot points" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowSignals, Mode=TwoWay}" Content="Signals" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowPositions, Mode=TwoWay}" Content="Positions" FontSize="12"/>
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowDlzZones, Mode=TwoWay}" Content="DLZ Zones" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowFvgZones, Mode=TwoWay}" Content="FVG Zones" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowSmcZones, Mode=TwoWay}" Content="SMC Zones" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowDtb, Mode=TwoWay}" Content="DTB" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowBollingerBand, Mode=TwoWay}" Content="Bollinger Bands" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowKeltnerChannel, Mode=TwoWay}" Content="Keltner Channel" FontSize="12"/>
-                        <!-- AtrRb, Baba, Slide, BRE and BBMA checkboxes are now generated dynamically via PluginOverlays -->
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowPSar, Mode=TwoWay}" Content="PSar" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowNweRepainting, Mode=TwoWay}" Content="NWE (repainting)" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowNwe, Mode=TwoWay}" Content="NWE (not repainting)" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowSmaLinesSbm, Mode=TwoWay}" Content="SBM SMA lines" FontSize="12"/>
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowStoch, Mode=TwoWay}" Content="Stochastic" FontSize="12"/>
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowRsi, Mode=TwoWay}" Content="RSI" FontSize="12"/>
+					</StackPanel>
+                </HeaderedContentControl>
+
+                <!-- Overlay Options (all items sorted alphabetically by label) -->
+                <HeaderedContentControl Classes="groupbox" Header="Overlays">
+                    <ItemsControl ItemsSource="{Binding DisplayOptions.AllOverlays}" Margin="4">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="-7"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" Content="{Binding Label}" FontSize="12"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </HeaderedContentControl>
+
+                <!-- Indicator sub-charts -->
+                <HeaderedContentControl Classes="groupbox" Header="Indicators">
+                    <StackPanel Margin="4" Spacing="-7">
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowLux, Mode=TwoWay}" Content="Lux" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowMacd, Mode=TwoWay}" Content="MACD" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowRsi, Mode=TwoWay}" Content="RSI" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowStoch, Mode=TwoWay}" Content="Stochastic" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowVolume, Mode=TwoWay}" Content="Volume" FontSize="12"/>
-						<ItemsControl ItemsSource="{Binding DisplayOptions.PluginOverlays}" Margin="0">
-							<ItemsControl.ItemsPanel>
-								<ItemsPanelTemplate>
-									<StackPanel Spacing="-7"/>
-								</ItemsPanelTemplate>
-							</ItemsControl.ItemsPanel>
-							<ItemsControl.ItemTemplate>
-								<DataTemplate>
-									<CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" Content="{Binding Label}" FontSize="12"/>
-								</DataTemplate>
-							</ItemsControl.ItemTemplate>
-						</ItemsControl>
 					</StackPanel>
                 </HeaderedContentControl>
 

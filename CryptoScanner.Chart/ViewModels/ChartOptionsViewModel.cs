@@ -1,9 +1,9 @@
-using System.Collections.ObjectModel;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Zones;
+
+using System.Collections.ObjectModel;
 
 namespace CryptoScanner.ViewModels;
 
@@ -12,6 +12,8 @@ public partial class ChartOptionsViewModel : ObservableObject
     /// <summary>Dynamic toggle items for plugin chart overlays.</summary>
     public ObservableCollection<PluginOverlayToggle> PluginOverlays { get; } = [];
 
+    /// <summary>All overlay items (static + plugin), sorted by label for the Overlays groupbox.</summary>
+    public ObservableCollection<PluginOverlayToggle> AllOverlays { get; } = [];
 
     // ShowBbma is now a plugin chart overlay (PluginOverlays).
     [ObservableProperty]
@@ -77,6 +79,52 @@ public partial class ChartOptionsViewModel : ObservableObject
     [ObservableProperty]
     private bool _transparent = false;
 
+    private static readonly (string key, string label)[] StaticOverlays =
+    [
+        ("bb", "Bollinger Bands"),
+        ("dlz", "DLZ Zones"),
+        ("dtb", "DTB"),
+        ("fvg", "FVG Zones"),
+        ("kc", "Keltner Channel"),
+        ("nwe", "NWE (not repainting)"),
+        ("nwe.r", "NWE (repainting)"),
+        ("psar", "PSar"),
+        ("sbm", "SBM SMA lines"),
+        ("smc", "SMC Zones"),
+    ];
+
+    private void SyncStaticOverlay(string key, bool value)
+    {
+        switch (key)
+        {
+            case "bb": ShowBollingerBand = value; break;
+            case "dlz": ShowDlzZones = value; break;
+            case "dtb": ShowDtb = value; break;
+            case "fvg": ShowFvgZones = value; break;
+            case "kc": ShowKeltnerChannel = value; break;
+            case "nwe": ShowNwe = value; break;
+            case "nwe.r": ShowNweRepainting = value; break;
+            case "psar": ShowPSar = value; break;
+            case "sbm": ShowSmaLinesSbm = value; break;
+            case "smc": ShowSmcZones = value; break;
+        }
+    }
+
+    private bool GetStaticOverlayValue(string key) => key switch
+    {
+        "bb" => ShowBollingerBand,
+        "dlz" => ShowDlzZones,
+        "dtb" => ShowDtb,
+        "fvg" => ShowFvgZones,
+        "kc" => ShowKeltnerChannel,
+        "nwe" => ShowNwe,
+        "nwe.r" => ShowNweRepainting,
+        "psar" => ShowPSar,
+        "sbm" => ShowSmaLinesSbm,
+        "smc" => ShowSmcZones,
+        _ => false,
+    };
+
     public void LoadFromSession(ZoneSession session)
     {
         // Options
@@ -106,13 +154,33 @@ public partial class ChartOptionsViewModel : ObservableObject
 
         // Plugin overlays — subscribe to each toggle so a flip triggers a chart redraw
         PluginOverlays.Clear();
-        foreach (var overlay in PluginManager.ChartOverlays)
+        foreach (var overlay in PluginManager.ChartOverlays.OrderBy(o => o.Label))
         {
             bool isOn = session.PluginOverlayStates.TryGetValue(overlay.GroupKey, out bool v) && v;
             var toggle = new PluginOverlayToggle(overlay.GroupKey, overlay.Label, isOn);
             toggle.PropertyChanged += (_, _) => OnPropertyChanged(nameof(PluginOverlays));
             PluginOverlays.Add(toggle);
         }
+
+        // Build a combined, sorted list of all overlay items (static + plugin)
+        AllOverlays.Clear();
+        var all = new List<PluginOverlayToggle>();
+
+        foreach (var (key, label) in StaticOverlays)
+        {
+            var toggle = new PluginOverlayToggle(key, label, GetStaticOverlayValue(key));
+            toggle.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(PluginOverlayToggle.IsEnabled))
+                    SyncStaticOverlay(toggle.GroupKey, toggle.IsEnabled);
+            };
+            all.Add(toggle);
+        }
+        all.AddRange(PluginOverlays);
+        all.Sort((a, b) => string.Compare(a.Label, b.Label, StringComparison.OrdinalIgnoreCase));
+
+        foreach (var item in all)
+            AllOverlays.Add(item);
     }
 
     public void SaveToSession(ZoneSession session)

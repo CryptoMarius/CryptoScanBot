@@ -126,7 +126,7 @@ public class SignalCreateBase
 
         return GlobalData.Settings.Trading.EntryConditions;
     }
-    
+
     /// <summary>
     /// Extra controles nadat we het accepteren
     /// </summary>

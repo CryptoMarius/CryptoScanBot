@@ -1,11 +1,10 @@
-using System.Text.Json;
-
-using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
 
 using NLog;
+
+using System.Text.Json;
 
 namespace CryptoScanner.Core.Contracts;
 

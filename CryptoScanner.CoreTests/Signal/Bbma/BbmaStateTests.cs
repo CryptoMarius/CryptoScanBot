@@ -1,7 +1,6 @@
+using CryptoScanner.Analyzers.Bbma.Signal;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
-using CryptoScanner.Analyzers.Bbma.Signal;
-
 // BbmaState enum lives in SignalBbmaBase; GetBbmaState/Short are in the derived classes.
 using static CryptoScanner.Analyzers.Bbma.Signal.SignalBbmaBase;
 

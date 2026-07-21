@@ -1,4 +1,3 @@
-using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 

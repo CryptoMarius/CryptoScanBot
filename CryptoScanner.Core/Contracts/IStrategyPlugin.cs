@@ -1,5 +1,4 @@
 using CryptoScanner.Core.Settings.Strategy;
-using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Core.Contracts;
 

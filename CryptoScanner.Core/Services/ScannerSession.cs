@@ -2,8 +2,8 @@
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 
-using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;

@@ -68,7 +68,7 @@ public class SignalExecute
                     Add(strategyDef, CryptoTradeSide.Short, false, "1m");
                 }
             }
-            else if (strategyDef.Strategy == CryptoSignalStrategy.DominantLevel || 
+            else if (strategyDef.Strategy == CryptoSignalStrategy.DominantLevel ||
                 strategyDef.Strategy == CryptoSignalStrategy.DominantLevelNear)
             {
                 // Detect the zone touches on the 1m
@@ -81,7 +81,7 @@ public class SignalExecute
                     Add(strategyDef, CryptoTradeSide.Short, false, "1m");
                 }
             }
-            else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock || 
+            else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock ||
                 strategyDef.Strategy == CryptoSignalStrategy.OrderBlockRejection)
             {
                 // Detect the SMC order-block proximity on the 1m, same as DLZ/FVG.

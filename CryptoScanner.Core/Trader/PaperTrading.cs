@@ -235,7 +235,7 @@ public class PaperTrading
     /// Check a single step against a candle and create the paper trade if filled.
     /// Returns the order when filled, null otherwise.
     /// </summary>
-    private static CryptoOrder? CheckStepAgainstCandle(CryptoDatabase database, 
+    private static CryptoOrder? CheckStepAgainstCandle(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle candle)
     {
         if (step.Status != CryptoOrderStatus.New)

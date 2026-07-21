@@ -1,10 +1,9 @@
-using System.Text.Json;
-
 using CryptoScanner.Analyzers.Baba;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
+
+using System.Text.Json;
 
 namespace CryptoScanner.CoreTests.Signal.Baba;
 

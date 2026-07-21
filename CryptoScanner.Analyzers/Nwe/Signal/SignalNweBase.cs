@@ -1,6 +1,5 @@
 using CryptoScanner.Analyzers.Sbm;
 using CryptoScanner.Analyzers.Stobb;
-using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;

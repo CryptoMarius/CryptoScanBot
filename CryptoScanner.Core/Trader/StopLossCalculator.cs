@@ -88,10 +88,11 @@ public static class StopLossCalculator
         }
         else
         {
-            return new SlResult { 
-                Stop = null, 
-                Limit = null, 
-                Source = SlSource.None 
+            return new SlResult
+            {
+                Stop = null,
+                Limit = null,
+                Source = SlSource.None
             };
         }
 
@@ -128,10 +129,11 @@ public static class StopLossCalculator
             limit = anchor - (multiplier * anchor * perc);
         }
 
-        return new SlResult { 
-            Stop = stop, 
-            Limit = limit, 
-            Source = source 
+        return new SlResult
+        {
+            Stop = stop,
+            Limit = limit,
+            Source = source
         };
     }
 }

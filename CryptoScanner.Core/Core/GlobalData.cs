@@ -4,8 +4,8 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Const;
-using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Messages;

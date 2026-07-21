@@ -1,8 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using CryptoScanner.Analyzers.Nwe;
-using CryptoScanner.Core.Settings.Strategy;
-
 namespace CryptoScanner.Analyzers.Nwe.Config;
 
 public partial class StrategyNweSettingsViewModel : ObservableObject

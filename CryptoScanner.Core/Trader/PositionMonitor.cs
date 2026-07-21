@@ -1796,7 +1796,7 @@ public class PositionMonitor : IDisposable
             List<int> openLevelIndexes = [];
             for (int i = 0; i < levels.Count; i++)
             {
-                bool closed = takeProfitPartsByLevel.TryGetValue(i, out CryptoPositionPart? existing) 
+                bool closed = takeProfitPartsByLevel.TryGetValue(i, out CryptoPositionPart? existing)
                     && existing.CloseTime.HasValue;
                 if (!closed)
                     openLevelIndexes.Add(i);

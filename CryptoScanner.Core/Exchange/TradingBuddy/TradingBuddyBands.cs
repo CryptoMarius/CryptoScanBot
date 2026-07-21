@@ -1,11 +1,10 @@
-using System.Collections.Concurrent;
-using System.Net.Http;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+
+using System.Collections.Concurrent;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 using ExchangeModel = CryptoScanner.Core.Model.CryptoExchange;
 

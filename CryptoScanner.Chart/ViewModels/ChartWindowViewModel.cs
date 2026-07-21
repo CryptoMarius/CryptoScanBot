@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using CryptoScanner.Chart.ViewModels.Chart;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -11,7 +12,6 @@ using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trend;
 using CryptoScanner.Core.Zones;
 using CryptoScanner.Helpers;
-using CryptoScanner.ViewModels.Chart;
 
 using OxyPlot;
 using OxyPlot.Annotations;
