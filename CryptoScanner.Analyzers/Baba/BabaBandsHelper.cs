@@ -18,7 +18,7 @@ namespace CryptoScanner.Analyzers.Baba;
 /// CryptoData.BabaBasis/Upper/Lower/BabaAtrSl, shared by both sides — so a candle with both a long and a
 /// short check active only pays for the VWMA/ATR once, not twice. A break is simply a wick or close
 /// outside the band (no lowest/highest filter; the signal supersede rule keeps only the latest break).
-/// The symmetric slide ("glijbaan") detection lives here too.
+/// A break is simply a wick or close outside the band.
 /// </summary>
 public static class BabaBandsHelper
 {
@@ -158,41 +158,4 @@ public static class BabaBandsHelper
     //    return BabaPlugin.Settings.StopLossAtrFactor * (atr / (double)candle.Close * 100);
     //}
 
-    /// <summary>
-    /// Symmetric slide ("glijbaan") detection at <paramref name="openTime"/> using the Kaufman efficiency
-    /// ratio over SlideWindow bars: efficiency = |net change| / (sum of absolute bar-to-bar moves).
-    /// A high efficiency + a real net move = an orderly one-way slide.
-    ///   <paramref name="slidingDown"/> = an efficient DOWN move (suppress longs),
-    ///   <paramref name="slidingUp"/>   = an efficient UP move   (suppress shorts).
-    /// </summary>
-    public static void ComputeSlide(CryptoSymbolInterval symbolInterval, CandleTime openTime,
-        out bool slidingDown, out bool slidingUp)
-    {
-        slidingDown = false;
-        slidingUp = false;
-
-        var settings = BabaPlugin.Settings;
-        int window = settings.SlideWindow;
-        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(window + 2, symbolInterval.Interval.Duration);
-        int idx = candles.FindIndex(c => c.OpenTime == openTime);
-        if (idx < window)
-            return;
-
-        double closeNow = (double)candles[idx].Close;
-        double closeThen = (double)candles[idx - window].Close;
-        if (closeThen == 0)
-            return;
-
-        double change = closeNow - closeThen;          // negative = down over the window
-        double path = 0;
-        for (int j = idx - window + 1; j <= idx; j++)
-            path += Math.Abs((double)candles[j].Close - (double)candles[j - 1].Close);
-
-        double efficiency = path > 0 ? Math.Abs(change) / path : 0;
-        double movePct = Math.Abs(change) / closeThen * 100.0;
-
-        bool qualifies = efficiency >= settings.SlideMinEfficiency && movePct >= settings.SlideMinMovePercent;
-        slidingDown = qualifies && change < 0;
-        slidingUp = qualifies && change > 0;
-    }
 }

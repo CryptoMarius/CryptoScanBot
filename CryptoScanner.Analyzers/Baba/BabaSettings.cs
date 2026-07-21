@@ -23,15 +23,6 @@ public class BabaSettings : SettingsSignalStrategyBase
     // TODO: Rename to RequireRsiOsOb
     public bool UseRsiFilter { get; set; } = true;
 
-    // Symmetric slide ("glijbaan") filter — Kaufman efficiency ratio over SlideWindow bars.
-    // When enabled: suppress LONG signals during a DOWN-slide and SHORT signals during an UP-slide
-    // (don't trade into an ongoing, efficient, one-way move). All directions are derived from the same
-    // efficiency + minimum-move thresholds.
-    public bool UseSlideFilter { get; set; } = false;
-    public int SlideWindow { get; set; } = 40;
-    public double SlideMinEfficiency { get; set; } = 0.35;
-    public double SlideMinMovePercent { get; set; } = 1.0;
-
     // Cooldown: after a signal fires, wait CooldownBars candles before a new one may appear on the same
     // symbol+interval (shared across long & short, like the Pine script). Counted from the last signal.
     //public bool UseCooldown { get; set; } = true;

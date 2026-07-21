@@ -111,17 +111,6 @@ public class BabaSignalShort : BabaSignalBaba
             }
         }
 
-        // Symmetric slide filter: don't go short into an ongoing efficient UP-slide (melt-up).
-        if (settings.UseSlideFilter)
-        {
-            BabaBandsHelper.ComputeSlide(SymbolInterval, CandleLast.Candle.OpenTime, out _, out bool slidingUp);
-            if (slidingUp)
-            {
-                ExtraText = "suppressed: up-slide active";
-                return false;
-            }
-        }
-
         var candle = CandleLast.Candle;
         decimal band = (decimal)upperBand;
 

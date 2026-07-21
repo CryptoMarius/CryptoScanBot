@@ -80,21 +80,6 @@ public class BabaSignalBaba : SignalCreateBase
             }
         }
 
-        // Slide ("glijbaan", experimental): drop the pending signal when a slide now runs against it —
-        // symmetric, using the same ComputeSlide thresholds the IsSignal suppression uses. Only when the
-        // slide filter is enabled. Cheap UseSlideFilter check first; the slide computation runs only then.
-        var settings = BabaPlugin.Settings;
-        if (settings.UseSlideFilter)
-        {
-            BabaBandsHelper.ComputeSlide(symbolInterval, CandleLast.Candle.OpenTime, out bool slidingDown, out bool slidingUp);
-            if ((signal.Side == CryptoTradeSide.Long && slidingDown)
-                || (signal.Side == CryptoTradeSide.Short && slidingUp))
-            {
-                ExtraText = "slide active (glijbaan): signal removed";
-                return true;
-            }
-        }
-
         return base.GiveUp(signal);
     }
 

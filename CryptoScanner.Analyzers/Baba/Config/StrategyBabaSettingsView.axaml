@@ -64,32 +64,6 @@
             </StackPanel>
         </HeaderedContentControl>
 
-        <HeaderedContentControl Classes="groupbox" Header="Slide filter">
-            <StackPanel Margin="4" Spacing="4">
-
-                <!-- Slide (glijbaan) filter -->
-                <CheckBox IsChecked="{Binding UseSlideFilter, Mode=TwoWay}"
-                          Content="Suppress signals into an ongoing slide" FontSize="12"
-                          ToolTip.Tip="Skip LONG signals during a DOWN-slide and SHORT signals during an UP-slide (don't trade into an efficient one-way move). Symmetric."/>
-                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Lookback window (bars) over which the slide is measured.">
-                    <TextBlock Grid.Column="0" Text="Slide window:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding SlideWindow, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Minimum Kaufman efficiency (0..1): net move / total path. Higher = stricter (only very straight slides count).">
-                    <TextBlock Grid.Column="0" Text="Slide min efficiency:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding SlideMinEfficiency, Mode=TwoWay, StringFormat=N2}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Minimum net move over the window, in percent, for it to count as a slide.">
-                    <TextBlock Grid.Column="0" Text="Slide min move %:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding SlideMinMovePercent, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-            </StackPanel>
-        </HeaderedContentControl>
-
     </StackPanel>
 
 </UserControl>

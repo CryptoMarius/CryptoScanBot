@@ -14,18 +14,6 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
     private bool _useRsiFilter = true;
 
     [ObservableProperty]
-    private bool _useSlideFilter = false;
-
-    [ObservableProperty]
-    private int _slideWindow = 40;
-
-    [ObservableProperty]
-    private double _slideMinEfficiency = 0.35;
-
-    [ObservableProperty]
-    private double _slideMinMovePercent = 1.0;
-
-    [ObservableProperty]
     private bool _useStopLoss = true;
 
     [ObservableProperty]
@@ -46,10 +34,6 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
         Length = settings.Length;
         Mult = settings.Mult;
         UseRsiFilter = settings.UseRsiFilter;
-        UseSlideFilter = settings.UseSlideFilter;
-        SlideWindow = settings.SlideWindow;
-        SlideMinEfficiency = settings.SlideMinEfficiency;
-        SlideMinMovePercent = settings.SlideMinMovePercent;
         UseStopLoss = settings.UseStopLoss;
         SLStdevFactor = settings.SLStdevFactor;
         RequireStochOsOb = settings.RequireStochOsOb;
@@ -61,10 +45,6 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
         settings.Length = Length;
         settings.Mult = Mult;
         settings.UseRsiFilter = UseRsiFilter;
-        settings.UseSlideFilter = UseSlideFilter;
-        settings.SlideWindow = SlideWindow;
-        settings.SlideMinEfficiency = SlideMinEfficiency;
-        settings.SlideMinMovePercent = SlideMinMovePercent;
         settings.UseStopLoss = UseStopLoss;
         settings.SLStdevFactor = SLStdevFactor;
         settings.RequireStochOsOb = RequireStochOsOb;

@@ -111,17 +111,6 @@ public class BabaSignalLong : BabaSignalBaba
             }
         }
 
-        // Symmetric slide filter: don't go long into an ongoing efficient DOWN-slide.
-        if (settings.UseSlideFilter)
-        {
-            BabaBandsHelper.ComputeSlide(SymbolInterval, CandleLast.Candle.OpenTime, out bool slidingDown, out _);
-            if (slidingDown)
-            {
-                ExtraText = "suppressed: down-slide active";
-                return false;
-            }
-        }
-
         var candle = CandleLast.Candle;
         decimal band = (decimal)lowerBand;
 
