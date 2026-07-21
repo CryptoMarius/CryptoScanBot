@@ -84,7 +84,6 @@ public class CryptoData
     public double? Sma200 { get; set; }
     //public double? SlopeSma200 { get; set; }
 
-#if DEBUG
     public double? Ema50 { get; set; }
     [Computed]
     public double? Wma05Low { get; set; }
@@ -99,7 +98,6 @@ public class CryptoData
     // ATR 14 is the standard ATR, nothing special
     [Computed]
     public double? Atr14 { get; set; }
-#endif
 
     // RSI indicator
     public double? Rsi { get; set; }

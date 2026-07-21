@@ -1,4 +1,3 @@
-#if DEBUG
 using CryptoScanner.Analyzers.Bbma.Signal;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
@@ -521,4 +520,3 @@ public class BbmaChartOverlay : IChartOverlay
     }
 
 }
-#endif

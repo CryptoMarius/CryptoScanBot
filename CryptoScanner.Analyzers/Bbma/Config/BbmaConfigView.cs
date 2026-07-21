@@ -1,5 +1,4 @@
 // DEBUG-only, together with BbmaPlugin (the BBMA signal classes only exist in DEBUG builds).
-#if DEBUG
 using Avalonia.Controls;
 
 using CryptoScanner.Core.Contracts;
@@ -27,4 +26,3 @@ public class BbmaConfigView : IConfigView
         _viewModel.SaveConfig(BbmaPlugin.Settings);
     }
 }
-#endif

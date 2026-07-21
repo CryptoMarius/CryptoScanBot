@@ -243,17 +243,14 @@ public static class IndicatorEngine
         //IReadOnlyList<EmaResult> emaList200 = quotes.ToEma(200);
 #endif
 
-#if DEBUG
         // EMA 20 / 50 — required by the trend filter and several strategies (was conditional, now standard).
         IReadOnlyList<EmaResult> emaList20 = quotes.ToEma(20);
-#endif
 
 #if EXTRASTRATEGIESSLOPEEMA
         IReadOnlyList<SlopeResult> slopeEma20List = emaList20.GetSlope(SlopeCount);
         IReadOnlyList<SlopeResult> slopeEma50List = emaList50.GetSlope(SlopeCount);
 #endif
 
-#if DEBUG
         // Linear Weighted Moving Average — used by BBMA experiments.
         // https://dotnet.stockindicators.dev/indicators/Wma/#content
         IReadOnlyList<EmaResult> emaList50 = quotes.ToEma(50);
@@ -263,7 +260,6 @@ public static class IndicatorEngine
         IReadOnlyList<WmaResult> wmaList10High = quotes.Use(CandlePart.High).ToWma(10);
         // ATR(14) — BBMA Omni: RejectedEMA50 big-body filter, MHV gap sizing.
         IReadOnlyList<AtrResult> atrList14 = quotes.ToAtr(14);
-#endif
 
         //IReadOnlyList<SmaResult> smaList08 = quotes.GetSma(08);
         IReadOnlyList<SmaResult> smaList20 = quotes.ToSma(20);
@@ -291,11 +287,9 @@ public static class IndicatorEngine
 
         //IReadOnlyList<WmaResult> wmaList30 = quotes.GetWma(30);
 
-#if DEBUG
         // Keltner Channel: EMA20 centerline +/- ATR(10) * 2 (Skender defaults). Used by
         // the TTM Squeeze family (BB inside KC = squeeze). Matches the chart drawer.
         //IReadOnlyList<KeltnerResult> keltnerList = quotes.GetKeltner();
-#endif
 
         //IReadOnlyList<AtrResult> atrList = Indicator.GetAtr(History);
         IReadOnlyList<RsiResult> rsiList = quotes.ToRsi(
@@ -375,20 +369,16 @@ public static class IndicatorEngine
                 //if (slopeSma200List != null && index < slopeSma200List.Count)
                 //    candleData.SlopeSma200 = slopeSma200List[index].Slope;
 
-#if DEBUG
                 candleData.Ema50 = emaList50[index].Ema;
                 candleData.Wma05Low = wmaList05Low[index].Wma;
                 candleData.Wma05High = wmaList05High[index].Wma;
                 candleData.Wma10Low = wmaList10Low[index].Wma;
                 candleData.Wma10High = wmaList10High[index].Wma;
                 candleData.Atr14 = atrList14[index].Atr;
-#endif
 
-#if DEBUG
                 //candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
                 //candleData.KeltnerCenterLine = keltnerList[index].Centerline;
                 //candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
-#endif
 
 
                 candleData.Rsi = rsiList[index].Rsi;

@@ -1,3 +1,5 @@
+using System.Linq;
+
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
@@ -19,7 +21,7 @@ public partial class StrategyTabView : UserControl
             DataContext = new StrategyTabViewModel();
         }
 
-        foreach (var configView in PluginManager.ConfigViews)
+        foreach (var configView in PluginManager.ConfigViews.OrderBy(v => v.TabHeader))
         {
             var tab = new TabItem
             {

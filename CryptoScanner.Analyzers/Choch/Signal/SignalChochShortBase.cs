@@ -5,7 +5,6 @@ using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Trend;
 
-#if DEBUG
 namespace CryptoScanner.Analyzers.Choch.Signal;
 
 /// <summary>
@@ -146,4 +145,3 @@ public abstract class SignalChochShortBase : SignalCreateBase
         return base.GiveUp(signal);
     }
 }
-#endif

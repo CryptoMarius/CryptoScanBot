@@ -21,7 +21,6 @@ public static class AnalyzerRegistration
         PluginManager.Register(new Stobb.StobbPlugin());
         PluginManager.Register(new Storsi.StorsiPlugin());
 
-#if DEBUG
         // Experimental strategies (not yet fully tested or documented)
         PluginManager.Register(new Bbma.BbmaPlugin());
         PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
@@ -30,7 +29,6 @@ public static class AnalyzerRegistration
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
         PluginManager.Register(new Nwe.NwePlugin());
         PluginManager.Register(new Trend.TrendPlugin());
-#endif
 
         // Stand-alone overlay (not a strategy!): TradingBuddy's own served BABA bands, so they can be
         // toggled independently and compared with the scanner's "Baba Bands" overlay.

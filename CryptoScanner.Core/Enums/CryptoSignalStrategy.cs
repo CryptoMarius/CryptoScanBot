@@ -27,7 +27,6 @@ public enum CryptoSignalStrategy
     // short on the upper band (the same events the chart prints as percentage labels).
     Bre = 30,
 
-#if DEBUG
     Trend = 31,
 
     Bbma = 42,
@@ -44,7 +43,7 @@ public enum CryptoSignalStrategy
     ChochPrimaryPullback = 61,
     ChochSecondary = 62,
     ChochSecondaryPullback = 63,
-#endif
+
 
     DominantLevel = 1000,
     DominantLevelNear = 1001,
