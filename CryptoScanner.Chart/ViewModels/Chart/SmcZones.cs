@@ -4,7 +4,7 @@ using CryptoScanner.Core.Model;
 using OxyPlot;
 using OxyPlot.Annotations;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 // How to Find Institutional Supply & Demand Zones (with ZERO experience)
 // https://www.youtube.com/watch?v=0YNWLzBEX2E

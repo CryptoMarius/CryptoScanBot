@@ -6,7 +6,7 @@ using OxyPlot.Series;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 /// <summary>
 /// Draws the MACD(12, 26, 9) indicator into the dedicated MACD sub-panel.

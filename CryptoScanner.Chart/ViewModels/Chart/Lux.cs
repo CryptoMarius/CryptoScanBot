@@ -6,7 +6,7 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Series;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 /// <summary>
 /// Draws the "RSI Multi Length [LuxAlgo]" overbought/oversold areas into the shared oscillator

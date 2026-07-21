@@ -4,7 +4,7 @@ using CryptoScanner.Core.Signal.Helpers;
 using OxyPlot;
 using OxyPlot.Series;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 /// <summary>
 /// Overlay that marks candles where <see cref="SlideDetector"/> flags a "glijbaan" (a clean, sustained

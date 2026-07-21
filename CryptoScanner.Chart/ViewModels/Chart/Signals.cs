@@ -4,7 +4,7 @@ using CryptoScanner.Core.Model;
 using OxyPlot;
 using OxyPlot.Series;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 public class Signals
 {

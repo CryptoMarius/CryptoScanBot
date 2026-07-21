@@ -1,5 +1,4 @@
 ﻿using CryptoScanner.Analyzers.Nwe;
-using CryptoScanner.Chart.ViewModels.Chart;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Indicators;
@@ -7,7 +6,7 @@ using CryptoScanner.Core.Signal.Indicators;
 using OxyPlot;
 using OxyPlot.Series;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 public class Nwe
 {

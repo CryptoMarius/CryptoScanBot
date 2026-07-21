@@ -1,6 +1,6 @@
 using OxyPlot.Axes;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 /// <summary>
 /// A LinearAxis that generates major ticks aligned to local midnight instead of UTC midnight.

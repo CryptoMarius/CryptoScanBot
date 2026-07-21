@@ -7,7 +7,7 @@ using OxyPlot.Series;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 /// <summary>
 /// Draws the Stochastic (14,3,3) lines into the shared indicator sub-panel.

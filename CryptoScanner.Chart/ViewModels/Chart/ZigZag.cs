@@ -1,10 +1,11 @@
-﻿using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
 
 using OxyPlot;
 using OxyPlot.Series;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 public class ZigZag
 {
@@ -16,6 +17,9 @@ public class ZigZag
         var seriesLow = new ScatterSeries { Title = tag + "Markers low", MarkerSize = 3, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, YAxisKey = "price", Tag = tag };
         var seriesDummyHigh = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, YAxisKey = "price", Tag = tag };
         var seriesDummyLow = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, YAxisKey = "price", Tag = tag };
+
+        var linePoints = new List<(long minutes, double value)>();
+
         foreach (var zigzag in zigZagList)
         {
             if (zigzag.Candle!.OpenTime >= minDate && zigzag.Candle!.OpenTime <= maxDate)
@@ -36,9 +40,24 @@ public class ZigZag
                         series = seriesHigh;
                 }
                 series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime.Minutes, (double)zigzag.Value));
-                seriesZigZag.Points.Add(new DataPoint(zigzag.Candle.OpenTime.Minutes, (double)zigzag.Value));
+                linePoints.Add((zigzag.Candle.OpenTime.Minutes, (double)zigzag.Value));
             }
         }
+
+        // Guard: sort by time so the line never jumps backwards.
+        for (int i = 1; i < linePoints.Count; i++)
+        {
+            if (linePoints[i].minutes < linePoints[i - 1].minutes)
+            {
+                ScannerLog.Logger.Info($"ZigZag.Draw: out-of-order point at index {i} " +
+                    $"(prev={linePoints[i - 1].minutes}, cur={linePoints[i].minutes}), sorting");
+                linePoints.Sort((a, b) => a.minutes.CompareTo(b.minutes));
+                break;
+            }
+        }
+
+        foreach (var (minutes, value) in linePoints)
+            seriesZigZag.Points.Add(new DataPoint(minutes, value));
 
         chart.Series.Add(seriesLow);
         chart.Series.Add(seriesHigh);

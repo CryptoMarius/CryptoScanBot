@@ -2,7 +2,7 @@
 
 using OxyPlot;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 public class Const
 {

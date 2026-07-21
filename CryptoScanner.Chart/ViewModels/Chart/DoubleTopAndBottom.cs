@@ -1,6 +1,6 @@
 ﻿using CryptoScanner.Core.Trend;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 // Experiment, Double tops and bottoms
 

@@ -6,7 +6,7 @@ using OxyPlot.Series;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Chart.ViewModels.Chart;
 
 public class Bollingerbands
 {
