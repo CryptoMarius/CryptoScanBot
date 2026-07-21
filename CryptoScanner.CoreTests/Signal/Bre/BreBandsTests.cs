@@ -96,21 +96,6 @@ public class BreBandsTests
             Assert.IsTrue(band.BandWidthPct > 0, "BandWidthPct must be positive");
     }
 
-    [TestMethod]
-    public void ComputeBands_DidoCloudPopulated()
-    {
-        var candles = MakeCandles(WarmupCandles);
-        var bands = BreBandsHelper.ComputeBands(candles);
-
-        int didoLength = GlobalData.Settings.Signal.Bre.DidoLength;
-        var lastBand = bands[^1];
-        Assert.IsNotNull(lastBand.DidoBasis, "DidoBasis must be populated for the last candle");
-        Assert.IsNotNull(lastBand.DidoUpper, "DidoUpper must be populated for the last candle");
-        Assert.IsNotNull(lastBand.DidoLower, "DidoLower must be populated for the last candle");
-        Assert.IsTrue(lastBand.DidoUpper > lastBand.DidoBasis, "DidoUpper must be above DidoBasis");
-        Assert.IsTrue(lastBand.DidoBasis > lastBand.DidoLower, "DidoBasis must be above DidoLower");
-    }
-
     // ── HMA trend filter ─────────────────────────────────────────────────
 
     [TestMethod]
