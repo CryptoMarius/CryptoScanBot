@@ -16,9 +16,6 @@ public struct BreBandValue
     public double Lower;        // middle - halfRange * (OuterMult / 2.5)
     public double Middle;       // (highestHigh + lowestLow) / 2
     public double BandWidthPct; // (Upper - Middle) / Middle * 100 — the label percentage
-    public double? DidoBasis;   // EMA(DidoLength) middle cloud
-    public double? DidoUpper;   // basis + ATR(DidoLength) * DidoMult
-    public double? DidoLower;   // basis - ATR(DidoLength) * DidoMult
     public double? Hma;         // WGHM trend line; only filled when the trend filter is enabled
     public double? Rsi;         // RSI(RsiLength); only filled when the RSI filter is enabled
     public double? StochK;      // Stochastic-RSI %K; only filled when the stoch filter is enabled
@@ -53,10 +50,6 @@ public static class BreBandsHelper
 
         IReadOnlyList<IQuote> quotes = candles.AsQuotes();
 
-        // DIDO cloud: EMA(DidoLength) basis ± ATR(DidoLength) * DidoMult (mirrors the Pine cloud).
-        IReadOnlyList<EmaResult> emaList = quotes.ToEma(settings.DidoLength);
-        IReadOnlyList<AtrResult> atrList = quotes.ToAtr(settings.DidoLength);
-
         // WGHM (Hull MA) trend line — only computed when the trend filter is enabled.
         IReadOnlyList<HmaResult>? hmaList = null;
         if (settings.UseTrendFilter)
@@ -80,14 +73,6 @@ public static class BreBandsHelper
         for (int i = 0; i < count; i++)
         {
             ref BreBandValue value = ref result[i];
-
-            value.DidoBasis = emaList[i].Ema;
-            if (value.DidoBasis.HasValue && atrList[i].Atr.HasValue)
-            {
-                double pad = atrList[i].Atr!.Value * settings.DidoMult;
-                value.DidoUpper = value.DidoBasis.Value + pad;
-                value.DidoLower = value.DidoBasis.Value - pad;
-            }
 
             value.Hma = hmaList?[i].Hma;
             value.Rsi = rsiList?[i].Rsi;

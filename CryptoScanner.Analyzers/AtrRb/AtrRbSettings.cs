@@ -25,7 +25,7 @@ public class AtrRbSettings : SettingsSignalStrategyBase
     // When true the signal hands its own (percentage based) stop-loss to the trader via
     // OverrideSlPrice. When false the signal returns null for the SL, so the trader falls back
     // to the default percentage stop-loss from the trading settings.
-    public bool UseStopLoss { get; set; } = true;
+    public bool UseStopLoss { get; set; } = false;
 
     // Multiplier applied to the ATR when deriving the stop-loss distance: SL distance = factor * ATR(Length).
     // Default 2.0 (the original hard-coded 2x ATR). Typical values: 1, 2, 2.5, 3.

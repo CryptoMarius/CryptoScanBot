@@ -28,24 +28,6 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
-            <!-- DIDO cloud length (chart only) -->
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="DIDO cloud: EMA/ATR length for the middle cloud on the chart (Pine default 20). Chart only, no effect on the signal.">
-                <TextBlock Grid.Column="0" Text="DIDO length (chart):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding DidoLength, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
-
-            <!-- DIDO cloud width (chart only) -->
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="DIDO cloud width: basis ± ATR × mult (Pine default 1.0). Chart only, no effect on the signal.">
-                <TextBlock Grid.Column="0" Text="DIDO width (chart):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding DidoMult, Mode=TwoWay, StringFormat=N1}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
-
             <!-- WGHM trend filter -->
             <CheckBox IsChecked="{Binding UseTrendFilter, Mode=TwoWay}"
                       Content="Use WGHM trend filter (Hull MA)" FontSize="12"

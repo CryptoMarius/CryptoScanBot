@@ -11,12 +11,6 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
     private double _outerMult = 3.2;
 
     [ObservableProperty]
-    private int _didoLength = 20;
-
-    [ObservableProperty]
-    private double _didoMult = 1.0;
-
-    [ObservableProperty]
     private bool _useTrendFilter = false;
 
     [ObservableProperty]
@@ -78,8 +72,6 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
     {
         BandLength = settings.BandLength;
         OuterMult = settings.OuterMult;
-        DidoLength = settings.DidoLength;
-        DidoMult = settings.DidoMult;
         UseTrendFilter = settings.UseTrendFilter;
         HmaLength = settings.HmaLength;
         UseRsiFilter = settings.UseRsiFilter;
@@ -105,8 +97,6 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
     {
         settings.BandLength = BandLength;
         settings.OuterMult = OuterMult;
-        settings.DidoLength = DidoLength;
-        settings.DidoMult = DidoMult;
         settings.UseTrendFilter = UseTrendFilter;
         settings.HmaLength = HmaLength;
         settings.UseRsiFilter = UseRsiFilter;

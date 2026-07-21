@@ -14,8 +14,6 @@ namespace CryptoScanner.Analyzers.Bre.Chart;
 /// chart and the bre signal always agree:
 ///   - Outer bands (gray plateaus): Donchian middle +/- halfRange * (OuterMult / 2.5), computed over
 ///     the PREVIOUS BandLength candles.
-///   - DIDO basis: the blue EMA(DidoLength) middle line. The trend coloured cloud lines and the
-///     background fill from the Pine script are intentionally not drawn (removed on request).
 ///   - WGHM trend line: HMA(HmaLength), only drawn when the trend filter is enabled.
 ///   - White percentage labels at the exact candles where the bre long/short alert fires
 ///     (band break + stacking rule + all enabled filters).
@@ -28,7 +26,6 @@ public class BreChartOverlay : IChartOverlay
     // Colours, translated from the Pine color.new(..., transparency) values.
     // Pine transparency is "percent transparent", so alpha = 255 * (100 - transparency) / 100.
     private static readonly OxyColor OuterBandColor = OxyColor.FromArgb(178, 0xb2, 0xb5, 0xbe); // #b2b5be, 30% transparent
-    private static readonly OxyColor BasisColor = OxyColor.FromArgb(127, 0x29, 0x62, 0xff);     // #2962ff, 50% transparent
     private static readonly OxyColor HmaUpColor = OxyColors.Green;
     private static readonly OxyColor HmaDownColor = OxyColors.Red;
 
@@ -50,9 +47,6 @@ public class BreChartOverlay : IChartOverlay
         // Outer Donchian bands (the gray plateaus from the dashboard).
         var outerUp = new LineSeries { Title = "bre.upper", Color = OuterBandColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
         var outerDown = new LineSeries { Title = "bre.lower", Color = OuterBandColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
-
-        // DIDO basis (middle) line.
-        var basisLine = new LineSeries { Title = "bre.basis", Color = BasisColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
 
         // WGHM trend line (only when the trend filter is enabled), split per trend colour.
         var hmaGreen = new LineSeries { Title = "bre.wghm", Color = HmaUpColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
@@ -79,9 +73,6 @@ public class BreChartOverlay : IChartOverlay
                 outerDown.Points.Add(new DataPoint(x, value.Lower));
             }
 
-            if (value.DidoBasis.HasValue)
-                basisLine.Points.Add(new DataPoint(x, value.DidoBasis.Value));
-
             if (settings.UseTrendFilter && value.Hma.HasValue)
             {
                 if (close > value.Hma.Value)
@@ -104,10 +95,8 @@ public class BreChartOverlay : IChartOverlay
                 AddLabel(chart, x, (double)candle.Low, pctLong, VerticalAlignment.Top, group);
         }
 
-        // Add the outer band lines first, then the basis on top.
         chart.Series.Add(outerUp);
         chart.Series.Add(outerDown);
-        chart.Series.Add(basisLine);
         if (settings.UseTrendFilter)
         {
             chart.Series.Add(hmaGreen);

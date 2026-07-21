@@ -17,10 +17,6 @@ public class BreSettings : SettingsSignalStrategyBase
     // Outer band multiplier: middle ± halfRange * (OuterMult / 2.5) (Pine default 3.2).
     public double OuterMult { get; set; } = 3.2;
 
-    // DIDO cloud: EMA(DidoLength) basis ± ATR(DidoLength) * DidoMult (chart only, Pine defaults 20 / 1.0).
-    public int DidoLength { get; set; } = 20;
-    public double DidoMult { get; set; } = 1.0;
-
     // Optional WGHM (Hull MA) trend filter: a long also requires close > HMA(HmaLength),
     // a short requires close < HMA(HmaLength).
     public bool UseTrendFilter { get; set; } = false;
@@ -28,7 +24,7 @@ public class BreSettings : SettingsSignalStrategyBase
 
     // When true a long signal also requires RSI to be oversold, and a short signal requires RSI
     // to be overbought (uses the global RSI OS/OB thresholds from SettingsRsi).
-    public bool UseRsiFilter { get; set; } = false;
+    public bool UseRsiFilter { get; set; } = true;
 
     // When true a long signal also requires Stochastic to be oversold, and a short signal requires
     // Stochastic to be overbought (uses the global Stoch OS/OB thresholds from SettingsStoch).
@@ -42,7 +38,7 @@ public class BreSettings : SettingsSignalStrategyBase
     // When true the signal hands its own stop-loss percentage (the band-width % printed in the
     // chart label) to the trader via OverrideSlPercentage. When false the signal returns null,
     // so the trader falls back to the default percentage stop-loss from the trading settings.
-    public bool UseStopLoss { get; set; } = true;
+    public bool UseStopLoss { get; set; } = false;
 
     // Multi-timeframe consensus: when > 0 the signal also requires this many consecutive higher
     // timeframes to confirm the same band break condition. 0 = single-timeframe (normal behavior).

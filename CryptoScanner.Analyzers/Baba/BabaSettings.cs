@@ -57,7 +57,7 @@ public class BabaSettings : SettingsSignalStrategyBase
     // When true the signal hands its own (percentage based) stop-loss to the trader via
     // OverrideSlPercentage. When false the signal returns null for the SL, so the trader falls back
     // to the default percentage stop-loss from the trading settings.
-    public bool UseStopLoss { get; set; } = true;
+    public bool UseStopLoss { get; set; } = false;
 
     // Stop-loss distance in vwStdev units below the lower band (long) or above the upper band (short).
     // SL price = band - SLStdevFactor * vwStdev (long) / band + SLStdevFactor * vwStdev (short).
