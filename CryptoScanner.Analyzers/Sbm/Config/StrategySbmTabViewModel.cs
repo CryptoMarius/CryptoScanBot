@@ -27,7 +27,7 @@ public partial class StrategySbmTabViewModel : ObservableObject
     }
 
 
-    internal void LoadConfig(SettingsSignalStrategySbm settings)
+    internal void LoadConfig(SbmSettings settings)
     {
         SoundAndColorsViewModel.LoadConfig("SBM", settings);
         StrategySbmSettingsViewModel.LoadConfig(settings);
@@ -35,7 +35,7 @@ public partial class StrategySbmTabViewModel : ObservableObject
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
-    internal void SaveConfig(SettingsSignalStrategySbm settings)
+    internal void SaveConfig(SbmSettings settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategySbmSettingsViewModel.SaveConfig(settings);

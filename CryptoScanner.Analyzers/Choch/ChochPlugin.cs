@@ -43,13 +43,13 @@ public class ChochPlugin : IStrategyPlugin
     ];
 
 
-    public static SettingsSignalStrategyChoch Settings { get; internal set; } = new();
+    public static ChochSettings Settings { get; internal set; } = new();
     public SettingsSignalStrategyBase SettingsBase
     {
         get => Settings;
         set
         {
-            if (value is not SettingsSignalStrategyChoch s)
+            if (value is not ChochSettings s)
                 throw new NotImplementedException();
             Settings = s;
         }
@@ -57,7 +57,7 @@ public class ChochPlugin : IStrategyPlugin
 
     public static SettingsSignalStrategyBase CreateSettings()
     {
-        Settings = new SettingsSignalStrategyChoch();
+        Settings = new ChochSettings();
         return Settings;
     }
 

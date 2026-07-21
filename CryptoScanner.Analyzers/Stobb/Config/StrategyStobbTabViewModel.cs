@@ -24,14 +24,14 @@ public partial class StrategyStobbTabViewModel : ObservableObject
     }
 
 
-    internal void LoadConfig(SettingsSignalStrategyStobb settings)
+    internal void LoadConfig(StobbSettings settings)
     {
         SoundAndColorsViewModel.LoadConfig("STOBB", settings);
         StrategyStobbSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
-    internal void SaveConfig(SettingsSignalStrategyStobb settings)
+    internal void SaveConfig(StobbSettings settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyStobbSettingsViewModel.SaveConfig(settings);

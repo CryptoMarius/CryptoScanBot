@@ -3,7 +3,7 @@
 namespace CryptoScanner.Analyzers.Nwe;
 
 [Serializable]
-public class SettingsSignalStrategyNwe : SettingsSignalStrategyBase
+public class NweSettings : SettingsSignalStrategyBase
 {
     // configuration:
     public double BandWidth { get; set; } = 8.0;
@@ -23,7 +23,7 @@ public class SettingsSignalStrategyNwe : SettingsSignalStrategyBase
     public int VolumeClimaxLookback { get; set; } = 20;
     public decimal VolumeClimaxMultiplier { get; set; } = 1.5m;
 
-    public SettingsSignalStrategyNwe() : base()
+    public NweSettings() : base()
     {
         SoundFileLong = "sound-nwe-oversold.wav";
         SoundFileShort = "sound-nwe-overbought.wav";

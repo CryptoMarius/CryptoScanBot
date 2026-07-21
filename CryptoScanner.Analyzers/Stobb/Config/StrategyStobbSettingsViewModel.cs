@@ -27,36 +27,7 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _onlyIfPreviousStobb = false;
 
-    [ObservableProperty]
-    private bool _onlyIfLux5m = false;
-
-    [ObservableProperty]
-    private int _lux5mPercentage = 50;
-
-    [ObservableProperty]
-    private bool _checkTrendPrimaryDirection = false;
-
-    [ObservableProperty]
-    private int _TrendPrimaryDirectionCount = 2;
-
-    [ObservableProperty]
-    private bool _checkTrendSecondaryDirection = false;
-
-    [ObservableProperty]
-    private int _trendSecondaryDirectionCount = 2;
-
-    [ObservableProperty]
-    private bool _useDlzZone = false;
-
-    [ObservableProperty]
-    private bool _useFvgZone = false;
-
-    [ObservableProperty]
-    private bool _useSmcZone = false;
-
-
-
-    public void LoadConfig(SettingsSignalStrategyStobb settings)
+    public void LoadConfig(StobbSettings settings)
     {
         BbMinPercentage = settings.BBMinPercentage;
         BbMaxPercentage = settings.BBMaxPercentage;
@@ -65,18 +36,9 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
         IncludeSbmMaLines = settings.IncludeSoftSbm;
         IncludeSbmPercAndCrossing = settings.IncludeSbmPercAndCrossing;
         OnlyIfPreviousStobb = settings.OnlyIfPreviousStobb;
-        OnlyIfLux5m = settings.OnlyIfLux5m;
-        Lux5mPercentage = settings.Lux5mPercentage;
-        CheckTrendPrimaryDirection = settings.CheckTrendPrimaryDirection;
-        TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
-        CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
-        TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
-        UseDlzZone = settings.UseDlzZone;
-        UseFvgZone = settings.UseFvgZone;
-        UseSmcZone = settings.UseSmcZone;
     }
 
-    public void SaveConfig(SettingsSignalStrategyStobb settings)
+    public void SaveConfig(StobbSettings settings)
     {
         settings.BBMinPercentage = BbMinPercentage;
         settings.BBMaxPercentage = BbMaxPercentage;
@@ -85,14 +47,5 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
         settings.IncludeSoftSbm = IncludeSbmMaLines;
         settings.IncludeSbmPercAndCrossing = IncludeSbmPercAndCrossing;
         settings.OnlyIfPreviousStobb = OnlyIfPreviousStobb;
-        settings.OnlyIfLux5m = OnlyIfLux5m;
-        settings.Lux5mPercentage = Lux5mPercentage;
-        settings.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;
-        settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
-        settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
-        settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
-        settings.UseDlzZone = UseDlzZone;
-        settings.UseFvgZone = UseFvgZone;
-        settings.UseSmcZone = UseSmcZone;
     }
 }

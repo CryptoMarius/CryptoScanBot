@@ -96,35 +96,6 @@ public class BreBandsTests
             Assert.IsTrue(band.BandWidthPct > 0, "BandWidthPct must be positive");
     }
 
-    // ── HMA trend filter ─────────────────────────────────────────────────
-
-    [TestMethod]
-    public void ComputeBands_TrendFilterDisabled_HmaIsNull()
-    {
-        GlobalData.Settings.Signal.Bre.UseTrendFilter = false;
-        var candles = MakeCandles(WarmupCandles);
-        var bands = BreBandsHelper.ComputeBands(candles);
-
-        Assert.IsNull(bands[^1].Hma, "Hma must be null when trend filter is disabled");
-    }
-
-    [TestMethod]
-    public void ComputeBands_TrendFilterEnabled_HmaPopulated()
-    {
-        GlobalData.Settings.Signal.Bre.UseTrendFilter = true;
-        try
-        {
-            var candles = MakeCandles(WarmupCandles);
-            var bands = BreBandsHelper.ComputeBands(candles);
-
-            Assert.IsNotNull(bands[^1].Hma, "Hma must be populated when trend filter is enabled");
-        }
-        finally
-        {
-            GlobalData.Settings.Signal.Bre.UseTrendFilter = false;
-        }
-    }
-
     // ── Stochastic-RSI filter ────────────────────────────────────────────
 
     [TestMethod]
@@ -235,7 +206,6 @@ public class BreBandsTests
     [TestMethod]
     public void IsLongBreak_TriggersOnDeepLow()
     {
-        GlobalData.Settings.Signal.Bre.UseTrendFilter = false;
         GlobalData.Settings.Signal.Bre.AllowStack = true;
 
         var candles = MakeCandles(WarmupCandles);
@@ -266,7 +236,6 @@ public class BreBandsTests
     [TestMethod]
     public void IsShortBreak_TriggersOnHighBreak()
     {
-        GlobalData.Settings.Signal.Bre.UseTrendFilter = false;
         GlobalData.Settings.Signal.Bre.AllowStack = true;
 
         var candles = MakeCandles(WarmupCandles);
@@ -299,7 +268,6 @@ public class BreBandsTests
     [TestMethod]
     public void IsLongBreak_StackingBlocked_WhenPreviousAlsoBroke()
     {
-        GlobalData.Settings.Signal.Bre.UseTrendFilter = false;
         GlobalData.Settings.Signal.Bre.AllowStack = false;
 
         var candles = MakeCandles(WarmupCandles);

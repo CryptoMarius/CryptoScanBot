@@ -12,16 +12,6 @@ public class SignalStobbMultiShort : SignalStobbBase
 
     public override bool AdditionalChecks(MyData data, out string response)
     {
-        if (StobbPlugin.Settings.OnlyIfLux5m)
-        {
-            int needed = StobbPlugin.Settings.Lux5mPercentage;
-            if (CandleLast.CandleData!.Lux5mValue < needed)
-            {
-                response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%, need >= {needed}%)";
-                return false;
-            }
-        }
-
         // Controle op de ma-lijnen
         if (StobbPlugin.Settings.IncludeSoftSbm)
         {
@@ -106,22 +96,6 @@ public class SignalStobbMultiShort : SignalStobbBase
                 okay--;
                 if (okay == 0)
                 {
-                    // ********************************************************************
-                    // Dont trade against the trend (only check current interval)
-                    if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
-                        return false;
-                    if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
-                        return false;
-
-                    // Optional zone-rejection confirmation (DLZ / FVG / SMC). OR over enabled types.
-                    if (!CheckEnabledZoneRejections(out string zoneInfo))
-                    {
-                        ExtraText = zoneInfo;
-                        return false;
-                    }
-                    if (zoneInfo.Length > 0)
-                        ExtraText += " " + zoneInfo;
-
                     return true;
                 }
             }

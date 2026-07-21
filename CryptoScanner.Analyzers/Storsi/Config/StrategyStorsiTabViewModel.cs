@@ -24,14 +24,14 @@ public partial class StrategyStorsiTabViewModel : ObservableObject
     }
 
 
-    public void LoadConfig(SettingsSignalStrategyStoRsi settings)
+    public void LoadConfig(StoRsiSettings settings)
     {
         SoundAndColorsViewModel.LoadConfig("StoRsi", settings);
         StrategyStorsiSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
-    public void SaveConfig(SettingsSignalStrategyStoRsi settings)
+    public void SaveConfig(StoRsiSettings settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyStorsiSettingsViewModel.SaveConfig(settings);

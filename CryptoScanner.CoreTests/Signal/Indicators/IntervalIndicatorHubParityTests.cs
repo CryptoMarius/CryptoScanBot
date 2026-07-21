@@ -108,12 +108,10 @@ public class IntervalIndicatorHubParityTests
         // Baba VWAP bands — same BabaBandsHelper.ComputeBands the hub path (IntervalIndicatorHub) uses.
         var baba = GlobalData.Settings.Signal.Baba;
         BabaBandsHelper.BandValue[] babaBands = BabaBandsHelper.ComputeBands(quotes.Cast<CryptoCandle>().ToList());
-        var atrBabaFast = quotes.ToAtr(baba.AtrLength).ToList();
         var atrBabaSl = quotes.ToAtr(baba.Length).ToList();
 
         return new CryptoData
         {
-            AtrBaba = atrBabaFast[i].Atr,
             BabaAtrSl = atrBabaSl[i].Atr,
             BabaBasis = babaBands[i].HasValue ? babaBands[i].Basis : null,
             BabaUpper = babaBands[i].HasValue ? babaBands[i].Upper : null,
@@ -158,7 +156,6 @@ public class IntervalIndicatorHubParityTests
         Eq("StochOscillator", hub.StochOscillator, batch.StochOscillator, maxRel);
         Eq("StochSignal", hub.StochSignal, batch.StochSignal, maxRel);
         Eq("PSar", hub.PSar, batch.PSar, maxRel);
-        Eq("AtrBaba", hub.AtrBaba, batch.AtrBaba, maxRel);
         Eq("BabaAtrSl", hub.BabaAtrSl, batch.BabaAtrSl, maxRel);
         Eq("BabaBasis", hub.BabaBasis, batch.BabaBasis, maxRel);
         Eq("BabaUpper", hub.BabaUpper, batch.BabaUpper, maxRel);

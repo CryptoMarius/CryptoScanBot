@@ -28,19 +28,6 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
-            <!-- WGHM trend filter -->
-            <CheckBox IsChecked="{Binding UseTrendFilter, Mode=TwoWay}"
-                      Content="Use WGHM trend filter (Hull MA)" FontSize="12"
-                      ToolTip.Tip="When on, a long also requires close above the Hull MA and a short requires close below it. The WGHM line is drawn on the chart when enabled."/>
-
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Hull MA length for the WGHM trend filter (Pine default 55).">
-                <TextBlock Grid.Column="0" Text="WGHM (HMA) length:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding HmaLength, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
-
             <!-- RSI confluence (overbought/oversold LEVELS come from the Indicators tab → RSI) -->
             <CheckBox IsChecked="{Binding UseRsiFilter, Mode=TwoWay}"
                       Content="Require RSI overbought/oversold" FontSize="12"
@@ -69,75 +56,6 @@
                          Text="{Binding TimeframeConsensusCount, Mode=TwoWay}"
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
-
-            <!-- Only if lux 5m at the configured threshold -->
-            <Grid ColumnDefinitions="Auto,*,80,Auto" RowDefinitions="Auto"
-                  ToolTip.Tip="Long needs Lux5mValue ≤ -threshold; short needs Lux5mValue ≥ +threshold. 50 = previous default; raise toward 100 for stricter signals.">
-                <CheckBox Grid.Column="0"
-                          IsChecked="{Binding OnlyIfLux5m, Mode=TwoWay}"
-                          Content="Only if lux 5m at"
-                          VerticalAlignment="Center"
-                          FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding Lux5mPercentage, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="8,0,4,0"
-                         IsEnabled="{Binding OnlyIfLux5m}"/>
-                <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
-            </Grid>
-
-            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-                <CheckBox IsChecked="{Binding CheckTrendPrimaryDirection, Mode=TwoWay}"
-                          Content="Trade with the primary trend"
-                          FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding TrendPrimaryDirectionCount, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-                         IsEnabled="{Binding CheckTrendPrimaryDirection}"/>
-            </Grid>
-
-            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-                <CheckBox IsChecked="{Binding CheckTrendSecondaryDirection, Mode=TwoWay}"
-                          Content="Trade with the secondary trend"
-                          FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding TrendSecondaryDirectionCount, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-                         IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
-            </Grid>
-
-            <CheckBox IsChecked="{Binding CheckPriceAboveMa200, Mode=TwoWay}"
-                      Content="Check price above/below MA200"
-                      FontSize="12"
-                      ToolTip.Tip="Long: only fire when price is above MA200. Short: only fire when price is below MA200."/>
-            <Grid ColumnDefinitions="Auto,8,80,16,Auto,8,80" Margin="24,0,0,0"
-                  IsEnabled="{Binding CheckPriceAboveMa200}">
-                <TextBlock Grid.Column="0" Text="Min distance %"
-                           VerticalAlignment="Center" FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding Ma200MinDistancePercentage, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-                         ToolTip.Tip="Minimum distance from MA200 as percentage (0 = disabled)."/>
-                <TextBlock Grid.Column="4" Text="Confirm candles"
-                           VerticalAlignment="Center" FontSize="12"/>
-                <TextBox Grid.Column="6"
-                         Text="{Binding Ma200ConfirmationCandles, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-                         ToolTip.Tip="Number of preceding candles that must also close on the correct side of MA200 (0 = disabled)."/>
-            </Grid>
-
-            <!-- Zone confirmation (OR over enabled types) -->
-            <CheckBox IsChecked="{Binding UseDlzZone, Mode=TwoWay}"
-                      Content="Require DLZ zone rejection"
-                      FontSize="12"
-                      ToolTip.Tip="Only fire when the candle was rejected at a DLZ zone."/>
-            <CheckBox IsChecked="{Binding UseFvgZone, Mode=TwoWay}"
-                      Content="Require FVG zone rejection"
-                      FontSize="12"
-                      ToolTip.Tip="Only fire when the candle was rejected at an FVG zone."/>
-            <CheckBox IsChecked="{Binding UseSmcZone, Mode=TwoWay}"
-                      Content="Require SMC zone rejection"
-                      FontSize="12"
-                      ToolTip.Tip="Only fire when the candle was rejected at an SMC order block."/>
 
         </StackPanel>
     </HeaderedContentControl>

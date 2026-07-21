@@ -40,13 +40,13 @@ public class SbmPlugin : IStrategyPlugin
         ),
     ];
 
-    public static SettingsSignalStrategySbm Settings { get; internal set; } = new();
+    public static SbmSettings Settings { get; internal set; } = new();
     public SettingsSignalStrategyBase SettingsBase
     {
         get => Settings;
         set
         {
-            if (value is not SettingsSignalStrategySbm s)
+            if (value is not SbmSettings s)
                 throw new NotImplementedException();
             Settings = s;
         }
@@ -54,7 +54,7 @@ public class SbmPlugin : IStrategyPlugin
 
     public static SettingsSignalStrategyBase CreateSettings()
     {
-        Settings = new SettingsSignalStrategySbm();
+        Settings = new SbmSettings();
         return Settings;
     }
 

@@ -48,16 +48,6 @@ public class BreSignalLong : SignalCreateBase
             return false;
         }
 
-        if (settings.OnlyIfLux5m)
-        {
-            int needed = settings.Lux5mPercentage;
-            if (CandleLast.CandleData!.Lux5mValue > -needed)
-            {
-                ExtraText = $"lux 5m not oversold enough ({CandleLast.CandleData!.Lux5mValue}%, need <= -{needed}%)";
-                return false;
-            }
-        }
-
         if (!BreBandsHelper.IsLowerBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double bandWidthPct, out double lowerBand, out string reason))
         {
             ExtraText = reason;
@@ -90,20 +80,6 @@ public class BreSignalLong : SignalCreateBase
             }
         }
 
-        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
-            return false;
-        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
-            return false;
-
-        if (!CheckMa200Filter(settings.CheckPriceAboveMa200, settings.Ma200MinDistancePercentage, settings.Ma200ConfirmationCandles))
-            return false;
-
-        if (!CheckEnabledZoneRejections(out string zoneInfo))
-        {
-            ExtraText = zoneInfo;
-            return false;
-        }
-
         var candle = CandleLast.Candle;
         decimal band = (decimal)lowerBand;
 
@@ -118,36 +94,7 @@ public class BreSignalLong : SignalCreateBase
         if (settings.UseStopLoss)
             _slPercentage = (decimal)bandWidthPct;
 
-        ExtraText = $"hit lower band {bandWidthPct:N2}%{(zoneInfo.Length > 0 ? " @ " + zoneInfo : "")}";
+        ExtraText = $"hit lower band {bandWidthPct:N2}%";
         return true;
-    }
-
-    private bool CheckEnabledZoneRejections(out string zoneInfo)
-    {
-        var settings = BrePlugin.Settings;
-        if (!settings.UseDlzZone && !settings.UseFvgZone && !settings.UseSmcZone)
-        {
-            zoneInfo = "";
-            return true;
-        }
-
-        if (settings.UseDlzZone && this.WasRejectedAtDlzZone(out string dlzInfo))
-        {
-            zoneInfo = dlzInfo;
-            return true;
-        }
-        if (settings.UseFvgZone && this.WasRejectedAtFvgZone(out string fvgInfo))
-        {
-            zoneInfo = fvgInfo;
-            return true;
-        }
-        if (settings.UseSmcZone && this.WasRejectedAtSmcZone(out string smcInfo))
-        {
-            zoneInfo = smcInfo;
-            return true;
-        }
-
-        zoneInfo = "no zone rejection (dlz/fvg/smc)";
-        return false;
     }
 }

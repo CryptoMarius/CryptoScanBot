@@ -27,7 +27,7 @@ public partial class StrategyNweTabViewModel : ObservableObject
     }
 
 
-    internal void LoadConfig(string caption, SettingsSignalStrategyNwe settings)
+    internal void LoadConfig(string caption, NweSettings settings)
     {
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategyNweSettingsViewModel.LoadConfig(settings);
@@ -35,7 +35,7 @@ public partial class StrategyNweTabViewModel : ObservableObject
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
-    internal void SaveConfig(SettingsSignalStrategyNwe settings)
+    internal void SaveConfig(NweSettings settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyNweSettingsViewModel.SaveConfig(settings);

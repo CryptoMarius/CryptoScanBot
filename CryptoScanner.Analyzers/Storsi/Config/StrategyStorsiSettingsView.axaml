@@ -43,55 +43,6 @@
                       Content="Only when macd shows recovery"
                       FontSize="12"/>
 
-            <!-- Only if lux 5m at the configured threshold -->
-            <Grid ColumnDefinitions="Auto,*,80,Auto" RowDefinitions="Auto"
-                  ToolTip.Tip="Long needs Lux5mValue ≤ -threshold; short needs Lux5mValue ≥ +threshold. 50 = previous default; raise toward 100 for stricter signals.">
-                <CheckBox Grid.Column="0"
-                          IsChecked="{Binding OnlyIfLux5m, Mode=TwoWay}"
-                          Content="Only if lux 5m at"
-                          VerticalAlignment="Center"
-                          FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding Lux5mPercentage, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="8,0,4,0"
-                         IsEnabled="{Binding OnlyIfLux5m}"/>
-                <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
-            </Grid>
-
-			<Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-				<CheckBox IsChecked="{Binding CheckTrendPrimaryDirection, Mode=TwoWay}"
-						  Content="Trade with the primary trend"
-						  FontSize="12"/>
-				<TextBox Grid.Column="2"
-						 Text="{Binding TrendPrimaryDirectionCount, Mode=TwoWay}"
-						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-						 IsEnabled="{Binding CheckTrendPrimaryDirection}"/>
-			</Grid>
-
-			<Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-				<CheckBox IsChecked="{Binding CheckTrendSecondaryDirection, Mode=TwoWay}"
-						  Content="Trade with the secondary trend"
-						  FontSize="12"/>
-				<TextBox Grid.Column="2"
-						 Text="{Binding TrendSecondaryDirectionCount, Mode=TwoWay}"
-						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-						 IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
-			</Grid>
-
-			<!-- Zone confirmation (OR over enabled types) -->
-			<CheckBox IsChecked="{Binding UseDlzZone, Mode=TwoWay}"
-					  Content="Require DLZ zone rejection"
-					  FontSize="12"
-					  ToolTip.Tip="Only fire when the candle was rejected at a DLZ zone (same logic as the StoRsiDlz strategy)."/>
-			<CheckBox IsChecked="{Binding UseFvgZone, Mode=TwoWay}"
-					  Content="Require FVG zone rejection"
-					  FontSize="12"
-					  ToolTip.Tip="Only fire when the candle was rejected at an FVG zone (same logic as the StoRsiFvg strategy)."/>
-			<CheckBox IsChecked="{Binding UseSmcZone, Mode=TwoWay}"
-					  Content="Require SMC zone rejection"
-					  FontSize="12"
-					  ToolTip.Tip="Only fire when the candle was rejected at an SMC order block (same logic as the StoRsiSmc strategy)."/>
-
         </StackPanel>
     </HeaderedContentControl>
 

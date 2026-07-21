@@ -3,7 +3,7 @@ using CryptoScanner.Core.Settings.Strategy;
 namespace CryptoScanner.Analyzers.Sbm;
 
 [Serializable]
-public class SettingsSignalStrategySbm : SettingsSignalStrategyBase
+public class SbmSettings : SettingsSignalStrategyBase
 {
     // SBM1 signals
     public int Sbm1CandlesLookbackCount { get; set; } = 5;
@@ -40,7 +40,7 @@ public class SettingsSignalStrategySbm : SettingsSignalStrategyBase
     public double BBMinPercentage { get; set; } = 1.50;
     public double BBMaxPercentage { get; set; } = 100.0;
 
-    public SettingsSignalStrategySbm() : base()
+    public SbmSettings() : base()
     {
         SoundFileLong = "sound-sbm-oversold.wav";
         SoundFileShort = "sound-sbm-overbought.wav";

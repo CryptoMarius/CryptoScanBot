@@ -20,13 +20,13 @@ public class JumpPlugin : IStrategyPlugin
 
     ];
 
-    public static SettingsSignalStrategyJump Settings { get; internal set; } = new();
+    public static JumpSettings Settings { get; internal set; } = new();
     public SettingsSignalStrategyBase SettingsBase
     {
         get => Settings;
         set
         {
-            if (value is not SettingsSignalStrategyJump s)
+            if (value is not JumpSettings s)
                 throw new NotImplementedException();
             Settings = s;
         }
@@ -34,7 +34,7 @@ public class JumpPlugin : IStrategyPlugin
 
     public static SettingsSignalStrategyBase CreateSettings()
     {
-        Settings = new SettingsSignalStrategyJump();
+        Settings = new JumpSettings();
         return Settings;
     }
 

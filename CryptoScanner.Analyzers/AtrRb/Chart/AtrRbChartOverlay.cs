@@ -40,7 +40,6 @@ public class AtrRbChartOverlay : IChartOverlay
         var atrrb = AtrRbPlugin.Settings;
         int Len = atrrb.Length;
         double OuterMult = atrrb.OuterMult;
-        //double InnerMult = atrrb.InnerMult;
         int BreakLookback = atrrb.BreakLookback;
 
         IReadOnlyList<IQuote> quotes = allCandles.AsQuotes();

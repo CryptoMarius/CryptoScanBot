@@ -16,7 +16,6 @@ public struct BreBandValue
     public double Lower;        // middle - halfRange * (OuterMult / 2.5)
     public double Middle;       // (highestHigh + lowestLow) / 2
     public double BandWidthPct; // (Upper - Middle) / Middle * 100 — the label percentage
-    public double? Hma;         // WGHM trend line; only filled when the trend filter is enabled
     public double? Rsi;         // RSI(RsiLength); only filled when the RSI filter is enabled
     public double? StochK;      // Stochastic-RSI %K; only filled when the stoch filter is enabled
     public double? StochD;      // Stochastic-RSI %D; only filled when the stoch filter is enabled
@@ -24,8 +23,8 @@ public struct BreBandValue
 
 /// <summary>
 /// Shared calculations for the "Buddy Reversion Engine" (BRE) construction: Donchian-based outer
-/// bands over the previous BandLength candles plus an EMA+ATR middle cloud (DIDO), with optional
-/// HMA-trend / RSI / Stochastic-RSI filters — a port of the Pine script
+/// bands over the previous BandLength candles, with optional
+/// RSI / Stochastic-RSI filters — a port of the Pine script
 /// "Buddy Reversion Engine (BRE) - Ultimate Master Cockpit".
 /// The chart drawer and the "bre" signal algorithm both use these methods so they stay in sync —
 /// the chart label and the alert always agree.
@@ -33,7 +32,7 @@ public struct BreBandValue
 public static class BreBandsHelper
 {
     // Number of candles to feed the calculations. Matches the signal pipeline window and leaves
-    // enough warm-up for the Donchian window, the HMA(55) and the Stochastic-RSI chain.
+    // enough warm-up for the Donchian window and the Stochastic-RSI chain.
     private const int CalculationCandles = 260;
 
     /// <summary>
@@ -49,11 +48,6 @@ public static class BreBandsHelper
             return result;
 
         IReadOnlyList<IQuote> quotes = candles.AsQuotes();
-
-        // WGHM (Hull MA) trend line — only computed when the trend filter is enabled.
-        IReadOnlyList<HmaResult>? hmaList = null;
-        if (settings.UseTrendFilter)
-            hmaList = quotes.ToHma(settings.HmaLength);
 
         // RSI — only computed when the RSI filter is enabled. Uses the standard RSI(14) from general settings.
         var rsiSettings = GlobalData.Settings.General.SettingsRsi;
@@ -74,7 +68,6 @@ public static class BreBandsHelper
         {
             ref BreBandValue value = ref result[i];
 
-            value.Hma = hmaList?[i].Hma;
             value.Rsi = rsiList?[i].Rsi;
             value.StochK = stochK?[i];
             value.StochD = stochD?[i];
@@ -162,8 +155,8 @@ public static class BreBandsHelper
     }
 
     /// <summary>
-    /// Full long-signal check on index <paramref name="idx"/>: lower-band break + stacking rule +
-    /// the enabled trend/RSI/stoch filters. Also used by the chart drawer for the break labels.
+    /// Full long-signal check on index <paramref name="idx"/>: lower-band break + stacking rule.
+    /// Also used by the chart drawer for the break labels.
     /// </summary>
     public static bool IsLongBreak(List<CryptoCandle> candles, BreBandValue[] bands, int idx,
         out double bandWidthPct, out double bandPrice, out string reason)
@@ -197,32 +190,13 @@ public static class BreBandsHelper
             return false;
         }
 
-        // WGHM trend filter: a long requires close above the Hull MA.
-        if (settings.UseTrendFilter)
-        {
-            if (!value.Hma.HasValue)
-            {
-                reason = "hma warming up";
-                return false;
-            }
-            if ((double)candles[idx].Close <= value.Hma.Value)
-            {
-                reason = $"trend filter: close below hma {value.Hma.Value:N8}";
-                return false;
-            }
-        }
-
-        // RSI and Stochastic OS/OB filters have been moved to the signal class (SignalBreLong/Short)
-        // so they use the standard precomputed indicators (consistent with BABA/ATRRB) and are only
-        // applied on the primary (lowest) timeframe in multi-TF consensus mode.
-
         reason = "";
         return true;
     }
 
     /// <summary>
-    /// Full short-signal check on index <paramref name="idx"/>: upper-band break + stacking rule +
-    /// the enabled trend filter. Also used by the chart drawer for the break labels.
+    /// Full short-signal check on index <paramref name="idx"/>: upper-band break + stacking rule.
+    /// Also used by the chart drawer for the break labels.
     /// </summary>
     public static bool IsShortBreak(List<CryptoCandle> candles, BreBandValue[] bands, int idx,
         out double bandWidthPct, out double bandPrice, out string reason)
@@ -254,21 +228,6 @@ public static class BreBandsHelper
         {
             reason = "already broken on previous candle";
             return false;
-        }
-
-        // WGHM trend filter: a short requires close below the Hull MA.
-        if (settings.UseTrendFilter)
-        {
-            if (!value.Hma.HasValue)
-            {
-                reason = "hma warming up";
-                return false;
-            }
-            if ((double)candles[idx].Close >= value.Hma.Value)
-            {
-                reason = $"trend filter: close above hma {value.Hma.Value:N8}";
-                return false;
-            }
         }
 
         // RSI and Stochastic OS/OB filters have been moved to the signal class (SignalBreLong/Short)

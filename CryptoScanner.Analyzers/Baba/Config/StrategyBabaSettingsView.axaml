@@ -26,46 +26,6 @@
                     <TextBox Grid.Column="1" Text="{Binding Mult, Mode=TwoWay, StringFormat=N2}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
 
-                <!-- ATR length -->
-                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Fast ATR length added on top of the vw-stdev band (optional angular shape).">
-                    <TextBlock Grid.Column="0" Text="ATR length:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding AtrLength, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-                <!-- ATR multiplier -->
-                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Multiplier on the fast ATR term: band = Mult × vwStdev + AtrMult × ATR. 0 = pure VWAP bands; higher = more angular and wider.">
-                    <TextBlock Grid.Column="0" Text="ATR multiplier:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding AtrMult, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-                <!-- Volume surge widening (approximate TradingBuddy's served bands) -->
-                <CheckBox IsChecked="{Binding UseVolumeSurge, Mode=TwoWay}"
-                          Content="Volume surge widening (approximate TradingBuddy)" FontSize="12"
-                          ToolTip.Tip="Widen the band after a recent volume spike, reverse-engineered from TradingBuddy: multiplier = Mult + Factor × max(0, surge − Threshold), where surge = max volume over the last N bars / SMA(volume, Length). Normal volume leaves the pure VWAP band unchanged. Explains ~45-48% of TradingBuddy's widening (not exact)."/>
-
-                <!-- Volume surge length (max-volume lookback in bars) -->
-                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Number of recent bars whose maximum volume is compared to the average (fit ≈ 5).">
-                    <TextBlock Grid.Column="0" Text="Surge length (bars):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding VolumeSurgeLength, Mode=TwoWay}" IsEnabled="{Binding UseVolumeSurge}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-                <!-- Volume surge threshold -->
-                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Surge level below which the band is NOT widened (surge = 1.0 means the recent max equals the average volume; fit ≈ 1.05).">
-                    <TextBlock Grid.Column="0" Text="Surge threshold:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding VolumeSurgeThreshold, Mode=TwoWay, StringFormat=N2}" IsEnabled="{Binding UseVolumeSurge}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-                <!-- Volume surge factor -->
-                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="How much each unit of surge above the threshold adds to the multiplier (fit ≈ 0.031). Higher = the band reacts more strongly to volume spikes.">
-                    <TextBlock Grid.Column="0" Text="Surge factor:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding VolumeSurgeFactor, Mode=TwoWay, StringFormat=N3}" IsEnabled="{Binding UseVolumeSurge}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
                 <!-- RSI confluence (overbought/oversold LEVELS come from the Indicators tab → RSI) -->
                 <CheckBox IsChecked="{Binding UseRsiFilter, Mode=TwoWay}"
                           Content="Require RSI overbought/oversold" FontSize="12"
@@ -84,72 +44,6 @@
                              Text="{Binding TimeframeConsensusCount, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
-
-                <!-- Only if lux 5m at the configured threshold -->
-                <Grid ColumnDefinitions="Auto,*,80,Auto" RowDefinitions="Auto"
-                      ToolTip.Tip="Long needs Lux5mValue ≤ -threshold; short needs Lux5mValue ≥ +threshold. 50 = previous default; raise toward 100 for stricter signals.">
-                    <CheckBox Grid.Column="0"
-                              IsChecked="{Binding OnlyIfLux5m, Mode=TwoWay}"
-                              Content="Only if lux 5m at"
-                              VerticalAlignment="Center"
-                              FontSize="12"/>
-                    <TextBox Grid.Column="2"
-                             Text="{Binding Lux5mPercentage, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="8,0,4,0"
-                             IsEnabled="{Binding OnlyIfLux5m}"/>
-                    <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
-                </Grid>
-
-                <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-                    <CheckBox IsChecked="{Binding CheckTrendPrimaryDirection, Mode=TwoWay}"
-                              Content="Trade with the primary trend"
-                              FontSize="12"/>
-                    <TextBox Grid.Column="2"
-                             Text="{Binding TrendPrimaryDirectionCount, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-                             IsEnabled="{Binding CheckTrendPrimaryDirection}"/>
-                </Grid>
-
-                <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-                    <CheckBox IsChecked="{Binding CheckTrendSecondaryDirection, Mode=TwoWay}"
-                              Content="Trade with the secondary trend"
-                              FontSize="12"/>
-                    <TextBox Grid.Column="2"
-                             Text="{Binding TrendSecondaryDirectionCount, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-                             IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
-                </Grid>
-
-                <CheckBox IsChecked="{Binding CheckPriceAboveMa200, Mode=TwoWay}"
-                          Content="Check price above/below MA200"
-                          FontSize="12"
-                          ToolTip.Tip="Long: only fire when price is above MA200. Short: only fire when price is below MA200."/>
-                <Grid ColumnDefinitions="Auto,8,80,16,Auto,8,80" Margin="24,0,0,0"
-                      IsEnabled="{Binding CheckPriceAboveMa200}">
-                    <TextBlock Grid.Column="0" Text="Min distance %"
-                               VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Grid.Column="2"
-                             Text="{Binding Ma200MinDistancePercentage, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-                             ToolTip.Tip="Minimum distance from MA200 as percentage (0 = disabled)."/>
-                    <TextBlock Grid.Column="4" Text="Confirm candles"
-                               VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Grid.Column="6"
-                             Text="{Binding Ma200ConfirmationCandles, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-                             ToolTip.Tip="Number of preceding candles that must also close on the correct side of MA200 (0 = disabled)."/>
-                </Grid>
-
-                <!-- Zone confirmation (OR over enabled types) -->
-                <CheckBox IsChecked="{Binding UseDlzZone, Mode=TwoWay}"
-                          Content="Require DLZ zone rejection" FontSize="12"
-                          ToolTip.Tip="Only fire when the band break was also a rejection at a DLZ zone."/>
-                <CheckBox IsChecked="{Binding UseFvgZone, Mode=TwoWay}"
-                          Content="Require FVG zone rejection" FontSize="12"
-                          ToolTip.Tip="Only fire when the band break was also a rejection at an FVG zone."/>
-                <CheckBox IsChecked="{Binding UseSmcZone, Mode=TwoWay}"
-                          Content="Require SMC zone rejection" FontSize="12"
-                          ToolTip.Tip="Only fire when the band break was also a rejection at an SMC order block."/>
 
             </StackPanel>
         </HeaderedContentControl>

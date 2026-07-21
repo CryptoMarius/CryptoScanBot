@@ -38,13 +38,13 @@ public class NwePlugin : IStrategyPlugin
     ];
 
 
-    public static SettingsSignalStrategyNwe Settings { get; internal set; } = new();
+    public static NweSettings Settings { get; internal set; } = new();
     public SettingsSignalStrategyBase SettingsBase
     {
         get => Settings;
         set
         {
-            if (value is not SettingsSignalStrategyNwe s)
+            if (value is not NweSettings s)
                 throw new NotImplementedException();
             Settings = s;
         }
@@ -52,7 +52,7 @@ public class NwePlugin : IStrategyPlugin
 
     public static SettingsSignalStrategyBase CreateSettings()
     {
-        Settings = new SettingsSignalStrategyNwe();
+        Settings = new NweSettings();
         return Settings;
     }
 

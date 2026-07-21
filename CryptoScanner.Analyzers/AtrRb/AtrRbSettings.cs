@@ -15,9 +15,6 @@ public class AtrRbSettings : SettingsSignalStrategyBase
     // Macro outer-band multiplier: basis +/- ATR * OuterMult (the wide cloud; Pine tuned to 4.2).
     public double OuterMult { get; set; } = 4.2;
 
-    // Inner ribbon multiplier: basis +/- ATR * InnerMult (chart ribbon only; default 1.0).
-    public double InnerMult { get; set; } = 1.0;
-
     // The break must be the lowest Low (long) / highest High (short) within this trailing window
     // of bars (mirrors the Pine ta.lowest / ta.highest filter).
     public int BreakLookback { get; set; } = 5;
@@ -49,24 +46,6 @@ public class AtrRbSettings : SettingsSignalStrategyBase
     // Multi-timeframe consensus: when > 0 the signal also requires this many consecutive higher
     // timeframes to confirm the same band break condition. 0 = single-timeframe (normal behavior).
     public int TimeframeConsensusCount { get; set; } = 0;
-
-    public bool OnlyIfLux5m { get; set; } = false;
-    public int Lux5mPercentage { get; set; } = 50;
-
-    public bool CheckTrendPrimaryDirection { get; set; } = false;
-    public int TrendPrimaryDirectionCount { get; set; } = 2;
-    public bool CheckTrendSecondaryDirection { get; set; } = false;
-    public int TrendSecondaryDirectionCount { get; set; } = 2;
-
-    public bool CheckPriceAboveMa200 { get; set; } = false;
-    public decimal Ma200MinDistancePercentage { get; set; } = 0m;
-    public int Ma200ConfirmationCandles { get; set; } = 0;
-
-    // Zone confirmations — when any of these is enabled, at least one of the enabled
-    // zone rejections must match (OR). All disabled = no zone filter.
-    public bool UseDlzZone { get; set; } = false;
-    public bool UseFvgZone { get; set; } = false;
-    public bool UseSmcZone { get; set; } = false;
 
     public AtrRbSettings() : base()
     {

@@ -30,7 +30,7 @@ public partial class StrategySbmSettingsViewModel : ObservableObject
 
 
 
-    public void LoadConfig(SettingsSignalStrategySbm settings)
+    public void LoadConfig(SbmSettings settings)
     {
         // SBM1 signals
         Sbm1CandlesLookbackCount = settings.Sbm1CandlesLookbackCount;
@@ -47,7 +47,7 @@ public partial class StrategySbmSettingsViewModel : ObservableObject
     }
 
 
-    public void SaveConfig(SettingsSignalStrategySbm settings)
+    public void SaveConfig(SbmSettings settings)
     {
         // SBM1 signals
         settings.Sbm1CandlesLookbackCount = Sbm1CandlesLookbackCount;

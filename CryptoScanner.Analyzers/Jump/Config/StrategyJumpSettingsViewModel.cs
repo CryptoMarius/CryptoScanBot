@@ -15,14 +15,14 @@ public partial class StrategyJumpSettingsViewModel : ObservableObject
 
 
 
-    public void LoadConfig(SettingsSignalStrategyJump settings)
+    public void LoadConfig(JumpSettings settings)
     {
         UseLowHighCalculation = settings.UseLowHighCalculation;
         CandlesLookbackCount = settings.CandlesLookbackCount;
         CandlePercentage = settings.CandlePercentage;
     }
 
-    public void SaveConfig(SettingsSignalStrategyJump settings)
+    public void SaveConfig(JumpSettings settings)
     {
         settings.UseLowHighCalculation = UseLowHighCalculation;
         settings.CandlesLookbackCount = CandlesLookbackCount;

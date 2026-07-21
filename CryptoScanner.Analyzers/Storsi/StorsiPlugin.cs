@@ -24,13 +24,13 @@ public class StorsiPlugin : IStrategyPlugin
         ),
     ];
 
-    public static SettingsSignalStrategyStoRsi Settings { get; internal set; } = new();
+    public static StoRsiSettings Settings { get; internal set; } = new();
     public SettingsSignalStrategyBase SettingsBase
     {
         get => Settings;
         set
         {
-            if (value is not SettingsSignalStrategyStoRsi s)
+            if (value is not StoRsiSettings s)
                 throw new NotImplementedException();
             Settings = s;
         }
@@ -38,7 +38,7 @@ public class StorsiPlugin : IStrategyPlugin
 
     public static SettingsSignalStrategyBase CreateSettings()
     {
-        Settings = new SettingsSignalStrategyStoRsi();
+        Settings = new StoRsiSettings();
         return Settings;
     }
 

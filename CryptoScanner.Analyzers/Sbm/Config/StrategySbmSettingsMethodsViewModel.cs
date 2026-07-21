@@ -54,7 +54,7 @@ public partial class StrategySbmSettingsMethodsViewModel : ObservableObject
     [ObservableProperty]
     private decimal _ma50AndMa20Percentage = 0.25m;
 
-    public void LoadConfig(SettingsSignalStrategySbm settings)
+    public void LoadConfig(SbmSettings settings)
     {
         BbMinPercentage = settings.BBMinPercentage;
         BbMaxPercentage = settings.BBMaxPercentage;
@@ -76,7 +76,7 @@ public partial class StrategySbmSettingsMethodsViewModel : ObservableObject
         Ma50AndMa20Percentage = settings.Ma50AndMa20Percentage;
     }
 
-    public void SaveConfig(SettingsSignalStrategySbm settings)
+    public void SaveConfig(SbmSettings settings)
     {
         settings.BBMinPercentage = BbMinPercentage;
         settings.BBMaxPercentage = BbMaxPercentage;

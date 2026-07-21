@@ -12,7 +12,7 @@ namespace CryptoScanner.Analyzers.AtrRb.Signal;
 /// </summary>
 public static class AtrRbBandsHelper
 {
-    // The band parameters (Len / OuterMult / InnerMult / BreakLookback) now live in
+    // The band parameters (Len / OuterMult / BreakLookback) now live in
     // AtrRbPlugin.Settings so the user can tune them; the chart drawer reads the same
     // settings, so chart and alert stay in sync.
 

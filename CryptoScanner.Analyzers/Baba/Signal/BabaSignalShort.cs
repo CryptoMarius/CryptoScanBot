@@ -55,16 +55,6 @@ public class BabaSignalShort : BabaSignalBaba
             return false;
         }
 
-        if (settings.OnlyIfLux5m)
-        {
-            int needed = settings.Lux5mPercentage;
-            if (CandleLast.CandleData!.Lux5mValue < needed)
-            {
-                ExtraText = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%, need >= {needed}%)";
-                return false;
-            }
-        }
-
         //// The (rarer, more expensive) upper-band break.
         if (!CandleLast.CandleData!.BabaUpper.HasValue)
             return false;
@@ -132,22 +122,6 @@ public class BabaSignalShort : BabaSignalBaba
             }
         }
 
-        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
-            return false;
-        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
-            return false;
-
-        if (!CheckMa200Filter(settings.CheckPriceAboveMa200, settings.Ma200MinDistancePercentage, settings.Ma200ConfirmationCandles))
-            return false;
-
-        // Optional DLZ/FVG/SMC zone confluence (settings checkboxes). Checked only after the rare band
-        // break, so the zone lookup runs sparingly.
-        if (!CheckEnabledZoneRejections(out string zoneInfo))
-        {
-            ExtraText = zoneInfo;
-            return false;
-        }
-
         var candle = CandleLast.Candle;
         decimal band = (decimal)upperBand;
 
@@ -158,7 +132,7 @@ public class BabaSignalShort : BabaSignalBaba
             _slPercentage = (decimal)pctDeviation;
 
         //MarkSignalFired();
-        ExtraText = $"hit upper band {pctDeviation:N2}%{(zoneInfo != "" ? " @ " + zoneInfo : "")} {_entryPrice}";
+        ExtraText = $"hit upper band {pctDeviation:N2}% {_entryPrice}";
         return true;
     }
 }

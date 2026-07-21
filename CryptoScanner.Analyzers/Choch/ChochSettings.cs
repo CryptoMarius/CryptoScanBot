@@ -1,7 +1,7 @@
 namespace CryptoScanner.Core.Settings.Strategy;
 
 [Serializable]
-public class SettingsSignalStrategyChoch : SettingsSignalStrategyBase
+public class ChochSettings : SettingsSignalStrategyBase
 {
     // When true the pullback variants require a BOS (Break of Structure) confirmation
     // in the new trend direction AFTER the CHoCH event before the signal fires.
@@ -9,7 +9,7 @@ public class SettingsSignalStrategyChoch : SettingsSignalStrategyBase
     public bool RequireBosConfirmation { get; set; } = false;
 
 
-    public SettingsSignalStrategyChoch() : base()
+    public ChochSettings() : base()
     {
         SoundFileLong = "sound-choch-oversold.wav";
         SoundFileShort = "sound-choch-overbought.wav";

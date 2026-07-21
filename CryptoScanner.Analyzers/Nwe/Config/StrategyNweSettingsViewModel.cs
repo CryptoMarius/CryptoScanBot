@@ -33,7 +33,7 @@ public partial class StrategyNweSettingsViewModel : ObservableObject
     [ObservableProperty]
     private decimal _volumeClimaxMultiplier = 1.5m; // decimal
 
-    public void LoadConfig(SettingsSignalStrategyNwe settings)
+    public void LoadConfig(NweSettings settings)
     {
         IncludeRsi = settings.IncludeRsi;
         IncludeSoftSbm = settings.IncludeSoftSbm;
@@ -45,7 +45,7 @@ public partial class StrategyNweSettingsViewModel : ObservableObject
         VolumeClimaxMultiplier = settings.VolumeClimaxMultiplier;
     }
 
-    public void SaveConfig(SettingsSignalStrategyNwe settings)
+    public void SaveConfig(NweSettings settings)
     {
         settings.IncludeRsi = IncludeRsi;
         settings.IncludeSoftSbm = IncludeSoftSbm;

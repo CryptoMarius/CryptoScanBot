@@ -9,7 +9,7 @@ namespace CryptoScanner.Analyzers.Baba.Indicators;
 /// Registers the Baba VWAP band hubs on the shared QuoteHub: two synthetic
 /// hubs (hlc3 and hlc3^2) for the volume-weighted variance, plus ATR hubs
 /// for the pad term and the stop-loss %. Writes the band values to the
-/// dedicated CryptoData fields (BabaBasis/Upper/Lower/VwStdev/AtrBaba/BabaAtrSl).
+/// dedicated CryptoData fields (BabaBasis/Upper/Lower/VwStdev/BabaAtrSl).
 /// </summary>
 public class BabaIndicatorExtension : IIndicatorExtension
 {
@@ -19,15 +19,12 @@ public class BabaIndicatorExtension : IIndicatorExtension
     private QuoteHub? _babaSqHub;
     private VwmaHub? _babaVwmaSrc;
     private VwmaHub? _babaVwmaSq;
-    private AtrHub? _atrBaba;
     private AtrHub? _atrBabaSl;
     private double _babaMult;
-    private double _babaAtrMult;
 
     public void Init(QuoteHub quoteHub)
     {
         var baba = BabaPlugin.Settings;
-        _atrBaba = quoteHub.ToAtrHub(baba.AtrLength);
         _atrBabaSl = quoteHub.ToAtrHub(baba.Length);
 
         _babaSrcHub = new QuoteHub(maxCacheSize: HubCacheSize);
@@ -35,7 +32,6 @@ public class BabaIndicatorExtension : IIndicatorExtension
         _babaVwmaSrc = _babaSrcHub.ToVwmaHub(baba.Length);
         _babaVwmaSq = _babaSqHub.ToVwmaHub(baba.Length);
         _babaMult = baba.Mult;
-        _babaAtrMult = baba.AtrMult;
     }
 
     public void OnCandleAdded(IQuote candle)
@@ -49,8 +45,6 @@ public class BabaIndicatorExtension : IIndicatorExtension
 
     public void FillData(CryptoData data)
     {
-        if (_atrBaba?.Results.Count > 0 && _atrBaba.Results[^1].Atr != null)
-            data.AtrBaba = _atrBaba.Results[^1].Atr;
         if (_atrBabaSl?.Results.Count > 0 && _atrBabaSl.Results[^1].Atr != null)
             data.BabaAtrSl = _atrBabaSl.Results[^1].Atr;
 
@@ -64,7 +58,7 @@ public class BabaIndicatorExtension : IIndicatorExtension
             {
                 double variance = second.Value - mean.Value * mean.Value;
                 double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
-                double pad = _babaMult * vwStdev + _babaAtrMult * (data.AtrBaba ?? 0);
+                double pad = _babaMult * vwStdev;
                 data.BabaBasis = mean.Value;
                 data.BabaUpper = mean.Value + pad;
                 data.BabaLower = mean.Value - pad;

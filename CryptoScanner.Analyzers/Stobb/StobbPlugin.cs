@@ -25,13 +25,13 @@ public class StobbPlugin : IStrategyPlugin
     ];
 
 
-    public static SettingsSignalStrategyStobb Settings { get; internal set; } = new();
+    public static StobbSettings Settings { get; internal set; } = new();
     public SettingsSignalStrategyBase SettingsBase
     {
         get => Settings;
         set
         {
-            if (value is not SettingsSignalStrategyStobb s)
+            if (value is not StobbSettings s)
                 throw new NotImplementedException();
             Settings = s;
         }
@@ -39,7 +39,7 @@ public class StobbPlugin : IStrategyPlugin
 
     public static SettingsSignalStrategyBase CreateSettings()
     {
-        Settings = new SettingsSignalStrategyStobb();
+        Settings = new StobbSettings();
         return Settings;
     }
 

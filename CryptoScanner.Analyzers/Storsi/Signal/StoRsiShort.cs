@@ -13,15 +13,6 @@ public class StoRsiShort : StoRsiBase
     public override bool AdditionalChecks(MyData data, out string response)
     {
         var settings = StorsiPlugin.Settings;
-        if (settings.OnlyIfLux5m)
-        {
-            int needed = settings.Lux5mPercentage;
-            if (CandleLast.CandleData!.Lux5mValue < needed)
-            {
-                response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%, need >= {needed}%)";
-                return false;
-            }
-        }
 
         if (settings.CheckBollingerBandsCondition)
         {
@@ -68,22 +59,6 @@ public class StoRsiShort : StoRsiBase
             ExtraText = "rsi not overbought";
             return false;
         }
-
-        // ********************************************************************
-        // Dont trade against the trend (only check current interval)
-        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
-            return false;
-        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
-            return false;
-
-        // Optional zone-rejection confirmation (DLZ / FVG / SMC). OR over enabled types.
-        if (!CheckEnabledZoneRejections(out string zoneInfo))
-        {
-            ExtraText = zoneInfo;
-            return false;
-        }
-        if (zoneInfo.Length > 0)
-            ExtraText = $"storsi+{zoneInfo}";
 
         return true;
     }
