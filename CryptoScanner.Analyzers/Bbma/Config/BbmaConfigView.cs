@@ -9,7 +9,7 @@ public class BbmaConfigView : IConfigView
 {
     private readonly StrategyBbmaTabViewModel _viewModel = new();
 
-    public string TabHeader => BbmaPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => "BBMA";
 
     public Control CreateSettingsView()
     {
