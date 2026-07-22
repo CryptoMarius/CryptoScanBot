@@ -1,18 +1,7 @@
 CryptoScanBot release historie:
 
-30-06-2025 2.5.9
-$ Kucoin futures werkt niet meer qua tickers
-$ Vanwege die change moet ik alles testen!
-
-$ bybit/spot werkt
-$ mexc/spot werkt
-$ okx spot en futures werkt
-
-TODO:
-- Defaults voor de strategien (zodat je terug kan naar de fabrieksinstellingen)
-- TODO: Chart venster, de 1e 4 opties zijn goed, daarna moeten de andere gesorteerd worden
-
-*****
+22-07-2025 2.5.9
+- De Timeframe consensus verplaatst en in de globale trader entry opties geplaatst
 - De Entry conditions versimpeld en de overlappende opties verwijderd
 - Bij het toevoegen van een DCA komen we in een deadlock situatie.
 - Intern is er versimpeld en geschoven met strategien waardoor deze opnieuw ingesteld moeten worden
