@@ -37,10 +37,11 @@
             <!-- SL protection: move the stop to break-even once the position is far enough in profit -->
             <CheckBox IsChecked="{Binding MoveSlToBreakEven, Mode=TwoWay}"
                       Content="Move SL to break-even when in profit"
-                      FontSize="12" IsVisible="false"
-                      ToolTip.Tip="Once the position reaches the percentage below in profit, the stop-loss is pulled to the break-even price and kept there (paper-trade only)."/>
+                      FontSize="12"
+                      ToolTip.Tip="Once the position reaches the percentage below in profit, the stop-loss is pulled to the break-even price and kept there. Open DCA orders are cancelled at that point (paper-trade only)."/>
 
-            <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto" IsVisible="false">
+            <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
+                  IsVisible="{Binding MoveSlToBreakEven}">
                 <TextBlock Grid.Column="0" Text="Break-even at profit %:"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>

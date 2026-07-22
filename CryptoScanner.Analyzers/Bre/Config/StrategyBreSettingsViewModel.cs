@@ -22,9 +22,6 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _useStopLoss = true;
 
-    [ObservableProperty]
-    private int _timeframeConsensusCount = 0;
-
     public void LoadConfig(BreSettings settings)
     {
         BandLength = settings.BandLength;
@@ -33,7 +30,6 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
         RequireStochOsOb = settings.RequireStochOsOb;
         AllowStack = settings.AllowStack;
         UseStopLoss = settings.UseStopLoss;
-        TimeframeConsensusCount = settings.TimeframeConsensusCount;
     }
 
     public void SaveConfig(BreSettings settings)
@@ -44,6 +40,5 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
         settings.RequireStochOsOb = RequireStochOsOb;
         settings.AllowStack = AllowStack;
         settings.UseStopLoss = UseStopLoss;
-        settings.TimeframeConsensusCount = TimeframeConsensusCount;
     }
 }

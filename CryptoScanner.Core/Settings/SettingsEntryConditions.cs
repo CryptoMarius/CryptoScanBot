@@ -24,4 +24,8 @@ public class SettingsEntryConditions
     public int StochMinExtremeBars { get; set; } = 0;
     public decimal StochMinExtremeArea { get; set; } = 0m;
     public decimal StochMinExtremeZScore { get; set; } = 0m;
+
+    // Multi-timeframe consensus: when > 0 the signal also requires this many consecutive higher
+    // timeframes to confirm the same band break condition. 0 = single-timeframe (normal behavior).
+    public int TimeframeConsensusCount { get; set; } = 0;
 }

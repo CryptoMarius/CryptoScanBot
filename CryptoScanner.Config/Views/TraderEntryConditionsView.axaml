@@ -2,138 +2,144 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="250"
+             mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="320"
              xmlns:vm="using:CryptoScanner.Config.ViewModels"
              x:DataType="vm:TraderEntryConditionsViewModel"
              x:Class="CryptoScanner.Config.Views.TraderEntryConditionsView">
 
     <HeaderedContentControl Classes="groupbox" Header="Entry condities">
-        <StackPanel Margin="8" Spacing="5">
-            
-            <!-- Entry Conditions -->
-            <CheckBox IsChecked="{Binding CheckIncreasingRsi, Mode=TwoWay}"
-                      Content="RSI must be increasing/decreasing"
-                      FontSize="12"/>
+        <Grid ColumnDefinitions="*,12,*" Margin="6">
 
-            <CheckBox IsChecked="{Binding CheckIncreasingMacd, Mode=TwoWay}"
-                      Content="MACD must be increasing/decreasing"
-                      FontSize="12"/>
+            <!-- ═══ Left column: Momentum / oscillator conditions ═══ -->
+            <StackPanel Grid.Column="0" Spacing="4">
 
-            <CheckBox IsChecked="{Binding CheckIncreasingStoch, Mode=TwoWay}"
-                      Content="Stoch must be increasing/decreasing"
-                      FontSize="12"/>
+                <CheckBox IsChecked="{Binding CheckIncreasingRsi, Mode=TwoWay}"
+                          Content="RSI must be increasing/decreasing"
+                          FontSize="12"/>
 
-            <CheckBox IsChecked="{Binding CheckFurtherPriceMove, Mode=TwoWay}"
-                      Content="Price must be increasing/decreasing"
-                      FontSize="12"/>
+                <CheckBox IsChecked="{Binding WaitForRsiRecovery, Mode=TwoWay}"
+                          Content="Wait if RSI is OS/OB"
+                          FontSize="12"/>
 
+                <CheckBox IsChecked="{Binding CheckIncreasingMacd, Mode=TwoWay}"
+                          Content="MACD must be increasing/decreasing"
+                          FontSize="12"/>
 
-			<Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-				<CheckBox IsChecked="{Binding CheckTrendPrimaryDirection, Mode=TwoWay}"
-						  Content="Trade with the primary trend"
-						  FontSize="12"/>
-				<TextBox Grid.Column="2"
-						 Text="{Binding TrendPrimaryDirectionCount, Mode=TwoWay}"
-						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-						 IsEnabled="{Binding CheckTrendPrimaryDirection}"/>
-			</Grid>
-			
-			<Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-				<CheckBox IsChecked="{Binding CheckTrendSecondaryDirection, Mode=TwoWay}"
-						  Content="Trade with the secondary trend"
-						  FontSize="12"/>
-				<TextBox Grid.Column="2"
-						 Text="{Binding TrendSecondaryDirectionCount, Mode=TwoWay}"
-						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-						 IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
-			</Grid>
+                <CheckBox IsChecked="{Binding CheckIncreasingStoch, Mode=TwoWay}"
+                          Content="Stoch must be increasing/decreasing"
+                          FontSize="12"/>
 
-			<CheckBox IsChecked="{Binding CheckPriceAboveMa200, Mode=TwoWay}"
-					  Content="Price above MA200 (long) / below MA200 (short)"
-					  FontSize="12"/>
-			<Grid ColumnDefinitions="Auto,8,80,16,Auto,8,80" Margin="24,0,0,0"
-				  IsEnabled="{Binding CheckPriceAboveMa200}">
-				<TextBlock Grid.Column="0" Text="Min distance %"
-						   VerticalAlignment="Center" FontSize="12"/>
-				<TextBox Grid.Column="2"
-						 Text="{Binding Ma200MinDistancePercentage, Mode=TwoWay}"
-						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-						 ToolTip.Tip="Minimum distance from MA200 as percentage (0 = disabled)."/>
-				<TextBlock Grid.Column="4" Text="Confirm candles"
-						   VerticalAlignment="Center" FontSize="12"/>
-				<TextBox Grid.Column="6"
-						 Text="{Binding Ma200ConfirmationCandles, Mode=TwoWay}"
-						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-						 ToolTip.Tip="Number of preceding candles that must also close on the correct side of MA200 (0 = disabled)."/>
-			</Grid>
+                <CheckBox IsChecked="{Binding WaitForStochRecovery, Mode=TwoWay}"
+                          Content="Wait if stoch %K is OS/OB"
+                          FontSize="12"/>
 
-			<!-- Wait when stoch %K is in extreme zone -->
-			<CheckBox IsChecked="{Binding WaitForStochRecovery, Mode=TwoWay}"
-					  Content="Wait if stoch %K is OS/OB"
-					  FontSize="12"/>
+                <!-- Stoch OS/OB strength gates — only meaningful when the OS run is qualified.
+                     Each numeric field equals 0 = disabled. -->
+                <HeaderedContentControl Classes="groupbox" Header="Stoch OS/OB strength" Margin="0,2,0,0">
+                    <StackPanel Margin="6" Spacing="4">
 
-			<!-- Stoch OS/OB strength gates — only meaningful when the OS run is qualified.
-			     Each numeric field equals 0 = disabled. -->
-			<HeaderedContentControl Classes="groupbox" Header="Stoch OS/OB strength" Margin="0,4,0,0">
-				<StackPanel Margin="8" Spacing="6">
+                        <Grid ColumnDefinitions="Auto,*,60,Auto" RowDefinitions="Auto"
+                              ToolTip.Tip="Window (in signal-interval bars) used to find the most-recent OS run and to compute the Z-score mean/stdev.">
+                            <TextBlock Grid.Column="0" Text="Lookback:"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"/>
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding StochExtremeLookback, Mode=TwoWay}"
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,6,0"/>
+                            <TextBlock Grid.Column="3" Text="bars" VerticalAlignment="Center" FontSize="12"/>
+                        </Grid>
 
-					<!-- Shared lookback window for run search + z-score sample -->
-					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
-					      ToolTip.Tip="Window (in signal-interval bars) used to find the most-recent OS run and to compute the Z-score mean/stdev.">
-						<TextBlock Grid.Column="0" Text="Lookback:"
-						           VerticalAlignment="Center"
-						           Margin="0,0,12,0" FontSize="12"/>
-						<TextBox Grid.Column="2"
-						         Text="{Binding StochExtremeLookback, Mode=TwoWay}"
-						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
-						<TextBlock Grid.Column="3" Text="bars" VerticalAlignment="Center" FontSize="12"/>
-					</Grid>
+                        <Grid ColumnDefinitions="Auto,*,60,Auto" RowDefinitions="Auto"
+                              ToolTip.Tip="Persistence: minimum consecutive bars stoch %K was in OS (long) / OB (short). 0 = off.">
+                            <TextBlock Grid.Column="0" Text="Min OS bars:"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"/>
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding StochMinExtremeBars, Mode=TwoWay}"
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,6,0"/>
+                            <TextBlock Grid.Column="3" Text="bars" VerticalAlignment="Center" FontSize="12"/>
+                        </Grid>
 
-					<!-- (1) Persistence -->
-					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
-					      ToolTip.Tip="Persistence: minimum consecutive bars stoch %K was in OS (long) / OB (short). 0 = off.">
-						<TextBlock Grid.Column="0" Text="Min OS bars:"
-						           VerticalAlignment="Center"
-						           Margin="0,0,12,0" FontSize="12"/>
-						<TextBox Grid.Column="2"
-						         Text="{Binding StochMinExtremeBars, Mode=TwoWay}"
-						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
-						<TextBlock Grid.Column="3" Text="bars" VerticalAlignment="Center" FontSize="12"/>
-					</Grid>
+                        <Grid ColumnDefinitions="Auto,*,60,Auto" RowDefinitions="Auto"
+                              ToolTip.Tip="Absolute cumulative depth below the oversold line (overbought for short), summed over the lookback window. Measures how DEEP and how LONG the oversold move was — a 1-candle wick gives almost nothing; a sustained deep dip gives a lot. Unit = %K-points × bars (e.g. 5 points below OS for 4 bars = 20).&#x0a;&#x0a;0 = off.   Start with ~20.   Strict: 60-80+.">
+                            <TextBlock Grid.Column="0" Text="Min OS area:"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"/>
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding StochMinExtremeArea, Mode=TwoWay}"
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,6,0"/>
+                            <TextBlock Grid.Column="3" Text="∑" VerticalAlignment="Center" FontSize="12"/>
+                        </Grid>
 
-					<!-- (2) AUC / area -->
-					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
-					      ToolTip.Tip="Absolute cumulative depth below the oversold line (overbought for short), summed over the lookback window. Measures how DEEP and how LONG the oversold move was — a 1-candle wick gives almost nothing; a sustained deep dip gives a lot. Unit = %K-points × bars (e.g. 5 points below OS for 4 bars = 20).&#x0a;&#x0a;0 = off.   Start with ~20.   Strict: 60-80+.">
-						<TextBlock Grid.Column="0" Text="Min OS area:"
-						           VerticalAlignment="Center"
-						           Margin="0,0,12,0" FontSize="12"/>
-						<TextBox Grid.Column="2"
-						         Text="{Binding StochMinExtremeArea, Mode=TwoWay}"
-						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
-						<TextBlock Grid.Column="3" Text="∑" VerticalAlignment="Center" FontSize="12"/>
-					</Grid>
+                        <Grid ColumnDefinitions="Auto,*,60,Auto" RowDefinitions="Auto"
+                              ToolTip.Tip="Statistical outlier of the deepest %K in the lookback, NOT absolute depth: how many standard deviations the most-extreme %K sits from the window's own mean (long needs z(min) ≤ -threshold, short z(max) ≥ +threshold). Because it is relative to the window, a long oversold stretch can score LOW (mean is already low) — use Min OS area if you want absolute depth.&#x0a;&#x0a;0 = off.   Start with 1.0-1.5.   Strict: 2.0+ (often blocks most entries).">
+                            <TextBlock Grid.Column="0" Text="Min |Z-score|:"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"/>
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding StochMinExtremeZScore, Mode=TwoWay}"
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,6,0"/>
+                            <TextBlock Grid.Column="3" Text="σ" VerticalAlignment="Center" FontSize="12"/>
+                        </Grid>
 
-					<!-- (3) Z-score -->
-					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
-					      ToolTip.Tip="Statistical outlier of the deepest %K in the lookback, NOT absolute depth: how many standard deviations the most-extreme %K sits from the window's own mean (long needs z(min) ≤ -threshold, short z(max) ≥ +threshold). Because it is relative to the window, a long oversold stretch can score LOW (mean is already low) — use Min OS area if you want absolute depth.&#x0a;&#x0a;0 = off.   Start with 1.0-1.5.   Strict: 2.0+ (often blocks most entries).">
-						<TextBlock Grid.Column="0" Text="Min |Z-score|:"
-						           VerticalAlignment="Center"
-						           Margin="0,0,12,0" FontSize="12"/>
-						<TextBox Grid.Column="2"
-						         Text="{Binding StochMinExtremeZScore, Mode=TwoWay}"
-						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
-						<TextBlock Grid.Column="3" Text="σ" VerticalAlignment="Center" FontSize="12"/>
-					</Grid>
+                    </StackPanel>
+                </HeaderedContentControl>
 
-				</StackPanel>
-			</HeaderedContentControl>
+            </StackPanel>
 
-			<!-- Wait when rsi is in extreme zone -->
-			<CheckBox IsChecked="{Binding WaitForRsiRecovery, Mode=TwoWay}"
-					  Content="Wait if RSI is OS/OB"
-					  FontSize="12"/>
+            <!-- ═══ Right column: Trend / price / multi-TF conditions ═══ -->
+            <StackPanel Grid.Column="2" Spacing="4">
 
-        </StackPanel>
+                <CheckBox IsChecked="{Binding CheckFurtherPriceMove, Mode=TwoWay}"
+                          Content="Price must be increasing/decreasing"
+                          FontSize="12"/>
+
+                <Grid ColumnDefinitions="Auto,*,60" RowDefinitions="Auto">
+                    <CheckBox IsChecked="{Binding CheckTrendPrimaryDirection, Mode=TwoWay}"
+                              Content="Trade with the primary trend"
+                              FontSize="12"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding TrendPrimaryDirectionCount, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                             IsEnabled="{Binding CheckTrendPrimaryDirection}"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,*,60" RowDefinitions="Auto">
+                    <CheckBox IsChecked="{Binding CheckTrendSecondaryDirection, Mode=TwoWay}"
+                              Content="Trade with the secondary trend"
+                              FontSize="12"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding TrendSecondaryDirectionCount, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                             IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
+                </Grid>
+
+                <CheckBox IsChecked="{Binding CheckPriceAboveMa200, Mode=TwoWay}"
+                          Content="Price above MA200 (long) / below (short)"
+                          FontSize="12"/>
+                <Grid ColumnDefinitions="Auto,6,60,12,Auto,6,60" Margin="24,0,0,0"
+                      IsEnabled="{Binding CheckPriceAboveMa200}">
+                    <TextBlock Grid.Column="0" Text="Min dist %"
+                               VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding Ma200MinDistancePercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                             ToolTip.Tip="Minimum distance from MA200 as percentage (0 = disabled)."/>
+                    <TextBlock Grid.Column="4" Text="Candles"
+                               VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="6"
+                             Text="{Binding Ma200ConfirmationCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                             ToolTip.Tip="Number of preceding candles that must also close on the correct side of MA200 (0 = disabled)."/>
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,60,*" RowDefinitions="Auto" Margin="0,6,0,0"
+                      ToolTip.Tip="Number of consecutive higher timeframes that must also confirm a band break. 0 = single-timeframe (normal). Example: 1 means the next higher TF must also show a break.">
+                    <TextBlock Grid.Column="0" Text="TF consensus count:" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding TimeframeConsensusCount, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+
+        </Grid>
     </HeaderedContentControl>
 
 </UserControl>

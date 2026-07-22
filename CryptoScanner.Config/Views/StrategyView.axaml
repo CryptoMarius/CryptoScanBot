@@ -26,15 +26,13 @@
                 </Button>
 
                 <ScrollViewer>
-                    <UniformGrid Columns="2" Rows="0">
-                        <ItemsControl ItemsSource="{Binding StrategyList}" Margin="8">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </UniformGrid>
+                    <ItemsControl ItemsSource="{Binding StrategyList}" Margin="8">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </ScrollViewer>
             </DockPanel>
         </HeaderedContentControl>

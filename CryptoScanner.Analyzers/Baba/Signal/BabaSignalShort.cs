@@ -78,11 +78,12 @@ public class BabaSignalShort : BabaSignalBaba
         //double pctDeviation = BabaPlugin.Settings.StopLossAtrFactor * (atr / (double)CandleLast.Candle.Close * 100);
 
         // Multi-timeframe consensus: higher timeframes must also show a band break.
-        if (settings.TimeframeConsensusCount > 0)
+        int consensusCount = ResolveEntryConditions().TimeframeConsensusCount;
+        if (consensusCount > 0)
         {
             int confirmed = 0;
             CryptoIntervalPeriod higherPeriod = Interval.IntervalPeriod;
-            for (int i = 0; i < settings.TimeframeConsensusCount; i++)
+            for (int i = 0; i < consensusCount; i++)
             {
                 if (higherPeriod == CryptoIntervalPeriod.interval1w)
                     break;
@@ -104,9 +105,9 @@ public class BabaSignalShort : BabaSignalBaba
                 }
                 confirmed++;
             }
-            if (confirmed < settings.TimeframeConsensusCount)
+            if (confirmed < consensusCount)
             {
-                ExtraText = $"not enough higher TFs confirmed ({confirmed}/{settings.TimeframeConsensusCount})";
+                ExtraText = $"not enough higher TFs confirmed ({confirmed}/{consensusCount})";
                 return false;
             }
         }

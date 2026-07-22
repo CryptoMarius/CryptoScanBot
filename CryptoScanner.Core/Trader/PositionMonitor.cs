@@ -59,6 +59,14 @@ public class PositionMonitor : IDisposable
         dcaPrice = 0;
         percentage = 0;
 
+        if (position.SlMovedToBreakEven)
+        {
+            step = null;
+            percentage = 0;
+            reaction = "";
+            return false;
+        }
+
         if (position.PartCount >= GlobalData.Settings.Trading.DcaList.Count)
         {
             step = null;
@@ -869,41 +877,44 @@ public class PositionMonitor : IDisposable
         decimal? stop = result.Stop?.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
         decimal? limit = result.Limit?.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
-        //// This does not work, it sets the sl directly after an entry hitting the sl to quick
-        //// SL protection (break-even): once the position has reached MoveSlToBreakEvenPercentage in profit,
-        //// pull the stop up to break-even and keep it there (sticky — the flag never resets, so a later
-        //// pullback cannot loosen it). Paper-trade only, like the stop-loss handling above.
-        //if (GlobalData.Settings.Trading.MoveSlToBreakEven
-        //    && GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade
-        //    && breakEven > 0)
-        //{
-        //    if (!position.SlMovedToBreakEven)
-        //    {
-        //        // Favorable extreme of the just-closed 1m candle: high for a long, low for a short.
-        //        decimal favorable = position.Side == CryptoTradeSide.Long ? LastCandle1m.High : LastCandle1m.Low;
-        //        decimal profitPct = multiplier * (favorable - breakEven) / breakEven * 100m;
-        //        if (profitPct >= GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage)
-        //            position.SlMovedToBreakEven = true;
-        //    }
+        // SL protection (break-even): once the position has reached MoveSlToBreakEvenPercentage in profit,
+        // pull the stop to break-even and keep it there (sticky — the flag never resets, so a later
+        // pullback cannot loosen it). Open DCA orders are cancelled separately in
+        // CancelOrdersIfClosedOrTimeoutOrReposition once the flag is set.
+        if (GlobalData.Settings.Trading.MoveSlToBreakEven
+            && position.BreakEvenPrice > 0)
+        {
+            int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
 
-        //    if (position.SlMovedToBreakEven)
-        //    {
-        //        decimal beStop = breakEven.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-        //        decimal beGap = Math.Abs(beStop * 0.01m);
-        //        decimal beLimit = (beStop - multiplier * beGap)
-        //            .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+            if (!position.SlMovedToBreakEven)
+            {
+                decimal favorable = position.Side == CryptoTradeSide.Long ? LastCandle1m.High : LastCandle1m.Low;
+                decimal profitPct = multiplier * (favorable - position.BreakEvenPrice) / position.BreakEvenPrice * 100m;
+                if (profitPct >= GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage)
+                {
+                    position.SlMovedToBreakEven = true;
+                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} SL moved to break-even (profit reached {profitPct:N2}% >= {GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage:N2}%)");
+                }
+            }
 
-        //        // Tighten only: pull the stop to BE when there was none, or when BE is tighter than the
-        //        // current stop (long: a higher stop is tighter; short: a lower stop is tighter).
-        //        if (stop == null
-        //            || (multiplier == 1 && beStop > stop.Value)
-        //            || (multiplier == -1 && beStop < stop.Value))
-        //        {
-        //            stop = beStop;
-        //            limit = beLimit;
-        //        }
-        //    }
-        //}
+            if (position.SlMovedToBreakEven)
+            {
+                decimal beStop = position.BreakEvenPrice.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+                decimal beGap = Math.Abs(beStop * 0.01m);
+                decimal beLimit = (beStop - multiplier * beGap)
+                    .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+
+                // Tighten only: pull the stop to BE when there was none, or when BE is tighter than the
+                // current stop (long: a higher stop is tighter; short: a lower stop is tighter).
+                if (stop == null
+                    || (multiplier == 1 && beStop > stop.Value)
+                    || (multiplier == -1 && beStop < stop.Value))
+                {
+                    stop = beStop;
+                    limit = beLimit;
+                }
+            }
+        }
 
         return (stop, limit);
     }
@@ -1459,6 +1470,10 @@ public class PositionMonitor : IDisposable
         // vanaf de entry, en wordt direct als losse open limit-order neergezet.
         if (position.Status == CryptoPositionStatus.Trading && GlobalData.Settings.Trading.DcaStrategy == CryptoEntryOrDcaStrategy.FixedPercentage)
         {
+            // No new DCA orders once the SL has been moved to break-even
+            if (position.SlMovedToBreakEven)
+                return;
+
             List<decimal> missingPrices = GetMissingFixedPercentageDcaPrices(position);
             if (missingPrices.Count > 0)
             {
@@ -1611,6 +1626,13 @@ public class PositionMonitor : IDisposable
                         {
                             newStatus = CryptoOrderStatus.ChangedSettings;
                             cancelReason = "annuleren vanwege aanpassing dca instellingen";
+                        }
+
+                        // Cancel unfilled DCA orders once the SL has been moved to break-even
+                        else if (part.Purpose == CryptoPartPurpose.Dca && position.SlMovedToBreakEven)
+                        {
+                            newStatus = CryptoOrderStatus.ChangedBreakEven;
+                            cancelReason = "cancel DCA because SL moved to break-even";
                         }
                     }
                     else if (step.Side == takeProfitOrderSide)

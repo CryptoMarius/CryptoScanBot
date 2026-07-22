@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 72;
+    public readonly static int CurrentDatabaseVersion = 73;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1459,6 +1459,21 @@ public class Migration
             try { database.Connection.Execute("alter table Exchange add LastZoneCheckTime TEXT NULL", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table Zone add TouchCount INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table Zone add IsMitigated INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 22-07-2026 Persist SlMovedToBreakEven flag so the SL stays at break-even after a restart
+        if (CurrentVersion > version.Version && version.Version == 72)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Position add SlMovedToBreakEven INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

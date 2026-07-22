@@ -97,9 +97,8 @@ public partial class CryptoPosition : CryptoData2
     // Persisted, so the level survives an app restart instead of falling back to the default strategy.
     public decimal? SlPercentage { get; set; }
 
-    // Sticky flag (in-memory only): set once the position reached the SL-protection profit threshold and
-    // the stop was pulled to break-even, so CalculateTpPrices keeps it at BE and never loosens it again.
-    [Computed]
+    // Sticky flag: set once the position reached the SL-protection profit threshold and
+    // the stop was pulled to break-even, so CalculateSlPrices keeps it at BE and never loosens it again.
     public bool SlMovedToBreakEven { get; set; }
 
     [Computed]

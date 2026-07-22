@@ -35,10 +35,6 @@ public class BreSettings : SettingsSignalStrategyBase
     // so the trader falls back to the default percentage stop-loss from the trading settings.
     public bool UseStopLoss { get; set; } = false;
 
-    // Multi-timeframe consensus: when > 0 the signal also requires this many consecutive higher
-    // timeframes to confirm the same band break condition. 0 = single-timeframe (normal behavior).
-    public int TimeframeConsensusCount { get; set; } = 0;
-
     public BreSettings() : base()
     {
     }

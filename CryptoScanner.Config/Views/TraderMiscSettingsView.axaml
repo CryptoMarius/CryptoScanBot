@@ -8,7 +8,7 @@
              x:Class="CryptoScanner.Config.Views.TraderMiscSettingsView">
 
     <HeaderedContentControl Classes="groupbox" Header="Common">
-        <StackPanel Spacing="12" Margin="0,8,0,0">
+        <StackPanel Spacing="4" Margin="6">
 
             <!-- Trade Via -->
             <Grid ColumnDefinitions="Auto,*,170" RowDefinitions="Auto">
@@ -49,8 +49,8 @@
             </Grid>
 
             <!-- Slot Limits -->
-            <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,8,0,0">
-                <StackPanel Margin="8" Spacing="8">
+            <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,2,0,0">
+                <StackPanel Margin="6" Spacing="4">
 
                     <!-- Long Slots -->
                     <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">

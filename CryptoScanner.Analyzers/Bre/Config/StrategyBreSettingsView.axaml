@@ -48,15 +48,6 @@
                       Content="Use stop-loss" FontSize="12"
                       ToolTip.Tip="When on, the signal passes the band-width percentage (the chart label) as stop-loss to the trader. When off, no stop-loss is handed over (null) and the trader uses its default percentage stop-loss."/>
 
-            <!-- Multi-timeframe consensus count -->
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Number of consecutive higher timeframes that must also confirm a band break. 0 = single-timeframe (normal). Example: 1 means the next higher TF must also show a break.">
-                <TextBlock Grid.Column="0" Text="TF consensus count:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding TimeframeConsensusCount, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
-
         </StackPanel>
     </HeaderedContentControl>
 

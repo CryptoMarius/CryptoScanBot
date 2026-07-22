@@ -118,7 +118,7 @@ public class SignalCreateBase
     /// When the strategy has its own EntryConditions they take precedence;
     /// otherwise the global SettingsTrading values are used.
     /// </summary>
-    private SettingsEntryConditions ResolveEntryConditions()
+    protected SettingsEntryConditions ResolveEntryConditions()
     {
         if (GlobalData.StrategiesSettings.TryGetValue(SignalStrategy, out var entry)
             && entry.strategySettings.EntryConditions != null)

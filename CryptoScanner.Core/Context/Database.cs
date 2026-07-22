@@ -564,6 +564,7 @@ public class CryptoDatabase : IDisposable
                 // stored as SlPercentage / TpPercentage.
                 "SlPercentage TEXT NULL," +
                 "TpPercentage TEXT NULL," +
+                "SlMovedToBreakEven INTEGER NOT NULL DEFAULT 0," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +

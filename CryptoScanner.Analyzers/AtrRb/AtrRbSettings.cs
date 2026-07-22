@@ -43,10 +43,6 @@ public class AtrRbSettings : SettingsSignalStrategyBase
     // Stochastic to be overbought (uses the global Stoch OS/OB thresholds from SettingsStoch).
     public bool RequireStochOsOb { get; set; } = false;
 
-    // Multi-timeframe consensus: when > 0 the signal also requires this many consecutive higher
-    // timeframes to confirm the same band break condition. 0 = single-timeframe (normal behavior).
-    public int TimeframeConsensusCount { get; set; } = 0;
-
     public AtrRbSettings() : base()
     {
     }
