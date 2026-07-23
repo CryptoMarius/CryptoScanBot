@@ -765,7 +765,9 @@ public static class GlobalData
             AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 ApplicationParams.Options?.AppDataFolder ?? Constants.AppName);
             Directory.CreateDirectory(AppDataFolder);
-            AppDataFolder += @"\";
+            // Use the platform path separator; a hardcoded "\" produced invalid paths on macOS/Linux
+            // (e.g. ~/.config/CryptoScanBot\CryptoScanBot.db).
+            AppDataFolder += Path.DirectorySeparatorChar;
         }
         return AppDataFolder;
     }
