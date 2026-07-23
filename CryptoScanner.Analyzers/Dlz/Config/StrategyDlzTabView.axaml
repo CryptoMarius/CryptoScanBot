@@ -10,6 +10,10 @@
 
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
     <StackPanel>
+        <TextBlock Margin="4,2,4,4" FontSize="13">
+            <Run Text="DLZ – Dominant Liquidity Zones" FontWeight="SemiBold"/>
+            <Run Text=" — Signals near historically dominant support/resistance zones" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+        </TextBlock>
         <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto" RowSpacing="5">
            <configviews:SoundAndColorsView Grid.Row="0" DataContext="{Binding SoundAndColorsViewModel}" />
             <HeaderedContentControl Grid.Row="0" Grid.Column="1" Classes="groupbox" Header="Zone calculation" HorizontalAlignment="Left"

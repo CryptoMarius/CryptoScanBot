@@ -47,10 +47,6 @@ public class SettingsSignal
     // SMC (Smart Money Concepts) supply/demand order blocks
     public SettingsSignalStrategySmc ZonesSmc = new();
 
-    // Baba, AtrRb, Bre and Bbma settings have been migrated to the Analyzers plugin architecture
-    // and are now managed by PluginManager (BabaPlugin.Settings, AtrRbPlugin.Settings, BrePlugin.Settings,
-    // BbmaPlugin.Settings).
-
     // Analyzer plugin settings (keyed by plugin name, e.g. "demo").
     // Stored as raw JSON per plugin: Core does not know the concrete settings types
     // (they live in the Analyzers project), so serializing them here as the base type

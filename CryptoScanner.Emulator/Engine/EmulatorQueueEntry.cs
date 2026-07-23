@@ -16,7 +16,7 @@ public class EmulatorQueueEntry
     public string Label { get; set; } = "";
 
     /// <summary>
-    /// When set, this entry only runs for the named algorithm (e.g. "atrrb", "baba").
+    /// When set, this entry only runs for the named algorithm
     /// When empty/null, the entry runs for every selected algorithm.
     /// </summary>
     public string? Algorithm { get; set; }
@@ -32,8 +32,8 @@ public class EmulatorQueueEntry
 
     /// <summary>
     /// Signal parameter overrides for this run. Outer key = settings section name on
-    /// SettingsSignal (e.g. "AtrRb", "Baba"), inner key = property name, value = the
-    /// value to set. Empty or omitted = no signal overrides.
+    /// SettingsSignal, inner key = property name, value = the value to set. 
+    /// Empty or omitted = no signal overrides.
     /// </summary>
     public Dictionary<string, Dictionary<string, JsonElement>> SignalOverrides { get; set; } = new();
 

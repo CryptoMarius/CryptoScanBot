@@ -31,8 +31,6 @@ public sealed class IntervalIndicatorHub
     private readonly StochHub _stoch;
     private readonly ParabolicSarHub _psar;
 
-    // Baba VWAP band indicators have been migrated to BabaIndicatorExtension (Analyzers plugin).
-
     // Lux Multi-RSI incremental state (mirrors LuxIndicator.CalculateNew)
     private const int LuxMin = 10;
     private const int LuxMax = 20;
@@ -74,8 +72,6 @@ public sealed class IntervalIndicatorHub
         _stoch = _quoteHub.ToStochHub(settings.SettingsStoch.Length, settings.SettingsStoch.SmoothingD, settings.SettingsStoch.SmoothingK);
         _psar = _quoteHub.ToParabolicSarHub(0.02, 0.2);
 
-        // Baba VWAP band init has been migrated to BabaIndicatorExtension (Analyzers plugin).
-
 #if DEBUG
         _ema50 = _quoteHub.ToEmaHub(50);
         _atr14 = _quoteHub.ToAtrHub(14);
@@ -104,8 +100,6 @@ public sealed class IntervalIndicatorHub
     public void Add(IQuote candle)
     {
         _quoteHub.Add(new Quote(candle.Timestamp, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume));
-
-        // Baba hlc3 hub feeds have been migrated to BabaIndicatorExtension (Analyzers plugin).
 
         // Incremental Lux Multi-RSI: one RMA step per candle instead of replaying 100 candles.
         double close = (double)candle.Close;
@@ -176,8 +170,6 @@ public sealed class IntervalIndicatorHub
 
         if (_psar.Results.Count > 0 && _psar.Results[^1].Sar != null)
             data.PSar = _psar.Results[^1].Sar;
-
-        // Baba VWAP band fill has been migrated to BabaIndicatorExtension (Analyzers plugin).
 
         // Lux Multi-RSI
         int luxValue = 0;

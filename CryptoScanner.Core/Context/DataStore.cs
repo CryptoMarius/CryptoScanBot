@@ -191,8 +191,6 @@ public class DataStore
         //   - crash between SaveCandlesForSymbol and File.Delete → file stays, next start
         //     re-saves to DB (INSERT OR REPLACE is idempotent) and deletes the file
         //   - DB write fails → file stays for the next attempt
-        // Once every symbol's file has been migrated, this branch becomes a no-op on every
-        // future startup (nothing to read, nothing to migrate).
         if (fileWasRead && symbol.Exchange != null)
         {
             try

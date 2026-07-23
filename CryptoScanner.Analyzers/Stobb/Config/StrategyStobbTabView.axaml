@@ -10,6 +10,10 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="5">
+            <TextBlock Margin="4,2,4,4" FontSize="13">
+                <Run Text="STOBB – Stochastic + Bollinger Bands" FontWeight="SemiBold"/>
+                <Run Text=" — Mean reversion signals combining Stochastic with Bollinger Band position" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+            </TextBlock>
             <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
             <vm:StrategyStobbSettingsView DataContext="{Binding StrategyStobbSettingsViewModel}" />
             <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />

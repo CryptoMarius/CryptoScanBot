@@ -80,6 +80,12 @@ public partial class TraderTabViewModel : ObservableObject
         _traderStrategyLongViewModel.ShortCounterpart = _traderStrategyShortViewModel;
         _traderStrategyShortViewModel.LongCounterpart = _traderStrategyLongViewModel;
         _traderStrategyShortViewModel.ShortCounterpart = _traderStrategyShortViewModel;
+
+        // Wire up same-tab interval counterparts
+        _traderIntervalLongViewModel.LongCounterpart = _traderIntervalLongViewModel;
+        _traderIntervalLongViewModel.ShortCounterpart = _traderIntervalShortViewModel;
+        _traderIntervalShortViewModel.LongCounterpart = _traderIntervalLongViewModel;
+        _traderIntervalShortViewModel.ShortCounterpart = _traderIntervalShortViewModel;
     }
 
     internal void LoadConfig(SettingsTrading settings)

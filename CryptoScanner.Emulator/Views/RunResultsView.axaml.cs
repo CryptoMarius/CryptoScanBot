@@ -265,7 +265,7 @@ public partial class RunResultsView : UserControl
         // the dialog, then restore the originals in the finally. We never call SaveConfiguration, so
         // whatever the user pokes at is discarded — no need to make every control read-only.
         SettingsBasic original = GlobalData.Settings;
-        // The plugin tabs (Baba/Bre/StoRsi) do not read GlobalData.Settings but the static plugin
+        // The plugin tabs do not read GlobalData.Settings but the static plugin
         // settings, so those have to be swapped along: snapshot the current plugin values, load the
         // run's AnalyzerSettings blocks into the plugins, and restore the snapshot in the finally.
         Dictionary<string, System.Text.Json.JsonElement> pluginSnapshot = [];

@@ -64,6 +64,12 @@ public partial class AnalyzerTabViewModel : ObservableObject
         _analyzerStrategyLongViewModel.ShortCounterpart = _analyzerStrategyShortViewModel;
         _analyzerStrategyShortViewModel.LongCounterpart = _analyzerStrategyLongViewModel;
         _analyzerStrategyShortViewModel.ShortCounterpart = _analyzerStrategyShortViewModel;
+
+        // Wire up same-tab interval counterparts
+        _analyzerIntervalLongViewModel.LongCounterpart = _analyzerIntervalLongViewModel;
+        _analyzerIntervalLongViewModel.ShortCounterpart = _analyzerIntervalShortViewModel;
+        _analyzerIntervalShortViewModel.LongCounterpart = _analyzerIntervalLongViewModel;
+        _analyzerIntervalShortViewModel.ShortCounterpart = _analyzerIntervalShortViewModel;
     }
 
     internal void LoadConfig(SettingsSignal settings)

@@ -24,15 +24,12 @@ public static class PluginManager
     public static IReadOnlyList<IChartOverlay> ChartOverlays => _overlays;
     private static readonly List<IChartOverlay> _overlays = [];
 
-    /// <summary>
-    /// Register a stand-alone chart overlay that is not tied to a strategy plugin (e.g. the
-    /// TradingBuddy band overlay). It shows up as its own checkbox in the chart's overlay list.
-    /// </summary>
-    public static void RegisterOverlay(IChartOverlay overlay)
-    {
-        if (!_overlays.Contains(overlay))
-            _overlays.Add(overlay);
-    }
+
+    //public static void RegisterOverlay(IChartOverlay overlay)
+    //{
+    //    if (!_overlays.Contains(overlay))
+    //        _overlays.Add(overlay);
+    //}
 
     /// <summary>Config view providers from registered plugins.</summary>
     public static IReadOnlyList<IConfigView> ConfigViews => _configViews;

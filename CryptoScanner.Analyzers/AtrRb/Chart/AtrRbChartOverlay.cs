@@ -18,6 +18,9 @@ public class AtrRbChartOverlay : IChartOverlay
 {
     public string Label => "ATR Reversal Bands";
     public string GroupKey => "atrrb";
+#pragma warning disable CS0067 // Required by IChartOverlay; raised externally when needed
+    public event Action? RequestRedraw;
+#pragma warning restore CS0067
 
     private static readonly OxyColor MacroLineColor = OxyColors.Gray;
     private static readonly OxyColor MacroFillColor = OxyColor.FromArgb(15, 0, 128, 0);

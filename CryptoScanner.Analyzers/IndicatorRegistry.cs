@@ -24,7 +24,6 @@ public enum IndicatorKind
     Stoch,
     ParabolicSar,
     Atr,
-    // BabaVwap has been migrated to BabaIndicatorExtension (Analyzers plugin).
 }
 
 /// <summary>
@@ -43,10 +42,7 @@ public readonly record struct IndicatorKey(
     public static IndicatorKey Stoch(int length, int smoothD, int smoothK) => new(IndicatorKind.Stoch, length, smoothD, smoothK);
     public static IndicatorKey Psar(double step = 0.02, double max = 0.2) => new(IndicatorKind.ParabolicSar, step, max);
     public static IndicatorKey Atr(int length) => new(IndicatorKind.Atr, length);
-    // BabaVwap key factory has been migrated to BabaIndicatorExtension (Analyzers plugin).
 }
-
-// BabaVwapState record has been migrated to BabaIndicatorExtension (Analyzers plugin).
 
 // ---------------------------------------------------------------------------
 // Interface: strategy declares its required indicators once
@@ -83,9 +79,6 @@ public sealed class IndicatorRegistry
     private readonly QuoteHub _quoteHub = new();
     private readonly Dictionary<IndicatorKey, object> _hubs = [];
 
-    // Baba VWAP synthetic hubs have been migrated to BabaIndicatorExtension (Analyzers plugin).
-
-
     // -----------------------------------------------------------------------
     // Feed
     // -----------------------------------------------------------------------
@@ -94,8 +87,6 @@ public sealed class IndicatorRegistry
     public void Add(IQuote c)
     {
         _quoteHub.Add(new Quote(c.Timestamp, c.Open, c.High, c.Low, c.Close, c.Volume));
-
-        // Baba hlc3 synthetic feeds have been migrated to BabaIndicatorExtension (Analyzers plugin).
     }
 
 
@@ -146,7 +137,6 @@ public sealed class IndicatorRegistry
             case IndicatorKind.Atr:
                 Atr((int)key.P1);
                 break;
-                // BabaVwap case has been migrated to BabaIndicatorExtension (Analyzers plugin).
         }
     }
 
@@ -163,8 +153,6 @@ public sealed class IndicatorRegistry
     public StochHub Stoch(int length, int smoothD, int smoothK) => GetOrAdd(IndicatorKey.Stoch(length, smoothD, smoothK), () => _quoteHub.ToStochHub(length, smoothD, smoothK));
     public ParabolicSarHub Psar(double step = 0.02, double max = 0.2) => GetOrAdd(IndicatorKey.Psar(step, max), () => _quoteHub.ToParabolicSarHub(step, max));
     public AtrHub Atr(int length) => GetOrAdd(IndicatorKey.Atr(length), () => _quoteHub.ToAtrHub(length));
-
-    // BabaVwap accessor has been migrated to BabaIndicatorExtension (Analyzers plugin).
 
 
     private TResult GetOrAdd<TResult>(IndicatorKey key, Func<TResult> factory) where TResult : class
@@ -253,10 +241,6 @@ public sealed class IndicatorRegistry
                             data.PSar = h.Results[^1].Sar;
                         break;
                     }
-                    // BabaVwap BuildCurrent case has been migrated to BabaIndicatorExtension (Analyzers plugin).
-                    // Ema and Atr have no fixed CryptoData field in the base set;
-                    // they are used as sub-components (Atr inside BabaVwap) or for
-                    // DEBUG-only fields. Extend here when a strategy needs them in CryptoData.
             }
         }
 
@@ -265,17 +249,17 @@ public sealed class IndicatorRegistry
 }
 
 // ---------------------------------------------------------------------------
-// Example: how SignalBabaBase would declare its requirements
+// Example: how SignalVbsBase would declare its requirements
 // ---------------------------------------------------------------------------
 
-// public class SignalBabaBase : SignalCreateBase, IRequiresIndicators
+// public class SignalVbsBase : SignalCreateBase, IRequiresIndicators
 // {
 //     public IEnumerable<IndicatorKey> RequiredIndicators()
 //     {
 //         var g = GlobalData.Settings.General;
-//         var b = GlobalData.Settings.Signal.Baba;
+//         var b = GlobalData.Settings.Signal.Vbs;
 //         yield return IndicatorKey.Rsi(g.SettingsRsi.Length);              // RSI confluence filter
-//         yield return IndicatorKey.BabaVwap(b.Length, b.AtrLength, b.Mult, b.AtrMult);
+//         yield return IndicatorKey.VbsVwap(b.Length, b.AtrLength, b.Mult, b.AtrMult);
 //     }
 // }
 

@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="540"
+             xmlns:vm="using:CryptoScanner.Analyzers.Vbs.Config"
+             x:DataType="vm:StrategyVbsSettingsViewModel"
+             x:Class="CryptoScanner.Analyzers.Vbs.Config.StrategyVbsSettingsView">
+
+    <StackPanel Spacing="8">
+
+        <HeaderedContentControl Classes="groupbox" Header="Mean Reversion Bands (VWAP volume-weighted)">
+            <StackPanel Margin="4" Spacing="4">
+
+                <!-- VWMA / vw-stdev length -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="VWMA / volume-weighted-stdev window for the VWAP basis (fit ≈ 50).">
+                    <TextBlock Grid.Column="0" Text="Length (VWAP/vw-stdev):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding Length, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <!-- vw-stdev multiplier -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Volume-weighted-stdev multiplier: basis ± Mult × vwStdev (the VWAP-band width; fit ≈ 2.5). Higher = wider band = fewer signals.">
+                    <TextBlock Grid.Column="0" Text="Multiplier (vw-stdev):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding Mult, Mode=TwoWay, StringFormat=N2}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <!-- RSI confluence (overbought/oversold LEVELS come from the Indicators tab → RSI) -->
+                <CheckBox IsChecked="{Binding UseRsiFilter, Mode=TwoWay}"
+                          Content="Require RSI overbought/oversold" FontSize="12"
+                          ToolTip.Tip="Only fire a short on an upper-band break when RSI ≥ overbought, and a long on a lower-band break when RSI ≤ oversold. The overbought/oversold levels are taken from the Indicators tab (RSI settings)."/>
+
+                <!-- Stochastic OS/OB gate -->
+                <CheckBox IsChecked="{Binding RequireStochOsOb, Mode=TwoWay}"
+                          Content="Require Stochastic oversold/overbought" FontSize="12"
+                          ToolTip.Tip="When on, a long signal also requires Stochastic to be oversold and a short signal requires Stochastic to be overbought (uses the global Stoch thresholds)."/>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+        <HeaderedContentControl Classes="groupbox" Header="Stop-loss">
+            <StackPanel Margin="4" Spacing="4">
+
+                <!-- Stop-loss -->
+                <CheckBox IsChecked="{Binding UseStopLoss, Mode=TwoWay}"
+                          Content="Use stop-loss" FontSize="12"
+                          ToolTip.Tip="When on, the signal passes its own percentage based stop-loss (SLStdevFactor × vwStdev) to the trader. When off, the trader uses its default stop-loss."/>
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="SL distance = SLStdevFactor × vwStdev below the lower band (long) or above the upper band (short). Factor 1.0 = one full band-width below the break level.">
+                    <TextBlock Grid.Column="0" Text="Stop-loss stdev factor:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding SLStdevFactor, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+    </StackPanel>
+
+</UserControl>

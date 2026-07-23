@@ -30,6 +30,13 @@ public partial class StrategyViewModel : ObservableObject
     public StrategyViewModel? LongCounterpart { get; set; }
     public StrategyViewModel? ShortCounterpart { get; set; }
 
+    // Cross-tab counterparts (Analyzer ↔ Trader)
+    public StrategyViewModel? CrossTabLongCounterpart { get; set; }
+    public StrategyViewModel? CrossTabShortCounterpart { get; set; }
+
+    [ObservableProperty]
+    private string _crossTabLabel = "Trading";
+
     public StrategyViewModel()
     {
     }
@@ -56,6 +63,8 @@ public partial class StrategyViewModel : ObservableObject
         // have populated strategy lists too.
         CopyFromLongCommand.NotifyCanExecuteChanged();
         CopyFromShortCommand.NotifyCanExecuteChanged();
+        CopyFromCrossTabLongCommand.NotifyCanExecuteChanged();
+        CopyFromCrossTabShortCommand.NotifyCanExecuteChanged();
     }
 
     public void SaveConfig(List<string> strategyList)
@@ -71,6 +80,23 @@ public partial class StrategyViewModel : ObservableObject
     }
 
 
+    // ---- Select all / none ----
+
+    [RelayCommand]
+    private void SelectAll()
+    {
+        foreach (var item in StrategyList)
+            item.IsEnabled = true;
+    }
+
+    [RelayCommand]
+    private void SelectNone()
+    {
+        foreach (var item in StrategyList)
+            item.IsEnabled = false;
+    }
+
+
     // ---- Copy from sibling ----
 
     [RelayCommand(CanExecute = nameof(CanCopyFromLong))]
@@ -80,6 +106,18 @@ public partial class StrategyViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanCopyFromShort))]
     private void CopyFromShort() => CopyFrom(ShortCounterpart);
     private bool CanCopyFromShort() => ShortCounterpart != null && !ReferenceEquals(ShortCounterpart, this);
+
+
+    // ---- Copy from cross-tab (Analyzer ↔ Trader) ----
+
+    [RelayCommand(CanExecute = nameof(CanCopyFromCrossTabLong))]
+    private void CopyFromCrossTabLong() => CopyFrom(CrossTabLongCounterpart);
+    private bool CanCopyFromCrossTabLong() => CrossTabLongCounterpart != null;
+
+    [RelayCommand(CanExecute = nameof(CanCopyFromCrossTabShort))]
+    private void CopyFromCrossTabShort() => CopyFrom(CrossTabShortCounterpart);
+    private bool CanCopyFromCrossTabShort() => CrossTabShortCounterpart != null;
+
 
     private void CopyFrom(StrategyViewModel? source)
     {

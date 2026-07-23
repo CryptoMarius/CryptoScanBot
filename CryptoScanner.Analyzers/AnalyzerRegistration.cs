@@ -10,11 +10,11 @@ public static class AnalyzerRegistration
 {
     public static void RegisterAll()
     {
-        // does not perform well enough
+        // ATR based bands, but it does not perform well enough
         //PluginManager.Register(new AtrRb.AtrRbPlugin()); 
-        PluginManager.Register(new Baba.BabaPlugin());
-        // A baba look alike which does rather well
-        PluginManager.Register(new Bre.BrePlugin());
+
+        // A band strategy which does rather well
+        PluginManager.Register(new Dbr.DbrPlugin());
 
         PluginManager.Register(new Dlz.DlzPlugin());
         PluginManager.Register(new Fvg.FvgPlugin());
@@ -23,6 +23,7 @@ public static class AnalyzerRegistration
         PluginManager.Register(new Smc.SmcPlugin());
         PluginManager.Register(new Stobb.StobbPlugin());
         PluginManager.Register(new Storsi.StorsiPlugin());
+        PluginManager.Register(new Vbs.VbsPlugin());
 
 #if DEBUG
         // Experimental strategies (not yet fully tested or documented)
@@ -34,8 +35,8 @@ public static class AnalyzerRegistration
         PluginManager.Register(new Nwe.NwePlugin());
         PluginManager.Register(new Trend.TrendPlugin());
 
-        // Stand-alone overlay (not a strategy!) (for comparing)
-        //PluginManager.RegisterOverlay(new Baba.Chart.TradingBuddyBabaOverlay());
+        // Overlay-only plugin (for comparing with TradingBuddy's own bands)
+        PluginManager.Register(new TradingBuddy.TradingBuddyPlugin());
 #endif
     }
 }

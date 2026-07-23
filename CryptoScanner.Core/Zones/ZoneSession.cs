@@ -49,8 +49,6 @@ public class ZoneSession
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowKeltnerChannel { get; set; } = false;
-    // ShowAtrRbBands, ShowBabaBands, ShowBreBands, ShowSlide and ShowBbma have been migrated
-    // to PluginOverlayStates (plugin chart overlays managed by PluginManager).
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowStoch { get; set; } = false;
     public bool ShowRsi { get; set; } = false;

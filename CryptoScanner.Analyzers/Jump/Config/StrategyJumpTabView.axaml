@@ -10,6 +10,10 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="5">
+            <TextBlock Margin="4,2,4,4" FontSize="13">
+                <Run Text="JUMP – Jump" FontWeight="SemiBold"/>
+                <Run Text=" — Detects sudden large price movements" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+            </TextBlock>
             <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
             <vm:StrategyJumpSettingsView DataContext="{Binding StrategyJumpSettingsViewModel}" />
             <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />

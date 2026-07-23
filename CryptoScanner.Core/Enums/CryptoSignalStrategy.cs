@@ -17,15 +17,15 @@ public enum CryptoSignalStrategy
     NweNp = 26,
     NweBb = 27,
 
-    // Baba Bands macro-band hit — long on the lower band, short on the upper band
+    // VWAP Bands macro-band hit — long on the lower band, short on the upper band
     // (the same events the chart prints as percentage labels).
-    Baba = 28,
+    Vbs = 28,
     // AtrRb Bands macro-band hit — long on the lower band, short on the upper band
     // (the same events the chart prints as percentage labels).
     AtrRb = 29,
-    // BRE (Buddy Reversion Engine) Donchian macro-band break — long on the lower band,
+    // DBR (Donchian Breakout Reversion) macro-band break — long on the lower band,
     // short on the upper band (the same events the chart prints as percentage labels).
-    Bre = 30,
+    Dbr = 30,
 
     Trend = 31,
 

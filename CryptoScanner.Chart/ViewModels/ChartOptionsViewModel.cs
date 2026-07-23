@@ -46,9 +46,6 @@ public partial class ChartOptionsViewModel : ObservableObject
     [ObservableProperty]
     private bool _showKeltnerChannel = false;
 
-    // ShowAtrRbBands, ShowBabaBands, ShowBreBands and ShowSlide are now handled
-    // dynamically via PluginOverlays (plugin chart overlays).
-
     [ObservableProperty]
     private bool _showPSar = false;
 
@@ -139,7 +136,6 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowPSar = session.ShowPSar;
         ShowBollingerBand = session.ShowBollingerBand;
         ShowKeltnerChannel = session.ShowKeltnerChannel;
-        // AtrRb, Baba, BRE and Slide toggles are now loaded via PluginOverlays below.
         ShowDlzZones = session.ShowDlzZones;
         ShowFvgZones = session.ShowFvgZones;
         ShowSmcZones = session.ShowSmcZones;
@@ -197,7 +193,6 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowPSar = ShowPSar;
         session.ShowBollingerBand = ShowBollingerBand;
         session.ShowKeltnerChannel = ShowKeltnerChannel;
-        // AtrRb, Baba, BRE and Slide toggles are now saved via PluginOverlays below.
         session.ShowDlzZones = ShowDlzZones;
         session.ShowFvgZones = ShowFvgZones;
         session.ShowSmcZones = ShowSmcZones;

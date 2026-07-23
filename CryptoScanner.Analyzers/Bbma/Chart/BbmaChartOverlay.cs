@@ -19,6 +19,9 @@ public class BbmaChartOverlay : IChartOverlay
 {
     public string Label => "BBMA";
     public string GroupKey => "bbma";
+#pragma warning disable CS0067 // Required by IChartOverlay; raised externally when needed
+    public event Action? RequestRedraw;
+#pragma warning restore CS0067
 
     public void Draw(object plotModel, CryptoSymbol symbol, CryptoInterval interval,
         List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)

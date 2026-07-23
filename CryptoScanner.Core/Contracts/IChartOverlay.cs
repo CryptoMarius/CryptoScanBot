@@ -13,6 +13,9 @@ public interface IChartOverlay
     string Label { get; }
     string GroupKey { get; }
 
+    // Raised when the overlay has new data and wants the chart to redraw.
+    event Action? RequestRedraw;
+
     void Draw(object plotModel, CryptoSymbol symbol, CryptoInterval interval,
               List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group);
 }

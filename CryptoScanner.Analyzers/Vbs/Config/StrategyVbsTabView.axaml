@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
+             xmlns:vm="using:CryptoScanner.Analyzers.Vbs.Config"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyVbsTabViewModel"
+             x:Class="CryptoScanner.Analyzers.Vbs.Config.StrategyVbsTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <TextBlock Margin="4,2,4,4" FontSize="13">
+                <Run Text="VBS – VWAP Band Signal" FontWeight="SemiBold"/>
+                <Run Text=" — Mean reversion signals at volume-weighted VWAP bands" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+            </TextBlock>
+            <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+            <vm:StrategyVbsSettingsView DataContext="{Binding StrategyVbsSettingsViewModel}" />
+            <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

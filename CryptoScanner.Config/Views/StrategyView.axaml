@@ -13,14 +13,32 @@
                 <!-- Top toolbar: "Copy from..." popup. Placed inside the content area because
                      the shared groupbox style renders the Header as a plain TextBlock and would
                      drop any interactive content put into HeaderedContentControl.Header. -->
-                <Button DockPanel.Dock="Top" Content="Copy from..."
+                <Button DockPanel.Dock="Top" Content="&#x25BC;"
                         HorizontalAlignment="Right" Padding="6,2" FontSize="11"
                         Margin="0,0,0,4"
-                        ToolTip.Tip="Replace this side's selection with the strategies enabled on the other side.">
+                        ToolTip.Tip="Select all, select none, or copy from another side.">
                     <Button.Flyout>
                         <MenuFlyout>
-                            <MenuItem Header="From Long"  Command="{Binding CopyFromLongCommand}"/>
-                            <MenuItem Header="From Short" Command="{Binding CopyFromShortCommand}"/>
+                            <MenuItem Header="Select all"  Command="{Binding SelectAllCommand}"/>
+                            <MenuItem Header="Select none" Command="{Binding SelectNoneCommand}"/>
+                            <Separator/>
+                            <MenuItem Header="Copy from Long"  Command="{Binding CopyFromLongCommand}"/>
+                            <MenuItem Header="Copy from Short" Command="{Binding CopyFromShortCommand}"/>
+                            <Separator/>
+                            <MenuItem Command="{Binding CopyFromCrossTabLongCommand}">
+                                <MenuItem.Header>
+                                    <TextBlock>
+                                        <Run Text="Copy from "/><Run Text="{Binding CrossTabLabel}"/><Run Text="/Long"/>
+                                    </TextBlock>
+                                </MenuItem.Header>
+                            </MenuItem>
+                            <MenuItem Command="{Binding CopyFromCrossTabShortCommand}">
+                                <MenuItem.Header>
+                                    <TextBlock>
+                                        <Run Text="Copy from "/><Run Text="{Binding CrossTabLabel}"/><Run Text="/Short"/>
+                                    </TextBlock>
+                                </MenuItem.Header>
+                            </MenuItem>
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>

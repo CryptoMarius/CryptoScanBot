@@ -118,25 +118,25 @@ public class CryptoData
     [Computed]
     public short? Lux5mValue { get; set; }
 
-    // Baba VWAP bands — basis = VWMA(hlc3, Length), Upper/Lower = basis +/- (Mult * vwStdev + AtrMult *
-    // ATR(AtrLength)). AtrBaba is that fast pad ATR; BabaAtrSl is the SLOW ATR(Length) used for the
-    // old ATR-based stop-loss %. BabaVwStdev is the volume-weighted stdev of hlc3 used to build the band —
+    // VBS VWAP bands strategy — basis = VWMA(hlc3, Length), Upper/Lower = basis +/- (Mult * vwStdev + AtrMult *
+    // ATR(AtrLength)). VbsAtr is that fast pad ATR; VbsAtrSl is the SLOW ATR(Length) used for the
+    // old ATR-based stop-loss %. VbsVwStdev is the volume-weighted stdev of hlc3 used to build the band —
     // stored so the SL can be expressed in vwStdev units (SLStdevFactor * vwStdev below/above the band).
-    // Computed once per candle by IndicatorEngine (hub or batch) and shared by SignalBabaLong/Short via
-    // BabaBandsHelper, so the band itself is never computed twice per candle.
+    // Computed once per candle by IndicatorEngine (hub or batch) and shared by SignalVbsLong/Short via
+    // VbsBandsHelper, so the band itself is never computed twice per candle.
 
     [Computed]
-    public double? AtrBaba { get; set; }
+    public double? VbsBasis { get; set; }
     [Computed]
-    public double? BabaBasis { get; set; }
+    public double? VbsUpper { get; set; }
     [Computed]
-    public double? BabaUpper { get; set; }
+    public double? VbsLower { get; set; }
     [Computed]
-    public double? BabaLower { get; set; }
+    public double? VbsVwStdev { get; set; }
     [Computed]
-    public double? BabaVwStdev { get; set; }
+    public double? VbsAtr { get; set; }
     [Computed]
-    public double? BabaAtrSl { get; set; }
+    public double? VbsAtrSl { get; set; }
 
     /// <summary>
     /// Copy common indicator values
@@ -211,12 +211,12 @@ public class CryptoData
 
         Lux5mValue = source.Lux5mValue;
 
-        AtrBaba = source.AtrBaba;
-        BabaBasis = source.BabaBasis;
-        BabaUpper = source.BabaUpper;
-        BabaLower = source.BabaLower;
-        BabaVwStdev = source.BabaVwStdev;
-        BabaAtrSl = source.BabaAtrSl;
+        VbsAtr = source.VbsAtr;
+        VbsBasis = source.VbsBasis;
+        VbsUpper = source.VbsUpper;
+        VbsLower = source.VbsLower;
+        VbsVwStdev = source.VbsVwStdev;
+        VbsAtrSl = source.VbsAtrSl;
     }
 }
 

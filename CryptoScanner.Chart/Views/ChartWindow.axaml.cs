@@ -48,9 +48,6 @@ public partial class ChartWindow : Window
             }
         };
 
-        // AtrRb, Baba, Slide, BRE and BBMA checkboxes are generated dynamically via
-        // PluginOverlays, so they no longer need to be hidden here.
-
         if (DataContext == null)
         {
             DataContext = new ChartWindowViewModel();

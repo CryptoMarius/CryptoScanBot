@@ -319,8 +319,6 @@ public static class IndicatorEngine
             lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
             standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
 
-        // Baba VWAP band batch computation has been migrated to BabaIndicatorExtension (Analyzers plugin).
-
         //AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
         //AccountSymbolIntervalData symbolIntervalData = symbolData.GetSymbolData(interval.IntervalPeriod);
 
@@ -415,7 +413,6 @@ public static class IndicatorEngine
                 if (psarList[index].Sar != null)
                     candleData.PSar = psarList[index].Sar;
 
-                // Baba band fill loop has been migrated to BabaIndicatorExtension (Analyzers plugin).
                 if (candle is CryptoCandle x)
                     lock (symbolInterval.Data)
                         symbolInterval.Data[x.OpenTime] = candleData;

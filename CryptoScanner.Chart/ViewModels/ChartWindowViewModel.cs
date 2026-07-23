@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Chart.ViewModels.Chart;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -117,9 +118,8 @@ public partial class ChartWindowViewModel : ObservableObject
         FibSettings.PropertyChanged += FibSettingsChanged;
         DisplayOptions.PropertyChanged += (sender, e) => DisplayOptionsChanged(sender, e);
 
-        // Redraw the chart once TradingBuddy's bands have been fetched in the background (the Baba
-        // overlay draws them when the "Show TradingBuddy bands" option is on). Unsubscribed in OnClosing.
-        CryptoScanner.Core.Exchange.TradingBuddy.TradingBuddyBands.BandsUpdated += OnTradingBuddyBandsUpdated;
+        foreach (var overlay in PluginManager.ChartOverlays)
+            overlay.RequestRedraw += OnOverlayRequestRedraw;
 
         // NOTE: do NOT start RefreshCommand here. Starting it in the ctor causes a race
         // with Window.Show()'s ExecuteInitialLayoutPass — the async refresh mutates
@@ -1116,8 +1116,6 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowKeltnerChannel))
             KeltnerChannel.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
-        // AtrRb, Baba, BRE and Slide overlays are now drawn dynamically via PluginManager.ChartOverlays below.
-
         // Draw plugin overlays
         foreach (var overlay in CryptoScanner.Core.Contracts.PluginManager.ChartOverlays)
         {
@@ -1529,13 +1527,14 @@ public partial class ChartWindowViewModel : ObservableObject
 
     public void OnClosing()
     {
-        CryptoScanner.Core.Exchange.TradingBuddy.TradingBuddyBands.BandsUpdated -= OnTradingBuddyBandsUpdated;
+        foreach (var overlay in PluginManager.ChartOverlays)
+            overlay.RequestRedraw -= OnOverlayRequestRedraw;
         SaveSessionSettings();
     }
 
-    // Fired (on a background thread) when a TradingBuddy band fetch completes; RequestRefresh marshals
+    // Fired (on a background thread) when an overlay has new data; RequestRefresh marshals
     // the redraw onto the UI thread itself.
-    private void OnTradingBuddyBandsUpdated() => RequestRefresh();
+    private void OnOverlayRequestRedraw() => RequestRefresh();
 
 
     // Candles of context drawn on each side of the position's lifetime when opening from a position.

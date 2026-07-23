@@ -10,6 +10,10 @@
 
     <ScrollViewer>
         <StackPanel>
+            <TextBlock Margin="4,2,4,4" FontSize="13">
+                <Run Text="SBM – Signal Bollinger/MA" FontWeight="SemiBold"/>
+                <Run Text=" — Signals based on Bollinger Band and Moving Average alignment" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+            </TextBlock>
             <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
             <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" Margin="4" RowSpacing="0" >
                 <vm:StrategySbmSettingsView Grid.Row="0" Grid.Column="0" DataContext="{Binding StrategySbmSettingsViewModel}" />

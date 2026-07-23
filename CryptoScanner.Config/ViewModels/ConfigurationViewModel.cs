@@ -95,6 +95,32 @@ public partial class ConfigurationViewModel : ObservableObject
         // Debug
         _debugTabViewModel = new();
 
+        // Wire cross-tab strategy counterparts (Analyzer ↔ Trader)
+        _analyzerTabViewModel.AnalyzerStrategyLongViewModel.CrossTabLongCounterpart = _traderTabViewModel.TraderStrategyLongViewModel;
+        _analyzerTabViewModel.AnalyzerStrategyLongViewModel.CrossTabShortCounterpart = _traderTabViewModel.TraderStrategyShortViewModel;
+        _analyzerTabViewModel.AnalyzerStrategyShortViewModel.CrossTabLongCounterpart = _traderTabViewModel.TraderStrategyLongViewModel;
+        _analyzerTabViewModel.AnalyzerStrategyShortViewModel.CrossTabShortCounterpart = _traderTabViewModel.TraderStrategyShortViewModel;
+
+        _traderTabViewModel.TraderStrategyLongViewModel.CrossTabLongCounterpart = _analyzerTabViewModel.AnalyzerStrategyLongViewModel;
+        _traderTabViewModel.TraderStrategyLongViewModel.CrossTabShortCounterpart = _analyzerTabViewModel.AnalyzerStrategyShortViewModel;
+        _traderTabViewModel.TraderStrategyLongViewModel.CrossTabLabel = "Analyzer";
+        _traderTabViewModel.TraderStrategyShortViewModel.CrossTabLongCounterpart = _analyzerTabViewModel.AnalyzerStrategyLongViewModel;
+        _traderTabViewModel.TraderStrategyShortViewModel.CrossTabShortCounterpart = _analyzerTabViewModel.AnalyzerStrategyShortViewModel;
+        _traderTabViewModel.TraderStrategyShortViewModel.CrossTabLabel = "Analyzer";
+
+        // Wire cross-tab interval counterparts (Analyzer ↔ Trader)
+        _analyzerTabViewModel.AnalyzerIntervalLongViewModel.CrossTabLongCounterpart = _traderTabViewModel.TraderIntervalLongViewModel;
+        _analyzerTabViewModel.AnalyzerIntervalLongViewModel.CrossTabShortCounterpart = _traderTabViewModel.TraderIntervalShortViewModel;
+        _analyzerTabViewModel.AnalyzerIntervalShortViewModel.CrossTabLongCounterpart = _traderTabViewModel.TraderIntervalLongViewModel;
+        _analyzerTabViewModel.AnalyzerIntervalShortViewModel.CrossTabShortCounterpart = _traderTabViewModel.TraderIntervalShortViewModel;
+
+        _traderTabViewModel.TraderIntervalLongViewModel.CrossTabLongCounterpart = _analyzerTabViewModel.AnalyzerIntervalLongViewModel;
+        _traderTabViewModel.TraderIntervalLongViewModel.CrossTabShortCounterpart = _analyzerTabViewModel.AnalyzerIntervalShortViewModel;
+        _traderTabViewModel.TraderIntervalLongViewModel.CrossTabLabel = "Analyzer";
+        _traderTabViewModel.TraderIntervalShortViewModel.CrossTabLongCounterpart = _analyzerTabViewModel.AnalyzerIntervalLongViewModel;
+        _traderTabViewModel.TraderIntervalShortViewModel.CrossTabShortCounterpart = _analyzerTabViewModel.AnalyzerIntervalShortViewModel;
+        _traderTabViewModel.TraderIntervalShortViewModel.CrossTabLabel = "Analyzer";
+
 
         LoadConfig(GlobalData.Settings);
     }

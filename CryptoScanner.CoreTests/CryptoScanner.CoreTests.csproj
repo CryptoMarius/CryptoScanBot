@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
-    <!-- Needed for the BABA band parity tests: the band helper lives in the Analyzers plugin now. -->
+    <!-- Needed for the VBS band parity tests: the band helper lives in the Analyzers plugin now. -->
     <ProjectReference Include="..\CryptoScanner.Analyzers\CryptoScanner.Analyzers.csproj" />
   </ItemGroup>
 
@@ -32,18 +32,16 @@
     <None Update="Trend\STETHUSDT\STETHUSDT-1h.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Signal\Bbma\ADAUSDT\*.json">
+    <None Update="Analyzer\Bbma\ADAUSDT\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Signal\StopLoss\SOLUSDT\*.json">
+    <None Update="Analyzer\VbsStopLoss\SOLUSDT\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Signal\Indicators\indicator_reference.json">
+    <None Update="Analyzer\Indicators\indicator_reference.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Signal\Baba\Fixtures\*.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <!-- TradingBuddy test + fixtures live in Analyzers\TradingBuddy\Tests but compile here -->
   </ItemGroup>
 
 </Project>

@@ -482,7 +482,7 @@ public class PositionMonitor : IDisposable
                                 // Check the assets, the symbol limits..
 
                                 // Bepaal het entry bedrag. Strategies that supplied an explicit entry
-                                // price (OverrideSignalPrice → signal.SignalPrice, e.g. baba's band,
+                                // price (OverrideSignalPrice → signal.SignalPrice, e.g. vbs's band,
                                 // CHoCH/BOS break) enter at that level; otherwise at the current market price.
                                 decimal entryPrice = (signal.EntryPriceOverridden && signal.SignalPrice > 0
                                     ? signal.SignalPrice
@@ -877,41 +877,43 @@ public class PositionMonitor : IDisposable
         decimal? stop = result.Stop?.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
         decimal? limit = result.Limit?.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
-        // SL protection (break-even): once the position has reached MoveSlToBreakEvenPercentage in profit,
-        // pull the stop to break-even and keep it there (sticky — the flag never resets, so a later
-        // pullback cannot loosen it). Open DCA orders are cancelled separately in
-        // CancelOrdersIfClosedOrTimeoutOrReposition once the flag is set.
+        // Profit lock: once the position has reached MoveSlToBreakEvenPercentage in profit,
+        // move the SL to BE + that percentage to protect the profit (sticky — the flag never
+        // resets, so a later pullback cannot loosen it). Open DCA orders are cancelled separately
+        // in CancelOrdersIfClosedOrTimeoutOrReposition once the flag is set.
         if (GlobalData.Settings.Trading.MoveSlToBreakEven
             && position.BreakEvenPrice > 0)
         {
             int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
+            decimal lockPct = GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage;
 
             if (!position.SlMovedToBreakEven)
             {
                 decimal favorable = position.Side == CryptoTradeSide.Long ? LastCandle1m.High : LastCandle1m.Low;
                 decimal profitPct = multiplier * (favorable - position.BreakEvenPrice) / position.BreakEvenPrice * 100m;
-                if (profitPct >= GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage)
+                if (profitPct >= lockPct)
                 {
                     position.SlMovedToBreakEven = true;
-                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} SL moved to break-even (profit reached {profitPct:N2}% >= {GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage:N2}%)");
+                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} profit lock: SL moved to BE+{lockPct:N2}% (profit reached {profitPct:N2}%)");
                 }
             }
 
             if (position.SlMovedToBreakEven)
             {
-                decimal beStop = position.BreakEvenPrice.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-                decimal beGap = Math.Abs(beStop * 0.01m);
-                decimal beLimit = (beStop - multiplier * beGap)
+                decimal lockStop = (position.BreakEvenPrice + multiplier * position.BreakEvenPrice * lockPct / 100m)
+                    .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+                decimal lockGap = Math.Abs(lockStop * 0.01m);
+                decimal lockLimit = (lockStop - multiplier * lockGap)
                     .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
-                // Tighten only: pull the stop to BE when there was none, or when BE is tighter than the
-                // current stop (long: a higher stop is tighter; short: a lower stop is tighter).
+                // Tighten only: move the stop when there was none, or when the lock level is
+                // tighter than the current stop (long: higher is tighter; short: lower is tighter).
                 if (stop == null
-                    || (multiplier == 1 && beStop > stop.Value)
-                    || (multiplier == -1 && beStop < stop.Value))
+                    || (multiplier == 1 && lockStop > stop.Value)
+                    || (multiplier == -1 && lockStop < stop.Value))
                 {
-                    stop = beStop;
-                    limit = beLimit;
+                    stop = lockStop;
+                    limit = lockLimit;
                 }
             }
         }
