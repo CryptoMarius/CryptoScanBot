@@ -34,9 +34,6 @@ public static class AnalyzerRegistration
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
         PluginManager.Register(new Nwe.NwePlugin());
         PluginManager.Register(new Trend.TrendPlugin());
-
-        // Overlay-only plugin (for comparing with TradingBuddy's own bands)
-        PluginManager.Register(new TradingBuddy.TradingBuddyPlugin());
 #endif
     }
 }
