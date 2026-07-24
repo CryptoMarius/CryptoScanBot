@@ -65,11 +65,11 @@ public class BitvavoRestClient : IDisposable
             candles.Add(new BitvavoCandle
             {
                 OpenTime = DateTimeOffset.FromUnixTimeMilliseconds(arr[0].GetInt64()).UtcDateTime,
-                Open = decimal.Parse(arr[1].GetString()!, CultureInfo.InvariantCulture),
-                High = decimal.Parse(arr[2].GetString()!, CultureInfo.InvariantCulture),
-                Low = decimal.Parse(arr[3].GetString()!, CultureInfo.InvariantCulture),
-                Close = decimal.Parse(arr[4].GetString()!, CultureInfo.InvariantCulture),
-                Volume = decimal.Parse(arr[5].GetString()!, CultureInfo.InvariantCulture),
+                Open = decimal.Parse(arr[1].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture),
+                High = decimal.Parse(arr[2].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture),
+                Low = decimal.Parse(arr[3].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture),
+                Close = decimal.Parse(arr[4].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture),
+                Volume = decimal.Parse(arr[5].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture),
             });
         }
         return candles;

@@ -57,11 +57,11 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 return;
 
             DateTime openTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(candleArr[0].GetInt64()).UtcDateTime;
-            decimal open = decimal.Parse(candleArr[1].GetString()!, CultureInfo.InvariantCulture);
-            decimal high = decimal.Parse(candleArr[2].GetString()!, CultureInfo.InvariantCulture);
-            decimal low = decimal.Parse(candleArr[3].GetString()!, CultureInfo.InvariantCulture);
-            decimal close = decimal.Parse(candleArr[4].GetString()!, CultureInfo.InvariantCulture);
-            decimal volume = decimal.Parse(candleArr[5].GetString()!, CultureInfo.InvariantCulture);
+            decimal open = decimal.Parse(candleArr[1].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture);
+            decimal high = decimal.Parse(candleArr[2].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture);
+            decimal low = decimal.Parse(candleArr[3].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture);
+            decimal close = decimal.Parse(candleArr[4].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture);
+            decimal volume = decimal.Parse(candleArr[5].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture);
 
             UpdateCacheFromKline(market, openTimeUtc,
                 open: open, high: high, low: low, close: close, volume: volume);
