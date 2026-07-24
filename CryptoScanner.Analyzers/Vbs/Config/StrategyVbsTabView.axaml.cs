@@ -26,6 +26,6 @@ public partial class StrategyVbsTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/VWAP-Band-Strategy-(VBS)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/VWAP-Band-Strategy-(VBS)") { UseShellExecute = true });
     }
 }
