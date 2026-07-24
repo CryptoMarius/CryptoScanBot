@@ -26,6 +26,6 @@ public partial class StrategyAtrRbTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/ATR-Range-Breakout-(AtrRb)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/ATR-Range-Breakout-(AtrRb)") { UseShellExecute = true });
     }
 }

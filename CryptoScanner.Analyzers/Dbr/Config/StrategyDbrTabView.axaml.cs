@@ -26,6 +26,6 @@ public partial class StrategyDbrTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/Donchian-Breakout-Reversion-(DBR)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/Donchian-Breakout-Reversion-(DBR)") { UseShellExecute = true });
     }
 }

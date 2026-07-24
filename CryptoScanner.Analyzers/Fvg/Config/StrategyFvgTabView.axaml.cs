@@ -26,6 +26,6 @@ public partial class StrategyFvgTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/Fair-Value-Gap-(FVG)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/Fair-Value-Gap-(FVG)") { UseShellExecute = true });
     }
 }

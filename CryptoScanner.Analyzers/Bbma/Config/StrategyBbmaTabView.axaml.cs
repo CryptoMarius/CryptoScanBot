@@ -27,6 +27,6 @@ public partial class StrategyBbmaTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/BBMA-Omni-(Bbma)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/BBMA-Omni-(Bbma)") { UseShellExecute = true });
     }
 }

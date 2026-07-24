@@ -26,6 +26,6 @@ public partial class StrategyJumpTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/Candle-Jump-(Jump)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/Candle-Jump-(Jump)") { UseShellExecute = true });
     }
 }

@@ -26,6 +26,6 @@ public partial class StrategySbmTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/SMA-Based-Method-(SBM)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/SMA-Based-Method-(SBM)") { UseShellExecute = true });
     }
 }

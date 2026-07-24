@@ -26,6 +26,6 @@ public partial class StrategyDlzTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/Dominant-Liquidity-Zones-(DLZ)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/Dominant-Liquidity-Zones-(DLZ)") { UseShellExecute = true });
     }
 }

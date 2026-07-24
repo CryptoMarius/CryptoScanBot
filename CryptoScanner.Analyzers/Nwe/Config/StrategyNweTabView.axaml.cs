@@ -26,6 +26,6 @@ public partial class StrategyNweTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/Nadaraya-Watson-Envelope-(NWE)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/Nadaraya-Watson-Envelope-(NWE)") { UseShellExecute = true });
     }
 }

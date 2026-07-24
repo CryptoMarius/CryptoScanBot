@@ -26,6 +26,6 @@ public partial class StrategyStobbTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/Stochastic-+-Bollinger-Bands-(STOBB)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/Stochastic-+-Bollinger-Bands-(STOBB)") { UseShellExecute = true });
     }
 }

@@ -26,6 +26,6 @@ public partial class StrategyStorsiTabView : UserControl
 
     private void OnWikiTapped(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/Stochastic-+-RSI-(StoRsi)") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/Stochastic-+-RSI-(StoRsi)") { UseShellExecute = true });
     }
 }
