@@ -29,6 +29,7 @@ public static class AnalyzerRegistration
         // Experimental strategies (not yet fully tested or documented)
         PluginManager.Register(new Bbma.BbmaPlugin());
         PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
+        PluginManager.Register(new BbSqueeze.BbSqueezePlugin());
         PluginManager.Register(new Choch.ChochPlugin());
         PluginManager.Register(new DoubleTopBottom.DoubleTopBottomPlugin());
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
