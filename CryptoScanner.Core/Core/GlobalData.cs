@@ -412,8 +412,8 @@ public static class GlobalData
 
             if (symbol.Name == "" || exchange.SymbolListId.ContainsKey(symbol.Id))
             {
-                //TODO: Delete the symbol? (first report all of them.......)
-                AddTextToLogTab($"DUPLICATE SYMBOL {exchange.Name} #{symbol.Id} {symbol.Name} {symbol.Base}/{symbol.Quote}?");
+                // Already in memory, not a problem
+                //AddTextToLogTab($"DUPLICATE SYMBOL {exchange.Name} #{symbol.Id} {symbol.Name} {symbol.Base}/{symbol.Quote}?");
             }
 
             if (!exchange.SymbolListId.ContainsKey(symbol.Id))
