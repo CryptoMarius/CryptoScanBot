@@ -49,6 +49,7 @@ public sealed class IntervalIndicatorHub
     private readonly WmaHub _wma05High;
     private readonly WmaHub _wma10Low;
     private readonly WmaHub _wma10High;
+    private readonly SuperTrendHub _superTrend;
 #endif
 
     private readonly List<IIndicatorExtension> _pluginExtensions = [];
@@ -82,6 +83,7 @@ public sealed class IntervalIndicatorHub
         _wma05High = high.ToWmaHub(5);
         _wma10Low = low.ToWmaHub(10);
         _wma10High = high.ToWmaHub(10);
+        _superTrend = _quoteHub.ToSuperTrendHub(10, 3.0);
 #endif
 
         foreach (var plugin in PluginManager.LoadedPlugins.Values)
@@ -190,6 +192,13 @@ public sealed class IntervalIndicatorHub
             data.Wma10Low = _wma10Low.Results[^1].Wma;
         if (_wma10High.Results.Count > 0)
             data.Wma10High = _wma10High.Results[^1].Wma;
+        if (_superTrend.Results.Count > 0)
+        {
+            var st = _superTrend.Results[^1];
+            data.SuperTrend = (double?)st.SuperTrend;
+            data.SuperTrendUpperBand = (double?)st.UpperBand;
+            data.SuperTrendLowerBand = (double?)st.LowerBand;
+        }
 #endif
 
         foreach (var ext in _pluginExtensions)
