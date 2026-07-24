@@ -7,6 +7,7 @@ using Avalonia.Threading;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
+using CryptoScanner.Core.SignalR;
 using CryptoScanner.Core.Sounds;
 using CryptoScanner.Services;
 using CryptoScanner.Views;
@@ -139,6 +140,9 @@ public partial class App : Application
             _ = scannerSession.ApplyConfigurationAsync(true);
             scannerSession.Start(0);
 
+            GlobalData.SignalRService = new SignalRService();
+            _ = GlobalData.SignalRService.StartAsync();
+
             // Initialize a hidden browser to avoid the Altrady start question in the browser
             EventOpenHiddenBrowser = GlobalData.Services.GetRequiredService<HiddenBrowserService>();
             EventOpenHiddenBrowser.Initialize();
@@ -198,6 +202,13 @@ public partial class App : Application
         ScannerLog.Logger.Trace($"OnApplicationExit(ThreadSoundPlayer.StopSoundThread)");
         ThreadSoundPlayer.StopSoundThread();
 
+        ScannerLog.Logger.Trace($"OnApplicationExit(SignalRService.StopAsync)");
+        if (GlobalData.SignalRService != null)
+        {
+            await GlobalData.SignalRService.StopAsync();
+            GlobalData.SignalRService = null;
+        }
+
         ScannerLog.Logger.Trace($"OnApplicationExit(ScannerSession.StopAsync)");
         var scannersession = GlobalData.GetService<IScannerSession>()
             ?? throw new InvalidOperationException("ScannerSession not registered");
@@ -256,6 +267,8 @@ public partial class App : Application
                 case PowerMode.Suspend:
                     ScannerLog.Logger.Trace("System going to sleep - disconnecting...");
                     GlobalData.AddTextToLogTab("System going to sleep - disconnecting...");
+                    if (GlobalData.SignalRService != null)
+                        await GlobalData.SignalRService.StopAsync();
                     var scannersession1 = GlobalData.GetService<IScannerSession>()
                         ?? throw new InvalidOperationException("ScannerSession not registered");
                     await scannersession1.StopAsync();
@@ -268,6 +281,8 @@ public partial class App : Application
                     ScannerLog.Logger.Trace("System resumed - reconnecting...");
                     GlobalData.AddTextToLogTab("System resumed - reconnecting...");
                     await Task.Delay(2000); // wait for network
+                    if (GlobalData.SignalRService != null)
+                        await GlobalData.SignalRService.StartAsync();
                     var scannersession2 = GlobalData.GetService<IScannerSession>()
                         ?? throw new InvalidOperationException("ScannerSession not registered");
                     scannersession2.Start(5000);

@@ -13,6 +13,7 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.SignalR;
 using CryptoScanner.Core.Trader;
 //using CryptoScanner.Core.TradingView;
 using CryptoScanner.Core.Zones;
@@ -158,6 +159,8 @@ public static class GlobalData
     public static void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
 
     public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
+
+    public static SignalRService? SignalRService { get; set; }
 
 
     // Active exchange

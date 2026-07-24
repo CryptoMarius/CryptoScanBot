@@ -459,6 +459,7 @@ public class SignalCreate
 
             GlobalData.ThreadSaveObjects!.AddToQueue(signal);
             GlobalData.AnalyzeSignalCreated?.Invoke(signal);
+            GlobalData.SignalRService?.BroadcastSignal(signal);
         }
         catch (Exception error)
         {

@@ -49,7 +49,7 @@ public static class TradingRules
                             else
                             {
                                 missingCandles = true;
-                                GlobalData.AddTextToLogTab($"Missing candles for tradingrules? {symbol.Name} {candleUnixDate.ToDateTime()} {symbolInterval.Interval.Name} {loop.ToDateTime()}  (debug2)");
+                                //GlobalData.AddTextToLogTab($"Missing candles for tradingrules? {symbol.Name} {candleUnixDate.ToDateTime()} {symbolInterval.Interval.Name} {loop.ToDateTime()}  (debug2)");
                             }
                             loop -= symbolInterval.Interval.Duration;
                             //loopDate = CandleTools.GetUnixDate(loop);

@@ -105,6 +105,10 @@ public class SettingsGeneral
     public SettingsGeneralRsi SettingsRsi { get; set; } = new();
     public SettingsGeneralStoch SettingsStoch { get; set; } = new();
 
+    // SignalR server for broadcasting signals to external programs
+    public bool SignalREnabled { get; set; } = false;
+    public int SignalRPort { get; set; } = 5200;
+
     public string DebugSymbol { get; set; } = "";
     public bool DebugZoneCandles { get; set; } = false;
     public bool DebugKLineReceive { get; set; } = false;
