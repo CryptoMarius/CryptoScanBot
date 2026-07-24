@@ -99,6 +99,14 @@ public class CryptoData
     [Computed]
     public double? Atr14 { get; set; }
 
+    // SuperTrend indicator (ATR-based trailing stop, flips between support and resistance)
+    [Computed]
+    public double? SuperTrend { get; set; }
+    [Computed]
+    public double? SuperTrendUpperBand { get; set; }
+    [Computed]
+    public double? SuperTrendLowerBand { get; set; }
+
     // RSI indicator
     public double? Rsi { get; set; }
     //public double? SlopeRsi { get; set; }
