@@ -10,10 +10,15 @@
 
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="5">
-            <TextBlock Margin="4,2,4,4" FontSize="13">
-                <Run Text="FVG – Fair Value Gap" FontWeight="SemiBold"/>
-                <Run Text=" — Entry signals at unfilled price gaps (ICT concept)" Foreground="{DynamicResource SystemBaseMediumColor}"/>
-            </TextBlock>
+            <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
+                <TextBlock FontSize="13">
+                    <Run Text="FVG – Fair Value Gap" FontWeight="SemiBold"/>
+                    <Run Text=" — Entry signals at unfilled price gaps (ICT concept)" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                </TextBlock>
+                <TextBlock Text="Wiki ↗" FontSize="12" Cursor="Hand"
+                           Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
+                           TextDecorations="Underline" Tapped="OnWikiTapped"/>
+            </StackPanel>
             <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" RowSpacing="5" ColumnSpacing="5" HorizontalAlignment="Left">
                 <configviews:SoundAndColorsView Grid.Row="0" Grid.Column="0" DataContext="{Binding SoundAndColorsViewModel}" />
                 <vm:StrategyFvgSettingsView Grid.Row="1" Grid.Column="0" DataContext="{Binding StrategyFvgSettingsViewModel}" />
