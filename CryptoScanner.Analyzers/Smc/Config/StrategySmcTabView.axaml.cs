@@ -1,4 +1,7 @@
+using System.Diagnostics;
+
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 
 namespace CryptoScanner.Analyzers.Smc.Config;
@@ -19,5 +22,10 @@ public partial class StrategySmcTabView : UserControl
     private void InitializeComponent()
     {
         AvaloniaXamlLoader.Load(this);
+    }
+
+    private void OnWikiTapped(object? sender, RoutedEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/analyzers/Smart-Money-Concepts-(SMC)") { UseShellExecute = true });
     }
 }
