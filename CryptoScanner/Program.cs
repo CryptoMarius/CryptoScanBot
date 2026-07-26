@@ -76,7 +76,7 @@ class Program
         Console.WriteLine($"Scanner AppDataFolder: {GlobalData.AppDataFolder}");
 
         // Initialize the logging system (as soon as possible)
-        ScannerLog.InitializeLogging();
+        ScannerLog.InitializeLogging(false);
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }

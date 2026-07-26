@@ -98,7 +98,7 @@ public partial class App : Application
         //    a default log, an error log, and (in DEBUG) a Trace log. EmulatorLogBridge then forwards
         //    every AddTextToLogTab line to ScannerLog.Logger.Info — independently of the UI Log tab —
         //    so those lines (bootstrap, runs, the Timing line, the per-run log) always land on disk.
-        ScannerLog.InitializeLogging();
+        ScannerLog.InitializeLogging(true);
         EmulatorLogBridge.Start();
 
         // 3. Seed settings.json from the live scanner if this is a fresh emulator folder.

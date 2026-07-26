@@ -9,11 +9,17 @@ public class ScannerLog
     // The global logger class
     public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
-    // Matches NLog's FileTarget default layout ("${longdate}|${level:uppercase=true}|${logger}|${message}")
-    // plus the simulated-time field (${simtime}, registered in InitializeLogging) inserted right after ${longdate}.
     // ${onexception} appends the full exception (incl. stacktrace) only on calls like Logger.Error(ex, "...") -
     // without it, every Logger.Error(exception, ...) call in the codebase silently drops the stacktrace.
-    private const string LogLayout = "${longdate}|sim=${simtime}|${level:uppercase=true}|${logger}|${message}${onexception:${newline}${exception:format=ToString}}";
+    private const string ScannerLogLayout = "${longdate}|${level:uppercase=true}|${logger}|${message}${onexception:${newline}${exception:format=ToString}}";
+    private const string EmulatorLogLayout = "${simtime}|${level:uppercase=true}|${logger}|${message}${onexception:${newline}${exception:format=ToString}}";
+
+    /// <summary>
+    /// When true, log lines use the simulated candle time instead of the wall-clock.
+    /// Set this before calling <see cref="InitializeLogging"/>.
+    /// </summary>
+    private static bool UseSimulatedTime { get; set; }
+    private static string LogLayout => UseSimulatedTime ? EmulatorLogLayout : ScannerLogLayout;
 
     static private NLog.Targets.Target CreateTarget(string name, string extra)
     {
@@ -165,13 +171,12 @@ public class ScannerLog
         runTraceRule = null;
     }
 
-    public static void InitializeLogging()
+    public static void InitializeLogging(bool fromEmulator)
     {
-        // ${simtime} renders GlobalData.Clock's current time (real wall-clock for the live scanner,
-        // the replay's simulated candle time for the emulator) instead of the actual system clock that
-        // NLog's built-in ${longdate} always uses. Used alongside ${longdate} in LogLayout below (not
-        // a replacement) so log lines keep showing both: how fast the run is really progressing AND
-        // which point in the (possibly simulated) timeline a line refers to.
+        UseSimulatedTime = fromEmulator;
+        // ${simtime} renders GlobalData.Clock's current time. The scanner never uses it (its layout
+        // uses ${longdate} only), but the emulator's layout replaces ${longdate} with ${simtime} so
+        // log lines show the simulated candle time instead of the wall-clock.
         LogManager.Setup().SetupExtensions(ext =>
             ext.RegisterLayoutRenderer("simtime", _ => GlobalData.Clock.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.ffff")));
 

@@ -36,6 +36,6 @@ public class TestAssemblySetup
         // Wire up log output to the test console (same as TestBase.AddTextToLogTab)
         GlobalData.LogToLogTabEvent += text => Console.WriteLine(text.Trim());
 
-        ScannerLog.InitializeLogging();
+        ScannerLog.InitializeLogging(false);
     }
 }
