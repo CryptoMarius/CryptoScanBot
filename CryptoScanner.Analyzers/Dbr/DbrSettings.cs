@@ -37,5 +37,7 @@ public class DbrSettings : SettingsSignalStrategyBase
 
     public DbrSettings() : base()
     {
+        SoundFileLong = "sound-dbr-oversold.wav";
+        SoundFileShort = "sound-dbr-overbought.wav";
     }
 }

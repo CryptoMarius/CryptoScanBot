@@ -61,5 +61,7 @@ public class VbsSettings : SettingsSignalStrategyBase
 
     public VbsSettings() : base()
     {
+        SoundFileLong = "sound-vbs-oversold.wav";
+        SoundFileShort = "sound-vbs-overbought.wav";
     }
 }

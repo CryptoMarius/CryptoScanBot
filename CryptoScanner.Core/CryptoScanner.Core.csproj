@@ -133,6 +133,8 @@
     <None Remove="Sounds\Other\star_trek_energize.wav" />
     <None Remove="Sounds\Other\suffocation.wav" />
     <None Remove="Sounds\Other\xiaomi_fress.wav" />
+    <None Remove="Sounds\sound-dbr-overbought.wav" />
+    <None Remove="Sounds\sound-dbr-oversold.wav" />
     <None Remove="Sounds\sound-dlz-overbought.wav" />
     <None Remove="Sounds\sound-dlz-oversold.wav" />
     <None Remove="Sounds\sound-domnear-overbought.wav" />
@@ -158,6 +160,8 @@
     <None Remove="Sounds\sound-trade-notification2.wav" />
     <None Remove="Sounds\sound-uuh-overbought.wav" />
     <None Remove="Sounds\sound-uuh-oversold.wav" />
+    <None Remove="Sounds\sound-vbs-overbought.wav" />
+    <None Remove="Sounds\sound-vbs-oversold.wav" />
   </ItemGroup>
 
   <ItemGroup>
@@ -242,6 +246,12 @@
     <Content Include="Sounds\Other\xiaomi_fress.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Sounds\sound-dbr-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-dbr-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Sounds\sound-dlz-overbought.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -315,6 +325,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Sounds\sound-uuh-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-vbs-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-vbs-oversold.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
