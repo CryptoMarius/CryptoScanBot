@@ -192,6 +192,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task StopAsync()
     {
+        StopFlushTimer();
+
         if (_ws == null)
         {
             ScannerLog.Logger.Trace($"Bitvavo kline ticker group {GroupName} already stopped");

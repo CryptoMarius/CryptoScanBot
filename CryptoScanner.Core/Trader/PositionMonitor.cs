@@ -610,54 +610,54 @@ public class PositionMonitor : IDisposable
     }
 
 
-    private async Task<(bool success, CryptoCandle candleInterval)> PrepareAsync(CryptoPosition position, CryptoPositionPart part)
-    {
-        // Stukje migratie, het interval van de part kan null zijn
-        CryptoInterval interval = position.Interval!;
-        if (part.Interval != null)
-            interval = part.Interval;
-        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
+    //private async Task<(bool success, CryptoCandle candleInterval)> PrepareAsync(CryptoPosition position, CryptoPositionPart part)
+    //{
+    //    // Stukje migratie, het interval van de part kan null zijn
+    //    CryptoInterval interval = position.Interval!;
+    //    if (part.Interval != null)
+    //        interval = part.Interval;
+    //    CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
 
 
 
-        // Maak beslissingen als de candle van het interval afgesloten is (dus NIET die van de 1m candle!)
-        // Dus ook niet zomaar een laatste candle nemen in verband met Backtesting (echt even berekenen)
-        CryptoCandle candleInterval = default;
-        if (LastCandle1mCloseTime % interval.Duration != 0)
-            return (false, candleInterval);
-        CandleTime candleOpenTimeInterval = LastCandle1mCloseTime - interval.Duration;
+    //    // Maak beslissingen als de candle van het interval afgesloten is (dus NIET die van de 1m candle!)
+    //    // Dus ook niet zomaar een laatste candle nemen in verband met Backtesting (echt even berekenen)
+    //    CryptoCandle candleInterval = default;
+    //    if (LastCandle1mCloseTime % interval.Duration != 0)
+    //        return (false, candleInterval);
+    //    CandleTime candleOpenTimeInterval = LastCandle1mCloseTime - interval.Duration;
 
 
-        // Die indicator berekening had ik niet verwacht (cooldown?)
-        await position.Symbol.Data.CandleLock.WaitAsync();
-        try
-        {
-            CryptoCandle lastx = symbolInterval.CandleList.LastCandle;
+    //    // Die indicator berekening had ik niet verwacht (cooldown?)
+    //    await position.Symbol.Data.CandleLock.WaitAsync();
+    //    try
+    //    {
+    //        CryptoCandle lastx = symbolInterval.CandleList.LastCandle;
 
-            // Niet zomaar een laatste candle nemen in verband met Backtesting
-            if (!symbolInterval.CandleList.TryGetValue(candleOpenTimeInterval, out candleInterval))
-            {
-                string t = string.Format("candle 1m interval: {0}", candleOpenTimeInterval.ToLocalTime()) + " " +
-                string.Format("is de candle op het {0} interval echt missing in action?", interval.Name);
-                GlobalData.AddTextToLogTab($"Analyse {position.Symbol.Name} position={position.CreateTime} interval={interval.Name} {t}");
-                //throw new Exception($"Candle niet aanwezig? {t}");
-                return (false, candleInterval);
-            }
-
-
-            // Calculate indicators if needed
-            var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, interval, candleInterval!.OpenTime, interval.IntervalPeriod);
-            if (!result.success)
-                return (false, candleInterval);
-        }
-        finally
-        {
-            position.Symbol.Data.CandleLock.Release();
-        }
+    //        // Niet zomaar een laatste candle nemen in verband met Backtesting
+    //        if (!symbolInterval.CandleList.TryGetValue(candleOpenTimeInterval, out candleInterval))
+    //        {
+    //            string t = string.Format("candle 1m interval: {0}", candleOpenTimeInterval.ToLocalTime()) + " " +
+    //            string.Format("is de candle op het {0} interval echt missing in action?", interval.Name);
+    //            GlobalData.AddTextToLogTab($"Analyse {position.Symbol.Name} position={position.CreateTime} interval={interval.Name} {t}");
+    //            //throw new Exception($"Candle niet aanwezig? {t}");
+    //            return (false, candleInterval);
+    //        }
 
 
-        return (true, candleInterval);
-    }
+    //        // Calculate indicators if needed
+    //        var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, interval, candleInterval!.OpenTime, interval.IntervalPeriod);
+    //        if (!result.success)
+    //            return (false, candleInterval);
+    //    }
+    //    finally
+    //    {
+    //        position.Symbol.Data.CandleLock.Release();
+    //    }
+
+
+    //    return (true, candleInterval);
+    //}
 
     private decimal CorrectBuyOrDcaPrice(CryptoPosition position, decimal price)
     {

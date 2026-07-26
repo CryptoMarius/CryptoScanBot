@@ -98,8 +98,19 @@ public class SignalBbSqueezeBase : SignalCreateBase
         if (base.GiveUp(signal))
             return true;
 
-        // Give up when the BB width collapses again (re-squeeze) after the breakout
         var settings = BbSqueezePlugin.Settings;
+
+        // Skip the re-squeeze check during the grace period after the signal fired;
+        // the bands need a few candles to really expand after the breakout candle.
+        CandleTime signalTime = CandleTime.FromDateTime(signal.OpenDate);
+        CandleTime graceEnd = signalTime + settings.ReSqueezeGraceCandles * signal.Interval.Duration;
+        if (CandleLast.Candle.OpenTime <= graceEnd)
+        {
+            ExtraText = "";
+            return false;
+        }
+
+        // Give up when the BB width collapses again (re-squeeze) after the breakout
         if (CandleLast?.CandleData?.BollingerBandsPercentage <= settings.BBSqueezeMaxPercentage)
         {
             ExtraText = "BB re-squeezed after breakout";

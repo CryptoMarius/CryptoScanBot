@@ -37,6 +37,8 @@ public class SuperTrendBreakoutPlugin : IStrategyPlugin
         return Settings;
     }
 
+    public bool RequiresDlzZones => true;
+
     public IChartOverlay? ChartOverlay { get; } = null;
     public IConfigView? ConfigView { get; } = null;
 }

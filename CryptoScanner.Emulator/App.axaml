@@ -213,6 +213,11 @@
             <Setter Property="HorizontalScrollBarVisibility" Value="Visible"/>
         </Style>
 
+        <!-- Reserve space below the last row so the horizontal scrollbar does not overlap it -->
+        <Style Selector="DataGrid /template/ DataGridRowsPresenter">
+            <Setter Property="Margin" Value="0,0,0,18"/>
+        </Style>
+
         <Style Selector="DataGridColumnHeader">
             <Setter Property="Margin" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />

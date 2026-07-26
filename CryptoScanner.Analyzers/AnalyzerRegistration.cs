@@ -33,8 +33,11 @@ public static class AnalyzerRegistration
         PluginManager.Register(new Choch.ChochPlugin());
         PluginManager.Register(new DoubleTopBottom.DoubleTopBottomPlugin());
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
+        PluginManager.Register(new KumoSqueeze.KumoSqueezePlugin());
         PluginManager.Register(new Nwe.NwePlugin());
+        PluginManager.Register(new SuperTrendBreakout.SuperTrendBreakoutPlugin());
         PluginManager.Register(new Trend.TrendPlugin());
+
 #endif
     }
 }

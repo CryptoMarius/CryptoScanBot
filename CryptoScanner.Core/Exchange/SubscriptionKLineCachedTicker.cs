@@ -20,6 +20,7 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
     : SubscriptionTicker(exchangeOptions)
 {
     private readonly SemaphoreSlim _cacheSemaphore = new(1, 1);
+    private System.Timers.Timer? _flushTimer;
 
     // Combined per-symbol entry: symbol metadata + its running candle cache, keyed by exchange name.
     private Dictionary<string, (CryptoSymbol Symbol, CryptoCandleList Candles)> _cache = [];
@@ -163,11 +164,13 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
             throw new Exception("interval1m not found");
 
-        System.Timers.Timer timer = new()
+        _flushTimer?.Stop();
+        _flushTimer?.Dispose();
+        _flushTimer = new System.Timers.Timer()
         {
             AutoReset = false
         };
-        timer.Elapsed += async (sender, _) =>
+        _flushTimer.Elapsed += async (sender, _) =>
         {
             foreach (var (symbol, candles) in _cache.Values)
             {
@@ -247,7 +250,20 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                 t.Start();
             }
         };
-        timer.Interval = GetNextTimerInterval();
-        timer.Start();
+        _flushTimer.Interval = GetNextTimerInterval();
+        _flushTimer.Start();
+    }
+
+    protected void StopFlushTimer()
+    {
+        _flushTimer?.Stop();
+        _flushTimer?.Dispose();
+        _flushTimer = null;
+    }
+
+    public override async Task StopAsync()
+    {
+        StopFlushTimer();
+        await base.StopAsync();
     }
 }

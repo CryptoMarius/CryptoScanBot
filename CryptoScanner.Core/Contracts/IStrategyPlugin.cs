@@ -24,6 +24,11 @@ public interface IStrategyPlugin
     /// Return null when the strategy uses only standard indicators.</summary>
     IIndicatorExtension? CreateIndicatorExtension() => null;
 
+    /// <summary>When true, the engine ensures DLZ zone calculation is active even when
+    /// the DLZ strategy itself is not in the signal list. Strategies that check DLZ
+    /// zone proximity (e.g. SuperTrendBreakout) should return true.</summary>
+    bool RequiresDlzZones => false;
+
     /// <summary>Optional chart overlay (band drawing, labels, etc.).</summary>
     IChartOverlay? ChartOverlay => null;
 

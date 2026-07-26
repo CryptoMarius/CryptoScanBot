@@ -37,6 +37,7 @@ public enum CryptoSignalStrategy
     IchimokuKumoBreakout = 54,
     BbSqueeze = 55,
     SuperTrendBreakout = 56,
+    KumoSqueeze = 57,
 
     // CHoCH (Change of Character) — fires when the ZigZag-derived structure makes a Change
     // of Character on the primary or secondary trend. The .pullback variants additionally

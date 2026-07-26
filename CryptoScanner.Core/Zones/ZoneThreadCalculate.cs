@@ -42,7 +42,7 @@ public class ZoneThreadCalculate
                 // NOTE: zones that were created earlier on an interval that has since been
                 // REMOVED from the IntervalList are NOT cleaned up here — that is a separate
                 // concern (stale zones stay in memory/DB until manually purged).
-                bool runDlz = GlobalData.Settings.Signal.ZonesDlz.IntervalList.Contains(interval.Name);
+                bool runDlz = Signal.SignalPrepare.IsDlzInterval(interval.Name);
                 bool runFvg = GlobalData.Settings.Signal.ZonesFvg.IntervalList.Contains(interval.Name);
                 if (!runDlz && !runFvg)
                     return;
@@ -196,7 +196,7 @@ public class ZoneThreadCalculate
             // only iterated FVG.IntervalList, which meant DLZ-only intervals were never
             // queued by the "Calculate DLZ for all" command. Concat+Distinct keeps the
             // DLZ-configured intervals first (stable, easy to follow in the log).
-            var intervalNames = GlobalData.Settings.Signal.ZonesDlz.IntervalList
+            var intervalNames = Signal.SignalPrepare.EffectiveDlzIntervals
                 .Concat(GlobalData.Settings.Signal.ZonesFvg.IntervalList)
                 .Distinct()
                 .ToList();

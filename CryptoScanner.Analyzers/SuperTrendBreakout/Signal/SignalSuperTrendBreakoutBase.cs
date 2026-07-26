@@ -64,7 +64,7 @@ public class SignalSuperTrendBreakoutBase : SignalCreateBase
 
         decimal warnPct = dlzSettings.NearZonePercentage;
 
-        foreach (var intervalName in dlzSettings.IntervalList)
+        foreach (var intervalName in SignalPrepare.EffectiveDlzIntervals)
         {
             if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
                 continue;

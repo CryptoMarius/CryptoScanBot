@@ -1,3 +1,4 @@
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.BbSqueeze;
@@ -14,9 +15,15 @@ public class BbSqueezeSettings : SettingsSignalStrategyBase
     // Number of MACD histogram bars that must confirm the breakout direction
     public int MacdConfirmCandles { get; set; } = 2;
 
+    // Number of candles after the signal to skip the re-squeeze GiveUp check
+    public int ReSqueezeGraceCandles { get; set; } = 2;
+
     public BbSqueezeSettings() : base()
     {
         SoundFileLong = "sound-signal-oversold.wav";
         SoundFileShort = "sound-signal-overbought.wav";
+
+        // Breakout strategy: disable all mean-reversion entry conditions
+        EntryConditions = new SettingsEntryConditions();
     }
 }

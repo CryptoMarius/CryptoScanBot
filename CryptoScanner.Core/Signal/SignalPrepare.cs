@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Contracts;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Zones;
@@ -25,6 +26,31 @@ public class SignalPrepare
 
     public static bool ZoneDlzActive() => Preparing.ContainsKey(SignalPrepareKind.Dlz);
     public static bool ZoneFvgActive() => Preparing.ContainsKey(SignalPrepareKind.Fvg);
+
+    /// <summary>True when the given interval is in the effective DLZ prep bucket
+    /// (settings + strategy-driven defaults).</summary>
+    public static bool IsDlzInterval(string intervalName)
+        => Preparing.TryGetValue(SignalPrepareKind.Dlz, out var list) && list.ContainsKey(intervalName);
+
+    /// <summary>All interval names in the effective DLZ prep bucket.</summary>
+    public static IEnumerable<string> EffectiveDlzIntervals
+        => Preparing.TryGetValue(SignalPrepareKind.Dlz, out var list) ? list.Keys : [];
+
+    private static bool AnyEnabledStrategyRequiresDlzZones()
+    {
+        foreach (var plugin in PluginManager.LoadedPlugins.Values.Distinct())
+        {
+            if (!plugin.RequiresDlzZones)
+                continue;
+            foreach (var strat in plugin.Strategies)
+            {
+                if (GlobalData.Settings.Signal.Long.Strategy.Contains(strat.Name) ||
+                    GlobalData.Settings.Signal.Short.Strategy.Contains(strat.Name))
+                    return true;
+            }
+        }
+        return false;
+    }
 
 
     /// <summary>
@@ -106,6 +132,13 @@ public class SignalPrepare
         foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
         {
             Add(SignalPrepareKind.Dlz, intervalName);
+        }
+        // When a strategy that depends on DLZ zones is enabled but ZonesDlz.IntervalList
+        // is empty, fall back to "1h" so zones are always calculated.
+        if (!Preparing.ContainsKey(SignalPrepareKind.Dlz) || Preparing[SignalPrepareKind.Dlz].Count == 0)
+        {
+            if (AnyEnabledStrategyRequiresDlzZones())
+                Add(SignalPrepareKind.Dlz, "1h");
         }
         // Separate intervals on which the SMC order blocks are calculated.
         foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)

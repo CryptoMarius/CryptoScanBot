@@ -53,6 +53,12 @@ public class VbsSettings : SettingsSignalStrategyBase
     // Stochastic to be overbought (uses the global Stoch OS/OB thresholds from SettingsStoch).
     public bool RequireStochOsOb { get; set; } = false;
 
+    // Maximum allowed VBS band-margin percentage (SLStdevFactor * vwStdev as % of the band).
+    // When > 0 a signal is skipped if pctDeviation exceeds this value (wide bands = high
+    // volatility = higher stop-loss risk). 0 = disabled (no upper limit). Applies to both
+    // long and short signals.
+    public double BandMaxPercentage { get; set; } = 0;
+
     public VbsSettings() : base()
     {
     }

@@ -22,7 +22,8 @@ public class ThreadMonitorCandle
 
     public void AddToQueue(CryptoSymbol symbol, CryptoCandle candle)
     {
-        if (!GlobalData.IsEmulatorMode && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+        if (!GlobalData.IsEmulatorMode && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running
+            && symbol.ExchangeId == GlobalData.ActiveExchange?.Id)
             Queue.Add((symbol, candle));
     }
 
