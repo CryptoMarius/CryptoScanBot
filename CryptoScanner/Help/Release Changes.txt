@@ -1,25 +1,21 @@
 CryptoScanBot release historie:
 
 XX-08-2025 2.6.0
+- Extra help link naar de Cryptoscanner wiki pagina op github
 - De afkortingen voor de strategien wordt nu beknopt uitgewerkt in het analyzer tabblad
 - Afkortingen aangepast, want de onderhuidse berekening strookte niet echt met de naam
 - De aligment/padding van de instellingen aangepast
 - Chart venster, de opties iets anders ingedeeld zodat de opties beter ingedeeld zijn + opties op naam sorteren
-- ?
-
+- BB Squeuze strategie toegevoegd (maar daar zijn niet veel signalen op)
 
 Alle exchanges testen (oh dear)
 Compilatie Mac + Testje op Mac vm.
 Compilatie Linux + Testje op Linux vm.
 
 De documentatie bijwerken, screenshots verversen.
-De readame bijwerken + ondersteunde exchanges
 De main branch overschrijven met Avalonia
 
-Definiteve release
-
-
-
+Definiteve release?
 
 
 22-07-2025 2.5.9
