@@ -1,4 +1,6 @@
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
 
 using System.Reflection;
@@ -25,21 +27,22 @@ public static class SignalGridExpander
 
         foreach (var (sectionName, props) in entry.SignalOverrides)
         {
+            // First try named fields on SettingsSignal (ZonesDlz, ZonesFvg, ZonesSmc)
             FieldInfo? field = typeof(SettingsSignal).GetField(sectionName);
-            if (field == null)
-                continue;
-
-            object sectionObj = field.GetValue(GlobalData.Settings.Signal)!;
-            Type sectionType = sectionObj.GetType();
-
-            foreach (var (propName, jsonVal) in props)
+            if (field != null)
             {
-                PropertyInfo? prop = sectionType.GetProperty(propName);
-                if (prop == null)
-                    continue;
+                object sectionObj = field.GetValue(GlobalData.Settings.Signal)!;
+                ApplyProps(sectionObj, props, saved);
+                continue;
+            }
 
-                saved.Add(new Override(sectionObj, prop, prop.GetValue(sectionObj)));
-                prop.SetValue(sectionObj, ConvertJsonElement(jsonVal, prop.PropertyType));
+            // Fall back to plugin settings in AnalyzerSettings (keyed by plugin name)
+            IStrategyPlugin? plugin = PluginManager.LoadedPlugins.Values
+                .FirstOrDefault(p => p.StrategyName.Equals(sectionName, StringComparison.OrdinalIgnoreCase));
+            if (plugin != null)
+            {
+                ApplyProps(plugin.SettingsBase, props, saved);
+                continue;
             }
         }
 
@@ -57,6 +60,20 @@ public static class SignalGridExpander
         }
 
         return saved;
+    }
+
+    private static void ApplyProps(object target, Dictionary<string, JsonElement> props, List<Override> saved)
+    {
+        Type targetType = target.GetType();
+        foreach (var (propName, jsonVal) in props)
+        {
+            PropertyInfo? prop = targetType.GetProperty(propName);
+            if (prop == null)
+                continue;
+
+            saved.Add(new Override(target, prop, prop.GetValue(target)));
+            prop.SetValue(target, ConvertJsonElement(jsonVal, prop.PropertyType));
+        }
     }
 
     /// <summary>Revert overrides to their saved values.</summary>

@@ -24,16 +24,25 @@ public class SignalBbSqueezeShort : SignalBbSqueezeBase
         }
 
         // MACD histogram must be falling (bearish momentum confirmation)
-        if (!IsMacdHistogramFalling(settings.MacdConfirmCandles))
+        if (settings.UseMacdFilter)
         {
-            ExtraText = "MACD histogram not falling";
-            return false;
+            if (!IsMacdHistogramFalling(settings.MacdConfirmCandles))
+            {
+                ExtraText = "MACD histogram not falling";
+                return false;
+            }
+
+            if (CandleLast.CandleData.MacdHistogram >= 0)
+            {
+                ExtraText = "MACD histogram not negative";
+                return false;
+            }
         }
 
-        // MACD histogram should be negative (below zero line)
-        if (CandleLast.CandleData.MacdHistogram >= 0)
+        // Volume spike confirmation
+        if (settings.UseVolumeFilter && !IsVolumeSpike(settings.VolumeMultiplier, settings.VolumeSmaLength))
         {
-            ExtraText = "MACD histogram not negative";
+            ExtraText = "Volume too low";
             return false;
         }
 

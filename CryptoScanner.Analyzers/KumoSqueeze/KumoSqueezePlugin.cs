@@ -45,5 +45,5 @@ public class KumoSqueezePlugin : IStrategyPlugin
     }
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = null;
+    public IConfigView? ConfigView { get; } = new Config.KumoSqueezeConfigView();
 }

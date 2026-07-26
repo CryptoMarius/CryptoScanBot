@@ -31,8 +31,8 @@ public class KumoSqueezeSignalShort : KumoSqueezeSignalBase
             return false;
         }
 
-        // 4. Volume spike: volume > multiplier × SMA(volume, length)
-        if (!IsVolumeSpike(settings.VolumeMultiplier, settings.VolumeSmaLength))
+        // 4. Volume spike: volume > multiplier x SMA(volume, length)
+        if (settings.UseVolumeFilter && !IsVolumeSpike(settings.VolumeMultiplier, settings.VolumeSmaLength))
         {
             ExtraText = "Volume too low";
             return false;
@@ -79,6 +79,21 @@ public class KumoSqueezeSignalShort : KumoSqueezeSignalBase
             if (cloud.TenkanSen >= cloud.KijunSen)
             {
                 ExtraText = $"Tenkan {cloud.TenkanSen:N8} not above Kijun {cloud.KijunSen:N8}";
+                return false;
+            }
+        }
+
+        // 10. Optional: MACD histogram falling + negative
+        if (settings.UseMacdFilter)
+        {
+            if (!IsMacdHistogramFalling(settings.MacdConfirmCandles))
+            {
+                ExtraText = "MACD histogram not falling";
+                return false;
+            }
+            if (CandleLast.CandleData.MacdHistogram >= 0)
+            {
+                ExtraText = "MACD histogram not negative";
                 return false;
             }
         }

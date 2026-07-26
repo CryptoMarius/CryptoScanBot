@@ -25,17 +25,24 @@ public static class AnalyzerRegistration
         PluginManager.Register(new Storsi.StorsiPlugin());
         PluginManager.Register(new Vbs.VbsPlugin());
 
-#if DEBUG
-        // Experimental strategies (not yet fully tested or documented)
-        PluginManager.Register(new Bbma.BbmaPlugin());
-        PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
+        // These look interesting (specially the squeeze ones)
         PluginManager.Register(new BbSqueeze.BbSqueezePlugin());
-        PluginManager.Register(new Choch.ChochPlugin());
-        PluginManager.Register(new DoubleTopBottom.DoubleTopBottomPlugin());
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
         PluginManager.Register(new KumoSqueeze.KumoSqueezePlugin());
+
+        // Experimental strategies (not yet fully tested or documented)
+#if DEBUG
+        // From the Malysian trader Oma Ally, not much signals but performs well (no profits yet)
+        PluginManager.Register(new Bbma.BbmaPlugin());
+        PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
+        // Very disapointing, expected more of this strategy
+        PluginManager.Register(new Choch.ChochPlugin());
+        // Lots of noise, there is alway's some sort of dtd to be found
+        PluginManager.Register(new DoubleTopBottom.DoubleTopBottomPlugin());
+        // Large breakous with large profits and large losses
         PluginManager.Register(new Nwe.NwePlugin());
         PluginManager.Register(new SuperTrendBreakout.SuperTrendBreakoutPlugin());
+        // Very disapointing, expected more of this strategy
         PluginManager.Register(new Trend.TrendPlugin());
 
 #endif

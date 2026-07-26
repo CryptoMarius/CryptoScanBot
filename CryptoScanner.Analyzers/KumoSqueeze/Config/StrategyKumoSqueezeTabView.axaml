@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
+             xmlns:vm="using:CryptoScanner.Analyzers.KumoSqueeze.Config"
+             xmlns:configviews="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyKumoSqueezeTabViewModel"
+             x:Class="CryptoScanner.Analyzers.KumoSqueeze.Config.StrategyKumoSqueezeTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
+                <TextBlock FontSize="13">
+                    <Run Text="KUMOSQUEEZE – Ichimoku Kumo + Bollinger Squeeze Breakout" FontWeight="SemiBold"/>
+                    <Run Text=" — BB squeeze breakout confirmed by Ichimoku cloud position, volume and momentum" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                </TextBlock>
+            </StackPanel>
+            <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+            <vm:StrategyKumoSqueezeSettingsView DataContext="{Binding StrategyKumoSqueezeSettingsViewModel}" />
+            <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

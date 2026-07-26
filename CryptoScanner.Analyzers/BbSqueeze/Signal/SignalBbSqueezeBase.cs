@@ -14,8 +14,10 @@ public class SignalBbSqueezeBase : SignalCreateBase
            || data.CandleData.Sma20 == null
            || data.CandleData.BollingerBandsDeviation == null
            || data.CandleData.BollingerBandsPercentage == null
-           || data.CandleData.MacdHistogram == null
            )
+            return false;
+
+        if (BbSqueezePlugin.Settings.UseMacdFilter && data.CandleData.MacdHistogram == null)
             return false;
 
         return true;
@@ -90,6 +92,33 @@ public class SignalBbSqueezeBase : SignalCreateBase
         }
 
         return true;
+    }
+
+
+    /// <summary>
+    /// Check whether current volume exceeds multiplier x SMA(volume, length)
+    /// </summary>
+    protected bool IsVolumeSpike(double multiplier, int smaLength)
+    {
+        MyData? current = CandleLast!;
+        double totalVolume = 0;
+        int count = 0;
+
+        for (int i = 0; i < smaLength; i++)
+        {
+            if (!GetPrevCandle(current, out MyData? prev))
+                return false;
+
+            totalVolume += (double)prev!.Candle.Volume;
+            current = prev;
+            count++;
+        }
+
+        if (count == 0)
+            return false;
+
+        double avgVolume = totalVolume / count;
+        return (double)CandleLast.Candle.Volume > avgVolume * multiplier;
     }
 
 

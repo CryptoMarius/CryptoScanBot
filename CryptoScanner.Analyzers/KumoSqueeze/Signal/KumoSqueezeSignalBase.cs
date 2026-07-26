@@ -21,6 +21,9 @@ public class KumoSqueezeSignalBase : SignalCreateBase
            )
             return false;
 
+        if (KumoSqueezePlugin.Settings.UseMacdFilter && data.CandleData.MacdHistogram == null)
+            return false;
+
         return true;
     }
 
@@ -76,6 +79,44 @@ public class KumoSqueezeSignalBase : SignalCreateBase
 
         double avgVolume = totalVolume / count;
         return (double)CandleLast.Candle.Volume > avgVolume * multiplier;
+    }
+
+
+    protected bool IsMacdHistogramRising(int confirmCandles)
+    {
+        MyData current = CandleLast!;
+
+        for (int i = 0; i < confirmCandles; i++)
+        {
+            if (!GetPrevCandle(current, out MyData? prev))
+                return false;
+
+            if (current.CandleData!.MacdHistogram <= prev!.CandleData!.MacdHistogram)
+                return false;
+
+            current = prev;
+        }
+
+        return true;
+    }
+
+
+    protected bool IsMacdHistogramFalling(int confirmCandles)
+    {
+        MyData current = CandleLast!;
+
+        for (int i = 0; i < confirmCandles; i++)
+        {
+            if (!GetPrevCandle(current, out MyData? prev))
+                return false;
+
+            if (current.CandleData!.MacdHistogram >= prev!.CandleData!.MacdHistogram)
+                return false;
+
+            current = prev;
+        }
+
+        return true;
     }
 
 
