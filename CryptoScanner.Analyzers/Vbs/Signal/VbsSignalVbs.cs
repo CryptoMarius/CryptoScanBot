@@ -1,3 +1,4 @@
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
@@ -83,7 +84,47 @@ public class VbsSignalVbs : SignalCreateBase
 
     public override bool AllowStepIn(CryptoSignal signal)
     {
-        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
+        //CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
+
+        // Cluster filter: after the VBS band break, wait until the last 2 candles stay fully
+        // inside the Bollinger Bands (no touch). This avoids entering during a cluster of
+        // consecutive band breaks — only step in once the extreme move has exhausted.
+        //const int requiredInsideBars = 2;
+        //MyData? candle = CandleLast;
+        //for (int i = 0; i < requiredInsideBars; i++)
+        //{
+        //    if (candle?.CandleData == null)
+        //    {
+        //        ExtraText = "not enough candles for bb inside check";
+        //        return false;
+        //    }
+
+        //    switch (SignalSide)
+        //    {
+        //        case CryptoTradeSide.Long:
+        //            double? lowerBand = candle.CandleData.BollingerBandsLowerBand;
+        //            if (!lowerBand.HasValue || (double)candle.Candle.Close <= lowerBand.Value)
+        //            {
+        //                ExtraText = $"candle {i + 1}/{requiredInsideBars} touches bb.lower (low={(double)candle.Candle.Low:N8} band={lowerBand:N8})";
+        //                return false;
+        //            }
+        //            break;
+        //        case CryptoTradeSide.Short:
+        //            double? upperBand = candle.CandleData.BollingerBandsUpperBand;
+        //            if (!upperBand.HasValue || (double)candle.Candle.Close >= upperBand.Value)
+        //            {
+        //                ExtraText = $"candle {i + 1}/{requiredInsideBars} touches bb.upper (high={(double)candle.Candle.High:N8} band={upperBand:N8})";
+        //                return false;
+        //            }
+        //            break;
+        //    }
+
+        //    if (i < requiredInsideBars - 1)
+        //    {
+        //        if (!GetPrevCandle(candle, out candle))
+        //            return false;
+        //    }
+        //}
 
         //// Enter on the candle AFTER the signal candle: wait at least one candle.
         //if (CandleLast.Candle.OpenTime.Minutes <= CandleTime.FromDateTime(signal.OpenDate).Minutes)

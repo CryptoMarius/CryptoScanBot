@@ -55,15 +55,31 @@ public class VbsSignalLong : VbsSignalVbs
             return false;
         }
 
-        //// The (rarer, more expensive) lower-band break.
-        if (!CandleLast.CandleData!.VbsLower.HasValue)
+
+        // The (rarer, more expensive) band break.
+        if (!CandleLast.CandleData!.VbsLower.HasValue || !CandleLast.CandleData.BollingerBandsLowerBand.HasValue)
             return false;
+        if (!CandleLast.CandleData!.VbsUpper.HasValue || !CandleLast.CandleData.BollingerBandsUpperBand.HasValue)
+            return false;
+
         double lowerBand = CandleLast.CandleData.VbsLower.Value;
         if ((double)CandleLast.Candle.Low >= lowerBand && (double)CandleLast.Candle.Close >= lowerBand)
         {
             ExtraText = "no lower band break";
             return false;
         }
+
+        if (CandleLast.CandleData.BollingerBandsLowerBand.Value <= CandleLast.CandleData.VbsLower.Value)
+        {
+            ExtraText = "bb.lower <= vbs.band";
+            return false;
+        }
+        if (CandleLast.CandleData.BollingerBandsUpperBand.Value >= CandleLast.CandleData.VbsUpper.Value)
+        {
+            ExtraText = "bb.upper >= vbs.bands";
+            return false;
+        }
+
 
         // Stop-loss: SLStdevFactor * vwStdev below the lower band.
         // SL price = lowerBand - SLStdevFactor * vwStdev; SL% = that distance as % of the band.
