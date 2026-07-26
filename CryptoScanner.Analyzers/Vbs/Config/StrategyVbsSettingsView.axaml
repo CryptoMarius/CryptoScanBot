@@ -36,6 +36,13 @@
                           Content="Require Stochastic oversold/overbought" FontSize="12"
                           ToolTip.Tip="When on, a long signal also requires Stochastic to be oversold and a short signal requires Stochastic to be overbought (uses the global Stoch thresholds)."/>
 
+                <!-- Band margin max percentage -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Skip signals where the VBS band margin (SLStdevFactor × vwStdev as % of the band) exceeds this value. Wide bands mean high volatility and a larger stop-loss distance. 0 = disabled (no upper limit).">
+                    <TextBlock Grid.Column="0" Text="Max band margin %:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding BandMaxPercentage, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
             </StackPanel>
         </HeaderedContentControl>
 

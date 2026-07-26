@@ -26,6 +26,9 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _requireStochOsOb = false;
 
+    [ObservableProperty]
+    private double _bandMaxPercentage = 0;
+
     public void LoadConfig(VbsSettings settings)
     {
         Length = settings.Length;
@@ -34,6 +37,7 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
         UseStopLoss = settings.UseStopLoss;
         SLStdevFactor = settings.SLStdevFactor;
         RequireStochOsOb = settings.RequireStochOsOb;
+        BandMaxPercentage = settings.BandMaxPercentage;
     }
 
     public void SaveConfig(VbsSettings settings)
@@ -44,5 +48,6 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
         settings.UseStopLoss = UseStopLoss;
         settings.SLStdevFactor = SLStdevFactor;
         settings.RequireStochOsOb = RequireStochOsOb;
+        settings.BandMaxPercentage = BandMaxPercentage;
     }
 }

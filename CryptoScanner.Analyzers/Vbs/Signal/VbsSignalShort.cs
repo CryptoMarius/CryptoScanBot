@@ -77,6 +77,12 @@ public class VbsSignalShort : VbsSignalVbs
         //    return false;
         //double pctDeviation = VbsPlugin.Settings.StopLossAtrFactor * (atr / (double)CandleLast.Candle.Close * 100);
 
+        if (settings.BandMaxPercentage > 0 && pctDeviation > settings.BandMaxPercentage)
+        {
+            ExtraText = $"band margin {pctDeviation:N2}% exceeds max {settings.BandMaxPercentage:N2}%";
+            return false;
+        }
+
         // Multi-timeframe consensus: higher timeframes must also show a band break.
         int consensusCount = ResolveEntryConditions().TimeframeConsensusCount;
         if (consensusCount > 0)
