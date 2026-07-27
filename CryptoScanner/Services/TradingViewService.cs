@@ -1,4 +1,5 @@
-﻿using CryptoScanner.TradingView;
+﻿using CryptoScanner.Core.SignalR;
+using CryptoScanner.TradingView;
 using CryptoScanner.ViewModels;
 
 namespace CryptoScanner.Services;
@@ -34,10 +35,18 @@ public class TradingViewService : ITradingViewService, IDisposable
                 switch (x.Type)
                 {
                     case IndicatorType.TradingView:
-                        RegisterTradingViewSymbol(x.Symbol, x.Name, (price, volume) => { x.Price = price; x.Volume = volume; }, token);
+                        RegisterTradingViewSymbol(x.Symbol, x.Name, (price, volume) =>
+                        {
+                            x.Price = price; x.Volume = volume;
+                            DashboardDataCollector.SetMarketIndicator("TradingView", x.Symbol, x.Name, price, volume);
+                        }, token);
                         break;
                     case IndicatorType.FearAndGreed:
-                        RegisterFearAndGreedSymbol(x.Symbol, x.Name, (price, volume) => { x.Price = price; }, token);
+                        RegisterFearAndGreedSymbol(x.Symbol, x.Name, (price, volume) =>
+                        {
+                            x.Price = price;
+                            DashboardDataCollector.SetMarketIndicator("FearAndGreed", x.Symbol, x.Name, price, null);
+                        }, token);
                         break;
                 }
             }

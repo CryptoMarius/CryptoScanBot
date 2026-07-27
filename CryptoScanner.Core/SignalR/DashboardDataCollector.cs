@@ -1,0 +1,214 @@
+using CryptoScanner.Core.Const;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
+
+namespace CryptoScanner.Core.SignalR;
+
+/// <summary>
+/// Collects dashboard data from Core-level sources and from externally registered market indicators.
+/// The UI project registers TradingView/F&amp;G values via <see cref="SetMarketIndicator"/>.
+/// </summary>
+public static class DashboardDataCollector
+{
+    private static readonly object _lock = new();
+    private static readonly List<MarketIndicatorDto> _marketIndicators = [];
+
+    /// <summary>
+    /// Called from the UI project to register/update a market indicator value.
+    /// </summary>
+    public static void SetMarketIndicator(string type, string symbol, string name, decimal? price, double? volume)
+    {
+        lock (_lock)
+        {
+            var existing = _marketIndicators.Find(m => m.Symbol == symbol);
+            if (existing != null)
+            {
+                existing.Price = price;
+                existing.Volume = volume;
+            }
+            else
+            {
+                _marketIndicators.Add(new MarketIndicatorDto
+                {
+                    Type = type,
+                    Symbol = symbol,
+                    Name = name,
+                    Price = price,
+                    Volume = volume,
+                });
+            }
+        }
+    }
+
+    public static DashboardUpdateDto CollectUpdate(string selectedQuote, string selectedInterval)
+    {
+        var dto = new DashboardUpdateDto();
+
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange == null)
+            return dto;
+
+        // Latest barometer point
+        dto.LatestBarometerPoint = GetLatestBarometerPoint(selectedQuote, selectedInterval);
+
+        // Barometer summary values (1h, 4h, 1d)
+        dto.BarometerValues = GetBarometerValues(selectedQuote);
+
+        // Market indicators (TradingView, F&G)
+        lock (_lock)
+        {
+            dto.MarketIndicators = _marketIndicators.Select(m => new MarketIndicatorDto
+            {
+                Type = m.Type,
+                Symbol = m.Symbol,
+                Name = m.Name,
+                Price = m.Price,
+                Volume = m.Volume,
+            }).ToList();
+        }
+
+        // Exchange symbol prices
+        dto.SymbolPrices = GetSymbolPrices(exchange);
+
+        // Ticker stats
+        dto.TickerStats = GetTickerStats(exchange);
+
+        return dto;
+    }
+
+    private static BarometerPointDto? GetLatestBarometerPoint(string quote, string interval)
+    {
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange == null || string.IsNullOrEmpty(quote) || string.IsNullOrEmpty(interval))
+            return null;
+
+        if (!GlobalData.IntervalListPeriodName.TryGetValue(interval, out CryptoInterval? cryptoInterval))
+            return null;
+
+        string symbolName = Constants.SymbolNameBarometerPrice + quote;
+        if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            return null;
+
+        var symbolInterval = symbol.GetSymbolInterval(cryptoInterval.IntervalPeriod);
+        if (symbolInterval.CandleList.Count == 0)
+            return null;
+
+        if (!symbolInterval.CandleList.TryGetLastCandle(out CryptoCandle lastCandle))
+            return null;
+
+        return new BarometerPointDto
+        {
+            Time = lastCandle.OpenTime.ToDateTime(),
+            Value = lastCandle.Close,
+        };
+    }
+
+    private static BarometerValuesDto GetBarometerValues(string quote)
+    {
+        var dto = new BarometerValuesDto { Quote = quote };
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange == null || string.IsNullOrEmpty(quote))
+            return dto;
+
+        if (!GlobalData.Settings.QuoteCoins.TryGetValue(quote, out var quoteData))
+            return dto;
+
+        CryptoIntervalPeriod[] periods = [CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d];
+        foreach (var period in periods)
+        {
+            var barometerData = exchange.Data.GetBarometer(quoteData.Name, period);
+            if (barometerData?.PriceBarometer != null)
+            {
+                if (period == CryptoIntervalPeriod.interval1h)
+                    dto.Barometer1h = barometerData.PriceBarometer.Value;
+                else if (period == CryptoIntervalPeriod.interval4h)
+                    dto.Barometer4h = barometerData.PriceBarometer.Value;
+                else if (period == CryptoIntervalPeriod.interval1d)
+                    dto.Barometer1d = barometerData.PriceBarometer.Value;
+            }
+        }
+
+        // Barometer time from 1m candle list
+        string symbolName = Constants.SymbolNameBarometerPrice + quote;
+        if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+        {
+            var interval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+            if (interval1m.CandleList.Count > 0 && interval1m.CandleList.TryGetLastCandle(out var candle))
+            {
+                dto.BarometerTime = (candle.OpenTime + 1).ToDateTime().ToLocalTime().ToString("HH:mm");
+            }
+        }
+
+        return dto;
+    }
+
+    private static List<SymbolPriceDto> GetSymbolPrices(Model.CryptoExchange exchange)
+    {
+        var result = new List<SymbolPriceDto>();
+        foreach (string baseName in GlobalData.Settings.ShowSymbolInformation)
+        {
+            foreach (var quoteCoin in GlobalData.Settings.QuoteCoins)
+            {
+                string symbolName = baseName + quoteCoin.Key;
+                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                {
+                    decimal price = 0;
+                    if (symbol.LastPrice.HasValue)
+                    {
+                        price = symbol.LastPrice.Value;
+                    }
+                    else
+                    {
+                        var si = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+                        try
+                        {
+                            if (si.CandleList.Count > 0)
+                            {
+                                var c = si.CandleList.Values.Last();
+                                price = c.Close;
+                            }
+                        }
+                        catch
+                        {
+                            // concurrent modification
+                        }
+                    }
+                    result.Add(new SymbolPriceDto
+                    {
+                        Symbol = symbolName,
+                        Price = price,
+                        Volume = symbol.Volume,
+                    });
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    private static TickerStatsDto GetTickerStats(Model.CryptoExchange exchange)
+    {
+        int positionCount = 0;
+        string positionText = "";
+        if (GlobalData.Settings.Trading.Active)
+        {
+            if (exchange.Data.PositionList.Count != 0)
+            {
+                foreach (var _ in exchange.Data.PositionList.Values)
+                    positionCount++;
+            }
+            positionText = $"({GlobalData.Settings.Trading.SlotsMaximalLong}/{GlobalData.Settings.Trading.SlotsMaximalShort}) {positionCount}";
+        }
+
+        return new TickerStatsDto
+        {
+            KlineTickerCount = ExchangeBase.KLineTicker?.Count() ?? 0,
+            ScannerExecuteCount = SignalExecute.AnalyseCount,
+            ScannerSignalCount = GlobalData.CreatedSignalCount,
+            ScannerPositionCount = positionText,
+        };
+    }
+}

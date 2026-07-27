@@ -16,6 +16,7 @@ using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.SignalR;
 using CryptoScanner.Helpers;
 using CryptoScanner.Services;
 
@@ -287,6 +288,9 @@ public partial class DashBoardInformationViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"Quote changed to: {value}");
         Task.Run(CalculateBarometer);
 
+        if (GlobalData.SignalRService != null)
+            GlobalData.SignalRService.SelectedQuote = value;
+
         RegisterExchangeSymbols();
         UpdateSymbolPrices();
     }
@@ -297,6 +301,9 @@ public partial class DashBoardInformationViewModel : ObservableObject
         _applicationStateService.BarometerInterval = value;
         System.Diagnostics.Debug.WriteLine($"Interval changed to: {value}");
         Task.Run(CalculateBarometer);
+
+        if (GlobalData.SignalRService != null)
+            GlobalData.SignalRService.SelectedInterval = value;
     }
 
 

@@ -54,3 +54,13 @@ Telegram
 (ik kon geen copy/paste doen van het bestand, misschien een andere naam geven?) -> crashte namelijk tijdens het opstarten, geen signals, geen positions, geen duidelijke error
 Bestand wordt niet meer bewaard?
 
+
+cleanup:
+
+update position set signalid=null where not signalid is null
+
+drop table [asset]
+drop table [signal]
+drop table [trade]
+drop table [order]
+vacuum

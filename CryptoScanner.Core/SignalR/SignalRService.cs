@@ -20,7 +20,12 @@ public sealed class SignalRService : IDisposable
 {
     private WebApplication? _app;
     private IHubContext<CryptoSignalHub>? _hubContext;
+    private Timer? _dashboardTimer;
     private bool _disposed;
+
+    // The UI project sets these so the periodic push knows which quote/interval to broadcast.
+    public string SelectedQuote { get; set; } = "USDT";
+    public string SelectedInterval { get; set; } = "1h";
 
     public bool IsRunning => _app != null;
 
@@ -80,6 +85,8 @@ public sealed class SignalRService : IDisposable
 
             _hubContext = _app.Services.GetRequiredService<IHubContext<CryptoSignalHub>>();
 
+            _dashboardTimer = new Timer(OnDashboardTimerTick, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+
             GlobalData.AddTextToLogTab($"SignalR server started on http://localhost:{port}/signalr/signals");
             ScannerLog.Logger.Info($"SignalR server started on port {port}");
         }
@@ -94,6 +101,12 @@ public sealed class SignalRService : IDisposable
 
     public async Task StopAsync()
     {
+        if (_dashboardTimer != null)
+        {
+            await _dashboardTimer.DisposeAsync();
+            _dashboardTimer = null;
+        }
+
         if (_app != null)
         {
             try
@@ -130,6 +143,25 @@ public sealed class SignalRService : IDisposable
         catch (Exception ex)
         {
             ScannerLog.Logger.Error(ex, "SignalR broadcast error");
+        }
+    }
+
+    private void OnDashboardTimerTick(object? state)
+    {
+        if (_hubContext == null || GlobalData.IsEmulatorMode)
+            return;
+
+        if (GlobalData.ApplicationStatus != Enums.CryptoApplicationStatus.Running)
+            return;
+
+        try
+        {
+            var update = DashboardDataCollector.CollectUpdate(SelectedQuote, SelectedInterval);
+            _ = _hubContext.Clients.All.SendAsync("ReceiveDashboardUpdate", update);
+        }
+        catch (Exception ex)
+        {
+            ScannerLog.Logger.Error(ex, "SignalR dashboard broadcast error");
         }
     }
 
