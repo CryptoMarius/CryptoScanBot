@@ -47,15 +47,17 @@ public static class DashboardDataCollector
     {
         var dto = new DashboardUpdateDto();
 
+        // Barometer summary values (1h, 4h, 1d) + Ready/Progress. Filled unconditionally, before the
+        // exchange check below, so the UI's candle-load progress keeps flowing even during startup when
+        // ActiveExchange is still null.
+        dto.BarometerValues = GetBarometerValues(selectedQuote);
+
         var exchange = GlobalData.ActiveExchange;
         if (exchange == null)
             return dto;
 
         // Latest barometer point
         dto.LatestBarometerPoint = GetLatestBarometerPoint(selectedQuote, selectedInterval);
-
-        // Barometer summary values (1h, 4h, 1d)
-        dto.BarometerValues = GetBarometerValues(selectedQuote);
 
         // Market indicators (TradingView, F&G)
         lock (_lock)
@@ -108,7 +110,15 @@ public static class DashboardDataCollector
 
     private static BarometerValuesDto GetBarometerValues(string quote)
     {
-        var dto = new BarometerValuesDto { Quote = quote };
+        var dto = new BarometerValuesDto
+        {
+            Quote = quote,
+            // Ready/Progress mirror the scanner's own candle-load state so the UI can show a live
+            // "Loading candles N/M" line and flip the graph the instant loading finishes. Set first so
+            // they are always populated, even on the early returns below.
+            Ready = GlobalData.ApplicationStatus == CryptoApplicationStatus.Running,
+            Progress = GlobalData.CandleProgressText,
+        };
         var exchange = GlobalData.ActiveExchange;
         if (exchange == null || string.IsNullOrEmpty(quote))
             return dto;
