@@ -17,6 +17,12 @@ public class BarometerGraphDto
     public string Quote { get; set; } = "";
     public string Interval { get; set; } = "";
     public List<BarometerPointDto> Points { get; set; } = [];
+
+    /// <summary>True once the scanner has finished loading candles (ApplicationStatus == Running).</summary>
+    public bool Ready { get; set; }
+
+    /// <summary>Live "done / total (symbol)" candle-load progress while starting up; empty once ready.</summary>
+    public string Progress { get; set; } = "";
 }
 
 /// <summary>
@@ -29,6 +35,12 @@ public class BarometerValuesDto
     public decimal Barometer4h { get; set; }
     public decimal Barometer1d { get; set; }
     public string BarometerTime { get; set; } = "";
+
+    /// <summary>True once the scanner has finished loading candles (ApplicationStatus == Running).</summary>
+    public bool Ready { get; set; }
+
+    /// <summary>Live "done / total (symbol)" candle-load progress while starting up; empty once ready.</summary>
+    public string Progress { get; set; } = "";
 }
 
 /// <summary>

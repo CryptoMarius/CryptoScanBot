@@ -31,7 +31,15 @@ public class CryptoSignalHub : Hub
     /// </summary>
     public BarometerGraphDto GetBarometerGraph(string quote, string interval)
     {
-        var result = new BarometerGraphDto { Quote = quote, Interval = interval };
+        var result = new BarometerGraphDto
+        {
+            Quote = quote,
+            Interval = interval,
+            // Report the scanner's load state so the UI shows the loading skeleton and only draws the
+            // graph once candles are in. Set on every return path.
+            Ready = Core.GlobalData.ApplicationStatus == CryptoApplicationStatus.Running,
+            Progress = Core.GlobalData.CandleProgressText,
+        };
 
         if (Core.GlobalData.ActiveExchange == null)
             return result;
