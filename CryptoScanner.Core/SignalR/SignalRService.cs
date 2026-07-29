@@ -21,6 +21,9 @@ public sealed class SignalRService : IDisposable
     private WebApplication? _app;
     private IHubContext<CryptoSignalHub>? _hubContext;
     private Timer? _dashboardTimer;
+    // Last time we broadcast the dashboard while Running - used to keep the ~1-minute cadence once the
+    // scanner is up, even though the timer itself now ticks every couple of seconds (for load progress).
+    private DateTime _lastRunningPushUtc = DateTime.MinValue;
     private bool _disposed;
 
     // The UI project sets these so the periodic push knows which quote/interval to broadcast.
@@ -85,7 +88,9 @@ public sealed class SignalRService : IDisposable
 
             _hubContext = _app.Services.GetRequiredService<IHubContext<CryptoSignalHub>>();
 
-            _dashboardTimer = new Timer(OnDashboardTimerTick, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+            // Tick every 2s so candle-load progress can be pushed live; once Running the tick throttles
+            // itself back to a ~1-minute broadcast cadence (see OnDashboardTimerTick).
+            _dashboardTimer = new Timer(OnDashboardTimerTick, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 
             GlobalData.AddTextToLogTab($"SignalR server started on http://localhost:{port}/signalr/signals");
             ScannerLog.Logger.Info($"SignalR server started on port {port}");
@@ -151,8 +156,15 @@ public sealed class SignalRService : IDisposable
         if (_hubContext == null || GlobalData.IsEmulatorMode)
             return;
 
-        if (GlobalData.ApplicationStatus != Enums.CryptoApplicationStatus.Running)
-            return;
+        // While the scanner is still loading candles (Initializing) push every tick (~2s) so the UI's
+        // "Loading candles N/M" progress stays in step. Once Running, throttle back to the original
+        // ~1-minute cadence (the timer keeps ticking at 2s, but we only broadcast once a minute).
+        if (GlobalData.ApplicationStatus == Enums.CryptoApplicationStatus.Running)
+        {
+            if (DateTime.UtcNow - _lastRunningPushUtc < TimeSpan.FromMinutes(1))
+                return;
+            _lastRunningPushUtc = DateTime.UtcNow;
+        }
 
         try
         {
