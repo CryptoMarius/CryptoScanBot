@@ -47,33 +47,44 @@ public static class SignalGridExpander
         }
 
         object tradingObj = GlobalData.Settings.Trading;
-        Type tradingType = tradingObj.GetType();
-
-        foreach (var (propName, jsonVal) in entry.TradingOverrides)
-        {
-            PropertyInfo? prop = tradingType.GetProperty(propName);
-            if (prop == null)
-                continue;
-
-            saved.Add(new Override(tradingObj, prop, prop.GetValue(tradingObj)));
-            prop.SetValue(tradingObj, ConvertJsonElement(jsonVal, prop.PropertyType));
-        }
+        foreach (var (propPath, jsonVal) in entry.TradingOverrides)
+            ApplyDottedProperty(tradingObj, propPath, jsonVal, saved);
 
         return saved;
     }
 
     private static void ApplyProps(object target, Dictionary<string, JsonElement> props, List<Override> saved)
     {
-        Type targetType = target.GetType();
-        foreach (var (propName, jsonVal) in props)
-        {
-            PropertyInfo? prop = targetType.GetProperty(propName);
-            if (prop == null)
-                continue;
+        foreach (var (propPath, jsonVal) in props)
+            ApplyDottedProperty(target, propPath, jsonVal, saved);
+    }
 
-            saved.Add(new Override(target, prop, prop.GetValue(target)));
-            prop.SetValue(target, ConvertJsonElement(jsonVal, prop.PropertyType));
+    /// <summary>
+    /// Resolves a dotted property path (e.g. "EntryConditions.Ma200MinDistancePercentage")
+    /// and sets the leaf value. Intermediate segments are navigated via reflection.
+    /// </summary>
+    private static void ApplyDottedProperty(object root, string propPath, JsonElement jsonVal, List<Override> saved)
+    {
+        string[] parts = propPath.Split('.');
+        object current = root;
+
+        for (int i = 0; i < parts.Length - 1; i++)
+        {
+            PropertyInfo? nav = current.GetType().GetProperty(parts[i]);
+            if (nav == null)
+                return;
+            object? next = nav.GetValue(current);
+            if (next == null)
+                return;
+            current = next;
         }
+
+        PropertyInfo? leaf = current.GetType().GetProperty(parts[^1]);
+        if (leaf == null)
+            return;
+
+        saved.Add(new Override(current, leaf, leaf.GetValue(current)));
+        leaf.SetValue(current, ConvertJsonElement(jsonVal, leaf.PropertyType));
     }
 
     /// <summary>Revert overrides to their saved values.</summary>
@@ -95,6 +106,10 @@ public static class SignalGridExpander
             if (element.ValueKind == JsonValueKind.String)
                 return Enum.Parse(underlying, element.GetString()!, ignoreCase: true);
         }
+
+        if (element.ValueKind == JsonValueKind.Object)
+            return JsonSerializer.Deserialize(element.GetRawText(), underlying,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         return underlying switch
         {

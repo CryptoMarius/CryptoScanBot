@@ -723,6 +723,20 @@ public partial class MainWindowViewModel : ObservableObject
         decimal savedStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage;
         List<CryptoTpEntry> savedTpList = GlobalData.Settings.Trading.TpList;
         List<CryptoDcaEntry> savedDcaList = GlobalData.Settings.Trading.DcaList;
+        List<string> savedSignalLongInterval = GlobalData.Settings.Signal.Long.Interval;
+        List<string> savedSignalShortInterval = GlobalData.Settings.Signal.Short.Interval;
+        List<string> savedSignalLongIntervalTrend = GlobalData.Settings.Signal.Long.IntervalTrend.List;
+        List<string> savedSignalShortIntervalTrend = GlobalData.Settings.Signal.Short.IntervalTrend.List;
+        Dictionary<string, (decimal, decimal)> savedSignalLongBarometer = GlobalData.Settings.Signal.Long.Barometer.List;
+        bool savedSignalLongBarometerConsensus = GlobalData.Settings.Signal.Long.Barometer.ConsensusActive;
+        int savedSignalLongBarometerMinConsensus = GlobalData.Settings.Signal.Long.Barometer.MinConsensus;
+        Dictionary<string, (decimal, decimal)> savedSignalShortBarometer = GlobalData.Settings.Signal.Short.Barometer.List;
+        bool savedSignalShortBarometerConsensus = GlobalData.Settings.Signal.Short.Barometer.ConsensusActive;
+        int savedSignalShortBarometerMinConsensus = GlobalData.Settings.Signal.Short.Barometer.MinConsensus;
+        List<(decimal, decimal)> savedSignalLongMarketTrend = GlobalData.Settings.Signal.Long.MarketTrend.List;
+        List<(decimal, decimal)> savedSignalShortMarketTrend = GlobalData.Settings.Signal.Short.MarketTrend.List;
+        List<(decimal, decimal)> savedSignalLongMarketTrendSecondary = GlobalData.Settings.Signal.Long.MarketTrendSecondary.List;
+        List<(decimal, decimal)> savedSignalShortMarketTrendSecondary = GlobalData.Settings.Signal.Short.MarketTrendSecondary.List;
 
         int totalRuns = selectedAlgorithms.Sum(a =>
             queue.Count(e => string.IsNullOrEmpty(e.Algorithm) || e.Algorithm.Equals(a!.Name, StringComparison.OrdinalIgnoreCase)));
@@ -750,17 +764,72 @@ public partial class MainWindowViewModel : ObservableObject
 
                     runIndex++;
 
-                    GlobalData.Settings.Trading.StopLossPercentage = entry.StopLossPercentage;
-                    GlobalData.Settings.Trading.StopLossLimitPercentage = entry.StopLossPercentage + 1m;
+                    // Reset all side filters to saved values (clean slate per entry)
+                    GlobalData.Settings.Signal.Long.Strategy = [algorithm.Name];
+                    GlobalData.Settings.Signal.Short.Strategy = [algorithm.Name];
+                    GlobalData.Settings.Trading.Long.Strategy = [algorithm.Name];
+                    GlobalData.Settings.Trading.Short.Strategy = [algorithm.Name];
+                    GlobalData.Settings.Signal.Long.Interval = savedSignalLongInterval;
+                    GlobalData.Settings.Signal.Short.Interval = savedSignalShortInterval;
+                    GlobalData.Settings.Signal.Long.IntervalTrend.List = savedSignalLongIntervalTrend;
+                    GlobalData.Settings.Signal.Short.IntervalTrend.List = savedSignalShortIntervalTrend;
+                    GlobalData.Settings.Signal.Long.Barometer.List = savedSignalLongBarometer;
+                    GlobalData.Settings.Signal.Long.Barometer.ConsensusActive = savedSignalLongBarometerConsensus;
+                    GlobalData.Settings.Signal.Long.Barometer.MinConsensus = savedSignalLongBarometerMinConsensus;
+                    GlobalData.Settings.Signal.Short.Barometer.List = savedSignalShortBarometer;
+                    GlobalData.Settings.Signal.Short.Barometer.ConsensusActive = savedSignalShortBarometerConsensus;
+                    GlobalData.Settings.Signal.Short.Barometer.MinConsensus = savedSignalShortBarometerMinConsensus;
+                    GlobalData.Settings.Signal.Long.MarketTrend.List = savedSignalLongMarketTrend;
+                    GlobalData.Settings.Signal.Short.MarketTrend.List = savedSignalShortMarketTrend;
+                    GlobalData.Settings.Signal.Long.MarketTrendSecondary.List = savedSignalLongMarketTrendSecondary;
+                    GlobalData.Settings.Signal.Short.MarketTrendSecondary.List = savedSignalShortMarketTrendSecondary;
 
-                    if (entry.TpList.Count > 0)
-                        GlobalData.Settings.Trading.TpList = entry.TpList
+                    decimal effectiveSL = entry.Trading?.StopLossPercentage ?? entry.StopLossPercentage;
+                    GlobalData.Settings.Trading.StopLossPercentage = effectiveSL;
+                    GlobalData.Settings.Trading.StopLossLimitPercentage = effectiveSL + 1m;
+
+                    List<CryptoTpEntry>? effectiveTP = entry.Trading?.TpList ?? (entry.TpList.Count > 0 ? entry.TpList : null);
+                    if (effectiveTP is { Count: > 0 })
+                        GlobalData.Settings.Trading.TpList = effectiveTP
                             .Select(e => new CryptoTpEntry { Factor = e.Factor, Percentage = e.Percentage })
                             .ToList();
 
-                    GlobalData.Settings.Trading.DcaList = entry.DcaList
+                    List<CryptoDcaEntry> effectiveDCA = entry.Trading?.DcaList ?? entry.DcaList;
+                    GlobalData.Settings.Trading.DcaList = effectiveDCA
                         .Select(e => new CryptoDcaEntry { Factor = e.Factor, Percentage = e.Percentage })
                         .ToList();
+
+                    bool hasPerSideConfig = entry.Long != null || entry.Short != null || entry.MirrorFrom != null;
+
+                    if (hasPerSideConfig)
+                    {
+                        EmulatorSideConfig? mirrorForLong = "Short".Equals(entry.MirrorFrom, StringComparison.OrdinalIgnoreCase) ? entry.Short : null;
+                        EmulatorSideConfig? mirrorForShort = "Long".Equals(entry.MirrorFrom, StringComparison.OrdinalIgnoreCase) ? entry.Long : null;
+                        EmulatorSideConfig longConfig = EmulatorSideConfig.Resolve(entry.Long, mirrorForLong);
+                        EmulatorSideConfig shortConfig = EmulatorSideConfig.Resolve(entry.Short, mirrorForShort);
+
+                        EmulatorSideConfig.Apply(longConfig, GlobalData.Settings.Signal.Long, GlobalData.Settings.Trading.Long);
+                        EmulatorSideConfig.Apply(shortConfig, GlobalData.Settings.Signal.Short, GlobalData.Settings.Trading.Short);
+                    }
+                    else
+                    {
+                        if (entry.Intervals is { Count: > 0 })
+                        {
+                            GlobalData.Settings.Signal.Long.Interval = new List<string>(entry.Intervals);
+                            GlobalData.Settings.Signal.Short.Interval = new List<string>(entry.Intervals);
+                        }
+
+                        if ("Short".Equals(entry.Side, StringComparison.OrdinalIgnoreCase))
+                        {
+                            GlobalData.Settings.Signal.Long.Strategy = [];
+                            GlobalData.Settings.Trading.Long.Strategy = [];
+                        }
+                        else if ("Long".Equals(entry.Side, StringComparison.OrdinalIgnoreCase))
+                        {
+                            GlobalData.Settings.Signal.Short.Strategy = [];
+                            GlobalData.Settings.Trading.Short.Strategy = [];
+                        }
+                    }
 
                     List<SignalGridExpander.Override> overrides = SignalGridExpander.Apply(entry);
                     try
@@ -802,6 +871,20 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Trading.StopLossLimitPercentage = savedStopLossLimitPercentage;
             GlobalData.Settings.Trading.TpList = savedTpList;
             GlobalData.Settings.Trading.DcaList = savedDcaList;
+            GlobalData.Settings.Signal.Long.Interval = savedSignalLongInterval;
+            GlobalData.Settings.Signal.Short.Interval = savedSignalShortInterval;
+            GlobalData.Settings.Signal.Long.IntervalTrend.List = savedSignalLongIntervalTrend;
+            GlobalData.Settings.Signal.Short.IntervalTrend.List = savedSignalShortIntervalTrend;
+            GlobalData.Settings.Signal.Long.Barometer.List = savedSignalLongBarometer;
+            GlobalData.Settings.Signal.Long.Barometer.ConsensusActive = savedSignalLongBarometerConsensus;
+            GlobalData.Settings.Signal.Long.Barometer.MinConsensus = savedSignalLongBarometerMinConsensus;
+            GlobalData.Settings.Signal.Short.Barometer.List = savedSignalShortBarometer;
+            GlobalData.Settings.Signal.Short.Barometer.ConsensusActive = savedSignalShortBarometerConsensus;
+            GlobalData.Settings.Signal.Short.Barometer.MinConsensus = savedSignalShortBarometerMinConsensus;
+            GlobalData.Settings.Signal.Long.MarketTrend.List = savedSignalLongMarketTrend;
+            GlobalData.Settings.Signal.Short.MarketTrend.List = savedSignalShortMarketTrend;
+            GlobalData.Settings.Signal.Long.MarketTrendSecondary.List = savedSignalLongMarketTrendSecondary;
+            GlobalData.Settings.Signal.Short.MarketTrendSecondary.List = savedSignalShortMarketTrendSecondary;
             _queueProgress = "";
             OnPropertyChanged(nameof(ProgressLabel));
             IsRunning = false;
