@@ -132,6 +132,7 @@ public static class DashboardDataCollector
             return dto;
 
         CryptoIntervalPeriod[] periods = [CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d];
+        CandleTime? barometerTime = null;
         foreach (var period in periods)
         {
             var barometerData = exchange.Data.GetBarometer(quoteData.Name, period);
@@ -143,19 +144,21 @@ public static class DashboardDataCollector
                     dto.Barometer4h = barometerData.PriceBarometer.Value;
                 else if (period == CryptoIntervalPeriod.interval1d)
                     dto.Barometer1d = barometerData.PriceBarometer.Value;
+
+                // Track the most recent computed minute for the barometer timestamp (see below).
+                if (barometerData.PriceDateTime.HasValue &&
+                    (barometerTime == null || barometerData.PriceDateTime.Value > barometerTime.Value))
+                    barometerTime = barometerData.PriceDateTime.Value;
             }
         }
 
-        // Barometer time from 1m candle list
-        string symbolName = Constants.SymbolNameBarometerPrice + quote;
-        if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-        {
-            var interval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-            if (interval1m.CandleList.Count > 0 && interval1m.CandleList.TryGetLastCandle(out var candle))
-            {
-                dto.BarometerTime = (candle.OpenTime + 1).ToDateTime().ToLocalTime().ToString("HH:mm");
-            }
-        }
+        // Barometer time. The barometer is computed per minute but stored under the aggregate interval
+        // periods (15m/1h/4h/1d, never 1m), so the "$BMP" symbol has no 1m candle list to read a time
+        // from - that lookup always came back empty. Use PriceDateTime from the barometer data we just
+        // fetched instead; it holds the OpenTime of the last computed minute. (+1 = the closing minute,
+        // matching the previous formatting.)
+        if (barometerTime.HasValue)
+            dto.BarometerTime = (barometerTime.Value + 1).ToDateTime().ToLocalTime().ToString("HH:mm");
 
         return dto;
     }
