@@ -108,7 +108,12 @@ public static class DashboardDataCollector
         };
     }
 
-    private static BarometerValuesDto GetBarometerValues(string quote)
+    /// <summary>
+    /// Returns the barometer summary values (1h/4h/1d) for a single quote. Public so the hub can expose
+    /// it as an RPC: the dashboard push always uses the quote selected in the desktop app, while a remote
+    /// client may be showing a different quote.
+    /// </summary>
+    public static BarometerValuesDto GetBarometerValues(string quote)
     {
         var dto = new BarometerValuesDto
         {

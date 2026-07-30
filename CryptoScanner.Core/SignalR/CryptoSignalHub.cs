@@ -10,6 +10,7 @@ namespace CryptoScanner.Core.SignalR;
 /// SignalR hub that broadcasts generated crypto signals to connected clients.
 /// Clients receive signals on the "ReceiveSignal" method.
 /// Clients can invoke GetBarometerGraph(quote, interval) for initial/switch data.
+/// Clients can invoke GetBarometerValues(quote) for the 1h/4h/1d summary of their own quote.
 /// </summary>
 public class CryptoSignalHub : Hub
 {
@@ -65,5 +66,16 @@ public class CryptoSignalHub : Hub
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Returns the barometer summary values (1h/4h/1d) for a given quote.
+    /// The dashboard push carries the quote selected in the desktop app; a remote client that lets the
+    /// user pick their own quote can call this to get the values for that quote instead.
+    /// Call this on connect and whenever the client switches quote.
+    /// </summary>
+    public BarometerValuesDto GetBarometerValues(string quote)
+    {
+        return DashboardDataCollector.GetBarometerValues(quote);
     }
 }
