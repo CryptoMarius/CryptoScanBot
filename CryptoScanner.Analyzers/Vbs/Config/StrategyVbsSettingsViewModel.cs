@@ -16,18 +16,21 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _useStopLoss = true;
 
+    // Stop-loss = Entry -/+ ACS%, ACS = AcsFactor * SMA((high-low)/close, AcsLength) * 100.
     [ObservableProperty]
-    private double _sLStdevFactor = 1.0;
+    private double _acsFactor = 2.17;
 
-    // Old ATR-based SL property — replaced by SLStdevFactor above.
-    //[ObservableProperty]
-    //private double _stopLossAtrFactor = 2.0;
+    [ObservableProperty]
+    private int _acsLength = 50;
+
+    [ObservableProperty]
+    private bool _useTakeProfit = false;
+
+    [ObservableProperty]
+    private double _riskRewardRatio = 1.0;
 
     [ObservableProperty]
     private bool _requireStochOsOb = false;
-
-    [ObservableProperty]
-    private double _bandMaxPercentage = 0;
 
     public void LoadConfig(VbsSettings settings)
     {
@@ -35,9 +38,11 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
         Mult = settings.Mult;
         UseRsiFilter = settings.UseRsiFilter;
         UseStopLoss = settings.UseStopLoss;
-        SLStdevFactor = settings.SLStdevFactor;
+        AcsFactor = settings.AcsFactor;
+        AcsLength = settings.AcsLength;
+        UseTakeProfit = settings.UseTakeProfit;
+        RiskRewardRatio = settings.RiskRewardRatio;
         RequireStochOsOb = settings.RequireStochOsOb;
-        BandMaxPercentage = settings.BandMaxPercentage;
     }
 
     public void SaveConfig(VbsSettings settings)
@@ -46,8 +51,10 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
         settings.Mult = Mult;
         settings.UseRsiFilter = UseRsiFilter;
         settings.UseStopLoss = UseStopLoss;
-        settings.SLStdevFactor = SLStdevFactor;
+        settings.AcsFactor = AcsFactor;
+        settings.AcsLength = AcsLength;
+        settings.UseTakeProfit = UseTakeProfit;
+        settings.RiskRewardRatio = RiskRewardRatio;
         settings.RequireStochOsOb = RequireStochOsOb;
-        settings.BandMaxPercentage = BandMaxPercentage;
     }
 }

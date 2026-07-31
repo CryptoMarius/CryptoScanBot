@@ -246,6 +246,7 @@ public class SignalCreate
         // report their proposed price here. PositionTools.AddSignalProperties copies it onto
         // the resulting position, where PositionMonitor.CalculateSlPrices picks it up.
         signal.SlPercentage = algorithm.OverrideSlPercentage;
+        signal.TpPercentage = algorithm.OverrideProfitPercentage;
 
         List<string> eventText = [];
         if (algorithm.ExtraText != "")

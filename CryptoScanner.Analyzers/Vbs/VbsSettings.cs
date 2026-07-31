@@ -34,13 +34,19 @@ public class VbsSettings : SettingsSignalStrategyBase
     // to the default percentage stop-loss from the trading settings.
     public bool UseStopLoss { get; set; } = false;
 
-    // Stop-loss distance in vwStdev units below the lower band (long) or above the upper band (short).
-    // SL price = band - SLStdevFactor * vwStdev (long) / band + SLStdevFactor * vwStdev (short).
-    // Example: SLStdevFactor=1.0 → SL sits one full band-width below the break level.
-    public double SLStdevFactor { get; set; } = 1.0;
+    // Stop-loss = Entry -/+ ACS%, where ACS (Average Candle Size) = AcsFactor * SMA((high-low)/close, AcsLength) * 100.
+    // Reverse-engineered from the reference (TradingBuddy): the SL distance % equals the average candle size %.
+    // Defaults (2.17 / 50) were fit against live signals. The SL% is handed to the trader via
+    // OverrideSlPercentage when UseStopLoss is on.
+    public double AcsFactor { get; set; } = 2.17;
+    public int AcsLength { get; set; } = 50;
 
-    // Old ATR-based stop-loss: factor * ATR(Length)% — replaced by SLStdevFactor above.
-    //public double StopLossAtrFactor { get; set; } = 2.0;
+    // Take-profit = Entry -/+ RiskRewardRatio * SL-distance, i.e. TP% = RiskRewardRatio * ACS%. When on,
+    // the signal hands this single TP to the trader via OverrideProfitPercentage (replacing the global TP
+    // grid for this position). RiskRewardRatio determines how far the TP sits (1.0 = same distance as the
+    // stop-loss = 1:1; higher = further away).
+    public bool UseTakeProfit { get; set; } = false;
+    public double RiskRewardRatio { get; set; } = 1.0;
 
     // Bollinger-band width gate, applied to BollingerBandsPercentage = 100 * (upper/lower - 1).
     // A break is only flagged (signal fires / chart prints a label) when the BB width is inside
@@ -52,12 +58,6 @@ public class VbsSettings : SettingsSignalStrategyBase
     // When true a long signal also requires Stochastic to be oversold, and a short signal requires
     // Stochastic to be overbought (uses the global Stoch OS/OB thresholds from SettingsStoch).
     public bool RequireStochOsOb { get; set; } = false;
-
-    // Maximum allowed VBS band-margin percentage (SLStdevFactor * vwStdev as % of the band).
-    // When > 0 a signal is skipped if pctDeviation exceeds this value (wide bands = high
-    // volatility = higher stop-loss risk). 0 = disabled (no upper limit). Applies to both
-    // long and short signals.
-    public double BandMaxPercentage { get; set; } = 0;
 
     public VbsSettings() : base()
     {

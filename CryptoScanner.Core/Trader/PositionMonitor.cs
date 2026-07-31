@@ -1814,7 +1814,7 @@ public class PositionMonitor : IDisposable
         if (position.Quantity > 0)
         {
             CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-            List<CryptoTpEntry> levels = GlobalData.Settings.Trading.TpList;
+            List<CryptoTpEntry> levels = TradeTools.EffectiveTpList(position);
 
             // A level stays "open" until its part exists and has been fully filled (CloseTime set).
             List<int> openLevelIndexes = [];

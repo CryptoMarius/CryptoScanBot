@@ -17,10 +17,13 @@ public class VbsIndicatorExtension : IIndicatorExtension
 
     private QuoteHub? _vbsSrcHub;
     private QuoteHub? _vbsSqHub;
+    private QuoteHub? _rangeHub;
     private VwmaHub? _vpsVwmaSrc;
     private VwmaHub? _vpsVwmaSq;
+    private SmaHub? _rangeSma;
     private AtrHub? _atrVpsSl;
     private double _vbsMult;
+    private double _acsFactor;
 
     public void Init(QuoteHub quoteHub)
     {
@@ -32,6 +35,11 @@ public class VbsIndicatorExtension : IIndicatorExtension
         _vpsVwmaSrc = _vbsSrcHub.ToVwmaHub(vbs.Length);
         _vpsVwmaSq = _vbsSqHub.ToVwmaHub(vbs.Length);
         _vbsMult = vbs.Mult;
+
+        // ACS (Average Candle Size): SMA of the per-candle range% = (high-low)/close*100, over AcsLength.
+        _rangeHub = new QuoteHub(maxCacheSize: HubCacheSize);
+        _rangeSma = _rangeHub.ToSmaHub(vbs.AcsLength);
+        _acsFactor = vbs.AcsFactor;
     }
 
     public void OnCandleAdded(IQuote candle)
@@ -41,6 +49,10 @@ public class VbsIndicatorExtension : IIndicatorExtension
         decimal hlc3 = (candle.High + candle.Low + candle.Close) / 3m;
         _vbsSrcHub.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, hlc3, candle.Volume));
         _vbsSqHub!.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, hlc3 * hlc3, candle.Volume));
+
+        // Candle range% carried as the Close of a synthetic quote so the SMA hub averages it.
+        decimal rangePct = candle.Close != 0m ? (candle.High - candle.Low) / candle.Close * 100m : 0m;
+        _rangeHub!.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, rangePct, 0m));
     }
 
     public void FillData(CryptoData data)
@@ -65,5 +77,9 @@ public class VbsIndicatorExtension : IIndicatorExtension
                 data.VbsVwStdev = vwStdev;
             }
         }
+
+        // ACS% = AcsFactor * SMA(range%, AcsLength). Drives the stop-loss (SL = entry -/+ VbsAcs%).
+        if (_rangeSma?.Results.Count > 0 && _rangeSma.Results[^1].Sma is double sma)
+            data.VbsAcs = _acsFactor * sma;
     }
 }

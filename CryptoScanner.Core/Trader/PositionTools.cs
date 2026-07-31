@@ -104,6 +104,8 @@ public static class PositionTools
 
         // Forward any per-signal SL override to the position (persisted; see CryptoPosition).
         position.SlPercentage = signal.SlPercentage;
+        // Forward any per-signal TP override to the position (single TP at this distance).
+        position.TpPercentage = signal.TpPercentage;
     }
 
     /// <summary>

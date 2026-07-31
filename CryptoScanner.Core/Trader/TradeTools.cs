@@ -3,6 +3,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -49,6 +50,18 @@ public class TradeTools
     /// <summary>
     /// De break-even prijs berekenen vanuit de parts en steps
     /// </summary>
+    /// <summary>
+    /// The take-profit levels the trader should use for this position. A per-signal TP override
+    /// (position.TpPercentage, e.g. VBS RiskRewardRatio * SL%) becomes a single TP that closes the whole
+    /// position; otherwise the global multi-level grid from Settings.Trading.TpList applies.
+    /// </summary>
+    public static List<CryptoTpEntry> EffectiveTpList(CryptoPosition position)
+    {
+        if (position.TpPercentage is decimal tpPct && tpPct > 0)
+            return [new CryptoTpEntry { Factor = 100m, Percentage = tpPct }];
+        return GlobalData.Settings.Trading.TpList;
+    }
+
     public static void CalculateProfitAndBreakEvenPrice(CryptoPosition position)
     {
         // We do not return early here: the step statuses already in memory (from the last DB sync) are

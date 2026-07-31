@@ -38,15 +38,6 @@ public class VbsChartOverlay : IChartOverlay
         // the signal stay identical. Index-aligned with the candle list below.
         var bands = VbsBandsHelper.ComputeBands(candles);
 
-        // Slow ATR over the band Length (used for the SL% label, so it stays stable through a rally —
-        // same as the signal's StopLossPercent).
-        var slAtrByDate = new Dictionary<DateTime, double>();
-        foreach (var atr in candles.AsQuotes().ToAtr(vbs.Length))
-        {
-            if (atr.Atr.HasValue)
-                slAtrByDate[atr.Timestamp] = atr.Atr.Value;
-        }
-
         // RSI confluence for the break labels (same gate as SignalVbsLong/Short): when the RSI filter
         // is enabled, only label a lower-band break when RSI is oversold and an upper-band break when
         // RSI is overbought. Thresholds come from the general RSI settings (Indicators tab).
@@ -85,11 +76,13 @@ public class VbsChartOverlay : IChartOverlay
             lowerLine.Points.Add(new DataPoint(x, lower));
             basisLine.Points.Add(new DataPoint(x, bands[i].Basis));
 
-            // Break label = the SL distance the signal applies: SLStdevFactor * vwStdev / band%.
-            // vwStdev is stored on BandValue so the chart and signal always agree.
-            double vwStdev = bands[i].VwStdev;
-            double refBand = low < lower ? lower : upper;
-            double slPct = refBand > 0 ? vbs.SLStdevFactor * vwStdev / refBand * 100.0 : 0;
+            // Break label = the SL distance the signal applies: the ACS% (average candle size).
+            // Acs is stored on BandValue so the chart and signal always agree.
+            double slPct = bands[i].Acs;
+
+            // Take-profit distance the signal would hand to the trader: RiskRewardRatio * SL-distance.
+            // Only shown when the take-profit is enabled, so the label matches what actually gets placed.
+            double? tpPct = vbs.UseTakeProfit ? vbs.RiskRewardRatio * slPct : null;
 
             // Same pass criteria as the signal: short needs rsi >= Overbought, long needs rsi <= Oversold.
             // With the RSI filter disabled every break is labeled, as before.
@@ -98,9 +91,9 @@ public class VbsChartOverlay : IChartOverlay
             bool rsiOversold = rsiList == null || (rsi.HasValue && rsi.Value <= rsiSettings.Oversold);
 
             if ((high > upper || close > upper) && rsiOverbought)
-                AddLabel(chart, x, high, slPct, VerticalAlignment.Bottom, group);
+                AddLabel(chart, x, high, slPct, tpPct, VerticalAlignment.Bottom, group);
             if ((low < lower || close < lower) && rsiOversold)
-                AddLabel(chart, x, low, slPct, VerticalAlignment.Top, group);
+                AddLabel(chart, x, low, slPct, tpPct, VerticalAlignment.Top, group);
         }
 
         //chart.Series.Add(bandFill);
@@ -109,15 +102,20 @@ public class VbsChartOverlay : IChartOverlay
         chart.Series.Add(basisLine);
     }
 
-    private static void AddLabel(PlotModel chart, double x, double y, double pct, VerticalAlignment vAlign, string group)
+    private static void AddLabel(PlotModel chart, double x, double y, double slPct, double? tpPct, VerticalAlignment vAlign, string group)
     {
         // Extra gap so the label clears the wick (a bit more than before).
         const double gapPixels = 30;
         double offsetY = vAlign == VerticalAlignment.Bottom ? -gapPixels : gapPixels;
 
+        // Stop-loss on the first line; the take-profit (when enabled) on a second line. Words spelled out.
+        string text = "Stop-loss " + slPct.ToString("0.##") + "%";
+        if (tpPct.HasValue)
+            text += "\nTake-profit " + tpPct.Value.ToString("0.##") + "%";
+
         chart.Annotations.Add(new TextAnnotation
         {
-            Text = pct.ToString("0.##") + "%",
+            Text = text,
             TextPosition = new DataPoint(x, y),
             Offset = new ScreenVector(0, offsetY),
             TextHorizontalAlignment = HorizontalAlignment.Center,

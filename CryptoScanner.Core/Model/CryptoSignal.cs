@@ -49,6 +49,10 @@ public partial class CryptoSignal : CryptoData2
     // stop price is derived where needed.
     public decimal? SlPercentage { get; set; }
 
+    // Optional per-signal take-profit distance (%), parallel to SlPercentage. When set the trader uses a
+    // single TP at this distance instead of the global TP grid. Populated from OverrideProfitPercentage.
+    public decimal? TpPercentage { get; set; }
+
     // In-memory only: set when the strategy supplied an explicit entry price via OverrideSignalPrice
     // (so SignalPrice is a deliberate entry level, not just the signal candle's close). The trader then
     // enters at SignalPrice instead of the current market price.

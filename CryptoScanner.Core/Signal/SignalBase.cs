@@ -68,6 +68,14 @@ public class SignalCreateBase
     /// </summary>
     public virtual decimal? OverrideSlPercentage => null;
 
+    /// <summary>
+    /// Optional per-signal take-profit distance, as a positive percentage from the entry. When non-null
+    /// the trader uses a single TP at this distance (closing the whole position) instead of the global
+    /// TP grid from Settings.Trading. Strategies that size their TP off the SL (e.g. RiskRewardRatio *
+    /// SL%) populate this. A percentage is reference-independent, matching OverrideSlPercentage.
+    /// </summary>
+    public virtual decimal? OverrideProfitPercentage => null;
+
     public virtual int MacdRecoveryBarCount => 1;
 
 

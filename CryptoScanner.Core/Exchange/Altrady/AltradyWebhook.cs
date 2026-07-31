@@ -149,13 +149,14 @@ public class AltradyWebhook
 
             request.quote_amount = position.EntryAmount;
 
-            // TP body (multiple)
-            if (GlobalData.Settings.Trading.TpList.Count > 0)
+            // TP body (multiple). A per-signal TP override collapses this to a single TP; see EffectiveTpList.
+            var tpList = Trader.TradeTools.EffectiveTpList(position);
+            if (tpList.Count > 0)
             {
                 dynamic tp_orders = new JArray();
                 request.take_profit = tp_orders;
 
-                foreach (CryptoTpEntry entry in GlobalData.Settings.Trading.TpList)
+                foreach (CryptoTpEntry entry in tpList)
                 {
                     dynamic tp = new JObject();
                     tp_orders.Add(tp);
@@ -224,9 +225,10 @@ public class AltradyWebhook
             // Entry expiration: cancel unfilled entry when time OR price condition is met (whichever comes first)
             // Use the first TP percentage to calculate the expiry price (ProfitPrice is not yet available at open time)
             decimal? expiryPrice = null;
-            if (position.EntryPrice.HasValue && GlobalData.Settings.Trading.TpList.Count > 0)
+            var expiryTpList = Trader.TradeTools.EffectiveTpList(position);
+            if (position.EntryPrice.HasValue && expiryTpList.Count > 0)
             {
-                decimal tpPercentage = GlobalData.Settings.Trading.TpList[0].Percentage;
+                decimal tpPercentage = expiryTpList[0].Percentage;
                 if (position.Side == Enums.CryptoTradeSide.Long)
                     expiryPrice = position.EntryPrice.Value * (1 + tpPercentage / 100m);
                 else

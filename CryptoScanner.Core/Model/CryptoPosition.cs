@@ -97,6 +97,11 @@ public partial class CryptoPosition : CryptoData2
     // Persisted, so the level survives an app restart instead of falling back to the default strategy.
     public decimal? SlPercentage { get; set; }
 
+    // Optional per-signal take-profit distance (%), parallel to SlPercentage. When set the trader places
+    // a single TP at this distance (close 100%) instead of the global TP grid from Settings.Trading.
+    // Persisted so the level survives an app restart.
+    public decimal? TpPercentage { get; set; }
+
     // Sticky flag: set once the position reached the SL-protection profit threshold and
     // the stop was pulled to break-even, so CalculateSlPrices keeps it at BE and never loosens it again.
     public bool SlMovedToBreakEven { get; set; }

@@ -27,17 +27,19 @@ public static class VbsBandsHelper
     {
         public readonly bool HasValue;
         public readonly double Basis;    // VWMA(hlc3, Length)
-        public readonly double Upper;    // basis + Mult * vwStdev + AtrMult * ATR
-        public readonly double Lower;    // basis - Mult * vwStdev - AtrMult * ATR
-        public readonly double VwStdev;  // volume-weighted stdev of hlc3 — used for SL in vwStdev units
+        public readonly double Upper;    // basis + Mult * vwStdev
+        public readonly double Lower;    // basis - Mult * vwStdev
+        public readonly double VwStdev;  // volume-weighted stdev of hlc3
+        public readonly double Acs;      // Average Candle Size %: AcsFactor * SMA((high-low)/close, AcsLength) * 100
 
-        public BandValue(double basis, double upper, double lower, double vwStdev)
+        public BandValue(double basis, double upper, double lower, double vwStdev, double acs)
         {
             HasValue = true;
             Basis = basis;
             Upper = upper;
             Lower = lower;
             VwStdev = vwStdev;
+            Acs = acs;
         }
     }
 
@@ -73,6 +75,18 @@ public static class VbsBandsHelper
         var vwmaSrc = (IReadOnlyList<VwmaResult>)srcQuotes.ToVwma(settings.Length);
         var vwmaSq = (IReadOnlyList<VwmaResult>)sqQuotes.ToVwma(settings.Length);
 
+        // Per-candle range% = (high-low)/close*100, plus a prefix sum so the ACS (its SMA over AcsLength)
+        // is an O(1) lookup per candle. ACS% = AcsFactor * SMA(range%, AcsLength).
+        int acsLen = Math.Max(1, settings.AcsLength);
+        var rangePct = new double[n];
+        var prefix = new double[n + 1];
+        for (int i = 0; i < n; i++)
+        {
+            double close = (double)candles[i].Close;
+            rangePct[i] = close != 0 ? (double)(candles[i].High - candles[i].Low) / close * 100.0 : 0;
+            prefix[i + 1] = prefix[i] + rangePct[i];
+        }
+
         for (int i = 0; i < n; i++)
         {
             double? mean = vwmaSrc[i].Vwma;
@@ -84,7 +98,12 @@ public static class VbsBandsHelper
             double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
 
             double pad = settings.Mult * vwStdev;
-            result[i] = new BandValue(mean.Value, mean.Value + pad, mean.Value - pad, vwStdev);
+
+            double acs = 0;
+            if (i + 1 >= acsLen)
+                acs = settings.AcsFactor * (prefix[i + 1] - prefix[i + 1 - acsLen]) / acsLen;
+
+            result[i] = new BandValue(mean.Value, mean.Value + pad, mean.Value - pad, vwStdev, acs);
         }
         return result;
     }

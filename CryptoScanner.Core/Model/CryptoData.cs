@@ -141,6 +141,10 @@ public class CryptoData
     public double? VbsLower { get; set; }
     [Computed]
     public double? VbsVwStdev { get; set; }
+    // ACS (Average Candle Size) as a percentage: AcsFactor * SMA((high-low)/close, AcsLength) * 100.
+    // Drives the VBS stop-loss (SL = entry -/+ VbsAcs%), reverse-engineered from the reference (TradingBuddy).
+    [Computed]
+    public double? VbsAcs { get; set; }
     [Computed]
     public double? VbsAtr { get; set; }
     [Computed]
@@ -224,6 +228,7 @@ public class CryptoData
         VbsUpper = source.VbsUpper;
         VbsLower = source.VbsLower;
         VbsVwStdev = source.VbsVwStdev;
+        VbsAcs = source.VbsAcs;
         VbsAtrSl = source.VbsAtrSl;
     }
 }

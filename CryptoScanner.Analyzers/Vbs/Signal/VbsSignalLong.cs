@@ -8,7 +8,7 @@ namespace CryptoScanner.Analyzers.Vbs.Signal;
 /// Mean Reversion Bands — long signal. Fires when price breaks the LOWER band (wick or close) while
 /// RSI is oversold (confluence). Optionally suppressed while the coin is in a DOWN-slide (don't catch a
 /// falling knife). Entry on the band, or on the close when the close itself broke through; stop-loss =
-/// SLStdevFactor * vwStdev below the lower band.
+/// Entry - ACS% (Average Candle Size, precomputed on CandleData.VbsAcs).
 ///
 /// When TimeframeConsensusCount > 0, higher timeframes must also confirm the band break
 /// (multi-timeframe consensus). Additional filters (RSI, Stoch, Lux5m, trend, zones) are
@@ -18,15 +18,18 @@ public class VbsSignalLong : VbsSignalVbs
 {
     private decimal? _entryPrice;
     private decimal? _slPercentage;
+    private decimal? _tpPercentage;
 
     public override decimal? OverrideSignalPrice => _entryPrice;
     public override decimal? OverrideSlPercentage => _slPercentage;
+    public override decimal? OverrideProfitPercentage => _tpPercentage;
 
     public override bool IsSignal()
     {
         ExtraText = "";
         _entryPrice = null;
         _slPercentage = null;
+        _tpPercentage = null;
 
         var settings = VbsPlugin.Settings;
 
@@ -81,23 +84,9 @@ public class VbsSignalLong : VbsSignalVbs
         }
 
 
-        // Stop-loss: SLStdevFactor * vwStdev below the lower band.
-        // SL price = lowerBand - SLStdevFactor * vwStdev; SL% = that distance as % of the band.
-        if (CandleLast.CandleData.VbsVwStdev is not double vwStdev)
-            return false;
-        double slPrice = lowerBand - settings.SLStdevFactor * vwStdev;
-        double pctDeviation = slPrice > 0 ? (lowerBand - slPrice) / lowerBand * 100.0 : 0;
-
-        // Old ATR-based SL: factor * ATR(Length)% — replaced by vwStdev approach above.
-        //if (CandleLast.CandleData.VbsAtrSl is not double atr)
-        //    return false;
-        //double pctDeviation = VbsPlugin.Settings.StopLossAtrFactor * (atr / (double)CandleLast.Candle.Close * 100);
-
-        if (settings.BandMaxPercentage > 0 && pctDeviation > settings.BandMaxPercentage)
-        {
-            ExtraText = $"band margin {pctDeviation:N2}% exceeds max {settings.BandMaxPercentage:N2}%";
-            return false;
-        }
+        // Stop-loss = Entry - ACS% (long). ACS (Average Candle Size) is precomputed on CandleData;
+        // the SL distance % equals the average candle size % (reverse-engineered from TradingBuddy).
+        double pctDeviation = CandleLast.CandleData.VbsAcs ?? 0;
 
         // Multi-timeframe consensus: higher timeframes must also show a band break.
         int consensusCount = ResolveEntryConditions().TimeframeConsensusCount;
@@ -142,6 +131,11 @@ public class VbsSignalLong : VbsSignalVbs
 
         if (settings.UseStopLoss)
             _slPercentage = (decimal)pctDeviation;
+
+        // Take-profit = RiskRewardRatio * SL-distance (RiskRewardRatio * ACS%), handed to the trader as a
+        // single TP via OverrideProfitPercentage.
+        if (settings.UseTakeProfit && pctDeviation > 0)
+            _tpPercentage = (decimal)(settings.RiskRewardRatio * pctDeviation);
 
         //MarkSignalFired();
         ExtraText = $"hit lower band {pctDeviation:N2}% {_entryPrice}";
