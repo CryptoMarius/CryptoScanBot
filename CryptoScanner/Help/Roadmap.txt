@@ -118,11 +118,3 @@ Exchanges:
   (lang niet alle exchanges zijn voor iedereen zichtbaar omdat het een soort van experimentele status heeft)
 
 
-Emulator:
-- Emulator - Emulator moet een eigen applicatie worden en een eigen database krijgen (dan zijn er veel minder conflicten)
-- Emulator - De trading rulez worden niet correct berekend (worden waarschijnlijk niet correct gereset bij een nieuwe sessie)
-- Emulator - De Barometer wordt niet correct berekend (of wordt verkeerd opgehaald)
-- Emulator - Als de emulator draait de menu optie onbereikbaar maken (anders 2 emulator sessies)
-- Emulator - Een "beter" algoritme ontwikkelen voor het ophalen en bewaren van de candles, hetzelfde geld ook voor het bepalen van de liquiditeit zones.
-             Uiteindelijk heb de candles verzameld over een lange tijd en dat wilde ik juist voorkomen.... bah..
-- Emulator - Het ophalen van candles gaat niet altijd goed indien de munt nog maar "kort" bestaat, er ontstaat een eindeloze lus
