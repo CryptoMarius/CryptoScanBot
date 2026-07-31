@@ -175,8 +175,11 @@ public static class EmulatorDb
         int id = run.Id;
         int timeoutStatus = (int)CryptoPositionStatus.Timeout;
 
-        run.SignalCount = database.Connection.ExecuteScalar<int>(
+        // Because we delete the signals afterwards (db gets way to large)
+        int count = database.Connection.ExecuteScalar<int>(
             "select count(*) from signal where EmulatorRunId = @id", new { id });
+        if (count > 0)
+            run.SignalCount = count;
         run.PositionCount = database.Connection.ExecuteScalar<int>(
             "select count(*) from position where EmulatorRunId = @id", new { id });
 
@@ -240,12 +243,15 @@ public static class EmulatorDb
     {
         using var database = new CryptoDatabase();
         database.Open();
-        database.Connection.Execute("DELETE FROM [Trade]");
-        database.Connection.Execute("DELETE FROM [Order]");
-        database.Connection.Execute("DELETE FROM Signal");
-        database.Connection.Execute("DELETE FROM PositionStep");
-        database.Connection.Execute("DELETE FROM PositionPart");
-        database.Connection.Execute("DELETE FROM Position");
+        database.Connection.Execute("update position set signalid=null where not signalid=null");
+        database.Connection.Execute("delete from [Asset]");
+        database.Connection.Execute("delete from [Signal]");
+        database.Connection.Execute("delete from [Order]");
+        database.Connection.Execute("delete from [Trade]");
+        // Need these for insights
+        //database.Connection.Execute("delete from PositionStep");
+        //database.Connection.Execute("delete from PositionPart");
+        //database.Connection.Execute("delete from Position");
     }
 
 
