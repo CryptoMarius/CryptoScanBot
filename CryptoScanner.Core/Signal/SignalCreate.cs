@@ -570,7 +570,10 @@ public class SignalCreate
                 ScannerLog.Logger.Info($"Debug Signal create {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             //GlobalData.AddTextToLogTab($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
-            if (algorithm.IndicatorsOkay(myData!) && algorithm.IsSignal())
+            if (algorithm.IndicatorsOkay(myData!)
+                && algorithm.EntryConditionsBeforeSignal()
+                && algorithm.IsSignal()
+                && algorithm.EntryConditionsAfterSignal())
                 return await PrepareAndSendSignalAsync(algorithm);
         }
         return false;

@@ -51,6 +51,30 @@ public class SignalCreateBase
     /// </summary>
     public virtual bool IsSignal() => false;
 
+    /// <summary>
+    /// Cheap entry-condition pre-filters (indicator lookups, no candlePrev needed)
+    /// applied BEFORE IsSignal. Only active when the strategy has its own entry
+    /// conditions configured; skipped when using the global fallback.
+    /// </summary>
+    public virtual bool EntryConditionsBeforeSignal()
+    {
+        if (!HasStrategyEntryConditions(out var settings))
+            return true;
+        return CheckCheapEntryConditions(settings);
+    }
+
+    /// <summary>
+    /// Expensive entry-condition post-filters (candlePrev-dependent checks and trend
+    /// calculations) applied AFTER IsSignal. Only active when the strategy has its
+    /// own entry conditions configured; skipped when using the global fallback.
+    /// </summary>
+    public virtual bool EntryConditionsAfterSignal()
+    {
+        if (!HasStrategyEntryConditions(out var settings))
+            return true;
+        return CheckExpensiveEntryConditions(settings);
+    }
+
 
     /// <summary>
     /// Optional override for the price stored on the signal. Return null to use
@@ -136,151 +160,55 @@ public class SignalCreateBase
     }
 
     /// <summary>
-    /// Extra controles nadat we het accepteren
+    /// Returns true when the strategy has its own entry conditions (not the global fallback).
     /// </summary>
-    public virtual bool AllowStepIn(CryptoSignal signal)
+    protected bool HasStrategyEntryConditions(out SettingsEntryConditions settings)
     {
-        if (!GetPrevCandle(CandleLast!, out MyData? candlePrev) || candlePrev == null)
-            return false;
-
-        var settings = ResolveEntryConditions();
-
-
-        // ********************************************************************
-        // Price going into the right direction
-        if (settings.CheckFurtherPriceMove)
+        if (GlobalData.StrategiesSettings.TryGetValue(SignalStrategy, out var entry)
+            && entry.strategySettings.EntryConditions != null)
         {
-            switch (SignalSide)
-            {
-                case CryptoTradeSide.Long:
-                    if (CandleLast.Candle.Close < candlePrev!.Candle.Close)
-                    {
-                        ExtraText = $"Price {candlePrev!.Candle.Close:N8} goes down even more {CandleLast.Candle.Close:N8}";
-                        return false;
-                    }
-                    break;
-                case CryptoTradeSide.Short:
-                    if (CandleLast.Candle.Close > candlePrev!.Candle.Close)
-                    {
-                        ExtraText = $"Price {candlePrev!.Candle.Close:N8} goes up even more {CandleLast.Candle.Close:N8}";
-                        return false;
-                    }
-                    break;
-            }
+            settings = entry.strategySettings.EntryConditions;
+            return true;
         }
+        settings = null!;
+        return false;
+    }
 
 
-        // ********************************************************************
-        // MACD recovering
-        if (settings.CheckIncreasingMacd)
-        {
-            int barCount = MacdRecoveryBarCount;
-
-            switch (SignalSide)
-            {
-                case CryptoTradeSide.Long:
-                    if (!this.IsMacdRecoveryOversold(barCount))
-                        return false;
-                    break;
-                case CryptoTradeSide.Short:
-                    if (!this.IsMacdRecoveryOverbought(barCount))
-                        return false;
-                    break;
-            }
-        }
-
-
-        // ********************************************************************
-        // RSI recovering
-        if (settings.CheckIncreasingRsi)
-        {
-            switch (SignalSide)
-            {
-                case CryptoTradeSide.Long:
-                    if (CandleLast?.CandleData?.Rsi <= candlePrev?.CandleData?.Rsi)
-                    {
-                        ExtraText = $"Rsi {candlePrev.CandleData.Rsi:N8} not recovering <= {CandleLast.CandleData.Rsi:N8}";
-                        return false;
-                    }
-                    break;
-                case CryptoTradeSide.Short:
-                    if (CandleLast?.CandleData?.Rsi >= candlePrev?.CandleData?.Rsi)
-                    {
-                        ExtraText = $"Rsi {candlePrev.CandleData.Rsi:N8} not recovering >= {CandleLast.CandleData.Rsi:N8}";
-                        return false;
-                    }
-                    break;
-            }
-        }
-
-        // ********************************************************************
-        // STOCH recovering (Stochastic)
-        // Red %D = signal, average from the last 3 %K values
-        // Blue %K = Oscilator calculated from the last 14 candles
-        if (settings.CheckIncreasingStoch)
-        {
-            switch (SignalSide)
-            {
-                case CryptoTradeSide.Long:
-                    // %K should recover
-                    if (CandleLast?.CandleData?.StochOscillator <= candlePrev?.CandleData?.StochOscillator)
-                    {
-                        ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering < {CandleLast.CandleData.StochOscillator:N8}";
-                        return false;
-                    }
-
-                    // %D and %K should have crossed, %K(quick/blue) > %D(slow/red)
-                    if (CandleLast?.CandleData?.StochOscillator <= CandleLast?.CandleData?.StochSignal)
-                    {
-                        ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} not above %K {candlePrev?.CandleData?.StochOscillator:N8}";
-                        return false;
-                    }
-                    break;
-                case CryptoTradeSide.Short:
-                    // %K should recover (= fall) for a short — refuse while it is still rising.
-                    if (CandleLast?.CandleData!.StochOscillator >= candlePrev?.CandleData?.StochOscillator)
-                    {
-                        ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering > {CandleLast.CandleData?.StochOscillator:N8}";
-                        return false;
-                    }
-
-                    // %D and %K should have crossed, %K(quick/blue) < %D(slow/red).
-                    // BUGFIX: the previous condition was StochSignal > StochOscillator (= %D > %K
-                    // = %K < %D), which is the DESIRED short state — so the check refused exactly
-                    // when it should have allowed and vice versa, letting bullish %K-above-%D
-                    // setups through on shorts. Correct test: refuse while %K is still above %D
-                    // (cross has not yet happened in the short direction).
-                    if (CandleLast?.CandleData?.StochOscillator >= CandleLast?.CandleData?.StochSignal)
-                    {
-                        ExtraText = $"Stoch.%K {CandleLast?.CandleData?.StochOscillator:N8} not below %D {CandleLast?.CandleData?.StochSignal:N8}";
-                        return false;
-                    }
-                    break;
-            }
-        }
-
-
-        // ********************************************************************
-        // Dont trade against the trend (only check current interval)
-        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
-            return false;
-
-        // ********************************************************************
-        // Dont trade against the trend (only check current interval)
-        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
-            return false;
-
-
-        // ********************************************************************
-        // Another "Dont trade against the trend", just via another comparison
-        // Price above/below MA200
+    /// <summary>
+    /// Cheap entry-condition checks: indicator lookups that need no candlePrev.
+    /// MA200, RSI/Stoch zone recovery, Stoch extreme strength.
+    /// </summary>
+    protected bool CheckCheapEntryConditions(SettingsEntryConditions settings)
+    {
         if (!CheckMa200Filter(settings.CheckPriceAboveMa200, settings.Ma200MinDistancePercentage, settings.Ma200ConfirmationCandles))
             return false;
 
+        if (settings.WaitForRsiRecovery)
+        {
+            var rsi = CandleLast!.CandleData?.Rsi;
+            if (rsi == null)
+                return false;
 
-        // ********************************************************************
-        // Wait for stoch %K (blue line) to exit the OS/OB zone before stepping in.
-        // Catches the actual bounce/fade candle instead of an extended oscillator extreme.
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    if (rsi < GlobalData.Settings.General.SettingsRsi.Oversold)
+                    {
+                        ExtraText = "waiting for rsi to exit os zone";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short:
+                    if (rsi > GlobalData.Settings.General.SettingsRsi.Overbought)
+                    {
+                        ExtraText = "waiting for rsi to exit ob zone";
+                        return false;
+                    }
+                    break;
+            }
+        }
+
         if (settings.WaitForStochRecovery)
         {
             var k = CandleLast!.CandleData?.StochOscillator;
@@ -306,10 +234,6 @@ public class SignalCreateBase
             }
         }
 
-        // ********************************************************************
-        // Stoch OS/OB strength — verify the move into OS/OB was substantial enough
-        // to be a real exhaustion, not a 1-candle wick. Ordered cheapest to most expensive
-        // (persistence < AUC < z-score) so we bail early when the cheap check fails.
         if (settings.StochMinExtremeBars > 0 ||
             settings.StochMinExtremeArea > 0m ||
             settings.StochMinExtremeZScore > 0m)
@@ -361,35 +285,148 @@ public class SignalCreateBase
             }
         }
 
-        // ********************************************************************
-        // Wait for RSI to exit the OS/OB zone before stepping in.
-        // Catches the actual bounce/fade candle instead of an extended oscillator extreme.
-        if (settings.WaitForRsiRecovery)
+        return true;
+    }
+
+
+    /// <summary>
+    /// Expensive entry-condition checks: candlePrev-dependent recovery checks
+    /// followed by trend calculations (most expensive last).
+    /// </summary>
+    protected bool CheckExpensiveEntryConditions(SettingsEntryConditions settings)
+    {
+        if (settings.CheckFurtherPriceMove
+            || settings.CheckIncreasingMacd
+            || settings.CheckIncreasingRsi
+            || settings.CheckIncreasingStoch)
         {
-            var rsi = CandleLast!.CandleData?.Rsi;
-            if (rsi == null)
+            if (!GetPrevCandle(CandleLast!, out MyData? candlePrev) || candlePrev == null)
                 return false;
 
-            switch (SignalSide)
+            if (settings.CheckFurtherPriceMove)
             {
-                case CryptoTradeSide.Long:
-                    if (rsi < GlobalData.Settings.General.SettingsRsi.Oversold)
-                    {
-                        ExtraText = "waiting for rsi to exit os zone";
-                        return false;
-                    }
-                    break;
-                case CryptoTradeSide.Short:
-                    if (rsi > GlobalData.Settings.General.SettingsRsi.Overbought)
-                    {
-                        ExtraText = "waiting for rsi to exit ob zone";
-                        return false;
-                    }
-                    break;
+                switch (SignalSide)
+                {
+                    case CryptoTradeSide.Long:
+                        if (CandleLast.Candle.Close < candlePrev!.Candle.Close)
+                        {
+                            ExtraText = $"Price {candlePrev!.Candle.Close:N8} goes down even more {CandleLast.Candle.Close:N8}";
+                            return false;
+                        }
+                        break;
+                    case CryptoTradeSide.Short:
+                        if (CandleLast.Candle.Close > candlePrev!.Candle.Close)
+                        {
+                            ExtraText = $"Price {candlePrev!.Candle.Close:N8} goes up even more {CandleLast.Candle.Close:N8}";
+                            return false;
+                        }
+                        break;
+                }
+            }
+
+            if (settings.CheckIncreasingMacd)
+            {
+                int barCount = MacdRecoveryBarCount;
+
+                switch (SignalSide)
+                {
+                    case CryptoTradeSide.Long:
+                        if (!this.IsMacdRecoveryOversold(barCount))
+                            return false;
+                        break;
+                    case CryptoTradeSide.Short:
+                        if (!this.IsMacdRecoveryOverbought(barCount))
+                            return false;
+                        break;
+                }
+            }
+
+            if (settings.CheckIncreasingRsi)
+            {
+                switch (SignalSide)
+                {
+                    case CryptoTradeSide.Long:
+                        if (CandleLast?.CandleData?.Rsi <= candlePrev?.CandleData?.Rsi)
+                        {
+                            ExtraText = $"Rsi {candlePrev.CandleData.Rsi:N8} not recovering <= {CandleLast.CandleData.Rsi:N8}";
+                            return false;
+                        }
+                        break;
+                    case CryptoTradeSide.Short:
+                        if (CandleLast?.CandleData?.Rsi >= candlePrev?.CandleData?.Rsi)
+                        {
+                            ExtraText = $"Rsi {candlePrev.CandleData.Rsi:N8} not recovering >= {CandleLast.CandleData.Rsi:N8}";
+                            return false;
+                        }
+                        break;
+                }
+            }
+
+            // Red %D = signal, average from the last 3 %K values
+            // Blue %K = Oscilator calculated from the last 14 candles
+            if (settings.CheckIncreasingStoch)
+            {
+                switch (SignalSide)
+                {
+                    case CryptoTradeSide.Long:
+                        // %K should recover
+                        if (CandleLast?.CandleData?.StochOscillator <= candlePrev?.CandleData?.StochOscillator)
+                        {
+                            ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering < {CandleLast.CandleData.StochOscillator:N8}";
+                            return false;
+                        }
+
+                        // %D and %K should have crossed, %K(quick/blue) > %D(slow/red)
+                        if (CandleLast?.CandleData?.StochOscillator <= CandleLast?.CandleData?.StochSignal)
+                        {
+                            ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} not above %K {candlePrev?.CandleData?.StochOscillator:N8}";
+                            return false;
+                        }
+                        break;
+                    case CryptoTradeSide.Short:
+                        // %K should recover (= fall) for a short — refuse while it is still rising.
+                        if (CandleLast?.CandleData!.StochOscillator >= candlePrev?.CandleData?.StochOscillator)
+                        {
+                            ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering > {CandleLast.CandleData?.StochOscillator:N8}";
+                            return false;
+                        }
+
+                        // BUGFIX: the previous condition was StochSignal > StochOscillator (= %D > %K
+                        // = %K < %D), which is the DESIRED short state — so the check refused exactly
+                        // when it should have allowed and vice versa, letting bullish %K-above-%D
+                        // setups through on shorts. Correct test: refuse while %K is still above %D
+                        // (cross has not yet happened in the short direction).
+                        if (CandleLast?.CandleData?.StochOscillator >= CandleLast?.CandleData?.StochSignal)
+                        {
+                            ExtraText = $"Stoch.%K {CandleLast?.CandleData?.StochOscillator:N8} not below %D {CandleLast?.CandleData?.StochSignal:N8}";
+                            return false;
+                        }
+                        break;
+                }
             }
         }
 
+        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
+            return false;
+
+        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
+            return false;
+
         return true;
+    }
+
+
+    /// <summary>
+    /// Extra controles nadat we het accepteren
+    /// </summary>
+    public virtual bool AllowStepIn(CryptoSignal signal)
+    {
+        var settings = ResolveEntryConditions();
+
+        if (!CheckCheapEntryConditions(settings))
+            return false;
+
+        return CheckExpensiveEntryConditions(settings);
     }
 
 
