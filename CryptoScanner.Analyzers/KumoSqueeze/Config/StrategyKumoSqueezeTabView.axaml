@@ -16,9 +16,11 @@
                     <Run Text=" — BB squeeze breakout confirmed by Ichimoku cloud position, volume and momentum" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
             </StackPanel>
-            <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
-            <vm:StrategyKumoSqueezeSettingsView DataContext="{Binding StrategyKumoSqueezeSettingsViewModel}" />
-            <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            <WrapPanel>
+                <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyKumoSqueezeSettingsView DataContext="{Binding StrategyKumoSqueezeSettingsViewModel}" />
+                <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
         </StackPanel>
     </ScrollViewer>
 

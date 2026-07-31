@@ -19,9 +19,11 @@
                            Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
                            TextDecorations="Underline" Tapped="OnWikiTapped"/>
             </StackPanel>
-            <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
-            <vm:StrategyDbrSettingsView DataContext="{Binding StrategyDbrSettingsViewModel}" />
-            <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            <WrapPanel>
+                <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyDbrSettingsView DataContext="{Binding StrategyDbrSettingsViewModel}" />
+                <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
         </StackPanel>
     </ScrollViewer>
 

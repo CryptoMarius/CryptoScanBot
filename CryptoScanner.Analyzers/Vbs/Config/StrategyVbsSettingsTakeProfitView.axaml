@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="110"
+             xmlns:vm="using:CryptoScanner.Analyzers.Vbs.Config"
+             x:DataType="vm:StrategyVbsSettingsViewModel"
+             x:Class="CryptoScanner.Analyzers.Vbs.Config.StrategyVbsSettingsTakeProfitView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Take-profit">
+        <StackPanel Margin="4" Spacing="4">
+
+            <CheckBox IsChecked="{Binding UseTakeProfit, Mode=TwoWay}"
+                      Content="Use take-profit" FontSize="12"
+                      ToolTip.Tip="When on, the signal hands a single take-profit to the trader: TP = Entry -/+ RiskRewardRatio × SL-distance (RiskRewardRatio × ACS%). Replaces the global TP grid for this position."/>
+
+            <!-- Risk-reward ratio -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="TP distance = RiskRewardRatio × SL distance. 1.0 = the TP sits as far as the stop-loss (1:1); higher = further away = more profit per win but hit less often.">
+                <TextBlock Grid.Column="0" Text="Risk-reward ratio (RRR):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1" Text="{Binding RiskRewardRatio, Mode=TwoWay, StringFormat=N2}" IsEnabled="{Binding UseTakeProfit}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

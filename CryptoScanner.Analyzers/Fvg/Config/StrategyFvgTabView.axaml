@@ -8,7 +8,7 @@
              x:DataType="vm:StrategyFvgTabViewModel"
              x:Class="CryptoScanner.Analyzers.Fvg.Config.StrategyFvgTabView">
 
-    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="5">
             <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
                 <TextBlock FontSize="13">
@@ -19,12 +19,12 @@
                            Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
                            TextDecorations="Underline" Tapped="OnWikiTapped"/>
             </StackPanel>
-            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" RowSpacing="5" ColumnSpacing="5" HorizontalAlignment="Left">
-                <configviews:SoundAndColorsView Grid.Row="0" Grid.Column="0" DataContext="{Binding SoundAndColorsViewModel}" />
-                <vm:StrategyFvgSettingsView Grid.Row="1" Grid.Column="0" DataContext="{Binding StrategyFvgSettingsViewModel}" />
-                <configviews:IntervalView Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" DataContext="{Binding IntervalViewModel}" VerticalAlignment="Top" HorizontalAlignment="Left"/>
-            </Grid>
-            <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            <WrapPanel>
+                <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyFvgSettingsView DataContext="{Binding StrategyFvgSettingsViewModel}" />
+                <configviews:IntervalView DataContext="{Binding IntervalViewModel}" />
+                <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
         </StackPanel>
     </ScrollViewer>
 

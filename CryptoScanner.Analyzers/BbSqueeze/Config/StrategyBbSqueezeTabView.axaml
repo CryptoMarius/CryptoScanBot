@@ -16,9 +16,11 @@
                     <Run Text=" — Breakout after a period of low volatility (BB squeeze), confirmed by MACD/volume" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
             </StackPanel>
-            <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
-            <vm:StrategyBbSqueezeSettingsView DataContext="{Binding StrategyBbSqueezeSettingsViewModel}" />
-            <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            <WrapPanel>
+                <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyBbSqueezeSettingsView DataContext="{Binding StrategyBbSqueezeSettingsViewModel}" />
+                <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
         </StackPanel>
     </ScrollViewer>
 

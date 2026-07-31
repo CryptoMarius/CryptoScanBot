@@ -8,8 +8,8 @@
              x:DataType="vm:StrategyDlzTabViewModel"
              x:Class="CryptoScanner.Analyzers.Dlz.Config.StrategyDlzTabView">
 
-    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-    <StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="5">
         <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
             <TextBlock FontSize="13">
                 <Run Text="DLZ – Dominant Liquidity Zones" FontWeight="SemiBold"/>
@@ -19,23 +19,20 @@
                        Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
                        TextDecorations="Underline" Tapped="OnWikiTapped"/>
         </StackPanel>
-        <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto" RowSpacing="5">
-           <configviews:SoundAndColorsView Grid.Row="0" DataContext="{Binding SoundAndColorsViewModel}" />
-            <HeaderedContentControl Grid.Row="0" Grid.Column="1" Classes="groupbox" Header="Zone calculation" HorizontalAlignment="Left"
+        <WrapPanel>
+            <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+            <HeaderedContentControl Classes="groupbox" Header="Zone calculation" HorizontalAlignment="Left"
 									 IsVisible="false">
                 <configviews:IndicatorZigZagView DataContext="{Binding IndicatorZigZagViewModel}" />
             </HeaderedContentControl>
-        </Grid>
-        <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,Auto,Auto" Margin="5" RowSpacing="5">
-            <vm:StrategyDlzSettingsView Grid.Row="0" DataContext="{Binding StrategyDlzSettingsViewModel}" />
-            <vm:StrategyDlzSettingsZoneFilterView Grid.Row="0" Grid.Column="1" DataContext="{Binding StrategyDlzSettingsZoneFilterViewModel}" />
-
-            <vm:StrategyDlzSettingsUnzoomedBoxView Grid.Row="1" Grid.Column="0" DataContext="{Binding StrategyDlzSettingsUnzoomedBoxViewModel}" />
-            <vm:StrategyDlzSettingsZoomedBoxView Grid.Row="1" Grid.Column="1" DataContext="{Binding StrategyDlzSettingsZoomedBoxViewModel}" />
-
-            <configviews:IntervalView Grid.Row="0" Grid.Column="3" Grid.RowSpan="2" DataContext="{Binding IntervalViewModel}" />
-        </Grid>
-        <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            <vm:StrategyDlzSettingsView DataContext="{Binding StrategyDlzSettingsViewModel}" />
+            <vm:StrategyDlzSettingsZoneStrengthView DataContext="{Binding StrategyDlzSettingsViewModel}" />
+            <vm:StrategyDlzSettingsZoneFilterView DataContext="{Binding StrategyDlzSettingsZoneFilterViewModel}" />
+            <vm:StrategyDlzSettingsUnzoomedBoxView DataContext="{Binding StrategyDlzSettingsUnzoomedBoxViewModel}" />
+            <vm:StrategyDlzSettingsZoomedBoxView DataContext="{Binding StrategyDlzSettingsZoomedBoxViewModel}" />
+            <configviews:IntervalView DataContext="{Binding IntervalViewModel}" />
+            <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+        </WrapPanel>
     </StackPanel>
     </ScrollViewer>
 
