@@ -20,6 +20,8 @@ using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Emulator.Views;
 using CryptoScanner.ViewModels;
 
+using System.Diagnostics;
+
 namespace CryptoScanner.Emulator.ViewModels;
 
 /// <summary>
@@ -929,7 +931,8 @@ public partial class MainWindowViewModel : ObservableObject
             Core.Contracts.PluginManager.CollectSettings(GlobalData.Settings.Signal.AnalyzerSettings);
             string settingsJson = System.Text.Json.JsonSerializer.Serialize(
                 GlobalData.Settings, Core.Json.JsonTools.JsonSerializerIndented);
-            run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label, settingsJson);
+            string? gitSha = GetGitShortSha();
+            run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label, settingsJson, gitSha);
             GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
 
             var runner = new TickRunner
@@ -1106,5 +1109,29 @@ public partial class MainWindowViewModel : ObservableObject
         // The Progress<T> callback already marshals to the UI thread when constructed on the
         // UI thread; the explicit Post is defensive in case this VM ever runs in a worker.
         Dispatcher.UIThread.Post(() => ProgressValue = p.Percent);
+    }
+
+
+    private static string? GetGitShortSha()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo("git", "rev-parse --short HEAD")
+            {
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            using var proc = Process.Start(psi);
+            if (proc == null)
+                return null;
+            string output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(3000);
+            return string.IsNullOrEmpty(output) ? null : output;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
