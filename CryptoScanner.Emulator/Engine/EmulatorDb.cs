@@ -229,6 +229,37 @@ public static class EmulatorDb
     }
 
 
+    /// <summary>
+    /// Deletes all rows from Signal, Order, Trade, PositionStep and PositionPart — the bulk data
+    /// that the trader needs during a run but that can be discarded once the run's stats are computed
+    /// in FinishRun. Position and EmulatorRun rows are kept (they hold the aggregated results).
+    /// Uses bare DELETE (no WHERE) which SQLite optimizes as a page-deallocation truncate.
+    /// Call VACUUM separately (e.g. at end of a queue batch) to reclaim disk space.
+    /// </summary>
+    public static void PurgeTransientData()
+    {
+        using var database = new CryptoDatabase();
+        database.Open();
+        database.Connection.Execute("DELETE FROM [Trade]");
+        database.Connection.Execute("DELETE FROM [Order]");
+        database.Connection.Execute("DELETE FROM Signal");
+        database.Connection.Execute("DELETE FROM PositionStep");
+        database.Connection.Execute("DELETE FROM PositionPart");
+        database.Connection.Execute("DELETE FROM Position");
+    }
+
+
+    /// <summary>
+    /// Reclaims unused pages after transient data has been purged.
+    /// </summary>
+    public static void Vacuum()
+    {
+        using var database = new CryptoDatabase();
+        database.Open();
+        database.Connection.Execute("VACUUM");
+    }
+
+
     /// <summary>Recalculates every run in the EmulatorRun table. Convenience wrapper for the full backfill.</summary>
     public static int RecalculateAllRuns()
     {

@@ -479,6 +479,8 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             await RunOnceAsync(config);
+            try { EmulatorDb.Vacuum(); }
+            catch { /* best-effort */ }
         }
         finally
         {
@@ -596,6 +598,9 @@ public partial class MainWindowViewModel : ObservableObject
         }
         finally
         {
+            try { EmulatorDb.Vacuum(); }
+            catch { /* best-effort */ }
+
             // Restore the user's configured strategy lists — the per-algorithm overrides were transient.
             GlobalData.Settings.Signal.Long.Strategy = savedSignalLongStrategy;
             GlobalData.Settings.Signal.Short.Strategy = savedSignalShortStrategy;
@@ -887,6 +892,15 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Signal.Short.MarketTrend.List = savedSignalShortMarketTrend;
             GlobalData.Settings.Signal.Long.MarketTrendSecondary.List = savedSignalLongMarketTrendSecondary;
             GlobalData.Settings.Signal.Short.MarketTrendSecondary.List = savedSignalShortMarketTrendSecondary;
+            try
+            {
+                EmulatorDb.Vacuum();
+            }
+            catch (Exception vx)
+            {
+                GlobalData.AddTextToLogTab($"Queue: VACUUM failed — {vx.Message}");
+            }
+
             _queueProgress = "";
             OnPropertyChanged(nameof(ProgressLabel));
             IsRunning = false;
@@ -994,6 +1008,17 @@ public partial class MainWindowViewModel : ObservableObject
             catch (Exception sx)
             {
                 GlobalData.AddTextToLogTab($"Run: persisting candles FAILED — {sx.Message}");
+            }
+
+            // Stats are computed — purge the bulk data (signals, orders, trades, position details)
+            // to keep the database small. Position and EmulatorRun rows survive.
+            try
+            {
+                EmulatorDb.PurgeTransientData();
+            }
+            catch (Exception px)
+            {
+                GlobalData.AddTextToLogTab($"Run: purge transient data failed — {px.Message}");
             }
 
             // The run just added/updated its EmulatorRun row (and its signals/positions); pull

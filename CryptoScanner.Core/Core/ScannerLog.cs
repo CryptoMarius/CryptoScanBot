@@ -19,6 +19,12 @@ public class ScannerLog
     /// Set this before calling <see cref="InitializeLogging"/>.
     /// </summary>
     private static bool UseSimulatedTime { get; set; }
+
+    /// <summary>
+    /// When false (default), per-run Trace log files are NOT created during emulator runs.
+    /// Set to true before a run to capture Trace-level detail (~300+ MB per run).
+    /// </summary>
+    public static bool EnableRunTraceLog { get; set; }
     private static string LogLayout => UseSimulatedTime ? EmulatorLogLayout : ScannerLogLayout;
 
     static private NLog.Targets.Target CreateTarget(string name, string extra)
@@ -106,27 +112,30 @@ public class ScannerLog
         runLoggingRule = new NLog.Config.LoggingRule("*", LogLevel.Info, runFileTarget);
         config.LoggingRules.Add(runLoggingRule);
 
-        // Split the (otherwise ever-growing) trace log per run as well: a dedicated Trace-level file
-        // for this run only, named with the run id exactly like the Info file above. Every
-        // Trace-or-above line is written here. Not gated on DEBUG, so it also works in Release.
-        string traceFilename = Path.Combine(GlobalData.AppDataFolder, "Log", $"{logName} Run {runId} Trace.log");
-
-        var innerTraceTarget = new NLog.Targets.FileTarget
+        if (EnableRunTraceLog)
         {
-            Name = $"run-{runId}-trace_file",
-            KeepFileOpen = true,
-            FileName = traceFilename,
-            Layout = LogLayout,
-        };
+            // Split the (otherwise ever-growing) trace log per run as well: a dedicated Trace-level file
+            // for this run only, named with the run id exactly like the Info file above. Every
+            // Trace-or-above line is written here. Not gated on DEBUG, so it also works in Release.
+            string traceFilename = Path.Combine(GlobalData.AppDataFolder, "Log", $"{logName} Run {runId} Trace.log");
 
-        runTraceTarget = new NLog.Targets.Wrappers.AsyncTargetWrapper(innerTraceTarget, 50000, NLog.Targets.Wrappers.AsyncTargetWrapperOverflowAction.Block)
-        {
-            Name = $"run-{runId}-trace",
-        };
+            var innerTraceTarget = new NLog.Targets.FileTarget
+            {
+                Name = $"run-{runId}-trace_file",
+                KeepFileOpen = true,
+                FileName = traceFilename,
+                Layout = LogLayout,
+            };
 
-        config.AddTarget(runTraceTarget);
-        runTraceRule = new NLog.Config.LoggingRule("*", LogLevel.Trace, runTraceTarget);
-        config.LoggingRules.Add(runTraceRule);
+            runTraceTarget = new NLog.Targets.Wrappers.AsyncTargetWrapper(innerTraceTarget, 50000, NLog.Targets.Wrappers.AsyncTargetWrapperOverflowAction.Block)
+            {
+                Name = $"run-{runId}-trace",
+            };
+
+            config.AddTarget(runTraceTarget);
+            runTraceRule = new NLog.Config.LoggingRule("*", LogLevel.Trace, runTraceTarget);
+            config.LoggingRules.Add(runTraceRule);
+        }
 
         // Detach the shared trace target so the global Trace.log does not grow during emulator runs.
         if (sharedTraceRule != null)

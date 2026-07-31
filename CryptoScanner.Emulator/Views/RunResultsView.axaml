@@ -50,12 +50,12 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="400"/>
-                <DataGridTextColumn Header="Period"      Binding="{Binding Period}" Width="230"/>
-                <DataGridTextColumn Header="Started"     Binding="{Binding StartedLocal}" Width="130" IsVisible="False"/>
-				<DataGridTextColumn Header="Finished"    Binding="{Binding FinishedLocal}" Width="130" IsVisible="False"/>
-				<DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="90"/>
-                <DataGridTextColumn Header="Result"      Binding="{Binding Result}" Width="90"/>
+                <DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="400"/>
+                <DataGridTextColumn Header="Period" Binding="{Binding Period}" Width="230"/>
+                <DataGridTextColumn Header="Started" Binding="{Binding StartedLocal}" Width="130"/>
+				<DataGridTextColumn Header="Finished" Binding="{Binding FinishedLocal}" Width="130" IsVisible="False"/>
+				<DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="90"/>
+                <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="90"/>
                 <DataGridTemplateColumn Header="Signals" Width="65" SortMemberPath="SignalCount">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
