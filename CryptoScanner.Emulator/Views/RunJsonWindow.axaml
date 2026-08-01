@@ -8,6 +8,8 @@
         Title="Run JSON"
         WindowStartupLocation="CenterOwner">
 
+    <!-- Border around entire content -->
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
     <Grid RowDefinitions="*,Auto" Margin="10" RowSpacing="8">
 
         <!-- Read-only, scrollable, monospace view of the stored JSON. -->
@@ -27,5 +29,6 @@
         </StackPanel>
 
     </Grid>
+    </Border>
 
 </Window>

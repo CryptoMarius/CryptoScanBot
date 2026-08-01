@@ -31,7 +31,7 @@
     </Window.Styles>
     
     <!-- Border around entire content -->
-    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" Margin="8">
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
 
     <DockPanel>
         <!-- OK Button at bottom -->

@@ -10,6 +10,8 @@
         Title="Run signals"
         WindowStartupLocation="CenterOwner">
 
+    <!-- Border around entire content -->
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
     <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="8">
 
         <TextBlock Grid.Row="0" FontWeight="Bold" FontSize="13" Text="{Binding Header}"/>
@@ -49,5 +51,6 @@
         <TextBlock Grid.Row="2" Text="{Binding Status}" Foreground="Gray" FontSize="11"/>
 
     </Grid>
+    </Border>
 
 </Window>

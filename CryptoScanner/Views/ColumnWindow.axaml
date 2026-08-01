@@ -12,13 +12,15 @@
 		WindowStartupLocation="CenterOwner" CanResize="True" ShowInTaskbar="False"
 		ExtendClientAreaToDecorationsHint="False">
 
+	<!-- Border around entire content -->
+	<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
 	<Grid RowDefinitions="*,Auto" Margin="10">
 
 		<ScrollViewer Grid.Row="0" x:Name="ColumnScrollViewer" HorizontalScrollBarVisibility="Disabled">
 			<ItemsControl ItemsSource="{Binding Columns}">
 				<ItemsControl.ItemsPanel>
 					<ItemsPanelTemplate>
-						<WrapPanel Orientation="Vertical" 
+						<WrapPanel Orientation="Vertical"
 								   MaxHeight="{Binding #ColumnScrollViewer.Bounds.Height}" />
 					</ItemsPanelTemplate>
 				</ItemsControl.ItemsPanel>
@@ -45,4 +47,5 @@
 			<Button Content="Close" HorizontalContentAlignment="Center" Click="OnCloseClick" Width="100"/>
 		</StackPanel>
 	</Grid>
+	</Border>
 </Window>

@@ -11,6 +11,8 @@
         WindowStartupLocation="CenterScreen"
         CanResize="False">
 
+    <!-- Border around entire content -->
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
     <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto" RowSpacing="12">
 
         <TextBlock Grid.Row="0" FontSize="18" FontWeight="Bold" Text="Emulator setup"/>
@@ -61,5 +63,6 @@
         </StackPanel>
 
     </Grid>
+    </Border>
 
 </Window>

@@ -10,6 +10,8 @@
         Title="Run algorithms"
         WindowStartupLocation="CenterOwner">
 
+    <!-- Border around entire content -->
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
     <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="6">
 
         <TextBlock Grid.Row="0" TextWrapping="Wrap"
@@ -43,5 +45,6 @@
         </StackPanel>
 
     </Grid>
+    </Border>
 
 </Window>

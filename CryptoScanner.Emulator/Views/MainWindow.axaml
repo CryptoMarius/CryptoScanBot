@@ -164,6 +164,11 @@
 
             </Grid>
         </DockPanel>
+
+        <!-- Border Overlay (layer 2 - on top) -->
+        <!-- IsHitTestVisible="False" allows clicks to pass through to content below -->
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1"
+                Background="Transparent" IsHitTestVisible="False"/>
     </Panel>
 
 </Window>

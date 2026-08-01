@@ -5,6 +5,8 @@
         WindowStartupLocation="CenterOwner"
         CanResize="False" ShowInTaskbar="False">
 
+    <!-- Border around entire content -->
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
     <StackPanel Margin="20" Spacing="20">
         <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="13"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
@@ -12,5 +14,5 @@
             <Button Content="No"  Click="OnNoClick"  Width="80"/>
         </StackPanel>
     </StackPanel>
-
+    </Border>
 </Window>

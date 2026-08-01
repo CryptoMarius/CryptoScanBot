@@ -11,8 +11,10 @@
         x:Class="CryptoScanner.Views.ChartWindow"
         Title="{Binding WindowTitle}">
 
+    <!-- Border around entire content -->
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
     <Grid ColumnDefinitions="220,*" RowDefinitions="*">
-        
+
         <!-- Left Panel - Controls -->
         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Width="220">
             <StackPanel Margin="8,0,0,2" Spacing="2">
@@ -183,6 +185,6 @@
                           Background="Transparent" />
         </Border>
     </Grid>
-    
+    </Border>
 
 </Window>
