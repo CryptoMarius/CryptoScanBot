@@ -222,6 +222,16 @@ public static class Helper
             symbolInterval.SignalList.Clear();
     }
 
+    // Clear signals on the given interval and all lower intervals
+    public static void ClearSignalsUpTo(this CryptoSymbol symbol, uint duration)
+    {
+        foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+        {
+            if (symbolInterval.Interval!.Duration <= duration)
+                symbolInterval.SignalList.Clear();
+        }
+    }
+
 
     public static bool IsBarometerSymbol(this CryptoSymbol symbol)
     {

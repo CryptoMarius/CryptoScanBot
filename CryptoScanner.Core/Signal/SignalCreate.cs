@@ -441,9 +441,11 @@ public class SignalCreate
                         // Just clear all, only the last signal counts?
                         // Not sure if this is the right way to go..
                         // Should we cancel unfilled positions as well?
-                        Symbol.ClearSignals();
+                        //Symbol.ClearSignals();
 
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
+                        // Clear own interval and all lower intervals (higher timeframe overrules lower)
+                        Symbol.ClearSignalsUpTo(signal.Interval.Duration);
                         symbolInterval.SignalList.Add(signal);
 
                         // Off-by-one diagnostic: a signal must be accepted at the CLOSE of its trigger
