@@ -45,20 +45,20 @@ public class HelperExtensionNullTests
     // ── RSI helpers ──────────────────────────────────────────────────
 
     [TestMethod]
-    public void RsiOversold_NullRsi_ReturnsTrue()
+    public void RsiOversold_NullRsi_ReturnsFalse()
     {
-        // CandleData?.Rsi is null → null > 30 is false → method returns true.
-        // This documents existing behavior: null is treated as oversold.
+        // RsiHelper.RsiOversold explicitly guards on !rsi.HasValue (see "Neater rsi helper for
+        // os/ob", 829196da): no RSI data yet must not be treated as an extreme condition.
         var data = MakeData(new CryptoData { Rsi = null });
-        Assert.IsTrue(data.RsiOversold());
+        Assert.IsFalse(data.RsiOversold());
     }
 
     [TestMethod]
-    public void RsiOverbought_NullRsi_ReturnsTrue()
+    public void RsiOverbought_NullRsi_ReturnsFalse()
     {
-        // Same pattern: null < 70 is false → returns true.
+        // Same guard as RsiOversold: missing RSI data is never overbought.
         var data = MakeData(new CryptoData { Rsi = null });
-        Assert.IsTrue(data.RsiOverbought());
+        Assert.IsFalse(data.RsiOverbought());
     }
 
     [TestMethod]

@@ -99,12 +99,17 @@ public class PaperTradingTests : TestBase
         return step;
     }
 
-    private static CryptoCandle MakeCandle(decimal open, decimal high, decimal low, decimal close, uint openTimeMinutes = 100)
+    private static CryptoCandle MakeCandle(decimal open, decimal high, decimal low, decimal close, DateTime? openTime = null)
     {
+        // Default to "now": PaperTradingCheckStep/CheckStepAgainstCandle reject a fill when
+        // step.CreateTime > candle.Date (a step cannot fill on a candle that predates it), and
+        // CreateTestPosition/CreateTestStep stamp CreateTime as DateTime.UtcNow.AddHours(-24). A
+        // fixed small CandleTime (close to the 2010-01-04 epoch) would always predate that and the
+        // guard would silently swallow every fill.
         return new CryptoCandle
         {
             TickDecimals = 4,
-            OpenTime = new CandleTime(openTimeMinutes),
+            OpenTime = CandleTime.FromDateTime(openTime ?? DateTime.UtcNow),
             Open = open,
             High = high,
             Low = low,
