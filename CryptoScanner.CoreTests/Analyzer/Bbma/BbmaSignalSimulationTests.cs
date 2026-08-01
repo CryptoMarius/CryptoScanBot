@@ -25,12 +25,12 @@ namespace CryptoScanner.CoreTests.Analyzer.Bbma;
 ///
 /// Data files
 /// ──────────
-/// Each symbol sub-folder under Signal\Bbma\ must contain three JSON files with
+/// Each symbol sub-folder under Analyzer\Bbma\ must contain three JSON files with
 /// candle history in CryptoCandleList format (same format as the ZigZag tests):
 ///
-///   Signal\Bbma\ADAUSDT\ADAUSDT-5m.json
-///   Signal\Bbma\ADAUSDT\ADAUSDT-15m.json
-///   Signal\Bbma\ADAUSDT\ADAUSDT-1h.json
+///   Analyzer\Bbma\ADAUSDT\ADAUSDT-5m.json
+///   Analyzer\Bbma\ADAUSDT\ADAUSDT-15m.json
+///   Analyzer\Bbma\ADAUSDT\ADAUSDT-1h.json
 ///
 ///
 /// To create these files, export candle data from the running scanner using the
@@ -48,6 +48,19 @@ namespace CryptoScanner.CoreTests.Analyzer.Bbma;
 [DoNotParallelize]
 public class BbmaSignalSimulationTests : TestBase
 {
+    [TestInitialize]
+    public void SkipOutsideDebug()
+    {
+        // BBMA reads Ema50/Atr14/Wma05Low/Wma05High/Wma10Low/Wma10High off CryptoData, which
+        // IntervalIndicatorHub only computes inside #if DEBUG (see IntervalIndicatorHub.cs) — the
+        // same gate that keeps the BBMA strategy itself DEBUG-only in AnalyzerRegistration.RegisterAll.
+        // In a Release build those fields stay null all the way through, so every simulation here
+        // silently finds 0 signals regardless of the data — not a real pass/fail signal.
+#if !DEBUG
+        Assert.Inconclusive("BBMA simulation requires a DEBUG build (Ema50/Atr14/Wma05/10 are DEBUG-only in IntervalIndicatorHub).");
+#endif
+    }
+
     // ─── timeframe pair for the 5m LTF BBMA setup ────────────────────────────
     private static readonly CryptoIntervalPeriod LtfPeriod = CryptoIntervalPeriod.interval5m;
     private static readonly CryptoIntervalPeriod MtfPeriod = CryptoIntervalPeriod.interval15m;
