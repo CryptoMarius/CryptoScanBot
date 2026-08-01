@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 74;
+    public readonly static int CurrentDatabaseVersion = 75;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1496,6 +1496,23 @@ public class Migration
             transaction.Commit();
         }
 
+
+        //***********************************************************
+        // 01-08-2026 Strategy2 column: the strategy name (e.g. "vbs"), set alongside the existing Strategy
+        // enum column. Lets Signal/Position eventually be addressed by name instead of by the
+        // CryptoSignalStrategy enum value (see the "TODO: Remove this enumeration" note on the enum).
+        if (CurrentVersion > version.Version && version.Version == 74)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Signal add Strategy2 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add Strategy2 Text null", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
 
 
         // Apply the exchange defaults with each update

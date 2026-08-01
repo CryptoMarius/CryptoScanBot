@@ -4,6 +4,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -81,6 +82,7 @@ public static class PositionTools
             IntervalId = symbolInterval.Interval.Id,
             Status = CryptoPositionStatus.Waiting,
             Strategy = strategy,
+            Strategy2 = RegisterAlgorithms.GetAlgorithm(strategy),
             ActiveDca = false,
             EventText = eventText,
             PartCount = 0,

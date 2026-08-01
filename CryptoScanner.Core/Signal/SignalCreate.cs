@@ -229,6 +229,7 @@ public class SignalCreate
         CryptoSignal signal = CreateSignal(Candle);
         signal.Side = algorithm.SignalSide;
         signal.Strategy = algorithm.SignalStrategy;
+        signal.Strategy2 = RegisterAlgorithms.GetAlgorithm(algorithm.SignalStrategy);
         // Might be different?
         signal.Interval = algorithm.Interval;
         signal.IntervalId = algorithm.Interval.Id;

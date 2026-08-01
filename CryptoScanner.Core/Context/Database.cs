@@ -327,6 +327,7 @@ public class CryptoDatabase : IDisposable
                 "SymbolId INTEGER NOT NULL," +
                 "IntervalId INTEGER NULL," +
                 "Strategy INTEGER NULL," +
+                "Strategy2 TEXT NULL," +
                 "Side INTEGER NOT NULL," +
 
                 "IsInvalid INTEGER NOT NULL," +
@@ -450,6 +451,7 @@ public class CryptoDatabase : IDisposable
                 "SymbolId INTEGER NOT NULL," +
                 "IntervalId INTEGER NOT NULL," +
                 "Strategy INTEGER NOT NULL," +
+                "Strategy2 TEXT NULL," +
                 "Side INTEGER NOT NULL," +
                 "Status INTEGER NOT NULL," +
 
