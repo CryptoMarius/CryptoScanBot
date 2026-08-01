@@ -51,7 +51,7 @@ public class PaperAssets
                 Free = defaultTotal,
                 Total = defaultTotal,
             };
-            activeExchange.Data.AssetList.Add(asset.Name, asset);
+            activeExchange.Data.AssetList.TryAdd(asset.Name, asset);
 
             using CryptoDatabase database = new();
             database.Open();
@@ -75,7 +75,7 @@ public class PaperAssets
                 Total = 0,
                 Locked = 0,
             };
-            activeExchange.Data.AssetList.Add(assetBase.Name, assetBase);
+            activeExchange.Data.AssetList.TryAdd(assetBase.Name, assetBase);
         }
 
         return assetBase;
@@ -102,7 +102,7 @@ public class PaperAssets
 
         if (asset.Total == 0)
         {
-            activeExchange.Data.AssetList.Remove(asset.Name);
+            activeExchange.Data.AssetList.TryRemove(asset.Name, out _);
             if (asset.Id > 0)
                 database.Connection.Delete(asset, transaction);
         }

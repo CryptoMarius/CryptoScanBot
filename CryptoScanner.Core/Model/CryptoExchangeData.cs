@@ -27,9 +27,16 @@ public class CryptoExchangeData
     // Assets
     // Assets + locking (unused as we are aiming for Altrady as platform)
     // Key = assetName
+    // ConcurrentDictionary (was SortedList): asset updates arrive from several threads at once
+    // (exchange balance callbacks, PaperAssets.Change on order fills, PositionMonitor reads), and
+    // SortedList is not thread-safe - a concurrent Add/Remove could resize its internal arrays while
+    // another thread's TryGetValue was mid-read, occasionally handing back a matched key with a still-
+    // null value slot (NullReferenceException in PositionMonitor.HandleEntryPart). AssetListSemaphore
+    // is kept for the compound multi-asset transactions in PaperAssets.Change/CreateAsset - that's
+    // about business-logic atomicity, not collection safety.
     public SemaphoreSlim AssetListSemaphore { get; set; } = new(1);
     public DateTime? LastRefreshAssets { get; set; } = null;
-    public SortedList<string, CryptoAsset> AssetList { get; } = [];
+    public ConcurrentDictionary<string, CryptoAsset> AssetList { get; } = new();
 
 
     // Open positions

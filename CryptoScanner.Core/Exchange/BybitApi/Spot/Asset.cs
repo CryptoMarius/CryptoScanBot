@@ -39,7 +39,7 @@ public class Asset() : AssetBase(), IAsset
                             {
                                 Name = assetInfo.Asset,
                             };
-                            activeExchange.Data.AssetList.Add(asset.Name, asset);
+                            activeExchange.Data.AssetList.TryAdd(asset.Name, asset);
                         }
                         asset.Total = (decimal)assetInfo.WalletBalance;
                         asset.Locked = (decimal)assetInfo.WalletBalance - assetInfo.TransferBalance;
@@ -58,7 +58,7 @@ public class Asset() : AssetBase(), IAsset
                     if (asset.Total == 0)
                     {
                         databaseThread.Connection.Delete(asset, transaction);
-                        activeExchange.Data.AssetList.Remove(asset.Name);
+                        activeExchange.Data.AssetList.TryRemove(asset.Name, out _);
                     }
                 }
 

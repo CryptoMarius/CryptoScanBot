@@ -382,7 +382,8 @@ public static class Helper
                         stringBuilder.AppendLine("Assets:");
 
                         //AddTextToLogTab("Assets changed");
-                        foreach (CryptoAsset asset in activeExchange.Data.AssetList.Values)
+                        // OrderBy: ConcurrentDictionary has no guaranteed order (unlike the old SortedList), sort here for a stable, readable log.
+                        foreach (CryptoAsset asset in activeExchange.Data.AssetList.Values.OrderBy(a => a.Name))
                         {
                             if (asset.Total.ToString0() == asset.Free.ToString0())
                                 stringBuilder.AppendLine(string.Format("{0} {1}", asset.Name, asset.Total.ToString0()));

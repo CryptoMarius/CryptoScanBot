@@ -1064,7 +1064,7 @@ public class PositionMonitor : IDisposable
             {
                 // Bepaal het entry bedrag, dat kan een vast bedrag of een perc van de totaal beschikbare quote asset zijn
                 decimal currentAssetQuantity = 0;
-                if (GlobalData.ActiveExchange!.Data.AssetList.TryGetValue(Symbol.Quote, out var asset))
+                if (GlobalData.ActiveExchange!.Data.AssetList.TryGetValue(Symbol.Quote, out var asset) && asset != null)
                     currentAssetQuantity = asset.Total;
                 entryValue = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity);
                 GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.PartCount} entry {part.PartNumber} value={entryValue}");

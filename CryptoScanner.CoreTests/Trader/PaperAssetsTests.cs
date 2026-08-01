@@ -30,7 +30,7 @@ public class PaperAssetsTests : TestBase
         CryptoSymbol symbol = CreateTestSymbol(database);
 
         CryptoAsset assetQuote = new() { Name = symbol.Quote, Total = 1000, Free = 1000, Locked = 0 };
-        GlobalData.ActiveExchange!.Data.AssetList.Add(assetQuote.Name, assetQuote);
+        GlobalData.ActiveExchange!.Data.AssetList.TryAdd(assetQuote.Name, assetQuote);
         database.Connection.Insert(assetQuote);
 
         const decimal entryPrice = 200m;
@@ -88,7 +88,7 @@ public class PaperAssetsTests : TestBase
         CryptoSymbol symbol = CreateTestSymbol(database);
 
         CryptoAsset assetQuote = new() { Name = symbol.Quote, Total = 2000, Free = 2000, Locked = 0 };
-        GlobalData.ActiveExchange!.Data.AssetList.Add(assetQuote.Name, assetQuote);
+        GlobalData.ActiveExchange!.Data.AssetList.TryAdd(assetQuote.Name, assetQuote);
         database.Connection.Insert(assetQuote);
 
         // Act — entry 1 fill (0.1 contract @ 1000, +100 USDT proceeds)
@@ -138,7 +138,7 @@ public class PaperAssetsTests : TestBase
             Free = 1000,
             Locked = 0,
         };
-        GlobalData.ActiveExchange!.Data.AssetList.Add(assetQuote.Name, assetQuote);
+        GlobalData.ActiveExchange!.Data.AssetList.TryAdd(assetQuote.Name, assetQuote);
         database.Connection.Insert(assetQuote);
 
         CryptoPosition position = PositionTools.CreatePosition(symbol, CryptoSignalStrategy.Stobb,
