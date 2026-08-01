@@ -11,7 +11,7 @@ public static class AnalyzerRegistration
     public static void RegisterAll()
     {
         // ATR based bands, but it does not perform well enough
-        //PluginManager.Register(new AtrRb.AtrRbPlugin()); 
+        PluginManager.Register(new AtrRb.AtrRbPlugin()); 
 
         // A band strategy which does rather well
         PluginManager.Register(new Dbr.DbrPlugin());
