@@ -360,7 +360,7 @@ public class SkenderReferenceRegressionTests
 
         foreach (bool useHub in new[] { false, true })
         {
-            GlobalData.Settings.Signal.UseIndicatorHub = useHub;
+            GlobalData.Settings.Signal.UseNewIndicatorHub = useHub;
             symbolInterval.Data.Clear();
             symbolInterval.IndicatorHub = null;
             symbolInterval.IndicatorHubLastAdded = null;

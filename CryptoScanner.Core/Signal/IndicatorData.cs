@@ -49,7 +49,7 @@ public static class IndicatorEngine
     /// <summary>
     /// Ensures <see cref="CryptoSymbolInterval.Data"/> holds the indicator data for
     /// <paramref name="candleOpenTime"/>. Filled either incrementally via the per-interval QuoteHub
-    /// (UseIndicatorHub) or via the per-candle batch — both produce identical CryptoData. Returns false
+    /// (UseNewIndicatorHub) or via the per-candle batch — both produce identical CryptoData. Returns false
     /// when there is not enough history yet.
     /// </summary>
     public static bool PrepareIndicators(CryptoSymbol symbol, CryptoInterval interval,
@@ -59,7 +59,7 @@ public static class IndicatorEngine
         if (symbolInterval.Data.ContainsKey(candleOpenTime))
             return true;
 
-        if (GlobalData.Settings.Signal.UseIndicatorHub)
+        if (GlobalData.Settings.Signal.UseNewIndicatorHub)
             return PrepareViaHub(symbol, interval, symbolInterval, candleOpenTime);
         return PrepareViaBatch(symbol, interval, symbolInterval, candleOpenTime, calculateCandles);
     }
@@ -217,7 +217,7 @@ public static class IndicatorEngine
     /// <summary>
     /// Batch path: collect the candle window and (re)compute every indicator with the Skender batch calls,
     /// writing one CryptoData per candle into <paramref name="symbolInterval"/>.Data. Field-for-field
-    /// identical to the hub path (UseIndicatorHub).
+    /// identical to the hub path (UseNewIndicatorHub).
     /// </summary>
     private static bool PrepareViaBatch(CryptoSymbol symbol, CryptoInterval interval,
         CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime, int calculateCandles = -1)
@@ -461,7 +461,7 @@ public static class IndicatorEngine
 
         // 5m hub path: BuildCurrent() already set Lux5mValue incrementally.
         if (symbolInterval.IntervalPeriod == CryptoIntervalPeriod.interval5m
-            && GlobalData.Settings.Signal.UseIndicatorHub
+            && GlobalData.Settings.Signal.UseNewIndicatorHub
             && data.Lux5mValue.HasValue)
             return;
 

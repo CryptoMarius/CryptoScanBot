@@ -91,7 +91,7 @@ public sealed class TickRunner
     public async Task RunAsync(EmulatorRunConfig config, CancellationToken ct)
     {
         var exchange = GlobalData.ActiveExchange!;
-        GlobalData.Settings.Signal.UseIndicatorHub = true;
+        GlobalData.Settings.Signal.UseNewIndicatorHub = true;
         GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
 
         // Enable the per-candle pipeline profiler for this run (off in the live scanner). It breaks

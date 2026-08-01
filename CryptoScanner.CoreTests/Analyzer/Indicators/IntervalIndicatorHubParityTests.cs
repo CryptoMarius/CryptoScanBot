@@ -10,7 +10,7 @@ using Skender.Stock.Indicators;
 namespace CryptoScanner.CoreTests.Analyzer.Indicators;
 
 /// <summary>
-/// Proves the indicator mechanism behaves the same with and without UseIndicatorHub.
+/// Proves the indicator mechanism behaves the same with and without UseNewIndicatorHub.
 ///
 /// Test 1 (mapping): the production <see cref="IntervalIndicatorHub"/> fed candle-by-candle produces the
 /// same CryptoData as the Skender batch over the SAME series — i.e. BuildCurrent's field mapping matches

@@ -53,7 +53,7 @@ public class StopLossStrategyTests : TestBase
     private static (CryptoSymbol symbol, CryptoInterval interval) LoadSymbolCandles(string symbolName, CryptoIntervalPeriod period)
     {
         InitTestSession();
-        GlobalData.Settings.Signal.UseIndicatorHub = true;
+        GlobalData.Settings.Signal.UseNewIndicatorHub = true;
         using CryptoDatabase database = new();
         database.Open();
 
@@ -312,6 +312,97 @@ public class StopLossStrategyTests : TestBase
             Assert.IsNull(sl,
                 $"STOBB Short signal at {time:yyyy-MM-dd HH:mm:ss} unexpectedly returned SL={sl}. " +
                 "STOBB must not override OverrideSlPercentage — the global stop-loss setting must be used.");
+        }
+    }
+
+    // ─── TEMP diagnostic (to be removed) ─────────────────────────────────────
+
+    [TestMethod]
+    public void Diagnose_VbsLong_RejectionReasons()
+    {
+        const string symbol = "SOLUSDT";
+        var (sym, interval) = LoadSymbolCandles(symbol, SignalPeriod);
+        CryptoSymbolInterval symbolInterval = sym.GetSymbolInterval(interval.IntervalPeriod);
+
+        var reasonCounts = new Dictionary<string, int>();
+        int total = 0;
+        int widerBandCount = 0;
+        int bandBreakCount = 0;
+        int nullVbsCount = 0;
+        DateTime? firstNullVbs = null;
+        DateTime? lastNullVbs = null;
+        DateTime? firstNonNullVbs = null;
+        DateTime? lastNonNullVbs = null;
+
+        foreach (CryptoCandle candle in symbolInterval.CandleList.Values.Skip(260))
+        {
+            CandleTime ct = candle.OpenTime;
+            if (!IndicatorEngine.PrepareIndicators(sym, interval, ct))
+                continue;
+            if (!symbolInterval.TryGetCandle(ct, out MyData? data) || data == null)
+                continue;
+            total++;
+
+            var cd = data.CandleData!;
+            if (cd.VbsLower.HasValue && cd.VbsUpper.HasValue
+                && cd.BollingerBandsLowerBand.HasValue && cd.BollingerBandsUpperBand.HasValue)
+            {
+                firstNonNullVbs ??= ct.ToDateTime();
+                lastNonNullVbs = ct.ToDateTime();
+
+                bool wider = cd.BollingerBandsLowerBand.Value > cd.VbsLower.Value
+                    && cd.BollingerBandsUpperBand.Value < cd.VbsUpper.Value;
+                if (wider) widerBandCount++;
+
+                bool lowerBreak = (double)candle.Low < cd.VbsLower.Value || (double)candle.Close < cd.VbsLower.Value;
+                if (lowerBreak) bandBreakCount++;
+            }
+            else
+            {
+                nullVbsCount++;
+                firstNullVbs ??= ct.ToDateTime();
+                lastNullVbs = ct.ToDateTime();
+            }
+
+            var algo = new VbsSignalLong
+            {
+                Symbol = sym,
+                Interval = interval,
+                SymbolInterval = symbolInterval,
+                SignalSide = CryptoTradeSide.Long,
+                SignalStrategy = CryptoSignalStrategy.Vbs,
+                CandleLast = data,
+            };
+            algo.IsSignal();
+            string key = algo.ExtraText.Split(' ').Length > 2
+                ? string.Join(' ', algo.ExtraText.Split(' ').Take(3))
+                : algo.ExtraText;
+            reasonCounts.TryGetValue(key, out int c);
+            reasonCounts[key] = c + 1;
+        }
+
+        Console.WriteLine($"Total candles checked: {total}");
+        Console.WriteLine($"Candles where VBS band is wider than BB on both sides: {widerBandCount}");
+        Console.WriteLine($"Candles with a lower VBS band break (regardless of other filters): {bandBreakCount}");
+        Console.WriteLine($"Null-VBS candles: {nullVbsCount}  range=[{firstNullVbs:yyyy-MM-dd HH:mm}..{lastNullVbs:yyyy-MM-dd HH:mm}]");
+        Console.WriteLine($"Non-null-VBS candles range=[{firstNonNullVbs:yyyy-MM-dd HH:mm}..{lastNonNullVbs:yyyy-MM-dd HH:mm}]");
+        Console.WriteLine();
+        Console.WriteLine("Rejection reason histogram (prefix):");
+        foreach (var kv in reasonCounts.OrderByDescending(kv => kv.Value))
+            Console.WriteLine($"  {kv.Value,5}  {kv.Key}");
+
+        Console.WriteLine();
+        Console.WriteLine("Sample band widths (last 10 candles):");
+        foreach (CryptoCandle candle in symbolInterval.CandleList.Values.TakeLast(10))
+        {
+            if (!symbolInterval.TryGetCandle(candle.OpenTime, out MyData? data) || data?.CandleData == null)
+                continue;
+            var cd = data.CandleData;
+            double bbWidth = (cd.BollingerBandsUpperBand ?? 0) - (cd.BollingerBandsLowerBand ?? 0);
+            double vbsWidth = (cd.VbsUpper ?? 0) - (cd.VbsLower ?? 0);
+            Console.WriteLine($"  {candle.OpenTime.ToDateTime():yyyy-MM-dd HH:mm}  close={candle.Close:N4}  " +
+                $"BB=[{cd.BollingerBandsLowerBand:N4}..{cd.BollingerBandsUpperBand:N4}] w={bbWidth:N4}  " +
+                $"VBS=[{cd.VbsLower:N4}..{cd.VbsUpper:N4}] w={vbsWidth:N4}  vwStdev={cd.VbsVwStdev:N4}  basis={cd.VbsBasis:N4}");
         }
     }
 

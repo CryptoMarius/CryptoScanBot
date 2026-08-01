@@ -32,7 +32,7 @@ namespace CryptoScanner.CoreTests.Analyzer.Bbma;
 ///   Signal\Bbma\ADAUSDT\ADAUSDT-15m.json
 ///   Signal\Bbma\ADAUSDT\ADAUSDT-1h.json
 ///
-/// 
+///
 /// To create these files, export candle data from the running scanner using the
 /// standard JSON serializer (JsonSerializer.Serialize) on a CryptoCandleList.
 /// A minimum of ~300 candles per interval is recommended (260 warm-up + margin).
@@ -76,7 +76,7 @@ public class BbmaSignalSimulationTests : TestBase
         LoadTestData(string symbolName)
     {
         InitTestSession();
-        GlobalData.Settings.Signal.UseIndicatorHub = true;
+        GlobalData.Settings.Signal.UseNewIndicatorHub = true;
         using CryptoDatabase database = new();
         database.Open();
 

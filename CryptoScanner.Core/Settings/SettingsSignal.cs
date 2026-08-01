@@ -15,8 +15,12 @@ public class SettingsSignal
 
     // Use the incremental Skender v3 QuoteHub per symbol+interval (IntervalIndicatorHub) instead of the
     // per-candle batch recompute. Both fill CryptoSymbolInterval.Data identically (verified field-for-field);
-    // the hub is far cheaper for the tick-by-tick replay. Toggle for A/B comparison and safe fallback.
-    public bool UseIndicatorHub { get; set; } = false;
+    // the hub is far cheaper for the tick-by-tick replay, and it is the only path that runs plugin
+    // indicator extensions (IIndicatorExtension), so strategies like Vbs need this on to ever signal.
+    // Toggle for safe fallback to the old batch path.
+    // Renamed from UseIndicatorHub so existing settings.json files (which persisted the old name with
+    // an explicit false) fall through to this new true default instead of carrying the old value forward.
+    public bool UseNewIndicatorHub { get; set; } = true;
 
     // Aantal dagen dat de munt moet bestaan
     public int SymbolMustExistsDays { get; set; } = 60;
