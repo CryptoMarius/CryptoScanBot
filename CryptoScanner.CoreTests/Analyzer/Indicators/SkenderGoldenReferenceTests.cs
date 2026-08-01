@@ -40,7 +40,7 @@ public class SkenderReferenceRegressionTests
 
     private static string ReferenceFilePath =>
         Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-            "Signal", "Indicators", "indicator_reference.json");
+            "Analyzer", "Indicators", "indicator_reference.json");
 
     // ── Snapshot data model ──────────────────────────────────────────────
 

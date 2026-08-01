@@ -87,7 +87,7 @@ public class BbmaSignalSimulationTests : TestBase
         CryptoInterval mtf = GlobalData.IntervalListPeriod[MtfPeriod];
         CryptoInterval htf = GlobalData.IntervalListPeriod[HtfPeriod];
 
-        string folder = $"Signal\\Bbma\\{symbolName}";
+        string folder = $"Analyzer\\Bbma\\{symbolName}";
         LoadCandleDataFromDisk(
             symbol.GetSymbolInterval(LtfPeriod).CandleList,
             TestDataPath($"{folder}\\{symbolName}-5m.json"));

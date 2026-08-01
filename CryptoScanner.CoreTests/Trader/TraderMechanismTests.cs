@@ -304,7 +304,7 @@ public class TraderMechanismTests
     // ═════════════════════════════════════════════════════════════════════════
 
     [TestMethod]
-    public void Dca1_Long_SlMovesToGlobal_AnchoredOnDcaPrice()
+    public void Dca1_Long_SignalSlStaysAnchoredOnEntry()
     {
         var exchange = MakeExchange();
         var symbol = MakeSymbol(exchange);
@@ -324,12 +324,13 @@ public class TraderMechanismTests
 
         Assert.AreEqual(1, position.PartCount, "1 DCA filled");
         Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL stays active after DCA fill");
-        // Signal SL anchored on extreme DCA price (95), 3% below = 92.15
-        Assert.AreEqual(95m - 95m * 0.03m, sl.Stop, "Signal SL = 95 - 3% = 92.15");
+        // Signal SL always anchors on EntryPrice (StopLossCalculator.Calculate), even after a DCA
+        // fill: 100 - 3% = 97.
+        Assert.AreEqual(100m - 100m * 0.03m, sl.Stop, "Signal SL = 100 - 3% = 97");
     }
 
     [TestMethod]
-    public void Dca1_Short_SlMovesToGlobal_AnchoredOnDcaPrice()
+    public void Dca1_Short_SignalSlStaysAnchoredOnEntry()
     {
         var exchange = MakeExchange();
         var symbol = MakeSymbol(exchange);
@@ -349,8 +350,8 @@ public class TraderMechanismTests
 
         Assert.AreEqual(1, position.PartCount);
         Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL stays active after DCA fill");
-        // Short: signal SL anchored on extreme DCA price (105) + 3% = 108.15
-        Assert.AreEqual(105m + 105m * 0.03m, sl.Stop, "Signal SL = 105 + 3% = 108.15");
+        // Signal SL always anchors on EntryPrice, even after a DCA fill: 100 + 3% = 103.
+        Assert.AreEqual(100m + 100m * 0.03m, sl.Stop, "Signal SL = 100 + 3% = 103");
     }
 
     [TestMethod]
@@ -375,10 +376,8 @@ public class TraderMechanismTests
         Assert.AreEqual(0, position.PartCount, "DCA not filled, PartCount stays 0");
         Assert.IsTrue(position.ActiveDca, "Pending DCA sets ActiveDca");
         Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL remains while DCA is only pending");
-        // SL anchors on the pending DCA price (95), not on SignalPrice (100),
-        // so the stop sits beyond the DCA: 95 - 95*0.03 = 92.15
-        Assert.AreEqual(92.15m, sl.Stop);
-        Assert.IsTrue(sl.Stop < 95m, "SL must be below the pending DCA, not between entry and DCA");
+        // Signal SL always anchors on EntryPrice (100), whether or not a DCA is pending: 97.
+        Assert.AreEqual(97m, sl.Stop);
     }
 
 
@@ -387,7 +386,7 @@ public class TraderMechanismTests
     // ═════════════════════════════════════════════════════════════════════════
 
     [TestMethod]
-    public void Dca2_Long_SlAnchorsOnLowestDcaPrice()
+    public void Dca2_Long_SignalSlStaysAnchoredOnEntry()
     {
         var exchange = MakeExchange();
         var symbol = MakeSymbol(exchange);
@@ -411,12 +410,12 @@ public class TraderMechanismTests
 
         Assert.AreEqual(2, position.PartCount, "2 DCAs filled");
         Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL stays active after multiple DCA fills");
-        // Signal SL anchored on lowest DCA = 88, 3% below = 85.36
-        Assert.AreEqual(88m - 88m * 0.03m, sl.Stop, "Signal SL anchors on lowest DCA price (88)");
+        // Signal SL always anchors on EntryPrice (100), regardless of how many DCAs filled: 97.
+        Assert.AreEqual(100m - 100m * 0.03m, sl.Stop, "Signal SL stays anchored on entry price (100)");
     }
 
     [TestMethod]
-    public void Dca2_Short_SlAnchorsOnHighestDcaPrice()
+    public void Dca2_Short_SignalSlStaysAnchoredOnEntry()
     {
         var exchange = MakeExchange();
         var symbol = MakeSymbol(exchange);
@@ -440,8 +439,8 @@ public class TraderMechanismTests
 
         Assert.AreEqual(2, position.PartCount);
         Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL stays active after multiple DCA fills");
-        // Short: signal SL anchored on highest DCA = 112, 3% above = 115.36
-        Assert.AreEqual(112m + 112m * 0.03m, sl.Stop, "Signal SL anchors on highest DCA price (112)");
+        // Signal SL always anchors on EntryPrice (100), regardless of how many DCAs filled: 103.
+        Assert.AreEqual(100m + 100m * 0.03m, sl.Stop, "Signal SL stays anchored on entry price (100)");
     }
 
 
@@ -760,7 +759,8 @@ public class TraderMechanismTests
         var sl2 = RecalcAndGetSl(position);
         Assert.AreEqual(SlSource.Signal, sl2.Source, "Phase 2: signal SL stays active after DCA fill");
         Assert.AreEqual(1, position.PartCount, "Phase 2: 1 DCA filled");
-        Assert.AreEqual(95m - 95m * 0.02m, sl2.Stop, "Phase 2: signal SL from DCA1 price (95) = 93.1");
+        // Signal SL always anchors on EntryPrice (StopLossCalculator.Calculate), unaffected by the DCA fill.
+        Assert.AreEqual(98m, sl2.Stop, "Phase 2: signal SL stays anchored on entry price = 100 - 2% = 98");
         Assert.IsTrue(position.BreakEvenPrice < 100m, "Phase 2: BE below 100 after DCA at 95");
 
         decimal beAfterDca1 = position.BreakEvenPrice;
@@ -772,11 +772,11 @@ public class TraderMechanismTests
         var sl3 = RecalcAndGetSl(position);
         Assert.AreEqual(SlSource.Signal, sl3.Source, "Phase 3: signal SL still active");
         Assert.AreEqual(2, position.PartCount, "Phase 3: 2 DCAs filled");
-        Assert.AreEqual(88m - 88m * 0.02m, sl3.Stop, "Phase 3: signal SL moves to DCA2 price (88) = 86.24");
+        Assert.AreEqual(98m, sl3.Stop, "Phase 3: signal SL still anchored on entry price = 100 - 2% = 98");
         Assert.IsTrue(position.BreakEvenPrice < beAfterDca1, "Phase 3: BE further reduced after DCA2");
 
-        // Verify SL is progressively lower (long: stop moves down with each DCA)
-        Assert.IsTrue(sl3.Stop < sl2.Stop, "SL moves down as DCAs are filled at lower prices");
+        // Signal SL is anchored on EntryPrice, so it does not move as further DCAs fill.
+        Assert.AreEqual(sl2.Stop, sl3.Stop, "Signal SL is unchanged by DCA fills (anchored on entry, not on DCA price)");
     }
 
 
