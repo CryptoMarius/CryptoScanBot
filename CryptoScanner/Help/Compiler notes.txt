@@ -64,3 +64,12 @@ drop table [signal]
 drop table [trade]
 drop table [order]
 vacuum
+
+
+
+
+kun je een CryptoScanBot-Emulator-Queue.json maken waarin we de dbr en de vbs (om en om) draaien met verschillende tp's (van 1 t/m 7 in stappen van 1.
+Kun je de intervallen laten oplopen van 1m .. 2h, iedere keer dus slechts 1 interval (wellicht moet dat nog geprogrammeerd worden in de emulator)
+Dan gaan we eens zien welke intervallen het beste passen bij deze twee strategien
+op dit moment staan er 1 dca's van 2%, zijn dat de beste of adviseer je op andere ook te proberen?
+(let wel, dit zijn lange run's, dus we moeten wel wat aan de oppervlakte blijven)
