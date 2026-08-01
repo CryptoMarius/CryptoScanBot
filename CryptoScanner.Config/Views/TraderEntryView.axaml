@@ -23,32 +23,6 @@
                           FontSize="12"/>
             </Grid>
 
-            <!-- Strategy -->
-            <Grid ColumnDefinitions="Auto,*,250" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="Strategy:" 
-                           VerticalAlignment="Center" 
-                           Margin="0,0,12,0" FontSize="12"/>
-                <ComboBox Grid.Column="2" 
-                          ItemsSource="{Binding StrategyList}"
-                          SelectedValue="{Binding EntryStrategy, Mode=TwoWay}"
-                          DisplayMemberBinding="{Binding Key}"
-                          SelectedValueBinding="{Binding Value}"
-                          FontSize="12"/>
-            </Grid>
-
-            <!-- Pricing -->
-            <Grid ColumnDefinitions="Auto,*,250" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="Pricing:" 
-                           VerticalAlignment="Center" 
-                           Margin="0,0,12,0" FontSize="12"/>
-                <ComboBox Grid.Column="2" 
-                          ItemsSource="{Binding PricingList}"
-                          SelectedValue="{Binding EntryOrderPrice, Mode=TwoWay}"
-                          DisplayMemberBinding="{Binding Key}"
-                          SelectedValueBinding="{Binding Value}"
-                          FontSize="12"/>
-            </Grid>
-
             <!-- Remove Time -->
             <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto">
                 <TextBlock Grid.Column="0" Text="Remove time:"

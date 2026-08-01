@@ -612,9 +612,6 @@ public class CryptoDatabase : IDisposable
                 "SignalPrice TEXT NOT NULL," +
                 "RemainingDust TEXT NULL," +
 
-                "EntryMethod INTEGER NULL," +
-                "ProfitMethod INTEGER NULL," +
-
                 "ManualOrder INTEGER NULL," +
 
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +

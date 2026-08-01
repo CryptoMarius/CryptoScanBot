@@ -118,8 +118,6 @@ public class SettingsTrading
     //***************************
     // Entry
     public CryptoOrderType EntryOrderType { get; set; } = CryptoOrderType.Market;
-    public CryptoEntryOrDcaPricing EntryOrderPrice { get; set; } = CryptoEntryOrDcaPricing.SignalPrice; // alway's
-    public CryptoEntryOrDcaStrategy EntryStrategy { get; set; } = CryptoEntryOrDcaStrategy.FixedPercentage; // Alway's for now, but can be trailing
     // Verwijder de order indien niet na zoveel candles gevuld
     public int EntryRemoveTime { get; set; } = 5;
     // Pullback (in %) applied when EntryOrderPrice == SignalPriceWithPullback. Positive value:
@@ -133,8 +131,6 @@ public class SettingsTrading
     //***************************
     // Dca
     public CryptoOrderType DcaOrderType { get; set; } = CryptoOrderType.Limit; // Alway's! but stoplimit when trailing
-    public CryptoEntryOrDcaPricing DcaOrderPrice { get; set; } = CryptoEntryOrDcaPricing.SignalPrice; // alway's
-    public CryptoEntryOrDcaStrategy DcaStrategy { get; set; } = CryptoEntryOrDcaStrategy.FixedPercentage;
     // Same role as EntryPullbackPercentage but for DCA orders.
     public decimal DcaPullbackPercentage { get; set; } = 0.5m;
 

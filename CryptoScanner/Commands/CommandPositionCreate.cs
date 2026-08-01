@@ -81,7 +81,7 @@ public class CommandPositionCreate : CommandBase
                 databaseThread.Connection.Insert(position);
                 PositionTools.AddPosition(position);
                 PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Entry,
-                    interval, strategy, GlobalData.Settings.Trading.EntryStrategy,
+                    interval, strategy,
                     entryPrice, LastCandle1mCloseTimeDate.ToDateTime());
                 GlobalData.AddTextToLogTab($"{symbol.Name} handmatig een positie gemaak {position.Id}");
 

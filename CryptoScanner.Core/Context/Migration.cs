@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 73;
+    public readonly static int CurrentDatabaseVersion = 74;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1481,14 +1481,21 @@ public class Migration
             transaction.Commit();
         }
 
+        //***********************************************************
+        // 01-08-2026 Removing trading properties
+        if (CurrentVersion > version.Version && version.Version == 73)
+        {
+            using var transaction = database.BeginTransaction();
 
-        //***********************************************************
-        //
-        //
-        //
-        //***********************************************************
-        // 30-05-2026 Changed position
-        // There are no field changes, only version number for UpdateExchanges
+            try { database.Connection.Execute("alter table PositionPart drop column EntryMethod", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table PositionPart drop column ProfitMethod", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
 
 
         // Apply the exchange defaults with each update

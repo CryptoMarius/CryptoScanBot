@@ -60,11 +60,6 @@ public class CryptoPositionPart
     // (wordt gebruikt voor data overdracht)
     public decimal SignalPrice { get; set; }
 
-    // De bijkoop methode -> EntryMethod (zou wellicht uit de actuele instellingen gehaald kunnen worden)
-    public CryptoEntryOrDcaStrategy EntryMethod { get; set; }
-    // De verkoop methode -> ProfitMethod (zou wellicht uit de actuele instellingen gehaald kunnen worden)
-    public CryptoEntryOrDcaStrategy ProfitMethod { get; set; }
-
     // Eigenlijk zijn er maar 2 steps in een deelpositie die van belang zijn?
     // Helaas dat gaat niet 100% op, want die kunnen verdeeld zijn in meerdere orders
     // De entry orders (bijvoorbeeld 50% buy op de bid prijs en 50% op de ask prijs)

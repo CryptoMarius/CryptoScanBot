@@ -2406,14 +2406,10 @@ public partial class TestForm : Form
         GlobalData.Settings.Trading.CheckIncreasingStoch = false;
 
         // BUY
-        GlobalData.Settings.Trading.EntryStrategy = CryptoEntryOrDcaStrategy.AfterNextSignal;
         GlobalData.Settings.Trading.GlobalBuyCooldownTime = 20;
-        GlobalData.Settings.Trading.EntryOrderPrice = CryptoEntryOrDcaPricing.MarketPrice;
 
         // DCA
         //GlobalData.Settings.Trading.DcaPercentage = 2m;
-        GlobalData.Settings.Trading.DcaOrderPrice = CryptoEntryOrDcaPricing.SignalPrice;
-        GlobalData.Settings.Trading.DcaStrategy = CryptoEntryOrDcaStrategy.FixedPercentage;
 
         // TP
         GlobalData.Settings.Trading.TpList = [new CryptoTpEntry { Percentage = 0.75m, Factor = 100m }];

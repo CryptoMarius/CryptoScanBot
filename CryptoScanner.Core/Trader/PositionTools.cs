@@ -121,7 +121,7 @@ public static class PositionTools
 
     public static CryptoPositionPart ExtendPosition(CryptoDatabase database,
         CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
-        CryptoSignalStrategy strategy, CryptoEntryOrDcaStrategy stepInMethod,
+        CryptoSignalStrategy strategy, //CryptoEntryOrDcaStrategy stepInMethod,
         decimal signalPrice, DateTime currentDate, bool manualOrder = false)
     {
         CryptoPositionPart part = new()
@@ -132,7 +132,6 @@ public static class PositionTools
             Strategy = strategy,
             Interval = interval,
             IntervalId = interval.Id,
-            EntryMethod = stepInMethod,
             SignalPrice = signalPrice,
             CreateTime = currentDate,
             PositionId = position.Id,
@@ -155,7 +154,7 @@ public static class PositionTools
         // Nieuwe parts kunnen hierdoor via de cooldown worden uitgesteld
         position.Symbol.LastTradeDate = currentDate;
 
-        GlobalData.AddTextToLogTab($"{position.Symbol.Name} {purpose} {stepInMethod} placing {signalPrice.ToString0(position.Symbol.PriceDisplayFormat)}");
+        GlobalData.AddTextToLogTab($"{position.Symbol.Name} {purpose} placing {signalPrice.ToString0(position.Symbol.PriceDisplayFormat)}");
         return part;
     }
 

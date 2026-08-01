@@ -533,8 +533,7 @@ public class PositionMonitor : IDisposable
                                 Database.Connection.Insert(position);
                                 PositionTools.AddPosition(position);
                                 PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry,
-                                    signal.Interval, signal.Strategy, GlobalData.Settings.Trading.EntryStrategy,
-                                    entryPrice, LastCandle1mCloseTimeDate);
+                                    signal.Interval, signal.Strategy, entryPrice, LastCandle1mCloseTimeDate);
 
                                 // Off-by-one diagnostic: compare the entry candle to the signal's trigger
                                 // candle. delayCandles == 1 means we entered at the trigger candle's close
@@ -610,54 +609,6 @@ public class PositionMonitor : IDisposable
     }
 
 
-    //private async Task<(bool success, CryptoCandle candleInterval)> PrepareAsync(CryptoPosition position, CryptoPositionPart part)
-    //{
-    //    // Stukje migratie, het interval van de part kan null zijn
-    //    CryptoInterval interval = position.Interval!;
-    //    if (part.Interval != null)
-    //        interval = part.Interval;
-    //    CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
-
-
-
-    //    // Maak beslissingen als de candle van het interval afgesloten is (dus NIET die van de 1m candle!)
-    //    // Dus ook niet zomaar een laatste candle nemen in verband met Backtesting (echt even berekenen)
-    //    CryptoCandle candleInterval = default;
-    //    if (LastCandle1mCloseTime % interval.Duration != 0)
-    //        return (false, candleInterval);
-    //    CandleTime candleOpenTimeInterval = LastCandle1mCloseTime - interval.Duration;
-
-
-    //    // Die indicator berekening had ik niet verwacht (cooldown?)
-    //    await position.Symbol.Data.CandleLock.WaitAsync();
-    //    try
-    //    {
-    //        CryptoCandle lastx = symbolInterval.CandleList.LastCandle;
-
-    //        // Niet zomaar een laatste candle nemen in verband met Backtesting
-    //        if (!symbolInterval.CandleList.TryGetValue(candleOpenTimeInterval, out candleInterval))
-    //        {
-    //            string t = string.Format("candle 1m interval: {0}", candleOpenTimeInterval.ToLocalTime()) + " " +
-    //            string.Format("is de candle op het {0} interval echt missing in action?", interval.Name);
-    //            GlobalData.AddTextToLogTab($"Analyse {position.Symbol.Name} position={position.CreateTime} interval={interval.Name} {t}");
-    //            //throw new Exception($"Candle niet aanwezig? {t}");
-    //            return (false, candleInterval);
-    //        }
-
-
-    //        // Calculate indicators if needed
-    //        var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, interval, candleInterval!.OpenTime, interval.IntervalPeriod);
-    //        if (!result.success)
-    //            return (false, candleInterval);
-    //    }
-    //    finally
-    //    {
-    //        position.Symbol.Data.CandleLock.Release();
-    //    }
-
-
-    //    return (true, candleInterval);
-    //}
 
     private decimal CorrectBuyOrDcaPrice(CryptoPosition position, decimal price)
     {
@@ -694,139 +645,6 @@ public class PositionMonitor : IDisposable
 
         return price;
     }
-
-    private decimal CalculateEntryOrDcaPrice(CryptoPosition position, CryptoPositionPart part,
-        CryptoEntryOrDcaPricing buyOrderPricing, decimal defaultPrice)
-    {
-        // Wat wordt de prijs? (hoe graag willen we in de trade?)
-        decimal price = defaultPrice;
-        switch (buyOrderPricing)
-        {
-            case CryptoEntryOrDcaPricing.SignalPrice:
-                price = CorrectBuyOrDcaPrice(position, price);
-                break;
-            //case CryptoEntryOrDcaPricing.BidPrice:
-            //    if (position.Side == CryptoTradeSide.Long && part.Symbol.BidPrice.HasValue)
-            //        price = part.Symbol.BidPrice ?? 0;
-            //    else if (position.Side == CryptoTradeSide.Short && part.Symbol.AskPrice.HasValue)
-            //        price = part.Symbol.BidPrice ?? 0;
-            //    price = CorrectBuyOrDcaPrice(position, price);
-            //    break;
-            //case CryptoEntryOrDcaPricing.AskPrice:
-            //    if (position.Side == CryptoTradeSide.Long && part.Symbol.AskPrice.HasValue)
-            //        price = part.Symbol.BidPrice ?? 0;
-            //    else if (position.Side == CryptoTradeSide.Short && part.Symbol.AskPrice.HasValue)
-            //        price = part.Symbol.BidPrice ?? 0;
-            //    price = CorrectBuyOrDcaPrice(position, price);
-            //    break;
-            case CryptoEntryOrDcaPricing.MarketPrice:
-                price = part.Symbol.LastPrice ?? 0;
-                break;
-                //case CryptoEntryOrDcaPricing.SignalPriceWithPullback:
-                //    // Take SignalPrice and pull it back by the configured percentage toward the
-                //    // direction price would need to retrace for a fill — down for long, up for
-                //    // short. Lands the entry inside the zone for smc.rejection / dlz.near style
-                //    // signals where SignalPrice (= rejection close) is already outside the zone.
-                //    {
-                //        decimal pullbackPct = part.Purpose == CryptoPartPurpose.Entry
-                //            ? GlobalData.Settings.Trading.EntryPullbackPercentage
-                //            : GlobalData.Settings.Trading.DcaPullbackPercentage;
-                //        price = defaultPrice;
-                //        if (position.Side == CryptoTradeSide.Long)
-                //            price = price * (100m - pullbackPct) / 100m;
-                //        else
-                //            price = price * (100m + pullbackPct) / 100m;
-                //        price = CorrectBuyOrDcaPrice(position, price);
-                //    }
-                //    break;
-                // De optie is vervallen maar blijft interessant, echter welke BB gebruik je dan (de actuele denk ik?, dus rekening houden met BE enzovoort)
-                // voorlopig even afgesterd
-                //case BuyPriceMethod.Sma20:
-                //    if (price > (decimal)CandleData.Sma20)
-                //        price = (decimal)CandleData.Sma20;
-                //    break;
-                // TODO: maar voorlopig even afgesterd - op zich voor de STOBB en/of SBM is deze okay
-                //case BuyPriceMethod.LowerBollingerband:
-                //    decimal lowerBand = (decimal)(CandleData.Sma20 - CandleData.BollingerBandsDeviation);
-                //    if (price > lowerBand)
-                //        price = lowerBand;
-                //    break;
-        }
-
-        return price;
-    }
-
-
-    ///// <summary>
-    ///// Kunnen we de positie afsluiten met de opgegeven winst perc
-    ///// </summary>
-    //private async Task HandleCheckProfitablePartClose(CryptoPosition position, CryptoPositionPart part, decimal perc)
-    //{
-    //    // TODO Long/Short
-
-    //    // Is er iets om te verkopen in deze "part"? (part.Quantity > 0?)
-    //    CryptoPositionStep step = PositionTools.FindPositionPartStep(part, CryptoOrderSide.Buy, true);
-    //    if (step != null && (step.Status == CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.PartiallyFilled))
-    //    {
-    //        step = PositionTools.FindPositionPartStep(part, CryptoOrderSide.Sell, false);
-    //        if (step != null)
-    //        {
-    //            // Als de actuele prijs ondertussen substantieel hoger dan winst proberen te nemen (jojo)
-    //            // Dit verstoord eigenlijk de trailing sell, maar het is maar even zo...
-    //            // Voorlopig even hardcoded (vanwege ontbreken OCO en stop order )
-    //            decimal breakEven = part.BreakEvenPrice;
-    //            decimal x = breakEven + breakEven * (perc / 100m);
-    //            if (position.Symbol.LastPrice < x)
-    //                return;
-
-    //            // Als we reeds aan het trailen zijn heeft dat onze voorkeur (geen garanties op dat perc)
-    //            if (step.Trailing == CryptoTrailing.Trailing)
-    //            {
-    //                GlobalData.AddTextToLogTab($"{Symbol.Name} is reeds aan het trailen, take profit exit");
-    //                return;
-    //            }
-
-
-    //            // Annuleer de sell order
-    //            var (cancelled, tradeParams) = await CancelOrder(position, part, step, CryptoOrderStatus.JoJoSell);
-    //            if (GlobalData.Settings.Trading.LogCanceledOrders)
-    //                ExchangeBase.Dump(position.Symbol, cancelled, tradeParams, "annuleren vanwege een jojo");
-
-
-    //            // En zet de nieuwe sell order vlak boven de bekende prijs met (helaas) een limit order (had liever een OCO gehad)
-    //            decimal sellPrice = x + Symbol.PriceTickSize;
-    //            if (position.Symbol.LastPrice > sellPrice)
-    //                sellPrice = (decimal)(position.Symbol.LastPrice + Symbol.PriceTickSize);
-    //            decimal sellQuantity = part.Quantity;
-    //            sellQuantity = sellQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
-
-    //            (bool result, TradeParams tradeParams) result;
-    //            var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-    //            result = await exchangeApi.PlaceOrder(Database,
-    //                position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate,
-    //                CryptoOrderType.Limit, CryptoOrderSide.Sell, sellQuantity, sellPrice, null, null);
-
-    //            if (result.result)
-    //            {
-    //                if (part.Purpose == CryptoPartPurpose.Entry)
-    //                    position.SellPrice = result.tradeParams.Price;
-    //                // Als vervanger van bovenstaande tzt (maar willen we die ook als een afzonderlijke step? Het zou ansich kunnen)
-    //                var sellStep = PositionTools.CreatePositionStep(position, part, result.tradeParams);
-    //                Database.Connection.Insert<CryptoPositionStep>(step);
-    //                PositionTools.AddPositionPartStep(part, sellStep);
-    //                part.StepOutMethod = CryptoStepInMethod.FixedPercentage; // niet helemaal waar, hebben we ervan gemaakt
-    //                Database.Connection.Update<CryptoPositionPart>(part);
-    //                Database.Connection.Update<CryptoPosition>(position);
-
-    //                if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-    //                    PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, result.tradeParams.OrderSide,
-    //                        step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
-
-    //            }
-    //            ExchangeBase.Dump(position.Symbol, result.result, result.tradeParams, "placing");
-    //        }
-    //    }
-    //}
 
 
 
@@ -954,8 +772,7 @@ public class PositionMonitor : IDisposable
     }
 
 
-    private async Task HandleEntryPart(CryptoPosition position, CryptoPositionPart part,
-        CryptoEntryOrDcaStrategy strategy, CryptoEntryOrDcaPricing orderPricing, CryptoOrderType orderType)
+    private async Task HandleEntryPart(CryptoPosition position, CryptoPositionPart part, CryptoOrderType orderType)
     {
         // Controleer de entry
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
@@ -968,89 +785,23 @@ public class PositionMonitor : IDisposable
         CryptoOrderType entryOrderType = orderType;
         CryptoTrailing trailing = CryptoTrailing.None;
 
-        //switch (strategy)
+        if (step == null && part.Quantity == 0) // entry
         {
-            //case CryptoEntryOrDcaStrategy.AfterNextSignal:
-            //    //entryOrderType = CryptoOrderType.Limit;
-            //    //if (orderMethod == CryptoEntryOrDcaPrice.MarketPrice)
-            //    //    entryOrderType = CryptoOrderType.Market;
-            //    if (entryOrderType == CryptoOrderType.Market)
-            //        orderPricing = CryptoEntryOrDcaPricing.MarketPrice;
-            //    if (step == null && part.Quantity == 0) // entry
-            //        entryPrice = CalculateEntryOrDcaPrice(position, part, orderPricing, part.SignalPrice);
-            //    break;
-            //case CryptoEntryOrDcaStrategy.FixedPercentage:
-            // Afspraak= niet bijplaatsen indien de BM te laag is (anders jojo=weghalen+bijplaatsen)
-            //entryOrderType = CryptoOrderType.Limit;
-            if (step == null && part.Quantity == 0) // entry
-                entryPrice = CalculateEntryOrDcaPrice(position, part, orderPricing, part.SignalPrice);
-            //break;
-            //case CryptoEntryOrDcaStrategy.TrailViaKcPsar:
-            //    trailing = CryptoTrailing.Trailing;
-            //    entryOrderType = CryptoOrderType.StopLimit;
-            //    // Trailing is afwijkend ten opzichte van de sell (zoveel mogelijk gelijk maken)
+            //entryPrice = CalculateEntryOrDcaPrice(position, part, part.SignalPrice);
 
-            //    // todo: Gaat deze vergelijking goed als er ook dust aanwezig kan zijn?
-            //    // Moet de bestaande verplaatst worden (cq annuleren + opnieuw plaatsen)?
-            //    //if (step != null && part.Quantity == 0 && step.Trailing == CryptoTrailing.Trailing)
-            //    //{
-            //    //    if (position.Side == CryptoTradeSide.Long)
-            //    //    {
-            //    //        decimal x = (decimal)Math.Max(candleInterval.CandleData?.KeltnerUpperBand ?? 0, candleInterval.CandleData?.PSar ?? 0) + Symbol.PriceTickSize;
-            //    //        if (x < step.StopPrice && Symbol.LastPrice < x && candleInterval.High < x)
-            //    //        {
-            //    //            entryPrice = x;
-            //    //            await TradeTools.CancelOrder(Database, position, part, step,
-            //    //                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
-            //    //        }
-            //    //    }
-            //    //    else
-            //    //    {
-            //    //        decimal x = (decimal)Math.Min(candleInterval.CandleData?.KeltnerLowerBand ?? 0, candleInterval.CandleData?.PSar ?? 0) - Symbol.PriceTickSize;
-            //    //        if (x > step.StopPrice && Symbol.LastPrice > x && candleInterval.Low > x)
-            //    //        {
-            //    //            entryPrice = x;
-            //    //            await TradeTools.CancelOrder(Database, position, part, step,
-            //    //                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
-            //    //        }
-            //    //    }
-            //    //}
-
-            //    //if (step == null && part.Quantity == 0) // entry
-            //    //{
-            //    //    if (position.Side == CryptoTradeSide.Long)
-            //    //    {
-            //    //        // Alleen in een neergaande "trend" beginnen we met trailen (niet in een opgaande)
-            //    //        // Dit is een fix om te voorkomen dat we direct na het kopen een trailing sell starten (maar of dit okay is?)
-            //    //        if (Symbol.LastPrice >= (decimal?)candleInterval.CandleData?.PSar)
-            //    //            return;
-
-            //    //        decimal x = (decimal)Math.Max(candleInterval.CandleData?.KeltnerUpperBand ?? 0, candleInterval.CandleData?.PSar ?? 0) + Symbol.PriceTickSize;
-            //    //        if (Symbol.LastPrice < x && candleInterval.High < x)
-            //    //        {
-            //    //            logText = "trailing";
-            //    //            entryPrice = x;
-            //    //        }
-            //    //    }
-            //    //    else
-            //    //    {
-            //    //        // Alleen in een opgaande "trend" beginnen we met trailen (niet in een neergaande)
-            //    //        // Dit is een fix om te voorkomen dat we direct na het kopen een trailing buy starten (maar of dit okay is?)
-            //    //        if (Symbol.LastPrice <= (decimal?)candleInterval.CandleData?.PSar)
-            //    //            return;
-
-            //    //        decimal x = (decimal)Math.Min(candleInterval.CandleData?.KeltnerLowerBand ?? 0, candleInterval.CandleData?.PSar ?? 0) - Symbol.PriceTickSize;
-            //    //        if (Symbol.LastPrice > x && candleInterval.Low > x)
-            //    //        {
-            //    //            logText = "trailing";
-            //    //            entryPrice = x;
-            //    //        }
-            //    //    }
-            //    //}
-            //    break;
-            //default:
-            //    throw new Exception($"{strategy} niet ondersteund");
+            // Wat wordt de prijs? (hoe graag willen we in de trade?)
+            switch (orderType)
+            {
+                case CryptoOrderType.Limit:
+                    entryPrice = CorrectBuyOrDcaPrice(position, part.SignalPrice);
+                    break;
+                case CryptoOrderType.Market:
+                    entryPrice = part.Symbol.LastPrice ?? 0;
+                    break;
+            }
         }
+
+
 
 
         if (entryPrice.HasValue)
@@ -1190,7 +941,6 @@ public class PositionMonitor : IDisposable
                 {
                     if (result.result)
                     {
-                        part.EntryMethod = strategy;
                         if (part.Purpose == CryptoPartPurpose.Entry)
                         {
                             position.EntryPrice = result.tradeParams.Price;
@@ -1234,7 +984,6 @@ public class PositionMonitor : IDisposable
                 {
                     if (result.result)
                     {
-                        part.EntryMethod = strategy;
                         if (part.Purpose == CryptoPartPurpose.Entry)
                         {
                             position.EntryPrice = result.tradeParams.Price;
@@ -1271,151 +1020,6 @@ public class PositionMonitor : IDisposable
         }
     }
 
-
-
-    //private async Task HandleTakeProfitPart(CryptoPosition position, CryptoPositionPart part, CryptoCandle candleInterval)
-    //{
-    //    CryptoOrderSide dcaOrderSide = position.GetEntryOrderSide();
-
-    //    // Is er wel iets om te verkopen in deze "part"? (hetzelfde als part.Quantity !=0 of part.Invested != 0?)
-    //    CryptoPositionStep stepEntry = PositionTools.FindPositionPartStep(part, dcaOrderSide, true);
-    //    if (stepEntry != null && (stepEntry.Status.IsFilled() || stepEntry.Status == CryptoOrderStatus.PartiallyFilled)) // Partially?
-    //    {
-    //        // TODO, is er genoeg Quantity van de symbol om het te kunnen verkopen? (min-quantity en notation)
-    //        // (nog niet opgemerkt in reallive trading, maar dit gaat zeker een keer gebeuren in de toekomst!)
-
-    //        CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-    //        CryptoPositionStep stepProfit = PositionTools.FindPositionPartStep(part, takeProfitOrderSide, false);
-    //        if (stepProfit == null && part.Quantity > 0)
-    //        {
-    //            decimal takeProfitPrice = CalculateTpPrices(position);
-    //            await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, part, takeProfitPrice, LastCandle1mCloseTimeDate, "placing");
-    //        }
-    //        //else if (step != null && part.Quantity > 0 && part.BreakEvenPrice > 0 && GlobalData.Settings.Trading.SellMethod == CryptoSellMethod.TrailViaKcPsar)
-    //        //{
-    //        //    // TODO Long/Short, trailing order...
-    //        //    bool doIt = false;
-
-    //        //    // Als de actuele prijs ondertussen substantieel hoger dan winst proberen te nemen (jojo)
-    //        //    // Dit verstoord eigenlijk de trailing sell, maar het is maar even zo...
-    //        //    // Voorlopig even hardcoded (vanwege ontbreken OCO en stop order )
-    //        //    // TODO: Hier nog eens een instelling van maken!
-    //        //    // De winst ppercentage is nu eigenlijk de trigger prijs!
-    //        //    decimal breakEven = part.BreakEvenPrice;
-    //        //    decimal breakEvenExtra = breakEven + breakEven * (GlobalData.Settings.Trading.ProfitPercentage / 100m);
-
-    //        //    //if (position.Symbol.LastPrice > breakEvenExtra) // LastPrice is niet altijd gezet
-    //        //    //    doIt = true;
-
-    //        //    // Als de candle in zijn geheel boven de BE + extra zit beginnen met trailen (de zogenaamde trigger)
-    //        //    if (candleInterval.Open > breakEvenExtra && candleInterval.Close > breakEvenExtra)
-    //        //        doIt = true;
-
-
-    //        //    // Trailing SELL
-    //        //    // Alleen in een opwaarste "trend" beginnen we met trailen (niet in een neergaande)
-    //        //    // Dit is een fix om te voorkomen dat we direct na het kopen een trailing sell starten
-    //        //    if (step.Trailing == CryptoTrailing.None && candleInterval.Low > (decimal)candleInterval.CandleData.PSar && !doIt)
-    //        //        return;
-
-
-    //        //    decimal x;
-    //        //    List<decimal> qqq = [];
-
-    //        //    // Via de psar trailen ipv KC/psar? (dat zou zelfs een instelling kunnen zijn)
-    //        //    //x = (decimal)candleInterval.CandleData.PSar - Symbol.PriceTickSize;
-    //        //    //qqq.Add(x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize));
-    //        //    x = breakEvenExtra;
-    //        //    if (x > breakEvenExtra)
-    //        //        qqq.Add(x);
-
-    //        //    x = Math.Min((decimal)candleInterval.CandleData.KeltnerLowerBand, (decimal)candleInterval.CandleData.PSar) - Symbol.PriceTickSize;
-    //        //    x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-    //        //    if (x > breakEvenExtra)
-    //        //        qqq.Add(x);
-
-    //        //    //x = (((decimal)candleInterval.CandleData.BollingerBandsUpperBand + (decimal)candleInterval.CandleData.BollingerBandsLowerBand) / 2m) - Symbol.PriceTickSize;
-    //        //    x = (decimal)candleInterval.CandleData.Sma20 - Symbol.PriceTickSize;
-    //        //    x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-    //        //    if (x > breakEvenExtra)
-    //        //        qqq.Add(x);
-
-    //        //    x = (decimal)candleInterval.CandleData.KeltnerUpperBand - Symbol.PriceTickSize;
-    //        //    x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-    //        //    if (x > breakEvenExtra)
-    //        //        qqq.Add(x);
-
-    //        //    x = (decimal)candleInterval.CandleData.BollingerBandsUpperBand - Symbol.PriceTickSize;
-    //        //    x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-    //        //    if (x > breakEvenExtra)
-    //        //        qqq.Add(x);
-
-    //        //    // De hoogst mogelijke waarde nemen (extra controles op de low anders wordt ie direct gevuld)
-    //        //    decimal stop = 0;
-    //        //    qqq.Sort((valueA, valueB) => valueB.CompareTo(valueA));
-    //        //    foreach (var stopX in qqq)
-    //        //    {
-    //        //        if (step.Status == CryptoOrderStatus.New && step.Side == CryptoOrderSide.Sell
-    //        //            //&& Symbol.LastPrice > stopX
-    //        //            && stopX > breakEvenExtra
-    //        //            && candleInterval.Low > stopX
-    //        //            && (step.StopPrice == null || stopX > step.StopPrice))
-    //        //        {
-    //        //            decimal oldPrice = stop;
-    //        //            stop = stopX;
-    //        //            if (oldPrice > 0)
-    //        //                GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction stop -> {oldPrice:N6} to {stop.ToString0()}");
-    //        //        }
-    //        //        //else break;
-    //        //    }
-
-    //        //    if (stop > 0)
-    //        //    {
-    //        //        var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-
-    //        //        // price moet lager, 1.5% moet genoeg zijn.
-    //        //        decimal price = stop - (stop * 1.5m / 100); // ergens eronder
-    //        //        price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-
-
-    //        //        var (cancelled, cancelParams) = await TradeTools.CancelOrder(Database, position, part, step, LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange);
-    //        //        if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
-    //        //            ExchangeBase.Dump(position, cancelled, cancelParams, "annuleren vanwege aanpassing stoploss trailing");
-
-    //        //        // Afhankelijk van de invoer stop of stoplimit een OCO of standaard sell plaatsen.
-    //        //        // TODO: Wat als het plaatsen van de order fout gaat? (hoe vangen we de fout op en hoe herstellen we dat? Binance is een bitch af en toe!)
-    //        //        //Api exchangeApi = new();
-    //        //        var (success, tradeParams) = await exchangeApi.PlaceOrder(Database,
-    //        //            position.TradeAccount, position.Symbol, position.Side, LastCandle1mCloseTimeDate,
-    //        //            CryptoOrderType.StopLimit, CryptoOrderSide.Sell,
-    //        //            step.Quantity, price, stop, null); // Was een OCO met een limit
-    //        //        if (success)
-    //        //        {
-    //        //            // Administratie van de nieuwe sell bewaren (iets met tonen van de posities)
-    //        //            if (!position.ProfitPrice.HasValue)
-    //        //                position.ProfitPrice = price; // part.SellPrice; // (kan eigenlijk weg, slechts ter debug en tracering, voila)
-    //        //            // Als vervanger van bovenstaande tzt (maar willen we die ook als een afzonderlijke step? Het zou ansich kunnen)
-    //        //            var sellStep = PositionTools.CreatePositionStep(position, part, tradeParams, CryptoTrailing.Trailing);
-    //        //            Database.Connection.Insert<CryptoPositionStep>(sellStep);
-    //        //            PositionTools.AddPositionPartStep(part, sellStep);
-    //        //            part.ProfitMethod = CryptoEntryOrProfitMethod.TrailViaKcPsar;
-    //        //            Database.Connection.Update<CryptoPositionPart>(part);
-    //        //            Database.Connection.Update<CryptoPosition>(position);
-
-    //        //            if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-    //        //                PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, tradeParams.OrderSide,
-    //        //                    step.Status, tradeParams.Quantity, tradeParams.QuoteQuantity);
-    //        //        }
-
-    //        //        decimal perc = 0;
-    //        //        if (part.BreakEvenPrice > 0)
-    //        //            perc = (decimal)(100 * ((stop / part.BreakEvenPrice) - 1));
-    //        //        ExchangeBase.Dump(position, success, tradeParams, $"locking ({perc:N2}%)");
-    //        //    }
-    //        //}
-
-    //    }
-    //}
 
 
     /// Determine which fixed-percentage DCA levels (GlobalData.Settings.Trading.DcaList) still need to be
@@ -1461,7 +1065,7 @@ public class PositionMonitor : IDisposable
 
         PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca,
             request.Interval, request.Strategy,
-            GlobalData.Settings.Trading.DcaStrategy, request.DcaPrice, request.CandleCloseTime);
+            request.DcaPrice, request.CandleCloseTime);
     }
 
 
@@ -1470,7 +1074,7 @@ public class PositionMonitor : IDisposable
         // Alle resterende DCA-niveaus in 1x plaatsen zodra de entry gevuld is (in plaats van steeds te
         // wachten tot de vorige DCA gevuld is) - elk niveau krijgt zijn eigen part op zijn vaste %-prijs
         // vanaf de entry, en wordt direct als losse open limit-order neergezet.
-        if (position.Status == CryptoPositionStatus.Trading && GlobalData.Settings.Trading.DcaStrategy == CryptoEntryOrDcaStrategy.FixedPercentage)
+        if (position.Status == CryptoPositionStatus.Trading)
         {
             // No new DCA orders once the SL has been moved to break-even
             if (position.SlMovedToBreakEven)
@@ -1515,7 +1119,7 @@ public class PositionMonitor : IDisposable
 
                     // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
                     PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, position.Interval!, position.Strategy,
-                        CryptoEntryOrDcaStrategy.FixedPercentage, price, LastCandle1mCloseTimeDate);
+                        price, LastCandle1mCloseTimeDate);
                 }
 
                 // De net aangemaakte parts hebben nog geen correct PartNumber (= dca niveau) totdat dit
@@ -1567,7 +1171,6 @@ public class PositionMonitor : IDisposable
                         // (een toekomstige gereserveerde DCA buy orders of actieve trailing orders moeten we niet annuleren)
                         // Verwijder openstaande buy orders die niet gevuld worden binnen zoveel X minuten/candles?
                         // En dan mag eventueel de positie gesloten worden (indien het uit 1 deelpositie bestaat)
-                        //else if (part.EntryMethod != CryptoEntryOrProfitMethod.FixedPercentage && step.Trailing == CryptoTrailing.None)
                         else if (part.Purpose == CryptoPartPurpose.Entry && step.Trailing == CryptoTrailing.None)
                         {
                             // Is de order ouder dan X minuten dan deze verwijderen
@@ -1595,41 +1198,6 @@ public class PositionMonitor : IDisposable
                             }
                         }
 
-                        // Verwijderen de buy vanwege een te lage barometer, pauseer stand of timeout (behalve trailing of reserved dca)
-                        //else if (PauseBecauseOfTradingRules)
-                        //{
-                        //    timeOut = true;
-                        //    closePart = false;
-                        //    newStatus = CryptoOrderStatus.TradingRules;
-                        //    cancelText = "annuleren vanwege trading regels";
-                        //}
-
-
-                        // Verwijderen de buy vanwege een te lage barometer, pauseer stand of timeout (behalve trailing of reserved dca)
-                        // (je wordt gek van het weghalen en opnieuw plaatsen van de orders)
-                        // (en je mist zo ook een heleboel goede kansen, dus weg ermee!)
-                        //else if (PauseBecauseOfBarometer)
-                        //{
-                        //    timeOut = true;
-                        //    closePart = false;
-                        //    newStatus = CryptoOrderStatus.BarameterToLow;
-                        //    cancelText = "annuleren vanwege lage barometer";
-                        //}
-
-                        // Als de instellingen veranderd zijn de lopende order annuleren
-                        else if (part.Purpose == CryptoPartPurpose.Entry && part.EntryMethod != GlobalData.Settings.Trading.EntryStrategy)
-                        {
-                            newStatus = CryptoOrderStatus.ChangedSettings;
-                            cancelReason = "annuleren vanwege aanpassing entry instellingen";
-                        }
-
-                        // Als de instellingen veranderd zijn de lopende order annuleren
-                        else if (part.Purpose == CryptoPartPurpose.Dca && part.EntryMethod != GlobalData.Settings.Trading.DcaStrategy)
-                        {
-                            newStatus = CryptoOrderStatus.ChangedSettings;
-                            cancelReason = "annuleren vanwege aanpassing dca instellingen";
-                        }
-
                         // Cancel unfilled DCA orders once the SL has been moved to break-even
                         else if (part.Purpose == CryptoPartPurpose.Dca && position.SlMovedToBreakEven)
                         {
@@ -1645,10 +1213,6 @@ public class PositionMonitor : IDisposable
                             newStatus = CryptoOrderStatus.ChangedBreakEven;
                             cancelReason = "annuleren vanwege aanpassing BE";
                         }
-
-
-                        // Note: there is no separate TP-strategy setting yet (unlike EntryStrategy / DcaStrategy),
-                        // so changed-settings detection for take-profit orders is not implemented here.
                     }
 
 
@@ -1770,39 +1334,13 @@ public class PositionMonitor : IDisposable
             if (!part.CloseTime.HasValue && part.Purpose != CryptoPartPurpose.TakeProfit)
             {
                 // Prepare checks if we have a valid candle in the interval (from the part or position)
-                //var (success, candleInterval) = await PrepareAsync(position, part);
-                //if (success)
-                //{
-                //if (candleInterval.OpenTime != 0)
-                //{
-                // Check entry - blocked during a market-wide TradingRules pause (no new positions during a fast move)
                 if (!PauseBecauseOfTradingRules && part.Purpose == CryptoPartPurpose.Entry)
-                    await HandleEntryPart(position, part, GlobalData.Settings.Trading.EntryStrategy,
-                        GlobalData.Settings.Trading.EntryOrderPrice, GlobalData.Settings.Trading.EntryOrderType);
+                    await HandleEntryPart(position, part, GlobalData.Settings.Trading.EntryOrderType);
 
                 // Check DCA - always allowed, even during a TradingRules pause (averaging into an
                 // existing position is not gated by the market-wide pause, see CheckThePosition)
                 if (part.Purpose == CryptoPartPurpose.Dca)
-                    await HandleEntryPart(position, part, GlobalData.Settings.Trading.DcaStrategy,
-                        GlobalData.Settings.Trading.DcaOrderPrice, GlobalData.Settings.Trading.DcaOrderType);
-                //}
-                //}
-
-
-                //if (GlobalData.Settings.Trading.LockProfits)
-                //{
-                //    // Kunnen we afsluiten met winst?
-                //    if (position.Quantity > 0)
-                //    {
-                //        if (position.CreateTime.AddDays(-20) > LastCandle1mCloseTimeDate)
-                //            await HandleCheckProfitablePartClose(position, part, 0.25m);
-                //        else if (position.CreateTime.AddDays(-10) > LastCandle1mCloseTimeDate)
-                //            await HandleCheckProfitablePartClose(position, part, 0.50m);
-                //        else
-                //            await HandleCheckProfitablePartClose(position, part, GlobalData.Settings.Trading.ProfitPercentage);
-                //    }
-                //}
-
+                    await HandleEntryPart(position, part, GlobalData.Settings.Trading.DcaOrderType);
             }
             // remember the tp parts, one per configured TP level - PartNumber is the 1-based level
             // ("TP 1", "TP 2", ...); convert back to the 0-based index used for TpList/levels lookups.
@@ -1833,7 +1371,7 @@ public class PositionMonitor : IDisposable
                 {
                     if (!takeProfitPartsByLevel.ContainsKey(i))
                         takeProfitPartsByLevel[i] = PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval!,
-                            position.Strategy, CryptoEntryOrDcaStrategy.FixedPercentage, 0, GlobalData.Clock.UtcNow);
+                            position.Strategy, 0, GlobalData.Clock.UtcNow);
                 }
 
                 decimal openFractionSum = openLevelIndexes.Sum(i => levels[i].Factor);
@@ -1908,156 +1446,8 @@ public class PositionMonitor : IDisposable
             }
         }
 
-        //// Is er wel een initiele TP order aanwezig? zoniet dan dit alsnog doen!
-        //// (buiten de PrepareIndicators loop gehaald die intern een controle op het interval doet)
-        //// Dus nu wordt de sell order vrijwel direct geplaatst (na een 1m candle)
-        //foreach (CryptoPositionPart part in position.Parts.Values.ToList())
-        //{
-        //    // voor de niet afgesloten parts...
-        //    if (!part.CloseTime.HasValue)
-        //    {
-        //        CryptoPositionStep step = PositionTools.FindPositionPartStep(part, dcaOrderSide, true);
-        //        if (step != null && step.Status.IsFilled())
-        //        //if (step != null && (step.Status == CryptoOrderStatus.Filled /*|| step.Status == CryptoOrderStatus.PartiallyFilled*/)) -- problemen, quick fix voor nu, order laten staan
-        //        {
-        //            if (position.Quantity > 0) // voldoende saldo om de sell te plaatsen
-        //            {
-        //                step = PositionTools.FindPositionPartStep(part, takeProfitOrderSide, false);
-        //                if (step == null)
-        //                {
-        //                    decimal takeProfitPrice = CalculateTpPrices(position);
-        //                    await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, part, takeProfitPrice, LastCandle1mCloseTimeDate, "placing");
-        //                }
-        //                else
-        //                {
-        //                    // Als we het verkoop percentages aangepast hebben is het wel prettig dat de order aangepast wordt)
-        //                    if (part.ProfitMethod == CryptoEntryOrProfitMethod.FixedPercentage)
-        //                    {
-        //                        decimal sellPrice = CalculateTpPrices(position);
-        //                        if (step.Price != sellPrice && step.Status == CryptoOrderStatus.New && !part.ManualOrder)
-        //                        {
-        //                            string cancelReason = $"annuleren vanwege aanpassing verkoop prijs ({step.Price} -> {sellPrice})";
-        //                            var (success, _) = await TradeTools.CancelOrder(Database, position, part, step,
-        //                                LastCandle1mCloseTimeDate, CryptoOrderStatus.ChangedSettings, cancelReason);
-        //                            if (success)
-        //                            {
-        //                                decimal takeProfitPrice = CalculateTpPrices(position);
-        //                                await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, part, takeProfitPrice, LastCandle1mCloseTimeDate, "modifying");
-        //                            }
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-        //CryptoOrderSide dcaOrderSide = position.GetEntryOrderSide();
-
-        //// Is er wel iets om te verkopen in deze "part"? (hetzelfde als part.Quantity !=0 of part.Invested != 0?)
-        //CryptoPositionStep stepEntry = PositionTools.FindPositionPartStep(part, dcaOrderSide, true);
-        //if (stepEntry != null && (stepEntry.Status.IsFilled() || stepEntry.Status == CryptoOrderStatus.PartiallyFilled)) // Partially?
-        //{
-        //    // TODO, is er genoeg Quantity van de symbol om het te kunnen verkopen? (min-quantity en notation)
-        //    // (nog niet opgemerkt in reallive trading, maar dit gaat zeker een keer gebeuren in de toekomst!)
-
-        //    CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-        //    CryptoPositionStep stepProfit = PositionTools.FindPositionPartStep(part, takeProfitOrderSide, false);
-        //    if (stepProfit == null && part.Quantity > 0)
-        //    {
-        //        decimal takeProfitPrice = CalculateTpPrices(position);
-        //        await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, part, takeProfitPrice, LastCandle1mCloseTimeDate, "placing");
-        //    }
-        //}
     }
 
-
-
-    //public async Task<List<CryptoSignal>> CreateSignalsAsync()
-    //{
-    //    List<CryptoSignal> signalList = [];
-    //    //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
-    //    if (GlobalData.Settings.Signal.Active && Symbol.QuoteData!.FetchCandles && Symbol.Status == 1 && Symbol.LastPrice != null)
-    //    {
-    //        // TODO: !!! This is different than te previous version (was not executed for zones) !!!
-    //        // not really sure if we want this for zones? The same goes for trend and barometer????
-    //        if (Symbol.QuoteData.MinimalVolume == 0 || Symbol.Volume <= Symbol.QuoteData.MinimalVolume)
-    //        {
-    //            Symbol.ClearSignals();
-    //            return [];
-    //        }
-
-    //        // Is the symbol a new one?
-    //        if (!SymbolTools.CheckNewCoin(Symbol, out string reaction))
-    //        {
-    //            if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
-    //                GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
-    //            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-    //                GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
-    //            Symbol.ClearSignals();
-    //            return [];
-    //        }
-
-    //        // prepare indicators, fvg and dlz zones (dlz will be delayed because of background fetching & zooming)
-    //        SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
-
-
-
-    //        foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide)))
-    //        {
-    //            // Barometer check
-    //            if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, TradingConfig.Signals[side].Barometer, out reaction))
-    //            {
-    //                if (TradingConfig.Signals[side].BarometerLog)
-    //                    GlobalData.AddTextToLogTab($"{Symbol.Name} {side} {reaction}");
-    //            }
-    //            else
-    //            {
-    //                // Only for certain strategies and intervals
-    //                foreach (CryptoInterval interval in TradingConfig.Signals[side].Interval.ToList())
-    //                {
-    //                    // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
-    //                    if (LastCandle1mCloseTime % interval.Duration == 0)
-    //                    {
-    //                        //GlobalData.Logger.Info($"analyze({interval.Name}):" + LastCandle1m.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, false, true));
-
-    //                        // We geven als tijd het begin van de "laatste" candle (van dat interval)
-    //                        SignalCreate createSignal = new(Symbol, interval, side, LastCandle1mCloseTime);
-    //                        if (await createSignal.AnalyzeAsync(LastCandle1mCloseTime - interval.Duration))
-    //                            signalList.AddRange(createSignal.SignalList);
-
-    //                        // Teller voor op het beeldscherm zodat je ziet dat deze thread iets doet en actief blijft.
-    //                        Interlocked.Increment(ref analyseCount);
-    //                    }
-    //                }
-    //            }
-
-
-    //            // FVG - Fair Value Gaps DlzAdmin
-    //            if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong) ||
-    //                (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsShort))
-    //            {
-    //                // Signal if the 1m candles touches a fvg zone
-    //                SignalCreate createSignal2 = new(Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
-    //                if (await createSignal2.AnalyzeFairValueGapAsync(LastCandle1mCloseTime))
-    //                    signalList.AddRange(createSignal2.SignalList);
-    //            }
-
-
-    //            // DLZ - Dominant Liquidity DlzAdmin
-    //            if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesDlz.ShowSignalsLong) ||
-    //                (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesDlz.ShowSignalsShort))
-    //            {
-    //                // Signal if the 1m candles approaches or touches a dlz zone
-    //                SignalCreate createSignal = new(Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
-    //                if (await createSignal.AnalyzeZonesAsync(LastCandle1mCloseTime - GlobalData.IntervalList[0].Duration))
-    //                    signalList.AddRange(createSignal.SignalList);
-    //            }
-    //        }
-    //    }
-    //    //GlobalData.Logger.Info($"CreateSignals(stop):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
-
-    //    return signalList;
-    //}
 
 
     public async Task CheckThePosition(CryptoPosition position)

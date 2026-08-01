@@ -49,37 +49,17 @@ public partial class TraderDcaViewModel : ObservableObject
         { "Limit order", CryptoOrderType.Limit }
     };
 
-    private readonly Dictionary<string, CryptoEntryOrDcaStrategy> _strategyList = new()
-    {
-        { "Op het opgegeven percentage", CryptoEntryOrDcaStrategy.FixedPercentage }
-    };
-
-    private readonly Dictionary<string, CryptoEntryOrDcaPricing> _pricingList = new()
-    {
-        { "DCA percentage", CryptoEntryOrDcaPricing.SignalPrice }
-    };
-
     [ObservableProperty]
     private CryptoOrderType _selectedOrderType = CryptoOrderType.Limit;
-
-    [ObservableProperty]
-    private CryptoEntryOrDcaStrategy _selectedStrategy = CryptoEntryOrDcaStrategy.FixedPercentage;
-
-    [ObservableProperty]
-    private CryptoEntryOrDcaPricing _selectedPricing = CryptoEntryOrDcaPricing.SignalPrice;
 
     [ObservableProperty]
     private ObservableCollection<DcaItemViewModel> _dcaItems = [];
 
     public Dictionary<string, CryptoOrderType> OrderTypeList => _orderTypeList;
-    public Dictionary<string, CryptoEntryOrDcaStrategy> StrategyList => _strategyList;
-    public Dictionary<string, CryptoEntryOrDcaPricing> PricingList => _pricingList;
 
     public void LoadConfig(SettingsTrading settings)
     {
         SelectedOrderType = settings.DcaOrderType;
-        SelectedStrategy = settings.DcaStrategy;
-        SelectedPricing = settings.DcaOrderPrice;
 
         DcaItems.Clear();
         int index = 1;
@@ -94,8 +74,6 @@ public partial class TraderDcaViewModel : ObservableObject
     public void SaveConfig(SettingsTrading settings)
     {
         settings.DcaOrderType = SelectedOrderType;
-        settings.DcaStrategy = SelectedStrategy;
-        settings.DcaOrderPrice = SelectedPricing;
 
         settings.DcaList.Clear();
         foreach (var item in DcaItems)

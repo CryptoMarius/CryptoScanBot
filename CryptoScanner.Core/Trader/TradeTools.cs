@@ -958,7 +958,7 @@ public class TradeTools
                 database.Connection.Insert<CryptoPositionStep>(step);
                 PositionTools.AddPositionPartStep(part, step);
 
-                part.ProfitMethod = CryptoEntryOrDcaStrategy.FixedPercentage;
+                //part.ProfitMethod = CryptoEntryOrDcaStrategy.FixedPercentage;
                 database.Connection.Update<CryptoPositionPart>(part);
                 database.Connection.Update<CryptoPosition>(position);
 
