@@ -55,11 +55,11 @@ public abstract class SignalNweBbBase : SignalCreateBase
         bars = [];
 
         // Repainting NWE computed on the full candle list (matches the chart NWE display)
-        var nweIndicator = new NweIndicator(
-            bandwidth: NwePlugin.Settings.BandWidth,
-            multiplier: NwePlugin.Settings.Multiplication,
+        var nweResults = NweResultCache.GetOrCalculate(
+            SymbolInterval.CandleList,
+            NwePlugin.Settings.BandWidth,
+            NwePlugin.Settings.Multiplication,
             smoothRepainting: true);
-        var nweResults = nweIndicator.Calculate(SymbolInterval.CandleList);
 
         // Lookup by OpenTime, only bars that have valid upper/lower
         var nweByTime = nweResults

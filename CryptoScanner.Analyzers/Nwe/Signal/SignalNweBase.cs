@@ -175,13 +175,11 @@ public class SignalNweBase : SignalCreateBase
 
         ExtraText = "";
 
-        NweIndicator indicator = new(
-            bandwidth: NwePlugin.Settings.BandWidth,
-            multiplier: NwePlugin.Settings.Multiplication,
-            smoothRepainting: SmoothRepainting
-           );
-        var candles = SymbolInterval.CandleList;
-        var nwe = indicator.Calculate(candles);
+        var nwe = NweResultCache.GetOrCalculate(
+            SymbolInterval.CandleList,
+            NwePlugin.Settings.BandWidth,
+            NwePlugin.Settings.Multiplication,
+            SmoothRepainting);
         var nweLast = nwe[^1];
 
         // buy alert
