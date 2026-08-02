@@ -26,7 +26,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 {
     public class QueryPositionData
     {
-        public DateTime CloseTime { get; set; }
+        public DateOnly? CloseTime { get; set; } = null;
         public string Quote { get; set; } = "";
         //public CryptoOrderStatus Status { get; set; }
 
@@ -305,7 +305,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
     {
         // Query voor positie data
         StringBuilder builder = new();
-        builder.AppendLine("select date(position.CloseTime,'localtime') as CloseTime, symbol.quote, count(position.id) as Positions,");
+        builder.AppendLine("select date(position.CloseTime,'localtime') as CloseTime,");
+        builder.AppendLine("symbol.quote, count(position.id) as Positions,");
         builder.AppendLine("round(MIN(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS MinMin,");
         builder.AppendLine("round(AVG(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS AvgMin,");
         builder.AppendLine("round(MAX(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS MaxMin,");
@@ -333,7 +334,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         foreach (QueryPositionData data in databaseThread.Connection.Query<QueryPositionData>(builder.ToString()))
         {
-            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+            if (data.CloseTime.HasValue)
             {
                 QueryPositionDataList.Add(data);
                 closedData.Positions += data.Positions;
@@ -417,12 +418,9 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         foreach (QueryPositionData data in QueryPositionDataList)
         {
-            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
-            {
-                double x = DateTimeAxis.ToDouble(data.CloseTime.Date);
-                // Each bar spans ±0.4 days around the day centre = 80% width, 20% gap.
-                series.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, data.Positions));
-            }
+            double x = DateTimeAxis.ToDouble(data.CloseTime!.Value);
+            // Each bar spans ±0.4 days around the day centre = 80% width, 20% gap.
+            series.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, data.Positions));
         }
 
         model.Series.Add(series);
@@ -496,15 +494,12 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         foreach (QueryPositionData data in QueryPositionDataList)
         {
-            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
-            {
-                double x = DateTimeAxis.ToDouble(data.CloseTime.Date);
-                // Each bar spans ±0.4 days around the day centre = 80% width, 20% gap.
-                if (data.TotalProfit < 0)
-                    seriesLoss.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, (double)data.TotalProfit));
-                else
-                    seriesProfit.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, (double)data.TotalProfit));
-            }
+            double x = DateTimeAxis.ToDouble(data.CloseTime!.Value);
+            // Each bar spans ±0.4 days around the day centre = 80% width, 20% gap.
+            if (data.TotalProfit < 0)
+                seriesLoss.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, (double)data.TotalProfit));
+            else
+                seriesProfit.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, (double)data.TotalProfit));
         }
 
         model.Series.Add(seriesProfit);
@@ -554,7 +549,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         foreach (var data in QueryPositionDataList)
         {
-            var dateValue = DateTimeAxis.ToDouble(data.CloseTime.Date);
+            var dateValue = DateTimeAxis.ToDouble(data.CloseTime!.Value);
             minSeries.Points.Add(new DataPoint(dateValue, (double)data.MinPerc));
             avgSeries.Points.Add(new DataPoint(dateValue, (double)data.AvgPerc));
             maxSeries.Points.Add(new DataPoint(dateValue, (double)data.MaxPerc));
@@ -603,24 +598,26 @@ public partial class DashboardPositionsViewModel : ObservableObject
         var returnedSeries = new LineSeries { Title = "Geretourneerd", Color = OxyColors.Green, MarkerType = MarkerType.Circle, MarkerSize = 3 };
 
         // Aggregate invested and returned per day
-        var combinedData = new Dictionary<DateTime, (decimal Invested, decimal Returned)>();
+        var combinedData = new Dictionary<DateOnly, (decimal Invested, decimal Returned)>();
 
         foreach (var data in investedData)
         {
-            if (!combinedData.ContainsKey(data.CloseTime.Date))
-                combinedData[data.CloseTime.Date] = (0, 0);
+            var day = data.CloseTime!.Value;
+            if (!combinedData.ContainsKey(day))
+                combinedData[day] = (0, 0);
 
-            var current = combinedData[data.CloseTime.Date];
-            combinedData[data.CloseTime.Date] = (current.Invested + data.Invested, current.Returned);
+            var current = combinedData[day];
+            combinedData[day] = (current.Invested + data.Invested, current.Returned);
         }
 
         foreach (var data in returnedData)
         {
-            if (!combinedData.ContainsKey(data.CloseTime.Date))
-                combinedData[data.CloseTime.Date] = (0, 0);
+            var day = data.CloseTime!.Value;
+            if (!combinedData.ContainsKey(day))
+                combinedData[day] = (0, 0);
 
-            var current = combinedData[data.CloseTime.Date];
-            combinedData[data.CloseTime.Date] = (current.Invested, current.Returned + data.Returned);
+            var current = combinedData[day];
+            combinedData[day] = (current.Invested, current.Returned + data.Returned);
         }
 
         foreach (var kvp in combinedData.OrderBy(x => x.Key))
@@ -672,7 +669,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         foreach (var data in QueryPositionDataList)
         {
-            var dateValue = DateTimeAxis.ToDouble(data.CloseTime.Date);
+            var dateValue = DateTimeAxis.ToDouble(data.CloseTime!.Value);
             minSeries.Points.Add(new DataPoint(dateValue, (double)data.MinMin));
             avgSeries.Points.Add(new DataPoint(dateValue, (double)data.AvgMin));
             maxSeries.Points.Add(new DataPoint(dateValue, (double)data.MaxMin));
@@ -693,7 +690,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
     private List<QueryPositionData> GetQueryInvestedData()
     {
         StringBuilder builder = new();
-        builder.AppendLine("select date(positionStep.CloseTime,'localtime') as CloseTime, symbol.quote, sum(positionStep.QuoteQuantityFilled) as Invested");
+        builder.AppendLine("select date(positionStep.CloseTime,'localtime') as CloseTime,");
+        builder.AppendLine("symbol.quote, sum(positionStep.QuoteQuantityFilled) as Invested");
         builder.AppendLine("from PositionStep");
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
@@ -710,7 +708,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         List<QueryPositionData> list = new();
         foreach (QueryPositionData data in databaseThread.Connection.Query<QueryPositionData>(builder.ToString()))
         {
-            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+            if (data.CloseTime.HasValue)
                 list.Add(data);
         }
         return list;
@@ -719,7 +717,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
     private List<QueryPositionData> GetQueryReturnedData()
     {
         StringBuilder builder = new();
-        builder.AppendLine("select date(positionStep.CloseTime,'localtime') as CloseTime, symbol.quote, sum(positionStep.QuoteQuantityFilled) as Returned");
+        builder.AppendLine("select date(positionStep.CloseTime,'localtime') as CloseTime,");
+        builder.AppendLine("symbol.quote, sum(positionStep.QuoteQuantityFilled) as Returned");
         builder.AppendLine("from PositionStep");
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
@@ -736,7 +735,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         List<QueryPositionData> list = new();
         foreach (QueryPositionData data in databaseThread.Connection.Query<QueryPositionData>(builder.ToString()))
         {
-            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+            if (data.CloseTime.HasValue)
                 list.Add(data);
         }
         return list;
