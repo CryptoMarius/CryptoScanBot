@@ -75,7 +75,13 @@ public static class SignalGridExpander
                 return;
             object? next = nav.GetValue(current);
             if (next == null)
-                return;
+            {
+                next = Activator.CreateInstance(nav.PropertyType);
+                if (next == null)
+                    return;
+                saved.Add(new Override(current, nav, null));
+                nav.SetValue(current, next);
+            }
             current = next;
         }
 
