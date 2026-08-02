@@ -123,6 +123,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "Low");
         WriteCell(sheet, columns++, row, "Close");
         WriteCell(sheet, columns++, row, "Volume");
+        WriteCell(sheet, columns++, row, "Filled");
 
         //WriteCell(sheet, columns++, row, "Rsi");
         //WriteCell(sheet, columns++, row, "StochOscillator");
@@ -154,9 +155,12 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             WriteCell(sheet, column++, row, candle.DateLocal.AddMinutes(symbolInterval.Interval?.Duration ?? 0), CellStyleDate);
 
             // Repeated value (flat candle)
+             // IsFilled: we synthesized this candle (gap-filled from the previous close) instead
+            // of receiving it from the exchange - mark it clearly instead of guessing from the
+            // OHLC values (a real flat candle would otherwise look the same).
             ICellStyle? cellStyle = CellStyleDecimalNormal;
-            if (candle.Open == last.Close && candle.High == last.Close &&
-                candle.Low == last.Close && candle.Close == last.Close)
+            if ((candle.Open == last.Close && candle.High == last.Close &&
+                candle.Low == last.Close && candle.Close == last.Close) || candle.IsFilled)
                 cellStyle = CellStyleDecimalRed;
 
             WriteCell(sheet, column++, row, candle.Open, cellStyle);
@@ -168,6 +172,11 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalRed);
             else
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
+
+            if (candle.IsFilled)
+                WriteCell(sheet, column++, row, "FILLED", CellStyleStringRed);
+            else
+                WriteCell(sheet, column++, row, "");
 
             //if (candle.CandleData != null)
             //{

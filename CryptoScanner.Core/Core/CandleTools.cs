@@ -29,7 +29,7 @@ public static class CandleTools
     /// Add the final candle in the right interval
     /// </summary>
     public static CryptoCandle CreateCandle(CryptoSymbol symbol, CryptoInterval interval, DateTime openTime,
-        decimal open, decimal high, decimal low, decimal close, decimal quoteVolume)
+        decimal open, decimal high, decimal low, decimal close, decimal quoteVolume, bool isFilled = false)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList candles = symbolInterval.CandleList;
@@ -48,12 +48,14 @@ public static class CandleTools
                 Low = low,
                 Close = close,
                 Volume = quoteVolume,
+                IsFilled = isFilled,
             };
             candles.Add(candleOpenUnix, candle);
         }
         else
         {
-            // Update the candle
+            // Update the candle. A real candle arriving later for the same OpenTime (e.g. a
+            // repeated GetCandles fetch) clears IsFilled again, since isFilled defaults to false.
             candle.Open = open;
             candle.High = high;
             candle.Low = low;
@@ -61,6 +63,7 @@ public static class CandleTools
             // Candles are getting removed are some key..
             if (quoteVolume > candle.Volume)
                 candle.Volume = quoteVolume;
+            candle.IsFilled = isFilled;
             candles[candleOpenUnix] = candle;
         }
 
@@ -99,6 +102,9 @@ public static class CandleTools
         decimal low = decimal.MaxValue;
         decimal close = 0;
         decimal volume = 0;
+        // True when at least one of the underlying lower-timeframe candles was itself gap-filled -
+        // the aggregate then rests on synthesized data too, so it is just as unreliable.
+        bool anyFilled = false;
 
         // The candle  in the higher timeframe contains x candles from the lower timeframe
         int candleCount = 0;
@@ -126,6 +132,8 @@ public static class CandleTools
                 // Dat gaat  fout als niet de hele "periode" aangeboden wordt
                 volume += candle.Volume;
                 candleCount++;
+                if (candle.IsFilled)
+                    anyFilled = true;
             }
             //else break; // the lower interval is not complete, stop? (see remarks) --> volume fix?
 
@@ -137,7 +145,7 @@ public static class CandleTools
         if (candleCount == expectedLowerIntervalCandleCount)
         {
             // Create the higher timeframe candle (it will be added later when its data is fully calculated)
-            CreateCandle(symbol, higherInterval, higherIntervalOpenTime.ToDateTime(), open, high, low, close, volume);
+            CreateCandle(symbol, higherInterval, higherIntervalOpenTime.ToDateTime(), open, high, low, close, volume, anyFilled);
             UpdateCandleFetched(symbol, higherInterval);
             //GlobalData.Logger.Info(higherIntervalCandle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true, true));
         }
@@ -148,7 +156,7 @@ public static class CandleTools
 
 
     public static async Task<CryptoCandle> Process1mCandleAsync(CryptoSymbol symbol, DateTime openTime,
-        decimal open, decimal high, decimal low, decimal close, decimal quoteVolume)
+        decimal open, decimal high, decimal low, decimal close, decimal quoteVolume, bool isFilled = false)
     {
         // Guard against empty/invalid candles (any OHLC <= 0). A no-trade minute or a price that rounds
         // to 0 (too-small PriceDecimals) would otherwise be stored as an all-zero candle and corrupt the
@@ -165,7 +173,7 @@ public static class CandleTools
             symbol.LastPrice = close;
 
             // Process the single 1m candle
-            CryptoCandle candle = CreateCandle(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, quoteVolume);
+            CryptoCandle candle = CreateCandle(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, quoteVolume, isFilled);
             // Update administration of the last processed candle
             UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
 
@@ -226,6 +234,7 @@ public static class CandleTools
                     Low = realCandle.Close,
                     Close = realCandle.Close,
                     Volume = 0,
+                    IsFilled = true,
                 };
                 candleList.Add(candle.OpenTime, candle);
                 if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))

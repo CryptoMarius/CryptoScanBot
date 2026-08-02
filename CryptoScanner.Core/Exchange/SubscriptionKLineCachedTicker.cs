@@ -211,7 +211,7 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
 
                             decimal lastPrice = symbol.LastPrice.Value;
                             await CandleTools.Process1mCandleAsync(symbol, expectedUpto.ToDateTime(),
-                                lastPrice, lastPrice, lastPrice, lastPrice, 0);
+                                lastPrice, lastPrice, lastPrice, lastPrice, 0, isFilled: true);
                             candleLast = new CryptoCandle
                             {
                                 TickDecimals = symbol.PriceDecimals,
@@ -221,6 +221,7 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                                 Low = lastPrice,
                                 Close = lastPrice,
                                 Volume = 0,
+                                IsFilled = true,
                             };
                         }
 

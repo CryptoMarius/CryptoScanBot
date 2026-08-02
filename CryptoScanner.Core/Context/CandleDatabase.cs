@@ -295,13 +295,15 @@ public class CandleDatabase : IDisposable
                 while (reader.Read())
                 {
                     uint openTimeMinutes = (uint)reader.GetInt64(0);
-                    byte ticks = (byte)reader.GetInt32(1);
-                    decimal tickSize = TickSizeFor(ticks);
+                    // Raw byte (decimals + IsFilled bit, see CryptoCandle.TickDecimalsRaw) -
+                    // mask off the flag bit before computing the tick size.
+                    byte ticksRaw = (byte)reader.GetInt32(1);
+                    decimal tickSize = TickSizeFor((byte)(ticksRaw & 0x0F));
 
                     CryptoCandle candle = new()
                     {
                         OpenTime = new CandleTime(openTimeMinutes),
-                        TickDecimals = ticks,
+                        TickDecimalsRaw = ticksRaw,
                         // Setting Open/High/Low/Close via decimal accessors round-trips through the
                         // tick reconstruction, identical to what LoadVersion3 does for the file path.
                         Open = reader.GetInt64(2) * tickSize,
@@ -372,13 +374,13 @@ public class CandleDatabase : IDisposable
             while (reader.Read())
             {
                 uint openTimeMinutes = (uint)reader.GetInt64(0);
-                byte ticks = (byte)reader.GetInt32(1);
-                decimal tickSize = TickSizeFor(ticks);
+                byte ticksRaw = (byte)reader.GetInt32(1);
+                decimal tickSize = TickSizeFor((byte)(ticksRaw & 0x0F));
 
                 CryptoCandle candle = new()
                 {
                     OpenTime = new CandleTime(openTimeMinutes),
-                    TickDecimals = ticks,
+                    TickDecimalsRaw = ticksRaw,
                     Open = reader.GetInt64(2) * tickSize,
                     High = reader.GetInt64(3) * tickSize,
                     Low = reader.GetInt64(4) * tickSize,
@@ -453,13 +455,13 @@ public class CandleDatabase : IDisposable
         while (reader.Read())
         {
             uint openTimeMinutes = (uint)reader.GetInt64(0);
-            byte ticks = (byte)reader.GetInt32(1);
-            decimal tickSize = TickSizeFor(ticks);
+            byte ticksRaw = (byte)reader.GetInt32(1);
+            decimal tickSize = TickSizeFor((byte)(ticksRaw & 0x0F));
 
             list.Add(new CryptoCandle
             {
                 OpenTime = new CandleTime(openTimeMinutes),
-                TickDecimals = ticks,
+                TickDecimalsRaw = ticksRaw,
                 Open = reader.GetInt64(2) * tickSize,
                 High = reader.GetInt64(3) * tickSize,
                 Low = reader.GetInt64(4) * tickSize,
@@ -595,7 +597,7 @@ public class CandleDatabase : IDisposable
                 foreach (CryptoCandle candle in symbolInterval.CandleList.Values)
                 {
                     pOpenTime.Value = (long)candle.OpenTime.Minutes;
-                    pTickDecimals.Value = candle.TickDecimals;
+                    pTickDecimals.Value = candle.TickDecimalsRaw;
                     // Reconstruct raw ticks from the decimal accessors. TickDecimals lets us
                     // round-trip without losing precision; this matches what SaveVersion3 writes.
                     decimal tickSize = TickSizeFor(candle.TickDecimals);
@@ -662,7 +664,7 @@ public class CandleDatabase : IDisposable
             foreach (CryptoCandle candle in symbolInterval.CandleList.Values)
             {
                 pOpenTime.Value = (long)candle.OpenTime.Minutes;
-                pTickDecimals.Value = candle.TickDecimals;
+                pTickDecimals.Value = candle.TickDecimalsRaw;
                 decimal tickSize = TickSizeFor(candle.TickDecimals);
                 pOpen.Value = (long)Math.Round(candle.Open / tickSize);
                 pHigh.Value = (long)Math.Round(candle.High / tickSize);

@@ -67,7 +67,31 @@ public struct CryptoCandle : IQuote
     //public decimal Close { get => _closeSatoshi / SatoshiMultiplier; set => _closeSatoshi = (long)(value * SatoshiMultiplier); }
 
     // Properties
-    public byte TickDecimals;                 // 1 byte (aantal decimalen in tickSize)
+    // TickDecimals only ever needs 0-9 (see TickSizeLookup below; _openTicks etc. are int, so a
+    // tick size with many more decimals would already overflow on real prices). That leaves the
+    // top bits of this byte unused, so IsFilled (a candle we synthesized instead of received from
+    // the exchange) is packed into bit 0x80 instead of adding a field - keeps the struct at 29
+    // bytes with Pack = 1, where every byte is counted (see the comments at the top of this file).
+    private byte _tickDecimalsAndFlags;        // 1 byte: low nibble = TickDecimals, bit 0x80 = IsFilled
+    public byte TickDecimals
+    {
+        readonly get => (byte)(_tickDecimalsAndFlags & 0x0F);
+        set => _tickDecimalsAndFlags = (byte)((_tickDecimalsAndFlags & 0xF0) | (value & 0x0F));
+    }
+    // True when this candle was synthesized locally (gap-filled from the previous close) instead
+    // of received from the exchange via the kline subscription or GetCandles. Default false.
+    public bool IsFilled
+    {
+        readonly get => (_tickDecimalsAndFlags & 0x80) != 0;
+        set => _tickDecimalsAndFlags = (byte)(value ? _tickDecimalsAndFlags | 0x80 : _tickDecimalsAndFlags & 0x7F);
+    }
+    // Raw combined byte (decimals + IsFilled bit), for the serialization layer only
+    // (SaveVersion3/LoadVersion3, CandleDatabase) so the flag survives round-trips to disk.
+    internal byte TickDecimalsRaw
+    {
+        readonly get => _tickDecimalsAndFlags;
+        set => _tickDecimalsAndFlags = value;
+    }
     // Pre-calculated tick sizes (0-8 decimals), less costly then Math.Pow()
     private static readonly decimal[] TickSizeLookup =
     {
@@ -123,7 +147,8 @@ public struct CryptoCandle : IQuote
     public void LoadVersion3(BinaryReader reader)
     {
         OpenTime = new CandleTime(reader.ReadUInt32());
-        TickDecimals = reader.ReadByte();
+        // Raw byte (decimals + IsFilled bit) - old files just read back IsFilled = false.
+        _tickDecimalsAndFlags = reader.ReadByte();
         _openTicks = reader.ReadInt32();
         _highTicks = reader.ReadInt32();
         _lowTicks = reader.ReadInt32();
@@ -134,7 +159,7 @@ public struct CryptoCandle : IQuote
     public readonly void SaveVersion3(BinaryWriter writer)
     {
         writer.Write(OpenTime.Minutes);
-        writer.Write(TickDecimals);
+        writer.Write(_tickDecimalsAndFlags);
         writer.Write(_openTicks);
         writer.Write(_highTicks);
         writer.Write(_lowTicks);
