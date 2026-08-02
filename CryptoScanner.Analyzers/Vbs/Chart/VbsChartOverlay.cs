@@ -32,7 +32,7 @@ public class VbsChartOverlay : IChartOverlay
         if (candles.Count == 0)
             return;
 
-        var vbs = VbsPlugin.Settings;
+        var settings = VbsPlugin.Settings;
 
         // Volume-weighted VWAP bands (basis/upper/lower), computed by the shared helper so the chart and
         // the signal stay identical. Index-aligned with the candle list below.
@@ -43,7 +43,7 @@ public class VbsChartOverlay : IChartOverlay
         // RSI is overbought. Thresholds come from the general RSI settings (Indicators tab).
         var rsiSettings = GlobalData.Settings.General.SettingsRsi;
         IReadOnlyList<RsiResult>? rsiList = null;
-        if (vbs.UseRsiFilter)
+        if (settings.UseRsiFilter)
             rsiList = candles.AsQuotes().ToRsi(rsiSettings.Length);
 
         //var bandFill = new AreaSeries { Title = "vbs.fill", Fill = BandFillColor, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
@@ -82,7 +82,7 @@ public class VbsChartOverlay : IChartOverlay
 
             // Take-profit distance the signal would hand to the trader: RiskRewardRatio * SL-distance.
             // Only shown when the take-profit is enabled, so the label matches what actually gets placed.
-            double? tpPct = vbs.UseTakeProfit ? vbs.RiskRewardRatio * slPct : null;
+            double? tpPct = settings.RiskRewardRatio * slPct;
 
             // Same pass criteria as the signal: short needs rsi >= Overbought, long needs rsi <= Oversold.
             // With the RSI filter disabled every break is labeled, as before.
