@@ -26,7 +26,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 {
     public class QueryPositionData
     {
-        public DateOnly? CloseTime { get; set; } = null;
+        public DateTime? CloseTime { get; set; } = null;
         public string Quote { get; set; } = "";
         //public CryptoOrderStatus Status { get; set; }
 
@@ -67,6 +67,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
         public string TotalProfitFraction => SplitNumber(TotalProfit, "N2").Fraction;
         public string AverageProfitWhole => SplitNumber(AverageProfit, "N2").Whole;
         public string AverageProfitFraction => SplitNumber(AverageProfit, "N2").Fraction;
+
+        private double offset = 0.4;
 
         // Splits a formatted number into a whole part and a fraction part (including the separator).
         public static (string Whole, string Fraction) SplitNumber(decimal value, string format)
@@ -342,11 +344,11 @@ public partial class DashboardPositionsViewModel : ObservableObject
                 closedData.Returned += data.Returned;
                 closedData.Commission += data.Commission;
                 closedData.TotalProfit += data.TotalProfit;
-                // enzovoort..
+                // etc..
             }
             else
             {
-                openData = data; // het restant
+                openData = data; // what remains
                 // verschil vanwege meerdere quotes
                 //openData.Positions += data.Positions;
                 //openData.Invested += data.Invested;
@@ -569,7 +571,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartInvestedReturnedPerDay()
     {
-        var model = new PlotModel { Title = "Geinvesteerd en geretourneerd per dag", TextColor = OxyColors.White, Background = OxyColors.Black };
+        var model = new PlotModel { Title = "Invested and returned per day", TextColor = OxyColors.White, Background = OxyColors.Black };
 
         model.Axes.Add(new DateTimeAxis
         {
@@ -594,11 +596,11 @@ public partial class DashboardPositionsViewModel : ObservableObject
         var investedData = GetQueryInvestedData();
         var returnedData = GetQueryReturnedData();
 
-        var investedSeries = new LineSeries { Title = "Geinvesteerd", Color = OxyColors.Red, MarkerType = MarkerType.Circle, MarkerSize = 3 };
-        var returnedSeries = new LineSeries { Title = "Geretourneerd", Color = OxyColors.Green, MarkerType = MarkerType.Circle, MarkerSize = 3 };
+        var investedSeries = new LineSeries { Title = "Invested", Color = OxyColors.Red, MarkerType = MarkerType.Circle, MarkerSize = 3 };
+        var returnedSeries = new LineSeries { Title = "Returned", Color = OxyColors.Green, MarkerType = MarkerType.Circle, MarkerSize = 3 };
 
         // Aggregate invested and returned per day
-        var combinedData = new Dictionary<DateOnly, (decimal Invested, decimal Returned)>();
+        var combinedData = new Dictionary<DateTime, (decimal Invested, decimal Returned)>();
 
         foreach (var data in investedData)
         {
@@ -663,9 +665,9 @@ public partial class DashboardPositionsViewModel : ObservableObject
             StringFormat = "N1"
         });
 
-        var minSeries = new LineSeries { Title = "Minimaal", Color = OxyColors.Green, MarkerType = MarkerType.Circle, MarkerSize = 3 };
-        var avgSeries = new LineSeries { Title = "Gemiddeld", Color = OxyColors.Orange, MarkerType = MarkerType.Circle, MarkerSize = 3 };
-        var maxSeries = new LineSeries { Title = "Maximaal", Color = OxyColors.Red, MarkerType = MarkerType.Circle, MarkerSize = 3 };
+        var minSeries = new LineSeries { Title = "Minimal", Color = OxyColors.Green, MarkerType = MarkerType.Circle, MarkerSize = 3 };
+        var avgSeries = new LineSeries { Title = "Average", Color = OxyColors.Orange, MarkerType = MarkerType.Circle, MarkerSize = 3 };
+        var maxSeries = new LineSeries { Title = "Maximal", Color = OxyColors.Red, MarkerType = MarkerType.Circle, MarkerSize = 3 };
 
         foreach (var data in QueryPositionDataList)
         {
