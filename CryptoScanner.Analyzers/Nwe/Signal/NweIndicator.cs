@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Analyzers.Nwe.Signal;
 
@@ -10,6 +10,11 @@ public class NweIndicator
     public double Bandwidth { get; }
     public decimal Multiplier { get; }
     public bool SmoothRepainting { get; }
+
+    // Precomputed Gaussian kernel weights: w[d] = exp(-d^2 / (2 * h^2))
+    // Only distances up to _effectiveRange contribute meaningfully (beyond ~4*bandwidth the weight is < 0.04%).
+    private readonly double[] _weights;
+    private readonly int _effectiveRange;
 
     public class NweResult
     {
@@ -25,6 +30,12 @@ public class NweIndicator
         Bandwidth = bandwidth;
         Multiplier = multiplier;
         SmoothRepainting = smoothRepainting;
+
+        double h2 = bandwidth * bandwidth * 2.0;
+        _effectiveRange = Math.Max(1, Math.Min(length, (int)(4.0 * bandwidth) + 1));
+        _weights = new double[_effectiveRange];
+        for (int d = 0; d < _effectiveRange; d++)
+            _weights[d] = Math.Exp(-(double)(d * d) / h2);
     }
 
     public List<NweResult> Calculate(CryptoCandleList candles)
@@ -34,14 +45,19 @@ public class NweIndicator
         // (see the note on CryptoCandleList.GetSnapshot for why .ToList() on the base type is unsafe).
         var snapshot = candles.GetSnapshot();
         int n = snapshot.Count;
-        var openTimes = new List<CandleTime>(n);
-        var closes = new List<decimal>(n);
+        var openTimes = new CandleTime[n];
+        var dCloses = new double[n];
         for (int i = 0; i < n; i++)
         {
-            openTimes.Add(snapshot[i].Key);
-            closes.Add(snapshot[i].Value.Close);
+            openTimes[i] = snapshot[i].Key;
+            dCloses[i] = (double)snapshot[i].Value.Close;
         }
 
+        return CalculateCore(dCloses, openTimes, n);
+    }
+
+    internal List<NweResult> CalculateCore(double[] dCloses, CandleTime[] openTimes, int n)
+    {
         var results = new List<NweResult>(n);
         for (int k = 0; k < n; k++)
         {
@@ -51,100 +67,83 @@ public class NweIndicator
         if (n < 1)
             return results;
 
+        double mult = (double)Multiplier;
+
         if (SmoothRepainting)
         {
             int window = Math.Min(Length, n);
             if (window < 1)
                 return results;
 
-            decimal sumAbs = 0m;
-            var nwe = new List<decimal>(); // index 0 = newest to window-1: oldest
+            double sumAbs = 0.0;
+            var centers = new double[window]; // index 0 = newest to window-1: oldest
             for (int i = 0; i < window; i++) // i=0: newest
             {
-                decimal sum = 0m;
+                double sum = 0.0;
                 double sumw = 0.0;
-                for (int j = 0; j < window; j++)
+                int jStart = Math.Max(0, i - _effectiveRange + 1);
+                int jEnd = Math.Min(window, i + _effectiveRange);
+                for (int j = jStart; j < jEnd; j++)
                 {
-                    double x = i - j;
-                    double arg = Math.Pow(x, 2) / (Bandwidth * Bandwidth * 2.0);
-                    double w = Math.Exp(-arg);
-                    decimal srcj = closes[n - 1 - j];
-                    sum += srcj * (decimal)w;
-                    sumw += w;
+                    int d = i >= j ? i - j : j - i;
+                    double wt = _weights[d];
+                    sum += dCloses[n - 1 - j] * wt;
+                    sumw += wt;
                 }
-                decimal y2 = sum / (decimal)sumw;
-                decimal srci = closes[n - 1 - i];
-                sumAbs += Math.Abs(srci - y2);
-                nwe.Add(y2);
+                double y = sum / sumw;
+                centers[i] = y;
+                sumAbs += Math.Abs(dCloses[n - 1 - i] - y);
             }
 
-            int divider = Math.Min(Length - 1, n - 1); // = Windows - 1?
-            decimal sae = sumAbs / divider * Multiplier;
+            int divider = Math.Max(1, Math.Min(Length - 1, n - 1)); // = Windows - 1?
+            double sae = sumAbs / divider * mult;
 
             // Mapping reverse
             for (int i = 0; i < window; i++)
             {
-                var center = nwe[i];
                 int idx = n - 1 - i;
-                results[idx].Center = center;
-                results[idx].Upper = center + sae;
-                results[idx].Lower = center - sae;
+                results[idx].Center = (decimal)centers[i];
+                results[idx].Upper = (decimal)(centers[i] + sae);
+                results[idx].Lower = (decimal)(centers[i] - sae);
             }
-            sae = sumAbs / divider * Multiplier;
         }
         else
         {
             // Non-repainting (endpoint estimation)
-            var weights = new double[Length];
-            for (int i = 0; i < Length; i++)
-            {
-                double arg = Math.Pow(i, 2) / (Bandwidth * Bandwidth * 2.0);
-                weights[i] = Math.Exp(-arg);
-            }
-
             for (int k = 0; k < n; k++)
             {
-                int effectiveLen = Math.Min(Length, k + 1);
-                decimal sum = 0m;
+                int effectiveLen = Math.Min(Math.Min(Length, k + 1), _effectiveRange);
+                double sum = 0.0;
                 double partialDen = 0.0;
                 for (int i = 0; i < effectiveLen; i++)
                 {
-                    double w = weights[i];
-                    decimal c = closes[k - i];
-                    sum += c * (decimal)w;
-                    partialDen += w;
+                    sum += dCloses[k - i] * _weights[i];
+                    partialDen += _weights[i];
                 }
                 if (partialDen > 0)
                 {
-                    results[k].Center = sum / (decimal)partialDen;
+                    results[k].Center = (decimal)(sum / partialDen);
                 }
             }
 
-            var residuals = new List<decimal>();
-            for (int k = 0; k < n; k++)
-            {
-                if (results[k].Center.HasValue)
-                {
-                    residuals.Add(Math.Abs(closes[k] - results[k].Center!.Value));
-                }
-            }
-
-            int available = residuals.Count;
-            int maeLen = Math.Min(Length - 1, available);
+            int maeLen = Math.Min(Length - 1, n);
             if (maeLen > 0)
             {
-                decimal sumAbs = 0m;
-                for (int i = 0; i < maeLen; i++)
+                double sumAbs = 0.0;
+                int startK = n - maeLen;
+                for (int k = startK; k < n; k++)
                 {
-                    sumAbs += residuals[available - 1 - i];
+                    if (results[k].Center.HasValue)
+                        sumAbs += Math.Abs(dCloses[k] - (double)results[k].Center!.Value);
                 }
-                decimal mae = sumAbs / maeLen * Multiplier;
+                double mae = sumAbs / maeLen * mult;
                 for (int k = 0; k < n; k++)
                 {
                     if (results[k].Center.HasValue)
                     {
-                        results[k].Upper = results[k].Center + mae;
-                        results[k].Lower = results[k].Center - mae;
+                        double c = (double)results[k].Center.Value;
+                        results[k].Upper = (decimal)(c + mae);
+                        results[k].Lower = (decimal)(c - mae);
                     }
                 }
             }

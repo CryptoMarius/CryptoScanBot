@@ -175,35 +175,50 @@ public class SignalNweBase : SignalCreateBase
 
         ExtraText = "";
 
-        var nwe = NweResultCache.GetOrCalculate(
-            SymbolInterval.CandleList,
-            NwePlugin.Settings.BandWidth,
-            NwePlugin.Settings.Multiplication,
-            SmoothRepainting);
-        var nweLast = nwe[^1];
+        // Try precomputed values from the indicator hub first (zero cost),
+        // fall back to on-demand calculation via cache when the hub hasn't run.
+        string prefix = SmoothRepainting ? "Nwe" : "NweNp";
+        double? hubUpper = CandleLast.CandleData?.GetCustom(prefix + "Upper");
+        double? hubLower = CandleLast.CandleData?.GetCustom(prefix + "Lower");
+
+        decimal? nweUpper, nweLower;
+        if (hubUpper != null || hubLower != null)
+        {
+            nweUpper = hubUpper != null ? (decimal)hubUpper.Value : null;
+            nweLower = hubLower != null ? (decimal)hubLower.Value : null;
+        }
+        else
+        {
+            var nwe = NweResultCache.GetOrCalculate(
+                SymbolInterval.CandleList,
+                NwePlugin.Settings.BandWidth,
+                NwePlugin.Settings.Multiplication,
+                SmoothRepainting);
+            var nweLast = nwe[^1];
+            nweUpper = nweLast.Upper;
+            nweLower = nweLast.Lower;
+        }
 
         // buy alert
-        if (SignalSide == CryptoTradeSide.Long && nweLast.Lower != null)
+        if (SignalSide == CryptoTradeSide.Long && nweLower != null)
         {
             // Candle outside the band
-            decimal? lowerband = nweLast.Lower;
-            if (CandleLast!.Candle.Close < lowerband && CandleLast!.Candle.Open < lowerband
+            if (CandleLast!.Candle.Close < nweLower && CandleLast!.Candle.Open < nweLower
                 && CandleLast.Candle.Close > CandleLast!.Candle.Open)
             {
-                ExtraText = $"{nweLast.OpenTime.ToLocalTime():HH:mm} c={CandleLast!.Candle.Close.ToString(Symbol.PriceDisplayFormat)} o={CandleLast!.Candle.Open.ToString(Symbol.PriceDisplayFormat)} b={lowerband?.ToString(Symbol.PriceDisplayFormat)}";
+                ExtraText = $"{CandleLast.Candle.OpenTime.ToLocalTime():HH:mm} c={CandleLast!.Candle.Close.ToString(Symbol.PriceDisplayFormat)} o={CandleLast!.Candle.Open.ToString(Symbol.PriceDisplayFormat)} b={nweLower?.ToString(Symbol.PriceDisplayFormat)}";
                 return true;
             }
         }
 
         // sell alert
-        if (SignalSide == CryptoTradeSide.Short && nweLast.Upper != null)
+        if (SignalSide == CryptoTradeSide.Short && nweUpper != null)
         {
             // Candle outside the band
-            decimal? upperband = nweLast.Upper;
-            if (CandleLast!.Candle.Close > upperband && CandleLast!.Candle.Open > upperband
+            if (CandleLast!.Candle.Close > nweUpper && CandleLast!.Candle.Open > nweUpper
                 && CandleLast.Candle.Close < CandleLast!.Candle.Open)
             {
-                ExtraText = $"{nweLast.OpenTime.ToLocalTime():HH:mm} c={CandleLast!.Candle.Close.ToString(Symbol.PriceDisplayFormat)} o={CandleLast!.Candle.Open.ToString(Symbol.PriceDisplayFormat)} b={upperband?.ToString(Symbol.PriceDisplayFormat)}";
+                ExtraText = $"{CandleLast.Candle.OpenTime.ToLocalTime():HH:mm} c={CandleLast!.Candle.Close.ToString(Symbol.PriceDisplayFormat)} o={CandleLast!.Candle.Open.ToString(Symbol.PriceDisplayFormat)} b={nweUpper?.ToString(Symbol.PriceDisplayFormat)}";
                 return true;
             }
         }

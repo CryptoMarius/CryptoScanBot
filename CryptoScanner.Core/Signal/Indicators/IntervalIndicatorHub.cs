@@ -86,8 +86,20 @@ public sealed class IntervalIndicatorHub
         _superTrend = _quoteHub.ToSuperTrendHub(10, 3.0);
 #endif
 
-        foreach (var plugin in PluginManager.LoadedPlugins.Values)
+        // .Distinct(): LoadedPlugins maps each strategy enum to its plugin, so a plugin
+        // with N strategies appears N times in .Values — without Distinct we'd create N
+        // duplicate extensions (each running the full indicator kernel on every candle).
+        // Only create extensions for plugins that have at least one enabled strategy;
+        // disabled plugins (e.g. NWE during an SBM-only emulator run) would otherwise
+        // run their O(window) kernels on every BuildCurrent() call for zero benefit.
+        foreach (var plugin in PluginManager.LoadedPlugins.Values.Distinct())
         {
+            bool anyEnabled = plugin.Strategies.Any(s =>
+                GlobalData.Settings.Signal.Long.Strategy.Contains(s.Name) ||
+                GlobalData.Settings.Signal.Short.Strategy.Contains(s.Name));
+            if (!anyEnabled)
+                continue;
+
             var ext = plugin.CreateIndicatorExtension();
             if (ext != null)
             {

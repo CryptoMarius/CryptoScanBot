@@ -1,3 +1,4 @@
+using CryptoScanner.Analyzers.Nwe.Signal;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
@@ -55,6 +56,8 @@ public class NwePlugin : IStrategyPlugin
         Settings = new NweSettings();
         return Settings;
     }
+
+    public IIndicatorExtension? CreateIndicatorExtension() => new NweIndicatorExtension();
 
     public IChartOverlay? ChartOverlay { get; } = null;
     public IConfigView? ConfigView { get; } = null; // new Config.NweConfigView();
