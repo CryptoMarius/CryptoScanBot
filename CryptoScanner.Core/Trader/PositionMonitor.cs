@@ -1066,6 +1066,9 @@ public class PositionMonitor : IDisposable
         PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca,
             request.Interval, request.Strategy,
             request.DcaPrice, request.CandleCloseTime);
+
+        position.TriggerPriceTop = null;
+        position.TriggerPriceBottom = null;
     }
 
 
@@ -1222,6 +1225,9 @@ public class PositionMonitor : IDisposable
                             LastCandle1mCloseTimeDate, newStatus, cancelReason);
                         if (success)
                         {
+                            position.TriggerPriceTop = null;
+                            position.TriggerPriceBottom = null;
+
                             // Na een timeout (barometer, tradingrules) even 5 minuten helemaal niets doen
                             if (newStatus == CryptoOrderStatus.TradingRules || newStatus == CryptoOrderStatus.BarameterToLow)
                                 Symbol.LastTradeDate = LastCandle1mCloseTimeDate.AddMinutes(-GlobalData.Settings.Trading.GlobalBuyCooldownTime + 5);
@@ -1323,6 +1329,37 @@ public class PositionMonitor : IDisposable
     }
 
 
+    /// <summary>
+    /// Find the nearest unfilled DCA order price (closest to the current market price).
+    /// Long: highest unfilled DCA buy. Short: lowest unfilled DCA sell.
+    /// Returns null when no open DCA orders exist.
+    /// </summary>
+    internal static decimal? FindNearestUnfilledDcaPrice(CryptoPosition position)
+    {
+        CryptoOrderSide dcaOrderSide = position.GetEntryOrderSide();
+        decimal? nearest = null;
+
+        foreach (var part in position.PartList.Values)
+        {
+            if (part.Purpose != CryptoPartPurpose.Dca || part.CloseTime.HasValue)
+                continue;
+
+            CryptoPositionStep? step = PositionTools.FindPositionPartStep(part, dcaOrderSide, false);
+            if (step == null)
+                continue;
+
+            if (nearest == null)
+                nearest = step.Price;
+            else if (position.Side == CryptoTradeSide.Long)
+                nearest = Math.Max(nearest.Value, step.Price);
+            else
+                nearest = Math.Min(nearest.Value, step.Price);
+        }
+
+        return nearest;
+    }
+
+
     public async Task HandlePosition(CryptoPosition position)
     {
         //GlobalData.Logger.Info($"position:" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
@@ -1421,6 +1458,7 @@ public class PositionMonitor : IDisposable
                     }
                 }
 
+                bool cancelFailed = false;
                 if (anyChange)
                 {
                     // Cancel all open take profit orders (across every level)
@@ -1441,11 +1479,77 @@ public class PositionMonitor : IDisposable
                         }
                     }
                     else
+                    {
                         GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} Niet alle orders konden verwijderd worden!!!! (partial filled or error?)");
+                        cancelFailed = true;
+                    }
+                }
+
+                if (!cancelFailed)
+                {
+                    decimal? nearestDca = FindNearestUnfilledDcaPrice(position);
+                    UpdateTriggerPrices(position, targets[0].Price, sl.stop, nearestDca);
                 }
             }
         }
 
+    }
+
+
+    internal static bool ShouldRunHandlePosition(CryptoPosition position, decimal candleHigh, decimal candleLow)
+    {
+        if (position.TriggerPriceTop == null && position.TriggerPriceBottom == null)
+            return true;
+        if (position.TriggerPriceTop != null && candleHigh >= position.TriggerPriceTop.Value)
+            return true;
+        if (position.TriggerPriceBottom != null && candleLow <= position.TriggerPriceBottom.Value)
+            return true;
+        return false;
+    }
+
+
+    internal static void UpdateTriggerPrices(CryptoPosition position, decimal nearestTpPrice, decimal? slStop, decimal? nearestDcaPrice = null)
+    {
+        bool isLong = position.Side == CryptoTradeSide.Long;
+
+        // Favorable side: nearest TP, capped by profit-lock threshold if applicable
+        decimal favorablePrice = nearestTpPrice;
+        if (GlobalData.Settings.Trading.MoveSlToBreakEven
+            && !position.SlMovedToBreakEven
+            && position.BreakEvenPrice > 0)
+        {
+            int multiplier = isLong ? +1 : -1;
+            decimal lockPct = GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage;
+            decimal lockThreshold = position.BreakEvenPrice + multiplier * position.BreakEvenPrice * lockPct / 100m;
+
+            if (isLong)
+                favorablePrice = Math.Min(favorablePrice, lockThreshold);
+            else
+                favorablePrice = Math.Max(favorablePrice, lockThreshold);
+        }
+
+        // Unfavorable side: the nearest of SL and unfilled DCA (closer to current price)
+        decimal? unfavorablePrice = slStop;
+        if (nearestDcaPrice != null)
+        {
+            if (unfavorablePrice == null)
+                unfavorablePrice = nearestDcaPrice;
+            else if (isLong)
+                unfavorablePrice = Math.Max(unfavorablePrice.Value, nearestDcaPrice.Value);
+            else
+                unfavorablePrice = Math.Min(unfavorablePrice.Value, nearestDcaPrice.Value);
+        }
+
+        if (isLong)
+        {
+            position.TriggerPriceTop = favorablePrice;
+            position.TriggerPriceBottom = unfavorablePrice;
+        }
+        else
+        {
+            position.TriggerPriceBottom = favorablePrice;
+            position.TriggerPriceTop = unfavorablePrice;
+        }
     }
 
 
@@ -1482,8 +1586,12 @@ public class PositionMonitor : IDisposable
                 long profHandleStart = Stopwatch.GetTimestamp();
                 profDcaTicks = profHandleStart - profDcaStart;
 
-                // Plaats of modificeer de buy of sell orders + optionele LockProfits
-                await HandlePosition(position);
+                // Plaats of modificeer de buy of sell orders + optionele LockProfits.
+                // Gate: skip when the candle stays inside the trigger boundaries (TP/SL
+                // prices only change on order fills, settings changes, or profit-lock —
+                // all of which invalidate the triggers via ForceCheckPosition or above).
+                if (ShouldRunHandlePosition(position, LastCandle1m.High, LastCandle1m.Low))
+                    await HandlePosition(position);
                 profHandleTicks = Stopwatch.GetTimestamp() - profHandleStart;
             }
             else
@@ -1569,18 +1677,35 @@ public class PositionMonitor : IDisposable
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
 
-            // Simulate Trade indien openstaande orders gevuld zijn
-            //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
-            if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
-                await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m);
+            // Trigger-price fence: if an existing position's candle stays inside the
+            // fence (no TP/SL/DCA boundary crossed), skip PaperTradingCheckOrders and
+            // position processing entirely — the most expensive part of the pipeline.
+            bool canSkipPositionProcessing = false;
+            CryptoPosition? existingPosition = null;
+            if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out existingPosition))
+            {
+                canSkipPositionProcessing = !existingPosition.ForceCheckPosition
+                    && existingPosition.TriggerPriceTop != null
+                    && existingPosition.TriggerPriceBottom != null
+                    && LastCandle1m.High < existingPosition.TriggerPriceTop.Value
+                    && LastCandle1m.Low > existingPosition.TriggerPriceBottom.Value;
+            }
 
-            // Pause because of trading rules or low barometer
-            PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);
+            if (!canSkipPositionProcessing)
+            {
+                // Simulate Trade indien openstaande orders gevuld zijn
+                //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
+                if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+                    await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m);
 
-            //TODO: Reuse the preparedIndicatorDataList in the CreateOrExtendPositionAsync?
-            // Open or extend a position
-            //if (signalList.Count > 0) // alway's?
-            await CreateOrExtendPositionAsync();
+                // Pause because of trading rules or low barometer
+                PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);
+
+                //TODO: Reuse the preparedIndicatorDataList in the CreateOrExtendPositionAsync?
+                // Open or extend a position
+                //if (signalList.Count > 0) // alway's?
+                await CreateOrExtendPositionAsync();
+            }
             long profPositionCheckStart = Stopwatch.GetTimestamp();
 
             // Check the positions
@@ -1588,8 +1713,11 @@ public class PositionMonitor : IDisposable
             // positionCheck bucket below (which times the same statement via subtraction) — the two
             // totals should match.
             long profAddToQueueStart = Stopwatch.GetTimestamp();
-            if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))
-                await GlobalData.ThreadCheckPosition!.AddToQueue(position!);
+            if (!canSkipPositionProcessing)
+            {
+                if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))
+                    await GlobalData.ThreadCheckPosition!.AddToQueue(position!);
+            }
             PipelineProfiler.RecordAddToQueue(Stopwatch.GetTimestamp() - profAddToQueueStart);
 
             PipelineProfiler.Record(

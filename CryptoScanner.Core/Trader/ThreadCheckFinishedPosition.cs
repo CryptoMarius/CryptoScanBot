@@ -289,6 +289,8 @@ public class ThreadCheckFinishedPosition
                     if (position.ForceCheckPosition)
                     {
                         position.ForceCheckPosition = false;
+                        position.TriggerPriceTop = null;
+                        position.TriggerPriceBottom = null;
                         long forceCheckStart = Stopwatch.GetTimestamp();
                         await TradeTools.CalculatePositionResultsViaOrders(database, position, forceCalculation: true);
                         ppForceCheckTicks = Stopwatch.GetTimestamp() - forceCheckStart;

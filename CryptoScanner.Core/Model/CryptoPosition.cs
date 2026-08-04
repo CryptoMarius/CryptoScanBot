@@ -144,6 +144,11 @@ public partial class CryptoPosition : CryptoData2
     public bool ForceCheckPosition { get; set; } = false;
 
     [Computed]
+    public decimal? TriggerPriceTop { get; set; }
+    [Computed]
+    public decimal? TriggerPriceBottom { get; set; }
+
+    [Computed]
     public PendingDcaRequest? PendingDcaSignal { get; set; }
 
     [Computed]
