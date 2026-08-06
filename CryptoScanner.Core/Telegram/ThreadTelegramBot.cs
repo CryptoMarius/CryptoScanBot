@@ -208,7 +208,7 @@ public class ThreadTelegramBotInstance
                 try
                 {
                     //SendMessage("hello over there!");
-                    Update[] updates = await bot.GetUpdatesAsync(offset);
+                    Update[] updates = await bot.GetUpdatesAsync(offset, cancellationToken: cancellationToken.Token);
 
                     foreach (Update update in updates)
                     {

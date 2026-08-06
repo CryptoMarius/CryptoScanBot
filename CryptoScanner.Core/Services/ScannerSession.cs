@@ -278,6 +278,18 @@ public class ScannerSession : IScannerSession
                 taskList.Add(task);
 
                 await Task.WhenAll(taskList).ConfigureAwait(false);
+
+                // On application close the timers are no longer needed; disposing them releases
+                // the threadpool callbacks that would otherwise keep the process alive
+                if (GlobalData.ApplicationIsClosing)
+                {
+                    TimerCheckPositions.Dispose();
+                    TimerCheckDataStream.Dispose();
+                    TimerRestartStreams.Dispose();
+                    TimerSoundHeartBeat.Dispose();
+                    TimerGetExchangeInfoAndCandles.Dispose();
+                    TimerSaveCandleData.Dispose();
+                }
             }
             finally
             {

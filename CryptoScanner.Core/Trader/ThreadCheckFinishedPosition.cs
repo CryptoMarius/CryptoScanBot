@@ -384,7 +384,15 @@ public class ThreadCheckFinishedPosition
         {
             if (Queue.Count == 0)
             {
-                Thread.Sleep(100);
+                // Cancellation-aware wait so shutdown is not delayed by a blocking sleep
+                try
+                {
+                    await Task.Delay(100, cancellationToken.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
                 continue;
             }
 

@@ -92,6 +92,7 @@ public static class GlobalData
 
     public static Action<string>? SetTheme { get; set; }
     public static Action<string>? SetTitle { get; set; }
+    public static Action? RequestShutdown { get; set; }
 
     // Amount of signals created
     public static int CreatedSignalCount { get; set; }
