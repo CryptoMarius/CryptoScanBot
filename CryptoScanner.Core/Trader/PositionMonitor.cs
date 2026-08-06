@@ -1056,7 +1056,7 @@ public class PositionMonitor : IDisposable
                         // in the same candle tick (which would cancel and recreate it unnecessarily).
                         if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading && step.OrderType == CryptoOrderType.Market)
                         {
-                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime);
+                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime, (int)BaseIntervalDuration);
                             position.Reposition = false;
                         }
                     }
