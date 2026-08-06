@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
 
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 

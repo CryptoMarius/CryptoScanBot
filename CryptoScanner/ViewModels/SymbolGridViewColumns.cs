@@ -1,20 +1,9 @@
-﻿using CryptoScanner.Core.Zones;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Zones;
 
 using System.Collections;
 
 namespace CryptoScanner.ViewModels;
-
-
-public enum SymbolColumnEnum
-{
-    Id,
-    Symbol,
-    Volume,
-    //Price
-    Distance,
-    //MarketTrendPrimary, to much cpu needed
-}
-
 
 
 public class SymbolColumnComparer : IComparer

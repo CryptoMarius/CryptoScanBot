@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 
 using CryptoScanner.Commands;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 

@@ -1,12 +1,8 @@
-﻿using System.Collections;
+﻿using CryptoScanner.Core.Enums;
+
+using System.Collections;
 
 namespace CryptoScanner.ViewModels;
-
-public enum LogColumnEnum
-{
-    Date,
-    Text,
-}
 
 public class LogColumnComparer : IComparer
 {

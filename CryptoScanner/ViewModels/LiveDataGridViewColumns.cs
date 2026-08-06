@@ -1,38 +1,8 @@
-﻿using System.Collections;
+﻿using CryptoScanner.Core.Enums;
+
+using System.Collections;
 
 namespace CryptoScanner.ViewModels;
-
-public enum LiveDataColumnEnum
-{
-    Date,
-    Exchange,
-    Symbol,
-    Interval,
-    Price,
-    Volume,
-    BB,
-    BbUpper,
-    BbLower,
-    Rsi,
-    LuxIndicator5m,
-    MacdValue,
-    MacdSignal,
-    MacdHistogram,
-    StochOscillator,
-    StochSignal,
-    Sma200,
-    Sma50,
-    Sma20,
-    PSar,
-    FundingRate,
-#if StrategyBbma
-    // Debug
-    Wma05Low,
-    ma05High,
-    Wma10Low,
-    Wma10High,
-#endif
-}
 
 public class LiveDataColumnComparer : IComparer
 {

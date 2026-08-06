@@ -1,69 +1,8 @@
-﻿using System.Collections;
+using CryptoScanner.Core.Enums;
+
+using System.Collections;
 
 namespace CryptoScanner.ViewModels;
-
-public enum SignalColumnEnum
-{
-    Id,
-    Date,
-    Exchange,
-    Symbol,
-    Side,
-    Interval,
-    Strategy,
-    EventText,
-    SignalPrice,
-    PriceChange,
-    SignalVolume,
-
-    TrendInterval,
-    TrendPercentagePrimary,
-    TrendPercentageSecondary,
-    Last24HoursChange,
-    LastXDaysEffective,
-
-    BB,
-    BbUpper,
-    BbLower,
-    AvgBB,
-
-    Rsi,
-    LuxIndicator5m,
-    MacdValue,
-    MacdSignal,
-    MacdHistogram,
-    StochOscillator,
-    StochSignal,
-    Sma200,
-    Sma50,
-    Sma20,
-    PSar,
-
-    Trend15m,
-    Trend30m,
-    Trend1h,
-    Trend4h,
-    Trend1d,
-
-    Barometer15m,
-    Barometer30m,
-    Barometer1h,
-    Barometer4h,
-    Barometer1d,
-
-    MinimumEntry,
-    //PriceMinPerc,
-    //PriceMaxPerc,
-    //SignalStatus,
-
-    // BBMA properties, but the strategy isn't working properly yet
-    //#if StrategyBbma
-    //        Wma05Low,
-    //        Wma05High,
-    //        Wma10Low,
-    //        Wma10High,
-    //#endif
-}
 
 public class SignalColumnComparer : IComparer
 {
