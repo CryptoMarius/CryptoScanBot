@@ -346,6 +346,7 @@ public readonly struct CandleTime : IEquatable<CandleTime>, IComparable<CandleTi
     public static uint operator +(CandleTime end, CandleTime start) => end._minutes + start._minutes;
     public static uint operator -(CandleTime end, CandleTime start) => end._minutes - start._minutes;
 
+    public CandleTime AddMinutes(uint minutes) => new(_minutes + minutes);
     public CandleTime AddMinutes(int minutes) => new((uint)(_minutes + minutes));
     public CandleTime AddHours(int hours) => new((uint)(_minutes + (hours * 60)));
     public CandleTime AddDays(int days) => new((uint)(_minutes + (days * 1440)));

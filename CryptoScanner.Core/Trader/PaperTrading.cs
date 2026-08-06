@@ -13,7 +13,7 @@ public class PaperTrading
 
     public static async Task CreatePaperTrade(
         CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
-        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime, int candleDuration = 1)
+        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime, uint candleDuration = 1)
     {
         CryptoOrder? order = CreatePaperTradeOrder(database, position, part, step, price, lastCandle1mOpenTime, candleDuration);
         if (order != null)
@@ -27,7 +27,7 @@ public class PaperTrading
     /// </summary>
     internal static CryptoOrder? CreatePaperTradeOrder(
         CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
-        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime, int candleDuration = 1)
+        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime, uint candleDuration = 1)
     {
         // We have a stupid bug which adds duplicate orders (and trades)
         // This leads to all kind of troubles, balances and wrong fees
@@ -236,7 +236,7 @@ public class PaperTrading
     /// Returns the order when filled, null otherwise.
     /// </summary>
     private static CryptoOrder? CheckStepAgainstCandle(CryptoDatabase database,
-        CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle candle, int candleDuration = 1)
+        CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle candle, uint candleDuration = 1)
     {
         if (step.Status != CryptoOrderStatus.New)
             return null;
@@ -267,7 +267,7 @@ public class PaperTrading
     }
 
 
-    internal static async Task PaperTradingCheckStep(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle lastCandle1m, int candleDuration = 1)
+    internal static async Task PaperTradingCheckStep(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle lastCandle1m, uint candleDuration = 1)
     {
         CryptoOrder? order = CheckStepAgainstCandle(database, position, part, step, lastCandle1m, candleDuration);
         if (order != null)
@@ -275,7 +275,7 @@ public class PaperTrading
     }
 
 
-    public static async Task PaperTradingCheckOrders(CryptoDatabase database, Model.CryptoExchange activeExchange, CryptoSymbol symbol, CryptoCandle lastCandle1m, int candleDuration = 1)
+    public static async Task PaperTradingCheckOrders(CryptoDatabase database, Model.CryptoExchange activeExchange, CryptoSymbol symbol, CryptoCandle lastCandle1m, uint candleDuration = 1)
     {
         // Is er iets gekocht of verkocht?
         // Zoja dan de HandleTrade aanroepen.

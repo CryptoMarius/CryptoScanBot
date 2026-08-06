@@ -1008,7 +1008,7 @@ public class PositionMonitor : IDisposable
 
                         if (step.OrderType == CryptoOrderType.Market)
                         {
-                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime, (int)BaseIntervalDuration);
+                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime, BaseIntervalDuration);
                             position.Reposition = false;
                         }
 
@@ -1056,7 +1056,7 @@ public class PositionMonitor : IDisposable
                         // in the same candle tick (which would cancel and recreate it unnecessarily).
                         if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading && step.OrderType == CryptoOrderType.Market)
                         {
-                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime, (int)BaseIntervalDuration);
+                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime, BaseIntervalDuration);
                             position.Reposition = false;
                         }
                     }
@@ -1826,7 +1826,7 @@ public class PositionMonitor : IDisposable
                 // Simulate Trade indien openstaande orders gevuld zijn
                 //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
                 if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
-                    await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m, (int)BaseIntervalDuration);
+                    await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m, BaseIntervalDuration);
 
                 // Pause because of trading rules or low barometer
                 PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);
