@@ -27,12 +27,14 @@ public class PositionMonitor : IDisposable
     public DateTime LastCandle1mCloseTimeDate { get; set; }
     public CryptoDatabase Database { get; set; } = new();
     public bool PauseBecauseOfTradingRules { get; set; } = false;
+    public uint BaseIntervalDuration { get; }
 
 
     public PositionMonitor(CryptoSymbol symbol, CryptoCandle lastCandle1m, uint baseIntervalDuration = 1)
     {
         Symbol = symbol;
         LastCandle1m = lastCandle1m;
+        BaseIntervalDuration = baseIntervalDuration;
 
         // The last final 1m candle
         LastCandle1mCloseTime = lastCandle1m.OpenTime + baseIntervalDuration;
@@ -1006,7 +1008,7 @@ public class PositionMonitor : IDisposable
 
                         if (step.OrderType == CryptoOrderType.Market)
                         {
-                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime);
+                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime, (int)BaseIntervalDuration);
                             position.Reposition = false;
                         }
 
@@ -1824,7 +1826,7 @@ public class PositionMonitor : IDisposable
                 // Simulate Trade indien openstaande orders gevuld zijn
                 //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
                 if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
-                    await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m);
+                    await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m, (int)BaseIntervalDuration);
 
                 // Pause because of trading rules or low barometer
                 PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);

@@ -193,13 +193,39 @@ public class ThreadCheckFinishedPosition
     private static async Task PositionOpenAsUsual(CryptoPosition position, string? orderId)
     {
         // PositionMonitor aanroep code verplaatst vanuit kline-ticker thread naar hier
-        var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-        if (symbolPeriod.CandleList.Count > 0)
-        {
-            CryptoCandle lastCandle1m = symbolPeriod.CandleList.LastCandle;
+        CryptoCandle? lastCandle = null;
+        uint duration = 1;
 
+        // In emulator mode with a non-1m base interval, ProcessBaseCandleAsync only creates
+        // candles in the base interval's CandleList (e.g. 5m) — the 1m list is never updated
+        // and CleanCandleDataAsync eventually prunes the stale warmup data, leaving it empty.
+        // Fall back to the first coarser interval that has candles so the entry order is
+        // actually placed and the position does not stay Waiting forever.
+        var symbolPeriod1m = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+        if (symbolPeriod1m.CandleList.Count > 0)
+        {
+            lastCandle = symbolPeriod1m.CandleList.LastCandle;
+        }
+        else
+        {
+            foreach (CryptoInterval interval in GlobalData.IntervalList)
+            {
+                if (interval.Duration <= 1)
+                    continue;
+                var si = position.Symbol.GetSymbolInterval(interval.IntervalPeriod);
+                if (si.CandleList.Count > 0)
+                {
+                    lastCandle = si.CandleList.LastCandle;
+                    duration = interval.Duration;
+                    break;
+                }
+            }
+        }
+
+        if (lastCandle is CryptoCandle candle)
+        {
             ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: {position.Symbol.Name} CheckThePosition {orderId}");
-            using PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
+            using PositionMonitor positionMonitor = new(position.Symbol, candle, duration);
             await positionMonitor.CheckThePosition(position); // CancelOrdersIfClosedOrTimeoutOrReposition?
 
             // Bij nader inzien kan die status hier nooit ready zijn...

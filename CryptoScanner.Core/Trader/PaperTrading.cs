@@ -13,9 +13,9 @@ public class PaperTrading
 
     public static async Task CreatePaperTrade(
         CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
-        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime)
+        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime, int candleDuration = 1)
     {
-        CryptoOrder? order = CreatePaperTradeOrder(database, position, part, step, price, lastCandle1mOpenTime);
+        CryptoOrder? order = CreatePaperTradeOrder(database, position, part, step, price, lastCandle1mOpenTime, candleDuration);
         if (order != null)
             await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
     }
@@ -27,7 +27,7 @@ public class PaperTrading
     /// </summary>
     internal static CryptoOrder? CreatePaperTradeOrder(
         CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
-        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime)
+        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime, int candleDuration = 1)
     {
         // We have a stupid bug which adds duplicate orders (and trades)
         // This leads to all kind of troubles, balances and wrong fees
@@ -52,7 +52,7 @@ public class PaperTrading
             Side = step.Side,
 
             CreateTime = step.CreateTime,
-            UpdateTime = lastCandle1mOpenTime.AddMinutes(1).ToDateTime(), // Datum van sluiten candle en een beetje extra
+            UpdateTime = lastCandle1mOpenTime.AddMinutes(candleDuration).ToDateTime(),
 
             Price = price,
             Quantity = step.Quantity,
@@ -84,7 +84,7 @@ public class PaperTrading
             TradeId = database.CreateNewUniqueId(),
             OrderId = step.OrderId, //Database.CreateNewUniqueId(), // Een fake trade ID (als er maar een getal in zit)
 
-            TradeTime = lastCandle1mOpenTime.AddMinutes(1).ToDateTime(), // Datum van sluiten candle en een beetje extra
+            TradeTime = lastCandle1mOpenTime.AddMinutes(candleDuration).ToDateTime(),
 
             Price = price,
             Quantity = step.Quantity,
@@ -236,7 +236,7 @@ public class PaperTrading
     /// Returns the order when filled, null otherwise.
     /// </summary>
     private static CryptoOrder? CheckStepAgainstCandle(CryptoDatabase database,
-        CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle candle)
+        CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle candle, int candleDuration = 1)
     {
         if (step.Status != CryptoOrderStatus.New)
             return null;
@@ -247,35 +247,35 @@ public class PaperTrading
         if (step.Side == CryptoOrderSide.Buy)
         {
             if (step.OrderType == CryptoOrderType.Market)
-                return CreatePaperTradeOrder(database, position, part, step, candle.Close, candle.OpenTime);
+                return CreatePaperTradeOrder(database, position, part, step, candle.Close, candle.OpenTime, candleDuration);
             if (step.StopPrice.HasValue && candle.High >= step.StopPrice)
-                return CreatePaperTradeOrder(database, position, part, step, step.StopPrice.Value, candle.OpenTime);
+                return CreatePaperTradeOrder(database, position, part, step, step.StopPrice.Value, candle.OpenTime, candleDuration);
             if (candle.Low < step.Price)
-                return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime);
+                return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime, candleDuration);
         }
         else if (step.Side == CryptoOrderSide.Sell)
         {
             if (step.OrderType == CryptoOrderType.Market)
-                return CreatePaperTradeOrder(database, position, part, step, candle.Close, candle.OpenTime);
+                return CreatePaperTradeOrder(database, position, part, step, candle.Close, candle.OpenTime, candleDuration);
             if (step.StopPrice.HasValue && candle.Low <= step.StopPrice)
-                return CreatePaperTradeOrder(database, position, part, step, step.StopPrice.Value, candle.OpenTime);
+                return CreatePaperTradeOrder(database, position, part, step, step.StopPrice.Value, candle.OpenTime, candleDuration);
             if (candle.High > step.Price)
-                return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime);
+                return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime, candleDuration);
         }
 
         return null;
     }
 
 
-    internal static async Task PaperTradingCheckStep(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle lastCandle1m)
+    internal static async Task PaperTradingCheckStep(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle lastCandle1m, int candleDuration = 1)
     {
-        CryptoOrder? order = CheckStepAgainstCandle(database, position, part, step, lastCandle1m);
+        CryptoOrder? order = CheckStepAgainstCandle(database, position, part, step, lastCandle1m, candleDuration);
         if (order != null)
             await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
     }
 
 
-    public static async Task PaperTradingCheckOrders(CryptoDatabase database, Model.CryptoExchange activeExchange, CryptoSymbol symbol, CryptoCandle lastCandle1m)
+    public static async Task PaperTradingCheckOrders(CryptoDatabase database, Model.CryptoExchange activeExchange, CryptoSymbol symbol, CryptoCandle lastCandle1m, int candleDuration = 1)
     {
         // Is er iets gekocht of verkocht?
         // Zoja dan de HandleTrade aanroepen.
@@ -288,7 +288,7 @@ public class PaperTrading
                 {
                     foreach (CryptoPositionStep step in part.StepList.Values.ToList())
                     {
-                        await PaperTradingCheckStep(database, position, part, step, lastCandle1m);
+                        await PaperTradingCheckStep(database, position, part, step, lastCandle1m, candleDuration);
                     }
                 }
             }
