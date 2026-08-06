@@ -420,10 +420,9 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         foreach (QueryPositionData data in QueryPositionDataList)
         {
-            // date() returns midnight; shift to noon so the bar sits in the middle of the day's axis space.
-            double x = DateTimeAxis.ToDouble(data.CloseTime!.Value.AddHours(12));
-            // Each bar spans ±0.4 days around the day centre = 80% width, 20% gap.
-            series.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, data.Positions));
+            double x = DateTimeAxis.ToDouble(data.CloseTime!.Value);
+            // Bar runs from x+0.1 to x+0.9 so it stays fully inside this day's axis space.
+            series.Items.Add(new RectangleBarItem(x + 0.1, 0, x + 0.9, data.Positions));
         }
 
         model.Series.Add(series);
@@ -497,13 +496,12 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         foreach (QueryPositionData data in QueryPositionDataList)
         {
-            // date() returns midnight; shift to noon so the bar sits in the middle of the day's axis space.
-            double x = DateTimeAxis.ToDouble(data.CloseTime!.Value.AddHours(12));
-            // Each bar spans ±0.4 days around the day centre = 80% width, 20% gap.
+            double x = DateTimeAxis.ToDouble(data.CloseTime!.Value);
+            // Bar runs from x+0.1 to x+0.9 so it stays fully inside this day's axis space.
             if (data.TotalProfit < 0)
-                seriesLoss.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, (double)data.TotalProfit));
+                seriesLoss.Items.Add(new RectangleBarItem(x + 0.1, 0, x + 0.9, (double)data.TotalProfit));
             else
-                seriesProfit.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, (double)data.TotalProfit));
+                seriesProfit.Items.Add(new RectangleBarItem(x + 0.1, 0, x + 0.9, (double)data.TotalProfit));
         }
 
         model.Series.Add(seriesProfit);
@@ -553,7 +551,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         foreach (var data in QueryPositionDataList)
         {
-            var dateValue = DateTimeAxis.ToDouble(data.CloseTime!.Value.AddHours(12));
+            var dateValue = DateTimeAxis.ToDouble(data.CloseTime!.Value);
             minSeries.Points.Add(new DataPoint(dateValue, (double)data.MinPerc));
             avgSeries.Points.Add(new DataPoint(dateValue, (double)data.AvgPerc));
             maxSeries.Points.Add(new DataPoint(dateValue, (double)data.MaxPerc));
@@ -626,7 +624,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         foreach (var kvp in combinedData.OrderBy(x => x.Key))
         {
-            var dateValue = DateTimeAxis.ToDouble(kvp.Key.Date.AddHours(12));
+            var dateValue = DateTimeAxis.ToDouble(kvp.Key.Date);
             investedSeries.Points.Add(new DataPoint(dateValue, (double)kvp.Value.Invested));
             returnedSeries.Points.Add(new DataPoint(dateValue, (double)kvp.Value.Returned));
         }
@@ -673,7 +671,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         foreach (var data in QueryPositionDataList)
         {
-            var dateValue = DateTimeAxis.ToDouble(data.CloseTime!.Value.AddHours(12));
+            var dateValue = DateTimeAxis.ToDouble(data.CloseTime!.Value);
             minSeries.Points.Add(new DataPoint(dateValue, (double)data.MinMin));
             avgSeries.Points.Add(new DataPoint(dateValue, (double)data.AvgMin));
             maxSeries.Points.Add(new DataPoint(dateValue, (double)data.MaxMin));
