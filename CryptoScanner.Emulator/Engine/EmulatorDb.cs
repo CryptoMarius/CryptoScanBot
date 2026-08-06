@@ -233,25 +233,23 @@ public static class EmulatorDb
 
 
     /// <summary>
-    /// Deletes all rows from Signal, Order, Trade, PositionStep and PositionPart — the bulk data
-    /// that the trader needs during a run but that can be discarded once the run's stats are computed
-    /// in FinishRun. Position and EmulatorRun rows are kept (they hold the aggregated results).
-    /// Uses bare DELETE (no WHERE) which SQLite optimizes as a page-deallocation truncate.
+    /// Drops and recreates the transient bulk-data tables (Signal, Order, Trade, Asset).
+    /// DROP TABLE is O(1) — SQLite deallocates the B-tree pages without scanning rows or indexes.
+    /// Position and EmulatorRun rows are preserved (they hold the aggregated results).
+    /// CreateTables only recreates the missing (dropped) tables thanks to the MissingTable guard.
     /// Call VACUUM separately (e.g. at end of a queue batch) to reclaim disk space.
     /// </summary>
     public static void PurgeTransientData()
     {
         using var database = new CryptoDatabase();
         database.Open();
-        database.Connection.Execute("update position set signalid=null where not signalid=null");
-        database.Connection.Execute("delete from [Asset]");
-        database.Connection.Execute("delete from [Signal]");
-        database.Connection.Execute("delete from [Order]");
-        database.Connection.Execute("delete from [Trade]");
-        // Need these for insights
-        //database.Connection.Execute("delete from PositionStep");
-        //database.Connection.Execute("delete from PositionPart");
-        //database.Connection.Execute("delete from Position");
+
+        database.Connection.Execute("update position set signalid = null where signalid is not null");
+        database.Connection.Execute("DROP TABLE IF EXISTS [Asset]");
+        database.Connection.Execute("DROP TABLE IF EXISTS [Trade]");
+        database.Connection.Execute("DROP TABLE IF EXISTS [Order]");
+        database.Connection.Execute("DROP TABLE IF EXISTS [Signal]");
+        CryptoDatabase.CreateTables(database);
     }
 
 
