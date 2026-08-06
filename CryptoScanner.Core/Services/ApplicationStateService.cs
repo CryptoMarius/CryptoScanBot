@@ -129,6 +129,61 @@ public class ApplicationStateService
     }
 
 
+    public void SaveGridSortState(string gridName, string? sortColumn, ListSortDirection? sortDirection)
+    {
+        lock (_lock)
+        {
+            var gridState = GetGridStateProperty(_states, gridName);
+            if (gridState != null)
+            {
+                gridState.SortColumn = sortColumn;
+                gridState.SortDirection = sortDirection;
+            }
+            FlushToDisk();
+        }
+    }
+
+    public void RestoreGridSortState(string gridName, out string sortColumn, out ListSortDirection sortDirection)
+    {
+        lock (_lock)
+        {
+            sortColumn = string.Empty;
+            sortDirection = ListSortDirection.Ascending;
+
+            var gridState = GetGridStateProperty(_states, gridName);
+            if (gridState == null)
+                return;
+
+            if (gridState.SortDirection != null && !string.IsNullOrEmpty(gridState.SortColumn))
+            {
+                sortColumn = gridState.SortColumn;
+                sortDirection = gridState.SortDirection.Value;
+            }
+        }
+    }
+
+    public void SaveGridColumnState(string gridName, List<GridColumn> columns)
+    {
+        lock (_lock)
+        {
+            var gridState = GetGridStateProperty(_states, gridName);
+            if (gridState != null)
+            {
+                gridState.Columns = columns;
+            }
+            FlushToDisk();
+        }
+    }
+
+    public List<GridColumn>? RestoreGridColumnState(string gridName)
+    {
+        lock (_lock)
+        {
+            var gridState = GetGridStateProperty(_states, gridName);
+            return gridState?.Columns;
+        }
+    }
+
     public void RestoreGridState(string gridName, DataGrid dataGrid, out string sortColumn, out ListSortDirection sortDirection)
     {
         ArgumentNullException.ThrowIfNull(dataGrid);
@@ -432,6 +487,30 @@ public class ApplicationStateService
                 window.Width = width;
                 window.Height = height;
                 window.WindowState = windowState;
+            }
+        }
+    }
+
+    public WindowState GetOrCreateWindowState(string windowName)
+    {
+        lock (_lock)
+        {
+            return GetWindowStateProperty(_states, windowName)!;
+        }
+    }
+
+    public void SaveWindowStateValues(string windowName, double x, double y, double width, double height, string state)
+    {
+        lock (_lock)
+        {
+            var ws = GetWindowStateProperty(_states, windowName);
+            if (ws != null)
+            {
+                ws.X = x;
+                ws.Y = y;
+                ws.Width = width;
+                ws.Height = height;
+                ws.State = state;
             }
         }
     }

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace CryptoScanner.Services;
+namespace CryptoScanner.Core.Services;
 
 /// <summary>
 /// Cross-platform power status monitor voor Windows, Linux en macOS
