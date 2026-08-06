@@ -1010,17 +1010,6 @@ public partial class MainWindowViewModel : ObservableObject
                 GlobalData.AddTextToLogTab($"Run: persisting candles FAILED — {sx.Message}");
             }
 
-            // Stats are computed — purge the bulk data (signals, orders, trades, position details)
-            // to keep the database small. Position and EmulatorRun rows survive.
-            try
-            {
-                EmulatorDb.PurgeTransientData();
-            }
-            catch (Exception px)
-            {
-                GlobalData.AddTextToLogTab($"Run: purge transient data failed — {px.Message}");
-            }
-
             // The run just added/updated its EmulatorRun row (and its signals/positions); pull
             // the fresh numbers into the Results tab so it reflects this run immediately.
             RunResults.Refresh();
@@ -1038,6 +1027,20 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _cts?.Cancel();
         Status = "Cancelling…";
+    }
+
+
+    [RelayCommand]
+    private async Task PurgeSignalsAsync()
+    {
+        Status = "Purging signals, orders and trades…";
+        await Task.Run(() =>
+        {
+            EmulatorDb.PurgeTransientData();
+            EmulatorDb.Vacuum();
+        });
+        GlobalData.AddTextToLogTab("Purge completed — signals, orders and trades removed, database compacted");
+        Status = "Purge completed.";
     }
 
 
