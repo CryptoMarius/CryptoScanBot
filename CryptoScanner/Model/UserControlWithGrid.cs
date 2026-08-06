@@ -7,6 +7,7 @@ using CryptoScanner.Commands;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Services;
+using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
 

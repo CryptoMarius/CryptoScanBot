@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using CryptoScanner.Config;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Config.ViewModels;
@@ -29,8 +30,8 @@ public partial class SoundAndColorsViewModel : ObservableObject
         PlaySound = settings.PlaySound;
         PlaySpeech = settings.PlaySpeech;
 
-        LongSettings.LoadConfig($"{caption} long", settings.ColorLong, settings.SoundFileLong);
-        ShortSettings.LoadConfig($"{caption} short", settings.ColorShort, settings.SoundFileShort);
+        LongSettings.LoadConfig($"{caption} long", settings.ColorLong.ToAvaloniaColor(), settings.SoundFileLong);
+        ShortSettings.LoadConfig($"{caption} short", settings.ColorShort.ToAvaloniaColor(), settings.SoundFileShort);
     }
 
     public void SaveConfig(SettingsSignalStrategyBase settings)
@@ -38,10 +39,10 @@ public partial class SoundAndColorsViewModel : ObservableObject
         settings.PlaySound = PlaySound;
         settings.PlaySpeech = PlaySpeech;
 
-        settings.ColorLong = LongSettings.SelectedColor;
+        settings.ColorLong = LongSettings.SelectedColor.ToCoreColor();
         settings.SoundFileLong = LongSettings.SoundFile;
 
-        settings.ColorShort = ShortSettings.SelectedColor;
+        settings.ColorShort = ShortSettings.SelectedColor.ToCoreColor();
         settings.SoundFileShort = ShortSettings.SoundFile;
     }
 }

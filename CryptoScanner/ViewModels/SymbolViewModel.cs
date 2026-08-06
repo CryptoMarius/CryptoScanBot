@@ -3,6 +3,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Zones;
+using CryptoScanner.Services;
 
 namespace CryptoScanner.ViewModels
 {
@@ -36,7 +37,7 @@ namespace CryptoScanner.ViewModels
         {
             get
             {
-                _SymbolBackground ??= new SolidColorBrush(Object.QuoteData.DisplayColor);
+                _SymbolBackground ??= new SolidColorBrush(Object.QuoteData.DisplayColor.ToAvaloniaColor());
                 return _SymbolBackground!;
             }
         }

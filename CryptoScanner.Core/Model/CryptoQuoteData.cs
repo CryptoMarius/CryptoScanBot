@@ -1,6 +1,4 @@
-﻿using Avalonia.Media;
-
-using CryptoScanner.Core.Barometer;
+﻿using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 
@@ -25,7 +23,7 @@ public class CryptoQuoteData
     // Trading: The initial entry percentage of PF
     public float EntryPercentage { get; set; }
     // Color of the base coin in signal grid
-    public Color DisplayColor { get; set; } = Color.FromArgb(0x00, 0xFF, 0x95, 0xA5);
+    public CoreColor DisplayColor { get; set; } = CoreColor.FromArgb(0x00, 0xFF, 0x95, 0xA5);
 
     // List of symbols (for this quote)
     [Computed]

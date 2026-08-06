@@ -4,6 +4,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Services;
 
 namespace CryptoScanner.ViewModels;
 
@@ -69,7 +70,7 @@ public partial class SignalViewModel : BaseConvertersViewModel
     {
         get
         {
-            _SymbolBackground ??= new SolidColorBrush(Object.Symbol.QuoteData.DisplayColor);
+            _SymbolBackground ??= new SolidColorBrush(Object.Symbol.QuoteData.DisplayColor.ToAvaloniaColor());
             return _SymbolBackground!;
         }
     }
@@ -126,9 +127,9 @@ public partial class SignalViewModel : BaseConvertersViewModel
                 if (GlobalData.StrategiesSettings.TryGetValue(Object.Strategy, out (SettingsSignalStrategyBase strategySettings, DateTime _) x))
                 {
                     if (Object.Side == CryptoTradeSide.Long)
-                        _StrategyBackground = new SolidColorBrush(x.strategySettings.ColorLong);
+                        _StrategyBackground = new SolidColorBrush(x.strategySettings.ColorLong.ToAvaloniaColor());
                     else
-                        _StrategyBackground = new SolidColorBrush(x.strategySettings.ColorShort);
+                        _StrategyBackground = new SolidColorBrush(x.strategySettings.ColorShort.ToAvaloniaColor());
                 }
             }
             return _StrategyBackground!;

@@ -2,6 +2,7 @@ using Avalonia.Media;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using CryptoScanner.Config;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
@@ -40,7 +41,7 @@ public partial class QuoteItem : ObservableObject
         MinPrice = quoteData.MinimalPrice;
         Amount = quoteData.EntryAmount;
         Percentage = (decimal)quoteData.EntryPercentage;
-        BackgroundColor = quoteData.DisplayColor;
+        BackgroundColor = quoteData.DisplayColor.ToAvaloniaColor();
         SymbolCount = quoteData.SymbolList.Count;
     }
 }
@@ -68,7 +69,7 @@ public partial class QuoteTabViewModel : ObservableObject
             quoteData.MinimalPrice = quote.MinPrice;
             quoteData.EntryAmount = quote.Amount;
             quoteData.EntryPercentage = (float)quote.Percentage;
-            quoteData.DisplayColor = quote.BackgroundColor;
+            quoteData.DisplayColor = quote.BackgroundColor.ToCoreColor();
         }
     }
 }

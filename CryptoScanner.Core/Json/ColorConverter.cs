@@ -1,4 +1,4 @@
-﻿using Avalonia.Media;
+﻿using CryptoScanner.Core.Model;
 
 using System.Globalization;
 using System.Text.Json;
@@ -6,9 +6,9 @@ using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Json;
 
-public class ColorConverter : JsonConverter<Color>
+public class ColorConverter : JsonConverter<CoreColor>
 {
-    public override Color Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override CoreColor Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType is JsonTokenType.String)
         {
@@ -22,7 +22,7 @@ public class ColorConverter : JsonConverter<Color>
                     byte r = byte.Parse(text.Substring(3, 2), NumberStyles.HexNumber);
                     byte g = byte.Parse(text.Substring(5, 2), NumberStyles.HexNumber);
                     byte b = byte.Parse(text.Substring(7, 2), NumberStyles.HexNumber);
-                    return Color.FromArgb(a, r, g, b);
+                    return CoreColor.FromArgb(a, r, g, b);
                 }
                 else if (text.Contains(','))
                 {
@@ -31,17 +31,17 @@ public class ColorConverter : JsonConverter<Color>
                     if (int.TryParse(values[0], out int r) &&
                         int.TryParse(values[1], out int g) &&
                         int.TryParse(values[2], out int b))
-                        return Color.FromRgb((byte)r, (byte)g, (byte)b);
+                        return CoreColor.FromRgb((byte)r, (byte)g, (byte)b);
                 }
-                // Use Color.Parse for string representations like "#RRGGBB" or "Red"
-                return Color.Parse(text);
+                // Use CoreColor.Parse for string representations like "#AARRGGBB" or "#RRGGBB"
+                return CoreColor.Parse(text);
             }
         }
 
-        return JsonSerializer.Deserialize<Color>(ref reader, JsonTools.DeSerializerOptions);
+        return JsonSerializer.Deserialize<CoreColor>(ref reader, JsonTools.DeSerializerOptions);
     }
 
-    public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, CoreColor value, JsonSerializerOptions options)
     {
         // Hexadecimal only "#AARRGGBB" (uppercase, cross-platform)
         string output = $"#{value.A:X2}{value.R:X2}{value.G:X2}{value.B:X2}";
