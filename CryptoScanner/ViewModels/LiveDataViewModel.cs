@@ -2,6 +2,7 @@
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Services;
 
 namespace CryptoScanner.ViewModels;
 
@@ -46,7 +47,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _SymbolBackground ??= new SolidColorBrush(Object.Symbol.QuoteData.DisplayColor);
+            _SymbolBackground ??= new SolidColorBrush(Object.Symbol.QuoteData.DisplayColor.ToAvaloniaColor());
             return _SymbolBackground!;
         }
     }

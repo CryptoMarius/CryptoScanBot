@@ -116,6 +116,13 @@ public static class PipelineProfiler
     public static long PcAddToQueueTicks;
     public static long PcCleanCandleTicks;
 
+    // Diagnostic: trigger-price skip effectiveness in NewCandleArrivedAsync
+    public static long SkipHasPosition;       // candles where a position exists
+    public static long SkipTriggersNull;      // ...but triggers not yet set (Waiting status)
+    public static long SkipForceCheck;        // ...but ForceCheckPosition is true
+    public static long SkipPriceOutside;      // ...but candle crosses a boundary
+    public static long SkipSuccess;           // candles actually skipped
+
     // Sub-breakdown of ThreadCheckFinishedPosition.ProcessPosition — the body AddToQueue runs
     // synchronously in emulator mode, i.e. what the positionCheck bucket above actually measures.
     // PositionResults and CheckThePosition (above) are only two of its branches; PpReadyTicks
@@ -192,6 +199,11 @@ public static class PipelineProfiler
 
         PcAddToQueueTicks = 0;
         PcCleanCandleTicks = 0;
+        SkipHasPosition = 0;
+        SkipTriggersNull = 0;
+        SkipForceCheck = 0;
+        SkipPriceOutside = 0;
+        SkipSuccess = 0;
 
         PpTotalTicks = 0;
         PpCalls = 0;

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 
 using CryptoScanner.Core.Core;
@@ -55,6 +56,38 @@ public partial class App : Application
         // has no hard dependency on App; the emulator leaves these null and only uses the system browser).
         CryptoScanner.Helpers.CommandHelper.OpenInternalBrowser = OpenInInternalBrowser;
         CryptoScanner.Helpers.CommandHelper.OpenHiddenBrowser = OpenInHiddenBrowser;
+
+        GlobalData.RunOnUiThread = action => Dispatcher.UIThread.Post(action);
+        GlobalData.SetTheme = theme =>
+        {
+            if (Application.Current != null)
+            {
+                var currentTheme = Application.Current.ActualThemeVariant;
+                ThemeVariant choosenTheme = theme switch
+                {
+                    "Light" => ThemeVariant.Light,
+                    "Dark" => ThemeVariant.Dark,
+                    _ => ThemeVariant.Default
+                };
+                if (currentTheme != choosenTheme)
+                    Application.Current.RequestedThemeVariant = choosenTheme;
+            }
+        };
+        GlobalData.SetTitle = title =>
+        {
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow?.DataContext != null)
+            {
+                try
+                {
+                    dynamic viewModel = desktop.MainWindow.DataContext;
+                    viewModel.Title = title;
+                }
+                catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
+                {
+                    System.Diagnostics.Debug.WriteLine("Property not found on ViewModel");
+                }
+            }
+        };
 
         // Basicly start the whole scanner
         InitializeGlobalDataAsync(); // Needs the DI services

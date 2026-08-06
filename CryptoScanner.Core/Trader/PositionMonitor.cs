@@ -29,13 +29,13 @@ public class PositionMonitor : IDisposable
     public bool PauseBecauseOfTradingRules { get; set; } = false;
 
 
-    public PositionMonitor(CryptoSymbol symbol, CryptoCandle lastCandle1m)
+    public PositionMonitor(CryptoSymbol symbol, CryptoCandle lastCandle1m, uint baseIntervalDuration = 1)
     {
         Symbol = symbol;
         LastCandle1m = lastCandle1m;
 
         // The last final 1m candle
-        LastCandle1mCloseTime = lastCandle1m.OpenTime + 1;
+        LastCandle1mCloseTime = lastCandle1m.OpenTime + baseIntervalDuration;
         LastCandle1mCloseTimeDate = LastCandle1mCloseTime.ToDateTime();
 
         Database.Open();
@@ -242,10 +242,16 @@ public class PositionMonitor : IDisposable
         // Om te voorkomen dat we te snel achter elkaar in dezelfde munt stappen
         if (Symbol.LastTradeDate.HasValue && Symbol.LastTradeDate?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1m.Date)
         {
-            reaction = "is in cooldown";
-            GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            Symbol.ClearSignals();
-            return;
+            // Bypass cooldown when an unfilled position exists — no actual trade took place yet,
+            // so a newer signal should be allowed to replace the waiting entry order.
+            if (!GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out var cooldownPos)
+                || cooldownPos.Status != CryptoPositionStatus.Waiting)
+            {
+                reaction = "is in cooldown";
+                GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
+                Symbol.ClearSignals();
+                return;
+            }
         }
 
         // Check the trading rules of the user (a quick drop of a symbol causes a pause)
@@ -345,6 +351,46 @@ public class PositionMonitor : IDisposable
 
                     {
                         CryptoPosition? position = PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol);
+
+                        // Replace a Waiting (unfilled) position with the newer signal
+                        if (position != null && position.Status == CryptoPositionStatus.Waiting)
+                        {
+                            GlobalData.AddTextToLogTab($"{text} replacing unfilled {position.Side} position {position.Id} with new signal");
+
+                            bool allCancelled = true;
+                            foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+                            {
+                                foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+                                {
+                                    if (step.Status == CryptoOrderStatus.New)
+                                    {
+                                        var (cancelled, _) = await TradeTools.CancelOrder(Database, position, part, step,
+                                            LastCandle1mCloseTimeDate, CryptoOrderStatus.PositionClosed, "replaced by new signal");
+                                        if (!cancelled)
+                                            allCancelled = false;
+                                    }
+                                }
+                            }
+
+                            if (allCancelled)
+                            {
+                                position.Status = CryptoPositionStatus.Cancelled;
+                                position.CloseTime = LastCandle1mCloseTimeDate;
+                                Database.Connection.Update(position);
+
+                                // Remove without ClearSignals — signals are needed for the replacement position
+                                GlobalData.ActiveExchange!.Data.PositionList.TryRemove(position.Symbol.Name, out _);
+                                GlobalData.SendMvvmMessage(new PositionIsClosedMessage(position));
+                                GlobalData.PositionClosed?.Invoke(position);
+                                position = null;
+                            }
+                            else
+                            {
+                                // Cancel failed (order may have been filled in the meantime) — let normal processing handle it
+                                position.ForceCheckPosition = true;
+                            }
+                        }
+
                         if (position == null)
                         {
                             if (GlobalData.Settings.Trading.DisableNewPositions)
@@ -557,6 +603,7 @@ public class PositionMonitor : IDisposable
 
                             // Send the created position to the ViewModel
                             GlobalData.SendMvvmMessage(new PositionIsCreatedMessage(position));
+                            GlobalData.PositionCreated?.Invoke(position);
                             return;
                         }
                         else
@@ -1492,7 +1539,61 @@ public class PositionMonitor : IDisposable
                 }
             }
         }
+        else if (position.Status == CryptoPositionStatus.Waiting)
+        {
+            UpdateTriggerPricesForWaiting(position);
+        }
 
+    }
+
+
+    internal static void UpdateTriggerPricesForWaiting(CryptoPosition position)
+    {
+        CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+        CryptoPositionStep? entryStep = null;
+        foreach (var part in position.PartList.Values)
+        {
+            if (part.Purpose == CryptoPartPurpose.Entry && !part.CloseTime.HasValue)
+            {
+                entryStep = PositionTools.FindPositionPartStep(part, entryOrderSide, false);
+                break;
+            }
+        }
+
+        if (entryStep == null || entryStep.Status != CryptoOrderStatus.New)
+            return;
+
+        if (entryStep.OrderType == CryptoOrderType.Market)
+            return;
+
+        bool isLong = position.Side == CryptoTradeSide.Long;
+
+        if (entryStep.OrderType == CryptoOrderType.Limit)
+        {
+            if (isLong)
+            {
+                position.TriggerPriceBottom = entryStep.Price;
+                position.TriggerPriceTop = decimal.MaxValue;
+            }
+            else
+            {
+                position.TriggerPriceTop = entryStep.Price;
+                position.TriggerPriceBottom = 0;
+            }
+        }
+        else if (entryStep.OrderType == CryptoOrderType.StopLimit && entryStep.StopPrice.HasValue)
+        {
+            if (isLong)
+            {
+                position.TriggerPriceTop = entryStep.StopPrice.Value;
+                position.TriggerPriceBottom = entryStep.Price;
+            }
+            else
+            {
+                position.TriggerPriceBottom = entryStep.StopPrice.Value;
+                position.TriggerPriceTop = entryStep.Price;
+            }
+        }
     }
 
 
@@ -1628,7 +1729,10 @@ public class PositionMonitor : IDisposable
             //string traceText = LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true);
             //ScannerLog.Logger.Trace($"NewCandleArrivedAsync.Signals " + traceText);
 
-            if (!Symbol.IsTrading())
+            // Single lookup: reused for the signal skip and the trigger-price check below.
+            CryptoPosition? existingPosition = null;
+            bool hasPosition = GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out existingPosition);
+            if (!hasPosition)
             {
                 // Is the Symbol a new one?
                 if (!SymbolTools.CheckNewCoin(Symbol, out string response))
@@ -1667,28 +1771,52 @@ public class PositionMonitor : IDisposable
             // handling / position-finished check so we can see where the dominant pipeline cost sits.
             long profPrepareStart = Stopwatch.GetTimestamp();
 
+            // Only skip signal generation for filled positions (status >= Trading).
+            // Waiting (unfilled) positions allow signals so a newer signal can replace them.
+            bool skipSignals = hasPosition && existingPosition!.Status >= CryptoPositionStatus.Trading;
+
             // Calculate all the indicators, queue the fvg and dlz zones etc
-            SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
+            if (!skipSignals)
+                SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
             long profExecuteStart = Stopwatch.GetTimestamp();
 
             // Calculate signals and touch of the dlz and fvg zones
-            await SignalExecute.ExecuteAsync(Symbol, LastCandle1mCloseTime);
+            if (!skipSignals)
+                await SignalExecute.ExecuteAsync(Symbol, LastCandle1mCloseTime);
             long profTradeStart = Stopwatch.GetTimestamp();
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
 
-            // Trigger-price fence: if an existing position's candle stays inside the
-            // fence (no TP/SL/DCA boundary crossed), skip PaperTradingCheckOrders and
-            // position processing entirely — the most expensive part of the pipeline.
+            // When a position exists and the candle stays inside the known TP/SL/DCA
+            // boundaries, order simulation and position processing can be skipped entirely.
             bool canSkipPositionProcessing = false;
-            CryptoPosition? existingPosition = null;
-            if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out existingPosition))
+            if (hasPosition)
             {
-                canSkipPositionProcessing = !existingPosition.ForceCheckPosition
-                    && existingPosition.TriggerPriceTop != null
-                    && existingPosition.TriggerPriceBottom != null
-                    && LastCandle1m.High < existingPosition.TriggerPriceTop.Value
-                    && LastCandle1m.Low > existingPosition.TriggerPriceBottom.Value;
+                Interlocked.Increment(ref PipelineProfiler.SkipHasPosition);
+                if (existingPosition!.TriggerPriceTop == null || existingPosition.TriggerPriceBottom == null)
+                    Interlocked.Increment(ref PipelineProfiler.SkipTriggersNull);
+                else if (existingPosition.ForceCheckPosition)
+                    Interlocked.Increment(ref PipelineProfiler.SkipForceCheck);
+                else if (LastCandle1m.High >= existingPosition.TriggerPriceTop.Value
+                      || LastCandle1m.Low <= existingPosition.TriggerPriceBottom.Value)
+                    Interlocked.Increment(ref PipelineProfiler.SkipPriceOutside);
+                else
+                {
+                    Interlocked.Increment(ref PipelineProfiler.SkipSuccess);
+                    canSkipPositionProcessing = true;
+                }
+
+                if (canSkipPositionProcessing && existingPosition!.Status == CryptoPositionStatus.Waiting)
+                {
+                    var interval = existingPosition.Interval;
+                    if (interval != null)
+                    {
+                        var timeoutAt = existingPosition.CreateTime.AddMinutes(
+                            GlobalData.Settings.Trading.EntryRemoveTime * interval.Duration);
+                        if (LastCandle1mCloseTimeDate >= timeoutAt)
+                            canSkipPositionProcessing = false;
+                    }
+                }
             }
 
             if (!canSkipPositionProcessing)
@@ -1704,7 +1832,8 @@ public class PositionMonitor : IDisposable
                 //TODO: Reuse the preparedIndicatorDataList in the CreateOrExtendPositionAsync?
                 // Open or extend a position
                 //if (signalList.Count > 0) // alway's?
-                await CreateOrExtendPositionAsync();
+                if (!skipSignals)
+                    await CreateOrExtendPositionAsync();
             }
             long profPositionCheckStart = Stopwatch.GetTimestamp();
 
@@ -1715,8 +1844,9 @@ public class PositionMonitor : IDisposable
             long profAddToQueueStart = Stopwatch.GetTimestamp();
             if (!canSkipPositionProcessing)
             {
-                if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))
-                    await GlobalData.ThreadCheckPosition!.AddToQueue(position!);
+                // Re-lookup: the position may have been replaced during CreateOrExtendPositionAsync.
+                if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? currentPosition))
+                    await GlobalData.ThreadCheckPosition!.AddToQueue(currentPosition!);
             }
             PipelineProfiler.RecordAddToQueue(Stopwatch.GetTimestamp() - profAddToQueueStart);
 

@@ -1,8 +1,4 @@
-﻿using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Styling;
-
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -148,18 +144,7 @@ public class ScannerSession : IScannerSession
         SetTimerDefaults();
 
         // Change theme if needed
-        if (Application.Current != null)
-        {
-            var currentTheme = Application.Current?.ActualThemeVariant;
-
-            ThemeVariant choosenTheme = ThemeVariant.Default;
-            if (GlobalData.Settings.General.Theme == "Light")
-                choosenTheme = ThemeVariant.Light;
-            else if (GlobalData.Settings.General.Theme == "Dark")
-                choosenTheme = ThemeVariant.Dark;
-            if (currentTheme != choosenTheme)
-                Application.Current!.RequestedThemeVariant = choosenTheme;
-        }
+        GlobalData.SetTheme?.Invoke(GlobalData.Settings.General.Theme ?? "Default");
 
         SetApplicationTitle();
 
@@ -180,26 +165,8 @@ public class ScannerSession : IScannerSession
 
     private static void SetApplicationTitle()
     {
-        // Could have used an event, but this works also more or less
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            var mainWindow = desktop.MainWindow;
-            if (mainWindow?.DataContext != null)
-            {
-                // Use dynamic to access properties without knowing the type
-                dynamic viewModel = mainWindow.DataContext;
-
-                try
-                {
-                    viewModel.Title = $"{Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
-                }
-                catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
-                {
-                    // Property doesn't exist
-                    System.Diagnostics.Debug.WriteLine("Property not found on ViewModel");
-                }
-            }
-        }
+        string title = $"{Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
+        GlobalData.SetTitle?.Invoke(title);
     }
 
 

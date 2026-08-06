@@ -1,7 +1,4 @@
-﻿using Avalonia.Controls;
-using Avalonia.Threading;
-
-using CommunityToolkit.Mvvm.Messaging;
+﻿using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
@@ -46,7 +43,7 @@ public static class GlobalData
     // DI (but moved to GlobalData so we can use it in class lib)
     public static IServiceProvider Services { get; set; } = null!;
     public static T? GetService<T>() where T : class => Services?.GetService<T>();
-    public static Window? MainWindow { get; set; } = null!;
+    public static object? MainWindow { get; set; } = null!;
 
     public static string AppPath { get; set; } = ""; // For sounds
     public static string LogName { get; set; } = "";
@@ -82,12 +79,19 @@ public static class GlobalData
         }
     }
 
+    public static Action<Action>? RunOnUiThread { get; set; }
+
     public static void SendMvvmMessage<TMessage>(TMessage message) where TMessage : class
     {
-        Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(message); }); // Avalonia
-        //MainForm!.BeginInvoke(() => { WeakReferenceMessenger.Default.Send(message); }); // Winforms
+        if (RunOnUiThread != null)
+            RunOnUiThread(() => { WeakReferenceMessenger.Default.Send(message); });
+        else
+            WeakReferenceMessenger.Default.Send(message);
     }
 
+
+    public static Action<string>? SetTheme { get; set; }
+    public static Action<string>? SetTitle { get; set; }
 
     // Amount of signals created
     public static int CreatedSignalCount { get; set; }
@@ -159,6 +163,11 @@ public static class GlobalData
     public static void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
 
     public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
+
+    public static Action<CryptoPosition>? PositionCreated { get; set; }
+    public static Action<CryptoPosition>? PositionClosed { get; set; }
+    public static Action<CryptoPosition>? PositionDeleted { get; set; }
+    public static Action? PositionDeletedAll { get; set; }
 
     public static SignalRService? SignalRService { get; set; }
 

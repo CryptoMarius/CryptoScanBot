@@ -1,7 +1,3 @@
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Platform;
-
 using CryptoScanner.Core.Core;
 
 using System.ComponentModel;
@@ -99,36 +95,6 @@ public class ApplicationStateService
     public string BarometerQuote { get { return _states.BarometerState.Quote; } set { _states.BarometerState.Quote = value; } }
     public string BarometerInterval { get { return _states.BarometerState.Interval; } set { _states.BarometerState.Interval = value; } }
 
-    public void SaveGridState(string gridName, DataGrid dataGrid, string? sortColumn, ListSortDirection? sortDirection)
-    {
-        ArgumentNullException.ThrowIfNull(dataGrid);
-
-        lock (_lock)
-        {
-            //System.Diagnostics.Debug.WriteLine($"SaveGridState({gridName}, {sortColumn} {sortDirection})");
-            var gridState = GetGridStateProperty(_states, gridName);
-            if (gridState != null)
-            {
-                // Save sort column and direction
-                gridState.SortColumn = sortColumn;
-                gridState.SortDirection = sortDirection;
-
-                // Save column settings
-                gridState.Columns = dataGrid.Columns.Select(col => new GridColumn
-                {
-                    SortMemberPath = col.SortMemberPath ?? string.Empty,
-                    Width = col.Width.IsAbsolute ? col.Width.Value : -1,  // -1 = Auto
-                    DisplayIndex = col.DisplayIndex,
-                    IsVisible = col.IsVisible
-                }).ToList();
-            }
-
-            // Persist to disk
-            FlushToDisk();
-        }
-    }
-
-
     public void SaveGridSortState(string gridName, string? sortColumn, ListSortDirection? sortDirection)
     {
         lock (_lock)
@@ -181,57 +147,6 @@ public class ApplicationStateService
         {
             var gridState = GetGridStateProperty(_states, gridName);
             return gridState?.Columns;
-        }
-    }
-
-    public void RestoreGridState(string gridName, DataGrid dataGrid, out string sortColumn, out ListSortDirection sortDirection)
-    {
-        ArgumentNullException.ThrowIfNull(dataGrid);
-
-        lock (_lock)
-        {
-            sortColumn = string.Empty;
-            sortDirection = ListSortDirection.Ascending;
-
-            var gridState = GetGridStateProperty(_states, gridName);
-            if (gridState == null)
-                return;
-
-            // Return sort column and direction
-            if (gridState.SortDirection != null && !string.IsNullOrEmpty(gridState.SortColumn))
-            {
-                sortColumn = gridState.SortColumn;
-                sortDirection = gridState.SortDirection.Value;
-            }
-            //System.Diagnostics.Debug.WriteLine($"RestoreGridState({gridName}, {sortColumn} {sortDirection})");
-
-            // Restore column settings
-            foreach (var colSetting in gridState.Columns)
-            {
-                var column = dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == colSetting.SortMemberPath);
-
-                if (column != null)
-                {
-                    // Restore width
-                    if (colSetting.Width > 0)
-                    {
-                        column.Width = new DataGridLength(colSetting.Width);
-                    }
-
-                    try
-                    {
-                        // Restore display order (must be in range of available columns)
-                        column.DisplayIndex = colSetting.DisplayIndex;
-                    }
-                    catch
-                    {
-                        // ignore (wil crash if we reduced the amount of columns)
-                    }
-
-                    // Restore visibility
-                    column.IsVisible = colSetting.IsVisible;
-                }
-            }
         }
     }
 
@@ -358,7 +273,7 @@ public class ApplicationStateService
     /// Persists window positions to the shared (exchange-independent) file so they
     /// survive database/exchange folder switches.
     /// </summary>
-    private void FlushWindowStateToDisk()
+    public void FlushWindowStateToDisk()
     {
         try
         {
@@ -431,66 +346,6 @@ public class ApplicationStateService
     }
 
 
-    public void SaveWindowState(string windowName, Window window)
-    {
-        lock (_lock)
-        {
-            var state = GetWindowStateProperty(_states, windowName);
-            if (state != null)
-            {
-                state.X = window.Position.X;
-                state.Y = window.Position.Y;
-                state.Width = window.Width;
-                state.Height = window.Height;
-                state.State = window.WindowState.ToString();
-
-                FlushToDisk();
-                FlushWindowStateToDisk();
-            }
-        }
-    }
-
-    public void RestoreWindowState(string windowName, Window window)
-    {
-        lock (_lock)
-        {
-            var state = GetWindowStateProperty(_states, windowName);
-            if (state == null)
-                return;
-
-            // Restore window state, position and size (if state is filled)
-            if (Enum.TryParse<Avalonia.Controls.WindowState>(state.State, out var windowState))
-            {
-                // Is saved position on ANY available screen?
-                Screen? targetScreen;
-                if (IsPositionOnScreen(window, state.X, state.Y, out targetScreen))
-                {
-                    window.Position = new PixelPoint((int)state.X, (int)state.Y);
-                }
-                else
-                {
-                    window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                    targetScreen = window.Screens.Primary ?? window.Screens.All.FirstOrDefault();
-                }
-
-                // Clamp to the working area of the target screen, so a size saved on a large
-                // display doesn't end up partially off-screen when restored on a smaller one
-                double width = state.Width;
-                double height = state.Height;
-                if (targetScreen != null)
-                {
-                    double scaling = targetScreen.Scaling > 0 ? targetScreen.Scaling : 1.0;
-                    width = Math.Min(width, targetScreen.WorkingArea.Width / scaling);
-                    height = Math.Min(height, targetScreen.WorkingArea.Height / scaling);
-                }
-
-                window.Width = width;
-                window.Height = height;
-                window.WindowState = windowState;
-            }
-        }
-    }
-
     public WindowState GetOrCreateWindowState(string windowName)
     {
         lock (_lock)
@@ -524,34 +379,6 @@ public class ApplicationStateService
         _states.WindowStates.Add(windowName, state);
         return state;
     }
-
-    private static bool IsPositionOnScreen(Window window, double x, double y, out Screen? matchedScreen)
-    {
-        matchedScreen = null;
-        try
-        {
-            var point = new PixelPoint((int)x, (int)y);
-            var screens = window.Screens.All;
-
-            // Check if point is within ANY screen's working area
-            foreach (var screen in screens)
-            {
-                if (screen.WorkingArea.Contains(point))
-                {
-                    matchedScreen = screen;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-        catch
-        {
-            // Op sommige Linux window managers kan dit falen
-            return false;
-        }
-    }
-
 
     //// Voeg toe aan ApplicationStateService class (onderaan):
     //public void SaveColumnWidths(string gridName, string widths)

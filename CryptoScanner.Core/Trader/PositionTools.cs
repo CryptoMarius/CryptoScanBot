@@ -264,6 +264,7 @@ public static class PositionTools
             {
                 // Send the position to the closed positions ViewModel
                 GlobalData.SendMvvmMessage(new PositionIsClosedMessage(position));
+                GlobalData.PositionClosed?.Invoke(position);
             }
         }
     }

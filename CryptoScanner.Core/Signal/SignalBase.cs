@@ -44,7 +44,10 @@ public class SignalCreateBase
     /// <summary>
     /// Zijn de indicatoren aanwezig
     /// </summary>
-    public virtual bool IndicatorsOkay(MyData data) => data.Candle.OpenTime != 0 && data.CandleData != null;
+    public virtual bool IndicatorsOkay(MyData data)
+    {
+        return data.Candle.OpenTime != 0 && data.CandleData != null;
+    }
 
     /// <summary>
     /// Is het een signaal?
@@ -133,9 +136,9 @@ public class SignalCreateBase
             return true;
         }
 
-        // Avoid duplicate signals
+        // Avoid duplicate signals — but allow a newer signal to replace a Waiting (unfilled) position
         var position = PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol);
-        if (position != null)
+        if (position != null && position.Status >= CryptoPositionStatus.Trading)
         {
             ExtraText = $"Position open {position.Id} on interval {position.Interval.Name}";
             return true;

@@ -202,6 +202,52 @@ public static class CandleTools
         }
     }
 
+    /// <summary>
+    /// Generalized version of <see cref="Process1mCandleAsync"/> that accepts any base interval.
+    /// Used by the emulator when replaying at a coarser resolution (e.g. 5m) for speed. The candle
+    /// is inserted into <paramref name="baseInterval"/>'s CandleList, and every higher interval
+    /// whose close time aligns is synthesised from its ConstructFrom chain — exactly as the 1m
+    /// variant does, but starting higher in the tree.
+    /// </summary>
+    public static async Task<CryptoCandle> ProcessBaseCandleAsync(CryptoSymbol symbol, CryptoInterval baseInterval,
+        DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal quoteVolume)
+    {
+        if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
+            return symbol.GetSymbolInterval(baseInterval.IntervalPeriod).CandleList.LastCandle;
+
+        await symbol.Data.CandleLock.WaitAsync();
+        try
+        {
+            symbol.LastPrice = close;
+
+            CryptoCandle candle = CreateCandle(symbol, baseInterval, openTime, open, high, low, close, quoteVolume);
+            UpdateCandleFetched(symbol, baseInterval);
+
+            CandleTime candleCloseTime = candle!.OpenTime + baseInterval.Duration;
+            foreach (CryptoInterval interval in GlobalData.IntervalList)
+            {
+                if (interval.Duration <= baseInterval.Duration)
+                    continue;
+                if (interval.ConstructFrom != null && candleCloseTime % interval.Duration == 0)
+                {
+                    var (targetComplete, targetStart) = IntervalTools.StartOfIntervalCandle3(candle.OpenTime, interval.ConstructFrom.Duration, interval.Duration);
+                    if (targetComplete)
+                    {
+                        CalculateCandleForInterval(symbol, interval.ConstructFrom, interval, targetStart);
+                        UpdateCandleFetched(symbol, interval);
+                    }
+                }
+            }
+
+            return candle;
+        }
+        finally
+        {
+            symbol.Data.CandleLock.Release();
+        }
+    }
+
+
     public static void BulkAddMissingCandles(CryptoSymbol symbol, CryptoInterval interval)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);

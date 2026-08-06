@@ -679,4 +679,201 @@ public class TriggerPriceTests
         // Price stays below DCA → skip
         Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 102, candleLow: 98));
     }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  UpdateTriggerPricesForWaiting — sets trigger fence for unfilled
+    //  entry orders so Waiting positions can be skipped when the candle
+    //  stays outside the fill zone.
+    // ═══════════════════════════════════════════════════════════════════════
+
+    private static CryptoPosition MakeWaitingPosition(CryptoTradeSide side)
+    {
+        var exchange = MakeExchange();
+        return new CryptoPosition
+        {
+            Id = 1,
+            CreateTime = DateTime.UtcNow,
+            Exchange = exchange,
+            ExchangeId = exchange.Id,
+            Symbol = MakeSymbol(exchange),
+            SymbolId = 1,
+            Interval = MakeInterval(),
+            IntervalId = 6,
+            Side = side,
+            Status = CryptoPositionStatus.Waiting,
+            HasOrdersAndTradesLoaded = true,
+        };
+    }
+
+    private static void AddEntryPart(CryptoPosition position,
+        CryptoOrderType orderType, decimal price, decimal? stopPrice = null,
+        CryptoOrderStatus status = CryptoOrderStatus.New, bool closed = false)
+    {
+        int partId = position.PartList.Count + 1;
+
+        var part = new CryptoPositionPart
+        {
+            Id = partId,
+            PositionId = position.Id,
+            Position = position,
+            Exchange = position.Exchange,
+            ExchangeId = position.Exchange.Id,
+            Symbol = position.Symbol,
+            SymbolId = position.Symbol.Id,
+            Purpose = CryptoPartPurpose.Entry,
+            CreateTime = DateTime.UtcNow,
+            CloseTime = closed ? DateTime.UtcNow : null,
+        };
+
+        var step = new CryptoPositionStep
+        {
+            Id = partId * 10,
+            PositionId = position.Id,
+            PositionPartId = partId,
+            CreateTime = DateTime.UtcNow,
+            CloseTime = closed ? DateTime.UtcNow : null,
+            Side = position.Side == CryptoTradeSide.Long ? CryptoOrderSide.Buy : CryptoOrderSide.Sell,
+            Status = status,
+            OrderType = orderType,
+            Price = price,
+            StopPrice = stopPrice,
+            Quantity = 1m,
+        };
+
+        part.StepList.Add(step.Id, step);
+        position.PartList.Add(partId, part);
+    }
+
+
+    [TestMethod]
+    public void WaitingLong_LimitBuy_BottomIsEntryPrice_TopIsMax()
+    {
+        var position = MakeWaitingPosition(CryptoTradeSide.Long);
+        AddEntryPart(position, CryptoOrderType.Limit, price: 100m);
+
+        PositionMonitor.UpdateTriggerPricesForWaiting(position);
+
+        Assert.AreEqual(100m, position.TriggerPriceBottom);
+        Assert.AreEqual(decimal.MaxValue, position.TriggerPriceTop);
+    }
+
+    [TestMethod]
+    public void WaitingShort_LimitSell_TopIsEntryPrice_BottomIsZero()
+    {
+        var position = MakeWaitingPosition(CryptoTradeSide.Short);
+        AddEntryPart(position, CryptoOrderType.Limit, price: 100m);
+
+        PositionMonitor.UpdateTriggerPricesForWaiting(position);
+
+        Assert.AreEqual(100m, position.TriggerPriceTop);
+        Assert.AreEqual(0m, position.TriggerPriceBottom);
+    }
+
+    [TestMethod]
+    public void WaitingLong_StopLimitBuy_TopIsStopPrice_BottomIsLimitPrice()
+    {
+        var position = MakeWaitingPosition(CryptoTradeSide.Long);
+        AddEntryPart(position, CryptoOrderType.StopLimit, price: 98m, stopPrice: 102m);
+
+        PositionMonitor.UpdateTriggerPricesForWaiting(position);
+
+        Assert.AreEqual(102m, position.TriggerPriceTop);
+        Assert.AreEqual(98m, position.TriggerPriceBottom);
+    }
+
+    [TestMethod]
+    public void WaitingShort_StopLimitSell_BottomIsStopPrice_TopIsLimitPrice()
+    {
+        var position = MakeWaitingPosition(CryptoTradeSide.Short);
+        AddEntryPart(position, CryptoOrderType.StopLimit, price: 102m, stopPrice: 98m);
+
+        PositionMonitor.UpdateTriggerPricesForWaiting(position);
+
+        Assert.AreEqual(98m, position.TriggerPriceBottom);
+        Assert.AreEqual(102m, position.TriggerPriceTop);
+    }
+
+    [TestMethod]
+    public void Waiting_MarketOrder_TriggersUnchanged()
+    {
+        var position = MakeWaitingPosition(CryptoTradeSide.Long);
+        AddEntryPart(position, CryptoOrderType.Market, price: 100m);
+        position.TriggerPriceTop = null;
+        position.TriggerPriceBottom = null;
+
+        PositionMonitor.UpdateTriggerPricesForWaiting(position);
+
+        Assert.IsNull(position.TriggerPriceTop);
+        Assert.IsNull(position.TriggerPriceBottom);
+    }
+
+    [TestMethod]
+    public void Waiting_NoEntryPart_TriggersUnchanged()
+    {
+        var position = MakeWaitingPosition(CryptoTradeSide.Long);
+        position.TriggerPriceTop = null;
+        position.TriggerPriceBottom = null;
+
+        PositionMonitor.UpdateTriggerPricesForWaiting(position);
+
+        Assert.IsNull(position.TriggerPriceTop);
+        Assert.IsNull(position.TriggerPriceBottom);
+    }
+
+    [TestMethod]
+    public void Waiting_StepAlreadyFilled_TriggersUnchanged()
+    {
+        var position = MakeWaitingPosition(CryptoTradeSide.Long);
+        AddEntryPart(position, CryptoOrderType.Limit, price: 100m, status: CryptoOrderStatus.Filled);
+        position.TriggerPriceTop = null;
+        position.TriggerPriceBottom = null;
+
+        PositionMonitor.UpdateTriggerPricesForWaiting(position);
+
+        Assert.IsNull(position.TriggerPriceTop);
+        Assert.IsNull(position.TriggerPriceBottom);
+    }
+
+    [TestMethod]
+    public void Waiting_ClosedEntryPart_TriggersUnchanged()
+    {
+        var position = MakeWaitingPosition(CryptoTradeSide.Long);
+        AddEntryPart(position, CryptoOrderType.Limit, price: 100m, closed: true);
+        position.TriggerPriceTop = null;
+        position.TriggerPriceBottom = null;
+
+        PositionMonitor.UpdateTriggerPricesForWaiting(position);
+
+        Assert.IsNull(position.TriggerPriceTop);
+        Assert.IsNull(position.TriggerPriceBottom);
+    }
+
+    [TestMethod]
+    public void WaitingLong_LimitBuy_GateIntegration()
+    {
+        var position = MakeWaitingPosition(CryptoTradeSide.Long);
+        AddEntryPart(position, CryptoOrderType.Limit, price: 100m);
+
+        PositionMonitor.UpdateTriggerPricesForWaiting(position);
+
+        // Price above entry → skip (candle doesn't reach limit buy)
+        Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 105, candleLow: 101));
+        // Price reaches entry → must run (limit buy can fill)
+        Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 103, candleLow: 100));
+    }
+
+    [TestMethod]
+    public void WaitingShort_LimitSell_GateIntegration()
+    {
+        var position = MakeWaitingPosition(CryptoTradeSide.Short);
+        AddEntryPart(position, CryptoOrderType.Limit, price: 100m);
+
+        PositionMonitor.UpdateTriggerPricesForWaiting(position);
+
+        // Price below entry → skip (candle doesn't reach limit sell)
+        Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 99, candleLow: 95));
+        // Price reaches entry → must run (limit sell can fill)
+        Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 100, candleLow: 97));
+    }
 }

@@ -1,6 +1,4 @@
-﻿using Avalonia.Controls;
-
-using CommandLine;
+﻿using CommandLine;
 
 namespace CryptoScanner.Core.Core;
 
@@ -25,11 +23,13 @@ public class ApplicationParams
 
     public static ApplicationParams? Options { get; set; }
 
+    public static bool IsDesignMode { get; set; }
+
     public static void InitApplicationOptions()
     {
         if (Options == null)
         {
-            if (Design.IsDesignMode)
+            if (IsDesignMode)
             {
                 Options = new()
                 {
