@@ -51,7 +51,7 @@ public abstract class SignalChochLongBase : SignalCreateBase
 
     public override bool IsSignal()
     {
-        // Skip the very noisy lower timeframes — mirrors SignalTrend
+        // Skip the very noisy lower timeframes
         if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval5m)
             return false;
 

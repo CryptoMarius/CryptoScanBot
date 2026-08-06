@@ -8,4 +8,5 @@ public enum CryptoPositionStatus
     Timeout, // 3
     TakeOver, // 4
     Altrady, // 5
+    Cancelled, // 6 new ignal invalidates the waiting position
 }
