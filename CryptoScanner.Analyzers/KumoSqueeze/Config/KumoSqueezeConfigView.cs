@@ -10,7 +10,7 @@ public class KumoSqueezeConfigView : IConfigView
 
     public string TabHeader => "KUMOSQUEEZE";
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyKumoSqueezeTabView { DataContext = _viewModel };
     }

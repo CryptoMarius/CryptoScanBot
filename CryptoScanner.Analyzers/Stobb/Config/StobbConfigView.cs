@@ -10,7 +10,7 @@ public class StobbConfigView : IConfigView
 
     public string TabHeader => StobbPlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyStobbTabView { DataContext = _viewModel };
     }

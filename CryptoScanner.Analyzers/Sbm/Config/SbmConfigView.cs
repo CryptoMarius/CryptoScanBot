@@ -10,7 +10,7 @@ public class SbmConfigView : IConfigView
 
     public string TabHeader => SbmPlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategySbmTabView { DataContext = _viewModel };
     }

@@ -10,7 +10,7 @@ public class StorsiConfigView : IConfigView
 
     public string TabHeader => NwePlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyNweTabView { DataContext = _viewModel };
     }

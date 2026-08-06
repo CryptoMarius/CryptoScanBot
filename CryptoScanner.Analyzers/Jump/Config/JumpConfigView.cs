@@ -10,7 +10,7 @@ public class JumpConfigView : IConfigView
 
     public string TabHeader => JumpPlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyJumpTabView { DataContext = _viewModel };
     }

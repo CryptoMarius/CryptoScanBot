@@ -10,7 +10,7 @@ public class DbrConfigView : IConfigView
 
     public string TabHeader => DbrPlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyDbrTabView { DataContext = _viewModel };
     }

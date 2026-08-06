@@ -72,16 +72,16 @@ public class VbsSignalLong : VbsSignalVbs
             return false;
         }
 
-        //if (CandleLast.CandleData.BollingerBandsLowerBand.Value <= CandleLast.CandleData.VbsLower.Value)
-        //{
-        //    ExtraText = "bb.lower <= vbs.band";
-        //    return false;
-        //}
-        //if (CandleLast.CandleData.BollingerBandsUpperBand.Value >= CandleLast.CandleData.VbsUpper.Value)
-        //{
-        //    ExtraText = "bb.upper >= vbs.bands";
-        //    return false;
-        //}
+        if (CandleLast.CandleData.BollingerBandsLowerBand.Value <= CandleLast.CandleData.VbsLower.Value)
+        {
+            ExtraText = "bb.lower <= vbs.band";
+            return false;
+        }
+        if (CandleLast.CandleData.BollingerBandsUpperBand.Value >= CandleLast.CandleData.VbsUpper.Value)
+        {
+            ExtraText = "bb.upper >= vbs.bands";
+            return false;
+        }
 
 
         // Stop-loss = Entry - ACS% (long). ACS (Average Candle Size) is precomputed on CandleData;

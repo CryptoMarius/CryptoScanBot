@@ -11,7 +11,7 @@ public class BbmaConfigView : IConfigView
 
     public string TabHeader => "BBMA";
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyBbmaTabView { DataContext = _viewModel };
     }

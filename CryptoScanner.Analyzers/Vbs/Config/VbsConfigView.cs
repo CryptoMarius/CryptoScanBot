@@ -10,7 +10,7 @@ public class VbsConfigView : IConfigView
 
     public string TabHeader => VbsPlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyVbsTabView { DataContext = _viewModel };
     }

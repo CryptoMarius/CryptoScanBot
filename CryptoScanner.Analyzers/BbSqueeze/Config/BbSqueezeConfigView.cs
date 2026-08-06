@@ -10,7 +10,7 @@ public class BbSqueezeConfigView : IConfigView
 
     public string TabHeader => BbSqueezePlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyBbSqueezeTabView { DataContext = _viewModel };
     }

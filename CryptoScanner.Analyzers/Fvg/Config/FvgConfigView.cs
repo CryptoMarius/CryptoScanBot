@@ -10,7 +10,7 @@ public class FvgConfigView : IConfigView
 
     public string TabHeader => FvgPlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyFvgTabView { DataContext = _viewModel };
     }

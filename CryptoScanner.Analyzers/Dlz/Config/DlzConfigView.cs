@@ -10,7 +10,7 @@ public class DlzConfigView : IConfigView
 
     public string TabHeader => DlzPlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyDlzTabView { DataContext = _viewModel };
     }

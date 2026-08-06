@@ -10,7 +10,7 @@ public class AtrRbConfigView : IConfigView
 
     public string TabHeader => AtrRbPlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategyAtrRbTabView { DataContext = _viewModel };
     }

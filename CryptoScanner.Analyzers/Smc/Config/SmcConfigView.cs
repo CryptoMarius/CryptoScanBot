@@ -10,7 +10,7 @@ public class SmcConfigView : IConfigView
 
     public string TabHeader => SmcPlugin.StrategyInternal.ToUpper();
 
-    public Control CreateSettingsView()
+    public object CreateSettingsView()
     {
         return new StrategySmcTabView { DataContext = _viewModel };
     }
