@@ -52,6 +52,12 @@ public partial class RunConfigViewModel : ObservableObject
     [ObservableProperty]
     private DateTime? _toDate;
 
+    public List<string> BaseIntervals { get; } = GlobalData.IntervalListPeriodName.Values
+        .OrderBy(i => i.Duration).Select(i => i.Name).ToList();
+
+    [ObservableProperty]
+    private string _selectedBaseInterval = "1m";
+
     /// <summary>Live text filter over the symbol list (substring, case-insensitive).</summary>
     [ObservableProperty]
     private string _symbolFilter = "";
@@ -81,6 +87,7 @@ public partial class RunConfigViewModel : ObservableObject
         Label = config.Label;
         FromDate = config.FromDate == default ? DateTime.UtcNow.Date.AddDays(-7) : config.FromDate;
         ToDate = config.ToDate == default ? DateTime.UtcNow.Date : config.ToDate;
+        SelectedBaseInterval = BaseIntervals.Contains(config.BaseInterval) ? config.BaseInterval : "1m";
 
         // Pre-check the symbols already in the run config. Build the full list from the active
         // exchange's known symbols; any config symbol not (yet) on the exchange is still added so
@@ -201,6 +208,7 @@ public partial class RunConfigViewModel : ObservableObject
             FromDate = FromDate.Value.Date,
             ToDate = ToDate.Value.Date,
             Label = Label ?? "",
+            BaseInterval = SelectedBaseInterval ?? "1m",
         };
         return true;
     }

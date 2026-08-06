@@ -1,3 +1,4 @@
+using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
@@ -87,6 +88,8 @@ public static class EmulatorBootstrap
         GlobalData.IndexStrategySettings();
         TradingConfig.IndexStrategyInternally();
         TradingConfig.InitWhiteAndBlackListSettings();
+
+        BarometerTools.InitBarometerSymbols();
 
         SignalPrepare.Prepare();
         SignalExecute.Prepare();

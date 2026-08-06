@@ -588,6 +588,7 @@ public partial class MainWindowViewModel : ObservableObject
                     Symbols = baseConfig.Symbols,
                     FromDate = baseConfig.FromDate,
                     ToDate = baseConfig.ToDate,
+                    BaseInterval = baseConfig.BaseInterval,
                     Label = labelRest.Length > 0 ? $"{algorithm.Name} {labelRest}" : algorithm.Name,
                 };
 
@@ -851,6 +852,7 @@ public partial class MainWindowViewModel : ObservableObject
                             Symbols = baseConfig.Symbols,
                             FromDate = baseConfig.FromDate,
                             ToDate = baseConfig.ToDate,
+                            BaseInterval = baseConfig.BaseInterval,
                             Label = runLabel,
                         };
 

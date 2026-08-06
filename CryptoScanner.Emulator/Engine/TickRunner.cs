@@ -80,6 +80,9 @@ public sealed class TickRunner
     private int lastDecile = -1;
     private long decileStart;
 
+    // The resolved base interval for this run (set at the start of RunAsync).
+    private CryptoInterval activeBaseInterval = null!;
+
 
     private static void ReceivedCreatedSignals(CryptoSignal signal)
     {
@@ -102,11 +105,14 @@ public sealed class TickRunner
         runWall.Restart();
         try
         {
-            if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
-                throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName.");
+            // Resolve the base interval from the run config (default "1m" for full precision).
+            string baseIntervalName = config.BaseInterval ?? "1m";
+            if (!GlobalData.IntervalListPeriodName.TryGetValue(baseIntervalName, out CryptoInterval? baseInterval))
+                throw new InvalidOperationException($"Base interval '{baseIntervalName}' not registered in GlobalData.IntervalListPeriodName.");
+            activeBaseInterval = baseInterval;
 
-            CandleTime replayFrom = CandleTime.AlignFromDateTime(config.FromDate, 1);
-            CandleTime replayTo = CandleTime.AlignFromDateTime(config.ToDate, 1);
+            CandleTime replayFrom = CandleTime.AlignFromDateTime(config.FromDate, baseInterval.Duration);
+            CandleTime replayTo = CandleTime.AlignFromDateTime(config.ToDate, baseInterval.Duration);
 
             // Advance the emulator clock to the END of the replay window before loading candles.
             // LoadCandlesInRange applies an "OpenTime <= Clock.UtcNow" filter when
@@ -128,21 +134,21 @@ public sealed class TickRunner
             }
 
 
+            // ───── Reset all transient state from any previous run ────────────────
+            ResetRunState(exchange, symbols);
+            AssertCleanState(exchange, symbols);
+
             // ───── Warmup all symbols up-front ──────────────────────────────────────
             long warmupStart = Stopwatch.GetTimestamp();
             foreach (var symbol in symbols)
             {
                 ct.ThrowIfCancellationRequested();
                 IndicatorWarmup.WarmupSymbol(symbol, replayFrom);
-
-                symbol.LastPrice = null;
-                symbol.LastTradeDate = null;
-                symbol.LastTradeFetched = null;
-                symbol.LastTradeIdFetched = null;
             }
             elapsedWarmup = Stopwatch.GetTimestamp() - warmupStart;
             GlobalData.AddTextToLogTab($"Warmup ({symbols.Count} symbol(s)): " +
-                $"{(double)elapsedWarmup / Stopwatch.Frequency:F1}s");
+                $"{(double)elapsedWarmup / Stopwatch.Frequency:F1}s " +
+                $"[base interval: {baseInterval.Name}]");
 
 
             // ───── Determine chunks ─────────────────────────────────────────────────
@@ -154,8 +160,8 @@ public sealed class TickRunner
             int lastReportedPercent = -1;
             var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
 
-            // Estimate total bars for progress: replay minutes × symbols (refined per chunk)
-            int totalBars = (int)((replayTo.Minutes - replayFrom.Minutes) / interval1m.Duration) * symbols.Count;
+            // Estimate total bars for progress: replay steps × symbols
+            int totalBars = (int)((replayTo.Minutes - replayFrom.Minutes) / baseInterval.Duration) * symbols.Count;
 
             // ───── Chunk loop (or single pass when chunking is off) ──────────────────
             int chunkIndex = 0;
@@ -184,7 +190,7 @@ public sealed class TickRunner
                 long loadStart = Stopwatch.GetTimestamp();
                 foreach (var symbol in symbols)
                 {
-                    CryptoCandleList replayCandles = IndicatorWarmup.LoadReplayCandles(symbol, windowFrom, windowTo);
+                    CryptoCandleList replayCandles = IndicatorWarmup.LoadReplayCandles(symbol, windowFrom, windowTo, baseInterval);
                     replays.Add((symbol, replayCandles));
                     chunkBars += replayCandles.Count;
                 }
@@ -199,12 +205,12 @@ public sealed class TickRunner
                 }
 
                 // ───── Time-merged replay loop for this chunk ────────────────────────
-                for (CandleTime openTime = windowFrom; openTime <= windowTo; openTime += interval1m.Duration)
+                for (CandleTime openTime = windowFrom; openTime <= windowTo; openTime += baseInterval.Duration)
                 {
                     if (ct.IsCancellationRequested)
                         break;
 
-                    CandleTime closeTime = openTime + interval1m.Duration;
+                    CandleTime closeTime = openTime + baseInterval.Duration;
                     if (emulatorClock != null)
                         emulatorClock.UtcNow = closeTime.ToDateTime();
 
@@ -274,7 +280,7 @@ public sealed class TickRunner
                 }
 
                 // Advance to next chunk
-                windowFrom = useChunks ? new CandleTime(windowTo.Minutes + interval1m.Duration) : replayTo;
+                windowFrom = useChunks ? new CandleTime(windowTo.Minutes + baseInterval.Duration) : replayTo;
             }
 
             Progress?.Report(new TickRunProgress(100));
@@ -536,6 +542,14 @@ public sealed class TickRunner
                 $"applyLux {hubApplyLux:F1}s ({hubApplyLux / hubTotal:P0})");
         }
 
+        // Trigger-price skip diagnostic
+        GlobalData.AddTextToLogTab(
+            $"TriggerSkip — hasPosition {PipelineProfiler.SkipHasPosition}, " +
+            $"triggersNull {PipelineProfiler.SkipTriggersNull}, " +
+            $"forceCheck {PipelineProfiler.SkipForceCheck}, " +
+            $"priceOutside {PipelineProfiler.SkipPriceOutside}, " +
+            $"skipped {PipelineProfiler.SkipSuccess}");
+
         // Per-decile wall-clock breakdown — shows where the run slows down
         var decileParts = new string[10];
         for (int i = 0; i < 10; i++)
@@ -545,32 +559,33 @@ public sealed class TickRunner
 
 
     /// <summary>
-    /// Phase A — per-symbol compute (parallel-safe): insert the new 1m candle, synthesise the higher
-    /// timeframes, then run the live scanner analysis pipeline (signals, paper-trade, position eval).
-    /// Touches only this symbol's own state plus thread-safe queues (ThreadSaveObjects /
-    /// ThreadZoneCalculate AddToQueue). The shared DB flush + zone drain are NOT done here — they run
-    /// once per minute in <see cref="PersistAndCalculateZonesAsync"/> after all symbols are computed.
-    /// elapsed* are accumulated with Interlocked because several symbols run this concurrently.
+    /// Phase A — per-symbol compute (parallel-safe): insert the new base-interval candle, synthesise
+    /// the higher timeframes, then run the live scanner analysis pipeline (signals, paper-trade,
+    /// position eval). When <see cref="activeBaseInterval"/> is 1m this is identical to the live
+    /// scanner path; at coarser intervals (e.g. 5m) higher TFs are synthesised from the base
+    /// interval instead of from 1m, trading precision for speed.
     /// </summary>
     private async Task ProcessComputeAsync(CryptoSymbol symbol, CryptoCandle candle)
     {
-        // Reuse the canonical 1m-arrival handler instead of re-deriving it here. Process1mCandleAsync
-        // is exactly what the live SubscriptionKLineTicker calls for every incoming 1m candle: it
-        // adds the 1m candle to its CandleList, advances UpdateCandleFetched, and synthesises every
-        // higher timeframe from 1m via CalculateCandleForInterval — using the look-ahead-safe
-        // "targetComplete" check (StartOfIntervalCandle3) so an incomplete higher bucket is never
-        // emitted. The pre-fetched higher candles in candles.db are the COMPLETE/closed bars; during
-        // replay we must instead rebuild the CURRENT higher bar incrementally from the 1m candles
-        // seen so far, otherwise the strategy would peek at the rest of the (future) bucket.
         long t0 = Stopwatch.GetTimestamp();
-        await CandleTools.Process1mCandleAsync(symbol, candle.OpenTime.ToDateTime(),
-            candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
+
+        if (activeBaseInterval.Duration <= 1)
+        {
+            await CandleTools.Process1mCandleAsync(symbol, candle.OpenTime.ToDateTime(),
+                candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
+        }
+        else
+        {
+            await CandleTools.ProcessBaseCandleAsync(symbol, activeBaseInterval, candle.OpenTime.ToDateTime(),
+                candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
+        }
+
         long t1 = Stopwatch.GetTimestamp();
         Interlocked.Add(ref elapsedProcess1m, t1 - t0);
 
         // Drive the exact same pipeline as the live ThreadMonitorCandle.Execute() loop:
         // SignalPrepare → SignalExecute → PaperTrading → TradingRules → CreateOrExtendPosition.
-        using PositionMonitor positionMonitor = new(symbol, candle);
+        using PositionMonitor positionMonitor = new(symbol, candle, activeBaseInterval.Duration);
         await positionMonitor.NewCandleArrivedAsync();
         Interlocked.Add(ref elapsedPipeline, Stopwatch.GetTimestamp() - t1);
     }
@@ -599,6 +614,148 @@ public sealed class TickRunner
 
         GlobalData.ThreadSaveObjects?.Flush();
         elapsedFlush += Stopwatch.GetTimestamp() - t2;
+    }
+
+
+    /// <summary>
+    /// Wipes all transient in-memory state so a run starts from a guaranteed clean slate.
+    /// Without this, leftover positions, signals, trends, zones, indicator hubs, barometer
+    /// values and paper-trading assets from a previous run leak into the next one, producing
+    /// non-reproducible results.
+    /// </summary>
+    private static void ResetRunState(CryptoScanner.Core.Model.CryptoExchange exchange, List<CryptoSymbol> symbols)
+    {
+        // ── Exchange-level state ────────────────────────────────────────────────
+
+        // Positions — a leftover position blocks signal generation for that symbol
+        exchange.Data.PositionList.Clear();
+
+        // Paper-trading asset balances
+        exchange.Data.AssetList.Clear();
+
+        // Pause rule (price-drop circuit breaker)
+        exchange.Data.PauseTrading.Clear();
+
+        // Zone-check timestamp
+        exchange.LastZoneCheckTime = null;
+
+        // Per-quote transient state: barometer values and pause-barometer timers
+        foreach (var quoteData in exchange.Data.QuoteDataList.Values)
+        {
+            foreach (var barometer in quoteData.BarometerDataList.Values)
+                barometer.Clear();
+            foreach (var pauseBarometer in quoteData.PauseBarometerList.Values)
+            {
+                pauseBarometer.Calculated = null;
+                pauseBarometer.Until = null;
+                pauseBarometer.Text = null;
+            }
+        }
+
+        // ── Global counters ─────────────────────────────────────────────────────
+
+        GlobalData.CreatedSignalCount = 0;
+        CryptoScanner.Core.Signal.SignalExecute.ResetAnalyseCount();
+        GlobalData.LiveDataQueue.Clear();
+        GlobalData.LiveDataQueueAdded.Clear();
+
+        // ── Per-symbol state ────────────────────────────────────────────────────
+
+        foreach (var symbol in symbols)
+        {
+            symbol.LastPrice = null;
+            symbol.LastTradeDate = null;
+            symbol.LastTradeFetched = null;
+            symbol.LastTradeIdFetched = null;
+
+            // Per-interval transient state
+            foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
+            {
+                // Signals
+                symbolInterval.SignalList.Clear();
+
+                // Indicator hub (Skender incremental state + Lux + plugin extensions)
+                symbolInterval.IndicatorHub = null;
+                symbolInterval.IndicatorHubLastAdded = null;
+                symbolInterval.IndicatorHubAddCount = 0;
+
+                // Indicator data cache (CryptoData per candle)
+                symbolInterval.Data.Clear();
+
+                // Candle sync cursor
+                symbolInterval.LastCandleSynchronized = null;
+
+                // DLZ swing tracking
+                symbolInterval.DlzAdmin.Reset();
+
+                // SMC parameter cache (forces full rescan)
+                symbolInterval.SmcCachedAverageWindow = -1;
+                symbolInterval.SmcCachedBaseMaxCandles = -1;
+            }
+
+            // Trend data (Dow + BOS, symbol-level and per-interval, including ZigZag caches)
+            symbol.Data.ResetTrendDataAndCaches();
+
+            // Zone data (DLZ, FVG, SMC) and their incremental cursors
+            symbol.Data.ResetDlzData();
+            symbol.Data.ResetFvgData();
+            symbol.Data.ResetSmcData();
+            symbol.Data.ResetZoneCalculationCursors();
+            symbol.Data.ZonesLoaded = false;
+            symbol.Data.ZonesLoadedRunId = null;
+        }
+    }
+
+
+    /// <summary>
+    /// Verifies that transient state is actually clean after <see cref="ResetRunState"/>.
+    /// Throws if anything was missed, so a forgotten reset produces a loud crash instead of
+    /// silently corrupted results. This is the safety net that prevents a repeat of the
+    /// original non-determinism bug.
+    /// </summary>
+    private static void AssertCleanState(CryptoScanner.Core.Model.CryptoExchange exchange, List<CryptoSymbol> symbols)
+    {
+        if (!exchange.Data.PositionList.IsEmpty)
+            throw new InvalidOperationException(
+                $"PositionList not empty at run start: {exchange.Data.PositionList.Count} leftover position(s).");
+
+        if (exchange.Data.AssetList.Count > 0)
+            throw new InvalidOperationException(
+                $"AssetList not empty at run start: {exchange.Data.AssetList.Count} leftover asset(s).");
+
+        foreach (var symbol in symbols)
+        {
+            if (symbol.LastPrice != null)
+                throw new InvalidOperationException(
+                    $"{symbol.Name}: LastPrice not null at run start.");
+
+            if (symbol.LastTradeDate != null)
+                throw new InvalidOperationException(
+                    $"{symbol.Name}: LastTradeDate not null at run start.");
+
+            foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
+            {
+                if (symbolInterval.SignalList.Count > 0)
+                    throw new InvalidOperationException(
+                        $"{symbol.Name} {symbolInterval.Interval!.Name}: " +
+                        $"{symbolInterval.SignalList.Count} leftover signal(s).");
+
+                if (symbolInterval.IndicatorHub != null)
+                    throw new InvalidOperationException(
+                        $"{symbol.Name} {symbolInterval.Interval!.Name}: " +
+                        "IndicatorHub not null — stale incremental indicator state.");
+
+                if (symbolInterval.Data.Count > 0)
+                    throw new InvalidOperationException(
+                        $"{symbol.Name} {symbolInterval.Interval!.Name}: " +
+                        $"{symbolInterval.Data.Count} leftover indicator data entries.");
+
+                if (symbolInterval.DlzAdmin.LastSwingHigh != null || symbolInterval.DlzAdmin.LastSwingLow != null)
+                    throw new InvalidOperationException(
+                        $"{symbol.Name} {symbolInterval.Interval!.Name}: " +
+                        "DlzAdmin swing points not null.");
+            }
+        }
     }
 
 }

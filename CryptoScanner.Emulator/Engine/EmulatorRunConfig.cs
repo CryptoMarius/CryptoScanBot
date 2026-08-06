@@ -39,6 +39,15 @@ public class EmulatorRunConfig
     public List<string> SelectedAlgorithms { get; set; } = [];
 
     /// <summary>
+    /// Base interval for the replay loop (e.g. "1m", "5m"). The emulator steps through
+    /// candles of this resolution and synthesises higher timeframes from it. A larger base
+    /// interval runs proportionally faster (5m → 5× fewer iterations) at the cost of less
+    /// precise order-fill timing. Intervals below the base are unavailable during the run.
+    /// Default is "1m" (full precision, identical to the live scanner).
+    /// </summary>
+    public string BaseInterval { get; set; } = "1m";
+
+    /// <summary>
     /// Column header text of the last user-chosen sort in the Results grid.
     /// Null/empty means default sort (StartedAt descending).
     /// </summary>

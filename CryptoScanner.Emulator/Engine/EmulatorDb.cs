@@ -174,6 +174,7 @@ public static class EmulatorDb
     {
         int id = run.Id;
         int timeoutStatus = (int)CryptoPositionStatus.Timeout;
+        int cancelledStatus = (int)CryptoPositionStatus.Cancelled;
 
         // Because we delete the signals afterwards (db gets way to large)
         int count = database.Connection.ExecuteScalar<int>(
@@ -185,15 +186,18 @@ public static class EmulatorDb
 
         // Outcome split. Open = no CloseTime yet. Timeout = the entry order never filled (status
         // Timeout) — it never became a real trade, so it is excluded from Won/Lost and counted on its
-        // own. The remaining closed positions are won/lost on their realised Profit.
+        // own. Cancelled = replaced by a newer signal before filling. The remaining closed positions
+        // are won/lost on their realised Profit.
         run.PositionsOpen = database.Connection.ExecuteScalar<int>(
             "select count(*) from position where EmulatorRunId = @id and CloseTime is null", new { id });
         run.PositionsTimeout = database.Connection.ExecuteScalar<int>(
             "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and Status = @timeoutStatus", new { id, timeoutStatus });
+        run.PositionsCancelled = database.Connection.ExecuteScalar<int>(
+            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and Status = @cancelledStatus", new { id, cancelledStatus });
         run.PositionsWon = database.Connection.ExecuteScalar<int>(
-            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and Status != @timeoutStatus and CAST(Profit as REAL) > 0", new { id, timeoutStatus });
+            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and Status not in (@timeoutStatus, @cancelledStatus) and CAST(Profit as REAL) > 0", new { id, timeoutStatus, cancelledStatus });
         run.PositionsLost = database.Connection.ExecuteScalar<int>(
-            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and Status != @timeoutStatus and (Profit is null or CAST(Profit as REAL) <= 0)", new { id, timeoutStatus });
+            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and Status not in (@timeoutStatus, @cancelledStatus) and (Profit is null or CAST(Profit as REAL) <= 0)", new { id, timeoutStatus, cancelledStatus });
 
         double profit = database.Connection.ExecuteScalar<double?>(
             "select sum(CAST(Profit as REAL)) from position where EmulatorRunId = @id and CloseTime is not null", new { id }) ?? 0.0;

@@ -12,7 +12,7 @@
 
     <!-- Border around entire content -->
     <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
-    <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" RowSpacing="8">
+    <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto" RowSpacing="8">
 
         <!-- Label -->
         <Grid Grid.Row="0" ColumnDefinitions="90,*">
@@ -31,8 +31,16 @@
 								SelectedDateFormat="Custom" CustomDateFormatString="dd-MM-yyyy"/>
         </Grid>
 
+        <!-- Base interval -->
+        <Grid Grid.Row="2" ColumnDefinitions="90,*">
+            <TextBlock Grid.Column="0" Text="Base interval:" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" ItemsSource="{Binding BaseIntervals}"
+                      SelectedItem="{Binding SelectedBaseInterval}"
+                      ToolTip.Tip="Replay resolution: 1m = full precision, 5m = ~5× faster (less precise order-fill timing)"/>
+        </Grid>
+
         <!-- Symbols header + filter -->
-        <Grid Grid.Row="2" ColumnDefinitions="90,*,Auto,Auto">
+        <Grid Grid.Row="3" ColumnDefinitions="90,*,Auto,Auto">
             <TextBlock Grid.Column="0" Text="Symbols:" VerticalAlignment="Center"/>
             <TextBox Grid.Column="1" Text="{Binding SymbolFilter}" Watermark="filter…"/>
             <Button Grid.Column="2" Content="All" Margin="6,0,0,0"
@@ -43,7 +51,7 @@
                     ToolTip.Tip="Deselect every symbol currently shown by the filter"/>
         </Grid>
 
-        <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+        <Grid Grid.Row="4" ColumnDefinitions="*,Auto">
             <TextBlock Grid.Column="0" Text="{Binding SelectedSummary}" Foreground="Gray" FontSize="11"
                        VerticalAlignment="Center"/>
             <CheckBox Grid.Column="1" Content="Show only selected" IsChecked="{Binding ShowOnlySelected}"
@@ -52,7 +60,7 @@
         </Grid>
 
         <!-- Symbol checklist -->
-        <Border Grid.Row="4" BorderBrush="#808080" BorderThickness="1" CornerRadius="3">
+        <Border Grid.Row="5" BorderBrush="#808080" BorderThickness="1" CornerRadius="3">
             <DataGrid ItemsSource="{Binding FilteredSymbols}"
                       CanUserReorderColumns="True"
                       CanUserResizeColumns="True"
@@ -81,11 +89,11 @@
         </Border>
 
         <!-- Validation -->
-        <TextBlock Grid.Row="5" Text="{Binding ValidationMessage}" Foreground="#C0392B"
+        <TextBlock Grid.Row="6" Text="{Binding ValidationMessage}" Foreground="#C0392B"
                    TextWrapping="Wrap" FontSize="11"/>
 
         <!-- Buttons -->
-        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
             <Button Content="Cancel" Click="OnCancel" MinWidth="80"/>
             <Button Content="OK" Click="OnOk" MinWidth="80"
                     Background="#3A8D3A" Foreground="White"/>

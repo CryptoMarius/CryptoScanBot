@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 75;
+    public readonly static int CurrentDatabaseVersion = 76;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1507,6 +1507,21 @@ public class Migration
 
             try { database.Connection.Execute("alter table Signal add Strategy2 Text null", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table Position add Strategy2 Text null", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        //***********************************************************
+        // 06-08-2026 PositionsCancelled column: track cancelled (replaced) positions separately
+        // so they are excluded from won/lost statistics in emulator run results.
+        if (CurrentVersion > version.Version && version.Version == 75)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table EmulatorRun add PositionsCancelled INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

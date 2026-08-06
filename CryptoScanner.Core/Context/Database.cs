@@ -897,6 +897,7 @@ public class CryptoDatabase : IDisposable
                 "PositionsWon INTEGER NOT NULL DEFAULT 0," +
                 "PositionsLost INTEGER NOT NULL DEFAULT 0," +
                 "PositionsTimeout INTEGER NOT NULL DEFAULT 0," +
+                "PositionsCancelled INTEGER NOT NULL DEFAULT 0," +
                 "Profit TEXT NULL," +
                 "Invested TEXT NULL" +
             ")");

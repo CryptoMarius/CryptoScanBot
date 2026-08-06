@@ -193,18 +193,19 @@ public static class IndicatorWarmup
 
 
     /// <summary>
-    /// Loads the 1m replay candles for the given window from the DB. The returned list is keyed by
-    /// OpenTime so the TickRunner can look each minute up by candle-time. Only candles at or after
-    /// <paramref name="replayFrom"/> are included.
+    /// Loads replay candles at the given base interval for the given window from the DB. The
+    /// returned list is keyed by OpenTime so the TickRunner can look each step up by candle-time.
+    /// Only candles at or after <paramref name="replayFrom"/> are included.
     /// </summary>
     public static CryptoCandleList LoadReplayCandles(CryptoSymbol symbol,
-        CandleTime replayFrom, CandleTime replayTo)
+        CandleTime replayFrom, CandleTime replayTo, CryptoInterval? baseInterval = null)
     {
-        if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
-            throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName");
+        CryptoInterval interval = baseInterval
+            ?? GlobalData.IntervalListPeriodName.GetValueOrDefault("1m")
+            ?? throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName");
 
         CryptoCandleList replayCandles = [];
-        foreach (CryptoCandle candle in CandleSource.Load(symbol, interval1m, replayFrom, replayTo))
+        foreach (CryptoCandle candle in CandleSource.Load(symbol, interval, replayFrom, replayTo))
         {
             if (candle.OpenTime >= replayFrom)
                 replayCandles.Add(candle.OpenTime, candle);
