@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -38,6 +39,14 @@ public class ScannerSession : IScannerSession
     // Voor het geval de user ticker het laat afwaten controleren we de posities ook 1x per uur
     private readonly System.Timers.Timer TimerCheckPositions = new() { Enabled = false };
 
+    // The barometer is market breadth over the full symbol pool of a quote. It used to be
+    // recalculated from the Avalonia dashboard viewmodel, which meant any other host (Photino,
+    // Web) never got a barometer at all — and SignalExecute rejects every signal when
+    // PriceBarometer has no value ("Barometer x not calculated"). Recalculating it here makes
+    // it host independent. BarometerTools.ExecuteAsync() is guarded by its own Monitor.TryEnter,
+    // so an overlapping call from the dashboard simply returns instead of doing double work.
+    private readonly System.Timers.Timer TimerBarometer = new() { Enabled = false };
+
     // Periodiek de strategy performance herberekenen (adaptieve feedback)
     //private readonly System.Timers.Timer TimerCheckStrategyPerformance = new() { Enabled = false };
 
@@ -49,6 +58,7 @@ public class ScannerSession : IScannerSession
     public ScannerSession()
     {
         TimerCheckPositions.Elapsed += TimerCheckPositions_Tick;
+        TimerBarometer.Elapsed += TimerBarometer_Tick;
         TimerCheckDataStream.Elapsed += TimerCheckDataStream_Tick;
         TimerRestartStreams.Elapsed += TimerRestartStreams_Tick;
         TimerSoundHeartBeat.Elapsed += TimerHeartBeath_Tick;
@@ -220,6 +230,7 @@ public class ScannerSession : IScannerSession
             try
             {
                 TimerCheckPositions.Enabled = false;
+                TimerBarometer.Enabled = false;
                 TimerCheckDataStream.Enabled = false;
                 TimerRestartStreams.Enabled = false;
                 TimerSoundHeartBeat.Enabled = false;
@@ -284,6 +295,7 @@ public class ScannerSession : IScannerSession
                 if (GlobalData.ApplicationIsClosing)
                 {
                     TimerCheckPositions.Dispose();
+                    TimerBarometer.Dispose();
                     TimerCheckDataStream.Dispose();
                     TimerRestartStreams.Dispose();
                     TimerSoundHeartBeat.Dispose();
@@ -330,6 +342,11 @@ public class ScannerSession : IScannerSession
         // Controleer de posities (fix probleem user ticker)
         TimerCheckPositions.InitTimerInterval(1 * 60 * 60); // 1 hours
 
+        // The barometer produces one value per minute, so recalculating every 30 seconds keeps
+        // it at most one candle behind without doing meaningful extra work (the internal
+        // bookkeeping only iterates the candles that were not calculated yet).
+        TimerBarometer.InitTimerInterval(30);
+
         // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
 
@@ -349,6 +366,31 @@ public class ScannerSession : IScannerSession
     private async void TimerHeartBeath_Tick(object? sender, EventArgs? e)
     {
         GlobalData.PlaySomeMusic(GlobalData.Settings.General.SoundHeartBeat);
+    }
+
+
+    private void TimerBarometer_Tick(object? sender, EventArgs? e)
+    {
+        // The emulator replays a handful of symbols; a barometer over that subset is meaningless
+        // (BarometerHelper treats a missing barometer as neutral in emulator mode).
+        if (GlobalData.IsEmulatorMode || GlobalData.ApplicationIsClosing)
+            return;
+        if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Running)
+            return;
+
+        Task.Run(() =>
+        {
+            try
+            {
+                BarometerTools barometerTools = new();
+                barometerTools.ExecuteAsync();
+                GlobalData.SendMvvmMessage(new BarometerRefreshMessage());
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "TimerBarometer");
+            }
+        });
     }
 
 

@@ -1,27 +1,13 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 
 using CryptoScanner.Config.Views;
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Messages;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 
 namespace CryptoScanner.Commands;
 
 public class CommandShowConfiguration : CommandBase
 {
-
-    private static string GetQuoteRelatedSettings()
-    {
-        string activeQuoteData = "";
-        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
-        {
-            if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
-                activeQuoteData += "," + quoteData.Name;
-        }
-        return activeQuoteData;
-    }
-
     public override async void Execute(object? parameter)
     {
         if (parameter is not Window parentWindow)
@@ -32,9 +18,7 @@ public class CommandShowConfiguration : CommandBase
             ?? throw new InvalidOperationException("ScannerSession service not found");
 
         // Save some old stuff for reloading stuff
-        var previousExchange = GlobalData.ActiveExchange;
-        string previousActiveQuotes = GetQuoteRelatedSettings();
-        string previousExchangeName = GlobalData.Settings.General.ExchangeName;
+        var previous = ConfigurationApplier.TakeSnapshot();
 
         try
         {
@@ -50,85 +34,15 @@ public class CommandShowConfiguration : CommandBase
             if (result != true)
                 return;
 
-
-
-            GlobalData.SaveConfiguration();
-
-            // Don't save exchange immediately, lots of data still in memory
-            if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? newActiveExchange))
-                return;
-            if (newActiveExchange == null)
-                return;
-
-
-            // Did we choose another exchange (reload)
-            bool exchangeChanged = previousExchangeName != GlobalData.Settings.General.ExchangeName;
-            if (exchangeChanged)
-                GlobalData.AddTextToLogTab("Exchange was changed (reload)!");
-
-            // Did we changes quotes (reload)
-            string currentActiveQuotes = GetQuoteRelatedSettings();
-            bool quoteChanged = previousActiveQuotes != currentActiveQuotes;
-            if (quoteChanged)
-                GlobalData.AddTextToLogTab("Quotes have changed (reload)!");
-
-            if (exchangeChanged || quoteChanged)
-            {
-                GlobalData.AddTextToLogTab("");
-
-                //AsyncContext.Run(scannerSession.StopAsync);
-                await scannerSession.StopAsync();
-
-                // Stop the current exchange
-                if (previousExchange != null)
-                {
-                    if (exchangeChanged)
-                    {
-                        previousExchange?.Clear();
-                        previousExchange?.Data.Clear();
-                        // TODO: Delete symbols, assets, orders, trades, positions, parts, steps from database!
-                    }
-
-                    // Clear candle data
-                    if (quoteChanged)
-                    {
-                        foreach (var symbol in previousExchange!.SymbolListId.Values)
-                        {
-                            if (!symbol.QuoteData.FetchCandles || symbol.Status == 0)
-                            {
-                                symbol.ClearCandles();
-                                //GlobalData.AddTextToLogTab($"Cleared candles for {symbol.Name}");
-                            }
-                        }
-                    }
-                }
-
-                // Standaard timers e.d.
-                await scannerSession.ApplyConfigurationAsync(true);
-
-                // Schedule a reload of data
-                scannerSession.ScheduleRefresh();
-
-                // Notify subscribers that the active exchange has changed
-                if (exchangeChanged)
-                    GlobalData.SendMvvmMessage(new ExchangeSwitchedMessage());
-            }
-            else
-            {
-                await scannerSession.ApplyConfigurationAsync(false);
-                // Refresh symbol grid so filters like MinimalPrice take effect immediately
-                GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
-            }
-
-            // Reset cached strategy colors in the signal grid
-            GlobalData.SendMvvmMessage(new ConfigurationChangedMessage());
-
+            // Save + re-apply. The implementation moved to Core so the Blazor hosts run exactly
+            // the same sequence (they only saved the file before, which left SignalExecute and
+            // the plugin settings stale until a restart).
+            await ConfigurationApplier.SaveAndApplyAsync(scannerSession, previous);
         }
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
         }
-
     }
 }

@@ -23,6 +23,43 @@ public class BbmaChartOverlay : IChartOverlay
     public event Action? RequestRedraw;
 #pragma warning restore CS0067
 
+    public IReadOnlyList<ChartOverlaySeries> GetSeries(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
+    {
+        if (candles.Count == 0)
+            return [];
+
+        var quotes = candles.AsQuotes();
+        var wma05Low = quotes.Use(CandlePart.Low).ToWma(5).ToList();
+        var wma05High = quotes.Use(CandlePart.High).ToWma(5).ToList();
+        var wma10Low = quotes.Use(CandlePart.Low).ToWma(10).ToList();
+        var wma10High = quotes.Use(CandlePart.High).ToWma(10).ToList();
+        var ema50 = quotes.ToEma(50).ToList();
+
+        var s5High = new ChartOverlaySeries { Key = "bbmaWma5High", Label = "WMA5 high", Color = "#c62828" };
+        var s10High = new ChartOverlaySeries { Key = "bbmaWma10High", Label = "WMA10 high", Color = "#c62828", LineStyle = 2 };
+        var s5Low = new ChartOverlaySeries { Key = "bbmaWma5Low", Label = "WMA5 low", Color = "#2e7d32" };
+        var s10Low = new ChartOverlaySeries { Key = "bbmaWma10Low", Label = "WMA10 low", Color = "#2e7d32", LineStyle = 2 };
+        var sEma = new ChartOverlaySeries { Key = "bbmaEma50", Label = "EMA50", Color = "#ef6c00", LineWidth = 2 };
+
+        for (int i = 0; i < candles.Count; i++)
+        {
+            long time = CandleTime.AlignFromDateTime(candles[i].Date, interval.Duration).ToUnixSeconds();
+
+            if (i < wma05High.Count && wma05High[i].Wma.HasValue)
+                s5High.Points.Add(new ChartOverlayPoint { Time = time, Value = wma05High[i].Wma!.Value });
+            if (i < wma10High.Count && wma10High[i].Wma.HasValue)
+                s10High.Points.Add(new ChartOverlayPoint { Time = time, Value = wma10High[i].Wma!.Value });
+            if (i < wma05Low.Count && wma05Low[i].Wma.HasValue)
+                s5Low.Points.Add(new ChartOverlayPoint { Time = time, Value = wma05Low[i].Wma!.Value });
+            if (i < wma10Low.Count && wma10Low[i].Wma.HasValue)
+                s10Low.Points.Add(new ChartOverlayPoint { Time = time, Value = wma10Low[i].Wma!.Value });
+            if (i < ema50.Count && ema50[i].Ema.HasValue)
+                sEma.Points.Add(new ChartOverlayPoint { Time = time, Value = ema50[i].Ema!.Value });
+        }
+
+        return [s5High, s10High, s5Low, s10Low, sEma];
+    }
+
     public void Draw(object plotModel, CryptoSymbol symbol, CryptoInterval interval,
         List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
     {

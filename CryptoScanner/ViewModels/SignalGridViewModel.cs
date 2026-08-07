@@ -8,8 +8,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Settings.Strategy;
-using CryptoScanner.Core.Telegram;
+using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.ViewModels;
 
@@ -131,41 +130,9 @@ public partial class SignalGridViewModel : ObservableObject
 
     private void ReceivedCreatedSignals(CryptoSignal signal)
     {
-        GlobalData.CreatedSignalCount++;
-        string text = "Signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
-        GlobalData.AddTextToLogTab(text);
-
-        if (!signal.IsInvalid || (signal.IsInvalid && GlobalData.Settings.General.ShowInvalidSignals))
-        {
-            // Queue<T> is not thread-safe; enqueue under the same lock the consumer/clear use
-            // to avoid a corrupted internal array ("Source array was not long enough" during resize)
-            lock (GlobalData.SignalQueue)
-            {
-                GlobalData.SignalQueue.Enqueue(signal);
-            }
-        }
-
-        if (!signal.IsInvalid)
-        {
-            if (GlobalData.StrategiesSettings.TryGetValue(signal.Strategy, out (SettingsSignalStrategyBase strategySettings, DateTime lastSignalTime) x))
-            {
-                if (x.strategySettings.PlaySound && signal.CloseDate > x.lastSignalTime)
-                {
-                    // Stay silent for the next 20 seconds (for his strategy)
-                    x.lastSignalTime = signal.CloseDate.AddSeconds(20);
-                    GlobalData.StrategiesSettings[signal.Strategy] = x;
-
-                    string soundFile = signal.Side == CryptoTradeSide.Long ?
-                        x.strategySettings.SoundFileLong : x.strategySettings.SoundFileShort;
-                    GlobalData.PlaySomeMusic(soundFile, false);
-                    //GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString());
-                }
-                //else GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString() + " ignored");
-            }
-
-            if (GlobalData.Telegram.SendSignalsToTelegram)
-                ThreadTelegramBot.SendSignal(signal);
-        }
+        // Counter, log line, SignalQueue, per strategy sound and Telegram now live in the shared
+        // Core helper so the Photino/Web hosts get exactly the same behaviour.
+        SignalNotification.HandleCreatedSignal(signal);
     }
 
     //static CandleTime LastStatisticUpdate = CandleTime.MinValue;

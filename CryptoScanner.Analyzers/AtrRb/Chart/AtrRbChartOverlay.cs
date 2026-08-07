@@ -30,6 +30,39 @@ public class AtrRbChartOverlay : IChartOverlay
     //private static readonly OxyColor RibbonUpFill = OxyColor.FromArgb(38, 0, 255, 170);
     //private static readonly OxyColor RibbonDownFill = OxyColor.FromArgb(38, 255, 59, 59);
 
+    public IReadOnlyList<ChartOverlaySeries> GetSeries(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
+    {
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        if (symbolInterval.CandleList.Count == 0)
+            return [];
+
+        var allCandles = symbolInterval.CandleList.Values.ToList();
+
+        var atrrb = AtrRbPlugin.Settings;
+        IReadOnlyList<IQuote> quotes = allCandles.AsQuotes();
+        IReadOnlyList<EmaResult> emaResults = quotes.ToEma(atrrb.Length);
+        IReadOnlyList<AtrResult> atrResults = quotes.ToAtr(atrrb.Length);
+
+        var upper = new ChartOverlaySeries { Key = "atrRbUpper", Label = "ATR RB upper", Color = "#90a4ae" };
+        var lower = new ChartOverlaySeries { Key = "atrRbLower", Label = "ATR RB lower", Color = "#90a4ae" };
+        var basis = new ChartOverlaySeries { Key = "atrRbBasis", Label = "ATR RB basis", Color = "#42a5f5", LineWidth = 2, LineStyle = 2 };
+
+        for (int i = 0; i < allCandles.Count; i++)
+        {
+            double? basisValue = emaResults[i].Ema;
+            double? atrValue = atrResults[i].Atr;
+            if (!basisValue.HasValue || !atrValue.HasValue)
+                continue;
+
+            long time = CandleTime.AlignFromDateTime(allCandles[i].Date, interval.Duration).ToUnixSeconds();
+            upper.Points.Add(new ChartOverlayPoint { Time = time, Value = basisValue.Value + atrValue.Value * atrrb.OuterMult });
+            lower.Points.Add(new ChartOverlayPoint { Time = time, Value = basisValue.Value - atrValue.Value * atrrb.OuterMult });
+            basis.Points.Add(new ChartOverlayPoint { Time = time, Value = basisValue.Value });
+        }
+
+        return [upper, lower, basis];
+    }
+
     public void Draw(object plotModel, CryptoSymbol symbol, CryptoInterval interval,
                      List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
     {

@@ -102,6 +102,31 @@ public class VbsChartOverlay : IChartOverlay
         chart.Series.Add(basisLine);
     }
 
+    public IReadOnlyList<ChartOverlaySeries> GetSeries(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
+    {
+        if (candles.Count == 0)
+            return [];
+
+        var bands = VbsBandsHelper.ComputeBands(candles);
+
+        var upper = new ChartOverlaySeries { Key = "vbsUpper", Label = "VBS upper", Color = "#009688", LineWidth = 2 };
+        var lower = new ChartOverlaySeries { Key = "vbsLower", Label = "VBS lower", Color = "#009688", LineWidth = 2 };
+        var basis = new ChartOverlaySeries { Key = "vbsBasis", Label = "VBS basis", Color = "#9e9e9e", LineStyle = 2 };
+
+        for (int i = 0; i < candles.Count; i++)
+        {
+            if (!bands[i].HasValue)
+                continue;
+
+            long time = CandleTime.AlignFromDateTime(candles[i].Date, interval.Duration).ToUnixSeconds();
+            upper.Points.Add(new ChartOverlayPoint { Time = time, Value = bands[i].Upper });
+            lower.Points.Add(new ChartOverlayPoint { Time = time, Value = bands[i].Lower });
+            basis.Points.Add(new ChartOverlayPoint { Time = time, Value = bands[i].Basis });
+        }
+
+        return [upper, lower, basis];
+    }
+
     private static void AddLabel(PlotModel chart, double x, double y, double slPct, double? tpPct, VerticalAlignment vAlign, string group)
     {
         // Extra gap so the label clears the wick (a bit more than before).

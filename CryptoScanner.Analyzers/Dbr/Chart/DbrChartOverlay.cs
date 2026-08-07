@@ -29,6 +29,31 @@ public class DbrChartOverlay : IChartOverlay
     // Pine transparency is "percent transparent", so alpha = 255 * (100 - transparency) / 100.
     private static readonly OxyColor OuterBandColor = OxyColor.FromArgb(178, 0xb2, 0xb5, 0xbe); // #b2b5be, 30% transparent
 
+    public IReadOnlyList<ChartOverlaySeries> GetSeries(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
+    {
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        if (symbolInterval.CandleList.Count == 0)
+            return [];
+
+        var allCandles = symbolInterval.CandleList.Values.ToList();
+        DbrBandValue[] bands = DbrBandsHelper.ComputeBands(allCandles);
+
+        var upper = new ChartOverlaySeries { Key = "dbrUpper", Label = "DBR upper", Color = "#b2b5be", LineWidth = 2 };
+        var lower = new ChartOverlaySeries { Key = "dbrLower", Label = "DBR lower", Color = "#b2b5be", LineWidth = 2 };
+
+        for (int i = 0; i < allCandles.Count; i++)
+        {
+            if (!bands[i].HasBands)
+                continue;
+
+            long time = CandleTime.AlignFromDateTime(allCandles[i].Date, interval.Duration).ToUnixSeconds();
+            upper.Points.Add(new ChartOverlayPoint { Time = time, Value = bands[i].Upper });
+            lower.Points.Add(new ChartOverlayPoint { Time = time, Value = bands[i].Lower });
+        }
+
+        return [upper, lower];
+    }
+
     public void Draw(object plotModel, CryptoSymbol symbol, CryptoInterval interval,
                      List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
     {

@@ -479,39 +479,17 @@ public partial class ChartWindowViewModel : ObservableObject
         DisplayOptions.SaveToSession(Session);
     }
 
+    // The file handling moved to Core (ZoneSessionStore) so the Blazor chart page can persist
+    // exactly the same session file. Behaviour here is unchanged.
     public static ZoneSession LoadSessionSettings()
     {
-
-        try
-        {
-            // load previous Session settings
-            string fileName = Path.Combine(GlobalData.AppDataFolder, $"CryptoScanBot-chart.json");
-            if (File.Exists(fileName))
-            {
-                string text = File.ReadAllText(fileName);
-                var session = JsonSerializer.Deserialize<ZoneSession>(text, JsonTools.DeSerializerOptions);
-                if (session != null)
-                    return session;
-            }
-
-        }
-        catch (Exception error)
-        {
-            // ignore and fallback on new config (not that important)
-            ScannerLog.Logger.Error(error);
-        }
-        return new();
+        return ZoneSessionStore.Load();
     }
 
     public void SaveSessionSettings()
     {
         PickupUserInput();
-
-        // save current session settings
-        Directory.CreateDirectory(GlobalData.AppDataFolder);
-        string fileName = Path.Combine(GlobalData.AppDataFolder, $"CryptoScanBot-chart.json");
-        string text = JsonSerializer.Serialize(Session, JsonTools.JsonSerializerIndented);
-        File.WriteAllText(fileName, text);
+        ZoneSessionStore.Save(Session);
     }
 
 
