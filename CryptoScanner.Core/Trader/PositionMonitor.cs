@@ -1773,14 +1773,13 @@ public class PositionMonitor : IDisposable
             // handling / position-finished check so we can see where the dominant pipeline cost sits.
             long profPrepareStart = Stopwatch.GetTimestamp();
 
+            // Alway's calculate the indicators, queue the fvg and dlz zones etc
+            SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
+            long profExecuteStart = Stopwatch.GetTimestamp();
+
             // Only skip signal generation for filled positions (status >= Trading).
             // Waiting (unfilled) positions allow signals so a newer signal can replace them.
             bool skipSignals = hasPosition && existingPosition!.Status >= CryptoPositionStatus.Trading;
-
-            // Calculate all the indicators, queue the fvg and dlz zones etc
-            if (!skipSignals)
-                SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
-            long profExecuteStart = Stopwatch.GetTimestamp();
 
             // Calculate signals and touch of the dlz and fvg zones
             if (!skipSignals)
