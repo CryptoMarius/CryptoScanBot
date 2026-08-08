@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Indicators;
@@ -48,9 +48,13 @@ public static class IndicatorEngine
 
     /// <summary>
     /// Ensures <see cref="CryptoSymbolInterval.Data"/> holds the indicator data for
-    /// <paramref name="candleOpenTime"/>. Filled either incrementally via the per-interval QuoteHub
-    /// (UseNewIndicatorHub) or via the per-candle batch — both produce identical CryptoData. Returns false
-    /// when there is not enough history yet.
+    /// <paramref name="candleOpenTime"/>, filled incrementally via the per-interval QuoteHub.
+    /// Returns false when there is not enough history yet.
+    /// <para>
+    /// <paramref name="calculateCandles"/> asks for a bigger history window than the default 260
+    /// (the chart overlays use it so slow indicators are warmed up for every displayed bar). It
+    /// forces a full warm-up, because the incremental path only ever appends a single candle.
+    /// </para>
     /// </summary>
     public static bool PrepareIndicators(CryptoSymbol symbol, CryptoInterval interval,
         CandleTime candleOpenTime, int calculateCandles = -1)
@@ -59,28 +63,28 @@ public static class IndicatorEngine
         if (symbolInterval.Data.ContainsKey(candleOpenTime))
             return true;
 
-        if (GlobalData.Settings.Signal.UseNewIndicatorHub)
-            return PrepareViaHub(symbol, interval, symbolInterval, candleOpenTime);
-        return PrepareViaBatch(symbol, interval, symbolInterval, candleOpenTime, calculateCandles);
+        return PrepareViaHub(symbol, interval, symbolInterval, candleOpenTime, calculateCandles);
     }
 
 
     /// <summary>
-    /// Incremental path: feed candles into the per-interval <see cref="IntervalIndicatorHub"/>. A full
-    /// warm-up (the whole CollectCandles window) runs on first use or when the hub fell out of sync (a gap);
-    /// otherwise only the single new candle is fed. The latest CryptoData lands in Data[candleOpenTime].
+    /// Feed candles into the per-interval <see cref="IntervalIndicatorHub"/>. A full warm-up (the whole
+    /// CollectCandles window) runs on first use, when the hub fell out of sync (a gap), or when an
+    /// explicit larger window was requested; otherwise only the single new candle is fed. The latest
+    /// CryptoData lands in Data[candleOpenTime].
     /// </summary>
     private static bool PrepareViaHub(CryptoSymbol symbol, CryptoInterval interval,
-        CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime)
+        CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime, int calculateCandles = -1)
     {
         bool warmup = symbolInterval.IndicatorHub == null
             || symbolInterval.IndicatorHubLastAdded == null
-            || symbolInterval.IndicatorHubLastAdded.Value + interval.Duration != candleOpenTime;
+            || symbolInterval.IndicatorHubLastAdded.Value + interval.Duration != candleOpenTime
+            || calculateCandles > 0;
 
         if (warmup)
         {
             long profCollectStart = Stopwatch.GetTimestamp();
-            List<IQuote>? history = CollectCandles(symbol, interval, candleOpenTime, out _);
+            List<IQuote>? history = CollectCandles(symbol, interval, candleOpenTime, out _, calculateCandles);
             PipelineProfiler.RecordPrepCollect(Stopwatch.GetTimestamp() - profCollectStart);
             if (history == null)
                 return false;
@@ -212,256 +216,18 @@ public static class IndicatorEngine
 
 
     /// <summary>
-    /// Calculate all the indicators, we want to have data for the last 60 candles
-    /// </summary>
-    /// <summary>
-    /// Batch path: collect the candle window and (re)compute every indicator with the Skender batch calls,
-    /// writing one CryptoData per candle into <paramref name="symbolInterval"/>.Data. Field-for-field
-    /// identical to the hub path (UseNewIndicatorHub).
-    /// </summary>
-    private static bool PrepareViaBatch(CryptoSymbol symbol, CryptoInterval interval,
-        CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime, int calculateCandles = -1)
-    {
-        long profCollectStart = Stopwatch.GetTimestamp();
-        List<IQuote>? quotes = CollectCandles(symbol, interval, candleOpenTime, out _, calculateCandles);
-        PipelineProfiler.RecordPrepCollect(Stopwatch.GetTimestamp() - profCollectStart);
-        if (quotes == null)
-            return false;
-
-        var candle = quotes[^1];
-
-        // Profiling: start of the Skender batch-calculation block (see PipelineProfiler).
-        long profSkenderStart = Stopwatch.GetTimestamp();
-
-        //IReadOnlyList<TemaResult> temaList = quotes.ToTema(9);
-        //IReadOnlyList<EmaResult> emaList9 = quotes.ToEma(9);
-#if EXTRASTRATEGIES
-        IReadOnlyList<EmaResult> emaList5 = quotes.ToEma(5);
-        //IReadOnlyList<EmaResult> emaList8 = quotes.ToEma(8);
-        IReadOnlyList<EmaResult> emaList26 = quotes.ToEma(26);
-        //IReadOnlyList<EmaResult> emaList100 = quotes.ToEma(100);
-        //IReadOnlyList<EmaResult> emaList200 = quotes.ToEma(200);
-#endif
-
-        // EMA 20 / 50 — required by the trend filter and several strategies (was conditional, now standard).
-        IReadOnlyList<EmaResult> emaList20 = quotes.ToEma(20);
-
-#if EXTRASTRATEGIESSLOPEEMA
-        IReadOnlyList<SlopeResult> slopeEma20List = emaList20.GetSlope(SlopeCount);
-        IReadOnlyList<SlopeResult> slopeEma50List = emaList50.GetSlope(SlopeCount);
-#endif
-
-        // Linear Weighted Moving Average — used by BBMA experiments.
-        // https://dotnet.stockindicators.dev/indicators/Wma/#content
-        IReadOnlyList<EmaResult> emaList50 = quotes.ToEma(50);
-        IReadOnlyList<WmaResult> wmaList05Low = quotes.Use(CandlePart.Low).ToWma(05);
-        IReadOnlyList<WmaResult> wmaList05High = quotes.Use(CandlePart.High).ToWma(05);
-        IReadOnlyList<WmaResult> wmaList10Low = quotes.Use(CandlePart.Low).ToWma(10);
-        IReadOnlyList<WmaResult> wmaList10High = quotes.Use(CandlePart.High).ToWma(10);
-        // ATR(14) — BBMA Omni: RejectedEMA50 big-body filter, MHV gap sizing.
-        IReadOnlyList<AtrResult> atrList14 = quotes.ToAtr(14);
-
-        //IReadOnlyList<SmaResult> smaList08 = quotes.GetSma(08);
-        IReadOnlyList<SmaResult> smaList20 = quotes.ToSma(20);
-        IReadOnlyList<SmaResult> smaList50 = quotes.ToSma(50);
-        IReadOnlyList<SmaResult> smaList100 = quotes.ToSma(100);
-        IReadOnlyList<SmaResult> smaList200 = quotes.ToSma(200);
-
-        //// GetSlope looks buggy? (specially with sma(200) and count <> 200)
-        //List<SlopeResult>? slopeSma20List = null;
-        //List<SlopeResult>? slopeSma50List = null;
-        //List<SlopeResult>? slopeSma100List = null;
-        //List<SlopeResult>? slopeSma200List = null;
-        //try
-        //{
-        //    slopeSma20List = (IReadOnlyList<SlopeResult>)smaList20.GetSlope(SlopeCount);
-        //    slopeSma50List = (IReadOnlyList<SlopeResult>)smaList50.GetSlope(SlopeCount);
-        //    slopeSma100List = (IReadOnlyList<SlopeResult>)smaList100.GetSlope(SlopeCount);
-        //    slopeSma200List = (IReadOnlyList<SlopeResult>)smaList200.GetSlope(SlopeCount);
-        //}
-        //catch (Exception)
-        //{
-        //    //ignore
-        //}
-
-
-        //IReadOnlyList<WmaResult> wmaList30 = quotes.GetWma(30);
-
-        // Keltner Channel: EMA20 centerline +/- ATR(10) * 2 (Skender defaults). Used by
-        // the TTM Squeeze family (BB inside KC = squeeze). Matches the chart drawer.
-        //IReadOnlyList<KeltnerResult> keltnerList = quotes.GetKeltner();
-
-        //IReadOnlyList<AtrResult> atrList = Indicator.GetAtr(History);
-        IReadOnlyList<RsiResult> rsiList = quotes.ToRsi(
-            lookbackPeriods: GlobalData.Settings.General.SettingsRsi.Length);
-        IReadOnlyList<MacdResult> macdList = quotes.ToMacd();
-
-        //IReadOnlyList<SlopeResult> slopeMacdList = macdList.GetSlope(SlopeCount);
-        //IReadOnlyList<VwapResult> vwapList = History.GetVwap();
-        //#if EXTRASTRATEGIES
-        //        IReadOnlyList<MacdResult> macdLtList = quotes.GetMacd(34, 144);
-        //#endif
-
-        //IReadOnlyList<SlopeResult> slopeRsiList = rsiList.GetSlope(SlopeCount);
-
-        // (volgens de telegram groepen op 14,3,1 ipv de standaard 14,3,3)
-        IReadOnlyList<StochResult> stochList = quotes.ToStoch(
-            lookbackPeriods: GlobalData.Settings.General.SettingsStoch.Length,
-            signalPeriods: GlobalData.Settings.General.SettingsStoch.SmoothingD,
-            smoothPeriods: GlobalData.Settings.General.SettingsStoch.SmoothingK);
-        //14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
-        //IReadOnlyList<SlopeResult> slopeStochList = stochList.GetSlope(SlopeCount);
-
-        IReadOnlyList<ParabolicSarResult> psarList = quotes.ToParabolicSar();
-
-        // dan kan nu ook met de stdDev * setting.... Maar komt het wel overeen?
-        IReadOnlyList<BollingerBandsResult> bollingerBandsList = quotes.ToBollingerBands(
-            lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
-            standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
-
-        //AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-        //AccountSymbolIntervalData symbolIntervalData = symbolData.GetSymbolData(interval.IntervalPeriod);
-
-        // Profiling: end of the Skender batch block, start of the per-candle fill loop.
-        long profFillStart = Stopwatch.GetTimestamp();
-
-        // Fill the last 60 candles with the indicator data
-        int iteration = 0;
-        for (int index = quotes.Count - 1; index >= 0; index--)
-        {
-            // Maximaal 60 records aanvullen
-            iteration++;
-            candle = quotes[index];
-
-            CryptoData candleData = new();
-            try
-            {
-                // EMA's
-#if EXTRASTRATEGIES
-                //candleData.Ema5 = emaList5[index].Ema;
-                //candleData.Ema8 = emaList8[index].Ema;
-                //candleData.Ema20 = emaList20[index].Ema;
-                candleData.Ema26 = emaList26[index].Ema;
-                //candleData.Ema100 = emaList100[index].Ema;
-                //candleData.Ema200 = emaList200[index].Ema;
-#endif
-#if EXTRASTRATEGIESSLOPEEMA
-                candleData.SlopeEma20 = slopeEma20List[index].Slope;
-                candleData.SlopeEma50 = slopeEma50List[index].Slope;
-#endif
-
-
-                // SMA's
-                //candleData.Sma8 = smaList8[index].Sma;
-                candleData.Sma20 = bollingerBandsList[index].Sma;
-                candleData.Sma50 = smaList50[index].Sma;
-                candleData.Sma100 = smaList100[index].Sma;
-                candleData.Sma200 = smaList200[index].Sma;
-
-                //if (slopeSma20List != null && index < slopeSma20List.Count)
-                //    candleData.SlopeSma20 = slopeSma20List[index].Slope;
-                //if (slopeSma50List != null && index < slopeSma50List.Count)
-                //    candleData.SlopeSma50 = slopeSma50List[index].Slope;
-                //if (slopeSma100List != null && index < slopeSma100List.Count)
-                //    candleData.SlopeSma100 = slopeSma100List[index].Slope;
-                //if (slopeSma200List != null && index < slopeSma200List.Count)
-                //    candleData.SlopeSma200 = slopeSma200List[index].Slope;
-
-                candleData.Ema50 = emaList50[index].Ema;
-                candleData.Wma05Low = wmaList05Low[index].Wma;
-                candleData.Wma05High = wmaList05High[index].Wma;
-                candleData.Wma10Low = wmaList10Low[index].Wma;
-                candleData.Wma10High = wmaList10High[index].Wma;
-                candleData.Atr14 = atrList14[index].Atr;
-
-                //candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
-                //candleData.KeltnerCenterLine = keltnerList[index].Centerline;
-                //candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
-
-
-                candleData.Rsi = rsiList[index].Rsi;
-                //if (slopeRsiList != null && index < slopeRsiList.Count)
-                //    candleData.SlopeRsi = slopeRsiList[index].Slope;
-
-                candleData.MacdValue = macdList[index].Macd;
-                candleData.MacdSignal = macdList[index].Signal;
-                candleData.MacdHistogram = macdList[index].Histogram;
-
-                //#if DEBUG
-                //                // Test
-                //                //candleData.Ema9 = emaList9[index].Ema;
-                //                //candleData.Tema = temaList[index].Tema;
-                //                //candleData.Wma30 = wmaList30[index].Wma;
-                //                //candleData.Vwap = vwapList[index].Vwap;
-                //#endif
-
-                //#if EXTRASTRATEGIES
-                //                //candleData.MacdLtValue = macdLtList[index].Macd;
-                //                //candleData.MacdLtSignal = macdLtList[index].Signal;
-                //                candleData.MacdTestHistogram = macdLtList[index].Histogram;
-                //#endif
-
-                candleData.StochSignal = stochList[index].Signal;
-                candleData.StochOscillator = stochList[index].Oscillator;
-                //candleData.SlopeStoch = slopeStochList[index].Slope;
-
-                double? BollingerBandsLowerBand = bollingerBandsList[index].LowerBand;
-                double? BollingerBandsUpperBand = bollingerBandsList[index].UpperBand;
-                candleData.BollingerBandsDeviation = 0.5 * (BollingerBandsUpperBand - BollingerBandsLowerBand);
-                candleData.BollingerBandsPercentage = 100 * (BollingerBandsUpperBand / BollingerBandsLowerBand - 1);
-
-                if (psarList[index].Sar != null)
-                    candleData.PSar = psarList[index].Sar;
-
-                if (candle is CryptoCandle x)
-                    lock (symbolInterval.Data)
-                        symbolInterval.Data[x.OpenTime] = candleData;
-            }
-            catch (Exception error)
-            {
-                // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-                ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab("");
-                GlobalData.AddTextToLogTab("error indicators");
-                GlobalData.AddTextToLogTab(error.ToString());
-                GlobalData.AddTextToLogTab("");
-                //GlobalData.AddTextToLogTab(History.ToString());
-                throw;
-            }
-
-        }
-
-
-        // Profiling: end of the fill loop, start of the Lux calculation.
-        long profLuxStart = Stopwatch.GetTimestamp();
-
-        // Lux indicator (non-Skender) for the latest candle, same as before.
-        ApplyLux(symbol, symbolInterval, candleOpenTime);
-
-        // Profiling: attribute the three sub-buckets of this method to the profiler (thread-safe).
-        PipelineProfiler.RecordIndicatorPhases(
-            skender: profFillStart - profSkenderStart,
-            fill: profLuxStart - profFillStart,
-            lux: Stopwatch.GetTimestamp() - profLuxStart);
-
-        return true;
-    }
-
-
-    /// <summary>
-    /// Applies the Lux 5m value to the CryptoData of the latest candle. When using the hub path and
-    /// the interval IS 5m, BuildCurrent() already set Lux5mValue incrementally — nothing to do.
-    /// For non-5m intervals (or the batch path), reads the value from the 5m Data dictionary.
-    /// Falls back to the full LuxIndicator.Calculate only when the 5m hub value is unavailable.
+    /// Applies the Lux 5m value to the CryptoData of the latest candle. When the interval IS 5m,
+    /// BuildCurrent() already set Lux5mValue incrementally — nothing to do. For the other intervals
+    /// it reads the value from the 5m Data dictionary, falling back to the full
+    /// LuxIndicator.Calculate only when the 5m value is unavailable.
     /// </summary>
     private static void ApplyLux(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime)
     {
         if (!symbolInterval.Data.TryGetValue(candleOpenTime, out CryptoData? data))
             return;
 
-        // 5m hub path: BuildCurrent() already set Lux5mValue incrementally.
+        // 5m: BuildCurrent() already set Lux5mValue incrementally.
         if (symbolInterval.IntervalPeriod == CryptoIntervalPeriod.interval5m
-            && GlobalData.Settings.Signal.UseNewIndicatorHub
             && data.Lux5mValue.HasValue)
             return;
 

@@ -24,8 +24,11 @@ public class SignalPrepare
     // advantage 3: prepare the fvg and dlz for other intervals than the signal interval (1h vs 1m)
     private static Dictionary<SignalPrepareKind, SortedList<string, CryptoInterval>> Preparing { get; set; } = [];
 
-    public static bool ZoneDlzActive() => Preparing.ContainsKey(SignalPrepareKind.Dlz);
-    public static bool ZoneFvgActive() => Preparing.ContainsKey(SignalPrepareKind.Fvg);
+    //public static bool ZoneDlzActive() 
+    //    => Preparing.ContainsKey(SignalPrepareKind.Dlz);
+
+    public static bool ZoneFvgActive() 
+        => Preparing.ContainsKey(SignalPrepareKind.Fvg);
 
     /// <summary>True when the given interval is in the effective DLZ prep bucket
     /// (settings + strategy-driven defaults).</summary>
@@ -42,10 +45,10 @@ public class SignalPrepare
         {
             if (!plugin.RequiresDlzZones)
                 continue;
-            foreach (var strat in plugin.Strategies)
+            foreach (var strategy in plugin.Strategies)
             {
-                if (GlobalData.Settings.Signal.Long.Strategy.Contains(strat.Name) ||
-                    GlobalData.Settings.Signal.Short.Strategy.Contains(strat.Name))
+                if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategy.Name) ||
+                    GlobalData.Settings.Signal.Short.Strategy.Contains(strategy.Name))
                     return true;
             }
         }
