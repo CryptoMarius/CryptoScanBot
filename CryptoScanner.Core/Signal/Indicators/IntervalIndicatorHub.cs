@@ -14,7 +14,7 @@ namespace CryptoScanner.Core.Signal.Indicators;
 /// 9251 candles (0 mismatches) and ~10x cheaper for the per-candle pattern.
 ///
 /// The indicators and their parameters mirror IndicatorData.CalculateIndicators exactly (so hub and batch
-/// stay interchangeable behind the UseNewIndicatorHub setting). One instance lives on CryptoSymbolInterval and
+/// were interchangeable when the batch path still existed). One instance lives on CryptoSymbolInterval and
 /// is fed in ascending candle-open-time order; CryptoSymbolInterval.IndicatorHubLastAdded tracks the last
 /// candle (null = warm-up still needed).
 /// </summary>
