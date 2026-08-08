@@ -89,7 +89,6 @@ public class BbmaSignalSimulationTests : TestBase
         LoadTestData(string symbolName)
     {
         InitTestSession();
-        GlobalData.Settings.Signal.UseNewIndicatorHub = true;
         using CryptoDatabase database = new();
         database.Open();
 
