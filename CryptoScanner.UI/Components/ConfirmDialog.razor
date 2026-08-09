@@ -1,0 +1,38 @@
+@if (Visible)
+{
+    <div class="modal-overlay" @onclick="OnCancel" @oncontextmenu:preventDefault="true">
+    </div>
+    <div class="modal-dialog confirm-dialog" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <span class="modal-title">@Title</span>
+        </div>
+        <div class="modal-body">
+            <p>@Message</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" @onclick="OnConfirm">Yes</button>
+            <button class="btn btn-secondary" @onclick="OnCancel">No</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public string Title { get; set; } = "Confirm";
+    [Parameter] public string Message { get; set; } = "Are you sure?";
+    [Parameter] public EventCallback OnConfirmed { get; set; }
+
+    private async Task OnConfirm()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+        await OnConfirmed.InvokeAsync();
+    }
+
+    private async Task OnCancel()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+}

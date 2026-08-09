@@ -1,0 +1,421 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Enums
+@using CryptoScanner.Core.Model
+@using CryptoScanner.Core.Settings
+@using CryptoScanner.UI.Components
+@using CryptoScanner.UI.Models
+
+<div class="settings-wrap" style="flex-direction: column;">
+
+    <div class="tab-bar settings-tab-bar">
+        <button class="tab @(_subTab == 0 ? "active" : "")" @onclick="() => _subTab = 0">Trader common</button>
+        <button class="tab @(_subTab == 1 ? "active" : "")" @onclick="() => _subTab = 1">Trader long</button>
+        <button class="tab @(_subTab == 2 ? "active" : "")" @onclick="() => _subTab = 2">Trader short</button>
+    </div>
+
+    @if (_subTab != 0)
+    {
+        <TextualSideEditor Side="@(_subTab == 1 ? _longSide : _shortSide)"
+                           SideLabel="@(_subTab == 1 ? "Long" : "Short")"
+                           OtherSide="@(_subTab == 1 ? _shortSide : _longSide)"
+                           OtherSideLabel="@(_subTab == 1 ? "Short" : "Long")"
+                           CrossLongSide="CrossLongSide"
+                           CrossShortSide="CrossShortSide"
+                           CrossLabel="Analyzer" />
+    }
+    else
+    {
+<div class="settings-wrap">
+
+    @* Order, captions and grouping of TraderMiscSettingsView: the slot limits are a groupbox INSIDE
+       Common, not one of their own. "Trading active" is not on the Avalonia view at all (it is the
+       Trader active item in the menu), so it is not rendered here either — the value keeps loading
+       and saving. *@
+    <!-- Common -->
+    <div class="settings-group">
+        <div class="settings-group-header">Common</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Trading</label>
+                <select class="input-select" @bind="_tradeVia">
+                    @foreach (var val in Enum.GetValues<CryptoTradeVia>())
+                    {
+                        <option value="@val">@val</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="_soundTradeNotification" />
+                <label>Sound trade notification</label>
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="_disableNewPositions" />
+                <label>Disable new positions</label>
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="_logCanceledOrders" />
+                <label>Log cancelled orders</label>
+            </div>
+            <div class="field">
+                <label>Cool down time (m)</label>
+                <input type="number" class="input-number" min="0" @bind="_buyCooldown" />
+            </div>
+
+            <div class="settings-group settings-group-nested">
+                <div class="settings-group-header">Slot limits</div>
+                <div class="settings-group-body">
+                    <div class="field">
+                        <label>Long</label>
+                        <input type="number" class="input-number" min="0" @bind="_slotsLong" />
+                    </div>
+                    <div class="field">
+                        <label>Short</label>
+                        <input type="number" class="input-number" min="0" @bind="_slotsShort" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entry -->
+    <div class="settings-group">
+        <div class="settings-group-header">Entry</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Order Type</label>
+                <select class="input-select" @bind="_entryOrderType">
+                    @foreach (var val in Enum.GetValues<CryptoOrderType>())
+                    {
+                        <option value="@val">@val</option>
+                    }
+                </select>
+            </div>
+            @* Avalonia has "Remove time:" with the unit behind the field, and no pullback at all. *@
+            <div class="field">
+                <label>Remove time</label>
+                <span class="field-control">
+                    <input type="number" class="input-number" min="0" @bind="_entryRemoveTime" />
+                    <span class="field-unit">candles</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- DCA -->
+    <div class="settings-group">
+        <div class="settings-group-header">DCA</div>
+        <div class="settings-group-body">
+            @* Avalonia has the order type, then the two buttons, then the DCA entries. No pullback
+               and no buy cooldown — that last one lives in Common as "Cool down time (m)". *@
+            <div class="field">
+                <label>Order Type</label>
+                <select class="input-select" @bind="_dcaOrderType">
+                    @foreach (var val in Enum.GetValues<CryptoOrderType>())
+                    {
+                        <option value="@val">@val</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <button class="btn btn-secondary" @onclick="AddDca">Add DCA</button>
+                <button class="btn btn-secondary" @onclick="RemoveDca">Remove DCA</button>
+            </div>
+
+            @for (int i = 0; i < _dcaList.Count; i++)
+            {
+                int index = i;
+                <div class="settings-subgroup-header">DCA @(index + 1)</div>
+                <div class="field">
+                    <label>Percentage</label>
+                    <input type="number" class="input-number" step="0.1"
+                           value="@_dcaList[index].Percentage"
+                           @onchange="e => _dcaList[index].Percentage = ParseDecimal(e.Value)" />
+                </div>
+                <div class="field">
+                    <label>Factor %</label>
+                    <input type="number" class="input-number" step="1"
+                           value="@_dcaList[index].Factor"
+                           @onchange="e => _dcaList[index].Factor = ParseDecimal(e.Value)" />
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Take Profit -->
+    <div class="settings-group">
+        <div class="settings-group-header">Take Profit</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>TP order type</label>
+                <select class="input-select" @bind="_tpOrderType">
+                    @foreach (var val in Enum.GetValues<CryptoOrderType>())
+                    {
+                        <option value="@val">@val</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>TP strategy</label>
+                <select class="input-select" @bind="_tpStrategy">
+                    @foreach (var val in Enum.GetValues<CryptoTakeProfitStrategy>())
+                    {
+                        <option value="@val">@val</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="_addDustToTp" />
+                <label>Add dust to TP</label>
+            </div>
+
+            @for (int i = 0; i < _tpList.Count; i++)
+            {
+                int index = i;
+                <div class="settings-subgroup-header">Take profit @(index + 1)</div>
+                <div class="field">
+                    <label>Profit %</label>
+                    <input type="number" class="input-number" step="0.1"
+                           value="@_tpList[index].Percentage"
+                           @onchange="e => _tpList[index].Percentage = ParseDecimal(e.Value)" />
+                </div>
+                <div class="field">
+                    <label>Quantity %</label>
+                    <input type="number" class="input-number" step="1"
+                           value="@_tpList[index].Factor"
+                           @onchange="e => _tpList[index].Factor = ParseDecimal(e.Value)" />
+                </div>
+            }
+            <div class="field">
+                <button class="btn btn-secondary" @onclick="AddTp">Add take profit level</button>
+                <button class="btn btn-secondary" @onclick="RemoveTp">Remove take profit level</button>
+            </div>
+        </div>
+    </div>
+
+    @* Captions of TraderStopLossView. "Move SL to break-even" is called "Profit lock" there, and
+       its percentage only appears while the checkbox is on. *@
+    <!-- Stop loss -->
+    <div class="settings-group">
+        <div class="settings-group-header">Stop loss</div>
+        <div class="settings-group-body">
+            <div class="field" title="Distance from the entry/DCA anchor at which the stop-limit order triggers.">
+                <label>Stop loss trigger %</label>
+                <span class="field-control">
+                    <input type="number" class="input-number" step="0.1" min="0" @bind="_stopLoss" />
+                    <span class="field-unit">%</span>
+                </span>
+            </div>
+            <div class="field" title="Worst acceptable fill price, further from entry than the trigger. Must be larger than the trigger %; auto-corrected if not.">
+                <label>Stop loss worst fill %</label>
+                <span class="field-control">
+                    <input type="number" class="input-number" step="0.1" min="0" @bind="_stopLossLimit" />
+                    <span class="field-unit">%</span>
+                </span>
+            </div>
+            <div class="field" title="Once the position reaches the profit % below, the SL moves to that level above break-even to lock in profit. Open DCA orders are cancelled at that point.">
+                <input type="checkbox" class="input-checkbox" @bind="_moveSlBe" />
+                <label>Profit lock</label>
+            </div>
+            @if (_moveSlBe)
+            {
+                <div class="field" title="The SL moves to BE + this % once the price has reached this profit level. E.g. 1% means the SL protects 1% profit above break-even.">
+                    <label>Profit lock %</label>
+                    <span class="field-control">
+                        <input type="number" class="input-number" step="0.1" min="0" @bind="_moveSlBePct" />
+                        <span class="field-unit">%</span>
+                    </span>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Two columns, exactly as the Grid ColumnDefinitions="*,12,*" of TraderEntryConditionsView:
+       oscillator conditions on the left, trend/price conditions on the right. Stacked in one column
+       this box became far taller than everything around it. *@
+    <!-- Entry conditions -->
+    <div class="settings-group">
+        <div class="settings-group-header">Entry conditions</div>
+        <EntryConditionsEditor Data="_entryConditions" />
+    </div>
+
+    @* Avalonia carries this same group in TraderFuturesView.axaml but with IsVisible="false".
+       Hidden rather than removed, so the settings keep loading and saving unchanged. *@
+    <!-- Futures -->
+    <div class="settings-group" style="display:none;">
+        <div class="settings-group-header">Futures</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Margin</label>
+                <select class="input-select" @bind="_crossOrIsolated">
+                    <option value="0">Cross</option>
+                    <option value="1">Isolated</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Leverage</label>
+                <input type="number" class="input-number" step="0.01" @bind="_leverage" />
+            </div>
+        </div>
+    </div>
+
+</div>
+    }
+
+</div>
+
+@code {
+    private int _subTab;
+    private TextualSideData _longSide = new();
+    private TextualSideData _shortSide = new();
+
+    /// <summary>Exposed so the Analyzer tab can offer "copy from Trading".</summary>
+    public TextualSideData LongSide => _longSide;
+    public TextualSideData ShortSide => _shortSide;
+
+    /// <summary>Counterparts on the Analyzer tab, wired by the settings dialog.</summary>
+    [Parameter] public TextualSideData? CrossLongSide { get; set; }
+    [Parameter] public TextualSideData? CrossShortSide { get; set; }
+
+    private bool _active;
+    private CryptoTradeVia _tradeVia;
+    private bool _disableNewPositions;
+    private bool _logCanceledOrders;
+    /// <summary>
+    /// Lives in Settings.General, but the Avalonia TraderMiscSettingsView edits it here. This tab is
+    /// saved after the Exchange tab, so this value wins.
+    /// </summary>
+    private bool _soundTradeNotification;
+    private int _slotsLong;
+    private int _slotsShort;
+    private CryptoOrderType _entryOrderType;
+    private int _entryRemoveTime;
+    private decimal _entryPullback;
+    private CryptoOrderType _dcaOrderType;
+    private decimal _dcaPullback;
+    private int _buyCooldown;
+    private CryptoOrderType _tpOrderType;
+    private CryptoTakeProfitStrategy _tpStrategy;
+    private bool _addDustToTp;
+    private decimal _stopLoss;
+    private decimal _stopLossLimit;
+    private bool _moveSlBe;
+    private decimal _moveSlBePct;
+
+    private readonly List<CryptoDcaEntry> _dcaList = [];
+    private readonly List<CryptoTpEntry> _tpList = [];
+
+    private readonly EntryConditionsData _entryConditions = new();
+
+    private int _crossOrIsolated;
+    private decimal _leverage;
+
+    private static decimal ParseDecimal(object? value) =>
+        decimal.TryParse(value?.ToString(), System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out decimal result) ? result : 0m;
+
+    private void AddDca() => _dcaList.Add(new CryptoDcaEntry { Percentage = 1m, Factor = 100m });
+
+    private void RemoveDca()
+    {
+        if (_dcaList.Count > 0)
+            _dcaList.RemoveAt(_dcaList.Count - 1);
+    }
+
+    private void AddTp() => _tpList.Add(new CryptoTpEntry { Percentage = 1m, Factor = 100m });
+
+    private void RemoveTp()
+    {
+        if (_tpList.Count > 0)
+            _tpList.RemoveAt(_tpList.Count - 1);
+    }
+
+    protected override void OnInitialized()
+    {
+        LoadFrom(GlobalData.Settings);
+    }
+
+    public void LoadFrom(SettingsBasic settings)
+    {
+        var t = settings.Trading;
+        _active = t.Active;
+        _tradeVia = t.TradeVia;
+        _disableNewPositions = t.DisableNewPositions;
+        _logCanceledOrders = t.LogCanceledOrders;
+        _soundTradeNotification = settings.General.SoundTradeNotification;
+        _slotsLong = t.SlotsMaximalLong;
+        _slotsShort = t.SlotsMaximalShort;
+        _entryOrderType = t.EntryOrderType;
+        _entryRemoveTime = t.EntryRemoveTime;
+        _entryPullback = t.EntryPullbackPercentage;
+        _dcaOrderType = t.DcaOrderType;
+        _dcaPullback = t.DcaPullbackPercentage;
+        _buyCooldown = t.GlobalBuyCooldownTime;
+        _tpOrderType = t.TakeProfitOrderType;
+        _tpStrategy = t.TakeProfitStrategy;
+        _addDustToTp = t.AddDustToTp;
+        _stopLoss = t.StopLossPercentage;
+        _stopLossLimit = t.StopLossLimitPercentage;
+        _moveSlBe = t.MoveSlToBreakEven;
+        _moveSlBePct = t.MoveSlToBreakEvenPercentage;
+
+        // Work on copies so Cancel does not leave edited entries behind
+        _dcaList.Clear();
+        foreach (var dca in t.DcaList)
+            _dcaList.Add(new CryptoDcaEntry { Percentage = dca.Percentage, Factor = dca.Factor });
+
+        _tpList.Clear();
+        foreach (var tp in t.TpList)
+            _tpList.Add(new CryptoTpEntry { Percentage = tp.Percentage, Factor = tp.Factor });
+
+        var e = t.EntryConditions;
+        _entryConditions.LoadFrom(e);
+
+        _crossOrIsolated = t.CrossOrIsolated;
+        _leverage = t.Leverage;
+
+        _longSide = TextualSideData.LoadFrom(t.Long);
+        _shortSide = TextualSideData.LoadFrom(t.Short);
+    }
+
+    public void SaveTo(SettingsBasic settings)
+    {
+        var t = settings.Trading;
+        t.Active = _active;
+        t.TradeVia = _tradeVia;
+        t.DisableNewPositions = _disableNewPositions;
+        t.LogCanceledOrders = _logCanceledOrders;
+        settings.General.SoundTradeNotification = _soundTradeNotification;
+        t.SlotsMaximalLong = _slotsLong;
+        t.SlotsMaximalShort = _slotsShort;
+        t.EntryOrderType = _entryOrderType;
+        t.EntryRemoveTime = _entryRemoveTime;
+        t.EntryPullbackPercentage = _entryPullback;
+        t.DcaOrderType = _dcaOrderType;
+        t.DcaPullbackPercentage = _dcaPullback;
+        t.GlobalBuyCooldownTime = _buyCooldown;
+        t.TakeProfitOrderType = _tpOrderType;
+        t.TakeProfitStrategy = _tpStrategy;
+        t.AddDustToTp = _addDustToTp;
+        t.StopLossPercentage = _stopLoss;
+        t.StopLossLimitPercentage = _stopLossLimit;
+        t.MoveSlToBreakEven = _moveSlBe;
+        t.MoveSlToBreakEvenPercentage = _moveSlBePct;
+
+        t.DcaList.Clear();
+        foreach (var dca in _dcaList)
+            t.DcaList.Add(new CryptoDcaEntry { Percentage = dca.Percentage, Factor = dca.Factor });
+
+        t.TpList.Clear();
+        foreach (var tp in _tpList)
+            t.TpList.Add(new CryptoTpEntry { Percentage = tp.Percentage, Factor = tp.Factor });
+
+        var e = t.EntryConditions;
+        _entryConditions.SaveTo(e);
+
+        t.CrossOrIsolated = _crossOrIsolated;
+        t.Leverage = _leverage;
+
+        _longSide.SaveTo(t.Long);
+        _shortSide.SaveTo(t.Short);
+    }
+}

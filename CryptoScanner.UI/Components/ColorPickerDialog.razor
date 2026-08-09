@@ -1,0 +1,157 @@
+@using CryptoScanner.Core.Model
+@using CryptoScanner.UI.Models
+
+@* Colour dialog with the four ARGB channels as plain numbers, so the effect of a combination is
+   visible while typing: every change repaints the preview, and the preview is drawn over a
+   checkerboard so the alpha is actually readable. The native colour input is there for picking an
+   RGB value quickly; it knows nothing about transparency, which is why A has its own field. *@
+@if (Visible)
+{
+    <div class="modal-overlay" @onclick="Cancel" @oncontextmenu:preventDefault="true">
+    </div>
+    <div class="modal-dialog color-dialog" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <span class="modal-title">@Title</span>
+        </div>
+        <div class="modal-body">
+            <div class="color-dialog-top">
+                <div class="color-dialog-preview">
+                    <span class="color-preview color-preview-large" title="Result">
+                        <span class="color-preview-fill" style="background-color: @Rgba"></span>
+                    </span>
+                    @* Straight under the preview square, as wide as it is: dragging the
+                       transparency and watching the result happen in the same spot. @oninput, so
+                       the preview follows the thumb instead of only the release. *@
+                    <input type="range" class="color-alpha" min="0" max="255" step="1"
+                           value="@_a" @oninput="@(e => SetChannel(e, v => _a = v))"
+                           title="Transparency: 0 = invisible, 255 = solid" />
+                </div>
+                <div class="color-dialog-channels">
+                    <div class="color-channel">
+                        <label>A</label>
+                        <input type="number" class="input-number" min="0" max="255"
+                               value="@_a" @onchange="@(e => SetChannel(e, v => _a = v))" />
+                    </div>
+                    <div class="color-channel">
+                        <label>R</label>
+                        <input type="number" class="input-number" min="0" max="255"
+                               value="@_r" @onchange="@(e => SetChannel(e, v => _r = v))" />
+                    </div>
+                    <div class="color-channel">
+                        <label>G</label>
+                        <input type="number" class="input-number" min="0" max="255"
+                               value="@_g" @onchange="@(e => SetChannel(e, v => _g = v))" />
+                    </div>
+                    <div class="color-channel">
+                        <label>B</label>
+                        <input type="number" class="input-number" min="0" max="255"
+                               value="@_b" @onchange="@(e => SetChannel(e, v => _b = v))" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="color-dialog-bottom">
+                <div class="color-channel">
+                    <label>Pick</label>
+                    <input type="color" class="color-native" value="@RgbHex" @onchange="OnNativePicked" />
+                </div>
+                <div class="color-channel">
+                    <label>ARGB</label>
+                    <input type="text" class="input-text color-argb" maxlength="9"
+                           value="@Argb" @onchange="OnArgbTyped" />
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" @onclick="Ok">OK</button>
+            <button class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    /// <summary>The colour as "#AARRGGBB". Only written back when OK is pressed.</summary>
+    [Parameter] public string Value { get; set; } = "#FFFF95A5";
+
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter] public string Title { get; set; } = "Color";
+
+    private bool _wasVisible;
+    private int _a = 255;
+    private int _r = 255;
+    private int _g = 0x95;
+    private int _b = 0xA5;
+
+    protected override void OnParametersSet()
+    {
+        // Only re-read the incoming value when the dialog opens; while it is open the four channels
+        // are the truth, so Cancel can leave the original untouched.
+        if (Visible && !_wasVisible)
+        {
+            var color = ColorTextHelper.Parse(Value, CoreColor.FromArgb(0xFF, 0xFF, 0x95, 0xA5));
+            _a = color.A;
+            _r = color.R;
+            _g = color.G;
+            _b = color.B;
+        }
+        _wasVisible = Visible;
+    }
+
+    private string Argb => $"#{_a:X2}{_r:X2}{_g:X2}{_b:X2}";
+
+    private string RgbHex => $"#{_r:X2}{_g:X2}{_b:X2}";
+
+    private string Rgba
+    {
+        get
+        {
+            string alpha = (_a / 255.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+            return $"rgba({_r},{_g},{_b},{alpha})";
+        }
+    }
+
+    private void SetChannel(ChangeEventArgs e, Action<int> assign)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+            assign(Math.Clamp(value, 0, 255));
+    }
+
+    private void OnNativePicked(ChangeEventArgs e)
+    {
+        var rgb = ColorTextHelper.Parse(e.Value?.ToString(), CoreColor.FromArgb(0xFF, (byte)_r, (byte)_g, (byte)_b));
+        _r = rgb.R;
+        _g = rgb.G;
+        _b = rgb.B;
+    }
+
+    private void OnArgbTyped(ChangeEventArgs e)
+    {
+        var color = ColorTextHelper.Parse(e.Value?.ToString(), CoreColor.FromArgb((byte)_a, (byte)_r, (byte)_g, (byte)_b));
+        _a = color.A;
+        _r = color.R;
+        _g = color.G;
+        _b = color.B;
+    }
+
+    private async Task Ok()
+    {
+        Value = Argb;
+        await ValueChanged.InvokeAsync(Value);
+        await Close();
+    }
+
+    private async Task Cancel()
+    {
+        await Close();
+    }
+
+    private async Task Close()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+}

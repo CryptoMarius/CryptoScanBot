@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CryptoScanner.Web</RootNamespace>
+    <AssemblyName>CryptoScanBot.Web</AssemblyName>
+    <Product>CryptoScanBot Web</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CryptoScanner.UI\CryptoScanner.UI.csproj" />
+    <ProjectReference Include="..\CryptoScanner.Analyzers\CryptoScanner.Analyzers.csproj" />
+  </ItemGroup>
+
+</Project>

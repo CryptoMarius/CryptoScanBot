@@ -1,0 +1,2095 @@
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ══════════════════════════════════════
+   Dark theme (matches Avalonia FluentTheme dark)
+   ══════════════════════════════════════ */
+[data-theme="dark"] {
+    /* Tells the browser to render everything it draws itself — scrollbars, dropdown lists, the
+       colour picker — in dark. Without it those stayed light on a dark page. */
+    color-scheme: dark;
+
+    --bg-base: #000000;
+    --bg-surface: #0a0a0a;
+    --bg-elevated: #1a1a1a;
+    --bg-hover: #252525;
+    --bg-input: #0a0a0a;
+
+    --border: #333333;
+    --border-subtle: #1a1a1a;
+    --border-groupbox: #787878;
+    --border-low: #2a2a2a;
+
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --text-muted: #787878;
+
+    --accent: #0078d7;
+    --accent-hover: #1a8ae8;
+
+    --green: #45c173;
+    --green-dim: rgba(69, 193, 115, 0.12);
+    --red: #cd4040;
+    --red-dim: rgba(205, 64, 64, 0.12);
+
+    color: #e0e0e0;
+    background: #000000;
+}
+
+/* ══════════════════════════════════════
+   Light theme (matches Avalonia FluentTheme light)
+   ══════════════════════════════════════ */
+[data-theme="light"] {
+    color-scheme: light;
+
+    --bg-base: #f3f3f3;
+    --bg-surface: #fbfbfb;
+    --bg-elevated: #f0f0f0;
+    --bg-hover: #e8e8e8;
+    --bg-input: #ffffff;
+
+    --border: #cccccc;
+    --border-subtle: #e0e0e0;
+    --border-groupbox: #606060;
+    --border-low: #d8d8d8;
+
+    --text-primary: #1a1a1a;
+    --text-secondary: #404040;
+    --text-muted: #606060;
+
+    --accent: #0078d7;
+    --accent-hover: #006cc1;
+
+    --green: #439982;
+    --green-dim: rgba(67, 153, 130, 0.10);
+    --red: #c95b5c;
+    --red-dim: rgba(201, 91, 92, 0.10);
+
+    color: #1a1a1a;
+    background: #f3f3f3;
+}
+
+/* ── Shared tokens ── */
+:root {
+    color-scheme: dark;
+
+    --radius: 4px;
+    --radius-sm: 2px;
+
+    /* Dark as the document-level default. The data-theme attribute sits on .app-root, which is a
+       CHILD of body, so anything painted by html/body itself (the area behind the symbol sidebar,
+       any element without its own background) resolved these variables to nothing and fell back to
+       the browser default white. That is why the symbol grid showed up light while the settings
+       said dark. .app-root overrides them again for the light theme. */
+    --bg-base: #000000;
+    --bg-surface: #0a0a0a;
+    --bg-elevated: #1a1a1a;
+    --bg-hover: #252525;
+    --bg-input: #0a0a0a;
+    --border: #333333;
+    --border-subtle: #1a1a1a;
+    --border-groupbox: #787878;
+    --border-low: #2a2a2a;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --text-muted: #787878;
+    --accent: #0078d7;
+    --accent-hover: #1a8ae8;
+    --green: #45c173;
+    --green-dim: rgba(69, 193, 115, 0.12);
+    --red: #cd4040;
+    --red-dim: rgba(205, 64, 64, 0.12);
+}
+
+/* ── Base ── */
+html, body {
+    height: 100%;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text-primary);
+    background: var(--bg-base);
+}
+
+/* ══════════════════════════════════════
+   App shell
+   ══════════════════════════════════════ */
+.app-root {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    /* Paints the themed background itself so switching to light never leaves the dark body
+       showing through, and so children without a background of their own inherit the right one. */
+    background: var(--bg-base);
+    color: var(--text-primary);
+}
+
+/* ══════════════════════════════════════
+   Title bar (matches Avalonia TitleBarGrid, 38px)
+   ══════════════════════════════════════ */
+.titlebar {
+    display: flex;
+    align-items: center;
+    height: 38px;
+    min-height: 38px;
+    padding: 0 4px;
+    background: var(--bg-base);
+    user-select: none;
+}
+
+.titlebar-menu {
+    display: flex;
+    align-items: center;
+}
+
+.menu-dropdown {
+    position: relative;
+}
+
+.menu-dropdown-trigger {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.menu-dropdown-trigger:hover {
+    background: var(--bg-hover);
+}
+
+.menu-dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 180px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    padding: 4px 0;
+    z-index: 1000;
+}
+
+.menu-dropdown:hover .menu-dropdown-content {
+    display: block;
+}
+
+.menu-check-item, .menu-action-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.menu-check-item:hover, .menu-action-item:hover {
+    background: var(--bg-hover);
+}
+
+.menu-separator {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+}
+
+.menu-check-item input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    accent-color: var(--accent);
+}
+
+.titlebar-title {
+    font-size: 12px;
+    color: var(--text-primary);
+    margin-left: 20px;
+}
+
+/* ══════════════════════════════════════
+   Dashboard info panel (matches Avalonia, 125px)
+   ══════════════════════════════════════ */
+.dashboard-panel {
+    display: flex;
+    align-items: stretch;
+    height: 140px;
+    min-height: 140px;
+    padding: 4px 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.dashboard-section {
+    padding: 4px 10px;
+    min-width: 120px;
+}
+
+.dashboard-heading {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+
+.dashboard-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 1px 0;
+}
+
+.dashboard-row.clickable {
+    cursor: pointer;
+    border-radius: 2px;
+    font-size: 12px;
+}
+
+.dashboard-value {
+    text-align: right;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+}
+
+.dashboard-row > span:first-child {
+    flex-shrink: 0;
+}
+
+.dashboard-row .dashboard-price {
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.dashboard-row .dashboard-volume {
+    min-width: 60px;
+    flex-shrink: 0;
+}
+
+.dashboard-separator {
+    width: 1px;
+    background: var(--border-low);
+    margin: 0 4px;
+    align-self: stretch;
+}
+
+/* Red when off, green when on — the Avalonia dashboard binds these ellipses to
+   PriceDownBrush / PriceUpBrush, so a disabled scanner is red there and grey here. */
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--red);
+    display: inline-block;
+    flex: none;
+}
+
+.status-dot.active {
+    background: var(--green);
+    border-color: var(--green);
+}
+
+/* Rulez has a third state: neutral when no rules are configured at all. */
+.status-dot.neutral {
+    background: var(--text-muted);
+    border-color: var(--text-muted);
+}
+
+/* ── Dashboard: barometer combo (compact select in dashboard row) ── */
+.dashboard-combo {
+    height: 20px;
+    padding: 0 4px;
+    font-size: 11px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+}
+
+/* ── Dashboard: barometer chart placeholder (400x100, matches Avalonia) ── */
+.dashboard-chart-section {
+    /* flex:none so the panel can never stretch or squeeze the 400x100 chart — Avalonia draws a
+       fixed-size bitmap there and the surrounding grid does not resize it either. */
+    flex: none;
+    width: 404px;
+    min-width: 404px;
+    padding: 2px 2px;
+}
+
+/* Animation with the progress line underneath it, the way Avalonia stacks LoadingCandlesticksView
+   and the CandleProgressText in one centred StackPanel. The text used to sit in the Tickers panel,
+   far away from the animation it belongs to. */
+.dashboard-chart-placeholder {
+    width: 400px;
+    /* Must equal BarometerChartHeight in MainLayout — the SVG viewBox is in the same pixels. */
+    height: 124px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 1px solid var(--border-low);
+}
+
+.candle-bar-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    height: 60px;
+}
+
+/* text-primary, not text-muted: the progress line was drawn in #787878 on a black background,
+   which is barely legible at 10px. */
+.candle-progress-text {
+    font-size: 11px;
+    color: var(--text-primary);
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+.barometer-chart {
+    display: block;
+    width: 400px;
+    /* Must equal BarometerChartHeight in MainLayout. */
+    height: 124px;
+    background: var(--bg-base);
+}
+
+.candle-bar {
+    width: 8px;
+    background: var(--green);
+    border-radius: 1px;
+    animation: candle-pulse 1.2s ease-in-out infinite;
+}
+
+.candle-bar:nth-child(1) { height: 30px; animation-delay: 0s; }
+.candle-bar:nth-child(2) { height: 50px; animation-delay: 0.15s; background: var(--red); }
+.candle-bar:nth-child(3) { height: 40px; animation-delay: 0.3s; }
+.candle-bar:nth-child(4) { height: 60px; animation-delay: 0.45s; background: var(--red); }
+.candle-bar:nth-child(5) { height: 35px; animation-delay: 0.6s; }
+
+@keyframes candle-pulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+    50% { opacity: 1; transform: scaleY(1); }
+}
+
+/* ── Sidebar toggle button ── */
+.sidebar-toggle-btn {
+    height: 22px;
+    width: 26px;
+    padding: 0;
+    font-size: 11px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.sidebar-collapsed {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 2px;
+}
+
+/* ══════════════════════════════════════
+   Separator line
+   ══════════════════════════════════════ */
+.separator-line {
+    height: 1px;
+    background: var(--border-low);
+}
+
+/* ══════════════════════════════════════
+   Main area: symbols left, content right
+   ══════════════════════════════════════ */
+.main-area {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* ── Symbol sidebar (matches Avalonia, 300px, left) ── */
+.symbol-sidebar {
+    display: flex;
+    flex-direction: column;
+    min-width: 100px;
+    overflow: hidden;
+}
+
+.symbol-sidebar-header {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 10px;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+}
+
+.symbol-sidebar-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.symbol-sidebar-filter {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.symbol-filter-input {
+    width: 100px;
+    height: 20px;
+    border: none;
+    padding: 0 4px;
+    font-size: 12px;
+}
+
+.symbol-sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* ── Splitter ── */
+.splitter-handle {
+    width: 4px;
+    cursor: col-resize;
+    background: transparent;
+}
+
+.splitter-handle:hover {
+    background: var(--border);
+}
+
+.splitter-line {
+    width: 1px;
+    background: var(--border-low);
+}
+
+/* ── Content area (tabs + content) ── */
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 6px;
+}
+
+/* ══════════════════════════════════════
+   Tabs (matches Avalonia TabControl)
+   ══════════════════════════════════════ */
+.tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.tab {
+    padding: 6px 12px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.tab:hover { color: var(--text-primary); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ══════════════════════════════════════
+   Data table (matches Avalonia DataGrid)
+   ══════════════════════════════════════ */
+/* table-layout:fixed makes the browser honour the per-column widths. With the default "auto"
+   layout plus width:100% it ignored them and stretched every column to fill the viewport, which is
+   why the grids looked far wider than the Avalonia DataGrid — the DefaultWidth values themselves
+   already match the Width attributes in the axaml. width:auto keeps the table exactly as wide as
+   its columns, the way a DataGrid leaves the remaining space empty. */
+.data-table { width: auto; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+
+.data-table th {
+    height: 32px;
+    padding: 0 5px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid rgba(128, 128, 128, 0.3);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.data-table th:last-child { border-right: none; }
+
+.col-resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 2;
+}
+
+.col-resize-handle:hover { background: var(--accent); opacity: 0.5; }
+
+.data-table th[draggable="true"] { cursor: grab; }
+.data-table th.dragging { opacity: 0.4; }
+.data-table th.drag-over { border-left: 2px solid var(--accent); }
+
+.data-table th .sort-indicator {
+    margin-left: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.data-table td {
+    height: 23px;
+    padding: 0 5px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+    white-space: nowrap;
+    /* Fixed layout means content can no longer widen a column, so clip it instead. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.data-table tbody tr:hover { background: var(--bg-hover); }
+.data-table tbody tr.selected { background: var(--accent) !important; color: #fff !important; }
+.data-table tbody tr.selected td { color: #fff !important; }
+.data-table tbody tr:last-child td { border-bottom: none; }
+
+.symbol-name { font-weight: 500; }
+/* Avalonia sets no FontFamily anywhere, so its grids render in the system UI font. Using a
+   programmer font here was what put the slashed zero on screen. tabular-nums keeps the columns
+   aligned, which is the only thing the monospace font was really needed for. */
+.mono { font-family: inherit; font-variant-numeric: tabular-nums; font-size: 11px; }
+.text-right { text-align: right; }
+.text-long { color: var(--green); }
+.text-short { color: var(--red); }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+/* Neutral is the NORMAL text colour, not a dimmed one. Avalonia's PriceNeutralBrush is #E0E0E0 in
+   the dark theme and #202020 in the light one — the same colour a cell without any colour rule gets,
+   which is why BB% (no rule) and a mid-range RSI (neutral) have to look identical. Pointing this at
+   --text-muted made every non-oversold/overbought RSI, Stochastic, Lux and MACD value stand out as
+   different from its neighbours in every grid at once. */
+.text-neutral { color: var(--text-primary); }
+
+.empty-state {
+    text-align: center;
+    padding: 20px 10px !important;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ══════════════════════════════════════
+   Page header
+   ══════════════════════════════════════ */
+.page-header { margin-bottom: 8px; }
+.page-header h2 { font-size: 15px; font-weight: 600; }
+.page-subtitle { font-size: 11px; color: var(--text-muted); }
+
+/* ══════════════════════════════════════
+   Stats grid
+   ══════════════════════════════════════ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+}
+
+.stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 2px;
+}
+
+.stat-value { font-size: 16px; font-weight: 600; }
+
+/* ══════════════════════════════════════
+   Toolbar
+   ══════════════════════════════════════ */
+.toolbar {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* ══════════════════════════════════════
+   Form controls (matches Avalonia inputs)
+   ══════════════════════════════════════ */
+.input-select, .input-text, .input-number {
+    height: 26px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 2px 6px;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+}
+
+.input-select:focus, .input-text:focus, .input-number:focus { border-color: var(--accent); }
+.input-select option { background: var(--bg-elevated); color: var(--text-primary); }
+
+.input-text { width: 150px; }
+.input-number { width: 80px; font-family: inherit; font-variant-numeric: tabular-nums; font-size: 11px; }
+/* Checkboxes are drawn by hand instead of by the browser. The native box keeps a white fill when it
+   is off, whatever accent-color says, and a column of them read as one white block on a dark page.
+   Styled on the element rather than on .input-checkbox, because the grids, the menu and the chart
+   toolbar use bare checkboxes. */
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    flex: none;
+    position: relative;
+    vertical-align: middle;
+    border: 1px solid var(--border-groupbox);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    cursor: pointer;
+}
+
+input[type="checkbox"]:hover:not(:disabled) {
+    border-color: var(--accent);
+}
+
+input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* The tick: two borders of an empty box, rotated into a check mark. */
+input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0;
+    width: 4px;
+    height: 8px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+input[type="checkbox"]:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+input[type="checkbox"]:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.input-checkbox { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
+
+/* ══════════════════════════════════════
+   Settings — GroupBox style (matches Avalonia)
+   ══════════════════════════════════════ */
+.settings-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 10px;
+    align-items: flex-start;
+}
+
+.settings-group {
+    position: relative;
+    border: 1px solid var(--border-groupbox);
+    margin-top: 8px;
+    padding: 8px 8px 4px 8px;
+    /* Avalonia gives every groupbox HorizontalAlignment="Left", so a frame is exactly as wide as
+       the fields inside it. A growing flex item with a 280px basis stretched all of them to the
+       width of the dialog instead, which is why the Photino frames looked so much wider than the
+       Avalonia ones. */
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.settings-group-header {
+    /* Kept in the flow (it used to be position:absolute) so its width counts towards the width of
+       the group. With the group sized to its content an absolute header simply stuck out of the
+       frame whenever the caption was longer than the fields, e.g. "Bollinger bands parameters".
+       The negative top margin lifts it back onto the border line, the bottom margin gives the
+       body back the space the header took. */
+    width: max-content;
+    max-width: 100%;
+    margin: -17px 0 5px 0;
+    padding: 0 5px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-primary);
+    /* The header hides the piece of border behind it, so it has to be painted in the colour of
+       whatever the group sits on. Inside the settings dialog that is the dialog, not the page: a
+       hardcoded --bg-base put a black patch on a lighter dialog and the border then read as a line
+       running straight through the caption. */
+    background: var(--bg-groupbox-mask, var(--bg-base));
+    line-height: 1;
+}
+
+.settings-group-body {
+    padding: 4px 0 0 0;
+}
+
+/* Full-width variant for tabs holding a single editor instead of a row of small groups.
+   .settings-wrap uses align-items:flex-start, which in a column layout shrinks every child to its
+   own content width — that is what kept the black/white list memo at a fraction of the frame. */
+.settings-wrap-full {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+}
+
+.settings-wrap-full .settings-group-full {
+    width: 100%;
+    max-width: none;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-wrap-full .settings-group-full .settings-group-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-wrap-full textarea.input-text {
+    width: 100%;
+    flex: 1 1 auto;
+    /* The tab wrapper has no height of its own, so a percentage would collapse. */
+    height: 52vh;
+    min-height: 200px;
+    resize: none;
+    /* Same reasoning as the grids: Avalonia uses the system font, and a programmer font puts a
+       slashed zero on screen. tabular-nums keeps the columns of a symbol list lining up. */
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+}
+
+.settings-subgroup-header {
+    margin: 8px 0 4px 0;
+    padding-bottom: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Avalonia lays every settings group out as a Grid with ColumnDefinitions="Auto,Auto": the label
+   column is exactly as wide as the WIDEST label in that group, and the control sits directly next
+   to it. A fixed 130px label width pushed every short label away from its control, which is why the
+   Photino tabs looked spread out compared to the Avalonia ones.
+   Applied on the group body so it holds for every tab at once. */
+.settings-group-body {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    align-items: center;
+    gap: 2px 6px;
+}
+
+/* Each field hands its label and control straight to the grid, so all labels in a group line up. */
+.settings-group-body > .field {
+    display: contents;
+}
+
+/* Anything that is not a label/control pair (a table, a textarea, a note) spans the full width. */
+.settings-group-body > *:not(.field) {
+    grid-column: 1 / -1;
+}
+
+/* A grid item stretches by default, and a stretched table with table-layout:fixed hands the extra
+   width out over all its columns — which is what pushed the basecoins "Symbols" count far away
+   from the colour. Keep the table at the width of its own columns. */
+.settings-group-body > table {
+    justify-self: start;
+}
+
+.field {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 5px;
+}
+
+.field label {
+    font-size: 12px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    padding: 2px 0;
+}
+
+/* A checkbox row is ONE thing, not a label/control pair. Because .field uses display:contents the
+   checkbox was handed to the grid's first column (as wide as the longest label in the group) and its
+   text to the second — which is why the tick sat on the far left and the text far to the right, with
+   the whole group's label width in between. Span both columns and lay it out inline instead, so a
+   checkbox and its text sit together exactly like an Avalonia CheckBox with Content. */
+.settings-group-body > .field:has(> input[type="checkbox"]) {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    gap: 5px;
+}
+
+.field input[type="checkbox"] + label {
+    min-width: auto;
+}
+
+/* A groupbox inside another groupbox — the slot limits inside Common, the stoch strength inside the
+   entry conditions. It is not a label/control pair, so it already spans both grid columns. */
+.settings-group-nested {
+    margin-top: 10px;
+    width: 100%;
+}
+
+/* Debug tab — a plain list without a frame, like the StackPanel in DebugTabView. */
+.debug-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 6px;
+}
+
+.debug-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+label.debug-item {
+    cursor: pointer;
+}
+
+.debug-symbol {
+    margin: 8px 0;
+}
+
+/* The "first three .. last three" hint next to an API key. */
+.key-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+/* Trading rules — one line per rule, captions once as a header above the columns. */
+.rule-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 2px 5px;
+    font-size: 12px;
+}
+
+.rule-header {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.rule-number {
+    width: 30px;
+    flex: none;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Entry conditions: two columns next to each other, like the Grid in the Avalonia view. It is a
+   <fieldset> so one disabled attribute greys out the whole block; that element brings a border and
+   margins of its own. */
+.entry-conditions {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+.entry-conditions:disabled {
+    opacity: 0.5;
+}
+
+/* The "▼" sits in the top right of the groupbox, as in the Avalonia views. */
+.group-menu {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+}
+
+/* The "▼" button of a groupbox and its dropdown. */
+.menu-button {
+    position: relative;
+    display: inline-block;
+}
+
+.menu-button-trigger {
+    height: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+    line-height: 1;
+}
+
+.menu-button-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9995;
+}
+
+.menu-button-items {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 9996;
+    min-width: 170px;
+    padding: 3px 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-button-item {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 12px;
+    text-align: left;
+    white-space: nowrap;
+    padding: 4px 12px;
+    cursor: pointer;
+}
+
+.menu-button-item:hover {
+    background: var(--bg-hover);
+}
+
+/* Interval picker — three columns of checkboxes, like the Avalonia IntervalView. */
+.interval-grid {
+    display: flex;
+    gap: 24px;
+    padding: 2px 5px;
+}
+
+.interval-column {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.interval-column-header {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.interval-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* A control plus its unit text as ONE grid cell. */
+.field-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.field-unit {
+    font-size: 12px;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+/* The <Separator> the Avalonia strategy views put between two blocks of settings. */
+.settings-separator {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: 6px 0;
+    width: 100%;
+}
+
+/* A value that belongs to the switch above it — Margin="20,0,0,0" in the axaml. Because .field is
+   display:contents the indent has to go on the label itself. */
+.field.indented > label,
+/* Lines a row up with the CAPTIONS of the checkboxes above it instead of with their little squares:
+   the row padding of a checkbox line (5) plus the box (14) plus the gap after it (5). */
+.field.align-caption > label {
+    padding-left: 24px;
+}
+
+.settings-group-nested.align-caption {
+    margin-left: 24px;
+}
+
+/* A row that follows the enabled state of its checkbox: the caption and the unit text grey out with
+   the fields, so the whole line reads as switched off. */
+.field.row-disabled > label,
+.field.row-disabled > .field-control {
+    opacity: 0.5;
+}
+
+.input-text:disabled,
+.input-number:disabled,
+.input-select:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* The deliberate gap between two blocks in one groupbox (Spacing="20" in the axaml). Again on the
+   children, because the .field itself has no box of its own. */
+.field.space-before > label,
+.field.space-before > .field-control,
+.field.space-before > input,
+.field.space-before > .input-checkbox {
+    margin-top: 14px;
+}
+
+.settings-subgroup-header.space-before {
+    margin-top: 20px;
+}
+
+.field .field-value {
+    color: var(--text-primary);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* ══════════════════════════════════════
+   Buttons (matches Avalonia Fluent buttons)
+   ══════════════════════════════════════ */
+.btn {
+    height: 26px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+}
+
+.btn:hover { background: var(--bg-hover); }
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+.btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover { background: var(--bg-hover); }
+
+/* ══════════════════════════════════════
+   Status / misc
+   ══════════════════════════════════════ */
+.status-message {
+    margin-top: 6px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+}
+
+.status-success { background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
+.status-error { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+
+.row-invalid { opacity: 0.4; }
+
+.event-text {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.text-muted { color: var(--text-muted); font-size: 11px; line-height: 1.4; }
+
+code {
+    background: var(--bg-elevated);
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
+    color: var(--accent);
+}
+
+/* ── Scrollbar (always visible, matches Avalonia AllowAutoHide=False) ── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── Card wrapper ── */
+.card {
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════
+   Tradingview
+   ══════════════════════════════════════ */
+.tradingview-container {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+}
+
+.tradingview-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 300px;
+}
+
+
+
+/* ── Chart page (lightweight-charts POC) ── */
+/* Options panel on the left, chart to its right — the Avalonia ChartWindow uses a Grid with a
+   220px ScrollViewer in column 0 and the plot in column 1. It used to sit above the chart, which
+   both ate vertical space and put the groups in a different place than in the scanner. */
+.chart-layout {
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+    overflow: hidden;
+}
+
+.chart-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex: none;
+    width: 220px;
+    gap: 0;
+    padding: 4px 8px;
+    border-right: 1px solid var(--border-low);
+    background: var(--bg-surface);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.chart-layout .chart-panels {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Title strip above the chart: which coin, quote, interval and exchange is being shown */
+.chart-header-bar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 3px 8px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-base);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.chart-header-symbol {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.chart-header-quote {
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.chart-header-interval {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.chart-header-exchange,
+.chart-header-separator {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.chart-symbol-label {
+    font-weight: 600;
+    font-size: 13px;
+    min-width: 120px;
+}
+
+.chart-interval-select {
+    width: 70px;
+    height: 24px;
+    font-size: 12px;
+}
+
+.chart-toggle {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+.chart-toggle input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.chart-refresh-btn {
+    height: 24px;
+    font-size: 11px;
+    padding: 0 8px;
+    margin-left: auto;
+}
+
+.chart-toggle-group {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.chart-toggle-separator {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 0 2px;
+}
+
+.chart-panels {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: calc(100% - 33px);
+    min-height: 400px;
+}
+.chart-panel-main {
+    flex: 1 1 auto;
+    min-height: 200px;
+}
+.chart-panel-sub {
+    flex: 0 0 auto;
+    border-top: 1px solid var(--border-low);
+}
+
+/* ══════════════════════════════════════
+   Context menu (matches Avalonia MenuFlyout)
+   ══════════════════════════════════════ */
+.context-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9998;
+}
+
+.context-menu {
+    position: fixed;
+    z-index: 9999;
+    min-width: 240px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    padding: 4px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 5px 20px;
+    font-size: 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.context-menu-item:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+.context-menu-separator {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+}
+
+/* ══════════════════════════════════════
+   Modal dialog (matches Avalonia ShowDialog)
+   ══════════════════════════════════════ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9990;
+}
+
+.modal-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9991;
+    min-width: 300px;
+    max-width: 600px;
+    max-height: 80vh;
+    background: var(--bg-elevated);
+    /* Tells the groupbox headers which colour to paint over the border line they cover. */
+    --bg-groupbox-mask: var(--bg-elevated);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.modal-footer {
+    padding: 8px 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.column-check-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 0;
+    font-size: 12px;
+    cursor: pointer;
+    min-width: 140px;
+    /* Keeps a label and its checkbox together when the list is split into columns. */
+    break-inside: avoid;
+}
+
+/* Column list laid out top-to-bottom and then wrapping into a next column, the way the Avalonia
+   ColumnWindow does it with a vertical WrapPanel inside a fixed-height window.
+   The height must be FIXED and vertical scrolling switched off, otherwise the inherited
+   "overflow-y: auto" from .modal-body just makes one endless column again instead of wrapping. */
+/* height and column-count come from the component, which derives them from the number of items —
+   see ColumnVisibilityDialog. Vertical scrolling must stay off or the content forms one endless
+   column instead of wrapping into the next one. */
+.modal-body.column-list {
+    display: block;
+    column-gap: 16px;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    max-height: 70vh;
+}
+
+.modal-dialog.column-dialog {
+    max-width: 90vw;
+}
+
+/* Matches ItemHeight in the component; the column maths depends on it. */
+.modal-body.column-list .column-check-item {
+    height: 26px;
+    min-width: 0;
+}
+
+.column-check-item input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--accent);
+}
+
+/* ══════════════════════════════════════
+   Settings dialog (modal variant)
+   ══════════════════════════════════════ */
+.settings-dialog {
+    /* The Avalonia configuration window is wide enough to put the three indicator groups next to
+       each other and to show the full basecoins table; at 700px the basecoins "Symbols" column
+       ended up outside the group border. */
+    width: 980px;
+    max-width: 90vw;
+    max-height: 85vh;
+}
+
+.settings-body {
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+}
+
+.settings-tab-bar {
+    border-bottom: 1px solid var(--border);
+    padding: 0 10px;
+    flex-shrink: 0;
+}
+
+.settings-tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 14px;
+}
+
+/* ══════════════════════════════════════
+   Dashboard positions view (matches Avalonia DashboardPositionsView)
+   ══════════════════════════════════════ */
+.dashboard-stats {
+    padding: 10px;
+}
+
+.dashboard-stats-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.dashboard-stats-grid {
+    display: flex;
+    gap: 30px;
+}
+
+.dashboard-stats-column {
+    min-width: 200px;
+}
+
+.dashboard-stats-header {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.dashboard-stats-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 1px 0;
+    font-size: 12px;
+}
+
+.dashboard-stats-spacer {
+    height: 10px;
+}
+
+.dashboard-charts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 10px;
+}
+
+.dashboard-chart-box {
+    width: 600px;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-low);
+    padding: 8px;
+}
+
+.chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+/* Legend + inline SVG line charts (percentage, invested/returned, duration) */
+/* Chart toolbar groups (mirrors the Avalonia ChartWindow side panel group boxes) */
+.chart-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 0 8px 0;
+    /* Stacked vertically now, so the separator belongs underneath rather than to the right. */
+    border-bottom: 1px solid var(--border-low);
+    min-width: 0;
+}
+
+.chart-group:last-child {
+    border-bottom: none;
+}
+
+.chart-group-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+    white-space: nowrap;
+}
+
+.chart-group .input-select {
+    margin-bottom: 2px;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.chart-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.chart-swatch {
+    width: 10px;
+    height: 3px;
+    display: inline-block;
+}
+
+.chart-swatch-red {
+    background: var(--red);
+}
+
+.chart-swatch-green {
+    background: var(--green);
+}
+
+.chart-swatch-blue {
+    background: #4a9eff;
+}
+
+.dashboard-line-chart {
+    width: 100%;
+    height: auto;
+    flex: 1;
+}
+
+.chart-bar-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    flex: 1;
+    padding-bottom: 18px;
+    position: relative;
+}
+
+.chart-bar-centered {
+    align-items: stretch;
+}
+
+.chart-bar-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    height: 100%;
+    position: relative;
+}
+
+.chart-bar-centered .chart-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-bar-upper {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+}
+
+.chart-bar-lower {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+}
+
+.chart-bar {
+    width: 80%;
+    min-height: 1px;
+    border-radius: 1px 1px 0 0;
+}
+
+.chart-bar-up {
+    border-radius: 1px 1px 0 0;
+}
+
+.chart-bar-down {
+    border-radius: 0 0 1px 1px;
+}
+
+.chart-bar-green {
+    background: var(--green);
+}
+
+.chart-bar-red {
+    background: var(--red);
+}
+
+.chart-bar-label {
+    position: absolute;
+    bottom: -16px;
+    font-size: 9px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Square button holding a single glyph — the "..." browse and "▶" play buttons of the Avalonia
+   ColorAndSoundView are 26x26. */
+.btn-icon {
+    width: 26px;
+    padding: 0;
+    flex: none;
+    text-align: center;
+}
+
+/* Sound file picker */
+.sound-picker-dialog {
+    width: 420px;
+}
+
+.sound-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.sound-file-item {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 12px;
+    text-align: left;
+    padding: 3px 6px;
+    cursor: pointer;
+}
+
+.sound-file-item:hover {
+    background: var(--bg-hover);
+}
+
+.sound-file-item.active {
+    background: var(--bg-hover);
+    font-weight: 600;
+}
+
+/* About dialog */
+.about-dialog {
+    max-width: 400px;
+}
+
+.about-body {
+    text-align: center;
+    padding: 15px;
+}
+
+.about-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.about-app-name {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.about-version {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.about-copyright {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.about-author {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+}
+
+.about-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+    text-align: left;
+}
+
+.about-exchange-list {
+    max-height: 200px;
+    overflow-y: auto;
+    text-align: left;
+    border: 1px solid var(--border-low);
+    border-radius: 3px;
+    padding: 6px 10px;
+    background: var(--bg-secondary);
+}
+
+.about-info-list {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.about-info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    padding: 2px 0;
+}
+
+.about-info-row .mono {
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    color: var(--text-secondary);
+    word-break: break-all;
+    text-align: right;
+}
+
+.about-exchange-item {
+    font-size: 12px;
+    padding: 1px 0;
+    color: var(--text-secondary);
+}
+
+
+/* ══════════════════════════════════════
+   Shutdown overlay
+   The host cancels the window close and runs its cleanup in the background, so the window stays
+   visible throughout. Without any feedback that read as a frozen application.
+   ══════════════════════════════════════ */
+.shutdown-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.shutdown-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.shutdown-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: shutdown-spin 0.9s linear infinite;
+}
+
+@keyframes shutdown-spin {
+    to { transform: rotate(360deg); }
+}
+
+
+/* ══════════════════════════════════════
+   Base coin colour cell
+   The stored colour carries an alpha channel; input[type=color] does not. The preview shows the
+   real value over a checkerboard so a fully transparent quote reads as transparent instead of as
+   a solid swatch, which is how the Avalonia colour picker presents it.
+   ══════════════════════════════════════ */
+.color-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.color-preview {
+    position: relative;
+    display: inline-block;
+    width: 24px;
+    height: 20px;
+    cursor: pointer;
+    flex: none;
+    /* It is a <button> in the cell, so undo what a button brings along. */
+    padding: 0;
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background-image:
+        linear-gradient(45deg, #808080 25%, transparent 25%),
+        linear-gradient(-45deg, #808080 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #808080 75%),
+        linear-gradient(-45deg, transparent 75%, #808080 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+}
+
+/* Sits ON TOP of the checkerboard; a background-color on the parent would end up underneath the
+   gradients that draw it. */
+.color-preview-fill {
+    position: absolute;
+    inset: 0;
+}
+
+.color-argb {
+    width: 78px;
+    font-variant-numeric: tabular-nums;
+    text-transform: uppercase;
+}
+
+/* ── Colour dialog ────────────────────────────────────────────────────────────
+   The four channels as numbers, with the result repainted on every keystroke, so the effect of a
+   combination is visible while editing. A slider for the alpha alone turned out to be awkward to
+   aim; typing 00 or FF is faster and exact. */
+.color-dialog {
+    width: 360px;
+}
+
+.color-dialog-top {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+/* Preview square with the transparency slider underneath, both the same width. */
+.color-dialog-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: none;
+}
+
+.color-preview-large {
+    width: 96px;
+    height: 96px;
+    background-size: 12px 12px;
+    background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+    cursor: default;
+}
+
+.color-dialog-channels {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 auto;
+}
+
+.color-dialog-bottom {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.color-channel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.color-channel > label {
+    width: 34px;
+    flex: none;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+/* Transparency slider, only used inside the colour dialog. */
+.color-alpha {
+    width: 96px;
+    flex: none;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.color-native {
+    width: 46px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    cursor: pointer;
+}
+
+
+/* ══════════════════════════════════════
+   Ported rows — mirror an Avalonia Grid row directly
+   The two-column .settings-group-body grid only fits "label + one control". Avalonia rows regularly
+   carry three or four items (label, field, field, unit — ColumnDefinitions="Auto,*,80,40"), so those
+   groups use .rows instead and place every control of one axaml row inside one .row.
+   ══════════════════════════════════════ */
+.settings-group-body.rows {
+    display: block;
+    padding: 4px 0 0 0;
+}
+
+.rows .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 5px;
+    min-height: 26px;
+}
+
+/* Grid.Column="0" — Auto width, but identical within a group so the fields line up. */
+.rows .row > .lbl {
+    flex: none;
+    width: var(--label-w, 190px);
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+/* The "*" spacer column that pushes the fields to the right. */
+.rows .row > .spacer {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Width="80" columns. */
+.rows .row > .w80 {
+    flex: none;
+    width: 80px;
+}
+
+/* Width="40" unit columns ("%", "days", "candles"). */
+.rows .row > .unit {
+    flex: none;
+    width: 44px;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+/* A trailing remark such as "Larger value is a nogo". */
+.rows .row > .note {
+    flex: 1 1 auto;
+    font-size: 12px;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+/* A full-width row: a checkbox spanning the columns, or a footnote. */
+.rows .row.span > label,
+.rows .row.span > .lbl {
+    width: auto;
+}
+
+.rows .row .hint {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.rows .row input[type="checkbox"] {
+    flex: none;
+}
+
+/* A checkbox that sits in a field column rather than at the start of the row. */
+.rows .row > input[type="checkbox"].w80 {
+    width: auto;
+}
+
+/* Outer Grid ColumnDefinitions="Auto,Auto" of AnalyzerCommonView: two columns of groups. */
+.analyzer-common { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.analyzer-common-col { display: flex; flex-direction: column; gap: 14px; }
+.analyzer-common .settings-group { max-width: none; min-width: 0; flex: none; }
+/* A checkbox that sits in a Width="80" column instead of at the start of the row. */
+.rows .row > input[type="checkbox"].in80 { flex: none; }

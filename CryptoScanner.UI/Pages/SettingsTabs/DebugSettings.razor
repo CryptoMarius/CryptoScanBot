@@ -1,0 +1,82 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Settings
+
+@* Order and captions of DebugTabView: a plain list without a frame, the symbol box between the
+   trend checkbox and the rest, with its explanation to the right of the field. *@
+<div class="debug-list">
+
+    <label class="debug-item">
+        <input type="checkbox" class="input-checkbox" @bind="_debugTrendCalculation" />
+        <span>Show more information during TrendCalculation (in file)</span>
+    </label>
+
+    <div class="debug-item debug-symbol">
+        <input type="text" class="input-text" style="width: 120px;" placeholder="SYMBOL" @bind="_debugSymbol" />
+        <span>Limit Debug stuff to this symbol (less information)</span>
+    </div>
+
+    <label class="debug-item">
+        <input type="checkbox" class="input-checkbox" @bind="_debugKLineReceive" />
+        <span>Debug KLineReceive (does kline ticker work)</span>
+    </label>
+
+    <label class="debug-item">
+        <input type="checkbox" class="input-checkbox" @bind="_debugSignalCreate" />
+        <span>Debug SignalCreate (does coin go to analyzer)</span>
+    </label>
+
+    <label class="debug-item">
+        <input type="checkbox" class="input-checkbox" @bind="_debugAssetManagement" />
+        <span>Debug asset management (papertrading/emulator)</span>
+    </label>
+
+    <label class="debug-item">
+        <input type="checkbox" class="input-checkbox" @bind="_debugZoneCandles" />
+        <span>Debug candle management zones</span>
+    </label>
+
+    <label class="debug-item">
+        <input type="checkbox" class="input-checkbox" @bind="_debugSignalTiming" />
+        <span>Debug signal timing (log trigger candle vs entry candle)</span>
+    </label>
+
+</div>
+
+@code {
+    private bool _debugTrendCalculation;
+    private bool _debugKLineReceive;
+    private bool _debugSignalCreate;
+    private bool _debugAssetManagement;
+    private bool _debugZoneCandles;
+    private bool _debugSignalTiming;
+    private string _debugSymbol = "";
+
+    protected override void OnInitialized()
+    {
+        LoadFrom(GlobalData.Settings);
+    }
+
+    public void LoadFrom(SettingsBasic settings)
+    {
+        var g = settings.General;
+        _debugTrendCalculation = g.DebugTrendCalculation;
+        _debugKLineReceive = g.DebugKLineReceive;
+        _debugSignalCreate = g.DebugSignalCreate;
+        _debugAssetManagement = g.DebugAssetManagement;
+        _debugZoneCandles = g.DebugZoneCandles;
+        _debugSignalTiming = g.DebugSignalTiming;
+        _debugSymbol = g.DebugSymbol;
+    }
+
+    public void SaveTo(SettingsBasic settings)
+    {
+        var g = settings.General;
+        g.DebugTrendCalculation = _debugTrendCalculation;
+        g.DebugKLineReceive = _debugKLineReceive;
+        g.DebugSignalCreate = _debugSignalCreate;
+        g.DebugAssetManagement = _debugAssetManagement;
+        g.DebugZoneCandles = _debugZoneCandles;
+        g.DebugSignalTiming = _debugSignalTiming;
+        g.DebugSymbol = _debugSymbol.Trim().ToUpper();
+    }
+}

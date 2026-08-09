@@ -1,0 +1,317 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Enums
+@using CryptoScanner.UI.Services
+@inject DashboardService DashboardService
+@inject MarketIndicatorService MarketIndicatorService
+@inject GridCommandService GridCommandService
+@implements IDisposable
+
+@*
+    The dashboard info panel, split off from MainLayout (matches Avalonia DashBoardInformationView).
+
+    It is a component of its own for one reason: it refreshes twice a second while the symbol
+    sidebar next to it does not change at all. As part of MainLayout every dashboard tick
+    re-rendered the whole symbol table as well, and because each row carries three lambda event
+    handlers Blazor then had to hand out new handler ids for every row. That produced a render
+    batch of over 100 KB per tick, of which the web view never released a single one.
+    Keeping the panel separate means a tick only re-renders this component.
+*@
+
+<div class="dashboard-panel">
+
+    <!-- Section 1: Status — 4 traffic lights -->
+    <div class="dashboard-section" style="min-width:80px;">
+        <div class="dashboard-heading">Status</div>
+        <div class="dashboard-row clickable" @onclick="DashboardService.ToggleScanner">
+            <span class="status-dot @(DashboardService.ScannerActive ? "active" : "")"></span>
+            <span>Scanner</span>
+        </div>
+        <div class="dashboard-row clickable" @onclick="DashboardService.ToggleTrader">
+            <span class="status-dot @(DashboardService.TraderActive ? "active" : "")"></span>
+            <span>Trader</span>
+        </div>
+        <div class="dashboard-row">
+            <span class="status-dot @DashboardService.RulezDotClass"></span>
+            <span>Rulez</span>
+        </div>
+        <div class="dashboard-row clickable" @onclick="DashboardService.ToggleSounds">
+            <span class="status-dot @(DashboardService.SoundsActive ? "active" : "")"></span>
+            <span>@(string.IsNullOrEmpty(DashboardService.ApplicationStatusText) ? "Sound" : DashboardService.ApplicationStatusText)</span>
+        </div>
+    </div>
+    <div class="dashboard-separator"></div>
+
+    <!-- Section 2: Barometer — dropdowns + 1h/4h/1d values -->
+    <div class="dashboard-section" style="min-width:125px;">
+        <div class="dashboard-heading">Barometer</div>
+        <div class="dashboard-row">
+            <select class="input-select dashboard-combo" value="@DashboardService.QuoteName"
+                    @onchange="OnBarometerQuoteChanged">
+                @foreach (var q in DashboardService.QuoteOptions)
+                {
+                    <option value="@q">@q</option>
+                }
+            </select>
+            <select class="input-select dashboard-combo" value="@DashboardService.IntervalName"
+                    @onchange="OnBarometerIntervalChanged">
+                @foreach (var iv in DashboardService.IntervalOptions)
+                {
+                    <option value="@iv">@iv</option>
+                }
+            </select>
+        </div>
+        <div class="dashboard-row"><span>Barometer 1h:</span><span class="dashboard-value @DashboardService.Barometer1hClass">@DashboardService.Barometer1h</span></div>
+        <div class="dashboard-row"><span>Barometer 4h:</span><span class="dashboard-value @DashboardService.Barometer4hClass">@DashboardService.Barometer4h</span></div>
+        <div class="dashboard-row"><span>Barometer 1d:</span><span class="dashboard-value @DashboardService.Barometer1dClass">@DashboardService.Barometer1d</span></div>
+    </div>
+    <div class="dashboard-separator"></div>
+
+    <!-- Section 3: Barometer chart (400x100) -->
+    <div class="dashboard-section dashboard-chart-section">
+        @if (DashboardService.BarometerChartPoints.Count > 0)
+        {
+            @((MarkupString)RenderBarometerSvg())
+        }
+        else
+        {
+            <div class="dashboard-chart-placeholder">
+                <div class="candle-bar-row">
+                    <div class="candle-bar"></div>
+                    <div class="candle-bar"></div>
+                    <div class="candle-bar"></div>
+                    <div class="candle-bar"></div>
+                    <div class="candle-bar"></div>
+                </div>
+                @if (!string.IsNullOrEmpty(DashboardService.CandleProgressText))
+                {
+                    <div class="candle-progress-text">@DashboardService.CandleProgressText</div>
+                }
+            </div>
+        }
+    </div>
+    <div class="dashboard-separator"></div>
+
+    <!-- Section 4: Market Indicators — 5 rows -->
+    <div class="dashboard-section" style="min-width:180px;">
+        <div class="dashboard-heading">Market Indicators</div>
+        @foreach (var ind in MarketIndicatorService.Indicators)
+        {
+            var indicator = ind;
+            <div class="dashboard-row clickable" @onclick="@(() => OnMarketIndicatorClick(indicator))">
+                <span>@ind.Name</span>
+                <span class="dashboard-value @ind.ColorClass">@ind.PriceText</span>
+            </div>
+        }
+    </div>
+    <div class="dashboard-separator"></div>
+
+    <!-- Section 5: Crypto Prices — dynamic from settings -->
+    <div class="dashboard-section" style="min-width:180px;">
+        <div class="dashboard-heading">Crypto Prices</div>
+        @foreach (var sym in DashboardService.TopSymbols.Take(MaxCryptoPriceRows))
+        {
+            var s = sym;
+            <div class="dashboard-row clickable" @onclick="@(() => OnCryptoPriceClick(s))">
+                <span>@s.DisplayName</span>
+                <span class="dashboard-value dashboard-price @s.ColorClass">@s.PriceText</span>
+                <span class="dashboard-value dashboard-volume">@s.VolumeText</span>
+            </div>
+        }
+    </div>
+    <div class="dashboard-separator"></div>
+
+    <!-- Section 6: Tickers — 4 counters -->
+    <div class="dashboard-section" style="min-width:180px;">
+        <div class="dashboard-heading">Tickers</div>
+        <div class="dashboard-row"><span>Kline Ticker Count</span><span class="dashboard-value">@DashboardService.KlineTickerCount</span></div>
+        <div class="dashboard-row"><span>Scanner analyze Count</span><span class="dashboard-value">@DashboardService.ScannerExecuteCount</span></div>
+        <div class="dashboard-row"><span>Scanner signal Count</span><span class="dashboard-value">@DashboardService.ScannerSignalCount</span></div>
+        <div class="dashboard-row"><span>Open positions</span><span class="dashboard-value">@DashboardService.ScannerPositionCount</span></div>
+    </div>
+
+</div>
+
+@code {
+    /// <summary>
+    /// Avalonia binds five fixed rows (TopSymbols[0]..[4]) because that is what fits next to the
+    /// other panels. The Blazor version looped over the whole list, so an exchange configured with
+    /// six coins (OKX) pushed the panel wider than the space available.
+    /// </summary>
+    private const int MaxCryptoPriceRows = 5;
+
+    /// <summary>
+    /// Barometer chart size in CSS pixels. Kept 1:1 with the SVG viewBox and with
+    /// .barometer-chart / .dashboard-chart-placeholder in app.css, so the drawing is never scaled —
+    /// scaling is what made an earlier version look stretched.
+    /// <para>
+    /// Avalonia draws a 400x100 bitmap, but its panel has no room to spare. Here the dashboard panel
+    /// is 140px tall with 4px padding and the chart section adds 2px, leaving 128px; 124 uses that
+    /// without touching the edges. The neighbouring Market Indicators column needs about the same
+    /// height for its heading plus five rows, so the chart now runs down to the Fear and Greed row.
+    /// </para>
+    /// </summary>
+    private const int BarometerChartWidth = 400;
+    private const int BarometerChartHeight = 124;
+
+    private bool _disposed;
+
+    protected override void OnInitialized()
+    {
+        // The polling itself stays in MainLayout (one timer for the whole window); this component
+        // only listens for the result.
+        DashboardService.DashboardChanged += OnDashboardChanged;
+        MarketIndicatorService.IndicatorsChanged += OnDashboardChanged;
+    }
+
+    private void OnDashboardChanged()
+    {
+        if (_disposed)
+            return;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnBarometerQuoteChanged(ChangeEventArgs e)
+    {
+        DashboardService.QuoteName = e.Value?.ToString() ?? "";
+    }
+
+    private void OnBarometerIntervalChanged(ChangeEventArgs e)
+    {
+        DashboardService.IntervalName = e.Value?.ToString() ?? "";
+    }
+
+    private void OnCryptoPriceClick(DashboardSymbolInfo sym)
+    {
+        // Same steps as Avalonia's DashBoardInformationViewModel.OnSymbolTapped for an Exchange
+        // entry: refresh the link templates first, then open the configured trading app on the 15m
+        // interval. Skipping LoadWebLinkConfiguration left the templates empty after a settings
+        // change, and then clicking simply did nothing at all.
+        if (sym.Symbol == null)
+            return;
+
+        GlobalData.LoadWebLinkConfiguration();
+
+        var interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m];
+        GridCommandService.OpenTradingApp(sym.Symbol, interval);
+    }
+
+    private void OnMarketIndicatorClick(MarketIndicatorInfo indicator)
+    {
+        // Avalonia opens these in the INTERNAL browser and switches to that tab
+        // (App.OpenInInternalBrowser(url, true)), for both the TradingView and Fear-and-Greed rows.
+        GlobalData.LoadWebLinkConfiguration();
+
+        string url = indicator.GetUrl();
+        if (!string.IsNullOrEmpty(url))
+            GridCommandService.OpenUrl(url, switchTab: true);
+    }
+
+    /// <summary>
+    /// Barometer chart, drawn the way DashBoardInformationViewModel.CreateBarometerBitmap draws its
+    /// SkiaSharp bitmap: a vertical scale that ADAPTS to the data with a minimum span of 5 percent,
+    /// a grey grid line per whole percent from -3 to +3 (clipped when it falls outside the scale), a
+    /// red line at zero, and a grey vertical line on every whole hour.
+    /// <para>
+    /// Two earlier versions were both wrong. The first scaled the axis to the data with no minimum,
+    /// so the grid landed on different values than Avalonia and the vertical lines were placed every
+    /// 60 POINTS instead of every 60 minutes. The second pinned the scale at -3..+3, which is where
+    /// the grid LINES live but not what Avalonia scales by — the axis there is
+    /// max(5, data range), widened again when the data reaches beyond half of it.
+    /// </para>
+    /// </summary>
+    private string RenderBarometerSvg()
+    {
+        var points = DashboardService.BarometerChartPoints;
+        if (points.Count < 2)
+            return "<span class=\"text-muted\">Waiting for data...</span>";
+
+        const int w = BarometerChartWidth, h = BarometerChartHeight;
+
+        // Vertical scale, identical to CreateBarometerBitmap. Values beyond +/-50 are ignored there
+        // as exchange malfunctions, so do the same before taking the range.
+        decimal loY = decimal.MaxValue, hiY = decimal.MinValue;
+        foreach (var p in points)
+        {
+            if (p.Value <= -50m || p.Value >= 50m)
+                continue;
+            if (p.Value < loY) loY = p.Value;
+            if (p.Value > hiY) hiY = p.Value;
+        }
+        if (loY == decimal.MaxValue)
+            return "<span class=\"text-muted\">Waiting for data...</span>";
+
+        decimal screenY = hiY - loY;
+        if (screenY < 5m)
+            screenY = 5m;                       // never zoom in further than -2.5 .. +2.5
+        if (hiY > 0.5m * screenY)
+            screenY = 2m * hiY;
+        if (loY < -0.5m * screenY)
+            screenY = -2m * loY;
+
+        decimal scaleY = h / screenY;
+        decimal zeroY = h / 2m;                 // offsetY: zero sits in the middle
+
+        decimal YFor(decimal value) => zeroY - scaleY * value;
+
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"<svg viewBox=\"0 0 {w} {h}\" xmlns=\"http://www.w3.org/2000/svg\" class=\"barometer-chart\">");
+
+        // Horizontal lines: one per whole percent, red at zero. Solid grey/red at full strength —
+        // Avalonia uses SKColors.Gray and SKColors.Red, so no CSS variables and no opacity here.
+        for (int pct = -3; pct <= 3; pct++)
+        {
+            decimal y = YFor(pct);
+            if (y < 0 || y > h)
+                continue;                       // outside the scale, exactly as Skia clips it
+            string stroke = pct == 0 ? "#ff0000" : "#808080";
+            sb.Append($"<line x1=\"0\" y1=\"{y.ToString("F1", ic)}\" x2=\"{w}\" y2=\"{y.ToString("F1", ic)}\" stroke=\"{stroke}\" stroke-width=\"1\"/>");
+        }
+
+        // Vertical lines on whole hours, placed by TIME so they stay on the hour no matter how many
+        // points arrived or whether any are missing.
+        DateTime first = points[0].Time;
+        DateTime last = points[^1].Time;
+        double span = (last - first).TotalMinutes;
+        if (span > 0)
+        {
+            DateTime hour = new DateTime(last.Year, last.Month, last.Day, last.Hour, 0, 0, last.Kind);
+            while (hour > first)
+            {
+                double x = (hour - first).TotalMinutes / span * w;
+                sb.Append($"<line x1=\"{x.ToString("F1", ic)}\" y1=\"0\" x2=\"{x.ToString("F1", ic)}\" y2=\"{h}\" stroke=\"#808080\" stroke-width=\"1\"/>");
+                hour = hour.AddHours(-1);
+            }
+        }
+
+        // The line itself, green above zero and red below.
+        for (int i = 1; i < points.Count; i++)
+        {
+            decimal x1 = (decimal)(i - 1) / (points.Count - 1) * w;
+            decimal x2 = (decimal)i / (points.Count - 1) * w;
+            decimal y1 = YFor(points[i - 1].Value);
+            decimal y2 = YFor(points[i].Value);
+            string color = points[i].Value >= 0 ? "#008000" : "#ff0000";
+            sb.Append($"<line x1=\"{x1.ToString("F1", ic)}\" y1=\"{y1.ToString("F1", ic)}\" x2=\"{x2.ToString("F1", ic)}\" y2=\"{y2.ToString("F1", ic)}\" stroke=\"{color}\" stroke-width=\"1\"/>");
+        }
+
+        // Timestamp bottom-left inside the chart, instead of twice in the headings above it. In the
+        // muted grey it disappeared against the grid lines, so it gets the normal text colour, a
+        // readable size and a dark plate underneath to lift it off whatever line runs behind it.
+        if (!string.IsNullOrEmpty(DashboardService.BarometerTime))
+        {
+            sb.Append($"<rect x=\"1\" y=\"{h - 13}\" width=\"34\" height=\"12\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
+            sb.Append($"<text x=\"3\" y=\"{h - 4}\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-primary)\">{DashboardService.BarometerTime}</text>");
+        }
+
+        sb.Append("</svg>");
+        return sb.ToString();
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        DashboardService.DashboardChanged -= OnDashboardChanged;
+        MarketIndicatorService.IndicatorsChanged -= OnDashboardChanged;
+    }
+}

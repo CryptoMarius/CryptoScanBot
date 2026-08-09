@@ -458,3 +458,8 @@ $RECYCLE.BIN/
 ##
 .claude
 /nul
+
+##
+## Working notes (local only)
+##
+PARITY-TODO.md

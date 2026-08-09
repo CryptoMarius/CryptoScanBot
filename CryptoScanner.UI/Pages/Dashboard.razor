@@ -1,0 +1,290 @@
+@page "/dashboard"
+@using CryptoScanner.Core.Core
+@using CryptoScanner.UI.Services
+@inject DashboardPositionService PositionService
+@implements IDisposable
+
+<!-- Statistics panel (matches Avalonia DashboardPositionsView) -->
+<div class="dashboard-stats">
+
+    <div class="dashboard-stats-toolbar">
+        <select class="input-select" @bind="_selectedQuote" @bind:after="OnQuoteChanged">
+            @foreach (var q in PositionService.QuoteOptions)
+            {
+                <option value="@q">@q</option>
+            }
+        </select>
+        <button class="btn" @onclick="Refresh">Refresh</button>
+    </div>
+
+    <div class="dashboard-stats-grid">
+
+        <!-- Open -->
+        <div class="dashboard-stats-column">
+            <div class="dashboard-stats-header">Open</div>
+            <div class="dashboard-stats-row"><span>Positions</span><span class="mono">@PositionService.OpenData.Positions.ToString("N0")</span></div>
+            <div class="dashboard-stats-row"><span>Invested</span><span class="mono">@PositionService.OpenData.Format(PositionService.OpenData.Invested)</span></div>
+            <div class="dashboard-stats-row"><span>Returned</span><span class="mono">@PositionService.OpenData.Format(PositionService.OpenData.Returned)</span></div>
+            <div class="dashboard-stats-row"><span>Commission</span><span class="mono">@PositionService.OpenData.Format(PositionService.OpenData.Commission)</span></div>
+            <div class="dashboard-stats-spacer"></div>
+            <div class="dashboard-stats-row"><span>Total</span><span class="mono @PositionService.NettoPnlClass">@PositionService.NettoPnl</span></div>
+            <div class="dashboard-stats-row"><span>Current value</span><span class="mono">@PositionService.CurrentValue</span></div>
+            <div class="dashboard-stats-row"><span>Virtual profit</span><span class="mono @PositionService.VirtualProfitClass">@PositionService.VirtualProfit</span></div>
+            <div class="dashboard-stats-row"><span>Virtual profit</span><span class="mono @PositionService.VirtualProfitClass">@PositionService.VirtualProfitPercentage</span></div>
+        </div>
+
+        <!-- Closed -->
+        <div class="dashboard-stats-column">
+            <div class="dashboard-stats-header">Closed</div>
+            <div class="dashboard-stats-row"><span>Positions</span><span class="mono">@PositionService.ClosedData.Positions.ToString("N0")</span></div>
+            <div class="dashboard-stats-row"><span>Invested</span><span class="mono">@PositionService.ClosedData.Format(PositionService.ClosedData.Invested)</span></div>
+            <div class="dashboard-stats-row"><span>Returned</span><span class="mono">@PositionService.ClosedData.Format(PositionService.ClosedData.Returned)</span></div>
+            <div class="dashboard-stats-row"><span>Commission</span><span class="mono">@PositionService.ClosedData.Format(PositionService.ClosedData.Commission)</span></div>
+            <div class="dashboard-stats-spacer"></div>
+            <div class="dashboard-stats-row"><span>Profit/loss</span><span class="mono @PositionService.ClosedProfitClass">@PositionService.ClosedData.Format(PositionService.ClosedData.TotalProfit)</span></div>
+            <div class="dashboard-stats-row"><span>Return</span><span class="mono @PositionService.ClosedProfitClass">@PositionService.ClosedProfitPercentage</span></div>
+            <div class="dashboard-stats-row"><span>Avg. return/position</span><span class="mono @PositionService.ClosedProfitClass">@PositionService.ClosedData.Format(PositionService.ClosedData.AverageProfit)</span></div>
+        </div>
+
+        <!-- Total -->
+        <div class="dashboard-stats-column">
+            <div class="dashboard-stats-header">Total</div>
+            <div class="dashboard-stats-row"><span>Positions</span><span class="mono">@PositionService.TotalData.Positions.ToString("N0")</span></div>
+            <div class="dashboard-stats-row"><span>Invested</span><span class="mono">@PositionService.TotalData.Format(PositionService.TotalData.Invested)</span></div>
+            <div class="dashboard-stats-row"><span>Returned</span><span class="mono">@PositionService.TotalData.Format(PositionService.TotalData.Returned)</span></div>
+            <div class="dashboard-stats-row"><span>Commission</span><span class="mono">@PositionService.TotalData.Format(PositionService.TotalData.Commission)</span></div>
+            <div class="dashboard-stats-spacer"></div>
+            <div class="dashboard-stats-row"><span>Profit/loss</span><span class="mono @PositionService.TotalProfitClass">@PositionService.TotalData.Format(PositionService.TotalData.TotalProfit)</span></div>
+            <div class="dashboard-stats-row"><span>Return</span><span class="mono @PositionService.TotalProfitClass">@PositionService.TotalProfitPercentage</span></div>
+            <div class="dashboard-stats-row"><span>Avg. return/position</span><span class="mono @PositionService.TotalProfitClass">@PositionService.TotalData.Format(PositionService.TotalData.AverageProfit)</span></div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Charts -->
+<div class="dashboard-charts">
+    @if (PositionService.DailyData.Count > 0)
+    {
+        <!-- Positions per day -->
+        <div class="dashboard-chart-box">
+            <div class="chart-title">Positions per day</div>
+            <div class="chart-bar-container">
+                @{ var maxPositions = PositionService.DailyData.Max(d => d.Positions); }
+                @foreach (var day in PositionService.DailyData.TakeLast(30))
+                {
+                    var pct = maxPositions > 0 ? (100.0 * day.Positions / maxPositions) : 0;
+                    <div class="chart-bar-wrapper" title="@day.Date.ToString("dd-MM-yyyy"): @day.Positions positions">
+                        <div class="chart-bar chart-bar-green" style="height:@(pct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                        <span class="chart-bar-label">@day.Date.ToString("dd")</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Profits per day -->
+        <div class="dashboard-chart-box">
+            <div class="chart-title">Profits per day</div>
+            <div class="chart-bar-container chart-bar-centered">
+                @{
+                    var maxAbsProfit = PositionService.DailyData.Max(d => Math.Abs(d.TotalProfit));
+                    if (maxAbsProfit == 0) maxAbsProfit = 1;
+                }
+                @foreach (var day in PositionService.DailyData.TakeLast(30))
+                {
+                    var pct = (double)(50.0m * Math.Abs(day.TotalProfit) / maxAbsProfit);
+                    var isProfit = day.TotalProfit >= 0;
+                    <div class="chart-bar-wrapper" title="@day.Date.ToString("dd-MM-yyyy"): @day.TotalProfit.ToString("N2")">
+                        @if (isProfit)
+                        {
+                            <div class="chart-bar-upper">
+                                <div class="chart-bar chart-bar-green chart-bar-up" style="height:@(pct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                            </div>
+                            <div class="chart-bar-lower"></div>
+                        }
+                        else
+                        {
+                            <div class="chart-bar-upper"></div>
+                            <div class="chart-bar-lower">
+                                <div class="chart-bar chart-bar-red chart-bar-down" style="height:@(pct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                            </div>
+                        }
+                        <span class="chart-bar-label">@day.Date.ToString("dd")</span>
+                    </div>
+                }
+            </div>
+        </div>
+        <!-- Profit percentage per day (min / average / max) -->
+        <div class="dashboard-chart-box">
+            <div class="chart-title">Profit percentage per day</div>
+            <div class="chart-legend">
+                <span class="chart-legend-item"><span class="chart-swatch chart-swatch-red"></span>Minimum</span>
+                <span class="chart-legend-item"><span class="chart-swatch chart-swatch-blue"></span>Average</span>
+                <span class="chart-legend-item"><span class="chart-swatch chart-swatch-green"></span>Maximum</span>
+            </div>
+            @((MarkupString)RenderLineChart(
+                PositionService.DailyData.TakeLast(30).ToList(),
+                [
+                    ("var(--red)", d => (double)d.MinPercentage),
+                    ("var(--blue, #4a9eff)", d => (double)d.AvgPercentage),
+                    ("var(--green)", d => (double)d.MaxPercentage),
+                ]))
+        </div>
+
+        <!-- Invested and returned per day -->
+        <div class="dashboard-chart-box">
+            <div class="chart-title">Invested and returned per day</div>
+            <div class="chart-legend">
+                <span class="chart-legend-item"><span class="chart-swatch chart-swatch-red"></span>Invested</span>
+                <span class="chart-legend-item"><span class="chart-swatch chart-swatch-green"></span>Returned</span>
+            </div>
+            @((MarkupString)RenderLineChart(
+                PositionService.DailyData.TakeLast(30).ToList(),
+                [
+                    ("var(--red)", d => (double)d.Invested),
+                    ("var(--green)", d => (double)d.Returned),
+                ]))
+        </div>
+
+        <!-- Position duration per day (hours) -->
+        <div class="dashboard-chart-box">
+            <div class="chart-title">Position duration per day (hours)</div>
+            <div class="chart-legend">
+                <span class="chart-legend-item"><span class="chart-swatch chart-swatch-red"></span>Minimum</span>
+                <span class="chart-legend-item"><span class="chart-swatch chart-swatch-blue"></span>Average</span>
+                <span class="chart-legend-item"><span class="chart-swatch chart-swatch-green"></span>Maximum</span>
+            </div>
+            @((MarkupString)RenderLineChart(
+                PositionService.DailyData.TakeLast(30).ToList(),
+                [
+                    ("var(--red)", d => d.MinDuration),
+                    ("var(--blue, #4a9eff)", d => d.AvgDuration),
+                    ("var(--green)", d => d.MaxDuration),
+                ]))
+        </div>
+    }
+    else
+    {
+        <div class="dashboard-chart-box">
+            <span class="text-muted">No position data available. Click Refresh to load.</span>
+        </div>
+    }
+</div>
+
+@code {
+    private string _selectedQuote = "USDT";
+    private bool _disposed;
+
+    protected override void OnInitialized()
+    {
+        PositionService.DataChanged += OnDataChanged;
+        PositionService.RefreshQuoteOptions();
+        if (PositionService.QuoteOptions.Count > 0)
+            _selectedQuote = PositionService.QuoteOptions[0];
+    }
+
+    private void OnDataChanged()
+    {
+        if (_disposed)
+            return;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnQuoteChanged()
+    {
+        _ = Task.Run(() => PositionService.Refresh(_selectedQuote));
+    }
+
+    private void Refresh()
+    {
+        _ = Task.Run(() => PositionService.Refresh(_selectedQuote));
+    }
+
+    /// <summary>
+    /// Multi series line chart as inline SVG. Replaces the OxyPlot models the Avalonia dashboard
+    /// uses for the percentage, invested/returned and duration charts.
+    /// </summary>
+    private static string RenderLineChart(List<DailyPositionData> data,
+        (string Color, Func<DailyPositionData, double> Value)[] series)
+    {
+        if (data.Count < 2)
+            return "<span class=\"text-muted\">Not enough data.</span>";
+
+        const int w = 420, h = 140, padLeft = 44, padBottom = 18, padTop = 8;
+        double min = double.MaxValue, max = double.MinValue;
+        foreach (var d in data)
+        {
+            foreach (var s in series)
+            {
+                double v = s.Value(d);
+                if (double.IsNaN(v) || double.IsInfinity(v))
+                    continue;
+                if (v < min) min = v;
+                if (v > max) max = v;
+            }
+        }
+        if (min == double.MaxValue)
+            return "<span class=\"text-muted\">Not enough data.</span>";
+        if (Math.Abs(max - min) < 0.0001)
+        {
+            max += 1;
+            min -= 1;
+        }
+
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
+        double plotW = w - padLeft;
+        double plotH = h - padBottom - padTop;
+
+        double X(int i) => padLeft + (double)i / (data.Count - 1) * plotW;
+        double Y(double v) => padTop + (max - v) / (max - min) * plotH;
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"<svg viewBox=\"0 0 {w} {h}\" xmlns=\"http://www.w3.org/2000/svg\" class=\"dashboard-line-chart\">");
+
+        // Horizontal grid + axis labels (3 lines)
+        for (int g = 0; g <= 2; g++)
+        {
+            double value = min + (max - min) * g / 2.0;
+            double y = Y(value);
+            sb.Append($"<line x1=\"{padLeft}\" y1=\"{y.ToString("F1", ic)}\" x2=\"{w}\" y2=\"{y.ToString("F1", ic)}\" stroke=\"var(--text-muted)\" stroke-width=\"0.3\" opacity=\"0.4\"/>");
+            sb.Append($"<text x=\"2\" y=\"{(y + 3).ToString("F1", ic)}\" font-size=\"9\" fill=\"var(--text-muted)\">{value.ToString("N2", ic)}</text>");
+        }
+
+        // Zero line when the range crosses it
+        if (min < 0 && max > 0)
+        {
+            double y0 = Y(0);
+            sb.Append($"<line x1=\"{padLeft}\" y1=\"{y0.ToString("F1", ic)}\" x2=\"{w}\" y2=\"{y0.ToString("F1", ic)}\" stroke=\"var(--text-muted)\" stroke-width=\"0.8\" opacity=\"0.8\"/>");
+        }
+
+        foreach (var s in series)
+        {
+            var points = new System.Text.StringBuilder();
+            for (int i = 0; i < data.Count; i++)
+            {
+                double v = s.Value(data[i]);
+                if (double.IsNaN(v) || double.IsInfinity(v))
+                    continue;
+                if (points.Length > 0)
+                    points.Append(' ');
+                points.Append(X(i).ToString("F1", ic)).Append(',').Append(Y(v).ToString("F1", ic));
+            }
+            if (points.Length > 0)
+                sb.Append($"<polyline fill=\"none\" stroke=\"{s.Color}\" stroke-width=\"1.4\" points=\"{points}\"/>");
+        }
+
+        // First and last date label
+        sb.Append($"<text x=\"{padLeft}\" y=\"{h - 4}\" font-size=\"9\" fill=\"var(--text-muted)\">{data[0].Date:dd-MM}</text>");
+        sb.Append($"<text x=\"{w - 34}\" y=\"{h - 4}\" font-size=\"9\" fill=\"var(--text-muted)\">{data[^1].Date:dd-MM}</text>");
+
+        sb.Append("</svg>");
+        return sb.ToString();
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        PositionService.DataChanged -= OnDataChanged;
+    }
+}

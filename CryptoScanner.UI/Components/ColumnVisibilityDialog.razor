@@ -1,0 +1,103 @@
+@typeparam TEnum where TEnum : struct, System.Enum
+@using CryptoScanner.UI.ViewModels
+
+@if (Visible)
+{
+    <div class="modal-overlay" @onclick="OnCancel" @oncontextmenu:preventDefault="true">
+    </div>
+    <div class="modal-dialog column-dialog" style="width:@(DialogWidth)px" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <span class="modal-title">Select Visible Columns</span>
+        </div>
+        <div class="modal-body column-list" style="height:@(ListHeight)px; column-count:@ColumnCount">
+            @if (ColumnState != null)
+            {
+                @foreach (var col in ColumnState.Columns)
+                {
+                    <label class="column-check-item">
+                        <input type="checkbox" checked="@col.IsVisible"
+                               @onchange="@(e => OnToggleColumn(col, (bool)(e.Value ?? false)))" />
+                        @col.Header
+                    </label>
+                }
+            }
+        </div>
+        <div class="modal-footer">
+            <button class="btn" @onclick="OnSelectAll">Select All</button>
+            <button class="btn" @onclick="OnDeselectAll">Deselect All</button>
+            <button class="btn btn-primary" @onclick="OnClose">Close</button>
+        </div>
+    </div>
+}
+
+@code {
+    // The Avalonia ColumnWindow is a fixed-height window (600) holding a vertical WrapPanel: items
+    // fill one column top to bottom and only start a new column once the height runs out, and the
+    // window itself grows sideways (SizeToContent="Width", MinWidth 350, MaxWidth 1200). So the
+    // number of columns follows from how many items there are, not from a fixed layout — four items
+    // belong in one narrow column, forty-four in three.
+    private const int ListHeight = 520;      // usable height, mirrors the 600px Avalonia window
+    private const int ItemHeight = 26;       // one checkbox row, see .column-check-item
+    private const int ColumnWidth = 150;     // Width="150" on the Avalonia CheckBox
+    private const int ColumnGap = 16;
+    private const int BodyPadding = 28;      // 14 left + 14 right on .modal-body
+    private const int MinDialogWidth = 350;  // MinWidth on the Avalonia window
+    private const int MaxDialogWidth = 1200; // MaxWidth on the Avalonia window
+
+    private int ItemCount => ColumnState?.Columns.Count() ?? 0;
+
+    private int ColumnCount
+    {
+        get
+        {
+            int perColumn = Math.Max(1, ListHeight / ItemHeight);
+            return Math.Max(1, (ItemCount + perColumn - 1) / perColumn);
+        }
+    }
+
+    private int DialogWidth
+    {
+        get
+        {
+            int columns = ColumnCount;
+            int content = columns * ColumnWidth + (columns - 1) * ColumnGap + BodyPadding;
+            return Math.Clamp(content, MinDialogWidth, MaxDialogWidth);
+        }
+    }
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public GridColumnState<TEnum>? ColumnState { get; set; }
+    [Parameter] public EventCallback OnColumnsChanged { get; set; }
+
+    private void OnToggleColumn(ColumnRuntimeState<TEnum> col, bool visible)
+    {
+        col.IsVisible = visible;
+        ColumnState?.SaveColumnState();
+        OnColumnsChanged.InvokeAsync();
+    }
+
+    private void OnSelectAll()
+    {
+        ColumnState?.SetAllVisible(true);
+        ColumnState?.SaveColumnState();
+        OnColumnsChanged.InvokeAsync();
+    }
+
+    private void OnDeselectAll()
+    {
+        ColumnState?.SetAllVisible(false);
+        ColumnState?.SaveColumnState();
+        OnColumnsChanged.InvokeAsync();
+    }
+
+    private async Task OnClose()
+    {
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task OnCancel()
+    {
+        await VisibleChanged.InvokeAsync(false);
+    }
+}

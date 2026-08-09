@@ -1,0 +1,573 @@
+﻿@page "/positions/closed"
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Enums
+@using CryptoScanner.Core.Model
+@using CryptoScanner.UI.Services
+@using CryptoScanner.UI.ViewModels
+@using CryptoScanner.UI.Components
+@using CryptoScanner.Core.Services
+@inject PositionService PositionService
+@inject GridCommandService GridCommandService
+@inject ApplicationStateService StateService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<div class="signal-grid-wrapper" tabindex="0" @onkeydown="OnKeyDown">
+    <table class="data-table" @ref="_tableRef">
+        <thead @oncontextmenu="OnHeaderContextMenu" @oncontextmenu:preventDefault="true">
+            <tr>
+                @foreach (var col in _columnState!.VisibleColumns)
+                {
+                    var header = _headerCallbacks.Get(col);
+                    <th class="@col.CssClass @(_dragOverColumn?.Equals(col.Column) == true ? "drag-over" : "")"
+                        data-col="@col.Column"
+                        draggable="true"
+                        @onclick="header.Sort"
+                        @ondragstart="header.DragStart"
+                        @ondragover="header.DragOver"
+                        @ondragover:preventDefault="true"
+                        @ondrop="header.Drop"
+                        @ondragend="OnHeaderDragEnd"
+                        style="@(col.Width > 0 ? $"width:{col.Width}px" : "")">
+                        @col.Header@(PositionService.ClosedSortState.GetSortIndicator(col.Column))
+                        <div class="col-resize-handle" @onmousedown:stopPropagation="true"></div>
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (_positions.Count > 0)
+            {
+                @foreach (var vm in _positions)
+                {
+                    var row = _rowCallbacks.Get(vm);
+                    <tr class="@(_selectedPositions.Contains(vm) ? "selected" : "")"
+                        @key="vm"
+                        @onclick="row.Click"
+                        @ondblclick="row.DoubleClick"
+                        @oncontextmenu="row.ContextMenu"
+                        @oncontextmenu:preventDefault="true">
+                        @foreach (var col in _columnState!.VisibleColumns)
+                        {
+                            var bg = vm.GetBackgroundStyle(col.Column);
+                            <td class="@GetCellClass(col, vm)" style="@bg">@vm.GetCellValue(col.Column)</td>
+                        }
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="@_columnState!.VisibleColumns.Count()" class="empty-state">
+                        @if (GlobalData.ActiveExchange == null)
+                        {
+                            <text>No exchange active. Start the scanner first.</text>
+                        }
+                        else
+                        {
+                            <text>No closed positions.</text>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (_contextMenuVisible)
+{
+    <div class="context-menu-overlay" @onclick="CloseContextMenu" @oncontextmenu="CloseContextMenu" @oncontextmenu:preventDefault="true"></div>
+    <div class="context-menu" @ref="_contextMenuRef" style="left: @(_contextMenuX)px; top: @(_contextMenuY)px;">
+        @if (_contextMenuType == ContextMenuType.Row && _contextMenuPosition != null)
+        {
+            <div class="context-menu-item" @onclick="OnMenuOpenChart">Open symbol chart</div>
+            <div class="context-menu-item" @onclick="OnMenuOpenTradingApp">Open trading app</div>
+            <div class="context-menu-item" @onclick="OnMenuOpenTradingViewInternal">Open TradingView internal</div>
+            <div class="context-menu-item" @onclick="OnMenuOpenTradingViewExternal">Open TradingView external</div>
+            <div class="context-menu-item" @onclick="OnMenuOpenExchange">Open the exchange</div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" @onclick="OnMenuPositionRecalculate">Position recalculate</div>
+            <div class="context-menu-item" @onclick="OnMenuPositionDelete">Position delete from database</div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" @onclick="OnMenuCopySymbolName">Copy symbol name</div>
+            <div class="context-menu-item" @onclick="OnMenuCopyDataCells">Copy all data cells</div>
+            <div class="context-menu-item" @onclick="OnMenuCalculateZones">Calculate liquidity zones</div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" @onclick="OnMenuExportTrend">Export trend information to log</div>
+            <div class="context-menu-item" @onclick="OnMenuExportSymbolToExcel">Export symbol information to Excel</div>
+            <div class="context-menu-item" @onclick="OnMenuExportBarometerToExcel">Export barometer information to Excel</div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" @onclick="OnMenuExportPositionToExcel">Export position information to Excel</div>
+            <div class="context-menu-item" @onclick="OnMenuExportAllPositionsToExcel">Export all position information to Excel</div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" @onclick="OnMenuDeleteAllPositions">Delete all positions</div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" @onclick="OnMenuHideSelection">Hide grid selection</div>
+        }
+        else if (_contextMenuType == ContextMenuType.Header)
+        {
+            <div class="context-menu-item" @onclick="OnMenuAdjustColumns">Adjust Columns...</div>
+        }
+    </div>
+}
+
+<ColumnVisibilityDialog TEnum="PositionColumnEnum"
+                        @bind-Visible="_columnDialogVisible"
+                        ColumnState="_columnState"
+                        OnColumnsChanged="OnColumnsVisibilityChanged" />
+
+<CryptoScanner.UI.Components.ConfirmDialog @bind-Visible="_confirmDeleteAllVisible"
+    Title="Delete all positions"
+    Message="Are you sure you want to delete all positions from the database?"
+    OnConfirmed="OnConfirmDeleteAll" />
+
+@code {
+    private enum ContextMenuType { None, Row, Header }
+
+    private List<PositionViewModel> _positions = [];
+    private bool _disposed;
+
+    private GridColumnState<PositionColumnEnum>? _columnState;
+
+    // Event handlers per row and per column header, created once and handed to Blazor unchanged on
+    // every render. See GridCallbackCache for what that saves. Built in OnInitialized because the
+    // factories capture this.
+    private GridCallbackCache<PositionViewModel, RowCallbacks> _rowCallbacks = null!;
+    private GridCallbackCache<ColumnRuntimeState<PositionColumnEnum>, HeaderCallbacks> _headerCallbacks = null!;
+    private ElementReference _tableRef;
+    private DotNetObjectReference<PositionsClosed>? _dotNetRef;
+    private bool _jsInitialized;
+
+    private PositionColumnEnum? _dragSourceColumn;
+    private PositionColumnEnum? _dragOverColumn;
+
+    private PositionViewModel? _selectedPosition;
+    private readonly HashSet<PositionViewModel> _selectedPositions = [];
+    private bool _contextMenuVisible;
+    private ElementReference _contextMenuRef;
+    private bool _contextMenuPositioned;
+    private bool _confirmDeleteAllVisible;
+    private double _contextMenuX;
+    private double _contextMenuY;
+    private ContextMenuType _contextMenuType;
+    private PositionViewModel? _contextMenuPosition;
+    private bool _columnDialogVisible;
+
+    private static readonly GridColumnDef<PositionColumnEnum>[] PositionClosedColumnDefs =
+    [
+        new() { Column = PositionColumnEnum.Id, Header = "Id", CssClass = "text-right", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 0 },
+        new() { Column = PositionColumnEnum.AltradyId, Header = "AltradyId", CssClass = "text-right mono", DefaultWidth = 180, DefaultVisible = true, DefaultDisplayIndex = 1 },
+        new() { Column = PositionColumnEnum.CreateTime, Header = "Created", CssClass = "mono", DefaultWidth = 105, DefaultVisible = true, DefaultDisplayIndex = 2 },
+        new() { Column = PositionColumnEnum.CloseTime, Header = "Closed", CssClass = "mono", DefaultWidth = 105, DefaultVisible = true, DefaultDisplayIndex = 3 },
+        new() { Column = PositionColumnEnum.Duration, Header = "Duration", CssClass = "mono", DefaultWidth = 90, DefaultVisible = true, DefaultDisplayIndex = 4 },
+        new() { Column = PositionColumnEnum.Exchange, Header = "Exchange", CssClass = "", DefaultWidth = 110, DefaultVisible = false, DefaultDisplayIndex = 5 },
+        new() { Column = PositionColumnEnum.Symbol, Header = "Symbol", CssClass = "symbol-name", DefaultWidth = 100, DefaultVisible = true, DefaultDisplayIndex = 6 },
+        new() { Column = PositionColumnEnum.SignalVolume, Header = "Volume", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 7 },
+        new() { Column = PositionColumnEnum.Side, Header = "Side", CssClass = "text-center", DefaultWidth = 50, DefaultVisible = true, DefaultDisplayIndex = 8 },
+        new() { Column = PositionColumnEnum.Interval, Header = "Interval", CssClass = "text-center", DefaultWidth = 60, DefaultVisible = true, DefaultDisplayIndex = 9 },
+        new() { Column = PositionColumnEnum.Strategy, Header = "Strategy", CssClass = "", DefaultWidth = 60, DefaultVisible = true, DefaultDisplayIndex = 10 },
+        new() { Column = PositionColumnEnum.Status, Header = "Status", CssClass = "text-center", DefaultWidth = 60, DefaultVisible = true, DefaultDisplayIndex = 11 },
+        new() { Column = PositionColumnEnum.Invested, Header = "Invested", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 12 },
+        new() { Column = PositionColumnEnum.Returned, Header = "Returned", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 13 },
+        new() { Column = PositionColumnEnum.Commission, Header = "Commission", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 14 },
+        new() { Column = PositionColumnEnum.Quantity, Header = "Quantity", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 15 },
+        new() { Column = PositionColumnEnum.Open, Header = "Open", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 16 },
+        new() { Column = PositionColumnEnum.CurrentProfit, Header = "Profit", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 17 },
+        new() { Column = PositionColumnEnum.CurrentProfitPercentage, Header = "Percentage", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 18 },
+        new() { Column = PositionColumnEnum.Parts, Header = "Parts", CssClass = "text-center", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 19 },
+        new() { Column = PositionColumnEnum.EntryPrice, Header = "EntryPrice", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 20 },
+        new() { Column = PositionColumnEnum.ProfitPrice, Header = "ProfitPrice", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 21 },
+        new() { Column = PositionColumnEnum.FundingRate, Header = "FundingRate", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 22 },
+        new() { Column = PositionColumnEnum.QuantityTick, Header = "QuantityTick", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 23 },
+        new() { Column = PositionColumnEnum.RemainingDust, Header = "RemainingDust", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 24 },
+        new() { Column = PositionColumnEnum.RemainingDustValue, Header = "DustValue", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 25 },
+        new() { Column = PositionColumnEnum.SignalDate, Header = "SignalDate", CssClass = "mono", DefaultWidth = 105, DefaultVisible = false, DefaultDisplayIndex = 26 },
+        new() { Column = PositionColumnEnum.SignalPrice, Header = "Price", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 27 },
+        new() { Column = PositionColumnEnum.EventText, Header = "Text", CssClass = "event-text", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 28 },
+        new() { Column = PositionColumnEnum.TrendInterval, Header = "TF trend", CssClass = "text-center", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 29 },
+        new() { Column = PositionColumnEnum.TrendPercentagePrimary, Header = "Marketprimtrend", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 30 },
+        new() { Column = PositionColumnEnum.TrendPercentageSecondary, Header = "Marketsectrend", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 31 },
+        new() { Column = PositionColumnEnum.Last24HoursChange, Header = "24h Change", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 32 },
+        new() { Column = PositionColumnEnum.LastXDaysEffective, Header = "X day's move", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 33 },
+        new() { Column = PositionColumnEnum.BB, Header = "BB%", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 34 },
+        new() { Column = PositionColumnEnum.BbLower, Header = "BbLower", CssClass = "text-right mono", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 35 },
+        new() { Column = PositionColumnEnum.BbUpper, Header = "BbUpper", CssClass = "text-right mono", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 36 },
+        new() { Column = PositionColumnEnum.AvgBB, Header = "Avg BB%", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 37 },
+        new() { Column = PositionColumnEnum.Rsi, Header = "Rsi", CssClass = "text-right mono", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 38 },
+        new() { Column = PositionColumnEnum.LuxIndicator5m, Header = "Lux 5m", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 39 },
+        new() { Column = PositionColumnEnum.MacdValue, Header = "Macd Value", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 40 },
+        new() { Column = PositionColumnEnum.MacdSignal, Header = "Macd Signal", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 41 },
+        new() { Column = PositionColumnEnum.MacdHistogram, Header = "Macd Histo", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 42 },
+        new() { Column = PositionColumnEnum.StochOscillator, Header = "Stoch Oscillator", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 43 },
+        new() { Column = PositionColumnEnum.StochSignal, Header = "Stoch Signal", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 44 },
+        new() { Column = PositionColumnEnum.Sma200, Header = "Sma200", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 45 },
+        new() { Column = PositionColumnEnum.Sma50, Header = "Sma50", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 46 },
+        new() { Column = PositionColumnEnum.Sma20, Header = "Sma20", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 47 },
+        new() { Column = PositionColumnEnum.PSar, Header = "PSar", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 48 },
+        new() { Column = PositionColumnEnum.Trend15m, Header = "Trend 15m", CssClass = "text-center", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 49 },
+        new() { Column = PositionColumnEnum.Trend30m, Header = "Trend 30m", CssClass = "text-center", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 50 },
+        new() { Column = PositionColumnEnum.Trend1h, Header = "Trend 1h", CssClass = "text-center", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 51 },
+        new() { Column = PositionColumnEnum.Trend4h, Header = "Trend 4h", CssClass = "text-center", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 52 },
+        new() { Column = PositionColumnEnum.Trend1d, Header = "Trend 1d", CssClass = "text-center", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 53 },
+        new() { Column = PositionColumnEnum.Barometer15m, Header = "Bm 15m", CssClass = "text-center mono", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 54 },
+        new() { Column = PositionColumnEnum.Barometer30m, Header = "Bm 30m", CssClass = "text-center mono", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 55 },
+        new() { Column = PositionColumnEnum.Barometer1h, Header = "Bm 1h", CssClass = "text-center mono", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 56 },
+        new() { Column = PositionColumnEnum.Barometer4h, Header = "Bm 4h", CssClass = "text-center mono", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 57 },
+        new() { Column = PositionColumnEnum.Barometer1d, Header = "Bm 1d", CssClass = "text-center mono", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 58 },
+        new() { Column = PositionColumnEnum.MinimumEntry, Header = "Min Entry", CssClass = "text-right mono", DefaultWidth = 60, DefaultVisible = true, DefaultDisplayIndex = 59 },
+    ];
+
+    protected override void OnInitialized()
+    {
+        _rowCallbacks = new(vm => new RowCallbacks
+        {
+            Click = e => OnRowClick(e, vm),
+            DoubleClick = () => OnDoubleClick(vm),
+            ContextMenu = e => OnRowContextMenu(e, vm),
+        });
+        _headerCallbacks = new(col => new HeaderCallbacks
+        {
+            Sort = () => OnSort(col.Column),
+            DragStart = () => OnHeaderDragStart(col.Column),
+            DragOver = () => OnHeaderDragOver(col.Column),
+            Drop = () => OnHeaderDrop(col.Column),
+        });
+
+        _columnState = new GridColumnState<PositionColumnEnum>(
+            "PositionClosed", StateService, PositionClosedColumnDefs,
+            PositionColumnEnum.CloseTime, System.ComponentModel.ListSortDirection.Descending);
+
+        PositionService.ClosedPositionsChanged += OnPositionsChanged;
+        _positions = PositionService.ClosedPositions.ToList();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // A menu opened on the last row of a grid ran off the bottom of the screen. Move it back
+        // inside the window once it has been laid out, the way Avalonia shifts its menu up.
+        if (_contextMenuVisible && !_contextMenuPositioned)
+        {
+            _contextMenuPositioned = true;
+            try
+            {
+                await JS.InvokeVoidAsync("cryptoScannerPopup.keepInViewport", _contextMenuRef);
+            }
+            catch (JSException)
+            {
+            }
+        }
+        else if (!_contextMenuVisible)
+            _contextMenuPositioned = false;
+
+        if (!_jsInitialized)
+        {
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            try
+            {
+                await JS.InvokeVoidAsync("GridInterop.initAllResizeHandles", _tableRef, _dotNetRef);
+                _jsInitialized = true;
+            }
+            catch (JSException)
+            {
+            }
+        }
+    }
+
+    [JSInvokable]
+    public void OnColumnResized(string columnName, double newWidth)
+    {
+        if (Enum.TryParse<PositionColumnEnum>(columnName, out var col))
+        {
+            var runtime = _columnState?.Columns.FirstOrDefault(c => c.Column.Equals(col));
+            if (runtime != null)
+            {
+                runtime.Width = newWidth;
+                _columnState?.SaveColumnState();
+                InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private void OnPositionsChanged()
+    {
+        if (_disposed)
+            return;
+        _positions = PositionService.ClosedPositions.ToList();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnSort(PositionColumnEnum column)
+    {
+        PositionService.SortClosed(column);
+    }
+
+    private static string GetCellClass(ColumnRuntimeState<PositionColumnEnum> col, PositionViewModel vm)
+    {
+        var baseClass = col.CssClass;
+        var colorClass = vm.GetCellColorClass(col.Column);
+        if (string.IsNullOrEmpty(colorClass))
+            return baseClass;
+        return string.IsNullOrEmpty(baseClass) ? colorClass : $"{baseClass} {colorClass}";
+    }
+
+    private void OnRowClick(MouseEventArgs e, PositionViewModel vm)
+    {
+        if (e.CtrlKey)
+        {
+            if (_selectedPositions.Contains(vm))
+                _selectedPositions.Remove(vm);
+            else
+                _selectedPositions.Add(vm);
+            _selectedPosition = vm;
+        }
+        else if (e.ShiftKey && _selectedPosition != null)
+        {
+            int startIdx = _positions.IndexOf(_selectedPosition);
+            int endIdx = _positions.IndexOf(vm);
+            if (startIdx >= 0 && endIdx >= 0)
+            {
+                int from = Math.Min(startIdx, endIdx);
+                int to = Math.Max(startIdx, endIdx);
+                _selectedPositions.Clear();
+                for (int i = from; i <= to; i++)
+                    _selectedPositions.Add(_positions[i]);
+            }
+        }
+        else
+        {
+            _selectedPositions.Clear();
+            _selectedPositions.Add(vm);
+            _selectedPosition = vm;
+        }
+    }
+
+    private void OnDoubleClick(PositionViewModel vm)
+    {
+        _selectedPosition = vm;
+        if (vm.Object.Symbol != null)
+            GridCommandService.HandleDoubleClick(vm.Object.Symbol, vm.Object.Interval);
+    }
+
+    private void OnRowContextMenu(MouseEventArgs e, PositionViewModel vm)
+    {
+        _selectedPosition = vm;
+        _contextMenuPosition = vm;
+        _contextMenuType = ContextMenuType.Row;
+        _contextMenuX = e.ClientX;
+        _contextMenuY = e.ClientY;
+        _contextMenuVisible = true;
+    }
+
+    private void OnHeaderContextMenu(MouseEventArgs e)
+    {
+        _contextMenuType = ContextMenuType.Header;
+        _contextMenuX = e.ClientX;
+        _contextMenuY = e.ClientY;
+        _contextMenuVisible = true;
+    }
+
+    private void CloseContextMenu()
+    {
+        _contextMenuVisible = false;
+        _contextMenuPosition = null;
+        _contextMenuType = ContextMenuType.None;
+    }
+
+    private void OnMenuOpenChart()
+    {
+        if (_contextMenuPosition?.Object.Symbol != null)
+            GridCommandService.OpenChart(_contextMenuPosition.Object.Symbol);
+        CloseContextMenu();
+    }
+
+    private void OnMenuOpenTradingApp()
+    {
+        if (_contextMenuPosition?.Object.Symbol != null)
+            GridCommandService.OpenTradingApp(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.Interval);
+        CloseContextMenu();
+    }
+
+    private void OnMenuOpenTradingViewInternal()
+    {
+        if (_contextMenuPosition?.Object.Symbol != null)
+            GridCommandService.OpenTradingViewInternal(_contextMenuPosition.Object.Symbol);
+        CloseContextMenu();
+    }
+
+    private void OnMenuOpenTradingViewExternal()
+    {
+        if (_contextMenuPosition?.Object.Symbol != null)
+            GridCommandService.OpenTradingViewExternal(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.Interval);
+        CloseContextMenu();
+    }
+
+    private void OnMenuOpenExchange()
+    {
+        if (_contextMenuPosition?.Object.Symbol != null)
+            GridCommandService.OpenExchange(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.Interval);
+        CloseContextMenu();
+    }
+
+    private async Task OnMenuCopySymbolName()
+    {
+        if (_contextMenuPosition?.Object.Symbol != null)
+            await GridCommandService.CopySymbolNameAsync(_contextMenuPosition.Object.Symbol);
+        CloseContextMenu();
+    }
+
+    private void OnMenuCalculateZones()
+    {
+        if (_contextMenuPosition?.Object.Symbol != null)
+            GridCommandService.CalculateLiquidityZones(_contextMenuPosition.Object.Symbol);
+        CloseContextMenu();
+    }
+
+    private void OnMenuPositionRecalculate()
+    {
+        if (_contextMenuPosition?.Object != null)
+            GridCommandService.PositionRecalculate(_contextMenuPosition.Object);
+        CloseContextMenu();
+    }
+
+    private void OnMenuPositionDelete()
+    {
+        if (_contextMenuPosition?.Object != null)
+            GridCommandService.PositionDelete(_contextMenuPosition.Object);
+        CloseContextMenu();
+    }
+
+    private async Task OnMenuCopyDataCells()
+    {
+        if (_contextMenuPosition != null)
+        {
+            var cells = string.Join("\t", _columnState!.VisibleColumns.Select(c => _contextMenuPosition.GetCellValue(c.Column)));
+            await GridCommandService.CopyDataCellsAsync(cells);
+        }
+        CloseContextMenu();
+    }
+
+    private void OnMenuExportTrend()
+    {
+        if (_contextMenuPosition?.Object.Symbol != null)
+            GridCommandService.ExportTrendToLog(_contextMenuPosition.Object.Symbol);
+        CloseContextMenu();
+    }
+
+    private void OnMenuExportSymbolToExcel()
+    {
+        if (_contextMenuPosition?.Object.Symbol != null)
+            GridCommandService.ExportSymbolToExcel(_contextMenuPosition.Object.Symbol);
+        CloseContextMenu();
+    }
+
+    private void OnMenuExportBarometerToExcel()
+    {
+        if (_contextMenuPosition?.Object.Symbol != null)
+            GridCommandService.ExportBarometerToExcel(_contextMenuPosition.Object.Symbol);
+        CloseContextMenu();
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Delete" && _selectedPosition?.Object != null)
+        {
+            GridCommandService.PositionDelete(_selectedPosition.Object);
+        }
+    }
+
+    private void OnMenuExportPositionToExcel()
+    {
+        if (_contextMenuPosition?.Object != null)
+            GridCommandService.ExportPositionToExcel(_contextMenuPosition.Object);
+        CloseContextMenu();
+    }
+
+    private void OnMenuExportAllPositionsToExcel()
+    {
+        Task.Run(() => new CryptoScanner.Core.Excel.ExcelPostionsDump().ExportToExcel());
+        CloseContextMenu();
+    }
+
+    private void OnMenuDeleteAllPositions()
+    {
+        CloseContextMenu();
+        _confirmDeleteAllVisible = true;
+    }
+
+    private void OnConfirmDeleteAll()
+    {
+        GridCommandService.PositionDeleteAll();
+    }
+
+    private void OnMenuHideSelection()
+    {
+        _selectedPosition = null;
+        _selectedPositions.Clear();
+        CloseContextMenu();
+    }
+
+    private void OnMenuAdjustColumns()
+    {
+        CloseContextMenu();
+        _columnDialogVisible = true;
+    }
+
+    private void OnColumnsVisibilityChanged()
+    {
+        _jsInitialized = false;
+        StateHasChanged();
+    }
+
+    private void OnHeaderDragStart(PositionColumnEnum column) => _dragSourceColumn = column;
+
+    private void OnHeaderDragOver(PositionColumnEnum column)
+    {
+        if (_dragSourceColumn.HasValue && !_dragSourceColumn.Value.Equals(column))
+            _dragOverColumn = column;
+    }
+
+    private void OnHeaderDrop(PositionColumnEnum targetColumn)
+    {
+        _dragOverColumn = null;
+        if (!_dragSourceColumn.HasValue || _dragSourceColumn.Value.Equals(targetColumn))
+            return;
+
+        var source = _columnState?.Columns.FirstOrDefault(c => c.Column.Equals(_dragSourceColumn.Value));
+        var target = _columnState?.Columns.FirstOrDefault(c => c.Column.Equals(targetColumn));
+        if (source == null || target == null)
+            return;
+
+        int sourceIdx = source.DisplayIndex;
+        int targetIdx = target.DisplayIndex;
+        foreach (var c in _columnState!.Columns)
+        {
+            if (sourceIdx < targetIdx)
+            {
+                if (c.DisplayIndex > sourceIdx && c.DisplayIndex <= targetIdx)
+                    c.DisplayIndex--;
+            }
+            else
+            {
+                if (c.DisplayIndex >= targetIdx && c.DisplayIndex < sourceIdx)
+                    c.DisplayIndex++;
+            }
+        }
+        source.DisplayIndex = targetIdx;
+        _columnState.SaveColumnState();
+        _dragSourceColumn = null;
+        _jsInitialized = false;
+    }
+
+    private void OnHeaderDragEnd()
+    {
+        _dragSourceColumn = null;
+        _dragOverColumn = null;
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _dotNetRef?.Dispose();
+        PositionService.ClosedPositionsChanged -= OnPositionsChanged;
+    }
+}

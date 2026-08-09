@@ -1,0 +1,59 @@
+@page "/positions"
+
+<div class="page-header">
+    <h2>Positions</h2>
+    <span class="page-subtitle">Open and closed positions</span>
+</div>
+
+<div class="tab-bar">
+    <button class="tab @(_activeTab == 0 ? "active" : "")" @onclick="() => _activeTab = 0">Open</button>
+    <button class="tab @(_activeTab == 1 ? "active" : "")" @onclick="() => _activeTab = 1">Closed</button>
+</div>
+
+<div class="card">
+    @if (_activeTab == 0)
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Direction</th>
+                    <th>Entry</th>
+                    <th>Current</th>
+                    <th>Profit/Loss</th>
+                    <th>Stop loss</th>
+                    <th>Take profit</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="7" class="empty-state">No open positions.</td>
+                </tr>
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Direction</th>
+                    <th>Entry</th>
+                    <th>Exit</th>
+                    <th>Result</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="6" class="empty-state">No closed positions.</td>
+                </tr>
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private int _activeTab = 0;
+}

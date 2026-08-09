@@ -1,0 +1,160 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Model
+@using CryptoScanner.Core.Settings
+
+<div class="settings-wrap" style="flex-direction: column;">
+
+    <div class="settings-group" style="max-width: none; width: 100%;">
+        <div class="settings-group-header">Basecoins (Quote currencies)</div>
+        <div class="settings-group-body">
+            @* No width:100% — that stretched the columns apart and left the "Symbols" count sitting
+               a long way behind the colour. .data-table is width:auto, so the table is exactly as
+               wide as its columns, just like an Avalonia DataGrid. *@
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Active</th>
+                        <th style="width: 80px;">Symbol</th>
+                        <th style="width: 100px;">Min. volume</th>
+                        <th style="width: 100px;">Min. price</th>
+                        <th style="width: 100px;">Amount</th>
+                        <th style="width: 80px;">Percentage</th>
+                        <th style="width: 120px;">Color</th>
+                        <th style="width: 70px;">Symbols</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _quoteItems)
+                    {
+                        <tr>
+                            <td><input type="checkbox" class="input-checkbox" @bind="item.IsEnabled" /></td>
+                            <td>@item.Name</td>
+                            <td><input type="number" class="input-number" step="0.01" min="0" @bind="item.MinVolume" style="width:90px;" /></td>
+                            <td><input type="number" class="input-number" step="0.00000001" min="0" @bind="item.MinPrice" style="width:90px;" /></td>
+                            <td><input type="number" class="input-number" step="0.01" min="0" @bind="item.Amount" style="width:90px;" /></td>
+                            <td><input type="number" class="input-number" step="0.1" min="0" max="100" @bind="item.Percentage" style="width:70px;" /></td>
+                            @* One field in the exact #AARRGGBB the settings file stores, so the
+                               transparency is simply the first two characters — 00 is invisible, FF
+                               is solid. The swatch next to it shows the real colour on a
+                               checkerboard and opens the colour picker for the RGB part, keeping
+                               whatever transparency is set. The browser's own colour input cannot
+                               do alpha at all, which is what made every quote show up solid pink. *@
+                            <td>
+                                <ColorPickerCell @bind-Value="item.ColorArgb" Title="@item.Name" />
+                            </td>
+                            <td class="text-right">@item.SymbolCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private List<QuoteItem> _quoteItems = [];
+
+    protected override void OnInitialized()
+    {
+        LoadFrom(GlobalData.Settings);
+    }
+
+    public void LoadFrom(SettingsBasic settings)
+    {
+        _quoteItems.Clear();
+        foreach (var qd in settings.QuoteCoins.Values)
+        {
+            _quoteItems.Add(new QuoteItem
+            {
+                Name = qd.Name,
+                IsEnabled = qd.FetchCandles,
+                MinVolume = qd.MinimalVolume,
+                MinPrice = qd.MinimalPrice,
+                Amount = qd.EntryAmount,
+                Percentage = qd.EntryPercentage,
+                ColorArgb = qd.DisplayColor.ToString(),
+                SymbolCount = qd.SymbolList.Count,
+                Source = qd,
+            });
+        }
+    }
+
+    public void SaveTo(SettingsBasic settings)
+    {
+        foreach (var item in _quoteItems)
+        {
+            item.Source.FetchCandles = item.IsEnabled;
+            item.Source.MinimalVolume = item.MinVolume;
+            item.Source.MinimalPrice = item.MinPrice;
+            item.Source.EntryAmount = item.Amount;
+            item.Source.EntryPercentage = item.Percentage;
+            // Keep the original alpha: it decides whether the grids tint the row at all
+            item.Source.DisplayColor = item.ParsedColor;
+        }
+
+        // The symbol grid caches its background style per row; tell it the colours moved.
+        CryptoScanner.UI.ViewModels.ColorHelper.InvalidateQuoteColors();
+    }
+
+
+
+    private class QuoteItem
+    {
+        public string Name { get; set; } = "";
+        public bool IsEnabled { get; set; }
+        public double MinVolume { get; set; }
+        public decimal MinPrice { get; set; }
+        public decimal Amount { get; set; }
+        public float Percentage { get; set; }
+        /// <summary>
+        /// The colour in the same #AARRGGBB notation the settings file uses, so what you type here
+        /// is what ends up on disk. The leading pair is the transparency.
+        /// </summary>
+        public string ColorArgb { get; set; } = "#00FF95A5";
+
+        public CoreColor ParsedColor
+        {
+            get
+            {
+                var text = ColorArgb?.Trim() ?? "";
+                if (!text.StartsWith('#'))
+                    text = "#" + text;
+                var c = CoreColor.Parse(text);
+                // Parse yields all-zero on anything malformed; fall back rather than show black.
+                return c == default ? CoreColor.FromArgb(0x00, 0xFF, 0x95, 0xA5) : c;
+            }
+        }
+
+        /// <summary>RGB only, for the native colour picker which has no notion of transparency.</summary>
+        public string RgbHex
+        {
+            get
+            {
+                var c = ParsedColor;
+                return $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+            }
+        }
+
+        /// <summary>Replace the RGB part, keep the transparency the user set.</summary>
+        public void SetRgb(string? rgbHex)
+        {
+            if (string.IsNullOrWhiteSpace(rgbHex))
+                return;
+            var rgb = CoreColor.Parse(rgbHex.StartsWith('#') ? rgbHex : "#" + rgbHex);
+            ColorArgb = $"#{ParsedColor.A:X2}{rgb.R:X2}{rgb.G:X2}{rgb.B:X2}";
+        }
+
+        /// <summary>The real colour, for the preview swatch.</summary>
+        public string ColorRgba
+        {
+            get
+            {
+                var c = ParsedColor;
+                return $"rgba({c.R},{c.G},{c.B},{(c.A / 255.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)})";
+            }
+        }
+        public int SymbolCount { get; set; }
+        public CryptoQuoteData Source { get; set; } = null!;
+    }
+}

@@ -1,0 +1,69 @@
+@using CryptoScanner.Core.Core
+
+@if (Visible)
+{
+    <div class="modal-overlay" @onclick="OnClose" @oncontextmenu:preventDefault="true">
+    </div>
+    <div class="modal-dialog about-dialog" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <span class="modal-title">About CryptoScanBot</span>
+        </div>
+        <div class="modal-body about-body">
+            <div class="about-icon">&#x1F4B0;</div>
+            <div class="about-app-name">CryptoScanBot</div>
+            <div class="about-version">Version @GlobalData.AppVersion</div>
+            <div class="about-copyright">@_copyright</div>
+            <div class="about-author">Author: Marius</div>
+
+            <div class="about-section-title">Application Info</div>
+            <div class="about-info-list">
+                <div class="about-info-row"><span>Data folder</span><span class="mono">@GlobalData.AppDataFolder</span></div>
+                <div class="about-info-row"><span>Application path</span><span class="mono">@GlobalData.AppPath</span></div>
+                <div class="about-info-row"><span>Exchange</span><span>@(GlobalData.ActiveExchange?.Name ?? "None")</span></div>
+            </div>
+
+            <div class="about-section-title">Supported Exchanges</div>
+            <div class="about-exchange-list">
+                @foreach (var name in _exchanges)
+                {
+                    <div class="about-exchange-item">- @name</div>
+                }
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" @onclick="OnClose">Close</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    private string _copyright = "";
+    private List<string> _exchanges = [];
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && _exchanges.Count == 0)
+        {
+            _copyright = GetCopyright();
+            _exchanges = GlobalData.ExchangeListName.Keys.OrderBy(x => x).ToList();
+        }
+    }
+
+    private static string GetCopyright()
+    {
+        var assembly = typeof(GlobalData).Assembly;
+        var attr = assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyCopyrightAttribute), false);
+        if (attr.Length > 0)
+            return ((System.Reflection.AssemblyCopyrightAttribute)attr[0]).Copyright;
+        return $"CryptoScanBot (c) {DateTime.Now.Year}";
+    }
+
+    private async Task OnClose()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+}

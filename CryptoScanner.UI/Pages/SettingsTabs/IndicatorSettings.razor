@@ -1,0 +1,181 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Enums
+@using CryptoScanner.Core.Settings
+
+@* Group order, headers and labels copied from the Avalonia IndicatorsTabView: Stochastic, RSI,
+   Bollinger bands. *@
+<div class="settings-wrap">
+
+    <div class="settings-group">
+        <div class="settings-group-header">Stochastic parameters</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>%K Length</label>
+                <input type="number" class="input-number" @bind="_stochLength" min="2" max="50" />
+            </div>
+            <div class="field">
+                <label>%D smoothing</label>
+                <input type="number" class="input-number" @bind="_stochSmoothingD" min="1" max="20" />
+            </div>
+            <div class="field">
+                <label>%K smoothing</label>
+                <input type="number" class="input-number" @bind="_stochSmoothingK" min="1" max="20" />
+            </div>
+            <div class="field">
+                <label>Oversold</label>
+                <input type="number" class="input-number" @bind="_stochOversold" min="0" max="100" />
+            </div>
+            <div class="field">
+                <label>Overbought</label>
+                <input type="number" class="input-number" @bind="_stochOverbought" min="0" max="100" />
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <div class="settings-group-header">RSI parameters</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Length</label>
+                <input type="number" class="input-number" @bind="_rsiLength" min="2" max="50" />
+            </div>
+            <div class="field">
+                <label>Oversold</label>
+                <input type="number" class="input-number" @bind="_rsiOversold" min="0" max="100" />
+            </div>
+            <div class="field">
+                <label>Overbought</label>
+                <input type="number" class="input-number" @bind="_rsiOverbought" min="0" max="100" />
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <div class="settings-group-header">Bollinger bands parameters</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Length</label>
+                <input type="number" class="input-number" @bind="_bbLength" min="5" max="100" />
+            </div>
+            <div class="field">
+                <label>Deviation</label>
+                <input type="number" step="0.1" class="input-number" @bind="_bbDeviation" min="0.1" max="10" />
+            </div>
+        </div>
+    </div>
+
+    @* Avalonia has these two groups as well ("Primary trend parameters" / "Secondary trend
+       parameters") but both carry IsVisible="false". Hidden rather than removed, so the settings
+       keep loading and saving exactly as before. *@
+    <div class="settings-group" style="display:none;">
+        <div class="settings-group-header">Primary trend parameters</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Primary trend type</label>
+                <select class="input-select" @bind="_primaryTrendType">
+                    @foreach (var t in Enum.GetValues<TrendType>())
+                    {
+                        <option value="@t">@t</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="_primaryUseHighLow" />
+                <label>Primary use high/low</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-group" style="display:none;">
+        <div class="settings-group-header">Secondary trend parameters</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Secondary trend type</label>
+                <select class="input-select" @bind="_secondaryTrendType">
+                    @foreach (var t in Enum.GetValues<TrendType>())
+                    {
+                        <option value="@t">@t</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="_secondaryUseHighLow" />
+                <label>Secondary use high/low</label>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private TrendType _primaryTrendType;
+    private bool _primaryUseHighLow;
+    private TrendType _secondaryTrendType;
+    private bool _secondaryUseHighLow;
+
+    private int _bbLength;
+    private double _bbDeviation;
+    private int _rsiLength;
+    private double _rsiOversold;
+    private double _rsiOverbought;
+    private int _stochLength;
+    private int _stochSmoothingK;
+    private int _stochSmoothingD;
+    private double _stochOversold;
+    private double _stochOverbought;
+
+    protected override void OnInitialized()
+    {
+        LoadFrom(GlobalData.Settings);
+    }
+
+    public void LoadFrom(SettingsBasic settings)
+    {
+        var trend = settings.Trend;
+        _primaryTrendType = trend.Primary.TrendType;
+        _primaryUseHighLow = trend.Primary.UseHighLow;
+        _secondaryTrendType = trend.Secondary.TrendType;
+        _secondaryUseHighLow = trend.Secondary.UseHighLow;
+
+        var bb = settings.General.SettingsBb;
+        _bbLength = bb.Length;
+        _bbDeviation = bb.Deviation;
+
+        var rsi = settings.General.SettingsRsi;
+        _rsiLength = rsi.Length;
+        _rsiOversold = rsi.Oversold;
+        _rsiOverbought = rsi.Overbought;
+
+        var stoch = settings.General.SettingsStoch;
+        _stochLength = stoch.Length;
+        _stochSmoothingK = stoch.SmoothingK;
+        _stochSmoothingD = stoch.SmoothingD;
+        _stochOversold = stoch.Oversold;
+        _stochOverbought = stoch.Overbought;
+    }
+
+    public void SaveTo(SettingsBasic settings)
+    {
+        var trend = settings.Trend;
+        trend.Primary.TrendType = _primaryTrendType;
+        trend.Primary.UseHighLow = _primaryUseHighLow;
+        trend.Secondary.TrendType = _secondaryTrendType;
+        trend.Secondary.UseHighLow = _secondaryUseHighLow;
+
+        var bb = settings.General.SettingsBb;
+        bb.Length = _bbLength;
+        bb.Deviation = _bbDeviation;
+
+        var rsi = settings.General.SettingsRsi;
+        rsi.Length = _rsiLength;
+        rsi.Oversold = _rsiOversold;
+        rsi.Overbought = _rsiOverbought;
+
+        var stoch = settings.General.SettingsStoch;
+        stoch.Length = _stochLength;
+        stoch.SmoothingK = _stochSmoothingK;
+        stoch.SmoothingD = _stochSmoothingD;
+        stoch.Oversold = _stochOversold;
+        stoch.Overbought = _stochOverbought;
+    }
+}

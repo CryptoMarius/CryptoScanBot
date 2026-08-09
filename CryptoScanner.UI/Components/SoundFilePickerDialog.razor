@@ -1,0 +1,87 @@
+@using CryptoScanner.Core.Core
+
+@* Stand-in for the Avalonia "..." button, which opens the operating system file picker starting in
+   the Sounds folder. A web view cannot hand a full path back from input[type=file], so instead the
+   dialog lists what is actually in that folder — which is where every stored sound file lives.
+   A path typed into the text field by hand keeps working, exactly as in Avalonia. *@
+@if (Visible)
+{
+    <div class="modal-overlay" @onclick="Close" @oncontextmenu:preventDefault="true">
+    </div>
+    <div class="modal-dialog sound-picker-dialog" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <span class="modal-title">Select sound file</span>
+        </div>
+        <div class="modal-body">
+            @if (_files.Count == 0)
+            {
+                <p class="text-muted">No .wav files found in @_folder</p>
+            }
+            else
+            {
+                <div class="sound-file-list">
+                    @foreach (var file in _files)
+                    {
+                        <button class="sound-file-item @(file == Value ? "active" : "")"
+                                @onclick="() => Select(file)">
+                            @file
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="Close">Cancel</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    /// <summary>The sound file currently in the text box, highlighted in the list.</summary>
+    [Parameter] public string Value { get; set; } = "";
+
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    private readonly List<string> _files = [];
+    private string _folder = "";
+
+    protected override void OnParametersSet()
+    {
+        if (!Visible)
+            return;
+
+        _folder = Path.Combine(GlobalData.AppPath, "Sounds");
+        _files.Clear();
+        try
+        {
+            if (Directory.Exists(_folder))
+            {
+                _files.AddRange(Directory.GetFiles(_folder, "*.wav")
+                    .Select(Path.GetFileName)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .Select(name => name!)
+                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase));
+            }
+        }
+        catch (Exception)
+        {
+            // An unreadable folder simply yields an empty list rather than breaking the dialog
+        }
+    }
+
+    private async Task Select(string file)
+    {
+        Value = file;
+        await ValueChanged.InvokeAsync(file);
+        await Close();
+    }
+
+    private async Task Close()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+}

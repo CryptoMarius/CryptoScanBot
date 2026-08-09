@@ -1,0 +1,146 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Settings
+@using CryptoScanner.Core.Telegram
+
+<div class="settings-wrap">
+
+    @* Captions, order and the "first three .. last three" hint next to every key are the ones of
+       ApiTelegramView / ApiAltradyView. The two Dutch captions are copied verbatim from that view,
+       so both applications say the same thing. *@
+    <!-- Telegram -->
+    <div class="settings-group">
+        <div class="settings-group-header">Telegram</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Token</label>
+                <span class="field-control">
+                    <input type="password" class="input-text" style="width:230px;" @bind="_telegramToken" />
+                    <span class="key-hint">@Hint(_telegramToken)</span>
+                </span>
+            </div>
+            <div class="field">
+                <label>ChatId</label>
+                <span class="field-control">
+                    <input type="password" class="input-text" style="width:230px;" @bind="_telegramChatId" />
+                    <span class="key-hint">@Hint(_telegramChatId)</span>
+                </span>
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="_telegramSendSignals" />
+                <label>Stuur meldingen naar telegram</label>
+                <span class="field-control">
+                    <button class="btn btn-secondary" @onclick="StartStopTelegram">Stop/Start</button>
+                    <button class="btn btn-secondary" @onclick="TestTelegram">Test</button>
+                </span>
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="_telegramEmoji" />
+                <label>Gebruik Emoji's in de trend</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Altrady -->
+    <div class="settings-group">
+        <div class="settings-group-header">Altrady API key</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>API key</label>
+                <span class="field-control">
+                    <input type="password" class="input-text" style="width:230px;" @bind="_altradyKey" />
+                    <span class="key-hint">@Hint(_altradyKey)</span>
+                </span>
+            </div>
+            <div class="field">
+                <label>API secret</label>
+                <span class="field-control">
+                    <input type="password" class="input-text" style="width:230px;" @bind="_altradySecret" />
+                    <span class="key-hint">@Hint(_altradySecret)</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    @* The Avalonia API keys tab has Telegram, Altrady and a hidden Alpaca — an exchange key screen
+       does not exist there at all. Hidden rather than removed, so the values keep loading and
+       saving exactly as before. *@
+    <!-- Exchange API keys -->
+    <div class="settings-group" style="display:none;">
+        <div class="settings-group-header">Exchange API Keys</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Exchange</label>
+                <span class="field-value">@(GlobalData.ActiveExchange?.Name ?? "None")</span>
+            </div>
+            <div class="field">
+                <label>API Key</label>
+                <input type="password" class="input-text" style="width:300px;" @bind="_apiKey" />
+            </div>
+            <div class="field">
+                <label>API Secret</label>
+                <input type="password" class="input-text" style="width:300px;" @bind="_apiSecret" />
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private string _telegramToken = "";
+    private string _telegramChatId = "";
+    private bool _telegramEmoji;
+    private bool _telegramSendSignals;
+    private string _apiKey = "";
+    private string _apiSecret = "";
+    private string _altradyKey = "";
+    private string _altradySecret = "";
+
+    /// <summary>
+    /// Same as GetDisplayApiKey in the Avalonia viewmodels: the first three and the last three
+    /// characters, so you can tell which key is filled in without showing it.
+    /// </summary>
+    private static string Hint(string text)
+    {
+        return string.IsNullOrEmpty(text) || text.Length < 4 ? "" : $"{text[..3]}.. {text[^3..]}";
+    }
+
+    private async Task StartStopTelegram()
+    {
+        await ThreadTelegramBot.Start(_telegramToken, _telegramChatId);
+    }
+
+    private void TestTelegram()
+    {
+        ThreadTelegramBot.ChatId = _telegramChatId;
+        GlobalData.AddTextToTelegram("This is a test message");
+    }
+
+    protected override void OnInitialized()
+    {
+        LoadFrom(GlobalData.Settings);
+    }
+
+    public void LoadFrom(SettingsBasic settings)
+    {
+        _telegramToken = GlobalData.Telegram.Token;
+        _telegramChatId = GlobalData.Telegram.ChatId;
+        _telegramEmoji = GlobalData.Telegram.EmojiInTrend;
+        _telegramSendSignals = GlobalData.Telegram.SendSignalsToTelegram;
+        _apiKey = GlobalData.TradingApi.Key;
+        _apiSecret = GlobalData.TradingApi.Secret;
+        _altradyKey = GlobalData.AltradyApi.Key;
+        _altradySecret = GlobalData.AltradyApi.Secret;
+    }
+
+    public void SaveTo(SettingsBasic settings)
+    {
+        GlobalData.Telegram.Token = _telegramToken;
+        GlobalData.Telegram.ChatId = _telegramChatId;
+        GlobalData.Telegram.EmojiInTrend = _telegramEmoji;
+        GlobalData.Telegram.SendSignalsToTelegram = _telegramSendSignals;
+        GlobalData.TradingApi.Key = _apiKey;
+        GlobalData.TradingApi.Secret = _apiSecret;
+        GlobalData.AltradyApi.Key = _altradyKey;
+        GlobalData.AltradyApi.Secret = _altradySecret;
+    }
+}

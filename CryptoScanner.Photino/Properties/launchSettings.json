@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CryptoScanner.Photino": {
+      "commandName": "Project",
+      "commandLineArgs": "-e \"OKX Futures\" -f \"E:\\CryptoScanBot\\Data\\OKX\\Futures\""
+    }
+  }
+}

@@ -1,0 +1,116 @@
+@page "/tradingview"
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Model
+@using CryptoScanner.UI.Services
+@inject SymbolService SymbolService
+@inject InternalBrowserService InternalBrowser
+@implements IDisposable
+
+<div class="tradingview-container">
+    @if (string.IsNullOrEmpty(_iframeSrc))
+    {
+        <div class="tradingview-placeholder">
+            <span class="text-muted">Select a symbol to show the TradingView chart.</span>
+        </div>
+    }
+    else
+    {
+        @* No address bar and no "Open in browser" button: the Avalonia BrowserView is a bare
+           WebView filling the tab. Opening externally is reachable from the grid context menus. *@
+        <iframe src="@_iframeSrc"
+                style="width:100%; height:100%; border:none;"
+                allowfullscreen="true"
+                allow="encrypted-media">
+        </iframe>
+    }
+</div>
+
+@code {
+    private string _tvSymbol = "";
+    private string _iframeSrc = "";
+    private string _theme = "dark";
+
+    protected override void OnInitialized()
+    {
+        _theme = ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme);
+
+        SymbolService.SelectedSymbolChanged += OnSelectedSymbolChanged;
+        InternalBrowser.NavigateRequested += OnNavigateRequested;
+
+        // A url requested while this tab was closed is remembered by the service
+        if (!string.IsNullOrEmpty(InternalBrowser.CurrentUrl))
+            _iframeSrc = InternalBrowser.CurrentUrl!;
+        else
+            UpdateSymbol(SymbolService.SelectedSymbol);
+    }
+
+    private void OnNavigateRequested(string url, bool switchTab)
+    {
+        InvokeAsync(() =>
+        {
+            _iframeSrc = url;
+            StateHasChanged();
+        });
+    }
+
+    private void OnSelectedSymbolChanged()
+    {
+        InvokeAsync(() =>
+        {
+            UpdateSymbol(SymbolService.SelectedSymbol);
+            StateHasChanged();
+        });
+    }
+
+    private void UpdateSymbol(CryptoSymbol? symbol)
+    {
+        if (symbol == null)
+            return;
+
+        var prefix = GetTvExchangePrefix();
+        var newSymbol = $"{prefix}:{symbol.Base}{symbol.Quote}";
+
+        if (newSymbol != _tvSymbol || string.IsNullOrEmpty(_iframeSrc))
+        {
+            _tvSymbol = newSymbol;
+            _iframeSrc = $"https://s.tradingview.com/widgetembed/?symbol={Uri.EscapeDataString(_tvSymbol)}"
+                + $"&interval=60&hidesidetoolbar=0&symboledit=1&saveimage=0"
+                + $"&theme={_theme}&locale=en&allow_symbol_change=1";
+        }
+    }
+
+    /// <summary>
+    /// The exchange whose charts should be shown. Signal exchange and trading exchange can differ,
+    /// so ActivateExchangeName takes precedence over the scanning exchange — the same rule the
+    /// weblink configuration uses.
+    /// </summary>
+    private string GetTvExchangePrefix()
+    {
+        var name = GlobalData.Settings.General.ActivateExchangeName;
+        if (string.IsNullOrEmpty(name))
+            name = GlobalData.ActiveExchange?.Name ?? "";
+
+        name = name.ToUpperInvariant();
+        if (name.Contains("BYBIT"))
+            return "BYBIT";
+        if (name.Contains("KUCOIN"))
+            return "KUCOIN";
+        if (name.Contains("OKX"))
+            return "OKX";
+        if (name.Contains("KRAKEN"))
+            return "KRAKEN";
+        if (name.Contains("COINBASE"))
+            return "COINBASE";
+        if (name.Contains("BITVAVO"))
+            return "BITVAVO";
+        if (name.Contains("MEXC"))
+            return "MEXC";
+        return "BINANCE";
+    }
+
+    public void Dispose()
+    {
+        SymbolService.SelectedSymbolChanged -= OnSelectedSymbolChanged;
+        InternalBrowser.NavigateRequested -= OnNavigateRequested;
+    }
+}

@@ -1,0 +1,219 @@
+@using CryptoScanner.UI.Models
+
+@* Editor for one long/short SettingsTextual block. Layout mirrors the Avalonia sub-views. *@
+
+@* align-items: flex-start, otherwise every groupbox on a row is stretched to the height of the
+   tallest one — that is what made "Market trend filter primary" so much taller than its content. *@
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start;">
+
+    @* Strategies column *@
+    <div class="settings-group" style="min-width: 160px;">
+        <div class="settings-group-header">Strategies (@SideLabel)</div>
+        <div class="settings-group-body">
+            <div class="group-menu">
+                <MenuButton Items="StrategyMenu" Changed="StateHasChanged" />
+            </div>
+            <div style="max-height: 400px; overflow-y: auto;">
+                @foreach (var strat in Side.Strategies)
+                {
+                    <div class="field" style="margin: 2px 0;">
+                        <input type="checkbox" class="input-checkbox" @bind="strat.IsEnabled" />
+                        <label style="margin-left: 4px;">@strat.Name</label>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Intervals column — 3-column grid matching Avalonia *@
+    <div class="settings-group" style="min-width: 280px;">
+        <div class="settings-group-header">Intervals (@SideLabel)</div>
+        <div class="settings-group-body">
+            <div class="group-menu">
+                <MenuButton Items="IntervalMenu" Changed="StateHasChanged" />
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px;">
+                <div>
+                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 2px; color: var(--text-secondary);">Minutes</div>
+                    @foreach (var iv in Side.Intervals.Where(i => IsMinuteInterval(i.Name)))
+                    {
+                        <div class="field" style="margin: 2px 0;">
+                            <input type="checkbox" class="input-checkbox" @bind="iv.IsEnabled" />
+                            <label style="margin-left: 4px;">@iv.Name</label>
+                        </div>
+                    }
+                </div>
+                <div>
+                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 2px; color: var(--text-secondary);">Hours</div>
+                    @foreach (var iv in Side.Intervals.Where(i => IsHourInterval(i.Name)))
+                    {
+                        <div class="field" style="margin: 2px 0;">
+                            <input type="checkbox" class="input-checkbox" @bind="iv.IsEnabled" />
+                            <label style="margin-left: 4px;">@iv.Name</label>
+                        </div>
+                    }
+                </div>
+                <div>
+                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 2px; color: var(--text-secondary);">Days/Weeks</div>
+                    @foreach (var iv in Side.Intervals.Where(i => IsDayWeekInterval(i.Name)))
+                    {
+                        <div class="field" style="margin: 2px 0;">
+                            <input type="checkbox" class="input-checkbox" @bind="iv.IsEnabled" />
+                            <label style="margin-left: 4px;">@iv.Name</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Barometer filter column *@
+    <div class="settings-group" style="min-width: 200px;">
+        <div class="settings-group-header">Barometer filter (@SideLabel)</div>
+        <div class="settings-group-body">
+            @foreach (var baro in Side.BarometerRanges)
+            {
+                <div class="field">
+                    <input type="checkbox" class="input-checkbox" @bind="baro.IsActive" />
+                    <label style="margin-left: 4px; width: 30px;">@baro.Name</label>
+                    <input type="number" class="input-number" step="0.01" @bind="baro.Min" style="width: 70px;" />
+                    <span style="margin: 0 4px;">..</span>
+                    <input type="number" class="input-number" step="0.01" @bind="baro.Max" style="width: 70px;" />
+                </div>
+            }
+            @* One row, as in BarometerFilterView: the checkbox IS the caption and the value next to
+               it follows its enabled state (a NumericUpDown with Minimum=1 Maximum=5 over there). *@
+            <div class="field" style="margin-top: 4px;">
+                <input type="checkbox" class="input-checkbox" @bind="Side.BarometerConsensusActive" />
+                <label style="margin-left: 4px; width: 100px;">Min consensus</label>
+                <input type="number" class="input-number" min="1" max="5" step="1"
+                       disabled="@(!Side.BarometerConsensusActive)"
+                       @bind="Side.BarometerMinConsensus" style="width: 70px;" />
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="Side.BarometerLog" />
+                <label style="margin-left: 4px;">Log if outside boundaries</label>
+            </div>
+        </div>
+    </div>
+
+    @* Trend interval filter column — 2-column grid matching Avalonia *@
+    <div class="settings-group" style="min-width: 300px;">
+        <div class="settings-group-header">Trend interval filter (@SideLabel)</div>
+        <div class="settings-group-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px;">
+                @foreach (var t in Side.TrendIntervals)
+                {
+                    <div class="field" style="margin: 2px 0;">
+                        <input type="checkbox" class="input-checkbox" @bind="t.IsEnabled" />
+                        <label style="margin-left: 4px;">@t.Name interval=bullish</label>
+                    </div>
+                }
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="Side.TrendIntervalLog" />
+                <label>Log trend filter</label>
+            </div>
+        </div>
+    </div>
+
+    @* Market trend filter (primary) *@
+    <div class="settings-group" style="min-width: 200px;">
+        <div class="settings-group-header">Market trend filter primary (@SideLabel)</div>
+        <div class="settings-group-body">
+            <div class="field" style="margin: 4px 0;">
+                <input type="checkbox" class="input-checkbox" @bind="Side.MarketTrendActive" />
+                <label style="margin-left: 4px; width: 50px;">Trend%</label>
+                <input type="number" class="input-number" step="0.1" @bind="Side.MarketTrendMin" style="width: 70px;" />
+                <span style="margin: 0 4px;">..</span>
+                <input type="number" class="input-number" step="0.1" @bind="Side.MarketTrendMax" style="width: 70px;" />
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="Side.MarketTrendLog" />
+                <label>Log if outside boundaries</label>
+            </div>
+        </div>
+    </div>
+
+    @* Market trend filter (secondary) *@
+    <div class="settings-group" style="min-width: 200px;">
+        <div class="settings-group-header">Market trend filter secondary (@SideLabel)</div>
+        <div class="settings-group-body">
+            <div class="field" style="margin: 4px 0;">
+                <input type="checkbox" class="input-checkbox" @bind="Side.MarketTrendSecondaryActive" />
+                <label style="margin-left: 4px; width: 50px;">Trend%</label>
+                <input type="number" class="input-number" step="0.1" @bind="Side.MarketTrendSecondaryMin" style="width: 70px;" />
+                <span style="margin: 0 4px;">..</span>
+                <input type="number" class="input-number" step="0.1" @bind="Side.MarketTrendSecondaryMax" style="width: 70px;" />
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="Side.MarketTrendSecondaryLog" />
+                <label>Log if outside boundaries</label>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public TextualSideData Side { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public string SideLabel { get; set; } = "";
+
+    [Parameter]
+    public TextualSideData? OtherSide { get; set; }
+
+    [Parameter]
+    public string OtherSideLabel { get; set; } = "";
+
+    // Cross-tab counterparts (Analyzer <-> Trader), same feature as the Avalonia
+    // StrategyViewModel/IntervalViewModel "Copy from ..." commands.
+    [Parameter]
+    public TextualSideData? CrossLongSide { get; set; }
+
+    [Parameter]
+    public TextualSideData? CrossShortSide { get; set; }
+
+    [Parameter]
+    public string CrossLabel { get; set; } = "";
+
+    private static readonly HashSet<string> MinuteIntervals = ["1m", "2m", "3m", "5m", "10m", "15m", "30m"];
+    private static readonly HashSet<string> HourIntervals = ["1h", "2h", "3h", "4h", "6h", "8h", "12h"];
+    private static readonly HashSet<string> DayWeekIntervals = ["1d", "1w"];
+
+    private static bool IsMinuteInterval(string name) => MinuteIntervals.Contains(name);
+    private static bool IsHourInterval(string name) => HourIntervals.Contains(name);
+    private static bool IsDayWeekInterval(string name) => DayWeekIntervals.Contains(name);
+
+    /// <summary>The entries of the Avalonia MenuFlyout behind the "▼" of the strategies box.</summary>
+    private List<MenuAction> StrategyMenu => BuildMenu(
+        s => s.Strategies,
+        Side.Strategies);
+
+    /// <summary>The same menu for the intervals box.</summary>
+    private List<MenuAction> IntervalMenu => BuildMenu(
+        s => s.Intervals,
+        Side.Intervals);
+
+    private List<MenuAction> BuildMenu(
+        Func<TextualSideData, List<TextualCheckItem>> pick,
+        List<TextualCheckItem> target)
+    {
+        var items = new List<MenuAction>
+        {
+            new("Select all", () => TextualSideData.SelectAll(target)),
+            new("Select none", () => TextualSideData.SelectNone(target)),
+        };
+
+        if (OtherSide != null)
+            items.Add(new($"Copy from {OtherSideLabel}", () => TextualSideData.CopyChecksFrom(pick(OtherSide), target)));
+        if (CrossLongSide != null)
+            items.Add(new($"Copy from {CrossLabel}/Long", () => TextualSideData.CopyChecksFrom(pick(CrossLongSide), target)));
+        if (CrossShortSide != null)
+            items.Add(new($"Copy from {CrossLabel}/Short", () => TextualSideData.CopyChecksFrom(pick(CrossShortSide), target)));
+
+        return items;
+    }
+}

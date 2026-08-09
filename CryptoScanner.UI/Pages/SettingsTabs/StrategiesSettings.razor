@@ -1,0 +1,272 @@
+@using CryptoScanner.Core.Contracts
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Settings
+@using CryptoScanner.UI.Models
+@using CryptoScanner.UI.Services
+@using Microsoft.Extensions.DependencyInjection
+@inject IServiceProvider Services
+
+<div class="settings-wrap" style="flex-direction: column;">
+
+    <div class="tab-bar settings-tab-bar" style="flex-wrap: wrap;">
+        @for (int i = 0; i < _plugins.Count; i++)
+        {
+            var idx = i;
+            <button class="tab @(_activePlugin == idx ? "active" : "")"
+                    @onclick="() => _activePlugin = idx"
+                    style="font-size: 12px; padding: 4px 8px;">
+                @_plugins[idx].Name
+            </button>
+        }
+    </div>
+
+    @if (_activePlugin >= 0 && _activePlugin < _plugins.Count)
+    {
+        var state = _plugins[_activePlugin];
+
+        @* The plugin tab of the Avalonia window puts its groups in a WrapPanel, so they sit next to
+           each other instead of underneath. *@
+        <div class="settings-wrap" style="width: 100%;">
+
+        @* One row per direction, laid out like the Avalonia ColorAndSoundView:
+           caption | colour | "Sound file:" | file | browse | play.
+           Avalonia has the "Play speech" checkbox commented out in SoundAndColorsView, so it is not
+           rendered here either — the value keeps loading and saving. *@
+        <div class="settings-group">
+            <div class="settings-group-header">Sound and colors</div>
+            <div class="settings-group-body rows">
+                <div class="row span">
+                    <input type="checkbox" class="input-checkbox" @bind="state.PlaySound" />
+                    <label>Play sound</label>
+                </div>
+                <div class="row">
+                    @* Just "Long" — the strategy name is already the caption of the tab, and a long
+                       one (ichimoku.kumo.breakout) pushed the whole row out of shape. *@
+                    <span class="lbl" style="width: 50px;">Long</span>
+                    <ColorPickerCell @bind-Value="state.ColorLongArgb" Title="@($"{state.Name} long")" />
+                    <span class="lbl" style="width: 70px;">Sound file:</span>
+                    <input type="text" class="input-text" @bind="state.SoundFileLong" style="width: 150px;" />
+                    <button class="btn btn-secondary btn-icon" title="Browse for sound file"
+                            @onclick="@(() => BrowseSound(v => state.SoundFileLong = v, state.SoundFileLong, () => _browseLong = true))">...</button>
+                    <button class="btn btn-secondary btn-icon" title="Play sound"
+                            @onclick="@(() => PlayTestSound(state.SoundFileLong))">▶</button>
+                </div>
+                <div class="row">
+                    <span class="lbl" style="width: 50px;">Short</span>
+                    <ColorPickerCell @bind-Value="state.ColorShortArgb" Title="@($"{state.Name} short")" />
+                    <span class="lbl" style="width: 70px;">Sound file:</span>
+                    <input type="text" class="input-text" @bind="state.SoundFileShort" style="width: 150px;" />
+                    <button class="btn btn-secondary btn-icon" title="Browse for sound file"
+                            @onclick="@(() => BrowseSound(v => state.SoundFileShort = v, state.SoundFileShort, () => _browseShort = true))">...</button>
+                    <button class="btn btn-secondary btn-icon" title="Play sound"
+                            @onclick="@(() => PlayTestSound(state.SoundFileShort))">▶</button>
+                </div>
+            </div>
+        </div>
+
+        <SoundFilePickerDialog @bind-Visible="_browseLong" @bind-Value="state.SoundFileLong" />
+        <SoundFilePickerDialog @bind-Visible="_browseShort" @bind-Value="state.SoundFileShort" />
+
+        @* Plugin specific parameters. The Avalonia window renders a plugin supplied control here;
+           these fields are the same settings object, discovered by reflection. One box per
+           groupbox of that Avalonia tab — most strategies have a single "Settings" box, DLZ and
+           FVG spread theirs over several. *@
+        @foreach (var group in state.FieldGroups)
+        {
+            @* A group whose settings are all hidden leaves an empty frame behind. *@
+            if (!group.Fields.Exists(state.IsFieldVisible))
+            {
+                continue;
+            }
+
+            <div class="settings-group">
+                <div class="settings-group-header">@group.Header</div>
+                <div class="settings-group-body">
+                    @foreach (var field in group.Fields)
+                    {
+                        if (!state.IsFieldVisible(field))
+                        {
+                            continue;
+                        }
+
+                        if (field.SeparatorBefore)
+                        {
+                            <hr class="settings-separator" />
+                        }
+
+                        if (!string.IsNullOrEmpty(field.SubHeader))
+                        {
+                            @* The extra space belongs above the sub-heading, not between the heading
+                               and its first setting. *@
+                            <div class="settings-subgroup-header @(field.SpaceBefore ? "space-before" : "")">@field.SubHeader</div>
+                        }
+
+                        if (field.Kind == PluginFieldKind.IntervalList)
+                        {
+                            @* Three columns of checkboxes, like the Avalonia IntervalView. It is not
+                               a label/control pair, so it spans the whole group body. *@
+                            <div class="interval-grid">
+                                @foreach (var column in IntervalColumns)
+                                {
+                                    <div class="interval-column">
+                                        <div class="interval-column-header">@column.Header</div>
+                                        @foreach (var name in column.Names)
+                                        {
+                                            var intervalName = name;
+                                            <label class="interval-item">
+                                                <input type="checkbox" class="input-checkbox"
+                                                       checked="@field.ListValue.Contains(intervalName)"
+                                                       @onchange="@(e => field.ToggleListValue(intervalName, e.Value is bool on && on))" />
+                                                <span>@intervalName</span>
+                                            </label>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            continue;
+                        }
+
+                        @* title="" carries the ToolTip.Tip the Avalonia control has. The controls sit
+                           in one cell, so a unit or a companion cannot land in the caption column of
+                           the next row. *@
+                        <div class="field @(field.Indented ? "indented" : "") @(field.SpaceBefore && string.IsNullOrEmpty(field.SubHeader) ? "space-before" : "")" title="@field.Tooltip">
+                            @if (field.Kind == PluginFieldKind.Bool)
+                            {
+                                <PluginSettingControl Field="field" Changed="StateHasChanged" />
+                                <label>@field.Label</label>
+                                @foreach (var companion in field.Companions)
+                                {
+                                    <PluginSettingControl Field="companion" Disabled="!field.BoolValue" Changed="StateHasChanged" />
+                                }
+                            }
+                            else
+                            {
+                                <label>@field.Label</label>
+                                <span class="field-control">
+                                    <PluginSettingControl Field="field" Disabled="!state.IsFieldEnabled(field)" Changed="StateHasChanged" />
+                                    @if (!string.IsNullOrEmpty(field.Unit))
+                                    {
+                                        <span class="field-unit">@field.Unit</span>
+                                    }
+                                    @foreach (var companion in field.Companions)
+                                    {
+                                        <PluginSettingControl Field="companion" Changed="StateHasChanged" />
+                                    }
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Every strategy tab of the Avalonia window ends with this box (StrategyEntryConditionsView):
+           a switch, a "Reset to global" button and the same editor the Trader tab uses. Off means
+           the strategy follows the global trader conditions. *@
+        <div class="settings-group" style="max-width: none;">
+            <div class="settings-group-header">Entry conditions</div>
+            <div class="settings-group-body">
+                <div class="field">
+                    <input type="checkbox" class="input-checkbox" @bind="state.UseCustomEntryConditions" />
+                    <label>Use custom entry conditions for this strategy</label>
+                    <button class="btn btn-secondary" disabled="@(!state.UseCustomEntryConditions)"
+                            @onclick="() => ResetToGlobal(state)">Reset to global</button>
+                </div>
+                <EntryConditionsEditor Data="state.EntryConditions" Disabled="!state.UseCustomEntryConditions" />
+            </div>
+        </div>
+
+        </div>
+    }
+
+</div>
+
+@code {
+    /// <summary>One column of the interval picker: Minutes, Hours, Days/Weeks.</summary>
+    private record IntervalColumn(string Header, List<string> Names);
+
+    /// <summary>
+    /// The three columns of the Avalonia IntervalView, filled from the intervals the application
+    /// knows. Names end in m / h / d / w, which is what puts them in the right column.
+    /// </summary>
+    private static List<IntervalColumn> IntervalColumns =>
+    [
+        new("Minutes", GlobalData.IntervalList.Where(i => i.Name.EndsWith('m')).Select(i => i.Name).ToList()),
+        new("Hours", GlobalData.IntervalList.Where(i => i.Name.EndsWith('h')).Select(i => i.Name).ToList()),
+        new("Days/Weeks", GlobalData.IntervalList.Where(i => i.Name.EndsWith('d') || i.Name.EndsWith('w')).Select(i => i.Name).ToList()),
+    ];
+
+    private List<PluginSettingsEditState> _plugins = [];
+    private int _activePlugin;
+    private bool _browseLong;
+    private bool _browseShort;
+
+    protected override void OnInitialized()
+    {
+        _plugins = PluginManager.LoadedPlugins.Values
+            .Distinct()
+            .OrderBy(p => p.StrategyName, StringComparer.OrdinalIgnoreCase)
+            .Select(p => new PluginSettingsEditState(p))
+            .ToList();
+
+        LoadFrom(GlobalData.Settings);
+    }
+
+    /// <summary>
+    /// Re-read every plugin's settings. Called on open and on Cancel, so edits are only
+    /// persisted when the user actually presses Save (this tab used to write straight into
+    /// GlobalData.Settings, which made Cancel a no-op).
+    /// </summary>
+    public void LoadFrom(SettingsBasic settings)
+    {
+        foreach (var state in _plugins)
+            state.Load();
+    }
+
+    public void SaveTo(SettingsBasic settings)
+    {
+        foreach (var state in _plugins)
+            state.Save();
+    }
+
+    /// <summary>
+    /// Opens the operating system file picker, filtered on .wav, exactly like the "..." button in the
+    /// Avalonia window. It starts in the folder of the file that is currently filled in, falling back
+    /// to the application's Sounds folder, and stores the full path that comes back.
+    /// A host without a native window (the web host registers no <see cref="IFileDialogService"/>)
+    /// falls back to the in-page list dialog.
+    /// </summary>
+    private void BrowseSound(Action<string> assign, string current, Action showFallback)
+    {
+        var dialog = Services.GetService<IFileDialogService>();
+        if (dialog == null)
+        {
+            showFallback();
+            return;
+        }
+
+        string startFolder = Path.Combine(GlobalData.AppPath, "Sounds");
+        if (!string.IsNullOrWhiteSpace(current))
+        {
+            string? folder = Path.GetDirectoryName(current);
+            if (!string.IsNullOrWhiteSpace(folder) && Directory.Exists(folder))
+                startFolder = folder;
+        }
+
+        string? selected = dialog.OpenFile("Select sound file", startFolder, ("Sound files", ["wav"]));
+        if (!string.IsNullOrWhiteSpace(selected))
+            assign(selected);
+    }
+
+    /// <summary>Copy the global trader entry conditions over this strategy's own set.</summary>
+    private static void ResetToGlobal(PluginSettingsEditState state)
+    {
+        state.EntryConditions.LoadFrom(GlobalData.Settings.Trading.EntryConditions);
+    }
+
+    private static void PlayTestSound(string soundFile)
+    {
+        if (!string.IsNullOrEmpty(soundFile))
+            GlobalData.PlaySomeMusic(soundFile, true);
+    }
+}

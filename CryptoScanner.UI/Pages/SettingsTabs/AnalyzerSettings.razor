@@ -1,0 +1,280 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Enums
+@using CryptoScanner.Core.Settings
+@using CryptoScanner.Core.Signal
+@using CryptoScanner.UI.Components
+@using CryptoScanner.UI.Models
+
+<div class="settings-wrap" style="flex-direction: column;">
+
+    <div class="tab-bar settings-tab-bar">
+        <button class="tab @(_subTab == 0 ? "active" : "")" @onclick="() => _subTab = 0">Analyze common</button>
+        <button class="tab @(_subTab == 1 ? "active" : "")" @onclick="() => _subTab = 1">Analyze long</button>
+        <button class="tab @(_subTab == 2 ? "active" : "")" @onclick="() => _subTab = 2">Analyze short</button>
+    </div>
+
+    @if (_subTab == 0)
+    {
+        @* Ported one-to-one from AnalyzerCommonView.axaml. The outer Grid there is
+           ColumnDefinitions="Auto,Auto": four groups stacked in the left column and "Other settings"
+           in the right one. Every .row below is one Grid row from that file, with the controls in the
+           same order and the same column widths (80 for a field, 40 for a unit). *@
+        <div class="analyzer-common">
+
+            <div class="analyzer-common-col">
+
+                @* Grid ColumnDefinitions="Auto,80,80,*" *@
+                <div class="settings-group">
+                    <div class="settings-group-header">Check relative change% 24 hours</div>
+                    <div class="settings-group-body rows" style="--label-w: 150px;">
+                        <div class="row">
+                            <span class="lbl">24 hour change:</span>
+                            <input type="number" step="0.01" class="input-number w80" @bind="_minChange" />
+                            <input type="number" step="0.01" class="input-number w80" @bind="_maxChange" />
+                        </div>
+                        <div class="row span">
+                            <input type="checkbox" class="input-checkbox" @bind="_logMinMaxChange" />
+                            <label>Log if outside boundary</label>
+                        </div>
+                    </div>
+                </div>
+
+                @* Grid ColumnDefinitions="Auto,*,80,40" *@
+                <div class="settings-group">
+                    <div class="settings-group-header">Check effective change% over multiple days</div>
+                    <div class="settings-group-body rows" style="--label-w: 190px;">
+                        <div class="row">
+                            <span class="lbl">Check effective percentage:</span>
+                            <span class="spacer"></span>
+                            <input type="number" step="0.01" class="input-number w80" @bind="_effectivePercentage" />
+                            <span class="unit">%</span>
+                        </div>
+                        <div class="row">
+                            <span class="lbl">Check effective days:</span>
+                            <span class="spacer"></span>
+                            <input type="number" class="input-number w80" @bind="_effectiveDays" />
+                            <span class="unit">days</span>
+                        </div>
+                        <div class="row span">
+                            <input type="checkbox" class="input-checkbox" @bind="_logEffective" />
+                            <label>Log if outside boundary</label>
+                        </div>
+                    </div>
+                </div>
+
+                @* Grid ColumnDefinitions="Auto,*,80,40" *@
+                <div class="settings-group">
+                    <div class="settings-group-header">Check volume multiple days</div>
+                    <div class="settings-group-body rows" style="--label-w: 190px;">
+                        <div class="row span">
+                            <input type="checkbox" class="input-checkbox" @bind="_checkVolume" />
+                            <label>Check volume over multiple days</label>
+                        </div>
+                        <div class="row">
+                            <span class="lbl">Check over days:</span>
+                            <span class="spacer"></span>
+                            <input type="number" class="input-number w80" @bind="_volumeDays" />
+                            <span class="unit">days</span>
+                        </div>
+                        <div class="row span">
+                            <span class="hint">(using the minimal volume from the basecoins)</span>
+                        </div>
+                    </div>
+                </div>
+
+                @* Grid ColumnDefinitions="*,80,Auto" — checkbox, field, remark *@
+                <div class="settings-group">
+                    <div class="settings-group-header">Check the last 60 candles</div>
+                    <div class="settings-group-body rows">
+                        <div class="row">
+                            <input type="checkbox" class="input-checkbox" @bind="_flatPriceCheck" />
+                            <label class="note">Check the number of flat candles</label>
+                            <input type="number" class="input-number w80" @bind="_flatPrice" />
+                            <span class="note">Larger value is a nogo</span>
+                        </div>
+                        <div class="row">
+                            <input type="checkbox" class="input-checkbox" @bind="_zeroVolumeCheck" />
+                            <label class="note">Check the candles without volume</label>
+                            <input type="number" class="input-number w80" @bind="_zeroVolume" />
+                            <span class="note">Larger value is a nogo</span>
+                        </div>
+                        <div class="row">
+                            <input type="checkbox" class="input-checkbox" @bind="_aboveBbSmaCheck" />
+                            <label class="note">Check if candles are above bb.center</label>
+                            <input type="number" class="input-number w80" @bind="_aboveBbSma" />
+                            <span class="note">Smaller value is a nogo</span>
+                        </div>
+                        <div class="row">
+                            <input type="checkbox" class="input-checkbox" @bind="_aboveBbUpperCheck" />
+                            <label class="note">Check if candles are above bb.upper</label>
+                            <input type="number" class="input-number w80" @bind="_aboveBbUpper" />
+                            <span class="note">Smaller value is a nogo</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="analyzer-common-col">
+
+                @* Grid ColumnDefinitions="Auto,*,80,40" — on some rows a checkbox sits in the 80 column *@
+                <div class="settings-group">
+                    <div class="settings-group-header">Other settings</div>
+                    <div class="settings-group-body rows" style="--label-w: 175px;">
+                        <div class="row">
+                            <span class="lbl">Remove signals after:</span>
+                            <span class="spacer"></span>
+                            @* Bounds from SettingsGeneral; the setter clamps as well, this only
+                               keeps the field from accepting a number it will not get. *@
+                            <input type="number" class="input-number w80"
+                                   min="@SettingsGeneral.RemoveSignalAfterxCandlesMinimum"
+                                   max="@SettingsGeneral.RemoveSignalAfterxCandlesMaximum"
+                                   @bind="_removeSignalAfterCandles" />
+                            <span class="unit">candles</span>
+                        </div>
+                        <div class="row">
+                            <span class="lbl">Show invalid signals:</span>
+                            <span class="spacer"></span>
+                            <input type="checkbox" class="input-checkbox in80" @bind="_showInvalidSignals" />
+                        </div>
+                        <div class="row">
+                            <span class="lbl">Symbol must exists days:</span>
+                            <span class="spacer"></span>
+                            <input type="number" class="input-number w80" @bind="_symbolExistDays" />
+                            <span class="unit">days</span>
+                        </div>
+                        <div class="row">
+                            <span class="lbl">Log if it is a new coin:</span>
+                            <span class="spacer"></span>
+                            <input type="checkbox" class="input-checkbox in80" @bind="_logSymbolDays" />
+                        </div>
+                        <div class="row">
+                            <span class="lbl">Minimum tick percentage:</span>
+                            <span class="spacer"></span>
+                            <input type="number" step="0.01" class="input-number w80" @bind="_minTickPercentage" />
+                            <span class="unit">%</span>
+                        </div>
+                        <div class="row">
+                            <span class="lbl">Log if tick is above this:</span>
+                            <span class="spacer"></span>
+                            <input type="checkbox" class="input-checkbox in80" @bind="_logMinTick" />
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    }
+    else
+    {
+        @* Long or Short sub-tab — same editor the trader long/short tabs use *@
+        <TextualSideEditor Side="@(_subTab == 1 ? _longSide : _shortSide)"
+                           SideLabel="@(_subTab == 1 ? "Long" : "Short")"
+                           OtherSide="@(_subTab == 1 ? _shortSide : _longSide)"
+                           OtherSideLabel="@(_subTab == 1 ? "Short" : "Long")"
+                           CrossLongSide="CrossLongSide"
+                           CrossShortSide="CrossShortSide"
+                           CrossLabel="Trading" />
+    }
+
+</div>
+
+@code {
+    private int _subTab;
+
+    // Common settings
+    private float _minChange, _maxChange;
+    private bool _logMinMaxChange;
+    private float _effectivePercentage;
+    private int _effectiveDays;
+    private bool _logEffective;
+    private bool _checkVolume;
+    private int _volumeDays;
+    private int _symbolExistDays;
+    private bool _logSymbolDays;
+    private int _removeSignalAfterCandles;
+    private bool _showInvalidSignals;
+    private decimal _minTickPercentage;
+    private bool _logMinTick;
+    private bool _flatPriceCheck, _zeroVolumeCheck, _aboveBbSmaCheck, _aboveBbUpperCheck;
+    private int _flatPrice, _zeroVolume, _aboveBbSma, _aboveBbUpper;
+
+    // Long/Short side data
+    private TextualSideData _longSide = new();
+    private TextualSideData _shortSide = new();
+
+    /// <summary>Exposed so the Trader tab can offer "copy from Analyzer".</summary>
+    public TextualSideData LongSide => _longSide;
+    public TextualSideData ShortSide => _shortSide;
+
+    /// <summary>Counterparts on the Trader tab, wired by the settings dialog.</summary>
+    [Parameter] public TextualSideData? CrossLongSide { get; set; }
+    [Parameter] public TextualSideData? CrossShortSide { get; set; }
+
+    protected override void OnInitialized()
+    {
+        LoadFrom(GlobalData.Settings);
+    }
+
+    public void LoadFrom(SettingsBasic settings)
+    {
+        var s = settings.Signal;
+        _minChange = s.AnalysisMinChangePercentage;
+        _maxChange = s.AnalysisMaxChangePercentage;
+        _logMinMaxChange = s.LogAnalysisMinMaxChangePercentage;
+        _effectivePercentage = s.AnalysisEffectivePercentage;
+        _effectiveDays = s.AnalysisEffectiveDays;
+        _logEffective = s.AnalysisMaxEffectiveLog;
+        _checkVolume = s.CheckVolumeOverPeriod;
+        _volumeDays = s.CheckVolumeOverDays;
+        _symbolExistDays = s.SymbolMustExistsDays;
+        _logSymbolDays = s.LogSymbolMustExistsDays;
+        _removeSignalAfterCandles = settings.General.RemoveSignalAfterxCandles;
+        _showInvalidSignals = settings.General.ShowInvalidSignals;
+        _minTickPercentage = s.MinimumTickPercentage;
+        _logMinTick = s.LogMinimumTickPercentage;
+        _flatPriceCheck = s.CandlesWithFlatPriceCheck;
+        _flatPrice = s.CandlesWithFlatPrice;
+        _zeroVolumeCheck = s.CandlesWithZeroVolumeCheck;
+        _zeroVolume = s.CandlesWithZeroVolume;
+        _aboveBbSmaCheck = s.AboveBollingerBandsSmaCheck;
+        _aboveBbSma = s.AboveBollingerBandsSma;
+        _aboveBbUpperCheck = s.AboveBollingerBandsUpperCheck;
+        _aboveBbUpper = s.AboveBollingerBandsUpper;
+
+        _longSide = TextualSideData.LoadFrom(s.Long);
+        _shortSide = TextualSideData.LoadFrom(s.Short);
+    }
+
+    public void SaveTo(SettingsBasic settings)
+    {
+        var s = settings.Signal;
+        s.AnalysisMinChangePercentage = _minChange;
+        s.AnalysisMaxChangePercentage = _maxChange;
+        s.LogAnalysisMinMaxChangePercentage = _logMinMaxChange;
+        s.AnalysisEffectivePercentage = _effectivePercentage;
+        s.AnalysisEffectiveDays = _effectiveDays;
+        s.AnalysisMaxEffectiveLog = _logEffective;
+        s.CheckVolumeOverPeriod = _checkVolume;
+        s.CheckVolumeOverDays = _volumeDays;
+        s.SymbolMustExistsDays = _symbolExistDays;
+        s.LogSymbolMustExistsDays = _logSymbolDays;
+        settings.General.RemoveSignalAfterxCandles = _removeSignalAfterCandles;
+        settings.General.ShowInvalidSignals = _showInvalidSignals;
+        s.MinimumTickPercentage = _minTickPercentage;
+        s.LogMinimumTickPercentage = _logMinTick;
+        s.CandlesWithFlatPriceCheck = _flatPriceCheck;
+        s.CandlesWithFlatPrice = _flatPrice;
+        s.CandlesWithZeroVolumeCheck = _zeroVolumeCheck;
+        s.CandlesWithZeroVolume = _zeroVolume;
+        s.AboveBollingerBandsSmaCheck = _aboveBbSmaCheck;
+        s.AboveBollingerBandsSma = _aboveBbSma;
+        s.AboveBollingerBandsUpperCheck = _aboveBbUpperCheck;
+        s.AboveBollingerBandsUpper = _aboveBbUpper;
+
+        _longSide.SaveTo(s.Long);
+        _shortSide.SaveTo(s.Short);
+    }
+
+}

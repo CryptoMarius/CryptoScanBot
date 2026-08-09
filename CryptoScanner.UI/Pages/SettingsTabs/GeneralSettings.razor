@@ -1,0 +1,193 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Enums
+@using CryptoScanner.Core.Settings
+
+@* Groups, order and labels copied from the Avalonia ExchangeView / CommonView, which the
+   ConfigurationWindow shows under the "Exchange" tab. The fields Avalonia does not show
+   (TradingAppInternExtern, DefaultInterval, HideSelectedRow, HideSymbolsOnTheLeft,
+   SoundTradeNotification) are kept in the code block so the settings keep loading and saving,
+   but are not rendered — the same approach Avalonia itself uses with IsVisible="false". *@
+<div class="settings-wrap">
+
+    <div class="settings-group">
+        <div class="settings-group-header">Exchange parameters</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Extra application caption</label>
+                <input type="text" class="input-text" @bind="_extraCaption" />
+            </div>
+            <div class="field">
+                <label>Active exchange</label>
+                <select class="input-select" @bind="_exchangeName">
+                    @foreach (var exchange in GlobalData.ExchangeListName)
+                    {
+                        <option value="@exchange.Key">@exchange.Key</option>
+                    }
+                    @if (!GlobalData.ExchangeListName.Any())
+                    {
+                        <option value="@_exchangeName">@_exchangeName</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>Activate exchange</label>
+                <select class="input-select" @bind="_activateExchangeName">
+                    @foreach (var exchange in GlobalData.ExchangeListName)
+                    {
+                        <option value="@exchange.Key">@exchange.Key</option>
+                    }
+                    @if (!string.IsNullOrEmpty(_activateExchangeName) && !GlobalData.ExchangeListName.ContainsKey(_activateExchangeName))
+                    {
+                        <option value="@_activateExchangeName">@_activateExchangeName</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                @* Avalonia's ExchangeViewModel binds this label to General.GetCandleInterval. *@
+                <label>Refresh symbols every x minutes</label>
+                <input type="number" class="input-number" @bind="_getCandleInterval" min="10" max="300" />
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <div class="settings-group-header">Common parameters</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <label>Trading app</label>
+                <select class="input-select" @bind="_tradingApp">
+                    @foreach (var app in TradingAppList)
+                    {
+                        <option value="@app.Key">@app.Value</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>Double click action</label>
+                <select class="input-select" @bind="_doubleClickAction">
+                    @foreach (var a in DoubleClickActionList)
+                    {
+                        <option value="@a.Key">@a.Value</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>Play heart beat sound every</label>
+                <input type="number" class="input-number" @bind="_soundHeartBeatMinutes" min="0" max="60" />
+            </div>
+            <div class="field">
+                <label>Theme</label>
+                <select class="input-select" @bind="_theme">
+                    @foreach (var theme in ThemeList)
+                    {
+                        <option value="@theme.Key">@theme.Value</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @* No Avalonia counterpart: SignalR only exists in the Blazor hosts. *@
+    <div class="settings-group">
+        <div class="settings-group-header">SignalR</div>
+        <div class="settings-group-body">
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="_signalREnabled" />
+                <label>Enabled</label>
+            </div>
+            <div class="field">
+                <label>Port</label>
+                <input type="number" class="input-number" @bind="_signalRPort" min="1024" max="65535" />
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    @* The captions and their order are the ones the Avalonia CommonViewModel builds in
+       BuildTradingAppList / BuildDoubleClickActionList / BuildThemeList. Rendering the raw enum
+       names instead put "ActivateTradingApp" and "ExchangeUrl" on screen. The theme keys stay the
+       ThemeHelper spellings, because both hosts read the same settings file. *@
+    private static readonly List<KeyValuePair<CryptoTradingApp, string>> TradingAppList =
+    [
+        new(CryptoTradingApp.Altrady, "Altrady"),
+        new(CryptoTradingApp.Hypertrader, "Hypertrader"),
+        new(CryptoTradingApp.TradingView, "TradingView"),
+        new(CryptoTradingApp.ExchangeUrl, "Exchange"),
+    ];
+
+    private static readonly List<KeyValuePair<CryptoDoubleClickAction, string>> DoubleClickActionList =
+    [
+        new(CryptoDoubleClickAction.ActivateTradingApp, "Activate trading app"),
+        new(CryptoDoubleClickAction.ActivateChartForm, "Show chart form"),
+    ];
+
+    private static readonly List<KeyValuePair<string, string>> ThemeList =
+    [
+        new(ThemeHelper.Default, "Follow system"),
+        new(ThemeHelper.Dark, "Dark mode"),
+        new(ThemeHelper.Light, "Light mode"),
+    ];
+
+    private string _exchangeName = "";
+    private string _activateExchangeName = "";
+    private CryptoTradingApp _tradingApp;
+    private CryptoExternalUrlType _tradingAppInternExtern;
+    private CryptoDoubleClickAction _doubleClickAction;
+    private CryptoIntervalPeriod _defaultInterval;
+    private string _extraCaption = "";
+    private string _theme = ThemeHelper.Dark;
+    private int _getCandleInterval;
+    private bool _hideSelectedRow;
+    private bool _hideSymbolsOnTheLeft;
+    private bool _soundTradeNotification;
+    private int _soundHeartBeatMinutes;
+    private bool _signalREnabled;
+    private int _signalRPort;
+
+    protected override void OnInitialized()
+    {
+        LoadFrom(GlobalData.Settings);
+    }
+
+    public void LoadFrom(SettingsBasic settings)
+    {
+        var g = settings.General;
+        _exchangeName = g.ExchangeName;
+        _activateExchangeName = g.ActivateExchangeName;
+        _tradingApp = g.TradingApp;
+        _tradingAppInternExtern = g.TradingAppInternExtern;
+        _doubleClickAction = g.DoubleClickAction;
+        _defaultInterval = g.DefaultInterval;
+        _extraCaption = g.ExtraCaption;
+        _theme = ThemeHelper.Normalize(g.Theme);
+        _getCandleInterval = g.GetCandleInterval;
+        _hideSelectedRow = g.HideSelectedRow;
+        _hideSymbolsOnTheLeft = g.HideSymbolsOnTheLeft;
+        _soundTradeNotification = g.SoundTradeNotification;
+        _soundHeartBeatMinutes = g.SoundHeartBeatMinutes;
+        _signalREnabled = g.SignalREnabled;
+        _signalRPort = g.SignalRPort;
+    }
+
+    public void SaveTo(SettingsBasic settings)
+    {
+        var g = settings.General;
+        g.ExchangeName = _exchangeName;
+        g.ActivateExchangeName = _activateExchangeName;
+        g.TradingApp = _tradingApp;
+        g.TradingAppInternExtern = _tradingAppInternExtern;
+        g.DoubleClickAction = _doubleClickAction;
+        g.DefaultInterval = _defaultInterval;
+        g.ExtraCaption = _extraCaption;
+        g.Theme = ThemeHelper.Normalize(_theme);
+        g.GetCandleInterval = _getCandleInterval;
+        g.HideSelectedRow = _hideSelectedRow;
+        g.HideSymbolsOnTheLeft = _hideSymbolsOnTheLeft;
+        g.SoundTradeNotification = _soundTradeNotification;
+        g.SoundHeartBeatMinutes = _soundHeartBeatMinutes;
+        g.SignalREnabled = _signalREnabled;
+        g.SignalRPort = _signalRPort;
+    }
+}

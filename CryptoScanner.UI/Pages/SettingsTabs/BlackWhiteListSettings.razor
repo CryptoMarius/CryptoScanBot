@@ -1,0 +1,94 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Settings
+
+<div class="settings-wrap settings-wrap-full">
+
+    <div class="tab-bar settings-tab-bar">
+        <button class="tab @(_subTab == 0 ? "active" : "")" @onclick="() => _subTab = 0">Whitelist long</button>
+        <button class="tab @(_subTab == 1 ? "active" : "")" @onclick="() => _subTab = 1">Whitelist short</button>
+        <button class="tab @(_subTab == 2 ? "active" : "")" @onclick="() => _subTab = 2">Blacklist long</button>
+        <button class="tab @(_subTab == 3 ? "active" : "")" @onclick="() => _subTab = 3">Blacklist short</button>
+    </div>
+
+    <div class="settings-group settings-group-full">
+        <div class="settings-group-header">
+            @(_subTab switch
+            {
+                0 => "Whitelist long (oversold)",
+                1 => "Whitelist short (overbought)",
+                2 => "Blacklist long (oversold)",
+                3 => "Blacklist short (overbought)",
+                _ => ""
+            })
+        </div>
+        <div class="settings-group-body">
+            @* The hint belongs in the memo as a watermark, the way BlackAndWhiteListView sets it —
+               the fixed line above the memo took a row of its own and stayed there while typing. *@
+            <textarea class="input-text" placeholder="COINUSDT Put your comments behind it if needed"
+                      @bind="CurrentText" @bind:event="oninput"></textarea>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private int _subTab;
+    private string _whiteListLong = "";
+    private string _whiteListShort = "";
+    private string _blackListLong = "";
+    private string _blackListShort = "";
+
+    private string CurrentText
+    {
+        get => _subTab switch
+        {
+            0 => _whiteListLong,
+            1 => _whiteListShort,
+            2 => _blackListLong,
+            3 => _blackListShort,
+            _ => ""
+        };
+        set
+        {
+            switch (_subTab)
+            {
+                case 0: _whiteListLong = value; break;
+                case 1: _whiteListShort = value; break;
+                case 2: _blackListLong = value; break;
+                case 3: _blackListShort = value; break;
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        LoadFrom(GlobalData.Settings);
+    }
+
+    public void LoadFrom(SettingsBasic settings)
+    {
+        _whiteListLong = string.Join("\n", settings.WhiteListOversold);
+        _whiteListShort = string.Join("\n", settings.WhiteListOverbought);
+        _blackListLong = string.Join("\n", settings.BlackListOversold);
+        _blackListShort = string.Join("\n", settings.BlackListOverbought);
+    }
+
+    public void SaveTo(SettingsBasic settings)
+    {
+        settings.WhiteListOversold = ParseLines(_whiteListLong);
+        settings.WhiteListOverbought = ParseLines(_whiteListShort);
+        settings.BlackListOversold = ParseLines(_blackListLong);
+        settings.BlackListOverbought = ParseLines(_blackListShort);
+    }
+
+    private static List<string> ParseLines(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return [];
+
+        return text.Split('\n', StringSplitOptions.None)
+            .Select(l => l.Trim())
+            .Where(l => l.Length > 0)
+            .ToList();
+    }
+}

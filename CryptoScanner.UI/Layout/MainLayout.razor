@@ -1,0 +1,949 @@
+﻿@inherits LayoutComponentBase
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Diagnostics
+@using CryptoScanner.Core.Enums
+@using CryptoScanner.Core.Excel
+@using CryptoScanner.Core.Context
+@using CryptoScanner.Core.Exchange
+@using CryptoScanner.Core.Messages
+@using CommunityToolkit.Mvvm.Messaging
+@using CryptoScanner.Core.Signal
+@using CryptoScanner.Core.Zones
+@using CryptoScanner.UI.Services
+@using CryptoScanner.UI.ViewModels
+@using CryptoScanner.Core.Services
+@using CryptoScanner.UI.Components
+@inject SymbolService SymbolService
+@inject SignalService SignalService
+@inject GridCommandService GridCommandService
+@inject ApplicationStateService StateService
+@inject DashboardService DashboardService
+@inject MarketIndicatorService MarketIndicatorService
+@inject LogService LogService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<div class="app-root" data-theme="@_theme">
+
+    <!-- Title bar: Menu + title (matches Avalonia MainWindow TitleBarGrid) -->
+    <div class="titlebar">
+        <div class="titlebar-menu">
+            <div class="menu-dropdown">
+                <span class="menu-dropdown-trigger">File</span>
+                <div class="menu-dropdown-content">
+                    <label class="menu-check-item">
+                        <input type="checkbox" checked="@GlobalData.Settings.Signal.Active"
+                               @onchange="ToggleScanner" />
+                        Analyzer active
+                    </label>
+                    <label class="menu-check-item">
+                        <input type="checkbox" checked="@GlobalData.Settings.Trading.Active"
+                               @onchange="ToggleTrader" />
+                        Trader active
+                    </label>
+                    <label class="menu-check-item">
+                        <input type="checkbox" checked="@GlobalData.Settings.Signal.SoundsActive"
+                               @onchange="ToggleSounds" />
+                        Play sounds
+                    </label>
+                    <div class="menu-separator"></div>
+                    <span class="menu-action-item" @onclick="OpenSettings">Scanner configuration</span>
+                    <span class="menu-action-item" @onclick="OnRefreshInformation">Refresh information</span>
+                    <span class="menu-action-item" @onclick="OnClearLogAndTickers">Clear log and tickers</span>
+                    <div class="menu-separator"></div>
+                    <span class="menu-action-item" @onclick="OnOpenDataFolder">Open data folder</span>
+                    <div class="menu-separator"></div>
+                    <span class="menu-action-item" @onclick="OnExit">Exit</span>
+                </div>
+            </div>
+            <div class="menu-dropdown">
+                <span class="menu-dropdown-trigger">Tools</span>
+                <div class="menu-dropdown-content">
+                    <span class="menu-action-item" @onclick="OnExportExchangeToExcel">Export exchange info to Excel</span>
+                    <span class="menu-action-item" @onclick="OnExportSignalsToExcel">Export signals to Excel</span>
+                    <span class="menu-action-item" @onclick="OnExportPositionsToExcel">Export positions to Excel</span>
+                    <div class="menu-separator"></div>
+                    <span class="menu-action-item" @onclick="OnDumpMemoryInfo">Dump memory info</span>
+                    <span class="menu-action-item" @onclick="OnCleanupCandles">Cleanup candles and old files</span>
+                    <span class="menu-action-item" @onclick="OnCalculateAllDlz">Calculate all liquidity zones</span>
+                    <div class="menu-separator"></div>
+                    <span class="menu-action-item" @onclick="ToggleTheme">Toggle theme</span>
+                </div>
+            </div>
+            <div class="menu-dropdown">
+                <span class="menu-dropdown-trigger">Help</span>
+                <div class="menu-dropdown-content">
+                    <span class="menu-action-item" @onclick="OpenAbout">About</span>
+                </div>
+            </div>
+        </div>
+        <span class="titlebar-title">CryptoScanBot v@(GlobalData.AppVersion) — @(DashboardService.ExchangeName)</span>
+    </div>
+
+    <!-- Dashboard info panel (matches Avalonia DashBoardInformationView, 125px).
+         Its own component so a dashboard tick does not re-render the symbol sidebar as well. -->
+    <DashboardPanel />
+
+
+    <!-- Separator -->
+    <div class="separator-line"></div>
+
+    <!-- Main area: symbols left, tabs right -->
+    <div class="main-area">
+
+        <!-- Symbol sidebar (matches Avalonia SymbolSplitView, 300px, collapsible) -->
+        @if (_sidebarVisible)
+        {
+            <div class="symbol-sidebar" @ref="_sidebarRef" style="width: @(_sidebarWidth)px;">
+                <div class="symbol-sidebar-header">
+                    <span class="symbol-sidebar-title">Symbols</span>
+                    <span class="symbol-sidebar-filter">Filter:</span>
+                    <input type="text" class="input-text symbol-filter-input"
+                           value="@_symbolFilter"
+                           @oninput="OnFilterInput"
+                           @onkeydown="OnFilterKeyDown" />
+                    <button class="btn sidebar-toggle-btn" @onclick="ToggleSidebar" title="Hide symbols">◄</button>
+                </div>
+                <div class="symbol-sidebar-content" tabindex="0" @onkeydown="OnSymbolGridKeyDown">
+                    <table class="data-table" @ref="_symbolTableRef">
+                        <thead @oncontextmenu="OnHeaderContextMenu" @oncontextmenu:preventDefault="true">
+                            <tr>
+                                @foreach (var col in _symbolColumns!.VisibleColumns)
+                                {
+                                    var header = _headerCallbacks.Get(col);
+                                    <th class="@col.CssClass @(_dragOverColumn?.Equals(col.Column) == true ? "drag-over" : "")"
+                                        data-col="@col.Column"
+                                        draggable="true"
+                                        @onclick="header.Sort"
+                                        @ondragstart="header.DragStart"
+                                        @ondragover="header.DragOver"
+                                        @ondragover:preventDefault="true"
+                                        @ondrop="header.Drop"
+                                        @ondragend="OnHeaderDragEnd"
+                                        style="@(col.Width > 0 ? $"width:{col.Width}px" : "")">
+                                        @col.Header@(SymbolService.SortState.GetSortIndicator(col.Column))
+                                        <div class="col-resize-handle" @onmousedown:stopPropagation="true"></div>
+                                    </th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (_symbols.Count > 0)
+                            {
+                                @foreach (var vm in _symbols)
+                                {
+                                    var row = _rowCallbacks.Get(vm);
+                                    <tr class="@(_selectedSymbols.Contains(vm) ? "selected" : "")"
+                                        @key="vm"
+                                        @onclick="row.Click"
+                                        @ondblclick="row.DoubleClick"
+                                        @oncontextmenu="row.ContextMenu"
+                                        @oncontextmenu:preventDefault="true">
+                                        @foreach (var col in _symbolColumns!.VisibleColumns)
+                                        {
+                                            @* Avalonia wraps only the Symbol cell in a Border with the quote colour
+                                               (SymbolGridView.axaml), so the tint marks the coin, not the whole row. *@
+                                            <td class="@GetSymbolCellClass(col, vm)"
+                                                style="@(col.Column == SymbolColumnEnum.Symbol ? vm.BackgroundStyle : "")">@GetSymbolCellValue(col, vm)</td>
+                                        }
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="@_symbolColumns!.VisibleColumns.Count()" class="empty-state">
+                                        @if (GlobalData.ActiveExchange == null)
+                                        {
+                                            <text>Start the scanner to load symbols.</text>
+                                        }
+                                        else
+                                        {
+                                            <text>No symbols match the filter.</text>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Splitter -->
+            <div class="splitter-handle" @ref="_splitterRef"></div>
+            <div class="splitter-line"></div>
+        }
+        else
+        {
+            <div class="sidebar-collapsed">
+                <button class="btn sidebar-toggle-btn" @onclick="ToggleSidebar" title="Show symbols">►</button>
+            </div>
+            <div class="splitter-line"></div>
+        }
+
+        <!-- Tabbed content (matches Avalonia MainTabs) -->
+        <div class="content-area">
+            <div class="tab-bar">
+                <NavLink class="tab" href="" Match="NavLinkMatch.All">Signals</NavLink>
+                <NavLink class="tab" href="chart">Chart</NavLink>
+                <NavLink class="tab" href="tradingview">Tradingview</NavLink>
+                <NavLink class="tab" href="livedata">Live Data</NavLink>
+                <NavLink class="tab" href="dashboard">Dashboard</NavLink>
+                <NavLink class="tab" href="positions/open">Open positions</NavLink>
+                <NavLink class="tab" href="positions/closed">Closed positions</NavLink>
+                <NavLink class="tab" href="log">Log</NavLink>
+            </div>
+
+            <div class="tab-content">
+                <ErrorBoundary @ref="_errorBoundary">
+                    <ChildContent>
+                        @Body
+                    </ChildContent>
+                    <ErrorContent>
+                        <div style="padding: 10px; color: var(--red);">
+                            An error occurred. <button class="btn btn-secondary" @onclick="ResetError">Retry</button>
+                        </div>
+                    </ErrorContent>
+                </ErrorBoundary>
+            </div>
+        </div>
+
+    </div>
+
+    @if (_contextMenuVisible)
+    {
+        <div class="context-menu-overlay" @onclick="CloseContextMenu" @oncontextmenu="CloseContextMenu" @oncontextmenu:preventDefault="true"></div>
+        <div class="context-menu" @ref="_contextMenuRef" style="left: @(_contextMenuX)px; top: @(_contextMenuY)px;">
+            @if (_contextMenuType == ContextMenuType.SymbolRow && _contextMenuSymbol != null)
+            {
+                <div class="context-menu-item" @onclick="@(() => OnMenuOpenChart())">Open symbol chart</div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuOpenTradingApp())">Open trading app</div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuOpenTradingViewInternal())">Open TradingView internal</div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuOpenTradingViewExternal())">Open TradingView external</div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuOpenExchange())">Open the exchange</div>
+                <div class="context-menu-separator"></div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuCopySymbolName())">Copy symbol name</div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuCopyDataCells())">Copy all data cells</div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuCalculateZones())">Calculate liquidity zones</div>
+                <div class="context-menu-separator"></div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuExportTrend())">Export trend information to log</div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuExportSymbolToExcel())">Export symbol information to Excel</div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuExportBarometerToExcel())">Export barometer information to Excel</div>
+                <div class="context-menu-separator"></div>
+                <div class="context-menu-item" @onclick="@(() => OnMenuHideSelection())">Hide grid selection</div>
+            }
+            else if (_contextMenuType == ContextMenuType.Header)
+            {
+                <div class="context-menu-item" @onclick="OnMenuAdjustColumns">Adjust Columns...</div>
+            }
+        </div>
+    }
+
+    @if (_shuttingDown)
+    {
+        <div class="shutdown-overlay">
+            <div class="shutdown-box">
+                <div class="shutdown-spinner"></div>
+                <div>Closing down, saving candles and closing connections...</div>
+            </div>
+        </div>
+    }
+
+    <CryptoScanner.UI.Pages.Settings @bind-Visible="_settingsVisible" />
+    <AboutDialog @bind-Visible="_aboutVisible" />
+
+    <ColumnVisibilityDialog TEnum="SymbolColumnEnum"
+                            @bind-Visible="_columnDialogVisible"
+                            ColumnState="_symbolColumns"
+                            OnColumnsChanged="OnColumnsVisibilityChanged" />
+</div>
+
+@code {
+    private enum ContextMenuType { None, SymbolRow, Header }
+
+    private string _theme = "dark";
+    private bool _shuttingDown;
+    private int _sidebarWidth = 300;
+    private bool _sidebarVisible = true;
+    private string _symbolFilter = "";
+    private List<SymbolViewModel> _symbols = [];
+    private System.Threading.Timer? _refreshTimer;
+    private System.Threading.Timer? _dashboardTimer;
+    private int _dashboardTickCount;
+    private bool _disposed;
+    private ErrorBoundary? _errorBoundary;
+
+    private SymbolViewModel? _selectedSymbol;
+    private readonly HashSet<SymbolViewModel> _selectedSymbols = [];
+    private bool _contextMenuVisible;
+    private ElementReference _contextMenuRef;
+    private bool _contextMenuPositioned;
+    private double _contextMenuX;
+    private double _contextMenuY;
+    private ContextMenuType _contextMenuType;
+    private SymbolViewModel? _contextMenuSymbol;
+    private bool _columnDialogVisible;
+    private bool _settingsVisible;
+    private bool _aboutVisible;
+
+    private GridColumnState<SymbolColumnEnum>? _symbolColumns;
+    private ElementReference _symbolTableRef;
+    private ElementReference _sidebarRef;
+    private ElementReference _splitterRef;
+    private DotNetObjectReference<MainLayout>? _dotNetRef;
+    private bool _jsInitialized;
+    private SymbolColumnEnum? _dragSourceColumn;
+    private SymbolColumnEnum? _dragOverColumn;
+
+    // Event handlers per row and per column header, created once and handed to Blazor unchanged on
+    // every render. See GridCallbackCache for what that saves. Built in OnInitialized because the
+    // factories capture this.
+    private GridCallbackCache<SymbolViewModel, RowCallbacks> _rowCallbacks = null!;
+    private GridCallbackCache<ColumnRuntimeState<SymbolColumnEnum>, HeaderCallbacks> _headerCallbacks = null!;
+
+    private static readonly GridColumnDef<SymbolColumnEnum>[] SymbolColumnDefs =
+    [
+        new() { Column = SymbolColumnEnum.Id, Header = "Id", DefaultVisible = false, DefaultDisplayIndex = 0 },
+        new() { Column = SymbolColumnEnum.Symbol, Header = "Symbol", CssClass = "symbol-name", DefaultVisible = true, DefaultDisplayIndex = 1 },
+        new() { Column = SymbolColumnEnum.Volume, Header = "Volume", CssClass = "text-right", DefaultVisible = true, DefaultDisplayIndex = 2 },
+        new() { Column = SymbolColumnEnum.Distance, Header = "Distance", CssClass = "text-right", DefaultVisible = true, DefaultDisplayIndex = 3 },
+    ];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // A menu opened on the last row of a grid ran off the bottom of the screen. Move it back
+        // inside the window once it has been laid out, the way Avalonia shifts its menu up.
+        if (_contextMenuVisible && !_contextMenuPositioned)
+        {
+            _contextMenuPositioned = true;
+            try
+            {
+                await JS.InvokeVoidAsync("cryptoScannerPopup.keepInViewport", _contextMenuRef);
+            }
+            catch (JSException)
+            {
+            }
+        }
+        else if (!_contextMenuVisible)
+            _contextMenuPositioned = false;
+
+        if (firstRender)
+        {
+            // "Follow system" can only be answered by the browser (prefers-color-scheme), so ask it
+            // once and keep listening — otherwise that setting silently stayed dark.
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            try
+            {
+                ThemeHelper.SystemPrefersDark = await JS.InvokeAsync<bool>("cryptoScannerTheme.prefersDark");
+                await JS.InvokeVoidAsync("cryptoScannerTheme.watch", _dotNetRef);
+                ApplyTheme();
+            }
+            catch (JSException)
+            {
+            }
+        }
+
+        if (!_jsInitialized && _sidebarVisible)
+        {
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            try
+            {
+                await JS.InvokeVoidAsync("GridInterop.initAllResizeHandles", _symbolTableRef, _dotNetRef);
+                await JS.InvokeVoidAsync("GridInterop.initSplitter", _splitterRef, _sidebarRef, _dotNetRef);
+                _jsInitialized = true;
+            }
+            catch (JSException)
+            {
+            }
+        }
+    }
+
+    /// <summary>The operating system switched between its light and dark theme.</summary>
+    [JSInvokable]
+    public void OnSystemThemeChanged(bool prefersDark)
+    {
+        ThemeHelper.SystemPrefersDark = prefersDark;
+        ApplyTheme();
+    }
+
+    [JSInvokable]
+    public void OnColumnResized(string columnName, double newWidth)
+    {
+        if (Enum.TryParse<SymbolColumnEnum>(columnName, out var col))
+        {
+            var runtime = _symbolColumns?.Columns.FirstOrDefault(c => c.Column.Equals(col));
+            if (runtime != null)
+            {
+                runtime.Width = newWidth;
+                _symbolColumns?.SaveColumnState();
+                InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    [JSInvokable]
+    public void OnSidebarResized(int newWidth)
+    {
+        _sidebarWidth = newWidth;
+        StateService.SaveSplitterPosition("MainWindow", newWidth);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnHeaderDragStart(SymbolColumnEnum column)
+    {
+        _dragSourceColumn = column;
+    }
+
+    private void OnHeaderDragOver(SymbolColumnEnum column)
+    {
+        if (_dragSourceColumn.HasValue && !_dragSourceColumn.Value.Equals(column))
+        {
+            _dragOverColumn = column;
+        }
+    }
+
+    private void OnHeaderDrop(SymbolColumnEnum targetColumn)
+    {
+        _dragOverColumn = null;
+
+        if (!_dragSourceColumn.HasValue || _dragSourceColumn.Value.Equals(targetColumn))
+            return;
+
+        var source = _symbolColumns?.Columns.FirstOrDefault(c => c.Column.Equals(_dragSourceColumn.Value));
+        var target = _symbolColumns?.Columns.FirstOrDefault(c => c.Column.Equals(targetColumn));
+        if (source == null || target == null)
+            return;
+
+        int sourceIdx = source.DisplayIndex;
+        int targetIdx = target.DisplayIndex;
+
+        foreach (var c in _symbolColumns!.Columns)
+        {
+            if (sourceIdx < targetIdx)
+            {
+                if (c.DisplayIndex > sourceIdx && c.DisplayIndex <= targetIdx)
+                    c.DisplayIndex--;
+            }
+            else
+            {
+                if (c.DisplayIndex >= targetIdx && c.DisplayIndex < sourceIdx)
+                    c.DisplayIndex++;
+            }
+        }
+        source.DisplayIndex = targetIdx;
+
+        _symbolColumns.SaveColumnState();
+        _dragSourceColumn = null;
+
+        _jsInitialized = false;
+    }
+
+    private void OnHeaderDragEnd()
+    {
+        _dragSourceColumn = null;
+        _dragOverColumn = null;
+    }
+
+    protected override void OnInitialized()
+    {
+        _rowCallbacks = new(vm => new RowCallbacks
+        {
+            Click = e => OnSymbolRowClick(e, vm),
+            DoubleClick = () => OnSymbolDoubleClick(vm),
+            ContextMenu = e => OnSymbolRowContextMenu(e, vm),
+        });
+        _headerCallbacks = new(col => new HeaderCallbacks
+        {
+            Sort = () => OnSymbolSort(col.Column),
+            DragStart = () => OnHeaderDragStart(col.Column),
+            DragOver = () => OnHeaderDragOver(col.Column),
+            Drop = () => OnHeaderDrop(col.Column),
+        });
+
+        _theme = ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme);
+
+        // Repaint the moment the theme changes instead of on the next dashboard tick. The poll
+        // below stays as a safety net for a host that sets the theme without broadcasting.
+        WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, (_, _) => ApplyTheme());
+        WeakReferenceMessenger.Default.Register<ShutdownStartedMessage>(this, (_, _) =>
+        {
+            _shuttingDown = true;
+            _ = InvokeAsync(StateHasChanged);
+        });
+        // The check marks in the File menu follow the same three settings as the traffic lights in
+        // the dashboard panel. That panel is a separate component now, so a click there no longer
+        // repaints this one; this message does. It only fires on an actual toggle, unlike the
+        // dashboard tick that used to repaint the whole window (and the symbol grid with it).
+        WeakReferenceMessenger.Default.Register<StatusesHaveChangedMessage>(this, (_, _) =>
+        {
+            if (!_disposed)
+                _ = InvokeAsync(StateHasChanged);
+        });
+
+        _sidebarWidth = (int)StateService.GetSplitterPosition("MainWindow", 300);
+        _sidebarVisible = !StateService.GetSymbolPanelCollapsed();
+
+        _symbolColumns = new GridColumnState<SymbolColumnEnum>(
+            "Symbol", StateService, SymbolColumnDefs,
+            SymbolColumnEnum.Symbol);
+
+        // SymbolService keeps itself up to date through the scanner messages; just take the
+        // current snapshot and subscribe.
+        SymbolService.SymbolsChanged += OnSymbolsChanged;
+        _symbols = SymbolService.Symbols.ToList();
+
+        _refreshTimer = new System.Threading.Timer(_ =>
+        {
+            if (_disposed)
+                return;
+            try
+            {
+                SymbolService.InvalidateDistances();
+            }
+            catch
+            {
+            }
+        }, null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+
+        // The timer stays here (one timer for the whole window), but the result of the poll is
+        // picked up by DashboardPanel, which subscribes to DashboardChanged itself.
+        _dashboardTimer = new System.Threading.Timer(_ =>
+        {
+            if (_disposed)
+                return;
+            try
+            {
+                _dashboardTickCount++;
+                DashboardService.Poll();
+                if (_dashboardTickCount == 1 || _dashboardTickCount % 30 == 0)
+                    DashboardService.PollSlow();
+
+                ApplyTheme();
+            }
+            catch
+            {
+            }
+        }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+    }
+
+    /// <summary>Re-read the theme from the settings and repaint if it actually changed.</summary>
+    private void ApplyTheme()
+    {
+        if (_disposed)
+            return;
+        var current = ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme);
+        if (current == _theme)
+            return;
+        _theme = current;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnSymbolsChanged()
+    {
+        if (_disposed)
+            return;
+        _symbols = SymbolService.Symbols.ToList();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnFilterInput(ChangeEventArgs e)
+    {
+        _symbolFilter = e.Value?.ToString() ?? "";
+        ApplyFilter();
+    }
+
+    private void OnFilterKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            ApplyFilter();
+    }
+
+    /// <summary>
+    /// The filter box drives both the symbol panel and the signal grid, the same way Avalonia
+    /// wires MainWindowViewModel.FilterTextChanged to both grids.
+    /// </summary>
+    private void ApplyFilter()
+    {
+        SymbolService.SetFilter(_symbolFilter);
+        SignalService.SetFilter(_symbolFilter);
+    }
+
+    private void OnSymbolSort(SymbolColumnEnum column)
+    {
+        SymbolService.Sort(column);
+    }
+
+    private void ToggleSidebar()
+    {
+        _sidebarVisible = !_sidebarVisible;
+        StateService.SaveSymbolPanelCollapsed(!_sidebarVisible);
+    }
+
+    private void ResetError()
+    {
+        _errorBoundary?.Recover();
+    }
+
+    private void OnSymbolRowClick(MouseEventArgs e, SymbolViewModel vm)
+    {
+        if (e.CtrlKey)
+        {
+            if (_selectedSymbols.Contains(vm))
+                _selectedSymbols.Remove(vm);
+            else
+                _selectedSymbols.Add(vm);
+            _selectedSymbol = vm;
+        }
+        else if (e.ShiftKey && _selectedSymbol != null)
+        {
+            int startIdx = _symbols.IndexOf(_selectedSymbol);
+            int endIdx = _symbols.IndexOf(vm);
+            if (startIdx >= 0 && endIdx >= 0)
+            {
+                int from = Math.Min(startIdx, endIdx);
+                int to = Math.Max(startIdx, endIdx);
+                _selectedSymbols.Clear();
+                for (int i = from; i <= to; i++)
+                    _selectedSymbols.Add(_symbols[i]);
+            }
+        }
+        else
+        {
+            _selectedSymbols.Clear();
+            _selectedSymbols.Add(vm);
+            _selectedSymbol = vm;
+        }
+
+        SymbolService.SetSelectedSymbol(vm.Object);
+    }
+
+    private void OnSymbolGridKeyDown(KeyboardEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.Key) || e.Key.Length != 1)
+            return;
+
+        char ch = char.ToUpperInvariant(e.Key[0]);
+        if (!char.IsLetterOrDigit(ch))
+            return;
+
+        var match = _symbols.FirstOrDefault(s =>
+            s.Symbol.Length > 0 && char.ToUpperInvariant(s.Symbol[0]) == ch);
+        if (match != null)
+        {
+            _selectedSymbols.Clear();
+            _selectedSymbols.Add(match);
+            _selectedSymbol = match;
+        }
+    }
+
+    private static string GetSymbolCellClass(ColumnRuntimeState<SymbolColumnEnum> col, SymbolViewModel vm)
+    {
+        return col.Column switch
+        {
+            SymbolColumnEnum.Symbol => "symbol-name",
+            SymbolColumnEnum.Volume => $"text-right {vm.VolumeColorClass}",
+            SymbolColumnEnum.Distance => "text-right",
+            _ => "",
+        };
+    }
+
+    private static string GetSymbolCellValue(ColumnRuntimeState<SymbolColumnEnum> col, SymbolViewModel vm)
+    {
+        return col.Column switch
+        {
+            SymbolColumnEnum.Id => vm.Id,
+            SymbolColumnEnum.Symbol => vm.Symbol,
+            SymbolColumnEnum.Volume => vm.VolumeText,
+            SymbolColumnEnum.Distance => vm.DistanceText,
+            _ => "",
+        };
+    }
+
+    private void OpenSettings()
+    {
+        _settingsVisible = true;
+    }
+
+    private void OpenAbout()
+    {
+        _aboutVisible = true;
+    }
+
+    // Each toggle broadcasts StatusesHaveChangedMessage so the menu checkboxes, the traffic
+    // lights and any other subscriber stay in sync (same contract as the Avalonia dashboard).
+    // The bodies live in DashboardService because the traffic lights in DashboardPanel drive
+    // exactly the same three settings.
+    private void ToggleScanner() => DashboardService.ToggleScanner();
+
+    private void ToggleTrader() => DashboardService.ToggleTrader();
+
+    private void ToggleSounds() => DashboardService.ToggleSounds();
+
+    private void ToggleTheme()
+    {
+        // Store the same capitalised values the Avalonia host expects ("Light"/"Dark"), so the
+        // shared settings file stays valid for both applications.
+        GlobalData.Settings.General.Theme = ThemeHelper.Toggle(GlobalData.Settings.General.Theme);
+        _theme = ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme);
+        GlobalData.SetTheme?.Invoke(GlobalData.Settings.General.Theme);
+    }
+
+    private void OnRefreshInformation()
+    {
+        Task.Run(async () =>
+        {
+            var api = GlobalData.ActiveExchange?.GetApiInstance();
+            if (api == null)
+                return;
+            await api.Symbol.GetSymbolsAsync();
+            if (ExchangeBase.KLineTicker != null)
+                await ExchangeBase.KLineTicker.CheckTickers();
+            await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
+        });
+    }
+
+    private void OnClearLogAndTickers()
+    {
+        GlobalData.CreatedSignalCount = 0;
+        SignalExecute.ResetAnalyseCount();
+        ExchangeBase.KLineTicker?.Reset();
+        LogService.Clear();
+    }
+
+    private void OnExit()
+    {
+        if (GlobalData.RequestShutdown != null)
+            GlobalData.RequestShutdown();
+        else
+            Environment.Exit(0);
+    }
+
+    private void OnOpenDataFolder()
+    {
+        var folder = GlobalData.AppDataFolder;
+        if (!string.IsNullOrEmpty(folder))
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = folder,
+                    UseShellExecute = true,
+                });
+            }
+            catch { }
+        }
+    }
+
+    private void OnExportExchangeToExcel()
+    {
+        if (GlobalData.ActiveExchange != null)
+            Task.Run(() => new ExcelExchangeDump(GlobalData.ActiveExchange).ExportToExcel());
+    }
+
+    private void OnExportSignalsToExcel()
+    {
+        Task.Run(() => new ExcelSignalsDump().ExportToExcel());
+    }
+
+    private void OnExportPositionsToExcel()
+    {
+        Task.Run(() => new ExcelPostionsDump().ExportToExcel());
+    }
+
+    private void OnDumpMemoryInfo()
+    {
+        Task.Run(() =>
+        {
+            try
+            {
+                // Same dump as the Avalonia CommandShowMemoryObjects: application state, managed
+                // versus native memory, heap statistics per type and the large object heap.
+                // Walking the heap takes a while on a large process, hence the background task.
+                GlobalData.AddTextToLogTab("Memory dump started, this can take a while...");
+                string folder = MemoryDump.Execute();
+                GlobalData.AddTextToLogTab($"Memory dump saved to {folder}");
+            }
+            catch (Exception ex)
+            {
+                GlobalData.AddTextToLogTab($"Memory dump failed: {ex.Message}");
+            }
+        });
+    }
+
+    private void OnCleanupCandles()
+    {
+        Task.Run(async () =>
+        {
+            if (GlobalData.ActiveExchange == null)
+                return;
+            try
+            {
+                await CandleDatabase.CleanCandlesAsync();
+                await DataStore.CleanOrphanCandleFilesAsync();
+                GlobalData.AddTextToLogTab("Cleanup candles completed");
+            }
+            catch (Exception ex)
+            {
+                GlobalData.AddTextToLogTab($"Cleanup candles failed: {ex.Message}");
+            }
+        });
+    }
+
+    private void OnCalculateAllDlz()
+    {
+        Task.Run(() =>
+        {
+            try
+            {
+                ZoneThreadCalculate.CalculateZonesForAllSymbolsAsync();
+                GlobalData.AddTextToLogTab("Calculate all liquidity zones started");
+            }
+            catch (Exception ex)
+            {
+                GlobalData.AddTextToLogTab($"Calculate DLZ failed: {ex.Message}");
+            }
+        });
+    }
+
+    private void OnColumnsVisibilityChanged()
+    {
+        _jsInitialized = false;
+        StateHasChanged();
+    }
+
+    private void OnMenuAdjustColumns()
+    {
+        CloseContextMenu();
+        _columnDialogVisible = true;
+    }
+
+    private void OnSymbolDoubleClick(SymbolViewModel vm)
+    {
+        _selectedSymbol = vm;
+        GridCommandService.HandleDoubleClick(vm.Object, null);
+    }
+
+    private void OnSymbolRowContextMenu(MouseEventArgs e, SymbolViewModel vm)
+    {
+        _selectedSymbol = vm;
+        _contextMenuSymbol = vm;
+        _contextMenuType = ContextMenuType.SymbolRow;
+        _contextMenuX = e.ClientX;
+        _contextMenuY = e.ClientY;
+        _contextMenuVisible = true;
+    }
+
+    private void OnHeaderContextMenu(MouseEventArgs e)
+    {
+        _contextMenuType = ContextMenuType.Header;
+        _contextMenuX = e.ClientX;
+        _contextMenuY = e.ClientY;
+        _contextMenuVisible = true;
+    }
+
+    private void CloseContextMenu()
+    {
+        _contextMenuVisible = false;
+        _contextMenuSymbol = null;
+        _contextMenuType = ContextMenuType.None;
+    }
+
+    private void OnMenuOpenChart()
+    {
+        if (_contextMenuSymbol != null)
+            GridCommandService.OpenChart(_contextMenuSymbol.Object);
+        CloseContextMenu();
+    }
+
+    private void OnMenuOpenTradingApp()
+    {
+        if (_contextMenuSymbol != null)
+            GridCommandService.OpenTradingApp(_contextMenuSymbol.Object, null);
+        CloseContextMenu();
+    }
+
+    private void OnMenuOpenTradingViewInternal()
+    {
+        if (_contextMenuSymbol != null)
+            GridCommandService.OpenTradingViewInternal(_contextMenuSymbol.Object);
+        CloseContextMenu();
+    }
+
+    private void OnMenuOpenTradingViewExternal()
+    {
+        if (_contextMenuSymbol != null)
+            GridCommandService.OpenTradingViewExternal(_contextMenuSymbol.Object, null);
+        CloseContextMenu();
+    }
+
+    private void OnMenuOpenExchange()
+    {
+        if (_contextMenuSymbol != null)
+            GridCommandService.OpenExchange(_contextMenuSymbol.Object, null);
+        CloseContextMenu();
+    }
+
+    private async Task OnMenuCopySymbolName()
+    {
+        if (_contextMenuSymbol != null)
+            await GridCommandService.CopySymbolNameAsync(_contextMenuSymbol.Object);
+        CloseContextMenu();
+    }
+
+    private void OnMenuCalculateZones()
+    {
+        if (_contextMenuSymbol != null)
+            GridCommandService.CalculateLiquidityZones(_contextMenuSymbol.Object);
+        CloseContextMenu();
+    }
+
+    private async Task OnMenuCopyDataCells()
+    {
+        if (_contextMenuSymbol != null)
+        {
+            var cells = string.Join("\t", _symbolColumns!.VisibleColumns
+                .Select(c => GetSymbolCellValue(c, _contextMenuSymbol)));
+            await GridCommandService.CopyDataCellsAsync(cells);
+        }
+        CloseContextMenu();
+    }
+
+    private void OnMenuExportSymbolToExcel()
+    {
+        if (_contextMenuSymbol != null)
+            GridCommandService.ExportSymbolToExcel(_contextMenuSymbol.Object);
+        CloseContextMenu();
+    }
+
+    private void OnMenuExportBarometerToExcel()
+    {
+        if (_contextMenuSymbol != null)
+            GridCommandService.ExportBarometerToExcel(_contextMenuSymbol.Object);
+        CloseContextMenu();
+    }
+
+    private void OnMenuExportTrend()
+    {
+        if (_contextMenuSymbol?.Object != null)
+            GridCommandService.ExportTrendToLog(_contextMenuSymbol.Object);
+        CloseContextMenu();
+    }
+
+    private void OnMenuHideSelection()
+    {
+        _selectedSymbol = null;
+        _selectedSymbols.Clear();
+        CloseContextMenu();
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        WeakReferenceMessenger.Default.UnregisterAll(this);
+        _refreshTimer?.Dispose();
+        _dashboardTimer?.Dispose();
+        _dotNetRef?.Dispose();
+        SymbolService.SymbolsChanged -= OnSymbolsChanged;
+    }
+}

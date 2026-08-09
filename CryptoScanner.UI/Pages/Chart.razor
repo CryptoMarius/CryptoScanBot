@@ -1,0 +1,963 @@
+﻿@page "/chart"
+@using CryptoScanner.Analyzers.Nwe
+@using CryptoScanner.Analyzers.Nwe.Signal
+@using CryptoScanner.Core.Contracts
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Enums
+@using CryptoScanner.Core.Model
+@using CryptoScanner.Core.Signal.Indicators
+@using CryptoScanner.Core.Trend
+@using CryptoScanner.Core.Zones
+@using CryptoScanner.UI.Services
+@using Skender.Stock.Indicators
+@inject SymbolService SymbolService
+@inject IJSRuntime JS
+@implements IDisposable
+
+@* Avalonia puts this panel on the LEFT of the chart (ScrollViewer Grid.Column="0" Width="220"),
+   not above it. The group order below already matches: Symbol, Trend, FIB, Display, Overlays,
+   Indicators, actions. *@
+<div class="chart-layout">
+<div class="chart-toolbar">
+
+    @* Groups mirror the Avalonia ChartWindow side panel: Symbol, Trend, FIB, Display,
+       Overlays (one alphabetical list), Indicators and the action buttons. *@
+    <div class="chart-group">
+        <div class="chart-group-header">Symbol</div>
+        <select class="input-select" @bind="_selectedBase" @bind:after="OnSymbolSelectionChanged">
+            @foreach (var b in _baseOptions)
+            {
+                <option value="@b">@b</option>
+            }
+        </select>
+        <select class="input-select" @bind="_selectedQuote" @bind:after="OnSymbolSelectionChanged">
+            @foreach (var q in _quoteOptions)
+            {
+                <option value="@q">@q</option>
+            }
+        </select>
+        <select class="input-select" @bind="_selectedInterval" @bind:after="OnIntervalChanged">
+            @foreach (var iv in _intervalOptions)
+            {
+                <option value="@iv.Key">@iv.Value</option>
+            }
+        </select>
+    </div>
+
+    <div class="chart-group">
+        <div class="chart-group-header">Trend</div>
+        <select class="input-select" @bind="_trendType" @bind:after="LoadChart">
+            <option value="@TrendType.Primary">Primary trend</option>
+            <option value="@TrendType.Secondary">Secondary trend</option>
+        </select>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showZigZag" @bind:after="LoadChart" /> Show zigzag</label>
+    </div>
+
+    <div class="chart-group">
+        <div class="chart-group-header">FIB</div>
+        <select class="input-select" @bind="_fibTrendType" @bind:after="LoadChart">
+            <option value="@TrendType.Primary">Primary trend</option>
+            <option value="@TrendType.Secondary">Secondary trend</option>
+        </select>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showFib" @bind:after="LoadChart" /> Show fib retracement</label>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showFibZigZag" @bind:after="LoadChart" /> Show zigzag</label>
+    </div>
+
+    <div class="chart-group">
+        <div class="chart-group-header">Display</div>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showCandles" @bind:after="LoadChart" /> Candles</label>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showPivots" @bind:after="LoadChart" /> Pivot points</label>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showSignals" @bind:after="LoadChart" /> Signals</label>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showPositions" @bind:after="LoadChart" /> Positions</label>
+    </div>
+
+    <div class="chart-group">
+        <div class="chart-group-header">Overlays</div>
+        @foreach (var overlay in _allOverlays)
+        {
+            var key = overlay.Key;
+            <label class="chart-toggle">
+                <input type="checkbox" checked="@IsOverlayEnabled(key)"
+                       @onchange="e => OnOverlayToggled(key, e)" /> @overlay.Label
+            </label>
+        }
+    </div>
+
+    <div class="chart-group">
+        <div class="chart-group-header">Indicators</div>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showLux" @bind:after="LoadChart" /> Lux</label>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showMacd" @bind:after="LoadChart" /> MACD</label>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showRsi" @bind:after="LoadChart" /> RSI</label>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showStoch" @bind:after="LoadChart" /> Stochastic</label>
+        <label class="chart-toggle"><input type="checkbox" @bind="_showVolume" @bind:after="LoadChart" /> Volume</label>
+    </div>
+
+    @* Header intentionally blank: the symbol is already selected in the Symbol group at the top,
+       and repeating it here read as a stray label above the buttons. *@
+    <div class="chart-group">
+        <div class="chart-group-header">&nbsp;</div>
+        <button class="btn @(_measureMode ? "btn-primary" : "btn-secondary")" @onclick="ToggleMeasureMode"
+                title="Drag over the chart to measure the move in percent. Shift+drag always works, Escape clears it.">
+            Measure
+        </button>
+        <button class="btn btn-secondary" @onclick="LoadChart">Refresh</button>
+        <button class="btn btn-secondary" @onclick="Calculate" title="Force a full recalculation of the liquidity zones">Calc</button>
+    </div>
+</div>
+<div class="chart-panels">
+    <div class="chart-header-bar">
+        <span class="chart-header-symbol">@_selectedBase</span>
+        <span class="chart-header-quote">@_selectedQuote</span>
+        <span class="chart-header-separator">·</span>
+        <span class="chart-header-interval">@CurrentIntervalLabel</span>
+        @if (!string.IsNullOrEmpty(_currentExchangeName))
+        {
+            <span class="chart-header-separator">·</span>
+            <span class="chart-header-exchange">@_currentExchangeName</span>
+        }
+    </div>
+    <div id="chart-main" class="chart-panel chart-panel-main"></div>
+    <div id="chart-volume" class="chart-panel chart-panel-sub" style="display:@(_showVolume ? "block" : "none"); height:80px;"></div>
+    <div id="chart-oscillator" class="chart-panel chart-panel-sub" style="display:@(ShowOscillatorPanel ? "block" : "none"); height:120px;"></div>
+    <div id="chart-macd" class="chart-panel chart-panel-sub" style="display:@(_showMacd ? "block" : "none"); height:120px;"></div>
+</div>
+</div>
+
+@code {
+    private string? _currentSymbolName;
+    private CryptoSymbol? _currentSymbol;
+    private string _selectedInterval = "interval1h";
+    private bool _initialized;
+
+    private ZoneSession _session = new();
+
+    // Double top/bottom rectangles, filled while building the zigzag overlays
+    private readonly List<ChartDataService.ChartRect> _dtbZones = [];
+
+    private bool _showBB = true;
+    private bool _showSma200;
+    private bool _showSma50;
+    private bool _showSma20;
+    private bool _showPSar;
+    private bool _showKeltner;
+    private bool _showNwe;
+    private bool _showNweRepainting;
+    private bool _showSmaLinesSbm;
+    private bool _showDtb;
+    private bool _showDlzZones;
+    private bool _showFvgZones;
+    private bool _showSmcZones;
+    private bool _showSignals = true;
+    private bool _showPositions = true;
+    private bool _showZigZag;
+    private bool _showPivots;
+    private bool _showFib;
+    private bool _showVolume = true;
+    private bool _showRsi;
+    private bool _showStoch;
+    private bool _showMacd;
+    private bool _showLux;
+    private bool _showCandles = true;
+    private bool _showFibZigZag;
+
+    private TrendType _trendType = TrendType.Primary;
+    private TrendType _fibTrendType = TrendType.Primary;
+
+    private bool _measureMode;
+    private string _currentExchangeName = "";
+
+    private string CurrentIntervalLabel =>
+        _intervalOptions.TryGetValue(_selectedInterval, out var label) ? label : _selectedInterval;
+
+    private async Task ToggleMeasureMode()
+    {
+        _measureMode = !_measureMode;
+        try
+        {
+            await JS.InvokeVoidAsync("ChartWidget.setMeasureMode", _measureMode);
+        }
+        catch (JSException) { }
+    }
+
+    private string _selectedBase = "BTC";
+    private string _selectedQuote = "USDT";
+    private List<string> _baseOptions = [];
+    private List<string> _quoteOptions = [];
+
+    // Static overlays merged with the plugin overlays into one alphabetical list, exactly like
+    // the Avalonia ChartOptionsViewModel.AllOverlays.
+    private static readonly (string Key, string Label)[] StaticOverlays =
+    [
+        ("bb", "Bollinger Bands"),
+        ("dlz", "DLZ Zones"),
+        ("dtb", "DTB"),
+        ("fvg", "FVG Zones"),
+        ("kc", "Keltner Channel"),
+        ("nwe", "NWE (not repainting)"),
+        ("nwe.r", "NWE (repainting)"),
+        ("psar", "PSar"),
+        ("sbm", "SBM SMA lines"),
+        ("sma20", "SMA 20"),
+        ("sma50", "SMA 50"),
+        ("sma200", "SMA 200"),
+        ("smc", "SMC Zones"),
+    ];
+
+    private List<(string Key, string Label)> _allOverlays = [];
+
+    private bool ShowOscillatorPanel => _showRsi || _showStoch || _showLux;
+
+    private readonly Dictionary<string, string> _pluginOverlays = [];
+    private readonly Dictionary<string, bool> _pluginOverlayStates = [];
+
+    private static readonly Dictionary<string, string> _intervalOptions = new()
+    {
+        ["interval1m"] = "1m",
+        ["interval5m"] = "5m",
+        ["interval15m"] = "15m",
+        ["interval30m"] = "30m",
+        ["interval1h"] = "1h",
+        ["interval4h"] = "4h",
+        ["interval1d"] = "1d",
+    };
+
+    protected override void OnInitialized()
+    {
+        // Restore the chart session (same file the Avalonia chart window uses), otherwise every
+        // visit resets all overlay/panel toggles to their hardcoded defaults.
+        _session = ZoneSessionStore.Load();
+        ApplySessionToFields();
+
+        SymbolService.SelectedSymbolChanged += OnSelectedSymbolChanged;
+        if (SymbolService.SelectedSymbol != null)
+        {
+            _currentSymbol = SymbolService.SelectedSymbol;
+            _currentSymbolName = _currentSymbol.Name;
+            _selectedBase = _currentSymbol.Base;
+            _selectedQuote = _currentSymbol.Quote;
+        }
+        else if (GlobalData.ActiveExchange != null
+            && GlobalData.ActiveExchange.SymbolListName.TryGetValue(_selectedBase + _selectedQuote, out CryptoSymbol? stored))
+        {
+            // No grid selection yet: fall back on the symbol stored in the session
+            _currentSymbol = stored;
+            _currentSymbolName = stored.Name;
+        }
+
+        foreach (var overlay in PluginManager.ChartOverlays)
+        {
+            _pluginOverlays[overlay.GroupKey] = overlay.Label;
+            _pluginOverlayStates[overlay.GroupKey] =
+                _session.PluginOverlayStates.TryGetValue(overlay.GroupKey, out bool on) && on;
+        }
+
+        // One combined list, static and plugin entries together, sorted by label
+        var all = new List<(string Key, string Label)>(StaticOverlays);
+        all.AddRange(_pluginOverlays.Select(kv => (kv.Key, kv.Value)));
+        all.Sort((a, b) => string.Compare(a.Label, b.Label, StringComparison.OrdinalIgnoreCase));
+        _allOverlays = all;
+
+        RefreshSymbolOptions();
+    }
+
+    /// <summary>Current value of one entry in the combined overlay list.</summary>
+    private bool IsOverlayEnabled(string key) => key switch
+    {
+        "bb" => _showBB,
+        "dlz" => _showDlzZones,
+        "dtb" => _showDtb,
+        "fvg" => _showFvgZones,
+        "kc" => _showKeltner,
+        "nwe" => _showNwe,
+        "nwe.r" => _showNweRepainting,
+        "psar" => _showPSar,
+        "sbm" => _showSmaLinesSbm,
+        "sma20" => _showSma20,
+        "sma50" => _showSma50,
+        "sma200" => _showSma200,
+        "smc" => _showSmcZones,
+        _ => _pluginOverlayStates.TryGetValue(key, out bool on) && on,
+    };
+
+    private async Task OnOverlayToggled(string key, ChangeEventArgs e)
+    {
+        bool value = e.Value is bool b && b;
+        switch (key)
+        {
+            case "bb": _showBB = value; break;
+            case "dlz": _showDlzZones = value; break;
+            case "dtb": _showDtb = value; break;
+            case "fvg": _showFvgZones = value; break;
+            case "kc": _showKeltner = value; break;
+            case "nwe": _showNwe = value; break;
+            case "nwe.r": _showNweRepainting = value; break;
+            case "psar": _showPSar = value; break;
+            case "sbm": _showSmaLinesSbm = value; break;
+            case "sma20": _showSma20 = value; break;
+            case "sma50": _showSma50 = value; break;
+            case "sma200": _showSma200 = value; break;
+            case "smc": _showSmcZones = value; break;
+            default: _pluginOverlayStates[key] = value; break;
+        }
+
+        SaveSession();
+        await LoadChartAsync();
+    }
+
+    /// <summary>
+    /// Fill the base/quote dropdowns from the active exchange, same filter the Avalonia
+    /// ChartSymbolSelectorViewModel uses.
+    /// </summary>
+    private void RefreshSymbolOptions()
+    {
+        List<string> bases = [];
+        List<string> quotes = [];
+
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange != null)
+        {
+            foreach (var symbol in exchange.SymbolListName.Values)
+            {
+                if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol()
+                    && !bases.Contains(symbol.Base))
+                    bases.Add(symbol.Base);
+            }
+            bases.Sort(StringComparer.OrdinalIgnoreCase);
+        }
+
+        foreach (var quoteData in GlobalData.Settings.QuoteCoins.Values.OrderBy(x => x.Name))
+        {
+            if (quoteData.FetchCandles)
+                quotes.Add(quoteData.Name);
+        }
+        if (quotes.Count == 0)
+            quotes.Add("USDT");
+
+        _baseOptions = bases;
+        _quoteOptions = quotes;
+
+        if (bases.Count > 0 && !bases.Contains(_selectedBase))
+            _selectedBase = bases[0];
+        if (!quotes.Contains(_selectedQuote))
+            _selectedQuote = quotes[0];
+    }
+
+    private async Task OnSymbolSelectionChanged()
+    {
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange != null && exchange.SymbolListName.TryGetValue(_selectedBase + _selectedQuote, out CryptoSymbol? symbol))
+        {
+            _currentSymbol = symbol;
+            _currentSymbolName = symbol.Name;
+            _currentExchangeName = symbol.Exchange?.Name ?? "";
+            SymbolService.SetSelectedSymbol(symbol);
+        }
+
+        SaveSession();
+        await LoadChartAsync();
+    }
+
+    /// <summary>
+    /// "Calc": force a full recalculation of the liquidity zones for this symbol and redraw,
+    /// same as the Avalonia CalculateCommand (which sets Session.ForceCalculation).
+    /// </summary>
+    private async Task Calculate()
+    {
+        if (_currentSymbol != null)
+        {
+            foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+            {
+                if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? intervalX))
+                    GlobalData.ThreadZoneCalculate?.AddToQueue(_currentSymbol, intervalX);
+            }
+            GlobalData.AddTextToLogTab($"{_currentSymbol.Name} liquidity zone recalculation queued");
+        }
+        await LoadChartAsync();
+    }
+
+    private void ApplySessionToFields()
+    {
+        _selectedInterval = _session.ActiveInterval.ToString();
+
+        _showBB = _session.ShowBollingerBand;
+        _showKeltner = _session.ShowKeltnerChannel;
+        _showPSar = _session.ShowPSar;
+        _showNwe = _session.ShowNwe;
+        _showNweRepainting = _session.ShowNweRepainting;
+        _showSmaLinesSbm = _session.ShowSmaLinesSbm;
+        _showDlzZones = _session.ShowDlzZones;
+        _showFvgZones = _session.ShowFvgZones;
+        _showSmcZones = _session.ShowSmcZones;
+        _showDtb = _session.ShowDtb;
+        _showSignals = _session.ShowSignals;
+        _showPositions = _session.ShowPositions;
+        _showPivots = _session.ShowPoints;
+        _showZigZag = _session.TrendShowZigZag;
+        _showFib = _session.ShowFibRetracement;
+        _showFibZigZag = _session.ShowFibZigZag;
+        _showCandles = _session.ShowCandles;
+        _trendType = _session.TrendType;
+        _fibTrendType = _session.FibTrend;
+        _selectedBase = string.IsNullOrEmpty(_session.SymbolBase) ? "BTC" : _session.SymbolBase.Trim().ToUpperInvariant();
+        _selectedQuote = string.IsNullOrEmpty(_session.SymbolQuote) ? "USDT" : _session.SymbolQuote.Trim().ToUpperInvariant();
+        _showVolume = _session.ShowVolume;
+        _showRsi = _session.ShowRsi;
+        _showStoch = _session.ShowStoch;
+        _showLux = _session.ShowLux;
+        _showMacd = _session.ShowMacd;
+    }
+
+    private void SaveSession()
+    {
+        if (Enum.TryParse<CryptoIntervalPeriod>(_selectedInterval, out var period))
+        {
+            _session.ActiveInterval = period;
+            _session.IntervalName = period.ToString().Replace("interval", "");
+        }
+        _session.SymbolBase = _selectedBase;
+        _session.SymbolQuote = _selectedQuote;
+
+        _session.ShowBollingerBand = _showBB;
+        _session.ShowKeltnerChannel = _showKeltner;
+        _session.ShowPSar = _showPSar;
+        _session.ShowNwe = _showNwe;
+        _session.ShowNweRepainting = _showNweRepainting;
+        _session.ShowSmaLinesSbm = _showSmaLinesSbm;
+        _session.ShowDlzZones = _showDlzZones;
+        _session.ShowFvgZones = _showFvgZones;
+        _session.ShowSmcZones = _showSmcZones;
+        _session.ShowDtb = _showDtb;
+        _session.ShowSignals = _showSignals;
+        _session.ShowPositions = _showPositions;
+        _session.ShowPoints = _showPivots;
+        _session.TrendShowZigZag = _showZigZag;
+        _session.ShowFibRetracement = _showFib;
+        _session.ShowFibZigZag = _showFibZigZag;
+        _session.ShowCandles = _showCandles;
+        _session.TrendType = _trendType;
+        _session.FibTrend = _fibTrendType;
+        _session.ShowVolume = _showVolume;
+        _session.ShowRsi = _showRsi;
+        _session.ShowStoch = _showStoch;
+        _session.ShowLux = _showLux;
+        _session.ShowMacd = _showMacd;
+
+        foreach (var kv in _pluginOverlayStates)
+            _session.PluginOverlayStates[kv.Key] = kv.Value;
+
+        ZoneSessionStore.Save(_session);
+    }
+
+    private async Task OnPluginToggled(string key, ChangeEventArgs e)
+    {
+        _pluginOverlayStates[key] = e.Value is bool b && b;
+        SaveSession();
+        await LoadChartAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // ThemeHelper is what turns "Dark"/"Light"/"Default"/empty into the lower case value the
+            // widget expects. Passing Settings.General.Theme straight through meant "Dark" never
+            // matched the widget's === 'dark' test, so the chart rendered in its light palette while
+            // the rest of the application was dark.
+            var theme = ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme);
+
+            try
+            {
+                await JS.InvokeVoidAsync("ChartWidget.init", theme);
+                _initialized = true;
+                await LoadChartAsync();
+            }
+            catch (JSException) { }
+        }
+    }
+
+    private void OnSelectedSymbolChanged()
+    {
+        InvokeAsync(async () =>
+        {
+            var symbol = SymbolService.SelectedSymbol;
+            if (symbol != null && symbol != _currentSymbol)
+            {
+                _currentSymbol = symbol;
+                _currentSymbolName = symbol.Name;
+                _currentExchangeName = symbol.Exchange?.Name ?? "";
+                _selectedBase = symbol.Base;
+                _selectedQuote = symbol.Quote;
+                RefreshSymbolOptions();
+                StateHasChanged();
+                await ResetChartViewAsync();
+                await LoadChartAsync();
+            }
+        });
+    }
+
+    private async Task OnIntervalChanged()
+    {
+        SaveSession();
+        await ResetChartViewAsync();
+        await LoadChartAsync();
+    }
+
+    /// <summary>
+    /// Let the chart fit its content on the next load. Only for a different symbol or interval —
+    /// an overlay toggle must keep the zoom and scroll position the user set.
+    /// </summary>
+    private async Task ResetChartViewAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("ChartWidget.resetView");
+        }
+        catch (JSException) { }
+    }
+
+    private async Task LoadChart()
+    {
+        SaveSession();
+        await LoadChartAsync();
+    }
+
+    private bool _loadingChart;
+    private bool _loadPending;
+
+    /// <summary>
+    /// Rebuild the chart. Every checkbox calls this, and ChartWidget.setData throws away all series
+    /// and rebuilds them, so two overlapping runs can leave the chart holding whatever the slower
+    /// one produced — which is how ticking an overlay off could take the candles with it. Only one
+    /// run at a time; a request arriving during a run is coalesced into a single re-run afterwards.
+    /// </summary>
+    private async Task LoadChartAsync()
+    {
+        if (!_initialized || _currentSymbol == null)
+            return;
+
+        if (_loadingChart)
+        {
+            _loadPending = true;
+            return;
+        }
+
+        _loadingChart = true;
+        try
+        {
+            await LoadChartCoreAsync();
+        }
+        finally
+        {
+            _loadingChart = false;
+        }
+
+        if (_loadPending)
+        {
+            _loadPending = false;
+            await LoadChartAsync();
+        }
+    }
+
+    private async Task LoadChartCoreAsync()
+    {
+        if (!_initialized || _currentSymbol == null)
+            return;
+
+        if (!Enum.TryParse<CryptoIntervalPeriod>(_selectedInterval, out var period))
+            return;
+
+        try
+        {
+            var symbolInterval = _currentSymbol.GetSymbolInterval(period);
+            var snapshot = symbolInterval.CandleList.GetSnapshot();
+
+            var rawCandles = snapshot.Select(kv => kv.Value).ToList();
+            var quotes = rawCandles.AsQuotes();
+
+            var candles = new List<object>(rawCandles.Count);
+            foreach (var candle in rawCandles)
+            {
+                candles.Add(new
+                {
+                    time = candle.OpenTime.ToUnixSeconds(),
+                    open = (double)candle.Open,
+                    high = (double)candle.High,
+                    low = (double)candle.Low,
+                    close = (double)candle.Close,
+                    volume = (double)candle.Volume,
+                });
+            }
+
+            // Overlays on main chart
+            var overlays = new Dictionary<string, object>();
+            var markers = new List<ChartDataService.ChartMarker>();
+            var priceLines = new List<ChartDataService.ChartPriceLine>();
+            _dtbZones.Clear();
+
+            if (_showBB)
+            {
+                int bbLen = GlobalData.Settings.General.SettingsBb.Length;
+                double bbDev = (double)GlobalData.Settings.General.SettingsBb.Deviation;
+                var bb = quotes.ToBollingerBands(bbLen, bbDev).ToList();
+                overlays["bbUpper"] = BuildLineSeries(rawCandles, bb, r => ((BollingerBandsResult)r).UpperBand);
+                overlays["bbMiddle"] = BuildLineSeries(rawCandles, bb, r => ((BollingerBandsResult)r).Sma);
+                overlays["bbLower"] = BuildLineSeries(rawCandles, bb, r => ((BollingerBandsResult)r).LowerBand);
+            }
+
+            // "SBM SMA lines" draws the 200/50/20 trio in one go, same as the Avalonia chart
+            if (_showSma200 || _showSmaLinesSbm)
+                overlays["sma200"] = BuildSmaSeries(rawCandles, quotes, 200);
+            if (_showSma50 || _showSmaLinesSbm)
+                overlays["sma50"] = BuildSmaSeries(rawCandles, quotes, 50);
+            if (_showSma20 || _showSmaLinesSbm)
+                overlays["sma20"] = BuildSmaSeries(rawCandles, quotes, 20);
+
+            if (_showPSar)
+            {
+                var psar = quotes.ToParabolicSar().ToList();
+                overlays["psar"] = BuildLineSeries(rawCandles, psar, r => ((ParabolicSarResult)r).Sar);
+            }
+
+            if (_showKeltner)
+            {
+                var kc = quotes.ToKeltner().ToList();
+                overlays["keltnerUpper"] = BuildLineSeries(rawCandles, kc, r => ((KeltnerResult)r).UpperBand);
+                overlays["keltnerMiddle"] = BuildLineSeries(rawCandles, kc, r => ((KeltnerResult)r).Centerline);
+                overlays["keltnerLower"] = BuildLineSeries(rawCandles, kc, r => ((KeltnerResult)r).LowerBand);
+            }
+
+            if (_showNwe)
+                AddNweOverlays(overlays, symbolInterval, smoothRepainting: false, prefix: "nwe");
+            if (_showNweRepainting)
+                AddNweOverlays(overlays, symbolInterval, smoothRepainting: true, prefix: "nweRepaint");
+
+            if (_showZigZag || _showPivots || _showFib || _showDtb || _showFibZigZag)
+                AddZigZagOverlays(overlays, symbolInterval, priceLines, markers);
+
+            // Plugin bands (BBMA, ATR reversal bands, VBS, DBR) expose their lines
+            // through the renderer-agnostic GetSeries so this chart can draw them too
+            foreach (var overlay in PluginManager.ChartOverlays)
+            {
+                if (!_pluginOverlayStates.TryGetValue(overlay.GroupKey, out bool enabled) || !enabled)
+                    continue;
+
+                foreach (var series in overlay.GetSeries(_currentSymbol, symbolInterval.Interval, rawCandles))
+                {
+                    if (series.Points.Count == 0)
+                        continue;
+
+                    overlays[series.Key] = series.Points
+                        .Select(p => (object)new { time = p.Time, value = p.Value })
+                        .ToList();
+                }
+            }
+
+            // Sub-panel data
+            var panels = new Dictionary<string, object>();
+
+            if (_showVolume)
+            {
+                panels["volume"] = candles;
+            }
+
+            if (_showRsi)
+            {
+                var rsiOversold = (double)GlobalData.Settings.General.SettingsRsi.Oversold;
+                var rsiOverbought = (double)GlobalData.Settings.General.SettingsRsi.Overbought;
+                var rsi = quotes.ToRsi(14).ToList();
+                panels["rsi"] = new
+                {
+                    data = BuildLineSeries(rawCandles, rsi, r => ((RsiResult)r).Rsi),
+                    oversold = rsiOversold,
+                    overbought = rsiOverbought,
+                };
+            }
+
+            if (_showStoch)
+            {
+                var stochOversold = (double)GlobalData.Settings.General.SettingsStoch.Oversold;
+                var stochOverbought = (double)GlobalData.Settings.General.SettingsStoch.Overbought;
+                var stoch = quotes.ToStoch(14, 3, 3).ToList();
+                panels["stoch"] = new
+                {
+                    k = BuildLineSeries(rawCandles, stoch, r => ((StochResult)r).K),
+                    d = BuildLineSeries(rawCandles, stoch, r => ((StochResult)r).D),
+                    oversold = stochOversold,
+                    overbought = stochOverbought,
+                };
+            }
+
+            if (_showMacd)
+            {
+                var macd = quotes.ToMacd().ToList();
+                panels["macd"] = new
+                {
+                    macdLine = BuildLineSeries(rawCandles, macd, r => ((MacdResult)r).Macd),
+                    signal = BuildLineSeries(rawCandles, macd, r => ((MacdResult)r).Signal),
+                    histogram = BuildHistogramSeries(rawCandles, macd),
+                };
+            }
+
+            if (_showLux && rawCandles.Count > 0)
+            {
+                var luxSymbolInterval = _currentSymbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m);
+                int luxCount = rawCandles.Count;
+                var lastCandle = rawCandles[^1];
+                CandleTime endTime = IntervalTools.StartOfIntervalCandle(lastCandle.OpenTime, luxSymbolInterval.Interval.Duration);
+
+                LuxIndicator.CalculateRange(_currentSymbol, CryptoIntervalPeriod.interval5m,
+                    endTime, luxCount, out int[] overSoldHistory, out int[] overBoughtHistory);
+
+                var luxData = new List<object>();
+                int offset = rawCandles.Count - luxCount;
+                for (int i = 0; i < luxCount && i < rawCandles.Count; i++)
+                {
+                    int idx = offset + i;
+                    if (idx >= 0 && idx < rawCandles.Count)
+                    {
+                        luxData.Add(new
+                        {
+                            time = rawCandles[idx].OpenTime.ToUnixSeconds(),
+                            oversold = overSoldHistory[i],
+                            overbought = overBoughtHistory[i],
+                        });
+                    }
+                }
+                panels["lux"] = luxData;
+            }
+
+            // Zones, signals and positions
+            var zones = new List<ChartDataService.ChartRect>();
+
+            if (rawCandles.Count > 0)
+            {
+                CandleTime from = rawCandles[0].OpenTime;
+                CandleTime to = rawCandles[^1].OpenTime;
+
+                zones = ChartDataService.BuildZones(_currentSymbol,
+                    _showDlzZones, _showFvgZones, _showSmcZones, from, to);
+
+                if (_showSignals)
+                    markers.AddRange(ChartDataService.BuildSignalMarkers(_currentSymbol, from, to));
+
+                if (_showPositions)
+                    ChartDataService.BuildPositionOverlays(_currentSymbol, from, to, markers, priceLines);
+            }
+
+            if (_dtbZones.Count > 0)
+                zones = zones.Concat(_dtbZones).ToList();
+
+            var extras = new
+            {
+                zones,
+                markers,
+                priceLines,
+            };
+
+            // The Avalonia chart can hide the candles and only show the overlays
+            var mainCandles = _showCandles ? candles : new List<object>();
+
+            await JS.InvokeVoidAsync("ChartWidget.setData", mainCandles, overlays, panels, extras);
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddTextToLogTab($"Chart load error: {ex.Message}");
+        }
+    }
+
+    private void AddNweOverlays(Dictionary<string, object> overlays, CryptoSymbolInterval symbolInterval,
+        bool smoothRepainting, string prefix)
+    {
+        var settings = NwePlugin.Settings;
+        var indicator = new NweIndicator(
+            bandwidth: settings.BandWidth,
+            multiplier: settings.Multiplication,
+            smoothRepainting: smoothRepainting);
+
+        var results = indicator.Calculate(symbolInterval.CandleList);
+
+        var upper = new List<object>();
+        var middle = new List<object>();
+        var lower = new List<object>();
+
+        foreach (var result in results)
+        {
+            long time = result.OpenTime.ToUnixSeconds();
+            if (result.Upper.HasValue)
+                upper.Add(new { time, value = (double)result.Upper.Value });
+            if (result.Center.HasValue)
+                middle.Add(new { time, value = (double)result.Center.Value });
+            if (result.Lower.HasValue)
+                lower.Add(new { time, value = (double)result.Lower.Value });
+        }
+
+        if (upper.Count > 0)
+            overlays[prefix + "Upper"] = upper;
+        if (middle.Count > 0)
+            overlays[prefix + "Middle"] = middle;
+        if (lower.Count > 0)
+            overlays[prefix + "Lower"] = lower;
+    }
+
+    private void AddZigZagOverlays(Dictionary<string, object> overlays, CryptoSymbolInterval symbolInterval,
+        List<ChartDataService.ChartPriceLine> priceLines, List<ChartDataService.ChartMarker> markers)
+    {
+        // Same source the Avalonia chart uses, but with the trend type selected on this screen
+        // (the Trend and FIB groups can each point at the primary or the secondary trend).
+        var trendSettings = _trendType == TrendType.Primary
+            ? GlobalData.Settings.Trend.Primary
+            : GlobalData.Settings.Trend.Secondary;
+        if (!symbolInterval.ZigZagIndicators.TryGetValue((trendSettings.TrendType, trendSettings.UseHighLow), out var indicator))
+            return;
+
+        var fibSettings = _fibTrendType == TrendType.Primary
+            ? GlobalData.Settings.Trend.Primary
+            : GlobalData.Settings.Trend.Secondary;
+        symbolInterval.ZigZagIndicators.TryGetValue((fibSettings.TrendType, fibSettings.UseHighLow), out var fibIndicator);
+        fibIndicator ??= indicator;
+
+        if (_showZigZag)
+        {
+            var points = indicator.ZigZagList
+                .Where(z => !z.Dummy)
+                .Select(z => (object)new { time = z.Candle.OpenTime.ToUnixSeconds(), value = (double)z.Value })
+                .ToList();
+            if (points.Count > 0)
+                overlays["zigzag"] = points;
+        }
+
+        if (_showPivots)
+        {
+            foreach (var pivot in indicator.PivotList)
+            {
+                bool isHigh = pivot.PointType == 'H';
+                markers.Add(new ChartDataService.ChartMarker
+                {
+                    time = pivot.Candle.OpenTime.ToUnixSeconds(),
+                    position = isHigh ? "aboveBar" : "belowBar",
+                    color = isHigh ? "#e53935" : "#ffeb3b",
+                    shape = "square",
+                    text = "",
+                });
+            }
+        }
+
+        if (_showDtb)
+        {
+            // Double top / double bottom: the Avalonia chart paints a triangle over the three
+            // zigzag points; the lightweight chart only knows rectangles, so draw the bounding
+            // box of those three points in the same green (bottom) / orange (top) tint.
+            foreach (var (first, second, third) in DoubleTopAndBottom.CalculateDoubleTopBottom(indicator))
+            {
+                double p1 = (double)first.Value;
+                double p2 = (double)second.Value;
+                double p3 = (double)third.Value;
+                bool isBottom = first.PointType == 'L';
+
+                _dtbZones.Add(new ChartDataService.ChartRect
+                {
+                    time1 = first.Candle.OpenTime.ToUnixSeconds(),
+                    time2 = third.Candle.OpenTime.ToUnixSeconds(),
+                    price1 = Math.Max(p1, Math.Max(p2, p3)),
+                    price2 = Math.Min(p1, Math.Min(p2, p3)),
+                    fill = isBottom ? "rgba(0,128,0,0.29)" : "rgba(255,165,0,0.29)",
+                    border = isBottom ? "rgba(0,128,0,0.60)" : "rgba(255,165,0,0.60)",
+                    text = isBottom ? "DB" : "DT",
+                });
+            }
+        }
+
+        if (_showFibZigZag && fibIndicator != indicator)
+        {
+            var fibPoints = fibIndicator.ZigZagList
+                .Where(z => !z.Dummy)
+                .Select(z => (object)new { time = z.Candle.OpenTime.ToUnixSeconds(), value = (double)z.Value })
+                .ToList();
+            if (fibPoints.Count > 0)
+                overlays["fibZigzag"] = fibPoints;
+        }
+
+        if (_showFib && fibIndicator.LastSwingHigh != null && fibIndicator.LastSwingLow != null)
+        {
+            double high = (double)fibIndicator.LastSwingHigh.Value;
+            double low = (double)fibIndicator.LastSwingLow.Value;
+            double range = high - low;
+
+            (double level, string color)[] fibLevels =
+            [
+                (0.000, "#9e9e9e"),
+                (0.236, "#ffffff"),
+                (0.382, "#ffffff"),
+                (0.500, "#ffeb3b"),
+                (0.618, "#ffeb3b"),
+                (0.786, "#ffffff"),
+                (1.000, "#9e9e9e"),
+            ];
+
+            foreach (var (level, color) in fibLevels)
+            {
+                priceLines.Add(new ChartDataService.ChartPriceLine
+                {
+                    price = low + range * level,
+                    color = color,
+                    lineStyle = 1,
+                    title = level.ToString("0.000"),
+                });
+            }
+        }
+    }
+
+    private static List<object> BuildSmaSeries(List<CryptoCandle> rawCandles, IReadOnlyList<IQuote> quotes, int length)
+    {
+        var sma = quotes.ToSma(length).ToList();
+        return BuildLineSeries(rawCandles, sma, r => ((SmaResult)r).Sma);
+    }
+
+    private static List<object> BuildLineSeries<T>(List<CryptoCandle> rawCandles, List<T> results, Func<T, double?> getValue)
+    {
+        var data = new List<object>();
+        for (int i = 0; i < rawCandles.Count && i < results.Count; i++)
+        {
+            var val = getValue(results[i]);
+            if (val.HasValue)
+            {
+                data.Add(new
+                {
+                    time = rawCandles[i].OpenTime.ToUnixSeconds(),
+                    value = val.Value,
+                });
+            }
+        }
+        return data;
+    }
+
+    private static List<object> BuildHistogramSeries(List<CryptoCandle> rawCandles, List<MacdResult> results)
+    {
+        var data = new List<object>();
+        for (int i = 0; i < rawCandles.Count && i < results.Count; i++)
+        {
+            var val = results[i].Histogram;
+            if (val.HasValue)
+            {
+                data.Add(new
+                {
+                    time = rawCandles[i].OpenTime.ToUnixSeconds(),
+                    value = val.Value,
+                    color = val.Value >= 0 ? "rgba(69,193,115,0.6)" : "rgba(205,64,64,0.6)",
+                });
+            }
+        }
+        return data;
+    }
+
+    public void Dispose()
+    {
+        try { SaveSession(); } catch { }
+        SymbolService.SelectedSymbolChanged -= OnSelectedSymbolChanged;
+        try
+        {
+            _ = JS.InvokeVoidAsync("ChartWidget.dispose");
+        }
+        catch { }
+    }
+}

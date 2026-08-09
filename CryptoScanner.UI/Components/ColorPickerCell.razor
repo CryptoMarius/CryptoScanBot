@@ -1,0 +1,59 @@
+@using CryptoScanner.Core.Model
+@using CryptoScanner.UI.Models
+
+@* Shared colour editor, used everywhere a CoreColor is edited so the basecoins tab and the
+   strategy sound/colour boxes offer the very same controls.
+
+   The swatch is drawn over a checkerboard — a transparent colour reads as transparent — and opens
+   the colour dialog, where the four ARGB channels can be typed with the result visible while
+   editing. The text field next to it holds the exact #AARRGGBB the settings file stores, for when
+   a value is simply pasted in. *@
+<span class="color-cell">
+    <button type="button" class="color-preview" title="Click to edit the colour"
+            @onclick="() => _editing = true">
+        <span class="color-preview-fill" style="background-color: @ColorRgba"></span>
+    </button>
+    <input type="text" class="input-text color-argb" maxlength="9"
+           value="@Value" @onchange="OnArgbChanged"
+           title="#AARRGGBB — the first two characters are the transparency (00 = invisible, FF = solid)" />
+</span>
+
+<ColorPickerDialog @bind-Visible="_editing" Value="@Value" ValueChanged="SetAsync" Title="@Title" />
+
+@code {
+    /// <summary>The colour as "#AARRGGBB", the same notation the settings file uses.</summary>
+    [Parameter] public string Value { get; set; } = "#00FF95A5";
+
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    /// <summary>Caption of the colour dialog, e.g. "AtrRb long".</summary>
+    [Parameter] public string Title { get; set; } = "Color";
+
+    /// <summary>Shown when the stored text cannot be parsed at all.</summary>
+    private static readonly CoreColor Fallback = CoreColor.FromArgb(0x00, 0xFF, 0x95, 0xA5);
+
+    private bool _editing;
+
+    private CoreColor Parsed => ColorTextHelper.Parse(Value, Fallback);
+
+    private string ColorRgba
+    {
+        get
+        {
+            var c = Parsed;
+            string alpha = (c.A / 255.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+            return $"rgba({c.R},{c.G},{c.B},{alpha})";
+        }
+    }
+
+    private async Task OnArgbChanged(ChangeEventArgs e)
+    {
+        await SetAsync(ColorTextHelper.Parse(e.Value?.ToString(), Parsed).ToString());
+    }
+
+    private async Task SetAsync(string argb)
+    {
+        Value = argb;
+        await ValueChanged.InvokeAsync(Value);
+    }
+}

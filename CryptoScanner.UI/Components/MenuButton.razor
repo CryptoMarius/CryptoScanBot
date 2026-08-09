@@ -1,0 +1,42 @@
+@using CryptoScanner.UI.Models
+
+@* The little "▼" the Avalonia views put in the top right of a groupbox (IntervalView, StrategyView):
+   select all, select none, copy from another side. A row of buttons was taking up as much room as
+   the list underneath it. *@
+<span class="menu-button">
+    <button type="button" class="btn btn-secondary menu-button-trigger" title="@Title" @onclick="Toggle">▼</button>
+    @if (_open)
+    {
+        @* Catches the next click anywhere on the page, so the menu closes again. *@
+        <div class="menu-button-backdrop" @onclick="Close"></div>
+        <div class="menu-button-items">
+            @foreach (var item in Items)
+            {
+                var action = item;
+                <button type="button" class="menu-button-item" @onclick="() => Run(action)">@action.Label</button>
+            }
+        </div>
+    }
+</span>
+
+@code {
+    [Parameter, EditorRequired] public List<MenuAction> Items { get; set; } = [];
+
+    [Parameter] public string Title { get; set; } = "Select all, select none, or copy from another side.";
+
+    /// <summary>Reported to the page so it redraws the list the menu just changed.</summary>
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private bool _open;
+
+    private void Toggle() => _open = !_open;
+
+    private void Close() => _open = false;
+
+    private async Task Run(MenuAction item)
+    {
+        item.Invoke();
+        _open = false;
+        await Changed.InvokeAsync();
+    }
+}

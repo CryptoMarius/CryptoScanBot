@@ -1,0 +1,117 @@
+@using CryptoScanner.UI.Models
+
+@* The two columns of TraderEntryConditionsView: oscillator conditions on the left, trend/price
+   conditions on the right. Used twice, exactly as Avalonia does — once for the global trader
+   conditions and once inside a strategy's own "Entry conditions" box.
+
+   <fieldset disabled> greys out everything at once, which is what the <Border IsEnabled="..."/>
+   around the view does over there. *@
+<fieldset class="entry-conditions" disabled="@Disabled">
+
+    <div class="settings-group-body">
+        <div class="field">
+            <input type="checkbox" class="input-checkbox" @bind="Data.CheckIncreasingRsi" />
+            <label>RSI must be increasing/decreasing</label>
+        </div>
+        <div class="field">
+            <input type="checkbox" class="input-checkbox" @bind="Data.WaitForRsiRecovery" />
+            <label>Wait if RSI is OS/OB</label>
+        </div>
+        <div class="field">
+            <input type="checkbox" class="input-checkbox" @bind="Data.CheckIncreasingStoch" />
+            <label>Stoch must be increasing/decreasing</label>
+        </div>
+        <div class="field">
+            <input type="checkbox" class="input-checkbox" @bind="Data.WaitForStochRecovery" />
+            <label>Wait if stoch %K is OS/OB</label>
+        </div>
+
+        @* Also lined up with the checkbox captions above it. *@
+        <div class="settings-group settings-group-nested align-caption">
+            <div class="settings-group-header">Stoch OS/OB strength</div>
+            <div class="settings-group-body">
+                <div class="field" title="Window (in signal-interval bars) used to find the most-recent OS run and to compute the Z-score mean/stdev.">
+                    <label>Lookback</label>
+                    <span class="field-control">
+                        <input type="number" class="input-number" min="0" @bind="Data.StochExtremeLookback" />
+                        <span class="field-unit">bars</span>
+                    </span>
+                </div>
+                <div class="field" title="Persistence: minimum consecutive bars stoch %K was in OS (long) / OB (short). 0 = off.">
+                    <label>Min OS bars</label>
+                    <span class="field-control">
+                        <input type="number" class="input-number" min="0" @bind="Data.StochMinExtremeBars" />
+                        <span class="field-unit">bars</span>
+                    </span>
+                </div>
+                <div class="field" title="Absolute cumulative depth below the oversold line, summed over the lookback window. 0 = off. Start with ~20, strict 60-80+.">
+                    <label>Min OS area</label>
+                    <span class="field-control">
+                        <input type="number" class="input-number" step="0.1" min="0" @bind="Data.StochMinExtremeArea" />
+                        <span class="field-unit">∑</span>
+                    </span>
+                </div>
+                <div class="field" title="Statistical outlier of the deepest %K in the lookback, not absolute depth. 0 = off. Start with 1.0-1.5, strict 2.0+.">
+                    <label>Min |Z-score|</label>
+                    <span class="field-control">
+                        <input type="number" class="input-number" step="0.1" min="0" @bind="Data.StochMinExtremeZScore" />
+                        <span class="field-unit">σ</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-group-body">
+        <div class="field">
+            <input type="checkbox" class="input-checkbox" @bind="Data.CheckIncreasingMacd" />
+            <label>MACD must be increasing/decreasing</label>
+        </div>
+        <div class="field">
+            <input type="checkbox" class="input-checkbox" @bind="Data.CheckFurtherPriceMove" />
+            <label>Price must be increasing/decreasing</label>
+        </div>
+        <div class="field">
+            <input type="checkbox" class="input-checkbox" @bind="Data.CheckTrendPrimaryDirection" />
+            <label>Trade with the primary trend</label>
+            <input type="number" class="input-number" style="width: 60px;"
+                   @bind="Data.TrendPrimaryDirectionCount" disabled="@(!Data.CheckTrendPrimaryDirection)" />
+        </div>
+        <div class="field">
+            <input type="checkbox" class="input-checkbox" @bind="Data.CheckTrendSecondaryDirection" />
+            <label>Trade with the secondary trend</label>
+            <input type="number" class="input-number" style="width: 60px;"
+                   @bind="Data.TrendSecondaryDirectionCount" disabled="@(!Data.CheckTrendSecondaryDirection)" />
+        </div>
+        <div class="field">
+            <input type="checkbox" class="input-checkbox" @bind="Data.CheckPriceAboveMa200" />
+            <label>Price above MA200 (long) / below (short)</label>
+        </div>
+        @* The whole row greys out with its checkbox, the way the Avalonia Grid carries
+           IsEnabled="{Binding CheckPriceAboveMa200}" over the captions as well as the fields. *@
+        <div class="field indented @(Data.CheckPriceAboveMa200 ? "" : "row-disabled")"
+             title="Minimum distance from MA200 as percentage (0 = disabled), and the number of preceding candles that must also close on the correct side (0 = disabled).">
+            <label>Min dist %</label>
+            <span class="field-control">
+                <input type="number" class="input-number" step="0.1" min="0" style="width: 60px;"
+                       @bind="Data.Ma200MinDistancePercentage" disabled="@(!Data.CheckPriceAboveMa200)" />
+                <span class="field-unit">Candles</span>
+                <input type="number" class="input-number" min="0" style="width: 60px;"
+                       @bind="Data.Ma200ConfirmationCandles" disabled="@(!Data.CheckPriceAboveMa200)" />
+            </span>
+        </div>
+        @* Lines up with the captions of the checkboxes above instead of with their little squares. *@
+        <div class="field align-caption" title="Number of consecutive higher timeframes that must also confirm a band break. 0 = single-timeframe (normal).">
+            <label>Timeframe consensus count</label>
+            <input type="number" class="input-number" min="0" @bind="Data.TimeframeConsensusCount" />
+        </div>
+    </div>
+
+</fieldset>
+
+@code {
+    [Parameter, EditorRequired] public EntryConditionsData Data { get; set; } = null!;
+
+    /// <summary>Greyed out as a whole, for a strategy that follows the global conditions.</summary>
+    [Parameter] public bool Disabled { get; set; }
+}

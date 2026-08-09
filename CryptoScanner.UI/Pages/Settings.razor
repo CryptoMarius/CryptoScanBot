@@ -1,0 +1,164 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Enums
+@using CryptoScanner.Core.Services
+@using CryptoScanner.Core.Settings
+@inject IScannerSession ScannerSession
+
+@if (Visible)
+{
+    <div class="modal-overlay" @onclick="Cancel"></div>
+    <div class="modal-dialog settings-dialog" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <span class="modal-title">Scanner configuration</span>
+        </div>
+
+        <div class="modal-body settings-body">
+            <div class="tab-bar settings-tab-bar" style="flex-wrap: wrap;">
+                <button class="tab @(_activeTab == 0 ? "active" : "")" @onclick="() => _activeTab = 0">Exchange</button>
+                <button class="tab @(_activeTab == 1 ? "active" : "")" @onclick="() => _activeTab = 1">Indicators</button>
+                <button class="tab @(_activeTab == 2 ? "active" : "")" @onclick="() => _activeTab = 2">Basecoins</button>
+                <button class="tab @(_activeTab == 3 ? "active" : "")" @onclick="() => _activeTab = 3">Strategies</button>
+                <button class="tab @(_activeTab == 4 ? "active" : "")" @onclick="() => _activeTab = 4">Analyzer</button>
+                <button class="tab @(_activeTab == 5 ? "active" : "")" @onclick="() => _activeTab = 5">Trader</button>
+                <button class="tab @(_activeTab == 6 ? "active" : "")" @onclick="() => _activeTab = 6">Rulez</button>
+                <button class="tab @(_activeTab == 7 ? "active" : "")" @onclick="() => _activeTab = 7">API Keys</button>
+                <button class="tab @(_activeTab == 8 ? "active" : "")" @onclick="() => _activeTab = 8">Black/White list</button>
+                <button class="tab @(_activeTab == 9 ? "active" : "")" @onclick="() => _activeTab = 9">Debug</button>
+            </div>
+
+            @* Every tab stays in the render tree (hidden with CSS) so its @ref is always captured.
+               With @if the components of tabs the user never opened were never created, their refs
+               stayed null and their SaveTo was silently skipped — unlike Avalonia, which builds all
+               configuration viewmodels up front and always saves every one of them. *@
+            <div class="settings-tab-content">
+                <div style="@TabStyle(0)">
+                    <CryptoScanner.UI.Pages.SettingsTabs.GeneralSettings @ref="_generalSettings" />
+                </div>
+                <div style="@TabStyle(1)">
+                    <CryptoScanner.UI.Pages.SettingsTabs.IndicatorSettings @ref="_indicatorSettings" />
+                </div>
+                <div style="@TabStyle(2)">
+                    <CryptoScanner.UI.Pages.SettingsTabs.BasecoinsSettings @ref="_basecoinsSettings" />
+                </div>
+                <div style="@TabStyle(3)">
+                    <CryptoScanner.UI.Pages.SettingsTabs.StrategiesSettings @ref="_strategiesSettings" />
+                </div>
+                <div style="@TabStyle(4)">
+                    @* Cross-tab "copy from Trading/Analyzer" needs both sides of the other tab *@
+                    <CryptoScanner.UI.Pages.SettingsTabs.AnalyzerSettings @ref="_analyzerSettings"
+                                                                          CrossLongSide="_traderSettings?.LongSide"
+                                                                          CrossShortSide="_traderSettings?.ShortSide" /></div>
+                <div style="@TabStyle(5)">
+                    <CryptoScanner.UI.Pages.SettingsTabs.TraderSettings @ref="_traderSettings"
+                                                                        CrossLongSide="_analyzerSettings?.LongSide"
+                                                                        CrossShortSide="_analyzerSettings?.ShortSide" />
+                </div>
+                <div style="@TabStyle(6)">
+                    <CryptoScanner.UI.Pages.SettingsTabs.RulezSettings @ref="_rulezSettings" />
+                </div>
+                <div style="@TabStyle(7)">
+                    <CryptoScanner.UI.Pages.SettingsTabs.ApiKeySettings @ref="_apiKeySettings" />
+                </div>
+                <div style="@TabStyle(8)">
+                    <CryptoScanner.UI.Pages.SettingsTabs.BlackWhiteListSettings @ref="_blackWhiteListSettings" />
+                </div>
+                <div style="@TabStyle(9)">
+                    <CryptoScanner.UI.Pages.SettingsTabs.DebugSettings @ref="_debugSettings" />
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            @if (!string.IsNullOrEmpty(_statusMessage))
+            {
+                <span class="status-message @(_statusIsError ? "status-error" : "status-success")" style="margin-right: auto;">
+                    @_statusMessage
+                </span>
+            }
+            <button class="btn btn-primary" @onclick="Save" disabled="@_saving">Save</button>
+            <button class="btn btn-secondary" @onclick="Cancel" disabled="@_saving">Cancel</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    private int _activeTab = 0;
+    private string _statusMessage = "";
+    private bool _statusIsError;
+    private bool _saving;
+
+    private SettingsTabs.GeneralSettings? _generalSettings;
+    private SettingsTabs.IndicatorSettings? _indicatorSettings;
+    private SettingsTabs.BasecoinsSettings? _basecoinsSettings;
+    private SettingsTabs.StrategiesSettings? _strategiesSettings;
+    private SettingsTabs.AnalyzerSettings? _analyzerSettings;
+    private SettingsTabs.TraderSettings? _traderSettings;
+    private SettingsTabs.RulezSettings? _rulezSettings;
+    private SettingsTabs.ApiKeySettings? _apiKeySettings;
+    private SettingsTabs.BlackWhiteListSettings? _blackWhiteListSettings;
+    private SettingsTabs.DebugSettings? _debugSettings;
+
+    private string TabStyle(int index) => _activeTab == index ? "" : "display:none;";
+
+    private async Task Save()
+    {
+        if (_saving)
+            return;
+
+        _saving = true;
+        try
+        {
+            // Snapshot before the settings objects are touched — the applier needs the old
+            // exchange/quote selection to decide whether a full reload is required.
+            var previous = ConfigurationApplier.TakeSnapshot();
+
+            _generalSettings?.SaveTo(GlobalData.Settings);
+            _indicatorSettings?.SaveTo(GlobalData.Settings);
+            _basecoinsSettings?.SaveTo(GlobalData.Settings);
+            _strategiesSettings?.SaveTo(GlobalData.Settings);
+            _analyzerSettings?.SaveTo(GlobalData.Settings);
+            _traderSettings?.SaveTo(GlobalData.Settings);
+            _rulezSettings?.SaveTo(GlobalData.Settings);
+            _apiKeySettings?.SaveTo(GlobalData.Settings);
+            _blackWhiteListSettings?.SaveTo(GlobalData.Settings);
+            _debugSettings?.SaveTo(GlobalData.Settings);
+
+            // Save AND re-apply: this rebuilds SignalPrepare/SignalExecute, the strategy index,
+            // the plugin settings, the black/white lists and the timers. Without it the scanner
+            // kept running on the configuration it was started with.
+            await ConfigurationApplier.SaveAndApplyAsync(ScannerSession, previous);
+
+            await VisibleChanged.InvokeAsync(false);
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"Error saving: {ex.Message}";
+            _statusIsError = true;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task Cancel()
+    {
+        // Reload every tab from the stored settings so edits made in this session are discarded
+        _generalSettings?.LoadFrom(GlobalData.Settings);
+        _indicatorSettings?.LoadFrom(GlobalData.Settings);
+        _basecoinsSettings?.LoadFrom(GlobalData.Settings);
+        _strategiesSettings?.LoadFrom(GlobalData.Settings);
+        _analyzerSettings?.LoadFrom(GlobalData.Settings);
+        _traderSettings?.LoadFrom(GlobalData.Settings);
+        _rulezSettings?.LoadFrom(GlobalData.Settings);
+        _apiKeySettings?.LoadFrom(GlobalData.Settings);
+        _blackWhiteListSettings?.LoadFrom(GlobalData.Settings);
+        _debugSettings?.LoadFrom(GlobalData.Settings);
+
+        _statusMessage = "";
+        await VisibleChanged.InvokeAsync(false);
+    }
+}

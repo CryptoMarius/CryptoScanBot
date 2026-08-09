@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <title>CryptoScanBot</title>
+    <link href="_content/CryptoScanner.UI/css/app.css" rel="stylesheet" />
+    <style>
+        /* Follow the theme instead of hardcoding dark. app.css defines these on :root, so the body
+           no longer paints black behind a light-theme layout. */
+        body { background: var(--bg-base, #000); color: var(--text-primary, #e0e0e0); }
+    </style>
+</head>
+<body>
+    <app>Loading...</app>
+
+    <script src="_framework/blazor.webview.js"></script>
+    <script src="_content/CryptoScanner.UI/js/theme-interop.js"></script>
+    <script src="_content/CryptoScanner.UI/js/popup-interop.js"></script>
+    <script src="_content/CryptoScanner.UI/js/number-input.js"></script>
+    <script src="_content/CryptoScanner.UI/js/grid-interop.js"></script>
+    <script src="_content/CryptoScanner.UI/js/tradingview-widget.js"></script>
+    <script src="_content/CryptoScanner.UI/js/chart-widget.js"></script>
+</body>
+</html>

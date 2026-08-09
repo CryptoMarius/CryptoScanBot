@@ -1,0 +1,54 @@
+@using CryptoScanner.UI.Models
+
+@* One editor for a reflected plugin setting. Split off so a setting can be drawn twice: on its own
+   row, and as a companion behind another setting's caption.
+
+   The value is written straight into the field and the change is reported to the owner page with
+   Changed, because that page decides what is visible and what is enabled — with @bind the event
+   would stay inside this component and a checkbox would no longer reveal the values below it. *@
+@if (Field.Kind == PluginFieldKind.Bool)
+{
+    <input type="checkbox" class="input-checkbox" checked="@Field.BoolValue" disabled="@Disabled"
+           @onchange="OnBoolChanged" />
+}
+else if (Field.Kind == PluginFieldKind.Enum)
+{
+    <select class="input-select" value="@Field.TextValue" disabled="@Disabled" @onchange="OnTextChanged">
+        @foreach (var option in Field.EnumOptions)
+        {
+            <option value="@option">@option</option>
+        }
+    </select>
+}
+else if (Field.Kind == PluginFieldKind.Number)
+{
+    <input type="number" class="input-number" step="any" style="width: 120px;"
+           value="@Field.TextValue" disabled="@Disabled" @onchange="OnTextChanged" />
+}
+else
+{
+    <input type="text" class="input-text" style="width: 250px;"
+           value="@Field.TextValue" disabled="@Disabled" @onchange="OnTextChanged" />
+}
+
+@code {
+    [Parameter, EditorRequired] public PluginSettingField Field { get; set; } = null!;
+
+    /// <summary>Greyed out, for a value whose checkbox is off.</summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Reported to the page so it can re-evaluate what is visible and enabled.</summary>
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private async Task OnBoolChanged(ChangeEventArgs e)
+    {
+        Field.BoolValue = e.Value is bool on && on;
+        await Changed.InvokeAsync();
+    }
+
+    private async Task OnTextChanged(ChangeEventArgs e)
+    {
+        Field.TextValue = e.Value?.ToString() ?? "";
+        await Changed.InvokeAsync();
+    }
+}
