@@ -1,5 +1,6 @@
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
 
@@ -13,8 +14,6 @@ namespace CryptoScanner.Analyzers.Vbs.Indicators;
 /// </summary>
 public class VbsIndicatorExtension : IIndicatorExtension
 {
-    private const int HubCacheSize = 300;
-
     private QuoteHub? _vbsSrcHub;
     private QuoteHub? _vbsSqHub;
     private QuoteHub? _rangeHub;
@@ -25,19 +24,24 @@ public class VbsIndicatorExtension : IIndicatorExtension
     private double _vbsMult;
     private double _acsFactor;
 
-    public void Init(QuoteHub quoteHub)
+    public void Init(IndicatorRegistry registry)
     {
         var vbs = VbsPlugin.Settings;
-        _atrVpsSl = quoteHub.ToAtrHub(vbs.Length);
 
-        _vbsSrcHub = new QuoteHub(maxCacheSize: HubCacheSize);
-        _vbsSqHub = new QuoteHub(maxCacheSize: HubCacheSize);
+        // Through the registry, so an Atr(Length) requested elsewhere is the same hub instead of a
+        // second one doing identical work on every candle.
+        _atrVpsSl = registry.Atr(vbs.Length);
+
+        // The VWAP band needs hlc3 and hlc3 squared, which are values this plugin produces itself —
+        // they cannot chain off the price hub, hence a derived hub per series.
+        _vbsSrcHub = registry.CreateDerivedHub();
+        _vbsSqHub = registry.CreateDerivedHub();
         _vpsVwmaSrc = _vbsSrcHub.ToVwmaHub(vbs.Length);
         _vpsVwmaSq = _vbsSqHub.ToVwmaHub(vbs.Length);
         _vbsMult = vbs.Mult;
 
         // ACS (Average Candle Size): SMA of the per-candle range% = (high-low)/close*100, over AcsLength.
-        _rangeHub = new QuoteHub(maxCacheSize: HubCacheSize);
+        _rangeHub = registry.CreateDerivedHub();
         _rangeSma = _rangeHub.ToSmaHub(vbs.AcsLength);
         _acsFactor = vbs.AcsFactor;
     }
@@ -57,8 +61,14 @@ public class VbsIndicatorExtension : IIndicatorExtension
 
     public void FillData(CryptoData data)
     {
+        var vbsData = new VbsCandleData();
+        bool any = false;
+
         if (_atrVpsSl?.Results.Count > 0 && _atrVpsSl.Results[^1].Atr != null)
-            data.VbsAtrSl = _atrVpsSl.Results[^1].Atr;
+        {
+            vbsData.AtrSl = _atrVpsSl.Results[^1].Atr;
+            any = true;
+        }
 
         var vbsSrc = _vpsVwmaSrc?.Results;
         var vbsSq = _vpsVwmaSq?.Results;
@@ -71,15 +81,24 @@ public class VbsIndicatorExtension : IIndicatorExtension
                 double variance = second.Value - mean.Value * mean.Value;
                 double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
                 double pad = _vbsMult * vwStdev;
-                data.VbsBasis = mean.Value;
-                data.VbsUpper = mean.Value + pad;
-                data.VbsLower = mean.Value - pad;
-                data.VbsVwStdev = vwStdev;
+                vbsData.Basis = mean.Value;
+                vbsData.Upper = mean.Value + pad;
+                vbsData.Lower = mean.Value - pad;
+                vbsData.VwStdev = vwStdev;
+                any = true;
             }
         }
 
-        // ACS% = AcsFactor * SMA(range%, AcsLength). Drives the stop-loss (SL = entry -/+ VbsAcs%).
+        // ACS% = AcsFactor * SMA(range%, AcsLength). Drives the stop-loss (SL = entry -/+ Acs%).
         if (_rangeSma?.Results.Count > 0 && _rangeSma.Results[^1].Sma is double sma)
-            data.VbsAcs = _acsFactor * sma;
+        {
+            vbsData.Acs = _acsFactor * sma;
+            any = true;
+        }
+
+        // Nothing computed yet during warm-up — leave the slot empty instead of attaching an
+        // all-null object, so a strategy can tell "not ready" from "ready but zero".
+        if (any)
+            data.SetPluginData(vbsData);
     }
 }

@@ -80,6 +80,14 @@ public sealed class TickRunner
     private int lastDecile = -1;
     private long decileStart;
 
+    // Snapshot of every accumulator at the end of the previous chunk. The end-of-run report tells you
+    // how the TOTAL time was divided, but not which part of it grows as the replay walks forward —
+    // that is what the per-chunk delta below answers: every chunk logs the wall time it took plus the
+    // increase of each bucket since the previous chunk, so a phase with quadratic behaviour shows up
+    // as a steadily rising column instead of being averaged away over the whole run.
+    private ProfileSnapshot lastChunkSnapshot;
+    private long lastChunkWallTicks;
+
     // The resolved base interval for this run (set at the start of RunAsync).
     private CryptoInterval activeBaseInterval = null!;
 
@@ -94,7 +102,6 @@ public sealed class TickRunner
     public async Task RunAsync(EmulatorRunConfig config, CancellationToken ct)
     {
         var exchange = GlobalData.ActiveExchange!;
-        GlobalData.Settings.Signal.UseNewIndicatorHub = true;
         GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
 
         // Enable the per-candle pipeline profiler for this run (off in the live scanner). It breaks
@@ -279,6 +286,9 @@ public sealed class TickRunner
                     GlobalData.AddTextToLogTab($"Chunk {chunkIndex}: pruned {pruned} old candles from memory");
                 }
 
+                // Per-chunk delta report — the "where does it slow down" measurement.
+                LogChunkTimings(chunkIndex, exchange, symbols);
+
                 // Advance to next chunk
                 windowFrom = useChunks ? new CandleTime(windowTo.Minutes + baseInterval.Duration) : replayTo;
             }
@@ -294,6 +304,105 @@ public sealed class TickRunner
             LogPhaseTimings();
             PipelineProfiler.Enabled = false;
         }
+    }
+
+
+    /// <summary>
+    /// Point-in-time copy of every accumulator the per-chunk report compares. Only the counters that
+    /// can plausibly grow with the replay position are captured — the end-of-run report keeps covering
+    /// the full breakdown.
+    /// </summary>
+    private readonly record struct ProfileSnapshot(
+        long Process1m, long Pipeline, long ZoneDrain, long Flush,
+        long Prepare, long Execute, long Trade, long PositionCheck,
+        long SeStrategy, long SeEvaluations, long SeSignals,
+        long Trend, long TrendCalls, long FvgInline, long SmcInline,
+        long DbFlush, long DbFlushItems, long CandleArrivals)
+    {
+        public static ProfileSnapshot Capture(TickRunner runner) => new(
+            runner.elapsedProcess1m, runner.elapsedPipeline, runner.elapsedZoneDrain, runner.elapsedFlush,
+            PipelineProfiler.PrepareTicks, PipelineProfiler.ExecuteTicks, PipelineProfiler.TradeTicks,
+            PipelineProfiler.PositionCheckTicks,
+            PipelineProfiler.SeStrategyTicks, PipelineProfiler.SeEvaluations, PipelineProfiler.SeSignals,
+            PipelineProfiler.TrendTicks, PipelineProfiler.TrendCalls,
+            PipelineProfiler.FvgInlineTicks, PipelineProfiler.SmcInlineTicks,
+            PipelineProfiler.DbFlushOpenTicks + PipelineProfiler.DbFlushWriteTicks + PipelineProfiler.DbFlushCommitTicks,
+            PipelineProfiler.DbFlushItems, PipelineProfiler.CandleArrivals);
+    }
+
+
+    /// <summary>
+    /// Logs what this chunk cost compared to the previous one. The end-of-run "Timing"/"Decile" lines
+    /// say how the total was divided and that the run slows down; this says WHICH phase is responsible,
+    /// while the run is still going. Two blocks per chunk:
+    /// <list type="bullet">
+    ///   <item>the wall time of the chunk plus the increase of every timing bucket since the previous
+    ///         chunk (a phase with quadratic behaviour keeps rising chunk after chunk, a constant-cost
+    ///         phase stays flat);</item>
+    ///   <item>the size of the state that could be causing it — in-memory candles, cached indicator
+    ///         data, zones, open positions — so a rising bucket can be tied to the structure that grows
+    ///         along with it.</item>
+    /// </list>
+    /// </summary>
+    private void LogChunkTimings(int chunkIndex, CryptoScanner.Core.Model.CryptoExchange exchange, List<CryptoSymbol> symbols)
+    {
+        static double Seconds(long ticks) => (double)ticks / Stopwatch.Frequency;
+
+        ProfileSnapshot now = ProfileSnapshot.Capture(this);
+        ProfileSnapshot prev = lastChunkSnapshot;
+        long wallNow = runWall.ElapsedTicks;
+        double chunkWall = Seconds(wallNow - lastChunkWallTicks);
+        lastChunkSnapshot = now;
+        lastChunkWallTicks = wallNow;
+
+        GlobalData.AddTextToLogTab(
+            $"Chunk {chunkIndex} timing — wall {chunkWall:F1}s | " +
+            $"candles {Seconds(now.Process1m - prev.Process1m):F1}s, " +
+            $"pipeline {Seconds(now.Pipeline - prev.Pipeline):F1}s, " +
+            $"zones {Seconds(now.ZoneDrain - prev.ZoneDrain):F1}s, " +
+            $"flush {Seconds(now.Flush - prev.Flush):F1}s " +
+            $"|| indicators {Seconds(now.Prepare - prev.Prepare):F1}s, " +
+            $"algorithms {Seconds(now.Execute - prev.Execute):F1}s " +
+            $"(strategy {Seconds(now.SeStrategy - prev.SeStrategy):F1}s over {now.SeEvaluations - prev.SeEvaluations} eval, " +
+            $"{now.SeSignals - prev.SeSignals} signal), " +
+            $"trade {Seconds(now.Trade - prev.Trade):F1}s, " +
+            $"positionCheck {Seconds(now.PositionCheck - prev.PositionCheck):F1}s " +
+            $"|| trend {Seconds(now.Trend - prev.Trend):F1}s over {now.TrendCalls - prev.TrendCalls} call(s), " +
+            $"fvgInline {Seconds(now.FvgInline - prev.FvgInline):F1}s, " +
+            $"smcInline {Seconds(now.SmcInline - prev.SmcInline):F1}s, " +
+            $"db {Seconds(now.DbFlush - prev.DbFlush):F1}s over {now.DbFlushItems - prev.DbFlushItems} item(s) " +
+            $"|| candles processed {now.CandleArrivals - prev.CandleArrivals}");
+
+        // State that survives the chunk boundary. A bucket above that keeps rising while one of these
+        // keeps rising too is the pair to look at: the phase re-walks a structure that never stops
+        // growing. Counted per chunk over all replayed symbols, so the cost is negligible.
+        long candleCount = 0;
+        long dataCount = 0;
+        long zonesOpen = 0;
+        long zonesClosed = 0;
+        long signalCount = 0;
+        foreach (var symbol in symbols)
+        {
+            foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
+            {
+                candleCount += symbolInterval.CandleList.Count;
+                dataCount += symbolInterval.Data.Count;
+                signalCount += symbolInterval.SignalList.Count;
+                // SMC keeps a single flat list, DLZ/FVG split theirs into open and closed lists.
+                zonesOpen += symbolInterval.DlzZones.LongOpen.Count + symbolInterval.DlzZones.ShortOpen.Count
+                    + symbolInterval.FvgZones.LongOpen.Count + symbolInterval.FvgZones.ShortOpen.Count
+                    + symbolInterval.SmcZones.Count;
+                zonesClosed += symbolInterval.DlzZones.LongClosed.Count + symbolInterval.DlzZones.ShortClosed.Count
+                    + symbolInterval.FvgZones.LongClosed.Count + symbolInterval.FvgZones.ShortClosed.Count;
+            }
+        }
+
+        GlobalData.AddTextToLogTab(
+            $"Chunk {chunkIndex} state — candles in memory {candleCount}, indicator data {dataCount}, " +
+            $"signals {signalCount}, zones open {zonesOpen} / closed {zonesClosed}, " +
+            $"positions {exchange.Data.PositionList.Count}, " +
+            $"managed memory {GC.GetTotalMemory(false) / (1024 * 1024)} MB, " +
+            $"GC gen0/1/2 {GC.CollectionCount(0)}/{GC.CollectionCount(1)}/{GC.CollectionCount(2)}");
     }
 
 
@@ -359,22 +468,19 @@ public sealed class TickRunner
                 $"positionCheck {posCheck:F1}s ({posCheck / pipelineMeasured:P0})");
         }
 
-        // Sub-breakdown of the indicator (SignalPrepare) bucket: where inside CalculateIndicators
-        // the time goes — candle-list building, Skender batch math, the per-candle fill loop, or Lux.
-        // This decides whether an incremental rewrite is worthwhile or just cheaper bookkeeping.
+        // Sub-breakdown of the indicator (SignalPrepare) bucket. Two parts now that the batch path
+        // is gone: building the history window for a warm-up, and the per-candle incremental work.
+        // The incremental part is split further in the "Hub incremental" line below.
         double collect = Seconds(PipelineProfiler.PrepCollectTicks);
-        double skender = Seconds(PipelineProfiler.PrepSkenderTicks);
-        double fill = Seconds(PipelineProfiler.PrepFillTicks);
-        double lux = Seconds(PipelineProfiler.PrepLuxTicks);
-        double prepMeasured = collect + skender + fill + lux;
+        double incremental = Seconds(PipelineProfiler.HubAddTicks + PipelineProfiler.HubBuildTicks
+            + PipelineProfiler.HubDataInsertTicks + PipelineProfiler.HubApplyLuxTicks);
+        double prepMeasured = collect + incremental;
         if (prepMeasured > 0)
         {
             GlobalData.AddTextToLogTab(
                 $"Indicators — measured {prepMeasured:F1}s | " +
-                $"collectCandles {collect:F1}s ({collect / prepMeasured:P0}), " +
-                $"skender {skender:F1}s ({skender / prepMeasured:P0}), " +
-                $"fillLoop {fill:F1}s ({fill / prepMeasured:P0}), " +
-                $"lux {lux:F1}s ({lux / prepMeasured:P0})");
+                $"collectCandles(warmup) {collect:F1}s ({collect / prepMeasured:P0}), " +
+                $"hubIncremental {incremental:F1}s ({incremental / prepMeasured:P0})");
         }
 
         // Sub-breakdown of the algorithms (SignalExecute) bucket: normal-strategy evaluation vs.

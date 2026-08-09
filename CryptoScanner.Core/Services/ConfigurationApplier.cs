@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 
@@ -57,6 +57,16 @@ public static class ConfigurationApplier
         try
         {
             GlobalData.SaveConfiguration();
+
+            // The indicator hubs freeze their parameters and their set of plugin extensions at
+            // construction, so every existing hub has to be rebuilt before the new settings can
+            // take effect. Bumping the version does that lazily on the next candle.
+            Signal.Indicators.IndicatorConfiguration.Bump();
+            Signal.Indicators.StrategyDiagnostics.Report();
+
+            // Apply the theme right away, before the (potentially slow) exchange/quote reload
+            // below. Waiting until after it made a theme switch appear to take ten seconds or more.
+            GlobalData.SetTheme?.Invoke(GlobalData.Settings.General.Theme ?? "Default");
 
             // Don't save exchange immediately, lots of data still in memory
             if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? newActiveExchange))

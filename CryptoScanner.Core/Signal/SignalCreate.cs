@@ -369,7 +369,18 @@ public class SignalCreate
         // Iets wat ik wel eens gebruikt als ik trade
         if (signal.LuxIndicator5m == null)
         {
-            LuxIndicator.Calculate(Symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, Candle!.OpenTime + 5);
+            // NOTE: the indicator hub also advances this same Lux Multi-RSI once per candle, so this
+            // call looks like pure duplication. It is not interchangeable: CalculateNew replays a
+            // fixed 99-candle window while the hub runs continuously from whatever warm-up the
+            // pipeline gave it. Measured on the reference series those two disagree on 1.1% of the
+            // candles by up to 27 percentage points (3 of the 11 RSI lengths flipping across the
+            // 70/30 threshold), so reading the hub value here would silently change the recorded
+            // value for roughly one signal in a hundred. See LuxWindowEquivalenceTests.
+            //
+            // The hardcoded "+ 5" used to land on the SECOND 5m sub-candle of the signal candle,
+            // which skipped every 5m candle after it — on a 1h signal that threw away 10 of the 12.
+            CandleTime lux5m = LuxIndicator.LastClosed5mCandle(Candle!.OpenTime, Interval.Duration);
+            LuxIndicator.Calculate(Symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, lux5m);
             if (signal.Side == CryptoTradeSide.Long)
                 signal.LuxIndicator5m = luxOverSold;
             else

@@ -26,10 +26,24 @@ public static class ThemeHelper
         return Default;
     }
 
+    /// <summary>
+    /// What the operating system asks for, for the "Follow system" setting. Avalonia resolves that
+    /// itself through ThemeVariant.Default; the Blazor hosts have to ask the browser
+    /// (prefers-color-scheme) and drop the answer here, so every screen resolves it the same way.
+    /// Dark until told otherwise, which is what the application used to assume unconditionally.
+    /// </summary>
+    public static bool SystemPrefersDark { get; set; } = true;
+
     /// <summary>The value the Blazor layout puts in the data-theme attribute.</summary>
     public static string ToCssTheme(string? theme)
     {
-        return Normalize(theme) == Light ? "light" : "dark";
+        string normalized = Normalize(theme);
+        if (normalized == Light)
+            return "light";
+        if (normalized == Dark)
+            return "dark";
+        // "Follow system"
+        return SystemPrefersDark ? "dark" : "light";
     }
 
     /// <summary>Flip between light and dark, always returning a normalized value.</summary>

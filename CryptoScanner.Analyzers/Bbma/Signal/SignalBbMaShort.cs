@@ -1,4 +1,5 @@
 using CryptoScanner.Analyzers.Stobb;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
@@ -208,12 +209,14 @@ public class SignalBbmaShort : SignalBbmaBase
 
         CryptoInterval interval5m = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).Interval;
 
-        // Ensure 5m indicator data is available in IndicatorDataList
-        if (!IndicatorEngine.PrepareIndicators(Symbol, interval5m, CandleLast.Candle.OpenTime))
-            return false;
+        // Align to the last completed 5m candle (StartOfIntervalCandle2 steps back one
+        // duration when the current 5m candle is still in progress)
+        CandleTime time5m = IntervalTools.StartOfIntervalCandle2(
+            CandleLast.Candle.OpenTime, Interval.Duration, interval5m.Duration);
 
-        // Align current time down to the nearest 5m boundary
-        CandleTime time5m = CandleLast.Candle.OpenTime - (CandleLast.Candle.OpenTime % interval5m.Duration);
+        // Ensure 5m indicator data is available in IndicatorDataList
+        if (!IndicatorEngine.PrepareIndicators(Symbol, interval5m, time5m))
+            return false;
 
         if (!Symbol.GetSymbolInterval(interval5m.IntervalPeriod).TryGetCandle(time5m, out MyData? current5m) || current5m == null)
             return false;

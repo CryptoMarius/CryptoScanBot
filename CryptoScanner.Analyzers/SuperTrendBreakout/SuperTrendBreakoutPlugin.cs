@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Contracts;
+using CryptoScanner.Core.Signal.Indicators;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
@@ -38,6 +39,9 @@ public class SuperTrendBreakoutPlugin : IStrategyPlugin
     }
 
     public bool RequiresDlzZones => true;
+
+    // Read from CandleData.SuperTrend / SuperTrendUpperBand / SuperTrendLowerBand.
+    public IReadOnlyList<IndicatorKey> RequiredIndicators { get; } = [IndicatorKey.SuperTrend(10, 3.0)];
 
     public IChartOverlay? ChartOverlay { get; } = null;
     public IConfigView? ConfigView { get; } = null;

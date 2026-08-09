@@ -47,6 +47,13 @@ public class CryptoInterval
     /// <summary>
     /// Builds the canonical list of all supported intervals with their ConstructFrom chain.
     /// Single source of truth shared by the DB seed (CreateTableInterval) and test helpers.
+    ///
+    /// WARNING — the ORDER of this list is an identity, not a presentation choice. It determines
+    /// both the autoincrement Interval.Id in the database and the index into SymbolIntervalList
+    /// (see CryptoSymbol.GetSymbolInterval, which does SymbolIntervalList[(int)IntervalPeriod]).
+    /// Inserting an entry in the MIDDLE shifts every id after it, which silently re-labels all
+    /// stored candles, signals, positions and zones — a 15m candle then reads back as 30m, with
+    /// no error anywhere. Append at the end, or migrate the existing data deliberately.
     /// </summary>
     public static List<CryptoInterval> CreateStandardIntervalList()
     {

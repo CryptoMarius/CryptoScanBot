@@ -8,6 +8,15 @@ using Microsoft.Data.Sqlite;
 namespace CryptoScanner.Core.Context;
 
 /// <summary>
+/// The candle database on disk does not match the schema this build expects. Its own type so
+/// callers can distinguish "this file needs converting" from a genuine SQLite failure: loading
+/// and saving then skip the candle store and say so, instead of aborting the whole startup.
+/// </summary>
+public class CandleDatabaseSchemaException(string message) : Exception(message)
+{
+}
+
+/// <summary>
 /// Standalone SQLite store for candles, one DB file per exchange. Lives in the exchange's
 /// own folder ({AppDataFolder}/{exchange-name}/candles.db) so size and growth can be
 /// inspected per exchange. This is a first version intended to observe what storing candles
@@ -108,10 +117,20 @@ public class CandleDatabase : IDisposable
     }
 
     /// <summary>
+    /// Schema version stored in the Meta table. Version 2 introduced the local Symbol
+    /// registry: Candle.SymbolId no longer refers to CryptoScanBot.db's Symbol table but
+    /// to this database's own Symbol table, keyed by symbol NAME. Version 1 databases
+    /// (no Meta table) carry foreign ids and need an explicit migration.
+    /// </summary>
+    public const int CurrentSchemaVersion = 2;
+
+
+    /// <summary>
     /// Initialize the candle database for one exchange:
     ///   - Apply once-only PRAGMAs (page_size, auto_vacuum) BEFORE any tables exist
     ///   - Apply per-connection PRAGMAs (journal_mode, synchronous)
     ///   - Create the Candle table + composite primary key (IF NOT EXISTS for concurrency safety)
+    ///   - Create the local Symbol registry + Meta table and verify the schema version
     /// Idempotent — safe to call on every save pass.
     /// </summary>
     public static void InitializeSchema(Model.CryptoExchange exchange)
@@ -155,6 +174,155 @@ public class CandleDatabase : IDisposable
             "  LastSync    INTEGER NULL," +
             "  PRIMARY KEY (SymbolId, IntervalId)" +
             ") WITHOUT ROWID");
+
+        // Local symbol registry. Candle.SymbolId / SymbolInterval.SymbolId point HERE, not at
+        // the Symbol table in CryptoScanBot.db. That main database is regularly thrown away and
+        // rebuilt (faster than cleaning it), and a symbol almost never comes back on the same
+        // autoincrement id — which silently re-labelled every candle in this store. Keying on the
+        // name instead makes this database self-describing and independent of that rebuild.
+        //
+        // The name is stored ONCE here rather than in every Candle row: Candle is WITHOUT ROWID
+        // with the primary key clustered into each row, so a TEXT key would add its full length
+        // to all (tens of millions of) rows. The local id keeps the rows byte-identical in size.
+        db.Connection.Execute(
+            "CREATE TABLE IF NOT EXISTS [Symbol] (" +
+            "  SymbolId  INTEGER PRIMARY KEY AUTOINCREMENT," +
+            "  Name      TEXT NOT NULL UNIQUE" +
+            ")");
+
+        // Schema bookkeeping. Also holds the exchange name so a file copied into the wrong
+        // folder cannot silently be read as a different exchange.
+        db.Connection.Execute(
+            "CREATE TABLE IF NOT EXISTS [Meta] (" +
+            "  Key    TEXT NOT NULL PRIMARY KEY," +
+            "  Value  TEXT NOT NULL" +
+            ") WITHOUT ROWID");
+
+        VerifySchemaVersion(db.Connection, exchange);
+    }
+
+
+    /// <summary>
+    /// Establishes (or verifies) the schema version of an already-created database.
+    /// <list type="bullet">
+    ///   <item>No version recorded and no candles → brand new or emptied file, stamp it as
+    ///         <see cref="CurrentSchemaVersion"/>. Nothing to convert.</item>
+    ///   <item>No version recorded but candles present → a version-1 file whose SymbolIds still
+    ///         refer to the main database. Converted right here by
+    ///         <see cref="CandleDatabaseMigration.ConvertInPlace"/>: every application that opens a
+    ///         candle store has to get past this point, so it cannot be left to a menu action that
+    ///         only the Avalonia scanner has.</item>
+    ///   <item>Version recorded → must match, otherwise the code and the file disagree.</item>
+    /// </list>
+    /// </summary>
+    private static void VerifySchemaVersion(SqliteConnection connection, Model.CryptoExchange exchange)
+    {
+        string? version = connection.QueryFirstOrDefault<string>(
+            "SELECT Value FROM Meta WHERE Key = 'SchemaVersion'");
+
+        if (string.IsNullOrEmpty(version))
+        {
+            long candleCount = connection.ExecuteScalar<long>("SELECT COUNT(*) FROM (SELECT 1 FROM Candle LIMIT 1)");
+            if (candleCount > 0)
+            {
+                // Throws (and leaves the file untouched) when there is nothing to judge the old
+                // mapping against yet — the caller then skips the candle store for now.
+                CandleDatabaseMigration.ConvertInPlace(connection, exchange);
+                return;
+            }
+
+            connection.Execute(
+                "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', $Version)",
+                new { Version = CurrentSchemaVersion.ToString() });
+            connection.Execute(
+                "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('ExchangeName', $Name)",
+                new { Name = exchange.Name });
+            return;
+        }
+
+        if (version != CurrentSchemaVersion.ToString())
+        {
+            throw new InvalidOperationException(
+                $"Candle database for '{exchange.Name}' has schema version {version}, " +
+                $"this build expects {CurrentSchemaVersion}.");
+        }
+    }
+
+
+    // Local symbol-id cache, per database FILE (not global): the scanner and the emulator run
+    // against different candle databases, each with its own autoincrement numbering, so a shared
+    // cache would hand out an id from the wrong file. SqliteConnection.DataSource is the resolved
+    // path, which is exactly the identity we need. Both levels are concurrent because
+    // SaveCandlesAsync/LoadCandlesAsync resolve from parallel workers.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string,
+        System.Collections.Concurrent.ConcurrentDictionary<string, int>> LocalSymbolIdCache =
+        new(StringComparer.OrdinalIgnoreCase);
+
+
+    private static System.Collections.Concurrent.ConcurrentDictionary<string, int> CacheFor(SqliteConnection connection)
+        => LocalSymbolIdCache.GetOrAdd(connection.DataSource ?? "", _ => new(StringComparer.OrdinalIgnoreCase));
+
+
+    /// <summary>
+    /// Drops the cached name→local-id mapping for one database file, or for every file when
+    /// <paramref name="dataSource"/> is null. Needed after a migration or after the file is
+    /// deleted and recreated, since the autoincrement numbering starts over.
+    /// </summary>
+    public static void ClearLocalSymbolIdCache(string? dataSource = null)
+    {
+        if (dataSource == null)
+            LocalSymbolIdCache.Clear();
+        else
+            LocalSymbolIdCache.TryRemove(dataSource, out _);
+    }
+
+
+    /// <summary>
+    /// Local id for a symbol, registering the name when this database has not seen it before.
+    /// Use for WRITE paths only — a read must not create rows for a symbol that has no candles.
+    ///
+    /// Must be called BEFORE the caller opens its transaction: Microsoft.Data.Sqlite requires
+    /// every command on a connection with a pending transaction to carry that transaction, and
+    /// the registration is deliberately its own tiny statement so a parallel writer that races
+    /// on the same new name resolves to the same row (INSERT OR IGNORE against the UNIQUE index).
+    /// </summary>
+    private static int ResolveLocalSymbolId(SqliteConnection connection, CryptoSymbol symbol)
+    {
+        var cache = CacheFor(connection);
+        if (cache.TryGetValue(symbol.Name, out int cached))
+            return cached;
+
+        connection.Execute("INSERT OR IGNORE INTO Symbol (Name) VALUES ($Name)", new { symbol.Name });
+        int localId = connection.ExecuteScalar<int>(
+            "SELECT SymbolId FROM Symbol WHERE Name = $Name", new { symbol.Name });
+
+        cache[symbol.Name] = localId;
+        return localId;
+    }
+
+
+    /// <summary>
+    /// Local id for a symbol without registering it. Returns false when this database holds no
+    /// data for the symbol at all — the READ paths then simply produce nothing, which is the
+    /// same outcome as a symbol whose candles were never fetched.
+    /// </summary>
+    private static bool TryGetLocalSymbolId(SqliteConnection connection, CryptoSymbol symbol, out int localSymbolId)
+    {
+        var cache = CacheFor(connection);
+        if (cache.TryGetValue(symbol.Name, out localSymbolId))
+            return true;
+
+        int? found = connection.ExecuteScalar<int?>(
+            "SELECT SymbolId FROM Symbol WHERE Name = $Name", new { symbol.Name });
+        if (found == null)
+        {
+            localSymbolId = 0;
+            return false;
+        }
+
+        localSymbolId = found.Value;
+        cache[symbol.Name] = localSymbolId;
+        return true;
     }
 
 
@@ -163,7 +331,7 @@ public class CandleDatabase : IDisposable
     /// interval) into the SymbolInterval table. Runs inside the caller's transaction
     /// so it commits atomically together with the candle inserts.
     /// </summary>
-    private static void SaveSymbolInterval(SqliteConnection connection, SqliteTransaction tx, CryptoSymbol symbol, CryptoSymbolInterval symbolInterval)
+    private static void SaveSymbolInterval(SqliteConnection connection, SqliteTransaction tx, int localSymbolId, CryptoSymbolInterval symbolInterval)
     {
         using var cmd = connection.CreateCommand();
         cmd.Transaction = tx;
@@ -173,7 +341,7 @@ public class CandleDatabase : IDisposable
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
-        pSymbol.Value = symbol.Id;
+        pSymbol.Value = localSymbolId;
         cmd.Parameters.Add(pSymbol);
 
         var pInterval = cmd.CreateParameter();
@@ -197,14 +365,14 @@ public class CandleDatabase : IDisposable
     /// of the symbol from the SymbolInterval table. Called by <see cref="LoadCandlesForSymbol"/>
     /// after the candles themselves have been loaded.
     /// </summary>
-    private static void LoadSymbolIntervals(SqliteConnection connection, CryptoSymbol symbol)
+    private static void LoadSymbolIntervals(SqliteConnection connection, int localSymbolId, CryptoSymbol symbol)
     {
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT IntervalId, LastSync FROM SymbolInterval WHERE SymbolId = $SymbolId";
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
-        pSymbol.Value = symbol.Id;
+        pSymbol.Value = localSymbolId;
         cmd.Parameters.Add(pSymbol);
 
         Dictionary<int, CryptoSymbolInterval> intervalsId = [];
@@ -243,6 +411,10 @@ public class CandleDatabase : IDisposable
         // below, and a cached ZigZagResult.Candle would otherwise keep referencing a stale candle.
         symbol.Data.ResetTrendDataAndCaches();
 
+        // Unknown to this candle database = no candles were ever stored for it. Nothing to read.
+        if (!TryGetLocalSymbolId(connection, symbol, out int localSymbolId))
+            return;
+
         // Per-interval SELECT bounded by GetCandleFetchStart so we don't materialise the
         // bulk DLZ-zoom candles at startup — those stay in the DB and only flow into memory
         // when the zone calculation explicitly asks for them. The PK (SymbolId, IntervalId,
@@ -260,7 +432,7 @@ public class CandleDatabase : IDisposable
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
-        pSymbol.Value = symbol.Id;
+        pSymbol.Value = localSymbolId;
         cmd.Parameters.Add(pSymbol);
 
         var pInterval = cmd.CreateParameter();
@@ -324,7 +496,7 @@ public class CandleDatabase : IDisposable
 
         // Restore LastCandleSynchronized per interval so the exchange fetcher continues
         // from where it left off instead of refetching the full GetCandleFetchStart window.
-        LoadSymbolIntervals(connection, symbol);
+        LoadSymbolIntervals(connection, localSymbolId, symbol);
     }
 
 
@@ -338,6 +510,10 @@ public class CandleDatabase : IDisposable
     public static void LoadCandlesForSymbolInterval(SqliteConnection connection, CryptoSymbol symbol,
         CryptoSymbolInterval symbolInterval)
     {
+        // Unknown to this candle database = no candles were ever stored for it. Nothing to read.
+        if (!TryGetLocalSymbolId(connection, symbol, out int localSymbolId))
+            return;
+
         using var cmd = connection.CreateCommand();
         cmd.CommandText =
             "SELECT OpenTime, Ticks, Open, High, Low, Close, Volume " +
@@ -350,7 +526,7 @@ public class CandleDatabase : IDisposable
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
-        pSymbol.Value = symbol.Id;
+        pSymbol.Value = localSymbolId;
         cmd.Parameters.Add(pSymbol);
 
         var pInterval = cmd.CreateParameter();
@@ -407,6 +583,10 @@ public class CandleDatabase : IDisposable
     public static List<CryptoCandle> LoadCandlesInRange(SqliteConnection connection,
         CryptoSymbol symbol, CryptoInterval interval, uint fromMinutes, uint toMinutes)
     {
+        // Unknown to this candle database = no candles were ever stored for it. Nothing to read.
+        if (!TryGetLocalSymbolId(connection, symbol, out int localSymbolId))
+            return [];
+
         using var cmd = connection.CreateCommand();
         cmd.CommandText =
             "SELECT OpenTime, Ticks, Open, High, Low, Close, Volume " +
@@ -424,7 +604,7 @@ public class CandleDatabase : IDisposable
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
-        pSymbol.Value = symbol.Id;
+        pSymbol.Value = localSymbolId;
         cmd.Parameters.Add(pSymbol);
 
         var pInterval = cmd.CreateParameter();
@@ -494,7 +674,18 @@ public class CandleDatabase : IDisposable
                 return;
             }
 
-            InitializeSchema(exchange);
+            // An unconverted (version 1) file must not be read: its ids refer to a Symbol table
+            // that may since have been rebuilt, so the candles would end up on the wrong symbols.
+            // Skip the candle store and keep starting up — the migration is a menu action.
+            try
+            {
+                InitializeSchema(exchange);
+            }
+            catch (CandleDatabaseSchemaException error)
+            {
+                GlobalData.AddTextToLogTab($"candles.db load {exchange.Name}: SKIPPED — {error.Message}");
+                return;
+            }
 
             // Snapshot to avoid enumerating a live collection from parallel workers
             var symbols = exchange.SymbolListName.Values.ToList();
@@ -559,6 +750,10 @@ public class CandleDatabase : IDisposable
     /// </summary>
     public static void SaveCandlesForSymbol(SqliteConnection connection, CryptoSymbol symbol)
     {
+        // Registers the name if this database has not seen it yet. Deliberately before
+        // BeginTransaction — see ResolveLocalSymbolId.
+        int localSymbolId = ResolveLocalSymbolId(connection, symbol);
+
         using var tx = connection.BeginTransaction();
         using var cmd = connection.CreateCommand();
         cmd.Transaction = tx;
@@ -584,7 +779,7 @@ public class CandleDatabase : IDisposable
 
         cmd.Prepare();
 
-        pSymbol.Value = symbol.Id;
+        pSymbol.Value = localSymbolId;
 
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
         {
@@ -619,7 +814,7 @@ public class CandleDatabase : IDisposable
         // Persist LastCandleSynchronized for every interval in the same transaction so the
         // exchange fetcher can continue from where it left off after a restart.
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
-            SaveSymbolInterval(connection, tx, symbol, symbolInterval);
+            SaveSymbolInterval(connection, tx, localSymbolId, symbolInterval);
 
         tx.Commit();
 
@@ -634,6 +829,10 @@ public class CandleDatabase : IDisposable
     /// </summary>
     public static void SaveCandlesForSymbolInterval(SqliteConnection connection, CryptoSymbol symbol, CryptoSymbolInterval symbolInterval)
     {
+        // Registers the name if this database has not seen it yet. Deliberately before
+        // BeginTransaction — see ResolveLocalSymbolId.
+        int localSymbolId = ResolveLocalSymbolId(connection, symbol);
+
         using var tx = connection.BeginTransaction();
         using var cmd = connection.CreateCommand();
         cmd.Transaction = tx;
@@ -655,7 +854,7 @@ public class CandleDatabase : IDisposable
 
         cmd.Prepare();
 
-        pSymbol.Value = symbol.Id;
+        pSymbol.Value = localSymbolId;
         pInterval.Value = symbolInterval.Interval.Id;
 
         symbolInterval.CandleList.Lock();
@@ -681,7 +880,7 @@ public class CandleDatabase : IDisposable
         }
 
         // Persist LastCandleSynchronized for this single interval in the same transaction.
-        SaveSymbolInterval(connection, tx, symbol, symbolInterval);
+        SaveSymbolInterval(connection, tx, localSymbolId, symbolInterval);
 
         tx.Commit();
     }
@@ -715,7 +914,17 @@ public class CandleDatabase : IDisposable
                 return;
             }
 
-            InitializeSchema(exchange);
+            // Writing into an unconverted (version 1) file would mix candles resolved through the
+            // local registry with candles stored under foreign ids. Refuse until it is migrated.
+            try
+            {
+                InitializeSchema(exchange);
+            }
+            catch (CandleDatabaseSchemaException error)
+            {
+                GlobalData.AddTextToLogTab($"candles.db save {exchange.Name}: SKIPPED — {error.Message}");
+                return;
+            }
 
             // Snapshot to avoid enumerating a live collection from parallel workers
             var symbols = exchange.SymbolListName.Values.ToList();
@@ -1019,19 +1228,26 @@ public class CandleDatabase : IDisposable
     /// </summary>
     public static void CleanCandlesForSymbol(SqliteConnection connection, SqliteConnection mainConn, CryptoSymbol symbol)
     {
+        // Two different databases, two different symbol ids — do not mix them up. Everything
+        // touching `connection` (candles.db) uses localSymbolId; Phase A below talks to the main
+        // database via mainConn and keeps using symbol.Id. A symbol this database never stored
+        // has nothing to clean.
+        if (!TryGetLocalSymbolId(connection, symbol, out int localSymbolId))
+            return;
+
         using var tx = connection.BeginTransaction();
 
         if (SymbolHasNoUse(symbol))
         {
             int candleRows = connection.Execute(
                 "DELETE FROM Candle WHERE SymbolId = @SymbolId",
-                new { SymbolId = symbol.Id }, transaction: tx);
+                new { SymbolId = localSymbolId }, transaction: tx);
 
             // Sync-bookkeeping has no value without candles either — drop it too so the next
             // start treats the symbol as never-synced when it eventually comes back into use.
             int stateRows = connection.Execute(
                 "DELETE FROM SymbolInterval WHERE SymbolId = @SymbolId",
-                new { SymbolId = symbol.Id }, transaction: tx);
+                new { SymbolId = localSymbolId }, transaction: tx);
 
             tx.Commit();
 
@@ -1065,7 +1281,7 @@ public class CandleDatabase : IDisposable
                 // No keep-range for this interval → drop everything for it
                 deleted = connection.Execute(
                     "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId",
-                    new { SymbolId = symbol.Id, IntervalId = intervalId }, transaction: tx);
+                    new { SymbolId = localSymbolId, IntervalId = intervalId }, transaction: tx);
             }
             else
             {
@@ -1106,7 +1322,7 @@ public class CandleDatabase : IDisposable
                 deleted = connection.Execute(
                     "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId " +
                     "AND NOT EXISTS (SELECT 1 FROM keep_ranges WHERE Candle.OpenTime BETWEEN s AND e)",
-                    new { SymbolId = symbol.Id, IntervalId = intervalId }, transaction: tx);
+                    new { SymbolId = localSymbolId, IntervalId = intervalId }, transaction: tx);
             }
 
             if (deleted > 0)
@@ -1133,7 +1349,17 @@ public class CandleDatabase : IDisposable
     /// </summary>
     public static void CleanCandlesForExchange(Model.CryptoExchange exchange)
     {
-        InitializeSchema(exchange);
+        // Deleting from an unconverted (version 1) file would apply the keep-ranges of one symbol
+        // to the candles of another. Refuse until it is migrated.
+        try
+        {
+            InitializeSchema(exchange);
+        }
+        catch (CandleDatabaseSchemaException error)
+        {
+            GlobalData.AddTextToLogTab($"candles.db cleanup {exchange.Name}: SKIPPED — {error.Message}");
+            return;
+        }
 
         using var db = new CandleDatabase(exchange);
         db.Open();

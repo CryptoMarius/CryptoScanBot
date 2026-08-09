@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
 
@@ -12,7 +13,13 @@ namespace CryptoScanner.Core.Contracts;
 /// </summary>
 public interface IIndicatorExtension
 {
-    void Init(QuoteHub quoteHub);
+    /// <summary>
+    /// Wire up the hubs this extension needs. Ask the <paramref name="registry"/> for standard
+    /// indicators (they are then shared with everyone else asking for the same parameters) and use
+    /// <see cref="IndicatorRegistry.CreateDerivedHub"/> for synthetic series of your own.
+    /// </summary>
+    void Init(IndicatorRegistry registry);
+
     void OnCandleAdded(IQuote candle);
     void FillData(CryptoData data);
 }

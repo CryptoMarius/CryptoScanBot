@@ -83,6 +83,21 @@ public class LuxIndicator
     //    luxOverBought = 10 * overbuy;
     //}
 
+    /// <summary>
+    /// Warm-up bars before the bar being reported, counted in RMA STEPS. The walk covers
+    /// WarmupBars + 1 candles (its first iteration only seeds candlePrev), so N here means N price
+    /// differences over N+1 candles — the old 99 was 99 steps across 100 candles.
+    /// <para>
+    /// The Pine original keeps <c>var</c> arrays for the whole chart: it has NO window and starts at
+    /// the first bar. Replaying that here is not practical, so we approximate it — but the
+    /// approximation has to be the same everywhere. It used to be 99 here while the incremental
+    /// IntervalIndicatorHub warmed up on 260 candles, and on the reference series a 99-bar warm-up
+    /// disagrees with the windowless original on 1.1% of the candles. Matching the hub's 260 removes
+    /// that discrepancy for every candle measured.
+    /// </para>
+    /// </summary>
+    public const int WarmupBars = 260;
+
     public static void CalculateNew(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought,
         CryptoIntervalPeriod cryptoIntervalPeriod, CandleTime candleCloseTime)
     {
@@ -90,7 +105,7 @@ public class LuxIndicator
         CandleTime candleIntervalOpenTimeEnd = IntervalTools.StartOfIntervalCandle(candleCloseTime, symbolInterval.Interval.Duration);
         if (!symbolInterval.CandleList.ContainsKey(candleIntervalOpenTimeEnd))
             candleIntervalOpenTimeEnd -= symbolInterval.Interval.Duration;
-        CandleTime candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 99 * symbolInterval.Interval.Duration;
+        CandleTime candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - WarmupBars * symbolInterval.Interval.Duration;
 
 
 
@@ -152,7 +167,7 @@ public class LuxIndicator
     /// <summary>
     /// Single-pass batch variant: computes the Lux value at each candle's own close for the
     /// last <paramref name="count"/> candles ending at <paramref name="endOpenTime"/>.
-    /// Walks (99 + count − 1) candles once, sharing the RMA warmup across all output points.
+    /// Walks (WarmupBars + count − 1) candles once, sharing the RMA warmup across all output points.
     /// Output arrays are indexed 0..count−1, where [count−1] corresponds to endOpenTime.
     /// </summary>
     public static void CalculateRange(CryptoSymbol symbol, CryptoIntervalPeriod cryptoIntervalPeriod,
@@ -161,9 +176,9 @@ public class LuxIndicator
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(cryptoIntervalPeriod);
         uint duration = symbolInterval.Interval.Duration;
 
-        // Walk needs 99 warmup bars before the first recorded bar, plus (count − 1) extra to
-        // reach endOpenTime. Total span = (99 + count − 1) bars before endOpenTime.
-        CandleTime startOpenTime = endOpenTime - (uint)(99 + count - 1) * duration;
+        // Walk needs WarmupBars warmup bars before the first recorded bar, plus (count − 1) extra to
+        // reach endOpenTime. Total span = (WarmupBars + count − 1) bars before endOpenTime.
+        CandleTime startOpenTime = endOpenTime - (uint)(WarmupBars + count - 1) * duration;
 
         int min = 10;
         int max = 20;
@@ -178,8 +193,8 @@ public class LuxIndicator
         CryptoCandle candleLast = default;
 
         // recordOffset = barIndex value at which we start writing into the output arrays.
-        // barIndex 99 (= 100th iteration, first with a fully-warmed RMA) maps to output[0].
-        const int recordOffset = 99;
+        // barIndex WarmupBars (the first with a fully-warmed RMA) maps to output[0].
+        const int recordOffset = WarmupBars;
 
         CandleTime loop = startOpenTime;
         int barIndex = 0;
@@ -223,6 +238,35 @@ public class LuxIndicator
             loop += duration;
             barIndex++;
         }
+    }
+
+
+    /// <summary>
+    /// The open time of the last 5m candle that has fully closed when the candle at
+    /// <paramref name="candleOpenTime"/> (of <paramref name="intervalDuration"/> minutes) closes.
+    /// <para>
+    /// The Pine original ("RSI Multi Length [LuxAlgo]") runs on every bar and the value it shows is
+    /// the state after that bar — there is no window and no bar is skipped. So the 5m value that
+    /// belongs to a 15m candle is the value at its LAST 5m sub-candle, not its first: the two
+    /// sub-candles in between carry the price movement that makes the RSI count move at all.
+    /// </para>
+    /// <para>
+    /// Both callers used to get this wrong, and differently: IndicatorEngine.ApplyLux took the FIRST
+    /// sub-candle (dropping 2 of 3 on a 15m candle, 11 of 12 on a 1h) and SignalCreate took the
+    /// second, so the value shown in the grid and the one stored on the signal described different
+    /// moments in time.
+    /// </para>
+    /// </summary>
+    public static CandleTime LastClosed5mCandle(CandleTime candleOpenTime, uint intervalDuration)
+    {
+        // A 5m candle has closed once its open + 5 has been reached, so the newest closed one is
+        // the 5m candle containing (closeTime - 5). Works for intervals below 5m too: a 1m candle
+        // closing at 08:04 maps back to the 5m candle 07:55-08:00.
+        CandleTime closeTime = candleOpenTime + intervalDuration;
+        const uint duration5m = 5;
+        if (closeTime < duration5m)
+            return candleOpenTime;
+        return IntervalTools.StartOfIntervalCandle(closeTime - duration5m, duration5m);
     }
 
 

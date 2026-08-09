@@ -59,25 +59,27 @@ public class VbsSignalShort : VbsSignalVbs
         }
 
 
-        // The (rarer, more expensive) band break.
-        if (!CandleLast.CandleData!.VbsLower.HasValue || !CandleLast.CandleData.BollingerBandsLowerBand.HasValue)
+        // The (rarer, more expensive) band break. The VBS values live in the plugin's own
+        // per-candle object; a null slot simply means the indicator has not warmed up yet.
+        var vbs = CandleLast.CandleData!.GetPluginData<VbsCandleData>();
+        if (vbs?.Lower == null || !CandleLast.CandleData.BollingerBandsLowerBand.HasValue)
             return false;
-        if (!CandleLast.CandleData!.VbsUpper.HasValue || !CandleLast.CandleData.BollingerBandsUpperBand.HasValue)
+        if (vbs.Upper == null || !CandleLast.CandleData.BollingerBandsUpperBand.HasValue)
             return false;
 
-        double upperBand = CandleLast.CandleData.VbsUpper.Value;
+        double upperBand = vbs.Upper.Value;
         if ((double)CandleLast.Candle.High <= upperBand && (double)CandleLast.Candle.Close <= upperBand)
         {
             ExtraText = "no upper band break";
             return false;
         }
 
-        if (CandleLast.CandleData.BollingerBandsLowerBand.Value <= CandleLast.CandleData.VbsLower.Value)
+        if (CandleLast.CandleData.BollingerBandsLowerBand.Value <= vbs.Lower.Value)
         {
             ExtraText = "bb.lower <= vbs.band";
             return false;
         }
-        if (CandleLast.CandleData.BollingerBandsUpperBand.Value >= CandleLast.CandleData.VbsUpper.Value)
+        if (CandleLast.CandleData.BollingerBandsUpperBand.Value >= vbs.Upper.Value)
         {
             ExtraText = "bb.upper >= vbs.bands";
             return false;
@@ -86,7 +88,7 @@ public class VbsSignalShort : VbsSignalVbs
 
         // Stop-loss = Entry + ACS% (short). ACS (Average Candle Size) is precomputed on CandleData;
         // the SL distance % equals the average candle size % (reverse-engineered from TradingBuddy).
-        double pctDeviation = CandleLast.CandleData.VbsAcs ?? 0;
+        double pctDeviation = vbs.Acs ?? 0;
 
         // Multi-timeframe consensus: higher timeframes must also show a band break.
         int consensusCount = ResolveEntryConditions().TimeframeConsensusCount;
@@ -101,12 +103,13 @@ public class VbsSignalShort : VbsSignalVbs
                 higherPeriod++;
 
                 var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, Interval, CandleLast.Candle.OpenTime, higherPeriod);
-                if (!result.success || result.candle?.CandleData?.VbsUpper == null)
+                var htfVbs = result.candle?.CandleData?.GetPluginData<VbsCandleData>();
+                if (!result.success || htfVbs?.Upper == null)
                 {
                     ExtraText = $"no vbs data on {higherPeriod}";
                     return false;
                 }
-                double htfUpper = result.candle.CandleData.VbsUpper.Value;
+                double htfUpper = htfVbs.Upper.Value;
                 double htfHigh = (double)result.candle.Candle.High;
                 double htfClose = (double)result.candle.Candle.Close;
                 if (htfHigh <= htfUpper && htfClose <= htfUpper)

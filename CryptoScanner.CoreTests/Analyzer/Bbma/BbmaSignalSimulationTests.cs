@@ -1,5 +1,7 @@
 using CryptoScanner.Analyzers.Bbma.Signal;
 using CryptoScanner.Core.Context;
+using CryptoScanner.Analyzers.Bbma;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -48,17 +50,14 @@ namespace CryptoScanner.CoreTests.Analyzer.Bbma;
 [DoNotParallelize]
 public class BbmaSignalSimulationTests : TestBase
 {
-    [TestInitialize]
-    public void SkipOutsideDebug()
+    [ClassInitialize]
+    public static void ClassInit(TestContext _)
     {
-        // BBMA reads Ema50/Atr14/Wma05Low/Wma05High/Wma10Low/Wma10High off CryptoData, which
-        // IntervalIndicatorHub only computes inside #if DEBUG (see IntervalIndicatorHub.cs) — the
-        // same gate that keeps the BBMA strategy itself DEBUG-only in AnalyzerRegistration.RegisterAll.
-        // In a Release build those fields stay null all the way through, so every simulation here
-        // silently finds 0 signals regardless of the data — not a real pass/fail signal.
-#if !DEBUG
-        Assert.Inconclusive("BBMA simulation requires a DEBUG build (Ema50/Atr14/Wma05/10 are DEBUG-only in IntervalIndicatorHub).");
-#endif
+        // BBMA reads Ema50/Atr14/Wma05Low/Wma05High/Wma10Low/Wma10High off CryptoData. Those are
+        // built because BbmaPlugin declares them (IStrategyPlugin.RequiredIndicators), so registering
+        // the plugin is all this test needs — no build-configuration gymnastics. Before the indicator
+        // registry these fields only existed in a DEBUG build and the whole class had to be skipped.
+        TestBase.RegisterAndEnablePlugin(new BbmaPlugin());
     }
 
     // ─── timeframe pair for the 5m LTF BBMA setup ────────────────────────────

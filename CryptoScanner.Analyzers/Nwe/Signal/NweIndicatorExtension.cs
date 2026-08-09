@@ -1,5 +1,6 @@
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
 
@@ -18,8 +19,9 @@ public class NweIndicatorExtension : IIndicatorExtension
     private readonly List<double> _closes = new(600);
     private readonly List<CandleTime> _openTimes = new(600);
 
-    public void Init(QuoteHub quoteHub)
+    public void Init(IndicatorRegistry registry)
     {
+        // NWE runs its own kernel over a rolling close buffer, so it needs no hub from the registry.
         var s = NwePlugin.Settings;
         _repIndicator = new NweIndicator(bandwidth: s.BandWidth, multiplier: s.Multiplication, smoothRepainting: true);
         _npIndicator = new NweIndicator(bandwidth: s.BandWidth, multiplier: s.Multiplication, smoothRepainting: false);
@@ -47,15 +49,16 @@ public class NweIndicatorExtension : IIndicatorExtension
 
         var closesArr = _closes.ToArray();
         var timesArr = _openTimes.ToArray();
+        var nweData = new NweCandleData();
 
         // Repainting NWE (used by SignalNwe + SignalNweBb)
         if (_repIndicator != null)
         {
             var results = _repIndicator.CalculateCore(closesArr, timesArr, n);
             var last = results[^1];
-            if (last.Center != null) data.SetCustom("NweCenter", (double)last.Center.Value);
-            if (last.Upper != null) data.SetCustom("NweUpper", (double)last.Upper.Value);
-            if (last.Lower != null) data.SetCustom("NweLower", (double)last.Lower.Value);
+            if (last.Center != null) nweData.Center = (double)last.Center.Value;
+            if (last.Upper != null) nweData.Upper = (double)last.Upper.Value;
+            if (last.Lower != null) nweData.Lower = (double)last.Lower.Value;
         }
 
         // Non-repainting NWE (used by SignalNweNp)
@@ -63,9 +66,11 @@ public class NweIndicatorExtension : IIndicatorExtension
         {
             var results = _npIndicator.CalculateCore(closesArr, timesArr, n);
             var last = results[^1];
-            if (last.Center != null) data.SetCustom("NweNpCenter", (double)last.Center.Value);
-            if (last.Upper != null) data.SetCustom("NweNpUpper", (double)last.Upper.Value);
-            if (last.Lower != null) data.SetCustom("NweNpLower", (double)last.Lower.Value);
+            if (last.Center != null) nweData.NpCenter = (double)last.Center.Value;
+            if (last.Upper != null) nweData.NpUpper = (double)last.Upper.Value;
+            if (last.Lower != null) nweData.NpLower = (double)last.Lower.Value;
         }
+
+        data.SetPluginData(nweData);
     }
 }

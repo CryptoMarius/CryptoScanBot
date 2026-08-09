@@ -177,9 +177,9 @@ public class SignalNweBase : SignalCreateBase
 
         // Try precomputed values from the indicator hub first (zero cost),
         // fall back to on-demand calculation via cache when the hub hasn't run.
-        string prefix = SmoothRepainting ? "Nwe" : "NweNp";
-        double? hubUpper = CandleLast.CandleData?.GetCustom(prefix + "Upper");
-        double? hubLower = CandleLast.CandleData?.GetCustom(prefix + "Lower");
+        var nweData = CandleLast.CandleData?.GetPluginData<NweCandleData>();
+        double? hubUpper = SmoothRepainting ? nweData?.Upper : nweData?.NpUpper;
+        double? hubLower = SmoothRepainting ? nweData?.Lower : nweData?.NpLower;
 
         decimal? nweUpper, nweLower;
         if (hubUpper != null || hubLower != null)

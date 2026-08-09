@@ -7,22 +7,27 @@ using Skender.Stock.Indicators;
 namespace CryptoScanner.Core.Signal.Indicators;
 
 /// <summary>
-/// Incremental indicator state for ONE symbol+interval, built on Skender v3 hubs. Replaces the per-candle
-/// batch recompute (CryptoIndicatorDataList.CalculateIndicators over a 260-candle window) with a single
-/// QuoteHub that all indicator hubs subscribe to: feed each candle once via <see cref="Add"/> and read the
-/// latest values via <see cref="BuildCurrent"/>. Verified field-for-field identical to the batch path over
-/// 9251 candles (0 mismatches) and ~10x cheaper for the per-candle pattern.
-///
-/// The indicators and their parameters mirror IndicatorData.CalculateIndicators exactly (so hub and batch
-/// were interchangeable when the batch path still existed). One instance lives on CryptoSymbolInterval and
-/// is fed in ascending candle-open-time order; CryptoSymbolInterval.IndicatorHubLastAdded tracks the last
+/// Incremental indicator state for ONE symbol+interval, built on Skender v3 hubs through an
+/// <see cref="IndicatorRegistry"/>: feed each candle once via <see cref="Add"/> and read the latest
+/// values via <see cref="BuildCurrent"/>. One instance lives on CryptoSymbolInterval and is fed in
+/// ascending candle-open-time order; CryptoSymbolInterval.IndicatorHubLastAdded tracks the last
 /// candle (null = warm-up still needed).
+///
+/// What gets built is a decision of the consumers, not of this class:
+///  • a BASE SET that virtually every strategy reads (Bollinger/Sma20, Sma50/100/200, Rsi, Macd,
+///    Stoch, PSar) plus the incremental Lux Multi-RSI — always present;
+///  • whatever REGISTERED plugins declare through <see cref="IStrategyPlugin.RequiredIndicators"/>
+///    (Ema, Wma, Atr, SuperTrend). Nobody declaring them means they are never computed.
+///
+/// That replaces the old <c>#if DEBUG</c> blocks, which computed Ema50/Wma/Atr14/SuperTrend only in
+/// a Debug build because the only strategies reading them (Bbma, SuperTrendBreakout) happened to be
+/// registered only in Debug — a coupling spread over two files that nothing enforced.
 /// </summary>
 public sealed class IntervalIndicatorHub
 {
-    private readonly QuoteHub _quoteHub;
+    private readonly IndicatorRegistry _registry;
 
-    private readonly BollingerBandsHub _bb;   // also the source of Sma20 (= BB basis), matching the batch
+    private readonly BollingerBandsHub _bb;   // also the source of Sma20 (= BB basis)
     private readonly SmaHub _sma50;
     private readonly SmaHub _sma100;
     private readonly SmaHub _sma200;
@@ -30,6 +35,15 @@ public sealed class IntervalIndicatorHub
     private readonly MacdHub _macd;
     private readonly StochHub _stoch;
     private readonly ParabolicSarHub _psar;
+
+    // Optional: present only when a registered plugin declared them.
+    private readonly EmaHub? _ema50;
+    private readonly AtrHub? _atr14;
+    private readonly WmaHub? _wma05Low;
+    private readonly WmaHub? _wma05High;
+    private readonly WmaHub? _wma10Low;
+    private readonly WmaHub? _wma10High;
+    private readonly SuperTrendHub? _superTrend;
 
     // Lux Multi-RSI incremental state (mirrors LuxIndicator.CalculateNew)
     private const int LuxMin = 10;
@@ -42,57 +56,71 @@ public sealed class IntervalIndicatorHub
     private int _luxOversold;
     private int _luxOverbought;
 
-#if DEBUG
-    private readonly EmaHub _ema50;
-    private readonly AtrHub _atr14;
-    private readonly WmaHub _wma05Low;
-    private readonly WmaHub _wma05High;
-    private readonly WmaHub _wma10Low;
-    private readonly WmaHub _wma10High;
-    private readonly SuperTrendHub _superTrend;
-#endif
-
     private readonly List<IIndicatorExtension> _pluginExtensions = [];
 
     // SMA(200) is the longest lookback; 300 gives comfortable headroom.
     // Keeps Skender's internal cache small so pruning stays O(300) instead of O(100k).
     private const int HubCacheSize = 300;
 
+    // The CryptoData fields BuildCurrent knows how to fill from a declared indicator. Anything a
+    // plugin declares outside this list is still built and shared through the registry, it just has
+    // no dedicated CryptoData field — the plugin reads it through its own IIndicatorExtension.
+    private static readonly IndicatorKey KeyEma50 = IndicatorKey.Ema(50);
+    private static readonly IndicatorKey KeyAtr14 = IndicatorKey.Atr(14);
+    private static readonly IndicatorKey KeyWma05Low = IndicatorKey.WmaLow(5);
+    private static readonly IndicatorKey KeyWma05High = IndicatorKey.WmaHigh(5);
+    private static readonly IndicatorKey KeyWma10Low = IndicatorKey.WmaLow(10);
+    private static readonly IndicatorKey KeyWma10High = IndicatorKey.WmaHigh(10);
+    private static readonly IndicatorKey KeySuperTrend = IndicatorKey.SuperTrend(10, 3.0);
+
+    /// <summary>
+    /// The settings generation this hub was built under. A hub is fed incrementally and never
+    /// reconfigured, so once the settings change it has to be thrown away and rebuilt — see
+    /// <see cref="IndicatorConfiguration"/>.
+    /// </summary>
+    public int ConfigVersion { get; }
+
     public IntervalIndicatorHub()
     {
         var settings = GlobalData.Settings.General;
-        _quoteHub = new QuoteHub(maxCacheSize: HubCacheSize);
+        ConfigVersion = IndicatorConfiguration.Version;
+        _registry = new IndicatorRegistry(HubCacheSize);
 
-        // Parameters identical to IndicatorData.CalculateIndicators.
-        _bb = _quoteHub.ToBollingerBandsHub(settings.SettingsBb.Length, settings.SettingsBb.Deviation);
-        _sma50 = _quoteHub.ToSmaHub(50);
-        _sma100 = _quoteHub.ToSmaHub(100);
-        _sma200 = _quoteHub.ToSmaHub(200);
-        _rsi = _quoteHub.ToRsiHub(settings.SettingsRsi.Length);
-        _macd = _quoteHub.ToMacdHub(12, 26, 9);
-        _stoch = _quoteHub.ToStochHub(settings.SettingsStoch.Length, settings.SettingsStoch.SmoothingD, settings.SettingsStoch.SmoothingK);
-        _psar = _quoteHub.ToParabolicSarHub(0.02, 0.2);
+        // Base set — parameters identical to what the batch path used to compute.
+        _bb = _registry.BollingerBands(settings.SettingsBb.Length, settings.SettingsBb.Deviation);
+        _sma50 = _registry.Sma(50);
+        _sma100 = _registry.Sma(100);
+        _sma200 = _registry.Sma(200);
+        _rsi = _registry.Rsi(settings.SettingsRsi.Length);
+        _macd = _registry.Macd(12, 26, 9);
+        _stoch = _registry.Stoch(settings.SettingsStoch.Length, settings.SettingsStoch.SmoothingD, settings.SettingsStoch.SmoothingK);
+        _psar = _registry.ParabolicSar(0.02, 0.2);
 
-#if DEBUG
-        _ema50 = _quoteHub.ToEmaHub(50);
-        _atr14 = _quoteHub.ToAtrHub(14);
-        // WMA over the Low/High price part (QuotePartHub is an IChainProvider).
-        QuotePartHub low = _quoteHub.ToQuotePartHub(CandlePart.Low);
-        QuotePartHub high = _quoteHub.ToQuotePartHub(CandlePart.High);
-        _wma05Low = low.ToWmaHub(5);
-        _wma05High = high.ToWmaHub(5);
-        _wma10Low = low.ToWmaHub(10);
-        _wma10High = high.ToWmaHub(10);
-        _superTrend = _quoteHub.ToSuperTrendHub(10, 3.0);
-#endif
+        // .Distinct(): LoadedPlugins maps each strategy enum to its plugin, so a plugin with N
+        // strategies appears N times in .Values.
+        var plugins = PluginManager.LoadedPlugins.Values.Distinct().ToList();
 
-        // .Distinct(): LoadedPlugins maps each strategy enum to its plugin, so a plugin
-        // with N strategies appears N times in .Values — without Distinct we'd create N
-        // duplicate extensions (each running the full indicator kernel on every candle).
-        // Only create extensions for plugins that have at least one enabled strategy;
-        // disabled plugins (e.g. NWE during an SBM-only emulator run) would otherwise
-        // run their O(window) kernels on every BuildCurrent() call for zero benefit.
-        foreach (var plugin in PluginManager.LoadedPlugins.Values.Distinct())
+        // Declared indicators are built for every REGISTERED plugin, not only for enabled ones.
+        // Registration is the build-time decision "does this strategy exist at all"; enabling is a
+        // runtime setting the user flips. Tying cheap indicators to that setting is what made a
+        // strategy silently stop signalling when it was not ticked in a test or a fresh profile.
+        foreach (var plugin in plugins)
+        {
+            foreach (IndicatorKey key in plugin.RequiredIndicators)
+                _registry.GetOrAdd(key);
+        }
+
+        _ema50 = _registry.Find<EmaHub>(KeyEma50);
+        _atr14 = _registry.Find<AtrHub>(KeyAtr14);
+        _wma05Low = _registry.Find<WmaHub>(KeyWma05Low);
+        _wma05High = _registry.Find<WmaHub>(KeyWma05High);
+        _wma10Low = _registry.Find<WmaHub>(KeyWma10Low);
+        _wma10High = _registry.Find<WmaHub>(KeyWma10High);
+        _superTrend = _registry.Find<SuperTrendHub>(KeySuperTrend);
+
+        // The heavy plugin kernels (NWE ~99k FLOPs per candle, VBS its VWMA pair) stay gated on an
+        // enabled strategy — running them for a disabled plugin is pure waste.
+        foreach (var plugin in plugins)
         {
             bool anyEnabled = plugin.Strategies.Any(s =>
                 GlobalData.Settings.Signal.Long.Strategy.Contains(s.Name) ||
@@ -103,17 +131,20 @@ public sealed class IntervalIndicatorHub
             var ext = plugin.CreateIndicatorExtension();
             if (ext != null)
             {
-                ext.Init(_quoteHub);
+                ext.Init(_registry);
                 _pluginExtensions.Add(ext);
             }
         }
     }
 
+    /// <summary>The indicators actually built for this symbol+interval (diagnostics and tests).</summary>
+    public IReadOnlyCollection<IndicatorKey> BuiltIndicators => _registry.Keys;
+
     /// <summary>Feeds one candle and advances every indicator. Call in ascending candle-open-time order.
     /// Accepts IQuote so the warm-up can feed the boxed CollectCandles window directly.</summary>
     public void Add(IQuote candle)
     {
-        _quoteHub.Add(new Quote(candle.Timestamp, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume));
+        _registry.QuoteHub.Add(new Quote(candle.Timestamp, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume));
 
         // Incremental Lux Multi-RSI: one RMA step per candle instead of replaying 100 candles.
         double close = (double)candle.Close;
@@ -141,9 +172,8 @@ public sealed class IntervalIndicatorHub
     }
 
     /// <summary>
-    /// Reads the latest value of every indicator into a fresh <see cref="CryptoData"/>. The field mapping is
-    /// identical to the fill loop in IndicatorData.CalculateIndicators. Lux5mValue is NOT set here (it is a
-    /// non-Skender, recursive indicator applied separately by the caller, as before).
+    /// Reads the latest value of every built indicator into a fresh <see cref="CryptoData"/>.
+    /// Fields whose indicator was never requested stay null.
     /// </summary>
     public CryptoData BuildCurrent()
     {
@@ -191,27 +221,26 @@ public sealed class IntervalIndicatorHub
         if (_luxOversold > 0) luxValue -= _luxOversold;
         data.Lux5mValue = (short)luxValue;
 
-#if DEBUG
-        if (_ema50.Results.Count > 0)
+        // Declared by plugins; stay null when nobody asked for them.
+        if (_ema50 != null && _ema50.Results.Count > 0)
             data.Ema50 = _ema50.Results[^1].Ema;
-        if (_atr14.Results.Count > 0)
+        if (_atr14 != null && _atr14.Results.Count > 0)
             data.Atr14 = _atr14.Results[^1].Atr;
-        if (_wma05Low.Results.Count > 0)
+        if (_wma05Low != null && _wma05Low.Results.Count > 0)
             data.Wma05Low = _wma05Low.Results[^1].Wma;
-        if (_wma05High.Results.Count > 0)
+        if (_wma05High != null && _wma05High.Results.Count > 0)
             data.Wma05High = _wma05High.Results[^1].Wma;
-        if (_wma10Low.Results.Count > 0)
+        if (_wma10Low != null && _wma10Low.Results.Count > 0)
             data.Wma10Low = _wma10Low.Results[^1].Wma;
-        if (_wma10High.Results.Count > 0)
+        if (_wma10High != null && _wma10High.Results.Count > 0)
             data.Wma10High = _wma10High.Results[^1].Wma;
-        if (_superTrend.Results.Count > 0)
+        if (_superTrend != null && _superTrend.Results.Count > 0)
         {
             var st = _superTrend.Results[^1];
             data.SuperTrend = (double?)st.SuperTrend;
             data.SuperTrendUpperBand = (double?)st.UpperBand;
             data.SuperTrendLowerBand = (double?)st.LowerBand;
         }
-#endif
 
         foreach (var ext in _pluginExtensions)
             ext.FillData(data);

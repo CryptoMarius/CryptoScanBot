@@ -343,12 +343,13 @@
     <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.3.8" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
     <PackageReference Include="HyperLiquid.Net" Version="5.4.0" />
-    <PackageReference Include="JK.Mexc.Net" Version="6.3.0" />
+    <PackageReference Include="JK.Mexc.Net" Version="6.4.0" />
     <PackageReference Include="JK.OKX.Net" Version="5.3.1" />
-    <PackageReference Include="JKorf.Coinbase.Net" Version="4.3.0" />
+    <PackageReference Include="JKorf.Coinbase.Net" Version="4.4.0" />
     <PackageReference Include="KrakenExchange.Net" Version="8.3.0" />
     <PackageReference Include="Kucoin.Net" Version="9.3.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Diagnostics.Runtime" Version="4.0.732401" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
     <PackageReference Include="NLog" Version="6.1.4" />

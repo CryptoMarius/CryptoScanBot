@@ -14,8 +14,8 @@ namespace CryptoScanner.Analyzers.Vbs;
 /// reverse-engineered from the reference chart and matches the green bands to ~pixel level.
 /// The chart drawer (VbsBands) still draws a whole history in one go via <see cref="ComputeBands"/>.
 /// The signal (VbsSignalLong/Short) no longer recomputes the window itself: IndicatorEngine (via
-/// IntervalIndicatorHub or the batch path) computes the SAME band once per candle and stores it on
-/// CryptoData.VbsBasis/Upper/Lower/VbsAtrSl, shared by both sides — so a candle with both a long and a
+/// IntervalIndicatorHub) computes the SAME band once per candle and stores it in the plugin's own
+/// <see cref="VbsCandleData"/> slot on CryptoData, shared by both sides — so a candle with both a long and a
 /// short check active only pays for the VWMA/ATR once, not twice. A break is simply a wick or close
 /// outside the band (no lowest/highest filter; the signal supersede rule keeps only the latest break).
 /// A break is simply a wick or close outside the band.

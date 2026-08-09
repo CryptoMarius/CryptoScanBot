@@ -6,6 +6,7 @@ using CryptoScanner.Analyzers.Bbma.Config;
 using CryptoScanner.Analyzers.Bbma.Signal;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Signal.Indicators;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Bbma;
@@ -27,6 +28,19 @@ public class BbmaPlugin : IStrategyPlugin
             typeof(SignalBbmaOmniLong),
             typeof(SignalBbmaOmniShort)
         ),
+    ];
+
+    // BBMA reads these from CandleData (SignalBbmaBase.IndicatorsOkay bails when any is null).
+    // Declaring them here is what makes the indicator hub build them; before, the hub decided on
+    // its own behind an #if DEBUG that happened to match this plugin's registration.
+    public IReadOnlyList<IndicatorKey> RequiredIndicators { get; } =
+    [
+        IndicatorKey.Ema(50),
+        IndicatorKey.WmaLow(5),
+        IndicatorKey.WmaHigh(5),
+        IndicatorKey.WmaLow(10),
+        IndicatorKey.WmaHigh(10),
+        IndicatorKey.Atr(14),
     ];
 
     public static BbmaSettings Settings { get; internal set; } = new();

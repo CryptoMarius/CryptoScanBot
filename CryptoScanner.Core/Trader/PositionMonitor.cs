@@ -1774,7 +1774,7 @@ public class PositionMonitor : IDisposable
             long profPrepareStart = Stopwatch.GetTimestamp();
 
             // Alway's calculate the indicators, queue the fvg and dlz zones etc
-            SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
+            await SignalPrepare.ExecuteAsync(Symbol, LastCandle1m, LastCandle1mCloseTime);
             long profExecuteStart = Stopwatch.GetTimestamp();
 
             // Only skip signal generation for filled positions (status >= Trading).

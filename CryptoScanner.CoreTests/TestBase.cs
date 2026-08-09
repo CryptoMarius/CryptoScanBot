@@ -1,4 +1,5 @@
 ﻿using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
@@ -37,6 +38,42 @@ public class TestBase
     internal static void InitTestSession()
     {
         SetupOnce();
+    }
+
+
+    /// <summary>
+    /// Register a plugin and enable all its strategies for both sides.
+    /// <para>
+    /// Both halves are needed and they do different things. Registration makes the plugin's declared
+    /// indicators (IStrategyPlugin.RequiredIndicators) part of the hub; enabling is what makes the hub
+    /// build the plugin's IIndicatorExtension, because the heavy kernels are only run for a strategy
+    /// somebody actually switched on. Do only the first half and the plugin's own values stay null,
+    /// the strategy never signals, and the test fails with no indication why — which is exactly what
+    /// happened to the VBS stop-loss tests. PluginManager is process-static, so a test class that
+    /// forgets this can still pass by accident when another class registered the plugin first.
+    /// </para>
+    /// </summary>
+    internal static void RegisterAndEnablePlugin(IStrategyPlugin plugin)
+    {
+        PluginManager.Register(plugin);
+        foreach (var strategy in plugin.Strategies)
+            EnableStrategy(strategy.Name);
+    }
+
+    /// <summary>Register a plugin without enabling it — for tests that only need its declared indicators.</summary>
+    internal static void RegisterPlugin(IStrategyPlugin plugin)
+    {
+        PluginManager.Register(plugin);
+    }
+
+    /// <summary>Add a strategy name to the enabled long and short lists (idempotent).</summary>
+    internal static void EnableStrategy(string name)
+    {
+        name = name.ToLower();
+        if (!GlobalData.Settings.Signal.Long.Strategy.Contains(name))
+            GlobalData.Settings.Signal.Long.Strategy.Add(name);
+        if (!GlobalData.Settings.Signal.Short.Strategy.Contains(name))
+            GlobalData.Settings.Signal.Short.Strategy.Add(name);
     }
 
     internal static void AddTextToLogTab(string text)

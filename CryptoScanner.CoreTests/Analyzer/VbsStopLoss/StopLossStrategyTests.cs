@@ -51,7 +51,12 @@ public class StopLossStrategyTests : TestBase
         // VbsPlugin first as a side effect of the shared, process-static PluginManager — which made
         // VbsLong_UsesStrategyStopLoss_NotNull / VbsShort_UsesStrategyStopLoss_NotNull pass or fail
         // depending on unrelated test execution order, not on VBS itself.
-        global::CryptoScanner.Core.Contracts.PluginManager.Register(new VbsPlugin());
+        RegisterAndEnablePlugin(new VbsPlugin());
+    }
+
+    private static void EnableVbsStrategy()
+    {
+        EnableStrategy(VbsPlugin.StrategyInternal);
     }
 
     // ─── data loading ────────────────────────────────────────────────────────
@@ -65,7 +70,12 @@ public class StopLossStrategyTests : TestBase
     private static (CryptoSymbol symbol, CryptoInterval interval) LoadSymbolCandles(string symbolName, CryptoIntervalPeriod period)
     {
         InitTestSession();
-        GlobalData.Settings.Signal.UseNewIndicatorHub = true;
+
+        // The hub only builds a plugin indicator extension for plugins with at least one ENABLED
+        // strategy (see IntervalIndicatorHub), so registering VbsPlugin in ClassInit is not enough:
+        // without this the VBS bands stay null and no VBS signal can ever fire.
+        EnableVbsStrategy();
+
         using CryptoDatabase database = new();
         database.Open();
 

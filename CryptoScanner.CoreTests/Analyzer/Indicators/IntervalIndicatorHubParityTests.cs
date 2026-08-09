@@ -1,3 +1,4 @@
+using CryptoScanner.Analyzers.Bbma;
 using CryptoScanner.Analyzers.Vbs;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
@@ -10,14 +11,15 @@ using Skender.Stock.Indicators;
 namespace CryptoScanner.CoreTests.Analyzer.Indicators;
 
 /// <summary>
-/// Proves the indicator mechanism behaves the same with and without UseNewIndicatorHub.
+/// Cross-checks IntervalIndicatorHub against an independent Skender batch computation.
+/// (The production batch path is gone; this local one only serves as a second opinion.)
 ///
 /// Test 1 (mapping): the production <see cref="IntervalIndicatorHub"/> fed candle-by-candle produces the
 /// same CryptoData as the Skender batch over the SAME series — i.e. BuildCurrent's field mapping matches
-/// IndicatorEngine.PrepareViaBatch's fill-loop mapping. Exact (≤1e-6 relative, all fields).
+/// the batch fill-loop mapping below. Exact (≤1e-6 relative, all fields).
 ///
 /// Test 2 (flow): the actual integrated flow. PrepareViaHub warms up on a 260-candle window and then feeds
-/// ONE candle per close (a CONTINUOUS series); PrepareViaBatch recomputes a SLIDING 260-candle window each
+/// ONE candle per close (a CONTINUOUS series); the batch reference recomputes a SLIDING 260-candle window each
 /// close. Window-based indicators (SMA/BB/WMA/Stoch%K) are identical. Recursive indicators carry a tiny
 /// seed-truncation difference because the batch only sees 260 candles of history while the hub sees all:
 /// it decays below 1e-6 for the short periods (MACD-EMAs, RMA-based ATR/RSI) but for EMA(50) it is ~1e-4
@@ -35,8 +37,21 @@ public class IntervalIndicatorHubParityTests
     public static void ClassInit(TestContext _)
     {
         GlobalData.Settings = new SettingsBasic();
-        // Register the VBS plugin so the hub creates the VBS indicator extension
-        PluginManager.Register(new VbsPlugin());
+        // Register the VBS plugin AND enable it: registration alone is not enough, since the "NWE
+        // optimalization" commit the hub only builds an extension for plugins that have at least one
+        // ENABLED strategy, so an untouched SettingsBasic (which lists sbm/stobb/storsi, not vbs)
+        // would leave every VBS field null here while the batch reference still computes them.
+        TestBase.RegisterAndEnablePlugin(new VbsPlugin());
+        // Declares Ema50 / Wma05 / Wma10 / Atr14 — without it the hub has no reason to build them.
+        TestBase.RegisterPlugin(new BbmaPlugin());
+    }
+
+    private static void EnableStrategy(string name)
+    {
+        if (!GlobalData.Settings.Signal.Long.Strategy.Contains(name))
+            GlobalData.Settings.Signal.Long.Strategy.Add(name);
+        if (!GlobalData.Settings.Signal.Short.Strategy.Contains(name))
+            GlobalData.Settings.Signal.Short.Strategy.Add(name);
     }
 
     [TestMethod]
@@ -78,7 +93,7 @@ public class IntervalIndicatorHubParityTests
         }
 
         // BATCH flow — a fresh sliding 260-window per close, take the last candle's data, exactly like
-        // IndicatorEngine.PrepareViaBatch (CollectCandles window + batch each candle).
+        // the retired batch path did (CollectCandles window + batch each candle).
         var maxRel = new Dictionary<string, double>();
         for (int t = Window - 1; t < candles.Count; t++)
         {
@@ -93,7 +108,7 @@ public class IntervalIndicatorHubParityTests
             "Max relative diff per field: " + Describe(maxRel));
     }
 
-    // ── batch reference: build the CryptoData at index i, mirroring PrepareViaBatch's fill loop ──
+    // ── batch reference: build the CryptoData at index i with the plain Skender batch calls ──
     private static CryptoData BatchCryptoData(IReadOnlyList<IQuote> quotes, List<CryptoCandle> candles, int i)
     {
         var g = GlobalData.Settings.General;
@@ -117,13 +132,8 @@ public class IntervalIndicatorHubParityTests
         VbsBandsHelper.BandValue[] vbsBands = VbsBandsHelper.ComputeBands(candles);
         var atrVbsSl = quotes.ToAtr(vbs.Length).ToList();
 
-        return new CryptoData
+        var result = new CryptoData
         {
-            VbsAtrSl = atrVbsSl[i].Atr,
-            VbsBasis = vbsBands[i].HasValue ? vbsBands[i].Basis : null,
-            VbsUpper = vbsBands[i].HasValue ? vbsBands[i].Upper : null,
-            VbsLower = vbsBands[i].HasValue ? vbsBands[i].Lower : null,
-            VbsVwStdev = vbsBands[i].HasValue ? vbsBands[i].VwStdev : null,
             Sma20 = bb[i].Sma,
             BollingerBandsDeviation = 0.5 * (bb[i].UpperBand - bb[i].LowerBand),
             BollingerBandsPercentage = 100 * (bb[i].UpperBand / bb[i].LowerBand - 1),
@@ -137,15 +147,24 @@ public class IntervalIndicatorHubParityTests
             StochOscillator = stoch[i].Oscillator,
             StochSignal = stoch[i].Signal,
             PSar = psar[i].Sar,
-#if DEBUG
             Ema50 = ema50[i].Ema,
             Atr14 = atr14[i].Atr,
             Wma05Low = wma05Low[i].Wma,
             Wma05High = wma05High[i].Wma,
             Wma10Low = wma10Low[i].Wma,
             Wma10High = wma10High[i].Wma,
-#endif
         };
+
+        // The VBS values live in the plugin's own slot, exactly as VbsIndicatorExtension writes them.
+        result.SetPluginData(new VbsCandleData
+        {
+            AtrSl = atrVbsSl[i].Atr,
+            Basis = vbsBands[i].HasValue ? vbsBands[i].Basis : null,
+            Upper = vbsBands[i].HasValue ? vbsBands[i].Upper : null,
+            Lower = vbsBands[i].HasValue ? vbsBands[i].Lower : null,
+            VwStdev = vbsBands[i].HasValue ? vbsBands[i].VwStdev : null,
+        });
+        return result;
     }
 
     private static void Compare(CryptoData hub, CryptoData batch, Dictionary<string, double> maxRel)
@@ -163,19 +182,19 @@ public class IntervalIndicatorHubParityTests
         Eq("StochOscillator", hub.StochOscillator, batch.StochOscillator, maxRel);
         Eq("StochSignal", hub.StochSignal, batch.StochSignal, maxRel);
         Eq("PSar", hub.PSar, batch.PSar, maxRel);
-        Eq("VbsAtrSl", hub.VbsAtrSl, batch.VbsAtrSl, maxRel);
-        Eq("VbsBasis", hub.VbsBasis, batch.VbsBasis, maxRel);
-        Eq("VbsUpper", hub.VbsUpper, batch.VbsUpper, maxRel);
-        Eq("VbsLower", hub.VbsLower, batch.VbsLower, maxRel);
-        Eq("VbsVwStdev", hub.VbsVwStdev, batch.VbsVwStdev, maxRel);
-#if DEBUG
+        var hubVbs = hub.GetPluginData<VbsCandleData>();
+        var batchVbs = batch.GetPluginData<VbsCandleData>();
+        Eq("VbsAtrSl", hubVbs?.AtrSl, batchVbs?.AtrSl, maxRel);
+        Eq("VbsBasis", hubVbs?.Basis, batchVbs?.Basis, maxRel);
+        Eq("VbsUpper", hubVbs?.Upper, batchVbs?.Upper, maxRel);
+        Eq("VbsLower", hubVbs?.Lower, batchVbs?.Lower, maxRel);
+        Eq("VbsVwStdev", hubVbs?.VwStdev, batchVbs?.VwStdev, maxRel);
         Eq("Ema50", hub.Ema50, batch.Ema50, maxRel);
         Eq("Atr14", hub.Atr14, batch.Atr14, maxRel);
         Eq("Wma05Low", hub.Wma05Low, batch.Wma05Low, maxRel);
         Eq("Wma05High", hub.Wma05High, batch.Wma05High, maxRel);
         Eq("Wma10Low", hub.Wma10Low, batch.Wma10Low, maxRel);
         Eq("Wma10High", hub.Wma10High, batch.Wma10High, maxRel);
-#endif
     }
 
     private static void Eq(string field, double? a, double? b, Dictionary<string, double> maxRel)
@@ -315,5 +334,66 @@ public class IntervalIndicatorHubParityTests
             prevClose = close;
         }
         return list;
+    }
+
+    /// <summary>
+    /// The registry contract: a registered plugin always gets the indicators it declares, and the
+    /// hub builds nothing beyond the base set plus those declarations.
+    ///
+    /// This is what replaced the hand-maintained #if DEBUG coupling. Ema50/Wma/Atr14 exist here
+    /// because BbmaPlugin (registered in ClassInit) declares them — not because of a build flag.
+    /// </summary>
+    [TestMethod]
+    public void Test3_Hub_Builds_Exactly_The_Declared_Indicators()
+    {
+        var hub = new IntervalIndicatorHub();
+        var built = hub.BuiltIndicators.ToHashSet();
+
+        var g = GlobalData.Settings.General;
+
+        // Base set — every strategy reads these off CandleData.
+        IndicatorKey[] baseSet =
+        [
+            IndicatorKey.BollingerBands(g.SettingsBb.Length, g.SettingsBb.Deviation),
+            IndicatorKey.Sma(50), IndicatorKey.Sma(100), IndicatorKey.Sma(200),
+            IndicatorKey.Rsi(g.SettingsRsi.Length),
+            IndicatorKey.Macd(12, 26, 9),
+            IndicatorKey.Stoch(g.SettingsStoch.Length, g.SettingsStoch.SmoothingD, g.SettingsStoch.SmoothingK),
+            IndicatorKey.ParabolicSar(0.02, 0.2),
+        ];
+        foreach (IndicatorKey key in baseSet)
+            Assert.IsTrue(built.Contains(key), $"base indicator {key} must always be built");
+
+        // Declared by every registered plugin.
+        foreach (var plugin in PluginManager.LoadedPlugins.Values.Distinct())
+        {
+            foreach (IndicatorKey key in plugin.RequiredIndicators)
+                Assert.IsTrue(built.Contains(key),
+                    $"{plugin.StrategyName} declares {key} but the hub did not build it");
+        }
+
+        // Nothing else: anything extra means something is computed that nobody asked for.
+        // Plugin extensions legitimately add to the set too — VBS asks the registry for its
+        // Atr(Length), which is exactly the sharing the registry exists for — so replay the
+        // extensions onto a scratch registry to learn what they contribute.
+        var scratch = new IndicatorRegistry(300);
+        foreach (var plugin in PluginManager.LoadedPlugins.Values.Distinct())
+        {
+            bool anyEnabled = plugin.Strategies.Any(st =>
+                GlobalData.Settings.Signal.Long.Strategy.Contains(st.Name) ||
+                GlobalData.Settings.Signal.Short.Strategy.Contains(st.Name));
+            if (anyEnabled)
+                plugin.CreateIndicatorExtension()?.Init(scratch);
+        }
+
+        var expected = baseSet
+            .Concat(PluginManager.LoadedPlugins.Values.Distinct().SelectMany(p => p.RequiredIndicators))
+            .Concat(scratch.Keys)
+            .ToHashSet();
+        var unexpected = built.Except(expected).ToList();
+        Assert.AreEqual(0, unexpected.Count,
+            "hub built indicators nobody declared: " + string.Join(", ", unexpected));
+
+        Console.WriteLine($"Hub built {built.Count} indicators: {string.Join(", ", built.OrderBy(k => k.ToString()))}");
     }
 }

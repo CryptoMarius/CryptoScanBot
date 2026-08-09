@@ -35,6 +35,22 @@ public static class ExternalLinkHelper
         }
     }
 
+    /// <summary>
+    /// Point the internal browser at BTC against the given quote, so the tab is not empty on
+    /// startup. Silently does nothing when the symbol does not exist yet.
+    /// </summary>
+    public static void ActivateStartupSymbol(string quote)
+    {
+        if (GlobalData.ActiveExchange == null)
+            return;
+        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval30m, out CryptoInterval? interval))
+            return;
+        if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue("BTC" + quote, out CryptoSymbol? symbol))
+            return;
+
+        ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false);
+    }
+
     public static void ActivateTradingApp(CryptoTradingApp tradingApp,
         CryptoSymbol symbol, CryptoInterval interval, CryptoExternalUrlType viaTradingBrowser, bool activateTab = true)
     {

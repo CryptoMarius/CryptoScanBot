@@ -126,10 +126,8 @@ public partial class MainWindow : Window
         Closing += OnWindowClosing;
 
         // Initialize the visible browser to the BTCUSDT (if it exists) (TODO: Other Quote perhaps)
-        string quote = applicationStateService.BarometerQuote;
-        CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval30m];
-        if (GlobalData.ActiveExchange!.SymbolListName.TryGetValue("BTC" + quote, out CryptoSymbol? symbol))
-            CommandHelper.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false);
+        // Implementation moved to Core so the Blazor hosts do the same on startup.
+        CryptoScanner.Core.Helpers.ExternalLinkHelper.ActivateStartupSymbol(applicationStateService.BarometerQuote);
     }
 
 

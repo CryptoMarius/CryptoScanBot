@@ -230,7 +230,17 @@ public class DataStore
 
                 // Ensure the candle DB schema exists once — the parallel workers below
                 // open their own CandleDatabase per call during the per-symbol migration.
-                CandleDatabase.InitializeSchema(exchange);
+                // A version-1 file is converted here; when that is not possible yet (symbols not
+                // loaded) the candle store is skipped for this pass rather than aborting startup.
+                try
+                {
+                    CandleDatabase.InitializeSchema(exchange);
+                }
+                catch (CandleDatabaseSchemaException error)
+                {
+                    GlobalData.AddTextToLogTab($"candles.db load {exchange.Name}: SKIPPED — {error.Message}");
+                    return;
+                }
 
                 // Snapshot to avoid enumerating a live collection in parallel
                 var symbols = exchange.SymbolListName.Values.ToList();

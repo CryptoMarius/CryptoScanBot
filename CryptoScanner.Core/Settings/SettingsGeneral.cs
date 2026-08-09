@@ -96,7 +96,29 @@ public class SettingsGeneral
     public bool HideSelectedRow { get; set; } = false;
     public bool ShowInvalidSignals { get; set; } = false;
     public bool HideSymbolsOnTheLeft { get; set; } = false;
-    public int RemoveSignalAfterxCandles { get; set; } = 15;
+    /// <summary>Lower bound of <see cref="RemoveSignalAfterxCandles"/>.</summary>
+    public const int RemoveSignalAfterxCandlesMinimum = 15;
+
+    /// <summary>Upper bound of <see cref="RemoveSignalAfterxCandles"/>.</summary>
+    public const int RemoveSignalAfterxCandlesMaximum = 120;
+
+    /// <summary>
+    /// How long a signal is kept, counted in candles of its own interval. It decides the
+    /// ExpirationDate of every signal, and the signal list drops everything that has expired — so
+    /// this number is what governs how many signals stay in memory.
+    /// <para>
+    /// Clamped in the setter, not just in the settings screen: the value also arrives from the
+    /// settings file and from the other application, and a large number there would quietly hold on
+    /// to far more signals than intended. Note that DLZ/FVG-style signals are deliberately kept five
+    /// times as long (see GetExpirationDate).
+    /// </para>
+    /// </summary>
+    public int RemoveSignalAfterxCandles
+    {
+        get => _removeSignalAfterxCandles;
+        set => _removeSignalAfterxCandles = Math.Clamp(value, RemoveSignalAfterxCandlesMinimum, RemoveSignalAfterxCandlesMaximum);
+    }
+    private int _removeSignalAfterxCandles = 15;
 
     public int SoundHeartBeatMinutes { get; set; } = 0;
     public string SoundHeartBeat { get; set; } = "sound-heart-beat.wav";

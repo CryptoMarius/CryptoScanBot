@@ -35,14 +35,10 @@ public static class PipelineProfiler
     /// <summary>How many NewCandleArrivedAsync bodies were fully measured (reached the Record call).</summary>
     public static long CandleArrivals;
 
-    // Sub-breakdown of the PrepareTicks ("indicators") bucket, accumulated inside
-    // CryptoIndicatorDataList.CalculateIndicators / PrepareIndicators. Tells us whether the indicator
-    // cost is the candle-list building, the Skender batch math, the per-candle fill loop, or Lux —
-    // which decides whether an incremental rewrite is even needed or just cheaper bookkeeping.
-    public static long PrepCollectTicks;   // CollectCandles (build the 260-candle history list)
-    public static long PrepSkenderTicks;   // the Skender GetXxx(...) batch calls
-    public static long PrepFillTicks;      // the loop filling CryptoData per candle
-    public static long PrepLuxTicks;       // LuxIndicator.Calculate (recursive RMA)
+    // Sub-breakdown of the PrepareTicks ("indicators") bucket. The Skender / fill-loop / Lux
+    // counters that used to sit here belonged to the batch path, which no longer exists; the
+    // incremental hub reports its own split through the Hub* counters below.
+    public static long PrepCollectTicks;   // CollectCandles (build the history window)
 
     // Sub-breakdown of the ExecuteTicks ("algorithms") bucket, accumulated inside
     // SignalExecute.ExecuteAsync. Tells us whether the dominant SignalExecute time is normal-strategy
@@ -158,9 +154,6 @@ public static class PipelineProfiler
         CandleArrivals = 0;
 
         PrepCollectTicks = 0;
-        PrepSkenderTicks = 0;
-        PrepFillTicks = 0;
-        PrepLuxTicks = 0;
 
         SeStrategyTicks = 0;
         SeZoneTouchTicks = 0;
@@ -258,15 +251,6 @@ public static class PipelineProfiler
         Interlocked.Increment(ref HubIncrementalCalls);
     }
 
-    /// <summary>Adds the Skender / fill-loop / Lux sub-buckets of the indicator phase.</summary>
-    public static void RecordIndicatorPhases(long skender, long fill, long lux)
-    {
-        if (!Enabled)
-            return;
-        Interlocked.Add(ref PrepSkenderTicks, skender);
-        Interlocked.Add(ref PrepFillTicks, fill);
-        Interlocked.Add(ref PrepLuxTicks, lux);
-    }
 
     /// <summary>Records one ExecuteAlgorithmAsync call: time + whether it was a normal strategy
     /// (checkBarometer) or a zone-touch, and whether it produced a signal.</summary>

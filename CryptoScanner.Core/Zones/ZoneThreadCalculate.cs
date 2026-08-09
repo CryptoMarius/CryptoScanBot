@@ -27,7 +27,7 @@ public class ZoneThreadCalculate
     }
 
 
-    private static async Task CalculateZones(CryptoSymbol symbol, CryptoInterval interval)
+    internal static async Task CalculateZones(CryptoSymbol symbol, CryptoInterval interval)
     {
         if (symbol.QuoteData!.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
         {

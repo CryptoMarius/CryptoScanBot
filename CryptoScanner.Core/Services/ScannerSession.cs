@@ -151,6 +151,10 @@ public class ScannerSession : IScannerSession
         SignalPrepare.Prepare();
         SignalExecute.Prepare();
 
+        // Report enabled strategies that can never signal (plugin missing from this build, stale
+        // settings entry). Silent in the healthy case.
+        Signal.Indicators.StrategyDiagnostics.Report();
+
         SetTimerDefaults();
 
         // Change theme if needed

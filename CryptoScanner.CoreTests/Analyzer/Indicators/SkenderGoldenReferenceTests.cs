@@ -1,3 +1,8 @@
+using CryptoScanner.Analyzers.Bbma;
+using CryptoScanner.Analyzers.Nwe;
+using CryptoScanner.Analyzers.Nwe.Signal;
+using CryptoScanner.Analyzers.Vbs;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -15,16 +20,24 @@ namespace CryptoScanner.CoreTests.Analyzer.Indicators;
 /// <summary>
 /// Regression tests that pin Skender indicator output for 2500 deterministic candles.
 ///
-/// On first run (or when the reference file is missing) the batch path computes every
-/// indicator and saves the values to a JSON file on disk. Subsequent runs recompute via
-/// the batch path, the hub path, and the full PrepareIndicators pipeline, and compare
-/// each against the saved reference. If a future Skender upgrade or a code change alters
-/// any indicator value, one of these tests fails immediately.
+/// The values are pinned in a JSON file on disk. Every run recomputes them three ways and
+/// compares each against that file, so a Skender upgrade or a code change that alters any
+/// indicator value fails a test immediately.
 ///
 /// Three test phases:
-/// 1. Batch    → reference file  (verify the batch path reproduces the saved values)
+/// 1. Batch    → reference file  (an independent Skender batch computation, local to this test)
 /// 2. Hub      → reference file  (same candles through IntervalIndicatorHub)
 /// 3. Pipeline → reference file  (IndicatorEngine.PrepareIndicators on a test symbol)
+///
+/// Note that phase 1 is this test's OWN batch computation. The production batch path
+/// (IndicatorData.PrepareViaBatch) no longer exists — the hub is the only path the scanner uses —
+/// so phase 1 exists purely to keep an implementation-independent cross-check against the hub.
+///
+/// The reference also pins the PLUGIN indicators (VBS bands + ACS, NWE repainting and
+/// non-repainting). Only the hub produces those, which makes them the part of the safety net that
+/// matters most now that the batch path is gone. Their reference values are computed here with the
+/// plugins' own batch implementations (VbsBandsHelper.ComputeBands / NweIndicator.Calculate), so
+/// this is an independent check and not merely a recording of whatever the hub produced.
 /// </summary>
 [TestClass]
 [DoNotParallelize]
@@ -33,10 +46,15 @@ public class SkenderReferenceRegressionTests
     private const int CandleCount = 2500;
     private const byte TickDec = 4;
     private const double Tolerance = 1e-6;
-    // The pipeline's batch path uses a 260-candle sliding window, so recursive indicators
-    // (EMA, RSI, ATR, MACD signal) carry a seed-truncation difference vs. the reference
-    // (which computed over all 2500 candles).
+    // The pipeline warms up from a 260-candle window, so recursive indicators (EMA, RSI, ATR,
+    // MACD signal) carry a seed-truncation difference vs. the reference (computed over all 2500).
     private const double PipelineTolerance = 1e-3;
+    // The plugin indicators are far more sensitive to that same 260-candle warm-up window:
+    // NWE regresses over a 500-candle kernel (so the pipeline sees roughly half of it) and
+    // VbsAtrSl is an RMA over 50 periods seeded from 260 candles instead of the full history.
+    // Both drift ~2e-3 relative, which is still tight enough to catch a missing or structurally
+    // wrong indicator (those show up as infinity or orders of magnitude).
+    private const double PluginPipelineTolerance = 1e-2;
 
     private static string ReferenceFilePath =>
         Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
@@ -60,15 +78,31 @@ public class SkenderReferenceRegressionTests
         public double? PSar { get; set; }
         public double? BbDeviation { get; set; }
         public double? BbPercentage { get; set; }
-#if DEBUG
         public double? Ema50 { get; set; }
         public double? Wma05Low { get; set; }
         public double? Wma05High { get; set; }
         public double? Wma10Low { get; set; }
         public double? Wma10High { get; set; }
         public double? Atr14 { get; set; }
-#endif
         public short? Lux5mValue { get; set; }
+
+        // ── Plugin indicators ────────────────────────────────────────────
+        // Only the hub can produce these (the batch path has no plugin support), which is exactly
+        // why they belong in the reference: once the batch path is gone this file is the only
+        // thing standing between a broken plugin indicator and a silently signal-less scanner.
+        public double? VbsBasis { get; set; }
+        public double? VbsUpper { get; set; }
+        public double? VbsLower { get; set; }
+        public double? VbsVwStdev { get; set; }
+        public double? VbsAcs { get; set; }
+        public double? VbsAtrSl { get; set; }
+
+        public double? NweCenter { get; set; }
+        public double? NweUpper { get; set; }
+        public double? NweLower { get; set; }
+        public double? NweNpCenter { get; set; }
+        public double? NweNpUpper { get; set; }
+        public double? NweNpLower { get; set; }
     }
 
     private class IndicatorReferenceData
@@ -121,17 +155,22 @@ public class SkenderReferenceRegressionTests
         var stoch = quotes.ToStoch(g.SettingsStoch.Length, g.SettingsStoch.SmoothingD, g.SettingsStoch.SmoothingK).ToList();
         var psar = quotes.ToParabolicSar(0.02, 0.2).ToList();
 
-#if DEBUG
         var ema50 = quotes.ToEma(50).ToList();
         var wma05Low = quotes.Use(CandlePart.Low).ToWma(5).ToList();
         var wma05High = quotes.Use(CandlePart.High).ToWma(5).ToList();
         var wma10Low = quotes.Use(CandlePart.Low).ToWma(10).ToList();
         var wma10High = quotes.Use(CandlePart.High).ToWma(10).ToList();
         var atr14 = quotes.ToAtr(14).ToList();
-#endif
 
         // Lux Multi-RSI: manual RMA computation identical to IntervalIndicatorHub.Add
         var luxValues = ComputeLuxBatch(candles);
+
+        // Plugin indicators, computed here with the plugins' own batch implementations — an
+        // independent reference, not a copy of whatever the hub happens to produce.
+        VbsBandsHelper.BandValue[] vbsBands = VbsBandsHelper.ComputeBands(candles);
+        var vbsAtrSl = quotes.ToAtr(VbsPlugin.Settings.Length).ToList();
+        (double?[] repCenter, double?[] repUpper, double?[] repLower) = ComputeNweBatch(candles, smoothRepainting: true);
+        (double?[] npCenter, double?[] npUpper, double?[] npLower) = ComputeNweBatch(candles, smoothRepainting: false);
 
         var reference = new IndicatorReferenceData { CandleCount = candles.Count, TickDecimals = TickDec };
 
@@ -153,23 +192,99 @@ public class SkenderReferenceRegressionTests
                 StochOscillator = stoch[i].Oscillator,
                 StochSignal = stoch[i].Signal,
                 PSar = psar[i].Sar,
-#if DEBUG
                 Ema50 = ema50[i].Ema,
                 Wma05Low = wma05Low[i].Wma,
                 Wma05High = wma05High[i].Wma,
                 Wma10Low = wma10Low[i].Wma,
                 Wma10High = wma10High[i].Wma,
                 Atr14 = atr14[i].Atr,
-#endif
                 Lux5mValue = luxValues[i],
+
+                VbsBasis = vbsBands[i].HasValue ? vbsBands[i].Basis : null,
+                VbsUpper = vbsBands[i].HasValue ? vbsBands[i].Upper : null,
+                VbsLower = vbsBands[i].HasValue ? vbsBands[i].Lower : null,
+                VbsVwStdev = vbsBands[i].HasValue ? vbsBands[i].VwStdev : null,
+                VbsAcs = vbsBands[i].HasValue ? vbsBands[i].Acs : null,
+                VbsAtrSl = vbsAtrSl[i].Atr,
+
+                NweCenter = repCenter[i],
+                NweUpper = repUpper[i],
+                NweLower = repLower[i],
+                NweNpCenter = npCenter[i],
+                NweNpUpper = npUpper[i],
+                NweNpLower = npLower[i],
             });
         }
 
         return reference;
     }
 
+    /// <summary>
+    /// NWE reference: replays the indicator exactly as NweIndicatorExtension does — a rolling
+    /// buffer capped at Length+50 candles, recalculated on every candle, reading the last result.
+    /// </summary>
+    private static (double?[] center, double?[] upper, double?[] lower) ComputeNweBatch(
+        List<CryptoCandle> candles, bool smoothRepainting)
+    {
+        var s = NwePlugin.Settings;
+        var indicator = new NweIndicator(bandwidth: s.BandWidth, multiplier: s.Multiplication,
+            smoothRepainting: smoothRepainting);
+
+        int n = candles.Count;
+        var center = new double?[n];
+        var upper = new double?[n];
+        var lower = new double?[n];
+
+        // Same rolling buffer the extension keeps (Length + 50), fed through the public
+        // Calculate(CryptoCandleList) so no internals have to be exposed to the test project.
+        var window = new CryptoCandleList();
+        var order = new List<CandleTime>(600);
+        int maxBuffer = indicator.Length + 50;
+
+        for (int i = 0; i < n; i++)
+        {
+            window.TryAdd(candles[i].OpenTime, candles[i]);
+            order.Add(candles[i].OpenTime);
+            if (order.Count > maxBuffer)
+            {
+                int trim = order.Count - indicator.Length;
+                for (int t = 0; t < trim; t++)
+                    window.Remove(order[t]);
+                order.RemoveRange(0, trim);
+            }
+
+            var results = indicator.Calculate(window);
+            var last = results[^1];
+            center[i] = last.Center.HasValue ? (double)last.Center.Value : null;
+            upper[i] = last.Upper.HasValue ? (double)last.Upper.Value : null;
+            lower[i] = last.Lower.HasValue ? (double)last.Lower.Value : null;
+        }
+
+        return (center, upper, lower);
+    }
+
+    /// <summary>
+    /// Register and enable the plugins whose indicators are part of the reference. The hub only
+    /// builds a plugin indicator extension for plugins with at least one ENABLED strategy, so
+    /// registering alone is not enough — that is precisely the trap this reference now guards.
+    /// </summary>
+    private static void RegisterAndEnablePlugins()
+    {
+        TestBase.RegisterAndEnablePlugin(new VbsPlugin());
+        TestBase.RegisterAndEnablePlugin(new NwePlugin());
+        // BbmaPlugin declares Ema50 / Wma05Low+High / Wma10Low+High / Atr14, so registering it is
+        // what makes the hub build them. They used to appear only in a DEBUG build. Its own
+        // strategies do not have to be enabled: declared indicators follow registration, not
+        // enabling — only an IIndicatorExtension needs an enabled strategy.
+        TestBase.RegisterPlugin(new BbmaPlugin());
+    }
+
     private static IndicatorSnapshot CryptoDataToSnapshot(int index, CryptoData data)
     {
+        // Plugin values no longer live on CryptoData itself; each plugin owns a typed slot.
+        var vbs = data.GetPluginData<VbsCandleData>();
+        var nwe = data.GetPluginData<NweCandleData>();
+
         return new IndicatorSnapshot
         {
             Index = index,
@@ -186,15 +301,27 @@ public class SkenderReferenceRegressionTests
             PSar = data.PSar,
             BbDeviation = data.BollingerBandsDeviation,
             BbPercentage = data.BollingerBandsPercentage,
-#if DEBUG
             Ema50 = data.Ema50,
             Wma05Low = data.Wma05Low,
             Wma05High = data.Wma05High,
             Wma10Low = data.Wma10Low,
             Wma10High = data.Wma10High,
             Atr14 = data.Atr14,
-#endif
             Lux5mValue = data.Lux5mValue,
+
+            VbsBasis = vbs?.Basis,
+            VbsUpper = vbs?.Upper,
+            VbsLower = vbs?.Lower,
+            VbsVwStdev = vbs?.VwStdev,
+            VbsAcs = vbs?.Acs,
+            VbsAtrSl = vbs?.AtrSl,
+
+            NweCenter = nwe?.Center,
+            NweUpper = nwe?.Upper,
+            NweLower = nwe?.Lower,
+            NweNpCenter = nwe?.NpCenter,
+            NweNpUpper = nwe?.NpUpper,
+            NweNpLower = nwe?.NpLower,
         };
     }
 
@@ -225,6 +352,7 @@ public class SkenderReferenceRegressionTests
     public void GenerateReferenceFile()
     {
         GlobalData.Settings = new SettingsBasic();
+        RegisterAndEnablePlugins();
         List<CryptoCandle> candles = MakeCandles(CandleCount);
         IndicatorReferenceData reference = ComputeBatchIndicators(candles);
 
@@ -236,8 +364,10 @@ public class SkenderReferenceRegressionTests
 
     // ── Comparison helpers ────────────────────────────────────────────────
 
+    /// <param name="pluginDiffs">Where the plugin indicator differences are recorded. Pass null to
+    /// skip them entirely (the batch path cannot compute them).</param>
     private static void CompareSnapshots(IndicatorSnapshot expected, IndicatorSnapshot actual,
-        double tolerance, Dictionary<string, double> maxDiffs)
+        double tolerance, Dictionary<string, double> maxDiffs, Dictionary<string, double>? pluginDiffs)
     {
         Cmp("Sma20", expected.Sma20, actual.Sma20, tolerance, maxDiffs);
         Cmp("Sma50", expected.Sma50, actual.Sma50, tolerance, maxDiffs);
@@ -252,14 +382,39 @@ public class SkenderReferenceRegressionTests
         Cmp("PSar", expected.PSar, actual.PSar, tolerance, maxDiffs);
         Cmp("BbDeviation", expected.BbDeviation, actual.BbDeviation, tolerance, maxDiffs);
         Cmp("BbPercentage", expected.BbPercentage, actual.BbPercentage, tolerance, maxDiffs);
-#if DEBUG
         Cmp("Ema50", expected.Ema50, actual.Ema50, tolerance, maxDiffs);
         Cmp("Wma05Low", expected.Wma05Low, actual.Wma05Low, tolerance, maxDiffs);
         Cmp("Wma05High", expected.Wma05High, actual.Wma05High, tolerance, maxDiffs);
         Cmp("Wma10Low", expected.Wma10Low, actual.Wma10Low, tolerance, maxDiffs);
         Cmp("Wma10High", expected.Wma10High, actual.Wma10High, tolerance, maxDiffs);
         Cmp("Atr14", expected.Atr14, actual.Atr14, tolerance, maxDiffs);
-#endif
+        // Lux was stored in the reference but never compared, so a stale value in the file went
+        // unnoticed for a long time. It is a short?, hence the widening to double?.
+        Cmp("Lux5mValue", expected.Lux5mValue, actual.Lux5mValue, tolerance, maxDiffs);
+
+        // The batch path has no plugin support, so those fields are skipped when comparing it
+        if (pluginDiffs == null)
+            return;
+
+        Cmp("VbsBasis", expected.VbsBasis, actual.VbsBasis, tolerance, pluginDiffs);
+        Cmp("VbsUpper", expected.VbsUpper, actual.VbsUpper, tolerance, pluginDiffs);
+        Cmp("VbsLower", expected.VbsLower, actual.VbsLower, tolerance, pluginDiffs);
+        Cmp("VbsVwStdev", expected.VbsVwStdev, actual.VbsVwStdev, tolerance, pluginDiffs);
+        Cmp("VbsAcs", expected.VbsAcs, actual.VbsAcs, tolerance, pluginDiffs);
+        Cmp("VbsAtrSl", expected.VbsAtrSl, actual.VbsAtrSl, tolerance, pluginDiffs);
+
+        Cmp("NweCenter", expected.NweCenter, actual.NweCenter, tolerance, pluginDiffs);
+        Cmp("NweUpper", expected.NweUpper, actual.NweUpper, tolerance, pluginDiffs);
+        Cmp("NweLower", expected.NweLower, actual.NweLower, tolerance, pluginDiffs);
+        Cmp("NweNpCenter", expected.NweNpCenter, actual.NweNpCenter, tolerance, pluginDiffs);
+        Cmp("NweNpUpper", expected.NweNpUpper, actual.NweNpUpper, tolerance, pluginDiffs);
+        Cmp("NweNpLower", expected.NweNpLower, actual.NweNpLower, tolerance, pluginDiffs);
+    }
+
+    private static void Cmp(string field, short? expected, short? actual, double tolerance,
+        Dictionary<string, double> maxDiffs)
+    {
+        Cmp(field, (double?)expected, (double?)actual, tolerance, maxDiffs);
     }
 
     private static void Cmp(string field, double? expected, double? actual, double tolerance,
@@ -289,6 +444,7 @@ public class SkenderReferenceRegressionTests
     public void Test1_Batch_Matches_Saved_Reference()
     {
         GlobalData.Settings = new SettingsBasic();
+        RegisterAndEnablePlugins();
         IndicatorReferenceData reference = LoadReference();
 
         List<CryptoCandle> candles = MakeCandles(CandleCount);
@@ -298,7 +454,7 @@ public class SkenderReferenceRegressionTests
 
         var maxDiffs = new Dictionary<string, double>();
         for (int i = 0; i < reference.Snapshots.Count; i++)
-            CompareSnapshots(reference.Snapshots[i], current.Snapshots[i], Tolerance, maxDiffs);
+            CompareSnapshots(reference.Snapshots[i], current.Snapshots[i], Tolerance, maxDiffs, maxDiffs);
 
         double worst = maxDiffs.Values.DefaultIfEmpty(0).Max();
         Assert.IsTrue(worst <= Tolerance,
@@ -314,6 +470,7 @@ public class SkenderReferenceRegressionTests
     public void Test2_Hub_Matches_Saved_Reference()
     {
         GlobalData.Settings = new SettingsBasic();
+        RegisterAndEnablePlugins();
         IndicatorReferenceData reference = LoadReference();
         List<CryptoCandle> candles = MakeCandles(CandleCount);
 
@@ -328,7 +485,7 @@ public class SkenderReferenceRegressionTests
 
         var maxDiffs = new Dictionary<string, double>();
         for (int i = 0; i < candles.Count; i++)
-            CompareSnapshots(reference.Snapshots[i], hubSnapshots[i], Tolerance, maxDiffs);
+            CompareSnapshots(reference.Snapshots[i], hubSnapshots[i], Tolerance, maxDiffs, maxDiffs);
 
         double worst = maxDiffs.Values.DefaultIfEmpty(0).Max();
         Assert.IsTrue(worst <= Tolerance,
@@ -344,6 +501,7 @@ public class SkenderReferenceRegressionTests
     public void Test3_Pipeline_Matches_Saved_Reference()
     {
         GlobalData.Settings = new SettingsBasic();
+        RegisterAndEnablePlugins();
         IndicatorReferenceData reference = LoadReference();
         List<CryptoCandle> candles = MakeCandles(CandleCount);
 
@@ -358,32 +516,35 @@ public class SkenderReferenceRegressionTests
 
         CandleTime lastCandleTime = candles[^1].OpenTime;
 
-        foreach (bool useHub in new[] { false, true })
-        {
-            GlobalData.Settings.Signal.UseNewIndicatorHub = useHub;
-            symbolInterval.Data.Clear();
-            symbolInterval.IndicatorHub = null;
-            symbolInterval.IndicatorHubLastAdded = null;
-            symbolInterval.IndicatorHubAddCount = 0;
+        symbolInterval.Data.Clear();
+        symbolInterval.IndicatorHub = null;
+        symbolInterval.IndicatorHubLastAdded = null;
+        symbolInterval.IndicatorHubAddCount = 0;
 
-            bool success = IndicatorEngine.PrepareIndicators(symbol, interval15m, lastCandleTime);
-            Assert.IsTrue(success, $"PrepareIndicators failed (useHub={useHub})");
-            Assert.IsTrue(symbolInterval.Data.ContainsKey(lastCandleTime),
-                $"No indicator data for last candle (useHub={useHub})");
+        bool success = IndicatorEngine.PrepareIndicators(symbol, interval15m, lastCandleTime);
+        Assert.IsTrue(success, "PrepareIndicators failed");
+        Assert.IsTrue(symbolInterval.Data.ContainsKey(lastCandleTime), "No indicator data for last candle");
 
-            CryptoData pipelineData = symbolInterval.Data[lastCandleTime];
-            IndicatorSnapshot pipelineSnapshot = CryptoDataToSnapshot(candles.Count - 1, pipelineData);
+        CryptoData pipelineData = symbolInterval.Data[lastCandleTime];
+        IndicatorSnapshot pipelineSnapshot = CryptoDataToSnapshot(candles.Count - 1, pipelineData);
 
-            var maxDiffs = new Dictionary<string, double>();
-            CompareSnapshots(reference.Snapshots[candles.Count - 1], pipelineSnapshot, PipelineTolerance, maxDiffs);
+        var maxDiffs = new Dictionary<string, double>();
+        var pluginDiffs = new Dictionary<string, double>();
+        CompareSnapshots(reference.Snapshots[candles.Count - 1], pipelineSnapshot, PipelineTolerance,
+            maxDiffs, pluginDiffs);
 
-            double worst = maxDiffs.Values.DefaultIfEmpty(0).Max();
-            Assert.IsTrue(worst <= PipelineTolerance,
-                $"Pipeline ({(useHub ? "hub" : "batch")}) diverged from reference (tolerance={PipelineTolerance:E1}). " +
-                $"Max relative diff per field: {Describe(maxDiffs)}");
+        double worst = maxDiffs.Values.DefaultIfEmpty(0).Max();
+        Assert.IsTrue(worst <= PipelineTolerance,
+            $"Pipeline diverged from reference (tolerance={PipelineTolerance:E1}). " +
+            $"Max relative diff per field: {Describe(maxDiffs)}");
 
-            Console.WriteLine($"Pipeline ({(useHub ? "hub" : "batch")}) vs reference: max diffs = {Describe(maxDiffs)}");
-        }
+        double worstPlugin = pluginDiffs.Values.DefaultIfEmpty(0).Max();
+        Assert.IsTrue(worstPlugin <= PluginPipelineTolerance,
+            $"Pipeline plugin indicators diverged from reference (tolerance={PluginPipelineTolerance:E1}). " +
+            $"Max relative diff per field: {Describe(pluginDiffs)}");
+
+        Console.WriteLine($"Pipeline vs reference: max diffs = {Describe(maxDiffs)}");
+        Console.WriteLine($"Pipeline plugin indicators vs reference: max diffs = {Describe(pluginDiffs)}");
     }
 
     // ── Lightweight GlobalData setup (no DB) ─────────────────────────────
@@ -484,6 +645,7 @@ public class SkenderReferenceRegressionTests
     public void Test4_DebugIndicators_HubMatchesBatch()
     {
         GlobalData.Settings = new SettingsBasic();
+        RegisterAndEnablePlugins();
         List<CryptoCandle> candles = MakeCandles(CandleCount);
         IndicatorReferenceData batchRef = ComputeBatchIndicators(candles);
 
@@ -497,10 +659,9 @@ public class SkenderReferenceRegressionTests
 
         var maxDiffs = new Dictionary<string, double>();
         for (int i = 0; i < candles.Count; i++)
-            CompareSnapshots(batchRef.Snapshots[i], hubSnapshots[i], Tolerance, maxDiffs);
+            CompareSnapshots(batchRef.Snapshots[i], hubSnapshots[i], Tolerance, maxDiffs, maxDiffs);
 
         // Verify DEBUG-only indicators are populated
-#if DEBUG
         var last = batchRef.Snapshots[^1];
         Assert.IsNotNull(last.Ema50, "Ema50 must have a value for the last candle");
         Assert.IsNotNull(last.Wma05Low, "Wma05Low must have a value for the last candle");
@@ -517,7 +678,6 @@ public class SkenderReferenceRegressionTests
             $"DEBUG indicators diverged between batch and hub (tolerance={Tolerance:E1}). " +
             $"Max relative diff per field: {Describe(maxDiffs)}");
         Console.WriteLine($"DEBUG indicators batch vs hub: max diffs = {Describe(maxDiffs)}");
-#endif
 
         double worst = maxDiffs.Values.DefaultIfEmpty(0).Max();
         Assert.IsTrue(worst <= Tolerance,
@@ -531,6 +691,7 @@ public class SkenderReferenceRegressionTests
     public void Test5_LuxMultiRsi_HubMatchesBatch()
     {
         GlobalData.Settings = new SettingsBasic();
+        RegisterAndEnablePlugins();
         List<CryptoCandle> candles = MakeCandles(CandleCount);
         short?[] batchLux = ComputeLuxBatch(candles);
 
@@ -554,6 +715,7 @@ public class SkenderReferenceRegressionTests
     public void Test6_LuxMultiRsi_ProducesNonZeroValues()
     {
         GlobalData.Settings = new SettingsBasic();
+        RegisterAndEnablePlugins();
         List<CryptoCandle> candles = MakeCandles(CandleCount);
         short?[] luxValues = ComputeLuxBatch(candles);
 

@@ -275,6 +275,84 @@ public class PaperTrading
     }
 
 
+    /// <summary>
+    /// How many of the step's own price levels this candle touches (0, 1 or 2). A take-profit step
+    /// carries both a limit price and a stop price, so a single step can already be ambiguous on
+    /// its own. Mirrors the conditions in <see cref="CheckStepAgainstCandle"/> exactly — it answers
+    /// "would this fill?" without filling anything.
+    /// </summary>
+    private static int CountTriggeredLevels(CryptoPositionStep step, CryptoCandle candle)
+    {
+        if (step.Status != CryptoOrderStatus.New)
+            return 0;
+        if (step.CreateTime > candle.Date)
+            return 0;
+
+        // A market order has no price condition: it fills, and there is nothing to disambiguate
+        // about WHICH level was hit — but it still competes with the other steps for being first.
+        if (step.OrderType == CryptoOrderType.Market)
+            return 1;
+
+        int levels = 0;
+        if (step.Side == CryptoOrderSide.Buy)
+        {
+            if (step.StopPrice.HasValue && candle.High >= step.StopPrice)
+                levels++;
+            if (candle.Low < step.Price)
+                levels++;
+        }
+        else if (step.Side == CryptoOrderSide.Sell)
+        {
+            if (step.StopPrice.HasValue && candle.Low <= step.StopPrice)
+                levels++;
+            if (candle.High > step.Price)
+                levels++;
+        }
+        return levels;
+    }
+
+
+    /// <summary>
+    /// Total number of price levels this candle touches across every open step of the position.
+    /// Two or more means the candle cannot tell us the sequence, and the outcome depends on it.
+    /// </summary>
+    private static int CountTriggeredLevels(CryptoPosition position, CryptoCandle candle)
+    {
+        int levels = 0;
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+        {
+            if (part.CloseTime.HasValue)
+                continue;
+            foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+            {
+                levels += CountTriggeredLevels(step, candle);
+                if (levels > 1)
+                    return levels; // enough to know it is ambiguous
+            }
+        }
+        return levels;
+    }
+
+
+    /// <summary>
+    /// Runs every open step of the position against one candle, in the existing order.
+    /// </summary>
+    private static async Task CheckAllSteps(CryptoDatabase database, CryptoPosition position,
+        CryptoCandle candle, uint candleDuration)
+    {
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+        {
+            if (!part.CloseTime.HasValue)
+            {
+                foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+                {
+                    await PaperTradingCheckStep(database, position, part, step, candle, candleDuration);
+                }
+            }
+        }
+    }
+
+
     public static async Task PaperTradingCheckOrders(CryptoDatabase database, Model.CryptoExchange activeExchange, CryptoSymbol symbol, CryptoCandle lastCandle1m, uint candleDuration = 1)
     {
         // Is er iets gekocht of verkocht?
@@ -282,16 +360,28 @@ public class PaperTrading
 
         if (activeExchange.Data.PositionList.TryGetValue(symbol.Name, out var position))
         {
-            foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+            // At most one level touched -> the sequence cannot matter, so the candle we already have
+            // is precise enough. This is the overwhelmingly common case (and always the case at a 1m
+            // base interval), which keeps the drill-down off the hot path.
+            if (candleDuration > 1 && CountTriggeredLevels(position, lastCandle1m) > 1
+                && IntrabarCandles.TryLoad(symbol, candleDuration, lastCandle1m.OpenTime,
+                    out List<CryptoCandle> finerCandles, out uint finerDuration))
             {
-                if (!part.CloseTime.HasValue)
-                {
-                    foreach (CryptoPositionStep step in part.StepList.Values.ToList())
-                    {
-                        await PaperTradingCheckStep(database, position, part, step, lastCandle1m, candleDuration);
-                    }
-                }
+                // Walk the finer candles in time order. Each fill runs its full HandleTradeAsync
+                // cascade before the next sub-candle is examined, so a take profit that happened
+                // after an entry is seen as such, and orders created by that cascade are only
+                // considered from the sub-candle after the one that created them (their CreateTime
+                // guard in CheckStepAgainstCandle).
+                //
+                // If a single sub-candle is STILL ambiguous we do not descend further — this is
+                // already the finest data available. The step order then decides, which tests the
+                // stop price before the limit price: the pessimistic reading, deliberately.
+                foreach (CryptoCandle subCandle in finerCandles)
+                    await CheckAllSteps(database, position, subCandle, finerDuration);
+                return;
             }
+
+            await CheckAllSteps(database, position, lastCandle1m, candleDuration);
         }
     }
 

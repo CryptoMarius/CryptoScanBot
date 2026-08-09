@@ -24,6 +24,19 @@ public interface IStrategyPlugin
     /// Return null when the strategy uses only standard indicators.</summary>
     IIndicatorExtension? CreateIndicatorExtension() => null;
 
+    /// <summary>
+    /// Standard indicators this plugin's strategies read from <c>CandleData</c> on top of the base
+    /// set every strategy gets (Bollinger/Sma20, Sma50/100/200, Rsi, Macd, Stoch, PSar, Lux).
+    /// <para>
+    /// Declare Ema, Wma, Atr or SuperTrend here instead of relying on someone remembering to add
+    /// them to IntervalIndicatorHub. A registered plugin always gets what it declares, so its
+    /// strategies cannot silently read a null because the indicator was never built — which is
+    /// exactly what the old <c>#if DEBUG</c> coupling between the hub and the plugin registration
+    /// allowed to happen.
+    /// </para>
+    /// </summary>
+    IReadOnlyList<Signal.Indicators.IndicatorKey> RequiredIndicators => [];
+
     /// <summary>When true, the engine ensures DLZ zone calculation is active even when
     /// the DLZ strategy itself is not in the signal list. Strategies that check DLZ
     /// zone proximity (e.g. SuperTrendBreakout) should return true.</summary>

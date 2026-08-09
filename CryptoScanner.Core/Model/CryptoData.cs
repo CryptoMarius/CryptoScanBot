@@ -116,39 +116,34 @@ public class CryptoData
     // Parabolic Sar indicator
     public double? PSar { get; set; }
 
-    // Plugin-owned indicator values, keyed by plugin-defined names (e.g. "demo_rsi").
-    // Not persisted to DB; filled per candle by IIndicatorExtension.FillData().
-    [Computed]
-    public Dictionary<string, double?> Custom { get; } = [];
-    public double? GetCustom(string key) => Custom.GetValueOrDefault(key);
-    public void SetCustom(string key, double? value) => Custom[key] = value;
+    // Plugin-owned per-candle values. Each plugin defines its own class and gets a slot for it,
+    // so Core never has to know that a plugin exists — adding a plugin no longer grows this class.
+    // The array is only allocated once a plugin actually stores something, so candles for symbols
+    // where no plugin has state carry no extra object at all.
+    private object?[]? _pluginData;
+
+    /// <summary>The plugin's values for this candle, or null when the plugin produced none.</summary>
+    public T? GetPluginData<T>() where T : class
+    {
+        int index = PluginDataSlot<T>.Index;
+        object?[]? slots = _pluginData;
+        return slots != null && index < slots.Length ? slots[index] as T : null;
+    }
+
+    /// <summary>Store this plugin's values for this candle. Called from IIndicatorExtension.FillData.</summary>
+    public void SetPluginData<T>(T value) where T : class
+    {
+        int index = PluginDataSlot<T>.Index;
+        if (_pluginData == null)
+            _pluginData = new object?[PluginDataSlots.Count];
+        else if (_pluginData.Length <= index)
+            Array.Resize(ref _pluginData, PluginDataSlots.Count);
+        _pluginData[index] = value;
+    }
 
     [Computed]
     public short? Lux5mValue { get; set; }
 
-    // VBS VWAP bands strategy — basis = VWMA(hlc3, Length), Upper/Lower = basis +/- (Mult * vwStdev + AtrMult *
-    // ATR(AtrLength)). VbsAtr is that fast pad ATR; VbsAtrSl is the SLOW ATR(Length) used for the
-    // old ATR-based stop-loss %. VbsVwStdev is the volume-weighted stdev of hlc3 used to build the band —
-    // stored so the SL can be expressed in vwStdev units (SLStdevFactor * vwStdev below/above the band).
-    // Computed once per candle by IndicatorEngine (hub or batch) and shared by SignalVbsLong/Short via
-    // VbsBandsHelper, so the band itself is never computed twice per candle.
-
-    [Computed]
-    public double? VbsBasis { get; set; }
-    [Computed]
-    public double? VbsUpper { get; set; }
-    [Computed]
-    public double? VbsLower { get; set; }
-    [Computed]
-    public double? VbsVwStdev { get; set; }
-    // ACS (Average Candle Size) as a percentage: AcsFactor * SMA((high-low)/close, AcsLength) * 100.
-    // Drives the VBS stop-loss (SL = entry -/+ VbsAcs%), reverse-engineered from the reference (TradingBuddy).
-    [Computed]
-    public double? VbsAcs { get; set; }
-    [Computed]
-    public double? VbsAtr { get; set; }
-    [Computed]
-    public double? VbsAtrSl { get; set; }
 
     /// <summary>
     /// Copy common indicator values
@@ -209,27 +204,24 @@ public class CryptoData
         Sma200 = source.Sma200;
         //SlopeSma200 = source.SlopeSma200;
 
-#if DEBUG
+        // These are only non-null when a registered plugin declared them (see
+        // IStrategyPlugin.RequiredIndicators); copying a null costs nothing, so no build-time gate.
         Ema50 = source.Ema50;
         Wma05Low = source.Wma05Low;
         Wma05High = source.Wma05High;
         Wma10Low = source.Wma10Low;
         Wma10High = source.Wma10High;
         Atr14 = source.Atr14;
-#endif
 
         // Parabolic SAR indicator value
         PSar = source.PSar;
 
         Lux5mValue = source.Lux5mValue;
 
-        VbsAtr = source.VbsAtr;
-        VbsBasis = source.VbsBasis;
-        VbsUpper = source.VbsUpper;
-        VbsLower = source.VbsLower;
-        VbsVwStdev = source.VbsVwStdev;
-        VbsAcs = source.VbsAcs;
-        VbsAtrSl = source.VbsAtrSl;
+        // Carry the plugin values over to the signal/position, same as the individual Vbs* fields
+        // used to be copied. The slot objects are shared, not cloned — they are written once per
+        // candle and never mutated afterwards.
+        _pluginData = source._pluginData;
     }
 }
 
@@ -283,12 +275,6 @@ public class CryptoData2 : CryptoData
     // Trend on interval
     public CryptoTrendIndicator TrendInterval { get; set; }
 
-    // Statistics, the min and max differences against the signalprice
-    //public decimal PriceMin { get; set; }
-    //public float PriceMinPerc { get; set; }
-    //public decimal PriceMax { get; set; }
-    //public float PriceMaxPerc { get; set; }
-    //public CryptoSignalStatus SignalStatus { get; set; }
 
     public float AvgBB { get; set; }
 
@@ -330,12 +316,6 @@ public class CryptoData2 : CryptoData
             Barometer1h = source2.Barometer1h;
             Barometer4h = source2.Barometer4h;
             Barometer1d = source2.Barometer1d;
-
-            //PriceMin = source2.PriceMin;
-            //PriceMax = source2.PriceMax;
-            //PriceMinPerc = source2.PriceMinPerc;
-            //PriceMaxPerc = source2.PriceMaxPerc;
-            //SignalStatus = source2.SignalStatus;
 
             AvgBB = source2.AvgBB;
         }

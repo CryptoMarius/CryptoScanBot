@@ -162,7 +162,7 @@ public class SignalPrepare
 
 
 
-    public static void Execute(CryptoSymbol symbol, CryptoCandle lastCandle1m, CandleTime lastCandle1mCloseTime)
+    public static async Task ExecuteAsync(CryptoSymbol symbol, CryptoCandle lastCandle1m, CandleTime lastCandle1mCloseTime)
     {
         // Prepare all the indicators on the requested intervals
         // The indexList contains only the checked intervals for the normal strategies
@@ -207,7 +207,7 @@ public class SignalPrepare
                         symbolInterval.DlzAdmin.LastSwingLow = valueLow;
                         symbolInterval.DlzAdmin.LastSwingHigh = valueHigh;
                         // TODO: This is not 100% correct...
-                        GlobalData.ThreadZoneCalculate?.AddToQueue(symbol, interval);
+                        await ZoneThreadCalculate.CalculateZones(symbol, interval);
                     }
                 }
             }

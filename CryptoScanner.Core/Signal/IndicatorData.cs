@@ -79,7 +79,10 @@ public static class IndicatorEngine
         bool warmup = symbolInterval.IndicatorHub == null
             || symbolInterval.IndicatorHubLastAdded == null
             || symbolInterval.IndicatorHubLastAdded.Value + interval.Duration != candleOpenTime
-            || calculateCandles > 0;
+            || calculateCandles > 0
+            // Settings changed since this hub was built: its indicator parameters and its set of
+            // plugin extensions are frozen at construction, so rebuild instead of feeding it further.
+            || symbolInterval.IndicatorHub.ConfigVersion != IndicatorConfiguration.Version;
 
         if (warmup)
         {
@@ -89,13 +92,24 @@ public static class IndicatorEngine
             if (history == null)
                 return false;
 
+            // The hub advances its Lux Multi-RSI over the candles it is fed, so on a 15m or 1h hub
+            // that value is a Lux over 15m/1h candles — not the 5m value the field promises.
+            // ApplyLux replaces it for the candle being analyzed; the warm-up candles behind it never
+            // get that treatment, so clear it there rather than leave a wrong-timeframe number behind.
+            bool is5m = symbolInterval.IntervalPeriod == CryptoIntervalPeriod.interval5m;
+
             var hub = new IntervalIndicatorHub();
             foreach (IQuote quote in history)
             {
                 hub.Add(quote);
                 if (quote is CryptoCandle candle)
+                {
+                    CryptoData built = hub.BuildCurrent();
+                    if (!is5m)
+                        built.Lux5mValue = null;
                     lock (symbolInterval.Data)
-                        symbolInterval.Data[candle.OpenTime] = hub.BuildCurrent();
+                        symbolInterval.Data[candle.OpenTime] = built;
+                }
             }
             symbolInterval.IndicatorHub = hub;
             symbolInterval.IndicatorHubLastAdded = candleOpenTime;
@@ -231,18 +245,20 @@ public static class IndicatorEngine
             && data.Lux5mValue.HasValue)
             return;
 
-        // Non-5m intervals: read the pre-computed value from the 5m Data dictionary.
+        // Non-5m intervals: read the pre-computed value from the 5m Data dictionary. Take the LAST
+        // 5m sub-candle that has closed, not the first — see LuxIndicator.LastClosed5mCandle.
         CryptoSymbolInterval si5m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m);
-        CandleTime aligned5m = IntervalTools.StartOfIntervalCandle(candleOpenTime, si5m.Interval.Duration);
+        CandleTime aligned5m = LuxIndicator.LastClosed5mCandle(candleOpenTime, symbolInterval.Interval.Duration);
         if (si5m.Data.TryGetValue(aligned5m, out CryptoData? data5m) && data5m.Lux5mValue.HasValue)
         {
             data.Lux5mValue = data5m.Lux5mValue;
             return;
         }
 
-        // Fallback: full recalculation (batch path or 5m data not yet available).
+        // Fallback: full recalculation (5m data not yet available). CalculateNew resolves its
+        // argument with StartOfIntervalCandle, so passing the target OPEN time lands on that candle.
         LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought,
-            CryptoIntervalPeriod.interval5m, candleOpenTime + si5m.Interval.Duration);
+            CryptoIntervalPeriod.interval5m, aligned5m);
 
         int luxValue = 0;
         if (luxOverBought > 0)
