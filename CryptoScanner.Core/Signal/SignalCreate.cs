@@ -168,19 +168,25 @@ public class SignalCreate
     }
 
 
-    private float CalculateLastPeriodsInInterval(long interval)
+    /// <summary>
+    /// Percentage change over 24 hours, measured on the signal's OWN interval rather than on the
+    /// 1m list. Both closes then lie exactly 24 hours apart, and only a handful of candles is
+    /// needed (96 on 15m, 24 on 1h) instead of 1441 minute candles.
+    /// Returns 0 when that candle is missing, or when the interval does not divide into 24 hours.
+    /// </summary>
+    private float CalculateLast24HoursChange()
     {
-        //Dit moet via de standaard 1m candles omdat de lijst niet alle candles bevat
-        //(om de berekeningen allemaal wat sneller te maken)
-        // CandleList contains normally about 1 day of candles
+        const long periodInMinutes = 24 * 60;
+        if (Interval.Duration == 0 || periodInMinutes % Interval.Duration != 0)
+            return 0;
 
         CandleTime openTime = Candle.OpenTime; // Note: backtest, alway's take the signal candle
-        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-        if (!symbolInterval.CandleList.TryGetValue(openTime - interval, out CryptoCandle candlePrev))
-            symbolInterval.CandleList.TryGetFirstCandle(out candlePrev); // better than zero or null (approx)
+        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
+        if (!symbolInterval.CandleList.TryGetValue(openTime - periodInMinutes, out CryptoCandle candlePrev))
+            return 0;
 
         double closeLast = (double)Candle.Close;
-        double closePrev = (double)candlePrev!.Close;
+        double closePrev = (double)candlePrev.Close;
         double diff = closeLast - closePrev;
 
         if (!closePrev.Equals(0))
@@ -320,7 +326,7 @@ public class SignalCreate
 
 
         // de 24 change moet in een bepaald interval zitten
-        signal.Last24HoursChange = CalculateLastPeriodsInInterval(24 * 60);
+        signal.Last24HoursChange = CalculateLast24HoursChange();
         if (!signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)

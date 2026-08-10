@@ -257,7 +257,7 @@ public class PositionMonitor : IDisposable
         }
 
         // Check the trading rules of the user (a quick drop of a symbol causes a pause)
-        if (!TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1))
+        if (!TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, BaseIntervalDuration))
         {
             reaction = $"paused because of {GlobalData.ActiveExchange!.Data.PauseTrading.Text}";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
@@ -433,7 +433,7 @@ public class PositionMonitor : IDisposable
                             }
 
                             // Heeft de munt genoeg 24h volume
-                            if (!SymbolTools.CheckValidMinimalVolume(Symbol, LastCandle1m.OpenTime, 1, out reaction))
+                            if (!SymbolTools.CheckValidMinimalVolume(Symbol, LastCandle1m.OpenTime, BaseIntervalDuration, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 Symbol.ClearSignals();
@@ -1660,7 +1660,7 @@ public class PositionMonitor : IDisposable
     public async Task CheckThePosition(CryptoPosition position)
     {
         // Pauzeren vanwege de trading regels of te lage barometer
-        PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);
+        PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, BaseIntervalDuration);
 
         // Profiling: sub-breakdown of the positionCheck bucket's "other" path (see PipelineProfiler).
         // Runs on every candle that has an open position (not gated behind ForceCheckPosition like
@@ -1747,7 +1747,9 @@ public class PositionMonitor : IDisposable
                 }
 
                 // Is the volume valid within a certain minimal limit
-                if (!Symbol.CheckValidMinimalVolume(LastCandle1mCloseTime, 1, out response))
+                // candleStart wants the OPEN time of the candle plus its duration; this passed the
+                // close time with duration 1, which describes the NEXT candle.
+                if (!Symbol.CheckValidMinimalVolume(LastCandle1m.OpenTime, BaseIntervalDuration, out response))
                 {
                     if (GlobalData.Settings.Signal.LogMinimalVolume)
                         GlobalData.AddTextToLogTab($"{Symbol.Name} {response}");
@@ -1828,7 +1830,7 @@ public class PositionMonitor : IDisposable
                     await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m, BaseIntervalDuration);
 
                 // Pause because of trading rules or low barometer
-                PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);
+                PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, BaseIntervalDuration);
 
                 //TODO: Reuse the preparedIndicatorDataList in the CreateOrExtendPositionAsync?
                 // Open or extend a position
@@ -1861,9 +1863,20 @@ public class PositionMonitor : IDisposable
 
             // Remove old candles or CandleData
             // Profiling: this tail previously ran AFTER PipelineProfiler.Record above, so it fell
-            // outside every bucket. Gated behind !IsEmulatorMode, so it stays ~0 in emulator runs.
+            // outside every bucket.
+            //
+            // Skipped in emulator mode — the comment here used to claim that was already the case
+            // while the guard was missing, and it did real damage. CleanCandleDataAsync trims each
+            // CandleList back to GetCandleFetchStart, which for 1m is InitialCandleCountFetch
+            // (1450 candles once the barometer has been calculated). SignalCreate's 24-hour change
+            // looks back 1441 candles, so the margin is nine candles and in practice the lookup
+            // failed; it then silently fell back to the OLDEST candle in the list via
+            // TryGetFirstCandle, producing a wrong 24-hour change that differed per run because the
+            // trim happened at different moments. A replay owns its own memory management: the
+            // TickRunner prunes between chunks using IndicatorWarmup.WarmupDepth, which reserves
+            // the full day plus barometer window for 1m.
             long profCleanCandleStart = Stopwatch.GetTimestamp();
-            if (Symbol.Data.ZoneLock.CurrentCount > 0)
+            if (!GlobalData.IsEmulatorMode && Symbol.Data.ZoneLock.CurrentCount > 0)
                 await CandleTools.CleanCandleDataAsync(Symbol, LastCandle1mCloseTime);
             PipelineProfiler.RecordCleanCandle(Stopwatch.GetTimestamp() - profCleanCandleStart);
 
