@@ -361,7 +361,20 @@
         decimal.TryParse(value?.ToString(), System.Globalization.NumberStyles.Any,
             System.Globalization.CultureInfo.InvariantCulture, out decimal result) ? result : 0m;
 
-    private void AddDca() => _dcaList.Add(new CryptoDcaEntry { Percentage = 1m, Factor = 100m });
+    // First DCA starts at 3% with a full-size order; every next level doubles both the distance
+    // and the order size, so each step down costs twice what the one before it did.
+    private const decimal FirstDcaPercentage = 3m;
+    private const decimal FirstDcaFactor = 100m;
+
+    private void AddDca()
+    {
+        var previous = _dcaList.Count > 0 ? _dcaList[^1] : null;
+        _dcaList.Add(new CryptoDcaEntry
+        {
+            Percentage = previous != null ? previous.Percentage * 2m : FirstDcaPercentage,
+            Factor = previous != null ? previous.Factor * 2m : FirstDcaFactor,
+        });
+    }
 
     private void RemoveDca()
     {
@@ -369,12 +382,49 @@
             _dcaList.RemoveAt(_dcaList.Count - 1);
     }
 
-    private void AddTp() => _tpList.Add(new CryptoTpEntry { Percentage = 1m, Factor = 100m });
+    // First take profit sits at 0.75%; every next level doubles the distance. The quantities are
+    // shared out over all levels because the position can only be sold once.
+    private const decimal FirstTpPercentage = 0.75m;
+
+    private void AddTp()
+    {
+        var previous = _tpList.Count > 0 ? _tpList[^1] : null;
+        _tpList.Add(new CryptoTpEntry
+        {
+            Percentage = previous != null ? previous.Percentage * 2m : FirstTpPercentage,
+            Factor = 100m,
+        });
+        SpreadTpFactors();
+    }
 
     private void RemoveTp()
     {
-        if (_tpList.Count > 0)
-            _tpList.RemoveAt(_tpList.Count - 1);
+        if (_tpList.Count == 0)
+            return;
+
+        _tpList.RemoveAt(_tpList.Count - 1);
+        SpreadTpFactors();
+    }
+
+    /// <summary>
+    /// Divide the quantity evenly over the take profit levels, keeping the total at exactly 100%:
+    /// selling more than the whole position is not possible. The last level takes the rounding
+    /// remainder, so three levels become 33.33 / 33.33 / 33.34 instead of falling short.
+    /// </summary>
+    private void SpreadTpFactors()
+    {
+        if (_tpList.Count == 0)
+            return;
+
+        decimal share = Math.Round(100m / _tpList.Count, 2, MidpointRounding.AwayFromZero);
+        decimal assigned = 0m;
+
+        for (int i = 0; i < _tpList.Count - 1; i++)
+        {
+            _tpList[i].Factor = share;
+            assigned += share;
+        }
+        _tpList[^1].Factor = 100m - assigned;
     }
 
     protected override void OnInitialized()
