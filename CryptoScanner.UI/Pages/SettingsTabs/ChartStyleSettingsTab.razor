@@ -1,0 +1,83 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Settings
+@using CryptoScanner.UI.Components
+@using CryptoScanner.UI.Models
+
+@* Every chart series in one place. The same editor is reachable straight from the chart toolbar
+   through the little gear behind each overlay; this tab is the complete overview. Stored in its
+   own file, so these personal choices stay apart from the scanner configuration. *@
+
+<div class="settings-wrap" style="flex-direction: column;">
+
+    <div class="settings-table-buttons" style="margin-bottom: 6px;">
+        <button class="btn btn-secondary" @onclick="ResetAll">Reset all to default</button>
+        <span style="font-size: 11px; color: var(--text-muted); margin-left: 8px;">
+            The same settings sit behind the gear next to each overlay on the chart
+        </span>
+    </div>
+
+    @foreach (var group in ChartStyleSettings.Definitions.GroupBy(d => d.Group))
+    {
+        <div class="settings-group" style="max-width: none; flex-basis: 100%;">
+            <div class="settings-group-header">@group.Key</div>
+            <div class="settings-group-body">
+                <ChartStyleEditor Definitions="group" Styles="_styles" />
+            </div>
+        </div>
+    }
+
+</div>
+
+@code {
+    // Working copy, so Cancel leaves the stored styles untouched
+    private readonly Dictionary<string, ChartLineStyle> _styles = [];
+
+    protected override void OnInitialized()
+    {
+        LoadFrom(GlobalData.Settings);
+    }
+
+    public void LoadFrom(SettingsBasic settings)
+    {
+        // settings is unused: the chart styles live in their own file, but the settings screen
+        // drives every tab through this signature.
+        var stored = ChartStyleSettings.Current;
+
+        _styles.Clear();
+        foreach (var definition in ChartStyleSettings.Definitions)
+        {
+            _styles[definition.Key] = stored.Styles.TryGetValue(definition.Key, out var s)
+                ? s.Clone()
+                : definition.Default.Clone();
+        }
+    }
+
+    public void SaveTo(SettingsBasic settings)
+    {
+        var target = new ChartStyleSettings();
+
+        // Only keep what actually differs from the default, so a later change to the built-in
+        // palette still reaches series the user never touched.
+        foreach (var definition in ChartStyleSettings.Definitions)
+        {
+            if (!_styles.TryGetValue(definition.Key, out var style))
+                continue;
+
+            if (style.Color != definition.Default.Color
+                || style.LineWidth != definition.Default.LineWidth
+                || style.LineStyle != definition.Default.LineStyle
+                || style.Dots != definition.Default.Dots)
+            {
+                target.Styles[definition.Key] = style.Clone();
+            }
+        }
+
+        target.Save();
+    }
+
+    private void ResetAll()
+    {
+        foreach (var definition in ChartStyleSettings.Definitions)
+            _styles[definition.Key] = definition.Default.Clone();
+    }
+}

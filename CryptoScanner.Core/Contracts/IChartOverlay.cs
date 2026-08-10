@@ -27,6 +27,22 @@ public sealed class ChartOverlayPoint
 }
 
 /// <summary>
+/// A short text an overlay wants on a specific candle, such as the stop-loss and take-profit
+/// distance at a band break. Rendered as a marker so it does not need its own drawing surface.
+/// </summary>
+public sealed class ChartOverlayLabel
+{
+    /// <summary>Unix timestamp in seconds of the candle it belongs to.</summary>
+    public long Time { get; set; }
+
+    /// <summary>Above the candle (a high/short side break) or below it.</summary>
+    public bool Above { get; set; }
+
+    public string Text { get; set; } = "";
+    public string Color { get; set; } = "#ffffff";
+}
+
+/// <summary>
 /// Contract for a strategy plugin that wants to draw on the chart.
 /// The host iterates all loaded overlays in the draw loop and calls
 /// <see cref="Draw"/> when the user has toggled this overlay on.
@@ -49,5 +65,12 @@ public interface IChartOverlay
     /// meaningful line representation can leave the default empty result.
     /// </summary>
     IReadOnlyList<ChartOverlaySeries> GetSeries(CryptoSymbol symbol, CryptoInterval interval,
+              List<CryptoCandle> candles) => [];
+
+    /// <summary>
+    /// Texts the overlay wants on individual candles (stop-loss / take-profit distances at a band
+    /// break, and the like). Empty for overlays that only draw lines.
+    /// </summary>
+    IReadOnlyList<ChartOverlayLabel> GetLabels(CryptoSymbol symbol, CryptoInterval interval,
               List<CryptoCandle> candles) => [];
 }

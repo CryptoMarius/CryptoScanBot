@@ -1,4 +1,4 @@
-using CryptoScanner.Analyzers.Dbr.Signal;
+﻿using CryptoScanner.Analyzers.Dbr.Signal;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Model;
 
@@ -99,6 +99,46 @@ public class DbrChartOverlay : IChartOverlay
 
         chart.Series.Add(outerUp);
         chart.Series.Add(outerDown);
+    }
+
+    public IReadOnlyList<ChartOverlayLabel> GetLabels(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
+    {
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        if (symbolInterval.CandleList.Count == 0)
+            return [];
+
+        // Same break conditions as Draw, evaluated by the shared helper
+        var allCandles = symbolInterval.CandleList.Values.ToList();
+        DbrBandValue[] bands = DbrBandsHelper.ComputeBands(allCandles);
+
+        var labels = new List<ChartOverlayLabel>();
+
+        for (int i = 0; i < allCandles.Count; i++)
+        {
+            long time = CandleTime.AlignFromDateTime(allCandles[i].Date, interval.Duration).ToUnixSeconds();
+
+            if (DbrBandsHelper.IsShortBreak(allCandles, bands, i, out double pctShort, out _, out _))
+            {
+                labels.Add(new ChartOverlayLabel
+                {
+                    Time = time,
+                    Above = true,
+                    Text = pctShort.ToString("0.##") + "%",
+                });
+            }
+
+            if (DbrBandsHelper.IsLongBreak(allCandles, bands, i, out double pctLong, out _, out _))
+            {
+                labels.Add(new ChartOverlayLabel
+                {
+                    Time = time,
+                    Above = false,
+                    Text = pctLong.ToString("0.##") + "%",
+                });
+            }
+        }
+
+        return labels;
     }
 
     private static void AddLabel(PlotModel chart, double x, double y, double pct, VerticalAlignment vAlign, string group)

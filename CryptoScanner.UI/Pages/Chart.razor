@@ -8,6 +8,7 @@
 @using CryptoScanner.Core.Signal.Indicators
 @using CryptoScanner.Core.Trend
 @using CryptoScanner.Core.Zones
+@using CryptoScanner.UI.Models
 @using CryptoScanner.UI.Services
 @using Skender.Stock.Indicators
 @inject SymbolService SymbolService
@@ -20,37 +21,19 @@
 <div class="chart-layout">
 <div class="chart-toolbar">
 
-    @* Groups mirror the Avalonia ChartWindow side panel: Symbol, Trend, FIB, Display,
-       Overlays (one alphabetical list), Indicators and the action buttons. *@
-    <div class="chart-group">
-        <div class="chart-group-header">Symbol</div>
-        <select class="input-select" @bind="_selectedBase" @bind:after="OnSymbolSelectionChanged">
-            @foreach (var b in _baseOptions)
-            {
-                <option value="@b">@b</option>
-            }
-        </select>
-        <select class="input-select" @bind="_selectedQuote" @bind:after="OnSymbolSelectionChanged">
-            @foreach (var q in _quoteOptions)
-            {
-                <option value="@q">@q</option>
-            }
-        </select>
-        <select class="input-select" @bind="_selectedInterval" @bind:after="OnIntervalChanged">
-            @foreach (var iv in _intervalOptions)
-            {
-                <option value="@iv.Key">@iv.Value</option>
-            }
-        </select>
-    </div>
-
+    @* Groups mirror the Avalonia ChartWindow side panel: Trend, FIB, Display, Overlays
+       (one alphabetical list), Indicators and the action buttons. The symbol, quote and
+       interval pickers live in the bar directly above the chart instead. *@
     <div class="chart-group">
         <div class="chart-group-header">Trend</div>
         <select class="input-select" @bind="_trendType" @bind:after="LoadChart">
             <option value="@TrendType.Primary">Primary trend</option>
             <option value="@TrendType.Secondary">Secondary trend</option>
         </select>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showZigZag" @bind:after="LoadChart" /> Show zigzag</label>
+        <div class="chart-toggle-row">
+            <label class="chart-toggle"><input type="checkbox" @bind="_showZigZag" @bind:after="LoadChart" /> Show zigzag</label>
+            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog(ZigZagStyleKey, "ZigZag"))">⚙</button>
+        </div>
     </div>
 
     <div class="chart-group">
@@ -60,7 +43,10 @@
             <option value="@TrendType.Secondary">Secondary trend</option>
         </select>
         <label class="chart-toggle"><input type="checkbox" @bind="_showFib" @bind:after="LoadChart" /> Show fib retracement</label>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showFibZigZag" @bind:after="LoadChart" /> Show zigzag</label>
+        <div class="chart-toggle-row">
+            <label class="chart-toggle"><input type="checkbox" @bind="_showFibZigZag" @bind:after="LoadChart" /> Show zigzag</label>
+            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog(FibZigZagStyleKey, "FIB ZigZag"))">⚙</button>
+        </div>
     </div>
 
     <div class="chart-group">
@@ -76,45 +62,82 @@
         @foreach (var overlay in _allOverlays)
         {
             var key = overlay.Key;
-            <label class="chart-toggle">
-                <input type="checkbox" checked="@IsOverlayEnabled(key)"
-                       @onchange="e => OnOverlayToggled(key, e)" /> @overlay.Label
-            </label>
+            var styleDefinitions = ChartStyleSettings.DefinitionsForOverlay(key).ToList();
+            <div class="chart-toggle-row">
+                <label class="chart-toggle">
+                    <input type="checkbox" checked="@IsOverlayEnabled(key)"
+                           @onchange="e => OnOverlayToggled(key, e)" /> @overlay.Label
+                </label>
+                @if (styleDefinitions.Count > 0)
+                {
+                    <button class="chart-style-button" title="Colours and lines"
+                            @onclick="() => OpenStyleDialog(key, overlay.Label)">⚙</button>
+                }
+            </div>
         }
     </div>
 
     <div class="chart-group">
         <div class="chart-group-header">Indicators</div>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showLux" @bind:after="LoadChart" /> Lux</label>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showMacd" @bind:after="LoadChart" /> MACD</label>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showRsi" @bind:after="LoadChart" /> RSI</label>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showStoch" @bind:after="LoadChart" /> Stochastic</label>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showVolume" @bind:after="LoadChart" /> Volume</label>
+        <div class="chart-toggle-row">
+            <label class="chart-toggle"><input type="checkbox" @bind="_showLux" @bind:after="LoadChart" /> Lux</label>
+            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("lux", "Lux"))">&#9881;</button>
+        </div>
+        <div class="chart-toggle-row">
+            <label class="chart-toggle"><input type="checkbox" @bind="_showMacd" @bind:after="LoadChart" /> MACD</label>
+            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("macd", "MACD"))">&#9881;</button>
+        </div>
+        <div class="chart-toggle-row">
+            <label class="chart-toggle"><input type="checkbox" @bind="_showRsi" @bind:after="LoadChart" /> RSI</label>
+            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("rsi", "RSI"))">&#9881;</button>
+        </div>
+        <div class="chart-toggle-row">
+            <label class="chart-toggle"><input type="checkbox" @bind="_showStoch" @bind:after="LoadChart" /> Stochastic</label>
+            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("stoch", "Stochastic"))">&#9881;</button>
+        </div>
+        <div class="chart-toggle-row">
+            <label class="chart-toggle"><input type="checkbox" @bind="_showVolume" @bind:after="LoadChart" /> Volume</label>
+            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("volume", "Volume"))">&#9881;</button>
+        </div>
     </div>
 
-    @* Header intentionally blank: the symbol is already selected in the Symbol group at the top,
-       and repeating it here read as a stray label above the buttons. *@
+    @* Header intentionally blank: a caption above these two buttons read as a stray label.
+       Measuring has no button of its own — shift+drag on the chart does it. *@
     <div class="chart-group">
         <div class="chart-group-header">&nbsp;</div>
-        <button class="btn @(_measureMode ? "btn-primary" : "btn-secondary")" @onclick="ToggleMeasureMode"
-                title="Drag over the chart to measure the move in percent. Shift+drag always works, Escape clears it.">
-            Measure
-        </button>
         <button class="btn btn-secondary" @onclick="LoadChart">Refresh</button>
         <button class="btn btn-secondary" @onclick="Calculate" title="Force a full recalculation of the liquidity zones">Calc</button>
     </div>
 </div>
 <div class="chart-panels">
+    @* The symbol, quote and interval pickers themselves, moved here out of the side panel *@
     <div class="chart-header-bar">
-        <span class="chart-header-symbol">@_selectedBase</span>
-        <span class="chart-header-quote">@_selectedQuote</span>
-        <span class="chart-header-separator">·</span>
-        <span class="chart-header-interval">@CurrentIntervalLabel</span>
-        @if (!string.IsNullOrEmpty(_currentExchangeName))
-        {
-            <span class="chart-header-separator">·</span>
-            <span class="chart-header-exchange">@_currentExchangeName</span>
-        }
+        <select class="input-select chart-header-select chart-header-base"
+                @bind="_selectedBase" @bind:after="OnSymbolSelectionChanged">
+            @foreach (var b in _baseOptions)
+            {
+                <option value="@b">@b</option>
+            }
+        </select>
+        <select class="input-select chart-header-select"
+                @bind="_selectedQuote" @bind:after="OnSymbolSelectionChanged">
+            @foreach (var q in _quoteOptions)
+            {
+                <option value="@q">@q</option>
+            }
+        </select>
+        <select class="input-select chart-header-select"
+                @bind="_selectedInterval" @bind:after="OnIntervalChanged">
+            @foreach (var iv in _intervalOptions)
+            {
+                <option value="@iv.Key">@iv.Value</option>
+            }
+        </select>
+
+        @* Open/high/low/close/volume of the candle under the mouse. Filled by the chart widget
+           itself — the crosshair fires on every mouse move, which is far too often to route
+           through Blazor. *@
+        <span id="chart-ohlcv" class="chart-ohlcv"></span>
     </div>
     <div id="chart-main" class="chart-panel chart-panel-main"></div>
     <div id="chart-volume" class="chart-panel chart-panel-sub" style="display:@(_showVolume ? "block" : "none"); height:80px;"></div>
@@ -122,6 +145,13 @@
     <div id="chart-macd" class="chart-panel chart-panel-sub" style="display:@(_showMacd ? "block" : "none"); height:120px;"></div>
 </div>
 </div>
+
+<ChartStyleDialog Visible="_styleDialogVisible"
+                  VisibleChanged="OnStyleDialogVisibleChanged"
+                  Title="@_styleDialogTitle"
+                  Definitions="_styleDialogDefinitions"
+                  Styles="_chartStyles"
+                  Changed="OnChartStyleChanged" />
 
 @code {
     private string? _currentSymbolName;
@@ -163,21 +193,6 @@
     private TrendType _trendType = TrendType.Primary;
     private TrendType _fibTrendType = TrendType.Primary;
 
-    private bool _measureMode;
-    private string _currentExchangeName = "";
-
-    private string CurrentIntervalLabel =>
-        _intervalOptions.TryGetValue(_selectedInterval, out var label) ? label : _selectedInterval;
-
-    private async Task ToggleMeasureMode()
-    {
-        _measureMode = !_measureMode;
-        try
-        {
-            await JS.InvokeVoidAsync("ChartWidget.setMeasureMode", _measureMode);
-        }
-        catch (JSException) { }
-    }
 
     private string _selectedBase = "BTC";
     private string _selectedQuote = "USDT";
@@ -227,6 +242,7 @@
         // visit resets all overlay/panel toggles to their hardcoded defaults.
         _session = ZoneSessionStore.Load();
         ApplySessionToFields();
+        LoadChartStyles();
 
         SymbolService.SelectedSymbolChanged += OnSelectedSymbolChanged;
         if (SymbolService.SelectedSymbol != null)
@@ -349,7 +365,6 @@
         {
             _currentSymbol = symbol;
             _currentSymbolName = symbol.Name;
-            _currentExchangeName = symbol.Exchange?.Name ?? "";
             SymbolService.SetSelectedSymbol(symbol);
         }
 
@@ -475,6 +490,117 @@
         }
     }
 
+    // Live working copy of every stylable series, edited by the small popups behind the overlays.
+    // Held here (not per popup) so a change survives closing and reopening one.
+    private readonly Dictionary<string, ChartLineStyle> _chartStyles = [];
+
+    private bool _styleDialogVisible;
+    private string _styleDialogTitle = "";
+    private List<ChartStyleSettings.ChartSeriesDefinition> _styleDialogDefinitions = [];
+
+    // The zigzag lines sit in the Trend and FIB groups instead of the overlay list, so they need
+    // their own constants (a string literal inside a Razor attribute cannot be nested).
+    private const string ZigZagStyleKey = "zigzag";
+    private const string FibZigZagStyleKey = "fibZigzag";
+
+    private static readonly List<ChartStyleSettings.ChartSeriesDefinition> ZigZagStyleDefinitions =
+        ChartStyleSettings.DefinitionsForOverlay(ZigZagStyleKey).ToList();
+
+    private static readonly List<ChartStyleSettings.ChartSeriesDefinition> FibZigZagStyleDefinitions =
+        ChartStyleSettings.DefinitionsForOverlay(FibZigZagStyleKey).ToList();
+
+    private void LoadChartStyles()
+    {
+        var stored = ChartStyleSettings.Current;
+        _chartStyles.Clear();
+        foreach (var definition in ChartStyleSettings.Definitions)
+        {
+            _chartStyles[definition.Key] = stored.Styles.TryGetValue(definition.Key, out var s)
+                ? s.Clone()
+                : definition.Default.Clone();
+        }
+    }
+
+    private void OpenStyleDialog(string key, string title)
+    {
+        _styleDialogDefinitions = ChartStyleSettings.DefinitionsForOverlay(key).ToList();
+        if (_styleDialogDefinitions.Count == 0)
+            return;
+
+        _styleDialogTitle = title;
+        _styleDialogVisible = true;
+    }
+
+    private void OnStyleDialogVisibleChanged(bool visible)
+    {
+        _styleDialogVisible = visible;
+    }
+
+    /// <summary>
+    /// A colour or line was changed in one of the popups: store it and redraw straight away, so
+    /// the effect is visible while picking instead of after a separate save step.
+    /// </summary>
+    private async Task OnChartStyleChanged()
+    {
+        SaveChartStyles();
+        await LoadChartAsync();
+    }
+
+    private void SaveChartStyles()
+    {
+        var target = new ChartStyleSettings();
+
+        // Only what actually differs from the default is written, so a later change to the
+        // built-in palette still reaches series the user never touched.
+        foreach (var definition in ChartStyleSettings.Definitions)
+        {
+            if (!_chartStyles.TryGetValue(definition.Key, out var style))
+                continue;
+
+            if (style.Color != definition.Default.Color
+                || style.LineWidth != definition.Default.LineWidth
+                || style.LineStyle != definition.Default.LineStyle
+                || style.Dots != definition.Default.Dots)
+            {
+                target.Styles[definition.Key] = style.Clone();
+            }
+        }
+
+        target.Save();
+    }
+
+    /// <summary>
+    /// Push the user's personal colours and line widths to the chart. Only the series that were
+    /// actually changed are sent; the rest keep the built-in look.
+    /// </summary>
+    private async Task ApplyChartStylesAsync()
+    {
+        // Every series is sent, not only the changed ones: the JavaScript side has no table of
+        // its own for the sub-panel indicators, so an unsent key would fall back to plain grey.
+        // ToCssColor turns the stored #AARRGGBB into an rgba() the canvas understands.
+        var stored = ChartStyleSettings.Current;
+        var styles = ChartStyleSettings.Definitions.ToDictionary(
+            d => d.Key,
+            d =>
+            {
+                var style = stored.Styles.TryGetValue(d.Key, out var s) ? s : d.Default;
+                return (object)new
+                {
+                    color = style.ToCssColor(),
+                    lineWidth = style.LineWidth,
+                    lineStyle = style.LineStyle,
+                    dots = style.Dots,
+                };
+            });
+
+        try
+        {
+            await JS.InvokeVoidAsync("ChartWidget.setStyles", styles);
+        }
+        catch (JSException) { }
+    }
+
+
     private void OnSelectedSymbolChanged()
     {
         InvokeAsync(async () =>
@@ -484,7 +610,6 @@
             {
                 _currentSymbol = symbol;
                 _currentSymbolName = symbol.Name;
-                _currentExchangeName = symbol.Exchange?.Name ?? "";
                 _selectedBase = symbol.Base;
                 _selectedQuote = symbol.Quote;
                 RefreshSymbolOptions();
@@ -566,6 +691,23 @@
         if (!Enum.TryParse<CryptoIntervalPeriod>(_selectedInterval, out var period))
             return;
 
+        // Re-sent on every refresh, so a change on the Chart styles settings tab shows up without
+        // having to reopen the chart
+        await ApplyChartStylesAsync();
+
+        // The OHLCV read-out rounds to the symbol's own precision ("N8" -> 8 decimals)
+        try
+        {
+            string format = _currentSymbol.PriceDisplayFormat ?? "N2";
+            int decimals = int.TryParse(format.AsSpan(1), out int parsed) ? parsed : 2;
+            await JS.InvokeVoidAsync("ChartWidget.setPriceDecimals", decimals);
+
+            // Same zoom depth as the Avalonia chart's ZoomLast
+            await JS.InvokeVoidAsync("ChartWidget.setZoomCandles",
+                GlobalData.Settings.Signal.ZonesDlz.CandleCountZoom);
+        }
+        catch (JSException) { }
+
         try
         {
             var symbolInterval = _currentSymbol.GetSymbolInterval(period);
@@ -632,7 +774,10 @@
                 AddNweOverlays(overlays, symbolInterval, smoothRepainting: true, prefix: "nweRepaint");
 
             if (_showZigZag || _showPivots || _showFib || _showDtb || _showFibZigZag)
+            {
+                await BuildZigZagIndicatorsAsync(symbolInterval);
                 AddZigZagOverlays(overlays, symbolInterval, priceLines, markers);
+            }
 
             // Plugin bands (BBMA, ATR reversal bands, VBS, DBR) expose their lines
             // through the renderer-agnostic GetSeries so this chart can draw them too
@@ -649,6 +794,22 @@
                     overlays[series.Key] = series.Points
                         .Select(p => (object)new { time = p.Time, value = p.Value })
                         .ToList();
+                }
+
+                // Stop-loss / take-profit texts at the band breaks, drawn as text-only markers
+                foreach (var label in overlay.GetLabels(_currentSymbol, symbolInterval.Interval, rawCandles))
+                {
+                    markers.Add(new ChartDataService.ChartMarker
+                    {
+                        time = label.Time,
+                        position = label.Above ? "aboveBar" : "belowBar",
+                        color = label.Color,
+                        // No text-only marker exists; size 0 shrinks the shape away and leaves
+                        // just the caption, which is what the Avalonia annotation shows too
+                        shape = "circle",
+                        size = 0,
+                        text = label.Text,
+                    });
                 }
             }
 
@@ -799,27 +960,59 @@
             overlays[prefix + "Lower"] = lower;
     }
 
+    // ZigZag indicators owned by this screen, one per (trend type, use high/low) combination.
+    // The scanner's symbolInterval.ZigZagIndicators is a lazily filled cache that only ever holds
+    // the one or two keys the scanner itself used, so reading it left the overlays empty for the
+    // secondary trend and for any interval the scanner had not processed. The Avalonia chart has
+    // its own set for exactly this reason (ChartWindowViewModel.ClearOptions).
+    private TrendZigZagIndicatorList _zigZagIndicators = [];
+    private string _zigZagBuiltFor = "";
+
+    /// <summary>
+    /// Rebuild and feed the zigzag indicators for the current symbol/interval window, the same
+    /// way the Avalonia chart does through ZoneDlz.CalculatePivots. FinishBatch (inside that call)
+    /// is what makes LastSwingHigh/LastSwingLow — and therefore the FIB levels — valid.
+    /// </summary>
+    private async Task BuildZigZagIndicatorsAsync(CryptoSymbolInterval symbolInterval)
+    {
+        var interval = symbolInterval.Interval;
+        CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
+        CandleTime minDate = maxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
+
+        string key = $"{_currentSymbol!.Name}|{interval.Name}|{minDate.Minutes}|{maxDate.Minutes}";
+        if (key == _zigZagBuiltFor && _zigZagIndicators.Count > 0)
+            return;
+
+        _zigZagIndicators = [];
+        _zigZagIndicators.Add((TrendType.Primary, false), new(TrendType.Primary, false));
+        _zigZagIndicators.Add((TrendType.Primary, true), new(TrendType.Primary, true));
+        _zigZagIndicators.Add((TrendType.Secondary, false), new(TrendType.Secondary, false));
+        _zigZagIndicators.Add((TrendType.Secondary, true), new(TrendType.Secondary, true));
+
+        await ZoneDlz.CalculatePivots(_currentSymbol, interval, minDate, maxDate, _zigZagIndicators);
+        _zigZagBuiltFor = key;
+    }
+
     private void AddZigZagOverlays(Dictionary<string, object> overlays, CryptoSymbolInterval symbolInterval,
         List<ChartDataService.ChartPriceLine> priceLines, List<ChartDataService.ChartMarker> markers)
     {
-        // Same source the Avalonia chart uses, but with the trend type selected on this screen
-        // (the Trend and FIB groups can each point at the primary or the secondary trend).
+        // The Trend and FIB groups can each point at the primary or the secondary trend.
         var trendSettings = _trendType == TrendType.Primary
             ? GlobalData.Settings.Trend.Primary
             : GlobalData.Settings.Trend.Secondary;
-        if (!symbolInterval.ZigZagIndicators.TryGetValue((trendSettings.TrendType, trendSettings.UseHighLow), out var indicator))
+        if (!_zigZagIndicators.TryGetValue((trendSettings.TrendType, trendSettings.UseHighLow), out var indicator))
             return;
 
-        var fibSettings = _fibTrendType == TrendType.Primary
-            ? GlobalData.Settings.Trend.Primary
-            : GlobalData.Settings.Trend.Secondary;
-        symbolInterval.ZigZagIndicators.TryGetValue((fibSettings.TrendType, fibSettings.UseHighLow), out var fibIndicator);
-        fibIndicator ??= indicator;
+        // The FIB group always works on the high/low variant, same as the Avalonia chart
+        var fibTrendType = _fibTrendType == TrendType.Primary ? TrendType.Primary : TrendType.Secondary;
+        if (!_zigZagIndicators.TryGetValue((fibTrendType, true), out var fibIndicator))
+            fibIndicator = indicator;
 
         if (_showZigZag)
         {
+            // Dummy points included: they carry the last, not yet confirmed leg of the zigzag,
+            // which the Avalonia chart draws as well
             var points = indicator.ZigZagList
-                .Where(z => !z.Dummy)
                 .Select(z => (object)new { time = z.Candle.OpenTime.ToUnixSeconds(), value = (double)z.Value })
                 .ToList();
             if (points.Count > 0)
@@ -867,10 +1060,11 @@
             }
         }
 
-        if (_showFibZigZag && fibIndicator != indicator)
+        // Drawn on its own toggle. Previously this was skipped whenever the FIB trend equalled the
+        // main trend, which is the default, so the checkbox appeared to do nothing.
+        if (_showFibZigZag)
         {
             var fibPoints = fibIndicator.ZigZagList
-                .Where(z => !z.Dummy)
                 .Select(z => (object)new { time = z.Candle.OpenTime.ToUnixSeconds(), value = (double)z.Value })
                 .ToList();
             if (fibPoints.Count > 0)
@@ -882,6 +1076,10 @@
             double high = (double)fibIndicator.LastSwingHigh.Value;
             double low = (double)fibIndicator.LastSwingLow.Value;
             double range = high - low;
+
+            // Which swing came last decides the direction of the retracement, exactly as
+            // FibRetracement.RetracementX does: for a move up, 0.000 sits at the high.
+            bool isLong = fibIndicator.LastSwingHigh.Candle.OpenTime >= fibIndicator.LastSwingLow.Candle.OpenTime;
 
             (double level, string color)[] fibLevels =
             [
@@ -898,7 +1096,7 @@
             {
                 priceLines.Add(new ChartDataService.ChartPriceLine
                 {
-                    price = low + range * level,
+                    price = isLong ? high - range * level : low + range * level,
                     color = color,
                     lineStyle = 1,
                     title = level.ToString("0.000"),
@@ -933,6 +1131,11 @@
 
     private static List<object> BuildHistogramSeries(List<CryptoCandle> rawCandles, List<MacdResult> results)
     {
+        // Colour per bar, so both directions follow their own configured colour
+        var stored = ChartStyleSettings.Current;
+        string up = stored.Get("macdHistUp").ToCssColor();
+        string down = stored.Get("macdHistDown").ToCssColor();
+
         var data = new List<object>();
         for (int i = 0; i < rawCandles.Count && i < results.Count; i++)
         {
@@ -943,7 +1146,7 @@
                 {
                     time = rawCandles[i].OpenTime.ToUnixSeconds(),
                     value = val.Value,
-                    color = val.Value >= 0 ? "rgba(69,193,115,0.6)" : "rgba(205,64,64,0.6)",
+                    color = val.Value >= 0 ? up : down,
                 });
             }
         }

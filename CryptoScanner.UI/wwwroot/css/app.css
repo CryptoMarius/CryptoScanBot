@@ -1,4 +1,4 @@
-/* ── Reset ── */
+﻿/* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ══════════════════════════════════════
@@ -580,6 +580,9 @@ html, body {
    aligned, which is the only thing the monospace font was really needed for. */
 .mono { font-family: inherit; font-variant-numeric: tabular-nums; font-size: 11px; }
 .text-right { text-align: right; }
+/* The trend columns carry this class, but it had no rule at all, so those cells stayed left
+   aligned while the Avalonia templates centre them (HorizontalAlignment="Center"). */
+.text-center { text-align: center; }
 .text-long { color: var(--green); }
 .text-short { color: var(--red); }
 .text-green { color: var(--green); }
@@ -663,6 +666,7 @@ html, body {
 
 .input-text { width: 150px; }
 .input-number { width: 80px; font-family: inherit; font-variant-numeric: tabular-nums; font-size: 11px; }
+
 /* Checkboxes are drawn by hand instead of by the browser. The native box keeps a white fill when it
    is off, whatever accent-color says, and a column of them read as one white block on a dark page.
    Styled on the element rather than on .input-checkbox, because the grids, the menu and the chart
@@ -868,6 +872,17 @@ input[type="checkbox"]:focus-visible {
 
 .field input[type="checkbox"] + label {
     min-width: auto;
+}
+
+/* A row of buttons that belongs to the table underneath it (add/remove a DCA or take profit level).
+   Like the checkbox row this is ONE thing, not a label/control pair: without this the two buttons
+   are handed to the two grid columns and the label width of the group pushes them apart. */
+.settings-group-body > .field.settings-table-buttons {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0 4px 0;
 }
 
 /* A groupbox inside another groupbox — the slot limits inside Common, the stoch strength inside the
@@ -1242,12 +1257,12 @@ code {
     overflow: hidden;
 }
 
-/* Title strip above the chart: which coin, quote, interval and exchange is being shown */
+/* Strip above the chart holding the coin, quote and interval pickers */
 .chart-header-bar {
     flex: 0 0 auto;
     display: flex;
-    align-items: baseline;
-    gap: 5px;
+    align-items: center;
+    gap: 6px;
     padding: 3px 8px;
     border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-base);
@@ -1255,28 +1270,106 @@ code {
     overflow: hidden;
 }
 
-.chart-header-symbol {
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--text-primary);
-}
-
-.chart-header-quote {
-    font-weight: 500;
+.chart-header-select {
+    height: 22px;
     font-size: 12px;
-    color: var(--text-secondary);
+    width: auto;
+    min-width: 68px;
 }
 
-.chart-header-interval {
+.chart-header-base {
     font-weight: 600;
-    font-size: 12px;
+}
+
+/* OHLCV read-out, follows the crosshair */
+.chart-ohlcv {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+    margin-left: 6px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.chart-ohlcv .ohlcv-key {
+    color: var(--text-muted);
+}
+
+.chart-ohlcv .ohlcv-value {
+    margin-right: 6px;
     color: var(--text-primary);
 }
 
-.chart-header-exchange,
-.chart-header-separator {
-    font-size: 11px;
+.chart-ohlcv .ohlcv-up { color: var(--green); }
+.chart-ohlcv .ohlcv-down { color: var(--red); }
+
+/* ── Per-overlay style configuration on the chart toolbar ── */
+.chart-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+/* Only shows itself on hover or while its popup is open, so the column of overlay names stays
+   calm instead of carrying a row of icons. */
+.chart-style-button {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    font-size: 10px;
+    line-height: 1;
     color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    opacity: 0;
+}
+
+.chart-toggle-row:hover .chart-style-button {
+    opacity: 1;
+}
+
+.chart-style-button:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+    opacity: 1;
+}
+
+/* Colours and lines open in a modal dialog now, so nothing is clipped by the narrow toolbar */
+.chart-style-dialog {
+    min-width: 480px;
+    max-width: 620px;
+}
+
+.chart-style-table {
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.chart-style-table td {
+    padding: 1px 3px;
+    vertical-align: middle;
+}
+
+.chart-style-label {
+    color: var(--text-secondary);
+    white-space: nowrap;
+    padding-right: 4px !important;
+}
+
+.chart-style-width { width: 40px; }
+.chart-style-linestyle { width: 72px; height: 20px; font-size: 11px; }
+
+
+.chart-style-reset {
+    padding: 0 4px;
+    font-size: 10px;
+    height: 18px;
 }
 
 .chart-symbol-label {

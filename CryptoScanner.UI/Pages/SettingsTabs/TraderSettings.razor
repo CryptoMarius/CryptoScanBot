@@ -35,12 +35,15 @@
     <div class="settings-group">
         <div class="settings-group-header">Common</div>
         <div class="settings-group-body">
+            @* The captions and the choices come from TraderMiscSettingsViewModel.TradeViaList, which
+               shows three friendly names and leaves RealTrading out altogether. Looping over the raw
+               enum values here showed four entries with their code names instead. *@
             <div class="field">
                 <label>Trading</label>
                 <select class="input-select" @bind="_tradeVia">
-                    @foreach (var val in Enum.GetValues<CryptoTradeVia>())
+                    @foreach (var (caption, value) in TradeViaList)
                     {
-                        <option value="@val">@val</option>
+                        <option value="@value">@caption</option>
                     }
                 </select>
             </div>
@@ -116,28 +119,45 @@
                     }
                 </select>
             </div>
-            <div class="field">
+            @* One row per DCA level with the buttons above it, instead of a labelled block of two
+               fields per level. With five levels that block ran off the bottom of the tab. *@
+            <div class="field settings-table-buttons">
                 <button class="btn btn-secondary" @onclick="AddDca">Add DCA</button>
                 <button class="btn btn-secondary" @onclick="RemoveDca">Remove DCA</button>
             </div>
 
-            @for (int i = 0; i < _dcaList.Count; i++)
-            {
-                int index = i;
-                <div class="settings-subgroup-header">DCA @(index + 1)</div>
-                <div class="field">
-                    <label>Percentage</label>
-                    <input type="number" class="input-number" step="0.1"
-                           value="@_dcaList[index].Percentage"
-                           @onchange="e => _dcaList[index].Percentage = ParseDecimal(e.Value)" />
-                </div>
-                <div class="field">
-                    <label>Factor %</label>
-                    <input type="number" class="input-number" step="1"
-                           value="@_dcaList[index].Factor"
-                           @onchange="e => _dcaList[index].Factor = ParseDecimal(e.Value)" />
-                </div>
-            }
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">Level</th>
+                        <th style="width: 100px;">Percentage</th>
+                        <th style="width: 100px;">Factor %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < _dcaList.Count; i++)
+                    {
+                        int index = i;
+                        <tr>
+                            <td>DCA @(index + 1)</td>
+                            <td>
+                                <input type="number" class="input-number" step="0.1"
+                                       value="@_dcaList[index].Percentage"
+                                       @onchange="e => _dcaList[index].Percentage = ParseDecimal(e.Value)" />
+                            </td>
+                            <td>
+                                <input type="number" class="input-number" step="1"
+                                       value="@_dcaList[index].Factor"
+                                       @onchange="e => _dcaList[index].Factor = ParseDecimal(e.Value)" />
+                            </td>
+                        </tr>
+                    }
+                    @if (_dcaList.Count == 0)
+                    {
+                        <tr><td colspan="3" class="empty-state">No DCA levels</td></tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -168,27 +188,44 @@
                 <label>Add dust to TP</label>
             </div>
 
-            @for (int i = 0; i < _tpList.Count; i++)
-            {
-                int index = i;
-                <div class="settings-subgroup-header">Take profit @(index + 1)</div>
-                <div class="field">
-                    <label>Profit %</label>
-                    <input type="number" class="input-number" step="0.1"
-                           value="@_tpList[index].Percentage"
-                           @onchange="e => _tpList[index].Percentage = ParseDecimal(e.Value)" />
-                </div>
-                <div class="field">
-                    <label>Quantity %</label>
-                    <input type="number" class="input-number" step="1"
-                           value="@_tpList[index].Factor"
-                           @onchange="e => _tpList[index].Factor = ParseDecimal(e.Value)" />
-                </div>
-            }
-            <div class="field">
+            @* Same shape as the DCA levels above: buttons first, then one row per level. *@
+            <div class="field settings-table-buttons">
                 <button class="btn btn-secondary" @onclick="AddTp">Add take profit level</button>
                 <button class="btn btn-secondary" @onclick="RemoveTp">Remove take profit level</button>
             </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">Level</th>
+                        <th style="width: 100px;">Profit %</th>
+                        <th style="width: 100px;">Quantity %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < _tpList.Count; i++)
+                    {
+                        int index = i;
+                        <tr>
+                            <td>TP @(index + 1)</td>
+                            <td>
+                                <input type="number" class="input-number" step="0.1"
+                                       value="@_tpList[index].Percentage"
+                                       @onchange="e => _tpList[index].Percentage = ParseDecimal(e.Value)" />
+                            </td>
+                            <td>
+                                <input type="number" class="input-number" step="1"
+                                       value="@_tpList[index].Factor"
+                                       @onchange="e => _tpList[index].Factor = ParseDecimal(e.Value)" />
+                            </td>
+                        </tr>
+                    }
+                    @if (_tpList.Count == 0)
+                    {
+                        <tr><td colspan="3" class="empty-state">No take profit levels</td></tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -300,6 +337,17 @@
     private decimal _stopLossLimit;
     private bool _moveSlBe;
     private decimal _moveSlBePct;
+
+    /// <summary>
+    /// The choices of the Trading dropdown, identical to TraderMiscSettingsViewModel.TradeViaList:
+    /// three entries with friendly captions, and RealTrading deliberately not among them.
+    /// </summary>
+    private static readonly (string Caption, CryptoTradeVia Value)[] TradeViaList =
+    [
+        ("Papertrading", CryptoTradeVia.PaperTrade),
+        ("Altrady webhook", CryptoTradeVia.Altrady),
+        ("Papertrading + Altrady", CryptoTradeVia.PaperTradingAndAltrady),
+    ];
 
     private readonly List<CryptoDcaEntry> _dcaList = [];
     private readonly List<CryptoTpEntry> _tpList = [];

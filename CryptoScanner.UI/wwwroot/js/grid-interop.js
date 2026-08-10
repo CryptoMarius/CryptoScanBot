@@ -1,6 +1,37 @@
 window.GridInterop = {
     _activeResize: null,
 
+    // Bring a grid row into view without yanking the whole list around: only scrolls when the row
+    // actually sits outside the visible area, and then no further than needed.
+    scrollRowIntoView: function (rowId) {
+        var row = document.getElementById(rowId);
+        if (!row) return;
+
+        var container = row.closest('.symbol-sidebar-content') || row.closest('.grid-scroll') || row.parentElement;
+        while (container && container.scrollHeight <= container.clientHeight)
+            container = container.parentElement;
+        if (!container) return;
+
+        // Header is sticky, so the usable top starts below it
+        var header = container.querySelector('thead');
+        var headerHeight = header ? header.offsetHeight : 0;
+
+        var rowTop = row.offsetTop;
+        var rowBottom = rowTop + row.offsetHeight;
+        var viewTop = container.scrollTop + headerHeight;
+        var viewBottom = container.scrollTop + container.clientHeight;
+
+        if (rowTop < viewTop)
+            container.scrollTop = rowTop - headerHeight;
+        else if (rowBottom > viewBottom)
+            container.scrollTop = rowBottom - container.clientHeight;
+    },
+
+    focusElement: function (element) {
+        if (element && element.focus)
+            element.focus();
+    },
+
     initColumnResize: function (thElement, dotNetRef, columnName) {
         const handle = thElement.querySelector('.col-resize-handle');
         if (!handle) return;

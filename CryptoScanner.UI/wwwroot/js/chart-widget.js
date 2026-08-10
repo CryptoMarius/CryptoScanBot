@@ -169,6 +169,7 @@ function createMeasurePrimitive() {
                         (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%',
                         source._formatPrice(m.price2 - m.price1),
                         m.bars + (m.bars === 1 ? ' candle' : ' candles') + (m.span ? '  ' + m.span : ''),
+                        'click or Esc to clear',
                     ];
 
                     var fontPx = Math.round(11 * vRatio);
@@ -196,10 +197,14 @@ function createMeasurePrimitive() {
                     ctx.fillStyle = rising ? UP_LINE : DOWN_LINE;
                     ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
-                    ctx.fillStyle = '#ffffff';
                     ctx.textBaseline = 'top';
-                    for (var j = 0; j < lines.length; j++)
+                    for (var j = 0; j < lines.length; j++) {
+                        // Last line is the how-to-dismiss hint, kept quieter than the numbers
+                        var isHint = j === lines.length - 1;
+                        ctx.fillStyle = isHint ? 'rgba(255,255,255,0.75)' : '#ffffff';
+                        ctx.font = (isHint ? Math.round(fontPx * 0.82) : fontPx) + 'px sans-serif';
                         ctx.fillText(lines[j], boxX + padding, boxY + padding / 2 + j * lineHeight);
+                    }
                 });
             }
             catch (e) {
@@ -246,7 +251,7 @@ window.ChartWidget = {
     _RectanglePrimitive: null,
     _MeasurePrimitive: null,
     _measurePrimitive: null,
-    _measureArmed: false,
+    _measureHandlers: null,
     _pendingFit: true,
     _lastCandles: null,
 
@@ -272,17 +277,6 @@ window.ChartWidget = {
         this._createMainChart();
         this._attachMeasureTool();
         this._loaded = true;
-    },
-
-    /// Turn the measuring tool on or off. Shift+drag measures regardless of this setting.
-    setMeasureMode: function (enabled) {
-        this._measureArmed = !!enabled;
-        if (!enabled)
-            this.clearMeasure();
-
-        var main = this._charts.main;
-        if (main && main.container)
-            main.container.style.cursor = enabled ? 'crosshair' : '';
     },
 
     clearMeasure: function () {
@@ -319,8 +313,21 @@ window.ChartWidget = {
         main.series.candles.attachPrimitive(this._measurePrimitive);
 
         var container = main.container;
+
+        // init() can run again (theme switch), and the container div outlives the chart. Without
+        // this the handlers would stack up and every drag would be processed several times.
+        if (this._measureHandlers) {
+            var old = this._measureHandlers;
+            container.removeEventListener('mousedown', old.down, true);
+            container.removeEventListener('mousemove', old.move, true);
+            container.removeEventListener('mouseup', old.up, true);
+            container.removeEventListener('mouseleave', old.up, true);
+            document.removeEventListener('keydown', old.key);
+        }
+
         var dragging = false;
         var start = null;
+        var moved = false;
 
         // Pixel position inside the chart, and the time/price under it
         var pointAt = function (event) {
@@ -335,27 +342,38 @@ window.ChartWidget = {
             return { x: x, y: y, price: price, time: time };
         };
 
-        container.addEventListener('mousedown', function (event) {
+        // Shift+drag measures, like TradingView. Without shift the mouse keeps its normal job of
+        // panning and zooming the chart.
+        var onMouseDown = function (event) {
             if (event.button !== 0) return;
-            if (!self._measureArmed && !event.shiftKey) return;
+
+            if (!event.shiftKey) {
+                // A plain click wipes a measurement that is still on screen
+                if (self._measurePrimitive && self._measurePrimitive._measure)
+                    self.clearMeasure();
+                return;
+            }
 
             var point = pointAt(event);
             if (!point) return;
 
             dragging = true;
+            moved = false;
             start = point;
             event.preventDefault();
             event.stopPropagation();
 
             // The chart pans on drag; suspend that while measuring
             main.chart.applyOptions({ handleScroll: false, handleScale: false });
-        }, true);
+        };
 
-        container.addEventListener('mousemove', function (event) {
+        var onMouseMove = function (event) {
             if (!dragging || !start) return;
 
             var point = pointAt(event);
             if (!point) return;
+
+            moved = true;
 
             var bars = 0;
             if (self._lastCandles && start.time !== null && point.time !== null) {
@@ -378,23 +396,36 @@ window.ChartWidget = {
             });
 
             event.preventDefault();
-        }, true);
+        };
 
-        var endDrag = function () {
+        var onMouseUp = function () {
             if (!dragging) return;
             dragging = false;
             start = null;
-            // Restore panning; the measurement stays on screen until the next drag or Escape
+
+            // A shift-click without dragging clears instead of leaving a dot behind
+            if (!moved)
+                self.clearMeasure();
+            moved = false;
+
+            // Restore panning; the measurement stays on screen until the next click or Escape
             main.chart.applyOptions({ handleScroll: true, handleScale: true });
         };
 
-        container.addEventListener('mouseup', endDrag, true);
-        container.addEventListener('mouseleave', endDrag, true);
-
-        document.addEventListener('keydown', function (event) {
+        var onKeyDown = function (event) {
             if (event.key === 'Escape')
                 self.clearMeasure();
-        });
+        };
+
+        container.addEventListener('mousedown', onMouseDown, true);
+        container.addEventListener('mousemove', onMouseMove, true);
+        container.addEventListener('mouseup', onMouseUp, true);
+        container.addEventListener('mouseleave', onMouseUp, true);
+        document.addEventListener('keydown', onKeyDown);
+
+        this._measureHandlers = {
+            down: onMouseDown, move: onMouseMove, up: onMouseUp, key: onKeyDown,
+        };
     },
 
     _chartOptions: function (hideTimeScale) {
@@ -447,6 +478,86 @@ window.ChartWidget = {
             overlays: {},
             priceLines: [],
         };
+
+        // Feed the OHLCV read-out above the chart. Written straight into the DOM instead of
+        // through a Blazor round trip: this fires on every mouse move over the chart.
+        var self = this;
+        chart.subscribeCrosshairMove(function (param) {
+            // Looked up by time in the data we sent, not through param.seriesData: the candlestick
+            // series only hands back open/high/low/close, and the volume has to come along too.
+            var candle = param && param.time !== undefined
+                ? self._candleAt(param.time)
+                : null;
+
+            // Off the chart the last candle is shown again, so the bar is never empty
+            self._renderOhlcv(candle || self._lastCandle());
+        });
+    },
+
+    _lastCandle: function () {
+        var list = this._lastCandles;
+        return list && list.length > 0 ? list[list.length - 1] : null;
+    },
+
+    _candleAt: function (time) {
+        var list = this._lastCandles;
+        if (!list) return null;
+
+        // Binary search: the crosshair fires on every mouse move and the list can hold thousands
+        var lo = 0, hi = list.length - 1;
+        while (lo <= hi) {
+            var mid = (lo + hi) >> 1;
+            if (list[mid].time === time) return list[mid];
+            if (list[mid].time < time) lo = mid + 1; else hi = mid - 1;
+        }
+        return null;
+    },
+
+    _ohlcvDecimals: 2,
+
+    setPriceDecimals: function (decimals) {
+        this._ohlcvDecimals = typeof decimals === 'number' && decimals >= 0 ? decimals : 2;
+    },
+
+    _formatVolume: function (value) {
+        if (!value) return '0';
+        if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
+        if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+        if (value >= 1e3) return (value / 1e3).toFixed(2) + 'K';
+        return value.toFixed(0);
+    },
+
+    _renderOhlcv: function (candle) {
+        var host = document.getElementById('chart-ohlcv');
+        if (!host) return;
+
+        if (!candle) {
+            host.textContent = '';
+            return;
+        }
+
+        var d = this._ohlcvDecimals;
+        var rising = candle.close >= candle.open;
+        var cls = rising ? 'ohlcv-up' : 'ohlcv-down';
+
+        var parts = [
+            ['O', candle.open.toFixed(d)],
+            ['H', candle.high.toFixed(d)],
+            ['L', candle.low.toFixed(d)],
+            ['C', candle.close.toFixed(d)],
+        ];
+
+        var html = '';
+        for (var i = 0; i < parts.length; i++)
+            html += '<span class="ohlcv-key">' + parts[i][0] + '</span>'
+                  + '<span class="ohlcv-value ' + cls + '">' + parts[i][1] + '</span>';
+
+        if (candle.volume !== undefined && candle.volume !== null) {
+            html += '<span class="ohlcv-key">V</span>'
+                  + '<span class="ohlcv-value">' + this._formatVolume(candle.volume) + '</span>';
+        }
+
+        host.innerHTML = html;
     },
 
     _createSubChart: function (containerId, hideTimeScale) {
@@ -538,6 +649,21 @@ window.ChartWidget = {
         fibZigzag:      { color: '#ffeb3b', lineWidth: 1, lineStyle: 2 },
     },
 
+    // User-configured styles, keyed the same way as _overlayStyles. Whatever is in here wins over
+    // the built-in defaults above, so a series only needs an entry when it was actually changed.
+    _userStyles: {},
+
+    setStyles: function (styles) {
+        this._userStyles = styles || {};
+    },
+
+    _styleFor: function (key) {
+        var user = this._userStyles[key];
+        if (user)
+            return user;
+        return this._overlayStyles[key] || { color: '#888', lineWidth: 1, lineStyle: 0 };
+    },
+
     setData: function (candles, overlays, panels, extras) {
         if (!this._loaded || !this._charts.main) return;
 
@@ -550,6 +676,9 @@ window.ChartWidget = {
 
         mainEntry.series.candles.setData(candles);
         this._lastCandles = candles;
+
+        // Show the newest candle until the mouse moves over the chart
+        this._renderOhlcv(this._lastCandle());
 
         // Time window the candles cover. Overlay points and markers outside it are dropped:
         // a single stray point (an indicator computed over a longer history than the visible
@@ -593,7 +722,7 @@ window.ChartWidget = {
                 data = data.filter(function (p) { return inRange(p.time); });
                 if (data.length === 0) return;
 
-                var style = self._overlayStyles[key] || { color: '#888', lineWidth: 1, lineStyle: 0 };
+                var style = self._styleFor(key);
 
                 var series = mainEntry.chart.addLineSeries({
                     color: style.color,
@@ -652,14 +781,41 @@ window.ChartWidget = {
         // call threw away the zoom and scroll position on each overlay toggle.
         if (this._pendingFit) {
             this._pendingFit = false;
-            mainEntry.chart.timeScale().fitContent();
+            this._zoomLast(candles ? candles.length : 0);
         }
         else if (visibleRange) {
             try { mainEntry.chart.timeScale().setVisibleLogicalRange(visibleRange); } catch (e) { }
         }
     },
 
-    /// Ask the next setData to fit the content again (symbol or interval changed).
+    // How many candles the initial view shows. fitContent squeezed the whole loaded history into
+    // the pane, which left the candles as hair-thin slivers; the Avalonia chart zooms to the last
+    // ZonesDlz.CandleCountZoom candles instead.
+    _zoomCandles: 125,
+
+    setZoomCandles: function (count) {
+        if (typeof count === 'number' && count > 0)
+            this._zoomCandles = count;
+    },
+
+    _zoomLast: function (candleCount) {
+        var timeScale = this._charts.main.chart.timeScale();
+        if (candleCount <= 0) {
+            timeScale.fitContent();
+            return;
+        }
+
+        var count = Math.min(this._zoomCandles, candleCount);
+        try {
+            // A few bars of empty space on the right, the way a trading chart normally sits
+            timeScale.setVisibleLogicalRange({ from: candleCount - count, to: candleCount + 2 });
+        }
+        catch (e) {
+            timeScale.fitContent();
+        }
+    },
+
+    /// Ask the next setData to zoom to the most recent candles again (symbol or interval changed).
     resetView: function () {
         this._pendingFit = true;
     },
@@ -679,6 +835,9 @@ window.ChartWidget = {
         var entry = this._createSubChart('chart-volume', true);
         if (!entry) return;
 
+        var up = this._styleFor('volumeUp').color;
+        var down = this._styleFor('volumeDown').color;
+
         var series = entry.chart.addHistogramSeries({
             priceFormat: { type: 'volume' },
         });
@@ -686,7 +845,7 @@ window.ChartWidget = {
             return {
                 time: c.time,
                 value: c.volume || 0,
-                color: c.close >= c.open ? 'rgba(69,193,115,0.5)' : 'rgba(205,64,64,0.5)',
+                color: c.close >= c.open ? up : down,
             };
         }));
         entry.series.volume = series;
@@ -700,27 +859,32 @@ window.ChartWidget = {
         var levelSeries = null;
 
         if (rsiData) {
+            var rsiStyle = this._styleFor('rsi');
             var rsiSeries = entry.chart.addLineSeries({
-                color: '#ab47bc', lineWidth: 1,
+                color: rsiStyle.color, lineWidth: rsiStyle.lineWidth, lineStyle: rsiStyle.lineStyle,
                 lastValueVisible: true, priceLineVisible: false, title: 'RSI',
             });
             rsiSeries.setData(rsiData.data);
             entry.series.rsi = rsiSeries;
             levelSeries = rsiSeries;
 
-            this._addPriceLine(rsiSeries, rsiData.oversold, 'rgba(69,193,115,0.4)', 2);
-            this._addPriceLine(rsiSeries, rsiData.overbought, 'rgba(205,64,64,0.4)', 2);
+            var rsiOs = this._styleFor('rsiOversold');
+            var rsiOb = this._styleFor('rsiOverbought');
+            this._addPriceLine(rsiSeries, rsiData.oversold, rsiOs.color, rsiOs.lineStyle);
+            this._addPriceLine(rsiSeries, rsiData.overbought, rsiOb.color, rsiOb.lineStyle);
         }
 
         if (stochData) {
+            var kStyle = this._styleFor('stochK');
             var kSeries = entry.chart.addLineSeries({
-                color: '#2196F3', lineWidth: 1,
+                color: kStyle.color, lineWidth: kStyle.lineWidth, lineStyle: kStyle.lineStyle,
                 lastValueVisible: true, priceLineVisible: false, title: '%K',
             });
             kSeries.setData(stochData.k);
 
+            var dStyle = this._styleFor('stochD');
             var dSeries = entry.chart.addLineSeries({
-                color: '#ff9800', lineWidth: 1,
+                color: dStyle.color, lineWidth: dStyle.lineWidth, lineStyle: dStyle.lineStyle,
                 lastValueVisible: true, priceLineVisible: false, title: '%D',
             });
             dSeries.setData(stochData.d);
@@ -730,8 +894,10 @@ window.ChartWidget = {
 
             // Only draw the threshold lines once, RSI and stochastic share the 0..100 scale
             if (!levelSeries) {
-                this._addPriceLine(kSeries, stochData.oversold, 'rgba(69,193,115,0.4)', 2);
-                this._addPriceLine(kSeries, stochData.overbought, 'rgba(205,64,64,0.4)', 2);
+                var stochOs = this._styleFor('stochOversold');
+                var stochOb = this._styleFor('stochOverbought');
+                this._addPriceLine(kSeries, stochData.oversold, stochOs.color, stochOs.lineStyle);
+                this._addPriceLine(kSeries, stochData.overbought, stochOb.color, stochOb.lineStyle);
                 levelSeries = kSeries;
             }
         }
@@ -740,7 +906,7 @@ window.ChartWidget = {
             // Lux counts are unbounded, so it gets its own overlay scale to avoid
             // squashing the 0..100 oscillators sharing this pane
             var osSeries = entry.chart.addHistogramSeries({
-                color: 'rgba(69,193,115,0.55)',
+                color: this._styleFor('luxOversold').color,
                 lastValueVisible: false, priceLineVisible: false,
                 priceScaleId: 'lux',
             });
@@ -749,7 +915,7 @@ window.ChartWidget = {
             }));
 
             var obSeries = entry.chart.addHistogramSeries({
-                color: 'rgba(205,64,64,0.55)',
+                color: this._styleFor('luxOverbought').color,
                 lastValueVisible: false, priceLineVisible: false,
                 priceScaleId: 'lux',
             });
@@ -777,14 +943,16 @@ window.ChartWidget = {
         });
         histSeries.setData(macdData.histogram);
 
+        var macdStyle = this._styleFor('macdLine');
         var macdSeries = entry.chart.addLineSeries({
-            color: '#2196F3', lineWidth: 1,
+            color: macdStyle.color, lineWidth: macdStyle.lineWidth, lineStyle: macdStyle.lineStyle,
             lastValueVisible: true, priceLineVisible: false, title: 'MACD',
         });
         macdSeries.setData(macdData.macdLine);
 
+        var signalStyle = this._styleFor('macdSignal');
         var signalSeries = entry.chart.addLineSeries({
-            color: '#ff9800', lineWidth: 1,
+            color: signalStyle.color, lineWidth: signalStyle.lineWidth, lineStyle: signalStyle.lineStyle,
             lastValueVisible: true, priceLineVisible: false, title: 'Signal',
         });
         signalSeries.setData(macdData.signal);

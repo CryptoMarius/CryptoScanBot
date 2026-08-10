@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
@@ -131,6 +131,63 @@ public class AtrRbChartOverlay : IChartOverlay
         chart.Series.Add(macroUp);
         chart.Series.Add(macroDown);
         chart.Series.Add(basisLine);
+    }
+
+    public IReadOnlyList<ChartOverlayLabel> GetLabels(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
+    {
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        if (symbolInterval.CandleList.Count == 0)
+            return [];
+
+        // Same break conditions as Draw, so the labels land on the very same candles
+        var allCandles = symbolInterval.CandleList.Values.ToList();
+        var atrrb = AtrRbPlugin.Settings;
+
+        IReadOnlyList<IQuote> quotes = allCandles.AsQuotes();
+        IReadOnlyList<EmaResult> emaResults = quotes.ToEma(atrrb.Length);
+        IReadOnlyList<AtrResult> atrResults = quotes.ToAtr(atrrb.Length);
+        IReadOnlyList<BollingerBandsResult> bbResults = quotes.ToBollingerBands(
+            lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
+            standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
+
+        var labels = new List<ChartOverlayLabel>();
+
+        for (int i = 0; i < allCandles.Count; i++)
+        {
+            double? basisN = emaResults[i].Ema;
+            double? atrN = atrResults[i].Atr;
+            if (!basisN.HasValue || !atrN.HasValue)
+                continue;
+
+            var candle = allCandles[i];
+            double close = (double)candle.Close;
+            double high = (double)candle.High;
+            double low = (double)candle.Low;
+
+            double outerUp = basisN.Value + atrN.Value * atrrb.OuterMult;
+            double outerDown = basisN.Value - atrN.Value * atrrb.OuterMult;
+            double slPct = atrrb.StopLossAtrFactor * (atrN.Value / close * 100);
+
+            var bb = bbResults[i];
+            bool bbWidthOk = bb.UpperBand.HasValue && bb.LowerBand.HasValue && bb.LowerBand.Value != 0
+                && BbWidthOk(100 * (bb.UpperBand.Value / bb.LowerBand.Value - 1), atrrb.BBMinPercentage, atrrb.BBMaxPercentage);
+            if (!bbWidthOk)
+                continue;
+
+            bool upperBreak = high > outerUp && IsHighestHigh(allCandles, i, atrrb.BreakLookback);
+            bool lowerBreak = low < outerDown && IsLowestLow(allCandles, i, atrrb.BreakLookback);
+            if (!upperBreak && !lowerBreak)
+                continue;
+
+            labels.Add(new ChartOverlayLabel
+            {
+                Time = CandleTime.AlignFromDateTime(candle.Date, interval.Duration).ToUnixSeconds(),
+                Above = upperBreak,
+                Text = "SL " + slPct.ToString("0.##") + "%",
+            });
+        }
+
+        return labels;
     }
 
     private static void AddLabel(PlotModel chart, double x, double y, double pct, VerticalAlignment vAlign, string group)

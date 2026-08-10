@@ -415,7 +415,14 @@ public class DashboardService : IDisposable
     private bool UpdateCryptoPrices()
     {
         var exchange = GlobalData.ActiveExchange;
-        if (exchange == null || TopSymbols.Count == 0)
+        if (exchange == null)
+            return false;
+
+        // Rebuilt here rather than only when the exchange name changes: that happens once at
+        // startup, often before the symbol list has finished loading, and every coin that could
+        // not be resolved at that moment stayed missing for the rest of the session.
+        RefreshTopSymbolsList();
+        if (TopSymbols.Count == 0)
             return false;
 
         bool changed = false;
@@ -424,32 +431,34 @@ public class DashboardService : IDisposable
             if (info.Symbol == null)
                 continue;
 
-            decimal? price = info.Symbol.LastPrice;
+            decimal? price = info.Symbol.LastPrice ?? LastCandleClose(info.Symbol);
+
             if (price == null)
             {
-                var si = info.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-                if (si?.CandleList != null)
+                // No price yet (or ever): the row drops out and the next coin moves up
+                if (info.HasPrice)
                 {
-                    lock (si.CandleList)
-                    {
-                        if (si.CandleList.Count > 0)
-                            price = si.CandleList.Values.Last().Close;
-                    }
-                }
-            }
-
-            if (price != null)
-            {
-                var priceText = price.Value.ToString(info.Symbol.PriceDisplayFormat ?? "N2");
-                if (priceText != info.PriceText)
-                {
-                    var css = price > info.LastKnownPrice ? "text-green"
-                            : price < info.LastKnownPrice ? "text-red" : info.ColorClass;
-                    info.LastKnownPrice = price.Value;
-                    info.PriceText = priceText;
-                    info.ColorClass = css;
+                    info.HasPrice = false;
                     changed = true;
                 }
+                continue;
+            }
+
+            if (!info.HasPrice)
+            {
+                info.HasPrice = true;
+                changed = true;
+            }
+
+            var priceText = price.Value.ToString(info.Symbol.PriceDisplayFormat ?? "N2");
+            if (priceText != info.PriceText)
+            {
+                var css = price > info.LastKnownPrice ? "text-green"
+                        : price < info.LastKnownPrice ? "text-red" : info.ColorClass;
+                info.LastKnownPrice = price.Value;
+                info.PriceText = priceText;
+                info.ColorClass = css;
+                changed = true;
             }
 
             var vol = info.Symbol.Volume;
@@ -463,12 +472,35 @@ public class DashboardService : IDisposable
         return changed;
     }
 
+    /// <summary>
+    /// Newest close price from whichever interval has candles. Only the 1 minute list used to be
+    /// consulted, so a coin whose 1m candles are not fetched showed no price at all even though
+    /// its hourly or daily candles were in memory.
+    /// </summary>
+    private static decimal? LastCandleClose(CryptoSymbol symbol)
+    {
+        foreach (var interval in GlobalData.IntervalList)
+        {
+            var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            if (symbolInterval?.CandleList == null)
+                continue;
+
+            lock (symbolInterval.CandleList)
+            {
+                if (symbolInterval.CandleList.Count > 0)
+                    return symbolInterval.CandleList.Values.Last().Close;
+            }
+        }
+        return null;
+    }
+
     private void RefreshTopSymbolsList()
     {
         var exchange = GlobalData.ActiveExchange;
         if (exchange == null)
         {
-            TopSymbols = [];
+            if (TopSymbols.Count > 0)
+                TopSymbols = [];
             return;
         }
 
@@ -488,11 +520,30 @@ public class DashboardService : IDisposable
             if (symbol == null)
                 continue;
 
-            list.Add(new DashboardSymbolInfo
+            // Carry the running price and colour over, so a rebuild does not reset the row
+            var existing = TopSymbols.FirstOrDefault(t => t.Symbol == symbol);
+            list.Add(existing ?? new DashboardSymbolInfo
             {
                 BaseName = baseName,
                 Symbol = symbol,
             });
+        }
+
+        // Nothing to do when the same symbols came out, otherwise the rows would be replaced on
+        // every tick and their price/colour state thrown away.
+        if (list.Count == TopSymbols.Count)
+        {
+            bool equal = true;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].Symbol != TopSymbols[i].Symbol)
+                {
+                    equal = false;
+                    break;
+                }
+            }
+            if (equal)
+                return;
         }
 
         TopSymbols = list;
@@ -582,6 +633,14 @@ public class DashboardSymbolInfo
     /// against the selected quote.
     /// </summary>
     public string DisplayName => Symbol?.Name ?? BaseName;
+
+    /// <summary>
+    /// False while no price has been seen at all. The dashboard shows a limited number of rows, so
+    /// a coin the exchange lists but never quotes (too little volume to be monitored) is left out
+    /// and the next coin from the list takes its place instead of wasting a slot.
+    /// </summary>
+    public bool HasPrice { get; set; }
+
     public string PriceText { get; set; } = "-";
     public string VolumeText { get; set; } = "-";
     public string ColorClass { get; set; } = "";

@@ -1,0 +1,141 @@
+@using CryptoScanner.UI.Models
+
+@* Colour / width / style rows for a set of chart series. Used both by the settings tab (wide, one
+   row per series) and by the small popup behind each overlay on the chart toolbar, which is only
+   220 pixels wide — there the label goes above its controls so nothing runs off the edge. *@
+
+@if (Compact)
+{
+    <div class="chart-style-compact">
+        @foreach (var definition in Definitions)
+        {
+            var key = definition.Key;
+            var style = Styles[key];
+            <div class="chart-style-compact-item">
+                <div class="chart-style-compact-label">@definition.Label</div>
+                <div class="chart-style-compact-controls">
+                    <ColorPickerCell Value="@style.Color"
+                                     ValueChanged="argb => OnColorChanged(key, argb)"
+                                     Title="@definition.Label" />
+                    <input type="number" class="input-number chart-style-width" min="1" max="4" step="1"
+                           title="Line width"
+                           value="@style.LineWidth"
+                           disabled="@style.Dots"
+                           @onchange="e => OnWidthChanged(key, e)" />
+                    <select class="input-select chart-style-linestyle"
+                            title="Line style"
+                            value="@style.LineStyle"
+                            disabled="@style.Dots"
+                            @onchange="e => OnLineStyleChanged(key, e)">
+                        <option value="0">Solid</option>
+                        <option value="1">Dotted</option>
+                        <option value="2">Dashed</option>
+                    </select>
+                    <button class="btn btn-secondary chart-style-reset"
+                            title="Back to the built-in look"
+                            @onclick="() => ResetOne(key)">↺</button>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <table class="chart-style-table">
+        <tbody>
+            @foreach (var definition in Definitions)
+            {
+                var key = definition.Key;
+                var style = Styles[key];
+                <tr>
+                    <td class="chart-style-label">@definition.Label</td>
+                    @* Same editor as the basecoins and strategy colours: a swatch that opens the
+                       shared ARGB dialog. That dialog is modal, so it is never clipped. *@
+                    <td>
+                        <ColorPickerCell Value="@style.Color"
+                                         ValueChanged="argb => OnColorChanged(key, argb)"
+                                         Title="@definition.Label" />
+                    </td>
+                    <td>
+                        <input type="number" class="input-number chart-style-width" min="1" max="4" step="1"
+                               value="@style.LineWidth"
+                               disabled="@style.Dots"
+                               @onchange="e => OnWidthChanged(key, e)" />
+                    </td>
+                    <td>
+                        <select class="input-select chart-style-linestyle"
+                                value="@style.LineStyle"
+                                disabled="@style.Dots"
+                                @onchange="e => OnLineStyleChanged(key, e)">
+                            <option value="0">Solid</option>
+                            <option value="1">Dotted</option>
+                            <option value="2">Dashed</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary chart-style-reset"
+                                title="Back to the built-in look"
+                                @onclick="() => ResetOne(key)">Default</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    /// <summary>The series to edit.</summary>
+    [Parameter, EditorRequired]
+    public IEnumerable<ChartStyleSettings.ChartSeriesDefinition> Definitions { get; set; } = [];
+
+    /// <summary>Working copy, keyed by series key. The owner decides when it is persisted.</summary>
+    [Parameter, EditorRequired]
+    public Dictionary<string, ChartLineStyle> Styles { get; set; } = null!;
+
+    /// <summary>Stacked layout for the narrow popup on the chart toolbar.</summary>
+    [Parameter]
+    public bool Compact { get; set; }
+
+    /// <summary>Raised after any change, so the owner can save and/or redraw.</summary>
+    [Parameter]
+    public EventCallback Changed { get; set; }
+
+    private async Task NotifyChanged()
+    {
+        if (Changed.HasDelegate)
+            await Changed.InvokeAsync();
+    }
+
+    private async Task OnColorChanged(string key, string argb)
+    {
+        if (!string.IsNullOrEmpty(argb))
+        {
+            Styles[key].Color = argb;
+            await NotifyChanged();
+        }
+    }
+
+    private async Task OnWidthChanged(string key, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int width))
+        {
+            Styles[key].LineWidth = Math.Clamp(width, 1, 4);
+            await NotifyChanged();
+        }
+    }
+
+    private async Task OnLineStyleChanged(string key, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int lineStyle))
+        {
+            Styles[key].LineStyle = lineStyle;
+            await NotifyChanged();
+        }
+    }
+
+    private async Task ResetOne(string key)
+    {
+        Styles[key] = ChartStyleSettings.DefaultFor(key).Clone();
+        await NotifyChanged();
+    }
+}

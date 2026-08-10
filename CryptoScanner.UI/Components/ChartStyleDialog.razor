@@ -1,0 +1,54 @@
+@using CryptoScanner.UI.Models
+
+@* Colours and lines of one overlay, in the same modal shape as the colour dialog. Inline in the
+   220 pixel toolbar the controls never fitted; a dialog also gives room for the wide layout. *@
+@if (Visible)
+{
+    <div class="modal-overlay" @onclick="Close" @oncontextmenu:preventDefault="true"></div>
+    <div class="modal-dialog chart-style-dialog" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <span class="modal-title">@Title</span>
+        </div>
+        <div class="modal-body">
+            <ChartStyleEditor Definitions="Definitions"
+                              Styles="Styles"
+                              Changed="Changed" />
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="ResetAll">Reset to default</button>
+            <button class="btn btn-primary" @onclick="Close">Close</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    /// <summary>Caption, normally the name of the overlay.</summary>
+    [Parameter] public string Title { get; set; } = "Colours and lines";
+
+    [Parameter, EditorRequired]
+    public IEnumerable<ChartStyleSettings.ChartSeriesDefinition> Definitions { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public Dictionary<string, ChartLineStyle> Styles { get; set; } = null!;
+
+    /// <summary>Raised after every change, so the chart can redraw and the file can be written.</summary>
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private async Task Close()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task ResetAll()
+    {
+        foreach (var definition in Definitions)
+            Styles[definition.Key] = definition.Default.Clone();
+
+        if (Changed.HasDelegate)
+            await Changed.InvokeAsync();
+    }
+}

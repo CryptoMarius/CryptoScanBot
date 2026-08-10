@@ -108,7 +108,9 @@
     <!-- Section 5: Crypto Prices — dynamic from settings -->
     <div class="dashboard-section" style="min-width:180px;">
         <div class="dashboard-heading">Crypto Prices</div>
-        @foreach (var sym in DashboardService.TopSymbols.Take(MaxCryptoPriceRows))
+        @* Coins the exchange never quotes are skipped, so the ones after them move up into the
+           limited number of rows instead of leaving a blank line. *@
+        @foreach (var sym in DashboardService.TopSymbols.Where(s => s.HasPrice).Take(MaxCryptoPriceRows))
         {
             var s = sym;
             <div class="dashboard-row clickable" @onclick="@(() => OnCryptoPriceClick(s))">

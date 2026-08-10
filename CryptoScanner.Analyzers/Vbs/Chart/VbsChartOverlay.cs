@@ -127,6 +127,79 @@ public class VbsChartOverlay : IChartOverlay
         return [upper, lower, basis];
     }
 
+    public IReadOnlyList<ChartOverlayLabel> GetLabels(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
+    {
+        if (candles.Count == 0)
+            return [];
+
+        // Same conditions as Draw, so the web chart shows the labels at the very same candles
+        var settings = VbsPlugin.Settings;
+        var bands = VbsBandsHelper.ComputeBands(candles);
+
+        var rsiSettings = GlobalData.Settings.General.SettingsRsi;
+        IReadOnlyList<RsiResult>? rsiList = null;
+        if (settings.UseRsiFilter)
+            rsiList = candles.AsQuotes().ToRsi(rsiSettings.Length);
+
+        var labels = new List<ChartOverlayLabel>();
+
+        for (int i = 0; i < candles.Count; i++)
+        {
+            if (!bands[i].HasValue)
+                continue;
+
+            var candle = candles[i];
+            double close = (double)candle.Close;
+            double high = (double)candle.High;
+            double low = (double)candle.Low;
+            double upper = bands[i].Upper;
+            double lower = bands[i].Lower;
+
+            double slPct = bands[i].Acs;
+            double tpPct = settings.RiskRewardRatio * slPct;
+
+            double? rsi = rsiList?[i].Rsi;
+            bool rsiOverbought = rsiList == null || (rsi.HasValue && rsi.Value >= rsiSettings.Overbought);
+            bool rsiOversold = rsiList == null || (rsi.HasValue && rsi.Value <= rsiSettings.Oversold);
+
+            bool upperBreak = (high > upper || close > upper) && rsiOverbought;
+            bool lowerBreak = (low < lower || close < lower) && rsiOversold;
+            if (!upperBreak && !lowerBreak)
+                continue;
+
+            // Two lines with the take-profit under the stop-loss. A marker holds one line of text,
+            // so they are emitted separately and the renderer stacks them outward from the candle:
+            // above the bar the first one ends up lowest, below the bar the first one ends up
+            // highest. Emitting them in the right order per side keeps TP under SL either way.
+            long time = CandleTime.AlignFromDateTime(candle.Date, interval.Duration).ToUnixSeconds();
+            var stopLoss = new ChartOverlayLabel
+            {
+                Time = time,
+                Above = upperBreak,
+                Text = "SL " + slPct.ToString("0.##") + "%",
+            };
+            var takeProfit = new ChartOverlayLabel
+            {
+                Time = time,
+                Above = upperBreak,
+                Text = "TP " + tpPct.ToString("0.##") + "%",
+            };
+
+            if (upperBreak)
+            {
+                labels.Add(takeProfit);
+                labels.Add(stopLoss);
+            }
+            else
+            {
+                labels.Add(stopLoss);
+                labels.Add(takeProfit);
+            }
+        }
+
+        return labels;
+    }
+
     private static void AddLabel(PlotModel chart, double x, double y, double slPct, double? tpPct, VerticalAlignment vAlign, string group)
     {
         // Extra gap so the label clears the wick (a bit more than before).

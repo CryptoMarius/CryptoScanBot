@@ -134,6 +134,7 @@
                                 {
                                     var row = _rowCallbacks.Get(vm);
                                     <tr class="@(_selectedSymbols.Contains(vm) ? "selected" : "")"
+                                        id="@SymbolRowId(vm)"
                                         @key="vm"
                                         @onclick="row.Click"
                                         @ondblclick="row.DoubleClick"
@@ -617,23 +618,84 @@
         SymbolService.SetSelectedSymbol(vm.Object);
     }
 
-    private void OnSymbolGridKeyDown(KeyboardEventArgs e)
+    // Type-ahead buffer. Characters typed shortly after one another search for a symbol starting
+    // with the whole string ("OP" jumps to OP, not to P), and it resets after a short pause.
+    private string _typeAhead = "";
+    private DateTime _typeAheadTime = DateTime.MinValue;
+    private static readonly TimeSpan TypeAheadTimeout = TimeSpan.FromMilliseconds(900);
+
+    private static string SymbolRowId(SymbolViewModel vm) => "sym-" + vm.Symbol;
+
+    private async Task OnSymbolGridKeyDown(KeyboardEventArgs e)
     {
-        if (string.IsNullOrEmpty(e.Key) || e.Key.Length != 1)
+        if (_symbols.Count == 0 || string.IsNullOrEmpty(e.Key))
             return;
 
-        char ch = char.ToUpperInvariant(e.Key[0]);
-        if (!char.IsLetterOrDigit(ch))
-            return;
+        int current = _selectedSymbol != null ? _symbols.IndexOf(_selectedSymbol) : -1;
+        int target = -1;
 
-        var match = _symbols.FirstOrDefault(s =>
-            s.Symbol.Length > 0 && char.ToUpperInvariant(s.Symbol[0]) == ch);
-        if (match != null)
+        switch (e.Key)
         {
-            _selectedSymbols.Clear();
-            _selectedSymbols.Add(match);
-            _selectedSymbol = match;
+            case "ArrowDown":
+                target = current < 0 ? 0 : Math.Min(current + 1, _symbols.Count - 1);
+                break;
+            case "ArrowUp":
+                target = current <= 0 ? 0 : current - 1;
+                break;
+            case "PageDown":
+                target = current < 0 ? 0 : Math.Min(current + 15, _symbols.Count - 1);
+                break;
+            case "PageUp":
+                target = current < 0 ? 0 : Math.Max(current - 15, 0);
+                break;
+            case "Home":
+                target = 0;
+                break;
+            case "End":
+                target = _symbols.Count - 1;
+                break;
+
+            default:
+                if (e.Key.Length != 1 || !char.IsLetterOrDigit(e.Key[0]))
+                    return;
+
+                var now = DateTime.UtcNow;
+                if (now - _typeAheadTime > TypeAheadTimeout)
+                    _typeAhead = "";
+                _typeAheadTime = now;
+                _typeAhead += char.ToUpperInvariant(e.Key[0]);
+
+                target = _symbols.FindIndex(s =>
+                    s.Symbol.StartsWith(_typeAhead, StringComparison.OrdinalIgnoreCase));
+
+                // Nothing starts with the whole buffer: treat this key as a fresh search, so
+                // holding down one letter keeps stepping instead of getting stuck
+                if (target < 0 && _typeAhead.Length > 1)
+                {
+                    _typeAhead = _typeAhead[^1..];
+                    target = _symbols.FindIndex(s =>
+                        s.Symbol.StartsWith(_typeAhead, StringComparison.OrdinalIgnoreCase));
+                }
+                break;
         }
+
+        if (target < 0 || target >= _symbols.Count)
+            return;
+
+        var match = _symbols[target];
+        _selectedSymbols.Clear();
+        _selectedSymbols.Add(match);
+        _selectedSymbol = match;
+
+        // Same effect as clicking the row, otherwise the chart and the rest keep the old symbol
+        SymbolService.SetSelectedSymbol(match.Object);
+        StateHasChanged();
+
+        try
+        {
+            await JS.InvokeVoidAsync("GridInterop.scrollRowIntoView", SymbolRowId(match));
+        }
+        catch (JSException) { }
     }
 
     private static string GetSymbolCellClass(ColumnRuntimeState<SymbolColumnEnum> col, SymbolViewModel vm)

@@ -1,4 +1,4 @@
-@using CryptoScanner.Core.Core
+﻿@using CryptoScanner.Core.Core
 @using CryptoScanner.Core.Enums
 @using CryptoScanner.Core.Services
 @using CryptoScanner.Core.Settings
@@ -23,7 +23,8 @@
                 <button class="tab @(_activeTab == 6 ? "active" : "")" @onclick="() => _activeTab = 6">Rulez</button>
                 <button class="tab @(_activeTab == 7 ? "active" : "")" @onclick="() => _activeTab = 7">API Keys</button>
                 <button class="tab @(_activeTab == 8 ? "active" : "")" @onclick="() => _activeTab = 8">Black/White list</button>
-                <button class="tab @(_activeTab == 9 ? "active" : "")" @onclick="() => _activeTab = 9">Debug</button>
+                <button class="tab @(_activeTab == 9 ? "active" : "")" @onclick="() => _activeTab = 9">Chart styles</button>
+                <button class="tab @(_activeTab == 10 ? "active" : "")" @onclick="() => _activeTab = 10">Debug</button>
             </div>
 
             @* Every tab stays in the render tree (hidden with CSS) so its @ref is always captured.
@@ -63,6 +64,9 @@
                     <CryptoScanner.UI.Pages.SettingsTabs.BlackWhiteListSettings @ref="_blackWhiteListSettings" />
                 </div>
                 <div style="@TabStyle(9)">
+                    <CryptoScanner.UI.Pages.SettingsTabs.ChartStyleSettingsTab @ref="_chartStyleSettings" />
+                </div>
+                <div style="@TabStyle(10)">
                     <CryptoScanner.UI.Pages.SettingsTabs.DebugSettings @ref="_debugSettings" />
                 </div>
             </div>
@@ -100,6 +104,7 @@
     private SettingsTabs.ApiKeySettings? _apiKeySettings;
     private SettingsTabs.BlackWhiteListSettings? _blackWhiteListSettings;
     private SettingsTabs.DebugSettings? _debugSettings;
+    private SettingsTabs.ChartStyleSettingsTab? _chartStyleSettings;
 
     private string TabStyle(int index) => _activeTab == index ? "" : "display:none;";
 
@@ -125,6 +130,7 @@
             _apiKeySettings?.SaveTo(GlobalData.Settings);
             _blackWhiteListSettings?.SaveTo(GlobalData.Settings);
             _debugSettings?.SaveTo(GlobalData.Settings);
+            _chartStyleSettings?.SaveTo(GlobalData.Settings);
 
             // Save AND re-apply: this rebuilds SignalPrepare/SignalExecute, the strategy index,
             // the plugin settings, the black/white lists and the timers. Without it the scanner
@@ -157,6 +163,7 @@
         _apiKeySettings?.LoadFrom(GlobalData.Settings);
         _blackWhiteListSettings?.LoadFrom(GlobalData.Settings);
         _debugSettings?.LoadFrom(GlobalData.Settings);
+        _chartStyleSettings?.LoadFrom(GlobalData.Settings);
 
         _statusMessage = "";
         await VisibleChanged.InvokeAsync(false);
