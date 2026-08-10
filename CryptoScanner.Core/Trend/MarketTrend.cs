@@ -10,6 +10,21 @@ namespace CryptoScanner.Core.Trend;
 
 public class MarketTrend
 {
+    /// <summary>
+    /// The symbol's finest interval that holds candles, or null when it has none at all.
+    /// SymbolIntervalList is ordered by IntervalPeriod, so the first hit is the finest one.
+    /// </summary>
+    private static CryptoSymbolInterval? FindFinestIntervalWithCandles(CryptoSymbol symbol)
+    {
+        foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+        {
+            if (symbolInterval.CandleList.LastCandle.OpenTime != 0)
+                return symbolInterval;
+        }
+        return null;
+    }
+
+
     public static async Task<CryptoTrendData> CalculateMarketTrendAsync(CryptoSymbol symbol, SettingsZigZag trend, StringBuilder? log = null)
     {
         // MarketTrend is summarized in the Symbol.Data.TrendPrimary/Secondary and is calculated from the Interval.TrendPrimary/Secondary
@@ -24,10 +39,16 @@ public class MarketTrend
             PipelineProfiler.RecordTrendLockWait(Stopwatch.GetTimestamp() - profLockStart);
             try
             {
-                // Take the last 1m endtime as timing (
-                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-                if (symbolInterval.CandleList.LastCandle.OpenTime == 0)
-                    return symbolTrend; // should never happen
+                // Timing marker: how far the data has advanced, used to decide whether the summary
+                // needs recalculating. Taken from the FINEST interval that actually has candles,
+                // not from 1m specifically — the trend itself covers 15m up to 1d and has no reason
+                // to depend on minute data being present. It used to read interval1m directly, and
+                // in an emulator run on a coarser base interval that list stays empty: the method
+                // then bailed out on the line marked "should never happen" and the trend silently
+                // froze at its warmup value for the entire run.
+                CryptoSymbolInterval? symbolInterval = FindFinestIntervalWithCandles(symbol);
+                if (symbolInterval == null)
+                    return symbolTrend; // no candles at all for this symbol
                 CandleTime candleIntervalEnd = symbolInterval.CandleList.LastCandle.OpenTime;
 
                 // the log parameter is only present when called from the CommandShowTrendInfo()

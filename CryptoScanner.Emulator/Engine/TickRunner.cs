@@ -91,6 +91,10 @@ public sealed class TickRunner
     // The resolved base interval for this run (set at the start of RunAsync).
     private CryptoInterval activeBaseInterval = null!;
 
+    // The 1m interval, resolved once. Only used when the base interval is coarser than 1m, to keep
+    // the 1m CandleList filled for the engine parts that read it directly.
+    private CryptoInterval oneMinuteInterval = null!;
+
 
     private static void ReceivedCreatedSignals(CryptoSignal signal)
     {
@@ -117,6 +121,10 @@ public sealed class TickRunner
             if (!GlobalData.IntervalListPeriodName.TryGetValue(baseIntervalName, out CryptoInterval? baseInterval))
                 throw new InvalidOperationException($"Base interval '{baseIntervalName}' not registered in GlobalData.IntervalListPeriodName.");
             activeBaseInterval = baseInterval;
+
+            if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
+                throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName.");
+            oneMinuteInterval = interval1m;
 
             CandleTime replayFrom = CandleTime.AlignFromDateTime(config.FromDate, baseInterval.Duration);
             CandleTime replayTo = CandleTime.AlignFromDateTime(config.ToDate, baseInterval.Duration);
@@ -191,14 +199,23 @@ public sealed class TickRunner
                 if (emulatorClock != null)
                     emulatorClock.UtcNow = windowTo.ToDateTime();
 
-                // Load replay candles for this chunk
-                var replays = new List<(CryptoSymbol Symbol, CryptoCandleList Replay)>();
+                // Load replay candles for this chunk. At a coarser base interval the 1m candles are
+                // loaded ALONGSIDE them: they are never fed to the pipeline (that keeps running at
+                // the base resolution, which is the whole point of a coarser run) but they do have
+                // to be present in the CandleList, because parts of the engine read the 1m series
+                // directly regardless of what the replay steps on — SignalCreate's 24-hour change,
+                // the barometer, MarketTrend. Leaving that list empty does not disable those, it
+                // makes them return a silent zero, which changed which signals survived validation.
+                var replays = new List<(CryptoSymbol Symbol, CryptoCandleList Replay, CryptoCandleList? OneMinute)>();
                 int chunkBars = 0;
                 long loadStart = Stopwatch.GetTimestamp();
                 foreach (var symbol in symbols)
                 {
                     CryptoCandleList replayCandles = IndicatorWarmup.LoadReplayCandles(symbol, windowFrom, windowTo, baseInterval);
-                    replays.Add((symbol, replayCandles));
+                    CryptoCandleList? oneMinuteCandles = null;
+                    if (baseInterval.Duration > 1)
+                        oneMinuteCandles = IndicatorWarmup.LoadReplayCandles(symbol, windowFrom, windowTo, oneMinuteInterval);
+                    replays.Add((symbol, replayCandles, oneMinuteCandles));
                     chunkBars += replayCandles.Count;
                 }
                 long loadElapsed = Stopwatch.GetTimestamp() - loadStart;
@@ -221,11 +238,11 @@ public sealed class TickRunner
                     if (emulatorClock != null)
                         emulatorClock.UtcNow = closeTime.ToDateTime();
 
-                    List<(CryptoSymbol Symbol, CryptoCandle Candle)> ticksThisMinute = [];
-                    foreach (var (symbol, replay) in replays)
+                    List<(CryptoSymbol Symbol, CryptoCandle Candle, CryptoCandleList? OneMinute)> ticksThisMinute = [];
+                    foreach (var (symbol, replay, oneMinute) in replays)
                     {
                         if (replay.TryGetValue(openTime, out CryptoCandle candle))
-                            ticksThisMinute.Add((symbol, candle));
+                            ticksThisMinute.Add((symbol, candle, oneMinute));
                     }
                     if (ticksThisMinute.Count == 0)
                         continue;
@@ -236,12 +253,12 @@ public sealed class TickRunner
                     if (RunParallel && ticksThisMinute.Count > 1)
                     {
                         await Parallel.ForEachAsync(ticksThisMinute, parallelOptions,
-                            async (item, _) => await ProcessComputeAsync(item.Symbol, item.Candle));
+                            async (item, _) => await ProcessComputeAsync(item.Symbol, item.Candle, item.OneMinute));
                     }
                     else
                     {
                         foreach (var item in ticksThisMinute)
-                            await ProcessComputeAsync(item.Symbol, item.Candle);
+                            await ProcessComputeAsync(item.Symbol, item.Candle, item.OneMinute);
                     }
 
                     // ── Phase B: persist + zones (serial, deterministic order) ────────────────
@@ -671,7 +688,7 @@ public sealed class TickRunner
     /// scanner path; at coarser intervals (e.g. 5m) higher TFs are synthesised from the base
     /// interval instead of from 1m, trading precision for speed.
     /// </summary>
-    private async Task ProcessComputeAsync(CryptoSymbol symbol, CryptoCandle candle)
+    private async Task ProcessComputeAsync(CryptoSymbol symbol, CryptoCandle candle, CryptoCandleList? oneMinuteCandles)
     {
         long t0 = Stopwatch.GetTimestamp();
 
@@ -682,6 +699,14 @@ public sealed class TickRunner
         }
         else
         {
+            // Make the minute candles covered by this base candle available BEFORE the pipeline
+            // runs, so anything reading the 1m series sees the same history a 1m run would. Purely
+            // additive: the higher timeframes are still synthesised from the base interval (see
+            // ProcessBaseCandleAsync), and no pipeline work is done per minute — the whole point of
+            // a coarser base interval is that the analysis runs once per base candle, not that the
+            // minute data does not exist.
+            AddMinuteCandles(symbol, candle.OpenTime, oneMinuteCandles);
+
             await CandleTools.ProcessBaseCandleAsync(symbol, activeBaseInterval, candle.OpenTime.ToDateTime(),
                 candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
         }
@@ -694,6 +719,30 @@ public sealed class TickRunner
         using PositionMonitor positionMonitor = new(symbol, candle, activeBaseInterval.Duration);
         await positionMonitor.NewCandleArrivedAsync();
         Interlocked.Add(ref elapsedPipeline, Stopwatch.GetTimestamp() - t1);
+    }
+
+
+    /// <summary>
+    /// Copies the 1m candles inside one base candle into the symbol's 1m CandleList. Only the
+    /// candles of the window [baseOpenTime, baseOpenTime + base duration) are added, so the 1m
+    /// series stays exactly as far along as the replay itself — adding the whole chunk up front
+    /// would let anything reading it look into the future.
+    ///
+    /// Deliberately does NOT touch LastPrice or UpdateCandleFetched: the base candle owns those,
+    /// and on a base boundary its close equals the last minute's close anyway.
+    /// </summary>
+    private void AddMinuteCandles(CryptoSymbol symbol, CandleTime baseOpenTime, CryptoCandleList? oneMinuteCandles)
+    {
+        if (oneMinuteCandles == null || oneMinuteCandles.Count == 0)
+            return;
+
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(oneMinuteInterval.IntervalPeriod);
+        CandleTime windowEnd = baseOpenTime + activeBaseInterval.Duration;
+        for (CandleTime minute = baseOpenTime; minute < windowEnd; minute += 1)
+        {
+            if (oneMinuteCandles.TryGetValue(minute, out CryptoCandle minuteCandle))
+                symbolInterval.CandleList.TryAdd(minute, minuteCandle);
+        }
     }
 
 

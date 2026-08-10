@@ -37,6 +37,13 @@ public static class EmulatorBootstrap
         // and silently swallow the NullReferenceException inside the per-signal try/catch.
         GlobalData.ThreadSaveObjects ??= new ThreadSaveObjects();
 
+        // How much 1m history the engine reserves (GetCandleFetchStart). The live scanner starts at
+        // a day plus the barometer graph hours and lowers it to this once the barometer has been
+        // calculated (BarometerTools). The emulator draws no barometer graph and never runs that
+        // code, so it would keep fetching those extra hours for nothing — set the lowered value
+        // straight away. A day plus a few candles is what the 24-hour change calculation needs.
+        CandleTools.SetInitialCandleCountFetch(24 * 60 + 10);
+
         // Setup dialog override wins over everything (settings.json AND -e argument), because
         // the user explicitly picked this exchange for this session in the wizard.
         if (!string.IsNullOrEmpty(exchangeOverride))

@@ -42,5 +42,6 @@ public class SettingsBasic
     public List<string> BlackListOverbought { get; set; } = [];
 
     // What symbols to show in the information dashboard
-    public List<string> ShowSymbolInformation { get; set; } = new(["BTC", "PAXG", "ETH", "XRP", "SOL", "ADA"]);
+    public List<string> ShowSymbolInformation { get; set; } = 
+        new(["BTC", "PAXG", "ETH", "XRP", "SOL", "DOGE", "ADA", "ZEC", "BNB"]);
 }

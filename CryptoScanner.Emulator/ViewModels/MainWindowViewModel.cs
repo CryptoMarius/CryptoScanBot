@@ -304,65 +304,72 @@ public partial class MainWindowViewModel : ObservableObject
                     SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
 
-                    // ── Step 1: fetch 1m from the exchange ───────────────────────────────────
-                    // Fetch enough 1m candles to calculate the higher timeframes?
+                    // ── Step 1: determine the fetch start per interval ───────────────────────
+                    // Exactly what the live scanner does before GetCandlesForAllIntervalsAsync
+                    // (see CandleBase.GetCandlesForAllSymbolsAndIntervalsAsync). It applies
+                    // GetCandleFetchStart per interval — 500 bars of that interval's own
+                    // resolution, and InitialCandleCountFetch for 1m — and then walks the
+                    // ConstructFrom chain for every interval this exchange does NOT serve, pulling
+                    // the source interval's start date back far enough to build it. That walk is a
+                    // loop, so a chain of several missing intervals cascades correctly, and it
+                    // takes the MINIMUM over all consumers so a source is deepened once for
+                    // everyone instead of once per dependent interval.
+                    //
+                    // The only difference with the scanner is the reference point: it measures back
+                    // from "now", the emulator from the START of its replay window.
+                    CandleTools.DetermineFetchStartDate(symbol, config.FromDate);
 
-                    // The warmup must cover whichever is bigger: what the indicators need
-                    // (ComputeWarmupMinutes) or what the chart needs (WindowMarginCandles +
-                    // WindowCalcWarmupCandles). Because every higher interval is DERIVED from
-                    // this single 1m stream (step 2), the 1m window must span the warmup of the
-                    // LONGEST maintained interval — 270 bars of 15m needs ~2.8 days of 1m, 270
-                    // bars of 1h needs ~11 days. Taking only ComputeWarmupMinutes(1m) (24 h)
-                    // here left the 15m/30m CandleLists far below the 260-candle minimum that
-                    // CollectCandles requires ("Error collecting history" at the start of a run).
-                    // Zone depth (DLZ CandleCount) is NOT included here — PrepareSymbol loads
-                    // those candles per interval directly from the DB at their own resolution.
-                    uint chartMarginMinutes1m = (uint)((ChartWindowViewModel.WindowMarginCandles
-                        + ChartWindowViewModel.WindowCalcWarmupCandles) * interval1m.Duration);
-                    uint indicatorWarmupMinutes = IndicatorWarmup.ComputeWarmupMinutes(interval1m);
-                    foreach (CryptoInterval maintained in IndicatorWarmup.ResolveMaintainedIntervals())
-                    {
-                        uint intervalWarmup = IndicatorWarmup.ComputeWarmupMinutes(maintained);
-                        if (intervalWarmup > indicatorWarmupMinutes)
-                            indicatorWarmupMinutes = intervalWarmup;
-                    }
-                    uint warmupMinutes1m = Math.Max(indicatorWarmupMinutes, chartMarginMinutes1m);
-                    DateTime from1m = config.FromDate.AddMinutes(-warmupMinutes1m);
-
-                    CandleTime minDate1m = IntervalTools.StartOfIntervalCandle(
-                        CandleTime.AlignFromDateTime(from1m, interval1m.Duration), interval1m.Duration);
-                    CandleTime maxDate1m = IntervalTools.StartOfIntervalCandle(
+                    CandleTime fetchEnd = IntervalTools.StartOfIntervalCandle(
                         CandleTime.AlignFromDateTime(config.ToDate, interval1m.Duration), interval1m.Duration);
 
-                    if (maxDate1m > minDate1m)
-                    {
-                        int candleFetchCount1m = (int)((maxDate1m.Minutes - minDate1m.Minutes) / interval1m.Duration);
-                        GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} 1m — " +
-                            $"want {minDate1m.ToDateTime():yyyy-MM-dd HH:mm}..{maxDate1m.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount1m} bars)");
-                        try
-                        {
-                            await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval1m, minDate1m, candleFetchCount1m);
-                        }
-                        catch (Exception sx)
-                        {
-                            GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} 1m — FAILED ({sx.Message})");
-                        }
-                    }
-
-                    // ── Step 2: derive all higher intervals from their source interval ────────
-                    // IntervalList is sorted ascending by IntervalPeriod, so when a higher interval
-                    // is derived from an intermediate one (e.g. 4h from 1h) its source is always
-                    // already populated by the time we reach it. Intervals without ConstructFrom
-                    // (i.e. 1m itself) are skipped — 1m was fetched in step 1.
-                    CandleTime nowTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 0);
+                    // ── Step 2: fetch + derive, interval by interval ─────────────────────────
+                    // Mirrors CandleBase.GetCandlesForIntervalAsync: fetch the interval when the
+                    // exchange serves it, then fill gaps and bulk-calculate the NEXT interval from
+                    // its ConstructFrom. IntervalList runs ascending, so by the time an interval is
+                    // reached its source is complete — including the ones the exchange does not
+                    // serve, which are produced here rather than fetched.
                     foreach (CryptoInterval interval in intervals)
                     {
-                        if (interval.ConstructFrom == null)
-                            continue;
+                        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                        CandleTime fetchStart = symbolInterval.LastCandleSynchronized
+                            ?? IntervalTools.StartOfIntervalCandle(
+                                CandleTools.GetCandleFetchStart(symbol, interval, config.FromDate), interval.Duration);
 
-                        GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — calculating from {interval.ConstructFrom.Name}");
-                        CandleTools.BulkCalculateCandles(symbol, interval.ConstructFrom, interval, nowTime);
-                        loadedCandlesInMemory[interval.IntervalPeriod] = true;
+                        if (symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod) && fetchEnd > fetchStart)
+                        {
+                            int candleFetchCount = (int)((fetchEnd.Minutes - fetchStart.Minutes) / interval.Duration);
+                            GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — " +
+                                $"want {fetchStart.ToDateTime():yyyy-MM-dd HH:mm}..{fetchEnd.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount} bars)");
+                            try
+                            {
+                                await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, fetchStart, candleFetchCount);
+                            }
+                            catch (Exception sx)
+                            {
+                                GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — FAILED ({sx.Message})");
+                            }
+                        }
+
+                        await symbol.Data.CandleLock.WaitAsync();
+                        try
+                        {
+                            CandleTools.UpdateCandleFetched(symbol, interval);
+                            CandleTools.BulkAddMissingCandles(symbol, interval);
+
+                            // Build the next interval up from its own ConstructFrom (which is not
+                            // necessarily THIS interval — 5m is built from 1m, not from 3m).
+                            if (interval.IntervalPeriod < Enum.GetValues<CryptoIntervalPeriod>().Last())
+                            {
+                                CryptoInterval targetInterval = GlobalData.IntervalListPeriod[interval.IntervalPeriod + 1];
+                                CandleTools.BulkCalculateCandles(symbol, targetInterval.ConstructFrom!, targetInterval, fetchEnd);
+                                loadedCandlesInMemory[targetInterval.IntervalPeriod] = true;
+                            }
+                            CandleTools.UpdateCandleFetched(symbol, interval);
+                        }
+                        finally
+                        {
+                            symbol.Data.CandleLock.Release();
+                        }
                     }
 
                     // ── Step 3: persist this symbol to {Exchange}.db and release its memory ──

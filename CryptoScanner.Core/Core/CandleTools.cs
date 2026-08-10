@@ -420,7 +420,17 @@ public static class CandleTools
     public static void DetermineFetchStartDate(CryptoSymbol symbol)
     {
         CandleTime currentTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1) + 1;
-        DateTime fetchEndDate = currentTime.ToDateTime();
+        DetermineFetchStartDate(symbol, currentTime.ToDateTime());
+    }
+
+
+    /// <summary>
+    /// Same as <see cref="DetermineFetchStartDate(CryptoSymbol)"/> but for a caller that is not
+    /// working towards "now": the emulator fetches a historical window and needs the warmup to be
+    /// measured backwards from the START of its run, not from the current clock.
+    /// </summary>
+    public static void DetermineFetchStartDate(CryptoSymbol symbol, DateTime fetchEndDate)
+    {
         Dictionary<CryptoIntervalPeriod, CandleTime> fetchFrom = [];
 
         // Determine the (minimum) startdate per interval
@@ -469,6 +479,14 @@ public static class CandleTools
     // We need 1 day + X hours because of the barometer calculation (we show ~5 hours in the display)
     // As soon as the barometer has been calculated it will be lowered to 1 day + 10 candles..
     private static long InitialCandleCountFetch = (24 + Constants.BarometerGraphHours) * 60;
+
+    /// <summary>
+    /// How many 1m candles the engine expects to have available. Read-only view on the same value
+    /// <see cref="GetCandleFetchStart"/> uses, so the emulator's warmup/pruning depth cannot drift
+    /// away from what the live scanner fetches. Anything reading back over a day of 1m history
+    /// (the barometer, SignalCreate's 24-hour change) depends on this.
+    /// </summary>
+    public static long CandleCountFetch1m => InitialCandleCountFetch;
 
     public static void SetInitialCandleCountFetch(long value)
     {

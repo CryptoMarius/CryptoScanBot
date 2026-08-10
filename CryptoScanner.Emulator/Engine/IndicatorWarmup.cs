@@ -71,13 +71,27 @@ public static class IndicatorWarmup
 
 
     /// <summary>
-    /// How many candles of history to keep per interval when pruning between chunks. Uses the same
-    /// depth as the warmup (270 or DLZ CandleCount, whichever is larger) so indicators always have
-    /// enough lookback after pruning.
+    /// How many candles of history to keep per interval, both for the warmup and for the pruning
+    /// between chunks. The two MUST use the same number: pruning to less than the warmup loaded
+    /// silently removes history that the engine assumed was there.
+    ///
+    /// The 1m interval is a special case. Indicators need a few hundred bars, but two consumers
+    /// read back a full day or more: the barometer, and SignalCreate.CalculateLastPeriodsInInterval
+    /// (the 24-hour change, which invalidates a signal when it falls outside the configured range).
+    /// The live scanner reserves 24h + barometer hours for exactly that reason, so we take the same
+    /// number here instead of a second, lower one — at 270 the 24-hour lookup fails right after
+    /// every chunk boundary and silently falls back to a candle a few hours old.
     /// </summary>
     public static int WarmupDepth(CryptoInterval interval)
     {
         int depth = MinCandlesPerInterval + SafetyExtraBars;
+        if (interval.Duration <= 1)
+        {
+            int barometerDepth = (int)CandleTools.CandleCountFetch1m + SafetyExtraBars;
+            if (barometerDepth > depth)
+                depth = barometerDepth;
+        }
+
         var dlzSettings = GlobalData.Settings.Signal.ZonesDlz;
         if (dlzSettings.IntervalList.Contains(interval.Name) && dlzSettings.CandleCount > depth)
             depth = dlzSettings.CandleCount;
@@ -165,10 +179,10 @@ public static class IndicatorWarmup
         {
             // Candles of EACH interval's own resolution to load before replayFrom: enough for SMA200
             // (200) plus a safety margin, and enough history to make a day/week bar meaningful.
-            // For DLZ-enabled intervals the zone depth (CandleCount) can be much larger.
-            int depth = 270;
-            if (dlzSettings.IntervalList.Contains(interval.Name) && dlzSettings.CandleCount > depth)
-                depth = dlzSettings.CandleCount;
+            // For DLZ-enabled intervals the zone depth (CandleCount) can be much larger, and 1m
+            // needs a full day plus the barometer window — WarmupDepth is the single source for all
+            // three cases, shared with the between-chunk pruning so the two cannot drift apart.
+            int depth = WarmupDepth(interval);
             CandleTime from = new(replayFrom.Minutes - (uint)depth * interval.Duration);
 
             //CandleTime lastWarmup = new(replayTo.Minutes);

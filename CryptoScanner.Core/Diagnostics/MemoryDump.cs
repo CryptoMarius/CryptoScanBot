@@ -198,8 +198,7 @@ public static class MemoryDump
         var stats = new Dictionary<string, (int Count, long TotalSize)>();
         try
         {
-            int pid = Environment.ProcessId;
-            using var dataTarget = DataTarget.AttachToProcess(pid, suspend: false);
+            using var dataTarget = AttachToSelf();
             using var runtime = dataTarget.ClrVersions[0].CreateRuntime();
 
             // Walk all objects on the heap
@@ -314,8 +313,7 @@ public static class MemoryDump
         DataTarget dataTarget;
         try
         {
-            int pid = Environment.ProcessId;
-            dataTarget = DataTarget.AttachToProcess(pid, suspend: false);
+            dataTarget = AttachToSelf();
             runtime = dataTarget.ClrVersions[0].CreateRuntime();
         }
         catch (Exception error)
@@ -381,6 +379,18 @@ public static class MemoryDump
                 writer.WriteLine();
             }
         }
+    }
+
+
+    /// <summary>
+    /// Open a ClrMD view on our OWN process. AttachToProcess refuses that with "Attaching to the
+    /// current process is not supported"; a snapshot is the supported route and is also the safer
+    /// one, because the heap is walked over a frozen copy instead of over memory that the scanner
+    /// threads keep changing while we read it.
+    /// </summary>
+    private static DataTarget AttachToSelf()
+    {
+        return DataTarget.CreateSnapshotAndAttach(Environment.ProcessId);
     }
 
 
