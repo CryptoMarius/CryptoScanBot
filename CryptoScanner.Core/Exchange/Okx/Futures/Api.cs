@@ -4,6 +4,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 using OKX.Net;
+using OKX.Net.Enums;
 using OKX.Net.Clients;
 
 namespace CryptoScanner.Core.Exchange.Okx.Futures;
@@ -77,20 +78,182 @@ public class Api : ExchangeBase
     }
 
 
-    public override Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
-        CryptoPosition position, CryptoPositionPart part,
-        DateTime currentDate, CryptoOrderType orderType, CryptoOrderSide orderSide,
+    public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
+        CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
+        CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false)
     {
-        // not implemented
-        return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
+        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.PlaceOrder {symbol.Name}");
+        // debug
+        //GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", symbol.Name, "not at this moment", price, quantity));
+        //return (false, null);
+
+
+        // Controleer de limiten van de maximum en minimum bedrag en de quantity
+        if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
+        {
+            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            return (false, null);
+        }
+
+        TradeParams tradeParams = new()
+        {
+            Purpose = part.Purpose,
+            CreateTime = currentDate,
+            OrderSide = orderSide,
+            OrderType = orderType,
+            Price = price,
+            StopPrice = stop, // OCO - the price at which the limit order to sell is activated
+            LimitPrice = limit, // OCO - the lowest price that the trader is willing to accept
+            Quantity = quantity,
+            QuoteQuantity = price * quantity,
+            //OrderId = 0,
+        };
+        if (orderType == CryptoOrderType.StopLimit)
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+        {
+            tradeParams.OrderId = database.CreateNewUniqueId();
+            return (true, tradeParams);
+        }
+
+        throw new Exception("PlaceOrder not implemented");
+        //OrderSide side;
+        //if (orderSide == CryptoOrderSide.Buy)
+        //    side = OrderSide.Buy;
+        //else
+        //    side = OrderSide.Sell;
+
+
+        //// Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
+        ////BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+        //using OKXRestClient client = new();
+
+        //switch (orderType)
+        //{
+        //    //case CryptoOrderType.Market:
+        //    //    {
+        //    //        HttpResult<BinanceUsdFuturesOrder> result;
+        //    //        result = await client.UsdFuturesApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
+        //    //            FuturesOrderType.Market, quantity);
+        //    //        if (!result.Success)
+        //    //        {
+        //    //            tradeParams.Error = result.Error;
+        //    //            tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+        //    //        }
+        //    //        if (result.Success && result.Data != null)
+        //    //        {
+        //    //            tradeParams.CreateTime = result.Data.CreateTime;
+        //    //            tradeParams.OrderId = result.Data.Id.ToString();
+        //    //        }
+        //    //        return (result.Success, tradeParams);
+        //    //    }
+        //    //case CryptoOrderType.Limit:
+        //    //    {
+        //    //        HttpResult<BinanceUsdFuturesOrder> result;
+        //    //        result = await client.UsdFuturesApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
+        //    //            FuturesOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
+        //    //        if (!result.Success)
+        //    //        {
+        //    //            tradeParams.Error = result.Error;
+        //    //            tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+        //    //        }
+        //    //        if (result.Success && result.Data != null)
+        //    //        {
+        //    //            tradeParams.CreateTime = result.Data.CreateTime;
+        //    //            tradeParams.OrderId = result.Data.Id.ToString();
+        //    //        }
+        //    //        return (result.Success, tradeParams);
+        //    //    }
+        //    ////case CryptoOrderType.StopLimit:
+        //    ////    {
+        //    ////        HttpResult<BinanceUsdFuturesOrder> result;
+        //    ////        result = await client.UsdFuturesApi.Trading.PlaceOrderAsync(symbol.Name, side,
+        //    ////            FuturesOrderType.StopLossLimit, quantity, price: price, stopPrice: stop, timeInForce: TimeInForce.GoodTillCanceled);
+        //    ////        if (!result.Success)
+        //    ////        {
+        //    ////            tradeParams.Error = result.Error;
+        //    ////            tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+        //    ////        }
+        //    ////        if (result.Success && result.Data != null)
+        //    ////        {
+        //    ////            tradeParams.CreateTime = result.Data.CreateTime;
+        //    ////            tradeParams.OrderId = result.Data.Id.ToString();
+        //    ////        }
+        //    ////        return (result.Success, tradeParams);
+        //    ////    }
+        //    ////case CryptoOrderType.Oco:
+        //    ////    {
+        //    ////        HttpResult<BinanceUsdFuturesOrder> result;
+        //    ////        result = await client.UsdFuturesApi.Trading.PlaceOcoOrderAsync(symbol.Name, side,
+        //    ////            quantity, price: price, (decimal)stop, limit, stopLimitTimeInForce: TimeInForce.GoodTillCanceled);
+
+        //    ////        if (!result.Success)
+        //    ////        {
+        //    ////            tradeParams.Error = result.Error;
+        //    ////            tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+        //    ////        }
+        //    ////        if (result.Success && result.Data != null)
+        //    ////        {
+        //    ////            // https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md
+        //    ////            // De 1e order is de stop loss (te herkennen aan de "type": "STOP_LOSS")
+        //    ////            // De 2e order is de normale sell (te herkennen aan de "type": "LIMIT_MAKER")
+        //    ////            // De ene order heeft een price/stopprice, de andere enkel een price (combi)
+        //    ////            BinancePlacedOcoOrder order1 = result.Data.OrderReports.First();
+        //    ////            BinancePlacedOcoOrder order2 = result.Data.OrderReports.Last();
+        //    ////            tradeParams.CreateTime = result.Data.TransactionTime; // order1.CreateTime;
+        //    ////            tradeParams.OrderId = order1.Id.ToString();
+        //    ////            tradeParams.Order2Id = order2.Id.ToString(); // Een 2e ordernummer (welke eigenlijk?)
+        //    ////        }
+        //    ////        return (result.Success, tradeParams);
+        //    ////    }
+        //    default:
+        //        throw new Exception("${orderType} not supported");
+        //}
     }
 
 
-    public override Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
+    public override async Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
-        // not implemented
-        return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
+        // Order gegevens overnemen (voor een eventuele error dump)
+        TradeParams tradeParams = new()
+        {
+            Purpose = part.Purpose,
+            CreateTime = step.CreateTime,
+            OrderSide = step.Side,
+            OrderType = step.OrderType,
+            Price = step.Price, // the sell part (can also be a buy)
+            StopPrice = step.StopPrice, // OCO - the price at which the limit order to sell is activated
+            LimitPrice = step.StopLimitPrice, // OCO - the lowest price that the trader is willing to accept
+            Quantity = step.Quantity,
+            QuoteQuantity = step.Price * step.Quantity,
+            OrderId = step.OrderId,
+            Order2Id = step.Order2Id,
+        };
+        // Eigenlijk niet nodig
+        if (step.OrderType == CryptoOrderType.StopLimit)
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
+
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+            return (true, tradeParams);
+
+        throw new Exception("Cancel not implemented");
+
+        //// Annuleer de order
+        //if (step.OrderId != null && step.OrderId != "")
+        //{
+        //    // BinanceWeights.WaitForFairBinanceWeight(1);
+        //    using var client = new OKXRestClient();
+        //    var result = await client.UsdFuturesApi.Trading.CancelOrderAsync(position.Symbol.Name, long.Parse(step.OrderId));
+        //    if (!result.Success)
+        //    {
+        //        tradeParams.Error = result.Error;
+        //        tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+        //    }
+        //    return (result.Success, tradeParams);
+        //}
+
+        //return (false, tradeParams);
     }
 
     public static CryptoExternalUrls GetExchangeLinks()
