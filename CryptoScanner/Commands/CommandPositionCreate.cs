@@ -37,7 +37,7 @@ public class CommandPositionCreate : CommandBase
             try
             {
                 CryptoTradeSide tradeSide = CryptoTradeSide.Long; // right?
-                CryptoSignalStrategy strategy = CryptoSignalStrategy.Stobb; // right?
+                string strategy = "stobb"; // right?
                 CryptoInterval interval = GlobalData.IntervalList[0]; // 1m right..
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 CandleTime LastCandle1mCloseTimeDate = CandleTime.FromDateTime(DateTime.Now);

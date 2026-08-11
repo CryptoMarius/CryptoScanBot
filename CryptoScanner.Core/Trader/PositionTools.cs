@@ -67,7 +67,7 @@ public static class PositionTools
         return null;
     }
 
-    public static CryptoPosition CreatePosition(CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side,
+    public static CryptoPosition CreatePosition(CryptoSymbol symbol, string? strategyName, CryptoTradeSide side,
         string? eventText, CryptoSymbolInterval symbolInterval, DateTime currentDate)
     {
         CryptoPosition position = new()
@@ -81,8 +81,8 @@ public static class PositionTools
             Interval = symbolInterval.Interval,
             IntervalId = symbolInterval.Interval.Id,
             Status = CryptoPositionStatus.Waiting,
-            Strategy = strategy,
-            Strategy2 = RegisterAlgorithms.GetAlgorithm(strategy),
+            Strategy = RegisterAlgorithms.StrategyOf(strategyName),
+            Strategy2 = strategyName,
             ActiveDca = false,
             EventText = eventText,
             PartCount = 0,
@@ -123,7 +123,7 @@ public static class PositionTools
 
     public static CryptoPositionPart ExtendPosition(CryptoDatabase database,
         CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
-        CryptoSignalStrategy strategy, //CryptoEntryOrDcaStrategy stepInMethod,
+        string? strategyName, //CryptoEntryOrDcaStrategy stepInMethod,
         decimal signalPrice, DateTime currentDate, bool manualOrder = false)
     {
         CryptoPositionPart part = new()
@@ -131,7 +131,7 @@ public static class PositionTools
             Position = position,
             Purpose = purpose,
             PartNumber = NextPartNumber(position, purpose),
-            Strategy = strategy,
+            Strategy = RegisterAlgorithms.StrategyOf(strategyName),
             Interval = interval,
             IntervalId = interval.Id,
             SignalPrice = signalPrice,

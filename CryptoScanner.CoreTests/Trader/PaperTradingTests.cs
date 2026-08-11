@@ -40,7 +40,7 @@ public class PaperTradingTests : TestBase
     {
         DateTime startTime = DateTime.UtcNow.AddHours(-24);
         CryptoPosition position = PositionTools.CreatePosition(
-            symbol, CryptoSignalStrategy.Stobb, side, "PaperTradingTest",
+            symbol, "stobb", side, "PaperTradingTest",
             symbol.Data.SymbolIntervalList[0], startTime);
 
         // Register in active exchange so HandleTradeAsync can find it

@@ -45,16 +45,6 @@ public static class RegisterAlgorithms
         return AlgorithmDefinitionList.TryGetValue(name, out definition);
     }
 
-    /// <summary>
-    /// Return the algorithm definition
-    /// </summary>
-    public static bool GetAlgorithm(CryptoSignalStrategy strategy, out AlgorithmDefinition? definition)
-    {
-        definition = null;
-        return nameByStrategy.TryGetValue(strategy, out string? name)
-            && AlgorithmDefinitionList.TryGetValue(name, out definition);
-    }
-
     /// <summary>True when a strategy with this name is registered.</summary>
     public static bool IsRegistered(CryptoSignalStrategy strategy) => nameByStrategy.ContainsKey(strategy);
 
@@ -62,30 +52,29 @@ public static class RegisterAlgorithms
     /// True when the strategy fires on a zone touch. Unknown strategies count as not-a-zone, which
     /// matches how they are treated everywhere else (the normal indicator path).
     /// </summary>
-    public static bool IsZoneStrategy(CryptoSignalStrategy strategy)
-        => GetAlgorithm(strategy, out AlgorithmDefinition? definition) && definition!.IsZoneStrategy;
-
-    /// <inheritdoc cref="IsZoneStrategy(CryptoSignalStrategy)"/>
     public static bool IsZoneStrategy(string? name)
         => name != null && GetAlgorithm(name, out AlgorithmDefinition? definition) && definition!.IsZoneStrategy;
 
-
     /// <summary>
-    /// Return the name of the algorithm
+    /// The enum value a strategy name was registered with. Only needed to fill the numeric
+    /// Strategy columns that the database still has next to the Strategy2 name; goes away with
+    /// the enum. An unregistered name yields the default, same as reading a 0 from the database.
     /// </summary>
-    public static string GetAlgorithm(CryptoSignalStrategy strategy)
-    {
-        if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
-            return definition!.Name;
-        return strategy.ToString();
-    }
+    public static CryptoSignalStrategy StrategyOf(string? name)
+        => name != null && GetAlgorithm(name, out AlgorithmDefinition? definition)
+            ? definition!.Strategy : default;
+
+    /// <summary>The strategy name for a stored enum value, or the enum's own name when unknown.</summary>
+    public static string NameOf(CryptoSignalStrategy strategy)
+        => nameByStrategy.TryGetValue(strategy, out string? name) ? name : strategy.ToString();
+
 
     /// <summary>
     /// Return an instance of the algorithm (long/short)
     /// </summary>
-    public static SignalCreateBase? GetAlgorithm(CryptoTradeSide side, CryptoSignalStrategy strategy)
+    public static SignalCreateBase? GetAlgorithm(CryptoTradeSide side, string? name)
     {
-        if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
+        if (name != null && GetAlgorithm(name, out AlgorithmDefinition? definition))
         {
             Type? analyzeClass = null;
             if (side == CryptoTradeSide.Long && definition!.AnalyzeLongType != null)

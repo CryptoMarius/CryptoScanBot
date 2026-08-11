@@ -62,7 +62,7 @@ public class PaperTradingIntrabarTests : TestBase
         CreateTakeProfitPosition(CryptoDatabase database, CryptoSymbol symbol, DateTime createTime)
     {
         CryptoPosition position = PositionTools.CreatePosition(
-            symbol, CryptoSignalStrategy.Stobb, CryptoTradeSide.Long, "IntrabarTest",
+            symbol, "stobb", CryptoTradeSide.Long, "IntrabarTest",
             symbol.Data.SymbolIntervalList[0], createTime);
         GlobalData.ActiveExchange!.Data.PositionList[symbol.Name] = position;
 

@@ -27,7 +27,7 @@ public class VbsTakeProfitTests : TestBase
         database.Open();
         CryptoSymbol symbol = CreateTestSymbol(database);
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-        CryptoPosition position = PositionTools.CreatePosition(symbol, CryptoSignalStrategy.Vbs,
+        CryptoPosition position = PositionTools.CreatePosition(symbol, "vbs",
             CryptoTradeSide.Long, "Test", symbolInterval, DateTime.UtcNow);
         position.TpPercentage = tpPercentage;
         return position;

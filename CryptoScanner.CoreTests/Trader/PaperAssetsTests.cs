@@ -141,7 +141,7 @@ public class PaperAssetsTests : TestBase
         GlobalData.ActiveExchange!.Data.AssetList.TryAdd(assetQuote.Name, assetQuote);
         database.Connection.Insert(assetQuote);
 
-        CryptoPosition position = PositionTools.CreatePosition(symbol, CryptoSignalStrategy.Stobb,
+        CryptoPosition position = PositionTools.CreatePosition(symbol, "stobb",
            CryptoTradeSide.Long, "Test", symbol.Data.SymbolIntervalList[0], startTime);
 
         // act

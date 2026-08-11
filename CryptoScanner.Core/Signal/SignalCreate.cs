@@ -578,7 +578,7 @@ public class SignalCreate
 
     public async Task<bool> ExecuteAlgorithmAsync(AlgorithmDefinition strategyDefinition)
     {
-        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Strategy);
+        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Name);
         if (algorithm != null)
         {
             MyData myData = new() { Candle = Candle, CandleData = CandleData };

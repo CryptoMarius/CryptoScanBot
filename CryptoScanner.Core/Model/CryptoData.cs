@@ -237,7 +237,7 @@ public class CryptoData2 : CryptoData
 
     public CryptoSignalStrategy Strategy { get; set; }
     [Computed]
-    public string StrategyText { get { return RegisterAlgorithms.GetAlgorithm(Strategy); } }
+    public string StrategyText { get { return Strategy2 ?? RegisterAlgorithms.NameOf(Strategy); } }
 
     // Strategy name, set alongside Strategy at creation time (see SignalCreate/PositionTools). Persisted so
     // strategies can eventually be addressed by name instead of by the CryptoSignalStrategy enum value (see

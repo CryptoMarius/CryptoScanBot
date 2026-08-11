@@ -9,7 +9,7 @@ namespace CryptoScanner.Core.Model;
 public sealed record PendingDcaRequest
 (
     CryptoInterval Interval,
-    CryptoSignalStrategy Strategy,
+    string? Strategy,
     decimal DcaPrice,
     DateTime CandleCloseTime
 );

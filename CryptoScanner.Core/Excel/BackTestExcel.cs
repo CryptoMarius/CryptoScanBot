@@ -92,7 +92,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         return column;
     }
 
-    public void ExportToExcell(CryptoSignalStrategy strategy)
+    public void ExportToExcell(string strategyName)
     {
         // HSSF => Microsoft Excel(excel 97-2003)
         // XSSF => Office Open XML Workbook(excel 2007)
@@ -364,7 +364,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         }
 
 
-        string text = RegisterAlgorithms.GetAlgorithm(strategy);
+        string text = strategyName;
         GlobalData.AddTextToLogTab(string.Format("Backtest {0} {1} ready", Symbol.Name, text));
 
         string folderName = Path.Combine(GlobalData.AppDataFolder, "BackTest");

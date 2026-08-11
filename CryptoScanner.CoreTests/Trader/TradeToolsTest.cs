@@ -49,7 +49,7 @@ public class TradeToolsTest : TestBase
         DeleteAllPositionRelatedStuff(database);
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-        CryptoPosition position = PositionTools.CreatePosition(symbol, CryptoSignalStrategy.Stobb,
+        CryptoPosition position = PositionTools.CreatePosition(symbol, "stobb",
             CryptoTradeSide.Long, "Test", symbolInterval, lastCandle1mCloseTimeDate);
         database.Connection.Insert<CryptoPosition>(position);
         GlobalData.ActiveExchange!.Data.PositionList[symbol.Name] = position;
@@ -59,7 +59,7 @@ public class TradeToolsTest : TestBase
         // Dit wordt een rommeltje, in aparte routines afsplitsen?
 
         CryptoPositionPart entryPart = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, GlobalData.IntervalList[0],
-            CryptoSignalStrategy.Stobb, tradeParams.Price, lastCandle1mCloseTimeDate);
+            "stobb", tradeParams.Price, lastCandle1mCloseTimeDate);
         if (position.PartList.Count != 1)
             Assert.Fail("Geen entry gemaakt");
 
