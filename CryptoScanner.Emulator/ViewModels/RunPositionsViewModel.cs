@@ -23,7 +23,7 @@ public class PositionRow
     public string? Symbol { get; set; }
     public string? Interval { get; set; }
     public int Side { get; set; }
-    public string? Strategy2 { get; set; }
+    public string? Strategy { get; set; }
     public int Status { get; set; }
     public decimal Profit { get; set; }
     public decimal Percentage { get; set; }
@@ -61,9 +61,8 @@ public class PositionRow
     // Side is stored as the CryptoTradeSide enum value (Long = 0, Short = 1) — show its name.
     public string SideText => ((CryptoTradeSide)Side).ToString();
 
-    // The database carries the strategy name in Strategy2 next to the numeric Strategy column;
-    // read the name directly instead of translating the enum value back into one.
-    public string StrategyText => Strategy2 ?? "?";
+    // Strategy holds the strategy name; database version 77 replaced the numeric column with it.
+    public string StrategyText => Strategy ?? "?";
 
     // Status is stored as the CryptoPositionStatus enum value (Waiting/Trading/Ready/Timeout/
     // TakeOver/Altrady) — show its name instead of the raw int.
@@ -133,7 +132,7 @@ public partial class RunPositionsViewModel : ObservableObject
 
             var rows = database.Connection.Query<PositionRow>(
                 "SELECT p.Id, p.CreateTime, p.CloseTime, s.Name as Symbol, i.Name as Interval, " +
-                "       p.Side, p.Strategy2, p.Status, p.Profit, p.Percentage, " +
+                "       p.Side, p.Strategy, p.Status, p.Profit, p.Percentage, " +
                 "       p.SignalPrice, p.SlPercentage, p.EventText, " +
                 "       p.PartCount, p.ActiveDca " +
                 "FROM Position p " +

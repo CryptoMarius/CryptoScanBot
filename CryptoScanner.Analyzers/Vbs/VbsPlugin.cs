@@ -18,7 +18,6 @@ public class VbsPlugin : IStrategyPlugin
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
         new(
-            CryptoSignalStrategy.Vbs,
             StrategyInternal.ToLower(),
             typeof(VbsSignalLong),
             typeof(VbsSignalShort)

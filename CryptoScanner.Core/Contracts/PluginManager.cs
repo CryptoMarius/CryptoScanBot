@@ -45,20 +45,15 @@ public static class PluginManager
     {
         foreach (var reg in plugin.Strategies)
         {
-            // Both keys have to be free: the name is the registry key, the enum still feeds the
-            // legacy index. Registering a duplicate enum under a new name would silently repoint
-            // that index at the newcomer.
-            if (RegisterAlgorithms.AlgorithmDefinitionList.ContainsKey(reg.Name)
-                || RegisterAlgorithms.IsRegistered(reg.Strategy))
+            if (RegisterAlgorithms.AlgorithmDefinitionList.ContainsKey(reg.Name))
             {
-                Logger.Warn($"Strategy {reg.Strategy} ({reg.Name}) already registered, skipping");
+                Logger.Warn($"Strategy {reg.Name} already registered, skipping");
                 continue;
             }
 
             RegisterAlgorithms.Register(new AlgorithmDefinition()
             {
                 Name = reg.Name,
-                Strategy = reg.Strategy,
                 AnalyzeLongType = reg.AnalyzeLongType,
                 AnalyzeShortType = reg.AnalyzeShortType,
                 IsZoneStrategy = reg.IsZoneStrategy,

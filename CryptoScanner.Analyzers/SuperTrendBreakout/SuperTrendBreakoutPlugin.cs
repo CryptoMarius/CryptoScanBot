@@ -13,8 +13,7 @@ public class SuperTrendBreakoutPlugin : IStrategyPlugin
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.SuperTrendBreakout,
-            "supertrendbreakout",
+        new("supertrendbreakout",
             typeof(Signal.SignalSuperTrendBreakoutLong),
             typeof(Signal.SignalSuperTrendBreakoutShort)
         ),

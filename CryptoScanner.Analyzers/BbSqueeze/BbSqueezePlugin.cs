@@ -13,8 +13,7 @@ public class BbSqueezePlugin : IStrategyPlugin
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.BbSqueeze,
-            "bbsqueeze",
+        new("bbsqueeze",
             typeof(Signal.SignalBbSqueezeLong),
             typeof(Signal.SignalBbSqueezeShort)
         ),

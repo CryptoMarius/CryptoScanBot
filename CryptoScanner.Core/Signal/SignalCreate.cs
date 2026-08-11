@@ -234,11 +234,7 @@ public class SignalCreate
     {
         CryptoSignal signal = CreateSignal(Candle);
         signal.Side = algorithm.SignalSide;
-        signal.Strategy2 = algorithm.SignalStrategy;
-        // The numeric Strategy is still the database's column; look it up from the name until the
-        // CryptoSignalStrategy enum is gone and Strategy2 is the only strategy field left.
-        if (RegisterAlgorithms.GetAlgorithm(algorithm.SignalStrategy, out AlgorithmDefinition? algorithmDefinition))
-            signal.Strategy = algorithmDefinition!.Strategy;
+        signal.Strategy = algorithm.SignalStrategy;
         // Might be different?
         signal.Interval = algorithm.Interval;
         signal.IntervalId = algorithm.Interval.Id;
@@ -457,7 +453,7 @@ public class SignalCreate
             {
                 if (TradingConfig.Trading[signal.Side].IntervalPeriod.ContainsKey(signal.Interval.IntervalPeriod))
                 {
-                    if (signal.Strategy2 != null && TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy2))
+                    if (signal.Strategy != null && TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
                     {
                         // Just clear all, only the last signal counts?
                         // Not sure if this is the right way to go..
@@ -520,7 +516,6 @@ public class SignalCreate
             //SignalStatus = CryptoSignalStatus.Run,
             SignalVolume = Symbol.Volume,
             Side = CryptoTradeSide.Long,  // gets modified later
-            Strategy = CryptoSignalStrategy.Jump,  // gets modified later
             OpenDate = candle.OpenTime.ToDateTime(),
             CloseDate = candle.OpenTime.ToDateTime().AddMinutes(Interval.Duration),
         };

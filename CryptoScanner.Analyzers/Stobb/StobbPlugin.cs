@@ -12,13 +12,11 @@ public class StobbPlugin : IStrategyPlugin
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.Stobb,
-            "stobb",
+        new("stobb",
             typeof(Signal.SignalStobbLong),
             typeof(Signal.SignalStobbShort)
         ),
-        new(CryptoSignalStrategy.StobbMulti,
-            "stobb.multi",
+        new("stobb.multi",
             typeof(Signal.SignalStobbMultiLong),
             typeof(Signal.SignalStobbMultiShort)
         ),

@@ -140,7 +140,7 @@ public class PositionViewModel
 
     private string GetStrategyBackgroundStyle()
     {
-        if (Object.Strategy2 != null && GlobalData.StrategiesSettings.TryGetValue(Object.Strategy2, out var x))
+        if (Object.Strategy != null && GlobalData.StrategiesSettings.TryGetValue(Object.Strategy, out var x))
         {
             var c = Object.Side == CryptoTradeSide.Long ? x.strategySettings.ColorLong : x.strategySettings.ColorShort;
             if (c.A == 0)

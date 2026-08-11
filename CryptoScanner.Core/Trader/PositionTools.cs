@@ -81,8 +81,7 @@ public static class PositionTools
             Interval = symbolInterval.Interval,
             IntervalId = symbolInterval.Interval.Id,
             Status = CryptoPositionStatus.Waiting,
-            Strategy = RegisterAlgorithms.StrategyOf(strategyName),
-            Strategy2 = strategyName,
+            Strategy = strategyName ?? "",   // the column is NOT NULL
             ActiveDca = false,
             EventText = eventText,
             PartCount = 0,
@@ -131,7 +130,7 @@ public static class PositionTools
             Position = position,
             Purpose = purpose,
             PartNumber = NextPartNumber(position, purpose),
-            Strategy = RegisterAlgorithms.StrategyOf(strategyName),
+            Strategy = strategyName ?? "",   // the column is NOT NULL
             Interval = interval,
             IntervalId = interval.Id,
             SignalPrice = signalPrice,

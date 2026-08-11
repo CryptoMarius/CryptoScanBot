@@ -161,7 +161,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
         {
             if (_StrategyBackground == null)
             {
-                if (Object.Strategy2 != null && GlobalData.StrategiesSettings.TryGetValue(Object.Strategy2, out (SettingsSignalStrategyBase strategySettings, DateTime _) x))
+                if (Object.Strategy != null && GlobalData.StrategiesSettings.TryGetValue(Object.Strategy, out (SettingsSignalStrategyBase strategySettings, DateTime _) x))
                 {
                     if (Object.Side == CryptoTradeSide.Long)
                         _StrategyBackground = new SolidColorBrush(x.strategySettings.ColorLong.ToAvaloniaColor());

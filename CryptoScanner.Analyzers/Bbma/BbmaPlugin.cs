@@ -23,7 +23,6 @@ public class BbmaPlugin : IStrategyPlugin
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
         new(
-            CryptoSignalStrategy.BbmaOmni,
             StrategyInternal.ToLower(),
             typeof(SignalBbmaOmniLong),
             typeof(SignalBbmaOmniShort)

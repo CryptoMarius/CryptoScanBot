@@ -16,7 +16,6 @@ public class AtrRbPlugin : IStrategyPlugin
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
         new(
-            CryptoSignalStrategy.AtrRb,
             StrategyInternal.ToLower(),
             typeof(AtrRbSignalLong),
             typeof(AtrRbSignalShort)

@@ -14,15 +14,13 @@ public class SmcPlugin : IStrategyPlugin
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.OrderBlock,
-            "smc",
+        new("smc",
             typeof(Signal.SignalOrderBlockLong),
             typeof(Signal.SignalOrderBlockShort),
             IsZoneStrategy: true
         ),
 
-        new(CryptoSignalStrategy.OrderBlockRejection,
-            "smc.rejection",
+        new("smc.rejection",
             typeof(Signal.SignalOrderBlockRejectionLong),
             typeof(Signal.SignalOrderBlockRejectionShort),
             IsZoneStrategy: true

@@ -31,8 +31,8 @@ public class SignalCreateBase
 
     // The requested strategy and side
     public required CryptoTradeSide SignalSide { get; set; }
-    // The strategy NAME (e.g. "atrrb"). Used to be the CryptoSignalStrategy enum; the name is what
-    // the settings, the registry and the database (Strategy2) address a strategy by.
+    // The strategy NAME (e.g. "atrrb") — what the settings, the registry and the database all
+    // address a strategy by. Used to be the CryptoSignalStrategy enum.
     public required string SignalStrategy { get; set; }
 
     // The requested candle and its indicator data (grouped)

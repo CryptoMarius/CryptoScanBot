@@ -18,7 +18,6 @@ public class KumoSqueezePlugin : IStrategyPlugin
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
         new(
-            CryptoSignalStrategy.KumoSqueeze,
             StrategyInternal.ToLower(),
             typeof(Signal.KumoSqueezeSignalLong),
             typeof(Signal.KumoSqueezeSignalShort)

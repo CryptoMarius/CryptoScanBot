@@ -31,7 +31,7 @@ public class CryptoPositionPart
     public CryptoInterval? Interval { get; set; }
 
     public CryptoPartPurpose Purpose { get; set; }
-    public CryptoSignalStrategy Strategy { get; set; }
+    public string Strategy { get; set; } = "";
 
     // When Purpose == TakeProfit, this IS the configured TP level (1-based: "TP 1" = SettingsTrading
     // TpList[0], "TP 2" = TpList[1], ...), set once at creation and never renumbered - combined with

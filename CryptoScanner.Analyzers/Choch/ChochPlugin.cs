@@ -17,26 +17,22 @@ public class ChochPlugin : IStrategyPlugin
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.ChochPrimary,
-            "choch.primary",
+        new("choch.primary",
             typeof(Signal.SignalChochPrimaryLong),
             typeof(Signal.SignalChochPrimaryShort)
         ),
 
-        new(CryptoSignalStrategy.ChochPrimaryPullback,
-            "choch.primary.pullback",
+        new("choch.primary.pullback",
             typeof(Signal.SignalChochPrimaryPullbackLong),
             typeof(Signal.SignalChochPrimaryPullbackShort)
         ),
 
-        new(CryptoSignalStrategy.ChochSecondary,
-            "choch.secondary",
+        new("choch.secondary",
             typeof(Signal.SignalChochSecondaryLong),
             typeof(Signal.SignalChochSecondaryShort)
         ),
 
-        new(CryptoSignalStrategy.ChochSecondaryPullback,
-            "choch.secondary.pullback",
+        new("choch.secondary.pullback",
             typeof(Signal.SignalChochSecondaryPullbackLong),
             typeof(Signal.SignalChochSecondaryPullbackShort)
         ),

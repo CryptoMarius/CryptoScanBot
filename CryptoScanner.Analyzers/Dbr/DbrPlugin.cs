@@ -17,7 +17,6 @@ public class DbrPlugin : IStrategyPlugin
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
         new(
-            CryptoSignalStrategy.Dbr,
             StrategyInternal.ToLower(),
             typeof(DbrSignalLong),
             typeof(DbrSignalShort)

@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 76;
+    public readonly static int CurrentDatabaseVersion = 77;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1522,6 +1522,73 @@ public class Migration
             using var transaction = database.BeginTransaction();
 
             try { database.Connection.Execute("alter table EmulatorRun add PositionsCancelled INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 11-08-2026 Strategy by name. The Strategy column stops holding the CryptoSignalStrategy
+        // enum value and starts holding the strategy name ("atrrb") - on Signal, Position and
+        // PositionPart alike. Strategy2 was a short-lived companion column (database version 75)
+        // that never reached most installations; it is dropped where it does exist.
+        //
+        // The map below is the LAST place the CryptoSignalStrategy values exist. It is written out
+        // literally on purpose: this migration has to keep working after the enum is deleted from
+        // the code, and it is the historical record of what those numbers meant. Bbma (42) and
+        // StochDir (52) are absent because no plugin ever registered them; a row holding a value
+        // that is not in the map keeps that value, so it stays visible instead of turning into null.
+        //
+        // The numbers were reused over time: 28 was AtrRb until 2026-06-19, then Baba, and 0c73b955
+        // (2026-07-23) renamed Baba to Vbs and Bre to Dbr without changing the strategy. Checked
+        // against every database here: no row with 28/29/30 predates that renumbering, so mapping
+        // them to today's names is correct. 20/22 (Stoch/SmaDist) were dropped in a93939e7
+        // (2026-03-29) and only survive as history in a few old databases.
+        if (CurrentVersion > version.Version && version.Version == 76)
+        {
+            using var transaction = database.BeginTransaction();
+
+            (int Value, string Name)[] strategyNames =
+            [
+                (0, "jump"),
+                (1, "sbm1"), (2, "sbm2"), (3, "sbm3"),
+                (6, "stobb"), (7, "stobb.multi"),
+                (10, "storsi"), (11, "storsi.multi"),
+                (20, "stoch"), (22, "smadist"),   // removed experiments, still in old databases
+                (25, "nwe"), (26, "nwe.np"), (27, "nwe.bb"),
+                (28, "vbs"), (29, "atrrb"), (30, "dbr"), (31, "trend"),
+                (43, "bbma.omni"),
+                (53, "bbrsiengulfing"), (54, "ichimoku.kumo.breakout"), (55, "bbsqueeze"),
+                (56, "supertrendbreakout"), (57, "kumosqueeze"),
+                (60, "choch.primary"), (61, "choch.primary.pullback"),
+                (62, "choch.secondary"), (63, "choch.secondary.pullback"),
+                (1000, "dlz"), (1001, "dlz.near"), (1003, "fvg"),
+                (1004, "smc"), (1006, "smc.rejection"),
+            ];
+
+            // CAST because PositionPart.Strategy is a TEXT column holding the number as text ("30")
+            // where Signal and Position hold it as an integer - the cast makes one expression fit
+            // all three.
+            //
+            // The WHERE is what makes this safe to run twice. CAST('atrrb' AS INTEGER) is 0 in
+            // SQLite, so without it a second pass over already-converted rows would match "when 0"
+            // and turn every strategy into "jump". Only rows that still hold a number are touched:
+            // an integer (Signal/Position) or text starting with a digit (PositionPart). Names and
+            // NULLs match neither and are left alone.
+            string whenList = string.Concat(strategyNames.Select(s => $" when {s.Value} then '{s.Name}'"));
+            foreach (string table in new[] { "Signal", "Position", "PositionPart" })
+            {
+                database.Connection.Execute(
+                    $"update {table} set Strategy = case cast(Strategy as integer){whenList} else Strategy end " +
+                    "where typeof(Strategy) = 'integer' or Strategy glob '[0-9]*'",
+                    transaction: transaction);
+            }
+
+            try { database.Connection.Execute("alter table Signal drop column Strategy2", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position drop column Strategy2", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

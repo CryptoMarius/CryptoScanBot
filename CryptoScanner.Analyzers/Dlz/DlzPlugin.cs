@@ -14,16 +14,14 @@ public class DlzPlugin : IStrategyPlugin
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.DominantLevel,
-            "dlz",
+        new("dlz",
             typeof(Signal.SignalDominantLevelLong),
             typeof(Signal.SignalDominantLevelShort),
             IsZoneStrategy: true
         ),
 
         // Level approaching
-        new(CryptoSignalStrategy.DominantLevelNear,
-            "dlz.near",
+        new("dlz.near",
             typeof(Signal.SignalDominantLevelNearLong),
             typeof(Signal.SignalDominantLevelNearShort),
             IsZoneStrategy: true

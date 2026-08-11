@@ -12,13 +12,11 @@ public class StorsiPlugin : IStrategyPlugin
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.StoRsi,
-            "storsi",
+        new("storsi",
             typeof(Signal.StoRsiLong),
             typeof(Signal.StoRsiShort)
         ),
-        new(CryptoSignalStrategy.StoRsiMulti,
-            "storsi.multi",
+        new("storsi.multi",
             typeof(Signal.StoRsiMultiLong),
             typeof(Signal.StoRsiMultiShort)
         ),

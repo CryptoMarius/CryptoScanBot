@@ -12,8 +12,7 @@ public class JumpPlugin : IStrategyPlugin
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.Jump,
-            "jump",
+        new("jump",
             typeof(Signal.SignalCandleJumpLong),
             typeof(Signal.SignalCandleJumpShort)
         ),

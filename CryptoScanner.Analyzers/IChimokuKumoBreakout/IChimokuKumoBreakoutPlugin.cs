@@ -21,7 +21,6 @@ public class IChimokuKumoBreakoutPlugin : IStrategyPlugin
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
         new(
-            CryptoSignalStrategy.IchimokuKumoBreakout,
             StrategyInternal.ToLower(),
             typeof(IchimokuKumoBreakoutLong),
             typeof(IchimokuKumoBreakoutShort)

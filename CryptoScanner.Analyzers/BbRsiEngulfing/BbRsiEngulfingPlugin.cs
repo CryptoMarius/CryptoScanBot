@@ -20,7 +20,6 @@ public class BbRsiEngulfingPlugin : IStrategyPlugin
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
         new(
-            CryptoSignalStrategy.BbRsiEngulfing,
             StrategyInternal.ToLower(),
             typeof(Signal.BbRsiEngulfingLong),
             typeof(Signal.BbRsiEngulfingShort)

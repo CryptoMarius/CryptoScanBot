@@ -292,7 +292,7 @@ public class PositionMonitor : IDisposable
                     }
 
                     // Does the user want to trade with this strategy
-                    if (signal.Strategy2 == null || !TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy2))
+                    if (signal.Strategy == null || !TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
                         symbolInterval.SignalList.Remove(signal);
@@ -318,7 +318,7 @@ public class PositionMonitor : IDisposable
                     }
 
                     // Create the strategy and fill all the properties (todo: not a neat solution)
-                    SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(signal.Side, signal.Strategy2);
+                    SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(signal.Side, signal.Strategy);
                     if (algorithm == null)
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");
@@ -575,13 +575,13 @@ public class PositionMonitor : IDisposable
 
 
                                 // Create position + entry part
-                                position = PositionTools.CreatePosition(Symbol, signal.Strategy2, signal.Side,
+                                position = PositionTools.CreatePosition(Symbol, signal.Strategy, signal.Side,
                                     signal.EventText, symbolInterval, LastCandle1mCloseTimeDate);
                                 PositionTools.AddSignalProperties(position, signal);
                                 Database.Connection.Insert(position);
                                 PositionTools.AddPosition(position);
                                 PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry,
-                                    signal.Interval, signal.Strategy2, entryPrice, LastCandle1mCloseTimeDate);
+                                    signal.Interval, signal.Strategy, entryPrice, LastCandle1mCloseTimeDate);
 
                                 // Off-by-one diagnostic: compare the entry candle to the signal's trigger
                                 // candle. delayCandles == 1 means we entered at the trigger candle's close
@@ -647,7 +647,7 @@ public class PositionMonitor : IDisposable
 
                                 // Signal the background thread to create the DCA part (all position
                                 // mutations are serialized on the background thread under the semaphore).
-                                position.PendingDcaSignal = new(signal.Interval, signal.Strategy2, dcaPrice, LastCandle1mCloseTimeDate);
+                                position.PendingDcaSignal = new(signal.Interval, signal.Strategy, dcaPrice, LastCandle1mCloseTimeDate);
                                 return;
                             }
                         }
@@ -1170,7 +1170,7 @@ public class PositionMonitor : IDisposable
                     }
 
                     // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
-                    PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, position.Interval!, position.Strategy2,
+                    PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, position.Interval!, position.Strategy,
                         price, LastCandle1mCloseTimeDate);
                 }
 
@@ -1457,7 +1457,7 @@ public class PositionMonitor : IDisposable
                 {
                     if (!takeProfitPartsByLevel.ContainsKey(i))
                         takeProfitPartsByLevel[i] = PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval!,
-                            position.Strategy2, 0, GlobalData.Clock.UtcNow);
+                            position.Strategy, 0, GlobalData.Clock.UtcNow);
                 }
 
                 decimal openFractionSum = openLevelIndexes.Sum(i => levels[i].Factor);

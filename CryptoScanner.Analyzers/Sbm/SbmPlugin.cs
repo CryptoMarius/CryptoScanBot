@@ -19,22 +19,19 @@ public class SbmPlugin : IStrategyPlugin
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
         // Based on the original
-        new(CryptoSignalStrategy.Sbm1,
-            "sbm1",
+        new("sbm1",
             typeof(Signal.SignalSbm1Long),
             typeof(Signal.SignalSbm1Short)
         ),
 
         // Based on ??
-        new(CryptoSignalStrategy.Sbm2,
-            "sbm2",
+        new("sbm2",
             typeof(Signal.SignalSbm2Long),
             typeof(Signal.SignalSbm2Short)
         ),
 
         // Based on BB expansion
-        new(CryptoSignalStrategy.Sbm3,
-            "sbm3",
+        new("sbm3",
             typeof(Signal.SignalSbm3Long),
             typeof(Signal.SignalSbm3Short)
         ),

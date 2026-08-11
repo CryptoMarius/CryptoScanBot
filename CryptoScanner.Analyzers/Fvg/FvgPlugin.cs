@@ -14,8 +14,7 @@ public class FvgPlugin : IStrategyPlugin
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.FairValueGap,
-            "fvg",
+        new("fvg",
             typeof(Signal.SignalFairValueGapLong),
             typeof(Signal.SignalFairValueGapShort),
             IsZoneStrategy: true

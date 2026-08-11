@@ -250,7 +250,7 @@ public class GridCommandService
                             price = (decimal)position.Symbol.LastPrice + position.Symbol.PriceTickSize;
                     }
 
-                    PositionTools.ExtendPosition(db, position, CryptoPartPurpose.Dca, position.Interval!, position.Strategy2,
+                    PositionTools.ExtendPosition(db, position, CryptoPartPurpose.Dca, position.Interval!, position.Strategy,
                         price, GlobalData.Clock.UtcNow, true);
                     GlobalData.AddTextToLogTab($"{position.Symbol.Name} manually added DCA to position {position.Id}");
 

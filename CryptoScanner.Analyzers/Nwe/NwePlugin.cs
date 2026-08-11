@@ -17,22 +17,19 @@ public class NwePlugin : IStrategyPlugin
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
         // NWE Repaining
-        new(CryptoSignalStrategy.Nwe,
-            StrategyInternal.ToLower(),
+        new(StrategyInternal.ToLower(),
             typeof(Signal.SignalNwe),
             typeof(Signal.SignalNwe)
         ),
 
         // NWE not repainting
-        new(CryptoSignalStrategy.NweNp,
-            StrategyInternalNp.ToLower(),
+        new(StrategyInternalNp.ToLower(),
             typeof(Signal.SignalNweNp),
             typeof(Signal.SignalNweNp)
         ),
 
         // NWE × BB crossover: NWE curls through the BB band after extending beyond it
-        new(CryptoSignalStrategy.NweBb,
-            StrategyInternalBb.ToLower(),
+        new(StrategyInternalBb.ToLower(),
             typeof(Signal.SignalNweBbLong),
             typeof(Signal.SignalNweBbShort)
         ),

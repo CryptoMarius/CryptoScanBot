@@ -12,8 +12,7 @@ public class TrendPlugin : IStrategyPlugin
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.Trend,
-            StrategyInternal.ToLower(),
+        new(StrategyInternal.ToLower(),
             typeof(Signal.SignalTrendLong),
             typeof(Signal.SignalTrendShort)
         ),

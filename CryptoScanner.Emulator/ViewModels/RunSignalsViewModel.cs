@@ -22,7 +22,7 @@ public class SignalRow
     public string? Symbol { get; set; }
     public string? Interval { get; set; }
     public int Side { get; set; }
-    public string? Strategy2 { get; set; }
+    public string? Strategy { get; set; }
     public decimal SignalPrice { get; set; }
     public decimal? SlPercentage { get; set; }
     public int IsInvalid { get; set; }
@@ -39,7 +39,7 @@ public class SignalRow
 
     public string SignalLocal => DateTime.SpecifyKind(SignalTime, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm");
     public string SideText => ((CryptoTradeSide)Side).ToString();
-    public string StrategyText => Strategy2 ?? "?";
+    public string StrategyText => Strategy ?? "?";
     public string SignalPriceText => SignalPrice.ToString(QuoteDisplayFormat);
     public string SlPercentageText => SlPercentage.HasValue ? SlPercentage.Value.ToString("N2") : "—";
     public string ValidText => IsInvalid != 0 ? "invalid" : "ok";
@@ -92,7 +92,7 @@ public partial class RunSignalsViewModel : ObservableObject
 
             var rows = database.Connection.Query<SignalRow>(
                 "SELECT s.OpenDate as SignalTime, sym.Name as Symbol, i.Name as Interval, " +
-                "       s.Side, s.Strategy2, s.SignalPrice, s.SlPercentage, s.IsInvalid, s.EventText, " +
+                "       s.Side, s.Strategy, s.SignalPrice, s.SlPercentage, s.IsInvalid, s.EventText, " +
                 "       p.Id as PositionId, p.CreateTime as PositionCreateTime, p.Status as PositionStatus, " +
                 "       p.Profit, p.Percentage " +
                 "FROM Signal s " +
