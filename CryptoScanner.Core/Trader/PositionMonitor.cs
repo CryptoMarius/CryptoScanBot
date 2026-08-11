@@ -242,7 +242,11 @@ public class PositionMonitor : IDisposable
         }
 
         // Om te voorkomen dat we te snel achter elkaar in dezelfde munt stappen
-        if (Symbol.LastTradeDate.HasValue && Symbol.LastTradeDate?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1m.Date)
+        // Compare against the candle's CLOSE time: that is the moment this decision is taken, and
+        // it is what LastTradeDate itself is written with. Comparing against the OPEN time made the
+        // cooldown outlive itself by one base interval - 4 minutes on a 5m run, 14 on a 15m run -
+        // so a coarser base interval discarded signals that a 1m run acted on.
+        if (Symbol.LastTradeDate.HasValue && Symbol.LastTradeDate?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1mCloseTimeDate)
         {
             // Bypass cooldown when an unfilled position exists — no actual trade took place yet,
             // so a newer signal should be allowed to replace the waiting entry order.
@@ -867,7 +871,10 @@ public class PositionMonitor : IDisposable
                 if (GlobalData.ActiveExchange!.Data.AssetList.TryGetValue(Symbol.Quote, out var asset) && asset != null)
                     currentAssetQuantity = asset.Total;
                 entryValue = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity);
-                GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.PartCount} entry {part.PartNumber} value={entryValue}");
+                // No log line here on purpose: ExchangeBase.Dump reports the placed entry order
+                // right after this, including the quantity and value AFTER rounding - which is
+                // what the user actually needs. Logging the raw amount beforehand only repeated
+                // the configured entry amount on every attempt.
             }
             else
             {
@@ -893,13 +900,17 @@ public class PositionMonitor : IDisposable
                     var dcaEntry = GlobalData.Settings.Trading.DcaList[dcaLevelIndex];
                     // dcaEntry.Factor is a percentage of the entry amount (100 = 1x, 200 = 2x, ...)
                     entryValue = (decimal)position.EntryAmount * dcaEntry.Factor / 100m;
-                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.PartCount} dca {part.PartNumber} value={entryValue}");
+                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} averaging down with DCA {part.PartNumber} of "
+                        + $"{GlobalData.Settings.Trading.DcaList.Count} at {dcaEntry.Percentage}% from the entry price: "
+                        + $"{entryValue} {Symbol.Quote} extra ({dcaEntry.Factor}% of the {position.EntryAmount} {Symbol.Quote} entry)");
                 }
                 else
                 {
                     // DCA, verdubbelen, gebaseerd op Zignally (geeft snel een asset tekort)
                     entryValue = position.Invested - position.Returned + position.Commission;
-                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.PartCount} extra {part.PartNumber} value={entryValue}");
+                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} WARNING: DCA {part.PartNumber} has no matching level in the "
+                        + $"DCA list ({GlobalData.Settings.Trading.DcaList.Count} levels configured) - the list was probably changed "
+                        + $"while this position was open. Falling back to doubling the invested amount: {entryValue} {Symbol.Quote} extra");
                 }
             }
 
@@ -1841,15 +1852,6 @@ public class PositionMonitor : IDisposable
             await SignalPrepare.ExecuteAsync(Symbol, LastCandle1m, LastCandle1mCloseTime);
             long profExecuteStart = Stopwatch.GetTimestamp();
 
-            // Only skip signal generation for filled positions (status >= Trading).
-            // Waiting (unfilled) positions allow signals so a newer signal can replace them.
-            bool skipSignals = hasPosition && existingPosition!.Status >= CryptoPositionStatus.Trading;
-
-            // Calculate signals and touch of the dlz and fvg zones
-            if (!skipSignals)
-                await SignalExecute.ExecuteAsync(Symbol, LastCandle1mCloseTime);
-            long profTradeStart = Stopwatch.GetTimestamp();
-
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
 
             // When a position exists and the candle stays inside the known TP/SL/DCA
@@ -1884,22 +1886,55 @@ public class PositionMonitor : IDisposable
                 }
             }
 
+            // Orders first, signals after. An order this candle fills changes the position (Waiting
+            // becomes Trading), and that is what decides whether the signal work is needed at all -
+            // so it has to have happened before we ask. No second lookup needed: the fill mutates
+            // the very object existingPosition points at, and it does not leave PositionList here.
             if (!canSkipPositionProcessing)
             {
                 // Simulate Trade indien openstaande orders gevuld zijn
                 //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
                 if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading && !OrdersAlreadyProcessed)
                     await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m, BaseIntervalDuration);
-
-                // Pause because of trading rules or low barometer
-                PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, BaseIntervalDuration);
-
-                //TODO: Reuse the preparedIndicatorDataList in the CreateOrExtendPositionAsync?
-                // Open or extend a position
-                //if (signalList.Count > 0) // alway's?
-                if (!skipSignals)
-                    await CreateOrExtendPositionAsync();
             }
+
+            // Only skip signal generation for filled positions (status >= Trading).
+            // Waiting (unfilled) positions allow signals so a newer signal can replace them.
+            bool skipSignals = hasPosition && existingPosition!.Status >= CryptoPositionStatus.Trading;
+
+            // Also stay quiet for a short while after the last fill on this symbol. Closing a
+            // position IS a fill (take profit or stop loss), so this covers the case where the
+            // position just disappeared from PositionList - which, depending on the base interval,
+            // may or may not already have happened by the time we get here.
+            if (!skipSignals && Symbol.LastTradeDate.HasValue
+                && Symbol.LastTradeDate.Value.AddMinutes(GlobalData.Settings.Trading.SignalCooldownAfterTradeTime) > LastCandle1mCloseTimeDate)
+                skipSignals = true;
+
+            // Calculate signals and touch of the dlz and fvg zones
+            if (!skipSignals)
+                await SignalExecute.ExecuteAsync(Symbol, LastCandle1mCloseTime);
+            long profTradeStart = Stopwatch.GetTimestamp();
+
+            // Pause because of trading rules or low barometer
+            PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, BaseIntervalDuration);
+
+            // Stepping in runs REGARDLESS of the trigger-price skip. That skip guards the ORDER
+            // handling - it states that no order can have been touched by this candle - but the
+            // step-in asks something else entirely: should a waiting, unfilled position be replaced
+            // by a newer signal? That question does not depend on whether an order was touched.
+            //
+            // Keeping it inside the skip tied the answer to how much of the market the base candle
+            // covers. Replacing needs the trigger price to be reached without the order filling,
+            // which happens at exactly the entry price (the trigger uses <=, the fill uses <). On a
+            // 15m run the candle spans the whole quarter and closes on the quarter boundary, so
+            // both conditions meet; on a 1m run the candle at that same boundary only covers the
+            // final minute, so they never do. Same market, five times as many replacements.
+            //
+            //TODO: Reuse the preparedIndicatorDataList in the CreateOrExtendPositionAsync?
+            // Open or extend a position
+            //if (signalList.Count > 0) // alway's?
+            if (!skipSignals)
+                await CreateOrExtendPositionAsync();
             long profPositionCheckStart = Stopwatch.GetTimestamp();
 
             // Check the positions

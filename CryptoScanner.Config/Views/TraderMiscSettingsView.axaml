@@ -48,6 +48,16 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
+            <!-- Signal cool down after a trade -->
+            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Signal cool down after trade (m):"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding SignalCooldownAfterTradeTime, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
             <!-- Slot Limits -->
             <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,2,0,0">
                 <StackPanel Margin="6" Spacing="4">

@@ -1,4 +1,4 @@
-@using CryptoScanner.UI.Models
+﻿@using CryptoScanner.UI.Models
 
 @* The two columns of TraderEntryConditionsView: oscillator conditions on the left, trend/price
    conditions on the right. Used twice, exactly as Avalonia does — once for the global trader
@@ -26,8 +26,9 @@
             <label>Wait if stoch %K is OS/OB</label>
         </div>
 
-        @* Also lined up with the checkbox captions above it. *@
-        <div class="settings-group settings-group-nested align-caption">
+        @* Flush left, exactly as in TraderEntryConditionsView: the nested groupbox there carries
+           Margin="0,2,0,0". Only the MA200 sub-row below is indented (Margin="24,0,0,0"). *@
+        <div class="settings-group settings-group-nested">
             <div class="settings-group-header">Stoch OS/OB strength</div>
             <div class="settings-group-body">
                 <div class="field" title="Window (in signal-interval bars) used to find the most-recent OS run and to compute the Z-score mean/stdev.">
@@ -100,8 +101,8 @@
                        @bind="Data.Ma200ConfirmationCandles" disabled="@(!Data.CheckPriceAboveMa200)" />
             </span>
         </div>
-        @* Lines up with the captions of the checkboxes above instead of with their little squares. *@
-        <div class="field align-caption" title="Number of consecutive higher timeframes that must also confirm a band break. 0 = single-timeframe (normal).">
+        @* Flush left as well: the Avalonia grid for this row has Margin="0,6,0,0". *@
+        <div class="field" title="Number of consecutive higher timeframes that must also confirm a band break. 0 = single-timeframe (normal).">
             <label>Timeframe consensus count</label>
             <input type="number" class="input-number" min="0" @bind="Data.TimeframeConsensusCount" />
         </div>

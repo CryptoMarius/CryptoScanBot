@@ -137,6 +137,16 @@ public class SettingsTrading
     // Tijd na een buy om niets te doen (om ladders te voorkomen)
     public int GlobalBuyCooldownTime { get; set; } = 30;
 
+    // Minutes after a FILL (entry, dca, take profit or stop loss - LastTradeDate) in which no new
+    // signal is created for that symbol. GlobalBuyCooldownTime above holds off OPENING a position;
+    // this one holds off creating the signal in the first place.
+    //
+    // It also removes a base-interval dependency: whether the position had already left
+    // PositionList by the time the signal phase ran depended on how far into the candle it closed,
+    // which differs per base interval. Asking "did we trade recently" instead does not.
+    // Keep it at or above the coarsest base interval used.
+    public int SignalCooldownAfterTradeTime { get; set; } = 15;
+
     //***************************
     // Take profit
     public CryptoOrderType TakeProfitOrderType { get; set; } = CryptoOrderType.Limit;

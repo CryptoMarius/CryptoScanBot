@@ -889,7 +889,11 @@ input[type="checkbox"]:focus-visible {
    entry conditions. It is not a label/control pair, so it already spans both grid columns. */
 .settings-group-nested {
     margin-top: 10px;
-    width: 100%;
+    /* The groupbox body is a two column grid (labels | controls), so a nested frame landed inside
+       the narrow label column and got squeezed. It has to span both columns instead.
+       No width:100% either: combined with a left margin that pushed the frame the same distance
+       past the right edge of the groupbox around it. */
+    grid-column: 1 / -1;
 }
 
 /* Debug tab — a plain list without a frame, like the StackPanel in DebugTabView. */
@@ -1069,17 +1073,10 @@ label.debug-item {
     width: 100%;
 }
 
-/* A value that belongs to the switch above it — Margin="20,0,0,0" in the axaml. Because .field is
+/* A value that belongs to the switch above it — Margin="24,0,0,0" in the axaml. Because .field is
    display:contents the indent has to go on the label itself. */
-.field.indented > label,
-/* Lines a row up with the CAPTIONS of the checkboxes above it instead of with their little squares:
-   the row padding of a checkbox line (5) plus the box (14) plus the gap after it (5). */
-.field.align-caption > label {
+.field.indented > label {
     padding-left: 24px;
-}
-
-.settings-group-nested.align-caption {
-    margin-left: 24px;
 }
 
 /* A row that follows the enabled state of its checkbox: the caption and the unit text grey out with
@@ -1255,6 +1252,8 @@ code {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* anchor for the indicator dropdown that hangs under the header bar */
+    position: relative;
 }
 
 /* Strip above the chart holding the coin, quote and interval pickers */
@@ -1304,6 +1303,66 @@ code {
 
 .chart-ohlcv .ohlcv-up { color: var(--green); }
 .chart-ohlcv .ohlcv-down { color: var(--red); }
+
+/* ── EXPERIMENT: indicator dropdown in the header bar, TradingView style ── */
+.chart-header-menu {
+    margin-left: 4px;
+}
+
+.chart-header-button {
+    height: 22px;
+    padding: 0 8px;
+    font-size: 12px;
+    line-height: 20px;
+}
+
+/* Catches the click next to the menu so it closes again */
+.chart-indicator-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+}
+
+.chart-indicator-menu {
+    position: absolute;
+    top: 30px;
+    left: 8px;
+    z-index: 41;
+    min-width: 210px;
+    max-height: calc(100% - 40px);
+    overflow-y: auto;
+    padding: 6px 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-surface);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.chart-indicator-heading {
+    padding: 4px 10px 2px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.chart-indicator-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 1px 10px;
+}
+
+.chart-indicator-row:hover {
+    background: var(--bg-hover);
+}
+
+.chart-indicator-row .chart-toggle {
+    flex: 1;
+    min-width: 0;
+}
 
 /* ── Per-overlay style configuration on the chart toolbar ── */
 .chart-toggle-row {

@@ -183,6 +183,7 @@ public class AtrRbChartOverlay : IChartOverlay
             {
                 Time = CandleTime.AlignFromDateTime(candle.Date, interval.Duration).ToUnixSeconds(),
                 Above = upperBreak,
+                Price = upperBreak ? high : low,
                 Text = "SL " + slPct.ToString("0.##") + "%",
             });
         }

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
@@ -172,16 +172,19 @@ public class VbsChartOverlay : IChartOverlay
             // above the bar the first one ends up lowest, below the bar the first one ends up
             // highest. Emitting them in the right order per side keeps TP under SL either way.
             long time = CandleTime.AlignFromDateTime(candle.Date, interval.Duration).ToUnixSeconds();
+            double anchor = upperBreak ? high : low;
             var stopLoss = new ChartOverlayLabel
             {
                 Time = time,
                 Above = upperBreak,
+                Price = anchor,
                 Text = "SL " + slPct.ToString("0.##") + "%",
             };
             var takeProfit = new ChartOverlayLabel
             {
                 Time = time,
                 Above = upperBreak,
+                Price = anchor,
                 Text = "TP " + tpPct.ToString("0.##") + "%",
             };
 

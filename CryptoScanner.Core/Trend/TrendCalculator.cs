@@ -145,7 +145,16 @@ public class TrendCalculator
             // list happens to hold more than this window).
             if (GlobalData.IsEmulatorMode)
             {
+                // Align the window on THIS interval instead of on the minute. GetCandleFetchStart
+                // counts back from a minute-aligned "now", so the cold build started on a different
+                // candle depending on which minute the first trend calculation happened to land on —
+                // and that first candle decides where the ZigZag puts its first pivot, which it then
+                // carries for the rest of the run (it is only fed incrementally afterwards). For any
+                // interval FINER than the replay's base interval that minute differs between runs,
+                // which is exactly the set of intervals whose trend drifted apart: 1m/2m/3m on a 5m
+                // run, plus 5m/10m on a 15m run.
                 CandleTime windowStart = CandleTools.GetCandleFetchStart(symbol, interval, maxDate.ToDateTime());
+                windowStart = new CandleTime(windowStart.Minutes - (windowStart.Minutes % interval.Duration));
                 if (minDate < windowStart)
                     minDate = windowStart;
             }

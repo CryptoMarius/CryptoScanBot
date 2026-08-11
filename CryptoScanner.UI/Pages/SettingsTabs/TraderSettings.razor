@@ -63,6 +63,10 @@
                 <label>Cool down time (m)</label>
                 <input type="number" class="input-number" min="0" @bind="_buyCooldown" />
             </div>
+            <div class="field">
+                <label>Signal cool down after trade (m)</label>
+                <input type="number" class="input-number" min="0" @bind="_signalCooldownAfterTrade" />
+            </div>
 
             <div class="settings-group settings-group-nested">
                 <div class="settings-group-header">Slot limits</div>
@@ -330,6 +334,7 @@
     private CryptoOrderType _dcaOrderType;
     private decimal _dcaPullback;
     private int _buyCooldown;
+    private int _signalCooldownAfterTrade;
     private CryptoOrderType _tpOrderType;
     private CryptoTakeProfitStrategy _tpStrategy;
     private bool _addDustToTp;
@@ -448,6 +453,7 @@
         _dcaOrderType = t.DcaOrderType;
         _dcaPullback = t.DcaPullbackPercentage;
         _buyCooldown = t.GlobalBuyCooldownTime;
+        _signalCooldownAfterTrade = t.SignalCooldownAfterTradeTime;
         _tpOrderType = t.TakeProfitOrderType;
         _tpStrategy = t.TakeProfitStrategy;
         _addDustToTp = t.AddDustToTp;
@@ -491,6 +497,7 @@
         t.DcaOrderType = _dcaOrderType;
         t.DcaPullbackPercentage = _dcaPullback;
         t.GlobalBuyCooldownTime = _buyCooldown;
+        t.SignalCooldownAfterTradeTime = _signalCooldownAfterTrade;
         t.TakeProfitOrderType = _tpOrderType;
         t.TakeProfitStrategy = _tpStrategy;
         t.AddDustToTp = _addDustToTp;

@@ -38,6 +38,9 @@ public sealed class ChartOverlayLabel
     /// <summary>Above the candle (a high/short side break) or below it.</summary>
     public bool Above { get; set; }
 
+    /// <summary>Price the caption is anchored to, normally the candle's high or low.</summary>
+    public double Price { get; set; }
+
     public string Text { get; set; } = "";
     public string Color { get; set; } = "#ffffff";
 }

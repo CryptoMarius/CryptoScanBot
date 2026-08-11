@@ -34,8 +34,52 @@ public class InternalBrowserService : IDisposable
         if (string.IsNullOrEmpty(url))
             return;
 
+        url = ToEmbeddableUrl(url);
         CurrentUrl = url;
         NavigateRequested?.Invoke(url, switchTab);
+    }
+
+    /// <summary>
+    /// The internal browser is an iframe here, not a full WebView as in Avalonia, and
+    /// www.tradingview.com refuses to be framed (X-Frame-Options), which left an empty tab saying
+    /// "refused to connect". TradingView publishes s.tradingview.com/widgetembed for exactly this
+    /// purpose, so a chart link is rewritten to that. Any other address is passed through.
+    /// </summary>
+    private static string ToEmbeddableUrl(string url)
+    {
+        if (url.IndexOf("tradingview.com/chart", StringComparison.OrdinalIgnoreCase) < 0)
+            return url;
+
+        string symbol = ReadQueryValue(url, "symbol");
+        if (string.IsNullOrEmpty(symbol))
+            return url;
+
+        string theme = ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme);
+        string result = "https://s.tradingview.com/widgetembed/?symbol=" + Uri.EscapeDataString(symbol)
+            + "&hidesidetoolbar=0&symboledit=1&saveimage=0&allow_symbol_change=1&locale=en"
+            + "&theme=" + theme;
+
+        // The chart url carries the interval as "interval=60"; keep it when it is there
+        string interval = ReadQueryValue(url, "interval");
+        if (!string.IsNullOrEmpty(interval))
+            result += "&interval=" + Uri.EscapeDataString(interval);
+
+        return result;
+    }
+
+    private static string ReadQueryValue(string url, string name)
+    {
+        int start = url.IndexOf('?');
+        if (start < 0)
+            return "";
+
+        foreach (string pair in url[(start + 1)..].Split('&'))
+        {
+            int equals = pair.IndexOf('=');
+            if (equals > 0 && pair[..equals].Equals(name, StringComparison.OrdinalIgnoreCase))
+                return Uri.UnescapeDataString(pair[(equals + 1)..]);
+        }
+        return "";
     }
 
     /// <summary>

@@ -12,103 +12,16 @@
 @using CryptoScanner.UI.Services
 @using Skender.Stock.Indicators
 @inject SymbolService SymbolService
+@inject PositionService PositionService
 @inject IJSRuntime JS
 @implements IDisposable
 
-@* Avalonia puts this panel on the LEFT of the chart (ScrollViewer Grid.Column="0" Width="220"),
-   not above it. The group order below already matches: Symbol, Trend, FIB, Display, Overlays,
-   Indicators, actions. *@
+@* Avalonia puts all of this in a panel on the LEFT of the chart (ScrollViewer Grid.Column="0"
+   Width="220"). Here it lives in the bar above the chart instead: the pickers straight on the bar,
+   everything that was a group in that panel (Trend, FIB, Display, Overlays, Indicators) behind the
+   one Indicators button, and the two actions as icons. That is 220 pixels of width back for the
+   chart itself, which is what you are actually looking at. *@
 <div class="chart-layout">
-<div class="chart-toolbar">
-
-    @* Groups mirror the Avalonia ChartWindow side panel: Trend, FIB, Display, Overlays
-       (one alphabetical list), Indicators and the action buttons. The symbol, quote and
-       interval pickers live in the bar directly above the chart instead. *@
-    <div class="chart-group">
-        <div class="chart-group-header">Trend</div>
-        <select class="input-select" @bind="_trendType" @bind:after="LoadChart">
-            <option value="@TrendType.Primary">Primary trend</option>
-            <option value="@TrendType.Secondary">Secondary trend</option>
-        </select>
-        <div class="chart-toggle-row">
-            <label class="chart-toggle"><input type="checkbox" @bind="_showZigZag" @bind:after="LoadChart" /> Show zigzag</label>
-            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog(ZigZagStyleKey, "ZigZag"))">⚙</button>
-        </div>
-    </div>
-
-    <div class="chart-group">
-        <div class="chart-group-header">FIB</div>
-        <select class="input-select" @bind="_fibTrendType" @bind:after="LoadChart">
-            <option value="@TrendType.Primary">Primary trend</option>
-            <option value="@TrendType.Secondary">Secondary trend</option>
-        </select>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showFib" @bind:after="LoadChart" /> Show fib retracement</label>
-        <div class="chart-toggle-row">
-            <label class="chart-toggle"><input type="checkbox" @bind="_showFibZigZag" @bind:after="LoadChart" /> Show zigzag</label>
-            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog(FibZigZagStyleKey, "FIB ZigZag"))">⚙</button>
-        </div>
-    </div>
-
-    <div class="chart-group">
-        <div class="chart-group-header">Display</div>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showCandles" @bind:after="LoadChart" /> Candles</label>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showPivots" @bind:after="LoadChart" /> Pivot points</label>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showSignals" @bind:after="LoadChart" /> Signals</label>
-        <label class="chart-toggle"><input type="checkbox" @bind="_showPositions" @bind:after="LoadChart" /> Positions</label>
-    </div>
-
-    <div class="chart-group">
-        <div class="chart-group-header">Overlays</div>
-        @foreach (var overlay in _allOverlays)
-        {
-            var key = overlay.Key;
-            var styleDefinitions = ChartStyleSettings.DefinitionsForOverlay(key).ToList();
-            <div class="chart-toggle-row">
-                <label class="chart-toggle">
-                    <input type="checkbox" checked="@IsOverlayEnabled(key)"
-                           @onchange="e => OnOverlayToggled(key, e)" /> @overlay.Label
-                </label>
-                @if (styleDefinitions.Count > 0)
-                {
-                    <button class="chart-style-button" title="Colours and lines"
-                            @onclick="() => OpenStyleDialog(key, overlay.Label)">⚙</button>
-                }
-            </div>
-        }
-    </div>
-
-    <div class="chart-group">
-        <div class="chart-group-header">Indicators</div>
-        <div class="chart-toggle-row">
-            <label class="chart-toggle"><input type="checkbox" @bind="_showLux" @bind:after="LoadChart" /> Lux</label>
-            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("lux", "Lux"))">&#9881;</button>
-        </div>
-        <div class="chart-toggle-row">
-            <label class="chart-toggle"><input type="checkbox" @bind="_showMacd" @bind:after="LoadChart" /> MACD</label>
-            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("macd", "MACD"))">&#9881;</button>
-        </div>
-        <div class="chart-toggle-row">
-            <label class="chart-toggle"><input type="checkbox" @bind="_showRsi" @bind:after="LoadChart" /> RSI</label>
-            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("rsi", "RSI"))">&#9881;</button>
-        </div>
-        <div class="chart-toggle-row">
-            <label class="chart-toggle"><input type="checkbox" @bind="_showStoch" @bind:after="LoadChart" /> Stochastic</label>
-            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("stoch", "Stochastic"))">&#9881;</button>
-        </div>
-        <div class="chart-toggle-row">
-            <label class="chart-toggle"><input type="checkbox" @bind="_showVolume" @bind:after="LoadChart" /> Volume</label>
-            <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("volume", "Volume"))">&#9881;</button>
-        </div>
-    </div>
-
-    @* Header intentionally blank: a caption above these two buttons read as a stray label.
-       Measuring has no button of its own — shift+drag on the chart does it. *@
-    <div class="chart-group">
-        <div class="chart-group-header">&nbsp;</div>
-        <button class="btn btn-secondary" @onclick="LoadChart">Refresh</button>
-        <button class="btn btn-secondary" @onclick="Calculate" title="Force a full recalculation of the liquidity zones">Calc</button>
-    </div>
-</div>
 <div class="chart-panels">
     @* The symbol, quote and interval pickers themselves, moved here out of the side panel *@
     <div class="chart-header-bar">
@@ -134,11 +47,86 @@
             }
         </select>
 
+        @* Everything the side panel used to hold, behind one button, the way TradingView does it *@
+        <div class="chart-header-menu">
+            <button class="btn btn-secondary chart-header-button"
+                    title="Trend, FIB, overlays, indicators and what is displayed"
+                    @onclick="() => _indicatorMenuOpen = !_indicatorMenuOpen">
+                Indicators @(_indicatorMenuOpen ? "▲" : "▼")
+            </button>
+        </div>
+
+        <button class="chart-icon-button" @onclick="LoadChart"
+                title="Reload the chart with the latest candles, signals and positions">&#10227;</button>
+        <button class="chart-icon-button" @onclick="Calculate"
+                title="Force a full recalculation of the liquidity zones">&#8721;</button>
+
         @* Open/high/low/close/volume of the candle under the mouse. Filled by the chart widget
            itself — the crosshair fires on every mouse move, which is far too often to route
            through Blazor. *@
         <span id="chart-ohlcv" class="chart-ohlcv"></span>
     </div>
+
+    @if (_indicatorMenuOpen)
+    {
+        <div class="chart-indicator-overlay" @onclick="() => _indicatorMenuOpen = false"></div>
+        <div class="chart-indicator-menu" @onclick:stopPropagation="true">
+
+            <div class="chart-indicator-heading">Overlays</div>
+            @foreach (var overlay in _allOverlays)
+            {
+                var key = overlay.Key;
+                var styleDefinitions = ChartStyleSettings.DefinitionsForOverlay(key).ToList();
+                <div class="chart-indicator-row">
+                    <label class="chart-toggle">
+                        <input type="checkbox" checked="@IsOverlayEnabled(key)"
+                               @onchange="e => OnOverlayToggled(key, e)" /> @overlay.Label
+                    </label>
+                    @if (styleDefinitions.Count > 0)
+                    {
+                        <button class="chart-style-button" title="Colours and lines"
+                                @onclick="() => OpenStyleDialog(key, overlay.Label)">⚙</button>
+                    }
+                </div>
+            }
+
+            <div class="chart-indicator-heading">Indicators</div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showLux" @bind:after="LoadChart" /> Lux</label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("lux", "Lux"))">&#9881;</button>
+            </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showMacd" @bind:after="LoadChart" /> MACD</label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("macd", "MACD"))">&#9881;</button>
+            </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showRsi" @bind:after="LoadChart" /> RSI</label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("rsi", "RSI"))">&#9881;</button>
+            </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showStoch" @bind:after="LoadChart" /> Stochastic</label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("stoch", "Stochastic"))">&#9881;</button>
+            </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showVolume" @bind:after="LoadChart" /> Volume</label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("volume", "Volume"))">&#9881;</button>
+            </div>
+
+            <div class="chart-indicator-heading">Display</div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showCandles" @bind:after="LoadChart" /> Candles</label>
+            </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showPivots" @bind:after="LoadChart" /> Pivot points</label>
+            </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showSignals" @bind:after="LoadChart" /> Signals</label>
+            </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showPositions" @bind:after="LoadChart" /> Positions</label>
+            </div>
+        </div>
+    }
     <div id="chart-main" class="chart-panel chart-panel-main"></div>
     <div id="chart-volume" class="chart-panel chart-panel-sub" style="display:@(_showVolume ? "block" : "none"); height:80px;"></div>
     <div id="chart-oscillator" class="chart-panel chart-panel-sub" style="display:@(ShowOscillatorPanel ? "block" : "none"); height:120px;"></div>
@@ -485,14 +473,113 @@
                 await JS.InvokeVoidAsync("ChartWidget.init", theme);
                 _initialized = true;
                 await LoadChartAsync();
+                StartAutoRefresh();
             }
             catch (JSException) { }
         }
     }
 
+    // ------------------------------------------------------------------------------------------
+    // Auto refresh
+    //
+    // The chart used to be a pure snapshot: it only rebuilt on a symbol/interval change, an
+    // overlay toggle or the Refresh button. So a running candle never moved and a position that
+    // got filled while you were watching only appeared after leaving the tab and coming back
+    // (which recreates the component and therefore reloads).
+    //
+    // A full rebuild every tick would be wasteful, so the timer first computes a cheap signature
+    // of everything the chart draws from live data and only reloads when that actually changed.
+    // ------------------------------------------------------------------------------------------
+
+    // Four times a minute. A subscription on the candle/position events would be exact, but the
+    // chart draws from so many sources at once that polling a signature stays far simpler.
+    private const int AutoRefreshSeconds = 15;
+    private System.Threading.Timer? _autoRefreshTimer;
+    private string _dataSignature = "";
+
+    private void StartAutoRefresh()
+    {
+        _autoRefreshTimer?.Dispose();
+        _dataSignature = BuildDataSignature();
+        _autoRefreshTimer = new System.Threading.Timer(_ => AutoRefreshTick(), null,
+            TimeSpan.FromSeconds(AutoRefreshSeconds), TimeSpan.FromSeconds(AutoRefreshSeconds));
+    }
+
+    private void AutoRefreshTick()
+    {
+        if (_disposed || GlobalData.ApplicationIsClosing || !_initialized || _loadingChart)
+            return;
+
+        try
+        {
+            string signature = BuildDataSignature();
+            if (signature == _dataSignature)
+                return;
+
+            _dataSignature = signature;
+
+            // The timer runs on a thread pool thread; every JS call has to go through the
+            // renderer's synchronisation context.
+            _ = InvokeAsync(LoadChartAsync);
+        }
+        catch
+        {
+            // A refresh that cannot even determine what changed must never take the timer down
+        }
+    }
+
+    /// <summary>
+    /// Everything the chart draws from live data, condensed into a string. Deliberately cheap:
+    /// no snapshot copy of the candle list and no database query, just the counters and the
+    /// last candle the scanner keeps in memory anyway.
+    /// </summary>
+    private string BuildDataSignature()
+    {
+        if (_currentSymbol == null)
+            return "";
+        if (!Enum.TryParse<CryptoIntervalPeriod>(_selectedInterval, out var period))
+            return "";
+
+        var text = new System.Text.StringBuilder();
+        text.Append(_currentSymbol.Name).Append('|').Append(_selectedInterval).Append('|');
+
+        var symbolInterval = _currentSymbol.GetSymbolInterval(period);
+        var candleList = symbolInterval.CandleList;
+        var last = candleList.LastCandle;
+
+        // Count catches a new candle, close catches the running one moving, high/low catch a
+        // wick that grows without the close changing.
+        text.Append(candleList.Count).Append('|')
+            .Append(last.OpenTime).Append('|')
+            .Append(last.Close).Append('|')
+            .Append(last.High).Append('|')
+            .Append(last.Low).Append('|');
+
+        // Positions are drawn from the database, but the open list in memory is what changes
+        // first: a fill updates UpdateTime, and a close moves the position out of this list.
+        if (_showPositions)
+        {
+            foreach (var position in PositionService.OpenPositions)
+            {
+                if (position.Object.Symbol != _currentSymbol)
+                    continue;
+
+                text.Append(position.Object.Id).Append(':')
+                    .Append((int)position.Object.Status).Append(':')
+                    .Append(position.Object.Quantity).Append(':')
+                    .Append(position.Object.UpdateTime?.Ticks ?? 0).Append(',');
+            }
+        }
+
+        return text.ToString();
+    }
+
     // Live working copy of every stylable series, edited by the small popups behind the overlays.
     // Held here (not per popup) so a change survives closing and reopening one.
     private readonly Dictionary<string, ChartLineStyle> _chartStyles = [];
+
+    // EXPERIMENT: the TradingView style indicator dropdown in the bar above the chart
+    private bool _indicatorMenuOpen;
 
     private bool _styleDialogVisible;
     private string _styleDialogTitle = "";
@@ -674,6 +761,10 @@
         finally
         {
             _loadingChart = false;
+
+            // What is on screen now is what the signature must describe, otherwise the auto
+            // refresh reloads once more for a change this run already picked up.
+            try { _dataSignature = BuildDataSignature(); } catch { }
         }
 
         if (_loadPending)
@@ -698,9 +789,11 @@
         // The OHLCV read-out rounds to the symbol's own precision ("N8" -> 8 decimals)
         try
         {
-            string format = _currentSymbol.PriceDisplayFormat ?? "N2";
-            int decimals = int.TryParse(format.AsSpan(1), out int parsed) ? parsed : 2;
-            await JS.InvokeVoidAsync("ChartWidget.setPriceDecimals", decimals);
+            // Precision of this symbol, straight from PriceDecimals (derived from PriceTickSize).
+            // Drives the OHLCV read-out AND the price format of the series: without the latter the
+            // chart kept the library default of two decimals, so on a coin around 0.1883 every
+            // axis label read "0.19" and the scale dropped them all as duplicates.
+            await JS.InvokeVoidAsync("ChartWidget.setPriceDecimals", (int)_currentSymbol.PriceDecimals);
 
             // Same zoom depth as the Avalonia chart's ZoomLast
             await JS.InvokeVoidAsync("ChartWidget.setZoomCandles",
@@ -734,6 +827,9 @@
             var overlays = new Dictionary<string, object>();
             var markers = new List<ChartDataService.ChartMarker>();
             var priceLines = new List<ChartDataService.ChartPriceLine>();
+            var segments = new List<ChartDataService.ChartSegment>();
+            var dots = new List<ChartDataService.ChartDot>();
+            var overlayLabels = new List<object>();
             _dtbZones.Clear();
 
             if (_showBB)
@@ -796,18 +892,18 @@
                         .ToList();
                 }
 
-                // Stop-loss / take-profit texts at the band breaks, drawn as text-only markers
+                // Stop-loss / take-profit texts at the band breaks. Not markers: those are placed
+                // per bar with no thinning, so at every break the captions piled up on each other.
+                // The overlay renderer drops any that would collide, which makes them readable
+                // again and lets zooming in reveal more.
                 foreach (var label in overlay.GetLabels(_currentSymbol, symbolInterval.Interval, rawCandles))
                 {
-                    markers.Add(new ChartDataService.ChartMarker
+                    overlayLabels.Add(new
                     {
                         time = label.Time,
-                        position = label.Above ? "aboveBar" : "belowBar",
+                        price = label.Price,
+                        above = label.Above,
                         color = label.Color,
-                        // No text-only marker exists; size 0 shrinks the shape away and leaves
-                        // just the caption, which is what the Avalonia annotation shows too
-                        shape = "circle",
-                        size = 0,
                         text = label.Text,
                     });
                 }
@@ -893,16 +989,21 @@
             if (rawCandles.Count > 0)
             {
                 CandleTime from = rawCandles[0].OpenTime;
-                CandleTime to = rawCandles[^1].OpenTime;
+
+                // End of the last candle, not its start. Positions and signals carry a real
+                // timestamp somewhere INSIDE the running candle, so bounding on the open time
+                // dropped everything created after it - on an hourly chart that is up to an hour
+                // of the most recent activity, which is exactly what you want to see.
+                CandleTime to = rawCandles[^1].OpenTime + symbolInterval.Interval.Duration;
 
                 zones = ChartDataService.BuildZones(_currentSymbol,
                     _showDlzZones, _showFvgZones, _showSmcZones, from, to);
 
                 if (_showSignals)
-                    markers.AddRange(ChartDataService.BuildSignalMarkers(_currentSymbol, from, to));
+                    markers.AddRange(ChartDataService.BuildSignalMarkers(_currentSymbol, symbolInterval.Interval, from, to));
 
                 if (_showPositions)
-                    ChartDataService.BuildPositionOverlays(_currentSymbol, from, to, markers, priceLines);
+                    ChartDataService.BuildPositionOverlays(_currentSymbol, symbolInterval.Interval, from, to, segments, dots);
             }
 
             if (_dtbZones.Count > 0)
@@ -913,6 +1014,9 @@
                 zones,
                 markers,
                 priceLines,
+                segments,
+                dots,
+                labels = overlayLabels,
             };
 
             // The Avalonia chart can hide the candles and only show the overlays
@@ -1153,8 +1257,14 @@
         return data;
     }
 
+    private bool _disposed;
+
     public void Dispose()
     {
+        _disposed = true;
+        _autoRefreshTimer?.Dispose();
+        _autoRefreshTimer = null;
+
         try { SaveSession(); } catch { }
         SymbolService.SelectedSymbolChanged -= OnSelectedSymbolChanged;
         try

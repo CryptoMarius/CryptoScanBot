@@ -123,6 +123,7 @@ public class DbrChartOverlay : IChartOverlay
                 {
                     Time = time,
                     Above = true,
+                    Price = (double)allCandles[i].High,
                     Text = pctShort.ToString("0.##") + "%",
                 });
             }
@@ -133,6 +134,7 @@ public class DbrChartOverlay : IChartOverlay
                 {
                     Time = time,
                     Above = false,
+                    Price = (double)allCandles[i].Low,
                     Text = pctLong.ToString("0.##") + "%",
                 });
             }

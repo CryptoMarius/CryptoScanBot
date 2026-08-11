@@ -250,7 +250,13 @@ public class PaperTrading
                 return CreatePaperTradeOrder(database, position, part, step, candle.Close, candle.OpenTime, candleDuration);
             if (step.StopPrice.HasValue && candle.High >= step.StopPrice)
                 return CreatePaperTradeOrder(database, position, part, step, step.StopPrice.Value, candle.OpenTime, candleDuration);
-            if (candle.Low < step.Price)
+            // <= , not < : the trigger-price check (ShouldRunHandlePosition) decides whether this
+            // method runs at all and it uses <=, so a strict < here meant a candle touching the
+            // limit price exactly said "look at this position" while nothing could fill. That gap
+            // is where a waiting position got replaced instead of filled - and how often it opened
+            // depended on the base interval, because a 15m candle covers a whole quarter where a
+            // 1m candle covers one minute.
+            if (candle.Low <= step.Price)
                 return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime, candleDuration);
         }
         else if (step.Side == CryptoOrderSide.Sell)
@@ -259,7 +265,8 @@ public class PaperTrading
                 return CreatePaperTradeOrder(database, position, part, step, candle.Close, candle.OpenTime, candleDuration);
             if (step.StopPrice.HasValue && candle.Low <= step.StopPrice)
                 return CreatePaperTradeOrder(database, position, part, step, step.StopPrice.Value, candle.OpenTime, candleDuration);
-            if (candle.High > step.Price)
+            // >= , not > : see the buy side above.
+            if (candle.High >= step.Price)
                 return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime, candleDuration);
         }
 

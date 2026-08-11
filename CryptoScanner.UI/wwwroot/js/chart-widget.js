@@ -47,11 +47,12 @@ function createRectanglePrimitive() {
                     source._rects.forEach(function (r) {
                         var y1 = source._series.priceToCoordinate(r.price1);
                         var y2 = source._series.priceToCoordinate(r.price2);
-                        if (y1 === null || y2 === null) return;
+                        if (!isFinite(y1) || !isFinite(y2)) return;
 
                         var x1 = edgeX(r.time1, 0);
                         // A zone that is still active runs to the right edge of the chart
                         var x2 = edgeX(r.time2, widthPx);
+                        if (!isFinite(x1) || !isFinite(x2)) return;
 
                         var left = Math.min(x1, x2) * ratio;
                         var right = Math.max(x1, x2) * ratio;
@@ -242,16 +243,199 @@ function createMeasurePrimitive() {
     return MeasurePrimitive;
 }
 
+// Segment primitive — bounded line pieces with an optional caption, the way the Avalonia chart
+// draws position levels. lightweight-charts only offers createPriceLine, which always spans the
+// whole width; with an entry, several DCA levels, a take profit and a stop that turns into a wall
+// of full-width lines with no telling which belongs to which position.
+function createSegmentPrimitive() {
+    var DASH = {
+        0: [],        // solid
+        1: [2, 4],    // dotted, for the vertical open markers
+        // Position levels: dotted with a wide gap. The dash-dash-dot of the Avalonia original
+        // drew far too much attention on this chart, where the lines are thinner and darker.
+        2: [1, 6],
+    };
+
+    class SegmentRenderer {
+        constructor(source) { this._source = source; }
+
+        draw(target) {
+            var source = this._source;
+            if (!source._chart || !source._series)
+                return;
+            if (source._segments.length === 0 && source._labels.length === 0 && source._dots.length === 0)
+                return;
+
+            try {
+                var timeScale = source._chart.timeScale();
+                var visible = null;
+                try { visible = timeScale.getVisibleRange(); } catch (e) { }
+
+                target.useBitmapCoordinateSpace(function (scope) {
+                    var ctx = scope.context;
+                    var hRatio = scope.horizontalPixelRatio;
+                    var vRatio = scope.verticalPixelRatio;
+                    var widthPx = scope.mediaSize.width;
+
+                    // Clamped to the chart edges when the time falls outside the visible window,
+                    // so a segment that started before it still shows the part that is in view
+                    var edgeX = function (time, fallback) {
+                        if (time === null || time === undefined) return fallback;
+                        var x = null;
+                        try { x = timeScale.timeToCoordinate(time); } catch (e) { x = null; }
+                        if (x !== null) return x;
+                        if (visible) {
+                            if (time < visible.from) return 0;
+                            if (time > visible.to) return widthPx;
+                        }
+                        return fallback;
+                    };
+
+                    // try/finally around save/restore: an exception between the two leaves the
+                    // canvas with a pushed state, and every later draw then inherits a wrong
+                    // transform or clip. That is what turned the whole chart black instead of
+                    // just dropping this one overlay.
+                    ctx.save();
+                    try {
+                    source._segments.forEach(function (s) {
+                        var y1 = source._series.priceToCoordinate(s.price1);
+                        var y2 = source._series.priceToCoordinate(s.price2 !== undefined && s.price2 !== null ? s.price2 : s.price1);
+                        if (!isFinite(y1) || !isFinite(y2)) return;
+
+                        var x1 = edgeX(s.time1, 0);
+                        var x2 = edgeX(s.time2, widthPx);
+                        if (!isFinite(x1) || !isFinite(x2)) return;
+
+                        ctx.strokeStyle = s.color;
+                        ctx.lineWidth = (s.width || 2) * hRatio;
+                        ctx.setLineDash((DASH[s.dash] || []).map(function (d) { return d * hRatio; }));
+
+                        ctx.beginPath();
+                        ctx.moveTo(x1 * hRatio, y1 * vRatio);
+                        ctx.lineTo(x2 * hRatio, y2 * vRatio);
+                        ctx.stroke();
+
+                        if (s.text) {
+                            ctx.setLineDash([]);
+                            ctx.fillStyle = '#ffffff';
+                            ctx.font = Math.round(9 * vRatio) + 'px sans-serif';
+                            ctx.textBaseline = 'bottom';
+                            // Just right of the start of the line, same as the Avalonia annotation
+                            ctx.fillText(s.text, (Math.min(x1, x2) + 4) * hRatio, y1 * vRatio - 2 * vRatio);
+                        }
+                    });
+                    // A small filled circle where an order actually filled. Deliberately not a
+                    // series marker: the shapes lightweight-charts offers there start far bigger
+                    // than the candles and sat on the chart as blobs.
+                    ctx.setLineDash([]);
+                    source._dots.forEach(function (d) {
+                        var y = source._series.priceToCoordinate(d.price);
+                        if (!isFinite(y)) return;
+
+                        var x = null;
+                        try { x = timeScale.timeToCoordinate(d.time); } catch (e) { x = null; }
+                        if (!isFinite(x)) return;
+
+                        var radius = (d.radius || 3) * hRatio;
+                        ctx.beginPath();
+                        ctx.arc(x * hRatio, y * vRatio, radius, 0, 2 * Math.PI);
+                        ctx.fillStyle = d.color || '#ffffff';
+                        ctx.fill();
+
+                        // Thin dark rim, otherwise a dot on a candle of its own colour vanishes
+                        ctx.lineWidth = 1 * hRatio;
+                        ctx.strokeStyle = 'rgba(0,0,0,0.65)';
+                        ctx.stroke();
+                    });
+
+                    // Captions of the band overlays. Sorted by time, and one is skipped when it
+                    // would land on top of the previous one — so zooming in reveals more of them
+                    // instead of leaving an unreadable pile at every band break.
+                    var lastRight = { above: -1e9, below: -1e9 };
+                    ctx.font = Math.round(10 * vRatio) + 'px sans-serif';
+                    source._labels.forEach(function (l) {
+                        var y = source._series.priceToCoordinate(l.price);
+                        if (!isFinite(y)) return;
+
+                        var x = null;
+                        try { x = timeScale.timeToCoordinate(l.time); } catch (e) { x = null; }
+                        if (!isFinite(x)) return;
+
+                        var w = ctx.measureText(l.text).width;
+                        var left = x * hRatio - w / 2;
+                        var lane = l.above ? 'above' : 'below';
+                        if (left < lastRight[lane]) return;
+                        lastRight[lane] = left + w + 6 * hRatio;
+
+                        ctx.fillStyle = l.color || '#ffffff';
+                        ctx.textBaseline = l.above ? 'bottom' : 'top';
+                        ctx.fillText(l.text, left, y * vRatio + (l.above ? -8 : 8) * vRatio);
+                    });
+                    }
+                    finally {
+                        ctx.restore();
+                    }
+                });
+            }
+            catch (e) {
+                if (window.console) console.error('segment overlay draw failed', e);
+            }
+        }
+    }
+
+    class SegmentPaneView {
+        constructor(source) { this._renderer = new SegmentRenderer(source); }
+        renderer() { return this._renderer; }
+        zOrder() { return 'top'; }
+    }
+
+    class SegmentPrimitive {
+        constructor(segments) {
+            this._segments = segments || [];
+            this._labels = [];
+            this._dots = [];
+            this._paneView = new SegmentPaneView(this);
+        }
+        attached(param) {
+            this._chart = param.chart;
+            this._series = param.series;
+            this._requestUpdate = param.requestUpdate;
+        }
+        detached() { }
+        paneViews() { return [this._paneView]; }
+        updateAllViews() { }
+        setSegments(segments) {
+            this._segments = segments || [];
+            if (this._requestUpdate) this._requestUpdate();
+        }
+        setLabels(labels) {
+            // Sorted so the collision test below only has to look at the previous one
+            this._labels = (labels || []).slice().sort(function (a, b) { return a.time - b.time; });
+            if (this._requestUpdate) this._requestUpdate();
+        }
+        setDots(dots) {
+            this._dots = dots || [];
+            if (this._requestUpdate) this._requestUpdate();
+        }
+    }
+
+    return SegmentPrimitive;
+}
+
 window.ChartWidget = {
     _charts: {},
     _isDark: true,
     _loaded: false,
     _syncing: false,
     _zonePrimitive: null,
+    _segmentPrimitive: null,
     _RectanglePrimitive: null,
+    _SegmentPrimitive: null,
     _MeasurePrimitive: null,
     _measurePrimitive: null,
     _measureHandlers: null,
+    _verticalHandlers: null,
+    _interactionSuspended: false,
     _pendingFit: true,
     _lastCandles: null,
 
@@ -272,9 +456,11 @@ window.ChartWidget = {
         // caller used to pass "Dark" straight from the settings, which failed a === 'dark' test.
         this._isDark = String(theme || '').toLowerCase() !== 'light';
         this._RectanglePrimitive = createRectanglePrimitive();
+        this._SegmentPrimitive = createSegmentPrimitive();
         this._MeasurePrimitive = createMeasurePrimitive();
         this.dispose();
         this._createMainChart();
+        this._attachVerticalControl();
         this._attachMeasureTool();
         this._loaded = true;
     },
@@ -300,6 +486,119 @@ window.ChartWidget = {
         if (days > 0)
             return days + 'd' + (hours > 0 ? ' ' + hours + 'h' : '');
         return Math.round(seconds / 3600) + 'h';
+    },
+
+    // Vertical zoom and pan. lightweight-charts drags and wheel-zooms the TIME axis only; the price
+    // axis can just be dragged on the axis itself, and IPriceScaleApi exposes no way to set a price
+    // range. scaleMargins is the one lever there is: it says how much of the pane height stays
+    // empty above and below the data, so shrinking both margins magnifies the candles and shifting
+    // them against each other moves the data up or down.
+    _priceMargins: { top: 0.2, bottom: 0.1 },
+
+    _applyPriceMargins: function () {
+        var m = this._priceMargins;
+
+        // Never let the data get squeezed into a sliver: at least 40% of the pane height stays
+        // available for it. Beyond that the candles collapse onto one line and the price axis has
+        // no room left to place its labels, which is what made the axis look like it disappeared.
+        m.top = Math.min(Math.max(m.top, 0), 0.4);
+        m.bottom = Math.min(Math.max(m.bottom, 0), 0.4);
+        if (m.top + m.bottom > 0.6) {
+            var over = (m.top + m.bottom - 0.6) / 2;
+            m.top = Math.max(m.top - over, 0);
+            m.bottom = Math.max(m.bottom - over, 0);
+        }
+
+        try {
+            // Through the chart options rather than priceScale('right').applyOptions: this is the
+            // documented route to the visible right hand scale, and visible is restated so the
+            // axis can never be dropped by an option merge.
+            this._charts.main.chart.applyOptions({
+                rightPriceScale: {
+                    visible: true,
+                    scaleMargins: { top: m.top, bottom: m.bottom },
+                },
+            });
+        }
+        catch (e) { }
+    },
+
+    resetPriceScale: function () {
+        this._priceMargins = { top: 0.2, bottom: 0.1 };
+        this._applyPriceMargins();
+    },
+
+    _attachVerticalControl: function () {
+        var self = this;
+        var main = this._charts.main;
+        if (!main) return;
+
+        var container = main.container;
+        if (this._verticalHandlers) {
+            container.removeEventListener('wheel', this._verticalHandlers.wheel, true);
+            container.removeEventListener('mousedown', this._verticalHandlers.down, true);
+            container.removeEventListener('mousemove', this._verticalHandlers.move, true);
+            container.removeEventListener('mouseup', this._verticalHandlers.up, true);
+            container.removeEventListener('mouseleave', this._verticalHandlers.up, true);
+            container.removeEventListener('dblclick', this._verticalHandlers.dbl, true);
+        }
+
+        // Ctrl+wheel = vertical zoom, the same reflex TradingView trains
+        var onWheel = function (event) {
+            if (!event.ctrlKey) return;
+            event.preventDefault();
+            event.stopPropagation();
+
+            var step = event.deltaY > 0 ? 0.02 : -0.02;  // wheel down = zoom out
+            self._priceMargins.top += step;
+            self._priceMargins.bottom += step;
+            self._applyPriceMargins();
+        };
+
+        var panning = false;
+        var lastY = 0;
+
+        var onDown = function (event) {
+            if (event.button !== 0 || !event.ctrlKey) return;
+            panning = true;
+            lastY = event.clientY;
+            event.preventDefault();
+            event.stopPropagation();
+        };
+
+        var onMove = function (event) {
+            if (!panning) return;
+
+            var dy = event.clientY - lastY;
+            lastY = event.clientY;
+
+            // A drag down moves the data down: more room on top, less at the bottom
+            var frac = dy / Math.max(container.clientHeight, 1);
+            self._priceMargins.top += frac;
+            self._priceMargins.bottom -= frac;
+            self._applyPriceMargins();
+
+            event.preventDefault();
+            event.stopPropagation();
+        };
+
+        var onUp = function () { panning = false; };
+
+        // Ctrl+double click puts the price scale back the way it started
+        var onDblClick = function (event) {
+            if (!event.ctrlKey) return;
+            event.preventDefault();
+            self.resetPriceScale();
+        };
+
+        container.addEventListener('wheel', onWheel, { capture: true, passive: false });
+        container.addEventListener('mousedown', onDown, true);
+        container.addEventListener('mousemove', onMove, true);
+        container.addEventListener('mouseup', onUp, true);
+        container.addEventListener('mouseleave', onUp, true);
+        container.addEventListener('dblclick', onDblClick, true);
+
+        this._verticalHandlers = { wheel: onWheel, down: onDown, move: onMove, up: onUp, dbl: onDblClick };
     },
 
     _attachMeasureTool: function () {
@@ -345,7 +644,7 @@ window.ChartWidget = {
         // Shift+drag measures, like TradingView. Without shift the mouse keeps its normal job of
         // panning and zooming the chart.
         var onMouseDown = function (event) {
-            if (event.button !== 0) return;
+            if (event.button !== 0 || event.ctrlKey) return;
 
             if (!event.shiftKey) {
                 // A plain click wipes a measurement that is still on screen
@@ -365,6 +664,7 @@ window.ChartWidget = {
 
             // The chart pans on drag; suspend that while measuring
             main.chart.applyOptions({ handleScroll: false, handleScale: false });
+            self._interactionSuspended = true;
         };
 
         var onMouseMove = function (event) {
@@ -408,8 +708,17 @@ window.ChartWidget = {
                 self.clearMeasure();
             moved = false;
 
-            // Restore panning; the measurement stays on screen until the next click or Escape
-            main.chart.applyOptions({ handleScroll: true, handleScale: true });
+            // Restore the FULL option objects. Handing back plain booleans silently dropped
+            // axisPressedMouseMove.price, which is what makes the price axis draggable - after one
+            // measurement the chart could only be moved sideways.
+            if (self._interactionSuspended) {
+                self._interactionSuspended = false;
+                var opts = self._chartOptions(false);
+                main.chart.applyOptions({
+                    handleScroll: opts.handleScroll,
+                    handleScale: opts.handleScale,
+                });
+            }
         };
 
         var onKeyDown = function (event) {
@@ -448,6 +757,24 @@ window.ChartWidget = {
             },
             rightPriceScale: {
                 borderColor: d ? '#333' : '#ccc',
+                // Left on, so the chart fits its candles when it opens. Dragging the price axis
+                // switches it off by itself and the manual range then sticks.
+                autoScale: true,
+            },
+            // Spelled out rather than left to the defaults: the measure tool switches these off
+            // while dragging, and restoring them as plain booleans quietly dropped the price-axis
+            // part of the scaling.
+            handleScroll: {
+                mouseWheel: true,
+                pressedMouseMove: true,
+                horzTouchDrag: true,
+                vertTouchDrag: true,
+            },
+            handleScale: {
+                mouseWheel: true,
+                pinch: true,
+                axisPressedMouseMove: { time: true, price: true },
+                axisDoubleClickReset: { time: true, price: true },
             },
         };
     },
@@ -517,6 +844,30 @@ window.ChartWidget = {
 
     setPriceDecimals: function (decimals) {
         this._ohlcvDecimals = typeof decimals === 'number' && decimals >= 0 ? decimals : 2;
+        this._applyPriceFormat();
+    },
+
+    // Tell the series how precise its prices are. Without this every series keeps the library
+    // default of two decimals, so on a coin around 0.1883 every axis label rounded to "0.19";
+    // the price scale drops duplicate labels and what was left looked like an empty axis.
+    _applyPriceFormat: function () {
+        var main = this._charts.main;
+        if (!main) return;
+
+        var d = this._ohlcvDecimals;
+        var format = {
+            type: 'price',
+            precision: d,
+            minMove: Math.pow(10, -d),
+        };
+
+        try { main.series.candles.applyOptions({ priceFormat: format }); } catch (e) { }
+
+        // The overlays share the same scale, so they need the same precision or their own
+        // last-value labels would disagree with the axis
+        Object.keys(main.overlays).forEach(function (key) {
+            try { main.overlays[key].applyOptions({ priceFormat: format }); } catch (e) { }
+        });
     },
 
     _formatVolume: function (value) {
@@ -726,7 +1077,11 @@ window.ChartWidget = {
 
                 var series = mainEntry.chart.addLineSeries({
                     color: style.color,
-                    lineWidth: style.dots ? 0 : style.lineWidth,
+                    // lineVisible, not lineWidth: 0. lightweight-charts only accepts 1..4 there and
+                    // silently falls back to its default of 3 for anything else, which is why the
+                    // Parabolic SAR still drew a line straight through its dots.
+                    lineVisible: !style.dots,
+                    lineWidth: style.lineWidth || 1,
                     lineStyle: style.lineStyle,
                     pointMarkersVisible: !!style.dots,
                     pointMarkersRadius: style.dots ? 2 : 0,
@@ -740,6 +1095,9 @@ window.ChartWidget = {
             });
         }
 
+        // Overlays were just recreated with the library default precision
+        this._applyPriceFormat();
+
         // Zones as rectangles behind the candles
         this._applyZones(extras && extras.zones ? extras.zones : []);
 
@@ -751,7 +1109,14 @@ window.ChartWidget = {
         markers.sort(function (a, b) { return a.time - b.time; });
         try { mainEntry.series.candles.setMarkers(markers); } catch (e) { }
 
-        // Position levels as labelled horizontal lines
+        // Position levels: bounded segments with a caption, not full-width price lines
+        this._applySegments(extras && extras.segments ? extras.segments : []);
+        if (this._segmentPrimitive) {
+            this._segmentPrimitive.setLabels(extras && extras.labels ? extras.labels : []);
+            this._segmentPrimitive.setDots(extras && extras.dots ? extras.dots : []);
+        }
+
+        // Anything that genuinely spans the chart (the FIB levels) stays a price line
         if (extras && extras.priceLines) {
             extras.priceLines.forEach(function (pl) {
                 var line = self._addPriceLine(
@@ -818,6 +1183,17 @@ window.ChartWidget = {
     /// Ask the next setData to zoom to the most recent candles again (symbol or interval changed).
     resetView: function () {
         this._pendingFit = true;
+    },
+
+    _applySegments: function (segments) {
+        var mainEntry = this._charts.main;
+        if (!this._segmentPrimitive) {
+            this._segmentPrimitive = new this._SegmentPrimitive(segments);
+            mainEntry.series.candles.attachPrimitive(this._segmentPrimitive);
+        }
+        else {
+            this._segmentPrimitive.setSegments(segments);
+        }
     },
 
     _applyZones: function (zones) {
@@ -977,6 +1353,7 @@ window.ChartWidget = {
         });
         this._charts = {};
         this._zonePrimitive = null;
+        this._segmentPrimitive = null;
         this._measurePrimitive = null;
         this._lastCandles = null;
         this._loaded = false;

@@ -30,6 +30,9 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _globalBuyCooldownTime = 30; // int (EXACT match, in minutes)
 
+    [ObservableProperty]
+    private int _signalCooldownAfterTradeTime = 15; // int (EXACT match, in minutes)
+
     // Slot limits (all int - EXACT match)
     [ObservableProperty]
     private int _slotsMaximalLong = 1;
@@ -45,6 +48,7 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         DisableNewPositions = settings.DisableNewPositions;
         LogCanceledOrders = settings.LogCanceledOrders;
         GlobalBuyCooldownTime = settings.GlobalBuyCooldownTime;
+        SignalCooldownAfterTradeTime = settings.SignalCooldownAfterTradeTime;
         SoundTradeNotification = general.SoundTradeNotification;
 
         SlotsMaximalLong = settings.SlotsMaximalLong;
@@ -57,6 +61,7 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         settings.DisableNewPositions = DisableNewPositions;
         settings.LogCanceledOrders = LogCanceledOrders;
         settings.GlobalBuyCooldownTime = GlobalBuyCooldownTime;
+        settings.SignalCooldownAfterTradeTime = SignalCooldownAfterTradeTime;
         general.SoundTradeNotification = SoundTradeNotification;
 
         settings.SlotsMaximalLong = SlotsMaximalLong;

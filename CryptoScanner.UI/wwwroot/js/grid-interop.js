@@ -7,24 +7,35 @@ window.GridInterop = {
         var row = document.getElementById(rowId);
         if (!row) return;
 
-        var container = row.closest('.symbol-sidebar-content') || row.closest('.grid-scroll') || row.parentElement;
-        while (container && container.scrollHeight <= container.clientHeight)
+        // Walk up to the element that actually scrolls
+        var container = row.parentElement;
+        while (container && container !== document.body) {
+            var style = window.getComputedStyle(container);
+            var scrolls = style.overflowY === 'auto' || style.overflowY === 'scroll';
+            if (scrolls && container.scrollHeight > container.clientHeight)
+                break;
             container = container.parentElement;
-        if (!container) return;
+        }
+        if (!container || container === document.body) return;
 
-        // Header is sticky, so the usable top starts below it
+        // Measured through bounding rectangles instead of offsetTop: offsetTop is relative to the
+        // nearest positioned ancestor, which is not necessarily this container. When those two
+        // differ every row looked out of view, so each arrow key scrolled the list one row and the
+        // selection appeared to stand still while the data slid underneath it.
+        var rowRect = row.getBoundingClientRect();
+        var boxRect = container.getBoundingClientRect();
+
+        // The header is sticky, so it covers the top of the box
         var header = container.querySelector('thead');
-        var headerHeight = header ? header.offsetHeight : 0;
+        var headerHeight = header ? header.getBoundingClientRect().height : 0;
 
-        var rowTop = row.offsetTop;
-        var rowBottom = rowTop + row.offsetHeight;
-        var viewTop = container.scrollTop + headerHeight;
-        var viewBottom = container.scrollTop + container.clientHeight;
+        var topEdge = boxRect.top + headerHeight;
+        var bottomEdge = boxRect.bottom;
 
-        if (rowTop < viewTop)
-            container.scrollTop = rowTop - headerHeight;
-        else if (rowBottom > viewBottom)
-            container.scrollTop = rowBottom - container.clientHeight;
+        if (rowRect.top < topEdge)
+            container.scrollTop -= (topEdge - rowRect.top);
+        else if (rowRect.bottom > bottomEdge)
+            container.scrollTop += (rowRect.bottom - bottomEdge);
     },
 
     focusElement: function (element) {

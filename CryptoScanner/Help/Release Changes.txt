@@ -1,15 +1,5 @@
 CryptoScanBot release historie:
 
-XX-08-2025 2.6.0
-- Extra help link naar de Cryptoscanner wiki pagina op github
-- De afkortingen voor de strategien wordt nu beknopt uitgewerkt in het analyzer tabblad
-- Fixed logging, daarin was ook de emulator logtime nog opgenomen wat dubbelop is
-- Afkortingen aangepast, want de onderhuidse berekening strookte niet echt met de naam
-- De aligment/padding van de instellingen aangepast
-- Chart venster, de opties iets anders ingedeeld zodat de opties beter ingedeeld zijn + opties op naam sorteren
-- BB Squeuze strategie toegevoegd (maar daar zijn niet veel signalen op)
-
-
 Alle exchanges testen (oh dear)
 Compilatie Mac + Testje op Mac vm.
 Compilatie Linux + Testje op Linux vm.
@@ -18,6 +8,21 @@ De documentatie bijwerken, screenshots verversen.
 De main branch overschrijven met Avalonia
 
 Definiteve release?
+
+
+XX-08-2025 2.6.0
+- Extra help link naar de Cryptoscanner wiki pagina op github
+- De afkortingen voor de strategien wordt nu beknopt uitgewerkt in het analyzer tabblad
+- Fixed logging, daarin was ook de emulator logtime nog opgenomen wat dubbelop is
+- Afkortingen aangepast, want de onderhuidse berekening strookte niet echt met de naam
+- De aligment/padding van de instellingen aangepast
+- Chart venster, de opties iets anders ingedeeld zodat de opties beter ingedeeld zijn + opties op naam sorteren
+- Papertrading op de andere exchanges werkzaam gemaakt (was alleen actief voor Bybit en Binance)
+- BB Squeuze strategie toegevoegd (maar daar zijn niet veel signalen op)
+
+Photino
+- Nieuw TV chart die het Avalonia chart venster gaat vervangen.
+- Introductie van een nieuwe Photino applicatie (parallel aan de Avalonia app)
 
 
 22-07-2025 2.5.9

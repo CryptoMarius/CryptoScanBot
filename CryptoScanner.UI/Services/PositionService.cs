@@ -154,7 +154,16 @@ public class PositionService : IDisposable
     private void OnPositionCreated(CryptoPosition position)
     {
         lock (_lock)
+        {
+            // PositionMonitor announces a new position twice: once as an MVVM message and once
+            // through the GlobalData delegate, and this service listens to both. Closing and
+            // deleting already look the position up by id; creating did not, so every position
+            // ended up in the grid twice.
+            if (_openPositions.Any(p => p.Object.Id == position.Id))
+                return;
+
             _openPositions.Add(new PositionViewModel(position));
+        }
         ApplySortOpen();
         OpenPositionsChanged?.Invoke();
     }
@@ -170,7 +179,9 @@ public class PositionService : IDisposable
                 _openPositions.Remove(vm);
                 openChanged = true;
             }
-            _closedPositions.Insert(0, new PositionViewModel(position));
+            // Closing is announced twice as well (MVVM message plus delegate), so guard the insert
+            if (!_closedPositions.Any(p => p.Object.Id == position.Id))
+                _closedPositions.Insert(0, new PositionViewModel(position));
         }
         ApplySortClosed();
         if (openChanged)
