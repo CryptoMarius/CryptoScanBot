@@ -277,6 +277,7 @@ public class CryptoDatabase : IDisposable
                 "IsSpotTradingAllowed INTEGER NULL," +
                 "IsMarginTradingAllowed INTEGER NULL," +
                 "LastTradeDate TEXT NULL," +
+                "LastLossDate TEXT NULL," +
 
                 // Bybit Futures, ondersteunen van de FundingRate en FundingInterval
                 "FundingRate TEXT NULL," +

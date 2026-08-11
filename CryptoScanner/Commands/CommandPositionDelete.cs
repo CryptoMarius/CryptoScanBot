@@ -36,6 +36,7 @@ public class CommandPositionDelete : CommandBase
                 transaction.Commit();
 
                 dto.position.Symbol.LastTradeDate = null;
+                dto.position.Symbol.LastLossDate = null;
                 GlobalData.ThreadSaveObjects!.AddToQueue(dto.position.Symbol);
 
                 // Remove the position from open or closed positions

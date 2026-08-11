@@ -690,6 +690,12 @@ public class TradeTools
                     position.UpdateTime = lastDateTime;
                     position.Status = CryptoPositionStatus.Ready;
 
+                    // Starts the loss cooldown. Profit was recalculated by
+                    // CalculateProfitAndBreakEvenPrice further up in this same method, so it is
+                    // the final figure for this position here.
+                    if (position.Profit < 0)
+                        position.Symbol.LastLossDate = lastDateTime;
+
                     GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Quantity={position.Quantity}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Dust={position.RemainingDust}");

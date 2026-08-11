@@ -79,6 +79,13 @@ public partial class CryptoSymbol
     /// </summary>
     public DateTime? LastTradeDate { get; set; }
 
+    /// <summary>
+    /// Close time of the last position on this symbol that ended at a loss, for the loss cooldown
+    /// (SettingsTrading.LossCooldownTime). Never cleared by a later winning trade: the cooldown
+    /// expires on its own, and by then this value no longer influences anything.
+    /// </summary>
+    public DateTime? LastLossDate { get; set; }
+
     [Computed]
     // Quote: display format
     public required virtual CryptoQuoteData QuoteData { get; set; }

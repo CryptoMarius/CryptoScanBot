@@ -904,6 +904,7 @@ public sealed class ReplayRunner
         {
             symbol.LastPrice = null;
             symbol.LastTradeDate = null;
+            symbol.LastLossDate = null;
             symbol.LastTradeFetched = null;
             symbol.LastTradeIdFetched = null;
 
@@ -971,6 +972,10 @@ public sealed class ReplayRunner
             if (symbol.LastTradeDate != null)
                 throw new InvalidOperationException(
                     $"{symbol.Name}: LastTradeDate not null at run start.");
+
+            if (symbol.LastLossDate != null)
+                throw new InvalidOperationException(
+                    $"{symbol.Name}: LastLossDate not null at run start.");
 
             foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
             {

@@ -253,7 +253,9 @@ function createSegmentPrimitive() {
         1: [2, 4],    // dotted, for the vertical open markers
         // Position levels: dotted with a wide gap. The dash-dash-dot of the Avalonia original
         // drew far too much attention on this chart, where the lines are thinner and darker.
-        2: [1, 6],
+        // Dots half a pixel longer than the plain dotted pattern above, because at 1 pixel the
+        // horizontal levels were hard to pick out against the candles.
+        2: [1.5, 6],
     };
 
     class SegmentRenderer {
@@ -1015,8 +1017,47 @@ window.ChartWidget = {
         return this._overlayStyles[key] || { color: '#888', lineWidth: 1, lineStyle: 0 };
     },
 
+    // lightweight-charts renders every UTCTimestamp in UTC, so a candle that opened at 16:00 here
+    // was labelled 14:00. Reformatting only the labels would still leave the day separators on UTC
+    // midnight, so instead every timestamp entering the widget is shifted into local time once,
+    // right here. Axis, crosshair, markers, overlays and the measure tool then all work in the
+    // same space, and nothing is ever sent back to C# — the C# side keeps its own UTC values.
+    //
+    // The offset is read per timestamp rather than once for the whole chart, so a range that spans
+    // a daylight saving change keeps every candle on the wall clock time it actually had.
+    _toLocalTime: function (time) {
+        return time - new Date(time * 1000).getTimezoneOffset() * 60;
+    },
+
+    _localizeTimes: function (node) {
+        if (!node || typeof node !== 'object')
+            return node;
+
+        if (Array.isArray(node)) {
+            for (var i = 0; i < node.length; i++)
+                this._localizeTimes(node[i]);
+            return node;
+        }
+
+        for (var key in node) {
+            if (!Object.prototype.hasOwnProperty.call(node, key)) continue;
+
+            var value = node[key];
+            if ((key === 'time' || key === 'time1' || key === 'time2') && typeof value === 'number')
+                node[key] = this._toLocalTime(value);
+            else if (value && typeof value === 'object')
+                this._localizeTimes(value);
+        }
+        return node;
+    },
+
     setData: function (candles, overlays, panels, extras) {
         if (!this._loaded || !this._charts.main) return;
+
+        this._localizeTimes(candles);
+        this._localizeTimes(overlays);
+        this._localizeTimes(panels);
+        this._localizeTimes(extras);
 
         var self = this;
         var mainEntry = this._charts.main;

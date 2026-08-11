@@ -246,14 +246,22 @@ public class PositionMonitor : IDisposable
         // it is what LastTradeDate itself is written with. Comparing against the OPEN time made the
         // cooldown outlive itself by one base interval - 4 minutes on a 5m run, 14 on a 15m run -
         // so a coarser base interval discarded signals that a 1m run acted on.
-        if (Symbol.LastTradeDate.HasValue && Symbol.LastTradeDate?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1mCloseTimeDate)
+        // A losing trade can buy a longer wait than the normal cooldown. It is counted from the
+        // close of that losing position, not from the last fill, and it is a separate clock: a DCA
+        // or take profit fill afterwards must not push it forward or cut it short.
+        bool inLossCooldown = GlobalData.Settings.Trading.LossCooldownTime > 0
+            && Symbol.LastLossDate.HasValue
+            && Symbol.LastLossDate.Value.AddMinutes(GlobalData.Settings.Trading.LossCooldownTime) > LastCandle1mCloseTimeDate;
+
+        if (inLossCooldown
+            || (Symbol.LastTradeDate.HasValue && Symbol.LastTradeDate?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1mCloseTimeDate))
         {
             // Bypass cooldown when an unfilled position exists — no actual trade took place yet,
             // so a newer signal should be allowed to replace the waiting entry order.
             if (!GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out var cooldownPos)
                 || cooldownPos.Status != CryptoPositionStatus.Waiting)
             {
-                reaction = "is in cooldown";
+                reaction = inLossCooldown ? "is in cooldown after a loss" : "is in cooldown";
                 GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
                 Symbol.ClearSignals();
                 return;

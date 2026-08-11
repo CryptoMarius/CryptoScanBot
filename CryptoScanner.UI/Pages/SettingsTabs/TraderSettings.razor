@@ -1,4 +1,4 @@
-@using CryptoScanner.Core.Core
+﻿@using CryptoScanner.Core.Core
 @using CryptoScanner.Core.Enums
 @using CryptoScanner.Core.Model
 @using CryptoScanner.Core.Settings
@@ -59,13 +59,17 @@
                 <input type="checkbox" class="input-checkbox" @bind="_logCanceledOrders" />
                 <label>Log cancelled orders</label>
             </div>
-            <div class="field">
+            <div class="field" title="Minutes after the last fill on a symbol (entry, DCA, take profit or stop loss) in which no NEW position may be opened on it. Stops laddering into the same coin. A position that is still waiting for its entry to fill is exempt, so a newer signal can replace it.">
                 <label>Cool down time (m)</label>
                 <input type="number" class="input-number" min="0" @bind="_buyCooldown" />
             </div>
-            <div class="field">
+            <div class="field" title="Minutes after the last fill on a symbol in which no SIGNAL is created for it at all. Cool down time above holds off opening a position; this one stops the signal from being produced in the first place. Keep it at or above the coarsest base interval you run.">
                 <label>Signal cool down after trade (m)</label>
                 <input type="number" class="input-number" min="0" @bind="_signalCooldownAfterTrade" />
+            </div>
+            <div class="field" title="Minutes to stay out of a symbol after a position on it closed at a LOSS, counted from that close. Replaces the cool down time above while it lasts, so it only ever makes the wait longer. Zero switches it off. A position that timed out without buying anything does not count as a loss.">
+                <label>Cool down after loss (m)</label>
+                <input type="number" class="input-number" min="0" @bind="_lossCooldown" />
             </div>
 
             <div class="settings-group settings-group-nested">
@@ -335,6 +339,7 @@
     private decimal _dcaPullback;
     private int _buyCooldown;
     private int _signalCooldownAfterTrade;
+    private int _lossCooldown;
     private CryptoOrderType _tpOrderType;
     private CryptoTakeProfitStrategy _tpStrategy;
     private bool _addDustToTp;
@@ -454,6 +459,7 @@
         _dcaPullback = t.DcaPullbackPercentage;
         _buyCooldown = t.GlobalBuyCooldownTime;
         _signalCooldownAfterTrade = t.SignalCooldownAfterTradeTime;
+        _lossCooldown = t.LossCooldownTime;
         _tpOrderType = t.TakeProfitOrderType;
         _tpStrategy = t.TakeProfitStrategy;
         _addDustToTp = t.AddDustToTp;
@@ -498,6 +504,7 @@
         t.DcaPullbackPercentage = _dcaPullback;
         t.GlobalBuyCooldownTime = _buyCooldown;
         t.SignalCooldownAfterTradeTime = _signalCooldownAfterTrade;
+        t.LossCooldownTime = _lossCooldown;
         t.TakeProfitOrderType = _tpOrderType;
         t.TakeProfitStrategy = _tpStrategy;
         t.AddDustToTp = _addDustToTp;

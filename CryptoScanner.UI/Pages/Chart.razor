@@ -72,6 +72,35 @@
         <div class="chart-indicator-overlay" @onclick="() => _indicatorMenuOpen = false"></div>
         <div class="chart-indicator-menu" @onclick:stopPropagation="true">
 
+            @* Same groups the Avalonia side panel has. Display is the odd one out and sits at the
+               bottom here: it switches whole layers on and off rather than adding an indicator. *@
+            <div class="chart-indicator-heading">Trend</div>
+            <div class="chart-indicator-row">
+                <select class="input-select chart-indicator-select" @bind="_trendType" @bind:after="LoadChart">
+                    <option value="@TrendType.Primary">Primary trend</option>
+                    <option value="@TrendType.Secondary">Secondary trend</option>
+                </select>
+            </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showZigZag" @bind:after="LoadChart" /> Show zigzag</label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog(ZigZagStyleKey, "ZigZag"))">&#9881;</button>
+            </div>
+
+            <div class="chart-indicator-heading">FIB</div>
+            <div class="chart-indicator-row">
+                <select class="input-select chart-indicator-select" @bind="_fibTrendType" @bind:after="LoadChart">
+                    <option value="@TrendType.Primary">Primary trend</option>
+                    <option value="@TrendType.Secondary">Secondary trend</option>
+                </select>
+            </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showFib" @bind:after="LoadChart" /> Show fib retracement</label>
+            </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle"><input type="checkbox" @bind="_showFibZigZag" @bind:after="LoadChart" /> Show zigzag</label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog(FibZigZagStyleKey, "FIB ZigZag"))">&#9881;</button>
+            </div>
+
             <div class="chart-indicator-heading">Overlays</div>
             @foreach (var overlay in _allOverlays)
             {
@@ -213,16 +242,12 @@
     private readonly Dictionary<string, string> _pluginOverlays = [];
     private readonly Dictionary<string, bool> _pluginOverlayStates = [];
 
-    private static readonly Dictionary<string, string> _intervalOptions = new()
-    {
-        ["interval1m"] = "1m",
-        ["interval5m"] = "5m",
-        ["interval15m"] = "15m",
-        ["interval30m"] = "30m",
-        ["interval1h"] = "1h",
-        ["interval4h"] = "4h",
-        ["interval1d"] = "1d",
-    };
+    // Every interval the scanner knows, in the order CreateStandardIntervalList defines, same as
+    // the Avalonia ChartSymbolSelectorViewModel. This used to be a hardcoded seven, which left out
+    // 2m, 3m, 10m, 2h, 3h, 6h, 8h, 12h and 1w — all of them just as available as the rest: what the
+    // exchange does not deliver, the scanner builds itself from the interval below it.
+    private static Dictionary<string, string> _intervalOptions => GlobalData.IntervalList
+        .ToDictionary(i => i.IntervalPeriod.ToString(), i => i.Name);
 
     protected override void OnInitialized()
     {
@@ -616,6 +641,10 @@
 
         _styleDialogTitle = title;
         _styleDialogVisible = true;
+
+        // The gear now lives inside the dropdown. Leaving that open behind the dialog puts two
+        // layers of chrome over the chart you are trying to judge the colours against.
+        _indicatorMenuOpen = false;
     }
 
     private void OnStyleDialogVisibleChanged(bool visible)

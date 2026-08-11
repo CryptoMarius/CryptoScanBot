@@ -39,7 +39,8 @@
                       FontSize="12"/>
 
             <!-- Cool Down Time -->
-            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                  ToolTip.Tip="Minutes after the last fill on a symbol (entry, DCA, take profit or stop loss) in which no NEW position may be opened on it. Stops laddering into the same coin. A position that is still waiting for its entry to fill is exempt, so a newer signal can replace it.">
                 <TextBlock Grid.Column="0" Text="Cool down time (m):"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>
@@ -49,12 +50,24 @@
             </Grid>
 
             <!-- Signal cool down after a trade -->
-            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                  ToolTip.Tip="Minutes after the last fill on a symbol in which no SIGNAL is created for it at all. Cool down time above holds off opening a position; this one stops the signal from being produced in the first place. Keep it at or above the coarsest base interval you run.">
                 <TextBlock Grid.Column="0" Text="Signal cool down after trade (m):"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>
                 <TextBox Grid.Column="2"
                          Text="{Binding SignalCooldownAfterTradeTime, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Cool down after a losing trade -->
+            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                  ToolTip.Tip="Minutes to stay out of a symbol after a position on it closed at a LOSS, counted from that close. Replaces the cool down time above while it lasts, so it only ever makes the wait longer. Zero switches it off. A position that timed out without buying anything does not count as a loss.">
+                <TextBlock Grid.Column="0" Text="Cool down after loss (m):"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding LossCooldownTime, Mode=TwoWay}"
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 

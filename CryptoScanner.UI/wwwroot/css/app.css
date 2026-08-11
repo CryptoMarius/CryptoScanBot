@@ -1232,6 +1232,9 @@ code {
     overflow: hidden;
 }
 
+/* The 220 pixel side panel is gone: everything it held moved into the bar above the chart, the
+   groups behind the Indicators button. Its rules are left in place rather than deleted, so the
+   panel can be put back with only a markup change if the dropdown turns out to be worse. */
 .chart-toolbar {
     display: flex;
     flex-direction: column;
@@ -1309,6 +1312,26 @@ code {
     margin-left: 4px;
 }
 
+/* Refresh and recalculate. Icon only, the tooltip carries the meaning. */
+.chart-icon-button {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.chart-icon-button:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
 .chart-header-button {
     height: 22px;
     padding: 0 8px;
@@ -1362,6 +1385,27 @@ code {
 .chart-indicator-row .chart-toggle {
     flex: 1;
     min-width: 0;
+}
+
+/* The two trend pickers, which are selects rather than checkboxes */
+.chart-indicator-select {
+    flex: 1;
+    min-width: 0;
+    height: 22px;
+    font-size: 12px;
+    margin: 2px 0;
+}
+
+/* In the side panel the gear only appeared on hover, to keep a long column of names calm. A
+   dropdown is opened on purpose and closes again, so here it is always there — just dimmed until
+   you reach it. Without this it would stay at opacity 0, because the hover rule it relied on was
+   written for .chart-toggle-row. */
+.chart-indicator-row .chart-style-button {
+    opacity: 0.55;
+}
+
+.chart-indicator-row:hover .chart-style-button {
+    opacity: 1;
 }
 
 /* ── Per-overlay style configuration on the chart toolbar ── */

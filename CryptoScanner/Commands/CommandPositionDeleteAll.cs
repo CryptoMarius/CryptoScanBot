@@ -47,6 +47,7 @@ public class CommandPositionDeleteAll : CommandBase
             foreach (var symbol in GlobalData.ActiveExchange.SymbolListId.Values)
             {
                 symbol.LastTradeDate = null;
+                symbol.LastLossDate = null;
                 GlobalData.ThreadSaveObjects!.AddToQueue(symbol);
             }
 

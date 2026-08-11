@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Excel;
@@ -207,6 +207,7 @@ public class GridCommandService
                 transaction.Commit();
 
                 position.Symbol.LastTradeDate = null;
+                position.Symbol.LastLossDate = null;
                 GlobalData.ThreadSaveObjects!.AddToQueue(position.Symbol);
 
                 // Tell the grids the position is gone (the Avalonia CommandPositionDelete does the
@@ -364,6 +365,7 @@ public class GridCommandService
                 foreach (var symbol in exchange.SymbolListId.Values)
                 {
                     symbol.LastTradeDate = null;
+                    symbol.LastLossDate = null;
                     GlobalData.ThreadSaveObjects!.AddToQueue(symbol);
                 }
 

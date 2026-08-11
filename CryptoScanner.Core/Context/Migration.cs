@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 77;
+    public readonly static int CurrentDatabaseVersion = 78;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1589,6 +1589,22 @@ public class Migration
 
             try { database.Connection.Execute("alter table Signal drop column Strategy2", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table Position drop column Strategy2", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        //***********************************************************
+        // 11-08-2026 LastLossDate on Symbol: close time of the last position that ended at a loss,
+        // used by the loss cooldown (SettingsTrading.LossCooldownTime). Sits next to LastTradeDate,
+        // which drives the two cooldowns that already existed.
+        if (CurrentVersion > version.Version && version.Version == 77)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Symbol add LastLossDate TEXT NULL", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

@@ -88,6 +88,20 @@ public static class ChartDataService
         public int radius { get; set; } = 3;
     }
 
+    /// <summary>
+    /// The candle that CONTAINS this moment. A fill that lands exactly on a candle boundary belongs
+    /// to the candle that just closed, not to the one starting at that instant — and paper trading
+    /// stamps every fill with the close time of the base candle it happened in, so plain alignment
+    /// put each marker one candle to the right of the candle that actually filled the order.
+    /// </summary>
+    private static CandleTime CandleContaining(DateTime moment, uint duration)
+    {
+        CandleTime aligned = CandleTime.AlignFromDateTime(moment, duration);
+        if (aligned.ToDateTime() == moment.ToUniversalTime())
+            aligned -= duration;
+        return aligned;
+    }
+
     /// <summary>Horizontal level between two moments, captioned just right of its start.</summary>
     private static ChartSegment Horizontal(long time1, long time2, decimal price, string color, string caption) => new()
     {
@@ -285,9 +299,11 @@ public static class ChartDataService
                 decimal yTop = entry;
                 decimal yBottom = entry;
 
-                // A closed position keeps every level it never reached. Those lines describe an
-                // intention, not what happened, and on a finished trade they only make the picture
-                // harder to read. While the position runs they are exactly what you want to see.
+                // Once a position is finished, every order that never filled - DCA, take profit,
+                // stop price, stop limit - describes an intention rather than what happened, and
+                // only makes the picture harder to read. They are dropped. While the position runs
+                // they are exactly what you want to see, so nothing changes there. The entry is
+                // always kept: it shows where you meant to get in even when it never filled.
                 bool positionClosed = position.CloseTime != null;
 
                 foreach (CryptoPositionPart part in position.PartList.Values)
@@ -327,17 +343,20 @@ public static class ChartDataService
                                 break;
 
                             case CryptoPartPurpose.TakeProfit:
-                                segments.Add(Horizontal(stepStart, stepEnd, step.Price, color, $"take profit-{part.PartNumber}"));
-
-                                // Same rule for the stop legs: on a finished trade only the one
-                                // that actually triggered says anything
-                                if (!positionClosed || stepFilled)
+                                // Including its stop legs: a take profit that never triggered on a
+                                // finished trade says nothing, and neither does the stop that sat
+                                // underneath it.
+                                if (positionClosed && !stepFilled)
                                 {
-                                    if (step.StopPrice.HasValue)
-                                        segments.Add(Horizontal(stepStart, stepEnd, step.StopPrice.Value, color, "stop price"));
-                                    if (step.StopLimitPrice.HasValue)
-                                        segments.Add(Horizontal(stepStart, stepEnd, step.StopLimitPrice.Value, color, "stop limit"));
+                                    levelDrawn = false;
+                                    break;
                                 }
+
+                                segments.Add(Horizontal(stepStart, stepEnd, step.Price, color, $"take profit-{part.PartNumber}"));
+                                if (step.StopPrice.HasValue)
+                                    segments.Add(Horizontal(stepStart, stepEnd, step.StopPrice.Value, color, "stop price"));
+                                if (step.StopLimitPrice.HasValue)
+                                    segments.Add(Horizontal(stepStart, stepEnd, step.StopLimitPrice.Value, color, "stop limit"));
                                 break;
                         }
 
@@ -350,7 +369,7 @@ public static class ChartDataService
                             decimal filledPrice = step.AveragePrice > 0 ? step.AveragePrice : step.Price;
                             dots.Add(new ChartDot
                             {
-                                time = CandleTime.AlignFromDateTime(step.CloseTime.Value, interval.Duration).ToUnixSeconds(),
+                                time = CandleContaining(step.CloseTime.Value, interval.Duration).ToUnixSeconds(),
                                 price = (double)filledPrice,
                                 color = step.Side == CryptoOrderSide.Buy ? "#ffeb3b" : "#ffffff",
                             });

@@ -147,6 +147,15 @@ public class SettingsTrading
     // Keep it at or above the coarsest base interval used.
     public int SignalCooldownAfterTradeTime { get; set; } = 15;
 
+    // Minutes to stay out of a symbol after a position on it closed at a LOSS, counted from that
+    // close. Replaces GlobalBuyCooldownTime for that symbol while it lasts, so it only ever makes
+    // the wait longer, never shorter. Zero switches it off, which is the default: the existing two
+    // cooldowns keep behaving exactly as before until a value is entered.
+    //
+    // Only a real loss counts (position.Profit below zero on a Ready position). A position that
+    // timed out never bought anything, so it is not a losing trade.
+    public int LossCooldownTime { get; set; } = 0;
+
     //***************************
     // Take profit
     public CryptoOrderType TakeProfitOrderType { get; set; } = CryptoOrderType.Limit;
