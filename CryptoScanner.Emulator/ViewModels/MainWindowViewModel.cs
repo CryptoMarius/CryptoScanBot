@@ -958,9 +958,10 @@ public partial class MainWindowViewModel : ObservableObject
             run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label, settingsJson, gitSha);
             GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
 
+            // RunParallel deliberately not set here: TickRunner owns the default, so it can be changed
+            // in one place. Setting it here as well meant the default was silently overruled.
             var runner = new TickRunner
             {
-                RunParallel = true,
                 Progress = new Progress<TickRunProgress>(OnTickProgress),
             };
 

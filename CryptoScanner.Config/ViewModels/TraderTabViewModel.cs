@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
@@ -88,10 +88,10 @@ public partial class TraderTabViewModel : ObservableObject
         _traderIntervalShortViewModel.ShortCounterpart = _traderIntervalShortViewModel;
     }
 
-    internal void LoadConfig(SettingsTrading settings)
+    internal void LoadConfig(SettingsTrading settings, SettingsGeneral general)
     {
         TraderFuturesViewModel.LoadConfig(settings);
-        TraderMiscSettingsViewModel.LoadConfig(settings);
+        TraderMiscSettingsViewModel.LoadConfig(settings, general);
         TraderEntryConditionsViewModel.LoadConfig(settings);
         TraderTakeProfitViewModel.LoadConfig(settings);
         TraderStopLossViewModel.LoadConfig(settings);
@@ -113,10 +113,10 @@ public partial class TraderTabViewModel : ObservableObject
         TraderTrendIntervalFilterShortViewModel.LoadConfig(settings.Short.IntervalTrend, CryptoTradeSide.Short);
     }
 
-    internal void SaveConfig(SettingsTrading settings)
+    internal void SaveConfig(SettingsTrading settings, SettingsGeneral general)
     {
         TraderFuturesViewModel.SaveConfig(settings);
-        TraderMiscSettingsViewModel.SaveConfig(settings);
+        TraderMiscSettingsViewModel.SaveConfig(settings, general);
         TraderEntryConditionsViewModel.SaveConfig(settings);
         TraderTakeProfitViewModel.SaveConfig(settings);
         TraderStopLossViewModel.SaveConfig(settings);

@@ -9,6 +9,9 @@ public class AlgorithmDefinition
     public required CryptoSignalStrategy Strategy { get; set; }
     public required Type? AnalyzeLongType { get; set; }
     public required Type? AnalyzeShortType { get; set; }
+
+    /// <summary>Fires on a zone touch (DLZ/FVG/SMC) — see StrategyRegistration.IsZoneStrategy.</summary>
+    public bool IsZoneStrategy { get; set; }
 }
 
 public static class RegisterAlgorithms
@@ -31,6 +34,14 @@ public static class RegisterAlgorithms
     {
         return AlgorithmDefinitionList.TryGetValue(strategy, out definition);
     }
+
+    /// <summary>
+    /// True when the strategy fires on a zone touch. Unknown strategies count as not-a-zone, which
+    /// matches how they are treated everywhere else (the normal indicator path).
+    /// </summary>
+    public static bool IsZoneStrategy(CryptoSignalStrategy strategy)
+        => GetAlgorithm(strategy, out AlgorithmDefinition? definition) && definition!.IsZoneStrategy;
+
 
     /// <summary>
     /// Return the name of the algorithm

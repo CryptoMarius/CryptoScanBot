@@ -62,7 +62,8 @@ public static class ConfigurationApplier
             // construction, so every existing hub has to be rebuilt before the new settings can
             // take effect. Bumping the version does that lazily on the next candle.
             Signal.Indicators.IndicatorConfiguration.Bump();
-            Signal.Indicators.StrategyDiagnostics.Report();
+            // No StrategyDiagnostics.Report() here: ApplyConfigurationAsync below runs it on every
+            // path, and calling it twice logged every finding in duplicate.
 
             // Apply the theme right away, before the (potentially slow) exchange/quote reload
             // below. Waiting until after it made a theme switch appear to take ten seconds or more.

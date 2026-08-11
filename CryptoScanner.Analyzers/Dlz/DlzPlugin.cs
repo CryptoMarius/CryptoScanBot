@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
@@ -17,14 +17,16 @@ public class DlzPlugin : IStrategyPlugin
         new(CryptoSignalStrategy.DominantLevel,
             "dlz",
             typeof(Signal.SignalDominantLevelLong),
-            typeof(Signal.SignalDominantLevelShort)
+            typeof(Signal.SignalDominantLevelShort),
+            IsZoneStrategy: true
         ),
 
         // Level approaching
         new(CryptoSignalStrategy.DominantLevelNear,
             "dlz.near",
             typeof(Signal.SignalDominantLevelNearLong),
-            typeof(Signal.SignalDominantLevelNearShort)
+            typeof(Signal.SignalDominantLevelNearShort),
+            IsZoneStrategy: true
         ),
     ];
 

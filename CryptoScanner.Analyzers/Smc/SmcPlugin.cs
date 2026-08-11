@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
@@ -17,13 +17,15 @@ public class SmcPlugin : IStrategyPlugin
         new(CryptoSignalStrategy.OrderBlock,
             "smc",
             typeof(Signal.SignalOrderBlockLong),
-            typeof(Signal.SignalOrderBlockShort)
+            typeof(Signal.SignalOrderBlockShort),
+            IsZoneStrategy: true
         ),
 
         new(CryptoSignalStrategy.OrderBlockRejection,
             "smc.rejection",
             typeof(Signal.SignalOrderBlockRejectionLong),
-            typeof(Signal.SignalOrderBlockRejectionShort)
+            typeof(Signal.SignalOrderBlockRejectionShort),
+            IsZoneStrategy: true
         ),
     ];
 

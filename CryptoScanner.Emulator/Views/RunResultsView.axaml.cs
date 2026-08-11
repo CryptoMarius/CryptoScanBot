@@ -244,14 +244,6 @@ public partial class RunResultsView : UserControl
             return;
         }
 
-        // This temporarily swaps GlobalData.Settings (see below). A running replay reads those settings on
-        // its worker threads, so refuse while a run is active to avoid corrupting it mid-flight.
-        if (GlobalData.CurrentEmulatorRunId != null)
-        {
-            viewModel.Status = "Cannot view a run's settings while a run is active — stop the run first.";
-            return;
-        }
-
         RunRow row = rows[0];
         SettingsBasic? runSettings = RunResultsViewModel.GetRunSettings(row.Id);
         if (runSettings == null)
@@ -260,34 +252,15 @@ public partial class RunResultsView : UserControl
             return;
         }
 
-        // Show the familiar Configure UI populated with THIS run's settings, WITHOUT persisting anything:
-        // swap the run's settings into GlobalData.Settings (which the ConfigurationWindow binds to), open
-        // the dialog, then restore the originals in the finally. We never call SaveConfiguration, so
-        // whatever the user pokes at is discarded — no need to make every control read-only.
-        SettingsBasic original = GlobalData.Settings;
-        // The plugin tabs do not read GlobalData.Settings but the static plugin
-        // settings, so those have to be swapped along: snapshot the current plugin values, load the
-        // run's AnalyzerSettings blocks into the plugins, and restore the snapshot in the finally.
-        Dictionary<string, System.Text.Json.JsonElement> pluginSnapshot = [];
-        CryptoScanner.Core.Contracts.PluginManager.CollectSettings(pluginSnapshot);
-        GlobalData.Settings = runSettings;
-        CryptoScanner.Core.Contracts.PluginManager.RestoreSettings(runSettings.Signal.AnalyzerSettings);
-        try
+        // The dialog reads the run's settings directly — including the plugin tabs, which take their
+        // values from its AnalyzerSettings blocks. GlobalData.Settings and the live plugin settings
+        // stay untouched, so this also works while a replay is running.
+        var window = new ConfigurationWindow(runSettings, readOnly: true)
         {
-            var window = new ConfigurationWindow
-            {
-                Title = $"Settings of run #{row.Id} (view only — changes are NOT saved)",
-            };
-            await window.ShowDialog<bool>(owner);
-        }
-        finally
-        {
-            GlobalData.Settings = original;
-            CryptoScanner.Core.Contracts.PluginManager.RestoreSettings(pluginSnapshot);
-            // Undo any live theme change the dialog may have applied while showing the run's settings.
-            App.ApplyThemeFromSettings();
-            viewModel.Status = $"Viewed settings of run #{row.Id} (no changes saved).";
-        }
+            Title = $"Settings of run #{row.Id} (view only — changes are NOT saved)",
+        };
+        await window.ShowDialog<bool>(owner);
+        viewModel.Status = $"Viewed settings of run #{row.Id} (no changes saved).";
     }
 
 

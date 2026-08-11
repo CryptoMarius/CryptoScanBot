@@ -1,3 +1,4 @@
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
@@ -49,12 +50,23 @@ public static class PluginManager
                 continue;
             }
 
+            // Cross-check the declared flag against the old convention (enum value >= DominantLevel)
+            // while both exist. A plugin that forgets the flag would otherwise silently be prepared
+            // and evaluated on the wrong interval. This check can go once the enum does.
+            bool byConvention = reg.Strategy >= CryptoSignalStrategy.DominantLevel;
+            if (reg.IsZoneStrategy != byConvention)
+            {
+                Logger.Warn($"Strategy {reg.Name}: IsZoneStrategy={reg.IsZoneStrategy} " +
+                    $"but the enum value says {byConvention} — using {byConvention}");
+            }
+
             RegisterAlgorithms.Register(new AlgorithmDefinition()
             {
                 Name = reg.Name,
                 Strategy = reg.Strategy,
                 AnalyzeLongType = reg.AnalyzeLongType,
                 AnalyzeShortType = reg.AnalyzeShortType,
+                IsZoneStrategy = byConvention,
             });
 
             _plugins[reg.Strategy] = plugin;
@@ -112,5 +124,47 @@ public static class PluginManager
             target[plugin.StrategyName] = JsonSerializer.SerializeToElement(
                 plugin.SettingsBase, plugin.SettingsBase.GetType(), JsonTools.JsonSerializerIndented);
         }
+    }
+
+
+    /// <summary>The live settings instance of a plugin, or null when no plugin uses that name.</summary>
+    public static SettingsSignalStrategyBase? LiveSettings(string strategyName)
+    {
+        foreach (var plugin in _plugins.Values.Distinct())
+        {
+            if (plugin.StrategyName == strategyName)
+                return plugin.SettingsBase;
+        }
+        return null;
+    }
+
+
+    /// <summary>
+    /// A SEPARATE settings instance for a plugin, deserialized from a stored AnalyzerSettings block.
+    /// Unlike <see cref="RestoreSettings"/> this does not touch the plugin's live settings, so a
+    /// stored set can be shown alongside the running one. Returns null when the block is missing or
+    /// cannot be read — the caller then falls back to the live settings.
+    /// </summary>
+    public static SettingsSignalStrategyBase? MaterializeSettings(string strategyName, Dictionary<string, JsonElement> stored)
+    {
+        foreach (var plugin in _plugins.Values.Distinct())
+        {
+            if (plugin.StrategyName != strategyName)
+                continue;
+            if (!stored.TryGetValue(strategyName, out var element))
+                return null;
+
+            try
+            {
+                return element.Deserialize(plugin.SettingsBase.GetType(), JsonTools.DeSerializerOptions)
+                    as SettingsSignalStrategyBase;
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, $"Failed to read stored settings for {strategyName}");
+                return null;
+            }
+        }
+        return null;
     }
 }

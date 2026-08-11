@@ -39,7 +39,7 @@ public class SignalExecute
 
         foreach (AlgorithmDefinition strategyDef in RegisterAlgorithms.AlgorithmDefinitionList.Values)
         {
-            if (strategyDef.Strategy < CryptoSignalStrategy.DominantLevel)
+            if (!strategyDef.IsZoneStrategy)
             {
                 if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name))
                 {

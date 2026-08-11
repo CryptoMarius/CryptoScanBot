@@ -1715,7 +1715,69 @@ public class PositionMonitor : IDisposable
 
 
     /// <summary>
-    /// We have a new 1m candle, calculate the signals
+    /// True when this candle can move the position: it reaches one of the trigger prices, the
+    /// triggers are unknown, a check was forced, or a waiting entry has run past its timeout.
+    /// Only when this is false can the whole order/position handling be skipped.
+    ///
+    /// Static so the replay can ask the same question about a base candle before deciding whether
+    /// to descend into the underlying minute candles.
+    /// </summary>
+    public static bool CandleCanMovePosition(CryptoPosition position, CryptoCandle candle, CandleTime candleCloseTime)
+    {
+        if (position.TriggerPriceTop == null || position.TriggerPriceBottom == null)
+            return true;
+        if (position.ForceCheckPosition)
+            return true;
+        if (candle.High >= position.TriggerPriceTop.Value || candle.Low <= position.TriggerPriceBottom.Value)
+            return true;
+
+        if (position.Status == CryptoPositionStatus.Waiting && position.Interval != null)
+        {
+            DateTime timeoutAt = position.CreateTime.AddMinutes(
+                GlobalData.Settings.Trading.EntryRemoveTime * position.Interval.Duration);
+            if (candleCloseTime.ToDateTime() >= timeoutAt)
+                return true;
+        }
+        return false;
+    }
+
+
+    /// <summary>
+    /// Order handling for ONE candle: fill what fills, then let the position react — placing the
+    /// take profit / DCA / stop loss and recalculating the trigger prices. Deliberately without the
+    /// signal side (SignalPrepare/SignalExecute), which stays on the base interval.
+    ///
+    /// This is what the replay calls per minute candle once a base candle turns out to touch a
+    /// trigger. Handling the fill on the coarse candle instead would stamp it at the END of that
+    /// candle, so every follow-up order would only start existing minutes later — that is what made
+    /// a 5m run miss a take profit a 1m run did take.
+    /// </summary>
+    public async Task ProcessOrdersAsync()
+    {
+        var exchange = GlobalData.ActiveExchange!;
+        if (!exchange.Data.PositionList.ContainsKey(Symbol.Name))
+            return;
+
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+            await PaperTrading.PaperTradingCheckOrders(Database, exchange, Symbol, LastCandle1m, BaseIntervalDuration);
+
+        // Re-lookup: the fill cascade may have closed or replaced the position.
+        if (exchange.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))
+            await GlobalData.ThreadCheckPosition!.AddToQueue(position!);
+    }
+
+
+    /// <summary>
+    /// Set by the replay when the orders of this base candle were already handled per minute
+    /// candle. The pipeline then skips its own order handling — redoing it on the coarse candle
+    /// would fill at coarse-candle prices and stamp it at the end of the candle.
+    /// </summary>
+    public bool OrdersAlreadyProcessed { get; set; }
+
+
+    /// <summary>
+    /// We have a new candle (for the scanner a 1m interval, emulator can be a higher 
+    /// interval candle), calculate the signals
     /// </summary>
     public async Task NewCandleArrivedAsync()
     {
@@ -1826,7 +1888,7 @@ public class PositionMonitor : IDisposable
             {
                 // Simulate Trade indien openstaande orders gevuld zijn
                 //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
-                if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+                if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading && !OrdersAlreadyProcessed)
                     await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m, BaseIntervalDuration);
 
                 // Pause because of trading rules or low barometer
@@ -1848,7 +1910,10 @@ public class PositionMonitor : IDisposable
             if (!canSkipPositionProcessing)
             {
                 // Re-lookup: the position may have been replaced during CreateOrExtendPositionAsync.
-                if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? currentPosition))
+                // When the minute candles already handled the orders, only a position created just
+                // now still needs this — an existing one has been reacting per minute all along.
+                if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? currentPosition)
+                    && (!OrdersAlreadyProcessed || currentPosition!.Status == CryptoPositionStatus.Waiting))
                     await GlobalData.ThreadCheckPosition!.AddToQueue(currentPosition!);
             }
             PipelineProfiler.RecordAddToQueue(Stopwatch.GetTimestamp() - profAddToQueueStart);

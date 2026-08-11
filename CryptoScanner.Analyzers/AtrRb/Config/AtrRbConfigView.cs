@@ -1,6 +1,7 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 
 using CryptoScanner.Core.Contracts;
+using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.AtrRb.Config;
 
@@ -9,19 +10,23 @@ public class AtrRbConfigView : IConfigView
     private readonly StrategyAtrRbTabViewModel _viewModel = new();
 
     public string TabHeader => AtrRbPlugin.StrategyInternal.ToUpper();
+    public string StrategyName => AtrRbPlugin.StrategyInternal.ToLower();
 
     public object CreateSettingsView()
     {
         return new StrategyAtrRbTabView { DataContext = _viewModel };
     }
 
-    public void LoadConfig()
+    public void LoadConfig(SettingsSignalStrategyBase settings)
     {
-        _viewModel.LoadConfig(AtrRbPlugin.Settings);
+        _viewModel.LoadConfig(ToConcrete(settings));
     }
 
-    public void SaveConfig()
+    public void SaveConfig(SettingsSignalStrategyBase settings)
     {
-        _viewModel.SaveConfig(AtrRbPlugin.Settings);
+        _viewModel.SaveConfig(ToConcrete(settings));
     }
+
+    private static AtrRbSettings ToConcrete(SettingsSignalStrategyBase settings)
+        => settings as AtrRbSettings ?? AtrRbPlugin.Settings;
 }

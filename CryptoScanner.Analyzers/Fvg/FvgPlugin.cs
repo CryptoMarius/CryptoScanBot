@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
@@ -17,7 +17,8 @@ public class FvgPlugin : IStrategyPlugin
         new(CryptoSignalStrategy.FairValueGap,
             "fvg",
             typeof(Signal.SignalFairValueGapLong),
-            typeof(Signal.SignalFairValueGapShort)
+            typeof(Signal.SignalFairValueGapShort),
+            IsZoneStrategy: true
         ),
 
     ];

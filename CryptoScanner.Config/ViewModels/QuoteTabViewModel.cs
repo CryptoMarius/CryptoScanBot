@@ -1,4 +1,4 @@
-using Avalonia.Media;
+﻿using Avalonia.Media;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -53,7 +53,7 @@ public partial class QuoteTabViewModel : ObservableObject
 
     internal void LoadConfig(SortedList<string, CryptoQuoteData> quoteCoins)
     {
-        foreach (var quote in GlobalData.Settings.QuoteCoins.Values)
+        foreach (var quote in quoteCoins.Values)
         {
             Quotes.Add(new QuoteItem(quoteData: quote));
         }

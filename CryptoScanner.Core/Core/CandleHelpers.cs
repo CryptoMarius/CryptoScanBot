@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
 
 using System.Globalization;
 using System.Text;
@@ -25,7 +26,7 @@ public static class Helper
             return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 5);
 #endif
         // Keep these longer (fvg, dlz. dlz.near)
-        if (signal.Strategy >= CryptoSignalStrategy.DominantLevel)
+        if (RegisterAlgorithms.IsZoneStrategy(signal.Strategy))
             return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 5);
 
         return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration);

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Settings;
@@ -84,7 +84,7 @@ public partial class AnalyzerCommonViewModel : ObservableObject
     {
     }
 
-    internal void LoadConfig(SettingsSignal settings)
+    internal void LoadConfig(SettingsSignal settings, SettingsGeneral general)
     {
         AnalysisMinChangePercentage = settings.AnalysisMinChangePercentage;
         AnalysisMaxChangePercentage = settings.AnalysisMaxChangePercentage;
@@ -99,8 +99,8 @@ public partial class AnalyzerCommonViewModel : ObservableObject
 
         // Other settings
         // TODO: Refactor these two properties
-        RemoveSignalAfterxCandles = GlobalData.Settings.General.RemoveSignalAfterxCandles;
-        ShowInvalidSignals = GlobalData.Settings.General.ShowInvalidSignals;
+        RemoveSignalAfterxCandles = general.RemoveSignalAfterxCandles;
+        ShowInvalidSignals = general.ShowInvalidSignals;
         SymbolMustExistsDays = settings.SymbolMustExistsDays;
         LogSymbolMustExistsDays = settings.LogSymbolMustExistsDays;
         MinimumTickPercentage = settings.MinimumTickPercentage;
@@ -115,7 +115,7 @@ public partial class AnalyzerCommonViewModel : ObservableObject
         AboveBollingerBandsUpper = settings.AboveBollingerBandsUpper;
     }
 
-    internal void SaveConfig(SettingsSignal settings)
+    internal void SaveConfig(SettingsSignal settings, SettingsGeneral general)
     {
         settings.AnalysisMinChangePercentage = AnalysisMinChangePercentage;
         settings.AnalysisMaxChangePercentage = AnalysisMaxChangePercentage;
@@ -130,8 +130,8 @@ public partial class AnalyzerCommonViewModel : ObservableObject
 
         // Other settings
         // TODO: Refactor these two properties
-        GlobalData.Settings.General.RemoveSignalAfterxCandles = RemoveSignalAfterxCandles;
-        GlobalData.Settings.General.ShowInvalidSignals = ShowInvalidSignals;
+        general.RemoveSignalAfterxCandles = RemoveSignalAfterxCandles;
+        general.ShowInvalidSignals = ShowInvalidSignals;
         settings.SymbolMustExistsDays = SymbolMustExistsDays;
         settings.LogSymbolMustExistsDays = LogSymbolMustExistsDays;
         settings.MinimumTickPercentage = MinimumTickPercentage;

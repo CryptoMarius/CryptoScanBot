@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Settings;
@@ -33,8 +33,8 @@ public partial class IndicatorsTabViewModel : ObservableObject
         IndicatorRsiViewModel.LoadConfig(settings.General.SettingsRsi);
         IndicatorStochViewModel.LoadConfig(settings.General.SettingsStoch);
         IndicatorBollingerBandViewModel.LoadConfig(settings.General.SettingsBb);
-        IndicatorPrimaryTrend.LoadConfig(GlobalData.Settings.Trend.Secondary);
-        IndicatorSecondaryTrend.LoadConfig(GlobalData.Settings.Trend.Secondary);
+        IndicatorPrimaryTrend.LoadConfig(settings.Trend.Secondary);
+        IndicatorSecondaryTrend.LoadConfig(settings.Trend.Secondary);
     }
 
     internal void SaveConfig(SettingsBasic settings)

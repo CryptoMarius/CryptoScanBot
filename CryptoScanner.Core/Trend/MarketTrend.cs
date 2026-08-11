@@ -130,7 +130,6 @@ public class MarketTrend
                     //}
 
                     log?.AppendLine("");
-                    ScannerLog.Logger.Debug("");
                     text = $"{symbol.Name} sum ={weightSum} / {weightMax} = {symbolTrend.Percentage:N2}";
                     log?.AppendLine(text);
                     //ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);

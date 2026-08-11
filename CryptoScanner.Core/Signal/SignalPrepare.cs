@@ -98,7 +98,7 @@ public class SignalPrepare
             if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name) ||
                 GlobalData.Settings.Signal.Short.Strategy.Contains(strategyDef.Name))
             {
-                if (strategyDef.Strategy < CryptoSignalStrategy.DominantLevel)
+                if (!strategyDef.IsZoneStrategy)
                 {
                     foreach (string intervalName in GlobalData.Settings.Signal.Long.Interval)
                     {

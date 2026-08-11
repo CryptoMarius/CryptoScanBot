@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -39,25 +39,25 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
 
     public Dictionary<string, CryptoTradeVia> TradeViaList => _tradeViaList;
 
-    public void LoadConfig(SettingsTrading settings)
+    public void LoadConfig(SettingsTrading settings, SettingsGeneral general)
     {
         TradeVia = settings.TradeVia;
         DisableNewPositions = settings.DisableNewPositions;
         LogCanceledOrders = settings.LogCanceledOrders;
         GlobalBuyCooldownTime = settings.GlobalBuyCooldownTime;
-        SoundTradeNotification = GlobalData.Settings.General.SoundTradeNotification;
+        SoundTradeNotification = general.SoundTradeNotification;
 
         SlotsMaximalLong = settings.SlotsMaximalLong;
         SlotsMaximalShort = settings.SlotsMaximalShort;
     }
 
-    public void SaveConfig(SettingsTrading settings)
+    public void SaveConfig(SettingsTrading settings, SettingsGeneral general)
     {
         settings.TradeVia = TradeVia;
         settings.DisableNewPositions = DisableNewPositions;
         settings.LogCanceledOrders = LogCanceledOrders;
         settings.GlobalBuyCooldownTime = GlobalBuyCooldownTime;
-        GlobalData.Settings.General.SoundTradeNotification = SoundTradeNotification;
+        general.SoundTradeNotification = SoundTradeNotification;
 
         settings.SlotsMaximalLong = SlotsMaximalLong;
         settings.SlotsMaximalShort = SlotsMaximalShort;

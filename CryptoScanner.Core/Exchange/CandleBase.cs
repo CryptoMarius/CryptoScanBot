@@ -294,7 +294,11 @@ public class CandleBase(ExchangeBase api)
         CandleTime currentTime = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, interval.Duration);
         if (candleTime + interval.Duration > currentTime)
         {
-            ScannerLog.Logger.Debug($"Debug: future candle {symbol.Name} {interval.Name} {openTime.ToLocalTime()} > {candleTime.ToLocalTime()}");
+            // Report the values the condition above actually compares (the candle's close time
+            // against the current candle), not openTime/candleTime - those are the same aligned
+            // moment and printed a meaningless "15:55 > 15:55".
+            ScannerLog.Logger.Debug($"Debug: future candle {symbol.Name} {interval.Name} " +
+                $"close={(candleTime + interval.Duration).ToLocalTime()} > now={currentTime.ToLocalTime()}");
             return true;
         }
 

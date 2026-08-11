@@ -1,4 +1,5 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
 
@@ -13,20 +14,20 @@ public readonly record struct TickRunProgress(int Percent);
 
 
 /// <summary>
-/// Drives the emulator replay. Multi-symbol time-merged feed: the loop walks the replay window
-/// minute by minute and, for every symbol that has a 1m candle at that minute, processes its tick
+/// Drives the emulator replay. Multi-symbol time-merged feed: the loop walks the replay window one
+/// base interval at a time and, for every symbol that has a candle at that step, processes its tick
 /// before the clock advances. This matches what a real exchange does — symbols don't run on
 /// independent timelines — and is what lets cross-symbol strategies (barometer, trend filters that
 /// read other symbols) behave the same way in the emulator as they do live.
 ///
-/// The per-symbol replay candles are set aside as a <see cref="CryptoCandleList"/> keyed by
-/// OpenTime (built by <see cref="IndicatorWarmup.PrepareSymbolAsync"/>); each minute the loop simply
-/// looks the candle up by candle-time. Higher intervals are NOT delivered by anything else —
-/// <see cref="SignalPrepare.Execute"/> only computes indicators and expects the higher-TF candle
-/// to already be in <c>CandleList</c>. The emulator has no live KLine subscription, so
-/// <see cref="ProcessTickAsync"/> hands each 1m candle to <see cref="CandleTools.Process1mCandleAsync"/>
-/// — the exact live 1m handler — which adds the 1m candle and synthesises the higher timeframes
-/// from it. Without this the higher CandleLists stay empty and the signal pipeline produces nothing.
+/// Candles are HANDED OVER, not rebuilt. The fetch already computed and stored every interval, so
+/// each chunk loads all of them per symbol (<see cref="SymbolReplay"/>) and the replay passes each
+/// candle to the engine at the moment it closes. That keeps the intervals below the base interval
+/// up to date as well — synthesis could only ever build upwards — and removes a second candle
+/// implementation that can drift from what is stored.
+///
+/// Two rhythms: the analysis runs once per base candle, the order handling drops to minute
+/// resolution as soon as an open position can be moved by that candle. See ProcessComputeAsync.
 /// </summary>
 public sealed class TickRunner
 {
@@ -38,7 +39,7 @@ public sealed class TickRunner
     /// per minute, so the outcome is deterministic. Set to false for a single-threaded baseline (to
     /// confirm parallel and serial produce the same signals/positions).
     /// </summary>
-    public bool RunParallel { get; init; } = true;
+    public bool RunParallel { get; init; } = false;
 
     /// <summary>
     /// Number of days per chunk for the chunked replay loop. When the replay window exceeds this
@@ -96,6 +97,60 @@ public sealed class TickRunner
     private CryptoInterval oneMinuteInterval = null!;
 
 
+    /// <summary>
+    /// Per-symbol replay data for one chunk: the already-stored candles of EVERY interval, plus a
+    /// cursor per interval saying how far they have been handed to the engine.
+    ///
+    /// <see cref="AdvanceTo"/> copies the candles that have CLOSED at the given clock time into the
+    /// symbol's CandleList. No synthesis: the fetch already computed and stored every interval, so
+    /// rebuilding them from a lower one during the replay is work that has been done before — and a
+    /// second implementation that can drift away from the stored candles. It also means intervals
+    /// below the base interval (2m..10m on a 15m run) simply keep up, which synthesis could not do
+    /// because it only ever builds upwards.
+    /// </summary>
+    private sealed class SymbolReplay
+    {
+        public required CryptoSymbol Symbol { get; init; }
+        public required Dictionary<CryptoIntervalPeriod, CryptoCandleList> Candles { get; init; }
+        private readonly Dictionary<CryptoIntervalPeriod, CandleTime> cursor = [];
+
+        public void ResetCursors(CandleTime windowFrom)
+        {
+            cursor.Clear();
+            foreach (CryptoInterval interval in GlobalData.IntervalList)
+            {
+                // Start at the first boundary of this interval at or after the window start.
+                uint aligned = windowFrom.Minutes - (windowFrom.Minutes % interval.Duration);
+                cursor[interval.IntervalPeriod] = new CandleTime(aligned);
+            }
+        }
+
+        /// <summary>
+        /// Hands over every candle that is complete at <paramref name="clockTime"/>. A candle counts
+        /// as complete when its close time has been reached — handing it over earlier would let the
+        /// analysis read a bar that is still forming.
+        /// </summary>
+        public void AdvanceTo(CandleTime clockTime)
+        {
+            foreach (CryptoInterval interval in GlobalData.IntervalList)
+            {
+                if (!Candles.TryGetValue(interval.IntervalPeriod, out CryptoCandleList? source))
+                    continue;
+
+                CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
+                CandleTime at = cursor[interval.IntervalPeriod];
+                while (at + interval.Duration <= clockTime)
+                {
+                    if (source.TryGetValue(at, out CryptoCandle candle))
+                        symbolInterval.CandleList.TryAdd(at, candle);
+                    at += interval.Duration;
+                }
+                cursor[interval.IntervalPeriod] = at;
+            }
+        }
+    }
+
+
     private static void ReceivedCreatedSignals(CryptoSignal signal)
     {
         //GlobalData.CreatedSignalCount++;
@@ -148,6 +203,11 @@ public sealed class TickRunner
                 symbols.Add(symbol);
             }
 
+            // Sorted by name so the processing order does not depend on how the symbols happen to be
+            // ordered in the run config — reordering that list must not change the outcome of a run.
+            // Ordinal, not culture-aware, so the order is the same on every machine.
+            symbols.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
+
 
             // ───── Reset all transient state from any previous run ────────────────
             ResetRunState(exchange, symbols);
@@ -186,8 +246,13 @@ public sealed class TickRunner
                 if (ct.IsCancellationRequested)
                     break;
 
+                // The last bar of the chunk opens one base interval BEFORE windowFrom + chunkMinutes,
+                // so the next chunk starts exactly on windowFrom + chunkMinutes. Without the
+                // subtraction every chunk shifted the next window start by one base interval, and
+                // after enough chunks that drift moved the boundary across a candle boundary of the
+                // higher intervals — at a different moment for every base interval.
                 CandleTime windowTo = useChunks
-                    ? new CandleTime(Math.Min(windowFrom.Minutes + chunkMinutes, replayTo.Minutes))
+                    ? new CandleTime(Math.Min(windowFrom.Minutes + chunkMinutes - baseInterval.Duration, replayTo.Minutes))
                     : replayTo;
 
                 // Advance the clock to the end of this chunk BEFORE loading its candles.
@@ -199,24 +264,32 @@ public sealed class TickRunner
                 if (emulatorClock != null)
                     emulatorClock.UtcNow = windowTo.ToDateTime();
 
-                // Load replay candles for this chunk. At a coarser base interval the 1m candles are
-                // loaded ALONGSIDE them: they are never fed to the pipeline (that keeps running at
-                // the base resolution, which is the whole point of a coarser run) but they do have
-                // to be present in the CandleList, because parts of the engine read the 1m series
-                // directly regardless of what the replay steps on — SignalCreate's 24-hour change,
-                // the barometer, MarketTrend. Leaving that list empty does not disable those, it
-                // makes them return a silent zero, which changed which signals survived validation.
-                var replays = new List<(CryptoSymbol Symbol, CryptoCandleList Replay, CryptoCandleList? OneMinute)>();
+                // Load the stored candles of EVERY interval for this chunk. The replay hands them to
+                // the engine as they close (SymbolReplay.AdvanceTo) instead of rebuilding the higher
+                // timeframes from a lower one — the fetch computed them once and wrote them away, so
+                // recomputing them here is duplicated work AND a second implementation that can drift
+                // from what is stored.
+                var replays = new List<SymbolReplay>();
                 int chunkBars = 0;
                 long loadStart = Stopwatch.GetTimestamp();
                 foreach (var symbol in symbols)
                 {
-                    CryptoCandleList replayCandles = IndicatorWarmup.LoadReplayCandles(symbol, windowFrom, windowTo, baseInterval);
-                    CryptoCandleList? oneMinuteCandles = null;
-                    if (baseInterval.Duration > 1)
-                        oneMinuteCandles = IndicatorWarmup.LoadReplayCandles(symbol, windowFrom, windowTo, oneMinuteInterval);
-                    replays.Add((symbol, replayCandles, oneMinuteCandles));
-                    chunkBars += replayCandles.Count;
+                    Dictionary<CryptoIntervalPeriod, CryptoCandleList> perInterval = [];
+                    foreach (CryptoInterval interval in GlobalData.IntervalList)
+                    {
+                        // Load from this interval's own boundary at or before the window start. The
+                        // candle that STRADDLES the chunk boundary opens before it and closes inside
+                        // it; loading from windowFrom would drop it for good, because the previous
+                        // chunk ended before its close time and never handed it over either.
+                        CandleTime from = new(windowFrom.Minutes - (windowFrom.Minutes % interval.Duration));
+                        CryptoCandleList list = IndicatorWarmup.LoadReplayCandles(symbol, from, windowTo, interval);
+                        perInterval[interval.IntervalPeriod] = list;
+                        if (interval.IntervalPeriod == baseInterval.IntervalPeriod)
+                            chunkBars += list.Count;
+                    }
+                    var replay = new SymbolReplay { Symbol = symbol, Candles = perInterval };
+                    replay.ResetCursors(windowFrom);
+                    replays.Add(replay);
                 }
                 long loadElapsed = Stopwatch.GetTimestamp() - loadStart;
 
@@ -238,11 +311,11 @@ public sealed class TickRunner
                     if (emulatorClock != null)
                         emulatorClock.UtcNow = closeTime.ToDateTime();
 
-                    List<(CryptoSymbol Symbol, CryptoCandle Candle, CryptoCandleList? OneMinute)> ticksThisMinute = [];
-                    foreach (var (symbol, replay, oneMinute) in replays)
+                    List<(SymbolReplay Replay, CryptoCandle Candle)> ticksThisMinute = [];
+                    foreach (var replay in replays)
                     {
-                        if (replay.TryGetValue(openTime, out CryptoCandle candle))
-                            ticksThisMinute.Add((symbol, candle, oneMinute));
+                        if (replay.Candles[activeBaseInterval.IntervalPeriod].TryGetValue(openTime, out CryptoCandle candle))
+                            ticksThisMinute.Add((replay, candle));
                     }
                     if (ticksThisMinute.Count == 0)
                         continue;
@@ -253,12 +326,12 @@ public sealed class TickRunner
                     if (RunParallel && ticksThisMinute.Count > 1)
                     {
                         await Parallel.ForEachAsync(ticksThisMinute, parallelOptions,
-                            async (item, _) => await ProcessComputeAsync(item.Symbol, item.Candle, item.OneMinute));
+                            async (item, _) => await ProcessComputeAsync(item.Replay, item.Candle, openTime, closeTime));
                     }
                     else
                     {
                         foreach (var item in ticksThisMinute)
-                            await ProcessComputeAsync(item.Symbol, item.Candle, item.OneMinute);
+                            await ProcessComputeAsync(item.Replay, item.Candle, openTime, closeTime);
                     }
 
                     // ── Phase B: persist + zones (serial, deterministic order) ────────────────
@@ -293,8 +366,12 @@ public sealed class TickRunner
                     {
                         foreach (CryptoInterval interval in GlobalData.IntervalList)
                         {
+                            // Align the cutoff on the interval itself, so the number of candles that
+                            // survives the prune does not depend on where the chunk boundary happens
+                            // to fall (which follows the base interval).
                             int keepDepth = IndicatorWarmup.WarmupDepth(interval);
-                            CandleTime cutoff = new(windowTo.Minutes - (uint)keepDepth * interval.Duration);
+                            uint cutoffMinutes = windowTo.Minutes - (uint)keepDepth * interval.Duration;
+                            CandleTime cutoff = new(cutoffMinutes - cutoffMinutes % interval.Duration);
 
                             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                             pruned += symbolInterval.CandleList.RemoveBefore(cutoff);
@@ -682,67 +759,65 @@ public sealed class TickRunner
 
 
     /// <summary>
-    /// Phase A — per-symbol compute (parallel-safe): insert the new base-interval candle, synthesise
-    /// the higher timeframes, then run the live scanner analysis pipeline (signals, paper-trade,
-    /// position eval). When <see cref="activeBaseInterval"/> is 1m this is identical to the live
-    /// scanner path; at coarser intervals (e.g. 5m) higher TFs are synthesised from the base
-    /// interval instead of from 1m, trading precision for speed.
+    /// Phase A — per-symbol compute (parallel-safe). Hands the engine the candles that have closed
+    /// at this point in the replay, then runs the live scanner analysis pipeline (signals,
+    /// paper-trade, position eval).
+    ///
+    /// Two rhythms. The ANALYSIS always runs once per base candle — that is what makes a coarser
+    /// base interval faster. The ORDER handling drops to minute resolution as soon as this base
+    /// candle can move an open position, because a fill has to happen on the minute it is really
+    /// reached: only then do the follow-up orders (take profit, DCA, stop loss) exist from that
+    /// moment on. Handling it on the coarse candle stamps the fill at the END of that candle, which
+    /// is what made a 5m run miss a take profit a 1m run did take.
     /// </summary>
-    private async Task ProcessComputeAsync(CryptoSymbol symbol, CryptoCandle candle, CryptoCandleList? oneMinuteCandles)
+    private async Task ProcessComputeAsync(SymbolReplay replay, CryptoCandle candle, CandleTime openTime, CandleTime closeTime)
     {
         long t0 = Stopwatch.GetTimestamp();
+        CryptoSymbol symbol = replay.Symbol;
 
-        if (activeBaseInterval.Duration <= 1)
-        {
-            await CandleTools.Process1mCandleAsync(symbol, candle.OpenTime.ToDateTime(),
-                candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
-        }
-        else
-        {
-            // Make the minute candles covered by this base candle available BEFORE the pipeline
-            // runs, so anything reading the 1m series sees the same history a 1m run would. Purely
-            // additive: the higher timeframes are still synthesised from the base interval (see
-            // ProcessBaseCandleAsync), and no pipeline work is done per minute — the whole point of
-            // a coarser base interval is that the analysis runs once per base candle, not that the
-            // minute data does not exist.
-            AddMinuteCandles(symbol, candle.OpenTime, oneMinuteCandles);
+        // Can this base candle move an open position? Asked BEFORE handing over new candles, so the
+        // trigger prices are those the position was left with.
+        var exchange = GlobalData.ActiveExchange!;
+        bool descend = activeBaseInterval.Duration > 1
+            && exchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position)
+            && PositionMonitor.CandleCanMovePosition(position!, candle, closeTime);
 
-            await CandleTools.ProcessBaseCandleAsync(symbol, activeBaseInterval, candle.OpenTime.ToDateTime(),
-                candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
+        bool ordersHandledPerMinute = false;
+        if (descend)
+        {
+            CryptoSymbolInterval oneMinute = symbol.GetSymbolInterval(oneMinuteInterval.IntervalPeriod);
+            for (CandleTime minute = openTime; minute < closeTime; minute += 1)
+            {
+                // Hand over everything that closes at this minute, so the position reacts to the
+                // same picture it would see in a 1m run.
+                replay.AdvanceTo(minute + 1);
+                if (!oneMinute.CandleList.TryGetValue(minute, out CryptoCandle minuteCandle))
+                    continue;
+
+                symbol.LastPrice = minuteCandle.Close;
+                using PositionMonitor minuteMonitor = new(symbol, minuteCandle, 1);
+                await minuteMonitor.ProcessOrdersAsync();
+            }
+            ordersHandledPerMinute = true;
         }
+
+        // Catch up to the end of the base candle (a no-op for the intervals the loop above already
+        // advanced) and let the base candle dictate the last price, exactly as the live 1m handler
+        // does with its own candle.
+        replay.AdvanceTo(closeTime);
+        symbol.LastPrice = candle.Close;
 
         long t1 = Stopwatch.GetTimestamp();
         Interlocked.Add(ref elapsedProcess1m, t1 - t0);
 
         // Drive the exact same pipeline as the live ThreadMonitorCandle.Execute() loop:
         // SignalPrepare → SignalExecute → PaperTrading → TradingRules → CreateOrExtendPosition.
-        using PositionMonitor positionMonitor = new(symbol, candle, activeBaseInterval.Duration);
+        using PositionMonitor positionMonitor = new(symbol, candle, activeBaseInterval.Duration)
+        {
+            OrdersAlreadyProcessed = ordersHandledPerMinute,
+        };
         await positionMonitor.NewCandleArrivedAsync();
         Interlocked.Add(ref elapsedPipeline, Stopwatch.GetTimestamp() - t1);
-    }
-
-
-    /// <summary>
-    /// Copies the 1m candles inside one base candle into the symbol's 1m CandleList. Only the
-    /// candles of the window [baseOpenTime, baseOpenTime + base duration) are added, so the 1m
-    /// series stays exactly as far along as the replay itself — adding the whole chunk up front
-    /// would let anything reading it look into the future.
-    ///
-    /// Deliberately does NOT touch LastPrice or UpdateCandleFetched: the base candle owns those,
-    /// and on a base boundary its close equals the last minute's close anyway.
-    /// </summary>
-    private void AddMinuteCandles(CryptoSymbol symbol, CandleTime baseOpenTime, CryptoCandleList? oneMinuteCandles)
-    {
-        if (oneMinuteCandles == null || oneMinuteCandles.Count == 0)
-            return;
-
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(oneMinuteInterval.IntervalPeriod);
-        CandleTime windowEnd = baseOpenTime + activeBaseInterval.Duration;
-        for (CandleTime minute = baseOpenTime; minute < windowEnd; minute += 1)
-        {
-            if (oneMinuteCandles.TryGetValue(minute, out CryptoCandle minuteCandle))
-                symbolInterval.CandleList.TryAdd(minute, minuteCandle);
-        }
     }
 
 

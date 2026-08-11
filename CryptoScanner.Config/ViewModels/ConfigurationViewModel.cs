@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -60,8 +60,22 @@ public partial class ConfigurationViewModel : ObservableObject
     [ObservableProperty]
     private DebugTabViewModel _debugTabViewModel;
 
-    public ConfigurationViewModel()
+    // The settings this dialog edits. Normally GlobalData.Settings; a caller can pass another set
+    // (e.g. those of a finished emulator run) to inspect it without swapping the global instance.
+    private readonly SettingsBasic _settings;
+
+    /// <summary>True when Okay must not write anything back — inspecting a stored settings set.</summary>
+    public bool IsReadOnly { get; }
+
+    public ConfigurationViewModel() : this(null, false)
     {
+    }
+
+    public ConfigurationViewModel(SettingsBasic? settings, bool readOnly)
+    {
+        _settings = settings ?? GlobalData.Settings;
+        IsReadOnly = readOnly;
+
         // Exchange and common
         _exchangeViewModel = new();
         _commonViewModel = new();
@@ -122,7 +136,7 @@ public partial class ConfigurationViewModel : ObservableObject
         _traderTabViewModel.TraderIntervalShortViewModel.CrossTabLabel = "Analyzer";
 
 
-        LoadConfig(GlobalData.Settings);
+        LoadConfig(_settings);
     }
 
     private void LoadConfig(SettingsBasic settings)
@@ -138,13 +152,15 @@ public partial class ConfigurationViewModel : ObservableObject
         QuoteTabViewModel.LoadConfig(settings.QuoteCoins);
 
         // Strategies
-        StrategyTabViewModel.LoadConfig();
+        // Read-only means we are inspecting a stored settings set, so the plugin tabs must come from
+        // its AnalyzerSettings blocks rather than from the live plugin instances.
+        StrategyTabViewModel.LoadConfig(settings.Signal, fromStoredSettings: IsReadOnly);
 
         // Analyzer
-        AnalyzerTabViewModel.LoadConfig(settings.Signal);
+        AnalyzerTabViewModel.LoadConfig(settings.Signal, settings.General);
 
         // Trader
-        TraderTabViewModel.LoadConfig(settings.Trading);
+        TraderTabViewModel.LoadConfig(settings.Trading, settings.General);
 
         // Rulez
         TraderRulesViewModel.LoadConfig(settings.Trading);
@@ -177,10 +193,10 @@ public partial class ConfigurationViewModel : ObservableObject
         StrategyTabViewModel.SaveConfig();
 
         // Analyzer
-        AnalyzerTabViewModel.SaveConfig(settings.Signal);
+        AnalyzerTabViewModel.SaveConfig(settings.Signal, settings.General);
 
         // Trader
-        TraderTabViewModel.SaveConfig(settings.Trading);
+        TraderTabViewModel.SaveConfig(settings.Trading, settings.General);
 
         // Rulez
         TraderRulesViewModel.SaveConfig(settings.Trading);
@@ -205,8 +221,9 @@ public partial class ConfigurationViewModel : ObservableObject
     [RelayCommand]
     private void Okay(Window dialogWindow)
     {
-        SaveConfig(GlobalData.Settings);
-        dialogWindow.Close(true);
+        if (!IsReadOnly)
+            SaveConfig(_settings);
+        dialogWindow.Close(!IsReadOnly);
     }
 
     [RelayCommand]

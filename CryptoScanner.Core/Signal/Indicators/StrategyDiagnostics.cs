@@ -61,8 +61,9 @@ public static class StrategyDiagnostics
 
         // 3. A plugin that owns an indicator extension but has no enabled strategy: its indicators are
         //    not computed. That is intentional (the heavy kernels stay off), but it is also the exact
-        //    state in which enabling the strategy later without rebuilding the hubs reads null values,
-        //    so it is worth stating once at Debug level.
+        //    state in which enabling the strategy later without rebuilding the hubs reads null values.
+        //    That is now handled by IndicatorConfiguration.Bump() on every settings apply, so this is
+        //    only worth stating at Trace level.
         foreach (var plugin in PluginManager.LoadedPlugins.Values.Distinct())
         {
             if (plugin.CreateIndicatorExtension() == null)
@@ -70,7 +71,7 @@ public static class StrategyDiagnostics
 
             bool anyEnabled = plugin.Strategies.Any(s => enabled.Contains(s.Name));
             if (!anyEnabled)
-                Logger.Debug($"Plugin \"{plugin.StrategyName}\" has an indicator extension but no enabled strategy; its indicators are not computed");
+                Logger.Trace($"Plugin \"{plugin.StrategyName}\" has an indicator extension but no enabled strategy; its indicators are not computed");
         }
 
         // Report an enabled strategy whose owning plugin is missing separately from case 1, because

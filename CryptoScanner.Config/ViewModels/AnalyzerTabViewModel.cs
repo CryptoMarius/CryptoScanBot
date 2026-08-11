@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -72,10 +72,10 @@ public partial class AnalyzerTabViewModel : ObservableObject
         _analyzerIntervalShortViewModel.ShortCounterpart = _analyzerIntervalShortViewModel;
     }
 
-    internal void LoadConfig(SettingsSignal settings)
+    internal void LoadConfig(SettingsSignal settings, SettingsGeneral general)
     {
         // TODO: refactor two settings!
-        AnalyzerCommonViewModel.LoadConfig(GlobalData.Settings.Signal);
+        AnalyzerCommonViewModel.LoadConfig(settings, general);
 
         AnalyzerIntervalLongViewModel.LoadConfig(settings.Long.Interval);
         AnalyzerStrategyLongViewModel.LoadConfig(settings.Long.Strategy);
@@ -92,9 +92,9 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerTrendIntervalFilterShortViewModel.LoadConfig(settings.Short.IntervalTrend, CryptoTradeSide.Short);
     }
 
-    internal void SaveConfig(SettingsSignal settings)
+    internal void SaveConfig(SettingsSignal settings, SettingsGeneral general)
     {
-        AnalyzerCommonViewModel.SaveConfig(GlobalData.Settings.Signal);
+        AnalyzerCommonViewModel.SaveConfig(settings, general);
 
         AnalyzerIntervalLongViewModel.SaveConfig(settings.Long.Interval);
         AnalyzerStrategyLongViewModel.SaveConfig(settings.Long.Strategy);
