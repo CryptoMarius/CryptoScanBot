@@ -8,9 +8,9 @@ using System.Diagnostics;
 namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
-/// Progress payload emitted by <see cref="TickRunner"/> after each replayed candle.
+/// Progress payload emitted by <see cref="ReplayRunner"/> after each replayed candle.
 /// </summary>
-public readonly record struct TickRunProgress(int Percent);
+public readonly record struct ReplayProgress(int Percent);
 
 
 /// <summary>
@@ -29,9 +29,9 @@ public readonly record struct TickRunProgress(int Percent);
 /// Two rhythms: the analysis runs once per base candle, the order handling drops to minute
 /// resolution as soon as an open position can be moved by that candle. See ProcessComputeAsync.
 /// </summary>
-public sealed class TickRunner
+public sealed class ReplayRunner
 {
-    public IProgress<TickRunProgress>? Progress { get; init; }
+    public IProgress<ReplayProgress>? Progress { get; init; }
 
     /// <summary>
     /// When true, the symbols of each replay minute are processed in parallel (their per-symbol state
@@ -342,7 +342,7 @@ public sealed class TickRunner
                     if (percent != lastReportedPercent)
                     {
                         lastReportedPercent = percent;
-                        Progress?.Report(new TickRunProgress(percent));
+                        Progress?.Report(new ReplayProgress(percent));
                     }
 
                     int decile = Math.Min(percent / 10, 9);
@@ -387,7 +387,7 @@ public sealed class TickRunner
                 windowFrom = useChunks ? new CandleTime(windowTo.Minutes + baseInterval.Duration) : replayTo;
             }
 
-            Progress?.Report(new TickRunProgress(100));
+            Progress?.Report(new ReplayProgress(100));
 
             if (lastDecile >= 0)
                 decileWallTicks[lastDecile] += Stopwatch.GetTimestamp() - decileStart;
@@ -413,7 +413,7 @@ public sealed class TickRunner
         long Trend, long TrendCalls, long FvgInline, long SmcInline,
         long DbFlush, long DbFlushItems, long CandleArrivals)
     {
-        public static ProfileSnapshot Capture(TickRunner runner) => new(
+        public static ProfileSnapshot Capture(ReplayRunner runner) => new(
             runner.elapsedProcess1m, runner.elapsedPipeline, runner.elapsedZoneDrain, runner.elapsedFlush,
             PipelineProfiler.PrepareTicks, PipelineProfiler.ExecuteTicks, PipelineProfiler.TradeTicks,
             PipelineProfiler.PositionCheckTicks,
@@ -795,8 +795,17 @@ public sealed class TickRunner
                     continue;
 
                 symbol.LastPrice = minuteCandle.Close;
-                using PositionMonitor minuteMonitor = new(symbol, minuteCandle, 1);
-                await minuteMonitor.ProcessOrdersAsync();
+
+                // Put the clock on this minute's close instead of leaving it at the end of the base
+                // candle. PaperTradingCheckOrders walks the 1m candles up to Clock.UtcNow, so a clock
+                // that already stands at the end of the base candle makes it fill orders on minutes
+                // this iteration has not reached yet — a look-ahead inside the base candle that also
+                // put every log line and every clock-derived timeout up to a base interval too late.
+                using (EmulatorClock.Scoped((minute + 1).ToDateTime()))
+                {
+                    using PositionMonitor minuteMonitor = new(symbol, minuteCandle, 1);
+                    await minuteMonitor.ProcessOrdersAsync();
+                }
             }
             ordersHandledPerMinute = true;
         }

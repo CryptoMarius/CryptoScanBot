@@ -960,9 +960,9 @@ public partial class MainWindowViewModel : ObservableObject
 
             // RunParallel deliberately not set here: TickRunner owns the default, so it can be changed
             // in one place. Setting it here as well meant the default was silently overruled.
-            var runner = new TickRunner
+            var runner = new ReplayRunner
             {
-                Progress = new Progress<TickRunProgress>(OnTickProgress),
+                Progress = new Progress<ReplayProgress>(OnTickProgress),
             };
 
             // Run the replay on a background thread. 
@@ -1142,7 +1142,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
 
-    private void OnTickProgress(TickRunProgress p)
+    private void OnTickProgress(ReplayProgress p)
     {
         // The Progress<T> callback already marshals to the UI thread when constructed on the
         // UI thread; the explicit Post is defensive in case this VM ever runs in a worker.
