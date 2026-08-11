@@ -18,7 +18,7 @@ public class SignalExecute
 
     // Quick index on what to execute (with some specials for detecting fvg and dlz on the 1m)
     // (the zones for the fvg and dlz are prepared via other code and are stored in the database)
-    private static Dictionary<(CryptoSignalStrategy strategy, CryptoTradeSide side, bool checkBarometer),
+    private static Dictionary<(string strategy, CryptoTradeSide side, bool checkBarometer),
         SortedList<string, CryptoInterval>> Executing
     { get; set; } = [];
 
@@ -26,7 +26,7 @@ public class SignalExecute
     private static void Add(AlgorithmDefinition strategyDef, CryptoTradeSide side, bool checkBarometer, string intervalName)
     {
         CryptoInterval interval = GlobalData.IntervalListPeriodName[intervalName];
-        var key = (strategyDef.Strategy, side, checkBarometer);
+        var key = (strategyDef.Name, side, checkBarometer);
         Executing.TryAdd(key, []);
         Executing[key].TryAdd(intervalName, interval);
     }
@@ -56,35 +56,10 @@ public class SignalExecute
                     }
                 }
             }
-            else if (strategyDef.Strategy == CryptoSignalStrategy.FairValueGap)
+            else
             {
-                // Detect the zone touches on the 1m
-                if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name))
-                {
-                    Add(strategyDef, CryptoTradeSide.Long, false, "1m");
-                }
-                if (GlobalData.Settings.Signal.Short.Strategy.Contains(strategyDef.Name))
-                {
-                    Add(strategyDef, CryptoTradeSide.Short, false, "1m");
-                }
-            }
-            else if (strategyDef.Strategy == CryptoSignalStrategy.DominantLevel ||
-                strategyDef.Strategy == CryptoSignalStrategy.DominantLevelNear)
-            {
-                // Detect the zone touches on the 1m
-                if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name))
-                {
-                    Add(strategyDef, CryptoTradeSide.Long, false, "1m");
-                }
-                if (GlobalData.Settings.Signal.Short.Strategy.Contains(strategyDef.Name))
-                {
-                    Add(strategyDef, CryptoTradeSide.Short, false, "1m");
-                }
-            }
-            else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock ||
-                strategyDef.Strategy == CryptoSignalStrategy.OrderBlockRejection)
-            {
-                // Detect the SMC order-block proximity on the 1m, same as DLZ/FVG.
+                // Detect the zone touches on the 1m. Used to be three separate branches naming FVG,
+                // DLZ and SMC by enum value, all three doing exactly this.
                 if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name))
                 {
                     Add(strategyDef, CryptoTradeSide.Long, false, "1m");

@@ -17,14 +17,32 @@ public class AlgorithmDefinition
 public static class RegisterAlgorithms
 {
     /// <summary>
-    /// All available strategies + indexed
+    /// All available strategies, keyed by name. The name is what the settings, the database
+    /// (Signal.Strategy2 / Position.Strategy2) and the plugins already use to address a strategy;
+    /// keying on it here takes <see cref="CryptoSignalStrategy"/> off the lookup path.
+    /// Note this also fixes the iteration order alphabetically instead of by enum value, which is
+    /// the order SignalPrepare/SignalExecute evaluate the strategies in.
     /// </summary>
-    public static readonly SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionList = [];
+    public static readonly SortedList<string, AlgorithmDefinition> AlgorithmDefinitionList = [];
+
+    // Legacy index: the enum value a strategy was registered with. Only here to keep the callers
+    // that still hold a CryptoSignalStrategy working while that enum is being phased out — it goes
+    // away together with the enum.
+    private static readonly Dictionary<CryptoSignalStrategy, string> nameByStrategy = [];
 
 
     public static void Register(AlgorithmDefinition algorithmDefinition)
     {
-        AlgorithmDefinitionList.Add(algorithmDefinition.Strategy, algorithmDefinition);
+        AlgorithmDefinitionList.Add(algorithmDefinition.Name, algorithmDefinition);
+        nameByStrategy[algorithmDefinition.Strategy] = algorithmDefinition.Name;
+    }
+
+    /// <summary>
+    /// Return the algorithm definition by name
+    /// </summary>
+    public static bool GetAlgorithm(string name, out AlgorithmDefinition? definition)
+    {
+        return AlgorithmDefinitionList.TryGetValue(name, out definition);
     }
 
     /// <summary>
@@ -32,8 +50,13 @@ public static class RegisterAlgorithms
     /// </summary>
     public static bool GetAlgorithm(CryptoSignalStrategy strategy, out AlgorithmDefinition? definition)
     {
-        return AlgorithmDefinitionList.TryGetValue(strategy, out definition);
+        definition = null;
+        return nameByStrategy.TryGetValue(strategy, out string? name)
+            && AlgorithmDefinitionList.TryGetValue(name, out definition);
     }
+
+    /// <summary>True when a strategy with this name is registered.</summary>
+    public static bool IsRegistered(CryptoSignalStrategy strategy) => nameByStrategy.ContainsKey(strategy);
 
     /// <summary>
     /// True when the strategy fires on a zone touch. Unknown strategies count as not-a-zone, which
@@ -70,7 +93,7 @@ public static class RegisterAlgorithms
             {
                 SignalCreateBase? x = (SignalCreateBase?)Activator.CreateInstance(analyzeClass);
                 x!.SignalSide = side;
-                x!.SignalStrategy = strategy;
+                x!.SignalStrategy = definition!.Name;
                 return x;
             }
         }

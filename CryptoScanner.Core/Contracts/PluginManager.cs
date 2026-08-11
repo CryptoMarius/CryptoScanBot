@@ -18,8 +18,9 @@ public static class PluginManager
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-    public static IReadOnlyDictionary<Enums.CryptoSignalStrategy, IStrategyPlugin> LoadedPlugins => _plugins;
-    private static readonly Dictionary<Enums.CryptoSignalStrategy, IStrategyPlugin> _plugins = [];
+    /// <summary>The plugin per strategy NAME (one plugin can serve several strategies).</summary>
+    public static IReadOnlyDictionary<string, IStrategyPlugin> LoadedPlugins => _plugins;
+    private static readonly Dictionary<string, IStrategyPlugin> _plugins = [];
 
     /// <summary>Chart overlays provided by registered plugins.</summary>
     public static IReadOnlyList<IChartOverlay> ChartOverlays => _overlays;
@@ -44,20 +45,14 @@ public static class PluginManager
     {
         foreach (var reg in plugin.Strategies)
         {
-            if (RegisterAlgorithms.AlgorithmDefinitionList.ContainsKey(reg.Strategy))
+            // Both keys have to be free: the name is the registry key, the enum still feeds the
+            // legacy index. Registering a duplicate enum under a new name would silently repoint
+            // that index at the newcomer.
+            if (RegisterAlgorithms.AlgorithmDefinitionList.ContainsKey(reg.Name)
+                || RegisterAlgorithms.IsRegistered(reg.Strategy))
             {
                 Logger.Warn($"Strategy {reg.Strategy} ({reg.Name}) already registered, skipping");
                 continue;
-            }
-
-            // Cross-check the declared flag against the old convention (enum value >= DominantLevel)
-            // while both exist. A plugin that forgets the flag would otherwise silently be prepared
-            // and evaluated on the wrong interval. This check can go once the enum does.
-            bool byConvention = reg.Strategy >= CryptoSignalStrategy.DominantLevel;
-            if (reg.IsZoneStrategy != byConvention)
-            {
-                Logger.Warn($"Strategy {reg.Name}: IsZoneStrategy={reg.IsZoneStrategy} " +
-                    $"but the enum value says {byConvention} — using {byConvention}");
             }
 
             RegisterAlgorithms.Register(new AlgorithmDefinition()
@@ -66,10 +61,10 @@ public static class PluginManager
                 Strategy = reg.Strategy,
                 AnalyzeLongType = reg.AnalyzeLongType,
                 AnalyzeShortType = reg.AnalyzeShortType,
-                IsZoneStrategy = byConvention,
+                IsZoneStrategy = reg.IsZoneStrategy,
             });
 
-            _plugins[reg.Strategy] = plugin;
+            _plugins[reg.Name] = plugin;
         }
 
         if (plugin.ChartOverlay != null)

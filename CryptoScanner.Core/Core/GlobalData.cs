@@ -187,7 +187,7 @@ public static class GlobalData
 
 
     // Indexed strategies for colors and soundfiles etc...
-    public static Dictionary<CryptoSignalStrategy, (SettingsSignalStrategyBase strategySettings, DateTime lastSignalStrategy)> StrategiesSettings = [];
+    public static Dictionary<string, (SettingsSignalStrategyBase strategySettings, DateTime lastSignalStrategy)> StrategiesSettings = [];
 
 
     public static void LoadExchanges()

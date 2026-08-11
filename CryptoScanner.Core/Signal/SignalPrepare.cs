@@ -109,18 +109,11 @@ public class SignalPrepare
                         Add(SignalPrepareKind.Indicator, intervalName);
                     }
                 }
-                else if (strategyDef.Strategy == CryptoSignalStrategy.FairValueGap)
+                else
                 {
-                    Add(SignalPrepareKind.Indicator, "1m");
-                }
-                else if (strategyDef.Strategy == CryptoSignalStrategy.DominantLevel
-                    || strategyDef.Strategy == CryptoSignalStrategy.DominantLevelNear)
-                {
-                    Add(SignalPrepareKind.Indicator, "1m");
-                }
-                else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock
-                    || strategyDef.Strategy == CryptoSignalStrategy.OrderBlockRejection)
-                {
+                    // Every zone strategy is prepared on 1m — that is what makes it a zone strategy.
+                    // Used to be three separate branches naming FVG, DLZ and SMC by enum value, all
+                    // three doing exactly this.
                     Add(SignalPrepareKind.Indicator, "1m");
                 }
             }

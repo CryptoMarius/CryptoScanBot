@@ -32,7 +32,7 @@ public class CryptoTrendData
     // same event. Indexed per strategy because multiple strategies share this trend-data slot
     // (e.g. choch.primary and choch.primary.pullback both read TrendBosPrimary); if they
     // shared a single field the first one to fire would block the others on the same event.
-    public Dictionary<CryptoSignalStrategy, CandleTime> LastFiredStructureEventTimes { get; } = [];
+    public Dictionary<string, CandleTime> LastFiredStructureEventTimes { get; } = [];
 
     // Last confirmed ZigZag pivot — used by AllowStepIn to detect pullbacks after a signal.
     // 'H' = swing high, 'L' = swing low.
