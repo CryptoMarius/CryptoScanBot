@@ -374,7 +374,7 @@ public class BbmaChartOverlay : IChartOverlay
                 Interval = interval,
                 SymbolInterval = symbolInterval,
                 SignalSide = CryptoTradeSide.Long,
-                SignalStrategy = CryptoSignalStrategy.BbmaOmni,
+                SignalStrategy = BbmaPlugin.StrategyInternal.ToLower(),
                 CandleLast = seedCandle,
             };
             shortClassifier = new SignalBbmaOmniShort
@@ -383,7 +383,7 @@ public class BbmaChartOverlay : IChartOverlay
                 Interval = interval,
                 SymbolInterval = symbolInterval,
                 SignalSide = CryptoTradeSide.Short,
-                SignalStrategy = CryptoSignalStrategy.BbmaOmni,
+                SignalStrategy = BbmaPlugin.StrategyInternal.ToLower(),
                 CandleLast = seedCandle,
             };
 

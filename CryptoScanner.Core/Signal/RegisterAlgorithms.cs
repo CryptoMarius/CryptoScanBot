@@ -65,6 +65,10 @@ public static class RegisterAlgorithms
     public static bool IsZoneStrategy(CryptoSignalStrategy strategy)
         => GetAlgorithm(strategy, out AlgorithmDefinition? definition) && definition!.IsZoneStrategy;
 
+    /// <inheritdoc cref="IsZoneStrategy(CryptoSignalStrategy)"/>
+    public static bool IsZoneStrategy(string? name)
+        => name != null && GetAlgorithm(name, out AlgorithmDefinition? definition) && definition!.IsZoneStrategy;
+
 
     /// <summary>
     /// Return the name of the algorithm

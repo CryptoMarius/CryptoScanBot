@@ -292,7 +292,7 @@ public class PositionMonitor : IDisposable
                     }
 
                     // Does the user want to trade with this strategy
-                    if (!TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
+                    if (signal.Strategy2 == null || !TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy2))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
                         symbolInterval.SignalList.Remove(signal);

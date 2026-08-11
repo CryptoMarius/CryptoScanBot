@@ -35,7 +35,7 @@ public abstract class SignalChochShortBase : SignalCreateBase
     public override decimal? OverrideSignalPrice => _overrideSignalPrice;
 
 
-    private static readonly HashSet<(string, string, CryptoSignalStrategy)> _loggedNoChoch = [];
+    private static readonly HashSet<(string, string, string)> _loggedNoChoch = [];
 
     public static void ResetDiagnosticLog()
     {

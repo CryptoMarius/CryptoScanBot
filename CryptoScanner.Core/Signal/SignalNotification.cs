@@ -41,13 +41,14 @@ public static class SignalNotification
 
         if (!signal.IsInvalid)
         {
-            if (GlobalData.StrategiesSettings.TryGetValue(signal.Strategy, out (SettingsSignalStrategyBase strategySettings, DateTime lastSignalTime) x))
+            if (signal.Strategy2 != null
+                && GlobalData.StrategiesSettings.TryGetValue(signal.Strategy2, out (SettingsSignalStrategyBase strategySettings, DateTime lastSignalTime) x))
             {
                 if (x.strategySettings.PlaySound && signal.CloseDate > x.lastSignalTime)
                 {
                     // Stay silent for the next 20 seconds (for his strategy)
                     x.lastSignalTime = signal.CloseDate.AddSeconds(20);
-                    GlobalData.StrategiesSettings[signal.Strategy] = x;
+                    GlobalData.StrategiesSettings[signal.Strategy2] = x;
 
                     string soundFile = signal.Side == CryptoTradeSide.Long ?
                         x.strategySettings.SoundFileLong : x.strategySettings.SoundFileShort;

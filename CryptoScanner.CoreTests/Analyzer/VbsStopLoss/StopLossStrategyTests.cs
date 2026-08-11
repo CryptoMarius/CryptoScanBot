@@ -120,7 +120,7 @@ public class StopLossStrategyTests : TestBase
                     Interval = interval,
                     SymbolInterval = symbolInterval,
                     SignalSide = CryptoTradeSide.Long,
-                    SignalStrategy = CryptoSignalStrategy.Vbs,
+                    SignalStrategy = "vbs",
                     CandleLast = data,
                 }
                 : new VbsSignalShort
@@ -129,7 +129,7 @@ public class StopLossStrategyTests : TestBase
                     Interval = interval,
                     SymbolInterval = symbolInterval,
                     SignalSide = CryptoTradeSide.Short,
-                    SignalStrategy = CryptoSignalStrategy.Vbs,
+                    SignalStrategy = "vbs",
                     CandleLast = data,
                 };
 
@@ -168,7 +168,7 @@ public class StopLossStrategyTests : TestBase
                     Interval = interval,
                     SymbolInterval = symbolInterval,
                     SignalSide = CryptoTradeSide.Long,
-                    SignalStrategy = CryptoSignalStrategy.Stobb,
+                    SignalStrategy = "stobb",
                     CandleLast = data,
                 }
                 : new SignalStobbShort
@@ -177,7 +177,7 @@ public class StopLossStrategyTests : TestBase
                     Interval = interval,
                     SymbolInterval = symbolInterval,
                     SignalSide = CryptoTradeSide.Short,
-                    SignalStrategy = CryptoSignalStrategy.Stobb,
+                    SignalStrategy = "stobb",
                     CandleLast = data,
                 };
 

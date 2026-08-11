@@ -1484,7 +1484,7 @@ public partial class TestForm : Form
                 //            throw new Exception("Could not calculate SAR!");
                 //        }
                 //    }
-                var algorithm = RegisterAlgorithms.AlgorithmDefinitionList[CryptoSignalStrategy.Stobb];
+                var algorithm = RegisterAlgorithms.AlgorithmDefinitionList["stobb"];
                 if (algorithm != null)
                 {
 

@@ -165,7 +165,7 @@ public class BbmaSignalSimulationTests : TestBase
                     Interval = ltf,
                     SymbolInterval = ltfSymbolInterval,
                     SignalSide = CryptoTradeSide.Long,
-                    SignalStrategy = CryptoSignalStrategy.BbmaOmni,
+                    SignalStrategy = "bbma.omni",
                     CandleLast = candleLast,
                 }
                 : new SignalBbmaShort
@@ -174,7 +174,7 @@ public class BbmaSignalSimulationTests : TestBase
                     Interval = ltf,
                     SymbolInterval = ltfSymbolInterval,
                     SignalSide = CryptoTradeSide.Short,
-                    SignalStrategy = CryptoSignalStrategy.BbmaOmni,
+                    SignalStrategy = "bbma.omni",
                     CandleLast = candleLast,
                 };
 

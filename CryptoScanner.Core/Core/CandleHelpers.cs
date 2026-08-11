@@ -22,11 +22,11 @@ public static class Helper
     {
 #if DEBUG
         // Keep these longer
-        if (signal.Strategy == CryptoSignalStrategy.Trend)
+        if (signal.Strategy2 == "trend")
             return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 5);
 #endif
         // Keep these longer (fvg, dlz. dlz.near)
-        if (RegisterAlgorithms.IsZoneStrategy(signal.Strategy))
+        if (RegisterAlgorithms.IsZoneStrategy(signal.Strategy2))
             return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 5);
 
         return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration);

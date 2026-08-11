@@ -26,7 +26,7 @@ public class SettingsCompiled
 
 
     // The active strategies
-    public SortedList<CryptoSignalStrategy, bool> Strategy { get; set; } = [];
+    public SortedList<string, bool> Strategy { get; set; } = [];
 
 
     // Interval trend + Value (bullisch, bearish)
@@ -139,9 +139,9 @@ public class SettingsCompiled
             if (settings.Strategy.Contains(strategyDef.Name))
             {
                 if (side == CryptoTradeSide.Long && strategyDef.AnalyzeLongType != null)
-                    Strategy.Add(strategyDef.Strategy, true);
+                    Strategy.Add(strategyDef.Name, true);
                 if (side == CryptoTradeSide.Short && strategyDef.AnalyzeShortType != null)
-                    Strategy.Add(strategyDef.Strategy, true);
+                    Strategy.Add(strategyDef.Name, true);
             }
         }
     }

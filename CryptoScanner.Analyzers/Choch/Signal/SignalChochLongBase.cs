@@ -41,7 +41,7 @@ public abstract class SignalChochLongBase : SignalCreateBase
 
     // Tracks (symbol, interval, strategy) combos that already logged "no CHoCH" so we
     // don't flood the log with the same message every candle.
-    private static readonly HashSet<(string, string, CryptoSignalStrategy)> _loggedNoChoch = [];
+    private static readonly HashSet<(string, string, string)> _loggedNoChoch = [];
 
     public static void ResetDiagnosticLog()
     {
