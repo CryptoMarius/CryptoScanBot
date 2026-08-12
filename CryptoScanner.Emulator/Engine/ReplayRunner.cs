@@ -246,14 +246,9 @@ public sealed class ReplayRunner
                 if (ct.IsCancellationRequested)
                     break;
 
-                // The last bar of the chunk opens one base interval BEFORE windowFrom + chunkMinutes,
-                // so the next chunk starts exactly on windowFrom + chunkMinutes. Without the
-                // subtraction every chunk shifted the next window start by one base interval, and
-                // after enough chunks that drift moved the boundary across a candle boundary of the
-                // higher intervals — at a different moment for every base interval.
-                CandleTime windowTo = useChunks
-                    ? new CandleTime(Math.Min(windowFrom.Minutes + chunkMinutes - baseInterval.Duration, replayTo.Minutes))
-                    : replayTo;
+                // See ReplayChunk for what From / LastBaseOpen / End mean and why they differ.
+                ReplayChunk chunk = ReplayChunk.Resolve(windowFrom, replayTo, chunkMinutes, baseInterval.Duration);
+                CandleTime windowTo = chunk.LastBaseOpen;
 
                 // Advance the clock to the end of this chunk BEFORE loading its candles.
                 // LoadCandlesInRange clips every read to "OpenTime <= Clock.UtcNow" while a run is
@@ -261,8 +256,14 @@ public sealed class ReplayRunner
                 // replayed minute — which would clip the entire new chunk to (almost) nothing and
                 // starve the replay from chunk 2 onwards. The replay loop below resets the clock
                 // minute-by-minute anyway once it starts.
+                //
+                // chunk.End, not windowTo: windowTo is the OPEN time of the last base candle, and
+                // this clip is applied to the loading below. Parking the clock there silently undid
+                // the wider load window (chunk.LoadTo) — the 1m candles of the last base candle were
+                // requested but clipped away again, so the newest 1m candle stayed a base interval
+                // stale and orders derived from it were stamped into the past.
                 if (emulatorClock != null)
-                    emulatorClock.UtcNow = windowTo.ToDateTime();
+                    emulatorClock.UtcNow = chunk.End.ToDateTime();
 
                 // Load the stored candles of EVERY interval for this chunk. The replay hands them to
                 // the engine as they close (SymbolReplay.AdvanceTo) instead of rebuilding the higher
@@ -277,12 +278,8 @@ public sealed class ReplayRunner
                     Dictionary<CryptoIntervalPeriod, CryptoCandleList> perInterval = [];
                     foreach (CryptoInterval interval in GlobalData.IntervalList)
                     {
-                        // Load from this interval's own boundary at or before the window start. The
-                        // candle that STRADDLES the chunk boundary opens before it and closes inside
-                        // it; loading from windowFrom would drop it for good, because the previous
-                        // chunk ended before its close time and never handed it over either.
-                        CandleTime from = new(windowFrom.Minutes - (windowFrom.Minutes % interval.Duration));
-                        CryptoCandleList list = IndicatorWarmup.LoadReplayCandles(symbol, from, windowTo, interval);
+                        CryptoCandleList list = IndicatorWarmup.LoadReplayCandles(
+                            symbol, chunk.LoadFrom(interval.Duration), chunk.LoadTo, interval);
                         perInterval[interval.IntervalPeriod] = list;
                         if (interval.IntervalPeriod == baseInterval.IntervalPeriod)
                             chunkBars += list.Count;
@@ -384,7 +381,7 @@ public sealed class ReplayRunner
                 LogChunkTimings(chunkIndex, exchange, symbols);
 
                 // Advance to next chunk
-                windowFrom = useChunks ? new CandleTime(windowTo.Minutes + baseInterval.Duration) : replayTo;
+                windowFrom = useChunks ? chunk.NextFrom : replayTo;
             }
 
             Progress?.Report(new ReplayProgress(100));
