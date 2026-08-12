@@ -28,6 +28,16 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
         // Build 1m candles from the trade stream (Kraken Futures has no kline feed).
         var subscriptionResult = await api.SubscribeToTradeUpdatesAsync(SymbolNamesAsGenericArray, data =>
         {
+            // Kraken sends a snapshot of the most recent (historical) trades on every connect AND
+            // on every reconnect, through this very same handler - only the update type tells them
+            // apart. Merging those into the cache is harmful twice over: trades from minutes that
+            // were already flushed rebuild those candles from a partial set of trades and overwrite
+            // correct history through Process1mCandleAsync, and the trades of the current minute get
+            // counted a second time so its volume keeps growing on each reconnect. Only live updates
+            // may reach the cache.
+            if (data.UpdateType == SocketUpdateType.Snapshot)
+                return;
+
             // Handled synchronously (Wait, not WaitAsync/Task.Run), in the exact order the socket
             // delivers messages, so trades for the same still-open candle are always applied in order.
             foreach (KrakenFuturesTradeUpdate trade in data.Data)

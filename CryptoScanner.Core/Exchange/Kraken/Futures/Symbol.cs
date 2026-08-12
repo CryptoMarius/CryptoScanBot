@@ -7,6 +7,7 @@ using CryptoScanner.Core.Model;
 using Dapper.Contrib.Extensions;
 
 using Kraken.Net.Clients;
+using Kraken.Net.Enums;
 
 namespace CryptoScanner.Core.Exchange.Kraken.Futures;
 
@@ -66,11 +67,40 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data)
                         {
-                            if (symbolData.Category != "DeFi")
+                            // Only take the tradeable PF_ perpetuals (flexible futures without an
+                            // expiry): linear, USD quoted and multi collateral, which is the
+                            // PerpetualLinear mode requested below. Everything else is skipped
+                            // because it collides on the scanner name: the PI_ inverse contracts
+                            // and the dated FF_/FI_ contracts all parse to the same base+quote as
+                            // their PF_ counterpart (PF_ETHUSD, PI_ETHUSD and FF_ETHUSD_260925 all
+                            // become ETHUSD), after which activeSymbols.Add() further down throws
+                            // a duplicate key and rolls back the whole transaction - so nothing at
+                            // all gets stored and the exchange keeps its old symbol list.
+                            //
+                            // This replaces a "Category != DeFi" test filter, which threw away
+                            // almost everything: PF_XBTUSD and PF_ETHUSD have category "Layer 1"
+                            // and the inverse contracts have an empty category. Measured against
+                            // the instrument list: DeFi gave 95 symbols, this gives 274, all PF_
+                            // and all with a unique base+quote.
+                            if (!symbolData.Tradeable || symbolData.Type != SymbolType.FlexibleFutures
+                                || symbolData.LastTradingTime != null)
                                 continue;
 
                             // TODO? Inspect
                             SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
+
+                            // Safety net for the same collision: a duplicate name must never take
+                            // the entire fetch down, because the exception rolls back the whole
+                            // transaction and then not a single symbol is stored. Tested before
+                            // IsSymbolAccepted() so the second contract cannot overwrite the
+                            // ExchangeName of the first one either.
+                            if (activeSymbols.ContainsKey(info.ScannerName))
+                            {
+                                GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} " +
+                                    $"{symbolData.Symbol} skipped, {info.ScannerName} is already taken");
+                                continue;
+                            }
+
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
                                 //string name = symbolInfo.WebsocketName; // AlternateName; // symbolInfo.Base + symbolInfo.Quote;

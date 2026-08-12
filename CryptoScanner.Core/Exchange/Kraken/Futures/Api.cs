@@ -27,7 +27,9 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Kraken Futures", "USD", 720, false, 5, klineDelivery: KlineDelivery.TimerFlush);
+        // The charts endpoint returns well over 1000 candles per call without a count, so 1000 is a
+        // safe page size and fetches the history in fewer calls than the 720 that was set here.
+        ExchangeOptions.SetDefaultOptions("Kraken Futures", "USD", 1000, false, 5, klineDelivery: KlineDelivery.TimerFlush);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KrakenRestClient.SetDefaultOptions(options =>

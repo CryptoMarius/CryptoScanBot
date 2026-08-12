@@ -39,8 +39,10 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         int limit = Api.ExchangeOptions.CandleLimit;
         CandleTime maxTime = fetchFrom + (limit - 1) * interval.Duration;
 
+        // The "count" parameter returns the FIRST limit candles from startTime (ascending), so it
+        // combines with the paging on fetchFrom instead of cutting the newest candles off.
         var result = await api.ExchangeData.GetKlinesAsync(TickType.Trade, symbol.ExchangeName,
-            (FuturesKlineInterval)exchangeInterval, fetchFrom.ToDateTime());
+            (FuturesKlineInterval)exchangeInterval, fetchFrom.ToDateTime(), limit: limit);
         if (!result.Success)
         {
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
@@ -65,8 +67,14 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 if (CheckFutureCandleReceived(kline.Timestamp, symbol, interval, kline.ClosePrice))
                     continue;
 
+                // Kraken reports the volume of a candle in BASE units, while the scanner stores the
+                // QUOTE volume everywhere else (Binance QuoteVolume, Okx VolumeCurrencyQuote, and
+                // the kline ticker of this exchange which sums price x quantity per trade). Convert
+                // it with the average of high and low, the same approximation HyperLiquid Futures
+                // uses - without this the history is in a different unit than the live candles.
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.Timestamp,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
+                    kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
 
                 // remember the newest candle
                 if (candle.OpenTime > fetchedUpTo)

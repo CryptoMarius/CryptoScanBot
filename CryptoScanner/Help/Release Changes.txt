@@ -11,6 +11,7 @@ Definiteve release?
 
 
 XX-08-2025 2.6.0
+- De laatste fouten uit Kraken Futures gehaald
 - Extra help link naar de Cryptoscanner wiki pagina op github
 - De afkortingen voor de strategien wordt nu beknopt uitgewerkt in het analyzer tabblad
 - Fixed logging, daarin was ook de emulator logtime nog opgenomen wat dubbelop is
@@ -19,9 +20,11 @@ XX-08-2025 2.6.0
 - Chart venster, de opties iets anders ingedeeld zodat de opties beter ingedeeld zijn + opties op naam sorteren
 - Papertrading op de andere exchanges werkzaam gemaakt (was alleen actief voor Bybit en Binance)
 - BB Squeuze strategie toegevoegd (maar daar zijn niet veel signalen op)
+- Kraken futures weer geactiveerd, de symbols, candles en de trade subscription zijn gerepareerd
 
 Photino
-- Nieuw TV chart die het Avalonia chart venster gaat vervangen.
+- Nieuw Tradingview gebaseerde chart die het Avalonia chart venster vervangt
+- Tradingview tabblad verwijderd en vervangen met een popup vanwege limitaties Tradingview
 - Introductie van een nieuwe Photino applicatie (parallel aan de Avalonia app)
 
 
@@ -80,14 +83,14 @@ Photino
 - Foutmelding "The input string '219.95019055' was not in a correct format"
 
 02-06-2025 2.5.2
-- In de configuratie worden de strategieën nu gesorteerd (het worden er wat veel)
+- In de configuratie worden de strategieï¿½n nu gesorteerd (het worden er wat veel)
 - Copy data cells gerepareerd, de tekst van het clipboard kan nu zo in Excel geplakt worden
 - Meldingen van de fvg, dlz en smc melden nu het interval waarop de melding gedetecteerd is (was altijd 1m)
 - Nieuwe combinatie strategie voor de storsi, stobb icm met de fvg, dlz en smc zones (experimenteel)
 - Configuratie van de intervallen veranderd voor de dlz, fvg en smc
 - Nieuwe strategie voor het rapporteren van de ChoCh en pullback's (experimenteel)
 - Nieuwe strategie voor de smc methodiek (expansie/bounce vanaf een base), 1e poging dus wellicht wat ruw?
-- Nieuwe strategieën voor de stobb en storsi icm de fvg/dlz (die laatste moet dan wel aan staan)
+- Nieuwe strategieï¿½n voor de stobb en storsi icm de fvg/dlz (die laatste moet dan wel aan staan)
   De instap hiervan is tamelijk wisselend, ik ben niet tevreden over de trader en de condities.
 - De tekst van het signaal wordt nu overgenomen in de positie ter tracering
 - Opruimen van candles van zones die niet langer actief zijn of verwijderd zijn

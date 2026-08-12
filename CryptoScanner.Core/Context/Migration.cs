@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 78;
+    public readonly static int CurrentDatabaseVersion = 79;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1605,6 +1605,24 @@ public class Migration
             using var transaction = database.BeginTransaction();
 
             try { database.Connection.Execute("alter table Symbol add LastLossDate TEXT NULL", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 12-08-2026 Kraken Futures reactivated. It was switched off because the symbols and the
+        // candles were wrong: the symbol list was filtered on category "DeFi" (dropping BTC and
+        // ETH, which are "Layer 1"), the trade snapshot Kraken sends on every (re)connect was
+        // merged into the candle cache, and the history was stored in base volume while the live
+        // candles hold quote volume. Empty step: only the version bump is needed, so that
+        // UpdateExchanges() below picks up the new IsSupported for existing databases.
+        if (CurrentVersion > version.Version && version.Version == 78)
+        {
+            using var transaction = database.BeginTransaction();
 
             // update version
             version.Version += 1;
