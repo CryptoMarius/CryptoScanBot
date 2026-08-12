@@ -30,6 +30,7 @@ class Program
     private static LogService? _logService;
     private static SymbolService? _symbolService;
     private static InternalBrowserService? _internalBrowser;
+    private static TradingViewWindow? _tradingViewWindow;
 
     [STAThread]
     static void Main(string[] args)
@@ -186,6 +187,13 @@ class Program
         _internalBrowser = app.Services.GetRequiredService<InternalBrowserService>();
         _internalBrowser.Register();
 
+        // Every "open internally" request now opens a second window with a browser of its own,
+        // instead of the Tradingview tab. That tab was an iframe inside this same WebView, and
+        // www.tradingview.com refuses to be framed - which is why it could only show the anonymous
+        // embed widget, without a login and without the user's own indicators.
+        _tradingViewWindow = new TradingViewWindow(app.MainWindow);
+        _internalBrowser.OpenBrowserWindow = url => _tradingViewWindow.Show(url);
+
         // Start the scanner engine (same sequence as Avalonia App.InitializeGlobalDataAsync)
         _scannerSession = app.Services.GetRequiredService<IScannerSession>();
         _scannerSession.AfterStartup();
@@ -302,7 +310,8 @@ class Program
                 return;
             _isShuttingDown = true;
             GlobalData.ApplicationIsClosing = true;
-            GlobalData.SaveConfiguration();
+            try { GlobalData.SaveConfiguration(); }
+            catch (Exception error) { ScannerLog.Logger.Error(error, "ProcessExit(SaveConfiguration)"); }
             _stateService?.FlushToDisk();
             _stateService?.FlushWindowStateToDisk();
             NLog.LogManager.Shutdown();
@@ -419,6 +428,7 @@ class Program
         try { _liveDataService?.Dispose(); } catch { }
         try { _logService?.Dispose(); } catch { }
         try { _symbolService?.Dispose(); } catch { }
+        try { _tradingViewWindow?.Close(); } catch { }
         try { _internalBrowser?.Dispose(); } catch { }
 
         try
@@ -453,7 +463,10 @@ class Program
         }
 
         ScannerLog.Logger.Trace("Shutdown(SaveConfiguration)");
-        GlobalData.SaveConfiguration();
+        // SaveConfiguration rethrows now, and a failure here must not take the rest of the
+        // shutdown (window state, log flush) down with it
+        try { GlobalData.SaveConfiguration(); }
+        catch (Exception error) { ScannerLog.Logger.Error(error, "Shutdown(SaveConfiguration)"); }
         _stateService?.FlushToDisk();
         _stateService?.FlushWindowStateToDisk();
 

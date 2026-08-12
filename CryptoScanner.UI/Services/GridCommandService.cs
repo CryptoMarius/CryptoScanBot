@@ -40,8 +40,10 @@ public class GridCommandService
 
     public void OpenTradingViewInternal(CryptoSymbol symbol, CryptoInterval? interval = null)
     {
+        // No NavigateTo("/tradingview") any more: that tab is gone. It was an iframe, and
+        // www.tradingview.com refuses to be framed, so it could only ever show the anonymous embed
+        // widget. ActivateTradingApp below reaches the host, which opens a real second window.
         _symbolService.SetSelectedSymbol(symbol);
-        _navigationManager.NavigateTo("/tradingview");
 
         interval ??= GlobalData.IntervalListPeriod[GlobalData.Settings.General.DefaultInterval];
         ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal);

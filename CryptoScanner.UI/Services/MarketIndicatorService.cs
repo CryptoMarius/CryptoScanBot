@@ -92,9 +92,15 @@ public class MarketIndicatorService : IDisposable
             try
             {
                 var data = await http.GetFromJsonAsync<FGResponse>("https://api.alternative.me/fng/", ct);
-                if (data?.Data?.Length > 0 && !string.IsNullOrEmpty(data.Data[0].Value))
+
+                // Read into a local: the null test and the parse were two separate lookups into
+                // the array, so the compiler could not tie them together. Invariant culture
+                // because the value comes from an api, not from the user's regional settings.
+                string? value = data?.Data?.Length > 0 ? data.Data[0].Value : null;
+                if (!string.IsNullOrEmpty(value)
+                    && decimal.TryParse(value, System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture, out decimal val))
                 {
-                    decimal val = decimal.Parse(data.Data[0].Value);
                     UpdateIndicator(indicator, val, 0);
                 }
             }

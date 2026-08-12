@@ -1751,16 +1751,26 @@ code {
     height: 10px;
 }
 
+/* One below the other rather than side by side: with only the two charts the Avalonia dashboard
+   also has, a wrapping row left a wide empty gap next to them. */
 .dashboard-charts {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 5px;
     padding: 10px;
 }
 
 .dashboard-chart-box {
     width: 600px;
-    min-height: 250px;
+
+    /* A fixed height, not just a minimum. The bars inside are sized in percent, and a percentage
+       height only resolves against an ancestor whose height is definite. While these boxes sat in
+       a wrapping ROW they were stretched to the row height and that came for free; stacked in a
+       column their height follows their content, min-height does not count as definite, and every
+       bar collapsed to a flat line. flex: none keeps the column from shrinking them again. */
+    height: 250px;
+    flex: none;
+
     display: flex;
     flex-direction: column;
     border: 1px solid var(--border-low);

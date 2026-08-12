@@ -318,12 +318,21 @@ function createSegmentPrimitive() {
                         ctx.stroke();
 
                         if (s.text) {
+                            // Normally at the start of the line, but a vertical marker puts its
+                            // caption at a price of its own so it does not end up at the far end
+                            // of the line
+                            var yText = y1;
+                            if (s.textPrice !== undefined && s.textPrice !== null) {
+                                var yOwn = source._series.priceToCoordinate(s.textPrice);
+                                if (isFinite(yOwn)) yText = yOwn;
+                            }
+
                             ctx.setLineDash([]);
                             ctx.fillStyle = '#ffffff';
                             ctx.font = Math.round(9 * vRatio) + 'px sans-serif';
                             ctx.textBaseline = 'bottom';
                             // Just right of the start of the line, same as the Avalonia annotation
-                            ctx.fillText(s.text, (Math.min(x1, x2) + 4) * hRatio, y1 * vRatio - 2 * vRatio);
+                            ctx.fillText(s.text, (Math.min(x1, x2) + 4) * hRatio, yText * vRatio - 2 * vRatio);
                         }
                     });
                     // A small filled circle where an order actually filled. Deliberately not a
@@ -943,6 +952,12 @@ window.ChartWidget = {
 
         subChart.timeScale().subscribeVisibleLogicalRangeChange(function (range) {
             if (self._syncing || !range) return;
+
+            // A sub-chart created during setData fits itself to its own data and reports that
+            // here. Following it would drag the main chart to wherever this panel happens to sit,
+            // which is not something the user did. Only follow a sub-chart the user scrolled.
+            if (self._settingData) return;
+
             self._syncing = true;
             try { mainChart.timeScale().setVisibleLogicalRange(range); } catch (e) { }
             self._syncing = false;
@@ -1062,9 +1077,27 @@ window.ChartWidget = {
         var self = this;
         var mainEntry = this._charts.main;
 
-        // Remember where the user was looking, so a toggle does not move the chart
+        // While this runs, the sub-charts are destroyed and rebuilt. A fresh sub-chart fits itself
+        // to its own data and reports that through subscribeVisibleLogicalRangeChange, and the
+        // two-way sync then pushes that range onto the main chart. Those callbacks arrive after
+        // setData has returned, so the plain _syncing flag never caught them.
+        this._settingData = true;
+
+        // Remember where the user was looking, so a toggle does not move the chart.
+        //
+        // In TIME, not in bar indices. A logical range is an offset from the first bar, and the
+        // first bar moves: the scanner trims old candles as new ones come in, so between two
+        // refreshes the whole series can shift. Restoring index 800..930 onto a series that just
+        // lost a few hundred bars at the front lands past the end - an empty chart with the
+        // candles pushed off to the left, which is exactly the jump that kept happening.
+        // Times survive that. The logical range is kept only as a fallback for when the window
+        // holds no bars at all and getVisibleRange returns nothing.
         var visibleRange = null;
-        try { visibleRange = mainEntry.chart.timeScale().getVisibleLogicalRange(); } catch (e) { }
+        var visibleTimeRange = null;
+        try {
+            visibleRange = mainEntry.chart.timeScale().getVisibleLogicalRange();
+            visibleTimeRange = mainEntry.chart.timeScale().getVisibleRange();
+        } catch (e) { }
 
         mainEntry.series.candles.setData(candles);
         this._lastCandles = candles;
@@ -1189,9 +1222,19 @@ window.ChartWidget = {
             this._pendingFit = false;
             this._zoomLast(candles ? candles.length : 0);
         }
+        else if (visibleTimeRange) {
+            try { mainEntry.chart.timeScale().setVisibleRange(visibleTimeRange); }
+            catch (e) {
+                try { mainEntry.chart.timeScale().setVisibleLogicalRange(visibleRange); } catch (e2) { }
+            }
+        }
         else if (visibleRange) {
             try { mainEntry.chart.timeScale().setVisibleLogicalRange(visibleRange); } catch (e) { }
         }
+
+        // Release the sync guard only once the sub-charts have settled. Their range callbacks are
+        // queued, not immediate, so clearing it here and now would let them through after all.
+        setTimeout(function () { self._settingData = false; }, 0);
     },
 
     // How many candles the initial view shows. fitContent squeezed the whole loaded history into

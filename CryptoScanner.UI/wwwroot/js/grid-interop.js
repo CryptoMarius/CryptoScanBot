@@ -25,17 +25,48 @@ window.GridInterop = {
         var rowRect = row.getBoundingClientRect();
         var boxRect = container.getBoundingClientRect();
 
-        // The header is sticky, so it covers the top of the box
+        // Client area, not border box. getBoundingClientRect() includes the border and - the part
+        // that mattered here - the horizontal scrollbar along the bottom. The symbol grid has one
+        // as soon as the columns are wider than the sidebar, so aligning on boxRect.bottom parked
+        // the selected row underneath that scrollbar: half visible, and the next key scrolled a
+        // little further again. clientHeight and clientTop exclude both.
+        var visibleTop = boxRect.top + container.clientTop;
+        var visibleBottom = visibleTop + container.clientHeight;
+
+        // The header is sticky, so it covers the top of the client area
+        var header = container.querySelector('thead');
+        if (header)
+            visibleTop += header.getBoundingClientRect().height;
+
+        if (rowRect.top < visibleTop)
+            container.scrollTop -= (visibleTop - rowRect.top);
+        else if (rowRect.bottom > visibleBottom)
+            container.scrollTop += (rowRect.bottom - visibleBottom);
+    },
+
+    // How many rows fit in the visible part of the grid the given row belongs to, so page up and
+    // page down move by an actual page instead of a fixed guess. Returns 0 when it cannot tell.
+    visibleRowCount: function (rowId) {
+        var row = document.getElementById(rowId);
+        if (!row) return 0;
+
+        var container = row.parentElement;
+        while (container && container !== document.body) {
+            var style = window.getComputedStyle(container);
+            if ((style.overflowY === 'auto' || style.overflowY === 'scroll')
+                && container.scrollHeight > container.clientHeight)
+                break;
+            container = container.parentElement;
+        }
+        if (!container || container === document.body) return 0;
+
+        var rowHeight = row.getBoundingClientRect().height;
+        if (rowHeight <= 0) return 0;
+
         var header = container.querySelector('thead');
         var headerHeight = header ? header.getBoundingClientRect().height : 0;
 
-        var topEdge = boxRect.top + headerHeight;
-        var bottomEdge = boxRect.bottom;
-
-        if (rowRect.top < topEdge)
-            container.scrollTop -= (topEdge - rowRect.top);
-        else if (rowRect.bottom > bottomEdge)
-            container.scrollTop += (rowRect.bottom - bottomEdge);
+        return Math.floor((container.clientHeight - headerHeight) / rowHeight);
     },
 
     focusElement: function (element) {

@@ -5,6 +5,7 @@
 @using CryptoScanner.Core.Excel
 @using CryptoScanner.Core.Context
 @using CryptoScanner.Core.Exchange
+@using CryptoScanner.Core.Helpers
 @using CryptoScanner.Core.Messages
 @using CommunityToolkit.Mvvm.Messaging
 @using CryptoScanner.Core.Signal
@@ -20,6 +21,7 @@
 @inject DashboardService DashboardService
 @inject MarketIndicatorService MarketIndicatorService
 @inject LogService LogService
+@inject InternalBrowserService InternalBrowser
 @inject IJSRuntime JS
 @implements IDisposable
 
@@ -59,6 +61,11 @@
             <div class="menu-dropdown">
                 <span class="menu-dropdown-trigger">Tools</span>
                 <div class="menu-dropdown-content">
+                    @* Opens the separate browser window. The Tradingview tab it replaces could only
+                       show the anonymous embed widget, because www.tradingview.com refuses to be
+                       loaded inside a frame. *@
+                    <span class="menu-action-item" @onclick="OnOpenTradingViewWindow">Open TradingView window</span>
+                    <div class="menu-separator"></div>
                     <span class="menu-action-item" @onclick="OnExportExchangeToExcel">Export exchange info to Excel</span>
                     <span class="menu-action-item" @onclick="OnExportSignalsToExcel">Export signals to Excel</span>
                     <span class="menu-action-item" @onclick="OnExportPositionsToExcel">Export positions to Excel</span>
@@ -187,7 +194,6 @@
             <div class="tab-bar">
                 <NavLink class="tab" href="" Match="NavLinkMatch.All">Signals</NavLink>
                 <NavLink class="tab" href="chart">Chart</NavLink>
-                <NavLink class="tab" href="tradingview">Tradingview</NavLink>
                 <NavLink class="tab" href="livedata">Live Data</NavLink>
                 <NavLink class="tab" href="dashboard">Dashboard</NavLink>
                 <NavLink class="tab" href="positions/open">Open positions</NavLink>
@@ -634,6 +640,22 @@
         int current = _selectedSymbol != null ? _symbols.IndexOf(_selectedSymbol) : -1;
         int target = -1;
 
+        // A page is however many rows actually fit, asked of the browser. It used to be a fixed 15,
+        // which is most of two pages on a short sidebar and half a page on a tall one — in neither
+        // case what a page key is supposed to do.
+        int pageSize = 15;
+        if (e.Key == "PageDown" || e.Key == "PageUp")
+        {
+            var anchor = _selectedSymbol ?? _symbols[0];
+            try
+            {
+                int rows = await JS.InvokeAsync<int>("GridInterop.visibleRowCount", SymbolRowId(anchor));
+                if (rows > 1)
+                    pageSize = rows - 1; // one row of overlap, so you keep your bearings
+            }
+            catch (JSException) { }
+        }
+
         switch (e.Key)
         {
             case "ArrowDown":
@@ -643,10 +665,10 @@
                 target = current <= 0 ? 0 : current - 1;
                 break;
             case "PageDown":
-                target = current < 0 ? 0 : Math.Min(current + 15, _symbols.Count - 1);
+                target = current < 0 ? 0 : Math.Min(current + pageSize, _symbols.Count - 1);
                 break;
             case "PageUp":
-                target = current < 0 ? 0 : Math.Max(current - 15, 0);
+                target = current < 0 ? 0 : Math.Max(current - pageSize, 0);
                 break;
             case "Home":
                 target = 0;
@@ -795,6 +817,21 @@
             }
             catch { }
         }
+    }
+
+    /// <summary>
+    /// Open the separate TradingView window on the currently selected symbol, or on its own start
+    /// page when nothing is selected. Hosts that cannot open a window (no OpenBrowserWindow) fall
+    /// back on the system browser, so the menu item never does nothing.
+    /// </summary>
+    private void OnOpenTradingViewWindow()
+    {
+        if (_selectedSymbol != null)
+            GridCommandService.OpenTradingViewInternal(_selectedSymbol.Object);
+        else if (InternalBrowser.OpenBrowserWindow != null)
+            InternalBrowser.OpenBrowserWindow("");
+        else
+            ExternalLinkHelper.OpenSystemBrowser("https://www.tradingview.com/chart/");
     }
 
     private void OnExportExchangeToExcel()

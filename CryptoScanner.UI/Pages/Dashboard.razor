@@ -115,6 +115,11 @@
                 }
             </div>
         </div>
+        @* The three below have no counterpart in the Avalonia dashboard, which shows only positions
+           and profits per day. Kept, but switched off through ShowExtendedCharts so they are one
+           flag away from coming back. *@
+        @if (ShowExtendedCharts)
+        {
         <!-- Profit percentage per day (min / average / max) -->
         <div class="dashboard-chart-box">
             <div class="chart-title">Profit percentage per day</div>
@@ -163,6 +168,7 @@
                     ("var(--green)", d => d.MaxDuration),
                 ]))
         </div>
+        }
     }
     else
     {
@@ -173,6 +179,14 @@
 </div>
 
 @code {
+    /// <summary>
+    /// Profit percentage, invested/returned and position duration per day. The Avalonia dashboard
+    /// does not have them; set to true to bring them back.
+    /// </summary>
+    /// Not a const: that makes the compiler fold the check away and warn about the markup behind it
+    /// being unreachable, which is exactly the code being kept on purpose.
+    private static readonly bool ShowExtendedCharts = false;
+
     private string _selectedQuote = "USDT";
     private bool _disposed;
 

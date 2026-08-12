@@ -29,14 +29,58 @@ public class InternalBrowserService : IDisposable
     /// <summary>Raised with (url, switchTab) whenever a navigation is requested.</summary>
     public event Action<string, bool>? NavigateRequested;
 
+    /// <summary>
+    /// Set by the host when it can open a real browser window instead of an in-page frame. The
+    /// Photino host does; it opens a second window with its own WebView, which is the only way to
+    /// reach a signed-in TradingView with the user's own indicators.
+    /// </summary>
+    public Action<string>? OpenBrowserWindow { get; set; }
+
     public void Navigate(string url, bool switchTab)
     {
         if (string.IsNullOrEmpty(url))
             return;
 
+        // A real window loads the page as a normal navigation, so it needs the full address rather
+        // than the anonymous widget the iframe had to fall back on
+        if (OpenBrowserWindow != null)
+        {
+            url = WithTheme(url);
+            CurrentUrl = url;
+
+            // switchTab false is the silent activation the application does at startup. A tab could
+            // be filled in the background; a window would jump in front of the user unasked, so it
+            // only opens when the request came from the user.
+            if (switchTab)
+                OpenBrowserWindow(url);
+            return;
+        }
+
         url = ToEmbeddableUrl(url);
         CurrentUrl = url;
         NavigateRequested?.Invoke(url, switchTab);
+    }
+
+    /// <summary>
+    /// Hand the scanner's dark/light choice to the page. Opening a TradingView chart from a dark
+    /// application into its default light page is a jolt, and the widget path below has always done
+    /// this - the window path skipped it because it deliberately keeps the full address.
+    /// <para>
+    /// Only added when the address does not already carry a theme, so a link that was configured
+    /// with one of its own keeps it. Once signed in TradingView follows the account setting, which
+    /// then overrides this again.
+    /// </para>
+    /// </summary>
+    private static string WithTheme(string url)
+    {
+        if (url.Contains("theme=", StringComparison.OrdinalIgnoreCase))
+            return url;
+
+        string theme = ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme);
+        if (string.IsNullOrEmpty(theme))
+            return url;
+
+        return url + (url.Contains('?') ? "&" : "?") + "theme=" + theme;
     }
 
     /// <summary>

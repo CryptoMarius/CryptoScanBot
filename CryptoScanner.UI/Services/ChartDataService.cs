@@ -74,6 +74,12 @@ public static class ChartDataService
         public int dash { get; set; } = 2;
 
         public string text { get; set; } = "";
+
+        /// <summary>
+        /// Price the caption is drawn at, when that should not be the start of the line itself.
+        /// Null means "at price1", which is what every horizontal level uses.
+        /// </summary>
+        public double? textPrice { get; set; }
     }
 
     /// <summary>
@@ -114,8 +120,13 @@ public static class ChartDataService
         text = caption,
     };
 
-    /// <summary>Vertical marker at one moment, running between two prices.</summary>
-    private static ChartSegment Vertical(long time, decimal priceFrom, decimal priceTo, string color) => new()
+    /// <summary>
+    /// Vertical marker at one moment, running between two prices. The caption is drawn at
+    /// <paramref name="priceFrom"/>, so pass the far end of the line to keep the text clear of the
+    /// candles.
+    /// </summary>
+    private static ChartSegment Vertical(long time, decimal priceFrom, decimal priceTo, string color,
+        string caption = "", decimal? captionPrice = null) => new()
     {
         time1 = time,
         time2 = time,
@@ -123,6 +134,8 @@ public static class ChartDataService
         price2 = (double)priceTo,
         color = color,
         dash = 1, // Dot, as in Positions.DrawVerticalLine
+        text = caption,
+        textPrice = captionPrice == null ? null : (double)captionPrice.Value,
     };
 
     public static List<ChartRect> BuildZones(CryptoSymbol symbol, bool showDlz, bool showFvg, bool showSmc,
@@ -306,6 +319,15 @@ public static class ChartDataService
                 // always kept: it shows where you meant to get in even when it never filled.
                 bool positionClosed = position.CloseTime != null;
 
+                // Caption once per level. An order that is cancelled and placed again produces a
+                // new segment every time, and with the take profit being repositioned on every
+                // break-even change that put the same "stop price" and "stop limit" text across
+                // the chart four or five times over. The line still gets drawn - only the repeated
+                // caption is dropped, and a level that really moves is labelled again.
+                var captioned = new HashSet<string>();
+                string CaptionOnce(string caption, decimal price)
+                    => captioned.Add($"{caption}|{price}") ? caption : "";
+
                 foreach (CryptoPositionPart part in position.PartList.Values)
                 {
                     foreach (var step in part.StepList.Values)
@@ -328,7 +350,8 @@ public static class ChartDataService
                         switch (part.Purpose)
                         {
                             case CryptoPartPurpose.Entry:
-                                segments.Add(Horizontal(xStart, xEnd, step.Price, color, "entry"));
+                                segments.Add(Horizontal(xStart, xEnd, step.Price, color,
+                                    CaptionOnce("entry", step.Price)));
                                 if (firstEntry == xStart && step.CloseTime.HasValue)
                                     firstEntry = stepEnd;
                                 break;
@@ -339,7 +362,8 @@ public static class ChartDataService
                                     levelDrawn = false;
                                     break;
                                 }
-                                segments.Add(Horizontal(stepStart, stepEnd, step.Price, color, $"dca-{part.PartNumber}"));
+                                segments.Add(Horizontal(stepStart, stepEnd, step.Price, color,
+                                    CaptionOnce($"dca-{part.PartNumber}", step.Price)));
                                 break;
 
                             case CryptoPartPurpose.TakeProfit:
@@ -352,11 +376,14 @@ public static class ChartDataService
                                     break;
                                 }
 
-                                segments.Add(Horizontal(stepStart, stepEnd, step.Price, color, $"take profit-{part.PartNumber}"));
+                                segments.Add(Horizontal(stepStart, stepEnd, step.Price, color,
+                                    CaptionOnce($"take profit-{part.PartNumber}", step.Price)));
                                 if (step.StopPrice.HasValue)
-                                    segments.Add(Horizontal(stepStart, stepEnd, step.StopPrice.Value, color, "stop price"));
+                                    segments.Add(Horizontal(stepStart, stepEnd, step.StopPrice.Value, color,
+                                        CaptionOnce("stop price", step.StopPrice.Value)));
                                 if (step.StopLimitPrice.HasValue)
-                                    segments.Add(Horizontal(stepStart, stepEnd, step.StopLimitPrice.Value, color, "stop limit"));
+                                    segments.Add(Horizontal(stepStart, stepEnd, step.StopLimitPrice.Value, color,
+                                        CaptionOnce("stop limit", step.StopLimitPrice.Value)));
                                 break;
                         }
 
@@ -411,7 +438,15 @@ public static class ChartDataService
                     if (boxBelow > yBottom)
                         boxBelow = yBottom;
 
-                    segments.Add(Vertical(xStart, boxAbove, candleAbove, positionColor));
+                    // Strategy and the interval the position started on, 3% out from the entry on
+                    // the PROFIT side: above for a long, below for a short. The DCA levels and the
+                    // stop sit on the losing side, so their captions stay clear of this one.
+                    string caption = $"{position.StrategyText} {position.Interval?.Name}".Trim();
+                    decimal captionPrice = position.Side == CryptoTradeSide.Long
+                        ? entry * 1.03m
+                        : entry * 0.97m;
+
+                    segments.Add(Vertical(xStart, boxAbove, candleAbove, positionColor, caption, captionPrice));
                     segments.Add(Vertical(xStart, boxBelow, candleBelow, positionColor));
                 }
 

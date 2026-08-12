@@ -8,7 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <SupportedPlatform Include="browser" />
+    <!-- The Razor template lists browser as a target platform. This library is not a WebAssembly
+         one: its components read straight from GlobalData in the same process as the scanner, and
+         it uses sockets and the file system to do so. Saying so keeps CA1416 honest - it was
+         flagging a websocket header call as unsupported for a platform we never run on. -->
+    <SupportedPlatform Remove="browser" />
   </ItemGroup>
 
   <ItemGroup>
