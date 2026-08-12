@@ -92,7 +92,8 @@
                                         <TextBox Grid.Column="2" 
                                                  Text="{Binding CoolDown, Mode=TwoWay}" 
                                                  Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
-                                        <TextBlock Grid.Column="3" Text="Minuten" 
+                                        <TextBlock Grid.Column="3" Text="Candles"
+                                                   ToolTip.Tip="Counted in candles of the BASE interval, not in minutes and not in candles of the rule's own interval. Live the base interval is 1m so it equals minutes there, but an emulator run on a 5m or 15m base multiplies it by that."
                                                    VerticalAlignment="Center"
                                                    FontSize="12"/>
                                     </Grid>
