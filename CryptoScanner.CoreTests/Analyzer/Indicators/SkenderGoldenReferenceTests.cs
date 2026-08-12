@@ -1,4 +1,4 @@
-using CryptoScanner.Analyzers.Bbma;
+﻿using CryptoScanner.Analyzers.Bbma;
 using CryptoScanner.Analyzers.Nwe;
 using CryptoScanner.Analyzers.Nwe.Signal;
 using CryptoScanner.Analyzers.Vbs;
@@ -426,7 +426,9 @@ public class SkenderReferenceRegressionTests
         else if (!expected.HasValue)
             rel = 0;
         else
-            rel = Math.Abs(expected.Value - actual.Value) /
+            // Both have a value here: the first test above rejects the case where only one of
+            // them does, which the compiler does not follow through
+            rel = Math.Abs(expected.Value - actual!.Value) /
                   Math.Max(Math.Max(Math.Abs(expected.Value), Math.Abs(actual.Value)), 1e-9);
 
         if (rel > maxDiffs.GetValueOrDefault(field))

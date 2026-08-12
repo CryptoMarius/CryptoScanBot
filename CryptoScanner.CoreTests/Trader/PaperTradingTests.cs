@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -64,7 +64,7 @@ public class PaperTradingTests : TestBase
             Symbol = position.Symbol,
             SymbolId = position.SymbolId,
             Purpose = purpose,
-            Strategy = position.Strategy,
+            Strategy = position.Strategy ?? "", // the part requires one, the position allows null
             CreateTime = position.CreateTime,
             PartNumber = 0,
             SignalPrice = 100m,

@@ -103,6 +103,15 @@ public class Positions
             decimal yTop = position.EntryPrice!.Value;
             decimal yBottom = position.EntryPrice.Value;
 
+            // Caption once per level. An order that is cancelled and placed again produces a new
+            // line every time, and with the take profit being repositioned on every break-even
+            // change that put the same "stop price" and "stop limit" text across the chart four or
+            // five times over. The line is still drawn - only the repeated caption is dropped, so
+            // a level that really moves is labelled again.
+            HashSet<string> captioned = [];
+            string CaptionOnce(string caption, decimal atPrice)
+                => captioned.Add($"{caption}|{atPrice}") ? caption : "";
+
             // Steps: first entry-side step = "entry", subsequent = "dca#1", "dca#2", ...
             foreach (CryptoPositionPart positionPart in position.PartList.Values)
             {
@@ -126,27 +135,27 @@ public class Positions
                     switch (positionPart.Purpose)
                     {
                         case CryptoPartPurpose.Entry:
-                            DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, "entry", xLabelOffset, group);
+                            DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, CaptionOnce("entry", step.Price), xLabelOffset, group);
                             if (firstEntry == xStart && step.CloseTime.HasValue)
                                 firstEntry = CandleTime.FromDateTime(step.CloseTime.Value).Minutes;
                             break;
                         case CryptoPartPurpose.Dca:
                             double x2 = CandleTime.FromDateTime(step.CreateTime).Minutes;
                             double xEndDca = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
-                            DrawHorizontalLine(chart, x2, xEndDca, step.Price, stepColor, $"dca-{positionPart.PartNumber}", xLabelOffset, group);
+                            DrawHorizontalLine(chart, x2, xEndDca, step.Price, stepColor, CaptionOnce($"dca-{positionPart.PartNumber}", step.Price), xLabelOffset, group);
                             break;
                         case CryptoPartPurpose.TakeProfit:
                             double x1 = CandleTime.FromDateTime(step.CreateTime).Minutes;
                             double xEndTp = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
-                            DrawHorizontalLine(chart, x1, xEndTp, step.Price, stepColor, $"take profit-{positionPart.PartNumber}", xLabelOffset, group);
+                            DrawHorizontalLine(chart, x1, xEndTp, step.Price, stepColor, CaptionOnce($"take profit-{positionPart.PartNumber}", step.Price), xLabelOffset, group);
 
                             //if (step.CloseTime.HasValue && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice)
                             //    stepColor = OxyColors.Yellow; // just to see for now (orange ain't much different then red)
                             if (step.StopPrice.HasValue)
-                                DrawHorizontalLine(chart, x1, xEndTp, step.StopPrice.Value, stepColor, "stop price", xLabelOffset, group);
+                                DrawHorizontalLine(chart, x1, xEndTp, step.StopPrice.Value, stepColor, CaptionOnce("stop price", step.StopPrice.Value), xLabelOffset, group);
 
                             if (step.StopLimitPrice.HasValue)
-                                DrawHorizontalLine(chart, x1, xEndTp, step.StopLimitPrice.Value, stepColor, "stop limit", xLabelOffset, group);
+                                DrawHorizontalLine(chart, x1, xEndTp, step.StopLimitPrice.Value, stepColor, CaptionOnce("stop limit", step.StopLimitPrice.Value), xLabelOffset, group);
                             break;
                     }
 

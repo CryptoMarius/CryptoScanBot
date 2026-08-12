@@ -1950,15 +1950,22 @@ public class PositionMonitor : IDisposable
             // positionCheck bucket below (which times the same statement via subtraction) — the two
             // totals should match.
             long profAddToQueueStart = Stopwatch.GetTimestamp();
-            if (!canSkipPositionProcessing)
-            {
-                // Re-lookup: the position may have been replaced during CreateOrExtendPositionAsync.
-                // When the minute candles already handled the orders, only a position created just
-                // now still needs this — an existing one has been reacting per minute all along.
-                if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? currentPosition)
-                    && (!OrdersAlreadyProcessed || currentPosition!.Status == CryptoPositionStatus.Waiting))
-                    await GlobalData.ThreadCheckPosition!.AddToQueue(currentPosition!);
-            }
+
+            // Re-lookup: the position may have been created or replaced during
+            // CreateOrExtendPositionAsync. When the minute candles already handled the orders, only
+            // a position created just now still needs this — an existing one has been reacting per
+            // minute all along.
+            //
+            // Outside the trigger-price skip, for the same reason CreateOrExtendPositionAsync is:
+            // this is where a freshly created position gets its entry order PLACED. The skip is
+            // about the OLD position's trigger prices, so on a base interval whose candle happened
+            // to stay inside them the step above created the position and this line then refused to
+            // place its order - which arrived a base candle later, at whatever the price was by
+            // then. Two runs, same decision at the same minute, different entry price.
+            if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? currentPosition)
+                && (!canSkipPositionProcessing || currentPosition!.Status == CryptoPositionStatus.Waiting)
+                && (!OrdersAlreadyProcessed || currentPosition!.Status == CryptoPositionStatus.Waiting))
+                await GlobalData.ThreadCheckPosition!.AddToQueue(currentPosition!);
             PipelineProfiler.RecordAddToQueue(Stopwatch.GetTimestamp() - profAddToQueueStart);
 
             PipelineProfiler.Record(

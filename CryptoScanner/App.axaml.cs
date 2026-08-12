@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -252,7 +252,9 @@ public partial class App : Application
 
         // Ensure all states are written to disk before exit
         ScannerLog.Logger.Trace($"OnApplicationExit(GlobalData.SaveSettings)");
-        GlobalData.SaveConfiguration();
+        // SaveConfiguration rethrows now; a failure must not abort the rest of the shutdown
+        try { GlobalData.SaveConfiguration(); }
+        catch (Exception error) { ScannerLog.Logger.Error(error, "OnApplicationExit(SaveConfiguration)"); }
 
         // TODO: Rethink this boolean storage
         ScannerLog.Logger.Trace($"OnApplicationExit(applicationStateService.FlushToDisk)");

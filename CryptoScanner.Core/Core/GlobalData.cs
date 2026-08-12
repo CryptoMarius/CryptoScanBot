@@ -470,6 +470,84 @@ public static class GlobalData
 
 
 
+    /// <summary>
+    /// Serialises every read and write of the configuration files. SaveConfiguration is reached
+    /// from the configuration screen, from the Telegram bot commands and from the shutdown path,
+    /// each on its own thread. Two of those writing the same file at the same moment left one of
+    /// them with an IOException, and the settings of whoever lost simply never reached disk.
+    /// </summary>
+    private static readonly object ConfigurationFileLock = new();
+
+    /// <summary>
+    /// Set when the settings file could not be read at startup. Everything then runs on the
+    /// defaults, which is survivable — but writing those defaults back would turn a json that can
+    /// still be repaired by hand into the permanent loss of every setting. So while this is set,
+    /// <see cref="SaveConfiguration"/> refuses to touch the file.
+    /// </summary>
+    public static bool SettingsLoadFailed { get; private set; }
+
+    /// <summary>
+    /// Write a configuration file without ever leaving a half-written one behind: serialise to a
+    /// temporary file next to it, then swap them in one step. File.Replace also keeps the previous
+    /// version as .backup, which is what LoadJsonFile falls back on.
+    /// </summary>
+    private static void WriteJsonFile<T>(string folder, string fileName, T value)
+    {
+        string filename = Path.Combine(folder, fileName);
+        string temporary = filename + ".tmp";
+        string backup = filename + ".backup";
+
+        string text = JsonSerializer.Serialize(value, JsonTools.JsonSerializerIndented);
+        File.WriteAllText(temporary, text);
+
+        if (File.Exists(filename))
+            File.Replace(temporary, filename, backup);
+        else
+            File.Move(temporary, filename);
+    }
+
+    /// <summary>
+    /// Read a configuration file, falling back on the .backup left by <see cref="WriteJsonFile"/>
+    /// when the file itself cannot be parsed. Returns null when neither can be read; the caller
+    /// decides what that means for its own settings object.
+    /// </summary>
+    private static T? ReadJsonFile<T>(string folder, string fileName) where T : class
+    {
+        string filename = Path.Combine(folder, fileName);
+        if (!File.Exists(filename))
+            return null;
+
+        try
+        {
+            using FileStream stream = File.OpenRead(filename);
+            return JsonSerializer.Deserialize<T>(stream, JsonTools.DeSerializerOptions);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, $"Error reading {fileName}");
+            AddTextToLogTab($"Error reading {fileName}: {error.Message}");
+        }
+
+        string backup = filename + ".backup";
+        if (!File.Exists(backup))
+            return null;
+
+        try
+        {
+            using FileStream stream = File.OpenRead(backup);
+            var value = JsonSerializer.Deserialize<T>(stream, JsonTools.DeSerializerOptions);
+            if (value != null)
+                AddTextToLogTab($"Recovered {fileName} from {fileName}.backup");
+            return value;
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, $"Error reading {fileName}.backup");
+            AddTextToLogTab($"Error reading {fileName}.backup: {error.Message}");
+            return null;
+        }
+    }
+
     public static void LoadScannerConfiguration()
     {
         try
@@ -485,12 +563,21 @@ public static class GlobalData
                 //}
                 //string text = File.ReadAllText(filename);
                 //var value = JsonSerializer.Deserialize<SettingsBasic>(text, JsonTools.DeSerializerOptions);
-                using FileStream stream = File.OpenRead(filename);
-                var value = JsonSerializer.Deserialize<SettingsBasic>(stream, JsonTools.DeSerializerOptions);
+                var value = ReadJsonFile<SettingsBasic>(GlobalData.AppDataFolder, $"{Constants.AppName}-settings.json");
                 if (value != null)
+                {
                     Settings = value;
+                }
                 else
+                {
+                    // Neither the file nor its backup could be read. Carry on with the defaults so
+                    // the application still starts, but mark it so nothing writes over the file
+                    // that is still sitting there waiting to be repaired.
                     Settings = new();
+                    SettingsLoadFailed = true;
+                    AddTextToLogTab("The settings could not be read. Running on defaults, and the "
+                        + "settings file will NOT be overwritten - repair or remove it first.");
+                }
             }
 
             // Fix, sometimes people set this at 1 and that is not what I expected
@@ -552,8 +639,7 @@ public static class GlobalData
             string fullName = Path.Combine(GlobalData.AppDataFolder, fileName);
             if (File.Exists(fullName))
             {
-                string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<SettingsTelegram>(text, JsonTools.DeSerializerOptions);
+                var value = ReadJsonFile<SettingsTelegram>(AppDataFolder, fileName);
                 if (value != null)
                     Telegram = value;
                 else
@@ -575,8 +661,7 @@ public static class GlobalData
             string fullName = Path.Combine(AppDataFolder, fileName);
             if (File.Exists(fullName))
             {
-                string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<SettingsExchangeApi>(text, JsonTools.DeSerializerOptions);
+                var value = ReadJsonFile<SettingsExchangeApi>(AppDataFolder, fileName);
                 if (value != null)
                     TradingApi = value;
                 else
@@ -598,8 +683,7 @@ public static class GlobalData
             string fullName = Path.Combine(AppDataFolder, fileName);
             if (File.Exists(fullName))
             {
-                string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<SettingsAltradyApi>(text, JsonTools.DeSerializerOptions);
+                var value = ReadJsonFile<SettingsAltradyApi>(AppDataFolder, fileName);
                 if (value != null)
                     AltradyApi = value;
                 else
@@ -659,28 +743,41 @@ public static class GlobalData
         }
     }
 
+    /// <summary>
+    /// Write the configuration files. Logs and rethrows on failure: the caller has to know, because
+    /// silently returning here is what made a failed save look like a successful one - the screen
+    /// closed, and at the next start the previous values were back.
+    /// </summary>
     public static void SaveConfiguration()
     {
-        string baseFolder = AppDataFolder;
-        Directory.CreateDirectory(baseFolder);
+        if (SettingsLoadFailed)
+        {
+            AddTextToLogTab("Not saving: the settings could not be read at startup, so what is in "
+                + "memory are the defaults. Repair or remove the settings file first.");
+            return;
+        }
 
-        Contracts.PluginManager.CollectSettings(Settings.Signal.AnalyzerSettings);
+        lock (ConfigurationFileLock)
+        {
+            try
+            {
+                string baseFolder = AppDataFolder;
+                Directory.CreateDirectory(baseFolder);
 
-        string filename = Path.Combine(baseFolder, $"{Constants.AppName}-settings.json");
-        string text = JsonSerializer.Serialize(Settings, JsonTools.JsonSerializerIndented);
-        File.WriteAllText(filename, text);
+                Contracts.PluginManager.CollectSettings(Settings.Signal.AnalyzerSettings);
 
-        filename = Path.Combine(baseFolder, $"{Constants.AppName}-telegram.json");
-        text = JsonSerializer.Serialize(Telegram, JsonTools.JsonSerializerIndented);
-        File.WriteAllText(filename, text);
-
-        filename = Path.Combine(baseFolder, $"{Constants.AppName}-exchange.json");
-        text = JsonSerializer.Serialize(TradingApi, JsonTools.JsonSerializerIndented);
-        File.WriteAllText(filename, text);
-
-        filename = Path.Combine(baseFolder, $"{Constants.AppName}-altrady.json");
-        text = JsonSerializer.Serialize(AltradyApi, JsonTools.JsonSerializerIndented);
-        File.WriteAllText(filename, text);
+                WriteJsonFile(baseFolder, $"{Constants.AppName}-settings.json", Settings);
+                WriteJsonFile(baseFolder, $"{Constants.AppName}-telegram.json", Telegram);
+                WriteJsonFile(baseFolder, $"{Constants.AppName}-exchange.json", TradingApi);
+                WriteJsonFile(baseFolder, $"{Constants.AppName}-altrady.json", AltradyApi);
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "SaveConfiguration");
+                AddTextToLogTab("Error saving the settings: " + error.ToString());
+                throw;
+            }
+        }
 
         //#if DEBUG
         ////// Ter debug om te zien of alles okay is

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 
@@ -68,7 +68,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         public string AverageProfitWhole => SplitNumber(AverageProfit, "N2").Whole;
         public string AverageProfitFraction => SplitNumber(AverageProfit, "N2").Fraction;
 
-        private double offset = 0.4;
+        //private double offset = 0.4; // unused, kept as a note of the intended bar offset
 
         // Splits a formatted number into a whole part and a fraction part (including the separator).
         public static (string Whole, string Fraction) SplitNumber(decimal value, string format)

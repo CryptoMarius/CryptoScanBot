@@ -54,10 +54,13 @@ public static class ConfigurationApplier
     /// </summary>
     public static async Task SaveAndApplyAsync(IScannerSession scannerSession, ConfigurationSnapshot previous)
     {
+        // Deliberately OUTSIDE the try below. A failed write has to reach the caller so the
+        // configuration screen can stay open and say so; swallowing it here is what made a save
+        // that never happened look like one that did.
+        GlobalData.SaveConfiguration();
+
         try
         {
-            GlobalData.SaveConfiguration();
-
             // The indicator hubs freeze their parameters and their set of plugin extensions at
             // construction, so every existing hub has to be rebuilt before the new settings can
             // take effect. Bumping the version does that lazily on the next candle.
