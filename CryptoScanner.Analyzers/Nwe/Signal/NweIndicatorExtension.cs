@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Indicators;
 
@@ -30,7 +30,7 @@ public class NweIndicatorExtension : IIndicatorExtension
     public void OnCandleAdded(IQuote candle)
     {
         _closes.Add((double)candle.Close);
-        _openTimes.Add(CandleTime.FromDateTime(candle.Date));
+        _openTimes.Add(CandleTime.FromDateTime(candle.Timestamp));
 
         int maxBuffer = (_repIndicator?.Length ?? 500) + 50;
         if (_closes.Count > maxBuffer)

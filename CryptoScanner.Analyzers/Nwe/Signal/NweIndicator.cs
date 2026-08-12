@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Analyzers.Nwe.Signal;
 
@@ -141,7 +141,7 @@ public class NweIndicator
                 {
                     if (results[k].Center.HasValue)
                     {
-                        double c = (double)results[k].Center.Value;
+                        double c = (double)results[k].Center!.Value;
                         results[k].Upper = (decimal)(c + mae);
                         results[k].Lower = (decimal)(c - mae);
                     }

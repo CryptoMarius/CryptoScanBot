@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
 
@@ -103,15 +103,19 @@ public class VbsSignalShort : VbsSignalVbs
                 higherPeriod++;
 
                 var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, Interval, CandleLast.Candle.OpenTime, higherPeriod);
-                var htfVbs = result.candle?.CandleData?.GetPluginData<VbsCandleData>();
-                if (!result.success || htfVbs?.Upper == null)
+                // The candle in its own local, and checked on its own: the compiler cannot see
+                // that a non-null band value implies a non-null candle, so reading through
+                // result.candle below was flagged as a possible null dereference.
+                var htfCandle = result.candle;
+                var htfVbs = htfCandle?.CandleData?.GetPluginData<VbsCandleData>();
+                if (!result.success || htfCandle == null || htfVbs?.Upper == null)
                 {
                     ExtraText = $"no vbs data on {higherPeriod}";
                     return false;
                 }
                 double htfUpper = htfVbs.Upper.Value;
-                double htfHigh = (double)result.candle.Candle.High;
-                double htfClose = (double)result.candle.Candle.Close;
+                double htfHigh = (double)htfCandle.Candle.High;
+                double htfClose = (double)htfCandle.Candle.Close;
                 if (htfHigh <= htfUpper && htfClose <= htfUpper)
                 {
                     ExtraText = $"no upper band break on {result.higherInterval.Interval.Name}";
