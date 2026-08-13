@@ -1,18 +1,17 @@
 CryptoScanBot release historie:
 
-Alle exchanges testen (oh dear)
-Compilatie Mac + Testje op Mac vm.
-Compilatie Linux + Testje op Linux vm.
-
-De documentatie bijwerken, screenshots verversen.
-De main branch overschrijven met Avalonia
-
-Definiteve release?
-
+TODO:
+-Alle exchanges (laten) testen
+-Compilatie Mac + Testje op Mac vm.
+-Compilatie Linux + Testje op Linux vm.
+-De Photino app laten testen (nieuw)
+-De Emulator app laten testen (nieuw)
+-De documentatie bijwerken, screenshots verversen.
 
 XX-08-2025 2.6.0
 - De laatste fouten uit Kraken Futures gehaald
 - Extra help link naar de Cryptoscanner wiki pagina op github
+- Fix ZigZag punt berekening (met impact op de trend, marktrend enzovoort)
 - De afkortingen voor de strategien wordt nu beknopt uitgewerkt in het analyzer tabblad
 - Fixed logging, daarin was ook de emulator logtime nog opgenomen wat dubbelop is
 - Afkortingen aangepast, want de onderhuidse berekening strookte niet echt met de naam
@@ -23,10 +22,10 @@ XX-08-2025 2.6.0
 - Kraken futures weer geactiveerd, de symbols, candles en de trade subscription zijn gerepareerd
 
 Photino
+- Introductie van een nieuwe Photino applicatie (parallel aan de Avalonia app)
 - Nieuw Tradingview gebaseerde chart die het Avalonia chart venster vervangt
 - Tradingview tabblad verwijderd en vervangen met een popup vanwege limitaties Tradingview
-- Introductie van een nieuwe Photino applicatie (parallel aan de Avalonia app)
-
+- Diverse aanpassingen dashboard charts
 
 22-07-2025 2.5.9
 - De Timeframe consensus verplaatst en in de globale trader entry opties geplaatst

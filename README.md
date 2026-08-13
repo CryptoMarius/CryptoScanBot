@@ -4,7 +4,7 @@ CryptoScanBot signal scanner for the following exchanges:
 - Bybit Spot and Futures
 - Bybit EU Spot
 - HyperLiquid Futures
-- Kraken Spot
+- Kraken Spot and Futures
 - Kucoin Spot and Futures
 - Mexc Spot 
 - OKX Spot and Futures
