@@ -39,7 +39,7 @@ public sealed class ReplayRunner
     /// per minute, so the outcome is deterministic. Set to false for a single-threaded baseline (to
     /// confirm parallel and serial produce the same signals/positions).
     /// </summary>
-    public bool RunParallel { get; init; } = false;
+    public bool RunParallel { get; init; } = true;
 
     /// <summary>
     /// Number of days per chunk for the chunked replay loop. When the replay window exceeds this

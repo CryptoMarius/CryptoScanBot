@@ -17,31 +17,40 @@ public class ZigZagLanceBeggs(bool useHighLow)
 {
     public bool UseHighLow = useHighLow; // Use High/Low or Open/Close
     public readonly List<CryptoCandle> queue = []; // buffer with exactly 8 candles for testing H/L
+
+    // The high/low of each buffered candle, worked out once when it enters the buffer instead of on
+    // every comparison - the pattern checks below ask for the same value 34 times per candle.
+    //
+    // double, not decimal: a pivot only ever asks "is this higher or lower", never "how much money
+    // is this", and decimal arithmetic is an order of magnitude slower in .NET. The conversion is
+    // deterministic, so two equal decimals stay equal doubles and the ordering is preserved.
+    private readonly List<double> queueHigh = [];
+    private readonly List<double> queueLow = [];
     public bool UseIdenticalValues { get; set; } = true; // Use exact value matches or allow a margin
     public decimal MarginPercentage { get; set; } = 0.1m;  // Percentage margin for approximate equality
 
-    private decimal GetLowValue(CryptoCandle candle) => candle.GetLowValue(UseHighLow);
-    private decimal GetHighValue(CryptoCandle candle) => candle.GetHighValue(UseHighLow);
+    private double GetLowValue(int offset) => queueLow[offset];
+    private double GetHighValue(int offset) => queueHigh[offset];
 
     // Calculate distance percentage between two values
-    private static decimal PercentageDistance(decimal value1, decimal value2) =>
+    private static double PercentageDistance(double value1, double value2) =>
         Math.Abs(value1 - value2) * 100 / Math.Max(value1, value2);
 
     // Check if two values are "equal" based on the input settings
-    private bool ValuesAreEqual(decimal value1, decimal value2) =>
-        UseIdenticalValues ? value1 == value2 : PercentageDistance(value1, value2) <= MarginPercentage;
+    private bool ValuesAreEqual(double value1, double value2) =>
+        UseIdenticalValues ? value1 == value2 : PercentageDistance(value1, value2) <= (double)MarginPercentage;
 
     // Check if the first value is a higher high compared to the second value
-    private bool IsHigherHigh(decimal value, CryptoCandle candle)
+    private bool IsHigherHigh(double value, int offset)
     {
-        var candleValue = GetHighValue(candle);
+        var candleValue = GetHighValue(offset);
         return value > candleValue && !ValuesAreEqual(value, candleValue);
     }
 
     // Check if the first value is a lower low compared to the second value
-    private bool IsLowerLow(decimal value, CryptoCandle candle)
+    private bool IsLowerLow(double value, int offset)
     {
-        var candleValue = GetLowValue(candle);
+        var candleValue = GetLowValue(offset);
         return value < candleValue && !ValuesAreEqual(value, candleValue);
     }
 
@@ -52,12 +61,12 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // 12321, 21312, 22322, etc...
     private bool Has_LH_LH_AND_LH_LH(bool compareRight, int offset)
     {
-        decimal currentHigh = GetHighValue(queue[offset]);
-        bool result = IsHigherHigh(currentHigh, queue[offset - 2]) &&
-               IsHigherHigh(currentHigh, queue[offset - 1]);
+        double currentHigh = GetHighValue(offset);
+        bool result = IsHigherHigh(currentHigh, offset - 2) &&
+               IsHigherHigh(currentHigh, offset - 1);
         if (compareRight)
-            result &= IsHigherHigh(currentHigh, queue[offset + 1]) &&
-               IsHigherHigh(currentHigh, queue[offset + 2]);
+            result &= IsHigherHigh(currentHigh, offset + 1) &&
+               IsHigherHigh(currentHigh, offset + 2);
         return result;
     }
 
@@ -67,14 +76,14 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // currentBar=Second EQ bar
     private bool Has_LH_LH_EQ_LH_EQ_LH_LH(bool compareRight, int offset)
     {
-        decimal currentHigh = GetHighValue(queue[offset]);
-        bool result = IsHigherHigh(currentHigh, queue[offset - 4]) &&
-               IsHigherHigh(currentHigh, queue[offset - 3]) &&
-               ValuesAreEqual(currentHigh, GetHighValue(queue[offset - 2])) &&
-               IsHigherHigh(currentHigh, queue[offset - 1]);
+        double currentHigh = GetHighValue(offset);
+        bool result = IsHigherHigh(currentHigh, offset - 4) &&
+               IsHigherHigh(currentHigh, offset - 3) &&
+               ValuesAreEqual(currentHigh, GetHighValue(offset - 2)) &&
+               IsHigherHigh(currentHigh, offset - 1);
         if (compareRight)
-            result &= IsHigherHigh(currentHigh, queue[offset + 1]) &&
-               IsHigherHigh(currentHigh, queue[offset + 2]);
+            result &= IsHigherHigh(currentHigh, offset + 1) &&
+               IsHigherHigh(currentHigh, offset + 2);
         return result;
     }
 
@@ -83,13 +92,13 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // currentBar=Second EQ bar
     private bool Has_LH_LH_EQ_EQ_LH_LH(bool compareRight, int offset)
     {
-        decimal currentHigh = GetHighValue(queue[offset]);
-        bool result = IsHigherHigh(currentHigh, queue[offset - 3]) &&
-               IsHigherHigh(currentHigh, queue[offset - 2]) &&
-               ValuesAreEqual(currentHigh, GetHighValue(queue[offset - 1]));
+        double currentHigh = GetHighValue(offset);
+        bool result = IsHigherHigh(currentHigh, offset - 3) &&
+               IsHigherHigh(currentHigh, offset - 2) &&
+               ValuesAreEqual(currentHigh, GetHighValue(offset - 1));
         if (compareRight)
-            result &= IsHigherHigh(currentHigh, queue[offset + 1]) &&
-               IsHigherHigh(currentHigh, queue[offset + 2]);
+            result &= IsHigherHigh(currentHigh, offset + 1) &&
+               IsHigherHigh(currentHigh, offset + 2);
         return result;
     }
 
@@ -98,14 +107,14 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // currentBar=Third EQ bar
     private bool Has_LH_LH_EQ_EQ_EQ_LH_LH(bool compareRight, int offset)
     {
-        decimal currentHigh = GetHighValue(queue[offset]);
-        bool result = IsHigherHigh(currentHigh, queue[offset - 4]) &&
-               IsHigherHigh(currentHigh, queue[offset - 3]) &&
-               ValuesAreEqual(currentHigh, GetHighValue(queue[offset - 2])) &&
-               ValuesAreEqual(currentHigh, GetHighValue(queue[offset - 1]));
+        double currentHigh = GetHighValue(offset);
+        bool result = IsHigherHigh(currentHigh, offset - 4) &&
+               IsHigherHigh(currentHigh, offset - 3) &&
+               ValuesAreEqual(currentHigh, GetHighValue(offset - 2)) &&
+               ValuesAreEqual(currentHigh, GetHighValue(offset - 1));
         if (compareRight)
-            result &= IsHigherHigh(currentHigh, queue[offset + 1]) &&
-               IsHigherHigh(currentHigh, queue[offset + 2]);
+            result &= IsHigherHigh(currentHigh, offset + 1) &&
+               IsHigherHigh(currentHigh, offset + 2);
         return result;
     }
 
@@ -114,15 +123,15 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // currentBar=Fourth EQ bar
     private bool Has_LH_LH_EQ_EQ_EQ_EQ_LH_LH(bool compareRight, int offset)
     {
-        decimal currentHigh = GetHighValue(queue[offset]);
-        bool result = IsHigherHigh(currentHigh, queue[offset - 5]) &&
-               IsHigherHigh(currentHigh, queue[offset - 4]) &&
-               ValuesAreEqual(currentHigh, GetHighValue(queue[offset - 3])) &&
-               ValuesAreEqual(currentHigh, GetHighValue(queue[offset - 2])) &&
-               ValuesAreEqual(currentHigh, GetHighValue(queue[offset - 1]));
+        double currentHigh = GetHighValue(offset);
+        bool result = IsHigherHigh(currentHigh, offset - 5) &&
+               IsHigherHigh(currentHigh, offset - 4) &&
+               ValuesAreEqual(currentHigh, GetHighValue(offset - 3)) &&
+               ValuesAreEqual(currentHigh, GetHighValue(offset - 2)) &&
+               ValuesAreEqual(currentHigh, GetHighValue(offset - 1));
         if (compareRight)
-            result &= IsHigherHigh(currentHigh, queue[offset + 1]) &&
-               IsHigherHigh(currentHigh, queue[offset + 2]);
+            result &= IsHigherHigh(currentHigh, offset + 1) &&
+               IsHigherHigh(currentHigh, offset + 2);
         return result;
     }
 
@@ -132,14 +141,14 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // currentBar=Third EQ bar
     private bool Has_LH_EQ_LH_EQ_LH_EQ_LH(bool compareRight, int offset)
     {
-        decimal currentHigh = GetHighValue(queue[offset]);
-        bool result = IsHigherHigh(currentHigh, queue[offset - 5]) &&
-               ValuesAreEqual(currentHigh, GetHighValue(queue[offset - 4])) &&
-               IsHigherHigh(currentHigh, queue[offset - 3]) &&
-               ValuesAreEqual(currentHigh, GetHighValue(queue[offset - 2])) &&
-               IsHigherHigh(currentHigh, queue[offset - 1]);
+        double currentHigh = GetHighValue(offset);
+        bool result = IsHigherHigh(currentHigh, offset - 5) &&
+               ValuesAreEqual(currentHigh, GetHighValue(offset - 4)) &&
+               IsHigherHigh(currentHigh, offset - 3) &&
+               ValuesAreEqual(currentHigh, GetHighValue(offset - 2)) &&
+               IsHigherHigh(currentHigh, offset - 1);
         if (compareRight)
-            result &= IsHigherHigh(currentHigh, queue[offset + 1]);
+            result &= IsHigherHigh(currentHigh, offset + 1);
         return result;
     }
 
@@ -149,15 +158,15 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // 32123, 23132, 22122, etc...
     private bool Has_HL_HL_AND_HL_HL(bool compareRight, int offset)
     {
-        decimal currentLow = GetLowValue(queue[offset]);
+        double currentLow = GetLowValue(offset);
         bool result =
-            IsLowerLow(currentLow, queue[offset - 2]) &&
-            IsLowerLow(currentLow, queue[offset - 1]);
+            IsLowerLow(currentLow, offset - 2) &&
+            IsLowerLow(currentLow, offset - 1);
 
         if (compareRight)
             result &=
-                IsLowerLow(currentLow, queue[offset + 1]) &&
-                IsLowerLow(currentLow, queue[offset + 2]);
+                IsLowerLow(currentLow, offset + 1) &&
+                IsLowerLow(currentLow, offset + 2);
         return result;
     }
 
@@ -167,14 +176,14 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // currentBar=Second EQ bar
     private bool Has_HL_HL_EQ_HL_EQ_HL_HL(bool compareRight, int offset)
     {
-        decimal currentLow = GetLowValue(queue[offset]);
-        bool result = IsLowerLow(currentLow, queue[offset - 4]) &&
-               IsLowerLow(currentLow, queue[offset - 3]) &&
-               ValuesAreEqual(currentLow, GetLowValue(queue[offset - 2])) &&
-               IsLowerLow(currentLow, queue[offset - 1]);
+        double currentLow = GetLowValue(offset);
+        bool result = IsLowerLow(currentLow, offset - 4) &&
+               IsLowerLow(currentLow, offset - 3) &&
+               ValuesAreEqual(currentLow, GetLowValue(offset - 2)) &&
+               IsLowerLow(currentLow, offset - 1);
         if (compareRight)
-            result &= IsLowerLow(currentLow, queue[offset + 1]) &&
-               IsLowerLow(currentLow, queue[offset + 2]);
+            result &= IsLowerLow(currentLow, offset + 1) &&
+               IsLowerLow(currentLow, offset + 2);
         return result;
     }
 
@@ -183,13 +192,13 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // currentBar=Second EQ bar
     private bool Has_HL_HL_EQ_EQ_HL_HL(bool compareRight, int offset)
     {
-        decimal currentLow = GetLowValue(queue[offset]);
-        bool result = IsLowerLow(currentLow, queue[offset - 3]) &&
-               IsLowerLow(currentLow, queue[offset - 2]) &&
-               ValuesAreEqual(currentLow, GetLowValue(queue[offset - 1]));
+        double currentLow = GetLowValue(offset);
+        bool result = IsLowerLow(currentLow, offset - 3) &&
+               IsLowerLow(currentLow, offset - 2) &&
+               ValuesAreEqual(currentLow, GetLowValue(offset - 1));
         if (compareRight)
-            result &= IsLowerLow(currentLow, queue[offset + 1]) &&
-               IsLowerLow(currentLow, queue[offset + 2]);
+            result &= IsLowerLow(currentLow, offset + 1) &&
+               IsLowerLow(currentLow, offset + 2);
         return result;
     }
 
@@ -198,14 +207,14 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // currentBar=Third EQ bar
     private bool Has_HL_HL_EQ_EQ_EQ_HL_HL(bool compareRight, int offset)
     {
-        decimal currentLow = GetLowValue(queue[offset]);
-        bool result = IsLowerLow(currentLow, queue[offset - 4]) &&
-               IsLowerLow(currentLow, queue[offset - 3]) &&
-               ValuesAreEqual(currentLow, GetLowValue(queue[offset - 2])) &&
-               ValuesAreEqual(currentLow, GetLowValue(queue[offset - 1]));
+        double currentLow = GetLowValue(offset);
+        bool result = IsLowerLow(currentLow, offset - 4) &&
+               IsLowerLow(currentLow, offset - 3) &&
+               ValuesAreEqual(currentLow, GetLowValue(offset - 2)) &&
+               ValuesAreEqual(currentLow, GetLowValue(offset - 1));
         if (compareRight)
-            result &= IsLowerLow(currentLow, queue[offset + 1]) &&
-               IsLowerLow(currentLow, queue[offset + 2]);
+            result &= IsLowerLow(currentLow, offset + 1) &&
+               IsLowerLow(currentLow, offset + 2);
         return result;
     }
 
@@ -214,16 +223,16 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // currentBar=Fourth EQ bar
     private bool Has_HL_HL_EQ_EQ_EQ_EQ_HL_HL(bool compareRight, int offset)
     {
-        decimal currentLow = GetLowValue(queue[offset]);
-        bool result = IsLowerLow(currentLow, queue[offset - 5]) &&
-               IsLowerLow(currentLow, queue[offset - 4]) &&
-               ValuesAreEqual(currentLow, GetLowValue(queue[offset - 3])) &&
-               ValuesAreEqual(currentLow, GetLowValue(queue[offset - 2])) &&
-               ValuesAreEqual(currentLow, GetLowValue(queue[offset - 1]));
+        double currentLow = GetLowValue(offset);
+        bool result = IsLowerLow(currentLow, offset - 5) &&
+               IsLowerLow(currentLow, offset - 4) &&
+               ValuesAreEqual(currentLow, GetLowValue(offset - 3)) &&
+               ValuesAreEqual(currentLow, GetLowValue(offset - 2)) &&
+               ValuesAreEqual(currentLow, GetLowValue(offset - 1));
         if (compareRight)
             result &=
-                IsLowerLow(currentLow, queue[offset + 1]) &&
-               IsLowerLow(currentLow, queue[offset + 2]);
+                IsLowerLow(currentLow, offset + 1) &&
+               IsLowerLow(currentLow, offset + 2);
         return result;
     }
 
@@ -233,14 +242,14 @@ public class ZigZagLanceBeggs(bool useHighLow)
     // currentBar=Third EQ bar
     private bool Has_HL_EQ_HL_EQ_HL_EQ_HL(bool compareRight, int offset)
     {
-        decimal currentLow = GetLowValue(queue[offset]);
-        bool result = IsLowerLow(currentLow, queue[offset - 5]) &&
-               ValuesAreEqual(currentLow, GetLowValue(queue[offset - 4])) &&
-               IsLowerLow(currentLow, queue[offset - 3]) &&
-               ValuesAreEqual(currentLow, GetLowValue(queue[offset - 2])) &&
-               IsLowerLow(currentLow, queue[offset - 1]);
+        double currentLow = GetLowValue(offset);
+        bool result = IsLowerLow(currentLow, offset - 5) &&
+               ValuesAreEqual(currentLow, GetLowValue(offset - 4)) &&
+               IsLowerLow(currentLow, offset - 3) &&
+               ValuesAreEqual(currentLow, GetLowValue(offset - 2)) &&
+               IsLowerLow(currentLow, offset - 1);
         if (compareRight)
-            result &= IsLowerLow(currentLow, queue[offset + 1]);
+            result &= IsLowerLow(currentLow, offset + 1);
         return result;
     }
 
@@ -270,8 +279,14 @@ public class ZigZagLanceBeggs(bool useHighLow)
     internal bool Add(CryptoCandle candle)
     {
         queue.Add(candle);
+        queueHigh.Add((double)candle.GetHighValue(UseHighLow));
+        queueLow.Add((double)candle.GetLowValue(UseHighLow));
         if (queue.Count > 8)
+        {
             queue.RemoveAt(0);
+            queueHigh.RemoveAt(0);
+            queueLow.RemoveAt(0);
+        }
         return queue.Count == 8;
     }
 }
