@@ -363,11 +363,19 @@ public sealed class ReplayRunner
                     {
                         foreach (CryptoInterval interval in GlobalData.IntervalList)
                         {
-                            // Align the cutoff on the interval itself, so the number of candles that
-                            // survives the prune does not depend on where the chunk boundary happens
-                            // to fall (which follows the base interval).
+                            // Count back from chunk.End, NOT from windowTo (= chunk.LastBaseOpen).
+                            // LastBaseOpen is the OPEN time of the last base candle, so it sits one
+                            // base interval before the chunk boundary and therefore moves with the
+                            // base interval: 1 minute earlier on a 1m run, 15 on a 15m run. chunk.End
+                            // is the boundary itself and is identical for every base interval.
+                            //
+                            // Aligning the cutoff on the interval below only hides that for intervals
+                            // COARSER than the difference. For 1m/2m/3m/5m/10m it does not, so those
+                            // kept a different number of candles per base interval — and that is
+                            // exactly the set whose trend drifted apart, with the differences piling
+                            // up in the hours around a chunk boundary.
                             int keepDepth = IndicatorWarmup.WarmupDepth(interval);
-                            uint cutoffMinutes = windowTo.Minutes - (uint)keepDepth * interval.Duration;
+                            uint cutoffMinutes = chunk.End.Minutes - (uint)keepDepth * interval.Duration;
                             CandleTime cutoff = new(cutoffMinutes - cutoffMinutes % interval.Duration);
 
                             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);

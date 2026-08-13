@@ -143,6 +143,75 @@ public class ReplayChunkTests
     }
 
 
+    /// <summary>
+    /// The between-chunk prune in ReplayRunner counts back from a chunk time and then aligns the
+    /// result on the interval. That only yields the same cutoff for every base interval when it
+    /// counts back from <see cref="ReplayChunk.End"/>: LastBaseOpen sits one base interval earlier,
+    /// so on a 15m run it is 15 minutes before the boundary and on a 1m run only 1 - and aligning on
+    /// a 1m/2m/3m/5m/10m grid does not absorb that. Those intervals then kept a different number of
+    /// candles per base interval, which is what made the market trend of exactly those intervals
+    /// drift apart, concentrated in the hours around a chunk boundary.
+    /// </summary>
+    [TestMethod]
+    public void PruneCutoffIsIdenticalAcrossBaseIntervals()
+    {
+        // The intervals the scanner maintains, in minutes.
+        uint[] intervals = [1, 2, 3, 5, 10, 15, 30, 60, 120, 180, 240, 360, 480, 720, 1440, 10080];
+        const int keepDepth = 500; // IndicatorWarmup.WarmupDepth, constant per interval
+
+        foreach (uint intervalDuration in intervals)
+        {
+            uint? reference = null;
+            foreach (uint baseDuration in new uint[] { 1, 2, 3, 5, 15, 30 })
+            {
+                List<ReplayChunk> chunks = WalkChunks(T(0), T(8 * Week), Week, baseDuration);
+                ReplayChunk chunk = chunks[3];
+
+                uint cutoffMinutes = chunk.End.Minutes - keepDepth * intervalDuration;
+                uint cutoff = cutoffMinutes - cutoffMinutes % intervalDuration;
+
+                reference ??= cutoff;
+                Assert.AreEqual(reference.Value, cutoff,
+                    $"interval {intervalDuration}m: base {baseDuration}m prunes back to {cutoff} "
+                    + $"where a 1m run prunes back to {reference.Value}");
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Pins down WHY the prune must use End and not LastBaseOpen: this is the same arithmetic with
+    /// LastBaseOpen, and it demonstrably differs per base interval for the fine intervals.
+    /// </summary>
+    [TestMethod]
+    public void PruneCutoffFromLastBaseOpenWouldDriftForFineIntervals()
+    {
+        const int keepDepth = 500;
+        List<uint> drifting = [];
+
+        foreach (uint intervalDuration in new uint[] { 1, 2, 3, 5, 10, 15, 30, 60 })
+        {
+            uint? reference = null;
+            foreach (uint baseDuration in new uint[] { 1, 5, 15 })
+            {
+                ReplayChunk chunk = WalkChunks(T(0), T(8 * Week), Week, baseDuration)[3];
+
+                uint cutoffMinutes = chunk.LastBaseOpen.Minutes - keepDepth * intervalDuration;
+                uint cutoff = cutoffMinutes - cutoffMinutes % intervalDuration;
+
+                if (reference == null)
+                    reference = cutoff;
+                else if (cutoff != reference.Value && !drifting.Contains(intervalDuration))
+                    drifting.Add(intervalDuration);
+            }
+        }
+
+        CollectionAssert.AreEquivalent(new uint[] { 1, 2, 3, 5, 10 }, drifting,
+            "the intervals that drift when pruning from LastBaseOpen are exactly the ones finer "
+            + "than the coarsest base interval under test");
+    }
+
+
     [TestMethod]
     public void StraddlingCandleOfACoarserIntervalIsLoaded()
     {
