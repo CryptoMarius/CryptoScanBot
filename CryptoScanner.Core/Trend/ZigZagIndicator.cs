@@ -245,6 +245,16 @@ public class ZigZagIndicator
                 ZigZagList.Remove(zigZag);
             AddedDummyZigZag.Clear();
         }
+
+        // The two calls below run even when nothing was removed, and that is NOT redundant however
+        // much it looks it. RecalculateSwingLowAndHigh walks back through ZigZagList and calls
+        // Restore() on EVERY non-dummy point it passes, not only on the two it ends up returning -
+        // so this is also the moment a reused pivot gets its backed-up Value/Candle/PivotIndex put
+        // back (see ZigZagResult.ReusePoint/Backup).
+        //
+        // Skipping them when AddedDummyZigZag is empty looks like free speed - Calculate() calls
+        // this on every candle now - but it was tried on 2026-08-12 and broke the block-size
+        // independence again: 6 of the 12 tests in ZigZagIncrementalTests failed. Leave it.
         RecalculateSwingLowAndHigh();
         RestoreSwingPoint();
     }
@@ -418,22 +428,32 @@ public class ZigZagIndicator
         // we need buffer of 8 candles to detect a low or high point
         if (ZigZagLanceBeggs.Add(candle))
         {
-            if (!batchProcess)
-                RemoveDummyPoints();
+            // A dummy point must NEVER be in the list while OptimizeList runs. It is a provisional
+            // marker for the right-hand edge (see TryAddDummyPoints), not part of the structure, and
+            // OptimizeList skips any triple containing one. Leaving it in therefore made the result
+            // depend on how often the caller happened to settle the indicator: a candle at a time
+            // (the live scanner) produced 67 points where 15 at a time produced 193, on the very
+            // same candles, with the last swing high nearly four months apart.
+            //
+            // So: clear the provisional point, extend the structure, optimise on a clean list, and
+            // only then put the edge marker back. batchProcess now only defers that last step,
+            // which is what it was meant to do - it was never meant to change the outcome.
+            RemoveDummyPoints();
             CheckNewLow(true, 5, false);
             CheckNewHigh(true, 5, false);
+            OptimizeList();
             if (!batchProcess)
                 TryAddDummyPoints();
-            OptimizeList();
         }
     }
 
 
     public void FinishBatch()
     {
+        // Same order as Calculate: optimise on a dummy-free list, then place the edge marker.
         RemoveDummyPoints();
-        TryAddDummyPoints();
         OptimizeList();
+        TryAddDummyPoints();
     }
 
 
