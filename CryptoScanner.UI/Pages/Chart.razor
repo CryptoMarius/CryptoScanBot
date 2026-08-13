@@ -1175,8 +1175,8 @@
             // box of those three points in the same green (bottom) / orange (top) tint.
             foreach (var (first, second, third) in DoubleTopAndBottom.CalculateDoubleTopBottom(indicator))
             {
-                double p1 = (double)first.Value;
-                double p2 = (double)second.Value;
+                double p1 = first.Value;
+                double p2 = second.Value;
                 double p3 = (double)third.Value;
                 bool isBottom = first.PointType == 'L';
 
@@ -1206,8 +1206,8 @@
 
         if (_showFib && fibIndicator.LastSwingHigh != null && fibIndicator.LastSwingLow != null)
         {
-            double high = (double)fibIndicator.LastSwingHigh.Value;
-            double low = (double)fibIndicator.LastSwingLow.Value;
+            double high = fibIndicator.LastSwingHigh.Value;
+            double low = fibIndicator.LastSwingLow.Value;
             double range = high - low;
 
             // Which swing came last decides the direction of the retracement, exactly as

@@ -39,8 +39,8 @@ public class ZigZag
                     else
                         series = seriesHigh;
                 }
-                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime.Minutes, (double)zigzag.Value));
-                linePoints.Add((zigzag.Candle.OpenTime.Minutes, (double)zigzag.Value));
+                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime.Minutes, zigzag.Value));
+                linePoints.Add((zigzag.Candle.OpenTime.Minutes, zigzag.Value));
             }
         }
 

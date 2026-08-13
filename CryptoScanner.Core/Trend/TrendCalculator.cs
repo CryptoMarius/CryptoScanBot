@@ -77,14 +77,14 @@ public class TrendCalculator
         {
             var lastPivot = indicator.ZigZagList[^1];
             target.LastPivotType = lastPivot.PointType;
-            target.LastPivotValue = lastPivot.Value;
+            target.LastPivotValue = (decimal)lastPivot.Value;
             target.LastPivotTime = lastPivot.Candle.OpenTime;
 
             if (indicator.ZigZagList.Count > 1)
             {
                 var prevPivot = indicator.ZigZagList[^2];
                 target.PrevPivotType = prevPivot.PointType;
-                target.PrevPivotValue = prevPivot.Value;
+                target.PrevPivotValue = (decimal)prevPivot.Value;
                 target.PrevPivotTime = prevPivot.Candle.OpenTime;
             }
             else
@@ -172,7 +172,7 @@ public class TrendCalculator
             if (!symbolIntervalForCache.ZigZagIndicators.TryGetValue(zigZagCacheKey, out indicator)
                 || indicator.LastFedCandleTime == null)
             {
-                indicator = new(trendSettings.TrendType, trendSettings.UseHighLow, 1.0m);
+                indicator = new(trendSettings.TrendType, trendSettings.UseHighLow, 1.0);
                 symbolIntervalForCache.ZigZagIndicators[zigZagCacheKey] = indicator;
                 CandleTime? lastFed = await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
                 if (lastFed != null)

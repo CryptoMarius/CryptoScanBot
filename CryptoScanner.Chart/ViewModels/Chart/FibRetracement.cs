@@ -62,7 +62,7 @@ public class FibRetracement
                 last = indicator.LastSwingLow;
                 //fibRetracement = Retracement2(indicator.LastSwingHigh.Value, indicator.LastSwingLow.Value);
             }
-            fibRetracement = RetracementX(side, indicator.LastSwingLow.Value, indicator.LastSwingHigh.Value);
+            fibRetracement = RetracementX(side, (decimal)indicator.LastSwingLow.Value, (decimal)indicator.LastSwingHigh.Value);
 
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
             CandleTime start = last.Candle.OpenTime + interval.Duration;

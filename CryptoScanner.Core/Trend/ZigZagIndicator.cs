@@ -15,7 +15,7 @@ public class ZigZagIndicator
     public int CandleCount { get; set; } = 0; // Debug, count of candles added
 
     //public int Depth { get; set; } = 12; // from previous approach, but does not work
-    public decimal Deviation { get; set; } // Optimizing (does not work for now)
+    public double Deviation { get; set; } // Optimizing (does not work for now)
     //public int BackStep { get; set; } = 3; // from previous approach, but does not work
 
     private readonly List<ZigZagResult> AddedDummyZigZag = []; // collected points for recreating a low/high after a BOS formed
@@ -36,7 +36,7 @@ public class ZigZagIndicator
     private readonly ZigZagLanceBeggs ZigZagLanceBeggs;
 
 
-    public ZigZagIndicator(TrendType trendType, bool useHighLow, decimal deviation = 1.0m)
+    public ZigZagIndicator(TrendType trendType, bool useHighLow, double deviation = 1.0)
     {
         TrendType = trendType;
         UseHighLow = useHighLow;
@@ -44,8 +44,8 @@ public class ZigZagIndicator
         ZigZagLanceBeggs = new(UseHighLow);
     }
 
-    private decimal GetLowValue(CryptoCandle candle) => candle.GetLowValue(UseHighLow);
-    private decimal GetHighValue(CryptoCandle candle) => candle.GetHighValue(UseHighLow);
+    private double GetLowValue(CryptoCandle candle) => (double)candle.GetLowValue(UseHighLow);
+    private double GetHighValue(CryptoCandle candle) => (double)candle.GetHighValue(UseHighLow);
 
     private bool GetLowFromBuffer(int minIndex, int maxIndex, out ZigZagResult? swing)
     {
@@ -92,7 +92,7 @@ public class ZigZagIndicator
 
     private ZigZagResult AddZigZagPoint(CryptoCandle candle, char pointType, bool dummy, int pivotIndex)
     {
-        decimal value;
+        double value;
         if (pointType == 'L')
             value = GetLowValue(candle);
         else
@@ -130,7 +130,7 @@ public class ZigZagIndicator
     }
 
 
-    private bool CanAddNewHigh(decimal candleValue)
+    private bool CanAddNewHigh(double candleValue)
     {
         if (TrendType == TrendType.Secondary)
             return true;
@@ -180,7 +180,7 @@ public class ZigZagIndicator
         return false;
     }
 
-    private bool CanAddNewLow(decimal candleValue)
+    private bool CanAddNewLow(double candleValue)
     {
         if (TrendType == TrendType.Secondary)
             return true;
@@ -331,6 +331,9 @@ public class ZigZagIndicator
             return;
 
 
+        // Worked out once instead of twice per iteration: Deviation does not change while the loop runs.
+        double deviationFactor = Deviation / 100;
+
         // Dont need to iterate all, the last couple of points are enough
         int index = ZigZagList.Count - 10;
         if (index < 2)
@@ -352,27 +355,20 @@ public class ZigZagIndicator
                     continue;
                 }
 
-                decimal value1;
-                decimal value2;
-                decimal value3;
-                if (p1.PointType == 'L')
-                {
-                    value1 = GetLowValue(p1.Candle);
-                    value2 = GetHighValue(p2.Candle);
-                    value3 = GetLowValue(p3.Candle);
-                }
-                else
-                {
-                    value1 = GetHighValue(p1.Candle);
-                    value2 = GetLowValue(p2.Candle);
-                    value3 = GetHighValue(p3.Candle);
-                }
+                // A point's Value is by construction the low of its candle for an 'L' and the high for
+                // an 'H' (AddZigZagPoint sets them together, ReusePoint and Restore move them together),
+                // and the triple check above already established the L/H/L or H/L/H alternation. So the
+                // values are simply there - recomputing Math.Max(Open, Close) from the candle was the
+                // same answer worked out again on every candle.
+                double value1 = p1.Value;
+                double value2 = p2.Value;
+                double value3 = p3.Value;
 
-                decimal diff1 = Math.Abs(value2 - value1);
-                decimal perc1 = Math.Max(value1, value2) * Deviation / 100;
+                double diff1 = Math.Abs(value2 - value1);
+                double perc1 = Math.Max(value1, value2) * deviationFactor;
 
-                decimal diff2 = Math.Abs(value3 - value2);
-                decimal perc2 = Math.Max(value2, value3) * Deviation / 100;
+                double diff2 = Math.Abs(value3 - value2);
+                double perc2 = Math.Max(value2, value3) * deviationFactor;
 
                 if (diff1 < perc1 && diff2 < perc2)
                 {

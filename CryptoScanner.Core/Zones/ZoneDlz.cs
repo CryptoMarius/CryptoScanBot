@@ -518,9 +518,9 @@ public class ZoneDlz
             if (indicator.LastSwingPoint != null)
                 symbolIntervalData.DlzAdmin.TimeLastSwingPoint = indicator.LastSwingPoint.Candle.OpenTime;
             if (indicator.LastSwingLow != null)
-                symbolIntervalData.DlzAdmin.LastSwingLow = indicator.LastSwingLow.Value;
+                symbolIntervalData.DlzAdmin.LastSwingLow = (decimal)indicator.LastSwingLow.Value;
             if (indicator.LastSwingHigh != null)
-                symbolIntervalData.DlzAdmin.LastSwingHigh = indicator.LastSwingHigh.Value;
+                symbolIntervalData.DlzAdmin.LastSwingHigh = (decimal)indicator.LastSwingHigh.Value;
 
             foreach (var indicatorX in trendZigZagIndicatorList.Values)
                 indicatorX.FinishBatch();
@@ -691,7 +691,7 @@ public class ZoneDlz
                 if (!trendZigZagIndicatorList.TryGetValue(dlzCacheKey, out ZigZagIndicator? trendZigZagIndicator)
                     || trendZigZagIndicator.LastFedCandleTime == null)
                 {
-                    trendZigZagIndicator = new(trend.TrendType, trend.UseHighLow, 1.0m);
+                    trendZigZagIndicator = new(trend.TrendType, trend.UseHighLow, 1.0);
                     trendZigZagIndicatorList[dlzCacheKey] = trendZigZagIndicator;
                     await CalculatePivots(symbol, interval, minDate, maxDate, trendZigZagIndicatorList);
                     trendZigZagIndicator.LastFedCandleTime = maxDate;

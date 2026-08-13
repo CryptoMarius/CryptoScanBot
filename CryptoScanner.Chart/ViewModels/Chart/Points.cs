@@ -33,19 +33,19 @@ public class Points
         {
             if (zigzag.Candle!.OpenTime >= minDate && zigzag.Candle!.OpenTime <= maxDate)
             {
-                decimal value;
+                double value;
                 ScatterSeries? series;
                 if (zigzag.PointType == 'L')
                 {
                     series = seriesLow;
-                    value = zigzag.Value * 0.995m;
+                    value = zigzag.Value * 0.995;
                 }
                 else
                 {
-                    value = zigzag.Value * 1.005m;
+                    value = zigzag.Value * 1.005;
                     series = seriesHigh;
                 }
-                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime.Minutes, (double)value));
+                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime.Minutes, value));
             }
         }
 

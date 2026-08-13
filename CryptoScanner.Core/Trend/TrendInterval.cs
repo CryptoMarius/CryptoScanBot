@@ -40,8 +40,8 @@ public class TrendInterval
 
         // Configure a start value
         int count = 0;
-        decimal lastLow;
-        decimal lastHigh;
+        double lastLow;
+        double lastHigh;
         if (zigZagList[1].Value > zigZagList[0].Value)
         {
             lastLow = zigZagList[0].Value;
@@ -65,7 +65,7 @@ public class TrendInterval
             zigZag = zigZagList[i];
 
             // Pickup last value
-            decimal value = zigZag.PointType == 'H' ? lastHigh : lastLow;
+            double value = zigZag.PointType == 'H' ? lastHigh : lastLow;
             //decimal value;
             //if (zigZag.PointType == 'H')
             //    value = lastHigh;

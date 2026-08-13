@@ -94,7 +94,7 @@ public class ZoneDlzTests : TestBase
             ZigZagResult pivot = new()
             {
                 PointType = p.Type,
-                Value = p.Value,
+                Value = (double)p.Value,
                 Candle = candle,
             };
             indicator.ZigZagList.Add(pivot);
@@ -294,7 +294,7 @@ public class ZoneDlzTests : TestBase
             indicator.ZigZagList.Add(new ZigZagResult
             {
                 PointType = p.Type,
-                Value = p.Value,
+                Value = (double)p.Value,
                 Candle = candle,
             });
         }
@@ -336,7 +336,7 @@ public class ZoneDlzTests : TestBase
         indicator.ZigZagList.Add(new ZigZagResult
         {
             PointType = p.Type,
-            Value = p.Value,
+            Value = (double)p.Value,
             Candle = candle,
         });
 

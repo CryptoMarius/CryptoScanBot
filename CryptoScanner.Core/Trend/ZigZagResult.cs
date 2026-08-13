@@ -7,7 +7,10 @@ namespace CryptoScanner.Core.Trend;
 public class ZigZagResult
 {
     public required char PointType { get; set; } // indicates a specific point and type e.g. H or L
-    public required decimal Value { get; set; }
+    // double, not decimal: a pivot value only ever answers "is this point higher or lower than
+    // that one". It is not money that has to add up, and decimal arithmetic is an order of
+    // magnitude slower - see ZigZagIndicator.OptimizeList, which compares these on every candle.
+    public required double Value { get; set; }
     public required CryptoCandle Candle { get; set; }
 
     // Some call this Strong or Weak instead of Dominant, its the same concept
@@ -17,7 +20,7 @@ public class ZigZagResult
     public string NiceIntro { get; set; } = ""; // intro before box is interesting (a "jump" into the zone, ==not a small step)
     public CryptoZoneStrength Strength { get; set; } = CryptoZoneStrength.None;
 
-    public decimal? BackupValue { get; set; }
+    public double? BackupValue { get; set; }
     public CryptoCandle BackupCandle { get; set; }
     public int? BackupIndex { get; set; }
 
@@ -31,7 +34,7 @@ public class ZigZagResult
 
     public int PivotIndex { get; set; }
 
-    public void ReusePoint(CryptoCandle candle, decimal value, bool dummy, int pivotIndex)
+    public void ReusePoint(CryptoCandle candle, double value, bool dummy, int pivotIndex)
     {
         // Intention is to reset stuff because we are going to reuse a pivot point, clear the other stuff
         Value = value;

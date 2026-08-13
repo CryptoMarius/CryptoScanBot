@@ -69,10 +69,10 @@ public class TrendIntervalBos
         // protected level drift down with every LH inside a downtrend (and up with every HL
         // inside an uptrend), eventually triggering a false CHoCH on a minor reactionary move
         // even though price never actually broke the structural high/low.
-        decimal protectedHigh;
-        decimal protectedLow;
-        decimal recentHigh;
-        decimal recentLow;
+        double protectedHigh;
+        double protectedLow;
+        double recentHigh;
+        double recentLow;
         if (zigZagList[1].Value > zigZagList[0].Value)
         {
             recentLow = protectedLow = zigZagList[0].Value;
@@ -142,7 +142,7 @@ public class TrendIntervalBos
 
             if (structureEvent != CryptoStructureEvent.None)
             {
-                structureEvents.Add(new StructureEvent(zigZag.Candle!.OpenTime, structureEvent, zigZag.Value, trend));
+                structureEvents.Add(new StructureEvent(zigZag.Candle!.OpenTime, structureEvent, (decimal)zigZag.Value, trend));
             }
 
             if (log != null)

@@ -29,10 +29,10 @@ public class SupportResistance
             bool isSwingHigh = current.PointType == 'H';
 
             if (isSwingHigh)
-                AddOrMergeLevel(rawLevels, current.Value, current.Candle.OpenTime.Minutes, "Resistance", mergeTolerancePercent);
+                AddOrMergeLevel(rawLevels, (decimal)current.Value, current.Candle.OpenTime.Minutes, "Resistance", mergeTolerancePercent);
 
             if (isSwingLow)
-                AddOrMergeLevel(rawLevels, current.Value, current.Candle.OpenTime.Minutes, "Support", mergeTolerancePercent);
+                AddOrMergeLevel(rawLevels, (decimal)current.Value, current.Candle.OpenTime.Minutes, "Support", mergeTolerancePercent);
         }
 
         // Filter op minimale hits
