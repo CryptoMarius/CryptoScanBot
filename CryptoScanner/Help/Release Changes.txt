@@ -8,7 +8,7 @@ TODO:
 -De Emulator app laten testen (nieuw)
 -De documentatie bijwerken, screenshots verversen.
 
-XX-08-2025 2.6.0
+13-08-2025 2.6.0
 - De laatste fouten uit Kraken Futures gehaald
 - Extra help link naar de Cryptoscanner wiki pagina op github
 - Fix ZigZag punt berekening (met impact op de trend, marktrend enzovoort)
