@@ -10,6 +10,33 @@
         Title="Run parameters"
         WindowStartupLocation="CenterOwner">
 
+    <Window.Styles>
+        <!-- The Fluent theme draws the drop-down button of a CalendarDatePicker as a miniature
+             calendar carrying TODAY's day number (a TextBlock bound to DateTime.Today.Day). Right
+             next to a date field that number reads as part of the selected period, while it in fact
+             changes every midnight. This is the built-in template minus that number: the empty
+             calendar frame stays and the button still opens the calendar popup. -->
+        <Style Selector="CalendarDatePicker /template/ Button#PART_Button">
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Grid Height="24" Width="20" HorizontalAlignment="Center" VerticalAlignment="Center"
+                          Margin="0" ColumnDefinitions="*,*,*,*" RowDefinitions="23*,19*,19*,19*"
+                          ClipToBounds="False">
+                        <Border Name="Background" Margin="0,-1,0,0" Grid.ColumnSpan="4"
+                                Grid.Row="1" Grid.RowSpan="3" BorderThickness="0.5,0,0.5,0.5"
+                                BorderBrush="{TemplateBinding Foreground}" CornerRadius="0,0,2,2"/>
+                        <Border Grid.ColumnSpan="4" Grid.RowSpan="1"
+                                BorderBrush="{TemplateBinding Foreground}" BorderThickness="0.5"
+                                CornerRadius="2,2,0,0"/>
+                        <Ellipse HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 Fill="{TemplateBinding Foreground}" StrokeThickness="0"
+                                 Grid.ColumnSpan="4" Width="3" Height="3"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+    </Window.Styles>
+
     <!-- Border around entire content -->
     <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
     <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto" RowSpacing="8">

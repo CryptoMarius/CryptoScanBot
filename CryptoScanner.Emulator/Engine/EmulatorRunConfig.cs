@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
@@ -20,9 +22,11 @@ public class EmulatorRunConfig
     /// the 1m driving interval; enough 1m history is loaded before this date to fill the
     /// longest indicator lookback on the longest active interval.
     /// </summary>
+    [JsonConverter(typeof(DateOnlyJsonConverter))]
     public DateTime FromDate { get; set; }
 
     /// <summary>Inclusive UTC end of the replay window.</summary>
+    [JsonConverter(typeof(DateOnlyJsonConverter))]
     public DateTime ToDate { get; set; }
 
     /// <summary>

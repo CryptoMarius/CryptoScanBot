@@ -205,8 +205,11 @@ public partial class RunConfigViewModel : ObservableObject
             // this name, and the emulator only ever drives the one bootstrapped exchange.
             ExchangeName = GlobalData.ActiveExchange?.Name ?? "",
             Symbols = symbols,
-            FromDate = FromDate.Value.Date,
-            ToDate = ToDate.Value.Date,
+            // The date picker hands out a DateTime of kind Unspecified. Pin it to UTC: the replay
+            // window is aligned in UTC and CandleTime.AlignFromDateTime calls ToUniversalTime(),
+            // which would otherwise shift the window by the local time zone offset.
+            FromDate = DateTime.SpecifyKind(FromDate.Value.Date, DateTimeKind.Utc),
+            ToDate = DateTime.SpecifyKind(ToDate.Value.Date, DateTimeKind.Utc),
             Label = Label ?? "",
             BaseInterval = SelectedBaseInterval ?? "1m",
         };
