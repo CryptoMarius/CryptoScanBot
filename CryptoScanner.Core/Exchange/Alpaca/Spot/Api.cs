@@ -7,6 +7,33 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.Alpaca.Spot;
 
+/// <summary>
+/// Alpaca is not a crypto exchange but a US stock broker (US equities, fractional shares).
+/// It is plugged into the scanner as a regular exchange so the same analyzers can run on
+/// stocks; the quote currency is always USD and the symbol name is the plain ticker (AAPL).
+///
+/// Everything runs against the paper trading environment (Environments.Paper), so no real
+/// money is involved. An API key and secret are mandatory, even for reading market data.
+///
+/// Websites
+///   https://alpaca.markets                  main site
+///   https://app.alpaca.markets              dashboard, this is where the API key/secret live
+///   https://app.alpaca.markets/trade/{BASE} per symbol trade page (see GetExchangeLinks below)
+///
+/// Documentation
+///   https://docs.alpaca.markets             general documentation
+///   https://docs.alpaca.markets/reference   REST API reference (trading and market data)
+///   https://github.com/alpacahq/alpaca-trade-api-csharp   the Alpaca.Markets .NET SDK we use
+///
+/// Endpoints (handled by the SDK, listed here for reference only)
+///   https://paper-api.alpaca.markets        paper trading (what this implementation uses)
+///   https://api.alpaca.markets              live trading
+///   https://data.alpaca.markets             market data
+///
+/// Unlike the other exchanges this implementation does not use CryptoExchange.Net but the
+/// official Alpaca.Markets SDK, which is why the streaming ticker overrides StartAsync
+/// instead of following the Subscribe() pattern.
+/// </summary>
 public class Api : ExchangeBase
 {
     [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
