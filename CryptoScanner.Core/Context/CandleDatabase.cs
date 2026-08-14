@@ -367,6 +367,15 @@ public class CandleDatabase : IDisposable
     /// </summary>
     private static void LoadSymbolIntervals(SqliteConnection connection, int localSymbolId, CryptoSymbol symbol)
     {
+        // The instrument behind this symbol changed since these candles were stored. Restoring LastSync
+        // would undo that detection (the symbols are refreshed before the candles are loaded), so leave
+        // every interval on null and let the next fetch cycle pull the full window from the exchange.
+        if (symbol.Data.InstrumentChanged)
+        {
+            symbol.Data.InstrumentChanged = false;
+            return;
+        }
+
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT IntervalId, LastSync FROM SymbolInterval WHERE SymbolId = $SymbolId";
 
@@ -950,11 +959,8 @@ public class CandleDatabase : IDisposable
                     // their fetched candles must be kept regardless of the live volume heuristic
                     // (a freshly-added symbol has no 24h volume yet, so this would clear the just-
                     // fetched candles and force a full re-fetch on every run).
-                    if (!GlobalData.IsEmulatorMode
-                        && !symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
-                    {
-                        symbol.ClearCandles();
-                    }
+                    bool releaseCandles = !GlobalData.IsEmulatorMode
+                        && !symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading();
 
                     await sqliteWriteLock.WaitAsync(cancellationToken);
                     try
@@ -968,6 +974,14 @@ public class CandleDatabase : IDisposable
                     {
                         sqliteWriteLock.Release();
                     }
+
+                    // Release the memory only AFTER the write. Clearing first threw away everything that
+                    // had arrived since the previous save — the websocket keeps delivering for a symbol
+                    // that just dropped below the threshold, because the ticker subscription is only
+                    // rebuilt at startup. That silently cost up to a full hour of candles, which then had
+                    // to be filled in flat by BulkAddMissingCandles (ARBUSDT, 2026-08-09 21:35-22:34).
+                    if (releaseCandles)
+                        symbol.ClearCandles();
                 }
                 catch (Exception sqliteError)
                 {
