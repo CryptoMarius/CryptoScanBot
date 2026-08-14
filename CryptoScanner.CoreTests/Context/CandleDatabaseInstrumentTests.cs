@@ -2,25 +2,25 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
-using Dapper;
-
 namespace CryptoScanner.CoreTests.Context;
 
 /// <summary>
-/// Tests for the instrument provenance that candles.db stores next to the candles.
-///
-/// A scanner name does not identify an instrument: an exchange can publish several instruments with
-/// the same base and quote (BTCUSDT next to BTCUSDT_261225), rename one, or move it from spot to
-/// swap. Candles of the one are worthless as candles of the other, so the instrument they were
-/// fetched with is recorded and checked on load. On a mismatch the "synchronised up to here" marker
-/// is deliberately NOT restored, which makes the next fetch cycle pull the whole window again.
+/// Tests for the key candles.db stores its candles under: the exchange INSTRUMENT, not the scanner
+/// name. A scanner name does not identify an instrument — Binance publishes BTCUSDT next to
+/// BTCUSDT_261225 and both carry base BTC and quote USDT, and Okx moved its futures from spot
+/// instruments to swap instruments. Keyed on the instrument each gets its own registration, so the
+/// candles of one can never be served as the candles of the other.
 /// </summary>
 [TestClass]
 [DoNotParallelize]
 public class CandleDatabaseInstrumentTests : TestBase
 {
     private const string OriginalInstrument = "TEST exchange";
-    private const string OtherInstrument = "TEST exchange_261225";
+
+    // One instrument name per test. They share the same candle database file, so a name that another
+    // test registers would still be there — which is exactly what NeverStoredInstrument must not find.
+    private const string NeverStoredInstrument = "TEST exchange_never_stored";
+    private const string SecondInstrument = "TEST exchange_261225";
 
     // Arbitrary but fixed, so a failure reports the same numbers on every run.
     private static readonly CandleTime StoredLastSync = new(8_700_000);
@@ -107,53 +107,39 @@ public class CandleDatabaseInstrumentTests : TestBase
 
 
     [TestMethod]
-    public void ChangedInstrument_DoesNotRestoreLastCandleSynchronized()
+    public void OtherInstrument_FindsNothing()
     {
         CryptoSymbol symbol = Setup();
         Save(symbol, OriginalInstrument, StoredLastSync);
 
-        // The exchange now hands us a different instrument for the same scanner name — everything
-        // stored belongs to the previous one and has to be fetched again.
-        Load(symbol, OtherInstrument);
+        // Same scanner name, different instrument: this is the case that used to hand back the
+        // candles of the first one. There is no registration for it, so nothing is found and the
+        // next fetch cycle pulls the whole window.
+        Load(symbol, NeverStoredInstrument);
 
         AssertLastSyncRestored(symbol, false);
     }
 
 
     [TestMethod]
-    public void UnrecordedInstrument_DoesNotRestoreLastCandleSynchronized()
+    public void TwoInstruments_KeepTheirOwnCandles()
     {
         CryptoSymbol symbol = Setup();
         Save(symbol, OriginalInstrument, StoredLastSync);
 
-        // Simulate a database written by a build that did not record the instrument yet. Its candles
-        // cannot be vouched for, so they are refetched once — after which the save fills the column
-        // and this can never trigger a second time.
-        using (var candleDb = new CandleDatabase(symbol.Exchange))
-        {
-            candleDb.Open();
-            candleDb.Connection.Execute(
-                "UPDATE SymbolInterval SET ExchangeName = NULL " +
-                "WHERE SymbolId IN (SELECT SymbolId FROM Symbol WHERE Name = $Name)", new { symbol.Name });
-        }
+        // Give the second instrument its own bookkeeping...
+        CandleTime otherLastSync = StoredLastSync + 1000;
+        Save(symbol, SecondInstrument, otherLastSync);
 
+        // ...and the first one must still return its own, not the second one's
         Load(symbol, OriginalInstrument);
-
-        AssertLastSyncRestored(symbol, false);
-    }
-
-
-    [TestMethod]
-    public void SavingAfterAMismatch_RecordsTheNewInstrument()
-    {
-        CryptoSymbol symbol = Setup();
-        Save(symbol, OriginalInstrument, StoredLastSync);
-
-        // The refetch that follows a mismatch ends in a save, which must adopt the new instrument so
-        // the very next load matches again instead of refetching forever.
-        Save(symbol, OtherInstrument, StoredLastSync);
-        Load(symbol, OtherInstrument);
-
         AssertLastSyncRestored(symbol, true);
+
+        Load(symbol, SecondInstrument);
+        foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+        {
+            Assert.AreEqual(otherLastSync, symbolInterval.LastCandleSynchronized,
+                $"{symbolInterval.Interval.Name}: the second instrument has its own LastCandleSynchronized");
+        }
     }
 }

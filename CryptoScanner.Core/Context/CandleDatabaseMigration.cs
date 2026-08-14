@@ -213,9 +213,12 @@ public static class CandleDatabaseMigration
 
     private static void StampVersion(SqliteConnection connection, SqliteTransaction tx, Model.CryptoExchange exchange)
     {
+        // Deliberately the literal 2, not CurrentSchemaVersion: this conversion produces a Symbol
+        // table keyed on the scanner name, which is exactly what version 2 is. VerifySchemaVersion
+        // takes it from there to the current version.
         connection.Execute(
             "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', @Version)",
-            new { Version = CandleDatabase.CurrentSchemaVersion.ToString() }, transaction: tx);
+            new { Version = "2" }, transaction: tx);
         connection.Execute(
             "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('ExchangeName', @Name)",
             new { exchange.Name }, transaction: tx);

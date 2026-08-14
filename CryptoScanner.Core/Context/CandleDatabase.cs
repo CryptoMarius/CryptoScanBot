@@ -122,7 +122,7 @@ public class CandleDatabase : IDisposable
     /// to this database's own Symbol table, keyed by symbol NAME. Version 1 databases
     /// (no Meta table) carry foreign ids and need an explicit migration.
     /// </summary>
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
 
     /// <summary>
@@ -181,31 +181,26 @@ public class CandleDatabase : IDisposable
         // autoincrement id — which silently re-labelled every candle in this store. Keying on the
         // name instead makes this database self-describing and independent of that rebuild.
         //
-        // The name is stored ONCE here rather than in every Candle row: Candle is WITHOUT ROWID
+        // The key is the exchange INSTRUMENT, not the scanner name (version 3). A scanner name does
+        // not identify an instrument: Binance publishes BTCUSDT and BTCUSDT_261225, both with base
+        // BTC and quote USDT, and Okx moved its futures from spot instruments to swap instruments.
+        // Keyed on the instrument those simply get their own row, so their candles can never mix.
+        // Name is kept alongside it for readability when querying the file by hand.
+        //
+        // The key is stored ONCE here rather than in every Candle row: Candle is WITHOUT ROWID
         // with the primary key clustered into each row, so a TEXT key would add its full length
         // to all (tens of millions of) rows. The local id keeps the rows byte-identical in size.
+        //
+        // Deliberately created in the VERSION 2 layout here. A version-1 file has no Symbol table at
+        // all and is filled by CandleDatabaseMigration.ConvertInPlace, which writes (SymbolId, Name);
+        // VerifySchemaVersion takes it to the version-3 layout right after. An existing table is left
+        // alone by IF NOT EXISTS, so a file that is already version 3 keeps its own layout.
         db.Connection.Execute(
             "CREATE TABLE IF NOT EXISTS [Symbol] (" +
             "  SymbolId  INTEGER PRIMARY KEY AUTOINCREMENT," +
             "  Name      TEXT NOT NULL UNIQUE" +
             ")");
 
-        // Provenance of the stored candles: the instrument id they were actually fetched with.
-        // A scanner name (BTCUSDT) does not identify an instrument on its own — an exchange can
-        // offer several instruments with the same base and quote (BTCUSDT_261225), rename one, or
-        // move it from spot to swap, and the candles of the one are worthless as the candles of the
-        // other. Recording it makes the file self-describing, so the mismatch is caught on load
-        // instead of never.
-        //
-        // It lives in SymbolInterval, in the very row that carries LastSync, because the two only
-        // mean anything together: "synchronised up to here" is a statement ABOUT an instrument. One
-        // INSERT OR REPLACE writes both, so they can never drift apart and a refetch triggered by a
-        // mismatch always ends with the new instrument recorded — which is what makes it stop.
-        // Added with ALTER TABLE because CREATE TABLE IF NOT EXISTS leaves an existing table alone.
-        bool hasExchangeName = db.Connection.Query<string>("SELECT name FROM pragma_table_info('SymbolInterval')")
-            .Any(x => x.Equals("ExchangeName", StringComparison.OrdinalIgnoreCase));
-        if (!hasExchangeName)
-            db.Connection.Execute("ALTER TABLE [SymbolInterval] ADD COLUMN ExchangeName TEXT NULL");
 
         // Schema bookkeeping. Also holds the exchange name so a file copied into the wrong
         // folder cannot silently be read as a different exchange.
@@ -229,6 +224,8 @@ public class CandleDatabase : IDisposable
     ///         <see cref="CandleDatabaseMigration.ConvertInPlace"/>: every application that opens a
     ///         candle store has to get past this point, so it cannot be left to a menu action that
     ///         only the Avalonia scanner has.</item>
+    ///   <item>Version 2 recorded → keyed on the scanner name, converted to version 3 by
+    ///         <see cref="MigrateToVersion3"/>.</item>
     ///   <item>Version recorded → must match, otherwise the code and the file disagree.</item>
     /// </list>
     /// </summary>
@@ -244,17 +241,37 @@ public class CandleDatabase : IDisposable
             {
                 // Throws (and leaves the file untouched) when there is nothing to judge the old
                 // mapping against yet — the caller then skips the candle store for now.
+                // Produces a version-2 file, which the step below then takes to version 3.
                 CandleDatabaseMigration.ConvertInPlace(connection, exchange);
+                version = "2";
+            }
+            else
+            {
+                // Brand new or emptied file. The table above was created in the version-2 layout for
+                // the benefit of a version-1 conversion; with no candles there is nothing to keep, so
+                // replace it with the version-3 layout instead of converting it afterwards.
+                connection.Execute("DROP TABLE IF EXISTS [Symbol]");
+                connection.Execute(
+                    "CREATE TABLE [Symbol] (" +
+                    "  SymbolId      INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "  ExchangeName  TEXT NOT NULL COLLATE NOCASE UNIQUE," +
+                    "  Name          TEXT NULL" +
+                    ")");
+
+                connection.Execute(
+                    "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', $Version)",
+                    new { Version = CurrentSchemaVersion.ToString() });
+                connection.Execute(
+                    "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('ExchangeName', $Name)",
+                    new { Name = exchange.Name });
                 return;
             }
+        }
 
-            connection.Execute(
-                "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', $Version)",
-                new { Version = CurrentSchemaVersion.ToString() });
-            connection.Execute(
-                "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('ExchangeName', $Name)",
-                new { Name = exchange.Name });
-            return;
+        if (version == "2")
+        {
+            MigrateToVersion3(connection, exchange);
+            version = CurrentSchemaVersion.ToString();
         }
 
         if (version != CurrentSchemaVersion.ToString())
@@ -263,6 +280,151 @@ public class CandleDatabase : IDisposable
                 $"Candle database for '{exchange.Name}' has schema version {version}, " +
                 $"this build expects {CurrentSchemaVersion}.");
         }
+    }
+
+
+    /// <summary>
+    /// Converts a version-2 file (local Symbol table keyed on the SCANNER name) to version 3, where
+    /// it is keyed on the exchange INSTRUMENT. A scanner name does not identify an instrument: an
+    /// exchange can publish a perpetual and a dated contract that both parse to "BTCUSDT", or move an
+    /// instrument from spot to swap. Keying on the instrument makes mixing them impossible instead of
+    /// something to detect afterwards.
+    ///
+    /// Every existing row is adopted by looking its name up in the current symbol list and recording
+    /// that symbol's instrument. Two groups are NOT adopted, and lose their candles here:
+    /// <list type="bullet">
+    ///   <item>names the exchange covers with more than one instrument
+    ///         (<see cref="CryptoExchangeData.AmbiguousSymbolNames"/>) — those candles cannot be
+    ///         attributed to either instrument, so they are fetched again;</item>
+    ///   <item>names the exchange no longer lists — orphans, which the normal cleanup never reached
+    ///         because it iterates the live symbol list rather than the file.</item>
+    /// </list>
+    /// </summary>
+    private static void MigrateToVersion3(SqliteConnection connection, Model.CryptoExchange exchange)
+    {
+        // Without the instruments every row would look like an orphan and the whole file would be
+        // emptied. Refuse; the callers already treat this as "skip the candle store for now".
+        if (exchange.SymbolListName.Count == 0)
+        {
+            throw new CandleDatabaseSchemaException(
+                $"the symbol list of '{exchange.Name}' is not loaded yet, conversion to version " +
+                $"{CurrentSchemaVersion} needs it to resolve the instruments");
+        }
+
+        using var tx = connection.BeginTransaction();
+
+        connection.Execute(
+            "CREATE TABLE IF NOT EXISTS [SymbolVersion3] (" +
+            "  SymbolId      INTEGER PRIMARY KEY AUTOINCREMENT," +
+            "  ExchangeName  TEXT NOT NULL COLLATE NOCASE UNIQUE," +
+            "  Name          TEXT NULL" +
+            ")", transaction: tx);
+
+        List<LocalSymbolRow> rows = [.. connection.Query<LocalSymbolRow>(
+            "SELECT SymbolId, Name FROM Symbol", transaction: tx)];
+
+        int adopted = 0;
+        int ambiguous = 0;
+        int orphan = 0;
+        foreach (LocalSymbolRow row in rows)
+        {
+            bool isAmbiguous = !string.IsNullOrEmpty(row.Name)
+                && exchange.Data.AmbiguousSymbolNames.Contains(row.Name);
+
+            if (!isAmbiguous && !string.IsNullOrEmpty(row.Name)
+                && exchange.SymbolListName.TryGetValue(row.Name, out CryptoSymbol? symbol)
+                && !string.IsNullOrEmpty(symbol.ExchangeName))
+            {
+                // Keep the SymbolId so none of the (millions of) Candle rows have to be rewritten
+                connection.Execute(
+                    "INSERT OR IGNORE INTO SymbolVersion3 (SymbolId, ExchangeName, Name) " +
+                    "VALUES ($SymbolId, $ExchangeName, $Name)",
+                    new { row.SymbolId, symbol.ExchangeName, row.Name }, transaction: tx);
+                adopted++;
+                continue;
+            }
+
+            if (isAmbiguous)
+                ambiguous++;
+            else
+                orphan++;
+
+            connection.Execute("DELETE FROM Candle WHERE SymbolId = $SymbolId",
+                new { row.SymbolId }, transaction: tx);
+            connection.Execute("DELETE FROM SymbolInterval WHERE SymbolId = $SymbolId",
+                new { row.SymbolId }, transaction: tx);
+        }
+
+        connection.Execute("DROP TABLE [Symbol]", transaction: tx);
+        connection.Execute("ALTER TABLE [SymbolVersion3] RENAME TO [Symbol]", transaction: tx);
+
+        connection.Execute(
+            "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', $Version)",
+            new { Version = CurrentSchemaVersion.ToString() }, transaction: tx);
+        tx.Commit();
+
+        // The cache maps instrument -> id from here on, the old entries map name -> id
+        ClearLocalSymbolIdCache(connection.DataSource);
+
+        GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: converted to version {CurrentSchemaVersion} — " +
+            $"{adopted} symbol(s) kept, {ambiguous} fetched again (the name covers more than one " +
+            $"instrument), {orphan} orphan(s) removed");
+    }
+
+
+    private sealed class LocalSymbolRow
+    {
+        public int SymbolId { get; set; }
+        public string Name { get; set; } = "";
+    }
+
+
+    private sealed class LocalInstrumentRow
+    {
+        public int SymbolId { get; set; }
+        public string ExchangeName { get; set; } = "";
+    }
+
+
+    /// <summary>
+    /// Removes registrations, and everything stored under them, for instruments this exchange no
+    /// longer offers. Driven by what is IN the file rather than by the scanner's symbol list: the
+    /// per-symbol cleanup iterates the live symbols and can therefore never reach a row that no
+    /// longer has one, so those rows survived every cleanup. Measured on 2026-08-14: 1153 of the
+    /// 1586 rows in the Okx futures store, holding 10% of its candles, plus a row with an empty name.
+    /// </summary>
+    private static int CleanOrphanSymbols(SqliteConnection connection, Model.CryptoExchange exchange)
+    {
+        // An empty symbol list would make every row look like an orphan and empty the entire file
+        if (exchange.SymbolListName.Count == 0)
+            return 0;
+
+        HashSet<string> live = new(StringComparer.OrdinalIgnoreCase);
+        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+            live.Add(InstrumentKeyFor(symbol));
+
+        List<LocalInstrumentRow> rows = [.. connection.Query<LocalInstrumentRow>(
+            "SELECT SymbolId, ExchangeName FROM Symbol")];
+
+        List<LocalInstrumentRow> orphans = [.. rows.Where(x => !live.Contains(x.ExchangeName))];
+        if (orphans.Count == 0)
+            return 0;
+
+        using var tx = connection.BeginTransaction();
+        foreach (LocalInstrumentRow row in orphans)
+        {
+            connection.Execute("DELETE FROM Candle WHERE SymbolId = $SymbolId",
+                new { row.SymbolId }, transaction: tx);
+            connection.Execute("DELETE FROM SymbolInterval WHERE SymbolId = $SymbolId",
+                new { row.SymbolId }, transaction: tx);
+            connection.Execute("DELETE FROM Symbol WHERE SymbolId = $SymbolId",
+                new { row.SymbolId }, transaction: tx);
+        }
+        tx.Commit();
+
+        // Those instruments must not keep resolving to a now deleted id
+        ClearLocalSymbolIdCache(connection.DataSource);
+        return orphans.Count;
     }
 
 
@@ -305,17 +467,29 @@ public class CandleDatabase : IDisposable
     /// </summary>
     private static int ResolveLocalSymbolId(SqliteConnection connection, CryptoSymbol symbol)
     {
+        string instrument = InstrumentKeyFor(symbol);
+
         var cache = CacheFor(connection);
-        if (cache.TryGetValue(symbol.Name, out int cached))
+        if (cache.TryGetValue(instrument, out int cached))
             return cached;
 
-        connection.Execute("INSERT OR IGNORE INTO Symbol (Name) VALUES ($Name)", new { symbol.Name });
+        connection.Execute("INSERT OR IGNORE INTO Symbol (ExchangeName, Name) VALUES ($ExchangeName, $Name)",
+            new { ExchangeName = instrument, symbol.Name });
         int localId = connection.ExecuteScalar<int>(
-            "SELECT SymbolId FROM Symbol WHERE Name = $Name", new { symbol.Name });
+            "SELECT SymbolId FROM Symbol WHERE ExchangeName = $ExchangeName", new { ExchangeName = instrument });
 
-        cache[symbol.Name] = localId;
+        cache[instrument] = localId;
         return localId;
     }
+
+
+    /// <summary>
+    /// The key a symbol's candles are stored under: its exchange instrument. Falls back to the
+    /// scanner name for the rare symbol that has no instrument id yet — such a symbol cannot be
+    /// fetched either, and this keeps it from colliding with a real instrument.
+    /// </summary>
+    private static string InstrumentKeyFor(CryptoSymbol symbol)
+        => string.IsNullOrEmpty(symbol.ExchangeName) ? symbol.Name : symbol.ExchangeName;
 
 
     /// <summary>
@@ -325,12 +499,14 @@ public class CandleDatabase : IDisposable
     /// </summary>
     private static bool TryGetLocalSymbolId(SqliteConnection connection, CryptoSymbol symbol, out int localSymbolId)
     {
+        string instrument = InstrumentKeyFor(symbol);
+
         var cache = CacheFor(connection);
-        if (cache.TryGetValue(symbol.Name, out localSymbolId))
+        if (cache.TryGetValue(instrument, out localSymbolId))
             return true;
 
         int? found = connection.ExecuteScalar<int?>(
-            "SELECT SymbolId FROM Symbol WHERE Name = $Name", new { symbol.Name });
+            "SELECT SymbolId FROM Symbol WHERE ExchangeName = $ExchangeName", new { ExchangeName = instrument });
         if (found == null)
         {
             localSymbolId = 0;
@@ -338,30 +514,24 @@ public class CandleDatabase : IDisposable
         }
 
         localSymbolId = found.Value;
-        cache[symbol.Name] = localSymbolId;
+        cache[instrument] = localSymbolId;
         return true;
     }
 
 
     /// <summary>
     /// Upsert <see cref="CryptoSymbolInterval.LastCandleSynchronized"/> for one (symbol,
-    /// interval) into the SymbolInterval table, together with the instrument those candles were
-    /// fetched from. Runs inside the caller's transaction so it commits atomically together with
-    /// the candle inserts. Read back by <see cref="LoadSymbolIntervals"/>, which refuses to restore
-    /// LastSync when the instrument no longer matches.
-    ///
-    /// Both values are written by this one statement on purpose: "synchronised up to here" is a
-    /// statement ABOUT an instrument and is meaningless without it. That also makes the refetch
-    /// terminate — whatever writes LastSync writes the instrument that goes with it.
+    /// interval) into the SymbolInterval table. Runs inside the caller's transaction
+    /// so it commits atomically together with the candle inserts.
     /// </summary>
     private static void SaveSymbolInterval(SqliteConnection connection, SqliteTransaction tx, int localSymbolId,
-        CryptoSymbol symbol, CryptoSymbolInterval symbolInterval)
+        CryptoSymbolInterval symbolInterval)
     {
         using var cmd = connection.CreateCommand();
         cmd.Transaction = tx;
         cmd.CommandText =
-            "INSERT OR REPLACE INTO SymbolInterval (SymbolId, IntervalId, LastSync, ExchangeName) " +
-            "VALUES ($SymbolId, $IntervalId, $LastSync, $ExchangeName)";
+            "INSERT OR REPLACE INTO SymbolInterval (SymbolId, IntervalId, LastSync) " +
+            "VALUES ($SymbolId, $IntervalId, $LastSync)";
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
@@ -380,11 +550,6 @@ public class CandleDatabase : IDisposable
             : (object)DBNull.Value;
         cmd.Parameters.Add(pLastSync);
 
-        var pExchangeName = cmd.CreateParameter();
-        pExchangeName.ParameterName = "$ExchangeName";
-        pExchangeName.Value = string.IsNullOrEmpty(symbol.ExchangeName) ? (object)DBNull.Value : symbol.ExchangeName;
-        cmd.Parameters.Add(pExchangeName);
-
         cmd.ExecuteNonQuery();
     }
 
@@ -396,17 +561,8 @@ public class CandleDatabase : IDisposable
     /// </summary>
     private static void LoadSymbolIntervals(SqliteConnection connection, int localSymbolId, CryptoSymbol symbol)
     {
-        // The instrument behind this symbol changed since these candles were stored. Restoring LastSync
-        // would undo that detection (the symbols are refreshed before the candles are loaded), so leave
-        // every interval on null and let the next fetch cycle pull the full window from the exchange.
-        if (symbol.Data.InstrumentChanged)
-        {
-            symbol.Data.InstrumentChanged = false;
-            return;
-        }
-
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "SELECT IntervalId, LastSync, ExchangeName FROM SymbolInterval WHERE SymbolId = $SymbolId";
+        cmd.CommandText = "SELECT IntervalId, LastSync FROM SymbolInterval WHERE SymbolId = $SymbolId";
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
@@ -417,34 +573,12 @@ public class CandleDatabase : IDisposable
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
             intervalsId[symbolInterval.Interval.Id] = symbolInterval;
 
-        bool reported = false;
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
             int intervalId = reader.GetInt32(0);
             if (!intervalsId.TryGetValue(intervalId, out CryptoSymbolInterval? symbolInterval))
                 continue;
-
-            // The recorded instrument is the one these candles were fetched with. When it does not
-            // match the instrument we would fetch from today, everything stored belongs to something
-            // else and "synchronised up to here" is a claim about the wrong series — leave it on null
-            // so the next fetch cycle pulls the whole window again. NULL means the row predates this
-            // bookkeeping and cannot be vouched for, which is treated the same but only once: the
-            // save that ends the refetch writes LastSync and the instrument in one statement.
-            string? storedInstrument = reader.IsDBNull(2) ? null : reader.GetString(2);
-            if (string.IsNullOrEmpty(storedInstrument)
-                || !storedInstrument.Equals(symbol.ExchangeName, StringComparison.OrdinalIgnoreCase))
-            {
-                if (!reported)
-                {
-                    reported = true;
-                    GlobalData.AddTextToLogTab($"candles.db {symbol.Name}: stored candles come from " +
-                        $"'{storedInstrument ?? "an unrecorded instrument"}' but this symbol now trades as " +
-                        $"'{symbol.ExchangeName}' — fetching them again");
-                }
-                symbolInterval.LastCandleSynchronized = null;
-                continue;
-            }
 
             if (reader.IsDBNull(1))
                 symbolInterval.LastCandleSynchronized = null;
@@ -874,7 +1008,7 @@ public class CandleDatabase : IDisposable
         // Persist LastCandleSynchronized for every interval in the same transaction so the
         // exchange fetcher can continue from where it left off after a restart.
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
-            SaveSymbolInterval(connection, tx, localSymbolId, symbol, symbolInterval);
+            SaveSymbolInterval(connection, tx, localSymbolId, symbolInterval);
 
         tx.Commit();
 
@@ -940,7 +1074,7 @@ public class CandleDatabase : IDisposable
         }
 
         // Persist LastCandleSynchronized for this single interval in the same transaction.
-        SaveSymbolInterval(connection, tx, localSymbolId, symbol, symbolInterval);
+        SaveSymbolInterval(connection, tx, localSymbolId, symbolInterval);
 
         tx.Commit();
     }
@@ -1455,13 +1589,26 @@ public class CandleDatabase : IDisposable
             }
         }
 
+        // Then the rows the loop above cannot reach: instruments the exchange no longer offers
+        int orphans = 0;
+        try
+        {
+            orphans = CleanOrphanSymbols(db.Connection, exchange);
+        }
+        catch (Exception err)
+        {
+            ScannerLog.Logger.Error(err, "candles.db orphan cleanup failed");
+            GlobalData.AddTextToLogTab($"candles.db orphan cleanup failed: {err.Message}");
+        }
+
         // Reclaim pages freed by the DELETEs above. INCREMENTAL keeps it cheap;
         // pass a generous page-budget so a large cleanup completes in one call.
         db.Connection.Execute("PRAGMA incremental_vacuum(10000);");
 
         sw.Stop();
         GlobalData.AddTextToLogTab(
-            $"candles.db cleanup {exchange.Name}: done processed={processed} failed={failed} in {sw.ElapsedMilliseconds} ms");
+            $"candles.db cleanup {exchange.Name}: done processed={processed} failed={failed} " +
+            $"orphans={orphans} in {sw.ElapsedMilliseconds} ms");
     }
 
 

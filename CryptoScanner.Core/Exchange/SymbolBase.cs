@@ -78,6 +78,33 @@ public class SymbolBase()
         return info;
     }
 
+    /// <summary>
+    /// Records which scanner names cover more than one instrument on this exchange, by intersecting
+    /// the names of the instruments that were REJECTED with the names that were accepted. A dated
+    /// delivery contract carries the same base and quote as its perpetual, so both produce the same
+    /// scanner name and candles stored under that name cannot be attributed to either one.
+    /// Call once per <c>GetSymbolsAsync</c>, after its loop.
+    /// </summary>
+    static internal void RegisterAmbiguousSymbolNames(Model.CryptoExchange exchange,
+        IEnumerable<string> rejectedScannerNames, IEnumerable<string> acceptedScannerNames)
+    {
+        HashSet<string> accepted = new(acceptedScannerNames, StringComparer.OrdinalIgnoreCase);
+
+        exchange.Data.AmbiguousSymbolNames.Clear();
+        foreach (string name in rejectedScannerNames)
+        {
+            if (accepted.Contains(name))
+                exchange.Data.AmbiguousSymbolNames.Add(name);
+        }
+
+        if (exchange.Data.AmbiguousSymbolNames.Count != 0)
+        {
+            string names = string.Join(',', exchange.Data.AmbiguousSymbolNames.OrderBy(x => x));
+            ScannerLog.Logger.Trace($"{exchange.Name} symbols covering more than one instrument: {names}");
+        }
+    }
+
+
     static internal bool IsSymbolAccepted(Model.CryptoExchange exchange, SymbolInfo info, IRestApiClient api, TradingMode mode, out CryptoSymbol? symbol)
     {
         // Some exchanges publish instruments without a base and/or quote asset (Okx does this
@@ -103,22 +130,6 @@ public class SymbolBase()
                 ExchangeName = info.ExchangeName,
                 Status = 1,
             };
-        }
-
-        // A different instrument id for a symbol we already know means every candle stored for it was
-        // fetched from ANOTHER instrument: an exchange renaming it, a move from spot to swap, or a
-        // delivery contract that arrived under the perpetual's scanner name. Keeping the "synchronised
-        // up to here" marker would leave that foreign history in place forever, so clear it and let the
-        // next fetch cycle pull the whole window again. No candle is deleted — the refetch overwrites
-        // them — and this only triggers on an actual change, never on a normal startup.
-        if (symbol.Id != 0 && !string.IsNullOrEmpty(symbol.ExchangeName)
-            && !symbol.ExchangeName.Equals(info.ExchangeName, StringComparison.OrdinalIgnoreCase))
-        {
-            GlobalData.AddTextToLogTab($"{symbol.Name} instrument changed from {symbol.ExchangeName} to " +
-                $"{info.ExchangeName}, candles will be fetched again");
-            symbol.Data.InstrumentChanged = true;
-            foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
-                symbolInterval.LastCandleSynchronized = null;
         }
 
         // Fill the new storage ExchangeName field

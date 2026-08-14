@@ -13,6 +13,19 @@ public class CryptoExchangeData
     public PauseTradingRule PauseTrading { get; } = new();
 
 
+    // Symbols
+    /// <summary>
+    /// Scanner names for which this exchange currently publishes MORE than one instrument. Binance
+    /// offers BTCUSDT (perpetual) next to BTCUSDT_261225 (quarterly), and both carry base BTC and
+    /// quote USDT, so both parse to the scanner name "BTCUSDT". Filled by the exchange's
+    /// GetSymbolsAsync from the instruments it rejected; empty until that has run once.
+    ///
+    /// Used by the candle database migration: candles stored under such a name cannot be assumed to
+    /// come from the instrument we use today, so they are not adopted but fetched again.
+    /// </summary>
+    public HashSet<string> AmbiguousSymbolNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+
     // Quotes
     // Account data per quote for the barometer and pauzing rules
     // Key = QuoteName
