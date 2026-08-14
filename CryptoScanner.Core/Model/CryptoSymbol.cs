@@ -104,13 +104,49 @@ public partial class CryptoSymbol
         return Data.SymbolIntervalList[(int)interval.IntervalPeriod];
     }
 
+    // Hysteresis around QuoteData.MinimalVolume. A symbol whose 24 hour volume hovers around the limit
+    // would otherwise flip on every refresh, and the two states are treated very differently: candles
+    // fetched or not, kept or released, ticker subscribed or not. Coming in still costs the same
+    // 0.9 x MinimalVolume as before, but dropping out now needs a clearly lower volume, so a symbol in
+    // the band between the two keeps whatever answer it had.
+    public const double VolumeThresholdEnterFactor = 0.9;
+    public const double VolumeThresholdLeaveFactor = 0.75;
+
+    /// <summary>
+    /// Outcome of the last <see cref="UpdateEnoughVolume"/>; null means no decision was taken yet
+    /// (a symbol straight from the database). Not persisted — the first refresh decides again.
+    /// </summary>
+    [Computed]
+    public bool? VolumeAboveThreshold { get; set; }
+
+    /// <summary>
+    /// The single place where the "enough volume" decision changes. Call it once per refresh cycle,
+    /// after the 24 hour volume has been updated; everything else reads the outcome through
+    /// <see cref="EnoughVolume"/> so the whole cycle sees one consistent answer. Deliberately not
+    /// done from the Volume setter: the price ticker updates that value continuously, and the
+    /// decision must not move underneath a cycle that is already running.
+    /// </summary>
+    public void UpdateEnoughVolume()
+    {
+        if (QuoteData == null || QuoteData.MinimalVolume == 0)
+        {
+            VolumeAboveThreshold = true;
+            return;
+        }
+
+        double factor = VolumeAboveThreshold == true ? VolumeThresholdLeaveFactor : VolumeThresholdEnterFactor;
+        VolumeAboveThreshold = Volume > factor * QuoteData.MinimalVolume;
+    }
+
     public bool EnoughVolume()
     {
         if (QuoteData == null || QuoteData.MinimalVolume == 0)
             return true;
-        if (Volume > 0.9 * QuoteData.MinimalVolume)
-            return true;
-        return false;
+        // No decision taken yet: answer exactly as this method did before the hysteresis was added,
+        // without writing state from what callers expect to be a plain read.
+        if (VolumeAboveThreshold == null)
+            return Volume > VolumeThresholdEnterFactor * QuoteData.MinimalVolume;
+        return VolumeAboveThreshold.Value;
     }
 
     public bool ClearCandles()
