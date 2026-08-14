@@ -63,8 +63,12 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             decimal close = decimal.Parse(candleArr[4].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture);
             decimal volume = decimal.Parse(candleArr[5].GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture);
 
+            // Bitvavo reports the volume in the BASE asset, the scanner works in quote volume. The
+            // value is cumulative over the open candle, so multiplying it by the middle of that same
+            // candle keeps it growing monotonically - which is what the Math.Max in the cache expects.
             UpdateCacheFromKline(market, openTimeUtc,
-                open: open, high: high, low: low, close: close, volume: volume);
+                open: open, high: high, low: low, close: close,
+                volume: volume * 0.5m * (high + low));
         }
         catch (Exception ex)
         {
@@ -140,6 +144,11 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         ConnectionLostCount = 0;
         ErrorDuringStartup = false;
         ScannerLog.Logger.Trace($"Bitvavo kline ticker group {Name} starting ({SymbolList.Count} symbols)");
+
+        // Give the subscription a fresh starting point, otherwise the silence check would fire
+        // immediately on a ticker that has not had the chance to receive anything yet. The base
+        // StartAsync does the same; this override replaces it entirely.
+        MarkActivity();
 
         try
         {

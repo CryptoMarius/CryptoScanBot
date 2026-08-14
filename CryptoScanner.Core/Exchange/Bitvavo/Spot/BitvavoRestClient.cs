@@ -13,18 +13,26 @@ namespace CryptoScanner.Core.Exchange.Bitvavo.Spot;
 /// </summary>
 public class BitvavoRestClient : IDisposable
 {
-    private readonly HttpClient _http;
-    private const string BaseUrl = "https://api.bitvavo.com/v2";
-
-    public BitvavoRestClient()
+    // One HttpClient for the whole application. GetClient() hands out a BitvavoRestClient per symbol
+    // per fetch cycle - five parallel tasks over a couple of hundred symbols - and each of those used
+    // to carry its own HttpClient with its own connection pool, leaving a socket in TIME_WAIT behind
+    // for every request. The other exchanges get the same behaviour from their JKorf client.
+    // PooledConnectionLifetime keeps a static client from holding on to a connection forever, so a
+    // changed address behind api.bitvavo.com is still picked up during a run of several days.
+    private static readonly HttpClient _http = new(
+        new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(15) })
     {
-        _http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-    }
+        Timeout = TimeSpan.FromSeconds(30)
+    };
+    private const string BaseUrl = "https://api.bitvavo.com/v2";
 
 
     /// <summary>
     /// Fetches OHLCV candles for a given market and interval.
-    /// Returns candles sorted ascending (oldest first), or null on error.
+    /// Bitvavo returns them in reverse chronological order (newest first) and they are handed over
+    /// in that same order - the caller stores them in a SortedList keyed on the open time, so the
+    /// order of arrival does not matter. The volume is expressed in the BASE asset.
+    /// Returns null on error.
     /// </summary>
     public async Task<List<BitvavoCandle>?> GetCandlesAsync(
         string market, string interval, DateTime startTime, DateTime endTime, int limit)
@@ -114,7 +122,12 @@ public class BitvavoRestClient : IDisposable
     }
 
 
-    public void Dispose() => _http.Dispose();
+    // Deliberately does nothing: the HttpClient is shared and outlives every wrapper around it. The
+    // type stays disposable because ExchangeBase.GetClient returns an IDisposable that the callers
+    // hand to a using block.
+    public void Dispose()
+    {
+    }
 }
 
 
@@ -155,6 +168,11 @@ public class BitvavoMarket
 
     [JsonPropertyName("pricePrecision")]
     public int? PricePrecision { get; set; }
+
+    // The price step of the market ("1.00" for BTC-EUR, "0.0000010" for FUN-EUR). This is the field
+    // that carries the real precision; pricePrecision is null on every market these days.
+    [JsonPropertyName("tickSize")]
+    public string TickSize { get; set; } = "";
 
     [JsonPropertyName("minOrderInQuoteAsset")]
     public string MinOrderInQuoteAsset { get; set; } = "0";

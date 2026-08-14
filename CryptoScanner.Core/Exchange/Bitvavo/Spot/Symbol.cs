@@ -71,9 +71,25 @@ public class Symbol() : SymbolBase(), ISymbol
                             symbol.QuantityMaximum = 0;  // No hard maximum on Bitvavo
                             symbol.QuantityTickSize = GetTickSizeFromString(market.MinOrderInBaseAsset);
 
-                            symbol.PriceTickSize = market.PricePrecision > 0
-                                ? (decimal)Math.Pow(10, -market.PricePrecision.GetValueOrDefault())
-                                : GetTickSizeFromString(market.MinOrderInQuoteAsset);
+                            // Bitvavo refuses an order worth less than this (5 EUR on every market at
+                            // the moment). Without it the minimum entry value of a position only knows
+                            // about the settings, and the exchange rejects what it lets through.
+                            symbol.QuoteValueMinimum = decimal.TryParse(market.MinOrderInQuoteAsset,
+                                NumberStyles.Any, CultureInfo.InvariantCulture, out decimal quoteMin) ? quoteMin : 0;
+
+                            // The price step comes from tickSize. The two fallbacks below are dead weight
+                            // in practice: pricePrecision is null on every market, and minOrderInQuoteAsset
+                            // is "5.00" for all of them - which is how every symbol ended up with a tick
+                            // size of 0.01. That rounds the candles of everything under 1 EUR into a coarse
+                            // grid and the candles of everything under 0.01 EUR (PEPE, SHIB, BONK) into
+                            // zeros, since a candle stores its prices as whole multiples of the tick size.
+                            if (decimal.TryParse(market.TickSize, NumberStyles.Any,
+                                CultureInfo.InvariantCulture, out decimal priceTickSize) && priceTickSize > 0)
+                                symbol.PriceTickSize = priceTickSize;
+                            else if (market.PricePrecision > 0)
+                                symbol.PriceTickSize = (decimal)Math.Pow(10, -market.PricePrecision.GetValueOrDefault());
+                            else
+                                symbol.PriceTickSize = GetTickSizeFromString(market.MinOrderInQuoteAsset);
 
                             // Volume from the tickers (market format on Bitvavo: "BTC-EUR")
                             symbol.Volume = volumeTicker.TryGetValue(market.Market, out decimal volume)

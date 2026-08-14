@@ -10,8 +10,9 @@ internal class BitvavoWeight
 
 /// <summary>
 /// Rate limiter for Bitvavo REST API calls.
-/// Bitvavo allows 1000 weight per minute. Each candle/market request costs 1 weight.
-/// We use a conservative sliding-window limit of 400 per 20 seconds to stay safe.
+/// Bitvavo allows 1000 weight per minute. A candle or market request costs 1 weight; the 24 hour
+/// ticker costs 25 when it is asked for every market at once, which the callers book as 1.
+/// We use a conservative sliding-window limit of 200 per 20 seconds to stay safe.
 /// </summary>
 public static class LimitRate
 {
