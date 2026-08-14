@@ -65,25 +65,34 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data.Symbols)
                         {
+                            // These two filters must run BEFORE IsSymbolAccepted. A delivery contract such as
+                            // BTCUSDT_261225 carries the same base and quote as its perpetual, so ParseSymbol
+                            // gives it the same ScannerName ("BTCUSDT") and IsSymbolAccepted hands back the
+                            // EXISTING perpetual symbol — and overwrites its ExchangeName with the delivery
+                            // contract's name. The continue below then skips the database update, so the stored
+                            // row keeps saying BTCUSDT while every candle fetch for the rest of the session asks
+                            // Binance for BTCUSDT_261225 (which trades ~1.7% above the perpetual and is far less
+                            // liquid). Only BTCUSDT and ETHUSDT have such a sibling, which is exactly why their
+                            // candles were wrong while the database looked perfectly normal.
+                            if (symbolData.ContractType != ContractType.Perpetual)
+                            {
+#if DEBUG
+                                //GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractType.Perpetual}");
+#endif
+                                continue;
+                            }
+
+                            if (symbolData.UnderlyingSubType.Contains("Chinese"))
+                            {
+#if DEBUG
+                                //GlobalData.AddTextToLogTab($"{info.ExchangeName} UnderlyingSubType != {symbolData.UnderlyingSubType}");
+#endif
+                                continue;
+                            }
+
                             SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
-                                if (symbolData.ContractType != ContractType.Perpetual)
-                                {
-#if DEBUG
-                                    //GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractType.Perpetual}");
-#endif
-                                    continue;
-                                }
-
-                                if (symbolData.UnderlyingSubType.Contains("Chinese"))
-                                {
-#if DEBUG
-                                    //GlobalData.AddTextToLogTab($"{info.ExchangeName} UnderlyingSubType != {symbolData.UnderlyingSubType}");
-#endif
-                                    continue;
-                                }
-
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen
                                 //symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;

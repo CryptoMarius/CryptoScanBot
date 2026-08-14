@@ -82,17 +82,22 @@ public class Symbol() : SymbolBase(), ISymbol
                         //HttpResult<BybitResponse<BybitSpotSymbol>> x;
                         foreach (var symbolData in symbols)
                         {
+                            // Filter BEFORE IsSymbolAccepted, same reason as in Binance Futures: a dated
+                            // contract (BTCUSDT-25DEC26) shares base and quote with its perpetual, so it gets
+                            // the same ScannerName and IsSymbolAccepted overwrites the perpetual's
+                            // ExchangeName with the dated one. Bybit currently has eight such collisions
+                            // (BTC, ETH, DOGE, HYPE, MNT and three more).
+                            if (symbolData.ContractType != ContractTypeV5.LinearPerpetual)
+                            {
+#if DEBUG
+                                //GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractTypeV5.LinearPerpetual}");
+#endif
+                                continue;
+                            }
+
                             SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
-                                if (symbolData.ContractType != ContractTypeV5.LinearPerpetual)
-                                {
-#if DEBUG
-                                    //GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractTypeV5.LinearPerpetual}");
-#endif
-                                    continue;
-                                }
-
                                 //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
                                 //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
 
