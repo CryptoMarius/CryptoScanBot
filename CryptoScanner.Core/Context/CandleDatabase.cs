@@ -984,9 +984,6 @@ public class CandleDatabase : IDisposable
         }
         finally
         {
-            // Enable analysing
-            GlobalData.SetCandleTimerEnable(true);
-
             Semaphore.Release();
         }
     }
