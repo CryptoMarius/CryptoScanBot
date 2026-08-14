@@ -94,7 +94,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} WebSocket closed by server for group {GroupName}");
+                    GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} WebSocket closed by server for group {Name}");
                     NeedsRestart = true;
                     break;
                 }
@@ -112,7 +112,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             ScannerLog.Logger.Error(ex, "");
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} WebSocket receive error group {GroupName}: {ex.Message}");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} WebSocket receive error group {Name}: {ex.Message}");
             NeedsRestart = true;
         }
     }
@@ -132,14 +132,14 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     {
         if (_ws != null)
         {
-            ScannerLog.Logger.Trace($"Bitvavo kline ticker group {GroupName} already started");
+            ScannerLog.Logger.Trace($"Bitvavo kline ticker group {Name} already started");
             return;
         }
 
         NeedsRestart = false;
         ConnectionLostCount = 0;
         ErrorDuringStartup = false;
-        ScannerLog.Logger.Trace($"Bitvavo kline ticker group {GroupName} starting ({SymbolList.Count} symbols)");
+        ScannerLog.Logger.Trace($"Bitvavo kline ticker group {Name} starting ({SymbolList.Count} symbols)");
 
         try
         {
@@ -171,13 +171,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             // De gedachte is om dat iedere minuut 10 seconden na het normale kline event te doen.
             StartFlushTimer();
 
-            ScannerLog.Logger.Trace($"Bitvavo kline ticker group {GroupName} started");
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {GroupName} started ({SymbolList.Count} symbols)");
+            ScannerLog.Logger.Trace($"Bitvavo kline ticker group {Name} started");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} started ({SymbolList.Count} symbols)");
         }
         catch (Exception ex)
         {
             ScannerLog.Logger.Error(ex, "");
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {GroupName} startup error: {ex.Message}");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} startup error: {ex.Message}");
 
             _ws?.Dispose();
             _ws = null;
@@ -196,11 +196,11 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         if (_ws == null)
         {
-            ScannerLog.Logger.Trace($"Bitvavo kline ticker group {GroupName} already stopped");
+            ScannerLog.Logger.Trace($"Bitvavo kline ticker group {Name} already stopped");
             return;
         }
 
-        ScannerLog.Logger.Trace($"Bitvavo kline ticker group {GroupName} stopping");
+        ScannerLog.Logger.Trace($"Bitvavo kline ticker group {Name} stopping");
 
         _localCts?.Cancel();
 
@@ -216,6 +216,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         _localCts?.Dispose();
         _localCts = null;
 
-        ScannerLog.Logger.Trace($"Bitvavo kline ticker group {GroupName} stopped");
+        ScannerLog.Logger.Trace($"Bitvavo kline ticker group {Name} stopped");
     }
 }

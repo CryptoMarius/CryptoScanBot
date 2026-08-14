@@ -30,7 +30,7 @@ public class Api : ExchangeBase
         ExchangeOptions.SetDefaultOptions("Bitvavo Spot", "EUR", 1440, false, 10, klineDelivery: KlineDelivery.TimerFlush);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
-        KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
+        KLineTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
     }
 
 

@@ -9,12 +9,12 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.Binance.Futures;
 
-public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new BinanceSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).UsdFuturesApi.ExchangeData.SubscribeToAllTickerUpdatesAsync((data) =>
+        SubscriptionBundle!.SocketClient ??= new BinanceSocketClient();
+        CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)SubscriptionBundle.SocketClient).UsdFuturesApi.ExchangeData.SubscribeToAllTickerUpdatesAsync((data) =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {

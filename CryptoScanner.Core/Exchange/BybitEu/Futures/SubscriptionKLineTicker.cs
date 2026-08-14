@@ -13,7 +13,7 @@ namespace CryptoScanner.Core.Exchange.BybitEu.Futures;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door Binance)
 /// </summary>
-public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     private async Task ProcessCandleAsync(string? symbolName, BybitKlineUpdate kline)
     {
@@ -46,8 +46,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new BybitSocketClient();
-        var subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5LinearApi.SubscribeToKlineUpdatesAsync(
+        SubscriptionBundle!.SocketClient ??= new BybitSocketClient();
+        var subscriptionResult = await ((BybitSocketClient)SubscriptionBundle.SocketClient).V5LinearApi.SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, data =>
         {
             // Er zit tot ongeveer 8 a 10 seconden vertraging is van de exchange tot hier, dat moet ansich genoeg zijn

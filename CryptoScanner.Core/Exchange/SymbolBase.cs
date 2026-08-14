@@ -105,6 +105,22 @@ public class SymbolBase()
             };
         }
 
+        // A different instrument id for a symbol we already know means every candle stored for it was
+        // fetched from ANOTHER instrument: an exchange renaming it, a move from spot to swap, or a
+        // delivery contract that arrived under the perpetual's scanner name. Keeping the "synchronised
+        // up to here" marker would leave that foreign history in place forever, so clear it and let the
+        // next fetch cycle pull the whole window again. No candle is deleted — the refetch overwrites
+        // them — and this only triggers on an actual change, never on a normal startup.
+        if (symbol.Id != 0 && !string.IsNullOrEmpty(symbol.ExchangeName)
+            && !symbol.ExchangeName.Equals(info.ExchangeName, StringComparison.OrdinalIgnoreCase))
+        {
+            GlobalData.AddTextToLogTab($"{symbol.Name} instrument changed from {symbol.ExchangeName} to " +
+                $"{info.ExchangeName}, candles will be fetched again");
+            symbol.Data.InstrumentChanged = true;
+            foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+                symbolInterval.LastCandleSynchronized = null;
+        }
+
         // Fill the new storage ExchangeName field
         symbol.ExchangeName = info.ExchangeName;
         return true;

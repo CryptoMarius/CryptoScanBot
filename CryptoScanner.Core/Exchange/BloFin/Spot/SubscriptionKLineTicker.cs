@@ -15,7 +15,7 @@ namespace CryptoScanner.Core.Exchange.BloFin.Spot;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door de exchange)
 /// </summary>
-public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     // BloFin Spot uses api.FormatSymbol() for subscription names, which differ from ExchangeName.
     // The feed then strips underscores before matching — so we key this dict on the stripped name.
@@ -57,8 +57,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new BloFinSocketClient();
-        var client = (BloFinSocketClient)TickerGroup.SocketClient;
+        SubscriptionBundle!.SocketClient ??= new BloFinSocketClient();
+        var client = (BloFinSocketClient)SubscriptionBundle.SocketClient;
         var api = client.SpotApi;
 
         // BloFin Spot requires formatted symbol names (e.g. "BTC-USDT") for the subscription,

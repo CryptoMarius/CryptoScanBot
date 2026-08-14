@@ -13,7 +13,7 @@ namespace CryptoScanner.Core.Exchange.Alpaca.Spot;
 /// Alpaca's streaming SDK is independent of CryptoExchange.Net, so we override
 /// StartAsync and StopAsync entirely instead of using the Subscribe() pattern.
 /// </summary>
-public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     private IAlpacaDataStreamingClient? _streamingClient;
     private readonly List<IAlpacaDataSubscription<IBar>> _barSubscriptions = [];
@@ -50,14 +50,14 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     {
         if (_streamingClient != null)
         {
-            ScannerLog.Logger.Trace($"Alpaca kline ticker for group {GroupName} already started");
+            ScannerLog.Logger.Trace($"Alpaca kline subscription {Name} already started");
             return;
         }
 
         NeedsRestart = false;
         ConnectionLostCount = 0;
         ErrorDuringStartup = false;
-        ScannerLog.Logger.Trace($"Alpaca kline ticker for group {GroupName} starting ({SymbolList.Count} symbols)");
+        ScannerLog.Logger.Trace($"Alpaca kline subscription {Name} starting ({SymbolList.Count} symbols)");
 
         try
         {
@@ -80,13 +80,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 _barSubscriptions.Add(subscription);
             }
 
-            ScannerLog.Logger.Trace($"Alpaca kline ticker for group {GroupName} started");
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {GroupName} started ({SymbolList.Count} symbols)");
+            ScannerLog.Logger.Trace($"Alpaca kline subscription {Name} started");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} started ({SymbolList.Count} symbols)");
         }
         catch (Exception ex)
         {
             ScannerLog.Logger.Error(ex, "");
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {GroupName} startup error: {ex.Message}");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} startup error: {ex.Message}");
 
             _streamingClient?.Dispose();
             _streamingClient = null;
@@ -102,11 +102,11 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     {
         if (_streamingClient == null)
         {
-            ScannerLog.Logger.Trace($"Alpaca kline ticker for group {GroupName} already stopped");
+            ScannerLog.Logger.Trace($"Alpaca kline subscription {Name} already stopped");
             return;
         }
 
-        ScannerLog.Logger.Trace($"Alpaca kline ticker for group {GroupName} stopping");
+        ScannerLog.Logger.Trace($"Alpaca kline subscription {Name} stopping");
 
         foreach (var subscription in _barSubscriptions)
         {
@@ -118,6 +118,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         _streamingClient.Dispose();
         _streamingClient = null;
 
-        ScannerLog.Logger.Trace($"Alpaca kline ticker for group {GroupName} stopped");
+        ScannerLog.Logger.Trace($"Alpaca kline subscription {Name} stopped");
     }
 }

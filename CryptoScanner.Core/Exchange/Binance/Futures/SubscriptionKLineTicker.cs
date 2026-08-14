@@ -10,7 +10,7 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.Binance.Futures;
 
-public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     private async Task ProcessCandleAsync(BinanceStreamKlineData kline)
     {
@@ -30,8 +30,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new BinanceSocketClient();
-        WebSocketResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).UsdFuturesApi.ExchangeData.
+        SubscriptionBundle!.SocketClient ??= new BinanceSocketClient();
+        WebSocketResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)SubscriptionBundle.SocketClient).UsdFuturesApi.ExchangeData.
             SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, (data) =>
         {

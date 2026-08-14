@@ -13,7 +13,7 @@ namespace CryptoScanner.Core.Exchange.BloFin.Futures;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door de exchange)
 /// </summary>
-public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     private async Task ProcessCandleAsync(string? symbolName, BloFinKline kline)
     {
@@ -40,8 +40,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new BloFinSocketClient();
-        var client = (BloFinSocketClient)TickerGroup.SocketClient;
+        SubscriptionBundle!.SocketClient ??= new BloFinSocketClient();
+        var client = (BloFinSocketClient)SubscriptionBundle.SocketClient;
         var api = client.FuturesApi;
 
         var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(Symbols, KlineInterval.OneMinute, data =>

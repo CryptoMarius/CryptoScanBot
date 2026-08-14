@@ -13,7 +13,7 @@ namespace CryptoScanner.Core.Exchange.Okx.Futures;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door de exchange)
 /// </summary>
-public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     private async Task ProcessCandleAsync(string? symbolName, OKXKline kline)
     {
@@ -47,8 +47,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new OKXSocketClient();
-        var client = (OKXSocketClient)TickerGroup!.SocketClient;
+        SubscriptionBundle!.SocketClient ??= new OKXSocketClient();
+        var client = (OKXSocketClient)SubscriptionBundle!.SocketClient;
         var api = client.UnifiedApi;
 
         // OKX expects the hyphenated instrument id (for example "BASED-USDT-SWAP"), not the scanner name ("BASEDUSDT").

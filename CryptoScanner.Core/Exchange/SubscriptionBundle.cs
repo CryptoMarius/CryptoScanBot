@@ -2,13 +2,17 @@
 
 namespace CryptoScanner.Core.Exchange;
 
-public class TickerGroup : IDisposable
+/// <summary>
+/// One socket client with the subscriptions that run over it. The exchange library manages the actual
+/// websocket connection(s) underneath, so unsubscribing one subscription leaves the others untouched.
+/// </summary>
+public class SubscriptionBundle : IDisposable
 {
     // Iedere client bedient maximaal 10 subscriptions
     // Iedere subscription bedient een aantal symbols
     // dat is zo'n 1..200 en afhankelijk van de exchange..
     public BaseSocketClient? SocketClient; // made public for ExchangeTest project
-    public List<SubscriptionTicker> TickerList { get; set; } = [];
+    public List<Subscription> SubscriptionList { get; set; } = [];
 
 
     public void Dispose()

@@ -13,7 +13,7 @@ namespace CryptoScanner.Core.Exchange.BybitEu.Spot;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door de exchange)
 /// </summary>
-public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     private async Task ProcessCandleAsync(string? symbolName, BybitKlineUpdate kline)
     {
@@ -47,8 +47,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new BybitSocketClient();
-        var subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5SpotApi.SubscribeToKlineUpdatesAsync(
+        SubscriptionBundle!.SocketClient ??= new BybitSocketClient();
+        var subscriptionResult = await ((BybitSocketClient)SubscriptionBundle.SocketClient).V5SpotApi.SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, data =>
         {
             //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.ScannerSymbol));

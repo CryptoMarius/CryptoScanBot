@@ -12,9 +12,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
 {
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new KucoinSocketClient();
-        var client = (KucoinSocketClient)TickerGroup!.SocketClient;
-        //TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
+        SubscriptionBundle!.SocketClient ??= new KucoinSocketClient();
+        var client = (KucoinSocketClient)SubscriptionBundle!.SocketClient;
+        //SubscriptionBundle!.SocketClient.ClientOptions.OutputOriginalData = true;
         var api = client.SpotApi;
 
         InitializeCache(SymbolList);

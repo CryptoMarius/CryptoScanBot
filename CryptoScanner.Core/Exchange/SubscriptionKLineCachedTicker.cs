@@ -17,7 +17,7 @@ namespace CryptoScanner.Core.Exchange;
 /// After a successful subscription call <see cref="StartFlushTimer"/> to activate the timer.
 /// </summary>
 public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOptions)
-    : SubscriptionTicker(exchangeOptions)
+    : Subscription(exchangeOptions)
 {
     private readonly SemaphoreSlim _cacheSemaphore = new(1, 1);
     private System.Timers.Timer? _flushTimer;

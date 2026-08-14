@@ -73,17 +73,21 @@ public class Symbol() : SymbolBase(), ISymbol
                         {
                             foreach (var symbolData in symbolInfo.Data)
                             {
+                                // Filter BEFORE IsSymbolAccepted, same reason as in Binance and Bybit Futures:
+                                // that method adopts the instrument id of whatever is passed in, and the
+                                // continue below would skip the database update that has to persist it.
+                                if (symbolData.RootSymbol != symbolData.QuoteAsset)
+                                {
+#if DEBUG
+                                    // was info.ExchangeName, which is the same value but is only parsed below now
+                                    GlobalData.AddTextToLogTab($"{symbolData.Symbol} rootsymbol != quote {symbolData.RootSymbol}");
+#endif
+                                    continue;
+                                }
+
                                 SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
                                 if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                                 {
-                                    if (symbolData.RootSymbol != symbolData.QuoteAsset)
-                                    {
-#if DEBUG
-                                        GlobalData.AddTextToLogTab($"{info.ExchangeName} rootsymbol != quote {symbolData.RootSymbol}");
-#endif
-                                        continue;
-                                    }
-
                                     //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                     //De te gebruiken precisie in prijzen
                                     //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;

@@ -4,7 +4,7 @@
 /// Describes how an exchange delivers closed 1-minute candles over its WebSocket feed.
 /// Used as documentation and for diagnostics; the actual implementation choice is expressed
 /// by inheriting from <see cref="SubscriptionKLineCachedTicker"/> (Timer) or
-/// <see cref="SubscriptionTicker"/> directly (FinalEvent).
+/// <see cref="Subscription"/> directly (FinalEvent).
 /// </summary>
 public enum KlineDelivery
 {
@@ -32,7 +32,7 @@ public enum KlineDelivery
 //    public int SymbolLimitPerSubscription { get; set; }
 
 //    // Aantal subscriptions per client (een keuze in de techniek)
-//    public int SubscriptionLimitPerClient { get; set; }
+//    public int SubscriptionsPerBundle { get; set; }
 
 //    // Reduce the amount of symbols using the volume (if possible)
 //    // - Specificly build for Kucoin because of the amount of symbols
@@ -58,7 +58,8 @@ public class ExchangeOptions // : IExchangeOptions
     public int SymbolLimitPerSubscription { get; set; }
 
     // Aantal subscriptions per client (een keuze in de techniek)
-    public int SubscriptionLimitPerClient { get; set; } = 10;
+    // Every bundle owns one socket client, so this also decides how many socket clients are created.
+    public int SubscriptionsPerBundle { get; set; } = 10;
 
     // Reduce the amount of symbols using the volume (if possible)
     // - Specificly build for Kucoin because of the amount of symbols
@@ -73,7 +74,7 @@ public class ExchangeOptions // : IExchangeOptions
 
 
     public void SetDefaultOptions(string exchangeName, string defaultQuote, int candleLimit, bool limitAmountOfSymbols,
-        int symbolLimitPerSubscription, int subscriptionLimitPerClient = 10,
+        int symbolLimitPerSubscription, int subscriptionsPerBundle = 10,
         KlineDelivery klineDelivery = KlineDelivery.FinalEvent)
     {
         ExchangeName = exchangeName;
@@ -81,7 +82,7 @@ public class ExchangeOptions // : IExchangeOptions
         CandleLimit = candleLimit;
         LimitAmountOfSymbols = true; // limitAmountOfSymbols; ALWAY's
         SymbolLimitPerSubscription = symbolLimitPerSubscription;
-        SubscriptionLimitPerClient = subscriptionLimitPerClient;
+        SubscriptionsPerBundle = subscriptionsPerBundle;
         KlineDelivery = klineDelivery;
     }
 }

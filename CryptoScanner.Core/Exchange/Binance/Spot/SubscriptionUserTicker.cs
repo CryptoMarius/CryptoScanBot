@@ -10,13 +10,13 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.Binance.Spot;
 
-public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         using BinanceRestClient client = new();
         {
-            TickerGroup!.SocketClient ??= new BinanceSocketClient();
+            SubscriptionBundle!.SocketClient ??= new BinanceSocketClient();
             CallResult<string> userStreamResult = await client.SpotApi.Account.StartUserStreamAsync();
             //if (!userStreamResult.Success)
             //{
@@ -25,7 +25,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
             //}
 
 
-            var subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).SpotApi.Account.SubscribeToUserDataUpdatesAsync(
+            var subscriptionResult = await ((BinanceSocketClient)SubscriptionBundle.SocketClient).SpotApi.Account.SubscribeToUserDataUpdatesAsync(
                 userStreamResult.Data,
                 OnOrderUpdate,
                 null,

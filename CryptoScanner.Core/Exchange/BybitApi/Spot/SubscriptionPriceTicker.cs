@@ -8,12 +8,12 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.BybitApi.Spot;
 
-public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new BybitSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5SpotApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
+        SubscriptionBundle!.SocketClient ??= new BybitSocketClient();
+        CallResult<UpdateSubscription> subscriptionResult = await ((BybitSocketClient)SubscriptionBundle.SocketClient).V5SpotApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {

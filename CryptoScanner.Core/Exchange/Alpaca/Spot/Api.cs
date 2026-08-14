@@ -60,7 +60,7 @@ public class Api : ExchangeBase
         ExchangeOptions.SetDefaultOptions("Alpaca", "USD", 1000, false, 100);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
-        KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
+        KLineTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
     }
 
 

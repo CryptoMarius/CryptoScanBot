@@ -12,8 +12,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
 {
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new HyperLiquidSocketClient();
-        var client = (HyperLiquidSocketClient)TickerGroup.SocketClient;
+        SubscriptionBundle!.SocketClient ??= new HyperLiquidSocketClient();
+        var client = (HyperLiquidSocketClient)SubscriptionBundle.SocketClient;
         var api = client.FuturesApi.ExchangeData;
 
         // We verwachten (helaas) slechts 1 symbol per ticker

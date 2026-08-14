@@ -29,6 +29,14 @@ public class CryptoSymbolData
     // Interval related data like candles, last candle fetched, zones
     public List<CryptoSymbolInterval> SymbolIntervalList { get; set; } = [];
 
+    /// <summary>
+    /// Set by <c>SymbolBase.IsSymbolAccepted</c> when the exchange reports a different instrument id
+    /// than the one the stored candles were fetched with. The symbols are refreshed BEFORE the candles
+    /// are loaded at startup, so without this flag <c>CandleDatabase.LoadSymbolIntervals</c> would
+    /// restore the old LastSync and undo the detection. Cleared as soon as that load has honoured it.
+    /// </summary>
+    public bool InstrumentChanged { get; set; }
+
 
     /// <summary>
     /// DlzAdmin

@@ -12,9 +12,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
 {
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new HyperLiquidSocketClient();
-        var client = (HyperLiquidSocketClient)TickerGroup.SocketClient;
-        //TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
+        SubscriptionBundle!.SocketClient ??= new HyperLiquidSocketClient();
+        var client = (HyperLiquidSocketClient)SubscriptionBundle.SocketClient;
+        //SubscriptionBundle!.SocketClient.ClientOptions.OutputOriginalData = true;
         var api = client.SpotApi.ExchangeData;
 
         InitializeCache(SymbolList);

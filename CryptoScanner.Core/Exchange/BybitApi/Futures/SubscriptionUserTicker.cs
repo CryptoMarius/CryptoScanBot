@@ -13,12 +13,12 @@ using System.Text.Json;
 
 namespace CryptoScanner.Core.Exchange.BybitApi.Futures;
 
-public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new BybitSocketClient();
-        var subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5PrivateApi.SubscribeToOrderUpdatesAsync(OnOrderUpdate).ConfigureAwait(false);
+        SubscriptionBundle!.SocketClient ??= new BybitSocketClient();
+        var subscriptionResult = await ((BybitSocketClient)SubscriptionBundle.SocketClient).V5PrivateApi.SubscribeToOrderUpdatesAsync(OnOrderUpdate).ConfigureAwait(false);
         return subscriptionResult;
     }
 

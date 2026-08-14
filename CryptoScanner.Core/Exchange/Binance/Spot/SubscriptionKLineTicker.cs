@@ -13,7 +13,7 @@ namespace CryptoScanner.Core.Exchange.Binance.Spot;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door Binance)
 /// </summary>
-public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     private async Task ProcessCandleAsync(IBinanceStreamKlineData kline)
     {
@@ -39,8 +39,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new BinanceSocketClient();
-        WebSocketResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
+        SubscriptionBundle!.SocketClient ??= new BinanceSocketClient();
+        WebSocketResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)SubscriptionBundle.SocketClient).SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, (data) =>
         {
             if (data.Data.Data.Final)

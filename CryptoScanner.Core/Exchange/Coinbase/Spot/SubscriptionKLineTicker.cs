@@ -9,7 +9,7 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.Coinbase.Spot;
 
-public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscription(exchangeOptions)
 {
     private async Task ProcessCandleAsync(string? symbolName, CoinbaseStreamKline kline)
     {
@@ -34,8 +34,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup!.SocketClient ??= new CoinbaseSocketClient();
-        var client = (CoinbaseSocketClient)TickerGroup.SocketClient;
+        SubscriptionBundle!.SocketClient ??= new CoinbaseSocketClient();
+        var client = (CoinbaseSocketClient)SubscriptionBundle.SocketClient;
         var api = client.AdvancedTradeApi;
 
         //------------------------------------------------------------------------------
