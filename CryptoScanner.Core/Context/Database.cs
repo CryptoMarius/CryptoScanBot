@@ -173,9 +173,9 @@ public class CryptoDatabase : IDisposable
             new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
             new() { Name = "BitMart Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
 
-            // Experiment
+            // BloFin Spot is not implemented
             new() { Name = "BloFin Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Spot },
-            new() { Name = "BloFin Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Futures },
+            new() { Name = "BloFin Futures", IsSupported = true, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Futures },
 
             new() { Name = "Bybit Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Spot },
             new() { Name = "Bybit Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Futures },
@@ -188,8 +188,8 @@ public class CryptoDatabase : IDisposable
             new() { Name = "Coinbase Spot", IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Spot },
             new() { Name = "Coinbase Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Futures },
 
-            // HyperLiquid Spot has only 1 symbol
-            new() { Name = "HyperLiquid Spot", IsSupported = false, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Spot },
+            // HyperLiquid
+            new() { Name = "HyperLiquid Spot", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Spot },
             new() { Name = "HyperLiquid Futures", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Futures },
 
             // Kraken Futures has no kline websocket feed, the 1m candles are built from the trades
