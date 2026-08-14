@@ -194,14 +194,18 @@ public class CandleDatabase : IDisposable
         // A scanner name (BTCUSDT) does not identify an instrument on its own — an exchange can
         // offer several instruments with the same base and quote (BTCUSDT_261225), rename one, or
         // move it from spot to swap, and the candles of the one are worthless as the candles of the
-        // other. Recording it next to the candles makes the file self-describing, so the mismatch is
-        // caught on load instead of never. NULL means "written by a build that did not record it" —
-        // LoadSymbolIntervals treats that as unverified and refetches once, after which it is filled.
+        // other. Recording it makes the file self-describing, so the mismatch is caught on load
+        // instead of never.
+        //
+        // It lives in SymbolInterval, in the very row that carries LastSync, because the two only
+        // mean anything together: "synchronised up to here" is a statement ABOUT an instrument. One
+        // INSERT OR REPLACE writes both, so they can never drift apart and a refetch triggered by a
+        // mismatch always ends with the new instrument recorded — which is what makes it stop.
         // Added with ALTER TABLE because CREATE TABLE IF NOT EXISTS leaves an existing table alone.
-        bool hasExchangeName = db.Connection.Query<string>("SELECT name FROM pragma_table_info('Symbol')")
+        bool hasExchangeName = db.Connection.Query<string>("SELECT name FROM pragma_table_info('SymbolInterval')")
             .Any(x => x.Equals("ExchangeName", StringComparison.OrdinalIgnoreCase));
         if (!hasExchangeName)
-            db.Connection.Execute("ALTER TABLE [Symbol] ADD COLUMN ExchangeName TEXT NULL");
+            db.Connection.Execute("ALTER TABLE [SymbolInterval] ADD COLUMN ExchangeName TEXT NULL");
 
         // Schema bookkeeping. Also holds the exchange name so a file copied into the wrong
         // folder cannot silently be read as a different exchange.
@@ -340,42 +344,24 @@ public class CandleDatabase : IDisposable
 
 
     /// <summary>
-    /// Record which exchange instrument the candles being written came from, in the caller's
-    /// transaction so the provenance can never be newer than the candles themselves. Read back by
-    /// <see cref="LoadSymbolIntervals"/>, which refetches everything when it no longer matches.
-    /// </summary>
-    private static void SaveSymbolInstrument(SqliteConnection connection, SqliteTransaction tx, int localSymbolId, CryptoSymbol symbol)
-    {
-        using var cmd = connection.CreateCommand();
-        cmd.Transaction = tx;
-        cmd.CommandText = "UPDATE Symbol SET ExchangeName = $ExchangeName WHERE SymbolId = $SymbolId";
-
-        var pExchangeName = cmd.CreateParameter();
-        pExchangeName.ParameterName = "$ExchangeName";
-        pExchangeName.Value = string.IsNullOrEmpty(symbol.ExchangeName) ? (object)DBNull.Value : symbol.ExchangeName;
-        cmd.Parameters.Add(pExchangeName);
-
-        var pSymbol = cmd.CreateParameter();
-        pSymbol.ParameterName = "$SymbolId";
-        pSymbol.Value = localSymbolId;
-        cmd.Parameters.Add(pSymbol);
-
-        cmd.ExecuteNonQuery();
-    }
-
-
-    /// <summary>
     /// Upsert <see cref="CryptoSymbolInterval.LastCandleSynchronized"/> for one (symbol,
-    /// interval) into the SymbolInterval table. Runs inside the caller's transaction
-    /// so it commits atomically together with the candle inserts.
+    /// interval) into the SymbolInterval table, together with the instrument those candles were
+    /// fetched from. Runs inside the caller's transaction so it commits atomically together with
+    /// the candle inserts. Read back by <see cref="LoadSymbolIntervals"/>, which refuses to restore
+    /// LastSync when the instrument no longer matches.
+    ///
+    /// Both values are written by this one statement on purpose: "synchronised up to here" is a
+    /// statement ABOUT an instrument and is meaningless without it. That also makes the refetch
+    /// terminate — whatever writes LastSync writes the instrument that goes with it.
     /// </summary>
-    private static void SaveSymbolInterval(SqliteConnection connection, SqliteTransaction tx, int localSymbolId, CryptoSymbolInterval symbolInterval)
+    private static void SaveSymbolInterval(SqliteConnection connection, SqliteTransaction tx, int localSymbolId,
+        CryptoSymbol symbol, CryptoSymbolInterval symbolInterval)
     {
         using var cmd = connection.CreateCommand();
         cmd.Transaction = tx;
         cmd.CommandText =
-            "INSERT OR REPLACE INTO SymbolInterval (SymbolId, IntervalId, LastSync) " +
-            "VALUES ($SymbolId, $IntervalId, $LastSync)";
+            "INSERT OR REPLACE INTO SymbolInterval (SymbolId, IntervalId, LastSync, ExchangeName) " +
+            "VALUES ($SymbolId, $IntervalId, $LastSync, $ExchangeName)";
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
@@ -393,6 +379,11 @@ public class CandleDatabase : IDisposable
             ? (long)symbolInterval.LastCandleSynchronized.Value.Minutes
             : (object)DBNull.Value;
         cmd.Parameters.Add(pLastSync);
+
+        var pExchangeName = cmd.CreateParameter();
+        pExchangeName.ParameterName = "$ExchangeName";
+        pExchangeName.Value = string.IsNullOrEmpty(symbol.ExchangeName) ? (object)DBNull.Value : symbol.ExchangeName;
+        cmd.Parameters.Add(pExchangeName);
 
         cmd.ExecuteNonQuery();
     }
@@ -414,24 +405,8 @@ public class CandleDatabase : IDisposable
             return;
         }
 
-        // Same conclusion, but reached from the file itself instead of from the symbol refresh. The
-        // recorded instrument is the one these candles were fetched with; when it does not match the
-        // instrument we would fetch from today, everything stored here belongs to something else.
-        // NULL means the candles predate this bookkeeping and their origin cannot be established —
-        // treated as a mismatch exactly once, because the next save records the current instrument.
-        string? storedInstrument = connection.QueryFirstOrDefault<string>(
-            "SELECT ExchangeName FROM Symbol WHERE SymbolId = $SymbolId", new { SymbolId = localSymbolId });
-        if (string.IsNullOrEmpty(storedInstrument)
-            || !storedInstrument.Equals(symbol.ExchangeName, StringComparison.OrdinalIgnoreCase))
-        {
-            GlobalData.AddTextToLogTab($"candles.db {symbol.Name}: stored candles come from " +
-                $"'{storedInstrument ?? "an unrecorded instrument"}' but this symbol now trades as " +
-                $"'{symbol.ExchangeName}' — fetching them again");
-            return;
-        }
-
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "SELECT IntervalId, LastSync FROM SymbolInterval WHERE SymbolId = $SymbolId";
+        cmd.CommandText = "SELECT IntervalId, LastSync, ExchangeName FROM SymbolInterval WHERE SymbolId = $SymbolId";
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
@@ -442,12 +417,34 @@ public class CandleDatabase : IDisposable
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
             intervalsId[symbolInterval.Interval.Id] = symbolInterval;
 
+        bool reported = false;
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
             int intervalId = reader.GetInt32(0);
             if (!intervalsId.TryGetValue(intervalId, out CryptoSymbolInterval? symbolInterval))
                 continue;
+
+            // The recorded instrument is the one these candles were fetched with. When it does not
+            // match the instrument we would fetch from today, everything stored belongs to something
+            // else and "synchronised up to here" is a claim about the wrong series — leave it on null
+            // so the next fetch cycle pulls the whole window again. NULL means the row predates this
+            // bookkeeping and cannot be vouched for, which is treated the same but only once: the
+            // save that ends the refetch writes LastSync and the instrument in one statement.
+            string? storedInstrument = reader.IsDBNull(2) ? null : reader.GetString(2);
+            if (string.IsNullOrEmpty(storedInstrument)
+                || !storedInstrument.Equals(symbol.ExchangeName, StringComparison.OrdinalIgnoreCase))
+            {
+                if (!reported)
+                {
+                    reported = true;
+                    GlobalData.AddTextToLogTab($"candles.db {symbol.Name}: stored candles come from " +
+                        $"'{storedInstrument ?? "an unrecorded instrument"}' but this symbol now trades as " +
+                        $"'{symbol.ExchangeName}' — fetching them again");
+                }
+                symbolInterval.LastCandleSynchronized = null;
+                continue;
+            }
 
             if (reader.IsDBNull(1))
                 symbolInterval.LastCandleSynchronized = null;
@@ -877,9 +874,7 @@ public class CandleDatabase : IDisposable
         // Persist LastCandleSynchronized for every interval in the same transaction so the
         // exchange fetcher can continue from where it left off after a restart.
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
-            SaveSymbolInterval(connection, tx, localSymbolId, symbolInterval);
-
-        SaveSymbolInstrument(connection, tx, localSymbolId, symbol);
+            SaveSymbolInterval(connection, tx, localSymbolId, symbol, symbolInterval);
 
         tx.Commit();
 
@@ -945,9 +940,7 @@ public class CandleDatabase : IDisposable
         }
 
         // Persist LastCandleSynchronized for this single interval in the same transaction.
-        SaveSymbolInterval(connection, tx, localSymbolId, symbolInterval);
-
-        SaveSymbolInstrument(connection, tx, localSymbolId, symbol);
+        SaveSymbolInterval(connection, tx, localSymbolId, symbol, symbolInterval);
 
         tx.Commit();
     }
