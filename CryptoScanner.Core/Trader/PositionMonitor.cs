@@ -995,8 +995,12 @@ public class PositionMonitor : IDisposable
                 position.Status = CryptoPositionStatus.Altrady;
                 Database.Connection.Update(position);
 
-                await AltradyWebhook.DelegateControlToAltradyAsync(position);
-                Database.Connection.Update(position);
+                // Only the entry is delegated, see the note in the PaperTradingAndAltrady branch below
+                if (part.Purpose == CryptoPartPurpose.Entry)
+                {
+                    await AltradyWebhook.DelegateControlToAltradyAsync(position);
+                    Database.Connection.Update(position);
+                }
             }
             else if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady)
             {
@@ -1031,9 +1035,16 @@ public class PositionMonitor : IDisposable
                             position.Reposition = false;
                         }
 
-                        // Also delegate control to Altrady
-                        await AltradyWebhook.DelegateControlToAltradyAsync(position);
-                        Database.Connection.Update(position);
+                        // Also delegate control to Altrady, but ONLY for the entry. Opening a position is
+                        // the only thing we delegate — a dca, a moved take profit or a close is not
+                        // supported. Sending it anyway means Altrady opens a SECOND position with its own
+                        // id instead of adding to the first one (2026-08-13: AKEUSDT 12:00:00 id 58624873
+                        // and, when the entry filled and the dca was placed, 12:01:11 id 58624883).
+                        if (part.Purpose == CryptoPartPurpose.Entry)
+                        {
+                            await AltradyWebhook.DelegateControlToAltradyAsync(position);
+                            Database.Connection.Update(position);
+                        }
                     }
                     else
                     {
