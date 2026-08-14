@@ -202,6 +202,13 @@ public class ThreadTelegramBotInstance
             //    cancellationToken: cts.Token
             //);
 
+            // Telegram rejects getUpdates with 429 (and answers 502 while it is busy). Without a
+            // pause the 500 ms retry at the bottom of the loop turns one rejection into a burst of
+            // them, which is what the log shows every night around 03:10. This grows the pause on
+            // each consecutive failure and is reset as soon as a call succeeds.
+            int backOffSeconds = 0;
+            const int backOffSecondsMaximum = 30;
+
             // Dat moet ook nog eens wat netter met een CT
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -209,6 +216,7 @@ public class ThreadTelegramBotInstance
                 {
                     //SendMessage("hello over there!");
                     Update[] updates = await bot.GetUpdatesAsync(offset, cancellationToken: cancellationToken.Token);
+                    backOffSeconds = 0;
 
                     foreach (Update update in updates)
                     {
@@ -345,6 +353,30 @@ public class ThreadTelegramBotInstance
                         }
 
                     }
+                }
+                catch (ApiRequestException error)
+                {
+                    // Stupid Telegram is not playing nice
+                    // Telegram tells us how long to wait ("retry after 5"); honour that value when it is
+                    // present, otherwise back off ourselves. Without this the same request is repeated
+                    // 500 ms later and the rejections simply pile up.
+                    int waitSeconds = error.Parameters?.RetryAfter ?? 0;
+                    if (waitSeconds <= 0)
+                    {
+                        backOffSeconds = Math.Min(Math.Max(backOffSeconds, 1) * 2, backOffSecondsMaximum);
+                        waitSeconds = backOffSeconds;
+                    }
+                    ScannerLog.Logger.Error($"ERROR telegram thread {error.Message} (waiting {waitSeconds}s)"); // simplify error on 1 line
+                    GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message} (waiting {waitSeconds}s)");
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(waitSeconds), cancellationToken.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Stopping, the while condition takes care of the rest
+                    }
+                    continue;
                 }
                 catch (Exception error)
                 {
