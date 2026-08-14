@@ -377,7 +377,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         var model = new PlotModel
         {
             Title = "Positions per day",
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
             Background = Const.ChartSurfaceColor
         };
 
@@ -391,7 +391,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MinorGridlineColor = OxyColor.FromArgb(40, 255, 255, 255),
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
         });
 
         model.Axes.Add(new LinearAxis
@@ -402,7 +402,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MajorGridlineStyle = LineStyle.Solid,
             MajorGridlineColor = OxyColor.FromArgb(80, 255, 255, 255),
             AxislineColor = OxyColors.White,
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
             AxislineStyle = LineStyle.Solid,
             StringFormat = "N0"
         });
@@ -442,7 +442,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         var model = new PlotModel
         {
             Title = "Profits per day",
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
             Background = Const.ChartSurfaceColor
         };
 
@@ -456,7 +456,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MinorGridlineColor = OxyColor.FromArgb(40, 255, 255, 255),
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
         });
 
         model.Axes.Add(new LinearAxis
@@ -467,7 +467,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MajorGridlineStyle = LineStyle.Solid,
             MajorGridlineColor = OxyColor.FromArgb(80, 255, 255, 255),
             AxislineColor = OxyColors.White,
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
             AxislineStyle = LineStyle.Solid,
             StringFormat = QuoteData!.DisplayFormat,
         });
@@ -524,7 +524,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartProfitPercentagePerDay()
     {
-        var model = new PlotModel { Title = "Min, max en gemiddelde winst per dag", TextColor = OxyColors.White, Background = Const.ChartSurfaceColor };
+        var model = new PlotModel { Title = "Min, max en gemiddelde winst per dag", TextColor = Const.ChartTextColor, Background = Const.ChartSurfaceColor };
 
         model.Axes.Add(new DateTimeAxis
         {
@@ -533,7 +533,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MajorGridlineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
         });
 
         model.Axes.Add(new LinearAxis
@@ -543,7 +543,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MajorGridlineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
             StringFormat = "N2"
         });
 
@@ -573,7 +573,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartInvestedReturnedPerDay()
     {
-        var model = new PlotModel { Title = "Invested and returned per day", TextColor = OxyColors.White, Background = Const.ChartSurfaceColor };
+        var model = new PlotModel { Title = "Invested and returned per day", TextColor = Const.ChartTextColor, Background = Const.ChartSurfaceColor };
 
         model.Axes.Add(new DateTimeAxis
         {
@@ -582,7 +582,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MajorGridlineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
         });
 
         model.Axes.Add(new LinearAxis
@@ -592,7 +592,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MajorGridlineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.Gray,
             AxislineStyle = LineStyle.Solid,
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
         });
 
         var investedData = GetQueryInvestedData();
@@ -644,7 +644,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartDoorlooptijden()
     {
-        var model = new PlotModel { Title = "Minimale, maximale en gemiddelde doorlooptijden in uren", TextColor = OxyColors.White, Background = Const.ChartSurfaceColor };
+        var model = new PlotModel { Title = "Minimale, maximale en gemiddelde doorlooptijden in uren", TextColor = Const.ChartTextColor, Background = Const.ChartSurfaceColor };
 
         model.Axes.Add(new DateTimeAxis
         {
@@ -653,7 +653,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MajorGridlineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
         });
 
         model.Axes.Add(new LinearAxis
@@ -663,7 +663,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MajorGridlineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
-            TextColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
             StringFormat = "N1"
         });
 

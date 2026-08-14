@@ -27,8 +27,11 @@ internal class Program
     }
 
 
+    // No .WithInterFont() here. It only registers the Inter font collection so an explicit
+    // FontFamily="Inter" can resolve; it does not change the default family, and nothing in the
+    // emulator asked for Inter. Measured: with and without the call, a TextBlock still resolves to
+    // the platform default (Segoe UI on Windows) — the same as the scanner and the Photino shell.
     public static AppBuilder BuildAvaloniaApp() =>
         AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .WithInterFont();
+            .UsePlatformDetect();
 }

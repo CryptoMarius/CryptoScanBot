@@ -21,18 +21,18 @@
                 <!-- Light theme resources -->
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="LowVolumeBrush">#E61A1A</SolidColorBrush>
-                    <SolidColorBrush x:Key="NormalVolumeBrush">#202020</SolidColorBrush>
+                    <SolidColorBrush x:Key="NormalVolumeBrush">#232323</SolidColorBrush>
                     
                     <!-- Price change colors -->
                     <!--
                     <SolidColorBrush x:Key="PriceUpBrush">#00C853</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceDownBrush">#D32F2F</SolidColorBrush>
                     -->
-                    <SolidColorBrush x:Key="PriceUpBrush">#439982</SolidColorBrush>
-                    <SolidColorBrush x:Key="PriceDownBrush">#c95b5c</SolidColorBrush>
-                    <SolidColorBrush x:Key="PriceNeutralBrush">#202020</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceUpBrush">#00841a</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#ca3d4e</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceNeutralBrush">#232323</SolidColorBrush>
 
-                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#FBFBFB"/>
+                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#ededf3"/>
 
                     <!-- Window outline: a dark-ish gray that stands out against light window/desktop. -->
                     <SolidColorBrush x:Key="WindowBorderBrush" Color="#606060"/>
@@ -67,12 +67,6 @@
                     <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceUpBrush">#22c55e</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceDownBrush">#f0616d</SolidColorBrush>
-
-                    <!-- Application background. The Fluent dark theme resolves this to pure black,
-                         which makes long grids tiring to read (text edges bloom against #000000).
-                         Lifting it a few steps keeps the same palette as the Photino shell:
-                         page #0d0d0f, panels #131316, elevated #1c1c20. -->
-                    <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush">#0d0d0f</SolidColorBrush>
 
                     <SolidColorBrush x:Key="AlternatingBrushColor" Color="#16161a"/>
 
@@ -112,13 +106,21 @@
              populated. The OxyPlot.Avalonia package is referenced so this avares resource resolves. -->
         <StyleInclude Source="avares://OxyPlot.Avalonia/Themes/Default.axaml"/>
 
+        <!-- AltHigh is the application background, BaseHigh the primary text colour. Fluent puts
+             them on the extremes (black/white in dark, white/black in light); both are harsh,
+             because text edges bloom against a pure extreme and that makes long grids tiring to
+             read. Overriding them here also carries into every button, menu, combo box, check box
+             and tab, since their templates derive from these two palette entries.
+             The light values are the dark ones mirrored: same contrast distance from the opposite
+             extreme (#e0e0e0 sits 14.7:1 above #0d0d0f, #232323 sits 14.5:1 below #f5f5f9).
+             Keep in sync with the bg and text custom properties in app.css. -->
         <FluentTheme>
             <FluentTheme.Palettes>
                 <!-- Light mode: kies een lichtere accentkleur -->
-                <ColorPaletteResources x:Key="Light" Accent="#FF60A0FF" />  <!-- Lichtere blauw, pas aan naar wens (bijv. #FFA0C0FF voor nog lichter) -->
+                <ColorPaletteResources x:Key="Light" Accent="#FF60A0FF" AltHigh="#f5f5f9" BaseHigh="#232323" />  <!-- Lichtere blauw, pas aan naar wens (bijv. #FFA0C0FF voor nog lichter) -->
 
                 <!-- Dark mode: behoud standaard of pas aan -->
-                <ColorPaletteResources x:Key="Dark" Accent="#FF0078D7" />  <!-- Standaard blauw, of donkerder -->
+                <ColorPaletteResources x:Key="Dark" Accent="#FF0078D7" AltHigh="#0d0d0f" BaseHigh="#e0e0e0" />  <!-- Standaard blauw, of donkerder -->
             </FluentTheme.Palettes>
         </FluentTheme>
 

@@ -16,6 +16,12 @@ public class Const
     /// </summary>
     public static readonly OxyColor ChartSurfaceColor = OxyColor.FromRgb(0x13, 0x13, 0x16);
 
+    /// <summary>
+    /// Plot text. The same primary text colour the three shells use on a dark surface (#e0e0e0),
+    /// rather than pure white. Keep in sync with --text-primary and the BaseHigh palette entry.
+    /// </summary>
+    public static readonly OxyColor ChartTextColor = OxyColor.FromRgb(0xe0, 0xe0, 0xe0);
+
     // Color combinations, and the boolean is there for the closed zones (same colors after complaints)
     public static readonly Dictionary<(CryptoZoneKind, CryptoTradeSide, bool), (OxyColor boxColor, OxyColor textColor)> ColorList = new()
     {

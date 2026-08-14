@@ -44,31 +44,36 @@
 [data-theme="light"] {
     color-scheme: light;
 
-    --bg-base: #f3f3f3;
-    --bg-surface: #fbfbfb;
-    --bg-elevated: #f0f0f0;
-    --bg-hover: #e8e8e8;
-    --bg-input: #ffffff;
+    /* Mirror of the dark palette: every value sits the same contrast distance from white as its
+       dark counterpart does from black, so both themes read equally hard. Pure white is as harsh
+       as pure black was. Keep in sync with the ColorPaletteResources in the Avalonia App.axaml. */
+    --bg-base: #f5f5f9;
+    --bg-surface: #f0f0f5;
+    --bg-elevated: #e6e6ec;
+    --bg-hover: #dadae0;
+    --bg-input: #f0f0f5;
 
     --border: #cccccc;
     --border-subtle: #e0e0e0;
     --border-groupbox: #606060;
     --border-low: #d8d8d8;
 
-    --text-primary: #1a1a1a;
-    --text-secondary: #404040;
-    --text-muted: #606060;
+    --text-primary: #232323;
+    --text-secondary: #515151;
+    --text-muted: #737373;
 
     --accent: #0078d7;
     --accent-hover: #006cc1;
 
-    --green: #439982;
-    --green-dim: rgba(67, 153, 130, 0.10);
-    --red: #c95b5c;
-    --red-dim: rgba(201, 91, 92, 0.10);
+    /* Not a full mirror: matching the dark contrast exactly lands on #005400, which is so dark it
+       stops reading as green. These sit on the 4.5:1 readability threshold instead. */
+    --green: #00841a;
+    --green-dim: rgba(0, 132, 26, 0.10);
+    --red: #ca3d4e;
+    --red-dim: rgba(202, 61, 78, 0.10);
 
-    color: #1a1a1a;
-    background: #f3f3f3;
+    color: #232323;
+    background: #f5f5f9;
 }
 
 /* ── Shared tokens ── */
@@ -590,7 +595,7 @@ html, body {
 .text-green { color: var(--green); }
 .text-red { color: var(--red); }
 /* Neutral is the NORMAL text colour, not a dimmed one. Avalonia's PriceNeutralBrush is #E0E0E0 in
-   the dark theme and #202020 in the light one — the same colour a cell without any colour rule gets,
+   the dark theme and #232323 in the light one — the same colour a cell without any colour rule gets,
    which is why BB% (no rule) and a mid-range RSI (neutral) have to look identical. Pointing this at
    --text-muted made every non-oversold/overbought RSI, Stochastic, Lux and MACD value stand out as
    different from its neighbours in every grid at once. */
