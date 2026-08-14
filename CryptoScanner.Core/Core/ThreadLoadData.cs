@@ -273,7 +273,8 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Vanaf dit moment worden de aangeboden 1m candles in ons systeem verwerkt
                 // (Dit moet overlappen met "achterstand bijwerken" want anders ontstaan er gaten)
-                // BUG/Probleem! na nieuwe munt of instellingen wordt dit niet opnieuw gedaan (herstart nodig)
+                // Een munt die er later bij komt of afvalt wordt nu wel opgepakt zonder herstart:
+                // SubscriptionManager.SynchronizeSymbolsAsync doet dat elke verversingsronde.
                 //************************************************************************************
                 await ExchangeBase.KLineTicker!.StartAsync();
 

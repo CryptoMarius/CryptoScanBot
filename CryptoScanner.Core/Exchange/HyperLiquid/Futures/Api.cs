@@ -29,7 +29,10 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("HyperLiquid Futures", "USDC", 300, false, 1, klineDelivery: KlineDelivery.TimerFlush);
+        // 3 billion USDC over 177 listed perpetuals a day (14-08-2026), about 1/15 of Binance Futures.
+        // 49 symbols stay above the boundary.
+        ExchangeOptions.SetDefaultOptions("HyperLiquid Futures", "USDC", 300, false, 1,
+            klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 1_000_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         HyperLiquidRestClient.SetDefaultOptions(options =>

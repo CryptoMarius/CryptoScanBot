@@ -57,6 +57,7 @@ public class Api : ExchangeBase
     public override void ExchangeDefaults()
     {
         // 1000 bars per request, defaultQuote USD, max 100 symbols per WebSocket group
+        // no volume measured (needs an account), so the boundary falls back to the default
         ExchangeOptions.SetDefaultOptions("Alpaca", "USD", 1000, false, 100);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 

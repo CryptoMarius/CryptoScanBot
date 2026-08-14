@@ -32,7 +32,9 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Kucoin Futures", "USDC", 1500, true, 1, 20, KlineDelivery.TimerFlush);
+        // only 4 USDC contracts, together 1.6 million a day (14-08-2026) - the USDC side of Kucoin
+        // Futures is nearly empty, so the boundary hardly filters anything
+        ExchangeOptions.SetDefaultOptions("Kucoin Futures", "USDC", 1500, true, 1, 20, KlineDelivery.TimerFlush, minimalVolume: 530, pauseSymbol: "XBTUSDC");
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KucoinRestClient.SetDefaultOptions(options =>

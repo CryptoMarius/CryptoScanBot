@@ -44,7 +44,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         var client = (BloFinSocketClient)SubscriptionBundle.SocketClient;
         var api = client.FuturesApi;
 
-        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(Symbols, KlineInterval.OneMinute, data =>
+        // Subscribe on the instrument id ("BTC-USDT"), not on the scanner name ("BTCUSDT").
+        // BloFin does not know the scanner name, so the old subscription silently received nothing.
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(SymbolList.Select(s => s.ExchangeName).ToList(),
+            KlineInterval.OneMinute, data =>
         {
             var kline = data.Data;
             {

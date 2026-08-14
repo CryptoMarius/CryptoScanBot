@@ -28,6 +28,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
+        // barely any USDT pairs (Coinbase trades USD), so the boundary falls back to the default
         ExchangeOptions.SetDefaultOptions("Coinbase Spot", "USDT", 300, false, 4);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 

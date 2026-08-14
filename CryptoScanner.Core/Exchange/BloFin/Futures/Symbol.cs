@@ -37,6 +37,10 @@ public class Symbol() : SymbolBase(), ISymbol
                 SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");
 
                 // index volume
+                // BloFin publishes no quote volume: vol24h counts contracts and volCurrency24h is
+                // the base asset. The scanner filters on the 24 hour volume in the quote currency
+                // (QuoteData.MinimalVolume), so it has to be calculated here. Taking the contract
+                // count meant BTC-USDT arrived as 5 million instead of over 300 million.
                 SortedList<string, decimal> volumeTicker = [];
                 if (tickerInfo.Data != null && tickerInfo.Data != null)
                 {
@@ -44,7 +48,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         if (tickerData.Symbol != null)
                         {
-                            volumeTicker.Add(tickerData.Symbol, tickerData.ContractVolume24h);
+                            volumeTicker.Add(tickerData.Symbol, tickerData.BaseVolume24h * tickerData.LastPrice);
                         }
                     }
                 }
@@ -72,6 +76,13 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data)
                         {
+                            // Inverse contracts settle in the base asset and quote in USD (14 of the 488
+                            // instruments). The scanner assumes a linear contract everywhere, and their
+                            // volCurrency24h is already a USD amount, so multiplying it by the price would
+                            // put BTC-USD at the top of the volume list with 307 billion.
+                            if (symbolData.ContractType == ContractType.Inverse)
+                                continue;
+
                             SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
@@ -86,9 +97,13 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
                                 // min, max en tick (in base amount)
-                                symbol!.QuantityTickSize = symbolData.LotSize;
-                                symbol.QuantityMinimum = symbolData.MinQuantity;
-                                symbol.QuantityMaximum = symbolData.MaxLimitQuantity;
+                                // A swap order quantity is expressed in contracts, contractValue tells how
+                                // much of the base asset one contract represents. Multiply them to get the
+                                // amounts in base, which is what the scanner works with. BTC-USDT has a
+                                // contract of 0,001 BTC and a lot of 0,1, so the step is 0,0001 BTC.
+                                symbol!.QuantityTickSize = symbolData.LotSize * symbolData.ContractSize;
+                                symbol.QuantityMinimum = symbolData.MinQuantity * symbolData.ContractSize;
+                                symbol.QuantityMaximum = symbolData.MaxLimitQuantity * symbolData.ContractSize;
 
                                 //symbol.QuoteValueMinimum = symbolInfo.LotSizeFilter?.MinOrderValue ?? 0;
                                 //symbol.QuoteValueMaximum = symbolInfo.LotSizeFilter?.MaxOrderValue ?? 0;

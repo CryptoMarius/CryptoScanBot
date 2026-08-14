@@ -27,7 +27,8 @@ public class Api : ExchangeBase
     {
         // Bitvavo is a Dutch EUR-based exchange. Max 1440 candles per REST request.
         // symbolLimitPerSubscription = 100 (Bitvavo WS accepts many markets per channel subscription)
-        ExchangeOptions.SetDefaultOptions("Bitvavo Spot", "EUR", 1440, false, 10, klineDelivery: KlineDelivery.TimerFlush);
+        // 88 million EUR over 427 pairs a day (14-08-2026), 193 symbols stay above the boundary
+        ExchangeOptions.SetDefaultOptions("Bitvavo Spot", "EUR", 1440, false, 10, klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 30_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KLineTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);

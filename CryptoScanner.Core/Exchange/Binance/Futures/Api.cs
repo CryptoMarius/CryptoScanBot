@@ -96,7 +96,8 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Binance Futures", "USDT", 1000, false, 50);
+        // 44 billion USDT over 689 pairs a day (14-08-2026), 141 symbols stay above the boundary
+        ExchangeOptions.SetDefaultOptions("Binance Futures", "USDT", 1000, false, 50, minimalVolume: 15_000_000);
         GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange

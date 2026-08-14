@@ -28,6 +28,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
+        // no volume measured (exchange is switched off), so the boundary falls back to the default
         ExchangeOptions.SetDefaultOptions("BitMart Futures", "USDT", 500, false, 1, klineDelivery: KlineDelivery.TimerFlush);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 

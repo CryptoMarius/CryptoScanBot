@@ -423,8 +423,10 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     /// the hourly REST catch-up for its 1m candles - which hit exactly the coins that just became
     /// interesting because their volume spiked.
     ///
-    /// Call it after the volumes have been refreshed and the candles fetched, so a symbol that is added
-    /// already has its history. Does nothing at all when nothing changed.
+    /// Call it after the volumes have been refreshed (CandleBase.UpdateVolumeDecisions) but BEFORE the
+    /// candles are fetched, so the live 1m stream of an added symbol and the REST catch-up overlap. The
+    /// other way around leaves a gap for every minute boundary that passes in between, and that candle
+    /// only arrives an hour later with the next catch-up. Does nothing at all when nothing changed.
     /// </summary>
     public virtual async Task SynchronizeSymbolsAsync()
     {

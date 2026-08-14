@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Chart.ViewModels.Chart;
@@ -305,7 +305,7 @@ public partial class ChartWindowViewModel : ObservableObject
 
         PlotModel chart = new()
         {
-            Background = OxyColors.Black,
+            Background = Const.ChartSurfaceColor,
 
             //Title = "Chart 1.2.3.",
             //Subtitle = "...",

@@ -50,7 +50,8 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Bybit EU Spot", "USDC", 1000, false, 10);
+        // 39 million USDC over 82 pairs a day (14-08-2026), 42 symbols stay above the boundary
+        ExchangeOptions.SetDefaultOptions("Bybit EU Spot", "USDC", 1000, false, 10, minimalVolume: 13_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
 

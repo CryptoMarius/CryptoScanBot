@@ -29,7 +29,8 @@ public class Api : ExchangeBase
     {
         // The charts endpoint returns well over 1000 candles per call without a count, so 1000 is a
         // safe page size and fetches the history in fewer calls than the 720 that was set here.
-        ExchangeOptions.SetDefaultOptions("Kraken Futures", "USD", 1000, false, 5, klineDelivery: KlineDelivery.TimerFlush);
+        // 580 million USD over 272 contracts a day (14-08-2026), 63 symbols stay above the boundary
+        ExchangeOptions.SetDefaultOptions("Kraken Futures", "USD", 1000, false, 5, klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 200_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KrakenRestClient.SetDefaultOptions(options =>

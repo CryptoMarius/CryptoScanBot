@@ -52,6 +52,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
+        // no USDC contracts listed at all, so the boundary falls back to the default
         ExchangeOptions.SetDefaultOptions("Bybit EU Futures", "USDC", 1000, false, 10);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 

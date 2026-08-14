@@ -752,7 +752,7 @@ window.ChartWidget = {
         var d = this._isDark;
         return {
             layout: {
-                background: { type: 'solid', color: d ? '#0a0a0a' : '#fbfbfb' },
+                background: { type: 'solid', color: d ? '#131316' : '#fbfbfb' },
                 textColor: d ? '#e0e0e0' : '#1a1a1a',
             },
             grid: {

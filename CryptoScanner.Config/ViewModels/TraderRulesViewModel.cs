@@ -42,7 +42,9 @@ public partial class TraderRulesViewModel : ObservableObject
         var item = new TraderRuleItemViewModel
         {
             Index = Rules.Count + 1,
-            Symbol = "BTCUSDT",
+            // Empty means the bitcoin pair of the active exchange (ExchangeOptions.PauseSymbol),
+            // so the rule keeps working after switching exchange
+            Symbol = "",
             Interval = CryptoIntervalPeriod.interval5m,
             Candles = 5,
             Percentage = 4.0,

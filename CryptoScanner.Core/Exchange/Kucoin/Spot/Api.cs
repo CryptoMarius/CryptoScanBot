@@ -28,7 +28,8 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Kucoin Spot", "USDC", 1500, true, 1, 20, KlineDelivery.TimerFlush);
+        // 30 million USDC over 57 pairs a day (14-08-2026), 22 symbols stay above the boundary
+        ExchangeOptions.SetDefaultOptions("Kucoin Spot", "USDC", 1500, true, 1, 20, KlineDelivery.TimerFlush, minimalVolume: 10_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
 

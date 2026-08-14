@@ -27,7 +27,8 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Kraken Spot", "USD", 720, true, 5, klineDelivery: KlineDelivery.TimerFlush);
+        // 440 million USD over 651 pairs a day (14-08-2026), 89 symbols stay above the boundary
+        ExchangeOptions.SetDefaultOptions("Kraken Spot", "USD", 720, true, 5, klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 150_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KrakenRestClient.SetDefaultOptions(options =>

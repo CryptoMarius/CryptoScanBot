@@ -37,7 +37,8 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Bybit Futures", "USDT", 1000, false, 10);
+        // 9.3 billion USDT over 718 pairs a day (14-08-2026), 132 symbols stay above the boundary
+        ExchangeOptions.SetDefaultOptions("Bybit Futures", "USDT", 1000, false, 10, minimalVolume: 3_200_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange

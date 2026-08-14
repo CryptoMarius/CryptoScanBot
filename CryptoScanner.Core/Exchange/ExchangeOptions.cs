@@ -48,11 +48,41 @@ public enum KlineDelivery
 
 public class ExchangeOptions // : IExchangeOptions
 {
+    // Fallback for exchanges that do not state a boundary of their own. This is the value that used
+    // to be hardcoded in ScannerSession, so leaving an exchange on this default changes nothing.
+    // Used for the exchanges whose volume could not be measured (Alpaca needs an account, BitMart and
+    // Coinbase are switched off and barely trade their default quote, Bybit EU Futures has no symbols).
+    public const double DefaultMinimalVolume = 4_500_000;
+
     // Official exchange name (registered in database)
     public required string ExchangeName { get; set; } = "?";
 
     // The default selected QUOTE
     public string? DefaultQuote { get; set; } = null;
+
+    // The 24 hour quote volume boundary that a NEW quote coin starts with, in the quote currency.
+    // Every exchange has its own scale - a floor that is reasonable on Binance leaves nothing at all
+    // on HyperLiquid - so the value belongs with the exchange, not in one global constant.
+    //
+    // The value each exchange states is 0.034% of everything that exchange trades in its default quote
+    // over 24 hours, measured on 14-08-2026 and rounded to two digits. That fraction is calibrated on
+    // Binance Futures, where 15 million is the boundary in daily use. Scaling it to the size of the
+    // exchange is what makes the boundary comparable: it leaves roughly 100 to 140 symbols standing on
+    // the large exchanges, where one flat number left 240 on Binance Futures and 1 on Bybit EU Spot.
+    // Remeasuring is a manual job (see the volume comment above each SetDefaultOptions call); the
+    // numbers age slowly because they follow the whole exchange, not an individual coin.
+    //
+    // It is only used to initialise DefaultQuote the first time it is seen (a new database or a quote
+    // that is not in the settings yet); after that the value in the settings wins and the user is free
+    // to change it.
+    public double MinimalVolume { get; set; } = DefaultMinimalVolume;
+
+    // Scanner name of the coin the pause trading rules watch - bitcoin against the default quote, the
+    // coin the rest of the market follows. Also exchange specific: it is BTCUSDT on Binance, BTCUSD on
+    // Kraken, XBTUSDC on Kucoin Futures and UBTCUSDC on HyperLiquid Spot, where the same rule with
+    // "BTCUSDT" in it silently does nothing and only logs "symbol does not exist" every minute.
+    // Used to fill in a pause rule that has no symbol of its own (see ScannerSession).
+    public string PauseSymbol { get; set; } = "";
 
     // Aantal symbols per subscription (een limiet van de exchange)
     public int SymbolLimitPerSubscription { get; set; }
@@ -75,7 +105,9 @@ public class ExchangeOptions // : IExchangeOptions
 
     public void SetDefaultOptions(string exchangeName, string defaultQuote, int candleLimit, bool limitAmountOfSymbols,
         int symbolLimitPerSubscription, int subscriptionsPerBundle = 10,
-        KlineDelivery klineDelivery = KlineDelivery.FinalEvent)
+        KlineDelivery klineDelivery = KlineDelivery.FinalEvent,
+        double minimalVolume = DefaultMinimalVolume,
+        string? pauseSymbol = null)
     {
         ExchangeName = exchangeName;
         DefaultQuote = defaultQuote;
@@ -84,5 +116,8 @@ public class ExchangeOptions // : IExchangeOptions
         SymbolLimitPerSubscription = symbolLimitPerSubscription;
         SubscriptionsPerBundle = subscriptionsPerBundle;
         KlineDelivery = klineDelivery;
+        MinimalVolume = minimalVolume;
+        // Most exchanges simply call it BTC plus the quote, so only the exceptions have to say so
+        PauseSymbol = pauseSymbol ?? "BTC" + defaultQuote;
     }
 }

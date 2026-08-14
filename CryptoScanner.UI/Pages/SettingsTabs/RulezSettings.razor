@@ -25,7 +25,7 @@
                    values can sensibly be, so the dialog does at least some validating of its own. *@
                 <div class="rule-row rule-header">
                     <span class="rule-number"></span>
-                    <span style="width: 120px;">Symbol</span>
+                    <span style="width: 120px;" title="Leave empty to watch the bitcoin pair of whichever exchange is active (BTCUSDT on Binance, BTCUSD on Kraken, UBTCUSDC on HyperLiquid Spot). Fill in a name to pin the rule to that one coin.">Symbol</span>
                     <span style="width: 60px;">Candles</span>
                     <span style="width: 80px;">Interval</span>
                     <span style="width: 80px;">Percentage</span>
@@ -104,7 +104,9 @@
     {
         _rules.Add(new RuleItem
         {
-            Symbol = "BTCUSDT",
+            // Empty means the bitcoin pair of the active exchange (ExchangeOptions.PauseSymbol),
+            // so the rule keeps working after switching exchange
+            Symbol = "",
             Candles = 5,
             Interval = CryptoIntervalPeriod.interval5m,
             Percentage = 4.0,
@@ -120,7 +122,7 @@
 
     private class RuleItem
     {
-        public string Symbol { get; set; } = "BTCUSDT";
+        public string Symbol { get; set; } = "";
         public int Candles { get; set; } = 5;
         public CryptoIntervalPeriod Interval { get; set; } = CryptoIntervalPeriod.interval5m;
         public double Percentage { get; set; } = 4.0;

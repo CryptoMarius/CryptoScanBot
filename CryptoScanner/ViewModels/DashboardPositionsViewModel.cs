@@ -9,6 +9,8 @@ using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 
+using Const = CryptoScanner.Chart.ViewModels.Chart.Const;
+
 using Dapper;
 
 using OxyPlot;
@@ -376,7 +378,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         {
             Title = "Positions per day",
             TextColor = OxyColors.White,
-            Background = OxyColors.Black
+            Background = Const.ChartSurfaceColor
         };
 
         model.Axes.Add(new DateTimeAxis
@@ -441,7 +443,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         {
             Title = "Profits per day",
             TextColor = OxyColors.White,
-            Background = OxyColors.Black
+            Background = Const.ChartSurfaceColor
         };
 
         model.Axes.Add(new DateTimeAxis
@@ -522,7 +524,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartProfitPercentagePerDay()
     {
-        var model = new PlotModel { Title = "Min, max en gemiddelde winst per dag", TextColor = OxyColors.White, Background = OxyColors.Black };
+        var model = new PlotModel { Title = "Min, max en gemiddelde winst per dag", TextColor = OxyColors.White, Background = Const.ChartSurfaceColor };
 
         model.Axes.Add(new DateTimeAxis
         {
@@ -571,7 +573,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartInvestedReturnedPerDay()
     {
-        var model = new PlotModel { Title = "Invested and returned per day", TextColor = OxyColors.White, Background = OxyColors.Black };
+        var model = new PlotModel { Title = "Invested and returned per day", TextColor = OxyColors.White, Background = Const.ChartSurfaceColor };
 
         model.Axes.Add(new DateTimeAxis
         {
@@ -642,7 +644,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartDoorlooptijden()
     {
-        var model = new PlotModel { Title = "Minimale, maximale en gemiddelde doorlooptijden in uren", TextColor = OxyColors.White, Background = OxyColors.Black };
+        var model = new PlotModel { Title = "Minimale, maximale en gemiddelde doorlooptijden in uren", TextColor = OxyColors.White, Background = Const.ChartSurfaceColor };
 
         model.Axes.Add(new DateTimeAxis
         {

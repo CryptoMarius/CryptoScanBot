@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 79;
+    public readonly static int CurrentDatabaseVersion = 81;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1621,6 +1621,41 @@ public class DatabaseMigration
         // candles hold quote volume. Empty step: only the version bump is needed, so that
         // UpdateExchanges() below picks up the new IsSupported for existing databases.
         if (CurrentVersion > version.Version && version.Version == 78)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 14-08-2026 HyperLiquid Spot reactivated. It was switched off for "having only 1 symbol",
+        // but that was the 24 hour volume boundary of a much larger exchange being applied to it:
+        // the exchange lists 324 pairs and about 11 of them trade over 250.000 a day. The boundary
+        // is now stated per exchange (ExchangeOptions.MinimalVolume). Empty step: only the version
+        // bump is needed, so that UpdateExchanges() below picks up the new IsSupported for existing
+        // databases.
+        if (CurrentVersion > version.Version && version.Version == 79)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 14-08-2026 BloFin Futures activated. It was added as an experiment and never worked: the
+        // kline subscription was made on the scanner name (BTCUSDT) instead of the instrument id
+        // (BTC-USDT) so not a single candle arrived, and the 24 hour volume was taken as a contract
+        // count instead of an amount in the quote currency. Empty step: only the version bump is
+        // needed, so that UpdateExchanges() below picks up the new IsSupported for existing databases.
+        if (CurrentVersion > version.Version && version.Version == 80)
         {
             using var transaction = database.BeginTransaction();
 

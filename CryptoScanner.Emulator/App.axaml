@@ -68,7 +68,13 @@
                     <SolidColorBrush x:Key="PriceUpBrush">#22c55e</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceDownBrush">#f0616d</SolidColorBrush>
 
-                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#121212"/>
+                    <!-- Application background. The Fluent dark theme resolves this to pure black,
+                         which makes long grids tiring to read (text edges bloom against #000000).
+                         Lifting it a few steps keeps the same palette as the Photino shell:
+                         page #0d0d0f, panels #131316, elevated #1c1c20. -->
+                    <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush">#0d0d0f</SolidColorBrush>
+
+                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#16161a"/>
 
                     <!-- Window outline: a light gray that stands out against the dark window/desktop. -->
                     <SolidColorBrush x:Key="WindowBorderBrush" Color="#A0A0A0"/>

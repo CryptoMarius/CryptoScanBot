@@ -32,7 +32,10 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 300, false, 1, klineDelivery: KlineDelivery.TimerFlush);
+        // 61 million USDC over 74 listed pairs a day (14-08-2026) - the whole spot side is smaller than
+        // a single mid range coin on Binance. The old flat boundary left 4 symbols, this one keeps 18.
+        ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 300, false, 1,
+            klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 21_000, pauseSymbol: "UBTCUSDC");
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         HyperLiquidRestClient.SetDefaultOptions(options =>

@@ -28,7 +28,8 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Mexc Spot", "USDT", 500, true, 3, 10, KlineDelivery.TimerFlush);
+        // 850 million USDT over 1731 pairs a day (14-08-2026), 101 symbols stay above the boundary
+        ExchangeOptions.SetDefaultOptions("Mexc Spot", "USDT", 500, true, 3, 10, KlineDelivery.TimerFlush, minimalVolume: 290_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange

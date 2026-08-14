@@ -18,7 +18,15 @@ public static class TradingRules
             foreach (Settings.PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
             {
                 index++;
-                if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol? symbol))
+                // A rule without a symbol of its own watches the bitcoin pair of the exchange we are on.
+                // Every exchange spells that differently (BTCUSDT, BTCUSD, XBTUSDC, UBTCUSDC), so this
+                // keeps the rule working after switching exchange instead of pointing at a symbol that
+                // is not listed there.
+                string ruleSymbol = rule.Symbol;
+                if (string.IsNullOrEmpty(ruleSymbol))
+                    ruleSymbol = Exchange.ExchangeBase.ExchangeOptions.PauseSymbol;
+
+                if (exchange.SymbolListName.TryGetValue(ruleSymbol, out CryptoSymbol? symbol))
                 {
                     CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(rule.Interval);
                     if (symbolInterval.CandleList.Count != 0)
@@ -75,7 +83,7 @@ public static class TradingRules
                         }
                     }
                 }
-                else GlobalData.AddTextToLogTab($"Pauze regel: symbol {rule.Symbol} bestaat niet");
+                else GlobalData.AddTextToLogTab($"Pauze regel: symbol {ruleSymbol} bestaat niet");
             }
         }
     }

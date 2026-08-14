@@ -9,6 +9,13 @@ public class Const
     public const int OxyFontSize = 14;
     public const string OxyFontName = "Arial";
 
+    /// <summary>
+    /// Plot background. Matches the panel surface of the three shells (#131316), which is a few
+    /// steps up from pure black; text edges bloom against #000000 and that makes the charts and
+    /// grids tiring to read. Keep in sync with --bg-surface in app.css and the Avalonia palettes.
+    /// </summary>
+    public static readonly OxyColor ChartSurfaceColor = OxyColor.FromRgb(0x13, 0x13, 0x16);
+
     // Color combinations, and the boolean is there for the closed zones (same colors after complaints)
     public static readonly Dictionary<(CryptoZoneKind, CryptoTradeSide, bool), (OxyColor boxColor, OxyColor textColor)> ColorList = new()
     {

@@ -31,7 +31,8 @@ public class Api : ExchangeBase
     {
         // OKX allows subscribing to multiple instruments in one message (the combined channel list may be
         // up to 64 KB), so there is no need for a websocket connection per symbol.
-        ExchangeOptions.SetDefaultOptions("Okx Futures", "USDT", 300, false, 50);
+        // 18 billion USDT over 431 pairs a day (14-08-2026), 100 symbols stay above the boundary
+        ExchangeOptions.SetDefaultOptions("Okx Futures", "USDT", 300, false, 50, minimalVolume: 6_100_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         OKXEnvironment environment = OKXEnvironment.Live;

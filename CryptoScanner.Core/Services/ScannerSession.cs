@@ -129,7 +129,10 @@ public class ScannerSession : IScannerSession
         {
             CryptoQuoteData defaultQuoteData = GlobalData.AddQuoteData(defaultQuote);
             defaultQuoteData.FetchCandles = true;
-            defaultQuoteData.MinimalVolume = 4500000; // hmmm..
+            // The boundary comes from the exchange itself: what counts as a tradable 24 hour volume on
+            // Binance leaves nothing at all on a small exchange like HyperLiquid. Only applies to a quote
+            // the settings have never seen, so an existing (user adjusted) value is never overwritten.
+            defaultQuoteData.MinimalVolume = ExchangeBase.ExchangeOptions.MinimalVolume;
         }
         //if (GlobalData.ActiveExchange!.SymbolListName.Count == 0)
         //    GlobalData.LoadSymbols(); // need this for the information dashboard (needs refactoring, todo)

@@ -30,7 +30,10 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("BloFin Futures", "USDT", 1440, true, 1);
+        // BloFin accepts a list of instruments in one subscribe message, so a subscription per symbol
+        // is not needed. The volume boundary is its own: 464 linear USDT perpetuals, of which 14 trade
+        // over 4,5 million a day and 61 over 500.000. The usual boundary would leave 14 symbols.
+        ExchangeOptions.SetDefaultOptions("BloFin Futures", "USDT", 1440, true, 50, minimalVolume: 500_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         BloFinRestClient.SetDefaultOptions(options =>

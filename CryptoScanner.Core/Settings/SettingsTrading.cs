@@ -212,9 +212,14 @@ public class SettingsTrading
         //Long.MarketTrend.List.Add((0m, 100m));
         //Short.MarketTrend.List.Add((-100m, 0));
 
+        // No symbol on purpose: the exchange fills it in with its own name for bitcoin (see
+        // ExchangeOptions.PauseSymbol). "BTCUSDT" was hardcoded here, which does not exist on
+        // Kraken (BTCUSD), Kucoin Futures (XBTUSDC) or HyperLiquid Spot (UBTCUSDC), so on those
+        // exchanges the rule quietly did nothing. An empty symbol keeps working after switching
+        // exchange; filling one in yourself pins the rule to that one coin.
         PauseTradingRules.Add(new PauseTradingRule()
         {
-            Symbol = "BTCUSDT",
+            Symbol = "",
             Percentage = 1.5,
             Candles = 5,
             Interval = CryptoIntervalPeriod.interval2m,
@@ -223,7 +228,7 @@ public class SettingsTrading
 
         PauseTradingRules.Add(new PauseTradingRule()
         {
-            Symbol = "BTCUSDT",
+            Symbol = "",
             Percentage = 2.5,
             Candles = 5,
             Interval = CryptoIntervalPeriod.interval5m,

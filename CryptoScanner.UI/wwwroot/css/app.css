@@ -9,11 +9,13 @@
        colour picker — in dark. Without it those stayed light on a dark page. */
     color-scheme: dark;
 
-    --bg-base: #000000;
-    --bg-surface: #0a0a0a;
-    --bg-elevated: #1a1a1a;
-    --bg-hover: #252525;
-    --bg-input: #0a0a0a;
+    /* Not pure black: text edges bloom against #000000, which makes the long grids tiring to
+       read. The same ladder is set in the Avalonia App.axaml files so all three shells match. */
+    --bg-base: #0d0d0f;
+    --bg-surface: #131316;
+    --bg-elevated: #1c1c20;
+    --bg-hover: #26262b;
+    --bg-input: #131316;
 
     --border: #333333;
     --border-subtle: #1a1a1a;
@@ -33,7 +35,7 @@
     --red-dim: rgba(240, 97, 109, 0.12);
 
     color: #e0e0e0;
-    background: #000000;
+    background: #0d0d0f;
 }
 
 /* ══════════════════════════════════════
@@ -81,11 +83,11 @@
        any element without its own background) resolved these variables to nothing and fell back to
        the browser default white. That is why the symbol grid showed up light while the settings
        said dark. .app-root overrides them again for the light theme. */
-    --bg-base: #000000;
-    --bg-surface: #0a0a0a;
-    --bg-elevated: #1a1a1a;
-    --bg-hover: #252525;
-    --bg-input: #0a0a0a;
+    --bg-base: #0d0d0f;
+    --bg-surface: #131316;
+    --bg-elevated: #1c1c20;
+    --bg-hover: #26262b;
+    --bg-input: #131316;
     --border: #333333;
     --border-subtle: #1a1a1a;
     --border-groupbox: #787878;
