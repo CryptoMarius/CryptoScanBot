@@ -121,24 +121,24 @@ public class ChartStyleSettings
         // Sub-panel indicators. Line width and style apply to the lines; the histogram bars
         // (Lux, MACD, volume) only take the colour.
         new("rsi", "RSI", "rsi",           "RSI",        new() { Color = "#FFab47bc" }),
-        new("rsi", "RSI", "rsiOversold",   "Oversold",   new() { Color = "#6645c173", LineStyle = 2 }),
-        new("rsi", "RSI", "rsiOverbought", "Overbought", new() { Color = "#66cd4040", LineStyle = 2 }),
+        new("rsi", "RSI", "rsiOversold",   "Oversold",   new() { Color = "#6622c55e", LineStyle = 2 }),
+        new("rsi", "RSI", "rsiOverbought", "Overbought", new() { Color = "#66f0616d", LineStyle = 2 }),
 
         new("stoch", "Stochastic", "stochK",          "%K",         new() { Color = "#FF2196F3" }),
         new("stoch", "Stochastic", "stochD",          "%D",         new() { Color = "#FFff9800" }),
-        new("stoch", "Stochastic", "stochOversold",   "Oversold",   new() { Color = "#6645c173", LineStyle = 2 }),
-        new("stoch", "Stochastic", "stochOverbought", "Overbought", new() { Color = "#66cd4040", LineStyle = 2 }),
+        new("stoch", "Stochastic", "stochOversold",   "Oversold",   new() { Color = "#6622c55e", LineStyle = 2 }),
+        new("stoch", "Stochastic", "stochOverbought", "Overbought", new() { Color = "#66f0616d", LineStyle = 2 }),
 
-        new("lux", "Lux", "luxOversold",   "Oversold bars",   new() { Color = "#8c45c173" }),
-        new("lux", "Lux", "luxOverbought", "Overbought bars", new() { Color = "#8ccd4040" }),
+        new("lux", "Lux", "luxOversold",   "Oversold bars",   new() { Color = "#8c22c55e" }),
+        new("lux", "Lux", "luxOverbought", "Overbought bars", new() { Color = "#8cf0616d" }),
 
         new("macd", "MACD", "macdLine",      "MACD",           new() { Color = "#FF2196F3" }),
         new("macd", "MACD", "macdSignal",    "Signal",         new() { Color = "#FFff9800" }),
-        new("macd", "MACD", "macdHistUp",    "Histogram up",   new() { Color = "#9945c173" }),
-        new("macd", "MACD", "macdHistDown",  "Histogram down", new() { Color = "#99cd4040" }),
+        new("macd", "MACD", "macdHistUp",    "Histogram up",   new() { Color = "#9922c55e" }),
+        new("macd", "MACD", "macdHistDown",  "Histogram down", new() { Color = "#99f0616d" }),
 
-        new("volume", "Volume", "volumeUp",   "Rising candle",  new() { Color = "#8045c173" }),
-        new("volume", "Volume", "volumeDown", "Falling candle", new() { Color = "#80cd4040" }),
+        new("volume", "Volume", "volumeUp",   "Rising candle",  new() { Color = "#8022c55e" }),
+        new("volume", "Volume", "volumeDown", "Falling candle", new() { Color = "#80f0616d" }),
     ];
 
     /// <summary>

@@ -65,8 +65,8 @@
                     <SolidColorBrush x:Key="PriceDownBrush">#ef4436</SolidColorBrush>
                     -->
                     <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
-                    <SolidColorBrush x:Key="PriceUpBrush">#45c173</SolidColorBrush>
-                    <SolidColorBrush x:Key="PriceDownBrush">#cd4040</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceUpBrush">#22c55e</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#f0616d</SolidColorBrush>
 
                     <SolidColorBrush x:Key="AlternatingBrushColor" Color="#121212"/>
 

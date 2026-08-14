@@ -27,10 +27,10 @@
     --accent: #0078d7;
     --accent-hover: #1a8ae8;
 
-    --green: #45c173;
-    --green-dim: rgba(69, 193, 115, 0.12);
-    --red: #cd4040;
-    --red-dim: rgba(205, 64, 64, 0.12);
+    --green: #22c55e;
+    --green-dim: rgba(34, 197, 94, 0.12);
+    --red: #f0616d;
+    --red-dim: rgba(240, 97, 109, 0.12);
 
     color: #e0e0e0;
     background: #000000;
@@ -95,10 +95,10 @@
     --text-muted: #787878;
     --accent: #0078d7;
     --accent-hover: #1a8ae8;
-    --green: #45c173;
-    --green-dim: rgba(69, 193, 115, 0.12);
-    --red: #cd4040;
-    --red-dim: rgba(205, 64, 64, 0.12);
+    --green: #22c55e;
+    --green-dim: rgba(34, 197, 94, 0.12);
+    --red: #f0616d;
+    --red-dim: rgba(240, 97, 109, 0.12);
 }
 
 /* ── Base ── */

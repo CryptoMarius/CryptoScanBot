@@ -780,8 +780,11 @@
             if (api == null)
                 return;
             await api.Symbol.GetSymbolsAsync();
+            CandleBase.UpdateVolumeDecisions();
             if (ExchangeBase.KLineTicker != null)
                 await ExchangeBase.KLineTicker.CheckSubscriptions();
+            if (ExchangeBase.KLineTicker != null)
+                await ExchangeBase.KLineTicker.SynchronizeSymbolsAsync();
             await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
         });
     }

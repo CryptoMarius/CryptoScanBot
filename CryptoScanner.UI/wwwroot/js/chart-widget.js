@@ -800,9 +800,9 @@ window.ChartWidget = {
         ));
 
         var candleSeries = chart.addCandlestickSeries({
-            upColor: '#45c173', downColor: '#cd4040',
-            borderDownColor: '#cd4040', borderUpColor: '#45c173',
-            wickDownColor: '#cd4040', wickUpColor: '#45c173',
+            upColor: '#22c55e', downColor: '#f0616d',
+            borderDownColor: '#f0616d', borderUpColor: '#22c55e',
+            wickDownColor: '#f0616d', wickUpColor: '#22c55e',
         });
 
         new ResizeObserver(function () {

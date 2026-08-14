@@ -157,84 +157,84 @@
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C1Body" Width="8" VerticalAlignment="Center"
-                    Background="#cd4040" CornerRadius="1"/>
+                    Background="#f0616d" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 2: Bullish (green) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C2Body" Width="8" VerticalAlignment="Center"
-                    Background="#45c173" CornerRadius="1"/>
+                    Background="#22c55e" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 3: Bearish (red) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C3Body" Width="8" VerticalAlignment="Center"
-                    Background="#cd4040" CornerRadius="1"/>
+                    Background="#f0616d" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 4: Bullish (green) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C4Body" Width="8" VerticalAlignment="Center"
-                    Background="#45c173" CornerRadius="1"/>
+                    Background="#22c55e" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 5: Bearish (red) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C5Body" Width="8" VerticalAlignment="Center"
-                    Background="#cd4040" CornerRadius="1"/>
+                    Background="#f0616d" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 6: Bullish (green) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C6Body" Width="8" VerticalAlignment="Center"
-                    Background="#45c173" CornerRadius="1"/>
+                    Background="#22c55e" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 7: Bearish (red) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C7Body" Width="8" VerticalAlignment="Center"
-                    Background="#cd4040" CornerRadius="1"/>
+                    Background="#f0616d" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 8: Bullish (green) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C8Body" Width="8" VerticalAlignment="Center"
-                    Background="#45c173" CornerRadius="1"/>
+                    Background="#22c55e" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 9: Bearish (red) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C9Body" Width="8" VerticalAlignment="Center"
-                    Background="#cd4040" CornerRadius="1"/>
+                    Background="#f0616d" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 10: Bullish (green) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C10Body" Width="8" VerticalAlignment="Center"
-                    Background="#45c173" CornerRadius="1"/>
+                    Background="#22c55e" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 11: Bearish (red) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C11Body" Width="8" VerticalAlignment="Center"
-                    Background="#cd4040" CornerRadius="1"/>
+                    Background="#f0616d" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 12: Bullish (green) -->
         <Grid Width="8" Height="70">
             <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
             <Border x:Name="C12Body" Width="8" VerticalAlignment="Center"
-                    Background="#45c173" CornerRadius="1"/>
+                    Background="#22c55e" CornerRadius="1"/>
         </Grid>
 
     </StackPanel>
