@@ -453,7 +453,7 @@ public class ScannerSession : IScannerSession
                 // First try to restart only the subscriptions that reported a problem
                 if (_dataStreamProblemCount < 2)
                 {
-                    Task.Run(async () => await ExchangeBase.KLineTicker.CheckTickers());
+                    Task.Run(async () => await ExchangeBase.KLineTicker.CheckSubscriptions());
                     return;
                 }
 
@@ -538,11 +538,11 @@ public class ScannerSession : IScannerSession
                 await api.Symbol.GetSymbolsAsync();
 
                 if (ExchangeBase.KLineTicker != null)
-                    await ExchangeBase.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
+                    await ExchangeBase.KLineTicker.CheckSubscriptions(); // herstarten van ticker indien errors
                 //if (ExchangeBase.PriceTicker != null)
-                //    await ExchangeBase.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
+                //    await ExchangeBase.PriceTicker.CheckSubscriptions(); // herstarten van ticker indien errors
                 //if (ExchangeBase.UserTicker != null)
-                //    await ExchangeBase.UserTicker.CheckTickers(); // herstarten van ticker indien errors
+                //    await ExchangeBase.UserTicker.CheckSubscriptions(); // herstarten van ticker indien errors
 
                 await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
             }

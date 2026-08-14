@@ -781,7 +781,7 @@
                 return;
             await api.Symbol.GetSymbolsAsync();
             if (ExchangeBase.KLineTicker != null)
-                await ExchangeBase.KLineTicker.CheckTickers();
+                await ExchangeBase.KLineTicker.CheckSubscriptions();
             await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
         });
     }

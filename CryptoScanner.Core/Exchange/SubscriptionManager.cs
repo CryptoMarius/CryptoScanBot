@@ -342,7 +342,7 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     }
 
 
-    public virtual async Task CheckTickers()
+    public virtual async Task CheckSubscriptions()
     {
         // Only the subscriptions that reported a problem are restarted. They share a socket client per
         // group, but stopping and starting a single subscription does not disturb its neighbours, so
