@@ -40,7 +40,7 @@ public class Api : ExchangeBase
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
 
-        // Default opties voor deze exchange
+        // Default options for this exchange
         BybitRestClient.SetDefaultOptions(options =>
         {
             //options.OutputOriginalData = true;
@@ -84,7 +84,7 @@ public class Api : ExchangeBase
         //return (false, null);
 
 
-        // Controleer de limiten van de maximum en minimum bedrag en de quantity
+        // Check the maximum and minimum amount limits and the quantity
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
@@ -113,7 +113,7 @@ public class Api : ExchangeBase
         }
 
 
-        // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+        // BinanceWeights.WaitForFairBinanceWeight(1); nonsense for that single tick (no repetition, right?)
 
         OrderSide side;
         if (orderSide == CryptoOrderSide.Buy)
@@ -122,7 +122,7 @@ public class Api : ExchangeBase
             side = OrderSide.Sell;
 
 
-        // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
+        // Place an order on the exchange (they look alike, but it is slightly different every time)
         using BybitRestClient client = new();
 
         HttpResult<BybitOrderId> result;
@@ -130,7 +130,7 @@ public class Api : ExchangeBase
         {
             case CryptoOrderType.Market:
                 {
-                    // JA, price * quantity omdat dat blijkbaar zo moet, zie voorbeeld (onderin)
+                    // YES, price * quantity because that is apparently required, see the example (at the bottom)
                     // https://bybit-exchange.github.io/docs/v5/order/create-order
                     result = await client.V5Api.Trading.PlaceOrderAsync(Category, position.Symbol.Name, side,
                         NewOrderType.Market, price * quantity, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
@@ -242,9 +242,9 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.Oco:
                 {
-                    // Een OCO is afwijkend ten opzichte van een standaard buy or sell
-                    //    Bij Binance was een OCO totaal afwijkend ten opzichte van een standaard buy or sell
-                    //    het had ook andere parameters en results
+                    // An OCO deviates from a standard buy or sell
+                    //    On Binance an OCO was completely different from a standard buy or sell
+                    //    it also had different parameters and results
                     //HttpResult<BybitOrderOcoList> result;?????
                     //    throw new Exception("${orderType} not supported");
                     throw new Exception($"{orderType} not supported");
@@ -273,7 +273,7 @@ public class Api : ExchangeBase
     public override async Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
         //ScannerLog.Logger.Trace($"Exchange.BybitSpot.Cancel {symbol.Name}");
-        // Order gegevens overnemen (enkel voor een eventuele error dump)
+        // Order details carried over (only for a possible error dump)
         TradeParams tradeParams = new()
         {
             Purpose = part.Purpose,
@@ -288,7 +288,7 @@ public class Api : ExchangeBase
             OrderId = step.OrderId,
             Order2Id = step.Order2Id,
         };
-        // Eigenlijk niet nodig
+        // Not really needed
         if (step.OrderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
 
@@ -296,10 +296,10 @@ public class Api : ExchangeBase
             return (true, tradeParams);
 
 
-        // Annuleer de order 
+        // Cancel the order 
         if (step.OrderId != null && step.OrderId != "")
         {
-            // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
+            // BinanceWeights.WaitForFairBinanceWeight(1); nonsense
             using var client = new BybitRestClient();
             var result = await client.V5Api.Trading.CancelOrderAsync(Category, position.Symbol.Name, step.OrderId.ToString());
             if (!result.Success)

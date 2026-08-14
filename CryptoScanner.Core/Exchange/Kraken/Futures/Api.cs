@@ -65,7 +65,7 @@ public class Api : ExchangeBase
         // for good - silently, because a null tradeParams also skips the error dump.
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return Task.FromResult<(bool result, TradeParams? tradeParams)>((false, null));
         }
 
@@ -124,17 +124,21 @@ public class Api : ExchangeBase
     {
         return new()
         {
-            Altrady = new()
-            {
-                Code = "KRKNF",
-                Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/KRKNF_{QUOTE}_{BASE}:{interval}",
-            },
+            // No Altrady: their list of valid exchange codes has Kraken spot (KRKN) but no futures
+            // entity, so the KRKNF that used to stand here addressed an exchange that does not exist.
+            // https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
+            Altrady = null,
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,
                 Url = "https://www.tradingview.com/chart/?symbol=KRAKEN.P:{BASE}{QUOTE}&interval={interval}",
             },
+            ExchangeUrl = new()
+            {
+                // The instrument is named PF_XBTUSD here, so base + quote is not enough
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://futures.kraken.com/trade/futures/{EXCHANGENAME}",
+            }
         };
     }
 }

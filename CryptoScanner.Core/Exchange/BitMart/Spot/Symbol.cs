@@ -13,6 +13,20 @@ namespace CryptoScanner.Core.Exchange.BitMart.Spot;
 
 public class Symbol() : SymbolBase(), ISymbol
 {
+    /// <summary>
+    /// Ten to the power minus <paramref name="decimals"/>, as an exact decimal. BitMart states the
+    /// price step of a spot pair as a number of digits instead of a step, and the double route
+    /// (Math.Pow) would hand a value with a rounding tail to a field the whole candle store rounds
+    /// against. Capped at 15 because CryptoCandle keeps its tick decimals in a nibble.
+    /// </summary>
+    private static decimal TickSizeFromDecimals(int decimals)
+    {
+        decimal tickSize = 1m;
+        for (int i = 0; i < Math.Clamp(decimals, 0, 15); i++)
+            tickSize /= 10m;
+        return tickSize;
+    }
+
 
     public async Task GetSymbolsAsync()
     {
@@ -44,7 +58,13 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         if (tickerData.Symbol != null)
                         {
-                            volumeTicker.Add(tickerData.Symbol, tickerData.Volume24h);
+                            // QuoteVolume24h ("qv_24h") is the 24 hour turnover in the quote currency,
+                            // which is what the volume boundary and the rest of the scanner work with.
+                            // Volume24h ("v_24h") is the same period counted in the BASE currency, so
+                            // it made an expensive coin look like it barely traded (AVAX_USDT reports
+                            // 369 against a turnover of 2365 USDT).
+                            // Assigned instead of added, so a duplicate name cannot abort the whole update.
+                            volumeTicker[tickerData.Symbol] = tickerData.QuoteVolume24h;
                         }
                     }
                 }
@@ -91,7 +111,13 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //if (symbolData.Base.PriceDecimals)
                                 //    symbol.QuantityTickSize = symbolData.LotSize.Value;
                                 //symbol.QuantityTickSize = symbolData. QuantityDecimals;
-                                //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
+                                // QuoteIncrement ("quote_increment") is the step of the order QUANTITY,
+                                // despite its name - it is the same value as BaseMinQuantity on every
+                                // pair (0.00001 for BTC_USDT, 1 for DOGE_USDT).
+                                if (symbolData.QuoteIncrement.HasValue)
+                                    symbol!.QuantityTickSize = symbolData.QuoteIncrement.Value;
+                                if (symbolData.BaseMinQuantity.HasValue)
+                                    symbol!.QuantityMinimum = symbolData.BaseMinQuantity.Value;
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
                                 //symbol.QuoteValueMinimum = symbolInfo.LotSizeFilter?.MinOrderValue ?? 0;
@@ -104,8 +130,17 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.PriceMinimum = symbolInfo.LotSizeFilter.MinOrderValue;
                                 //symbol.PriceMaximum = symbolInfo.LotSizeFilter.MaxOrderValue;
 
-                                if (symbolData.QuoteIncrement.HasValue)
-                                    symbol!.PriceTickSize = symbolData.QuoteIncrement.Value;
+                                // The price step is ten to the power minus PriceMaxPrecision, and that
+                                // is also the number of decimals every fetched candle carries (checked
+                                // 14-08-2026: 2 for ETH_USDT, 6 for DOGE_USDT, 10 for SHIB_USDT).
+                                // This used to be QuoteIncrement, which is the quantity step above, and
+                                // that wrecked the candles: it stores prices as an int number of ticks
+                                // of PriceDecimals (see CryptoCandle), so DOGE_USDT (step 1, so zero
+                                // decimals) rounded every price to 0 and was thrown away as an empty
+                                // candle, while BTC_USDT (step 0.00001) needed 6.2 billion ticks and
+                                // overflowed the int.
+                                // PriceMinPrecision is not usable, it is -1 on BTC_USDT and ETH_USDT.
+                                symbol!.PriceTickSize = TickSizeFromDecimals(symbolData.PriceMaxPrecision);
 
                                 //symbol!.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???

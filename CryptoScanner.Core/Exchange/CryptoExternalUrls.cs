@@ -4,7 +4,7 @@ namespace CryptoScanner.Core.Exchange;
 
 public class CryptoExternalUrl
 {
-    // Alleen HyperTrader gebruikt een execute link
+    // Only HyperTrader uses an execute link
     public CryptoExternalUrlType Execute { get; set; } = CryptoExternalUrlType.External;
     public string Url { get; set; } = "";
     public string? Telegram { get; set; }

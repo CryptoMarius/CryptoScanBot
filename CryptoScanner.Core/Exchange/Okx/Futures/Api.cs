@@ -37,7 +37,7 @@ public class Api : ExchangeBase
 
         OKXEnvironment environment = OKXEnvironment.Live;
 
-        // Default opties voor deze exchange
+        // Default options for this exchange
         OKXRestClient.SetDefaultOptions(options =>
         {
             // Endpoints global
@@ -92,10 +92,10 @@ public class Api : ExchangeBase
         //return (false, null);
 
 
-        // Controleer de limiten van de maximum en minimum bedrag en de quantity
+        // Check the maximum and minimum amount limits and the quantity
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return (false, null);
         }
 
@@ -128,8 +128,8 @@ public class Api : ExchangeBase
         //    side = OrderSide.Sell;
 
 
-        //// Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        ////BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+        //// Place an order on the exchange (they look alike, but it is slightly different every time)
+        ////BinanceWeights.WaitForFairBinanceWeight(1); nonsense for that single tick (no repetition, right?)
         //using OKXRestClient client = new();
 
         //switch (orderType)
@@ -199,14 +199,14 @@ public class Api : ExchangeBase
         //    ////        if (result.Success && result.Data != null)
         //    ////        {
         //    ////            // https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md
-        //    ////            // De 1e order is de stop loss (te herkennen aan de "type": "STOP_LOSS")
-        //    ////            // De 2e order is de normale sell (te herkennen aan de "type": "LIMIT_MAKER")
-        //    ////            // De ene order heeft een price/stopprice, de andere enkel een price (combi)
+        //    ////            // The 1st order is the stop loss (recognisable by "type": "STOP_LOSS")
+        //    ////            // The 2nd order is the normal sell (recognisable by "type": "LIMIT_MAKER")
+        //    ////            // One order has a price/stop price, the other one only a price (combined)
         //    ////            BinancePlacedOcoOrder order1 = result.Data.OrderReports.First();
         //    ////            BinancePlacedOcoOrder order2 = result.Data.OrderReports.Last();
         //    ////            tradeParams.CreateTime = result.Data.TransactionTime; // order1.CreateTime;
         //    ////            tradeParams.OrderId = order1.Id.ToString();
-        //    ////            tradeParams.Order2Id = order2.Id.ToString(); // Een 2e ordernummer (welke eigenlijk?)
+        //    ////            tradeParams.Order2Id = order2.Id.ToString(); // A 2nd order number (which one exactly?)
         //    ////        }
         //    ////        return (result.Success, tradeParams);
         //    ////    }
@@ -218,7 +218,7 @@ public class Api : ExchangeBase
 
     public override async Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
-        // Order gegevens overnemen (voor een eventuele error dump)
+        // Order details carried over for a possible error dump
         TradeParams tradeParams = new()
         {
             Purpose = part.Purpose,
@@ -233,7 +233,7 @@ public class Api : ExchangeBase
             OrderId = step.OrderId,
             Order2Id = step.Order2Id,
         };
-        // Eigenlijk niet nodig
+        // Not really needed
         if (step.OrderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
 
@@ -242,7 +242,7 @@ public class Api : ExchangeBase
 
         throw new Exception("Cancel not implemented");
 
-        //// Annuleer de order
+        //// Cancel the order
         //if (step.OrderId != null && step.OrderId != "")
         //{
         //    // BinanceWeights.WaitForFairBinanceWeight(1);
@@ -265,20 +265,25 @@ public class Api : ExchangeBase
         {
             Altrady = new()
             {
-                Code = "OKEX",
+                // OKEXF, not OKEX: that is the spot exchange, which is where these links used to end up
+                Code = "OKEXF",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/OKEX_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/d/OKEXF_{QUOTE}_{BASE}:{interval}",
             },
             HyperTrader = null,
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://www.tradingview.com/chart/?symbol=OKEX:{BASE}{QUOTE}&interval={interval}",
+                // OKX, not OKEX: TradingView renamed the exchange and moved the symbols with it
+                Url = "https://www.tradingview.com/chart/?symbol=OKX:{BASE}{QUOTE}.P&interval={interval}",
             },
             ExchangeUrl = new()
             {
+                // The instrument is named BTC-USDT-SWAP here, so base + quote is not enough.
+                // Not verified from the Netherlands: my.okx.com is the European entity and it
+                // bounces every perpetual page back to its home page.
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://my.okx.com/trade-spot/{BASE}-{QUOTE}",
+                Url = "https://www.okx.com/trade-swap/{exchangename}",
             }
         };
     }

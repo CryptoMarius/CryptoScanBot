@@ -66,7 +66,7 @@ public class Api : ExchangeBase
         // for good - silently, because a null tradeParams also skips the error dump.
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return Task.FromResult<(bool result, TradeParams? tradeParams)>((false, null));
         }
 
@@ -136,6 +136,11 @@ public class Api : ExchangeBase
                 Execute = CryptoExternalUrlType.External,
                 Url = "https://www.tradingview.com/chart/?symbol=KRAKEN:{BASE}{QUOTE}&interval={interval}",
             },
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://pro.kraken.com/app/trade/{BASE}-{QUOTE}",
+            }
         };
     }
 }

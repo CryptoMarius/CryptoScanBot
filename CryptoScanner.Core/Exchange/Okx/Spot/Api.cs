@@ -34,7 +34,7 @@ public class Api : ExchangeBase
         ExchangeOptions.SetDefaultOptions("Okx Spot", "USDT", 300, false, 50, minimalVolume: 360_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
-        // Default opties voor deze exchange
+        // Default options for this exchange
         OKXRestClient.SetDefaultOptions(options =>
         {
             //options.Environment = environment; OKXEnvironment.Live;
@@ -76,7 +76,7 @@ public class Api : ExchangeBase
         // for good - silently, because a null tradeParams also skips the error dump.
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return Task.FromResult<(bool result, TradeParams? tradeParams)>((false, null));
         }
 
@@ -145,7 +145,8 @@ public class Api : ExchangeBase
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://www.tradingview.com/chart/?symbol=OKEX:{BASE}{QUOTE}&interval={interval}",
+                // OKX, not OKEX: TradingView renamed the exchange and moved the symbols with it
+                Url = "https://www.tradingview.com/chart/?symbol=OKX:{BASE}{QUOTE}&interval={interval}",
             },
             ExchangeUrl = new()
             {

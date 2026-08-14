@@ -28,8 +28,13 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        // no volume measured (exchange is switched off), so the boundary falls back to the default
-        ExchangeOptions.SetDefaultOptions("BitMart Futures", "USDT", 500, false, 1, klineDelivery: KlineDelivery.TimerFlush);
+        // The candle limit is 500, which is exactly what /contract/public/kline allows: a window of
+        // 501 candles is answered with "40039 Invalid Timestamp" instead of a truncated result.
+        // The spot side documents 20 topics per subscribe message and 100 channels per connection;
+        // the futures documentation states no limit of its own, so it follows the same numbers.
+        // 6.2 billion USDT over 1187 contracts a day (14-08-2026), 92 symbols stay above the boundary
+        ExchangeOptions.SetDefaultOptions("BitMart Futures", "USDT", 500, false, 20, 5,
+            KlineDelivery.TimerFlush, minimalVolume: 2_100_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         BitMartRestClient.SetDefaultOptions(options =>
@@ -70,7 +75,7 @@ public class Api : ExchangeBase
         // for good - silently, because a null tradeParams also skips the error dump.
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return Task.FromResult<(bool result, TradeParams? tradeParams)>((false, null));
         }
 
@@ -136,6 +141,14 @@ public class Api : ExchangeBase
                 Execute = CryptoExternalUrlType.Internal,
                 Url = "https://app.altrady.com/d/BITMF_{QUOTE}_{BASE}:{interval}",
             },
+            HyperTrader = null,
+            // No TradingView: whether it carries the BitMart perpetuals could not be checked
+            TradingView = null,
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.bitmart.com/futures/en-US?symbol={BASE}{QUOTE}",
+            }
         };
     }
 }

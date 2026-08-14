@@ -5,7 +5,6 @@ using CryptoScanner.Core.Model;
 
 using Mexc.Net;
 using Mexc.Net.Clients;
-using Mexc.Net.Enums;
 
 namespace CryptoScanner.Core.Exchange.Mexc.Spot;
 
@@ -32,7 +31,7 @@ public class Api : ExchangeBase
         ExchangeOptions.SetDefaultOptions("Mexc Spot", "USDT", 500, true, 3, 10, KlineDelivery.TimerFlush, minimalVolume: 290_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
-        // Default opties voor deze exchange
+        // Default options for this exchange
         MexcRestClient.SetDefaultOptions(options =>
         {
             //options.OutputOriginalData = true;
@@ -63,51 +62,6 @@ public class Api : ExchangeBase
     }
 
 
-    // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderType LocalOrderType(OrderType orderType)
-    {
-        CryptoOrderType localOrderType = orderType switch
-        {
-            OrderType.Market => CryptoOrderType.Market,
-            OrderType.Limit => CryptoOrderType.Limit,
-            OrderType.LimitMaker => CryptoOrderType.StopLimit, /// ????????????????????????????????????????????????
-            _ => throw new Exception("Niet ondersteunde ordertype"),
-        };
-
-        return localOrderType;
-    }
-
-    // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderSide LocalOrderSide(OrderSide orderSide)
-    {
-        CryptoOrderSide localOrderSide = orderSide switch
-        {
-            OrderSide.Buy => CryptoOrderSide.Buy,
-            OrderSide.Sell => CryptoOrderSide.Sell,
-            _ => throw new Exception("Niet ondersteunde orderside"),
-        };
-
-        return localOrderSide;
-    }
-
-
-    // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderStatus LocalOrderStatus(OrderStatus orderStatus)
-    {
-        CryptoOrderStatus localOrderStatus = orderStatus switch
-        {
-            OrderStatus.New => CryptoOrderStatus.New,
-            OrderStatus.Filled => CryptoOrderStatus.Filled,
-            OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
-            OrderStatus.PartiallyCanceled => CryptoOrderStatus.PartiallyAndClosed, // niet alles kon omgezet worden, iets minder gekregen
-            OrderStatus.Canceled => CryptoOrderStatus.Canceled,
-            _ => throw new Exception("Niet ondersteunde orderstatus"),
-        };
-
-        return localOrderStatus;
-    }
-
-
     public override Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
@@ -119,7 +73,7 @@ public class Api : ExchangeBase
         // for good - silently, because a null tradeParams also skips the error dump.
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return Task.FromResult<(bool result, TradeParams? tradeParams)>((false, null));
         }
 
@@ -190,6 +144,11 @@ public class Api : ExchangeBase
                 Execute = CryptoExternalUrlType.External,
                 Url = "https://www.tradingview.com/chart/?symbol=MEXC:{BASE}{QUOTE}&interval={interval}",
             },
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.mexc.com/exchange/{BASE}_{QUOTE}",
+            }
         };
     }
 }

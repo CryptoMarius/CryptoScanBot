@@ -12,70 +12,8 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.Binance.Futures;
 
-
-
-
-//Mogelijke foutmeldingen bij het kopen (of verkopen?):
-
-//Te laag bedrag
-//Filter failure: MIN_NOTIONAL
-//price* quantity is too low to be a valid order for the symbol.
-
-//Problemen met het aantal decimalen (zowel price als amount)
-//buyResult.Error = {-1111: Precision is over the maximum defined for this asset. }
-
-//Er is te weinig geld om de order te plaatsen
-//buyResult.Error = {-1013: Filter failure: PRICE_FILTER }
-
-// buyResult.Error = { -1013: Filter failure: LOT_SIZE }
-
-//The relationship of the prices for the orders is not correct". The prices set in the OCO is breaking the Price rules.
-//The rules are:
-//SELL Orders: Limit Price > Last Price > Stop Price
-//BUY Orders: Limit Price < Last Price < Stop Price
-// mooit overzicht: https://toscode.gitee.com/purplecity/binance-official-api-docs/blob/d5bab6053da63aecd71ed6393fbd7de1da88a43a/errors.md
-
-
-// Vanwege "The relationship of the prices for the orders is not correct." The prices set in the OCO
-// is breaking the Price rules. (de prijs is dan waarschijnlijk al hoger dan de gekozen sell prijs!!!!)
-
-//"The relationship of the prices for the orders is not correct." The prices set in the OCO is breaking the Price rules. (de prijs is dan waarschijnlijk al hoger dan de gekozen sell prijs!!!!)
-//The rules are:
-//SELL Orders: Limit Price > Last Price > Stop Price
-//BUY Orders: Limit Price<Last Price<Stop Price
-
-//De prijs is dan ondertussen al onder de StopPrice beland?
-
-
-//The relationship of the prices for the orders is not correct."	The prices set in the OCO is breaking the Price rules.
-//The rules are:
-//SELL Orders: Limit Price > Last Price > Stop Price
-//BUY Orders: Limit Price < Last Price < Stop Price
-// https://toscode.gitee.com/purplecity/binance-official-api-docs/blob/d5bab6053da63aecd71ed6393fbd7de1da88a43a/errors.md
-
-/*
- *
-https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-servertime
-https://api-testnet.bybit.com/v2/public/time
-{"ret_code":0,"ret_msg":"OK","result":{},"ext_code":"","ext_info":"","time_now":"1688116858.760925"}
-
-https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-announcement
-https://api-testnet.bybit.com/v2/public/announcement
-{"ret_code":0,"ret_msg":"OK","result":[],"ext_code":"","ext_info":"","time_now":"1688116961.886013"}
-(dat lijkt nogal op die eerste..)
-
-
-https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-querykline
-https://api-testnet.bybit.com/v2/public/kline/list
-{"retCode":10001,"retMsg":"The requested symbol is invalid.","result":{},"retExtInfo":{},"time":1688117090806}
-https://api-testnet.bybit.com/v2/public/kline/list?symbol=BTCUSDT&interval=1
-
-
-https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-querysymbol
-https://api-testnet.bybit.com/spot/v3/public/symbols
-(denk om de versie verschillen)
-
- */
+// The order errors and the OCO price rules that used to be listed here have moved to Binance.md,
+// the leftover Bybit v2 endpoint notes to BybitApi\Bybit.md.
 
 public class Api : ExchangeBase
 {
@@ -98,9 +36,9 @@ public class Api : ExchangeBase
     {
         // 44 billion USDT over 689 pairs a day (14-08-2026), 141 symbols stay above the boundary
         ExchangeOptions.SetDefaultOptions("Binance Futures", "USDT", 1000, false, 50, minimalVolume: 15_000_000);
-        GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} defaults");
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
-        // Default opties voor deze exchange
+        // Default options for this exchange
         BinanceRestClient.SetDefaultOptions(options =>
         {
             //options.OutputOriginalData = true;
@@ -143,10 +81,10 @@ public class Api : ExchangeBase
         //return (false, null);
 
 
-        // Controleer de limiten van de maximum en minimum bedrag en de quantity
+        // Check the maximum and minimum amount limits and the quantity
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return (false, null);
         }
 
@@ -178,8 +116,8 @@ public class Api : ExchangeBase
             side = OrderSide.Sell;
 
 
-        // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+        // Place an order on the exchange (they look alike, but it is slightly different every time)
+        //BinanceWeights.WaitForFairBinanceWeight(1); nonsense for that single tick (no repetition, right?)
         using BinanceRestClient client = new();
 
         switch (orderType)
@@ -249,14 +187,14 @@ public class Api : ExchangeBase
             //        if (result.Success && result.Data != null)
             //        {
             //            // https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md
-            //            // De 1e order is de stop loss (te herkennen aan de "type": "STOP_LOSS")
-            //            // De 2e order is de normale sell (te herkennen aan de "type": "LIMIT_MAKER")
-            //            // De ene order heeft een price/stopprice, de andere enkel een price (combi)
+            //            // The 1st order is the stop loss (recognisable by "type": "STOP_LOSS")
+            //            // The 2nd order is the normal sell (recognisable by "type": "LIMIT_MAKER")
+            //            // One order has a price/stop price, the other one only a price (combined)
             //            BinancePlacedOcoOrder order1 = result.Data.OrderReports.First();
             //            BinancePlacedOcoOrder order2 = result.Data.OrderReports.Last();
             //            tradeParams.CreateTime = result.Data.TransactionTime; // order1.CreateTime;
             //            tradeParams.OrderId = order1.Id.ToString();
-            //            tradeParams.Order2Id = order2.Id.ToString(); // Een 2e ordernummer (welke eigenlijk?)
+            //            tradeParams.Order2Id = order2.Id.ToString(); // A 2nd order number (which one exactly?)
             //        }
             //        return (result.Success, tradeParams);
             //    }
@@ -268,7 +206,7 @@ public class Api : ExchangeBase
 
     public override async Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
-        // Order gegevens overnemen (voor een eventuele error dump)
+        // Order details carried over for a possible error dump
         TradeParams tradeParams = new()
         {
             Purpose = part.Purpose,
@@ -283,7 +221,7 @@ public class Api : ExchangeBase
             OrderId = step.OrderId,
             Order2Id = step.Order2Id,
         };
-        // Eigenlijk niet nodig
+        // Not really needed
         if (step.OrderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
 
@@ -291,7 +229,7 @@ public class Api : ExchangeBase
             return (true, tradeParams);
 
 
-        // Annuleer de order
+        // Cancel the order
         if (step.OrderId != null && step.OrderId != "")
         {
             // BinanceWeights.WaitForFairBinanceWeight(1);

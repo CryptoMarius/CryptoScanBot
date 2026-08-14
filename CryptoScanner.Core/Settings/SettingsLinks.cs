@@ -65,6 +65,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 
         Remove("Mexc");
         this.TryAdd("Mexc Spot", Exchange.Mexc.Spot.Api.GetExchangeLinks());
+        this.TryAdd("Mexc Futures", Exchange.Mexc.Futures.Api.GetExchangeLinks());
 
         Remove("Okx");
         this.TryAdd("Okx Spot", Exchange.Okx.Spot.Api.GetExchangeLinks());
@@ -138,6 +139,12 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             urlTemplate = urlTemplate.Replace("{NAME}", symbol.Name.ToUpper());
             urlTemplate = urlTemplate.Replace("{BASE}", symbol.Base.ToUpper());
             urlTemplate = urlTemplate.Replace("{QUOTE}", symbol.Quote.ToUpper());
+
+            // The name the instrument has on the exchange itself, which is not always base + quote:
+            // Kraken Futures calls BTCUSD "PF_XBTUSD" and Okx Futures calls it "BTC-USDT-SWAP". Those
+            // trade pages cannot be addressed with {BASE} and {QUOTE} alone.
+            urlTemplate = urlTemplate.Replace("{exchangename}", symbol.ExchangeName.ToLower());
+            urlTemplate = urlTemplate.Replace("{EXCHANGENAME}", symbol.ExchangeName.ToUpper());
 
             // Interval: amount of minutes
             string intervalCode = ((int)interval.Duration).ToString();

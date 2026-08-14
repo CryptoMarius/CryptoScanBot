@@ -1,11 +1,12 @@
-﻿using BitMart.Net.Clients;
-using BitMart.Net.Enums;
+using CryptoExchange.Net.Objects.Errors;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
+using Mexc.Net.Clients;
+using Mexc.Net.Enums;
 
-namespace CryptoScanner.Core.Exchange.BitMart.Spot;
+namespace CryptoScanner.Core.Exchange.Mexc.Futures;
 
 /// <summary>
 /// Fetch klines/candles from the exchange
@@ -16,40 +17,37 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CryptoSymbol symbol, CryptoInterval interval, CandleTime fetchFrom)
     {
         // Remarks:
-        // The maximum is 200 candles per GetKlinesAsync call (ExchangeOptions.CandleLimit). A wider
-        // window is not truncated but refused: "71004 request kline num exceed the limit".
-        // Without an explicit limit the endpoint hands over 100 candles whatever the window is, so
-        // it has to be passed - the oldest ones of the window, which is the direction we page in.
-        // The results can be from new to old (wrong order).
+        // The maximum is 2000 candles per GetKlinesAsync call. The endpoint has no limit parameter of
+        // its own, it simply cuts off a larger window - hence CandleLimit=2000.
         // The results can contain in progress candles.
+        // The 1 minute history reaches about 30 to 90 days back, older windows return nothing at all.
 
-        // Weird piece of code, unable todo: (!clientBase is BinanceRestClient client1)
-        BitMartRestClient client;
-        if (clientBase is BitMartRestClient client1)
+        MexcRestClient client;
+        if (clientBase is MexcRestClient client1)
             client = client1;
         else
-            throw new Exception("Expected BitmartRestClient");
-        var api = client.SpotApi;
+            throw new Exception("Expected MexcRestClient");
+        var api = client.FuturesApi;
 
-        var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-
-        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod);
-        if (exchangeInterval == null)
-            throw new Exception($"Not supported interval");
-
-        //LimitRate.WaitForFairWeight(1);
+        FuturesKlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
+            ?? throw new Exception($"Not supported interval");
+        LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         CandleTime maxTime = fetchFrom + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
 
-        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
-            startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
+    Again:
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (FuturesKlineInterval)exchangeInterval,
+            startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime());
         if (!result.Success)
         {
+            if (result.Error?.ErrorType == ErrorType.RateLimitRequest)
+            {
+                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
+                Thread.Sleep(15000);
+                goto Again;
+            }
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
-#if DEBUG
-            SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no succes.json");
-#endif
             return (false, 0, fetchFrom);
         }
 
@@ -74,12 +72,12 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 if (CheckFutureCandleReceived(kline.OpenTime, symbol, interval, kline.ClosePrice))
                     continue;
 
-                // QuoteVolume ("quote_volume") is the turnover the exchange itself reports for the
-                // candle, so there is no need to estimate it from the base volume and a middle price.
-                // It is nullable in the library, hence the fall back to that estimate.
+                // QuoteVolume ("amount") is the turnover the exchange reports for the candle. Volume
+                // ("vol") counts CONTRACTS, so multiplying that by a price would be a factor contract
+                // size off - and it would not match the stream, which carries a quote volume as well.
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
-                    kline.QuoteVolume ?? kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
+                    kline.QuoteVolume);
 
                 // remember the newest candle
                 if (candle.OpenTime > fetchedUpTo)

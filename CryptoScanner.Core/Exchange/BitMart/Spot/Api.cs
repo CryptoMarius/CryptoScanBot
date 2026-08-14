@@ -32,8 +32,16 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        // no volume measured (exchange is switched off), so the boundary falls back to the default
-        ExchangeOptions.SetDefaultOptions("BitMart Spot", "USDT", 500, false, 1, klineDelivery: KlineDelivery.TimerFlush);
+        // The candle limit is 200: /spot/quotation/v3/klines refuses a wider window outright with
+        // "71004 request kline num exceed the limit" (200 candles works, 201 already fails), so a
+        // larger value does not page more slowly - it fetches nothing at all.
+        // BitMart accepts up to 20 topics in one subscribe message and 100 channels per connection,
+        // hence 20 symbols per subscription and 5 of those per socket client.
+        // 220 million USDT over 32 pairs a day (14-08-2026), 6 symbols stay above the boundary. That
+        // is the whole exchange as it presents itself here: the symbol endpoint lists 65 pairs and
+        // the ticker endpoint returns 47, where the futures side lists over 1200 contracts.
+        ExchangeOptions.SetDefaultOptions("BitMart Spot", "USDT", 200, false, 20, 5,
+            KlineDelivery.TimerFlush, minimalVolume: 76_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         BitMartRestClient.SetDefaultOptions(options =>
@@ -76,7 +84,7 @@ public class Api : ExchangeBase
         // for good - silently, because a null tradeParams also skips the error dump.
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return Task.FromResult<(bool result, TradeParams? tradeParams)>((false, null));
         }
 
@@ -136,6 +144,20 @@ public class Api : ExchangeBase
     {
         return new()
         {
+            // No Altrady: their list of valid exchange codes has BitMart futures (BITMF) but no spot
+            // entity. https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
+            Altrady = null,
+            HyperTrader = null,
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=BITMART:{BASE}{QUOTE}&interval={interval}",
+            },
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.bitmart.com/trade/en-US?symbol={BASE}_{QUOTE}",
+            }
         };
     }
 }

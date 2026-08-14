@@ -166,12 +166,19 @@ public class CryptoDatabase : IDisposable
     {
         return
         [
+            // You must have an account and register the api key, otherwise "error unauthorized"
+            new() { Name = "Alpaca", IsSupported = true, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Alpaca Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Futures},
+
             new() { Name = "Binance Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
             new() { Name = "Binance Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
 
             // Both loads of LimitRates errors, not working for this scanner
             new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
             new() { Name = "BitMart Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
+
+            new() { Name = "Bitvavo Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Bitvavo Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Futures},
 
             // The exchange does offer spot (241 instruments), but the BloFin.Net package (JKorf) only
             // implements the futures and account api - there is no spot client to talk to. Our source in
@@ -206,19 +213,13 @@ public class CryptoDatabase : IDisposable
             new() { Name = "Kucoin Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot },
             new() { Name = "Kucoin Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
 
-            // Mexc Futures: No api for futures (kind of a weird exchange?)
+            // Mexc Futures: market data only, the order endpoints of that exchange have been marked
+            // "(Under maintenance)" since 25-07-2022 - so it can be scanned but never traded on
             new() { Name = "Mexc Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Mexc Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Mexc Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Futures },
 
             new() { Name = "Okx Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot },
             new() { Name = "Okx Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Futures },
-
-            new() { Name = "Bitvavo Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Bitvavo Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Futures},
-
-            // You must have an account and register the api key, otherwise "error unauthorized"
-            new() { Name = "Alpaca", IsSupported = true, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Alpaca Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Futures},
         ];
     }
 

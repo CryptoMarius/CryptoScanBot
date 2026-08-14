@@ -11,7 +11,7 @@ namespace CryptoScanner.Core.Exchange.BloFin.Futures;
 
 public class Api : ExchangeBase
 {
-    [System.Diagnostics.CodeAnalysis.SetsRequiredMembers]
+    [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
     public Api()
     {
         //Asset = new Asset();
@@ -75,7 +75,7 @@ public class Api : ExchangeBase
         // for good - silently, because a null tradeParams also skips the error dump.
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return Task.FromResult<(bool result, TradeParams? tradeParams)>((false, null));
         }
 
@@ -136,6 +136,10 @@ public class Api : ExchangeBase
     {
         return new()
         {
+            // No Altrady: BloFin is not on their list of valid exchange codes at all
+            // https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
+            Altrady = null,
+            HyperTrader = null,
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,

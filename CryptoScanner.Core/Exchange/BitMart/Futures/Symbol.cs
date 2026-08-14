@@ -64,6 +64,9 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 // Track which symbols are still active, to deactivate the ones we no longer follow
                 SortedList<string, CryptoSymbol> activeSymbols = [];
+                // Scanner names of the instruments we skip below. Intersected with the accepted names
+                // after the loop, that gives the symbols whose name covers more than one instrument.
+                List<string> rejectedSymbols = [];
 
 
                 using (var transaction = database.BeginTransaction())
@@ -73,6 +76,22 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data)
                         {
+                            // Filter BEFORE IsSymbolAccepted, same reason as in Mexc Futures: that method
+                            // adopts the instrument name of whatever is passed in, and the continue below
+                            // would skip the database update that has to persist it.
+                            // The contract list has no settle asset, but the USD quoted contracts (21 of
+                            // the 1215 on 14-08-2026) are the coin margined ones and report their turnover
+                            // in the base currency, which the volume boundary cannot compare with the rest:
+                            // BTCUSD states 1848 against the 4 billion of BTCUSDT.
+                            if (symbolData.QuoteAsset.Equals("USD", StringComparison.OrdinalIgnoreCase))
+                            {
+#if DEBUG
+                                GlobalData.AddTextToLogTab($"{symbolData.Symbol} inverse contract, quoted in {symbolData.QuoteAsset}");
+#endif
+                                rejectedSymbols.Add(symbolData.BaseAsset.ToUpper() + symbolData.QuoteAsset.ToUpper());
+                                continue;
+                            }
+
                             SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
@@ -89,8 +108,17 @@ public class Symbol() : SymbolBase(), ISymbol
                                 // min, max en tick (in base amount)
                                 //if (symbolData.Base.PriceDecimals)
                                 //    symbol.QuantityTickSize = symbolData.LotSize.Value;
-                                symbol!.QuantityTickSize = symbolData.QuantityPrecision;
-                                //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
+                                // The quantity of a futures order is expressed in contracts, so the step
+                                // is the quantity precision times the base amount of one contract (as
+                                // Kucoin and Mexc do). ContractQuantity is 0.001 for BTCUSDT, so one
+                                // contract is 0.001 BTC and the bare QuantityPrecision (1 on every
+                                // contract) was a factor 1000 out.
+                                // Candle and SubscriptionKLineTicker read this field as well, to convert
+                                // the contract volume of a kline into a quote volume.
+                                symbol!.QuantityTickSize = symbolData.QuantityPrecision * symbolData.ContractQuantity;
+                                symbol.QuantityMinimum = symbolData.MinQuantity * symbolData.ContractQuantity;
+                                // MaxQuantity is filled, but a maximum has consequences for the Clamp
+                                // routine, which is why the other exchanges leave it alone as well.
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
                                 //symbol.QuoteValueMinimum = symbolInfo.LotSizeFilter?.MinOrderValue ?? 0;

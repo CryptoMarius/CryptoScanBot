@@ -76,7 +76,7 @@ public class Api : ExchangeBase
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false)
     {
-        // Controleer de limiten van de maximum en minimum bedrag en de quantity
+        // Check the maximum and minimum amount limits and the quantity
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
@@ -113,7 +113,7 @@ public class Api : ExchangeBase
 
     public override Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
-        // Order gegevens overnemen (enkel voor een eventuele error dump)
+        // Order details carried over (only for a possible error dump)
         TradeParams tradeParams = new()
         {
             Purpose = part.Purpose,
@@ -128,7 +128,7 @@ public class Api : ExchangeBase
             OrderId = step.OrderId,
             Order2Id = step.Order2Id,
         };
-        // Eigenlijk niet nodig
+        // Not really needed
         if (step.OrderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
 
@@ -156,6 +156,12 @@ public class Api : ExchangeBase
                 Execute = CryptoExternalUrlType.External,
                 Url = "https://www.tradingview.com/chart/?symbol=KUCOIN:{BASE}{QUOTE}.P&interval={interval}",
             },
+            ExchangeUrl = new()
+            {
+                // The instrument is named XBTUSDTM here, so base + quote is not enough
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.kucoin.com/futures/trade/{EXCHANGENAME}",
+            }
         };
     }
 }

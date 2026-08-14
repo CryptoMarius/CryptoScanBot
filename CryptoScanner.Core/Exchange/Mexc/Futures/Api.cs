@@ -1,12 +1,12 @@
-﻿using Coinbase.Net;
-using Coinbase.Net.Clients;
-
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Exchange.Coinbase.Spot;
+using Mexc.Net;
+using Mexc.Net.Clients;
+
+namespace CryptoScanner.Core.Exchange.Mexc.Futures;
 
 public class Api : ExchangeBase
 {
@@ -20,51 +20,47 @@ public class Api : ExchangeBase
         //Trade = new Trade();
     }
 
-
     public override IDisposable GetClient()
     {
-        return new CoinbaseRestClient();
+        return new MexcRestClient();
     }
 
     public override void ExchangeDefaults()
     {
-        // barely any USDT pairs (Coinbase trades USD), so the boundary falls back to the default
-        ExchangeOptions.SetDefaultOptions("Coinbase Spot", "USDT", 300, false, 4);
+        // 16551 million USDT over 986 contracts a day (14-08-2026), 73 contracts stay above the boundary.
+        // The candle limit is 2000: that is what the futures kline endpoint returns per call, whatever
+        // larger window we ask for (the spot side stops at 500).
+        // One symbol per subscription because the library only offers a single-symbol overload for the
+        // futures kline stream; 20 of those share one socket client.
+        ExchangeOptions.SetDefaultOptions("Mexc Futures", "USDT", 2000, true, 1, 20, KlineDelivery.TimerFlush, minimalVolume: 5_600_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default options for this exchange
-        CoinbaseRestClient.SetDefaultOptions(options =>
+        MexcRestClient.SetDefaultOptions(options =>
         {
             //options.OutputOriginalData = true;
-            //options.SpotOptions.AutoTimestamp = true;
-            //options.ReceiveWindow = TimeSpan.FromSeconds(15);
-            //options.Environment = CoinbaseEnvironment.Live;
-            options.RequestTimeout = TimeSpan.FromSeconds(80); // standard=20 seconds
-            //options.Environment = BybitEnvironment.Testnet;
-            //options.SpotOptions.RateLimiters = ?
+            options.ReceiveWindow = TimeSpan.FromSeconds(15);
+            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new CoinbaseCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = new MexcCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        CoinbaseSocketClient.SetDefaultOptions(options =>
+        MexcSocketClient.SetDefaultOptions(options =>
         {
             //options.AutoReconnect = true;
-            //options.Environment = CoinbaseEnvironment.Live;
-            options.RequestTimeout = TimeSpan.FromSeconds(80); // standard=20 seconds
+            options.RequestTimeout = TimeSpan.FromSeconds(60); // standard=20 seconds
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
             options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
-            //options.Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
-            //options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
 
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new CoinbaseCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = new MexcCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         //PriceTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         KLineTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
-        //UserTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+        // UserTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
 
-        CoinbaseExchange.RateLimiter.RateLimitTriggered += OnRateLimitTriggered;
+        MexcExchange.RateLimiter.RateLimitTriggered += OnRateLimitTriggered;
     }
 
 
@@ -73,13 +69,10 @@ public class Api : ExchangeBase
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false)
     {
-        // Same default as the exchanges that do implement this. Paper trading needs no exchange
-        // call at all, only a filled TradeParams so the caller can create the position step.
-        // Returning (false, null) meant no step was ever created and the position stayed Waiting
-        // for good - silently, because a null tradeParams also skips the error dump.
+        // Check the limits of the maximum and minimum amount and the quantity
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
+            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
             return Task.FromResult<(bool result, TradeParams? tradeParams)>((false, null));
         }
 
@@ -104,6 +97,10 @@ public class Api : ExchangeBase
             return Task.FromResult<(bool result, TradeParams? tradeParams)>((true, tradeParams));
         }
 
+        // Real trading cannot be built here at all: Mexc has had every futures order endpoint marked
+        // "(Under maintenance)" since 25-07-2022 - placing, cancelling and the trigger orders. Only
+        // the query endpoints answer, which is exactly enough for a scanner and nothing more. That is
+        // also why trading platforms state that Mexc has no futures.
         throw new Exception("PlaceOrder not implemented");
     }
 
@@ -131,6 +128,7 @@ public class Api : ExchangeBase
         if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
             return Task.FromResult<(bool succes, TradeParams? tradeParams)>((true, tradeParams));
 
+        // See the remark in PlaceOrder
         throw new Exception("Cancel not implemented");
     }
 
@@ -138,22 +136,19 @@ public class Api : ExchangeBase
     {
         return new()
         {
-            Altrady = new()
-            {
-                Code = "GDAX",
-                Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/GDAX_{QUOTE}_{BASE}:{interval}",
-            },
+            // Altrady does not offer Mexc futures, and cannot: the order endpoints of the exchange
+            // are closed, so there is nothing for a trading platform to connect to.
+            Altrady = null,
             HyperTrader = null,
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://www.tradingview.com/chart/?symbol=GDAX:{BASE}{QUOTE}&interval={interval}", // ?
+                Url = "https://www.tradingview.com/chart/?symbol=MEXC:{BASE}{QUOTE}.P&interval={interval}",
             },
             ExchangeUrl = new()
             {
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://coinbase.com/trade-spot/{BASE}-{QUOTE}", // ?
+                Url = "https://futures.mexc.com/exchange/{BASE}_{QUOTE}",
             }
         };
     }

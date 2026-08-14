@@ -1,13 +1,17 @@
 CryptoScanBot signal scanner for the following exchanges:
 - Binance Spot and Futures
 - Bitvavo Spot
+- BloFin Futures
 - Bybit Spot and Futures
 - Bybit EU Spot
-- HyperLiquid Futures
+- HyperLiquid Spot and Futures
 - Kraken Spot and Futures
 - Kucoin Spot and Futures
-- Mexc Spot 
+- Mexc Spot and Futures (futures has no api-order endpoints)
 - OKX Spot and Futures
+
+And, not a crypto exchange but plugged in as one so the same analyzers can run on US equities:
+- Alpaca (paper trading, an api key is mandatory even for market data)
 
 The Crypto scanner was initially only intended to generate oversold signals on the Binance exchange (because someone said something about DYOR and you shouldn't say that to a programmer). In the meantime, the application has been overhauled a number of times, split, merged the best points, improved, simplified, adapted for SBM signals and made multi-exchange.
 
@@ -15,7 +19,7 @@ The purpose of this application is to generate 3 types of signals (STOBB, SBM an
 
 In latest editions we also try to show dominant zones and FVG (see chart form).
 
-The application currently supports Binance and Bybit spot and Futures. Kucoin is still under investigation but is currently plagued by technical issues. The application is built in a mix of English and Dutch, because a number of tools have been combined (please indicate whether any texts are disturbing and/or should be adjusted), so apologies in advance for English crypto terms, for an explanation you have to be on the internet or ask in a crypto group what it means (but always do your own research first).
+The list at the top is the current state, all of those are switched on and scanning. A few more are in the source but switched off, because they cannot deliver what the scanner needs: BitMart floods the log with rate limit errors, Coinbase only streams 5m candles which is too coarse, BloFin has no spot client in the library we use, and the european Bybit entity lists no futures contracts at all. The application is built in a mix of English and Dutch, because a number of tools have been combined (please indicate whether any texts are disturbing and/or should be adjusted), so apologies in advance for English crypto terms, for an explanation you have to be on the internet or ask in a crypto group what it means (but always do your own research first).
 
 Furthermore: Very nice that you try this application, below is an explanation of what the application does, the installation, necessary settings and so on. I hope you enjoy trading, the communities and so on. Good luck in this special world!
 

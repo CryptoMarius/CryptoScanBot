@@ -32,11 +32,10 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.CandleLimit = 300;
-        ExchangeOptions.ExchangeName = "BloFin Spot";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 1;
-
+        // This exchange is excluded from the project (see CryptoScanner.Core.csproj) because the
+        // BloFin.Net package no longer has a SpotApi, so nothing below has been able to run since.
+        // no volume measured (exchange is switched off), so the boundary falls back to the default
+        ExchangeOptions.SetDefaultOptions("BloFin Spot", "USDT", 300, false, 1);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         BloFinRestClient.SetDefaultOptions(options =>
@@ -64,6 +63,7 @@ public class Api : ExchangeBase
         KLineTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
         //UserTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
 
+        BloFinExchange.RateLimiter.RateLimitTriggered += OnRateLimitTriggered;
     }
 
 
@@ -78,7 +78,7 @@ public class Api : ExchangeBase
         // for good - silently, because a null tradeParams also skips the error dump.
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return Task.FromResult<(bool result, TradeParams? tradeParams)>((false, null));
         }
 
@@ -134,4 +134,24 @@ public class Api : ExchangeBase
         throw new Exception("Cancel not implemented");
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+            // No Altrady: BloFin is not on their list of valid exchange codes at all
+            // https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
+            Altrady = null,
+            HyperTrader = null,
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=BLOFIN:{BASE}{QUOTE}&interval={interval}",
+            },
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.blofin.com/spot/{BASE}-{QUOTE}",
+            }
+        };
+    }
 }
