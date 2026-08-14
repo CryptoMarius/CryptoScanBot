@@ -80,6 +80,15 @@ public class SymbolBase()
 
     static internal bool IsSymbolAccepted(Model.CryptoExchange exchange, SymbolInfo info, IRestApiClient api, TradingMode mode, out CryptoSymbol? symbol)
     {
+        // Some exchanges publish instruments without a base and/or quote asset (Okx does this
+        // for instruments in the "preopen" state). Those would all end up with the same empty
+        // ScannerName, which makes the caller crash on a duplicate key in its symbol list.
+        if (string.IsNullOrWhiteSpace(info.Base) || string.IsNullOrWhiteSpace(info.Quote))
+        {
+            symbol = null;
+            return false;
+        }
+
         if (!exchange.SymbolListName.TryGetValue(info.ScannerName, out symbol))
         {
             var quoteData = GlobalData.AddQuoteData(info.Quote);
