@@ -105,7 +105,7 @@ public class CryptoDatabase : IDisposable
             using var transaction = connection.Connection.BeginTransaction();
             CryptoVersion databaseVersion = new()
             {
-                Version = Migration.CurrentDatabaseVersion,
+                Version = DatabaseMigration.CurrentDatabaseVersion,
             };
             connection.Connection.Insert(databaseVersion, transaction);
             transaction.Commit();
@@ -955,7 +955,7 @@ public class CryptoDatabase : IDisposable
         CreateTables(connection);
 
         // Indien noodzakelijk database upgraden
-        Migration.Execute(connection, Migration.CurrentDatabaseVersion);
+        DatabaseMigration.Execute(connection, DatabaseMigration.CurrentDatabaseVersion);
 
         // Tables are sometimes dropped
         CreateTables(connection);

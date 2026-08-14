@@ -3,7 +3,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanner.Core.Context;
 
-public class Migration
+public class DatabaseMigration
 {
     // Latest and greatest database version
     public readonly static int CurrentDatabaseVersion = 79;

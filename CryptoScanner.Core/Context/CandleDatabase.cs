@@ -190,6 +190,19 @@ public class CandleDatabase : IDisposable
             "  Name      TEXT NOT NULL UNIQUE" +
             ")");
 
+        // Provenance of the stored candles: the instrument id they were actually fetched with.
+        // A scanner name (BTCUSDT) does not identify an instrument on its own — an exchange can
+        // offer several instruments with the same base and quote (BTCUSDT_261225), rename one, or
+        // move it from spot to swap, and the candles of the one are worthless as the candles of the
+        // other. Recording it next to the candles makes the file self-describing, so the mismatch is
+        // caught on load instead of never. NULL means "written by a build that did not record it" —
+        // LoadSymbolIntervals treats that as unverified and refetches once, after which it is filled.
+        // Added with ALTER TABLE because CREATE TABLE IF NOT EXISTS leaves an existing table alone.
+        bool hasExchangeName = db.Connection.Query<string>("SELECT name FROM pragma_table_info('Symbol')")
+            .Any(x => x.Equals("ExchangeName", StringComparison.OrdinalIgnoreCase));
+        if (!hasExchangeName)
+            db.Connection.Execute("ALTER TABLE [Symbol] ADD COLUMN ExchangeName TEXT NULL");
+
         // Schema bookkeeping. Also holds the exchange name so a file copied into the wrong
         // folder cannot silently be read as a different exchange.
         db.Connection.Execute(
@@ -327,6 +340,31 @@ public class CandleDatabase : IDisposable
 
 
     /// <summary>
+    /// Record which exchange instrument the candles being written came from, in the caller's
+    /// transaction so the provenance can never be newer than the candles themselves. Read back by
+    /// <see cref="LoadSymbolIntervals"/>, which refetches everything when it no longer matches.
+    /// </summary>
+    private static void SaveSymbolInstrument(SqliteConnection connection, SqliteTransaction tx, int localSymbolId, CryptoSymbol symbol)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "UPDATE Symbol SET ExchangeName = $ExchangeName WHERE SymbolId = $SymbolId";
+
+        var pExchangeName = cmd.CreateParameter();
+        pExchangeName.ParameterName = "$ExchangeName";
+        pExchangeName.Value = string.IsNullOrEmpty(symbol.ExchangeName) ? (object)DBNull.Value : symbol.ExchangeName;
+        cmd.Parameters.Add(pExchangeName);
+
+        var pSymbol = cmd.CreateParameter();
+        pSymbol.ParameterName = "$SymbolId";
+        pSymbol.Value = localSymbolId;
+        cmd.Parameters.Add(pSymbol);
+
+        cmd.ExecuteNonQuery();
+    }
+
+
+    /// <summary>
     /// Upsert <see cref="CryptoSymbolInterval.LastCandleSynchronized"/> for one (symbol,
     /// interval) into the SymbolInterval table. Runs inside the caller's transaction
     /// so it commits atomically together with the candle inserts.
@@ -373,6 +411,22 @@ public class CandleDatabase : IDisposable
         if (symbol.Data.InstrumentChanged)
         {
             symbol.Data.InstrumentChanged = false;
+            return;
+        }
+
+        // Same conclusion, but reached from the file itself instead of from the symbol refresh. The
+        // recorded instrument is the one these candles were fetched with; when it does not match the
+        // instrument we would fetch from today, everything stored here belongs to something else.
+        // NULL means the candles predate this bookkeeping and their origin cannot be established —
+        // treated as a mismatch exactly once, because the next save records the current instrument.
+        string? storedInstrument = connection.QueryFirstOrDefault<string>(
+            "SELECT ExchangeName FROM Symbol WHERE SymbolId = $SymbolId", new { SymbolId = localSymbolId });
+        if (string.IsNullOrEmpty(storedInstrument)
+            || !storedInstrument.Equals(symbol.ExchangeName, StringComparison.OrdinalIgnoreCase))
+        {
+            GlobalData.AddTextToLogTab($"candles.db {symbol.Name}: stored candles come from " +
+                $"'{storedInstrument ?? "an unrecorded instrument"}' but this symbol now trades as " +
+                $"'{symbol.ExchangeName}' — fetching them again");
             return;
         }
 
@@ -825,6 +879,8 @@ public class CandleDatabase : IDisposable
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
             SaveSymbolInterval(connection, tx, localSymbolId, symbolInterval);
 
+        SaveSymbolInstrument(connection, tx, localSymbolId, symbol);
+
         tx.Commit();
 
     }
@@ -890,6 +946,8 @@ public class CandleDatabase : IDisposable
 
         // Persist LastCandleSynchronized for this single interval in the same transaction.
         SaveSymbolInterval(connection, tx, localSymbolId, symbolInterval);
+
+        SaveSymbolInstrument(connection, tx, localSymbolId, symbol);
 
         tx.Commit();
     }
