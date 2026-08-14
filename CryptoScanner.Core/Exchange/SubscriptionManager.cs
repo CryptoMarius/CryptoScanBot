@@ -46,12 +46,55 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
 
         if (Activator.CreateInstance(SubscriptionType, [ExchangeOptions]) is Subscription subscription)
         {
-            subscription.Name = "*";
+            subscription.BaseName = "*";
             subscription.TickerType = TickerType;
             subscriptionList.Add(subscription);
         }
 
         return subscriptionList;
+    }
+
+
+    // Running number for the subscription names, so a subscription added later never reuses the name
+    // of one that was removed earlier - that would make the log very hard to follow.
+    private int _nameCounter = 0;
+
+    private Subscription CreateSubscription(string quoteName)
+    {
+        if (Activator.CreateInstance(SubscriptionType, [ExchangeOptions]) is not Subscription subscription)
+            throw new InvalidOperationException($"Could not create a {SubscriptionType.Name}");
+
+        subscription.BaseName = $"{quoteName}#{_nameCounter++}";
+        subscription.TickerType = TickerType;
+        return subscription;
+    }
+
+
+    /// <summary>
+    /// The symbols that should be subscribed to right now, per quote. Both the initial layout and the
+    /// later synchronisation read from here, so they can never disagree about who belongs.
+    /// </summary>
+    private List<(CryptoQuoteData QuoteData, List<CryptoSymbol> Symbols)> GetWantedSymbolsPerQuote()
+    {
+        List<(CryptoQuoteData, List<CryptoSymbol>)> result = [];
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
+        {
+            if (!quoteData.FetchCandles || quoteData.SymbolList.Count == 0)
+                continue;
+
+            List<CryptoSymbol> symbols = [];
+            foreach (CryptoSymbol symbol in quoteData.SymbolList.ToList())
+            {
+                // Limit the amount of symbols (this has impact on the barometer)
+                if (ExchangeOptions.LimitAmountOfSymbols && !symbol.EnoughVolume() && !symbol.IsTrading())
+                    continue;
+                symbols.Add(symbol);
+            }
+
+            if (symbols.Count > 0)
+                result.Add((quoteData, symbols));
+        }
+        return result;
     }
 
 
@@ -62,61 +105,39 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     {
         // Splits de symbols
         symbolCount = 0;
-        int groupCount = 0;
         List<Subscription> subscriptionList = [];
-        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
+        foreach (var (quoteData, symbols) in GetWantedSymbolsPerQuote())
         {
-            if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
+            List<Subscription> subscriptions = [];
+
+            int x = symbols.Count;
+            while (x > 0)
             {
-                List<Subscription> subscriptions = [];
-                List<CryptoSymbol> symbols = [.. quoteData.SymbolList];
+                subscriptions.Add(CreateSubscription(quoteData.Name));
+                x -= ExchangeOptions.SymbolLimitPerSubscription;
+            }
 
-                // Limit the amount of symbols (this has impact on the barometer)
-                if (ExchangeOptions.LimitAmountOfSymbols)
-                {
-                    foreach (var symbol in symbols.ToList())
-                    {
-                        if (!symbol.EnoughVolume() && !symbol.IsTrading())
-                            symbols.Remove(symbol);
-                    }
-                }
+            // Divide the symbols evenly
+            List<List<CryptoSymbol>> buckets = [];
+            foreach (var _ in subscriptions)
+                buckets.Add([]);
 
+            x = 0;
+            foreach (CryptoSymbol symbol in symbols)
+            {
+                buckets[x].Add(symbol);
 
-                int x = symbols.Count;
-                while (x > 0)
-                {
-                    if (Activator.CreateInstance(SubscriptionType, [ExchangeOptions]) is Subscription subscription)
-                    {
-                        subscription.Name = $"{quoteData.Name}#{groupCount}";
-                        subscription.TickerType = TickerType;
-                        subscriptions.Add(subscription);
-                        x -= ExchangeOptions.SymbolLimitPerSubscription;
-                        groupCount++;
-                    }
-                }
+                x++;
+                if (x >= subscriptions.Count)
+                    x = 0;
+                symbolCount++;
+            }
 
-                // Divide the symbols evenly
-                x = 0;
-                foreach (CryptoSymbol symbol in symbols)
-                {
-                    var subscription = subscriptions[x];
-                    subscription.SymbolList.Add(symbol);
-                    subscription.Symbols.Add(symbol.Name);
-                    subscription.SymbolByExchangeName[symbol.ExchangeName] = symbol;
-
-                    x++;
-                    if (x >= subscriptions.Count)
-                        x = 0;
-                    symbolCount++;
-                }
-
-                // kan gecombineerd worden ^^
-                foreach (var subscription in subscriptions)
-                {
-                    subscriptionList.Add(subscription);
-                    subscription.Name += $" ({subscription.SymbolList.Count})";
-                    subscription.SymbolOverview = string.Join(',', subscription.Symbols);
-                }
+            // kan gecombineerd worden ^^
+            for (int i = 0; i < subscriptions.Count; i++)
+            {
+                subscriptions[i].SetSymbols(buckets[i]);
+                subscriptionList.Add(subscriptions[i]);
             }
         }
         return subscriptionList;
@@ -394,6 +415,174 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
             GlobalData.ApplicationStatus = Enums.CryptoApplicationStatus.Running;
 
     }
+
+    /// <summary>
+    /// Bring the subscribed symbols back in line with the ones that qualify right now. The layout is
+    /// decided once in StartAsync, but the symbol list moves: a coin can pass the volume threshold hours
+    /// later, or drop below it. Without this, such a symbol never got a subscription and had to lean on
+    /// the hourly REST catch-up for its 1m candles - which hit exactly the coins that just became
+    /// interesting because their volume spiked.
+    ///
+    /// Call it after the volumes have been refreshed and the candles fetched, so a symbol that is added
+    /// already has its history. Does nothing at all when nothing changed.
+    /// </summary>
+    public virtual async Task SynchronizeSymbolsAsync()
+    {
+        if (!Enabled || TickerType == CryptoTickerType.user || SubscriptionBundleList.Count == 0)
+            return;
+
+        // What we serve now, and what we should be serving
+        Dictionary<string, Subscription> currentBySymbol = [];
+        foreach (var bundle in SubscriptionBundleList)
+        {
+            foreach (var subscription in bundle.SubscriptionList)
+            {
+                foreach (var symbol in subscription.SymbolList)
+                    currentBySymbol[symbol.Name] = subscription;
+            }
+        }
+
+        List<CryptoSymbol> added = [];
+        List<CryptoSymbol> removed = [];
+        HashSet<string> wantedNames = [];
+        // Subscriptions that need to be resubscribed because their symbol set changed
+        Dictionary<Subscription, List<CryptoSymbol>> newContent = [];
+
+        foreach (var (quoteData, symbols) in GetWantedSymbolsPerQuote())
+        {
+            foreach (CryptoSymbol symbol in symbols)
+            {
+                wantedNames.Add(symbol.Name);
+                if (!currentBySymbol.ContainsKey(symbol.Name))
+                    added.Add(symbol);
+            }
+        }
+
+        foreach (var entry in currentBySymbol)
+        {
+            if (!wantedNames.Contains(entry.Key))
+            {
+                CryptoSymbol? symbol = entry.Value.SymbolList.Find(x => x.Name == entry.Key);
+                if (symbol != null)
+                    removed.Add(symbol);
+            }
+        }
+
+        if (added.Count == 0 && removed.Count == 0)
+            return;
+
+        // Take the symbols out first, that frees room for the new ones
+        foreach (CryptoSymbol symbol in removed)
+        {
+            Subscription subscription = currentBySymbol[symbol.Name];
+            List<CryptoSymbol> content = ContentOf(newContent, subscription);
+            content.RemoveAll(x => x.Name == symbol.Name);
+        }
+
+        foreach (CryptoSymbol symbol in added)
+        {
+            Subscription? target = FindSubscriptionWithRoom(symbol, newContent);
+            if (target == null)
+            {
+                // Everything is full, add a subscription and place it in a bundle with room
+                target = CreateSubscription(symbol.QuoteData.Name);
+                SubscriptionBundle bundle = SubscriptionBundleList.Find(x => x.SubscriptionList.Count < ExchangeOptions.SubscriptionsPerBundle)
+                    ?? AddBundle();
+                target.SubscriptionBundle = bundle;
+                bundle.SubscriptionList.Add(target);
+            }
+            ContentOf(newContent, target).Add(symbol);
+        }
+
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} symbols changed: " +
+            $"{added.Count} added, {removed.Count} removed, {newContent.Count} subscriptions affected");
+        if (added.Count > 0)
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} added: {string.Join(',', added.Select(x => x.Name))}");
+        if (removed.Count > 0)
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} removed: {string.Join(',', removed.Select(x => x.Name))}");
+
+        // Stop, rewrite, start again. In that order: the exchange still knows the old symbol set until
+        // we resubscribe, and the socket callback must not read the lookup while it is being replaced.
+        List<Task> taskList = [];
+        foreach (var entry in newContent)
+        {
+            taskList.Add(Task.Run(entry.Key.StopAsync));
+        }
+        await Task.WhenAll(taskList).ConfigureAwait(false);
+
+        List<Subscription> emptied = [];
+        foreach (var entry in newContent)
+        {
+            entry.Key.SetSymbols(entry.Value);
+            if (entry.Value.Count == 0)
+                emptied.Add(entry.Key);
+        }
+
+        // Drop the subscriptions that have no symbols left, and the bundles that ran out of subscriptions
+        foreach (Subscription subscription in emptied)
+        {
+            subscription.SubscriptionBundle?.SubscriptionList.Remove(subscription);
+            subscription.SubscriptionBundle = null;
+        }
+        SubscriptionBundleList.RemoveAll(x => x.SubscriptionList.Count == 0);
+
+        taskList.Clear();
+        foreach (var entry in newContent)
+        {
+            if (entry.Value.Count > 0)
+                taskList.Add(Task.Run(entry.Key.StartAsync));
+        }
+        await Task.WhenAll(taskList).ConfigureAwait(false);
+
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} now serving " +
+            $"{currentBySymbol.Count - removed.Count + added.Count} symbols over {SubscriptionBundleList.Count} bundles");
+    }
+
+
+    /// <summary>
+    /// The symbols a subscription will serve after this synchronisation, starting from what it serves now.
+    /// </summary>
+    private static List<CryptoSymbol> ContentOf(Dictionary<Subscription, List<CryptoSymbol>> newContent, Subscription subscription)
+    {
+        if (!newContent.TryGetValue(subscription, out List<CryptoSymbol>? content))
+        {
+            content = [.. subscription.SymbolList];
+            newContent[subscription] = content;
+        }
+        return content;
+    }
+
+
+    /// <summary>
+    /// An existing subscription of the same quote that still has room for one more symbol.
+    /// </summary>
+    private Subscription? FindSubscriptionWithRoom(CryptoSymbol symbol, Dictionary<Subscription, List<CryptoSymbol>> newContent)
+    {
+        foreach (var bundle in SubscriptionBundleList)
+        {
+            foreach (var subscription in bundle.SubscriptionList)
+            {
+                if (!subscription.BaseName.StartsWith(symbol.QuoteData.Name + "#", StringComparison.Ordinal))
+                    continue;
+
+                int count = newContent.TryGetValue(subscription, out List<CryptoSymbol>? content)
+                    ? content.Count
+                    : subscription.SymbolList.Count;
+                if (count < ExchangeOptions.SymbolLimitPerSubscription)
+                    return subscription;
+            }
+        }
+        return null;
+    }
+
+
+    private SubscriptionBundle AddBundle()
+    {
+        SubscriptionBundle bundle = new();
+        SubscriptionBundleList.Add(bundle);
+        return bundle;
+    }
+
 
     public void DumpSubscriptionInfo()
     {

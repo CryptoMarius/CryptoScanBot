@@ -48,6 +48,27 @@ public class CandleBase(ExchangeBase api)
     }
 
 
+    /// <summary>
+    /// Re-evaluate the "enough volume" decision for every symbol of the active exchange. Call it once
+    /// per refresh cycle, right after GetSymbolsAsync refreshed the 24 hour volumes and before anything
+    /// that reads EnoughVolume() - the subscription synchronisation and the candle fetch below have to
+    /// agree on who qualifies, otherwise one of them works on the answer of the previous cycle.
+    /// Calling it twice in the same cycle is harmless, the same volume gives the same answer.
+    /// </summary>
+    public static void UpdateVolumeDecisions()
+    {
+        if (!GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+            return;
+
+        foreach (var symbol in exchange.SymbolListName.Values)
+        {
+            if (symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData.FetchCandles)
+                continue;
+            symbol.UpdateEnoughVolume();
+        }
+    }
+
+
     public virtual async Task GetCandlesForAllSymbolsAndIntervalsAsync()
     {
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
@@ -59,17 +80,29 @@ public class CandleBase(ExchangeBase api)
                 await GetCandlesSemaphore.WaitAsync();
                 try
                 {
-                    GlobalData.SetCandleTimerEnable(false);
+                    // The semaphore above already prevents a second fetch from running halfway through this
+                    // one, so there is no need to disable the timer as well. Switching the timer off and on
+                    // restarted its countdown at the end of every run, which pushed the effective refresh
+                    // period well past the configured interval.
+                    //GlobalData.SetCandleTimerEnable(false);
                     //GlobalData.AddTextToLogTab("");
                     //GlobalData.AddTextToLogTab("Ophalen " + exchange.Name);
 
                     // Bij het opstarten is deze (vanuit de LoadData) reeds uitgevoerd
-                    if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Initializing)
-                        await Api.Symbol.GetSymbolsAsync();
+                    // Every caller (the hourly timer in ScannerSession and both refresh commands) already
+                    // calls GetSymbolsAsync itself right before this method, and during startup ThreadLoadData
+                    // does the same. Calling it again here fetched the ticker and instrument definitions of the
+                    // exchange a second time per cycle, which also made every error appear twice in the log.
+                    //if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Initializing)
+                    //    await Api.Symbol.GetSymbolsAsync();
 
                     // TODO: Niet alle symbols zijn actief
                     GlobalData.AddTextToLogTab($"{exchange.Name} symbols={exchange.SymbolListName.Values.Count}");
 
+
+                    // Safety net for callers that did not do this themselves (startup). Harmless when it
+                    // already ran: the same volume gives the same answer a second time.
+                    UpdateVolumeDecisions();
 
                     Queue<CryptoSymbol> queue = new();
                     foreach (var symbol in exchange.SymbolListName.Values)
@@ -142,7 +175,7 @@ public class CandleBase(ExchangeBase api)
                 finally
                 {
                     // Enabled analysing
-                    GlobalData.SetCandleTimerEnable(true);
+                    //GlobalData.SetCandleTimerEnable(true);
 
                     GetCandlesSemaphore.Release();
                 }

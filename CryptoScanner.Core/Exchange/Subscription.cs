@@ -45,9 +45,16 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     public int ConnectionLostCount = 0;
     public bool ErrorDuringStartup = false;
 
-    // Name of this subscription, for example "USDT#0 (50)" - the quote, a sequence number and the
-    // number of symbols it serves. The SubscriptionBundle it lives in has no name of its own.
-    public string Name = "";
+    // Fixed part of the name, the quote plus a sequence number ("USDT#0"). The SubscriptionBundle it
+    // lives in has no name of its own.
+    public string BaseName = "";
+
+    /// <summary>
+    /// Name of this subscription including the number of symbols it currently serves ("USDT#0 (50)").
+    /// Derived instead of stored so it stays correct after symbols are added or removed.
+    /// </summary>
+    public string Name => SymbolList.Count > 0 ? $"{BaseName} ({SymbolList.Count})" : BaseName;
+
     internal CryptoTickerType TickerType;
     public SubscriptionBundle? SubscriptionBundle;
     internal UpdateSubscription? _subscription;
@@ -58,6 +65,27 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     public List<string> Symbols = [];
     public List<CryptoSymbol> SymbolList = [];
     public string SymbolOverview = "";
+
+    /// <summary>
+    /// Replace the set of symbols this subscription serves. Only call it while the subscription is
+    /// stopped: the socket callback reads SymbolByExchangeName, and the exchange still knows the old
+    /// set until we subscribe again. The lookup is swapped as a whole for that same reason.
+    /// </summary>
+    public void SetSymbols(List<CryptoSymbol> symbols)
+    {
+        Dictionary<string, CryptoSymbol> lookup = [];
+        List<string> names = [];
+        foreach (var symbol in symbols)
+        {
+            lookup[symbol.ExchangeName] = symbol;
+            names.Add(symbol.Name);
+        }
+
+        SymbolList = symbols;
+        Symbols = names;
+        SymbolByExchangeName = lookup;
+        SymbolOverview = string.Join(',', names);
+    }
 
     // Lookup from exchange symbol name to CryptoSymbol — avoids the global exchange-dictionary
     // lookup in socket callbacks. Filled in SubscriptionManager.CreateTheSubscriptions right next to

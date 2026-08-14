@@ -537,12 +537,22 @@ public class ScannerSession : IScannerSession
 
                 await api.Symbol.GetSymbolsAsync();
 
+                // The volume decision for this whole cycle is taken here, right after the volumes were
+                // refreshed, so the synchronisation and the candle fetch below agree on who qualifies.
+                CandleBase.UpdateVolumeDecisions();
+
                 if (ExchangeBase.KLineTicker != null)
                     await ExchangeBase.KLineTicker.CheckSubscriptions(); // herstarten van ticker indien errors
                 //if (ExchangeBase.PriceTicker != null)
                 //    await ExchangeBase.PriceTicker.CheckSubscriptions(); // herstarten van ticker indien errors
                 //if (ExchangeBase.UserTicker != null)
                 //    await ExchangeBase.UserTicker.CheckSubscriptions(); // herstarten van ticker indien errors
+
+                // Subscribe BEFORE fetching, so the live 1m stream and the REST catch-up overlap. The
+                // other way around leaves a gap for every minute boundary that passes in between, and
+                // that candle only arrives an hour later with the next catch-up.
+                if (ExchangeBase.KLineTicker != null)
+                    await ExchangeBase.KLineTicker.SynchronizeSymbolsAsync();
 
                 await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
             }
