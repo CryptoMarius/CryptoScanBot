@@ -173,14 +173,21 @@ public class CryptoDatabase : IDisposable
             new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
             new() { Name = "BitMart Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
 
-            // BloFin Spot is not implemented
+            // The exchange does offer spot (241 instruments), but the BloFin.Net package (JKorf) only
+            // implements the futures and account api - there is no spot client to talk to. Our source in
+            // Exchange\BloFin\Spot was written against the SpotApi of an older package version and no
+            // longer compiles, which is why it is excluded from the project.
             new() { Name = "BloFin Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Spot },
             new() { Name = "BloFin Futures", IsSupported = true, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Futures },
 
+            // Bybit global
             new() { Name = "Bybit Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Spot },
             new() { Name = "Bybit Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Futures },
 
-            // Bybit EU Futures has only 1 symbol
+            // Bybit EU (the MiCA regulated european entity, api.bybit.eu) is a spot only exchange:
+            // instruments-info returns 132 spot instruments (111 USDC, 17 EUR, 4 PLN) and an empty
+            // list for linear, inverse and option (checked 14-08-2026). So there is nothing to
+            // subscribe to on the futures side, this is not a boundary or a filter problem.
             new() { Name = "Bybit EU Spot", IsSupported = true, ExchangeType = CryptoExchangeType.BybitEu, TradingType=CryptoTradingType.Spot },
             new() { Name = "Bybit EU Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BybitEu, TradingType=CryptoTradingType.Futures },
 

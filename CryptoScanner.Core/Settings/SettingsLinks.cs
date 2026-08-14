@@ -46,7 +46,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 
         Remove("Coinbase");
         this.TryAdd("Coinbase Spot", Exchange.Coinbase.Spot.Api.GetExchangeLinks());
-        this.TryAdd("Bybit EU Futures", Exchange.BybitEu.Futures.Api.GetExchangeLinks());
+        // (there is no Coinbase.Futures api, this line used to be a copy of the Bybit EU Futures one)
 
         Remove("HyperLiquid");
         this.TryAdd("HyperLiquid Spot", Exchange.HyperLiquid.Spot.Api.GetExchangeLinks());

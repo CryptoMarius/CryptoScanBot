@@ -133,7 +133,8 @@ public class CandleDatabaseInstrumentTests : TestBase
         {
             candleDb.Open();
             candleDb.Connection.Execute(
-                "UPDATE Symbol SET ExchangeName = NULL WHERE Name = $Name", new { symbol.Name });
+                "UPDATE SymbolInterval SET ExchangeName = NULL " +
+                "WHERE SymbolId IN (SELECT SymbolId FROM Symbol WHERE Name = $Name)", new { symbol.Name });
         }
 
         Load(symbol, OriginalInstrument);
