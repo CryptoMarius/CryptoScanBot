@@ -436,18 +436,33 @@ public class ScannerSession : IScannerSession
         //}
     }
 
+    // Number of consecutive checks that found a stalled ticker. Restarting the whole scanner session is
+    // a heavy hammer for a single silent subscription, so the first attempt only restarts the affected
+    // subscriptions and the session restart is kept as the fallback.
+    private int _dataStreamProblemCount = 0;
+
     private void TimerCheckDataStream_Tick(object? sender, EventArgs? e)
     {
         if (ExchangeBase.KLineTicker != null)
         {
             if (ExchangeBase.KLineTicker.NeedsRestart())
             {
-                GlobalData.AddTextToLogTab($"One of {ExchangeBase.KLineTicker.TickerType} tickers has stopped");
+                _dataStreamProblemCount++;
+                GlobalData.AddTextToLogTab($"One of {ExchangeBase.KLineTicker.TickerType} tickers has stopped (check {_dataStreamProblemCount})");
 
-                // Schedule a restart of the streams in 1m max
+                // First try to restart only the subscriptions that reported a problem
+                if (_dataStreamProblemCount < 2)
+                {
+                    Task.Run(async () => await ExchangeBase.KLineTicker.CheckTickers());
+                    return;
+                }
+
+                // That did not help, schedule a restart of the streams in 1m max
                 if (!TimerRestartStreams.Enabled || TimerRestartStreams.Interval > 60 * 1000)
                     TimerRestartStreams.InitTimerInterval(1 * 60);
             }
+            else
+                _dataStreamProblemCount = 0;
         }
     }
 
@@ -493,26 +508,53 @@ public class ScannerSession : IScannerSession
     }
 
 
+    // Guards against a second refresh cycle starting while the previous one is still busy. Replaces
+    // the old approach of switching the timer off during the refresh, which also restarted its
+    // countdown afterwards and stretched the effective period far beyond the configured interval.
+    private int _getExchangeInfoAndCandlesRunning = 0;
+
     private void TimerGetExchangeInfoAndCandles_Tick(object? sender, EventArgs? e)
     {
         // Ophalen van candle candles bijwerken
-        TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
+        // Reschedule before doing any work so the next run is exactly one interval away from this one,
+        // regardless of how long the refresh itself takes.
+        int intervalMinutes = GlobalData.Settings.General.GetCandleInterval;
+        TimerGetExchangeInfoAndCandles.InitTimerInterval(intervalMinutes * 60);
+        GlobalData.AddTextToLogTab($"Next refresh of exchange info and candles at {GlobalData.Clock.UtcNow.AddMinutes(intervalMinutes).ToLocalTime():HH:mm:ss}");
+
+        if (Interlocked.CompareExchange(ref _getExchangeInfoAndCandlesRunning, 1, 0) != 0)
+        {
+            GlobalData.AddTextToLogTab("Refresh of exchange info and candles is still running, skipping this cycle");
+            return;
+        }
 
         // restart tickers if errors
         Task.Run(async () =>
         {
-            var api = GlobalData.ActiveExchange!.GetApiInstance();
+            try
+            {
+                var api = GlobalData.ActiveExchange!.GetApiInstance();
 
-            await api.Symbol.GetSymbolsAsync();
+                await api.Symbol.GetSymbolsAsync();
 
-            if (ExchangeBase.KLineTicker != null)
-                await ExchangeBase.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
-            //if (ExchangeBase.PriceTicker != null)
-            //    await ExchangeBase.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
-            //if (ExchangeBase.UserTicker != null)
-            //    await ExchangeBase.UserTicker.CheckTickers(); // herstarten van ticker indien errors
+                if (ExchangeBase.KLineTicker != null)
+                    await ExchangeBase.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
+                //if (ExchangeBase.PriceTicker != null)
+                //    await ExchangeBase.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
+                //if (ExchangeBase.UserTicker != null)
+                //    await ExchangeBase.UserTicker.CheckTickers(); // herstarten van ticker indien errors
 
-            await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
+                await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "TimerGetExchangeInfoAndCandles");
+                GlobalData.AddTextToLogTab("error refreshing exchange info and candles " + error.ToString());
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _getExchangeInfoAndCandlesRunning, 0);
+            }
         });
         //_ = ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
         //_ = ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is
