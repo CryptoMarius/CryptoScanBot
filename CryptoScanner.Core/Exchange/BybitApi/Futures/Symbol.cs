@@ -73,6 +73,8 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 // Om achteraf de niet aangeboden munten te deactiveren
                 SortedList<string, CryptoSymbol> activeSymbols = [];
+                // Scanner names of the instruments we skip below, see RegisterAmbiguousSymbolNames
+                List<string> rejectedSymbols = [];
                 using (var transaction = database.BeginTransaction())
                 {
                     List<CryptoSymbol> cache = [];
@@ -92,6 +94,7 @@ public class Symbol() : SymbolBase(), ISymbol
 #if DEBUG
                                 //GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractTypeV5.LinearPerpetual}");
 #endif
+                                rejectedSymbols.Add(symbolData.BaseAsset.ToUpper() + symbolData.QuoteAsset.ToUpper());
                                 continue;
                             }
 
@@ -177,6 +180,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 activeSymbols.Add(symbol.Name, symbol);
                             }
                         }
+
+                        // Which scanner names cover more than one instrument (BTC, ETH, DOGE, HYPE, MNT, ...)
+                        RegisterAmbiguousSymbolNames(exchange, rejectedSymbols, activeSymbols.Keys);
 
                         // Deactiveer de munten die niet meer voorkomen
                         int deactivated = 0;

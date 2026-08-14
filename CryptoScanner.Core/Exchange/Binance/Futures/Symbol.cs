@@ -58,6 +58,9 @@ public class Symbol() : SymbolBase(), ISymbol
                 // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren
                 List<string> reportSymbols = [];
                 SortedList<string, CryptoSymbol> activeSymbols = [];
+                // Scanner names of the instruments we skip below. Intersected with the accepted names
+                // after the loop, that gives the symbols whose name covers more than one instrument.
+                List<string> rejectedSymbols = [];
                 using (var transaction = database.BeginTransaction())
                 {
                     List<CryptoSymbol> cache = [];
@@ -79,6 +82,7 @@ public class Symbol() : SymbolBase(), ISymbol
 #if DEBUG
                                 //GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractType.Perpetual}");
 #endif
+                                rejectedSymbols.Add(symbolData.BaseAsset.ToUpper() + symbolData.QuoteAsset.ToUpper());
                                 continue;
                             }
 
@@ -87,6 +91,7 @@ public class Symbol() : SymbolBase(), ISymbol
 #if DEBUG
                                 //GlobalData.AddTextToLogTab($"{info.ExchangeName} UnderlyingSubType != {symbolData.UnderlyingSubType}");
 #endif
+                                rejectedSymbols.Add(symbolData.BaseAsset.ToUpper() + symbolData.QuoteAsset.ToUpper());
                                 continue;
                             }
 
@@ -138,6 +143,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 activeSymbols.Add(symbol.Name, symbol);
                             }
                         }
+
+                        // Which scanner names cover more than one instrument (BTCUSDT and ETHUSDT here)
+                        RegisterAmbiguousSymbolNames(exchange, rejectedSymbols, activeSymbols.Keys);
 
                         // Deactiveer de munten die niet meer voorkomen
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
