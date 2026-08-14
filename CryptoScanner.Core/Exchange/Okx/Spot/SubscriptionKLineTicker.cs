@@ -53,7 +53,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         // OKX expects the hyphenated instrument id (for example "BASED-USDT"), not the scanner name ("BASEDUSDT").
         // Use ExchangeName so it matches both the REST candle fetch and the SymbolByExchangeName lookup below.
-        var subscriptionResult = await api.ExchangeData.SubscribeToKlineUpdatesAsync(string.Join(",", SymbolList.Select(s => s.ExchangeName)), KlineInterval.OneMinute, data =>
+        // Pass the names as a list: the overload taking a single string treats a comma separated text as one
+        // instrument id, which silently breaks as soon as a subscription serves more than one symbol.
+        var subscriptionResult = await api.ExchangeData.SubscribeToKlineUpdatesAsync(SymbolList.Select(s => s.ExchangeName).ToList(), KlineInterval.OneMinute, data =>
         {
             OKXKline kline = data.Data;
             {

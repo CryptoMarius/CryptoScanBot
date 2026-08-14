@@ -40,7 +40,9 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CandleTime maxTime = fetchFrom + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
 
         //string symbolName = OkxExchange.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
-        string symbolName = symbol.Base + '-' + symbol.Quote;
+        // ExchangeName holds the instrument id ("BCH-USDT-SWAP"). Building it from base and quote would
+        // request the spot instrument instead of the perpetual swap.
+        string symbolName = symbol.ExchangeName;
     Again:
         var result = await client.UnifiedApi.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);

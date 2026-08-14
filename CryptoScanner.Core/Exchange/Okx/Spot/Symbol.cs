@@ -70,6 +70,13 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data)
                         {
+                            // Only take instruments that are actually tradable (skip PreTrading, PostTrading or Halt).
+                            // Instruments in the "preopen" state have almost none of their fields filled in (base and
+                            // quote asset are empty), which would give them an empty scanner name. Symbols that were
+                            // live before are deactivated further down because they are missing from activeSymbols.
+                            if (symbolData.State != InstrumentState.Live)
+                                continue;
+
                             SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
@@ -112,10 +119,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                 else
                                     symbol.Volume = 0;
 
-                                if (symbolData.State == InstrumentState.Live)
-                                    symbol.Status = 1;
-                                else
-                                    symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+                                // Only live instruments reach this point
+                                symbol.Status = 1;
 
                                 if (symbol.Id == 0)
                                 {
