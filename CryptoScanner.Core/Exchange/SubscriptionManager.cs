@@ -331,6 +331,13 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                     continue;
                 }
 
+                // A market that is closed delivers nothing, and both checks below would read that as a
+                // broken subscription: the silence check because nothing came in, and the ticker count
+                // check because the count has not moved. Only the stock broker ever says no here; every
+                // crypto exchange trades around the clock.
+                if (!subscription.IsExpectingData)
+                    continue;
+
                 // Nothing received for a while? Then restart it. This also covers a subscription that never
                 // delivered a single candle, which the TickerCount comparison below cannot detect because it
                 // only looks at subscriptions that were already running. Only for the kline subscription: a user subscription

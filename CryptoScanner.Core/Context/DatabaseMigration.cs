@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 81;
+    public readonly static int CurrentDatabaseVersion = 82;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1656,6 +1656,25 @@ public class DatabaseMigration
         // count instead of an amount in the quote currency. Empty step: only the version bump is
         // needed, so that UpdateExchanges() below picks up the new IsSupported for existing databases.
         if (CurrentVersion > version.Version && version.Version == 80)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 14-08-2026 Alpaca activated. It was added as an experiment and never worked: every kline
+        // group opened a data stream of its own while the account is allowed one, the silence check
+        // restarted those streams every four minutes of the seventeen hours a day the stock market is
+        // closed, a period without bars (a weekend) stopped the candle history for good, the history
+        // was not corrected for stock splits and the volume was a number of shares where the rest of
+        // the scanner works in the quote currency. Empty step: only the version bump is needed, so that
+        // UpdateExchanges() below picks up the new IsSupported for existing databases.
+        if (CurrentVersion > version.Version && version.Version == 81)
         {
             using var transaction = database.BeginTransaction();
 

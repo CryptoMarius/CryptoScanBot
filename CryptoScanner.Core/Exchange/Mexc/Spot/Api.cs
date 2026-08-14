@@ -92,16 +92,15 @@ public class Api : ExchangeBase
 
 
     // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderStatus LocalOrderStatus(Bybit.Net.Enums.OrderStatus orderStatus)
+    public static CryptoOrderStatus LocalOrderStatus(OrderStatus orderStatus)
     {
         CryptoOrderStatus localOrderStatus = orderStatus switch
         {
-            Bybit.Net.Enums.OrderStatus.New => CryptoOrderStatus.New,
-            Bybit.Net.Enums.OrderStatus.Filled => CryptoOrderStatus.Filled,
-            Bybit.Net.Enums.OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
-            Bybit.Net.Enums.OrderStatus.PartiallyFilledCanceled => CryptoOrderStatus.PartiallyAndClosed, // niet alles kon omgezet worden, iets minder gekregen
-            //Bybit.Net.Enums.OrderStatus.Expired => CryptoOrderStatus.Expired,
-            Bybit.Net.Enums.OrderStatus.Cancelled => CryptoOrderStatus.Canceled,
+            OrderStatus.New => CryptoOrderStatus.New,
+            OrderStatus.Filled => CryptoOrderStatus.Filled,
+            OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
+            OrderStatus.PartiallyCanceled => CryptoOrderStatus.PartiallyAndClosed, // niet alles kon omgezet worden, iets minder gekregen
+            OrderStatus.Canceled => CryptoOrderStatus.Canceled,
             _ => throw new Exception("Niet ondersteunde orderstatus"),
         };
 

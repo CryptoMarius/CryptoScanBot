@@ -6,20 +6,45 @@ using CryptoScanner.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
+// Both the SDK and the scanner have an IAsset, and they mean something completely different
+using AlpacaAsset = Alpaca.Markets.IAsset;
+
 namespace CryptoScanner.Core.Exchange.Alpaca.Spot;
 
 public class Symbol() : SymbolBase(), ISymbol
 {
+    /// <summary>
+    /// A stock the scanner is considering, with everything needed to rank it against the others.
+    /// </summary>
+    private class Candidate
+    {
+        public required AlpacaAsset Asset { get; init; }
+        public decimal? LastPrice { get; set; }
+        public double QuoteVolume { get; set; }
+    }
+
+
     public async Task GetSymbolsAsync()
     {
         if (!GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             return;
 
+        // Alpaca needs a key for its market data as well, not just for trading. Say so once instead of
+        // letting the SDK throw somewhere further down with a message that explains nothing.
+        if (GlobalData.TradingApi.Key == "" || GlobalData.TradingApi.Secret == "")
+        {
+            GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} needs an API key and secret " +
+                $"(register a free account at alpaca.markets and enter the paper trading key)");
+            return;
+        }
+
         try
         {
-            // ListAssetsAsync is on IAlpacaTradingClient, not IAlpacaDataClient
-            using IAlpacaTradingClient tradingClient = Environments.Paper.GetAlpacaTradingClient(
-                new SecretKey(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret));
+            SecretKey secretKey = new(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+
+            // ListAssetsAsync is on IAlpacaTradingClient, the market data is on IAlpacaDataClient
+            using IAlpacaTradingClient tradingClient = Environments.Paper.GetAlpacaTradingClient(secretKey);
+            using IAlpacaDataClient dataClient = Environments.Paper.GetAlpacaDataClient(secretKey);
 
             using CryptoDatabase database = new();
             database.Open();
@@ -33,14 +58,32 @@ public class Symbol() : SymbolBase(), ISymbol
                 AssetStatus = AssetStatus.Active,
                 AssetClass = AssetClass.UsEquity,
             };
-            var assets = await tradingClient.ListAssetsAsync(assetsRequest);
+            var assets = await tradingClient.ListAssetsAsync(assetsRequest, ExchangeBase.CancellationToken);
 
             if (assets == null)
                 throw new ExchangeException("No asset data received");
             SaveExchangeInfo(assets, "symbols.json");
 
+            Dictionary<string, AlpacaAsset> tradable = [];
+            foreach (var asset in assets)
+            {
+                if (asset.IsTradable)
+                    tradable[asset.Symbol] = asset;
+            }
+            GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} {tradable.Count} tradable assets");
 
-            // Track which symbols are still active, to deactivate delisted ones
+
+            // Which of those do we follow? (the free plan cannot carry all of them)
+            List<Candidate> wanted = await DetermineSymbolsAsync(dataClient, tradable, exchange);
+            if (wanted.Count == 0)
+            {
+                GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} no symbols selected, " +
+                    $"leaving the current selection alone");
+                return;
+            }
+
+
+            // Track which symbols are still active, to deactivate the ones we no longer follow
             SortedList<string, CryptoSymbol> activeSymbols = [];
 
             using (var transaction = database.BeginTransaction())
@@ -48,10 +91,9 @@ public class Symbol() : SymbolBase(), ISymbol
                 List<CryptoSymbol> cache = [];
                 try
                 {
-                    foreach (var asset in assets)
+                    foreach (Candidate candidate in wanted)
                     {
-                        if (!asset.IsTradable)
-                            continue;
+                        AlpacaAsset asset = candidate.Asset;
 
                         // Use the ticker as both the exchange symbol and as base, USD as quote.
                         // This mirrors how HyperLiquid handles single-asset instruments.
@@ -61,12 +103,22 @@ public class Symbol() : SymbolBase(), ISymbol
                         if (IsSymbolAccepted(exchange, info, null, global::CryptoExchange.Net.SharedApis.TradingMode.Spot, out CryptoSymbol? symbol))
 #pragma warning restore CS8625
                         {
-                            symbol!.QuantityTickSize = 0.000001m;  // Alpaca supports fractional shares
-                            symbol.QuantityMinimum = 0.000001m;
+                            // The asset states its own steps. The fallbacks are the values that apply to
+                            // the overwhelming majority: a cent for the price, and a millionth of a share
+                            // for the quantity because Alpaca supports fractional shares.
+                            symbol!.PriceTickSize = PositiveOrDefault(asset.PriceIncrement, 0.01m);
+                            symbol.QuantityTickSize = PositiveOrDefault(asset.MinTradeIncrement, asset.Fractionable ? 0.000001m : 1m);
+                            symbol.QuantityMinimum = PositiveOrDefault(asset.MinOrderSize, 0m);
                             symbol.QuantityMaximum = 0;            // No hard maximum
-                            symbol.PriceTickSize = 0.01m;          // Cent precision for most stocks
 
-                            symbol.Status = asset.IsTradable ? 1 : 0;
+                            // Both are known before the symbol is written, so they survive a restart. The
+                            // volume decides whether candles are fetched and whether a subscription is
+                            // made (CandleBase.UpdateVolumeDecisions runs right after this method), and
+                            // that decision cannot wait for a background task filling it in afterwards.
+                            symbol.LastPrice = candidate.LastPrice;
+                            symbol.Volume = candidate.QuoteVolume;
+
+                            symbol.Status = 1;
 
                             if (symbol.Id == 0)
                             {
@@ -76,11 +128,12 @@ public class Symbol() : SymbolBase(), ISymbol
                             else
                                 database.Connection.Update(symbol, transaction);
 
-                            activeSymbols.Add(symbol.Name, symbol);
+                            activeSymbols[symbol.Name] = symbol;
                         }
                     }
 
-                    // Deactivate symbols that are no longer offered
+                    // Deactivate the symbols we no longer follow (delisted, or pushed out of the
+                    // selection by a stock that is more active today)
                     int deactivated = 0;
                     foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                     {
@@ -108,12 +161,11 @@ public class Symbol() : SymbolBase(), ISymbol
                 }
             }
 
+            GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} following {activeSymbols.Count} symbols: " +
+                $"{string.Join(',', activeSymbols.Keys)}");
+
             exchange.LastTimeFetched = DateTime.UtcNow;
             database.Connection.Update(exchange);
-
-            // Run in the background so symbol loading does not block startup.
-            // Volume will populate gradually while the scanner is already running.
-            _ = Task.Run(async () => await FetchSnapshotsAsync(activeSymbols));
         }
         catch (Exception error)
         {
@@ -124,58 +176,141 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
     /// <summary>
-    /// Fetch snapshots in batches to populate initial Volume (quote) and LastPrice for each symbol.
-    /// Uses IAlpacaDataClient.ListSnapshotsAsync with LatestMarketDataListRequest.
+    /// The stocks the scanner follows, at most <see cref="Api.MaxSymbols"/> of them.
+    ///
+    /// Alpaca offers roughly 11.000 tradable US equities and the free plan carries 30 of them on its
+    /// single data stream, so the selection has to be made here. The screener endpoint answers the
+    /// question "what is being traded today" in one request, but it ranks on the NUMBER of shares,
+    /// which puts a two dollar stock above a large cap trading ten times as much money. So we ask for
+    /// a wider list and rank it ourselves on the amount of money that changed hands - the same measure
+    /// the other exchanges use for their 24 hour volume.
+    ///
+    /// Returns an empty list when Alpaca says nothing at all, so a hiccup over there does not empty
+    /// out the whole exchange in the database.
     /// </summary>
-    private static async Task FetchSnapshotsAsync(SortedList<string, CryptoSymbol> symbols)
+    private static async Task<List<Candidate>> DetermineSymbolsAsync(IAlpacaDataClient dataClient,
+        Dictionary<string, AlpacaAsset> tradable, Model.CryptoExchange exchange)
     {
-        if (symbols.Count == 0)
-            return;
+        Dictionary<string, Candidate> candidates = [];
 
-        GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} fetching volume snapshots for {symbols.Count} symbols");
+        void AddCandidate(string name)
+        {
+            if (tradable.TryGetValue(name, out AlpacaAsset? asset))
+                candidates.TryAdd(name, new Candidate { Asset = asset });
+        }
 
-        using IAlpacaDataClient dataClient = Environments.Paper.GetAlpacaDataClient(
-            new SecretKey(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret));
+        try
+        {
+            LimitRate.WaitForFairWeight(1);
+            var actives = await dataClient.ListMostActiveStocksByVolumeAsync(4 * Api.MaxSymbols, ExchangeBase.CancellationToken);
+            foreach (var active in actives)
+                AddCandidate(active.Symbol);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} error reading the most active stocks {error.Message}");
+        }
 
-        var symbolNames = symbols.Keys.ToList();
+        // Whatever the screener says, the instrument the pause rules watch has to be in the list
+        AddCandidate(PauseSymbolTicker());
+
+        // Nothing? Then stay with the choice of the previous cycle instead of switching everything off
+        if (candidates.Count == 0)
+        {
+            foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+            {
+                if (symbol.Status == 1 && !symbol.IsBarometerSymbol())
+                    AddCandidate(symbol.ExchangeName);
+            }
+            if (candidates.Count > 0)
+                GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} keeping the previous selection of {candidates.Count} symbols");
+        }
+
+        if (candidates.Count == 0)
+            return [];
+
+        await FetchSnapshotsAsync(dataClient, candidates);
+
+        // The most money traded wins. A candidate without a snapshot has a volume of 0 and ends up at
+        // the bottom, which is where an instrument we know nothing about belongs.
+        List<Candidate> result = [.. candidates.Values.OrderByDescending(x => x.QuoteVolume)];
+        if (result.Count > Api.MaxSymbols)
+            result.RemoveRange(Api.MaxSymbols, result.Count - Api.MaxSymbols);
+        return result;
+    }
+
+
+    /// <summary>
+    /// The ticker of the instrument the pause rules watch. The option states the scanner name
+    /// ("SPYUSD"), the exchange knows it as the plain ticker.
+    /// </summary>
+    private static string PauseSymbolTicker()
+    {
+        string name = ExchangeBase.ExchangeOptions.PauseSymbol;
+        string quote = ExchangeBase.ExchangeOptions.DefaultQuote ?? "";
+        if (quote != "" && name.EndsWith(quote, StringComparison.OrdinalIgnoreCase))
+            return name[..^quote.Length];
+        return name;
+    }
+
+
+    /// <summary>
+    /// Fill in the last price and the 24 hour volume (in the quote currency, so in dollars) of every
+    /// candidate. Uses IAlpacaDataClient.ListSnapshotsAsync, which takes 100 symbols per request.
+    /// </summary>
+    private static async Task FetchSnapshotsAsync(IAlpacaDataClient dataClient, Dictionary<string, Candidate> candidates)
+    {
+        List<string> names = [.. candidates.Keys];
         const int batchSize = 100;
         int fetched = 0;
 
-        for (int i = 0; i < symbolNames.Count; i += batchSize)
+        for (int i = 0; i < names.Count; i += batchSize)
         {
-            var batch = symbolNames.GetRange(i, Math.Min(batchSize, symbolNames.Count - i));
+            var batch = names.GetRange(i, Math.Min(batchSize, names.Count - i));
             LimitRate.WaitForFairWeight(1);
             try
             {
-                var request = new LatestMarketDataListRequest(batch);
+                var request = new LatestMarketDataListRequest(batch) { Feed = Api.DataFeed };
                 var snapshots = await dataClient.ListSnapshotsAsync(request, ExchangeBase.CancellationToken);
                 foreach (var (name, snapshot) in snapshots)
                 {
-                    if (!symbols.TryGetValue(name, out CryptoSymbol? symbol))
+                    if (!candidates.TryGetValue(name, out Candidate? candidate))
                         continue;
 
                     // Use the latest trade price; fall back to daily bar close when the
                     // market is closed and no recent trade is available.
                     IBar? bar = snapshot.CurrentDailyBar ?? snapshot.PreviousDailyBar;
-                    symbol.LastPrice = snapshot.Trade?.Price ?? bar?.Close;
+                    candidate.LastPrice = snapshot.Trade?.Price ?? bar?.Close;
 
                     if (bar != null)
                     {
-                        // Prefer last price; fall back to VWAP so volume is never zero
-                        // just because the market happens to be closed right now.
-                        decimal price = symbol.LastPrice ?? bar.Vwap;
+                        // The bar states a number of shares, while the scanner works in the quote
+                        // currency everywhere else. The VWAP is the average price those shares changed
+                        // hands at; the last price is the fallback for a bar without one.
+                        decimal price = bar.Vwap > 0 ? bar.Vwap : candidate.LastPrice ?? 0;
                         if (price > 0)
-                            symbol.Volume = (double)(bar.Volume * price);
+                            candidate.QuoteVolume = (double)(bar.Volume * price);
                     }
                     fetched++;
                 }
             }
-            catch (Exception ex)
+            catch (Exception error)
             {
-                GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} snapshot batch {i / batchSize + 1} error: {ex.Message}");
+                GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} snapshot batch {i / batchSize + 1} error: {error.Message}");
             }
         }
 
         GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} volume snapshots received for {fetched} symbols");
+    }
+
+
+    /// <summary>
+    /// The value the asset states, or the given fallback when it states nothing usable. A step of zero
+    /// would round every price or quantity to nothing at all.
+    /// </summary>
+    private static decimal PositiveOrDefault(decimal? value, decimal fallback)
+    {
+        return value.HasValue && value.Value > 0 ? value.Value : fallback;
     }
 }

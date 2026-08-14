@@ -31,18 +31,19 @@ public class Symbol() : SymbolBase(), ISymbol
                 LimitRate.WaitForFairWeight(1);
                 var tickerInfo = await api.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
-                if (tickerInfo == null)
+                    GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
+                // Tested on the data, not on the result object: a WebCallResult is never null, so the
+                // check this replaces could not fire and a failed call simply carried on with an empty
+                // volume list - after which every symbol ends up with volume 0 and drops out of the
+                // scanner. Better to leave the symbols as they were until the next round.
+                if (tickerInfo.Data == null)
                     throw new ExchangeException("No ticker data received");
                 SaveExchangeInfo(tickerInfo, "tickers.json");
 
                 // Create dictionary for the volume
                 SortedList<string, decimal> volumeTicker = [];
-                if (tickerInfo.Data != null && tickerInfo.Data != null)
-                {
-                    foreach (var tickerData in tickerInfo.Data)
-                        volumeTicker.Add(tickerData.Symbol, tickerData.Volume24hQuote);
-                }
+                foreach (var tickerData in tickerInfo.Data)
+                    volumeTicker[tickerData.Symbol] = tickerData.Volume24hQuote;
 
 
 
@@ -52,12 +53,14 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (2)");
+                    throw new ExchangeException("No exchange data received (2)");
                 SaveExchangeInfo(symbolInfo, "symbols.json");
 
 
-                // Om achteraf de niet aangeboden munten te deactiveren
+                // Track which symbols are still active, to deactivate the ones we no longer follow
                 SortedList<string, CryptoSymbol> activeSymbols = [];
+                // Scanner names of the instruments we skip below, see RegisterAmbiguousSymbolNames
+                List<string> rejectedSymbols = [];
 
 
                 using (var transaction = database.BeginTransaction())
@@ -84,7 +87,10 @@ public class Symbol() : SymbolBase(), ISymbol
                             // and all with a unique base+quote.
                             if (!symbolData.Tradeable || symbolData.Type != SymbolType.FlexibleFutures
                                 || symbolData.LastTradingTime != null)
+                            {
+                                rejectedSymbols.Add(symbolData.BaseAsset.ToUpper() + symbolData.QuoteAsset.ToUpper());
                                 continue;
+                            }
 
                             // TODO? Inspect
                             SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
@@ -98,6 +104,7 @@ public class Symbol() : SymbolBase(), ISymbol
                             {
                                 GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} " +
                                     $"{symbolData.Symbol} skipped, {info.ScannerName} is already taken");
+                                rejectedSymbols.Add(info.ScannerName);
                                 continue;
                             }
 
@@ -110,8 +117,8 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 //TODO: ?????????????????????????????????????????????
 
-                                //Tijdelijk alles overnemen (vanwege into nieuwe velden)
-                                //De te gebruiken precisie in prijzen
+                                //Temporarily copy everything (because of the new fields)
+                                //The precision to use for prices
                                 //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;
                                 //if (symbol.BaseAssetPrecision <= 0)
                                 //    symbol.BaseAssetPrecision = 8;
@@ -120,14 +127,14 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //    symbol.QuoteAssetPrecision = 8;
                                 //symbol.MinNotional = symbolInfo.MinNotional; // ????
 
-                                //Minimale en maximale amount voor een order (in base amount)
+                                //Minimum and maximum amount for an order (in base amount)
                                 //symbol.QuantityMinimum = symbolInfo.LotSizeFilter.MinOrderQuantity;
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter.MaxOrderQuantity;
                                 //symbol.QuantityTickSize = symbolInfo.LotSizeFilter.QuantityStep;
 
-                                // De minimale en maximale prijs voor een order (in base price)
-                                // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
-                                // (dat heeft consequenties voor de werking van de Clamp die wel waarden verwacht)
+                                // The minimum and maximum price for an order (in base price)
+                                // The definitions do contain a minPrice and a maxPrice, but they are not filled
+                                // (which has consequences for the Clamp, which does expect values)
                                 //symbol.PriceMinimum = symbolInfo.PriceFilter.MinPrice;
                                 //symbol.PriceMaximum = symbolInfo.PriceFilter.MaxPrice;
 
@@ -157,11 +164,16 @@ public class Symbol() : SymbolBase(), ISymbol
                                 }
                                 else
                                     database.Connection.Update(symbol, transaction);
-                                activeSymbols.Add(symbol.Name, symbol);
+                                activeSymbols[symbol.Name] = symbol;
                             }
                         }
 
-                        // Deactiveer de munten die niet meer voorkomen
+                        // Which scanner names cover more than one instrument (BTCUSD, ETHUSD, LTCUSD,
+                        // SOLUSD and XRPUSD: the PI_ inverse contracts and the dated FF_ contracts
+                        // share their base and quote with the PF_ perpetual that was accepted)
+                        RegisterAmbiguousSymbolNames(exchange, rejectedSymbols, activeSymbols.Keys);
+
+                        // Deactivate the symbols who have disappeared
                         int deactivated = 0;
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                         {
@@ -173,13 +185,13 @@ public class Symbol() : SymbolBase(), ISymbol
                             }
                         }
                         if (deactivated > 0)
-                            GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
+                            GlobalData.AddTextToLogTab($"{deactivated} symbols deactivated");
 
                         transaction.Commit();
 
 
-                        // De nieuwe symbols toevoegen aan de lijst
-                        // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
+                        // Add the new symbols to the list
+                        // (because the symbols only get an id during the BulkInsert)
                         foreach (CryptoSymbol symbol in cache)
                         {
                             GlobalData.AddSymbol(symbol);

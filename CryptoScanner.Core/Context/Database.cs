@@ -217,7 +217,7 @@ public class CryptoDatabase : IDisposable
             new() { Name = "Bitvavo Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Futures},
 
             // You must have an account and register the api key, otherwise "error unauthorized"
-            new() { Name = "Alpaca", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Alpaca", IsSupported = true, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Spot },
             new() { Name = "Alpaca Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Futures},
         ];
     }

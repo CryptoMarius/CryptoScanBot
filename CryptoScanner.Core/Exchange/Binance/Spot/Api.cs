@@ -12,70 +12,8 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.Binance.Spot;
 
-
-
-
-//Mogelijke foutmeldingen bij het kopen (of verkopen?):
-
-//Te laag bedrag
-//Filter failure: MIN_NOTIONAL
-//price* quantity is too low to be a valid order for the symbol.
-
-//Problemen met het aantal decimalen (zowel price als amount)
-//buyResult.Error = {-1111: Precision is over the maximum defined for this asset. }
-
-//Er is te weinig geld om de order te plaatsen
-//buyResult.Error = {-1013: Filter failure: PRICE_FILTER }
-
-// buyResult.Error = { -1013: Filter failure: LOT_SIZE }
-
-//The relationship of the prices for the orders is not correct". The prices set in the OCO is breaking the Price rules.
-//The rules are:
-//SELL Orders: Limit Price > Last Price > Stop Price
-//BUY Orders: Limit Price < Last Price < Stop Price
-// mooit overzicht: https://toscode.gitee.com/purplecity/binance-official-api-docs/blob/d5bab6053da63aecd71ed6393fbd7de1da88a43a/errors.md
-
-
-// Vanwege "The relationship of the prices for the orders is not correct." The prices set in the OCO 
-// is breaking the Price rules. (de prijs is dan waarschijnlijk al hoger dan de gekozen sell prijs!!!!)
-
-//"The relationship of the prices for the orders is not correct." The prices set in the OCO is breaking the Price rules. (de prijs is dan waarschijnlijk al hoger dan de gekozen sell prijs!!!!)
-//The rules are:
-//SELL Orders: Limit Price > Last Price > Stop Price
-//BUY Orders: Limit Price<Last Price<Stop Price
-
-//De prijs is dan ondertussen al onder de StopPrice beland?
-
-
-//The relationship of the prices for the orders is not correct."	The prices set in the OCO is breaking the Price rules.
-//The rules are:
-//SELL Orders: Limit Price > Last Price > Stop Price
-//BUY Orders: Limit Price < Last Price < Stop Price
-// https://toscode.gitee.com/purplecity/binance-official-api-docs/blob/d5bab6053da63aecd71ed6393fbd7de1da88a43a/errors.md
-
-/*
- * 
-https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-servertime
-https://api-testnet.bybit.com/v2/public/time
-{"ret_code":0,"ret_msg":"OK","result":{},"ext_code":"","ext_info":"","time_now":"1688116858.760925"}
-
-https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-announcement
-https://api-testnet.bybit.com/v2/public/announcement
-{"ret_code":0,"ret_msg":"OK","result":[],"ext_code":"","ext_info":"","time_now":"1688116961.886013"}
-(dat lijkt nogal op die eerste..)
-
-
-https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-querykline
-https://api-testnet.bybit.com/v2/public/kline/list
-{"retCode":10001,"retMsg":"The requested symbol is invalid.","result":{},"retExtInfo":{},"time":1688117090806}
-https://api-testnet.bybit.com/v2/public/kline/list?symbol=BTCUSDT&interval=1
-
-
-https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-querysymbol
-https://api-testnet.bybit.com/spot/v3/public/symbols
-(denk om de versie verschillen)
-
- */
+// The order errors and the OCO price rules that used to be listed here have moved to Binance.md,
+// the leftover Bybit v2 endpoint notes to BybitApi\Bybit.md.
 
 public class Api : ExchangeBase
 {

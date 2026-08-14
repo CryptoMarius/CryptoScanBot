@@ -20,6 +20,9 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         // https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
         // TradingView: Codes are in the symbol description (kind of hidden)
 
+        // Registered under the name it has in the database, which is "Alpaca" and not "Alpaca Spot"
+        this.TryAdd("Alpaca", Exchange.Alpaca.Spot.Api.GetExchangeLinks());
+
         Remove("Binance");
         this.TryAdd("Binance Spot", Exchange.Binance.Spot.Api.GetExchangeLinks());
         this.TryAdd("Binance Futures", Exchange.Binance.Futures.Api.GetExchangeLinks());

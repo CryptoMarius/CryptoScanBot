@@ -55,7 +55,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
 
-                // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren
+                // Track which symbols are still active, to report and deactivate the ones we no longer follow
                 List<string> reportSymbols = [];
                 SortedList<string, CryptoSymbol> activeSymbols = [];
                 // Scanner names of the instruments we skip below. Intersected with the accepted names
@@ -98,8 +98,8 @@ public class Symbol() : SymbolBase(), ISymbol
                             SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
-                                //Tijdelijk alles overnemen (vanwege into nieuwe velden)
-                                //De te gebruiken precisie in prijzen
+                                //Temporarily copy everything (because of the new fields)
+                                //The precision to use for prices
                                 //symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;
                                 //symbol.QuoteAssetPrecision = binanceSymbol.QuoteAssetPrecision;
                                 // Tijdelijke fix voor Binance.net (kan waarschijnlijk weer weg)
@@ -108,12 +108,12 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //else
                                 //    symbol.MinNotional = 0;
 
-                                //Minimale en maximale amount voor een order (in base amount)
+                                //Minimum and maximum amount for an order (in base amount)
                                 symbol!.QuantityMinimum = symbolData.LotSizeFilter?.MinQuantity ?? 0;
                                 symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxQuantity ?? 0;
                                 symbol.QuantityTickSize = symbolData.LotSizeFilter?.StepSize ?? 0;
 
-                                //Minimale en maximale prijs voor een order (in base price)
+                                //Minimum and maximum price for an order (in base price)
                                 symbol.PriceMinimum = symbolData.PriceFilter?.MinPrice ?? 0;
                                 symbol.PriceMaximum = symbolData.PriceFilter?.MaxPrice ?? 0;
                                 symbol.PriceTickSize = symbolData.PriceFilter?.TickSize ?? 0;
@@ -130,7 +130,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 if (symbolData.Status == SymbolStatus.Trading | symbolData.Status == SymbolStatus.EndOfDay)
                                     symbol.Status = 1;
                                 else
-                                    symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+                                    symbol.Status = 0; //Pass the status on (PreTrading, PostTrading or Halt)
 
                                 if (symbol.Id == 0)
                                 {
@@ -140,14 +140,14 @@ public class Symbol() : SymbolBase(), ISymbol
                                 else
                                     database.Connection.Update(symbol, transaction);
 
-                                activeSymbols.Add(symbol.Name, symbol);
+                                activeSymbols[symbol.Name] = symbol;
                             }
                         }
 
                         // Which scanner names cover more than one instrument (BTCUSDT and ETHUSDT here)
                         RegisterAmbiguousSymbolNames(exchange, rejectedSymbols, activeSymbols.Keys);
 
-                        // Deactiveer de munten die niet meer voorkomen
+                        // Deactivate the symbols who have disappeared
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                         {
                             if (symbol.Status == 1 && !symbol.IsBarometerSymbol() && !activeSymbols.ContainsKey(symbol.Name))
@@ -171,8 +171,8 @@ public class Symbol() : SymbolBase(), ISymbol
                         transaction.Commit();
 
 
-                        // De nieuwe symbols toevoegen aan de lijst
-                        // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
+                        // Add the new symbols to the list
+                        // (because the symbols only get an id during the BulkInsert)
                         foreach (CryptoSymbol symbol in cache)
                         {
                             GlobalData.AddSymbol(symbol);

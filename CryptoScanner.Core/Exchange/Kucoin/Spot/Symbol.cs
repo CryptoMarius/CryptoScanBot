@@ -43,8 +43,10 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         if (tickerData.QuoteVolume.HasValue)
                         {
+                            // Assigned instead of added: removing the dash can in theory make two different
+                            // pairs collide, and an exception here would abort the whole symbol update.
                             string symbolName = tickerData.Symbol.Replace("-", "");
-                            volumeTicker.Add(symbolName, tickerData.QuoteVolume.Value);
+                            volumeTicker[symbolName] = tickerData.QuoteVolume.Value;
                         }
                     }
                 }
@@ -65,8 +67,11 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (symbolInfo.Data != null)
                 {
 
-                    // Om achteraf de niet aangeboden munten te deactiveren
+                    // Track which symbols are still active, to deactivate the ones we no longer follow
                     SortedList<string, CryptoSymbol> activeSymbols = [];
+                    // Scanner names of the instruments we do not take over. Nothing is filtered out here
+                    // (unlike the futures side), so this only fills up when IsSymbolAccepted refuses one.
+                    List<string> rejectedSymbols = [];
 
 
                     using (var transaction = database.BeginTransaction())
@@ -79,8 +84,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                 SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
                                 if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                                 {
-                                    //Tijdelijk alles overnemen (vanwege into nieuwe velden)
-                                    //De te gebruiken precisie in prijzen
+                                    //Temporarily copy everything (because of the new fields)
+                                    //The precision to use for prices
                                     //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;
                                     //if (symbol.BaseAssetPrecision <= 0)
                                     //    symbol.BaseAssetPrecision = 8;
@@ -89,15 +94,15 @@ public class Symbol() : SymbolBase(), ISymbol
                                     //    symbol.QuoteAssetPrecision = 8;
                                     //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
-                                    //Minimale en maximale amount voor een order (in base amount)
+                                    //Minimum and maximum amount for an order (in base amount)
                                     symbol!.QuantityMinimum = symbolData.BaseMinQuantity;
                                     symbol.QuantityMaximum = symbolData.BaseMaxQuantity; //baseMinSize
                                                                                          // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
                                     symbol.QuantityTickSize = symbolData.BaseIncrement;
 
-                                    // De minimale en maximale prijs voor een order (in base price)
-                                    // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
-                                    // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
+                                    // The minimum and maximum price for an order (in base price)
+                                    // The definitions do contain a minPrice and a maxPrice, but they are not filled
+                                    // (which has consequences for the Clamp, which does expect values)
                                     //symbol.PriceMinimum = niet aanwezig! binanceSymbol.PriceFilter.min;
                                     //symbol.PriceMaximum = niet aanwezig! binanceSymbol.LotSizeFilter.MaxOrderValue;
 
@@ -115,7 +120,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                     if (symbolData.EnableTrading)
                                         symbol.Status = 1;
                                     else
-                                        symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+                                        symbol.Status = 0; //Pass the status on (PreTrading, PostTrading or Halt)
 
                                     if (symbol.Id == 0)
                                     {
@@ -124,11 +129,16 @@ public class Symbol() : SymbolBase(), ISymbol
                                     }
                                     else
                                         database.Connection.Update(symbol, transaction);
-                                    activeSymbols.Add(symbol.Name, symbol);
+                                    activeSymbols[symbol.Name] = symbol;
                                 }
+                                else
+                                    rejectedSymbols.Add(info.ScannerName);
                             }
 
-                            // Deactiveer de munten die niet meer voorkomen
+                            // Which scanner names cover more than one instrument
+                            RegisterAmbiguousSymbolNames(exchange, rejectedSymbols, activeSymbols.Keys);
+
+                            // Deactivate the symbols who have disappeared
                             int deactivated = 0;
                             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                             {
@@ -143,8 +153,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                 GlobalData.AddTextToLogTab($"{deactivated} symbols deactivated");
 
 
-                            // De nieuwe symbols toevoegen aan de lijst
-                            // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
+                            // Add the new symbols to the list
+                            // (because the symbols only get an id during the BulkInsert)
                             foreach (CryptoSymbol symbol in cache)
                             {
                                 GlobalData.AddSymbol(symbol);

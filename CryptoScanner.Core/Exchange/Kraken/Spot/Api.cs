@@ -27,6 +27,9 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
+        // The candle limit of 720 is not a page size we picked but everything this exchange keeps per
+        // interval - older candles cannot be fetched at all. Paging inside that window works normally.
+        // See the remarks in Candle.GetCandlesForInterval for what it does to the warmup per interval.
         // 440 million USD over 651 pairs a day (14-08-2026), 89 symbols stay above the boundary
         ExchangeOptions.SetDefaultOptions("Kraken Spot", "USD", 720, true, 5, klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 150_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");

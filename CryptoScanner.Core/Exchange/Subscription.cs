@@ -95,6 +95,15 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     // socket callback is reading it.
     public Dictionary<string, CryptoSymbol> SymbolByExchangeName = [];
 
+    /// <summary>
+    /// Is this subscription supposed to be delivering data right now? True for every exchange that
+    /// trades around the clock, which is all of them except the stock broker: that one is closed at
+    /// night, in the weekend and on holidays. The silence check in
+    /// <see cref="SubscriptionManager.NeedsRestart"/> leaves a subscription that says no alone,
+    /// because restarting it every four minutes only means reconnecting for nothing.
+    /// </summary>
+    public virtual bool IsExpectingData => true;
+
     public abstract Task<WebSocketResult<UpdateSubscription>?> Subscribe();
 
 

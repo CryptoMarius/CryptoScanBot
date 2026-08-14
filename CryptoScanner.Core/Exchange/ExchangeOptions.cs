@@ -9,12 +9,12 @@
 public enum KlineDelivery
 {
     /// Exchange sends a single definitive "final" event once the candle closes (Binance, BloFin,
-    /// ByBit, OKX, Kucoin, …). No local cache or timer is needed.
+    /// ByBit, OKX, …). No local cache or timer is needed.
     FinalEvent,
 
     /// Exchange sends continuous partial updates for the currently open candle and never sends a
-    /// definitive "closed" signal (HyperLiquid, Kraken Futures). A local cache and a minute-boundary
-    /// timer are required to extract the completed candle.
+    /// definitive "closed" signal (HyperLiquid, Kraken Futures, Kucoin). A local cache and a
+    /// minute-boundary timer are required to extract the completed candle.
     TimerFlush,
 }
 
@@ -50,8 +50,9 @@ public class ExchangeOptions // : IExchangeOptions
 {
     // Fallback for exchanges that do not state a boundary of their own. This is the value that used
     // to be hardcoded in ScannerSession, so leaving an exchange on this default changes nothing.
-    // Used for the exchanges whose volume could not be measured (Alpaca needs an account, BitMart and
-    // Coinbase are switched off and barely trade their default quote, Bybit EU Futures has no symbols).
+    // Used for the exchanges whose volume could not be measured (BitMart and Coinbase are switched off
+    // and barely trade their default quote, Bybit EU Futures has no symbols). Alpaca states a boundary
+    // of zero: it picks its symbols itself and the volume it reports is the volume of one feed.
     public const double DefaultMinimalVolume = 4_500_000;
 
     // Official exchange name (registered in database)

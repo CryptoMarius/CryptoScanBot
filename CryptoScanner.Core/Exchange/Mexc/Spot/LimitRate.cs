@@ -1,30 +1,37 @@
-﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Core;
 
 namespace CryptoScanner.Core.Exchange.Mexc.Spot;
 
-internal class ByBitWeight
+internal class MexcWeight
 {
     public long Time { get; set; }
     public long Weight { get; set; }
 
 }
 /*
-- zijn er limiten voor bybit? Ja, dat heet rate limits
-  https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-ratelimits
-  het is gebaseerd op het aantal verzoeken per seconde wat je naar exchange stuurt
-  Je krijgt deze informatie ook terug zo te zien, eens zien wat het is
+- are there limits for Mexc? Yes, they are called rate limits
+  https://mexcdevelop.github.io/apidocs/spot_v3_en/#limits
+  It is based on a weight per endpoint, counted per IP address (and a separate one per account)
 */
 
 /// <summary>
-/// Deze class verzorgt een vertraging als je teveel aanvragen doet (via de weight van de actie)
-/// JKorf commented on May 1, 2019
-/// Hi, I've added the response headers to the HttpResult object. I also added a helper method to quickly retrieve the used weight header:
-/// var weight = client.GetAllOrders("ETHBTC").ResponseHeaders.UsedWeight(); (obviously you should check for errors)
+/// Delays the caller when too many requests are made (based on the weight of the action).
+///
+/// Mexc counts per endpoint: "Each endpoint with IP limits has an independent 500 every 10 second
+/// limit". The weight of the endpoints this scanner uses:
+///   GET /api/v3/klines           weight 1   (Candle.GetCandlesForInterval)
+///   GET /api/v3/exchangeInfo     weight 10  (Symbol.GetSymbolsAsync)
+///   GET /api/v3/ticker/24hr      weight 40  when asked for every symbol at once (Symbol.GetSymbolsAsync)
+///
+/// Because the limit is per endpoint and klines is by far the most used one, a single counter over
+/// all endpoints is the conservative choice: it can only book more weight than any one endpoint
+/// actually used. Exceeding the limit is expensive - Mexc blocks the endpoint for ten minutes - so
+/// the boundary stays below the official 500 per 10 seconds.
 /// </summary>
 public static class LimitRate
 {
     public static long CurrentWeight { get; set; }
-    static private List<ByBitWeight> List { get; } = new List<ByBitWeight>();
+    static private List<MexcWeight> List { get; } = new List<MexcWeight>();
 
     public static void WaitForFairWeight(long newWeight)
     {
@@ -32,22 +39,21 @@ public static class LimitRate
         Monitor.Enter(List);
         try
         {
-            // https://bybit-exchange.github.io/docs/v5/rate-limit
-            // Officiele limiet = 120 requests per second for 5 consecutive seconds
+            // Official limit = 500 weight per 10 seconds, per endpoint, per IP address
 
-            // De registraties ouder dan 1 minuut verwijderen
+            // Remove the registrations older than the measuring window
             while (true)
             {
-                // Huidige tijd.
+                // Current time.
                 DateTimeOffset dateTimeOffset = DateTime.UtcNow;
                 long unix = dateTimeOffset.ToUnixTimeSeconds();
 
-                // Een tijdstip 20 seconden geleden (ook reeds ruim genomen)
-                long removeBeforeDate = unix - 20;
+                // A moment 10 seconds ago (the window Mexc measures over)
+                long removeBeforeDate = unix - 10;
 
                 while (List.Count > 0)
                 {
-                    ByBitWeight item = List[0];
+                    MexcWeight item = List[0];
                     if (item.Time <= removeBeforeDate)
                     {
                         CurrentWeight -= item.Weight;
@@ -56,9 +62,9 @@ public static class LimitRate
                     else break;
                 }
 
-                // Het is nu een beetje gokken, 120*5 = 600 calls, met 300 per 20 sec blijven we daar RUIM onder lijkt me
-                // Maar het is ook niet plezierig om gebanned te worden, dus begin maar ietwat voorzichtig lijkt me..
-                if (CurrentWeight > 300)
+                // 400 of the 500 allowed weight leaves room for the requests that are already on
+                // their way, and for the difference between our clock and the one at the exchange
+                if (CurrentWeight > 400)
                 {
                     GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (rate limits)");
                     Thread.Sleep(2500);
@@ -67,8 +73,8 @@ public static class LimitRate
                 {
                     CurrentWeight += newWeight;
 
-                    // En een nieuwe registratie toevoegen
-                    ByBitWeight item = new();
+                    // And add a new registration
+                    MexcWeight item = new();
                     DateTimeOffset dateTimeOffset2 = DateTime.UtcNow;
                     item.Time = dateTimeOffset2.ToUnixTimeSeconds();
                     item.Weight = newWeight;

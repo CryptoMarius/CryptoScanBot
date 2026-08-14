@@ -1,4 +1,4 @@
-using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
 using CryptoScanner.Core.Core;
@@ -34,14 +34,40 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     private const string WsUrl = "wss://ws.bitvavo.com/v2/";
 
 
-    private async Task ProcessMessageAsync(string json)
+    private void ProcessMessage(string json)
     {
         try
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            if (!root.TryGetProperty("event", out var eventProp) || eventProp.GetString() != "candle")
+            // A rejected request comes back as {"action":"subscribe","errorCode":205,"error":"..."},
+            // without an event field. One invalid market rejects the WHOLE subscribe message, so the
+            // group then receives nothing at all and the only symptom is the silence check restarting
+            // it into the same rejection every four minutes. Log it so the reason is visible.
+            if (root.TryGetProperty("error", out var errorProp))
+            {
+                int errorCode = root.TryGetProperty("errorCode", out var codeProp) ? codeProp.GetInt32() : 0;
+                string message = $"{ExchangeOptions.ExchangeName} kline ticker group {Name} " +
+                    $"rejected ({errorCode}) {errorProp.GetString()}";
+                ScannerLog.Logger.Error($"{message} {SymbolOverview}");
+                GlobalData.AddTextToLogTab(message);
+                return;
+            }
+
+            if (!root.TryGetProperty("event", out var eventProp))
+                return;
+
+            // Confirmation of the subscription. Without this trace there is nothing in the log between
+            // "group started" and the first candle, so a group that never got through looks identical
+            // to one that is simply waiting for a quiet market.
+            if (eventProp.GetString() == "subscribed")
+            {
+                ScannerLog.Logger.Trace($"Bitvavo kline ticker group {Name} subscription confirmed");
+                return;
+            }
+
+            if (eventProp.GetString() != "candle")
                 return;
 
             if (!root.TryGetProperty("market", out var marketProp))
@@ -109,9 +135,16 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 {
                     string msg = messageBuilder.ToString();
                     messageBuilder.Clear();
-                    await ProcessMessageAsync(msg);
+                    ProcessMessage(msg);
                 }
             }
+
+            // The loop also ends when the socket leaves the Open state without a close frame and
+            // without throwing: the condition above is then simply false on the next round and it
+            // would stop in silence, with nobody to restart it until the silence check notices four
+            // minutes later. Being cancelled is the only legitimate reason to end quietly.
+            if (!ct.IsCancellationRequested)
+                NeedsRestart = true;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -174,10 +207,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             // Start background receive loop
             _ = Task.Run(() => ReceiveLoopAsync(_localCts.Token), _localCts.Token);
 
-            // Implementatie kline timer (fix)
-            // Omdat er niet altijd een nieuwe candle aangeboden wordt (zoals "flut" munt TOMOUSDT)
-            // kun je aanvullend een timer kunnen gebruiken die alsnog de vorige candle herhaalt.
-            // De gedachte is om dat iedere minuut 10 seconden na het normale kline event te doen.
+            // Kline timer implementation (fix)
+            // Because a new candle is not always offered (like the "junk" coin TOMOUSDT) an additional
+            // timer can be used that repeats the previous candle after all.
+            // The idea is to do that every minute, 10 seconds after the normal kline event.
             StartFlushTimer();
 
             ScannerLog.Logger.Trace($"Bitvavo kline ticker group {Name} started");

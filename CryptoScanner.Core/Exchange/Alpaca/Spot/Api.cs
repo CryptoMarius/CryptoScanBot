@@ -36,6 +36,31 @@ namespace CryptoScanner.Core.Exchange.Alpaca.Spot;
 /// </summary>
 public class Api : ExchangeBase
 {
+    /// <summary>
+    /// Number of stocks the scanner follows. Alpaca offers roughly 11.000 tradable US equities, while
+    /// the free (Basic) data plan allows one streaming connection carrying at most 30 symbols. So the
+    /// choice of which stocks to follow is made in <see cref="Symbol.GetSymbolsAsync"/> (the most
+    /// active ones of the day) instead of by a volume boundary further down the line.
+    /// Raise it together with the data plan; the subscription groups follow this number as well.
+    /// </summary>
+    public const int MaxSymbols = 30;
+
+    /// <summary>
+    /// The market data feed to read from. The free plan only serves IEX, which is a few percent of
+    /// everything the market trades - the volume in the candles is the IEX volume, not the volume of
+    /// the whole market. Stated once here so the REST requests and the WebSocket stream can never end
+    /// up on a different feed than each other. With a paid plan this becomes MarketDataFeed.Sip.
+    /// </summary>
+    public const MarketDataFeed DataFeed = MarketDataFeed.Iex;
+
+    /// <summary>
+    /// Endpoint of the data stream, the streaming counterpart of <see cref="DataFeed"/>. The SDK
+    /// derives this one from the environment instead of from the plan, and the SIP endpoint answers a
+    /// free plan with "subscription does not permit", so it is stated explicitly.
+    /// </summary>
+    public static readonly Uri DataStreamEndpoint = new("wss://stream.data.alpaca.markets/v2/iex");
+
+
     [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
     public Api()
     {
@@ -56,9 +81,18 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        // 1000 bars per request, defaultQuote USD, max 100 symbols per WebSocket group
-        // no volume measured (needs an account), so the boundary falls back to the default
-        ExchangeOptions.SetDefaultOptions("Alpaca", "USD", 1000, false, 100);
+        // 1000 bars per request, defaultQuote USD, MaxSymbols symbols per WebSocket group.
+        //
+        // No 24 hour volume boundary: the universe is already limited to the most active stocks of the
+        // day (see Symbol.GetSymbolsAsync), and the volume that comes back is the volume of the IEX
+        // feed - a few percent of what the market really trades - which makes it useless as an
+        // absolute limit. A boundary on top of the selection would only switch off what was picked as
+        // the most active stock of that moment.
+        //
+        // The pause rules watch SPY, the S&P 500 tracker. It is what bitcoin is on a crypto exchange:
+        // the instrument the rest of the market follows. "BTCUSD" (the default) does not exist here.
+        ExchangeOptions.SetDefaultOptions("Alpaca", "USD", 1000, false, MaxSymbols,
+            minimalVolume: 0, pauseSymbol: "SPYUSD");
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KLineTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);

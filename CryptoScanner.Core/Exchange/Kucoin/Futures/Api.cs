@@ -1,14 +1,10 @@
-﻿using CryptoExchange.Net.Objects;
-
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 using Kucoin.Net;
 using Kucoin.Net.Clients;
-using Kucoin.Net.Enums;
-using Kucoin.Net.Objects.Models.Spot;
 
 namespace CryptoScanner.Core.Exchange.Kucoin.Futures;
 
@@ -32,9 +28,12 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        // only 4 USDC contracts, together 1.6 million a day (14-08-2026) - the USDC side of Kucoin
-        // Futures is nearly empty, so the boundary hardly filters anything
-        ExchangeOptions.SetDefaultOptions("Kucoin Futures", "USDC", 1500, true, 1, 20, KlineDelivery.TimerFlush, minimalVolume: 530, pauseSymbol: "XBTUSDC");
+        // 1083 million USDT over 660 contracts a day (14-08-2026), 274 contracts stay above the boundary.
+        // USDT instead of USDC: only 5 of the 665 contracts are quoted in USDC and together they trade
+        // 1.6 million a day, so that side of the exchange is nearly empty (and its boundary was 530).
+        // The candle limit is 200: that is what the futures kline endpoint returns per call, whatever
+        // larger window we ask for (the spot side really does hand over 1500).
+        ExchangeOptions.SetDefaultOptions("Kucoin Futures", "USDT", 200, true, 1, 20, KlineDelivery.TimerFlush, minimalVolume: 370_000, pauseSymbol: "XBTUSDT");
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KucoinRestClient.SetDefaultOptions(options =>
@@ -72,7 +71,7 @@ public class Api : ExchangeBase
         KucoinExchange.RateLimiter.RateLimitTriggered += OnRateLimitTriggered;
     }
 
-    public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
+    public override Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false)
@@ -81,7 +80,7 @@ public class Api : ExchangeBase
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
-            return (false, null);
+            return Task.FromResult<(bool result, TradeParams? tradeParams)>((false, null));
         }
 
         TradeParams tradeParams = new()
@@ -102,80 +101,17 @@ public class Api : ExchangeBase
         if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
         {
             tradeParams.OrderId = database.CreateNewUniqueId();
-            return (true, tradeParams);
+            return Task.FromResult<(bool result, TradeParams? tradeParams)>((true, tradeParams));
         }
 
-
-        // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
-
-        OrderSide side;
-        if (orderSide == CryptoOrderSide.Buy)
-            side = OrderSide.Buy;
-        else
-            side = OrderSide.Sell;
-
-
-        // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
-        using KucoinRestClient client = new();
-
-        HttpResult<KucoinOrderId> result;
-        switch (orderType)
-        {
-            case CryptoOrderType.Market:
-                {
-                    result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
-                        NewOrderType.Market, quantity);
-                    if (!result.Success)
-                    {
-                        tradeParams.Error = result.Error;
-                        tradeParams.ResponseStatusCode = result.ResponseStatusCode;
-                    }
-                    if (result.Success && result.Data != null)
-                    {
-                        tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = result.Data.Id;
-                    }
-                    return (result.Success, tradeParams);
-                }
-            case CryptoOrderType.Limit:
-                {
-                    result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
-                    NewOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
-                    if (!result.Success)
-                    {
-                        tradeParams.Error = result.Error;
-                        tradeParams.ResponseStatusCode = result.ResponseStatusCode;
-                    }
-                    if (result.Success && result.Data != null)
-                    {
-                        tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = result.Data.Id;
-                    }
-                    return (result.Success, tradeParams);
-                }
-            case CryptoOrderType.StopLimit:
-                {
-                    // wordt het nu wel of niet ondersteund? Het zou ook een extra optie van de limit kunnen (zie wel een tp)
-                    //result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, side, NewOrderType.Market,
-                    //    quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
-                    throw new Exception("${orderType} not supported");
-                }
-            case CryptoOrderType.Oco:
-                {
-                    // Een OCO is afwijkend ten opzichte van een standaard buy or sell
-                    //    Bij Binance was een OCO totaal afwijkend ten opzichte van een standaard buy or sell
-                    //    het had ook andere parameters en results
-                    //HttpResult<BybitOrderOcoList> result;?????
-                    //    throw new Exception("${orderType} not supported");
-                    throw new Exception("${orderType} not supported");
-                }
-            default:
-                throw new Exception("${orderType} not supported");
-        }
+        // Real trading is not supported here, the same as in Kucoin Spot. What stood here placed the
+        // order through client.SpotApi.Trading with the scanner name of the symbol, so it addressed the
+        // spot exchange with a contract name it does not know. There is no user ticker, order or trade
+        // implementation for Kucoin either, so an order that did arrive would never be followed up.
+        throw new Exception("PlaceOrder not implemented");
     }
 
-    public override async Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
+    public override Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
         // Order gegevens overnemen (enkel voor een eventuele error dump)
         TradeParams tradeParams = new()
@@ -197,24 +133,11 @@ public class Api : ExchangeBase
             tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
 
         if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
-            return (true, tradeParams);
+            return Task.FromResult<(bool succes, TradeParams? tradeParams)>((true, tradeParams));
 
-
-        // Annuleer de order 
-        if (step.OrderId != null && step.OrderId != "")
-        {
-            // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
-            using var client = new KucoinRestClient();
-            var result = await client.SpotApi.Trading.CancelOrderAsync(step.OrderId!);
-            if (!result.Success)
-            {
-                tradeParams.Error = result.Error;
-                tradeParams.ResponseStatusCode = result.ResponseStatusCode;
-            }
-            return (result.Success, tradeParams);
-        }
-
-        return (false, tradeParams);
+        // Cancelling went through client.SpotApi.Trading as well, which cannot know an order that was
+        // never placed on the spot exchange. See the remark in PlaceOrder.
+        throw new Exception("Cancel not implemented");
     }
 
     public static CryptoExternalUrls GetExchangeLinks()

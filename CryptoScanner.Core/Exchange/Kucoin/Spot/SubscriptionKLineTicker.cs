@@ -1,4 +1,4 @@
-using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
 using Kucoin.Net.Clients;
@@ -20,7 +20,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
         InitializeCache(SymbolList);
 
         // This stream produces a continuous stream of data (with incomplete candle, so we need a cache and timers)
-        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(Symbols, KlineInterval.OneMinute, data =>
+        // Kucoin wants its own symbol names ("BTC-USDC"), not the scanner names ("BTCUSDC"). Passing the
+        // scanner names fails silently: the exchange accepts the topic and simply never sends anything,
+        // after which the flush timer keeps synthesizing flat candles from the last known price.
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(SymbolNamesAsGenericArray, KlineInterval.OneMinute, data =>
         {
             KucoinKline kline = data.Data.Candles;
             //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
@@ -42,10 +45,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
             //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(ScannerSymbol, interval, ScannerSymbol.PriceDisplayFormat, true, true)}");
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
-        // Implementatie kline timer (fix)
-        // Omdat er niet altijd een nieuwe candle aangeboden wordt (zoals "flut" munt TOMOUSDT)
-        // kun je aanvullend een timer kunnen gebruiken die alsnog de vorige candle herhaalt.
-        // De gedachte is om dat iedere minuut 10 seconden na het normale kline event te doen.
+        // Kline timer implementation (fix)
+        // Because a new candle is not always offered (like the "junk" coin TOMOUSDT) an additional
+        // timer can be used that repeats the previous candle after all.
+        // The idea is to do that every minute, 10 seconds after the normal kline event.
 
         if (subscriptionResult.Success)
             StartFlushTimer();

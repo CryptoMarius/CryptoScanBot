@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Core;
 
 namespace CryptoScanner.Core.Exchange.Kraken.Spot;
 
@@ -8,21 +8,29 @@ internal class KrakenWeight
     public long Weight { get; set; }
 
 }
-/*
-- zijn er limiten voor bybit? Ja, dat heet rate limits
-  https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-ratelimits
-  het is gebaseerd op het aantal verzoeken per seconde wat je naar exchange stuurt
-  Je krijgt deze informatie ook terug zo te zien, eens zien wat het is
-*/
 
 /// <summary>
-/// Deze class verzorgt een vertraging als je teveel aanvragen doet (via de weight van de actie)
-/// JKorf commented on May 1, 2019
-/// Hi, I've added the response headers to the HttpResult object. I also added a helper method to quickly retrieve the used weight header:
-/// var weight = client.GetAllOrders("ETHBTC").ResponseHeaders.UsedWeight(); (obviously you should check for errors)
+/// Delays the caller when too many requests are sent to the exchange, counted as weight over a
+/// moving window of 20 seconds.
+///
+/// Kraken states about one request per second for the public endpoints
+/// (https://docs.kraken.com/api/docs/guides/spot-rest-ratelimits), but that is the sustained rate
+/// they guarantee, not the point where requests start failing: a burst of 20 OHLC requests measured
+/// on 14-08-2026 was served at 9 requests per second without a single "EAPI:Rate limit exceeded".
+/// The counter based limit of the private endpoints (a tier dependent maximum of 15 to 20 that
+/// decays 0.33 to 1 per second) does not apply here - the scanner only reads public data.
+///
+/// The real guard is the rate limiter of the client library (KrakenExchange.RateLimiter, which knows
+/// the limit per endpoint and is hooked up in Api.ExchangeDefaults). This class is the coarse brake
+/// in front of it, keeping a burst of parallel candle fetches within what the exchange was measured
+/// to accept.
 /// </summary>
 public static class LimitRate
 {
+    // Weight per 20 seconds, so 200 is 10 requests per second - the order of magnitude the exchange
+    // served without complaining, and far under the limit that would get us banned
+    private const long MaximumWeightPerWindow = 200;
+
     public static long CurrentWeight { get; set; }
     static private List<KrakenWeight> List { get; } = new List<KrakenWeight>();
 
@@ -32,17 +40,14 @@ public static class LimitRate
         Monitor.Enter(List);
         try
         {
-            // https://bybit-exchange.github.io/docs/v5/rate-limit
-            // Officiele limiet = 120 requests per second for 5 consecutive seconds
-
-            // De registraties ouder dan 1 minuut verwijderen
+            // Remove the registrations older than the window
             while (true)
             {
-                // Huidige tijd.
+                // Current time
                 DateTimeOffset dateTimeOffset = DateTime.UtcNow;
                 long unix = dateTimeOffset.ToUnixTimeSeconds();
 
-                // Een tijdstip 20 seconden geleden (ook reeds ruim genomen)
+                // A moment 20 seconds ago
                 long removeBeforeDate = unix - 20;
 
                 while (List.Count > 0)
@@ -56,9 +61,7 @@ public static class LimitRate
                     else break;
                 }
 
-                // Het is nu een beetje gokken, 120*5 = 600 calls, met 300 per 20 sec blijven we daar RUIM onder lijkt me
-                // Maar het is ook niet plezierig om gebanned te worden, dus begin maar ietwat voorzichtig lijkt me..
-                if (CurrentWeight > 300)
+                if (CurrentWeight > MaximumWeightPerWindow)
                 {
                     GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (rate limits)");
                     Thread.Sleep(2500);
@@ -67,7 +70,7 @@ public static class LimitRate
                 {
                     CurrentWeight += newWeight;
 
-                    // En een nieuwe registratie toevoegen
+                    // And add a new registration
                     KrakenWeight item = new();
                     DateTimeOffset dateTimeOffset2 = DateTime.UtcNow;
                     item.Time = dateTimeOffset2.ToUnixTimeSeconds();

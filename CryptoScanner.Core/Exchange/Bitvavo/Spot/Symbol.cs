@@ -26,12 +26,14 @@ public class Symbol() : SymbolBase(), ISymbol
 
             // Tickers for the 24h volume
             GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-            LimitRate.WaitForFairWeight(1);
-            var tickers = await client.GetTickersAsync();
+            // The 24 hour ticker for every market at once costs 25 weight at Bitvavo, not the 1 of a
+            // single candle or market request.
+            LimitRate.WaitForFairWeight(25);
+            var (tickers, tickersJson) = await client.GetTickersAsync();
             SortedList<string, decimal> volumeTicker = [];
             if (tickers != null)
             {
-                SaveExchangeInfo(tickers, "tickers.json");
+                SaveExchangeInfo(tickersJson, "tickers.json");
                 foreach (var ticker in tickers)
                 {
                     if (decimal.TryParse(ticker.VolumeQuote, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal vol))
@@ -42,10 +44,10 @@ public class Symbol() : SymbolBase(), ISymbol
             GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
             LimitRate.WaitForFairWeight(1);
 
-            var markets = await client.GetMarketsAsync();
+            var (markets, marketsJson) = await client.GetMarketsAsync();
             if (markets == null)
                 throw new ExchangeException("No market data received from Bitvavo");
-            SaveExchangeInfo(markets, "symbols.json");
+            SaveExchangeInfo(marketsJson, "symbols.json");
 
 
             // Track active symbols to deactivate delisted ones afterwards
@@ -69,7 +71,14 @@ public class Symbol() : SymbolBase(), ISymbol
                             symbol!.QuantityMinimum = decimal.TryParse(market.MinOrderInBaseAsset,
                                 NumberStyles.Any, CultureInfo.InvariantCulture, out decimal qMin) ? qMin : 0;
                             symbol.QuantityMaximum = 0;  // No hard maximum on Bitvavo
-                            symbol.QuantityTickSize = GetTickSizeFromString(market.MinOrderInBaseAsset);
+                            // quantityDecimals states the step directly. Deriving it from
+                            // minOrderInBaseAsset gives the same answer on every market today, but only
+                            // because Bitvavo formats that amount with exactly that many decimals - it
+                            // is a coincidence, not a rule.
+                            if (market.QuantityDecimals.HasValue)
+                                symbol.QuantityTickSize = GetTickSizeFromDecimals(market.QuantityDecimals.Value);
+                            else
+                                symbol.QuantityTickSize = GetTickSizeFromString(market.MinOrderInBaseAsset);
 
                             // Bitvavo refuses an order worth less than this (5 EUR on every market at
                             // the moment). Without it the minimum entry value of a position only knows
@@ -106,7 +115,7 @@ public class Symbol() : SymbolBase(), ISymbol
                             else
                                 database.Connection.Update(symbol, transaction);
 
-                            activeSymbols.Add(symbol.Name, symbol);
+                            activeSymbols[symbol.Name] = symbol;
                         }
                     }
 
@@ -146,6 +155,16 @@ public class Symbol() : SymbolBase(), ISymbol
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab(error.ToString());
         }
+    }
+
+    // Turns a number of decimals into a tick size (3 -> 0.001). Multiplying stays exact in decimal,
+    // where the Math.Pow detour would go through a double first.
+    private static decimal GetTickSizeFromDecimals(int decimals)
+    {
+        decimal tickSize = 1m;
+        for (int i = 0; i < decimals; i++)
+            tickSize *= 0.1m;
+        return tickSize;
     }
 
     // Derives a tick size from a minimum order string by counting significant decimal places.

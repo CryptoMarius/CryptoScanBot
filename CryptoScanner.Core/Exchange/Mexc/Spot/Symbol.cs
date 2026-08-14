@@ -29,7 +29,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 // tickers for volumes... (need volume because of filtered kline and price tickers)
                 // https://api.bybit.com/v5/market/instruments-info?category=spot
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                LimitRate.WaitForFairWeight(1);
+                LimitRate.WaitForFairWeight(40); // ticker/24hr for every symbol at once costs 40
                 var tickerInfo = await api.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
@@ -45,15 +45,17 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         if (tickerData.QuoteVolume.HasValue)
                         {
+                            // Assigned instead of added: removing the dash can in theory make two different
+                            // pairs collide, and an exception here would abort the whole symbol update.
                             string symbolName = tickerData.Symbol.Replace("-", "");
-                            volumeTicker.Add(symbolName, tickerData.QuoteVolume.Value);
+                            volumeTicker[symbolName] = tickerData.QuoteVolume.Value;
                         }
                     }
                 }
 
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                LimitRate.WaitForFairWeight(1);
+                LimitRate.WaitForFairWeight(10); // exchangeInfo costs 10
                 var symbolInfo = await api.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
@@ -63,7 +65,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
 
-                // Om achteraf de niet aangeboden munten te deactiveren
+                // Track which symbols are still active, to deactivate the ones we no longer follow
                 SortedList<string, CryptoSymbol> activeSymbols = [];
                 using (var transaction = database.BeginTransaction())
                 {
@@ -117,16 +119,21 @@ public class Symbol() : SymbolBase(), ISymbol
                                 for (int x = symbolData.BaseAssetPrecision; x > 0; x--)
                                     symbol.QuantityTickSize /= 10;
 
-                                //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
+                                // baseSizePrecision is the smallest quantity Mexc accepts for this symbol,
+                                // not a step size (the step follows from BaseAssetPrecision above). There is
+                                // no maximum in base amount, only the maximum in quote below.
+                                symbol.QuantityMinimum = symbolData.BaseQuantityPrecision;
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
-                                //symbol.QuoteValueMinimum = symbolInfo.LotSizeFilter?.MinOrderValue ?? 0;
+                                // quoteAmountPrecision is the minimum order value in the quote asset
+                                // (1 USDT for every symbol at the time of writing)
+                                symbol.QuoteValueMinimum = symbolData.QuoteQuantityPrecision;
                                 symbol.QuoteValueMaximum = symbolData.MaxQuoteQuantity;
 
 
-                                // De minimale en maximale prijs voor een order (in base price)
-                                // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
-                                // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
+                                // The minimum and maximum price for an order (in base price)
+                                // The definitions do contain a minPrice and a maxPrice, but they are not filled
+                                // (which has consequences for the Clamp, which does expect values)
                                 //symbol.PriceMinimum = symbolInfo.LotSizeFilter.MinOrderValue;
                                 //symbol.PriceMaximum = symbolInfo.LotSizeFilter.MaxOrderValue;
 
@@ -144,10 +151,16 @@ public class Symbol() : SymbolBase(), ISymbol
                                 else
                                     symbol.Volume = 0;
 
-                                if (symbolData.IsSpotTradingAllowed && symbolData.Status == SymbolStatus.Enabled)
+                                // Only the status of the symbol decides whether we follow it. On Mexc
+                                // IsSpotTradingAllowed says whether the symbol may be traded through the
+                                // API, which is something else than being tradable at all: on 14-08-2026
+                                // it was false for 100 of the 1735 USDT symbols, and in a dump of 02-06-2026
+                                // even for BTCUSDT and ETHUSDT - which would take the barometer and the
+                                // pause symbol down with it. The scanner only reads candles here.
+                                if (symbolData.Status == SymbolStatus.Enabled)
                                     symbol.Status = 1;
                                 else
-                                    symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+                                    symbol.Status = 0; //Pass the status on (Paused or Offline)
 
                                 if (symbol.Id == 0)
                                 {
@@ -156,11 +169,11 @@ public class Symbol() : SymbolBase(), ISymbol
                                 }
                                 else
                                     database.Connection.Update(symbol, transaction);
-                                activeSymbols.Add(symbol.Name, symbol);
+                                activeSymbols[symbol.Name] = symbol;
                             }
                         }
 
-                        // Deactiveer de munten die niet meer voorkomen
+                        // Deactivate the symbols who have disappeared
                         int deactivated = 0;
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                         {
@@ -176,8 +189,8 @@ public class Symbol() : SymbolBase(), ISymbol
 
                         transaction.Commit();
 
-                        // De nieuwe symbols toevoegen aan de lijst
-                        // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
+                        // Add the new symbols to the list
+                        // (because the symbols only get an id during the BulkInsert)
                         foreach (CryptoSymbol symbol in cache)
                         {
                             GlobalData.AddSymbol(symbol);
@@ -193,7 +206,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     }
                 }
 
-                if (tickerInfo.Success && tickerInfo.Success)
+                if (tickerInfo.Success && symbolInfo.Success)
                 {
                     exchange.LastTimeFetched = DateTime.UtcNow;
                     database.Connection.Update(exchange);

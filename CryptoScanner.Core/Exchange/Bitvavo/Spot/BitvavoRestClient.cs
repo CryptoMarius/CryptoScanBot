@@ -85,9 +85,12 @@ public class BitvavoRestClient : IDisposable
 
 
     /// <summary>
-    /// Fetches all available markets from Bitvavo.
+    /// Fetches all available markets from Bitvavo. The untouched response is returned alongside the
+    /// parsed markets, so the debug dump can show everything Bitvavo sends instead of only the handful
+    /// of fields <see cref="BitvavoMarket"/> happens to declare - which is how the tickSize field
+    /// managed to stay out of sight while every symbol got the wrong price step.
     /// </summary>
-    public async Task<List<BitvavoMarket>?> GetMarketsAsync()
+    public async Task<(List<BitvavoMarket>? markets, string json)> GetMarketsAsync()
     {
         string json;
         try
@@ -99,14 +102,15 @@ public class BitvavoRestClient : IDisposable
             throw new ExchangeException($"Bitvavo HTTP error fetching markets: {ex.Message}");
         }
 
-        return JsonSerializer.Deserialize<List<BitvavoMarket>>(json);
+        return (JsonSerializer.Deserialize<List<BitvavoMarket>>(json), json);
     }
 
 
     /// <summary>
-    /// Fetches 24h ticker data for all markets from Bitvavo.
+    /// Fetches 24h ticker data for all markets from Bitvavo. Returns the untouched response as well,
+    /// see <see cref="GetMarketsAsync"/>.
     /// </summary>
-    public async Task<List<BitvavoTicker>?> GetTickersAsync()
+    public async Task<(List<BitvavoTicker>? tickers, string json)> GetTickersAsync()
     {
         string json;
         try
@@ -118,7 +122,7 @@ public class BitvavoRestClient : IDisposable
             throw new ExchangeException($"Bitvavo HTTP error fetching tickers: {ex.Message}");
         }
 
-        return JsonSerializer.Deserialize<List<BitvavoTicker>>(json);
+        return (JsonSerializer.Deserialize<List<BitvavoTicker>>(json), json);
     }
 
 
@@ -173,6 +177,10 @@ public class BitvavoMarket
     // that carries the real precision; pricePrecision is null on every market these days.
     [JsonPropertyName("tickSize")]
     public string TickSize { get; set; } = "";
+
+    // The number of decimals allowed in an order quantity (0..8 across the markets).
+    [JsonPropertyName("quantityDecimals")]
+    public int? QuantityDecimals { get; set; }
 
     [JsonPropertyName("minOrderInQuoteAsset")]
     public string MinOrderInQuoteAsset { get; set; } = "0";

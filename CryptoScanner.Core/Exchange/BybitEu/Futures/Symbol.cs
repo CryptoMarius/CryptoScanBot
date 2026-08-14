@@ -55,7 +55,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
 
 
-                // Om achteraf de niet aangeboden munten te deactiveren
+                // Track which symbols are still active, to deactivate the ones we no longer follow
                 SortedList<string, CryptoSymbol> activeSymbols = [];
                 using (var transaction = database.BeginTransaction())
                 {
@@ -102,8 +102,8 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 symbol!.FundingInterval = symbolData.FundingInterval;
 
-                                //Tijdelijk alles overnemen (vanwege into nieuwe velden)
-                                //De te gebruiken precisie in prijzen
+                                //Temporarily copy everything (because of the new fields)
+                                //The precision to use for prices
                                 //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;
                                 //if (symbol.BaseAssetPrecision <= 0)
                                 //    symbol.BaseAssetPrecision = 8;
@@ -112,14 +112,14 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //    symbol.QuoteAssetPrecision = 8;
                                 //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
-                                //Minimale en maximale amount voor een order (in base amount)
+                                //Minimum and maximum amount for an order (in base amount)
                                 symbol.QuantityMinimum = symbolData.LotSizeFilter?.MinOrderQuantity ?? 0;
                                 symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxOrderQuantity ?? 0;
                                 symbol.QuantityTickSize = symbolData.LotSizeFilter?.QuantityStep ?? 0;
 
-                                // De minimale en maximale prijs voor een order (in base price)
-                                // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
-                                // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
+                                // The minimum and maximum price for an order (in base price)
+                                // The definitions do contain a minPrice and a maxPrice, but they are not filled
+                                // (which has consequences for the Clamp, which does expect values)
                                 symbol.PriceMinimum = symbolData.PriceFilter?.MinPrice ?? 0;
                                 symbol.PriceMaximum = symbolData.PriceFilter?.MaxPrice ?? 0;
                                 symbol.PriceTickSize = symbolData.PriceFilter?.TickSize ?? 0;
@@ -136,7 +136,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 if (symbolData.Status == SymbolStatus.Trading)
                                     symbol.Status = 1;
                                 else
-                                    symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+                                    symbol.Status = 0; //Pass the status on (PreTrading, PostTrading or Halt)
 
                                 if (symbol.Id == 0)
                                 {
@@ -145,11 +145,11 @@ public class Symbol() : SymbolBase(), ISymbol
                                 }
                                 else
                                     database.Connection.Update(symbol, transaction);
-                                activeSymbols.Add(symbol.Name, symbol);
+                                activeSymbols[symbol.Name] = symbol;
                             }
                         }
 
-                        // Deactiveer de munten die niet meer voorkomen
+                        // Deactivate the symbols who have disappeared
                         int deactivated = 0;
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                         {
@@ -168,8 +168,8 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
 
-                        // De nieuwe symbols toevoegen aan de lijst
-                        // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
+                        // Add the new symbols to the list
+                        // (because the symbols only get an id during the BulkInsert)
                         foreach (CryptoSymbol symbol in cache)
                         {
                             GlobalData.AddSymbol(symbol);

@@ -84,6 +84,8 @@ public class SymbolBase()
     /// delivery contract carries the same base and quote as its perpetual, so both produce the same
     /// scanner name and candles stored under that name cannot be attributed to either one.
     /// Call once per <c>GetSymbolsAsync</c>, after its loop.
+    /// That is also why the callers assign into their activeSymbols list instead of adding to it: two
+    /// instruments sharing one scanner name would otherwise throw, and roll back the whole update.
     /// </summary>
     static internal void RegisterAmbiguousSymbolNames(Model.CryptoExchange exchange,
         IEnumerable<string> rejectedScannerNames, IEnumerable<string> acceptedScannerNames)

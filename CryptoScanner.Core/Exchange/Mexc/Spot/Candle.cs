@@ -17,7 +17,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CryptoSymbol symbol, CryptoInterval interval, CandleTime fetchFrom)
     {
         // Remarks:
-        // The maximum is 1000 candles per GetKlinesAsync call.
+        // The maximum is 500 candles per GetKlinesAsync call (the documentation says 1000, but the
+        // exchange returns 500 even when a higher limit is asked for - hence CandleLimit=500).
         // The results can be from new to old (wrong order).
         // The results can contain in progress candles.
 
@@ -26,7 +27,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         if (clientBase is MexcRestClient client1)
             client = client1;
         else
-            throw new Exception("Expected BybitRestClient");
+            throw new Exception("Expected MexcRestClient");
         var api = client.SpotApi;
 
         KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
@@ -41,7 +42,10 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
-            if (result.Error?.Code == 429) // not sure if this error exists on Mexc? Copied?
+            // Mexc answers with 429 when the weight of an endpoint is exceeded, and with 418 once
+            // it decided to ban the address. A ban is lifted after ten minutes, so waiting is the
+            // only sensible response - see LimitRate for the weights we book.
+            if (result.Error?.Code == 429)
             {
                 GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
                 Thread.Sleep(15000);

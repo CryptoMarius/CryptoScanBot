@@ -1,5 +1,7 @@
-using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+
+using CryptoScanner.Core.Model;
 
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
@@ -18,9 +20,20 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
         InitializeCache(SymbolList);
 
         // This stream produces a continuous stream of data (with incomplete candle, so we need a cache and timers)
-        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(string.Join(",", Symbols), KlineInterval.OneMinute, data =>
+        // Kucoin wants its own contract names ("XBTUSDCM"), not the scanner names ("XBTUSDC"). Passing the
+        // scanner names fails silently: the exchange accepts the topic and simply never sends anything,
+        // after which the flush timer keeps synthesizing flat candles from the last known price.
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(SymbolNamesAsGenericArray, KlineInterval.OneMinute, data =>
         {
             var kline = data.Data;
+
+            // The volume of a futures kline counts CONTRACTS and this stream carries no turnover field
+            // of its own. QuantityTickSize holds the base amount of one contract (lotSize * multiplier,
+            // see Symbol.cs), so this gives the same quote volume the fetched candles carry - without it
+            // the live candles are in another unit than the history (and a factor multiplier apart).
+            if (!SymbolByExchangeName.TryGetValue(data.Symbol!, out CryptoSymbol? symbol))
+                return;
+            decimal quoteVolume = kline.Volume * symbol.QuantityTickSize * kline.ClosePrice;
             //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
             //GlobalData.AddTextToLogTab($"kline ticker {data.ScannerSymbol} {json}");
 
@@ -36,14 +49,14 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
             // can never have an older message overwrite a newer one's OHLC.
             UpdateCacheFromKline(data.Symbol!, kline.OpenTime,
                 open: kline.OpenPrice, high: kline.HighPrice, low: kline.LowPrice,
-                close: kline.ClosePrice, volume: kline.Volume);
+                close: kline.ClosePrice, volume: quoteVolume);
             //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
-        // Implementatie kline timer (fix)
-        // Omdat er niet altijd een nieuwe candle aangeboden wordt (zoals "flut" munt TOMOUSDT)
-        // kun je aanvullend een timer kunnen gebruiken die alsnog de vorige candle herhaalt.
-        // De gedachte is om dat iedere minuut 10 seconden na het normale kline event te doen.
+        // Kline timer implementation (fix)
+        // Because a new candle is not always offered (like the "junk" coin TOMOUSDT) an additional
+        // timer can be used that repeats the previous candle after all.
+        // The idea is to do that every minute, 10 seconds after the normal kline event.
 
         if (subscriptionResult.Success)
             StartFlushTimer();

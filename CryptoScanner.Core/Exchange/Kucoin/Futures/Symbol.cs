@@ -62,8 +62,11 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (symbolInfo.Data != null)
                 {
 
-                    // Om achteraf de niet aangeboden munten te deactiveren
+                    // Track which symbols are still active, to deactivate the ones we no longer follow
                     SortedList<string, CryptoSymbol> activeSymbols = [];
+                    // Scanner names of the instruments we skip below. Intersected with the accepted names
+                    // after the loop, that gives the symbols whose name covers more than one instrument.
+                    List<string> rejectedSymbols = [];
 
 
                     using (var transaction = database.BeginTransaction())
@@ -82,14 +85,15 @@ public class Symbol() : SymbolBase(), ISymbol
                                     // was info.ExchangeName, which is the same value but is only parsed below now
                                     GlobalData.AddTextToLogTab($"{symbolData.Symbol} rootsymbol != quote {symbolData.RootSymbol}");
 #endif
+                                    rejectedSymbols.Add(symbolData.BaseAsset.ToUpper() + symbolData.QuoteAsset.ToUpper());
                                     continue;
                                 }
 
                                 SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
                                 if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                                 {
-                                    //Tijdelijk alles overnemen (vanwege into nieuwe velden)
-                                    //De te gebruiken precisie in prijzen
+                                    //Temporarily copy everything (because of the new fields)
+                                    //The precision to use for prices
                                     //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;
                                     //if (symbol.BaseAssetPrecision <= 0)
                                     //    symbol.BaseAssetPrecision = 8;
@@ -98,16 +102,21 @@ public class Symbol() : SymbolBase(), ISymbol
                                     //    symbol.QuoteAssetPrecision = 8;
                                     //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
-                                    //Minimale en maximale amount voor een order (in base amount)
+                                    //Minimum and maximum amount for an order (in base amount)
                                     //symbol.QuantityMinimum = symbolData.Base.MinQuantity;
                                     //symbol.QuantityMaximum = symbolData.MaxQuantity; //baseMinSize
                                     // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
 
-                                    symbol!.QuantityTickSize = symbolData.TickSize;
+                                    // The quantity of a futures order is expressed in contracts, so the step
+                                    // is the lot size times the base amount of one contract (as BloFin does).
+                                    // TickSize is the PRICE step and belongs below. SubscriptionKLineTicker
+                                    // reads this field as well, to convert the contract volume of a streamed
+                                    // kline into a quote volume.
+                                    symbol!.QuantityTickSize = symbolData.LotSize * symbolData.Multiplier;
 
-                                    // De minimale en maximale prijs voor een order (in base price)
-                                    // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
-                                    // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
+                                    // The minimum and maximum price for an order (in base price)
+                                    // The definitions do contain a minPrice and a maxPrice, but they are not filled
+                                    // (which has consequences for the Clamp, which does expect values)
                                     //symbol.PriceMinimum = niet aanwezig! binanceSymbol.PriceFilter.min;
                                     //symbol.PriceMaximum = niet aanwezig! binanceSymbol.LotSizeFilter.MaxOrderValue;
                                     symbol.PriceTickSize = symbolData.TickSize;
@@ -115,7 +124,12 @@ public class Symbol() : SymbolBase(), ISymbol
                                     //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                     //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
-                                    symbol.Volume = (double)symbolData.Volume24H;
+                                    // Turnover24H is the 24 hour volume in the QUOTE currency, which is what
+                                    // the volume boundary and the rest of the scanner work with. Volume24H is
+                                    // the same period in the base currency: XBTUSDCM reports 21.88 against a
+                                    // turnover of 1380480 USDC, so it dropped out while SUIUSDCM (1346 against
+                                    // 921 USDC) stayed - exactly the wrong way around.
+                                    symbol.Volume = (double)symbolData.Turnover24H;
                                     //// volume from the tickers
                                     //if (volumeTicker.TryGetValue(symbol.ExchangeSymbol, out decimal volume))
                                     //    symbol.Volume = volume;
@@ -125,7 +139,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                     if (symbolData.Status == "Open")
                                         symbol.Status = 1;
                                     else
-                                        symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+                                        symbol.Status = 0; //Pass the status on (PreTrading, PostTrading or Halt)
 
                                     if (symbol.Id == 0)
                                     {
@@ -134,11 +148,15 @@ public class Symbol() : SymbolBase(), ISymbol
                                     }
                                     else
                                         database.Connection.Update(symbol, transaction);
-                                    activeSymbols.Add(symbol.Name, symbol);
+                                    activeSymbols[symbol.Name] = symbol;
                                 }
                             }
 
-                            // Deactiveer de munten die niet meer voorkomen
+                            // Which scanner names cover more than one instrument (the inverse contracts
+                            // rejected above carry the same base and quote as a linear one)
+                            RegisterAmbiguousSymbolNames(exchange, rejectedSymbols, activeSymbols.Keys);
+
+                            // Deactivate the symbols who have disappeared
                             int deactivated = 0;
                             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                             {
@@ -153,8 +171,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                 GlobalData.AddTextToLogTab($"{deactivated} symbols deactivated");
 
 
-                            // De nieuwe symbols toevoegen aan de lijst
-                            // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
+                            // Add the new symbols to the list
+                            // (because the symbols only get an id during the BulkInsert)
                             foreach (CryptoSymbol symbol in cache)
                             {
                                 GlobalData.AddSymbol(symbol);

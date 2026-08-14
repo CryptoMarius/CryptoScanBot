@@ -73,9 +73,12 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 if (CheckFutureCandleReceived(kline.OpenTime, symbol, interval, kline.ClosePrice))
                     continue;
 
+                // QuoteVolume is the turnover the exchange itself reports for the candle. Volume counts
+                // CONTRACTS, so multiplying that by a price gave a value the size of the contract
+                // multiplier too high (a factor 1000 on XBTUSDTM, 10000 on XBTUSDCM).
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
-                    kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
+                    kline.QuoteVolume);
 
                 // remember the newest candle
                 if (candle.OpenTime > fetchedUpTo)

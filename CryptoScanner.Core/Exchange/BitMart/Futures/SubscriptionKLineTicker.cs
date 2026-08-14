@@ -1,4 +1,4 @@
-using BitMart.Net.Clients;
+﻿using BitMart.Net.Clients;
 using BitMart.Net.Enums;
 
 using CryptoExchange.Net.Objects;
@@ -45,10 +45,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
             }
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
-        // Implementatie kline timer (fix)
-        // Omdat er niet altijd een nieuwe candle aangeboden wordt (zoals "flut" munt TOMOUSDT)
-        // kun je aanvullend een timer kunnen gebruiken die alsnog de vorige candle herhaalt.
-        // De gedachte is om dat iedere minuut 10 seconden na het normale kline event te doen.
+        // Kline timer implementation (fix)
+        // Because a new candle is not always offered (like the "junk" coin TOMOUSDT) an additional
+        // timer can be used that repeats the previous candle after all.
+        // The idea is to do that every minute, 10 seconds after the normal kline event.
 
         if (subscriptionResult.Success)
             StartFlushTimer();

@@ -43,7 +43,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // But the Klines are always at a 5 minute interval, that won't work
         //------------------------------------------------------------------------------
 
-        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(Symbols, data =>
+        // Coinbase wants its own symbol names ("BTC-USD"), not the scanner names ("BTCUSD"). The names
+        // ProcessCandleAsync looks up come from the same dictionary, so both sides stay in step.
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(SymbolByExchangeName.Keys.ToList(), data =>
         {
             //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.ScannerSymbol));
             foreach (CoinbaseStreamKline kline in data.Data)
