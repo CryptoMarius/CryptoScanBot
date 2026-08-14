@@ -288,8 +288,20 @@ public class TradingViewSymbolWebSocket(string tickerName)
             {
                 var str = message[3..];
                 var pos = str.IndexOf("~m~", StringComparison.InvariantCulture);
+
+                // A frame looks like "~m~<length>~m~<payload>". A websocket packet can end halfway
+                // through that header, so the closing "~m~" has not arrived yet and IndexOf returns -1.
+                // Keep the incomplete bytes and wait for the next packet (str[..-1] would throw, and the
+                // catch below used to drop the whole buffer, desyncing every following frame).
+                if (pos < 0)
+                    return message;
+
                 var lengthStr = str[..pos];
-                var length = int.Parse(lengthStr);
+                // A non numeric length means we lost the frame boundaries. Dropping the buffer is the
+                // only way back in sync, but do that explicitly instead of through an exception that
+                // also throws away the frames parsed so far.
+                if (!int.TryParse(lengthStr, out int length))
+                    return "";
 
                 if (message.Length >= length + 3 + 3 + lengthStr.Length)
                 {
