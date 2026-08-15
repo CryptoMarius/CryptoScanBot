@@ -207,7 +207,22 @@ public class SignalPrepare
                         symbolInterval.DlzAdmin.LastSwingHigh = symbolInterval.DlzAdmin.LastSwingHigh.HasValue
                             ? Math.Max(symbolInterval.DlzAdmin.LastSwingHigh.Value, valueHigh) : valueHigh;
                         // TODO: This is not 100% correct...
-                        await ZoneThreadCalculate.CalculateZones(symbol, interval);
+
+                        // Hand the recalculation to ZoneThreadCalculate instead of running it here.
+                        // A DLZ recalculation zooms in on every dominant pivot and fetches the candles
+                        // it misses from the exchange, so it can take minutes. This method runs inside
+                        // ThreadMonitorCandle, which processes at most four symbols at a time, so doing
+                        // the work here stalls the analysis of every other symbol as well: on the first
+                        // hour boundary after a restart, when all symbols need a full scan, the 5m
+                        // signals arrived up to four and a half minutes late (15-08-2026).
+                        //
+                        // The emulator keeps the direct call: there is no exchange traffic during a
+                        // replay (ZoneCandleEngine.FetchFrom returns early) and the replay thread has to
+                        // stay deterministic.
+                        if (GlobalData.IsEmulatorMode)
+                            await ZoneThreadCalculate.CalculateZones(symbol, interval);
+                        else
+                            GlobalData.ThreadZoneCalculate?.AddToQueue(symbol, interval);
                     }
                 }
             }
