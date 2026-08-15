@@ -50,7 +50,8 @@ public partial class LogGridViewModel : ObservableObject
         try
         {
             // Use a queue because adding lines cost a lot of time (notification/refresh)
-            ScannerLog.Logger.Info(text);
+            // The NLog write is done by GlobalData.AddTextToLogTab itself, so it also happens
+            // when this ViewModel does not exist yet and can carry a level other than Info.
             text = text.Trim();
 
             if (text != "")
