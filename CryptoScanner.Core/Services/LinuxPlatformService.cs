@@ -28,4 +28,41 @@ public class LinuxPlatformService : IPlatformService
             return folder;
         }
     }
+
+    /// <summary>
+    /// There is no single message box on Linux, so the two dialog helpers that are almost always
+    /// present are tried in turn (zenity on GNOME, kdialog on KDE). When neither is installed the
+    /// message still reaches the console.
+    /// </summary>
+    public void ShowMessage(string title, string message)
+    {
+        if (TryShowWith("zenity", ["--warning", $"--title={title}", $"--text={message}"]))
+            return;
+        if (TryShowWith("kdialog", ["--title", title, "--sorry", message]))
+            return;
+
+        Console.WriteLine($"{title}: {message}");
+    }
+
+    private static bool TryShowWith(string command, string[] arguments)
+    {
+        try
+        {
+            var startInfo = new System.Diagnostics.ProcessStartInfo(command) { UseShellExecute = false };
+            foreach (string argument in arguments)
+                startInfo.ArgumentList.Add(argument);
+
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            if (process == null)
+                return false;
+
+            process.WaitForExit();
+            return true;
+        }
+        catch
+        {
+            // Not installed, or no display to show it on - the caller tries the next one
+            return false;
+        }
+    }
 }

@@ -29,6 +29,17 @@ public class WindowsPlatformService : IPlatformService
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetWindowPos(nint hwnd, nint hwndInsertAfter, int x, int y, int cx, int cy, uint flags);
 
+    // MessageBox flags: a single OK button with the warning icon, brought to the front and kept on
+    // top - it is shown while the application is still starting, so it must not end up behind it.
+    private const uint MbOk = 0x00000000;
+    private const uint MbIconWarning = 0x00000030;
+    private const uint MbSetForeground = 0x00010000;
+    private const uint MbTopMost = 0x00040000;
+
+    [SupportedOSPlatform("windows")]
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true, EntryPoint = "MessageBoxW")]
+    private static extern int MessageBox(nint hwnd, string text, string caption, uint type);
+
     /// <summary>
     /// Switch the title bar between its light and dark variant.
     /// <para>
@@ -84,6 +95,26 @@ public class WindowsPlatformService : IPlatformService
         {
             // This is a full path given by the parameter
             return folder;
+        }
+    }
+
+    /// <summary>
+    /// The plain Windows message box. No owner window on purpose: this is used before the
+    /// application has one, so it has to be able to stand on its own.
+    /// </summary>
+    public void ShowMessage(string title, string message)
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        try
+        {
+            MessageBox(0, message, title, MbOk | MbIconWarning | MbSetForeground | MbTopMost);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "ShowMessage");
+            Console.WriteLine($"{title}: {message}");
         }
     }
 

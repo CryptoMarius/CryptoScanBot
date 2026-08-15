@@ -78,6 +78,18 @@ class Program
         // Initialize the logging system (as soon as possible)
         ScannerLog.InitializeLogging(false);
 
+        // One application per data folder. The folder holds the databases, the settings and the
+        // user state, and a second process would fight over all three (and act on the same signals
+        // twice). Claimed before Avalonia starts, so a refused start never touches the folder.
+        if (!DataFolderLock.TryAcquire(GlobalData.AppDataFolder))
+        {
+            string message = DataFolderLock.ConflictMessage(GlobalData.AppDataFolder);
+            Console.WriteLine(message);
+            // Fully qualified: this project has a Constants of its own that would win here
+            platformService.ShowMessage($"{Core.Const.Constants.AppName} is already running", message);
+            Environment.Exit(1);
+        }
+
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 

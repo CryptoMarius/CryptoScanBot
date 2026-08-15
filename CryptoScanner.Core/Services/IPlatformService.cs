@@ -15,4 +15,15 @@ public interface IPlatformService
     void ApplyWindowTheme(nint windowHandle, bool dark)
     {
     }
+
+    /// <summary>
+    /// Show a blocking message box using whatever the platform provides. Meant for the startup
+    /// path, where the application refuses to continue and there is no window yet to hang a
+    /// dialog on. The fallback below writes to the console, which is all a host without a
+    /// desktop can do.
+    /// </summary>
+    void ShowMessage(string title, string message)
+    {
+        Console.WriteLine($"{title}: {message}");
+    }
 }

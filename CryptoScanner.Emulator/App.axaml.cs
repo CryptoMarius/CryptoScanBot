@@ -82,7 +82,9 @@ public partial class App : Application
             return;
         }
 
-        // 1. Apply the chosen data folder. Everything that reads GlobalData.AppDataFolder
+        // 1. Apply the chosen data folder. The dialog only confirms after DataFolderLock claimed
+        //    it (see SetupWindowViewModel.Ok), so nothing else is working in it.
+        //    Everything that reads GlobalData.AppDataFolder
         //    after this point — DB connection, settings.json — points here.
         GlobalData.AppDataFolder = setup.ViewModel.DataFolder;
         Directory.CreateDirectory(GlobalData.AppDataFolder);
@@ -145,6 +147,8 @@ public partial class App : Application
         if (!setup.ViewModel.Confirmed)
             return;
 
+        // The claim on the new folder was taken by the dialog itself; the old one is released only
+        // when that succeeded, so a refused folder never gets this far.
         // Apply the new folder + exchange exactly like the first-time startup path.
         GlobalData.AppDataFolder = setup.ViewModel.DataFolder;
         Directory.CreateDirectory(GlobalData.AppDataFolder);

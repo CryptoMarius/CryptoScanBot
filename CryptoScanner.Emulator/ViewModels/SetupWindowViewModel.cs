@@ -103,6 +103,19 @@ public partial class SetupWindowViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(DataFolder) || string.IsNullOrWhiteSpace(SelectedExchange))
             return;
 
+        // Claim the data folder while this dialog is still on screen, so a folder that is already
+        // taken keeps the dialog open instead of shutting the emulator down. Two applications in
+        // one folder overwrite each other's settings and databases.
+        // On the "change database" path the emulator already holds another folder; TryAcquire only
+        // lets go of that one once the new claim succeeded, so a refusal changes nothing.
+        if (!DataFolderLock.TryAcquire(DataFolder))
+        {
+            string conflict = DataFolderLock.ConflictMessage(DataFolder);
+            Console.WriteLine(conflict);
+            GlobalData.GetService<IPlatformService>()?.ShowMessage($"{Constants.AppName} emulator", conflict);
+            return;
+        }
+
         // Remember the picked folder and exchange so next launch pre-fills both without forcing
         // the user through the picker/combo again.
         LastFolderMemory.Save(DataFolder);

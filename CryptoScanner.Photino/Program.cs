@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Analyzers;
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.SignalR;
@@ -116,6 +117,19 @@ class Program
         GlobalData.AppDataFolder = platformService.GetDataDirectory();
 
         ScannerLog.InitializeLogging(false);
+
+        // One application per data folder, exactly like the Avalonia host. This has to happen before
+        // any service is started: the shutdown path of a refused instance would otherwise write its
+        // own (empty) settings over the ones belonging to the process that owns the folder.
+        if (!DataFolderLock.TryAcquire(GlobalData.AppDataFolder))
+        {
+            string conflict = DataFolderLock.ConflictMessage(GlobalData.AppDataFolder);
+            Console.WriteLine(conflict);
+            // Not app.MainWindow.ShowMessage: the native window does not exist until app.Run(),
+            // and this instance never gets that far
+            platformService.ShowMessage($"{Constants.AppName} is already running", conflict);
+            Environment.Exit(1);
+        }
 
         // Wire UI delegates.
         // The MVVM messages are delivered synchronously on the calling thread here; every Blazor

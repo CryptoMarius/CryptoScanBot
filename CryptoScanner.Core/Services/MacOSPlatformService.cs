@@ -28,4 +28,30 @@ public class MacOSPlatformService : IPlatformService
             return folder;
         }
     }
+
+    /// <summary>
+    /// macOS has no message-box call we can reach from .NET, so this goes through AppleScript.
+    /// Falls back to the console when osascript is not available.
+    /// </summary>
+    public void ShowMessage(string title, string message)
+    {
+        try
+        {
+            // AppleScript string literals only need the quote and the backslash escaped
+            string text = message.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            string caption = title.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+            var startInfo = new System.Diagnostics.ProcessStartInfo("osascript") { UseShellExecute = false };
+            startInfo.ArgumentList.Add("-e");
+            startInfo.ArgumentList.Add($"display dialog \"{text}\" with title \"{caption}\" buttons {{\"OK\"}} default button 1 with icon caution");
+
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            process?.WaitForExit();
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "ShowMessage");
+            Console.WriteLine($"{title}: {message}");
+        }
+    }
 }
