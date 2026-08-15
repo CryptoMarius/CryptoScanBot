@@ -1,6 +1,5 @@
 ﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Zones;
 
@@ -27,7 +26,7 @@ public class SignalPrepare
     //public static bool ZoneDlzActive() 
     //    => Preparing.ContainsKey(SignalPrepareKind.Dlz);
 
-    public static bool ZoneFvgActive() 
+    public static bool ZoneFvgActive()
         => Preparing.ContainsKey(SignalPrepareKind.Fvg);
 
     /// <summary>True when the given interval is in the effective DLZ prep bucket
@@ -196,9 +195,17 @@ public class SignalPrepare
                             $"(swingLow {symbolInterval.DlzAdmin.LastSwingLow}→{valueLow}, " +
                             $"swingHigh {symbolInterval.DlzAdmin.LastSwingHigh}→{valueHigh}) " +
                             $"open zones before: long={dlzZones.LongOpen.Count} short={dlzZones.ShortOpen.Count}");
-                        // avoid duplicate calculation (kind of a weak attemp)
-                        symbolInterval.DlzAdmin.LastSwingLow = valueLow;
-                        symbolInterval.DlzAdmin.LastSwingHigh = valueHigh;
+                        // Avoid duplicate calculation: remember the widest range seen so far, so only a
+                        // candle that breaks OUT of it triggers the next recalculation.
+                        // Assigning both values unconditionally (what happened here before) also moved
+                        // the opposite bound INWARDS - a new low pulled LastSwingHigh down to the high of
+                        // that same candle - after which almost any next candle triggered again. In the
+                        // log that showed up as "swingHigh 0.3503→0.1827", a swing high walking downwards,
+                        // and as a recalculation for nearly every symbol on every hour boundary.
+                        symbolInterval.DlzAdmin.LastSwingLow = symbolInterval.DlzAdmin.LastSwingLow.HasValue
+                            ? Math.Min(symbolInterval.DlzAdmin.LastSwingLow.Value, valueLow) : valueLow;
+                        symbolInterval.DlzAdmin.LastSwingHigh = symbolInterval.DlzAdmin.LastSwingHigh.HasValue
+                            ? Math.Max(symbolInterval.DlzAdmin.LastSwingHigh.Value, valueHigh) : valueHigh;
                         // TODO: This is not 100% correct...
                         await ZoneThreadCalculate.CalculateZones(symbol, interval);
                     }
