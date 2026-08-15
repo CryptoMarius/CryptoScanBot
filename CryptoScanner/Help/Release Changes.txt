@@ -4,32 +4,32 @@ TODO:
 -Alle exchanges (laten) testen
 -Compilatie Mac + Testje op Mac vm.
 -Compilatie Linux + Testje op Linux vm.
--De Photino app laten testen (nieuw)
--De Emulator app laten testen (nieuw)
--De documentatie bijwerken, screenshots verversen.
+-De documentatie bijwerken, screenshots verversen (wiki heeft nu nog de oude opzet)
+-Altrady meldt ook de shorts terug als long positie (nog uitzoeken?)
 
-- De onderhoudscyclus en de verversing van exchange informatie/verversing candles zitten elkaar in de weg, draait niet elk uur zoals gepland was
-- Okx Futures, haalt symbols op van de categorie spot ipv futures
-- Okx Futures, symbols met de status proepen geven een probleem
-- Tradingview: Geeft soms fouten op half verstuurde informatie frames
-- Telegram heeft s'nachts een onderbreking/herstart en dat geeft wat foutmeldingen
+
+13-08-2025 2.6.0
+- Alpaca geactiveerd (om te testen!!!!)
+- Het minimale 24-uurs volume van een basismunt schaalt nu mee met de omzet van die exchange
+- De pauzeregels van de trader pakken nu zelf de bitcoin munt van de exchange (BTCUSDT bestaat niet overal)
+- Blofin Futures geactiveerd, de candle subscription, het 24-uurs volume en de inverse contracten gerepareerd
+- Alpaca geactiveerd (aandelen, gratis IEX feed met maximaal 30 symbolen, alleen papertrading)
+- BitMart Futures geactiveerd, de spotkant is wel gerepareerd maar staat uit wegens te weinig volume
 - Binance Futures - verwissel probleem met de BTCUSDT en ETHUSDT en de kwartaalcontracten leiide tot trading rule problemen en verkeerde prijzen
 - HyperLiquid Spot toegevoegd (had nog een paar mankementen die nu hopelijk zijn opgelost)
 - Kraken Spot, het 24-uurs volume werd niet gevonden voor de oudste munten (BTC, ETH, USDT, XRP, DOGE) waardoor die buiten de scanner vielen
 - Kraken Spot, de opgehaalde historie stond in base volume terwijl de live candles het quote volume bevatten
 - Kraken Futures, een mislukte ticker aanroep zette het volume van alle munten op 0 in plaats van de vorige stand te laten staan
-- Altrady meldt ook de shorts terug als long positie (nog uitzoeken?)
-
-
-13-08-2025 2.6.0
-- Alpaca geactiveerd (om te testen!!!!)
-
+- Tradingview: Geeft soms fouten op half verstuurde informatie frames
+- Telegram heeft s'nachts een onderbreking/herstart en dat geeft wat foutmeldingen
 - De minimale 24-uurs omzet per exchange (0,034%-schaling)
 - Hyperliquid spot weer geactiveerd
 - Pauzeregels met hardgecodeerde BTCUSDT
 - Blofin futures geactiveerd
 - BitMart futures geactiveerd
-- De munt die gebruikt wordt voro de trafing rulez wordt nu doro de exchange api gestuurd (btc geeft wel eens een andere naam)
+- Okx Futures, haalt symbols op van de categorie spot ipv futures
+- Okx Futures, symbols met de status prepare geven een probleem
+- De munt die gebruikt wordt voro de trafing rulez wordt nu door de exchange api gestuurd (btc geeft wel eens een andere naam)
 - Het minimale volume van een basismunt wordt nu geinitialiseerd op de exchange grootte (een inschatting)
 - De kleur rood en groen aangepast waardoor het beter te lezen is op een zwarte achtergrond
 - De laatste fouten uit Kraken Futures gehaald
@@ -43,12 +43,12 @@ TODO:
 - Papertrading op de andere exchanges werkzaam gemaakt (was alleen actief voor Bybit en Binance)
 - BB Squeuze strategie toegevoegd (maar daar zijn niet veel signalen op)
 - Kraken futures weer geactiveerd, de symbols, candles en de trade subscription zijn gerepareerd
+- De onderhoudscyclus en de verversing van exchange informatie/verversing candles zitten elkaar in de weg, draait niet elk uur zoals gepland was
 
 Photino
 - Introductie van een nieuwe Photino applicatie (parallel aan de Avalonia app)
-- Nieuw Tradingview gebaseerde chart die het Avalonia chart venster vervangt
-- Tradingview tabblad verwijderd en vervangen met een popup vanwege limitaties Tradingview
-- Diverse aanpassingen dashboard charts
+- Highlights: Een Tradingview gebaseerde chart die het Avalonia chart venster vervangt
+- De Tradingview is tabblad verwijderd en vervangen met een popup vanwege limitaties Tradingview
 
 22-07-2025 2.5.9
 - SignalR toegevoegd voor een experiment met een andere applicatie (heeft ASP.NET package nodig)

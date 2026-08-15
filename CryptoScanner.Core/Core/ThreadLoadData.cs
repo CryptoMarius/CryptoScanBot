@@ -197,6 +197,25 @@ public class ThreadLoadData
 
     public static async Task ExecuteAsync(bool checkPositions)
     {
+        // Pin the exchange, its kline ticker and the cancellation token of this session. All three are
+        // statics that ApplyConfigurationAsync replaces the moment another exchange is activated, while
+        // this method runs for minutes on a cold start. Reading them again halfway through meant the
+        // loading of the previous exchange finished its work on the new one: it subscribed the new
+        // exchange's ticker to the old exchange's symbols, after which the real start found that ticker
+        // "already started" and no data was ever fetched for the exchange the user selected.
+        Model.CryptoExchange? activeExchange = GlobalData.ActiveExchange;
+        SubscriptionManager? klineTicker = ExchangeBase.KLineTicker;
+        CancellationToken cancellationToken = ExchangeBase.CancellationToken;
+
+        // True once this session was stopped, or another exchange became the active one
+        bool Interrupted()
+        {
+            if (!cancellationToken.IsCancellationRequested && ReferenceEquals(GlobalData.ActiveExchange, activeExchange))
+                return false;
+            GlobalData.AddTextToLogTab($"Loading the data of {activeExchange?.Name} was interrupted");
+            return true;
+        }
+
         try
         {
             using CryptoDatabase databaseThread = new();
@@ -215,9 +234,11 @@ public class ThreadLoadData
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
-                if (!GlobalData.ActiveExchange.LastTimeFetched.HasValue || GlobalData.ActiveExchange.LastTimeFetched?.AddHours(1) < GlobalData.Clock.UtcNow)
-                    await GlobalData.ActiveExchange!.GetApiInstance().Symbol.GetSymbolsAsync();
-                IndexQuoteDataSymbols(GlobalData.ActiveExchange);
+                if (!activeExchange.LastTimeFetched.HasValue || activeExchange.LastTimeFetched?.AddHours(1) < GlobalData.Clock.UtcNow)
+                    await activeExchange.GetApiInstance().Symbol.GetSymbolsAsync();
+                if (Interrupted())
+                    return;
+                IndexQuoteDataSymbols(activeExchange);
 
                 // Na het inlezen van de symbols de lijsten alsnog goed zetten
                 TradingConfig.InitWhiteAndBlackListSettings();
@@ -230,6 +251,8 @@ public class ThreadLoadData
                 GlobalData.AddTextToLogTab("Reading candle information");
                 await DataStore.LoadCandlesAsync(); // Only for migration to candles.db
                 await CandleDatabase.LoadCandlesAsync();
+                if (Interrupted())
+                    return;
 
                 //************************************************************************************
                 // Vanaf dit moment worden de candles (en candleperiod) bewaard
@@ -239,7 +262,7 @@ public class ThreadLoadData
 
 
                 int aantalTotaal = 0;
-                foreach (CryptoSymbol symbol in GlobalData.ActiveExchange.SymbolListName.Values)
+                foreach (CryptoSymbol symbol in activeExchange.SymbolListName.Values)
                 {
                     foreach (CryptoSymbolInterval symbolPeriod in symbol.Data.SymbolIntervalList)
                     {
@@ -276,7 +299,9 @@ public class ThreadLoadData
                 // Een munt die er later bij komt of afvalt wordt nu wel opgepakt zonder herstart:
                 // SubscriptionManager.SynchronizeSymbolsAsync doet dat elke verversingsronde.
                 //************************************************************************************
-                await ExchangeBase.KLineTicker!.StartAsync();
+                if (Interrupted())
+                    return;
+                await klineTicker!.StartAsync();
 
                 //************************************************************************************
                 // Om het volume per symbol en laatste prijs te achterhalen
@@ -286,14 +311,16 @@ public class ThreadLoadData
                 //************************************************************************************
                 // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
                 //************************************************************************************
-                var api = GlobalData.ActiveExchange!.GetApiInstance();
+                var api = activeExchange.GetApiInstance();
                 await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
+                if (Interrupted())
+                    return;
 
                 //Ze zijn er wel, deze is eigenlijk overbodig geworden (zit alleen zoveel werk in!)
                 //CalculateMissingCandles();
 
                 CandleTime currentTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
-                TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, currentTime, 1);
+                TradingRules.CheckTradingRules(activeExchange.Data.PauseTrading, currentTime, 1);
 
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
@@ -368,7 +395,7 @@ public class ThreadLoadData
                 if (!checkPositions)
                 {
                     if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
-                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ActiveExchange!);
+                        await PaperTrading.CheckPositionsAfterRestart(activeExchange);
                 }
 
                 // Assume we now can run
@@ -411,6 +438,11 @@ public class ThreadLoadData
                     });
                 }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Stopping the session cancels the calls that were in flight, that is not an error
+            GlobalData.AddTextToLogTab($"Loading the data of {activeExchange?.Name} was cancelled");
         }
         catch (Exception error)
         {

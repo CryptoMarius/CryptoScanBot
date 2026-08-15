@@ -54,6 +54,18 @@ public class ScannerSession : IScannerSession
     private AddTextEvent ConnectionWasLostEvent { get; set; }
     private AddTextEvent ConnectionWasRestoredEvent { get; set; }
 
+    // The data loading started by Start(). StopAsync has to wait for it before anything is torn down
+    // or reconfigured: on a cold start it runs for minutes (symbols, candle history, subscriptions)
+    // and it works on statics that the configuration screen replaces the moment another exchange is
+    // chosen. Letting it run on made the loading of the previous exchange finish its work on the new
+    // one - it subscribed the new exchange's ticker to the old exchange's symbols, after which the
+    // real start found that ticker "already started" and nothing was ever fetched.
+    private Task? LoadDataTask { get; set; }
+
+    // Upper bound for that wait. The loading checks the cancellation token between its steps, so it
+    // normally ends within a second; this only prevents a hang when a call in flight ignores the token.
+    private static readonly TimeSpan LoadDataStopTimeout = TimeSpan.FromSeconds(30);
+
 
     public ScannerSession()
     {
@@ -215,7 +227,7 @@ public class ScannerSession : IScannerSession
 
                 // De task start "traag" en dan heeft ie de nieuwe true te pakken
                 bool checkPositions = IsStartedBefore;
-                Task.Run(async () => { await ThreadLoadData.ExecuteAsync(checkPositions); });
+                LoadDataTask = Task.Run(async () => { await ThreadLoadData.ExecuteAsync(checkPositions); });
             }
             finally
             {
@@ -247,6 +259,11 @@ public class ScannerSession : IScannerSession
 
                 ScannerLog.Logger.Trace($"Debug: Request for ticker cancel");
                 ExchangeBase.CancellationTokenSource.Cancel();
+
+                // First let the data loading of this session end (see LoadDataTask). Everything below
+                // stops threads and saves candles that the loading is still writing to, and the caller
+                // (the configuration screen) activates another exchange the moment this method returns.
+                await WaitForLoadDataAsync().ConfigureAwait(false);
 
                 Task task;
                 List<Task> taskList = [];
@@ -317,6 +334,36 @@ public class ScannerSession : IScannerSession
             }
         }
         ScannerLog.Logger.Trace($"ScannerSession.Stopped");
+    }
+
+
+    /// <summary>
+    /// Wait for the data loading of this session, after its cancellation was requested. Never throws:
+    /// a failed or cancelled loading is not a reason to abort the shutdown.
+    /// </summary>
+    private async Task WaitForLoadDataAsync()
+    {
+        Task? loadDataTask = LoadDataTask;
+        if (loadDataTask == null || loadDataTask.IsCompleted)
+            return;
+
+        ScannerLog.Logger.Trace($"ScannerSession.Stopping: waiting for the data loading to finish");
+        Task finished = await Task.WhenAny(loadDataTask, Task.Delay(LoadDataStopTimeout)).ConfigureAwait(false);
+        if (finished != loadDataTask)
+        {
+            GlobalData.AddTextToLogTab($"The data loading did not stop within {LoadDataStopTimeout.TotalSeconds:N0} seconds, continuing anyway");
+            return;
+        }
+
+        try
+        {
+            // Observe the outcome so a failed loading does not surface as an unobserved task exception
+            await loadDataTask.ConfigureAwait(false);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Trace($"ScannerSession.Stopping: the data loading ended with {error.Message}");
+        }
     }
 
 

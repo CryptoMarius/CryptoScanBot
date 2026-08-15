@@ -40,6 +40,13 @@ public class CandleBase(ExchangeBase api)
         using IDisposable client = Api.GetClient();
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
+            // The session was stopped (exchange switch, standby, shutdown). One symbol means one round
+            // per interval, and on a cold start each of those catches up months of history, so waiting
+            // for the symbol to finish is not an option. The cleanup below still runs: it only trims
+            // candles that fall outside the fetch window, which is correct however far we got.
+            if (ExchangeBase.CancellationToken.IsCancellationRequested)
+                break;
+
             await Api.Candle.GetCandlesForIntervalAsync(client, symbol, interval);
         }
 
@@ -146,6 +153,12 @@ public class CandleBase(ExchangeBase api)
                                         Monitor.Exit(queue);
                                     }
 
+                                    // The session was stopped (exchange switch, standby, shutdown). Without this
+                                    // the remainder of the queue was still fetched, which kept the previous
+                                    // exchange busy for minutes after the user had already chosen another one.
+                                    if (ExchangeBase.CancellationToken.IsCancellationRequested)
+                                        break;
+
                                     // Er is niet geswitched van exchange (omdat het ophalen zo lang duurt)
                                     if (symbol.ExchangeId == GlobalData.ActiveExchange!.Id)
                                     {
@@ -223,6 +236,14 @@ public class CandleBase(ExchangeBase api)
 
                 if (symbolInterval.LastCandleSynchronized == fetchFrom) // not moving forward
                     break;
+
+                // The session was stopped. Leaving the loop (instead of returning) on purpose: the
+                // administration below has to run for the part that was fetched, exactly like it does
+                // for the two breaks above. LastCandleSynchronized only moved up to what really
+                // arrived, so the next start simply continues from there.
+                if (ExchangeBase.CancellationToken.IsCancellationRequested)
+                    break;
+
                 currentTime = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, 1);
             }
         }
