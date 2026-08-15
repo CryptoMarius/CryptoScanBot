@@ -1870,13 +1870,105 @@ code {
     flex: 1;
 }
 
+/* Bar chart with axes (positions and profits per day). Three nested boxes: a row with the value
+   axis next to the plot, and a label row underneath it. The day labels sit in that separate row
+   and not inside the plot, because the gridlines are positioned in percentages of the plot and
+   any padding for the labels would shift them away from the bar tops. */
+.chart-plot {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.chart-plot-row {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+/* The value axis of the Avalonia LinearAxis: labels right-aligned against the axis line. */
+.chart-yaxis {
+    width: 44px;
+    flex: none;
+    position: relative;
+    /* Transparent counterpart of the plot area's border-bottom. The labels are positioned in
+       percentages of this box, so without it they sit one pixel below their gridline. */
+    border-bottom: 1px solid transparent;
+}
+
+.chart-yaxis-label {
+    position: absolute;
+    right: 4px;
+    /* bottom places the lower edge of the label on the tick; shifting it down by half its own
+       height centres it on the gridline. */
+    transform: translateY(50%);
+    font-size: 9px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.chart-plot-area {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+    /* The axis lines Avalonia draws through AxislineStyle/AxislineColor. */
+    border-left: 1px solid var(--text-secondary);
+    border-bottom: 1px solid var(--text-secondary);
+}
+
+.chart-gridline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--text-muted);
+    opacity: 0.3;
+}
+
+/* The zero line, which Avalonia draws as a thick white LineAnnotation. */
+.chart-gridline-zero {
+    background: var(--text-secondary);
+    opacity: 1;
+}
+
+.chart-xaxis {
+    display: flex;
+    height: 16px;
+    flex: none;
+}
+
+.chart-xaxis-spacer {
+    width: 44px;
+    flex: none;
+}
+
+.chart-xaxis-labels {
+    flex: 1;
+    display: flex;
+    gap: 2px;
+    min-width: 0;
+    /* Transparent counterpart of the plot area's border-left, so the labels line up with the
+       bars to the pixel. */
+    border-left: 1px solid transparent;
+}
+
+.chart-xaxis-label {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-size: 9px;
+    color: var(--text-muted);
+    overflow: hidden;
+}
+
 .chart-bar-container {
     display: flex;
     align-items: flex-end;
     gap: 2px;
-    flex: 1;
-    padding-bottom: 18px;
-    position: relative;
+    /* Fills the plot area, which sits behind it with the gridlines. */
+    position: absolute;
+    inset: 0;
 }
 
 .chart-bar-centered {
@@ -1887,6 +1979,9 @@ code {
     flex: 1;
     display: flex;
     flex-direction: column;
+    /* The wrapper is a column that is as high as the whole plot, so without this the bar sticks
+       to the TOP of it and grows downwards. */
+    justify-content: flex-end;
     align-items: center;
     min-width: 0;
     height: 100%;
@@ -1936,13 +2031,6 @@ code {
     background: var(--red);
 }
 
-.chart-bar-label {
-    position: absolute;
-    bottom: -16px;
-    font-size: 9px;
-    color: var(--text-muted);
-    white-space: nowrap;
-}
 
 /* Square button holding a single glyph — the "..." browse and "▶" play buttons of the Avalonia
    ColorAndSoundView are 26x26. */

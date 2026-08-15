@@ -16,13 +16,19 @@ rem
 rem  The scanner csproj has a BundleEmulatorIntoPublish target, so CryptoScanBot.Emulator lands in
 rem  the same folder as the scanner - it does not need its own publish command here.
 rem
-rem  ORDER MATTERS on Windows: Photino is published LAST, over the scanner folder. Exactly two files
-rem  exist in both packages with different versions, and the Photino ones are the ones all three
-rem  .deps.json files ask for:
+rem  ORDER MATTERS on Windows. Exactly two files exist in both packages with different versions, and
+rem  the Photino ones are the ones all three .deps.json files ask for:
 rem    - System.Collections.Immutable.dll  scanner 8.0.0.0 vs Photino 10.0.0.0 (all deps.json want 10.0.7)
 rem    - WebView2Loader.dll (native)       1.0.1829.0 (WebView.Avalonia) vs 1.0.2903.40 (Photino.Native)
-rem  Publishing the scanner last would downgrade both. On osx-arm64 no file differs at all, but the
-rem  same order is used there to keep the two blocks identical.
+rem  Photino therefore has to land on top. Publishing it straight into the scanner folder does NOT do
+rem  that: publish copies with PreserveNewest semantics, so it keeps whatever file has the newest
+rem  timestamp - and the 10.0.7 assembly sits in the NuGet cache with an older date than the 8.0 one
+rem  from the runtime pack, so it was silently skipped. Hence the temp folder plus xcopy /y below,
+rem  which overwrites unconditionally and makes the result independent of package timestamps.
+rem  The 8.0.0.0 file itself comes from the emulator bundle (the emulator publishes the runtime pack
+rem  version while its own deps.json declares 10.0.7); the Photino merge repairs that as a side
+rem  effect. On osx-arm64 no file differs at all, but the same order is used there to keep the two
+rem  blocks identical.
 rem
 rem  Every command below is a plain one-liner: copy any single line into a command prompt to rerun
 rem  or test that step on its own (run the "set VERSION" line first, it is used everywhere).
@@ -38,7 +44,7 @@ rem  - Zipping uses the tar.exe that ships with Windows (bsdtar). It writes forw
 rem    zip, which matters for the macOS packages - a zip made by Windows Explorer or PowerShell 5.1
 rem    stores backslashes and unpacks into a mess on a Mac.
 rem  - For an extra runtime (osx-x64 for Intel Macs, linux-x64) copy one block and replace the
-rem    runtime identifier in all five lines.
+rem    runtime identifier everywhere in it.
 rem  - Do not run two publishes at the same time: they share the Core/Config/Chart/Analyzers
 rem    projects and the second one fails on a locked .pdb in obj\.
 rem =================================================================================================
@@ -60,10 +66,14 @@ echo ==================================================================
 echo.
 echo --- 1/2  CryptoScanBot %VERSION% win-x64 (scanner + emulator + Photino) ---
 if exist "publish\CryptoScanBot-%VERSION%-win-x64" rmdir /s /q "publish\CryptoScanBot-%VERSION%-win-x64"
+if exist "publish\photino-tmp-win-x64" rmdir /s /q "publish\photino-tmp-win-x64"
 dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r win-x64 --self-contained true -o "publish\CryptoScanBot-%VERSION%-win-x64" --nologo -v minimal
 if errorlevel 1 goto failed
-dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r win-x64 --self-contained true -o "publish\CryptoScanBot-%VERSION%-win-x64" --nologo -v minimal
+dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r win-x64 --self-contained true -o "publish\photino-tmp-win-x64" --nologo -v minimal
 if errorlevel 1 goto failed
+xcopy "publish\photino-tmp-win-x64\*" "publish\CryptoScanBot-%VERSION%-win-x64\" /e /y /r /q >nul
+if errorlevel 1 goto failed
+rmdir /s /q "publish\photino-tmp-win-x64"
 if exist "publish\CryptoScanBot-%VERSION%-win-x64\libSkiaSharp.pdb" del /q "publish\CryptoScanBot-%VERSION%-win-x64\libSkiaSharp.pdb"
 if exist "publish\CryptoScanBot-%VERSION%-win-x64.zip" del /q "publish\CryptoScanBot-%VERSION%-win-x64.zip"
 "%SystemRoot%\System32\tar.exe" -a -c -f "publish\CryptoScanBot-%VERSION%-win-x64.zip" -C "publish" "CryptoScanBot-%VERSION%-win-x64"
@@ -73,10 +83,14 @@ if errorlevel 1 goto failed
 echo.
 echo --- 2/2  CryptoScanBot %VERSION% osx-arm64 (scanner + emulator + Photino) ---
 if exist "publish\CryptoScanBot-%VERSION%-osx-arm64" rmdir /s /q "publish\CryptoScanBot-%VERSION%-osx-arm64"
+if exist "publish\photino-tmp-osx-arm64" rmdir /s /q "publish\photino-tmp-osx-arm64"
 dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r osx-arm64 --self-contained true -o "publish\CryptoScanBot-%VERSION%-osx-arm64" --nologo -v minimal
 if errorlevel 1 goto failed
-dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r osx-arm64 --self-contained true -o "publish\CryptoScanBot-%VERSION%-osx-arm64" --nologo -v minimal
+dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r osx-arm64 --self-contained true -o "publish\photino-tmp-osx-arm64" --nologo -v minimal
 if errorlevel 1 goto failed
+xcopy "publish\photino-tmp-osx-arm64\*" "publish\CryptoScanBot-%VERSION%-osx-arm64\" /e /y /r /q >nul
+if errorlevel 1 goto failed
+rmdir /s /q "publish\photino-tmp-osx-arm64"
 if exist "publish\CryptoScanBot-%VERSION%-osx-arm64\libSkiaSharp.pdb" del /q "publish\CryptoScanBot-%VERSION%-osx-arm64\libSkiaSharp.pdb"
 if exist "publish\CryptoScanBot-%VERSION%-osx-arm64.zip" del /q "publish\CryptoScanBot-%VERSION%-osx-arm64.zip"
 "%SystemRoot%\System32\tar.exe" -a -c -f "publish\CryptoScanBot-%VERSION%-osx-arm64.zip" -C "publish" "CryptoScanBot-%VERSION%-osx-arm64"

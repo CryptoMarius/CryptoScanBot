@@ -67,52 +67,115 @@
 <div class="dashboard-charts">
     @if (PositionService.DailyData.Count > 0)
     {
+        var chartDays = PositionService.DailyData.TakeLast(30).ToList();
+
         <!-- Positions per day -->
         <div class="dashboard-chart-box">
             <div class="chart-title">Positions per day</div>
-            <div class="chart-bar-container">
-                @{ var maxPositions = PositionService.DailyData.Max(d => d.Positions); }
-                @foreach (var day in PositionService.DailyData.TakeLast(30))
-                {
-                    var pct = maxPositions > 0 ? (100.0 * day.Positions / maxPositions) : 0;
-                    <div class="chart-bar-wrapper" title="@day.Date.ToString("dd-MM-yyyy"): @day.Positions positions">
-                        <div class="chart-bar chart-bar-green" style="height:@(pct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"></div>
-                        <span class="chart-bar-label">@day.Date.ToString("dd")</span>
+            @{
+                // Positions are whole numbers, so the step may never drop below 1 or the "N0"
+                // labels would repeat themselves (0, 0, 1, 2, 2 for a maximum of two positions).
+                var positionsAxis = CalculateAxis(0, chartDays.Max(d => (double)d.Positions), "N0", minStep: 1);
+            }
+            <div class="chart-plot">
+                <div class="chart-plot-row">
+                    <div class="chart-yaxis">
+                        @foreach (var tick in positionsAxis.Ticks)
+                        {
+                            <span class="chart-yaxis-label" style="bottom:@(Css(tick.Bottom))%">@tick.Label</span>
+                        }
                     </div>
-                }
+                    <div class="chart-plot-area">
+                        @foreach (var tick in positionsAxis.Ticks)
+                        {
+                            <div class="chart-gridline @(tick.IsZero ? "chart-gridline-zero" : "")" style="bottom:@(Css(tick.Bottom))%"></div>
+                        }
+                        <div class="chart-bar-container">
+                            @foreach (var day in chartDays)
+                            {
+                                var pct = positionsAxis.Max > 0 ? (100.0 * day.Positions / positionsAxis.Max) : 0;
+                                <div class="chart-bar-wrapper" title="@day.Date.ToString("dd-MM-yyyy"): @day.Positions positions">
+                                    <div class="chart-bar chart-bar-green" style="height:@(Css(pct))%"></div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-xaxis">
+                    <div class="chart-xaxis-spacer"></div>
+                    <div class="chart-xaxis-labels">
+                        @foreach (var day in chartDays)
+                        {
+                            <span class="chart-xaxis-label">@day.Date.ToString("dd")</span>
+                        }
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Profits per day -->
         <div class="dashboard-chart-box">
             <div class="chart-title">Profits per day</div>
-            <div class="chart-bar-container chart-bar-centered">
-                @{
-                    var maxAbsProfit = PositionService.DailyData.Max(d => Math.Abs(d.TotalProfit));
-                    if (maxAbsProfit == 0) maxAbsProfit = 1;
-                }
-                @foreach (var day in PositionService.DailyData.TakeLast(30))
+            @{
+                var maxAbsProfit = (double)chartDays.Max(d => Math.Abs(d.TotalProfit));
+                if (maxAbsProfit == 0)
                 {
-                    var pct = (double)(50.0m * Math.Abs(day.TotalProfit) / maxAbsProfit);
-                    var isProfit = day.TotalProfit >= 0;
-                    <div class="chart-bar-wrapper" title="@day.Date.ToString("dd-MM-yyyy"): @day.TotalProfit.ToString("N2")">
-                        @if (isProfit)
-                        {
-                            <div class="chart-bar-upper">
-                                <div class="chart-bar chart-bar-green chart-bar-up" style="height:@(pct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"></div>
-                            </div>
-                            <div class="chart-bar-lower"></div>
-                        }
-                        else
-                        {
-                            <div class="chart-bar-upper"></div>
-                            <div class="chart-bar-lower">
-                                <div class="chart-bar chart-bar-red chart-bar-down" style="height:@(pct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"></div>
-                            </div>
-                        }
-                        <span class="chart-bar-label">@day.Date.ToString("dd")</span>
-                    </div>
+                    // Without profit there is nothing to scale on, and a range of 0..1 would put
+                    // zero at the bottom instead of in the middle.
+                    maxAbsProfit = 1;
                 }
+                // Rounding a symmetric range keeps it symmetric, which is what the upper/lower
+                // halves of the centered bar container assume: zero sits exactly in the middle.
+                var profitAxis = CalculateAxis(-maxAbsProfit, maxAbsProfit, "N2");
+            }
+            <div class="chart-plot">
+                <div class="chart-plot-row">
+                    <div class="chart-yaxis">
+                        @foreach (var tick in profitAxis.Ticks)
+                        {
+                            <span class="chart-yaxis-label" style="bottom:@(Css(tick.Bottom))%">@tick.Label</span>
+                        }
+                    </div>
+                    <div class="chart-plot-area">
+                        @foreach (var tick in profitAxis.Ticks)
+                        {
+                            <div class="chart-gridline @(tick.IsZero ? "chart-gridline-zero" : "")" style="bottom:@(Css(tick.Bottom))%"></div>
+                        }
+                        <div class="chart-bar-container chart-bar-centered">
+                            @foreach (var day in chartDays)
+                            {
+                                // Percentage of one half of the plot, which is exactly the axis maximum.
+                                var pct = profitAxis.Max > 0 ? (100.0 * (double)Math.Abs(day.TotalProfit) / profitAxis.Max) : 0;
+                                var isProfit = day.TotalProfit >= 0;
+                                <div class="chart-bar-wrapper" title="@day.Date.ToString("dd-MM-yyyy"): @day.TotalProfit.ToString("N2")">
+                                    @if (isProfit)
+                                    {
+                                        <div class="chart-bar-upper">
+                                            <div class="chart-bar chart-bar-green chart-bar-up" style="height:@(Css(pct))%"></div>
+                                        </div>
+                                        <div class="chart-bar-lower"></div>
+                                    }
+                                    else
+                                    {
+                                        <div class="chart-bar-upper"></div>
+                                        <div class="chart-bar-lower">
+                                            <div class="chart-bar chart-bar-red chart-bar-down" style="height:@(Css(pct))%"></div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-xaxis">
+                    <div class="chart-xaxis-spacer"></div>
+                    <div class="chart-xaxis-labels">
+                        @foreach (var day in chartDays)
+                        {
+                            <span class="chart-xaxis-label">@day.Date.ToString("dd")</span>
+                        }
+                    </div>
+                </div>
             </div>
         </div>
         @* The three below have no counterpart in the Avalonia dashboard, which shows only positions
@@ -214,6 +277,65 @@
     {
         _ = Task.Run(() => PositionService.Refresh(_selectedQuote));
     }
+
+    /// <summary>
+    /// A value axis rounded to a readable step, the way the OxyPlot LinearAxis of the Avalonia
+    /// dashboard picks its major ticks. The bars are drawn against <see cref="ChartAxis.Max"/>
+    /// so their tops line up with the gridlines.
+    /// </summary>
+    private sealed class ChartAxis
+    {
+        public double Min { get; init; }
+        public double Max { get; init; }
+        public List<ChartTick> Ticks { get; init; } = [];
+    }
+
+    /// <summary>
+    /// One major tick. Bottom is the position within the plot area in percent, measured from the
+    /// bottom, so both the gridline and its label can be placed with a single CSS value.
+    /// </summary>
+    private readonly record struct ChartTick(double Bottom, string Label, bool IsZero);
+
+    /// <summary>
+    /// Rounds [min..max] outwards to a 1/2/5 x 10^n step and returns the resulting major ticks.
+    /// </summary>
+    /// <param name="format">Numeric format for the axis labels.</param>
+    /// <param name="minStep">Lower bound for the step, for axes that only carry whole numbers.</param>
+    private static ChartAxis CalculateAxis(double min, double max, string format, double minStep = 0, int targetTicks = 4)
+    {
+        if (max - min < 1e-9)
+            max = min + 1;
+
+        double rawStep = (max - min) / targetTicks;
+        double magnitude = Math.Pow(10, Math.Floor(Math.Log10(rawStep)));
+        double normalized = rawStep / magnitude;
+        double step = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+        step *= magnitude;
+        if (step < minStep)
+            step = minStep;
+
+        // Flooring the minimum and ceiling the maximum keeps a symmetric range symmetric,
+        // because floor(-x / step) * step == -ceil(x / step) * step.
+        double axisMin = Math.Floor(min / step) * step;
+        double axisMax = Math.Ceiling(max / step) * step;
+
+        var ticks = new List<ChartTick>();
+        int count = (int)Math.Round((axisMax - axisMin) / step);
+        for (int i = 0; i <= count; i++)
+        {
+            // Multiplying instead of accumulating keeps the rounding error from piling up.
+            double value = axisMin + i * step;
+            double bottom = 100.0 * (value - axisMin) / (axisMax - axisMin);
+            ticks.Add(new ChartTick(bottom, value.ToString(format), Math.Abs(value) < step / 1000.0));
+        }
+
+        return new ChartAxis { Min = axisMin, Max = axisMax, Ticks = ticks };
+    }
+
+    /// <summary>
+    /// Number for a CSS value: one decimal, always with a dot as the decimal separator.
+    /// </summary>
+    private static string Css(double value) => value.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>
     /// Multi series line chart as inline SVG. Replaces the OxyPlot models the Avalonia dashboard
