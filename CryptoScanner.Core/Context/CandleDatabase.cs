@@ -856,8 +856,6 @@ public class CandleDatabase : IDisposable
     /// </summary>
     public static async Task LoadCandlesAsync()
     {
-        GlobalData.AddTextToLogTab("Loading candle information from candles.db (please wait!)");
-
         await Semaphore.WaitAsync();
         try
         {
@@ -867,6 +865,10 @@ public class CandleDatabase : IDisposable
                 GlobalData.AddTextToLogTab("candles.db load: no active exchange — skipped");
                 return;
             }
+
+            // Name the exchange in the message: the candles.db is per exchange, so after switching
+            // exchanges the user must be able to see which file is actually being read.
+            GlobalData.AddTextToLogTab($"Loading candle information from candles.db for {exchange.Name} (please wait!)");
 
             // An unconverted (version 1) file must not be read: its ids refer to a Symbol table
             // that may since have been rebuilt, so the candles would end up on the wrong symbols.
@@ -1098,15 +1100,17 @@ public class CandleDatabase : IDisposable
         await Semaphore.WaitAsync();
         try
         {
-            GlobalData.AddTextToLogTab("Saving candles.db (please wait!)");
-            var swTotal = System.Diagnostics.Stopwatch.StartNew();
-
             var exchange = GlobalData.ActiveExchange;
             if (exchange == null)
             {
                 GlobalData.AddTextToLogTab("candles.db save: no active exchange — skipped");
                 return;
             }
+
+            // Name the exchange in the message: the candles.db is per exchange, so after switching
+            // exchanges the user must be able to see which file is actually being written.
+            GlobalData.AddTextToLogTab($"Saving candles.db for {exchange.Name} (please wait!)");
+            var swTotal = System.Diagnostics.Stopwatch.StartNew();
 
             // Writing into an unconverted (version 1) file would mix candles resolved through the
             // local registry with candles stored under foreign ids. Refuse until it is migrated.
@@ -1623,14 +1627,16 @@ public class CandleDatabase : IDisposable
     /// </summary>
     public static async Task CleanCandlesAsync()
     {
-        GlobalData.AddTextToLogTab("Cleaning candles.db (please wait!)");
-
         await Semaphore.WaitAsync();
         try
         {
             var exchange = GlobalData.ActiveExchange;
             if (exchange == null)
                 return;
+
+            // Name the exchange in the message: the candles.db is per exchange, so after switching
+            // exchanges the user must be able to see which file is actually being cleaned.
+            GlobalData.AddTextToLogTab($"Cleaning candles.db for {exchange.Name} (please wait!)");
 
             CleanCandlesForExchange(exchange);
         }
