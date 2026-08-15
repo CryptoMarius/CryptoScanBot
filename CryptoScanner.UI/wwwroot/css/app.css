@@ -1140,6 +1140,12 @@ label.debug-item {
     opacity: 0.5;
 }
 
+/* A unit caption that greys out on its own, for a row where only the value follows the checkbox and
+   the checkbox label itself stays readable (IsEnabled on just the TextBlock in the axaml). */
+.field-unit.unit-disabled {
+    opacity: 0.5;
+}
+
 .input-text:disabled,
 .input-number:disabled,
 .input-select:disabled {
