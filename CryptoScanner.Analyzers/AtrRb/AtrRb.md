@@ -23,7 +23,7 @@ The strategy reuses the global BB width percentage to ensure minimum volatility.
 
 - **RSI**: when `RequireRsiOsOb = true`, RSI must confirm oversold (long) or overbought (short).
 - **Stochastic**: when `RequireStochOsOb = true`, Stochastic must also be at an extreme.
-- **Multi-timeframe consensus**: if `TimeframeConsensusCount > 0`, higher timeframes must show the same band break.
+- **Band break confirmation on higher timeframes**: if `BandBreakConfirmationCount > 0`, that many consecutive higher timeframes must show the same band break.
 
 ### Entry price
 

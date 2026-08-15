@@ -72,15 +72,19 @@
             <input type="checkbox" class="input-checkbox" @bind="Data.CheckFurtherPriceMove" />
             <label>Price must be increasing/decreasing</label>
         </div>
-        <div class="field">
+        @* The "Intervals" caption matches the TextBlock the Avalonia grid puts in front of the
+           count, the same way the MA200 row captions its second field. *@
+        <div class="field" title="Number of timeframes that must all show the trend in the signal direction, starting at the signal's own timeframe. 1 = this timeframe only, 2 = this one plus the next higher one. The walk stops at the daily interval (the weekly trend is not calculated).">
             <input type="checkbox" class="input-checkbox" @bind="Data.CheckTrendPrimaryDirection" />
             <label>Trade with the primary trend</label>
+            <span class="field-unit">Intervals</span>
             <input type="number" class="input-number" style="width: 60px;"
                    @bind="Data.TrendPrimaryDirectionCount" disabled="@(!Data.CheckTrendPrimaryDirection)" />
         </div>
-        <div class="field">
+        <div class="field" title="Number of timeframes that must all show the trend in the signal direction, starting at the signal's own timeframe. 1 = this timeframe only, 2 = this one plus the next higher one. The walk stops at the daily interval (the weekly trend is not calculated).">
             <input type="checkbox" class="input-checkbox" @bind="Data.CheckTrendSecondaryDirection" />
             <label>Trade with the secondary trend</label>
+            <span class="field-unit">Intervals</span>
             <input type="number" class="input-number" style="width: 60px;"
                    @bind="Data.TrendSecondaryDirectionCount" disabled="@(!Data.CheckTrendSecondaryDirection)" />
         </div>
@@ -101,11 +105,9 @@
                        @bind="Data.Ma200ConfirmationCandles" disabled="@(!Data.CheckPriceAboveMa200)" />
             </span>
         </div>
-        @* Flush left as well: the Avalonia grid for this row has Margin="0,6,0,0". *@
-        <div class="field" title="Number of consecutive higher timeframes that must also confirm a band break. 0 = single-timeframe (normal).">
-            <label>Timeframe consensus count</label>
-            <input type="number" class="input-number" min="0" @bind="Data.TimeframeConsensusCount" />
-        </div>
+        @* The band break confirmation used to sit here as "Timeframe consensus count". Only the
+           three band strategies could act on it, so it now lives in their own settings as
+           "Band break confirmation on higher timeframes". *@
     </div>
 
 </fieldset>

@@ -49,13 +49,13 @@ public class AtrRbSignalLong : SignalCreateBase
             return false;
         }
 
-        // Multi-timeframe consensus: higher timeframes must also show a band break.
-        int consensusCount = ResolveEntryConditions().TimeframeConsensusCount;
-        if (consensusCount > 0)
+        // Band break confirmation: higher timeframes must also show a band break.
+        int confirmationCount = settings.BandBreakConfirmationCount;
+        if (confirmationCount > 0)
         {
             int confirmed = 0;
             CryptoIntervalPeriod higherPeriod = Interval.IntervalPeriod;
-            for (int i = 0; i < consensusCount; i++)
+            for (int i = 0; i < confirmationCount; i++)
             {
                 if (higherPeriod == CryptoIntervalPeriod.interval1w)
                     break;
@@ -69,9 +69,9 @@ public class AtrRbSignalLong : SignalCreateBase
                 }
                 confirmed++;
             }
-            if (confirmed < consensusCount)
+            if (confirmed < confirmationCount)
             {
-                ExtraText = $"not enough higher TFs confirmed ({confirmed}/{consensusCount})";
+                ExtraText = $"not enough higher timeframes confirmed ({confirmed}/{confirmationCount})";
                 return false;
             }
         }

@@ -28,7 +28,6 @@ public class EntryConditionsData
     public bool CheckPriceAboveMa200 { get; set; }
     public decimal Ma200MinDistancePercentage { get; set; }
     public int Ma200ConfirmationCandles { get; set; }
-    public int TimeframeConsensusCount { get; set; }
 
     public void LoadFrom(SettingsEntryConditions e)
     {
@@ -51,7 +50,6 @@ public class EntryConditionsData
         CheckPriceAboveMa200 = e.CheckPriceAboveMa200;
         Ma200MinDistancePercentage = e.Ma200MinDistancePercentage;
         Ma200ConfirmationCandles = e.Ma200ConfirmationCandles;
-        TimeframeConsensusCount = e.TimeframeConsensusCount;
     }
 
     public void SaveTo(SettingsEntryConditions e)
@@ -75,6 +73,5 @@ public class EntryConditionsData
         e.CheckPriceAboveMa200 = CheckPriceAboveMa200;
         e.Ma200MinDistancePercentage = Ma200MinDistancePercentage;
         e.Ma200ConfirmationCandles = Ma200ConfirmationCandles;
-        e.TimeframeConsensusCount = TimeframeConsensusCount;
     }
 }

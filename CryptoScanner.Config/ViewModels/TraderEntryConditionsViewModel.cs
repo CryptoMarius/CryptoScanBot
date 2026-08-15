@@ -59,9 +59,6 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     [ObservableProperty]
     private decimal _stochMinExtremeZScore = 0m;
 
-    [ObservableProperty]
-    private int _timeframeConsensusCount = 0;
-
     public void LoadConfig(SettingsTrading settings)
     {
         LoadConfig(settings.EntryConditions);
@@ -87,7 +84,6 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         StochMinExtremeBars = ec.StochMinExtremeBars;
         StochMinExtremeArea = ec.StochMinExtremeArea;
         StochMinExtremeZScore = ec.StochMinExtremeZScore;
-        TimeframeConsensusCount = ec.TimeframeConsensusCount;
     }
 
     public void SaveConfig(SettingsTrading settings)
@@ -115,6 +111,5 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         ec.StochMinExtremeBars = StochMinExtremeBars;
         ec.StochMinExtremeArea = StochMinExtremeArea;
         ec.StochMinExtremeZScore = StochMinExtremeZScore;
-        ec.TimeframeConsensusCount = TimeframeConsensusCount;
     }
 }
