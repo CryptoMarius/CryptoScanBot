@@ -36,6 +36,18 @@ public class BarometerValuesDto
     public decimal Barometer1d { get; set; }
     public string BarometerTime { get; set; } = "";
 
+    /// <summary>
+    /// Market breadth per interval: the percentage of symbols that rose, on a 0..100 scale. The
+    /// barometer above is an average and cannot tell a broad rise apart from a few coins carrying
+    /// the whole move; this can. See BarometerResult for the other figures of the same measurement.
+    /// </summary>
+    public decimal Rising1h { get; set; }
+    public decimal Rising4h { get; set; }
+    public decimal Rising1d { get; set; }
+
+    /// <summary>Number of symbols the most recent measurement was based on.</summary>
+    public int SymbolCount { get; set; }
+
     /// <summary>True once the scanner has finished loading candles (ApplicationStatus == Running).</summary>
     public bool Ready { get; set; }
 

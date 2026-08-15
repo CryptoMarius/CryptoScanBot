@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Analyzers;
+﻿using CommunityToolkit.Mvvm.Messaging;
+
+using CryptoScanner.Analyzers;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.SignalR;
@@ -19,6 +21,8 @@ class Program
 {
     private static PowerMonitorService? _powerMonitor;
     private static bool _isShuttingDown;
+    /// <summary>Kept alive for the theme subscription; the messenger holds its subscribers weakly.</summary>
+    private static readonly object _themeRecipient = new();
     private static PhotinoBlazorApp? _app;
     private static ApplicationStateService? _stateService;
     private static IScannerSession? _scannerSession;
@@ -31,6 +35,7 @@ class Program
     private static SymbolService? _symbolService;
     private static InternalBrowserService? _internalBrowser;
     private static TradingViewWindow? _tradingViewWindow;
+    private static HiddenBrowserWindow? _hiddenBrowserWindow;
 
     [STAThread]
     static void Main(string[] args)
@@ -194,6 +199,11 @@ class Program
         _tradingViewWindow = new TradingViewWindow(app.MainWindow);
         _internalBrowser.OpenBrowserWindow = url => _tradingViewWindow.Show(url);
 
+        // The Altrady/Hypertrader deep links get an invisible window with a browser of its own, so
+        // the trading application comes up without the user first landing on the Altrady website.
+        _hiddenBrowserWindow = new HiddenBrowserWindow(app.MainWindow);
+        _internalBrowser.OpenHiddenBrowserWindow = url => _hiddenBrowserWindow.Navigate(url);
+
         // Start the scanner engine (same sequence as Avalonia App.InitializeGlobalDataAsync)
         _scannerSession = app.Services.GetRequiredService<IScannerSession>();
         _scannerSession.AfterStartup();
@@ -239,11 +249,23 @@ class Program
 
         app.MainWindow
             .SetTitle("CryptoScanBot")
+            // The icon has to be set before the native window is created, so it belongs here and
+            // not in the window-created handler below.
+            .ApplyIcon()
             // Both of these default to true, and while they are on Photino lets the OS decide the
             // size and the position and silently ignores SetSize / SetLeft / SetTop. Only the size
             // one was switched off, which is why the saved position never came back.
             .SetUseOsDefaultSize(false)
             .SetUseOsDefaultLocation(false);
+
+        // The title bar is drawn by the operating system and stays white until it is told otherwise,
+        // which looks broken under the dark theme. It needs the native window handle, so it can only
+        // be done once the window exists - and again on every theme switch.
+        app.MainWindow.RegisterWindowCreatedHandler((_, _) => WindowChrome.ApplyTitleBarTheme(app.MainWindow));
+        // _themeRecipient is a static field on purpose: the messenger holds its subscribers weakly,
+        // so a throwaway object here would be collected and the registration would stop working.
+        WeakReferenceMessenger.Default.Register<CryptoScanner.Core.Messages.ThemeChangedMessage>(
+            _themeRecipient, (_, _) => WindowChrome.ApplyTitleBarTheme(app.MainWindow));
 
         // Restore saved window state or use defaults
         var windowState = _stateService.GetOrCreateWindowState("MainWindow");
@@ -429,6 +451,7 @@ class Program
         try { _logService?.Dispose(); } catch { }
         try { _symbolService?.Dispose(); } catch { }
         try { _tradingViewWindow?.Close(); } catch { }
+        try { _hiddenBrowserWindow?.Close(); } catch { }
         try { _internalBrowser?.Dispose(); } catch { }
 
         try

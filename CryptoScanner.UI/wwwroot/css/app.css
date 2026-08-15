@@ -276,6 +276,19 @@ html, body {
     flex-shrink: 0;
 }
 
+/* The barometer rows carry two values: the average and the market breadth beside it. Fixed widths
+   keep the three rows aligned - without them space-between puts the middle column in a different
+   place on every row, because the texts differ in length. */
+.dashboard-row .dashboard-barometer {
+    min-width: 52px;
+    flex-shrink: 0;
+}
+
+.dashboard-row .dashboard-breadth {
+    min-width: 32px;
+    flex-shrink: 0;
+}
+
 .dashboard-separator {
     width: 1px;
     background: var(--border-low);

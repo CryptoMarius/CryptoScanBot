@@ -27,27 +27,10 @@ public class Symbol() : SymbolBase(), ISymbol
                 database.Open();
 
 
-                // Tickers for the 24h volume
-                GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await api.ExchangeData.GetBookTickersAsync() ??
-                    throw new ExchangeException("No ticker data received");
-                if (!tickerInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
-                if (tickerInfo == null)
-                    throw new ExchangeException("No ticker data received");
-                SaveExchangeInfo(tickerInfo, "tickers.json");
-
-                // Create dictionary for the volume
-                SortedList<string, decimal> volumeTicker = [];
-                if (tickerInfo.Data != null && tickerInfo.Data != null)
-                {
-                    foreach (var tickerData in tickerInfo.Data)
-                        volumeTicker.Add(tickerData.Symbol, tickerData.BestAskPrice); //TODO: Where to retrieve volume?
-                }
-
-
-
+                // No separate ticker call for the 24 hour volume. The obvious candidate,
+                // GetBookTickersAsync, is a private endpoint (/api/v3/brokerage/best_bid_ask) with no
+                // public variant, so it fails outright without api credentials - and it reports a best
+                // ask price, not a volume. The symbol definitions below carry the volume themselves.
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //LimitRate.WaitForFairWeight(1);
                 var symbolInfo = await api.ExchangeData.GetSymbolsAsync(SymbolType.Spot) ??
@@ -55,7 +38,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (2)");
+                    throw new ExchangeException("No exchange data received (2)");
                 SaveExchangeInfo(symbolInfo, "symbols.json");
 
 
@@ -139,11 +122,11 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
-                                // volume from the tickers
-                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
-                                    symbol.Volume = (double)volume;
-                                else
-                                    symbol.Volume = 0;
+                                // 24 hour volume, straight from the symbol definition. The scanner works
+                                // in quote volume, which is exactly what approximate_quote_24h_volume is;
+                                // Volume24h next to it is the volume in the base asset.
+                                // The field is empty for the symbols that had no trades at all.
+                                symbol.Volume = (double)(symbolData.ApproximateQuote24hVolume ?? 0);
 
                                 if (symbolData.SymbolStatus == SymbolStatus.Online)
                                     symbol.Status = 1;

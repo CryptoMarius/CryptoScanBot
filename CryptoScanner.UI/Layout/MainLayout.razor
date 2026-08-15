@@ -80,6 +80,8 @@
             <div class="menu-dropdown">
                 <span class="menu-dropdown-trigger">Help</span>
                 <div class="menu-dropdown-content">
+                    <span class="menu-action-item" @onclick="OnOpenWiki">Wiki</span>
+                    <div class="menu-separator"></div>
                     <span class="menu-action-item" @onclick="OpenAbout">About</span>
                 </div>
             </div>
@@ -751,6 +753,15 @@
     private void OpenAbout()
     {
         _aboutVisible = true;
+    }
+
+    /// <summary>
+    /// Open the project wiki on github. The system browser is used on purpose: github refuses to
+    /// be shown inside a frame, and the internal browser window is meant for the charts.
+    /// </summary>
+    private void OnOpenWiki()
+    {
+        ExternalLinkHelper.OpenSystemBrowser("https://github.com/CryptoMarius/CryptoScanBot/wiki");
     }
 
     // Each toggle broadcasts StatusesHaveChangedMessage so the menu checkboxes, the traffic

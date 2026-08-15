@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 82;
+    public readonly static int CurrentDatabaseVersion = 83;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1675,6 +1675,32 @@ public class DatabaseMigration
         // the scanner works in the quote currency. Empty step: only the version bump is needed, so that
         // UpdateExchanges() below picks up the new IsSupported for existing databases.
         if (CurrentVersion > version.Version && version.Version == 81)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 14-08-2026 BitMart Futures activated. Both BitMart markets were added as an experiment and
+        // never worked: the kline subscription was made on the scanner name (BTCUSDT) instead of the
+        // pair name (BTC_USDT) so not a single candle arrived on the spot side, the spot price step
+        // was taken from quote_increment (which is the quantity step, so DOGE_USDT rounded every price
+        // to 0 and BTC_USDT overflowed the tick count), the futures price step was not read at all,
+        // the spot candle limit asked for more candles per call than the endpoint accepts so the
+        // history never got started, and the 24 hour volume was a base amount on the spot side and a
+        // contract count on the futures side where the rest of the scanner works in the quote currency.
+        // Both sides are repaired, but only the futures market is switched on: the spot market lists
+        // 32 pairs in its default quote of which 6 stay above the volume boundary, against 1187
+        // contracts and 92 symbols on the futures side.
+        // Empty step: only the version bump is needed, so that UpdateExchanges() below picks up the
+        // new IsSupported values of this version for existing databases - which is also what carries
+        // the Coinbase activation.
+        if (CurrentVersion > version.Version && version.Version == 82)
         {
             using var transaction = database.BeginTransaction();
 

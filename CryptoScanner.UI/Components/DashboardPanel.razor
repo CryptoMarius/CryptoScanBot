@@ -1,3 +1,4 @@
+@using CryptoScanner.Core.Barometer
 @using CryptoScanner.Core.Core
 @using CryptoScanner.Core.Enums
 @using CryptoScanner.UI.Services
@@ -59,10 +60,22 @@
                     <option value="@iv">@iv</option>
                 }
             </select>
+            @* Which figure of the measurement the graph draws. Every measurement holds six of them
+               (see BarometerCandleFields) and the rows below can only show two. *@
+            <select class="input-select dashboard-combo" value="@DashboardService.GraphValueName"
+                    @onchange="OnBarometerGraphValueChanged" title="Figure shown in the graph">
+                @foreach (var gv in DashboardService.GraphValueOptions)
+                {
+                    <option value="@gv">@gv</option>
+                }
+            </select>
         </div>
-        <div class="dashboard-row"><span>Barometer 1h:</span><span class="dashboard-value @DashboardService.Barometer1hClass">@DashboardService.Barometer1h</span></div>
-        <div class="dashboard-row"><span>Barometer 4h:</span><span class="dashboard-value @DashboardService.Barometer4hClass">@DashboardService.Barometer4h</span></div>
-        <div class="dashboard-row"><span>Barometer 1d:</span><span class="dashboard-value @DashboardService.Barometer1dClass">@DashboardService.Barometer1d</span></div>
+        @* The second value is the market breadth: the share of coins that rose. The barometer left
+           of it is an average, so it reads the same whether every coin rises a little or a handful
+           carries the move; the breadth separates those two. *@
+        <div class="dashboard-row" title="@DashboardService.Barometer1h.Tooltip"><span>Barometer 1h:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer1h.CssClass">@DashboardService.Barometer1h.Value</span><span class="dashboard-value dashboard-breadth text-muted">@DashboardService.Barometer1h.Rising</span></div>
+        <div class="dashboard-row" title="@DashboardService.Barometer4h.Tooltip"><span>Barometer 4h:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer4h.CssClass">@DashboardService.Barometer4h.Value</span><span class="dashboard-value dashboard-breadth text-muted">@DashboardService.Barometer4h.Rising</span></div>
+        <div class="dashboard-row" title="@DashboardService.Barometer1d.Tooltip"><span>Barometer 1d:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer1d.CssClass">@DashboardService.Barometer1d.Value</span><span class="dashboard-value dashboard-breadth text-muted">@DashboardService.Barometer1d.Rising</span></div>
     </div>
     <div class="dashboard-separator"></div>
 
@@ -155,6 +168,13 @@
     private const int BarometerChartWidth = 400;
     private const int BarometerChartHeight = 124;
 
+    /// <summary>
+    /// Width reserved for one hour label on the horizontal axis. The label is the bare hour without
+    /// minutes and without a leading zero ("9", "14"), so two digits at 9px plus a little air fit in
+    /// 14px - far below the ~57px between two hour lines.
+    /// </summary>
+    private const int HourLabelWidth = 14;
+
     private bool _disposed;
 
     protected override void OnInitialized()
@@ -180,6 +200,11 @@
     private void OnBarometerIntervalChanged(ChangeEventArgs e)
     {
         DashboardService.IntervalName = e.Value?.ToString() ?? "";
+    }
+
+    private void OnBarometerGraphValueChanged(ChangeEventArgs e)
+    {
+        DashboardService.GraphValueName = e.Value?.ToString() ?? "";
     }
 
     private void OnCryptoPriceClick(DashboardSymbolInfo sym)
@@ -221,7 +246,36 @@
     /// max(5, data range), widened again when the data reaches beyond half of it.
     /// </para>
     /// </summary>
+    private string _barometerSvg = "";
+    private int _barometerSvgVersion = -1;
+    private BarometerGraphValue _barometerSvgGraphValue;
+    private string _barometerSvgTime = "";
+
+    /// <summary>
+    /// The panel repaints on every dashboard poll (2 seconds) because tickers and counters do move
+    /// that often, while the barometer produces one measurement per MINUTE. Rebuilding a ~400
+    /// element SVG string for an unchanged chart - and handing it to the webview to diff - is pure
+    /// waste, so the drawing is kept until the data behind it actually moves.
+    /// <para>
+    /// The version alone is not enough: the dropdown and the timestamp are drawn INTO the picture,
+    /// and both can change before the next poll refreshes the points.
+    /// </para>
+    /// </summary>
     private string RenderBarometerSvg()
+    {
+        if (_barometerSvgVersion == DashboardService.BarometerChartVersion
+            && _barometerSvgGraphValue == DashboardService.GraphValue
+            && _barometerSvgTime == DashboardService.BarometerTime)
+            return _barometerSvg;
+
+        _barometerSvgVersion = DashboardService.BarometerChartVersion;
+        _barometerSvgGraphValue = DashboardService.GraphValue;
+        _barometerSvgTime = DashboardService.BarometerTime;
+        _barometerSvg = BuildBarometerSvg();
+        return _barometerSvg;
+    }
+
+    private string BuildBarometerSvg()
     {
         var points = DashboardService.BarometerChartPoints;
         if (points.Count < 2)
@@ -229,12 +283,16 @@
 
         const int w = BarometerChartWidth, h = BarometerChartHeight;
 
-        // Vertical scale, identical to CreateBarometerBitmap. Values beyond +/-50 are ignored there
-        // as exchange malfunctions, so do the same before taking the range.
+        // The scale depends on which figure is drawn: the average and the median swing around zero,
+        // breadth runs 0..100, spread and coin count are never negative. Average and median keep the
+        // original behaviour byte for byte - that scale was hard enough to get level with Avalonia.
+        BarometerGraphScale scale = BarometerCandleFields.GetScale(DashboardService.GraphValue);
+
         decimal loY = decimal.MaxValue, hiY = decimal.MinValue;
         foreach (var p in points)
         {
-            if (p.Value <= -50m || p.Value >= 50m)
+            // Only figures with a ceiling drop their outliers, see BarometerGraphScale.IgnoreBeyond.
+            if (scale.IgnoreBeyond.HasValue && Math.Abs(p.Value) >= scale.IgnoreBeyond.Value)
                 continue;
             if (p.Value < loY) loY = p.Value;
             if (p.Value > hiY) hiY = p.Value;
@@ -242,36 +300,67 @@
         if (loY == decimal.MaxValue)
             return "<span class=\"text-muted\">Waiting for data...</span>";
 
-        decimal screenY = hiY - loY;
-        if (screenY < 5m)
-            screenY = 5m;                       // never zoom in further than -2.5 .. +2.5
-        if (hiY > 0.5m * screenY)
-            screenY = 2m * hiY;
-        if (loY < -0.5m * screenY)
-            screenY = -2m * loY;
+        // Both branches end up with the same two numbers, so the drawing below is shared:
+        //   y = baseY - scaleY * value
+        decimal scaleY, baseY;
+        decimal gridLow, gridHigh, gridStep;
+        decimal? referenceLine;
 
-        decimal scaleY = h / screenY;
-        decimal zeroY = h / 2m;                 // offsetY: zero sits in the middle
+        if (scale.CenteredOnZero)
+        {
+            decimal screenY = hiY - loY;
+            if (screenY < scale.MinimumSpan)
+                screenY = scale.MinimumSpan;        // never zoom in further than half that each way
+            if (hiY > 0.5m * screenY)
+                screenY = 2m * hiY;
+            if (loY < -0.5m * screenY)
+                screenY = -2m * loY;
 
-        decimal YFor(decimal value) => zeroY - scaleY * value;
+            scaleY = h / screenY;
+            baseY = h / 2m;                         // offsetY: zero sits in the middle
+            gridLow = scale.GridFrom;
+            gridHigh = scale.GridTo;
+            gridStep = scale.GridEvery;
+            referenceLine = 0m;
+        }
+        else
+        {
+            decimal low = scale.Low ?? loY;
+            decimal high = scale.High ?? hiY;
+            if (high <= low)
+                high = low + 1m;                    // a completely flat line still needs a range
+
+            scaleY = h / (high - low);
+            baseY = h + scaleY * low;               // value == low lands on the bottom edge
+            gridLow = low;
+            gridHigh = high;
+            gridStep = scale.GridStep ?? (high - low) / 4m;
+            referenceLine = scale.ReferenceLine;
+        }
+
+        decimal YFor(decimal value) => baseY - scaleY * value;
 
         var ic = System.Globalization.CultureInfo.InvariantCulture;
         var sb = new System.Text.StringBuilder();
         sb.Append($"<svg viewBox=\"0 0 {w} {h}\" xmlns=\"http://www.w3.org/2000/svg\" class=\"barometer-chart\">");
 
-        // Horizontal lines: one per whole percent, red at zero. Solid grey/red at full strength —
-        // Avalonia uses SKColors.Gray and SKColors.Red, so no CSS variables and no opacity here.
-        for (int pct = -3; pct <= 3; pct++)
+        // Horizontal lines, red on the reference line. Solid grey/red at full strength — Avalonia
+        // uses SKColors.Gray and SKColors.Red, so no CSS variables and no opacity here.
+        if (gridStep > 0)
         {
-            decimal y = YFor(pct);
-            if (y < 0 || y > h)
-                continue;                       // outside the scale, exactly as Skia clips it
-            string stroke = pct == 0 ? "#ff0000" : "#808080";
-            sb.Append($"<line x1=\"0\" y1=\"{y.ToString("F1", ic)}\" x2=\"{w}\" y2=\"{y.ToString("F1", ic)}\" stroke=\"{stroke}\" stroke-width=\"1\"/>");
+            for (decimal line = gridLow; line <= gridHigh; line += gridStep)
+            {
+                decimal y = YFor(line);
+                if (y < 0 || y > h)
+                    continue;                       // outside the scale, exactly as Skia clips it
+                string stroke = referenceLine.HasValue && line == referenceLine.Value ? "#ff0000" : "#808080";
+                sb.Append($"<line x1=\"0\" y1=\"{y.ToString("F1", ic)}\" x2=\"{w}\" y2=\"{y.ToString("F1", ic)}\" stroke=\"{stroke}\" stroke-width=\"1\"/>");
+            }
         }
 
         // Vertical lines on whole hours, placed by TIME so they stay on the hour no matter how many
-        // points arrived or whether any are missing.
+        // points arrived or whether any are missing. Each line carries its hour as a label at the
+        // top, in LOCAL time so it matches the timestamp drawn at the bottom left.
         DateTime first = points[0].Time;
         DateTime last = points[^1].Time;
         double span = (last - first).TotalMinutes;
@@ -282,18 +371,35 @@
             {
                 double x = (hour - first).TotalMinutes / span * w;
                 sb.Append($"<line x1=\"{x.ToString("F1", ic)}\" y1=\"0\" x2=\"{x.ToString("F1", ic)}\" y2=\"{h}\" stroke=\"#808080\" stroke-width=\"1\"/>");
+
+                // The label always sits to the RIGHT of its line, and is simply left out when it no
+                // longer fits there - the rightmost hour therefore sometimes has no number. The
+                // plate underneath keeps it readable when the barometer line runs along the top of
+                // the chart (breadth does).
+                if (x + HourLabelWidth <= w)
+                {
+                    string label = hour.ToLocalTime().Hour.ToString(ic);
+                    sb.Append($"<rect x=\"{(x + 1).ToString("F1", ic)}\" y=\"1\" width=\"{HourLabelWidth - 1}\" height=\"11\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
+                    sb.Append($"<text x=\"{(x + 3).ToString("F1", ic)}\" y=\"10\" font-size=\"9\" fill=\"var(--text-primary)\">{label}</text>");
+                }
+
                 hour = hour.AddHours(-1);
             }
         }
 
-        // The line itself, green above zero and red below.
+        // The line itself, green above the reference line and red below it.
         for (int i = 1; i < points.Count; i++)
         {
             decimal x1 = (decimal)(i - 1) / (points.Count - 1) * w;
             decimal x2 = (decimal)i / (points.Count - 1) * w;
             decimal y1 = YFor(points[i - 1].Value);
             decimal y2 = YFor(points[i].Value);
-            string color = points[i].Value >= 0 ? "#008000" : "#ff0000";
+            // Figures without a reference line (spread) are never "good" or "bad", so they get one
+            // neutral colour instead of a misleading green. Not grey: that disappeared against the
+            // grey grid lines on a dark background. The theme variable keeps it readable in both.
+            string color = referenceLine.HasValue
+                ? (points[i].Value >= referenceLine.Value ? "#008000" : "#ff0000")
+                : "var(--text-primary)";
             sb.Append($"<line x1=\"{x1.ToString("F1", ic)}\" y1=\"{y1.ToString("F1", ic)}\" x2=\"{x2.ToString("F1", ic)}\" y2=\"{y2.ToString("F1", ic)}\" stroke=\"{color}\" stroke-width=\"1\"/>");
         }
 

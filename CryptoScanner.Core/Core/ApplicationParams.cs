@@ -13,7 +13,8 @@ public class ApplicationParams
     public string? AppDataFolder { get { return _AppDataFolder; } set { _AppDataFolder = value!.Trim().Trim('"'); } }
 
     private string? _ExchangeName;
-    [Option('e', "exchange", Required = false, HelpText = "Initialize to exchange (Binance Spot, Binance Futures, Bybit Spot, ByBit Futures, Kucoin Spot or Mexc Spot)")]
+    // No list of names here, it went stale as soon as an exchange was added or switched off
+    [Option('e', "exchange", Required = false, HelpText = "Initialize to exchange, under the name it is registered with (\"Bybit Spot\", \"Binance Futures\", ...). Which markets are available is in CryptoDatabase.CreateExchangeList; a name that is unknown or switched off stops the scanner")]
     public string? ExchangeName { get { return _ExchangeName; } set { _ExchangeName = value!.Trim(); } }
 
     public string? _AppLimitSymbols;

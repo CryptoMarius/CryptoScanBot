@@ -268,7 +268,11 @@ public class Api : ExchangeBase
                 // OKEXF, not OKEX: that is the spot exchange, which is where these links used to end up
                 Code = "OKEXF",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/OKEXF_{QUOTE}_{BASE}:{interval}",
+                // The _SWAP suffix is part of the symbol name at Altrady, without it the market does not
+                // open. Note the order: Altrady puts the quote first, so it cannot be built from
+                // {EXCHANGENAME} ("SHIB-USDT-SWAP") either.
+                Url = "https://app.altrady.com/d/OKEXF_{QUOTE}_{BASE}_SWAP:{interval}",
+                //https://app.altrady.com/dashboard#/d/OKEXF_USDT_SHIB_SWAP?resolution=5
             },
             HyperTrader = null,
             TradingView = new()

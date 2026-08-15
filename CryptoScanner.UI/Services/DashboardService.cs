@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 
+using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -69,11 +70,38 @@ public class DashboardService : IDisposable
         }
     }
 
+    private string _graphValueName = BarometerCandleFields.GetName(BarometerGraphValue.Average);
+
+    /// <summary>
+    /// Which figure of the barometer measurement the graph draws. Every measurement stores six of
+    /// them (see BarometerCandleFields); the panel can only show two, so the graph is where the rest
+    /// becomes visible.
+    /// </summary>
+    public string GraphValueName
+    {
+        get => _graphValueName;
+        set
+        {
+            if (_graphValueName == value || string.IsNullOrEmpty(value))
+                return;
+            _graphValueName = value;
+            _stateService.BarometerGraphValue = value;
+            UpdateBarometerChart();
+            DashboardChanged?.Invoke();
+        }
+    }
+
+    /// <summary>The figure the graph currently draws.</summary>
+    public BarometerGraphValue GraphValue => BarometerCandleFields.Parse(_graphValueName);
+
     /// <summary>Quotes that actually have symbols; rebuilt whenever the symbol list changes.</summary>
     public List<string> QuoteOptions { get; private set; } = ["USDT"];
 
     /// <summary>The intervals the Avalonia dashboard offers for the barometer graph.</summary>
     public static IReadOnlyList<string> IntervalOptions { get; } = ["1h", "4h", "1d"];
+
+    /// <summary>The figures the graph can draw.</summary>
+    public static IReadOnlyList<string> GraphValueOptions { get; } = BarometerCandleFields.Names;
 
     public string KlineTickerCount { get; private set; } = "-";
     public string ScannerExecuteCount { get; private set; } = "-";
@@ -87,12 +115,36 @@ public class DashboardService : IDisposable
     /// <summary>Time of the most recently calculated barometer candle.</summary>
     public string BarometerTime { get; private set; } = "";
 
-    public string Barometer1h { get; private set; } = "-";
-    public string Barometer4h { get; private set; } = "-";
-    public string Barometer1d { get; private set; } = "-";
-    public string Barometer1hClass { get; private set; } = "";
-    public string Barometer4hClass { get; private set; } = "";
-    public string Barometer1dClass { get; private set; } = "";
+    /// <summary>
+    /// Everything the panel shows for one barometer interval. This started as three loose strings
+    /// per interval, which meant three ref parameters and three callbacks per interval on the update
+    /// method; adding the tooltip would have made that nine. One object per interval is readable.
+    /// </summary>
+    public sealed class BarometerDisplay
+    {
+        /// <summary>The barometer itself: the average change over all coins.</summary>
+        public string Value { get; internal set; } = "-";
+
+        /// <summary>Colour class of Value (green above zero, red below).</summary>
+        public string CssClass { get; internal set; } = "";
+
+        /// <summary>
+        /// Market breadth: the percentage of coins that rose. The average next to it reads the same
+        /// whether every coin rises a little or a handful carries the move; this tells them apart.
+        /// </summary>
+        public string Rising { get; internal set; } = "";
+
+        /// <summary>
+        /// The remaining figures of the same measurement - median, spread, coin count, skipped
+        /// outliers. The panel has no room for them, so they live in the tooltip of the row.
+        /// See BarometerResult for what each of them means.
+        /// </summary>
+        public string Tooltip { get; internal set; } = "";
+    }
+
+    public BarometerDisplay Barometer1h { get; } = new();
+    public BarometerDisplay Barometer4h { get; } = new();
+    public BarometerDisplay Barometer1d { get; } = new();
 
     // Traffic lights. Avalonia only turns them green when the setting is on AND the scanner is
     // actually running, and the Rulez light follows the PauseTrading state of the exchange.
@@ -117,6 +169,29 @@ public class DashboardService : IDisposable
     public List<DashboardSymbolInfo> TopSymbols { get; private set; } = [];
 
     public List<BarometerPoint> BarometerChartPoints { get; private set; } = [];
+
+    /// <summary>
+    /// Raised by one every time <see cref="BarometerChartPoints"/> is actually replaced. The panel
+    /// caches its drawing on this number, so an unchanged chart is not rebuilt.
+    /// </summary>
+    public int BarometerChartVersion { get; private set; }
+
+    // Fingerprint of what BarometerChartPoints currently holds. Poll() runs every 2 seconds while
+    // the barometer produces one candle per MINUTE, so without this the point list was rebuilt (and
+    // reported as changed, repainting the whole panel) about 30 times per new measurement.
+    private string _chartStampKey = "";
+    private CandleTime _chartStampTime;
+    private int _chartStampCount = -1;
+    private decimal _chartStampValue;
+
+    /// <summary>Forget the fingerprint, so the next poll rebuilds the chart no matter what.</summary>
+    private void ResetBarometerChartStamp()
+    {
+        _chartStampKey = "";
+        _chartStampTime = default;
+        _chartStampCount = -1;
+        _chartStampValue = 0;
+    }
 
     /// <summary>
     /// CSS class for the Rulez dot. Avalonia has three states here (see
@@ -157,6 +232,8 @@ public class DashboardService : IDisposable
             _quoteName = _stateService.BarometerQuote;
         if (!string.IsNullOrEmpty(_stateService.BarometerInterval) && IntervalOptions.Contains(_stateService.BarometerInterval))
             _intervalName = _stateService.BarometerInterval;
+        if (!string.IsNullOrEmpty(_stateService.BarometerGraphValue) && GraphValueOptions.Contains(_stateService.BarometerGraphValue))
+            _graphValueName = _stateService.BarometerGraphValue;
 
         WeakReferenceMessenger.Default.Register<SymbolsHaveChangedMessage>(this, (_, _) => OnSymbolsChanged());
         WeakReferenceMessenger.Default.Register<ExchangeSwitchedMessage>(this, (_, _) => OnExchangeSwitched());
@@ -180,6 +257,10 @@ public class DashboardService : IDisposable
     private void OnExchangeSwitched()
     {
         BarometerChartPoints = [];
+        BarometerChartVersion++;
+        // The new exchange has its own candle list; without this the fingerprint of the old one
+        // could match it by accident and the chart would stay empty.
+        ResetBarometerChartStamp();
         GlobalData.CreatedSignalCount = 0;
         SignalExecute.ResetAnalyseCount();
         ExchangeBase.KLineTicker?.Reset();
@@ -376,22 +457,15 @@ public class DashboardService : IDisposable
         var quote = QuoteName;
         bool changed = false;
 
-        changed |= UpdateSingleBarometer(exchange, quote, CryptoIntervalPeriod.interval1h,
-            ref _barometer1h, ref _barometer1hClass, v => { Barometer1h = v; }, c => { Barometer1hClass = c; });
-        changed |= UpdateSingleBarometer(exchange, quote, CryptoIntervalPeriod.interval4h,
-            ref _barometer4h, ref _barometer4hClass, v => { Barometer4h = v; }, c => { Barometer4hClass = c; });
-        changed |= UpdateSingleBarometer(exchange, quote, CryptoIntervalPeriod.interval1d,
-            ref _barometer1d, ref _barometer1dClass, v => { Barometer1d = v; }, c => { Barometer1dClass = c; });
+        changed |= UpdateSingleBarometer(exchange, quote, CryptoIntervalPeriod.interval1h, Barometer1h);
+        changed |= UpdateSingleBarometer(exchange, quote, CryptoIntervalPeriod.interval4h, Barometer4h);
+        changed |= UpdateSingleBarometer(exchange, quote, CryptoIntervalPeriod.interval1d, Barometer1d);
 
         return changed;
     }
 
-    private string _barometer1h = "-", _barometer4h = "-", _barometer1d = "-";
-    private string _barometer1hClass = "", _barometer4hClass = "", _barometer1dClass = "";
-
     private static bool UpdateSingleBarometer(Exchange exchange, string quote,
-        CryptoIntervalPeriod period, ref string currentValue, ref string currentClass,
-        Action<string> setValue, Action<string> setClass)
+        CryptoIntervalPeriod period, BarometerDisplay display)
     {
         var barometer = exchange.Data.GetBarometer(quote, period);
         if (barometer?.PriceBarometer == null)
@@ -401,12 +475,20 @@ public class DashboardService : IDisposable
         var text = val.ToString("N2") + "%";
         var css = val > 0 ? "text-green" : val < 0 ? "text-red" : "";
 
-        if (text != currentValue || css != currentClass)
+        // Breadth is a whole percentage: the decimals of "62.47% of the coins rose" are noise, and
+        // the column next to the barometer has no room for them.
+        var rising = barometer.PricePercentageRising.HasValue
+            ? barometer.PricePercentageRising.Value.ToString("N0") + "%"
+            : "";
+
+        var tooltip = BarometerCandleFields.Describe(barometer);
+
+        if (text != display.Value || css != display.CssClass || rising != display.Rising || tooltip != display.Tooltip)
         {
-            currentValue = text;
-            currentClass = css;
-            setValue(text);
-            setClass(css);
+            display.Value = text;
+            display.CssClass = css;
+            display.Rising = rising;
+            display.Tooltip = tooltip;
             return true;
         }
         return false;
@@ -567,6 +649,30 @@ public class DashboardService : IDisposable
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         int maxPoints = Constants.BarometerGraphHours * 60;
 
+        // Which figure of the measurement is drawn follows the dropdown; Close (the average) is the
+        // barometer as it always was. ReadForGraph also shifts a figure whose neutral point is not
+        // zero (breadth), so the drawing code below only ever sees values around zero.
+        BarometerGraphValue graphValue = GraphValue;
+
+        // Skip the whole rebuild when nothing behind the chart moved. The last candle covers both a
+        // new measurement (its time changes) and the running minute being updated in place (its
+        // value changes); the count covers candles dropping off the far end, and the key covers the
+        // three dropdowns. TryGetLastCandle is O(1) and takes the read lock, unlike Values.Last().
+        if (!symbolInterval.CandleList.TryGetLastCandle(out CryptoCandle lastCandle))
+            return false;
+
+        string stampKey = symbolName + "/" + IntervalName + "/" + graphValue;
+        decimal stampValue = BarometerCandleFields.ReadForGraph(lastCandle, graphValue);
+        int stampCount = symbolInterval.CandleList.Count;
+        if (_chartStampKey == stampKey && _chartStampTime == lastCandle.OpenTime
+            && _chartStampCount == stampCount && _chartStampValue == stampValue)
+            return false;
+
+        _chartStampKey = stampKey;
+        _chartStampTime = lastCandle.OpenTime;
+        _chartStampCount = stampCount;
+        _chartStampValue = stampValue;
+
         var points = new List<BarometerPoint>();
         var candles = symbolInterval.CandleList.GetLastNValues(maxPoints, 1);
         foreach (var candle in candles)
@@ -574,11 +680,12 @@ public class DashboardService : IDisposable
             points.Add(new BarometerPoint
             {
                 Time = candle.OpenTime.ToDateTime(),
-                Value = candle.Close,
+                Value = BarometerCandleFields.ReadForGraph(candle, graphValue),
             });
         }
 
         BarometerChartPoints = points;
+        BarometerChartVersion++;
         return true;
     }
 
@@ -597,9 +704,12 @@ public class DashboardService : IDisposable
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         try
         {
-            if (symbolInterval.CandleList.Count > 0)
+            // TryGetLastCandle instead of Values.Last(): the latter walks the whole tree (O(n), and
+            // this runs every 2 seconds) and enumerates WITHOUT the read lock, which is exactly what
+            // CryptoCandleList warns against - that is where the InvalidOperationException caught
+            // below came from.
+            if (symbolInterval.CandleList.TryGetLastCandle(out CryptoCandle candle))
             {
-                CryptoCandle candle = symbolInterval.CandleList.Values.Last();
                 string text = (candle.OpenTime + 1).ToDateTime().ToLocalTime().ToString("HH:mm");
                 if (text != BarometerTime)
                 {

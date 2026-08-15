@@ -338,6 +338,8 @@ public partial class MainWindow : Window
 
         //var MenuHelp = this.FindControl<MenuItem>("MenuHelp");
         //if (MenuHelp != null)
+        MenuHelp.Items.Add(new MenuItem { Header = "Wiki", Command = new CommandOpenWiki(), CommandParameter = this });
+        MenuHelp.Items.Add(new MenuItem { Header = "-" });
         MenuHelp.Items.Add(new MenuItem { Header = "About...", Command = new CommandShowAbout(), CommandParameter = this });
 
     }

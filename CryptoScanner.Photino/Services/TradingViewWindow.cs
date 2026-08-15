@@ -93,6 +93,7 @@ public sealed class TradingViewWindow
 
             var window = new PhotinoWindow()
                 .SetTitle("TradingView")
+                .ApplyIcon()
                 .SetUseOsDefaultSize(false)
                 .SetSize(1400, 900)
                 .SetUseOsDefaultLocation(true)
@@ -113,6 +114,9 @@ public sealed class TradingViewWindow
             // Creates the native window. It does NOT block: the main window already started the
             // message loop, and Photino runs only one - see the note on the class above.
             window.WaitForClose();
+
+            // The handle only exists once the window has been created, so this comes after it.
+            WindowChrome.ApplyTitleBarTheme(window);
         }
         catch (Exception error)
         {

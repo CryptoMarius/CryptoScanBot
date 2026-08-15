@@ -8,7 +8,17 @@
     <RootNamespace>CryptoScanner.Photino</RootNamespace>
     <AssemblyName>CryptoScanBot.Photino</AssemblyName>
     <Product>CryptoScanBot Photino</Product>
+
+    <!-- Icon of the executable itself (Explorer, task bar, alt-tab). Shared with the Avalonia host
+         rather than copied, so there is one icon to maintain. -->
+    <ApplicationIcon>..\CryptoScanner\Assets\AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The same file next to the executable, because Photino sets the WINDOW icon from a path on
+         disk (WindowChrome.IconFile) and cannot read the one embedded in the executable. -->
+    <Content Include="..\CryptoScanner\Assets\AppIcon.ico" Link="AppIcon.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Photino.Blazor" Version="4.0.13" />

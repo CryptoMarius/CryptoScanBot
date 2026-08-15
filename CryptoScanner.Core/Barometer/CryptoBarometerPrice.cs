@@ -10,7 +10,7 @@ internal class CryptoBarometerPrice
     private const decimal OutlierThreshold = 250m;
 
     public static bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols,
-        CryptoInterval interval, CandleTime unixCandleLast, out decimal barometerPerc)
+        CryptoInterval interval, CandleTime unixCandleLast, BarometerResult result)
     {
         // Wat is de candle in het vorige interval
         CandleTime unixCandlePrev = unixCandleLast - interval.Duration;
@@ -19,8 +19,10 @@ internal class CryptoBarometerPrice
         //DateTime dateCandlePrev = CandleTools.GetUnixDate(unixCandlePrev);
         //DateTime dateCandleLast = CandleTools.GetUnixDate(unixCandleLast);
 
-        decimal sumPerc = 0;
-        int coinsMatching = 0;
+        // The caller reuses one result object across all measurements of a run, so clear it first.
+        // The percentages are collected instead of only summed: median, breadth and spread all come
+        // out of that same list afterwards, without a single extra candle lookup.
+        result.Reset();
 
         for (int i = 0; i < quoteData.SymbolList.Count; i++)
         {
@@ -49,27 +51,21 @@ internal class CryptoBarometerPrice
                             //    $"prev={candlePrev.Close} ({unixCandlePrev.ToLocalTime()}) " +
                             //    $"last={candleLast.Close} ({unixCandleLast.ToLocalTime()}) " +
                             //    $"perc={perc:F2}% (skipped)");
+                            result.OutlierCount++; // Count them, so a silent data problem becomes visible
                             continue; // Skip outlier
                         }
 
-                        sumPerc += perc;
-                        coinsMatching++;
+                        result.Add(perc);
                     }
                 }
             }
         }
 
-        if (coinsMatching > 0)
-        {
-            decimal result = sumPerc / coinsMatching;
-            barometerPerc = decimal.Round(result, 8);
-        }
-        else
-            barometerPerc = 0m; // not -99 because of long/short.
-        //GlobalData.AddTextToLogTab($"Barometer {quoteData.Name} ({quoteData.SymbolList.Count}) {interval.Name} {barometerPerc:N2} {coinsMatching}");
+        // Calculate() leaves everything at zero when no coin took part - not -99 because of long/short.
+        //GlobalData.AddTextToLogTab($"Barometer {quoteData.Name} ({quoteData.SymbolList.Count}) {interval.Name} {result.Average:N2} {result.SymbolCount}");
 
 
-        return coinsMatching > 0; // Met 1 munt krijgen we okay, mhhhh geeft een aardig vertekend beeld in dat geval..
+        return result.Calculate(); // Met 1 munt krijgen we okay, mhhhh geeft een aardig vertekend beeld in dat geval..
     }
 
 }

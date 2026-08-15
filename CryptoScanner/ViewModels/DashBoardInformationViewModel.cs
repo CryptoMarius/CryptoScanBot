@@ -74,6 +74,37 @@ public partial class DashBoardInformationViewModel : ObservableObject
     [ObservableProperty]
     private decimal _barometer1d = 0;
 
+    // Market breadth per interval: the percentage of symbols that rose. The barometer above is an
+    // average and reads the same for "every coin rises a little" and "a few coins carry the move";
+    // the breadth tells those two apart. See BarometerResult for the other figures of the same
+    // measurement, which are stored in the barometer candles.
+    [ObservableProperty]
+    private decimal _rising1h = 0;
+
+    [ObservableProperty]
+    private decimal _rising4h = 0;
+
+    [ObservableProperty]
+    private decimal _rising1d = 0;
+
+    // The remaining figures - median, spread, coin count, skipped outliers - have no room of their
+    // own in this panel, so they live in the tooltip of each barometer row.
+    [ObservableProperty]
+    private string _barometer1hTooltip = string.Empty;
+
+    [ObservableProperty]
+    private string _barometer4hTooltip = string.Empty;
+
+    [ObservableProperty]
+    private string _barometer1dTooltip = string.Empty;
+
+    // Which figure the graph draws, and the choices for it.
+    [ObservableProperty]
+    private ObservableCollection<string> _graphValues = [];
+
+    [ObservableProperty]
+    private string _selectedGraphValue = BarometerCandleFields.GetName(BarometerGraphValue.Average);
+
     [ObservableProperty]
     private string _barometerTime = string.Empty;
     private string _barometerCalculated = string.Empty;
@@ -273,6 +304,15 @@ public partial class DashBoardInformationViewModel : ObservableObject
         else
             SelectedInterval = _applicationStateService.BarometerInterval;
 
+        // Which figure of the measurement the graph draws (default = the average, the barometer as
+        // it always was). See BarometerCandleFields for the other five.
+        GraphValues = new ObservableCollection<string>(BarometerCandleFields.Names);
+
+        if (string.IsNullOrEmpty(_applicationStateService.BarometerGraphValue) || !GraphValues.Contains(_applicationStateService.BarometerGraphValue))
+            SelectedGraphValue = GraphValues[0];
+        else
+            SelectedGraphValue = _applicationStateService.BarometerGraphValue;
+
         BarometerTime = _barometerCalculated;
 
         // If nothing changed we need to fill the symbols
@@ -304,6 +344,15 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
         if (GlobalData.SignalRService != null)
             GlobalData.SignalRService.SelectedInterval = value;
+    }
+
+
+    partial void OnSelectedGraphValueChanged(string value)
+    {
+        // Not forwarded to SignalR: the hub serves the average to an external consumer and switching
+        // the desktop graph should not change what that consumer receives.
+        _applicationStateService.BarometerGraphValue = value;
+        Task.Run(CalculateBarometer);
     }
 
 
@@ -490,6 +539,12 @@ public partial class DashBoardInformationViewModel : ObservableObject
         if (candleList.Count == 0)
             return;
 
+        // Which figure of the measurement is drawn, and how it should be scaled: the average and the
+        // median swing around zero, breadth runs 0..100, spread and coin count are never negative.
+        // The centered branch below is the original code, unchanged.
+        BarometerGraphValue graphValue = BarometerCandleFields.Parse(SelectedGraphValue);
+        BarometerGraphScale graphScale = BarometerCandleFields.GetScale(graphValue);
+
         // determine range of data
         CandleTime loX = CandleTime.MaxValue;
         CandleTime hiX = CandleTime.MinValue;
@@ -514,40 +569,74 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 if (hiX < candle.OpenTime)
                     hiX = candle.OpenTime;
 
-                // Ignore very high barometer values (malfunctions Bybit Futures)
-                if (candle.Close > -50 && candle.Close < 50)
+                float value = (float)BarometerCandleFields.ReadForGraph(candle, graphValue);
+
+                // Ignore very high barometer values (malfunctions Bybit Futures). Only figures with a
+                // ceiling drop their outliers, see BarometerGraphScale.IgnoreBeyond.
+                if (!graphScale.IgnoreBeyond.HasValue || Math.Abs(value) < (float)graphScale.IgnoreBeyond.Value)
                 {
-                    if (loY > (float)candle.Close)
-                        loY = (float)candle.Close;
-                    if (hiY < (float)candle.Close)
-                        hiY = (float)candle.Close;
+                    if (loY > value)
+                        loY = value;
+                    if (hiY < value)
+                        hiY = value;
                 }
             }
             candleTime -= 1; // The barometer has each 1 minute a barometer value
         }
         if (loX == CandleTime.MaxValue)
             return;
+        if (loY == float.MaxValue)
+            return;
 
 
         // ranges symbolViewModel and y
         float screenX = hiX - loX; // unix time
-        float screenY = hiY - loY; // barometer, something like -5 .. +5
-        if (screenY < 5)
-            screenY = 5f; // from -2 to +2
-        if (hiY > 0.5 * screenY)
-            screenY = +2 * hiY;
-        if (loY < -0.5 * screenY)
-            screenY = -2 * loY;
 
+        // Both branches produce the same two numbers, so the drawing below is shared:
+        //   y = offsetY + scaleY * value   (scaleY is flipped below, screen y runs downwards)
+        // scaleY is still positive here; offsetY is computed with that positive scale.
+        float scaleY, offsetY;
+        float gridLow, gridHigh, gridStep;
+        float? referenceLine;
 
+        if (graphScale.CenteredOnZero)
+        {
+            float minimumSpan = (float)graphScale.MinimumSpan;
+            float screenY = hiY - loY; // barometer, something like -5 .. +5
+            if (screenY < minimumSpan)
+                screenY = minimumSpan; // from -2 to +2
+            if (hiY > 0.5 * screenY)
+                screenY = +2 * hiY;
+            if (loY < -0.5 * screenY)
+                screenY = -2 * loY;
+
+            scaleY = intHeight / screenY;
+            offsetY = scaleY * 0.5f * screenY; // center of picture
+            gridLow = (float)graphScale.GridFrom;
+            gridHigh = (float)graphScale.GridTo;
+            gridStep = (float)graphScale.GridEvery; // 1% per line for the average and the median
+            referenceLine = 0f;
+        }
+        else
+        {
+            float low = (float?)graphScale.Low ?? loY;
+            float high = (float?)graphScale.High ?? hiY;
+            if (high <= low)
+                high = low + 1f; // a completely flat line still needs a range
+
+            scaleY = intHeight / (high - low);
+            offsetY = intHeight + scaleY * low; // value == low lands on the bottom edge
+            gridLow = low;
+            gridHigh = high;
+            gridStep = (float?)graphScale.GridStep ?? (high - low) / 4f;
+            referenceLine = (float?)graphScale.ReferenceLine;
+        }
 
         // factor to keep points within picture
         float scaleX = intWidth / screenX;
-        float scaleY = intHeight / screenY;
 
         // ofset to first point
         float offsetX = 0; // start in the left of the picture
-        float offsetY = scaleY * 0.5f * screenY; // center of picture
 
         // flix y (specific for winform - what a crap)
         scaleY = -1 * scaleY;
@@ -568,24 +657,32 @@ public partial class DashBoardInformationViewModel : ObservableObject
             //FilterQuality = SKFilterQuality.High
         };
 
-        // horizontal lines (1% per line)
-        for (int y = -3; y <= 3; y++)
+        // horizontal lines (1% per line for the average and the median, a step that fits the range
+        // for the other figures), coloured red on the reference line
+        if (gridStep > 0)
         {
-            SKPoint p1 = new(0, offsetY + scaleY * y);
-            SKPoint p2 = new(intWidth, offsetY + scaleY * y);
-            if (y == 0)
+            for (float y = gridLow; y <= gridHigh; y += gridStep)
             {
-                paint.Color = SKColors.Red;
-                paint.StrokeWidth = 1;
-                paint.Style = SKPaintStyle.Stroke;
-                canvas.DrawLine(p1, p2, paint);
-            }
-            else
-            {
-                paint.Color = SKColors.Gray;
-                paint.StrokeWidth = 1;
-                paint.Style = SKPaintStyle.Stroke;
-                canvas.DrawLine(p1, p2, paint);
+                float screenLineY = offsetY + scaleY * y;
+                if (screenLineY < 0 || screenLineY > intHeight)
+                    continue; // outside the scale
+
+                SKPoint p1 = new(0, screenLineY);
+                SKPoint p2 = new(intWidth, screenLineY);
+                if (referenceLine.HasValue && y == referenceLine.Value)
+                {
+                    paint.Color = SKColors.Red;
+                    paint.StrokeWidth = 1;
+                    paint.Style = SKPaintStyle.Stroke;
+                    canvas.DrawLine(p1, p2, paint);
+                }
+                else
+                {
+                    paint.Color = SKColors.Gray;
+                    paint.StrokeWidth = 1;
+                    paint.Style = SKPaintStyle.Stroke;
+                    canvas.DrawLine(p1, p2, paint);
+                }
             }
         }
 
@@ -593,6 +690,17 @@ public partial class DashBoardInformationViewModel : ObservableObject
         //Pen pen = new Pen(Color.Gray, 0.5F);
         int intervalTime = 60;
         CandleTime lastX = hiX - (hiX.Minutes % intervalTime);
+
+        // Every hour line carries its hour as a label at the top, in LOCAL time so it matches the
+        // timestamp shown next to the chart.
+        using var hourFont = new SKFont { Size = 9 };
+        using var hourPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Color = SKColors.Gray,
+            Style = SKPaintStyle.Fill,
+        };
+
         while (lastX > loX)
         {
             //DateTime ehh = CandleTools.GetUnixDate(lastX);
@@ -603,6 +711,22 @@ public partial class DashBoardInformationViewModel : ObservableObject
             paint.StrokeWidth = 1;
             paint.Style = SKPaintStyle.Stroke;
             canvas.DrawLine(p1, p2, paint);
+
+            // The label always sits to the RIGHT of its line, and is simply left out when it no
+            // longer fits there - the rightmost hour therefore sometimes has no number. The plate
+            // underneath keeps it readable when the barometer line runs along the top of the chart
+            // (breadth does). Bare hour, no minutes and no leading zero.
+            string hourText = lastX.ToLocalTime().Hour.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            float hourWidth = hourFont.MeasureText(hourText);
+            float hourX = p1.X + 3;
+            if (hourX + hourWidth <= intWidth)
+            {
+                paint.Color = bgColor;
+                paint.Style = SKPaintStyle.Fill;
+                canvas.DrawRect(hourX - 2, 1, hourWidth + 4, 11, paint);
+                canvas.DrawText(hourText, hourX, 10, SKTextAlign.Left, hourFont, hourPaint);
+            }
+
             lastX -= intervalTime;
         }
 
@@ -616,13 +740,23 @@ public partial class DashBoardInformationViewModel : ObservableObject
         {
             if (candleList.TryGetValue(candleTime, out CryptoCandle candle))
             {
+                float value = (float)BarometerCandleFields.ReadForGraph(candle!, graphValue);
                 point2.X = offsetX + scaleX * (float)(candle!.OpenTime - loX);
-                point2.Y = offsetY + scaleY * ((float)candle.Close);
+                point2.Y = offsetY + scaleY * value;
                 //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
 
                 if (init)
                 {
-                    if (candle.Close < 0)
+                    // Green above the reference line, red below it. Figures without such a line
+                    // (spread) are never good or bad, so those get one neutral colour. Not grey:
+                    // that vanished against the grey grid lines on a dark background.
+                    if (!referenceLine.HasValue)
+                    {
+                        paint.Color = SKColors.WhiteSmoke;
+                        paint.StrokeWidth = 1;
+                        paint.Style = SKPaintStyle.Stroke;
+                    }
+                    else if (value < referenceLine.Value)
                     {
                         //g.DrawLine(Pens.Red, point1, point2, paint);
                         paint.Color = SKColors.Red;
@@ -708,12 +842,25 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 {
                     if (barometerData.PriceBarometer != null)
                     {
+                        string tooltip = BarometerCandleFields.Describe(barometerData);
                         if (intervalPeriod == CryptoIntervalPeriod.interval1h)
+                        {
                             Barometer1h = barometerData.PriceBarometer.Value;
+                            Rising1h = barometerData.PricePercentageRising ?? 0;
+                            Barometer1hTooltip = tooltip;
+                        }
                         else if (intervalPeriod == CryptoIntervalPeriod.interval4h)
+                        {
                             Barometer4h = barometerData.PriceBarometer.Value;
+                            Rising4h = barometerData.PricePercentageRising ?? 0;
+                            Barometer4hTooltip = tooltip;
+                        }
                         else if (intervalPeriod == CryptoIntervalPeriod.interval1d)
+                        {
                             Barometer1d = barometerData.PriceBarometer.Value;
+                            Rising1d = barometerData.PricePercentageRising ?? 0;
+                            Barometer1dTooltip = tooltip;
+                        }
                     }
                 }
             }

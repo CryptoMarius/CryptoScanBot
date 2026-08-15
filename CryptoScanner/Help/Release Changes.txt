@@ -8,7 +8,30 @@ TODO:
 -De Emulator app laten testen (nieuw)
 -De documentatie bijwerken, screenshots verversen.
 
+- De onderhoudscyclus en de verversing van exchange informatie/verversing candles zitten elkaar in de weg, draait niet elk uur zoals gepland was
+- Okx Futures, haalt symbols op van de categorie spot ipv futures
+- Okx Futures, symbols met de status proepen geven een probleem
+- Tradingview: Geeft soms fouten op half verstuurde informatie frames
+- Telegram heeft s'nachts een onderbreking/herstart en dat geeft wat foutmeldingen
+- Binance Futures - verwissel probleem met de BTCUSDT en ETHUSDT en de kwartaalcontracten leiide tot trading rule problemen en verkeerde prijzen
+- HyperLiquid Spot toegevoegd (had nog een paar mankementen die nu hopelijk zijn opgelost)
+- Kraken Spot, het 24-uurs volume werd niet gevonden voor de oudste munten (BTC, ETH, USDT, XRP, DOGE) waardoor die buiten de scanner vielen
+- Kraken Spot, de opgehaalde historie stond in base volume terwijl de live candles het quote volume bevatten
+- Kraken Futures, een mislukte ticker aanroep zette het volume van alle munten op 0 in plaats van de vorige stand te laten staan
+- Altrady meldt ook de shorts terug als long positie (nog uitzoeken?)
+
+
 13-08-2025 2.6.0
+- Alpaca geactiveerd (om te testen!!!!)
+
+- De minimale 24-uurs omzet per exchange (0,034%-schaling)
+- Hyperliquid spot weer geactiveerd
+- Pauzeregels met hardgecodeerde BTCUSDT
+- Blofin futures geactiveerd
+- BitMart futures geactiveerd
+- De munt die gebruikt wordt voro de trafing rulez wordt nu doro de exchange api gestuurd (btc geeft wel eens een andere naam)
+- Het minimale volume van een basismunt wordt nu geinitialiseerd op de exchange grootte (een inschatting)
+- De kleur rood en groen aangepast waardoor het beter te lezen is op een zwarte achtergrond
 - De laatste fouten uit Kraken Futures gehaald
 - Extra help link naar de Cryptoscanner wiki pagina op github
 - Fix ZigZag punt berekening (met impact op de trend, marktrend enzovoort)
@@ -28,6 +51,7 @@ Photino
 - Diverse aanpassingen dashboard charts
 
 22-07-2025 2.5.9
+- SignalR toegevoegd voor een experiment met een andere applicatie (heeft ASP.NET package nodig)
 - De Timeframe consensus verplaatst en in de globale trader entry opties geplaatst
 - De Entry conditions versimpeld en de overlappende opties verwijderd
 - Bij het toevoegen van een DCA komen we in een deadlock situatie.

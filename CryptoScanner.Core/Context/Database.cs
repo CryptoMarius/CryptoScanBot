@@ -173,9 +173,9 @@ public class CryptoDatabase : IDisposable
             new() { Name = "Binance Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
             new() { Name = "Binance Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
 
-            // Both loads of LimitRates errors, not working for this scanner
+            // The spot side is small: the exchange offers 65 pairs here, of which 32 are quoted in USDT
             new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
-            new() { Name = "BitMart Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
+            new() { Name = "BitMart Futures", IsSupported = true, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
 
             new() { Name = "Bitvavo Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Spot },
             new() { Name = "Bitvavo Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Futures},
@@ -198,8 +198,10 @@ public class CryptoDatabase : IDisposable
             new() { Name = "Bybit EU Spot", IsSupported = true, ExchangeType = CryptoExchangeType.BybitEu, TradingType=CryptoTradingType.Spot },
             new() { Name = "Bybit EU Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BybitEu, TradingType=CryptoTradingType.Futures },
 
-            // Problem: kline stream only supports 5m? That will not work
-            new() { Name = "Coinbase Spot", IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Spot },
+            // The kline stream of this exchange is fixed at 5 minutes, which is of no use for the 1m
+            // candles, so those are built from the trade feed instead (as with Kraken Futures).
+            new() { Name = "Coinbase Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Spot },
+            // There is no Coinbase futures implementation at all, ExchangeHelper.GetApi throws for it
             new() { Name = "Coinbase Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Futures },
 
             // HyperLiquid

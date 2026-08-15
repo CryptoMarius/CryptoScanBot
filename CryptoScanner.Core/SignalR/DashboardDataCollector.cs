@@ -139,11 +139,24 @@ public static class DashboardDataCollector
             if (barometerData?.PriceBarometer != null)
             {
                 if (period == CryptoIntervalPeriod.interval1h)
+                {
                     dto.Barometer1h = barometerData.PriceBarometer.Value;
+                    dto.Rising1h = barometerData.PricePercentageRising ?? 0;
+                }
                 else if (period == CryptoIntervalPeriod.interval4h)
+                {
                     dto.Barometer4h = barometerData.PriceBarometer.Value;
+                    dto.Rising4h = barometerData.PricePercentageRising ?? 0;
+                }
                 else if (period == CryptoIntervalPeriod.interval1d)
+                {
                     dto.Barometer1d = barometerData.PriceBarometer.Value;
+                    dto.Rising1d = barometerData.PricePercentageRising ?? 0;
+                }
+
+                // The symbol pool is the same for every interval, so the last one wins - they only
+                // differ when candles are missing at one of the two ends of a longer interval.
+                dto.SymbolCount = barometerData.PriceSymbolCount ?? 0;
 
                 // Track the most recent computed minute for the barometer timestamp (see below).
                 if (barometerData.PriceDateTime.HasValue &&

@@ -15,7 +15,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CryptoSymbol symbol, CryptoInterval interval, CandleTime fetchFrom)
     {
         // Remarks:
-        // The maximum is 1000 candles per GetKlinesAsync call.
+        // The maximum is 500 candles per GetKlinesAsync call (ExchangeOptions.CandleLimit). A wider
+        // window is not truncated but refused: "40039 Invalid Timestamp".
         // The results can be from new to old (wrong order).
         // The results can contain in progress candles.
 
@@ -72,9 +73,14 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 if (CheckFutureCandleReceived(kline.Timestamp.Value, symbol, interval, kline.ClosePrice))
                     continue;
 
+                // The volume of a futures kline counts CONTRACTS and this endpoint carries no turnover
+                // field of its own. QuantityTickSize holds the base amount of one contract (quantity
+                // precision * contract quantity, see Symbol.cs), so this gives a quote volume that can
+                // be compared with the other exchanges - multiplying the contract count by a price
+                // straight away was a factor contract size too high (1000 on BTCUSDT).
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.Timestamp.Value,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
-                    kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
+                    kline.Volume * symbol.QuantityTickSize * 0.5m * (kline.HighPrice + kline.LowPrice));
 
                 // remember the newest candle
                 if (candle.OpenTime > fetchedUpTo)

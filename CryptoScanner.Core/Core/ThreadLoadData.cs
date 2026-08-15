@@ -379,7 +379,37 @@ public class ThreadLoadData
                     ?? throw new InvalidOperationException("IScannerSession not registered in services");
                 _scannerSession.SetTimerDefaults();
 
-                GlobalData.SendMvvmMessage(new BarometerRefreshMessage());
+                // Calculate the barometer once, right now. Its timer runs every 30 seconds but a
+                // System.Timers.Timer only fires AFTER its first interval, so without this the
+                // scanner spends its first half minute without a barometer at all - which rejects
+                // every signal ("Barometer not calculated") and leaves the graph empty. The refresh
+                // message used to be sent here immediately, before that first calculation existed,
+                // so it told the dashboards to redraw nothing.
+                //
+                // Off the loading thread: the first calculation has to build the whole graph history
+                // and takes a moment. The emulator has no barometer (a handful of symbols is not a
+                // market), so it is skipped there.
+                if (GlobalData.IsEmulatorMode)
+                    GlobalData.SendMvvmMessage(new BarometerRefreshMessage());
+                else
+                {
+                    _ = Task.Run(() =>
+                    {
+                        try
+                        {
+                            Barometer.BarometerTools barometerTools = new();
+                            barometerTools.ExecuteAsync();
+                        }
+                        catch (Exception barometerError)
+                        {
+                            ScannerLog.Logger.Error(barometerError, "Initial barometer calculation");
+                        }
+
+                        // Always refresh, even when the calculation failed - the dashboards also use
+                        // this message to drop their loading state.
+                        GlobalData.SendMvvmMessage(new BarometerRefreshMessage());
+                    });
+                }
             }
         }
         catch (Exception error)

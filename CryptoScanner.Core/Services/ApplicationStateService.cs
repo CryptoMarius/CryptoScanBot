@@ -33,6 +33,10 @@ public class BarometerState
 {
     public string Quote { get; set; } = "";
     public string Interval { get; set; } = "1H";
+
+    /// Which figure of the measurement the graph draws, see BarometerCandleFields. Empty means the
+    /// average, which is the barometer as it always was.
+    public string GraphValue { get; set; } = "";
 }
 
 
@@ -94,6 +98,7 @@ public class ApplicationStateService
 
     public string BarometerQuote { get { return _states.BarometerState.Quote; } set { _states.BarometerState.Quote = value; } }
     public string BarometerInterval { get { return _states.BarometerState.Interval; } set { _states.BarometerState.Interval = value; } }
+    public string BarometerGraphValue { get { return _states.BarometerState.GraphValue; } set { _states.BarometerState.GraphValue = value; } }
 
     public void SaveGridSortState(string gridName, string? sortColumn, ListSortDirection? sortDirection)
     {

@@ -50,9 +50,12 @@ public class ExchangeOptions // : IExchangeOptions
 {
     // Fallback for exchanges that do not state a boundary of their own. This is the value that used
     // to be hardcoded in ScannerSession, so leaving an exchange on this default changes nothing.
-    // Used for the exchanges whose volume could not be measured (BitMart and Coinbase are switched off
-    // and barely trade their default quote, Bybit EU Futures has no symbols). Alpaca states a boundary
-    // of zero: it picks its symbols itself and the volume it reports is the volume of one feed.
+    // Only the two markets that are switched off still use it, so nothing that runs depends on it:
+    // BloFin Spot (no spot client in the package, excluded from the project) and Bybit EU Futures
+    // (that entity lists no contracts at all). Alpaca states a boundary of zero: it picks its symbols
+    // itself and the volume it reports is the volume of one feed.
+    // Whoever switches one of those two on has to measure a boundary for it first, the way the
+    // comment above every other SetDefaultOptions call describes.
     public const double DefaultMinimalVolume = 4_500_000;
 
     // Official exchange name (registered in database)

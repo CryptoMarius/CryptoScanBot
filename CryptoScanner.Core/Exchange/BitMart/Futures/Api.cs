@@ -142,7 +142,9 @@ public class Api : ExchangeBase
                 Url = "https://app.altrady.com/d/BITMF_{QUOTE}_{BASE}:{interval}",
             },
             HyperTrader = null,
-            // No TradingView: whether it carries the BitMart perpetuals could not be checked
+            // No TradingView: it does not carry this exchange at all. Their symbol search answers an
+            // empty list for exchange=BITMART where the same call on BINANCE returns the pairs
+            // (checked 14-08-2026).
             TradingView = null,
             ExchangeUrl = new()
             {

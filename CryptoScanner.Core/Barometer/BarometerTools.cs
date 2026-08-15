@@ -12,7 +12,7 @@ public class BarometerTools
 {
     private static readonly object LockObject = new();
     private delegate bool CalcBarometerMethod(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols,
-        CryptoInterval interval, CandleTime unixCandleLast, out decimal barometerPerc);
+        CryptoInterval interval, CandleTime unixCandleLast, BarometerResult result);
 
 
     public static void InitBarometerSymbols()
@@ -96,11 +96,32 @@ public class BarometerTools
         CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
         // Use TryGetFirstCandle() so the read is covered by the CryptoCandleList read lock,
         // preventing InvalidOperationException when another thread concurrently calls Add().
+        //
+        // Candles written before BarometerCandleFields existed are dropped here as well. Back then
+        // all four price fields held the same number, so such a candle reads its average as the
+        // breadth and again as the spread - the graph would quietly show nonsense for the part of
+        // the history that came out of candles.db. They are always the oldest ones, so this loop
+        // reaches them before it meets a valid candle. recalculateFrom brings them back correctly.
+        CandleTime? recalculateFrom = null;
         while (candles.TryGetFirstCandle(out CryptoCandle c))
         {
             if (c.OpenTime < startFetchUnix)
                 candles.Remove(c.OpenTime);
             else break;
+        }
+
+        // Unusable candles are not only at the front. A session that stops and starts again leaves a
+        // block of them BEHIND the valid ones, so the loop above would meet a good candle and stop
+        // right before them. Sweep the whole window instead - it is a few hundred candles, and only
+        // the first calculation after a start finds anything.
+        foreach (CryptoCandle candle in candles.GetLastNValues(Constants.BarometerGraphHours * 60, 1))
+        {
+            if (BarometerCandleFields.IsLegacyLayout(candle))
+            {
+                if (recalculateFrom == null || candle.OpenTime < recalculateFrom.Value)
+                    recalculateFrom = candle.OpenTime;
+                candles.Remove(candle.OpenTime);
+            }
         }
 
 
@@ -122,6 +143,12 @@ public class BarometerTools
             symbolInterval.LastCandleSynchronized = periodStart;
         }
 
+        // Whatever was dropped for its old layout has to be computed again, so go back that far. The
+        // 1m candles it is derived from are fetched for the whole graph window anyway, so this is the
+        // same work a first-ever start does - once, right after the update.
+        if (recalculateFrom.HasValue && recalculateFrom.Value < periodStart)
+            periodStart = recalculateFrom.Value;
+
         // De laatste candle die we moeten berekenen. Mogelijk 1 te hoog, wat "valse" waarden kan geven?
         // Dat kan opgelost worden door de laatst aangekomen candle mee te geven (vanuit de 1m stream)
         periodStop = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
@@ -135,13 +162,17 @@ public class BarometerTools
         //    GlobalData.AddTextToLogTab($"Calculating volume barometer chart {quoteData.Name} {interval.Name} from {periodStart.ToDateTime()} to {periodStop.ToDateTime()}");
 
 
+        // One result object for the whole run. The loop below walks minute by minute and can have
+        // hours of backlog after a restart, so a fresh object per measurement would be pure garbage.
+        BarometerResult result = new();
+
         // De opgegeven periode per minuut itereren
         while (periodStart <= periodStop)
         {
             //periodStartDebug = CandleTools.GetUnixDate(periodStart);
 
             // Bereken de 1e waarde (alleen candle aanmaken als er candles bestaan voor beide intervallen)
-            if (calcBarometerMethod(quoteData, bmSymbol.Exchange.SymbolListName, interval, periodStart, out decimal BarometerPerc))
+            if (calcBarometerMethod(quoteData, bmSymbol.Exchange.SymbolListName, interval, periodStart, result))
             {
                 // De candle aanmaken of bijwerken
                 if (!candles.TryGetValue(periodStart, out CryptoCandle candle))
@@ -154,12 +185,14 @@ public class BarometerTools
                 }
 
                 // Just fill all the ohlc + v
+                //
+                // Which figure goes in which field is decided by BarometerCandleFields, together
+                // with the code that reads them back for the graph - see there for the layout and
+                // why High/Low are not the highest and lowest value here.
+                // CryptoCandle is a struct, so Store() takes it by ref - without that it would fill a
+                // copy and the line below would write back an all-zero candle.
                 candle.TickDecimals = bmSymbol.PriceDecimals;
-                candle.Open = BarometerPerc;
-                candle.High = BarometerPerc;
-                candle.Low = BarometerPerc;
-                candle.Close = BarometerPerc;
-                candle.Volume = BarometerPerc;
+                BarometerCandleFields.Store(ref candle, result);
                 candles[periodStart] = candle;
 
 
@@ -167,12 +200,17 @@ public class BarometerTools
                 if (priceBarometer)
                 {
                     barometerData.PriceDateTime = periodStart;
-                    barometerData.PriceBarometer = BarometerPerc;
+                    barometerData.PriceBarometer = result.Average;
+                    barometerData.PriceMedian = result.Median;
+                    barometerData.PricePercentageRising = result.PercentageRising;
+                    barometerData.PriceSpread = result.Spread;
+                    barometerData.PriceSymbolCount = result.SymbolCount;
+                    barometerData.PriceOutlierCount = result.OutlierCount;
                 }
                 else
                 {
                     barometerData.VolumeDateTime = periodStart;
-                    barometerData.VolumeBarometer = BarometerPerc;
+                    barometerData.VolumeBarometer = result.Average;
                 }
 
                 // Willen we dat hier wel bijwerken, zie ook opmerking hierboven

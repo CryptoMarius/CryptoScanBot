@@ -131,16 +131,27 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.PriceMinimum = symbolInfo.LotSizeFilter.MinOrderValue;
                                 //symbol.PriceMaximum = symbolInfo.LotSizeFilter.MaxOrderValue;
 
-                                //symbol.PriceTickSize = symbolData.; ehh?
+                                // PricePrecision ("price_precision") IS the price step, despite its name:
+                                // 0.1 for BTCUSDT, 0.01 for ETHUSDT, 0.00001 for DOGEUSDT. Without it the
+                                // tick size stayed 0, and that breaks two things at once - the candle
+                                // store rounds every price to a whole number (see CryptoCandle, which
+                                // keeps prices as an int number of ticks, so DOGEUSDT became 0 and was
+                                // thrown away as an empty candle) and Clamp divides by the step.
+                                symbol.PriceTickSize = symbolData.PricePrecision;
 
                                 //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
+                                // Turnover24h ("turnover_24h") is the 24 hour volume in the QUOTE currency,
+                                // which is what the volume boundary and the rest of the scanner work with.
+                                // Volume24h counts CONTRACTS over that same period: BTCUSDT reports 63 million
+                                // against a turnover of 4 billion USDT, so the two are a factor contract size
+                                // and price apart and cannot be compared between coins at all.
                                 //// volume from the tickers
                                 //if (volumeTicker.TryGetValue(symbol.ExchangeSymbol, out decimal volume))
                                 //    symbol.Volume = volume;
                                 //else
-                                symbol.Volume = (double)symbolData.Volume24h;
+                                symbol.Volume = (double)symbolData.Turnover24h;
 
                                 if (symbolData.Status == ContractStatus.Trading)
                                     symbol.Status = 1;
@@ -157,6 +168,10 @@ public class Symbol() : SymbolBase(), ISymbol
                                 activeSymbols[symbol.Name] = symbol;
                             }
                         }
+
+                        // Which scanner names cover more than one instrument (an inverse contract rejected
+                        // above carries the same base and quote as a linear one would)
+                        RegisterAmbiguousSymbolNames(exchange, rejectedSymbols, activeSymbols.Keys);
 
                         // Deactivate the symbols who have disappeared
                         int deactivated = 0;

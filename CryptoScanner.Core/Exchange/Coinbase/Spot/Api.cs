@@ -28,8 +28,26 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        // barely any USDT pairs (Coinbase trades USD), so the boundary falls back to the default
-        ExchangeOptions.SetDefaultOptions("Coinbase Spot", "USDT", 300, false, 4);
+        // Coinbase is a USD exchange: 397 online USD pairs against 21 USDT ones, and the USD side is
+        // 715 million of the 24 hour volume against 3 million for USDT (measured 14-08-2026). Picking
+        // USDT here would leave the scanner with a handful of near-dead symbols.
+        // Volume: 715.000.000 USD over 24 hours, so the boundary is 240.000.
+        // The kline stream of this exchange is fixed at 5 minutes, so the 1m candles are built from
+        // the trade feed instead (see SubscriptionKLineTicker) - which needs the cache and the timer.
+        //
+        // Rate limits of this exchange (checked 14-08-2026, and the same values the package puts in
+        // CoinbaseExchange.RateLimiter, which enforces them itself and waits when it has to):
+        //   REST public      10 requests per second per IP address   (see LimitRate)
+        //   REST private     30 requests per second per api key      (not used, everything is public)
+        //   Socket connect  750 per second per IP address
+        //   Socket messages   8 per second per IP address, unauthenticated
+        // That last one is what bounds the layout below: every subscription costs one subscribe
+        // message and SubscriptionManager fires them all at once, so 4 symbols per subscription turns
+        // ~100 symbols into ~25 messages that the package spaces out over some three seconds at
+        // startup. Raising the 4 makes the startup shorter, not slower - it is not a per-message
+        // symbol limit of the exchange, the candles and market_trades channels take a whole list.
+        ExchangeOptions.SetDefaultOptions("Coinbase Spot", "USD", 300, false, 4,
+            klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 240_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default options for this exchange
@@ -140,6 +158,8 @@ public class Api : ExchangeBase
         {
             Altrady = new()
             {
+                // GDAX is what Altrady still calls Coinbase, confirmed 14-08-2026 in their own list of
+                // valid exchange values ("Coinbase or GDAX")
                 Code = "GDAX",
                 Execute = CryptoExternalUrlType.Internal,
                 Url = "https://app.altrady.com/d/GDAX_{QUOTE}_{BASE}:{interval}",
@@ -147,13 +167,16 @@ public class Api : ExchangeBase
             HyperTrader = null,
             TradingView = new()
             {
+                // TradingView moved on from the GDAX name, the market is COINBASE:BTCUSD there
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://www.tradingview.com/chart/?symbol=GDAX:{BASE}{QUOTE}&interval={interval}", // ?
+                Url = "https://www.tradingview.com/chart/?symbol=COINBASE:{BASE}{QUOTE}&interval={interval}",
             },
             ExchangeUrl = new()
             {
+                // The advanced trade interface, which is the one this api talks to. The url that stood
+                // here was a copy of the Okx one (my.okx.com/trade-spot/...) and answered with a 404.
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://coinbase.com/trade-spot/{BASE}-{QUOTE}", // ?
+                Url = "https://www.coinbase.com/advanced-trade/spot/{BASE}-{QUOTE}",
             }
         };
     }

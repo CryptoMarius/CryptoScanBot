@@ -42,7 +42,6 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
-            int x = Api.ExchangeOptions.CandleLimit;
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }
