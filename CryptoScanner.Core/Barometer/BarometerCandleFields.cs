@@ -202,9 +202,6 @@ public static class BarometerCandleFields
             {
                 CenteredOnZero = true,
                 MinimumSpan = 20m,
-                GridFrom = -30m,
-                GridTo = 30m,
-                GridEvery = 10m,
                 Decimals = 0,
             },
             BarometerGraphValue.Spread => new BarometerGraphScale
@@ -225,14 +222,63 @@ public static class BarometerCandleFields
                 GridStep = null,
                 Decimals = 0,
             },
-            // Average and median keep the scale the barometer graph always had, untouched.
+            // Average and median. MinimumSpan is deliberately NOT the 5 the graph was born with:
+            // that number came from a comment reading "barometer, something like -5 .. +5", which is
+            // the range of a single coin, not of an average over hundreds of them. Measured over a
+            // full graph window the average spans 0.7 and the median 0.3 percentage points, so a
+            // floor of 5 flattened the line onto a fifteenth of the picture. Do not restore it in
+            // the name of matching the original behaviour - the original behaviour is the bug.
             _ => new BarometerGraphScale
             {
                 CenteredOnZero = true,
+                MinimumSpan = 1m,
                 IgnoreBeyond = 50m,     // malfunctions seen on Bybit Futures
                 Decimals = 2,
             },
         };
+    }
+
+
+    /// <summary>
+    /// Round steps a grid line may sit on, from fine to coarse. Only values that read well on an
+    /// axis - no 0.3 or 0.7 - so the reader can tell what a line is worth without a label.
+    /// </summary>
+    private static readonly decimal[] GridSteps =
+        [0.01m, 0.02m, 0.05m, 0.1m, 0.2m, 0.25m, 0.5m, 1m, 2m, 5m, 10m, 20m, 25m, 50m];
+
+    /// <summary>Above this the lines start to read as a grey block instead of a grid.</summary>
+    private const int MaxGridLines = 8;
+
+    /// <summary>
+    /// Grid lines for a scale centred on zero, derived from the span that is actually in view.
+    /// <para>
+    /// The grid was fixed at -3..+3 with one line per percent, which only suits one span. Now that
+    /// the span follows the data down to a single percentage point, a fixed grid would leave nothing
+    /// but the zero line in view - so the step is picked from the span instead: the finest round step
+    /// that keeps the count under MaxGridLines.
+    /// </para>
+    /// <para>
+    /// Both bounds are whole multiples of the step, which is what puts a line on zero. Deriving them
+    /// from the span directly would offset the whole grid by half a step and lose that line, and the
+    /// zero line is the one the graph is read against.
+    /// </para>
+    /// </summary>
+    public static (decimal Low, decimal High, decimal Step) GetCenteredGrid(decimal span)
+    {
+        decimal half = span / 2m;
+
+        decimal step = GridSteps[^1];
+        foreach (decimal candidate in GridSteps)
+        {
+            if (span / candidate <= MaxGridLines)
+            {
+                step = candidate;
+                break;
+            }
+        }
+
+        decimal lines = Math.Floor(half / step);
+        return (-lines * step, lines * step, step);
     }
 }
 
@@ -241,9 +287,13 @@ public static class BarometerCandleFields
 /// The vertical scale of the barometer graph for one figure.
 /// <para>
 /// CenteredOnZero selects the scale the graph has always used: symmetric around zero, growing with
-/// the data but never below MinimumSpan, with the zero line in red and grey lines around it. The
-/// defaults of the four fields below it reproduce the original behaviour exactly, so the average and
-/// the median only have to say CenteredOnZero = true.
+/// the data but never below MinimumSpan, with the zero line in red and grey lines around it.
+/// </para>
+/// <para>
+/// MinimumSpan has no default worth relying on: it is the one number that decides whether the line
+/// fills the picture or lies flat against the middle, and it differs per figure by an order of
+/// magnitude (a percentage point for the average, twenty for the breadth). Every centred scale
+/// states it, so a new figure cannot silently inherit a floor that flattens it.
 /// </para>
 /// <para>
 /// The remaining fields apply only when CenteredOnZero is false.
@@ -255,8 +305,13 @@ public sealed class BarometerGraphScale
 
     // --- centred scale ---
 
-    /// Never zoom in further than this vertical span.
-    public decimal MinimumSpan { get; init; } = 5m;
+    /// <summary>
+    /// Never zoom in further than this vertical span. Zero means no floor at all: the scale then
+    /// follows the data whatever it does. That is the safe default - forgetting to set it costs a
+    /// jumpy graph in a quiet market, which is visible, while a floor that is too high costs a flat
+    /// line, which reads as "nothing is happening" and hides itself.
+    /// </summary>
+    public decimal MinimumSpan { get; init; }
 
     /// <summary>
     /// Values this far from zero or further are left out of the scale: for a percentage change they
@@ -266,10 +321,8 @@ public sealed class BarometerGraphScale
     /// </summary>
     public decimal? IgnoreBeyond { get; init; }
 
-    /// Grey grid lines from GridFrom up to GridTo, one every GridEvery.
-    public decimal GridFrom { get; init; } = -3m;
-    public decimal GridTo { get; init; } = 3m;
-    public decimal GridEvery { get; init; } = 1m;
+    // The centred scale has no grid fields of its own: its lines follow the span that ends up in
+    // view, see BarometerCandleFields.GetCenteredGrid.
 
     // --- scale that does not sit around zero ---
 

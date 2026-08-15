@@ -239,15 +239,16 @@
 
     /// <summary>
     /// Barometer chart, drawn the way DashBoardInformationViewModel.CreateBarometerBitmap draws its
-    /// SkiaSharp bitmap: a vertical scale that ADAPTS to the data with a minimum span of 5 percent,
-    /// a grey grid line per whole percent from -3 to +3 (clipped when it falls outside the scale), a
-    /// red line at zero, and a grey vertical line on every whole hour.
+    /// SkiaSharp bitmap: a vertical scale that ADAPTS to the data with a minimum span per figure
+    /// (BarometerGraphScale.MinimumSpan), grey grid lines on a step that follows that scale
+    /// (BarometerCandleFields.GetCenteredGrid, clipped when a line falls outside), a red line at
+    /// zero, and a grey vertical line on every whole hour.
     /// <para>
     /// Two earlier versions were both wrong. The first scaled the axis to the data with no minimum,
     /// so the grid landed on different values than Avalonia and the vertical lines were placed every
     /// 60 POINTS instead of every 60 minutes. The second pinned the scale at -3..+3, which is where
     /// the grid LINES live but not what Avalonia scales by — the axis there is
-    /// max(5, data range), widened again when the data reaches beyond half of it.
+    /// max(MinimumSpan, data range), widened again when the data reaches beyond half of it.
     /// </para>
     /// </summary>
     private string _barometerSvg = "";
@@ -322,9 +323,7 @@
 
             scaleY = h / screenY;
             baseY = h / 2m;                         // offsetY: zero sits in the middle
-            gridLow = scale.GridFrom;
-            gridHigh = scale.GridTo;
-            gridStep = scale.GridEvery;
+            (gridLow, gridHigh, gridStep) = BarometerCandleFields.GetCenteredGrid(screenY);
             referenceLine = 0m;
         }
         else
@@ -352,8 +351,12 @@
         // uses SKColors.Gray and SKColors.Red, so no CSS variables and no opacity here.
         if (gridStep > 0)
         {
-            for (decimal line = gridLow; line <= gridHigh; line += gridStep)
+            // Counted instead of accumulated: a step like 0.2 would drift over the additions and drop
+            // the last line, and with a fine grid that line is the one that carries the top value.
+            int lineCount = (int)Math.Round((gridHigh - gridLow) / gridStep);
+            for (int i = 0; i <= lineCount; i++)
             {
+                decimal line = gridLow + i * gridStep;
                 decimal y = YFor(line);
                 if (y < 0 || y > h)
                     continue;                       // outside the scale, exactly as Skia clips it
