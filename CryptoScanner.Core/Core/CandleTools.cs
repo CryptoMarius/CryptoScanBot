@@ -283,13 +283,17 @@ public static class CandleTools
                     IsFilled = true,
                 };
                 candleList.Add(candle.OpenTime, candle);
+                // Both lines below are debug output and belong INSIDE this guard. They used to sit
+                // outside it, which made a single gap fill write two Info lines per candle regardless
+                // of the DebugKLineReceive setting - one catch-up of five symbols put ten thousand
+                // lines in the log in a single second.
                 if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                {
                     ScannerLog.Logger.Info($"Debug BulkAddMissingCandles {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
+                    //realCandle = candle;
 
-                ScannerLog.Logger.Info($"Debug BulkAddMissingCandles {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
-                //realCandle = candle;
-
-                ScannerLog.Logger.Info($"DEBUG BulkAdd {symbol.Name} {interval.Name} First={realCandle.OpenTime.ToDateTime().ToLocalTime()} LastSync={symbolInterval.LastCandleSynchronized?.ToDateTime().ToLocalTime()} Count={candleList.Count}");
+                    ScannerLog.Logger.Info($"DEBUG BulkAdd {symbol.Name} {interval.Name} First={realCandle.OpenTime.ToDateTime().ToLocalTime()} LastSync={symbolInterval.LastCandleSynchronized?.ToDateTime().ToLocalTime()} Count={candleList.Count}");
+                }
             }
 
             loop += interval.Duration;
