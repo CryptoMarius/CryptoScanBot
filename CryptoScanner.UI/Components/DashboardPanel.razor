@@ -367,7 +367,7 @@
 
         // Vertical lines on whole hours, placed by TIME so they stay on the hour no matter how many
         // points arrived or whether any are missing. Each line carries its hour as a label at the
-        // top, in LOCAL time so it matches the timestamp drawn at the bottom left.
+        // BOTTOM, where a horizontal axis belongs, in LOCAL time so it matches the timestamp.
         DateTime first = points[0].Time;
         DateTime last = points[^1].Time;
         double span = (last - first).TotalMinutes;
@@ -381,13 +381,12 @@
 
                 // The label always sits to the RIGHT of its line, and is simply left out when it no
                 // longer fits there - the rightmost hour therefore sometimes has no number. The
-                // plate underneath keeps it readable when the barometer line runs along the top of
-                // the chart (breadth does).
+                // plate underneath keeps it readable wherever the barometer line happens to run.
                 if (x + HourLabelWidth <= w)
                 {
                     string label = hour.ToLocalTime().Hour.ToString(ic);
-                    sb.Append($"<rect x=\"{(x + 1).ToString("F1", ic)}\" y=\"1\" width=\"{HourLabelWidth - 1}\" height=\"11\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
-                    sb.Append($"<text x=\"{(x + 3).ToString("F1", ic)}\" y=\"10\" font-size=\"9\" fill=\"var(--text-primary)\">{label}</text>");
+                    sb.Append($"<rect x=\"{(x + 1).ToString("F1", ic)}\" y=\"{h - 12}\" width=\"{HourLabelWidth - 1}\" height=\"11\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
+                    sb.Append($"<text x=\"{(x + 3).ToString("F1", ic)}\" y=\"{h - 3}\" font-size=\"9\" fill=\"var(--text-primary)\">{label}</text>");
                 }
 
                 hour = hour.AddHours(-1);
@@ -410,13 +409,15 @@
             sb.Append($"<line x1=\"{x1.ToString("F1", ic)}\" y1=\"{y1.ToString("F1", ic)}\" x2=\"{x2.ToString("F1", ic)}\" y2=\"{y2.ToString("F1", ic)}\" stroke=\"{color}\" stroke-width=\"1\"/>");
         }
 
-        // Timestamp bottom-left inside the chart, instead of twice in the headings above it. In the
-        // muted grey it disappeared against the grid lines, so it gets the normal text colour, a
-        // readable size and a dark plate underneath to lift it off whatever line runs behind it.
+        // Timestamp top-left inside the chart, instead of twice in the headings above it. It sits
+        // opposite the hour labels along the bottom: those form the axis, this is the moment the
+        // measurement was taken, and stacking both along the same edge made them read as one scale.
+        // In the muted grey it disappeared against the grid lines, so it gets the normal text
+        // colour, a readable size and a dark plate underneath to lift it off the line behind it.
         if (!string.IsNullOrEmpty(DashboardService.BarometerTime))
         {
-            sb.Append($"<rect x=\"1\" y=\"{h - 13}\" width=\"34\" height=\"12\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
-            sb.Append($"<text x=\"3\" y=\"{h - 4}\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-primary)\">{DashboardService.BarometerTime}</text>");
+            sb.Append($"<rect x=\"1\" y=\"1\" width=\"34\" height=\"13\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
+            sb.Append($"<text x=\"3\" y=\"11\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-primary)\">{DashboardService.BarometerTime}</text>");
         }
 
         sb.Append("</svg>");

@@ -728,8 +728,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
         int intervalTime = 60;
         CandleTime lastX = hiX - (hiX.Minutes % intervalTime);
 
-        // Every hour line carries its hour as a label at the top, in LOCAL time so it matches the
-        // timestamp shown next to the chart.
+        // Every hour line carries its hour as a label at the BOTTOM, where a horizontal axis
+        // belongs, in LOCAL time so it matches the timestamp drawn in the top left corner.
         using var hourFont = new SKFont { Size = 9 };
         using var hourPaint = new SKPaint
         {
@@ -751,8 +751,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
             // The label always sits to the RIGHT of its line, and is simply left out when it no
             // longer fits there - the rightmost hour therefore sometimes has no number. The plate
-            // underneath keeps it readable when the barometer line runs along the top of the chart
-            // (breadth does). Bare hour, no minutes and no leading zero.
+            // underneath keeps it readable wherever the barometer line happens to run. Bare hour,
+            // no minutes and no leading zero.
             string hourText = lastX.ToLocalTime().Hour.ToString(System.Globalization.CultureInfo.InvariantCulture);
             float hourWidth = hourFont.MeasureText(hourText);
             float hourX = p1.X + 3;
@@ -760,8 +760,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
             {
                 paint.Color = bgColor;
                 paint.Style = SKPaintStyle.Fill;
-                canvas.DrawRect(hourX - 2, 1, hourWidth + 4, 11, paint);
-                canvas.DrawText(hourText, hourX, 10, SKTextAlign.Left, hourFont, hourPaint);
+                canvas.DrawRect(hourX - 2, intHeight - 12, hourWidth + 4, 11, paint);
+                canvas.DrawText(hourText, hourX, intHeight - 3, SKTextAlign.Left, hourFont, hourPaint);
             }
 
             lastX -= intervalTime;
@@ -815,6 +815,28 @@ public partial class DashBoardInformationViewModel : ObservableObject
             }
             candleTime -= 1; // The barometer has each 1 minute a barometer value
         }
+
+        // Timestamp in the top left corner, opposite the hour labels along the bottom: those form
+        // the axis, this is the moment the measurement was taken.
+        //
+        // It is drawn INTO the bitmap because the Avalonia view has nowhere else to put it - the
+        // BarometerTime property has been kept up to date for a long time without a single binding
+        // reading it, so the time was simply not on screen. Taken from hiX rather than from that
+        // property: this method runs BEFORE the property is refreshed, so binding to it would draw
+        // the previous minute. The +1 turns the open time of the last candle into its close time.
+        string timeText = (hiX + 1).ToLocalTime().ToString("HH:mm");
+        using var timeFont = new SKFont { Size = 11, Embolden = true };
+        using var timePaint = new SKPaint
+        {
+            IsAntialias = true,
+            Color = SKColors.WhiteSmoke,
+            Style = SKPaintStyle.Fill,
+        };
+        float timeWidth = timeFont.MeasureText(timeText);
+        paint.Color = bgColor;
+        paint.Style = SKPaintStyle.Fill;
+        canvas.DrawRect(1, 1, timeWidth + 4, 13, paint);
+        canvas.DrawText(timeText, 3, 11, SKTextAlign.Left, timeFont, timePaint);
         //??????? dead code..
         //}
         //else
