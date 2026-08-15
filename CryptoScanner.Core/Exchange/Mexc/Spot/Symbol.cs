@@ -32,7 +32,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 LimitRate.WaitForFairWeight(40); // ticker/24hr for every symbol at once costs 40
                 var tickerInfo = await api.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
-                    GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
+                    GlobalData.AddErrorToLogTab($"error getting symbol ticker {tickerInfo.Error}");
                 if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
                 SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");
@@ -58,7 +58,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 LimitRate.WaitForFairWeight(10); // exchangeInfo costs 10
                 var symbolInfo = await api.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
-                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
+                    GlobalData.AddErrorToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
                 if (symbolInfo == null || symbolInfo.Data == null)
                     throw new ExchangeException("No exchange data received");
                 SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");

@@ -126,7 +126,7 @@ public class Api : ExchangeBase
             if (result.Error?.ErrorCode == "110027")
                 return true; // {110027	Margin is not modified }
 
-            GlobalData.AddTextToLogTab($"{symbol.Name} ERROR setting CrossOrIsolated={tradeMode} and leverage={GlobalData.Settings.Trading.Leverage} {result.Error}");
+            GlobalData.AddErrorToLogTab($"{symbol.Name} ERROR setting CrossOrIsolated={tradeMode} and leverage={GlobalData.Settings.Trading.Leverage} {result.Error}");
         }
 
         // Because of an unexpected liquidation this one is logged extensively as well

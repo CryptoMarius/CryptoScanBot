@@ -96,7 +96,7 @@ public class Asset() : AssetBase(), IAsset
                     var accountInfo = await client.V5Api.Account.GetAllAssetBalancesAsync(AccountType.Contract);
                     if (!accountInfo.Success)
                     {
-                        GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
+                        GlobalData.AddErrorToLogTab("error getting accountinfo " + accountInfo.Error);
                     }
 
                     //Zo af en toe komt er geen data of is de Data niet gezet.

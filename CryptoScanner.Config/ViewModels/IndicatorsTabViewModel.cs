@@ -32,7 +32,7 @@ public partial class IndicatorsTabViewModel : ObservableObject
         IndicatorRsiViewModel.LoadConfig(settings.General.SettingsRsi);
         IndicatorStochViewModel.LoadConfig(settings.General.SettingsStoch);
         IndicatorBollingerBandViewModel.LoadConfig(settings.General.SettingsBb);
-        IndicatorPrimaryTrend.LoadConfig(settings.Trend.Secondary);
+        IndicatorPrimaryTrend.LoadConfig(settings.Trend.Primary);
         IndicatorSecondaryTrend.LoadConfig(settings.Trend.Secondary);
     }
 
@@ -41,7 +41,7 @@ public partial class IndicatorsTabViewModel : ObservableObject
         IndicatorRsiViewModel.SaveConfig(settings.General.SettingsRsi);
         IndicatorStochViewModel.SaveConfig(settings.General.SettingsStoch);
         IndicatorBollingerBandViewModel.SaveConfig(settings.General.SettingsBb);
-        IndicatorPrimaryTrend.SaveConfig(settings.Trend.Secondary);
+        IndicatorPrimaryTrend.SaveConfig(settings.Trend.Primary);
         IndicatorSecondaryTrend.SaveConfig(settings.Trend.Secondary);
     }
 }

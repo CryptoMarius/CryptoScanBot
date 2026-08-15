@@ -32,6 +32,9 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _requireStochOsOb = false;
 
+    [ObservableProperty]
+    private int _bandBreakConfirmationCount = 0;
+
     public void LoadConfig(VbsSettings settings)
     {
         Length = settings.Length;
@@ -43,6 +46,7 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
         UseTakeProfit = settings.UseTakeProfit;
         RiskRewardRatio = settings.RiskRewardRatio;
         RequireStochOsOb = settings.RequireStochOsOb;
+        BandBreakConfirmationCount = settings.BandBreakConfirmationCount;
     }
 
     public void SaveConfig(VbsSettings settings)
@@ -56,5 +60,6 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
         settings.UseTakeProfit = UseTakeProfit;
         settings.RiskRewardRatio = RiskRewardRatio;
         settings.RequireStochOsOb = RequireStochOsOb;
+        settings.BandBreakConfirmationCount = BandBreakConfirmationCount;
     }
 }

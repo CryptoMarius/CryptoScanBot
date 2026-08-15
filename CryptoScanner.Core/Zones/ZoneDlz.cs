@@ -824,7 +824,7 @@ public class ZoneDlz
         catch (Exception error)
         {
             ScannerLog.Logger.Info($"ERROR {error}");
-            GlobalData.AddTextToLogTab($"ERROR {error}");
+            GlobalData.AddErrorToLogTab($"ERROR {error}");
         }
     }
 

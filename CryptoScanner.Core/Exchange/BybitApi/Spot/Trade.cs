@@ -87,7 +87,7 @@ public class Trade() : TradeBase(), ITrade
     //            var result = await client.SpotApiV3.Trading.GetUserTradesAsync(position.Symbol.Name, fromId: fromId, limit: 1000);
     //            if (!result.Success)
     //            {
-    //                GlobalData.AddTextToLogTab($"{position.Symbol.Name} error retreiving trades {result.Error}");
+    //                GlobalData.AddErrorToLogTab($"{position.Symbol.Name} error retreiving trades {result.Error}");
     //                break;
     //            }
 
@@ -155,7 +155,7 @@ public class Trade() : TradeBase(), ITrade
     //    catch (Exception error)
     //    {
     //        ScannerLog.Logger.Error(error, "");
-    //        GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
+    //        GlobalData.AddErrorToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
     //    }
 
     //    return tradeCount;
@@ -192,7 +192,7 @@ public class Trade() : TradeBase(), ITrade
     //            var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Spot, position.Symbol.Name, startTime: startTime, limit: 1000);
     //            if (!result.Success)
     //            {
-    //                GlobalData.AddTextToLogTab($"{position.Symbol.Name} error retreiving trades {result.Error}");
+    //                GlobalData.AddErrorToLogTab($"{position.Symbol.Name} error retreiving trades {result.Error}");
     //                break;
     //            }
 
@@ -258,7 +258,7 @@ public class Trade() : TradeBase(), ITrade
     //    catch (Exception error)
     //    {
     //        ScannerLog.Logger.Error(error, "");
-    //        GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
+    //        GlobalData.AddErrorToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
     //    }
 
     //    return tradeCount;

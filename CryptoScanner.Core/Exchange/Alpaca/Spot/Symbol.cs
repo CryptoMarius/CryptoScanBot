@@ -209,7 +209,7 @@ public class Symbol() : SymbolBase(), ISymbol
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} error reading the most active stocks {error.Message}");
+            GlobalData.AddErrorToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} error reading the most active stocks {error.Message}");
         }
 
         // Whatever the screener says, the instrument the pause rules watch has to be in the list
@@ -297,7 +297,7 @@ public class Symbol() : SymbolBase(), ISymbol
             }
             catch (Exception error)
             {
-                GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} snapshot batch {i / batchSize + 1} error: {error.Message}");
+                GlobalData.AddErrorToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} snapshot batch {i / batchSize + 1} error: {error.Message}");
             }
         }
 

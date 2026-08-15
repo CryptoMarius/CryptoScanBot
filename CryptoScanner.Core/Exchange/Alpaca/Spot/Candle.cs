@@ -44,7 +44,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         }
         catch (Exception ex)
         {
-            GlobalData.AddTextToLogTab($"{prefix} error getting bars {ex.Message}");
+            GlobalData.AddErrorToLogTab($"{prefix} error getting bars {ex.Message}");
             return (false, 0, fetchFrom);
         }
 

@@ -269,7 +269,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR candle dump " + error.ToString());
+            GlobalData.AddErrorToLogTab("ERROR candle dump " + error.ToString());
         }
     }
 }

@@ -877,6 +877,13 @@ public class SignalCreateBase
 
         while (intervalCount-- > 0)
         {
+            // Stop at the weekly interval. CalculateMarketTrendAsync deliberately skips interval1w,
+            // so its trend slot stays Unknown and every signal reaching it would be refused for the
+            // wrong reason. There is nothing above 1w either: GetSymbolInterval indexes straight
+            // into SymbolIntervalList, so one step further would read past the end of that list.
+            if (period >= CryptoIntervalPeriod.interval1w)
+                break;
+
             var symbolPeriod = Symbol.GetSymbolInterval(period);
             var trendData = primaryTrend ? symbolPeriod.TrendPrimary : symbolPeriod.TrendSecondary;
             var trend = trendData.Trend;

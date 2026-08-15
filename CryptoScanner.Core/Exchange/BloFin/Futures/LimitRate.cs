@@ -61,7 +61,18 @@ public static class LimitRate
                 if (CurrentWeight > 300)
                 {
                     GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (rate limits)");
-                    Thread.Sleep(2500);
+                    // Release the lock while waiting. Sleeping inside Monitor.Enter(List) queues
+                    // every other fetch thread behind this one, after which they each sleep in
+                    // turn instead of re-testing the (by then lowered) weight.
+                    Monitor.Exit(List);
+                    try
+                    {
+                        Thread.Sleep(2500);
+                    }
+                    finally
+                    {
+                        Monitor.Enter(List);
+                    }
                 }
                 else
                 {

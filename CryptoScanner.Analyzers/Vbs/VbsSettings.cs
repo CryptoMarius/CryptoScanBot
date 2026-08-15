@@ -80,6 +80,13 @@ public class VbsSettings : SettingsSignalStrategyBase
     [SettingCaption("Require Stochastic oversold/overbought", Group = GroupBands)]
     public bool RequireStochOsOb { get; set; } = false;
 
+    // Number of consecutive higher timeframes that must show the same band break before the signal
+    // fires. 0 = this timeframe only (normal behaviour). Lives here rather than in the global entry
+    // conditions because only a band strategy has a band break to confirm.
+    [SettingCaption("Band break confirmation on higher timeframes", Group = GroupBands,
+        Tooltip = "Number of consecutive higher timeframes that must show the same band break. 0 = this timeframe only. Example: 1 means the next higher timeframe has to break its band as well. Missing indicator data on a higher timeframe counts as no confirmation.")]
+    public int BandBreakConfirmationCount { get; set; } = 0;
+
     public VbsSettings() : base()
     {
         SoundFileLong = "sound-vbs-oversold.wav";

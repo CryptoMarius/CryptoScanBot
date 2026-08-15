@@ -879,7 +879,7 @@ public class CandleDatabase : IDisposable
             }
             catch (CandleDatabaseSchemaException error)
             {
-                GlobalData.AddTextToLogTab($"candles.db load {exchange.Name}: SKIPPED — {error.Message}");
+                GlobalData.AddErrorToLogTab($"candles.db load {exchange.Name}: SKIPPED — {error.Message}");
                 return;
             }
 
@@ -923,7 +923,7 @@ public class CandleDatabase : IDisposable
                 {
                     Interlocked.Increment(ref failed);
                     ScannerLog.Logger.Error(sqliteError, "candles.db read failed for " + symbol.Name);
-                    GlobalData.AddTextToLogTab($"candles.db read failed for {symbol.Name}: {sqliteError.Message}");
+                    GlobalData.AddErrorToLogTab($"candles.db read failed for {symbol.Name}: {sqliteError.Message}");
                 }
             });
 
@@ -1120,7 +1120,7 @@ public class CandleDatabase : IDisposable
             }
             catch (CandleDatabaseSchemaException error)
             {
-                GlobalData.AddTextToLogTab($"candles.db save {exchange.Name}: SKIPPED — {error.Message}");
+                GlobalData.AddErrorToLogTab($"candles.db save {exchange.Name}: SKIPPED — {error.Message}");
                 return;
             }
 
@@ -1176,7 +1176,7 @@ public class CandleDatabase : IDisposable
                 {
                     Interlocked.Increment(ref failed);
                     ScannerLog.Logger.Error(sqliteError, "candles.db write failed for " + symbol.Name);
-                    GlobalData.AddTextToLogTab($"candles.db write failed for {symbol.Name}: {sqliteError.Message}");
+                    GlobalData.AddErrorToLogTab($"candles.db write failed for {symbol.Name}: {sqliteError.Message}");
                 }
             });
 
@@ -1557,7 +1557,7 @@ public class CandleDatabase : IDisposable
         }
         catch (CandleDatabaseSchemaException error)
         {
-            GlobalData.AddTextToLogTab($"candles.db cleanup {exchange.Name}: SKIPPED — {error.Message}");
+            GlobalData.AddErrorToLogTab($"candles.db cleanup {exchange.Name}: SKIPPED — {error.Message}");
             return;
         }
 
@@ -1589,7 +1589,7 @@ public class CandleDatabase : IDisposable
             {
                 failed++;
                 ScannerLog.Logger.Error(err, "candles.db cleanup failed for " + symbol.Name);
-                GlobalData.AddTextToLogTab($"candles.db cleanup failed for {symbol.Name}: {err.Message}");
+                GlobalData.AddErrorToLogTab($"candles.db cleanup failed for {symbol.Name}: {err.Message}");
             }
         }
 
@@ -1602,7 +1602,7 @@ public class CandleDatabase : IDisposable
         catch (Exception err)
         {
             ScannerLog.Logger.Error(err, "candles.db orphan cleanup failed");
-            GlobalData.AddTextToLogTab($"candles.db orphan cleanup failed: {err.Message}");
+            GlobalData.AddErrorToLogTab($"candles.db orphan cleanup failed: {err.Message}");
         }
 
         // Reclaim pages freed by the DELETEs above. INCREMENTAL keeps it cheap;

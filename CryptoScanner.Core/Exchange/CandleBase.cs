@@ -175,7 +175,7 @@ public class CandleBase(ExchangeBase api)
                             catch (Exception error)
                             {
                                 ScannerLog.Logger.Error(error, "");
-                                GlobalData.AddTextToLogTab("error getting candles " + error.ToString()); // symbol.Text + " " +
+                                GlobalData.AddErrorToLogTab("error getting candles " + error.ToString()); // symbol.Text + " " +
                             }
                         });
                         taskList.Add(task);
@@ -196,7 +196,7 @@ public class CandleBase(ExchangeBase api)
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab("error get prices " + error.ToString());
+                GlobalData.AddErrorToLogTab("error get prices " + error.ToString());
             }
         }
     }

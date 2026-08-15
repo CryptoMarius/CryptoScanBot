@@ -355,7 +355,7 @@ public class ThreadCheckFinishedPosition
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab($"{position.Symbol.Name} ERROR position ThreadCheckFinishedPosition thread {error.Message}");
+                GlobalData.AddErrorToLogTab($"{position.Symbol.Name} ERROR position ThreadCheckFinishedPosition thread {error.Message}");
             }
         }
         finally

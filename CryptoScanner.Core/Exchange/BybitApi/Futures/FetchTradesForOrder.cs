@@ -19,7 +19,7 @@ public class FetchTradeForOrder
             var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Linear, symbol.Name, orderId: orderId);
             if (!result.Success)
             {
-                GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync: error getting trades order {orderId} {result.Error}");
+                GlobalData.AddErrorToLogTab($"FetchTradesForOrderAsync: error getting trades order {orderId} {result.Error}");
             }
 
             List<CryptoTrade> tradeCache = new();
@@ -67,7 +67,7 @@ public class FetchTradeForOrder
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
+            GlobalData.AddErrorToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
         }
 
         return;

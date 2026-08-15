@@ -31,6 +31,9 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _requireStochOsOb = false;
 
+    [ObservableProperty]
+    private int _bandBreakConfirmationCount = 0;
+
     public void LoadConfig(AtrRbSettings settings)
     {
         Length = settings.Length;
@@ -42,6 +45,7 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         BBMaxPercentage = settings.BBMaxPercentage;
         RequireRsiOsOb = settings.RequireRsiOsOb;
         RequireStochOsOb = settings.RequireStochOsOb;
+        BandBreakConfirmationCount = settings.BandBreakConfirmationCount;
     }
 
     public void SaveConfig(AtrRbSettings settings)
@@ -55,5 +59,6 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         settings.BBMaxPercentage = BBMaxPercentage;
         settings.RequireRsiOsOb = RequireRsiOsOb;
         settings.RequireStochOsOb = RequireStochOsOb;
+        settings.BandBreakConfirmationCount = BandBreakConfirmationCount;
     }
 }

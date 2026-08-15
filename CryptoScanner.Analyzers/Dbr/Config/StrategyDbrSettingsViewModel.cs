@@ -22,6 +22,9 @@ public partial class StrategyDbrSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _useStopLoss = true;
 
+    [ObservableProperty]
+    private int _bandBreakConfirmationCount = 0;
+
     public void LoadConfig(DbrSettings settings)
     {
         BandLength = settings.BandLength;
@@ -30,6 +33,7 @@ public partial class StrategyDbrSettingsViewModel : ObservableObject
         RequireStochOsOb = settings.RequireStochOsOb;
         AllowStack = settings.AllowStack;
         UseStopLoss = settings.UseStopLoss;
+        BandBreakConfirmationCount = settings.BandBreakConfirmationCount;
     }
 
     public void SaveConfig(DbrSettings settings)
@@ -40,5 +44,6 @@ public partial class StrategyDbrSettingsViewModel : ObservableObject
         settings.RequireStochOsOb = RequireStochOsOb;
         settings.AllowStack = AllowStack;
         settings.UseStopLoss = UseStopLoss;
+        settings.BandBreakConfirmationCount = BandBreakConfirmationCount;
     }
 }

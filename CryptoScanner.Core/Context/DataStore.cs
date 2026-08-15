@@ -204,7 +204,7 @@ public class DataStore
             catch (Exception migrError)
             {
                 ScannerLog.Logger.Error(migrError, "candle migration to candles.db failed for " + symbol.Name);
-                GlobalData.AddTextToLogTab($"candle migration to candles.db failed for {symbol.Name}: {migrError.Message}");
+                GlobalData.AddErrorToLogTab($"candle migration to candles.db failed for {symbol.Name}: {migrError.Message}");
                 // Leave the file in place so the next startup retries.
             }
         }
@@ -238,7 +238,7 @@ public class DataStore
                 }
                 catch (CandleDatabaseSchemaException error)
                 {
-                    GlobalData.AddTextToLogTab($"candles.db load {exchange.Name}: SKIPPED — {error.Message}");
+                    GlobalData.AddErrorToLogTab($"candles.db load {exchange.Name}: SKIPPED — {error.Message}");
                     return;
                 }
 
@@ -491,7 +491,7 @@ public class DataStore
         catch (Exception err)
         {
             ScannerLog.Logger.Error(err, "orphan file delete failed: " + filePath);
-            GlobalData.AddTextToLogTab($"orphan file delete failed: {filePath}: {err.Message}");
+            GlobalData.AddErrorToLogTab($"orphan file delete failed: {filePath}: {err.Message}");
             return false;
         }
     }
@@ -514,7 +514,7 @@ public class DataStore
         catch (Exception err)
         {
             ScannerLog.Logger.Error(err, $"orphan migration failed for {symbol.Name} {interval.Name}");
-            GlobalData.AddTextToLogTab($"orphan migration failed for {symbol.Name} {interval.Name}: {err.Message}");
+            GlobalData.AddErrorToLogTab($"orphan migration failed for {symbol.Name} {interval.Name}: {err.Message}");
             return false;
         }
     }

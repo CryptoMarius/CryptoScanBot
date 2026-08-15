@@ -80,8 +80,8 @@ public partial class Form1 : Form
     {
         if (IsHandleCreated)
         {
+            // The NLog write is done by GlobalData.AddTextToLogTab itself
             text = text.Trim();
-            ScannerLog.Logger.Info(text);
 
             if (text == "")
                 text = "\r\n";

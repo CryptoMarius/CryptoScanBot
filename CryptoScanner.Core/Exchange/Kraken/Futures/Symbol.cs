@@ -31,7 +31,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 LimitRate.WaitForFairWeight(1);
                 var tickerInfo = await api.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
-                    GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
+                    GlobalData.AddErrorToLogTab($"error getting symbol ticker {tickerInfo.Error}");
                 // Tested on the data, not on the result object: a WebCallResult is never null, so the
                 // check this replaces could not fire and a failed call simply carried on with an empty
                 // volume list - after which every symbol ends up with volume 0 and drops out of the
@@ -51,7 +51,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 LimitRate.WaitForFairWeight(1);
                 var symbolInfo = await api.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
+                    GlobalData.AddErrorToLogTab("error getting exchangeinfo " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
                     throw new ExchangeException("No exchange data received (2)");
                 SaveExchangeInfo(symbolInfo, "symbols.json");

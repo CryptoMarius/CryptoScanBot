@@ -59,7 +59,7 @@ public class ThreadMonitorCandle
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"ThreadMonitorCandle ERROR {error.Message}");
+            GlobalData.AddErrorToLogTab($"ThreadMonitorCandle ERROR {error.Message}");
         }
 
         GlobalData.AddTextToLogTab("ThreadMonitorCandle candle thread exit");

@@ -97,11 +97,11 @@ public partial class App : Application
         // 2. Logging must be initialised AFTER AppDataFolder is known (the NLog files land in that
         //    folder's Log subdirectory) but BEFORE Bootstrap runs so its first AddTextToLogTab
         //    calls already write to file and the in-app Log tab. Same NLog setup as the scanner:
-        //    a default log, an error log, and (in DEBUG) a Trace log. EmulatorLogBridge then forwards
-        //    every AddTextToLogTab line to ScannerLog.Logger.Info — independently of the UI Log tab —
-        //    so those lines (bootstrap, runs, the Timing line, the per-run log) always land on disk.
+        //    a default log, an error log, and (in DEBUG) a Trace log. GlobalData.AddTextToLogTab
+        //    writes to NLog itself — independently of the UI Log tab — so those lines (bootstrap,
+        //    runs, the Timing line, the per-run log) always land on disk. That used to be the job
+        //    of EmulatorLogBridge, which is why the bridge no longer exists.
         ScannerLog.InitializeLogging(true);
-        EmulatorLogBridge.Start();
 
         // 3. Seed settings.json from the live scanner if this is a fresh emulator folder.
         //    Keeps the same convention as before; only the call site moved out of Program.cs.

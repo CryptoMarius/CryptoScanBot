@@ -90,7 +90,7 @@ public class Asset() : AssetBase(), IAsset
                     WebCallResult<BinanceFuturesAccountInfoV3> accountInfo = await client.UsdFuturesApi.Account.GetAccountInfoV3Async(); //GetAccountInfoAsync();
                     if (!accountInfo.Success)
                     {
-                        GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
+                        GlobalData.AddErrorToLogTab("error getting accountinfo " + accountInfo.Error);
                     }
 
                     //Zo af en toe komt er geen data of is de Data niet gezet.

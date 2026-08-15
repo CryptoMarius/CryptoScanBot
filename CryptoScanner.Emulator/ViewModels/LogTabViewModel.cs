@@ -14,11 +14,9 @@ namespace CryptoScanner.Emulator.ViewModels;
 /// call anywhere in Core surfaces here.
 ///
 /// This ViewModel ONLY renders lines for the user. Routing those same lines to the NLog files is
-/// done by <see cref="CryptoScanner.Emulator.EmulatorLogBridge"/>, which subscribes to the same
-/// event independently of the UI. Keeping the on-disk forwarding out of here is what prevents every
-/// line from being written to the files twice (the bug that appeared when both this VM and the
-/// bridge forwarded to <see cref="ScannerLog.Logger"/>), and it means file logging keeps working
-/// even when this tab's subscription is disabled.
+/// done by <see cref="GlobalData.AddTextToLogTab"/> itself, before the event is raised. Keeping the
+/// on-disk forwarding out of here is what prevents every line from being written to the files twice,
+/// and it means file logging keeps working even when this tab's subscription is disabled.
 ///
 /// Timestamp (in-app only): during a run (<see cref="GlobalData.CurrentEmulatorRunId"/> set) lines
 /// are stamped with the virtual EmulatorClock — i.e. the replay date the emulator is currently AT —

@@ -152,7 +152,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
             ErrorDuringStartup = true;
 
             ScannerLog.Logger.Trace($"{TickerType} subscription {Name} error {subscriptionResult?.Error?.Message} {SymbolOverview}");
-            GlobalData.AddTextToLogTab($"{TickerType} subscription {Name} error {subscriptionResult?.Error?.Message} {SymbolOverview}");
+            GlobalData.AddErrorToLogTab($"{TickerType} subscription {Name} error {subscriptionResult?.Error?.Message} {SymbolOverview}");
         }
     }
 
@@ -202,7 +202,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
 
     internal void TickerException(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 
 }

@@ -323,8 +323,8 @@ public partial class TestForm : Form
     {
         if (IsHandleCreated)
         {
+            // The NLog write is done by GlobalData.AddTextToLogTab itself
             text = text.Trim();
-            ScannerLog.Logger.Info(text);
 
             if (text != "")
             {

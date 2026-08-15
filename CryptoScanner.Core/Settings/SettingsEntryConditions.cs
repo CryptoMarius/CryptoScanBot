@@ -25,7 +25,7 @@ public class SettingsEntryConditions
     public decimal StochMinExtremeArea { get; set; } = 0m;
     public decimal StochMinExtremeZScore { get; set; } = 0m;
 
-    // Multi-timeframe consensus: when > 0 the signal also requires this many consecutive higher
-    // timeframes to confirm the same band break condition. 0 = single-timeframe (normal behavior).
-    public int TimeframeConsensusCount { get; set; } = 0;
+    // The multi-timeframe band-break confirmation used to live here as TimeframeConsensusCount, but
+    // only the three band strategies could act on it while every strategy showed the field. It now
+    // sits in the settings of those strategies as BandBreakConfirmationCount.
 }

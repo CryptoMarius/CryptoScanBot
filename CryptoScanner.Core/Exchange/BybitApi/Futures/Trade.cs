@@ -75,7 +75,7 @@ public class Trade() : TradeBase(), ITrade
                 var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Linear, position.Symbol.Name, startTime: startTime, limit: 1000);
                 if (!result.Success)
                 {
-                    GlobalData.AddTextToLogTab("error retreiving mytrades " + result.Error);
+                    GlobalData.AddErrorToLogTab("error retreiving mytrades " + result.Error);
                 }
 
 
@@ -143,7 +143,7 @@ public class Trade() : TradeBase(), ITrade
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
+            GlobalData.AddErrorToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
         }
 
         return tradeCount;

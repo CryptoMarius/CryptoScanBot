@@ -46,7 +46,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
-            GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
+            GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
 #if DEBUG
             SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no succes.json");
 #endif

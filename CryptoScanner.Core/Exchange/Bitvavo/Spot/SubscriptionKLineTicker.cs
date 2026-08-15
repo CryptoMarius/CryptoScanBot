@@ -149,7 +149,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             ScannerLog.Logger.Error(ex, "");
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} WebSocket receive error group {Name}: {ex.Message}");
+            GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} WebSocket receive error group {Name}: {ex.Message}");
             NeedsRestart = true;
         }
     }
@@ -219,7 +219,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         catch (Exception ex)
         {
             ScannerLog.Logger.Error(ex, "");
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} startup error: {ex.Message}");
+            GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} startup error: {ex.Message}");
 
             _ws?.Dispose();
             _ws = null;

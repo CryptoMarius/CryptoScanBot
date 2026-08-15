@@ -468,7 +468,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR postion dump " + error.ToString());
+            GlobalData.AddErrorToLogTab("ERROR postion dump " + error.ToString());
         }
     }
 }

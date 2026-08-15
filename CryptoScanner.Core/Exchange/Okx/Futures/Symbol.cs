@@ -32,7 +32,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 LimitRate.WaitForFairWeight(1);
                 var tickerInfo = await api.ExchangeData.GetTickersAsync(InstrumentType.Swap) ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
-                    GlobalData.AddTextToLogTab($"error getting symbol ticker info {tickerInfo.Error}");
+                    GlobalData.AddErrorToLogTab($"error getting symbol ticker info {tickerInfo.Error}");
                 if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
                 SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");
@@ -56,7 +56,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 LimitRate.WaitForFairWeight(1);
                 var symbolInfo = await api.ExchangeData.GetSymbolsAsync(InstrumentType.Swap) ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting symbol information " + symbolInfo.Error);
+                    GlobalData.AddErrorToLogTab("error getting symbol information " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
                     throw new ExchangeException("No exchange data retrieved (2)");
                 SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");

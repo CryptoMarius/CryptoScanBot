@@ -141,7 +141,7 @@ public static class ConfigurationApplier
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
+            GlobalData.AddErrorToLogTab("ERROR settings " + error.ToString());
         }
     }
 }

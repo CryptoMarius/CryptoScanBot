@@ -207,10 +207,25 @@ public class ThreadLoadData
         SubscriptionManager? klineTicker = ExchangeBase.KLineTicker;
         CancellationToken cancellationToken = ExchangeBase.CancellationToken;
 
+        // Set once the exchange has actually delivered its symbols. Only from that moment on does an
+        // empty symbol list mean "wiped", instead of "not read yet" (a fresh database).
+        bool symbolsWereLoaded = false;
+
         // True once this session was stopped, or another exchange became the active one
+        //
+        // The symbol count is part of the test because switching exchange calls Clear() on the
+        // previous one (ConfigurationApplier), and that happens while this loader may still be
+        // finishing its candle catch-up. Without the test it kept working on an exchange whose
+        // symbol lists were already empty, which surfaced as "Pause rule: symbol BTCUSDT does not
+        // exist" - a coin that is listed on every exchange involved.
         bool Interrupted()
         {
-            if (!cancellationToken.IsCancellationRequested && ReferenceEquals(GlobalData.ActiveExchange, activeExchange))
+            if (activeExchange?.SymbolListName.Count > 0)
+                symbolsWereLoaded = true;
+            bool symbolsWereWiped = symbolsWereLoaded && activeExchange?.SymbolListName.Count == 0;
+
+            if (!cancellationToken.IsCancellationRequested && ReferenceEquals(GlobalData.ActiveExchange, activeExchange)
+                && !symbolsWereWiped)
                 return false;
             GlobalData.AddTextToLogTab($"Loading the data of {activeExchange?.Name} was interrupted");
             return true;

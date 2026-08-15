@@ -133,7 +133,7 @@ public class ExcelBarometerDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR barometer dump " + error.ToString());
+            GlobalData.AddErrorToLogTab("ERROR barometer dump " + error.ToString());
         }
     }
 }

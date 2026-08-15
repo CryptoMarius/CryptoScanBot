@@ -83,7 +83,14 @@ public static class TradingRules
                         }
                     }
                 }
-                else GlobalData.AddTextToLogTab($"Pauze regel: symbol {ruleSymbol} bestaat niet");
+                // An empty symbol list is not a missing coin: it is an exchange that has not been read
+                // yet, or one that was just cleared because the user switched to another exchange while
+                // this loader was still finishing. Reporting "does not exist" there is misleading -
+                // BTCUSDT is listed on every exchange this ever ran on.
+                else if (exchange.SymbolListName.Count == 0)
+                    GlobalData.AddTextToLogTab($"Pause rule: the symbol list of {exchange.Name} is not available (yet), rule #{index} skipped");
+                else
+                    GlobalData.AddErrorToLogTab($"Pause rule: symbol {ruleSymbol} does not exist on {exchange.Name}");
             }
         }
     }

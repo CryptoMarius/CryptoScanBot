@@ -33,7 +33,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 var tickerInfo = await api.ExchangeData.GetLinearInverseTickersAsync(Category.Linear) ??
                     throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
+                    GlobalData.AddErrorToLogTab("error getting symbol ticker {tickersInfos.Error}");
                 if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
                 SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");
@@ -58,7 +58,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     var symbolInfo = await api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear, cursor: pageCursor) ??
                         throw new ExchangeException("No symbol data received");
                     if (!symbolInfo.Success)
-                        GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
+                        GlobalData.AddErrorToLogTab("error getting exchangeinfo " + symbolInfo.Error);
                     if (symbolInfo.Data == null)
                         throw new ExchangeException("no exchange data received (2)");
                     SaveExchangeInfo(symbolInfo.OriginalData, $"symbols{page++}.json");

@@ -60,7 +60,7 @@ public static class TradingConfig
                         if (!exchange.SymbolListName.ContainsKey(symbol))
                         {
                             if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running && !string.IsNullOrEmpty(caption))
-                                GlobalData.AddTextToLogTab($"Error {caption} {symbol} does not exist!");
+                                GlobalData.AddErrorToLogTab($"Error {caption} {symbol} does not exist!");
                         }
                     }
                 }

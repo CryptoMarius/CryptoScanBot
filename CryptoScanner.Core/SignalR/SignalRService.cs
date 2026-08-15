@@ -98,7 +98,7 @@ public sealed class SignalRService : IDisposable
         catch (Exception ex)
         {
             ScannerLog.Logger.Error(ex, "SignalR server failed to start");
-            GlobalData.AddTextToLogTab($"SignalR server failed to start: {ex.Message}");
+            GlobalData.AddErrorToLogTab($"SignalR server failed to start: {ex.Message}");
             _app = null;
             _hubContext = null;
         }

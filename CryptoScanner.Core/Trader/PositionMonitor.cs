@@ -1559,7 +1559,7 @@ public class PositionMonitor : IDisposable
                     }
                     else
                     {
-                        GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} Niet alle orders konden verwijderd worden!!!! (partial filled or error?)");
+                        GlobalData.AddErrorToLogTab($"Monitor {Symbol.Name} Niet alle orders konden verwijderd worden!!!! (partial filled or error?)");
                         cancelFailed = true;
                     }
                 }
@@ -2012,7 +2012,7 @@ public class PositionMonitor : IDisposable
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"{Symbol.Name} error Monitor {error.Message}");
+            GlobalData.AddErrorToLogTab($"{Symbol.Name} error Monitor {error.Message}");
         }
     }
 

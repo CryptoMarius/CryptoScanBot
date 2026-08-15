@@ -115,7 +115,7 @@ public class ZoneCandleEngine
         }
         catch (Exception error)
         {
-            GlobalData.AddTextToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} {error.Message}");
+            GlobalData.AddErrorToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} {error.Message}");
             File.Delete(fileName);
             throw;
         }
@@ -146,7 +146,7 @@ public class ZoneCandleEngine
             catch (Exception migrError)
             {
                 ScannerLog.Logger.Error(migrError, $"zone-candle migration to candles.db failed for {symbol.Name} {interval.Name}");
-                GlobalData.AddTextToLogTab($"zone-candle migration to candles.db failed for {symbol.Name} {interval.Name}: {migrError.Message}");
+                GlobalData.AddErrorToLogTab($"zone-candle migration to candles.db failed for {symbol.Name} {interval.Name}: {migrError.Message}");
                 // Leave the file in place so the next read attempt retries.
             }
         }
@@ -167,7 +167,7 @@ public class ZoneCandleEngine
             catch (Exception dbError)
             {
                 ScannerLog.Logger.Error(dbError, $"candles.db read failed for {symbol.Name} {interval.Name}");
-                GlobalData.AddTextToLogTab($"candles.db read failed for {symbol.Name} {interval.Name}: {dbError.Message}");
+                GlobalData.AddErrorToLogTab($"candles.db read failed for {symbol.Name} {interval.Name}: {dbError.Message}");
             }
         }
     }
@@ -232,7 +232,7 @@ public class ZoneCandleEngine
         }
         catch (Exception error)
         {
-            GlobalData.AddTextToLogTab($"ERROR writing {symbol.Name} {interval.Name} {error.Message}");
+            GlobalData.AddErrorToLogTab($"ERROR writing {symbol.Name} {interval.Name} {error.Message}");
             if (File.Exists(newFileName))
                 File.Delete(newFileName);
             throw;
@@ -279,7 +279,7 @@ public class ZoneCandleEngine
                 catch (Exception error)
                 {
                     ScannerLog.Logger.Error(error, $"candles.db write failed for {symbol.Name} {symbolInterval.Interval.Name}");
-                    GlobalData.AddTextToLogTab($"candles.db write failed for {symbol.Name} {symbolInterval.Interval.Name}: {error.Message}");
+                    GlobalData.AddErrorToLogTab($"candles.db write failed for {symbol.Name} {symbolInterval.Interval.Name}: {error.Message}");
                     // Leave loadedCandlesInMemory[...] = true so the next save retries.
                 }
             }
@@ -440,7 +440,7 @@ public class ZoneCandleEngine
         catch (Exception error)
         {
             // some stupid error i need to trace..
-            GlobalData.AddTextToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} from={fetchFrom} count={fetchCount} min={min} max={max} loop={loop} {error.Message}");
+            GlobalData.AddErrorToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} from={fetchFrom} count={fetchCount} min={min} max={max} loop={loop} {error.Message}");
             throw;
         }
     }
@@ -484,7 +484,7 @@ public class ZoneCandleEngine
     //    catch (Exception error)
     //    {
     //        // some stupid error i need to trace..
-    //        GlobalData.AddTextToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} from={fetchFrom} count={fetchCount} min={min} max={max} loop={loop} {error.Message}");
+    //        GlobalData.AddErrorToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} from={fetchFrom} count={fetchCount} min={min} max={max} loop={loop} {error.Message}");
     //        throw;
     //    }
     //}

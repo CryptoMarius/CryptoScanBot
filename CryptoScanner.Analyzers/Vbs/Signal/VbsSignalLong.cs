@@ -10,8 +10,8 @@ namespace CryptoScanner.Analyzers.Vbs.Signal;
 /// falling knife). Entry on the band, or on the close when the close itself broke through; stop-loss =
 /// Entry - ACS% (Average Candle Size, precomputed on CandleData.VbsAcs).
 ///
-/// When TimeframeConsensusCount > 0, higher timeframes must also confirm the band break
-/// (multi-timeframe consensus). Additional filters (RSI, Stoch, Lux5m, trend, zones) are
+/// When BandBreakConfirmationCount > 0, higher timeframes must also confirm the band break.
+/// Additional filters (RSI, Stoch, Lux5m, trend, zones) are
 /// applied only on the lowest (primary) timeframe.
 /// </summary>
 public class VbsSignalLong : VbsSignalVbs
@@ -90,13 +90,13 @@ public class VbsSignalLong : VbsSignalVbs
         // the SL distance % equals the average candle size % (reverse-engineered from TradingBuddy).
         double pctDeviation = vbs.Acs ?? 0;
 
-        // Multi-timeframe consensus: higher timeframes must also show a band break.
-        int consensusCount = ResolveEntryConditions().TimeframeConsensusCount;
-        if (consensusCount > 0)
+        // Band break confirmation: higher timeframes must also show a band break.
+        int confirmationCount = settings.BandBreakConfirmationCount;
+        if (confirmationCount > 0)
         {
             int confirmed = 0;
             CryptoIntervalPeriod higherPeriod = Interval.IntervalPeriod;
-            for (int i = 0; i < consensusCount; i++)
+            for (int i = 0; i < confirmationCount; i++)
             {
                 if (higherPeriod == CryptoIntervalPeriod.interval1w)
                     break;
@@ -123,9 +123,9 @@ public class VbsSignalLong : VbsSignalVbs
                 }
                 confirmed++;
             }
-            if (confirmed < consensusCount)
+            if (confirmed < confirmationCount)
             {
-                ExtraText = $"not enough higher TFs confirmed ({confirmed}/{consensusCount})";
+                ExtraText = $"not enough higher timeframes confirmed ({confirmed}/{confirmationCount})";
                 return false;
             }
         }

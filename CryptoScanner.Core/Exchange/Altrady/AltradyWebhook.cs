@@ -106,7 +106,7 @@ public class AltradyWebhook
             GlobalData.ExternalUrls.GetExternalRef(position.Symbol.Exchange, out CryptoExternalUrls? externalUrls);
             if (externalUrls == null || externalUrls.Altrady == null || externalUrls.Altrady!.Code == "")
             {
-                GlobalData.AddTextToLogTab($"error webhook {position.Symbol.Name} {position.Interval!.Name} no exchange code available");
+                GlobalData.AddErrorToLogTab($"error webhook {position.Symbol.Name} {position.Interval!.Name} no exchange code available");
                 return;
             }
 
@@ -299,17 +299,17 @@ public class AltradyWebhook
                 errorMessage += $" (Status: {error.StatusCode})";
             }
 
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook error {errorMessage}");
+            GlobalData.AddErrorToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook error {errorMessage}");
         }
         catch (TaskCanceledException error)
         {
             ScannerLog.Logger.Error(error);
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook timeout: {error.Message}");
+            GlobalData.AddErrorToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook timeout: {error.Message}");
         }
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error);
-            GlobalData.AddTextToLogTab($" {position.Symbol.Name} {position.Interval!.Name} Webhook error:error={error}");
+            GlobalData.AddErrorToLogTab($" {position.Symbol.Name} {position.Interval!.Name} Webhook error:error={error}");
         }
     }
 

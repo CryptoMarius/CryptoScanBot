@@ -20,7 +20,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
             CallResult<string> userStreamResult = await client.SpotApi.Account.StartUserStreamAsync();
             //if (!userStreamResult.Success)
             //{
-            //    GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} - Error starting user stream: " + userStreamResult.Error.Message);
+            //    GlobalData.AddErrorToLogTab($"{Api.ExchangeOptions.ExchangeName} - Error starting user stream: " + userStreamResult.Error.Message);
             //    return;
             //}
 
@@ -77,7 +77,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} ERROR: OrderUpdate " + error.ToString());
+            GlobalData.AddErrorToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} ERROR: OrderUpdate " + error.ToString());
         }
     }
 
@@ -95,7 +95,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
     //    catch (Exception error)
     //    {
     //        ScannerLog.Logger.Error(error, "");
-    //        GlobalData.AddTextToLogTab("ERROR: AccountPositionMessage " + error.ToString());
+    //        GlobalData.AddErrorToLogTab("ERROR: AccountPositionMessage " + error.ToString());
     //    }
     //}
 

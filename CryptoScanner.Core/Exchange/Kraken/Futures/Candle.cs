@@ -45,7 +45,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             (FuturesKlineInterval)exchangeInterval, fetchFrom.ToDateTime(), limit: limit);
         if (!result.Success)
         {
-            GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
+            GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }
 

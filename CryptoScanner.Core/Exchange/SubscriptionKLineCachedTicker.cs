@@ -240,7 +240,7 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                 {
                     ScannerLog.Logger.Error(error, symbol.Name);
 #if DEBUG
-                    GlobalData.AddTextToLogTab($"KLine Ticker {symbol.Name} ERROR {error.Message}");
+                    GlobalData.AddErrorToLogTab($"KLine Ticker {symbol.Name} ERROR {error.Message}");
 #endif
                 }
             }

@@ -178,7 +178,7 @@ public class ThreadSaveObjects
         {
             transaction.Rollback();
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"ThreadSaveObjects (flush) ERROR {error.Message}");
+            GlobalData.AddErrorToLogTab($"ThreadSaveObjects (flush) ERROR {error.Message}");
         }
     }
 
@@ -228,7 +228,7 @@ public class ThreadSaveObjects
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"ThreadSaveObjects ERROR {error.Message}");
+            GlobalData.AddErrorToLogTab($"ThreadSaveObjects ERROR {error.Message}");
         }
 
         GlobalData.AddTextToLogTab("ThreadSaveObjects thread exit");

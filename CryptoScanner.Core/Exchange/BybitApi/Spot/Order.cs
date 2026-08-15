@@ -182,7 +182,7 @@ public class Order() : OrderBase(), IOrder
             database.Connection.Update(position.Symbol);
         }
         else
-            GlobalData.AddTextToLogTab($"Error reading orders from {ExchangeBase.ExchangeOptions.ExchangeName} for {position.Symbol.Name} {info.Error}");
+            GlobalData.AddErrorToLogTab($"Error reading orders from {ExchangeBase.ExchangeOptions.ExchangeName} for {position.Symbol.Name} {info.Error}");
 
         return count;
     }

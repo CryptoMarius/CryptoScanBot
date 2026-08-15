@@ -881,7 +881,7 @@ public class CryptoDatabase : IDisposable
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR " + error.ToString());
+            GlobalData.AddErrorToLogTab("ERROR " + error.ToString());
         }
     }
 

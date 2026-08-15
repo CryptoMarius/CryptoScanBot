@@ -31,7 +31,7 @@ public static class ExternalLinkHelper
         }
         catch (Exception error)
         {
-            GlobalData.AddTextToLogTab($"Could not open {url}: {error.Message}");
+            GlobalData.AddErrorToLogTab($"Could not open {url}: {error.Message}");
         }
     }
 

@@ -47,6 +47,13 @@ public class DbrSettings : SettingsSignalStrategyBase
         Tooltip = "When on, the signal passes the band-width percentage (the chart label) as stop-loss to the trader. When off, no stop-loss is handed over (null) and the trader uses its default percentage stop-loss.")]
     public bool UseStopLoss { get; set; } = false;
 
+    // Number of consecutive higher timeframes that must show the same band break before the signal
+    // fires. 0 = this timeframe only (normal behaviour). Lives here rather than in the global entry
+    // conditions because only a band strategy has a band break to confirm.
+    [SettingCaption("Band break confirmation on higher timeframes",
+        Tooltip = "Number of consecutive higher timeframes that must show the same band break. 0 = this timeframe only. Example: 1 means the next higher timeframe has to break its band as well. Missing indicator data on a higher timeframe counts as no confirmation.")]
+    public int BandBreakConfirmationCount { get; set; } = 0;
+
     public DbrSettings() : base()
     {
         SoundFileLong = "sound-dbr-oversold.wav";

@@ -143,7 +143,7 @@ public class ZoneThreadCalculate
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab($"ThreadZoneCalculate (drain) ERROR {error.Message}");
+                GlobalData.AddErrorToLogTab($"ThreadZoneCalculate (drain) ERROR {error.Message}");
             }
         }
     }
@@ -167,7 +167,7 @@ public class ZoneThreadCalculate
                 catch (Exception error)
                 {
                     ScannerLog.Logger.Error(error, "");
-                    GlobalData.AddTextToLogTab($"ThreadZoneCalculate ERROR {error.Message}");
+                    GlobalData.AddErrorToLogTab($"ThreadZoneCalculate ERROR {error.Message}");
                 }
             }
         }
@@ -178,7 +178,7 @@ public class ZoneThreadCalculate
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"ThreadZoneCalculate ERROR {error.Message}");
+            GlobalData.AddErrorToLogTab($"ThreadZoneCalculate ERROR {error.Message}");
         }
 
         GlobalData.AddTextToLogTab("ThreadZoneCalculate thread exit");

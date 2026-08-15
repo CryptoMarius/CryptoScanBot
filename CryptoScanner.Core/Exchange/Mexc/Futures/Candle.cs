@@ -47,7 +47,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 Thread.Sleep(15000);
                 goto Again;
             }
-            GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
+            GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }
 

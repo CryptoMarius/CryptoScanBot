@@ -367,8 +367,16 @@ public class ScannerSession : IScannerSession
     }
 
 
+    // How often the candle database is saved and cleaned up
+    private const int SaveCandleDataIntervalSeconds = 1 * 60 * 60; // 1 hour
+
     private async void TimerSaveCandleData_Tick(object? sender, EventArgs? e)
     {
+        // The first tick is deliberately half an interval early (see SetTimerDefaults) so this
+        // housekeeping does not run in the same second as TimerGetExchangeInfoAndCandles. From here
+        // on the period is the configured one again.
+        TimerSaveCandleData.InitTimerInterval(SaveCandleDataIntervalSeconds);
+
         // Save the candles each x hours..
         //await DataStore.SaveCandlesAsync();
         await CandleDatabase.SaveCandlesAsync();
@@ -391,7 +399,11 @@ public class ScannerSession : IScannerSession
         TimerRestartStreams.InitTimerInterval(24 * 60 * 60); // 24 hours
 
         // Bewaar de candle data iedere x uur
-        TimerSaveCandleData.InitTimerInterval(1 * 60 * 60); // 1 hour
+        // Started at half the interval so the first save does not land in the same second as the
+        // exchange info + candle refresh below (both are one hour and both start here, which had
+        // the database save, the cleanup, the symbol refresh and the resubscribe all run at once).
+        // TimerSaveCandleData_Tick restores the full interval on its first tick.
+        TimerSaveCandleData.InitTimerInterval(SaveCandleDataIntervalSeconds / 2);
 
         // Controleer de posities (fix probleem user ticker)
         TimerCheckPositions.InitTimerInterval(1 * 60 * 60); // 1 hours
@@ -609,7 +621,7 @@ public class ScannerSession : IScannerSession
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "TimerGetExchangeInfoAndCandles");
-                GlobalData.AddTextToLogTab("error refreshing exchange info and candles " + error.ToString());
+                GlobalData.AddErrorToLogTab("error refreshing exchange info and candles " + error.ToString());
             }
             finally
             {

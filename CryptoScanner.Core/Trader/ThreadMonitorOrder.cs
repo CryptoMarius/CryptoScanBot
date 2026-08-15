@@ -37,7 +37,7 @@ public class ThreadMonitorOrder
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab($"{symbol.Name} ERROR order monitor thread {error.Message}");
+                GlobalData.AddErrorToLogTab($"{symbol.Name} ERROR order monitor thread {error.Message}");
             }
         }
         GlobalData.AddTextToLogTab("Task order monitor stopped");

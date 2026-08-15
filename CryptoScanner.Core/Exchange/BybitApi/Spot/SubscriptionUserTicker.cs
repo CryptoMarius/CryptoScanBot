@@ -69,7 +69,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} ERROR: OrderUpdate " + error.ToString());
+            GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} ERROR: OrderUpdate " + error.ToString());
         }
     }
 

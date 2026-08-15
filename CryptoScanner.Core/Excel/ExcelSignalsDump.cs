@@ -163,7 +163,7 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR signals dump " + error.ToString());
+            GlobalData.AddErrorToLogTab("ERROR signals dump " + error.ToString());
         }
     }
 }

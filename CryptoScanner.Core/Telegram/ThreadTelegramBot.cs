@@ -367,7 +367,7 @@ public class ThreadTelegramBotInstance
                         waitSeconds = backOffSeconds;
                     }
                     ScannerLog.Logger.Error($"ERROR telegram thread {error.Message} (waiting {waitSeconds}s)"); // simplify error on 1 line
-                    GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message} (waiting {waitSeconds}s)");
+                    GlobalData.AddErrorToLogTab($"ERROR telegram thread {error.Message} (waiting {waitSeconds}s)");
                     try
                     {
                         await Task.Delay(TimeSpan.FromSeconds(waitSeconds), cancellationToken.Token);
@@ -383,7 +383,7 @@ public class ThreadTelegramBotInstance
                     // Stupid Telegram is not playing nice
                     //ScannerLog.Logger.Error(error, "");
                     ScannerLog.Logger.Error($"ERROR telegram thread {error.Message}"); // simplify error on 1 line
-                    GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
+                    GlobalData.AddErrorToLogTab($"ERROR telegram thread {error.Message}");
                 }
                 await Task.Delay(500);
             }
@@ -392,7 +392,7 @@ public class ThreadTelegramBotInstance
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
+            GlobalData.AddErrorToLogTab($"ERROR telegram thread {error.Message}");
         }
         GlobalData.AddTextToLogTab("Task Telegram stopped");
     }

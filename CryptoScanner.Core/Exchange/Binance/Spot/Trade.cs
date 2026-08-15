@@ -65,7 +65,7 @@ public class Trade() : TradeBase(), ITrade
                 var result = await client.SpotApi.Trading.GetUserTradesAsync(position.Symbol.Name, null, position.Symbol.LastTradeFetched, null, 1000);
                 if (!result.Success)
                 {
-                    GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
+                    GlobalData.AddErrorToLogTab("error getting mytrades " + result.Error);
                 }
 
                 // Als we over het randje gaan qua API verzoeken even inhouden
@@ -138,7 +138,7 @@ public class Trade() : TradeBase(), ITrade
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
+            GlobalData.AddErrorToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
         }
 
         return tradeCount;

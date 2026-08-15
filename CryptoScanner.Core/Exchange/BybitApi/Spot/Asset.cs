@@ -96,7 +96,7 @@ public class Asset() : AssetBase(), IAsset
                     var accountInfo = await client.V5Api.Account.GetAllAssetBalancesAsync(AccountType.Spot);
                     if (!accountInfo.Success)
                     {
-                        GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} error getting accountinfo " + accountInfo.Error);
+                        GlobalData.AddErrorToLogTab($"{Api.ExchangeOptions.ExchangeName} error getting accountinfo " + accountInfo.Error);
                         return;
                     }
 
@@ -104,7 +104,7 @@ public class Asset() : AssetBase(), IAsset
                     // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
                     if (accountInfo?.Data is null)
                     {
-                        GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} No account data received {accountInfo?.Error}");
+                        GlobalData.AddErrorToLogTab($"{Api.ExchangeOptions.ExchangeName} No account data received {accountInfo?.Error}");
                         return;
                     }
 

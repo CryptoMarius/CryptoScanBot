@@ -120,8 +120,33 @@ public partial class DashBoardInformationViewModel : ObservableObject
     [ObservableProperty]
     private AvaloniaList<DashboardSymbolViewModel> _tvSymbols = [];
 
+    // The "Crypto Prices" grid in DashBoardInformationView binds TopSymbols[0]..TopSymbols[4] by
+    // index (five fixed rows). An index binding on a shorter list makes Avalonia log an "Index was
+    // out of range" binding error per binding - 35 warnings at every start and every exchange
+    // switch, because the list is only filled once the symbols have been read. Starting from (and
+    // padding to) RowCount empty rows keeps every one of those bindings valid; a placeholder row
+    // renders as blank text.
+    public const int TopSymbolRowCount = 5;
+
     [ObservableProperty]
-    private AvaloniaList<DashboardSymbolViewModel> _topSymbols = [];
+    private AvaloniaList<DashboardSymbolViewModel> _topSymbols = [.. CreateEmptyTopSymbols()];
+
+    private static List<DashboardSymbolViewModel> CreateEmptyTopSymbols()
+    {
+        List<DashboardSymbolViewModel> list = [];
+        PadTopSymbols(list);
+        return list;
+    }
+
+    private static void PadTopSymbols(List<DashboardSymbolViewModel> list)
+    {
+        while (list.Count < TopSymbolRowCount)
+            list.Add(new(IndicatorType.Exchange, "", ""));
+    }
+
+    /// True once at least one real symbol was placed in the grid. Callers used to test
+    /// <c>TopSymbols.Count == 0</c> for this, which no longer works now that the list is padded.
+    private bool HasTopSymbols => TopSymbols.Any(x => !string.IsNullOrEmpty(x.Name));
 
 
     #endregion
@@ -315,7 +340,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         BarometerTime = _barometerCalculated;
 
         // If nothing changed we need to fill the symbols
-        if (TopSymbols.Count == 0)
+        if (!HasTopSymbols)
             RegisterExchangeSymbols(); // The symbols are probably not read at this point
         UpdateSymbolPrices(); // try? Not sure if everything is initialized
     }
@@ -376,6 +401,9 @@ public partial class DashBoardInformationViewModel : ObservableObject
             }
         }
 
+        // Keep the five rows the view binds by index, even when fewer symbols were found
+        PadTopSymbols(list);
+
         // Did something change?
         if (TopSymbols != null && list.Count == TopSymbols.Count)
         {
@@ -415,7 +443,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
     {
         try
         {
-            if (TopSymbols.Count == 0)
+            if (!HasTopSymbols)
                 RegisterExchangeSymbols(); // Becase symbols are probably read  later then expected
 
             // Update barometer chart

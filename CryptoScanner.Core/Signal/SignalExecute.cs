@@ -174,7 +174,7 @@ public class SignalExecute
                     {
                         // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
                         ScannerLog.Logger.Error(error, "");
-                        GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {entry.Key.strategy} error Monitor {error.Message}");
+                        GlobalData.AddErrorToLogTab($"{symbol.Name} {interval.Name} {entry.Key.strategy} error Monitor {error.Message}");
                     }
                 }
             }

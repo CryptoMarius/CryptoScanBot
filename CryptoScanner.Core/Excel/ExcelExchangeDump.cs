@@ -142,7 +142,7 @@ public class ExcelExchangeDump(Model.CryptoExchange exchange) : ExcelBase(exchan
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR exchange dump " + error.ToString());
+            GlobalData.AddErrorToLogTab("ERROR exchange dump " + error.ToString());
         }
     }
 }

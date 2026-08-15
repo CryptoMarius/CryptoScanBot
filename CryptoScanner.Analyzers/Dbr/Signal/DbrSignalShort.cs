@@ -16,8 +16,8 @@ namespace CryptoScanner.Analyzers.Dbr.Signal;
 ///   - body breaks through the band -> entry on the close
 /// Stop-loss: the band-width percentage shown in the label, placed above the entry.
 ///
-/// When TimeframeConsensusCount > 0, higher timeframes must also confirm the band break
-/// (multi-timeframe consensus). Additional filters (RSI, Stoch, Lux5m, trend, zones) are
+/// When BandBreakConfirmationCount > 0, higher timeframes must also confirm the band break
+/// Additional filters (RSI, Stoch, Lux5m, trend, zones) are
 /// applied only on the lowest (primary) timeframe.
 /// </summary>
 public class DbrSignalShort : SignalCreateBase
@@ -54,13 +54,13 @@ public class DbrSignalShort : SignalCreateBase
             return false;
         }
 
-        // Multi-timeframe consensus: higher timeframes must also show a band break.
-        int consensusCount = ResolveEntryConditions().TimeframeConsensusCount;
-        if (consensusCount > 0)
+        // Band break confirmation: higher timeframes must also show a band break.
+        int confirmationCount = settings.BandBreakConfirmationCount;
+        if (confirmationCount > 0)
         {
             int confirmed = 0;
             CryptoIntervalPeriod higherPeriod = Interval.IntervalPeriod;
-            for (int i = 0; i < consensusCount; i++)
+            for (int i = 0; i < confirmationCount; i++)
             {
                 if (higherPeriod == CryptoIntervalPeriod.interval1w)
                     break;
@@ -74,9 +74,9 @@ public class DbrSignalShort : SignalCreateBase
                 }
                 confirmed++;
             }
-            if (confirmed < consensusCount)
+            if (confirmed < confirmationCount)
             {
-                ExtraText = $"not enough higher TFs confirmed ({confirmed}/{consensusCount})";
+                ExtraText = $"not enough higher timeframes confirmed ({confirmed}/{confirmationCount})";
                 return false;
             }
         }

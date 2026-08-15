@@ -125,7 +125,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} error {error.Message}");
+            GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} error {error.Message}");
         }
     }
 
@@ -142,7 +142,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     private void OnStreamError(Exception error)
     {
         NeedsRestart = true;
-        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} stream error {error.Message}");
+        GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} stream error {error.Message}");
     }
 
 
@@ -199,7 +199,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         catch (Exception ex)
         {
             ScannerLog.Logger.Error(ex, "");
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} startup error: {ex.Message}");
+            GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {Name} startup error: {ex.Message}");
 
             await StopInternalAsync();
 
