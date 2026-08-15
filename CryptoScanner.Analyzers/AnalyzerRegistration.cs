@@ -25,13 +25,13 @@ public static class AnalyzerRegistration
         PluginManager.Register(new Storsi.StorsiPlugin());
         PluginManager.Register(new Vbs.VbsPlugin());
 
+        // Experimental strategies (not yet fully tested or documented)
+#if DEBUG
         // These look interesting (specially the squeeze ones)
         PluginManager.Register(new BbSqueeze.BbSqueezePlugin());
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
         PluginManager.Register(new KumoSqueeze.KumoSqueezePlugin());
 
-        // Experimental strategies (not yet fully tested or documented)
-#if DEBUG
         // From the Malysian trader Oma Ally, not much signals but performs well (no profits yet)
         PluginManager.Register(new Bbma.BbmaPlugin());
         PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
