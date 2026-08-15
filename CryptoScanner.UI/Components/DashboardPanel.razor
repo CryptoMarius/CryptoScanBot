@@ -44,9 +44,22 @@
 
     <!-- Section 2: Barometer — dropdowns + 1h/4h/1d values -->
     <div class="dashboard-section" style="min-width:125px;">
-        <div class="dashboard-heading">Barometer</div>
-        <div class="dashboard-row">
-            <select class="input-select dashboard-combo" value="@DashboardService.QuoteName"
+        @* The graph selection sits next to the heading: there is room beside the title, and as a
+           row of its own below the values it took a line the panel cannot spare. *@
+        <div class="dashboard-heading dashboard-heading-row">
+            <span>Barometer</span>
+            @* Which figure of the measurement the graph draws. Every measurement holds six of them
+               (see BarometerCandleFields) and the rows below can only show two. *@
+            <select class="input-select dashboard-combo" value="@DashboardService.GraphValueName"
+                    @onchange="OnBarometerGraphValueChanged" title="Figure shown in the graph">
+                @foreach (var gv in DashboardService.GraphValueOptions)
+                {
+                    <option value="@gv">@gv</option>
+                }
+            </select>
+        </div>
+        <div class="dashboard-row dashboard-combo-row">
+            <select class="input-select dashboard-combo dashboard-combo-quote" value="@DashboardService.QuoteName"
                     @onchange="OnBarometerQuoteChanged">
                 @foreach (var q in DashboardService.QuoteOptions)
                 {
@@ -58,15 +71,6 @@
                 @foreach (var iv in DashboardService.IntervalOptions)
                 {
                     <option value="@iv">@iv</option>
-                }
-            </select>
-            @* Which figure of the measurement the graph draws. Every measurement holds six of them
-               (see BarometerCandleFields) and the rows below can only show two. *@
-            <select class="input-select dashboard-combo" value="@DashboardService.GraphValueName"
-                    @onchange="OnBarometerGraphValueChanged" title="Figure shown in the graph">
-                @foreach (var gv in DashboardService.GraphValueOptions)
-                {
-                    <option value="@gv">@gv</option>
                 }
             </select>
         </div>

@@ -241,6 +241,18 @@ html, body {
     color: var(--text-primary);
 }
 
+/* Heading with a control beside it. The bold of the heading may not carry over to the dropdown,
+   which is stated here rather than left to the browser default for form controls. */
+.dashboard-heading-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dashboard-heading-row select {
+    font-weight: 400;
+}
+
 .dashboard-row {
     display: flex;
     justify-content: space-between;
@@ -320,13 +332,35 @@ html, body {
 }
 
 /* ── Dashboard: barometer combo (compact select in dashboard row) ── */
-.dashboard-combo {
+/* Written on the element as well, because .input-select further down the file sets the same
+   properties and would otherwise win on source order alone: the dropdowns then stood 26 pixels
+   tall with a border and a background, while Avalonia draws them compact and BorderThickness="0".
+   With three dropdowns in the panel that difference is exactly what pushed the last row out of
+   the panel's fixed height. */
+select.dashboard-combo {
     height: 20px;
     padding: 0 4px;
     font-size: 11px;
     border: none;
     background: transparent;
     color: var(--text-primary);
+}
+
+/* Rows holding only dropdowns. The space-between of .dashboard-row spreads label and value across
+   the full width, which is right for the barometer values but pushes the dropdowns apart; the
+   Avalonia grid puts them left in adjacent columns. No vertical padding either: five rows have to
+   fit within the panel's fixed height. */
+.dashboard-combo-row {
+    justify-content: flex-start;
+    gap: 0;
+    padding: 0;
+}
+
+/* Column 0 of the Avalonia grid is as wide as its widest cell, and that is the "Barometer 1d:"
+   label and not the quote dropdown. The interval dropdown next to it therefore starts at the
+   value column, and not directly against the quote. */
+.dashboard-combo-quote {
+    min-width: 86px;
 }
 
 /* ── Dashboard: barometer chart placeholder (400x100, matches Avalonia) ── */

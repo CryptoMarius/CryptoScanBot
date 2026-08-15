@@ -81,12 +81,22 @@
 
         <!-- Baromer -->
         <StackPanel Grid.Column="2" Orientation="Vertical" MinWidth="125" Margin="0,0,2,0">
-            <TextBlock Text="Barometer" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" Margin="0,0,0,2"/>
+            <!-- The graph selection sits next to the heading: there is room beside the title, and
+                 as a row of its own below the values it took a line the grid cannot spare. -->
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="Barometer" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" Margin="0,0,0,2"/>
+                <!-- ComboBox: which figure of the measurement the graph draws. The rows below can
+                     only show two of the six; this is where the rest becomes visible. -->
+                <ComboBox FontSize="13" BorderThickness="0" Margin="0,0,0,0"
+                            SelectedItem="{Binding SelectedGraphValue}" VerticalAlignment="Center" HorizontalAlignment="Left"
+                            ItemsSource="{Binding GraphValues}" IsDropDownOpen="False"
+                            ToolTip.Tip="Figure shown in the graph"/>
+            </StackPanel>
 
             <!-- Column 2 holds the market breadth: the share of coins that rose. The barometer in
                  column 1 is an average and reads the same whether every coin rises a little or a
                  handful carries the move; the breadth separates those two. -->
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,70,40" Height="25">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,70,40" Height="25">
                 <!-- ComboBox: Quote -->
                 <ComboBox Grid.Row="0" Grid.Column="0" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
                             SelectedItem="{Binding SelectedQuote}" VerticalAlignment="Center" HorizontalAlignment="Left"
@@ -131,13 +141,6 @@
                 <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Rising1d, StringFormat='{}{0:N0}%'}"
                             FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"
                             Opacity="0.7" ToolTip.Tip="{Binding Barometer1dTooltip}"/>
-
-                <!-- ComboBox: which figure of the measurement the graph draws. The rows above can
-                     only show two of the six; this is where the rest becomes visible. -->
-                <ComboBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
-                            SelectedItem="{Binding SelectedGraphValue}" VerticalAlignment="Center" HorizontalAlignment="Left"
-                            ItemsSource="{Binding GraphValues}" IsDropDownOpen="False"
-                            ToolTip.Tip="Figure shown in the graph"/>
             </Grid>
         </StackPanel>
         <Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="0" Margin="1,0"/>
