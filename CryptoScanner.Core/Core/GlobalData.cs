@@ -151,7 +151,51 @@ public static class GlobalData
     public static event AddTextEvent? LogToTelegram;
 
     public static event AddTextEvent? LogToLogTabEvent;
-    public static void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
+
+    /// <summary>
+    /// Write a line to the log file and show it on the log tab.
+    ///
+    /// The NLog write lives here and no longer in the UI subscribers. Every host (the Avalonia
+    /// scanner, the Photino UI, the emulator) used to mirror the line into NLog itself, which made
+    /// on-disk logging depend on a ViewModel being alive and subscribed, and made it impossible to
+    /// log a line at anything other than Info - see <see cref="AddErrorToLogTab"/>.
+    /// </summary>
+    public static void AddTextToLogTab(string text)
+    {
+        // Empty lines are separators for the log tab only; they carry nothing in the file.
+        if (!string.IsNullOrWhiteSpace(text))
+            WriteToLogFile(text, false);
+        LogToLogTabEvent?.Invoke(text);
+    }
+
+    /// <summary>
+    /// Same as <see cref="AddTextToLogTab"/>, but the line is written at Error level so it also
+    /// lands in the separate error log file (see ScannerLog.InitializeLogging). Use this for
+    /// anything that actually went wrong - a rejected API call, a failed fetch - so the error log
+    /// is a real summary of the failures instead of staying empty while the main log hides them.
+    /// </summary>
+    public static void AddErrorToLogTab(string text)
+    {
+        if (!string.IsNullOrWhiteSpace(text))
+            WriteToLogFile(text, true);
+        LogToLogTabEvent?.Invoke(text);
+    }
+
+    private static void WriteToLogFile(string text, bool isError)
+    {
+        // Wrapped so a logging failure can never break a scan or a run
+        try
+        {
+            if (isError)
+                ScannerLog.Logger.Error(text);
+            else
+                ScannerLog.Logger.Info(text);
+        }
+        catch
+        {
+            // ignore - never let logging crash the caller
+        }
+    }
 
     // Events for refresing data
     public static event AddTextEvent? TelegramHasChangedEvent;
@@ -542,7 +586,7 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, $"Error reading {fileName}");
-            AddTextToLogTab($"Error reading {fileName}: {error.Message}");
+            AddErrorToLogTab($"Error reading {fileName}: {error.Message}");
         }
 
         string backup = filename + ".backup";
@@ -560,7 +604,7 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, $"Error reading {fileName}.backup");
-            AddTextToLogTab($"Error reading {fileName}.backup: {error.Message}");
+            AddErrorToLogTab($"Error reading {fileName}.backup: {error.Message}");
             return null;
         }
     }
@@ -608,7 +652,7 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab("Error loading setting " + error.ToString());
+            AddErrorToLogTab("Error loading setting " + error.ToString());
         }
     }
 
@@ -643,7 +687,7 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {filename} " + error.ToString());
+            AddErrorToLogTab($"Error loading {filename} " + error.ToString());
         }
     }
 
@@ -666,7 +710,7 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
+            AddErrorToLogTab($"Error loading {fileName} " + error.ToString());
         }
     }
 
@@ -688,7 +732,7 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
+            AddErrorToLogTab($"Error loading {fileName} " + error.ToString());
         }
     }
 
@@ -710,7 +754,7 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
+            AddErrorToLogTab($"Error loading {fileName} " + error.ToString());
         }
     }
 
@@ -791,7 +835,7 @@ public static class GlobalData
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "SaveConfiguration");
-                AddTextToLogTab("Error saving the settings: " + error.ToString());
+                AddErrorToLogTab("Error saving the settings: " + error.ToString());
                 throw;
             }
         }
@@ -822,7 +866,7 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab("Error playing music " + error.ToString());
+            AddErrorToLogTab("Error playing music " + error.ToString());
         }
     }
 
@@ -835,7 +879,7 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab("Error playing speech " + error.ToString());
+            AddErrorToLogTab("Error playing speech " + error.ToString());
         }
     }
 
@@ -850,7 +894,7 @@ public static class GlobalData
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                AddTextToLogTab(" error telegram thread(1)" + error.ToString());
+                AddErrorToLogTab(" error telegram thread(1)" + error.ToString());
             }
         }
     }
@@ -878,7 +922,7 @@ public static class GlobalData
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                AddTextToLogTab(" error telegram thread(1)" + error.ToString());
+                AddErrorToLogTab(" error telegram thread(1)" + error.ToString());
             }
         }
     }

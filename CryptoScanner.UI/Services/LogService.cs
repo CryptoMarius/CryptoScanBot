@@ -113,9 +113,8 @@ public class LogService : IDisposable
     {
         try
         {
-            // Mirror the Avalonia LogGridViewModel: everything that reaches the log tab is also
-            // written to the NLog file, and empty lines are dropped.
-            ScannerLog.Logger.Info(text);
+            // The NLog write is done by GlobalData.AddTextToLogTab itself, so it also happens
+            // when this service is not started yet and can carry a level other than Info.
             text = text.Trim();
             if (text == "")
                 return;
