@@ -1,6 +1,4 @@
 ﻿// DEBUG-only, together with BbmaPlugin (the BBMA signal classes only exist in DEBUG builds).
-using Avalonia.Controls;
-
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Settings.Strategy;
 

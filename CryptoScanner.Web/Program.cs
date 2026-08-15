@@ -6,8 +6,6 @@ using CryptoScanner.Core.Sounds;
 using CryptoScanner.UI.Services;
 using CryptoScanner.Web.Components;
 
-using Microsoft.Extensions.DependencyInjection;
-
 using System.Reflection;
 
 namespace CryptoScanner.Web;

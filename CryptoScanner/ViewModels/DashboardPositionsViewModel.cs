@@ -9,8 +9,6 @@ using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 
-using Const = CryptoScanner.Chart.ViewModels.Chart.Const;
-
 using Dapper;
 
 using OxyPlot;
@@ -21,6 +19,8 @@ using OxyPlot.Series;
 
 using System.Collections.ObjectModel;
 using System.Text;
+
+using Const = CryptoScanner.Chart.ViewModels.Chart.Const;
 
 namespace CryptoScanner.ViewModels;
 

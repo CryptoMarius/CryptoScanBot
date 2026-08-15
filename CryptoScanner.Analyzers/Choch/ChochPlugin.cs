@@ -1,5 +1,4 @@
 using CryptoScanner.Core.Contracts;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Choch;

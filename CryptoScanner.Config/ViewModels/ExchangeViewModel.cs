@@ -22,9 +22,27 @@ public partial class ExchangeViewModel : ObservableObject
     [ObservableProperty]
     private List<KeyValuePair<int, string>> _exchangeList = [];
 
+    /// <summary>
+    /// Set while LoadConfig fills the properties, so the "follow the active exchange" rule in
+    /// OnActiveExchangeChanged does not overwrite the stored ActivateExchange during loading.
+    /// </summary>
+    private bool _loadingConfig;
+
     public ExchangeViewModel()
     {
         BuildExchangeList();
+    }
+
+    /// <summary>
+    /// Picking another active exchange means the scanner is going to run on that exchange, so the
+    /// exchange the trading app/links are opened on has to follow. Leaving it pointing at the
+    /// previous exchange opened charts and orders on an exchange that is no longer being scanned.
+    /// </summary>
+    partial void OnActiveExchangeChanged(int value)
+    {
+        if (_loadingConfig)
+            return;
+        ActivateExchange = value;
     }
 
     private void BuildExchangeList()
@@ -41,18 +59,26 @@ public partial class ExchangeViewModel : ObservableObject
 
     internal void LoadConfig(SettingsGeneral general)
     {
-        ExtraCaption = general.ExtraCaption;
-        if (GlobalData.ExchangeListName.TryGetValue(general.ExchangeName, out Core.Model.CryptoExchange? exchange))
-            ActiveExchange = exchange.Id;
-        else
-            ActiveExchange = -1;
+        _loadingConfig = true;
+        try
+        {
+            ExtraCaption = general.ExtraCaption;
+            if (GlobalData.ExchangeListName.TryGetValue(general.ExchangeName, out Core.Model.CryptoExchange? exchange))
+                ActiveExchange = exchange.Id;
+            else
+                ActiveExchange = -1;
 
-        if (GlobalData.ExchangeListName.TryGetValue(general.ActivateExchangeName, out exchange))
-            ActivateExchange = exchange.Id;
-        else
-            ActivateExchange = -1;
+            if (GlobalData.ExchangeListName.TryGetValue(general.ActivateExchangeName, out exchange))
+                ActivateExchange = exchange.Id;
+            else
+                ActivateExchange = -1;
 
-        RefreshSymbols = general.GetCandleInterval;
+            RefreshSymbols = general.GetCandleInterval;
+        }
+        finally
+        {
+            _loadingConfig = false;
+        }
     }
 
     internal void SaveConfig(SettingsGeneral general)

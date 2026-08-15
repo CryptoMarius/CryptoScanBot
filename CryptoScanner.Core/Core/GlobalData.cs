@@ -378,6 +378,18 @@ public static class GlobalData
     }
 
 
+    /// <summary>
+    /// Quotes with a (roughly) fixed dollar/euro value, so an amount expressed in them is
+    /// meaningful without knowing the current rate.
+    /// </summary>
+    private static readonly string[] StableQuotes = ["USD", "USDC", "USDT", "EUR"];
+
+    /// <summary>
+    /// Entry amount given to a newly discovered stable quote. Without it a new quote starts at
+    /// zero, which is not a usable setting - at least this way there is a default.
+    /// </summary>
+    private const decimal DefaultEntryAmount = 15m;
+
     public static CryptoQuoteData AddQuoteData(string quoteName)
     {
         if (!Settings.QuoteCoins.TryGetValue(quoteName, out CryptoQuoteData? quoteData))
@@ -387,6 +399,11 @@ public static class GlobalData
                 Name = quoteName,
                 DisplayFormat = "N8",
             };
+
+            // Only for a quote the settings have never seen: an existing (user adjusted) amount,
+            // zero included, must never be overwritten on a later startup.
+            if (StableQuotes.Contains(quoteName))
+                quoteData.EntryAmount = DefaultEntryAmount;
 
             Settings.QuoteCoins.Add(quoteName, quoteData);
         }

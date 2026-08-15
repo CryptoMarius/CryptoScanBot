@@ -5,9 +5,8 @@ using CryptoScanner.Analyzers.Bbma.Chart;
 using CryptoScanner.Analyzers.Bbma.Config;
 using CryptoScanner.Analyzers.Bbma.Signal;
 using CryptoScanner.Core.Contracts;
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Signal.Indicators;
 using CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Core.Signal.Indicators;
 
 namespace CryptoScanner.Analyzers.Bbma;
 

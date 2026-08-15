@@ -5,7 +5,6 @@ using CryptoScanner.Core.Model;
 
 using Dapper;
 
-using System.Globalization;
 using System.Text;
 
 namespace CryptoScanner.UI.Services;

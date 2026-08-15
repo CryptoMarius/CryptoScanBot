@@ -1,9 +1,9 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Threading;
 
+using CryptoScanner.Chart.Services;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
-using CryptoScanner.Chart.Services;
 using CryptoScanner.ViewModels;
 
 using System.ComponentModel;

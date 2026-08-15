@@ -18,7 +18,6 @@ using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
 using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Emulator.Views;
-using CryptoScanner.ViewModels;
 
 using System.Diagnostics;
 

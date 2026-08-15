@@ -5,7 +5,6 @@ using CryptoScanner.Core.Excel;
 using CryptoScanner.Core.Helpers;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Trend;
 
@@ -14,8 +13,6 @@ using Dapper.Contrib.Extensions;
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-
-using System.Diagnostics;
 
 namespace CryptoScanner.UI.Services;
 

@@ -2,7 +2,6 @@
 using CryptoScanner.Analyzers.Nwe;
 using CryptoScanner.Analyzers.Nwe.Signal;
 using CryptoScanner.Analyzers.Vbs;
-using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;

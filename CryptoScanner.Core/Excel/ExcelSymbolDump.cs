@@ -155,7 +155,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             WriteCell(sheet, column++, row, candle.DateLocal.AddMinutes(symbolInterval.Interval?.Duration ?? 0), CellStyleDate);
 
             // Repeated value (flat candle)
-             // IsFilled: we synthesized this candle (gap-filled from the previous close) instead
+            // IsFilled: we synthesized this candle (gap-filled from the previous close) instead
             // of receiving it from the exchange - mark it clearly instead of guessing from the
             // OHLC values (a real flat candle would otherwise look the same).
             ICellStyle? cellStyle = CellStyleDecimalNormal;

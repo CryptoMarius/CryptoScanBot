@@ -1,7 +1,6 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.UI.ViewModels;
 

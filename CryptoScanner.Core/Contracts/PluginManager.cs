@@ -1,5 +1,4 @@
-﻿using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Json;
+﻿using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
 

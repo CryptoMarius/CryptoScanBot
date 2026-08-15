@@ -1,9 +1,9 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoExchange.Net.Objects;
+using CryptoExchange.Net.Objects.Sockets;
+
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
-
-using CryptoExchange.Net.Objects;
-using CryptoExchange.Net.Objects.Sockets;
 
 namespace CryptoScanner.CoreTests.Core;
 

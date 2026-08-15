@@ -1,5 +1,3 @@
-using CryptoScanner.Core.Enums;
-
 namespace CryptoScanner.Core.Model;
 
 /// <summary>

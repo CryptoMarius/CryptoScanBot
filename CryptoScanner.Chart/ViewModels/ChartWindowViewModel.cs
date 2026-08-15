@@ -2,11 +2,10 @@
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Chart.ViewModels.Chart;
-using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -21,7 +20,6 @@ using OxyPlot.Series;
 
 using System.Diagnostics;
 using System.Globalization;
-using System.Text.Json;
 
 namespace CryptoScanner.ViewModels;
 

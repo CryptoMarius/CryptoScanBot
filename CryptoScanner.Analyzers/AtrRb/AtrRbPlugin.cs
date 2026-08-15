@@ -2,7 +2,6 @@ using CryptoScanner.Analyzers.AtrRb.Chart;
 using CryptoScanner.Analyzers.AtrRb.Config;
 using CryptoScanner.Analyzers.AtrRb.Signal;
 using CryptoScanner.Core.Contracts;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.AtrRb;

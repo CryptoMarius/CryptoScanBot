@@ -1,5 +1,4 @@
 ﻿using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Signal;
 
 using Dapper.Contrib.Extensions;
 

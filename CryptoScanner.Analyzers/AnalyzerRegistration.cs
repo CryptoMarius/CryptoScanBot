@@ -10,9 +10,6 @@ public static class AnalyzerRegistration
 {
     public static void RegisterAll()
     {
-        // ATR based bands, but it does not perform well enough
-        PluginManager.Register(new AtrRb.AtrRbPlugin()); 
-
         // A band strategy which does rather well
         PluginManager.Register(new Dbr.DbrPlugin());
 
@@ -23,10 +20,15 @@ public static class AnalyzerRegistration
         PluginManager.Register(new Smc.SmcPlugin());
         PluginManager.Register(new Stobb.StobbPlugin());
         PluginManager.Register(new Storsi.StorsiPlugin());
+
+        // A new band stratgy which is still being tested, but looks promising
         PluginManager.Register(new Vbs.VbsPlugin());
 
         // Experimental strategies (not yet fully tested or documented)
 #if DEBUG
+        // ATR based bands, but it does not perform well enough
+        PluginManager.Register(new AtrRb.AtrRbPlugin());
+
         // These look interesting (specially the squeeze ones)
         PluginManager.Register(new BbSqueeze.BbSqueezePlugin());
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());

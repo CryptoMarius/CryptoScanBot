@@ -1,6 +1,6 @@
-using System.Runtime.CompilerServices;
-
 using CryptoScanner.Core.Model;
+
+using System.Runtime.CompilerServices;
 
 namespace CryptoScanner.Analyzers.Nwe.Signal;
 

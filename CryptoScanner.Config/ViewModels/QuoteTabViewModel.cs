@@ -2,8 +2,6 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using CryptoScanner.Config;
-using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using System.Collections.ObjectModel;

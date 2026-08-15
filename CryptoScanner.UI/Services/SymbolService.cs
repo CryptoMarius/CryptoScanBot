@@ -7,8 +7,6 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.UI.ViewModels;
 
-using System.ComponentModel;
-
 namespace CryptoScanner.UI.Services;
 
 public class SymbolService : IDisposable

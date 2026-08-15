@@ -16,7 +16,6 @@ using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Signal;
-using CryptoScanner.Core.SignalR;
 using CryptoScanner.Helpers;
 using CryptoScanner.Services;
 

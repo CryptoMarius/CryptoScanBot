@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using CryptoScanner.Config;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Config.ViewModels;

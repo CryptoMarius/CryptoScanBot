@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Signal;
 
 using Dapper;
 

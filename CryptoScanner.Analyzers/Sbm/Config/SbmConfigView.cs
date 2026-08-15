@@ -1,6 +1,4 @@
-﻿using Avalonia.Controls;
-
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Sbm.Config;

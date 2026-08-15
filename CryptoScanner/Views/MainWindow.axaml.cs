@@ -13,11 +13,8 @@ using Avalonia.Interactivity;
 
 using CryptoScanner.Commands;
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Sounds;
-using CryptoScanner.Helpers;
 using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
 

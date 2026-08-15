@@ -18,7 +18,7 @@
             </div>
             <div class="field">
                 <label>Active exchange</label>
-                <select class="input-select" @bind="_exchangeName">
+                <select class="input-select" @bind="_exchangeName" @bind:after="OnActiveExchangeChanged">
                     @foreach (var exchange in GlobalData.ExchangeListName)
                     {
                         <option value="@exchange.Key">@exchange.Key</option>
@@ -169,6 +169,15 @@
         _soundHeartBeatMinutes = g.SoundHeartBeatMinutes;
         _signalREnabled = g.SignalREnabled;
         _signalRPort = g.SignalRPort;
+    }
+
+    /// Picking another active exchange means the scanner is going to run on that exchange, so the
+    /// exchange the trading app/links are opened on has to follow. Leaving it pointing at the
+    /// previous exchange opened charts and orders on an exchange that is no longer being scanned.
+    /// Mirrors ExchangeViewModel.OnActiveExchangeChanged in the Avalonia configuration screen.
+    private void OnActiveExchangeChanged()
+    {
+        _activateExchangeName = _exchangeName;
     }
 
     public void SaveTo(SettingsBasic settings)

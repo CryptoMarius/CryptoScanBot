@@ -2,7 +2,6 @@ using CryptoScanner.Analyzers.Dbr.Chart;
 using CryptoScanner.Analyzers.Dbr.Config;
 using CryptoScanner.Analyzers.Dbr.Signal;
 using CryptoScanner.Core.Contracts;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Dbr;

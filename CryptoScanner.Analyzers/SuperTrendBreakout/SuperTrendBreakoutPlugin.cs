@@ -1,7 +1,6 @@
 using CryptoScanner.Core.Contracts;
-using CryptoScanner.Core.Signal.Indicators;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Core.Signal.Indicators;
 
 namespace CryptoScanner.Analyzers.SuperTrendBreakout;
 

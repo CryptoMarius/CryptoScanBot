@@ -127,16 +127,16 @@ public static class ChartDataService
     /// </summary>
     private static ChartSegment Vertical(long time, decimal priceFrom, decimal priceTo, string color,
         string caption = "", decimal? captionPrice = null) => new()
-    {
-        time1 = time,
-        time2 = time,
-        price1 = (double)priceFrom,
-        price2 = (double)priceTo,
-        color = color,
-        dash = 1, // Dot, as in Positions.DrawVerticalLine
-        text = caption,
-        textPrice = captionPrice == null ? null : (double)captionPrice.Value,
-    };
+        {
+            time1 = time,
+            time2 = time,
+            price1 = (double)priceFrom,
+            price2 = (double)priceTo,
+            color = color,
+            dash = 1, // Dot, as in Positions.DrawVerticalLine
+            text = caption,
+            textPrice = captionPrice == null ? null : (double)captionPrice.Value,
+        };
 
     public static List<ChartRect> BuildZones(CryptoSymbol symbol, bool showDlz, bool showFvg, bool showSmc,
         CandleTime from, CandleTime to)

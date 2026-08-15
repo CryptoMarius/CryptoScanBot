@@ -1,8 +1,8 @@
-using System.Diagnostics;
-
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+
+using System.Diagnostics;
 
 namespace CryptoScanner.Analyzers.Jump.Config;
 

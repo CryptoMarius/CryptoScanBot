@@ -1,7 +1,6 @@
+using CryptoScanner.Analyzers.Bbma;
 using CryptoScanner.Analyzers.Bbma.Signal;
 using CryptoScanner.Core.Context;
-using CryptoScanner.Analyzers.Bbma;
-using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;

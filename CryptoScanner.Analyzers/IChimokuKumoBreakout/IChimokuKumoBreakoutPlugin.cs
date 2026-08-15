@@ -1,6 +1,5 @@
 using CryptoScanner.Analyzers.IChimokuKumoBreakout.Signal;
 using CryptoScanner.Core.Contracts;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.IChimokuKumoBreakout;

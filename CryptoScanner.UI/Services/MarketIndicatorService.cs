@@ -1,4 +1,3 @@
-using CryptoScanner.Core.Core;
 using CryptoScanner.UI.ViewModels;
 
 using System.Net.Http.Json;
