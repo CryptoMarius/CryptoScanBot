@@ -4,7 +4,6 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 using OKX.Net;
-using OKX.Net.Enums;
 using OKX.Net.Clients;
 
 namespace CryptoScanner.Core.Exchange.Okx.Futures;

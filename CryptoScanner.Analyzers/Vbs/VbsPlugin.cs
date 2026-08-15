@@ -3,7 +3,6 @@ using CryptoScanner.Analyzers.Vbs.Config;
 using CryptoScanner.Analyzers.Vbs.Indicators;
 using CryptoScanner.Analyzers.Vbs.Signal;
 using CryptoScanner.Core.Contracts;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Vbs;
