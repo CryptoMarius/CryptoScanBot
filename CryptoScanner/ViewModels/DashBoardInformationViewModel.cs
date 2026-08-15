@@ -611,9 +611,13 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
             scaleY = intHeight / screenY;
             offsetY = scaleY * 0.5f * screenY; // center of picture
-            gridLow = (float)graphScale.GridFrom;
-            gridHigh = (float)graphScale.GridTo;
-            gridStep = (float)graphScale.GridEvery; // 1% per line for the average and the median
+
+            // The grid follows the span that ended up in view instead of a fixed 1% per line, so it
+            // stays readable at every zoom level. See BarometerCandleFields.GetCenteredGrid.
+            (decimal gridLowDec, decimal gridHighDec, decimal gridStepDec) = BarometerCandleFields.GetCenteredGrid((decimal)screenY);
+            gridLow = (float)gridLowDec;
+            gridHigh = (float)gridHighDec;
+            gridStep = (float)gridStepDec;
             referenceLine = 0f;
         }
         else
@@ -656,19 +660,25 @@ public partial class DashBoardInformationViewModel : ObservableObject
             //FilterQuality = SKFilterQuality.High
         };
 
-        // horizontal lines (1% per line for the average and the median, a step that fits the range
-        // for the other figures), coloured red on the reference line
+        // horizontal lines (a step that fits the span in view, see GetCenteredGrid), coloured red on
+        // the reference line
         if (gridStep > 0)
         {
-            for (float y = gridLow; y <= gridHigh; y += gridStep)
+            // Counted instead of accumulated: a float step like 0.2 drifts over the additions and
+            // drops the last line, and with a fine grid that is the line carrying the top value.
+            int lineCount = (int)MathF.Round((gridHigh - gridLow) / gridStep);
+            for (int i = 0; i <= lineCount; i++)
             {
+                float y = gridLow + i * gridStep;
                 float screenLineY = offsetY + scaleY * y;
                 if (screenLineY < 0 || screenLineY > intHeight)
                     continue; // outside the scale
 
                 SKPoint p1 = new(0, screenLineY);
                 SKPoint p2 = new(intWidth, screenLineY);
-                if (referenceLine.HasValue && y == referenceLine.Value)
+                // Within half a step rather than exactly equal: y is built up in floats, so the line
+                // on zero can miss an exact comparison by an ulp and silently lose its red colour.
+                if (referenceLine.HasValue && MathF.Abs(y - referenceLine.Value) < gridStep * 0.5f)
                 {
                     paint.Color = SKColors.Red;
                     paint.StrokeWidth = 1;
