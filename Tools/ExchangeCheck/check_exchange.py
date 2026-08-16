@@ -29,7 +29,9 @@ import argparse
 import json
 import os
 import re
+import socket
 import sqlite3
+import subprocess
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
@@ -50,7 +52,8 @@ LAG_BAD_MINUTES = 30
 # Deze grenzen gelden ook voor de barometer: die gaat via dezelfde opslagronde naar schijf.
 LAG_RUNNING_ATTENTION_MINUTES = 75
 LAG_RUNNING_BAD_MINUTES = 130
-# Zo vers moet de laatste logregel zijn om het proces als "draait nog" te lezen.
+# Zo vers moet de laatste logregel zijn om het proces als "draait nog" te lezen. Alleen de terugval
+# voor mappen zonder lock: normaal wordt het proces uit CryptoScanBot.lock.info gecontroleerd.
 STILL_RUNNING_MINUTES = 10
 GAP_ATTENTION_PERCENTAGE = 1.0     # ontbrekende minuten als aandeel van het gedekte bereik
 GAP_BAD_PERCENTAGE = 5.0
@@ -58,6 +61,7 @@ NO_CANDLE_ATTENTION_PERCENTAGE = 10.0   # symbolen in de instrumentenlijst zonde
 NO_CANDLE_BAD_PERCENTAGE = 40.0
 DROPS_ATTENTION_PER_HOUR = 2.0     # verbroken websocketverbindingen per uur
 DROPS_BAD_PER_HOUR = 10.0
+OUTAGE_ATTENTION_MINUTES = 5.0     # zolang duurde de langste onderbreking voordat het opvalt
 ERRORS_ATTENTION = 1               # regels in het foutenlog
 ERRORS_BAD = 50
 MEMORY_ATTENTION_MB_PER_HOUR = 50.0
@@ -322,6 +326,58 @@ def find_logs(folder):
     return main, errors
 
 
+def read_lock_owner(folder):
+    """
+    The scanner writes "pid|machine|start time" into CryptoScanBot.lock.info while it runs. Returns
+    (pid, machine, started) or None when the file is missing or unreadable. The file survives a
+    crash, so its presence proves nothing on its own - the pid still has to be checked.
+    """
+    path = folder / "CryptoScanBot.lock.info"
+    try:
+        parts = path.read_text(encoding="utf-8", errors="replace").strip().split("|")
+    except Exception:
+        return None
+    if len(parts) < 2 or not parts[0].strip().isdigit():
+        return None
+    return int(parts[0].strip()), parts[1].strip(), (parts[2].strip() if len(parts) > 2 else "")
+
+
+def process_is_running(folder):
+    """
+    Is the scanner of this data folder alive right now? Returns (True/False, explanation), or
+    (None, "") when it cannot be established - a missing lock, a lock from another machine, or a
+    platform where the check does not work. The caller falls back on the log in that case.
+    """
+    owner = read_lock_owner(folder)
+    if owner is None:
+        return None, ""
+    pid, machine, _ = owner
+    if machine and machine.upper() != os.environ.get("COMPUTERNAME", "").upper() \
+            and machine.upper() != socket.gethostname().upper():
+        return None, ""
+
+    if os.name == "nt":
+        try:
+            # A pid on its own is not enough: Windows hands the number to the next process once it
+            # is free. So the image name has to match as well, otherwise a recycled pid reads as a
+            # scanner that never stopped.
+            output = subprocess.run(
+                ["tasklist", "/FI", "PID eq {}".format(pid), "/FO", "CSV", "/NH"],
+                capture_output=True, text=True, timeout=15).stdout
+        except Exception:
+            return None, ""
+        alive = "cryptoscan" in output.lower()
+        return alive, "proces {} volgens de lock in de datamap".format(pid)
+
+    try:
+        os.kill(pid, 0)
+        return True, "proces {} volgens de lock in de datamap".format(pid)
+    except ProcessLookupError:
+        return False, "proces {} volgens de lock in de datamap".format(pid)
+    except Exception:
+        return None, ""
+
+
 # ==============================================================================================
 # 1. Instellingen
 # ==============================================================================================
@@ -436,6 +492,18 @@ def check_settings(report, folder):
 # ==============================================================================================
 # 2. Symbolen (hoofddatabase)
 # ==============================================================================================
+def as_number(value):
+    """
+    Tick sizes and volumes are stored as TEXT in the symbol table, so "0.0" is a non-empty string
+    and therefore true in Python. Testing such a field for truth accepts a zero and lets it reach a
+    division; compare the number instead of the text.
+    """
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def check_symbols(report, main_db, exchange_names):
     if main_db is None:
         report.add("symbols", "Symbolen", UNKNOWN, ["Geen hoofddatabase gevonden."])
@@ -468,10 +536,24 @@ def check_symbols(report, main_db, exchange_names):
                 verdict = worst(verdict, BAD)
                 continue
 
+            # The barometer is stored as a symbol but is not an instrument: it carries percentages,
+            # not prices, and older rows have no tick size at all. Judging it by the rules for a
+            # tradable symbol turns a healthy exchange red for a pseudo-symbol nobody trades.
+            # Same recognition as CandleHelpers.IsBarometerSymbol: the base starts with a dollar.
+            # A symbol the exchange no longer lists is never priced either, so a missing tick size
+            # on an inactive row is leftover, not a defect. It stays visible in the count below.
+            instruments = [row for row in rows
+                           if not (row["Base"] or "").startswith("$")
+                           and (row["Status"] in (None, "") or as_number(row["Status"]) == 1)]
+
             per_quote = Counter(row["Quote"] or "?" for row in rows)
-            inactive = sum(1 for row in rows if (row["Status"] or 1) != 1)
-            no_price_tick = [row["Name"] for row in rows if not row["PriceTickSize"]]
-            no_quantity_tick = [row["Name"] for row in rows if not row["QuantityTickSize"]]
+            # An empty or missing status means active; a stored zero means it really is inactive.
+            inactive = sum(1 for row in rows
+                           if row["Status"] not in (None, "") and as_number(row["Status"]) != 1)
+            no_price_tick = [row["Name"] or row["ExchangeName"] or "(naamloos)"
+                             for row in instruments if as_number(row["PriceTickSize"]) <= 0]
+            no_quantity_tick = [row["Name"] or row["ExchangeName"] or "(naamloos)"
+                                for row in instruments if as_number(row["QuantityTickSize"]) <= 0]
             no_exchange_name = [row["Name"] for row in rows if not (row["ExchangeName"] or "").strip()]
             zero_volume = sum(1 for row in rows if not row["Volume"])
 
@@ -960,11 +1042,15 @@ def check_barometer(report, candle_databases, main_db, window_start, window_end,
             if main_db is not None:
                 main_connection = open_readonly(main_db)
                 try:
-                    row = main_connection.execute(
-                        "SELECT PriceTickSize FROM Symbol WHERE Name = ?",
-                        (names_found[0],)).fetchone()
-                    if row and row["PriceTickSize"]:
-                        tick = float(row["PriceTickSize"])
+                    # The barometer symbol can be present more than once (one row per exchange that
+                    # ever wrote into this database), and older rows carry a tick size of zero.
+                    # Take the first usable one and otherwise keep the default above - a zero here
+                    # ends up as a divisor further down.
+                    for row in main_connection.execute(
+                            "SELECT PriceTickSize FROM Symbol WHERE Name = ?", (names_found[0],)):
+                        if as_number(row["PriceTickSize"]) > 0:
+                            tick = as_number(row["PriceTickSize"])
+                            break
                 finally:
                     main_connection.close()
 
@@ -1323,12 +1409,18 @@ def check_streams(report, entries, window_hours):
         return {}
 
     counts = Counter()
-    lost_balance = defaultdict(int)
-    lost_moments = []
     restart_states = Counter()
     started_lines = []
     serving_lines = []
     quotes = set()
+
+    # Een onderbreking wordt op twee manieren opgelost, en beide tellen als hersteld:
+    #   - de verbinding komt zelf terug        -> "connection restored" voor dezelfde groep
+    #   - de scanner herstart de abonnementen  -> "herstarten N subscriptions (finished)"
+    # Alleen op de eerste letten meldt een keurig opgeloste storing als "nooit hersteld", want bij
+    # een herstart komt die regel er niet meer.
+    outages = []                      # afgeronde storingen: naam, begin, einde, manier
+    open_outages = {}                 # groepsnaam -> moment van wegvallen
 
     for moment, level, logger, message in entries:
         for key, pattern in PATTERNS.items():
@@ -1337,12 +1429,22 @@ def check_streams(report, entries, window_hours):
                 continue
             counts[key] += 1
             if key == "connectionLost":
-                lost_balance[match.group("name").strip()] += 1
-                lost_moments.append(moment)
+                name = match.group("name").strip()
+                # Twee keer wegvallen zonder herstel ertussen blijft één storing.
+                open_outages.setdefault(name, moment)
             elif key == "connectionRestored":
-                lost_balance[match.group("name").strip()] -= 1
+                name = match.group("name").strip()
+                start = open_outages.pop(name, None)
+                outages.append({"name": name, "start": start or moment, "end": moment,
+                                "how": "eigen herstel"})
             elif key == "restart":
                 restart_states[match.group("state")] += 1
+                if match.group("state") == "finished":
+                    # Een afgeronde herstart zet alles wat nog openstaat weer neer.
+                    for name, start in sorted(open_outages.items()):
+                        outages.append({"name": name, "start": start, "end": moment,
+                                        "how": "herstart"})
+                    open_outages.clear()
             elif key == "startedSubscriptions":
                 started_lines.append("{:%Y-%m-%d %H:%M} {}".format(moment, message.strip())
                                      if moment else message.strip())
@@ -1351,26 +1453,64 @@ def check_streams(report, entries, window_hours):
             elif key == "startingSubscriptions":
                 quotes.add(match.group("quotes"))
 
-    never_restored = {name: balance for name, balance in lost_balance.items() if balance > 0}
-    drops = counts["connectionLost"]
+    never_restored = dict(open_outages)
+    drops = len(outages) + len(never_restored)
     drops_per_hour = drops / window_hours if window_hours else 0.0
+
+    def minutes(outage):
+        if not outage["start"] or not outage["end"]:
+            return None
+        return (outage["end"] - outage["start"]).total_seconds() / 60.0
+
+    durations = [value for value in (minutes(outage) for outage in outages) if value is not None]
+    longest = max(durations) if durations else 0.0
+    by_restart = sum(1 for outage in outages if outage["how"] == "herstart")
 
     verdict = GOOD
     if never_restored:
         verdict = BAD
     elif drops_per_hour > DROPS_BAD_PER_HOUR:
         verdict = BAD
-    elif drops_per_hour > DROPS_ATTENTION_PER_HOUR:
+    elif drops_per_hour > DROPS_ATTENTION_PER_HOUR or longest > OUTAGE_ATTENTION_MINUTES:
         verdict = ATTENTION
 
     lines = ["| Meting | Waarde |", "|---|---|",
              "| Abonnementsgroepen gestart | {} |".format(counts["startedSubscriptions"]),
-             "| Verbindingen verbroken | {} ({:.2f} per uur) |".format(drops, drops_per_hour),
-             "| Verbindingen hersteld | {} |".format(counts["connectionRestored"]),
-             "| Abonnementen nooit hersteld | **{}** |".format(len(never_restored)),
+             "| Onderbrekingen | {} ({:.2f} per uur) |".format(drops, drops_per_hour),
+             "| Daarvan opgelost door de verbinding zelf | {} |".format(len(outages) - by_restart),
+             "| Daarvan opgelost door een herstart | {} |".format(by_restart),
+             "| Niet hersteld | **{}** |".format(len(never_restored)),
+             "| Langste onderbreking | {:.1f} minuten |".format(longest),
              "| Herstartrondes (afgerond) | {} |".format(restart_states.get("finished", 0)),
              "| Wijzigingen in de symbolenlijst | {} |".format(counts["symbolsChanged"]),
              ""]
+
+    if outages or never_restored:
+        lines.append("**Alle onderbrekingen**")
+        lines.append("")
+        lines.append("| Groep | Weg vanaf | Duur | Hersteld door |")
+        lines.append("|---|---|---|---|")
+        listed = sorted(outages, key=lambda outage: (outage["start"] or datetime.min))
+        for outage in listed[:40]:
+            duration = minutes(outage)
+            lines.append("| `{}` | {} | {} | {} |".format(
+                outage["name"],
+                "{:%Y-%m-%d %H:%M:%S}".format(outage["start"]) if outage["start"] else "?",
+                "{:.0f}s".format(duration * 60) if duration is not None and duration < 2
+                else ("{:.1f} min".format(duration) if duration is not None else "?"),
+                outage["how"]))
+        for name, start in sorted(never_restored.items()):
+            lines.append("| `{}` | {} | tot het einde van het venster | **niet hersteld** |".format(
+                name, "{:%Y-%m-%d %H:%M:%S}".format(start) if start else "?"))
+        if len(listed) > 40:
+            lines.append("")
+            lines.append("({} onderbrekingen meer, alleen de eerste 40 staan hier)".format(
+                len(listed) - 40))
+        lines.append("")
+        lines.append("Een herstart is een geldig herstel: de scanner zet de abonnementen opnieuw "
+                     "op en er volgt geen aparte hersteld-regel meer. Wat telt is of er daarna weer "
+                     "symbolen bediend worden - zie de bediend-regels hieronder.")
+        lines.append("")
 
     if quotes:
         lines.append("Geabonneerde quote-munten: {}".format("; ".join(sorted(quotes))))
@@ -1397,24 +1537,41 @@ def check_streams(report, entries, window_hours):
         lines.append("")
 
     # Als de onderbrekingen in de tijd samenklonteren is het meestal de eigen verbinding en niet
-    # de exchange.
-    if lost_moments:
-        per_hour = Counter(moment.strftime("%Y-%m-%d %H:00") for moment in lost_moments if moment)
+    # de exchange: alle groepen tegelijk weg wijst naar het netwerk hier, verspreid over de nacht
+    # naar de exchange.
+    all_moments = [outage["start"] for outage in outages if outage["start"]]
+    all_moments.extend(moment for moment in never_restored.values() if moment)
+    if all_moments:
+        per_hour = Counter(moment.strftime("%Y-%m-%d %H:00") for moment in all_moments)
         busiest = per_hour.most_common(5)
         lines.append("Onderbrekingen per uur (drukste eerst): {}".format(
             ", ".join("{} = {}".format(hour, count) for hour, count in busiest)))
         lines.append("")
+        together = max(per_hour.values())
+        if together >= 3 and len(per_hour) == 1:
+            lines.append("Alle onderbrekingen vielen in hetzelfde uur. Dat wijst eerder op de "
+                         "netwerkverbinding van deze machine dan op de exchange.")
+            lines.append("")
 
-    key_points = ["{} abonnementen nooit hersteld".format(len(never_restored)),
-                  "{} onderbrekingen ({:.2f} per uur)".format(drops, drops_per_hour)]
+    key_points = ["{} onderbrekingen ({:.2f} per uur)".format(drops, drops_per_hour)]
+    if never_restored:
+        key_points.insert(0, "{} niet hersteld".format(len(never_restored)))
+    if longest > OUTAGE_ATTENTION_MINUTES:
+        key_points.append("langste {:.0f} minuten".format(longest))
 
     facts = {
-        "connectionsLost": drops,
-        "connectionsRestored": counts["connectionRestored"],
+        "outages": drops,
+        "recoveredByConnection": len(outages) - by_restart,
+        "recoveredByRestart": by_restart,
         "neverRestored": sorted(never_restored),
         "dropsPerHour": round(drops_per_hour, 3),
+        "longestOutageMinutes": round(longest, 2),
         "restartRounds": restart_states.get("finished", 0),
         "symbolListChanges": counts["symbolsChanged"],
+        "outageList": [{"name": outage["name"],
+                        "start": str(outage["start"]) if outage["start"] else None,
+                        "minutes": round(minutes(outage), 2) if minutes(outage) is not None else None,
+                        "how": outage["how"]} for outage in outages],
     }
     report.add("streams", "Streams", verdict, lines, facts, key_points)
     return facts
@@ -1859,14 +2016,35 @@ def main():
     # Alles hierboven is lokale kloktijd; de databases bewaren UTC.
     utc_start, utc_end = to_utc(window_start), to_utc(window_end)
 
-    subscribed = subscribed_per_exchange(entries)
+    # Het log bevat meer dan deze run: NLog rolt om middernacht om, en de vorige sessie staat vaak
+    # in hetzelfde bestand. Storingen en fouten van gisterochtend horen niet in het verslag van
+    # vannacht, dus alles wat over de run gaat kijkt vanaf hier alleen binnen het venster.
+    def inside_window(collection):
+        if not (window_start and window_end):
+            return collection
+        return [entry for entry in collection
+                if entry[0] and window_start <= entry[0] <= window_end]
 
-    # Draait het proces nog? Het venster eindigt op de laatste logregel, dus als die vers is loopt
-    # de scanner op dit moment. Dat verandert wat een achterstand betekent: de opslagdraad heeft dan
+    window_entries = inside_window(entries)
+    window_error_entries = inside_window(error_entries)
+
+    # The subscription count is the yardstick for candle coverage, so it has to come from THIS run.
+    # Taken from the whole log it picks up the largest count of any earlier session in the same
+    # file, and a night that subscribed 125 symbols then gets measured against yesterday's 157.
+    subscribed = subscribed_per_exchange(window_entries)
+
+    # Draait het proces nog? Dat verandert wat een achterstand betekent: de opslagdraad heeft dan
     # nog niet weggeschreven, en zonder dat onderscheid staat elk rapport van een levende scanner
     # op oranje om een reden die geen gebrek is.
-    still_running = bool(window_end) and (
-        (datetime.now() - window_end).total_seconds() / 60.0 < STILL_RUNNING_MINUTES)
+    # De lock in de datamap is het enige harde antwoord. Een scanner kan minutenlang stil zijn -
+    # geen signaal, geen symbolenronde - en de leeftijd van de laatste logregel verklaart hem dan
+    # ten onrechte dood, met de strengste achterstandsgrenzen als gevolg. De leeftijd van de
+    # logregel blijft de terugval voor mappen zonder lock (een oudere sessie, een kopie).
+    still_running, running_source = process_is_running(folder)
+    if still_running is None:
+        still_running = bool(window_end) and (
+            (datetime.now() - window_end).total_seconds() / 60.0 < STILL_RUNNING_MINUTES)
+        running_source = "leeftijd van de laatste logregel"
 
     report = Report()
     settings_facts = check_settings(report, folder)
@@ -1875,8 +2053,8 @@ def main():
                   subscribed, arguments.deep, still_running)
     check_barometer(report, candle_databases, main_db, utc_start, utc_end, subscribed,
                     still_running)
-    check_streams(report, entries, window_hours or 1.0)
-    check_errors(report, entries, error_entries, arguments.top)
+    check_streams(report, window_entries, window_hours or 1.0)
+    check_errors(report, window_entries, window_error_entries, arguments.top)
     check_signals(report, main_db, exchange_names, utc_start, utc_end,
                   settings_facts.get("tradingActive", False))
     check_memory(report, folder, arguments.memory_csv)
@@ -1891,6 +2069,7 @@ def main():
         "windowHours": round(window_hours, 2),
         "windowSource": window_source,
         "stillRunning": still_running,
+        "stillRunningSource": running_source or "leeftijd van de laatste logregel",
         "generated": str(datetime.now().replace(microsecond=0)),
     }
     header_lines = [
@@ -1902,9 +2081,10 @@ def main():
             window_start or "?", window_end or "?", window_hours),
         "| Venster (utc) | {} tot {} |".format(utc_start or "?", utc_end or "?"),
         "| Venster ontleend aan | {} |".format(window_source),
-        "| Scanner | {} |".format(
+        "| Scanner | {} ({}) |".format(
             "draait nog - achterstand telt daarom ruimer" if still_running
-            else "gestopt - achterstand telt volledig mee"),
+            else "gestopt - achterstand telt volledig mee",
+            running_source or "leeftijd van de laatste logregel"),
         "| Logbestanden | {} hoofd, {} fouten |".format(len(main_logs), len(error_logs)),
         "| Rapport gemaakt op | {} |".format(header["generated"]),
     ]
