@@ -490,12 +490,6 @@ public static class GlobalData
         {
             symbol.Exchange = exchange;
 
-            if (symbol.Name == "" || exchange.SymbolListId.ContainsKey(symbol.Id))
-            {
-                // Already in memory, not a problem
-                //AddTextToLogTab($"DUPLICATE SYMBOL {exchange.Name} #{symbol.Id} {symbol.Name} {symbol.Base}/{symbol.Quote}?");
-            }
-
             if (!exchange.SymbolListId.ContainsKey(symbol.Id))
                 exchange.SymbolListId.Add(symbol.Id, symbol);
 
