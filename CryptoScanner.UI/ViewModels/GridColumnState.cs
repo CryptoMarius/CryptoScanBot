@@ -104,6 +104,7 @@ public class GridColumnState<TEnum> where TEnum : struct, Enum
         if (persisted == null || persisted.Count == 0)
             return;
 
+        Dictionary<TEnum, int> savedOrder = [];
         foreach (var saved in persisted)
         {
             if (Enum.TryParse<TEnum>(saved.SortMemberPath, out var col))
@@ -114,9 +115,35 @@ public class GridColumnState<TEnum> where TEnum : struct, Enum
                     runtime.IsVisible = saved.IsVisible;
                     if (saved.Width > 0)
                         runtime.Width = saved.Width;
-                    runtime.DisplayIndex = saved.DisplayIndex;
+                    savedOrder[col] = saved.DisplayIndex;
                 }
             }
         }
+
+        RestoreDisplayOrder(savedOrder);
+    }
+
+    /// <summary>
+    /// Rebuild the display order from the saved state. A column that is not in the saved state (added
+    /// in a newer version) keeps the position it has in the column definitions, directly behind the
+    /// column it follows there, instead of taking over the index of an existing column. The indexes
+    /// are handed out again afterwards so they stay unique, which the drag and drop reorder relies on.
+    /// </summary>
+    private void RestoreDisplayOrder(Dictionary<TEnum, int> savedOrder)
+    {
+        // Sort key per column: its own saved index when we know it, otherwise the saved index of the
+        // nearest preceding known column. The definition order is the tie breaker.
+        List<(int SavedIndex, int DefinitionIndex, ColumnRuntimeState<TEnum> Column)> order = [];
+        int previous = -1;
+        for (int i = 0; i < _columns.Count; i++)
+        {
+            if (savedOrder.TryGetValue(_columns[i].Column, out int savedIndex))
+                previous = savedIndex;
+            order.Add((previous, i, _columns[i]));
+        }
+
+        var sorted = order.OrderBy(o => o.SavedIndex).ThenBy(o => o.DefinitionIndex).ToList();
+        for (int i = 0; i < sorted.Count; i++)
+            sorted[i].Column.DisplayIndex = i;
     }
 }
