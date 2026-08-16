@@ -73,21 +73,9 @@ public partial class DashBoardInformationViewModel : ObservableObject
     [ObservableProperty]
     private decimal _barometer1d = 0;
 
-    // Market breadth per interval: the percentage of symbols that rose. The barometer above is an
-    // average and reads the same for "every coin rises a little" and "a few coins carry the move";
-    // the breadth tells those two apart. See BarometerResult for the other figures of the same
-    // measurement, which are stored in the barometer candles.
-    [ObservableProperty]
-    private decimal _rising1h = 0;
-
-    [ObservableProperty]
-    private decimal _rising4h = 0;
-
-    [ObservableProperty]
-    private decimal _rising1d = 0;
-
-    // The remaining figures - median, spread, coin count, skipped outliers - have no room of their
-    // own in this panel, so they live in the tooltip of each barometer row.
+    // The remaining figures - market breadth, median, spread, coin count, skipped outliers - have no
+    // room of their own in this panel, so they live in the tooltip of each barometer row. The
+    // breadth had a column of its own until it turned out to read as part of the chart next to it.
     [ObservableProperty]
     private string _barometer1hTooltip = string.Empty;
 
@@ -531,6 +519,12 @@ public partial class DashBoardInformationViewModel : ObservableObject
     }
 
 
+    /// <summary>
+    /// Opacity of the plates behind the labels in the chart, matching the 0.75 the Photino chart
+    /// uses. Fully opaque would cut a hole in the grid lines running behind them.
+    /// </summary>
+    private const byte PlateAlpha = 191;
+
     private static SKColor GetThemeColor(string themeColor)
     {
         var app = Application.Current;
@@ -546,6 +540,29 @@ public partial class DashBoardInformationViewModel : ObservableObject
     }
 
 
+    /// <summary>
+    /// Colour for the text drawn INTO the chart bitmap: black on the light theme, white on the dark
+    /// one, the same way the Photino chart follows --text-primary.
+    /// <para>
+    /// GetThemeColor() cannot serve this. Its fallback is white, which on the light theme is
+    /// invisible against the background - and text that vanishes instead of turning an odd colour is
+    /// the failure you do not notice. So the fallback here follows the theme variant instead.
+    /// </para>
+    /// </summary>
+    private static SKColor GetChartTextColor()
+    {
+        var app = Application.Current;
+        if (app?.TryGetResource("SystemControlForegroundBaseHighBrush", app.ActualThemeVariant, out object? resource) == true
+            && resource is SolidColorBrush brush)
+        {
+            var color = brush.Color;
+            return new SKColor(color.R, color.G, color.B, color.A);
+        }
+
+        return app?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark ? SKColors.White : SKColors.Black;
+    }
+
+
     private void CreateBarometerBitmap(CryptoSymbolInterval symbolPeriod)
     {
         int blocks = CryptoScanner.Core.Const.Constants.BarometerGraphHours;
@@ -554,10 +571,19 @@ public partial class DashBoardInformationViewModel : ObservableObject
         int intWidth = 400;
         int intHeight = 100;
 
-        // Get theme colors
+        // Get theme colors.
+        //
+        // Invoke and not Post: Post queues the delegate and returns immediately, so both colours were
+        // still at their default by the time the bitmap was drawn - bgColor stayed transparent, which
+        // is why the plates behind the labels never appeared. This method runs on a worker thread
+        // (Task.Run), so reading a themed resource has to hop to the UI thread and wait for it.
         SKColor bgColor = SKColor.Empty;
-        Dispatcher.UIThread.Post(() => { bgColor = GetThemeColor("SystemControlBackgroundAltHighBrush"); });
-        //var fgColor = GetForegroundColor();
+        SKColor fgColor = SKColors.Gray;
+        Dispatcher.UIThread.Invoke(() =>
+        {
+            bgColor = GetThemeColor("SystemControlBackgroundAltHighBrush");
+            fgColor = GetChartTextColor();
+        });
 
         var bitmap = new WriteableBitmap(new PixelSize(intWidth, intHeight), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
         using var frameBuffer = bitmap.Lock(); // unsafe?
@@ -734,7 +760,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         using var hourPaint = new SKPaint
         {
             IsAntialias = true,
-            Color = SKColors.Gray,
+            Color = fgColor,        // black on the light theme, white on the dark one
             Style = SKPaintStyle.Fill,
         };
 
@@ -758,7 +784,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
             float hourX = p1.X + 3;
             if (hourX + hourWidth <= intWidth)
             {
-                paint.Color = bgColor;
+                paint.Color = bgColor.WithAlpha(PlateAlpha);
                 paint.Style = SKPaintStyle.Fill;
                 canvas.DrawRect(hourX - 2, intHeight - 12, hourWidth + 4, 11, paint);
                 canvas.DrawText(hourText, hourX, intHeight - 3, SKTextAlign.Left, hourFont, hourPaint);
@@ -829,11 +855,11 @@ public partial class DashBoardInformationViewModel : ObservableObject
         using var timePaint = new SKPaint
         {
             IsAntialias = true,
-            Color = SKColors.WhiteSmoke,
+            Color = fgColor,        // black on the light theme, white on the dark one
             Style = SKPaintStyle.Fill,
         };
         float timeWidth = timeFont.MeasureText(timeText);
-        paint.Color = bgColor;
+        paint.Color = bgColor.WithAlpha(PlateAlpha);
         paint.Style = SKPaintStyle.Fill;
         canvas.DrawRect(1, 1, timeWidth + 4, 13, paint);
         canvas.DrawText(timeText, 3, 11, SKTextAlign.Left, timeFont, timePaint);
@@ -905,19 +931,16 @@ public partial class DashBoardInformationViewModel : ObservableObject
                         if (intervalPeriod == CryptoIntervalPeriod.interval1h)
                         {
                             Barometer1h = barometerData.PriceBarometer.Value;
-                            Rising1h = barometerData.PricePercentageRising ?? 0;
                             Barometer1hTooltip = tooltip;
                         }
                         else if (intervalPeriod == CryptoIntervalPeriod.interval4h)
                         {
                             Barometer4h = barometerData.PriceBarometer.Value;
-                            Rising4h = barometerData.PricePercentageRising ?? 0;
                             Barometer4hTooltip = tooltip;
                         }
                         else if (intervalPeriod == CryptoIntervalPeriod.interval1d)
                         {
                             Barometer1d = barometerData.PriceBarometer.Value;
-                            Rising1d = barometerData.PricePercentageRising ?? 0;
                             Barometer1dTooltip = tooltip;
                         }
                     }

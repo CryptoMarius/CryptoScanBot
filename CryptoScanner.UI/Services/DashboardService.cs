@@ -129,12 +129,6 @@ public class DashboardService : IDisposable
         public string CssClass { get; internal set; } = "";
 
         /// <summary>
-        /// Market breadth: the percentage of coins that rose. The average next to it reads the same
-        /// whether every coin rises a little or a handful carries the move; this tells them apart.
-        /// </summary>
-        public string Rising { get; internal set; } = "";
-
-        /// <summary>
         /// The remaining figures of the same measurement - median, spread, coin count, skipped
         /// outliers. The panel has no room for them, so they live in the tooltip of the row.
         /// See BarometerResult for what each of them means.
@@ -475,19 +469,14 @@ public class DashboardService : IDisposable
         var text = val.ToString("N2") + "%";
         var css = val > 0 ? "text-green" : val < 0 ? "text-red" : "";
 
-        // Breadth is a whole percentage: the decimals of "62.47% of the coins rose" are noise, and
-        // the column next to the barometer has no room for them.
-        var rising = barometer.PricePercentageRising.HasValue
-            ? barometer.PricePercentageRising.Value.ToString("N0") + "%"
-            : "";
-
+        // The breadth used to be shown next to the value; it is part of the tooltip now (Describe
+        // reports it as "Rising x% of the coins").
         var tooltip = BarometerCandleFields.Describe(barometer);
 
-        if (text != display.Value || css != display.CssClass || rising != display.Rising || tooltip != display.Tooltip)
+        if (text != display.Value || css != display.CssClass || tooltip != display.Tooltip)
         {
             display.Value = text;
             display.CssClass = css;
-            display.Rising = rising;
             display.Tooltip = tooltip;
             return true;
         }

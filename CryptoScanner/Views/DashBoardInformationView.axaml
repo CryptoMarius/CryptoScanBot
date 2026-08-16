@@ -93,10 +93,10 @@
                             ToolTip.Tip="Figure shown in the graph"/>
             </StackPanel>
 
-            <!-- Column 2 holds the market breadth: the share of coins that rose. The barometer in
-                 column 1 is an average and reads the same whether every coin rises a little or a
-                 handful carries the move; the breadth separates those two. -->
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,70,40" Height="25">
+            <!-- The market breadth (the share of coins that rose) used to have a column of its own
+                 here. It stood right against the chart and read as part of it, so it now only lives
+                 in the tooltip of the row, together with the other figures of the measurement. -->
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,70" Height="25">
                 <!-- ComboBox: Quote -->
                 <ComboBox Grid.Row="0" Grid.Column="0" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
                             SelectedItem="{Binding SelectedQuote}" VerticalAlignment="Center" HorizontalAlignment="Left"
@@ -114,9 +114,6 @@
                             FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"
                             Foreground="{Binding Barometer1h, Converter={StaticResource BarometerColorConverter}}"
                             ToolTip.Tip="{Binding Barometer1hTooltip}"/>
-                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Rising1h, StringFormat='{}{0:N0}%'}"
-                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"
-                            Opacity="0.7" ToolTip.Tip="{Binding Barometer1hTooltip}"/>
 
                 <!-- Barometer: 11h TextAlignment="Left" -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Barometer 4h:"
@@ -126,9 +123,6 @@
                             FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"
                             Foreground="{Binding Barometer4h, Converter={StaticResource BarometerColorConverter}}"
                             ToolTip.Tip="{Binding Barometer4hTooltip}"/>
-                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Rising4h, StringFormat='{}{0:N0}%'}"
-                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"
-                            Opacity="0.7" ToolTip.Tip="{Binding Barometer4hTooltip}"/>
 
                 <!-- Barometer: 1d -->
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Barometer 1d:"
@@ -138,9 +132,6 @@
                             FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"
                             Foreground="{Binding Barometer1d, Converter={StaticResource BarometerColorConverter}}"
                             ToolTip.Tip="{Binding Barometer1dTooltip}"/>
-                <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Rising1d, StringFormat='{}{0:N0}%'}"
-                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"
-                            Opacity="0.7" ToolTip.Tip="{Binding Barometer1dTooltip}"/>
             </Grid>
         </StackPanel>
         <Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="0" Margin="1,0"/>

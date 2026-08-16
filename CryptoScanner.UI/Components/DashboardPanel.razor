@@ -23,19 +23,21 @@
     <!-- Section 1: Status — 4 traffic lights -->
     <div class="dashboard-section" style="min-width:80px;">
         <div class="dashboard-heading">Status</div>
-        <div class="dashboard-row clickable" @onclick="DashboardService.ToggleScanner">
+        @* status-row: these rows carry a dot and a label and nothing that has to line up on the
+           right, so they drop the space-between of .dashboard-row - see app.css. *@
+        <div class="dashboard-row status-row clickable" @onclick="DashboardService.ToggleScanner">
             <span class="status-dot @(DashboardService.ScannerActive ? "active" : "")"></span>
             <span>Scanner</span>
         </div>
-        <div class="dashboard-row clickable" @onclick="DashboardService.ToggleTrader">
+        <div class="dashboard-row status-row clickable" @onclick="DashboardService.ToggleTrader">
             <span class="status-dot @(DashboardService.TraderActive ? "active" : "")"></span>
             <span>Trader</span>
         </div>
-        <div class="dashboard-row">
+        <div class="dashboard-row status-row">
             <span class="status-dot @DashboardService.RulezDotClass"></span>
             <span>Rulez</span>
         </div>
-        <div class="dashboard-row clickable" @onclick="DashboardService.ToggleSounds">
+        <div class="dashboard-row status-row clickable" @onclick="DashboardService.ToggleSounds">
             <span class="status-dot @(DashboardService.SoundsActive ? "active" : "")"></span>
             <span>@(string.IsNullOrEmpty(DashboardService.ApplicationStatusText) ? "Sound" : DashboardService.ApplicationStatusText)</span>
         </div>
@@ -74,12 +76,12 @@
                 }
             </select>
         </div>
-        @* The second value is the market breadth: the share of coins that rose. The barometer left
-           of it is an average, so it reads the same whether every coin rises a little or a handful
-           carries the move; the breadth separates those two. *@
-        <div class="dashboard-row" title="@DashboardService.Barometer1h.Tooltip"><span>Barometer 1h:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer1h.CssClass">@DashboardService.Barometer1h.Value</span><span class="dashboard-value dashboard-breadth text-muted">@DashboardService.Barometer1h.Rising</span></div>
-        <div class="dashboard-row" title="@DashboardService.Barometer4h.Tooltip"><span>Barometer 4h:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer4h.CssClass">@DashboardService.Barometer4h.Value</span><span class="dashboard-value dashboard-breadth text-muted">@DashboardService.Barometer4h.Rising</span></div>
-        <div class="dashboard-row" title="@DashboardService.Barometer1d.Tooltip"><span>Barometer 1d:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer1d.CssClass">@DashboardService.Barometer1d.Value</span><span class="dashboard-value dashboard-breadth text-muted">@DashboardService.Barometer1d.Rising</span></div>
+        @* The market breadth (the share of coins that rose) used to stand next to each value. It sat
+           right against the chart and read as part of it, so it now only lives in the tooltip of the
+           row, together with the other figures of the same measurement. *@
+        <div class="dashboard-row" title="@DashboardService.Barometer1h.Tooltip"><span>Barometer 1h:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer1h.CssClass">@DashboardService.Barometer1h.Value</span></div>
+        <div class="dashboard-row" title="@DashboardService.Barometer4h.Tooltip"><span>Barometer 4h:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer4h.CssClass">@DashboardService.Barometer4h.Value</span></div>
+        <div class="dashboard-row" title="@DashboardService.Barometer1d.Tooltip"><span>Barometer 1d:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer1d.CssClass">@DashboardService.Barometer1d.Value</span></div>
     </div>
     <div class="dashboard-separator"></div>
 

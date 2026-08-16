@@ -276,6 +276,14 @@ public class CryptoData2 : CryptoData
 
     public float AvgBB { get; set; }
 
+    // Band-range statistics of the symbol+interval at the moment of the signal (see
+    // BandRangeTracker): median band width times the favourable/adverse excursion ratio, plus the
+    // number of completed excursions behind it. Recorded only, no condition acts on it yet — the
+    // point is to be able to measure afterwards whether signals on a wide, well-behaved symbol
+    // really do better. Null when the tracker had too little history to say anything.
+    public double? BandRangeIndex { get; set; }
+    public short? BandRangeCount { get; set; }
+
     public override void AssignValues(CryptoData source)
     {
         base.AssignValues(source);
@@ -316,6 +324,9 @@ public class CryptoData2 : CryptoData
             Barometer1d = source2.Barometer1d;
 
             AvgBB = source2.AvgBB;
+
+            BandRangeIndex = source2.BandRangeIndex;
+            BandRangeCount = source2.BandRangeCount;
         }
     }
 }

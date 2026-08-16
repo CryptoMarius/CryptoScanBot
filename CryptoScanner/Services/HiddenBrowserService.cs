@@ -99,7 +99,9 @@ public class HiddenBrowserService : IDisposable
                         ShowInTaskbar = false, // Niet in taskbar tonen
                         CanResize = false,
                         SystemDecorations = SystemDecorations.None,
-                        Title = "Hidden Browser"
+                        // The exchange is in there because the task manager lists this window under
+                        // its own instance, and a bare name gives no clue which scanner it belongs to
+                        Title = $"Hidden Browser ({GlobalData.Settings.General.ExchangeName})"
                     };
 
                     // Create official Avalonia WebView

@@ -72,6 +72,14 @@ public static class WindowChrome
             if (platformService == null)
                 return;
 
+            // "Follow system" is answered by the browser, which cannot be asked until the page is
+            // up - and that is well after this window exists. Painting the guess in the meantime is
+            // what put a black bar on top of a light application, so leave the bar as Windows made
+            // it (light) and wait: the layout broadcasts a theme change as soon as it knows.
+            if (ThemeHelper.Normalize(GlobalData.Settings.General.Theme) == ThemeHelper.Default
+                && !ThemeHelper.SystemPreferenceKnown)
+                return;
+
             bool dark = ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme) == "dark";
             platformService.ApplyWindowTheme(window.WindowHandle, dark);
         }

@@ -183,13 +183,21 @@ public partial class SignalViewModel : BaseConvertersViewModel
     }
 
     //public double PriceChange => Object.Last24HoursChange;
-    private string? _PriceChangeText;
-    public string PriceChange
+    // How far the price has run since the signal was made. Deliberately NOT cached like the other
+    // columns: PriceDiff is calculated from the current price, so a cached string would freeze on
+    // whatever the price was when the row was first drawn. The 24 hour change has its own column.
+    public string PriceChange => Object.PriceDiff?.ToString("N2") ?? "";
+
+    private IBrush? _PriceChangeForeground;
+    public IBrush PriceChangeForeground
     {
         get
         {
-            _PriceChangeText ??= Object.Last24HoursChange.ToString("N2");
-            return _PriceChangeText!;
+            // Seen from the side of the signal: green means the price moved the way the signal hoped
+            // for. Colouring the raw PriceDiff would paint a short that is winning red.
+            _PriceChangeForeground ??= GetBrushColorViaSign(
+                Object.Side == CryptoTradeSide.Long ? Object.PriceDiff : -Object.PriceDiff);
+            return _PriceChangeForeground!;
         }
     }
 
@@ -277,6 +285,39 @@ public partial class SignalViewModel : BaseConvertersViewModel
         {
             _AvgBBText ??= Object.AvgBB.ToString("N2");
             return _AvgBBText!;
+        }
+    }
+
+    // Band-range statistics recorded at the moment of the signal (see BandRangeTracker):
+    // median band width x favourable/adverse excursion ratio, plus the number of excursions behind
+    // it. Empty when the tracker had too little history to say anything.
+    private string? _RangeIndexText;
+    public string RangeIndex
+    {
+        get
+        {
+            _RangeIndexText ??= Object.BandRangeIndex?.ToString("N2") ?? "";
+            return _RangeIndexText!;
+        }
+    }
+
+    private IBrush? _RangeIndexForeground;
+    public IBrush RangeIndexForeground
+    {
+        get
+        {
+            _RangeIndexForeground ??= GetBrushColorBandRangeIndex(Object.BandRangeIndex);
+            return _RangeIndexForeground!;
+        }
+    }
+
+    private string? _RangeCountText;
+    public string RangeCount
+    {
+        get
+        {
+            _RangeCountText ??= Object.BandRangeCount?.ToString() ?? "";
+            return _RangeCountText!;
         }
     }
 

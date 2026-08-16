@@ -1,9 +1,11 @@
 CryptoScanBot signal scanner for the following exchanges:
 - Binance Spot and Futures
+- Bitmart Spot and Futures
 - Bitvavo Spot
 - BloFin Futures
 - Bybit Spot and Futures
 - Bybit EU Spot
+- Coinbase Spot
 - HyperLiquid Spot and Futures
 - Kraken Spot and Futures
 - Kucoin Spot and Futures

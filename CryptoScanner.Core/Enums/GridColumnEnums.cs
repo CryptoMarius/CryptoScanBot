@@ -36,6 +36,8 @@ public enum SignalColumnEnum
     BbUpper,
     BbLower,
     AvgBB,
+    RangeIndex,
+    RangeCount,
 
     Rsi,
     LuxIndicator5m,
@@ -116,6 +118,8 @@ public enum PositionColumnEnum
     BbUpper,
     BbLower,
     AvgBB,
+    RangeIndex,
+    RangeCount,
 
     Rsi,
     //SlopeRsi,
@@ -162,6 +166,8 @@ public enum LiveDataColumnEnum
     BB,
     BbUpper,
     BbLower,
+    RangeIndex,
+    RangeCount,
     Rsi,
     LuxIndicator5m,
     MacdValue,

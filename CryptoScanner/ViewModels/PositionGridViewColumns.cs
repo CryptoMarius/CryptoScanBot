@@ -68,6 +68,8 @@ public class PositionColumnComparer : IComparer
                     PositionColumnEnum.LastXDaysEffective => ObjectCompare.Compare(a.Object.LastXDaysEffective, b.Object.LastXDaysEffective),
                     PositionColumnEnum.BB => ObjectCompare.Compare(a.Object.BollingerBandsPercentage, b.Object.BollingerBandsPercentage),
                     PositionColumnEnum.AvgBB => ObjectCompare.Compare(a.Object.AvgBB, b.Object.AvgBB),
+                    PositionColumnEnum.RangeIndex => ObjectCompare.Compare(a.Object.BandRangeIndex, b.Object.BandRangeIndex),
+                    PositionColumnEnum.RangeCount => ObjectCompare.Compare(a.Object.BandRangeCount, b.Object.BandRangeCount),
                     PositionColumnEnum.MacdValue => ObjectCompare.Compare(a.Object.MacdValue, b.Object.MacdValue),
                     PositionColumnEnum.MacdSignal => ObjectCompare.Compare(a.Object.MacdSignal, b.Object.MacdSignal),
                     PositionColumnEnum.MacdHistogram => ObjectCompare.Compare(a.Object.MacdHistogram, b.Object.MacdHistogram),

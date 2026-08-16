@@ -262,7 +262,13 @@ class Program
         _stateService = app.Services.GetRequiredService<ApplicationStateService>();
 
         app.MainWindow
-            .SetTitle("CryptoScanBot")
+            // Not a constant: several instances run side by side and the exchange in the title is
+            // what tells them apart in the taskbar and in the task manager. A constant here also
+            // overwrote the title that ApplyConfigurationAsync had just pushed through
+            // GlobalData.SetTitle, which is why the Photino instances all showed up as plain
+            // "CryptoScanBot". The settings are loaded by AfterStartup() above, so the exchange
+            // name is known at this point.
+            .SetTitle(GlobalData.ApplicationTitle)
             // The icon has to be set before the native window is created, so it belongs here and
             // not in the window-created handler below.
             .ApplyIcon()
@@ -276,6 +282,10 @@ class Program
         // which looks broken under the dark theme. It needs the native window handle, so it can only
         // be done once the window exists - and again on every theme switch.
         app.MainWindow.RegisterWindowCreatedHandler((_, _) => WindowChrome.ApplyTitleBarTheme(app.MainWindow));
+        // Same reason for the title: a caption set before the native window exists is not always
+        // carried over to it, and without it the task manager shows every instance under the same
+        // name.
+        app.MainWindow.RegisterWindowCreatedHandler((_, _) => app.MainWindow.SetTitle(GlobalData.ApplicationTitle));
         // _themeRecipient is a static field on purpose: the messenger holds its subscribers weakly,
         // so a throwaway object here would be collected and the registration would stop working.
         WeakReferenceMessenger.Default.Register<CryptoScanner.Core.Messages.ThemeChangedMessage>(

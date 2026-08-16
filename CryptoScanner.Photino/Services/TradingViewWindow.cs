@@ -92,7 +92,7 @@ public sealed class TradingViewWindow
             GlobalData.AddTextToLogTab($"Opening the TradingView window: {url}");
 
             var window = new PhotinoWindow()
-                .SetTitle("TradingView")
+                .SetTitle($"TradingView ({GlobalData.Settings.General.ExchangeName})")
                 .ApplyIcon()
                 .SetUseOsDefaultSize(false)
                 .SetSize(1400, 900)

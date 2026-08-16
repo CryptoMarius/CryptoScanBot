@@ -194,8 +194,7 @@ public class ScannerSession : IScannerSession
 
     private static void SetApplicationTitle()
     {
-        string title = $"{Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
-        GlobalData.SetTitle?.Invoke(title);
+        GlobalData.SetTitle?.Invoke(GlobalData.ApplicationTitle);
     }
 
 

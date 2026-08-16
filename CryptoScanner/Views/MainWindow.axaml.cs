@@ -103,7 +103,11 @@ public partial class MainWindow : Window
                 TitleBarGrid.Margin = new Thickness(80, 0, 0, 0);  // 80px rechts
         }
 
-        Title = $"{Core.Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
+        // Through the view model, not through Window.Title: the XAML binds Title to the view model,
+        // so a value assigned here loses out as soon as that binding produces one - and its default
+        // is the bare application name. Whichever of the two ran last decided what the task manager
+        // showed, which is why some instances did not mention their exchange at all.
+        viewModel.Title = GlobalData.ApplicationTitle;
         CreateMenuItems();
 
         _signalView = new SignalGridView { DataContext = viewModel.SignalGridViewModel };

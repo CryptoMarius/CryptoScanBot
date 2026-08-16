@@ -393,6 +393,18 @@ public class SignalCreate
         }
 
 
+        // Record how much room this symbol had between its bands and how the price behaved after
+        // earlier band touches (see BandRangeTracker). Recorded only - nothing rejects a signal on
+        // it - so that it can be measured later whether a wide, well-behaved symbol does better.
+        // Both stay null while the tracker has too few completed excursions to say anything.
+        BandRangeTracker? bandRange = Symbol.GetSymbolInterval(Interval.IntervalPeriod).BandRange;
+        if (bandRange != null)
+        {
+            signal.BandRangeIndex = bandRange.Index;
+            signal.BandRangeCount = (short)bandRange.MeasurementCount;
+        }
+
+
 
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and that is why it is on the end of the routine)
         _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Primary);

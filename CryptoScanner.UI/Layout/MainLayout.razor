@@ -343,9 +343,9 @@
             _dotNetRef ??= DotNetObjectReference.Create(this);
             try
             {
-                ThemeHelper.SystemPrefersDark = await JS.InvokeAsync<bool>("cryptoScannerTheme.prefersDark");
+                bool prefersDark = await JS.InvokeAsync<bool>("cryptoScannerTheme.prefersDark");
                 await JS.InvokeVoidAsync("cryptoScannerTheme.watch", _dotNetRef);
-                ApplyTheme();
+                ReportSystemPreference(prefersDark);
             }
             catch (JSException)
             {
@@ -371,8 +371,25 @@
     [JSInvokable]
     public void OnSystemThemeChanged(bool prefersDark)
     {
-        ThemeHelper.SystemPrefersDark = prefersDark;
+        ReportSystemPreference(prefersDark);
+    }
+
+    /// <summary>
+    /// Hand the browser's prefers-color-scheme answer to the shared helper and repaint.
+    /// <para>
+    /// The broadcast is for the host, not for this layout: it draws the title bar of the native
+    /// window and has no way of noticing that the browser has answered. Only when the answer is
+    /// news - the first one, or a real change - so a "Follow system" that agrees with the guess
+    /// still reaches the host once.
+    /// </para>
+    /// </summary>
+    private void ReportSystemPreference(bool prefersDark)
+    {
+        bool news = !ThemeHelper.SystemPreferenceKnown || ThemeHelper.SystemPrefersDark != prefersDark;
+        ThemeHelper.ReportSystemPreference(prefersDark);
         ApplyTheme();
+        if (news)
+            GlobalData.SendMvvmMessage(new ThemeChangedMessage());
     }
 
     [JSInvokable]

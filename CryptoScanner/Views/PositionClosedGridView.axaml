@@ -347,6 +347,25 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
+			<!-- Range index: median band width x favourable/adverse ratio (see BandRangeTracker) -->
+			<DataGridTemplateColumn Header="Range" Width="60" SortMemberPath="RangeIndex"  IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Text="{Binding RangeIndex}" Foreground="{Binding RangeIndexForeground}"/>
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
+			<!-- Number of completed excursions behind the range index -->
+			<DataGridTemplateColumn Header="Range n" Width="60" SortMemberPath="RangeCount"  IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding RangeCount}"/>
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
 			<!-- RSI -->
 			<DataGridTemplateColumn Header="Rsi" Width="60" SortMemberPath="Rsi" IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>

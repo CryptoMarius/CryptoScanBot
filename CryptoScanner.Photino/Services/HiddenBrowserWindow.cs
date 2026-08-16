@@ -99,7 +99,7 @@ public sealed class HiddenBrowserWindow
             GlobalData.AddTextToLogTab($"Opening the hidden browser: {url}");
 
             var window = new PhotinoWindow()
-                .SetTitle("CryptoScanBot trading app launcher")
+                .SetTitle($"CryptoScanBot trading app launcher ({GlobalData.Settings.General.ExchangeName})")
                 .SetUseOsDefaultSize(false)
                 .SetSize(800, 600)
                 .SetUseOsDefaultLocation(false)

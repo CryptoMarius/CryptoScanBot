@@ -62,6 +62,8 @@ public class PositionViewModel
             PositionColumnEnum.BbUpper => Object.BollingerBandsUpperBand.ToString0(Object.Symbol.PriceDisplayFormat),
             PositionColumnEnum.BbLower => Object.BollingerBandsLowerBand.ToString0(Object.Symbol.PriceDisplayFormat),
             PositionColumnEnum.AvgBB => Object.AvgBB.ToString("N2"),
+            PositionColumnEnum.RangeIndex => Object.BandRangeIndex?.ToString("N2") ?? "",
+            PositionColumnEnum.RangeCount => Object.BandRangeCount?.ToString() ?? "",
 
             PositionColumnEnum.Rsi => Object.Rsi?.ToString("N2") ?? "",
             PositionColumnEnum.LuxIndicator5m => Object.LuxIndicator5m?.ToString("N0") ?? "",
@@ -98,6 +100,7 @@ public class PositionViewModel
         return column switch
         {
             PositionColumnEnum.Side => ColorHelper.GetColorClassSide(Object.Side),
+            PositionColumnEnum.RangeIndex => ColorHelper.GetColorClassBandRangeIndex(Object.BandRangeIndex),
             PositionColumnEnum.Status => ColorHelper.GetColorClassPositionStatus(Object.Status),
             PositionColumnEnum.CurrentProfit => ColorHelper.GetColorClassViaSign(Object.CurrentProfit()),
             PositionColumnEnum.CurrentProfitPercentage => ColorHelper.GetColorClassViaSign(Object.CurrentProfit()),

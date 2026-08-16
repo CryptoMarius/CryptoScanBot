@@ -28,7 +28,7 @@ public class SignalViewModel
             SignalColumnEnum.Strategy => Object.StrategyText,
             SignalColumnEnum.EventText => Object.EventText ?? "",
             SignalColumnEnum.SignalPrice => Object.SignalPrice.ToString(Object.Symbol?.PriceDisplayFormat ?? "N8"),
-            SignalColumnEnum.PriceChange => Object.Last24HoursChange.ToString("N2"),
+            SignalColumnEnum.PriceChange => Object.PriceDiff?.ToString("N2") ?? "",
             SignalColumnEnum.SignalVolume => Object.SignalVolume.ToString("N0"),
 
             SignalColumnEnum.TrendInterval => FormatTrend(Object.TrendInterval),
@@ -41,6 +41,8 @@ public class SignalViewModel
             SignalColumnEnum.BbLower => Object.BollingerBandsLowerBand?.ToString(Object.Symbol?.PriceDisplayFormat ?? "N8") ?? "-",
             SignalColumnEnum.BbUpper => Object.BollingerBandsUpperBand?.ToString(Object.Symbol?.PriceDisplayFormat ?? "N8") ?? "-",
             SignalColumnEnum.AvgBB => Object.AvgBB.ToString("N2"),
+            SignalColumnEnum.RangeIndex => Object.BandRangeIndex?.ToString("N2") ?? "",
+            SignalColumnEnum.RangeCount => Object.BandRangeCount?.ToString() ?? "",
 
             SignalColumnEnum.Rsi => Object.Rsi?.ToString("N2") ?? "-",
             SignalColumnEnum.LuxIndicator5m => Object.LuxIndicator5m?.ToString("N0") ?? "-",
@@ -76,7 +78,8 @@ public class SignalViewModel
         return column switch
         {
             SignalColumnEnum.Side => ColorHelper.GetColorClassSide(Object.Side),
-            SignalColumnEnum.PriceChange => ColorHelper.GetColorClassViaSign(Object.Last24HoursChange),
+            SignalColumnEnum.RangeIndex => ColorHelper.GetColorClassBandRangeIndex(Object.BandRangeIndex),
+            SignalColumnEnum.PriceChange => ColorHelper.GetColorClassViaSign(PriceDiffInSignalDirection),
             SignalColumnEnum.Last24HoursChange => ColorHelper.GetColorClassViaSign(Object.Last24HoursChange),
 
             SignalColumnEnum.TrendInterval => ColorHelper.GetColorClassTrend(Object.TrendInterval),
@@ -139,6 +142,13 @@ public class SignalViewModel
         }
         return "";
     }
+
+    /// <summary>
+    /// PriceDiff seen from the side of the signal: positive means the price moved the way the signal
+    /// hoped for. Colouring the raw PriceDiff would paint a short that is winning red.
+    /// </summary>
+    private double? PriceDiffInSignalDirection
+        => Object.Side == CryptoTradeSide.Long ? Object.PriceDiff : -Object.PriceDiff;
 
     private string FormatDate()
     {

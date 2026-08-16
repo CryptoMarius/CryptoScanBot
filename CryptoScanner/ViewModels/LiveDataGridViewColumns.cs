@@ -36,6 +36,12 @@ public class LiveDataColumnComparer : IComparer
                     LiveDataColumnEnum.BbUpper => ObjectCompare.Compare(a.Object.CandleData?.BollingerBandsUpperBand, b.Object.CandleData?.BollingerBandsUpperBand),
                     LiveDataColumnEnum.BbLower => ObjectCompare.Compare(a.Object.CandleData?.BollingerBandsLowerBand, b.Object.CandleData?.BollingerBandsLowerBand),
                     //LiveDataColumnEnum.AvgBB => ObjectCompare.Compare(a.Object.CandleData?.AvgBB, b.Object.CandleData?.AvgBB),
+                    LiveDataColumnEnum.RangeIndex => ObjectCompare.Compare(
+                        a.Object.Symbol.GetSymbolInterval(a.Object.Interval.IntervalPeriod).BandRange?.Index,
+                        b.Object.Symbol.GetSymbolInterval(b.Object.Interval.IntervalPeriod).BandRange?.Index),
+                    LiveDataColumnEnum.RangeCount => ObjectCompare.Compare(
+                        a.Object.Symbol.GetSymbolInterval(a.Object.Interval.IntervalPeriod).BandRange?.MeasurementCount,
+                        b.Object.Symbol.GetSymbolInterval(b.Object.Interval.IntervalPeriod).BandRange?.MeasurementCount),
                     LiveDataColumnEnum.MacdValue => ObjectCompare.Compare(a.Object.CandleData?.MacdValue, b.Object.CandleData?.MacdValue),
                     LiveDataColumnEnum.MacdSignal => ObjectCompare.Compare(a.Object.CandleData?.MacdSignal, b.Object.CandleData?.MacdSignal),
                     LiveDataColumnEnum.MacdHistogram => ObjectCompare.Compare(a.Object.CandleData?.MacdHistogram, b.Object.CandleData?.MacdHistogram),

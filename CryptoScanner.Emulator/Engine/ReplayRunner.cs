@@ -923,6 +923,7 @@ public sealed class ReplayRunner
                 symbolInterval.IndicatorHub = null;
                 symbolInterval.IndicatorHubLastAdded = null;
                 symbolInterval.IndicatorHubAddCount = 0;
+                symbolInterval.BandRange = null;
 
                 // Indicator data cache (CryptoData per candle)
                 symbolInterval.Data.Clear();

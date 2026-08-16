@@ -2,6 +2,7 @@
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Indicators;
 using CryptoScanner.Services;
 
 namespace CryptoScanner.ViewModels;
@@ -137,6 +138,41 @@ public class LiveDataViewModel : BaseConvertersViewModel
         {
             _BbUpperText ??= Object.CandleData?.BollingerBandsUpperBand.ToString0(Object.Symbol.PriceDisplayFormat);
             return _BbUpperText!;
+        }
+    }
+
+    // Band-range statistics, kept per symbol+interval next to the indicator hub. Not part of
+    // CandleData: it describes the last few hundred candles, not this single one.
+    private BandRangeTracker? BandRange
+        => Object.Symbol.GetSymbolInterval(Object.Interval.IntervalPeriod).BandRange;
+
+    private string? _RangeIndexText;
+    public string RangeIndex
+    {
+        get
+        {
+            _RangeIndexText ??= BandRange?.Index?.ToString("N2") ?? "";
+            return _RangeIndexText!;
+        }
+    }
+
+    private IBrush? _RangeIndexForeground;
+    public IBrush RangeIndexForeground
+    {
+        get
+        {
+            _RangeIndexForeground ??= GetBrushColorBandRangeIndex(BandRange?.Index);
+            return _RangeIndexForeground!;
+        }
+    }
+
+    private string? _RangeCountText;
+    public string RangeCount
+    {
+        get
+        {
+            _RangeCountText ??= BandRange?.MeasurementCount.ToString() ?? "";
+            return _RangeCountText!;
         }
     }
 

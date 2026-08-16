@@ -21,6 +21,22 @@ public partial class BaseConvertersViewModel : ObservableObject
         BrushNeutral = App.GetBrushResource("PriceNeutralBrush");
     }
 
+    /// <summary>
+    /// Colours the band-range index (see BandRangeTracker). Three buckets, no finer: the difference
+    /// between 2.6 and 2.9 is inside the measurement noise. Above 3 was the level where a plain
+    /// mean-reversion entry turned profitable in the measurement, under 2 it never did.
+    /// </summary>
+    internal IBrush GetBrushColorBandRangeIndex(double? index)
+    {
+        if (index == null)
+            return BrushNeutral;
+        if (index >= 3.0)
+            return BrushGreen;
+        if (index < 2.0)
+            return BrushRed;
+        return BrushNeutral;
+    }
+
     internal IBrush GetBrushColorViaSign(double value)
     {
         if (value < 0)

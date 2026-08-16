@@ -92,6 +92,15 @@ public static class GlobalData
 
     public static Action<string>? SetTheme { get; set; }
     public static Action<string>? SetTitle { get; set; }
+
+    /// <summary>
+    /// The window caption: application, version, exchange and the user's own extra caption. Every
+    /// host builds its title from this, so a machine running several instances stays readable in
+    /// the taskbar and in the task manager (which shows the window title per process).
+    /// </summary>
+    public static string ApplicationTitle =>
+        $"{Constants.AppName} {AppVersion} {Settings.General.ExchangeName} {Settings.General.ExtraCaption}".Trim();
+
     public static Action? RequestShutdown { get; set; }
 
     // Amount of signals created

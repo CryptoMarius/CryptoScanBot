@@ -32,7 +32,25 @@ public static class ThemeHelper
     /// (prefers-color-scheme) and drop the answer here, so every screen resolves it the same way.
     /// Dark until told otherwise, which is what the application used to assume unconditionally.
     /// </summary>
-    public static bool SystemPrefersDark { get; set; } = true;
+    public static bool SystemPrefersDark { get; private set; } = true;
+
+    /// <summary>
+    /// False as long as <see cref="SystemPrefersDark"/> is still the starting guess above. The
+    /// browser can only be asked once the page is up, so everything that runs before that - the
+    /// title bar of the native window, for one - would otherwise paint a colour that is not based
+    /// on anything. Such a caller can wait for the answer instead of guessing.
+    /// </summary>
+    public static bool SystemPreferenceKnown { get; private set; }
+
+    /// <summary>
+    /// The browser answered prefers-color-scheme (or reported that it changed). A method and not a
+    /// setter, because it writes the flag above as well.
+    /// </summary>
+    public static void ReportSystemPreference(bool prefersDark)
+    {
+        SystemPrefersDark = prefersDark;
+        SystemPreferenceKnown = true;
+    }
 
     /// <summary>The value the Blazor layout puts in the data-theme attribute.</summary>
     public static string ToCssTheme(string? theme)

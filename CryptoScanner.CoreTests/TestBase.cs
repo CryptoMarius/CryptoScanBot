@@ -149,6 +149,7 @@ public class TestBase
             symbolInterval.IndicatorHub = null;
             symbolInterval.IndicatorHubLastAdded = null;
             symbolInterval.IndicatorHubAddCount = 0;
+            symbolInterval.BandRange = null;
             symbolInterval.Data.Clear();
             symbolInterval.ResetTrendData();
         }

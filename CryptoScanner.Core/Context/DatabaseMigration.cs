@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 83;
+    public readonly static int CurrentDatabaseVersion = 84;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1175,8 +1175,11 @@ public class DatabaseMigration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("alter table signal drop column [EventTime]", transaction);
-            database.Connection.Execute("drop table [zone]", transaction);
+            // Both statements are optional: a database coming from version 46 or 54 already had
+            // its Zone table dropped there (it is only recreated by CreateTables *after* the
+            // migration finished), which made this step abort with "no such table: zone".
+            try { database.Connection.Execute("alter table signal drop column [EventTime]", transaction); } catch { } // ignore
+            try { database.Connection.Execute("drop table [zone]", transaction); } catch { } // ignore, already dropped in version 46/54
 
             // update version
             version.Version += 1;
@@ -1703,6 +1706,29 @@ public class DatabaseMigration
         if (CurrentVersion > version.Version && version.Version == 82)
         {
             using var transaction = database.BeginTransaction();
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 16-08-2026 Record the band-range statistics with every signal and position. BandRangeIndex
+        // is the median Bollinger band width times the ratio between the favourable and the adverse
+        // excursion after a band touch (see BandRangeTracker), BandRangeCount is the number of
+        // completed excursions behind it - below ten the index is not filled at all. Nothing acts on
+        // these two yet; they are stored so it can be measured afterwards whether signals on a wide,
+        // well-behaved symbol really do perform better.
+        if (CurrentVersion > version.Version && version.Version == 83)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Signal add column BandRangeIndex TEXT null", transaction);
+            database.Connection.Execute("alter table Signal add column BandRangeCount INTEGER null", transaction);
+            database.Connection.Execute("alter table Position add column BandRangeIndex TEXT null", transaction);
+            database.Connection.Execute("alter table Position add column BandRangeCount INTEGER null", transaction);
 
             // update version
             version.Version += 1;
