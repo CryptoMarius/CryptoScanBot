@@ -107,12 +107,6 @@ rem echo Alpaca
 rem del /f /q "%DATA%\Alpaca\Log\*.*" 2>nul
 
 echo.
-echo Done. Log files that are still listed below were open and could not be
-echo deleted (a scanner is still using them):
-echo.
-dir /b /s "%DATA%\*.log" 2>nul
-
-echo.
 pause
 exit /b 0
 

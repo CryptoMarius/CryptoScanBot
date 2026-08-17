@@ -37,6 +37,9 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 // index volume
                 SortedList<string, decimal> volumeTicker = [];
+                // The price of the moment, only used to cap the price tick size below so the candle
+                // storage cannot overflow. Not a property of the symbol, so it is not stored anywhere.
+                SortedList<string, decimal> priceTicker = [];
                 if (tickerInfo.Data != null && tickerInfo.Data != null)
                 {
                     foreach (var tickerData in tickerInfo.Data.Tickers)
@@ -45,6 +48,7 @@ public class Symbol() : SymbolBase(), ISymbol
                         {
                             string symbolName = tickerData.Symbol.Replace("/", "");
                             volumeTicker.TryAdd(symbolName, tickerData.QuoteVolume);
+                            priceTicker.TryAdd(symbolName, tickerData.MidPrice ?? tickerData.MarkPrice);
                         }
                     }
                 }
@@ -101,7 +105,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 // min, max en tick (in base amount)
                                 //if (symbolData.Base.PriceDecimals)
                                 //    symbol.QuantityTickSize = symbolData.LotSize.Value;
-                                symbol!.QuantityTickSize = symbolData.BaseAsset.QuantityDecimals;
+                                // QuantityDecimals is szDecimals, a NUMBER of decimals and not a tick
+                                // size, so it has to be converted (see SymbolBase.TickSizeFromDecimals).
+                                symbol!.QuantityTickSize = TickSizeFromDecimals(symbolData.BaseAsset.QuantityDecimals);
                                 //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
@@ -115,7 +121,28 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.PriceMinimum = symbolInfo.LotSizeFilter.MinOrderValue;
                                 //symbol.PriceMaximum = symbolInfo.LotSizeFilter.MaxOrderValue;
 
-                                symbol.PriceTickSize = symbolData.BaseAsset.PriceDecimals;
+                                // NOT BaseAsset.PriceDecimals: that field is weiDecimals, the on-chain
+                                // precision of the token, which has nothing to do with the price grid of
+                                // the market (the name the package gives it is misleading). HyperLiquid
+                                // states the rule instead: a spot price carries at most 8 - szDecimals
+                                // decimals. Checked against the mid price of all 293 pairs that quote one
+                                // (17-08-2026): not a single price needed more decimals than that.
+                                //
+                                // Assigning the decimals straight into PriceTickSize, the way it used to
+                                // happen here, made GlobalData derive ZERO decimals from it, after which
+                                // every candle was stored rounded to a whole number: 42 of the 80 symbols
+                                // that traded ended up with nothing but zero prices, and 53% of the whole
+                                // 1m history was zero. The candle store has to be refetched once.
+                                int priceDecimals = 8 - symbolData.BaseAsset.QuantityDecimals;
+                                if (priceDecimals < 0)
+                                    priceDecimals = 0;
+
+                                // A tick that fine on a four digit price does not fit in the int a candle
+                                // stores its price in (TSLA/USDC at 14162 would need 14.2 billion ticks),
+                                // so the price of the moment decides how far the precision can go.
+                                priceTicker.TryGetValue(symbol.Name, out decimal referencePrice);
+                                symbol.PriceTickSize = TickSizeFromDecimals(
+                                    LimitDecimalsToCandleRange(priceDecimals, referencePrice));
 
                                 //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???

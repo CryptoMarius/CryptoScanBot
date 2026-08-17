@@ -131,6 +131,13 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter.MaxOrderQuantity;
                                 //symbol.QuantityTickSize = symbolInfo.LotSizeFilter.QuantityStep;
 
+                                // Kraken has no quantity step of its own, it states lot_decimals - a
+                                // NUMBER of decimals, so it needs the conversion (see
+                                // SymbolBase.TickSizeFromDecimals). Without this 1374 of the 1580 pairs
+                                // kept a quantity tick size of zero, which makes every amount
+                                // calculation wrong the moment the trading is switched on.
+                                symbol!.QuantityTickSize = TickSizeFromDecimals(symbolData.LotDecimals);
+
                                 // The minimum and maximum price for an order (in base price)
                                 // The definitions do contain a minPrice and a maxPrice, but they are not filled
                                 // (which has consequences for the Clamp, which does expect values)

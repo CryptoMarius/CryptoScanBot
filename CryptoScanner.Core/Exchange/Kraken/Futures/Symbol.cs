@@ -143,6 +143,16 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter.MaxOrderQuantity;
                                 //symbol.QuantityTickSize = symbolInfo.LotSizeFilter.QuantityStep;
 
+                                // Kraken Futures has no quantity step either, it states
+                                // contractValueTradePrecision - a NUMBER of decimals that may be
+                                // negative as well (-2 means the contract trades in steps of 100), which
+                                // is why the conversion has to handle both directions. Times the
+                                // contract size, the way the other futures markets do it; on Kraken that
+                                // is 1 on all 300 instruments today, so it changes nothing yet.
+                                // Without this 276 of the 287 instruments kept a tick size of zero.
+                                symbol!.QuantityTickSize = TickSizeFromDecimals((int)(symbolData.ContractValueTradePrecision ?? 0))
+                                    * (symbolData.ContractSize ?? 1);
+
                                 // The minimum and maximum price for an order (in base price)
                                 // The definitions do contain a minPrice and a maxPrice, but they are not filled
                                 // (which has consequences for the Clamp, which does expect values)

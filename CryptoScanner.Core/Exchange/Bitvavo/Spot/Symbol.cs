@@ -177,13 +177,9 @@ public class Symbol() : SymbolBase(), ISymbol
 
     // Turns a number of decimals into a tick size (3 -> 0.001). Multiplying stays exact in decimal,
     // where the Math.Pow detour would go through a double first.
-    private static decimal GetTickSizeFromDecimals(int decimals)
-    {
-        decimal tickSize = 1m;
-        for (int i = 0; i < decimals; i++)
-            tickSize *= 0.1m;
-        return tickSize;
-    }
+    // Moved to SymbolBase on 17-08-2026, because Kraken and HyperLiquid state their precision the
+    // same way and were writing the number of decimals into the tick size field unconverted.
+    private static decimal GetTickSizeFromDecimals(int decimals) => TickSizeFromDecimals(decimals);
 
     // Derives a tick size from a minimum order string by counting significant decimal places.
     // E.g. "0.001" -> 0.001, "5" -> 1, "" -> 1 (default).

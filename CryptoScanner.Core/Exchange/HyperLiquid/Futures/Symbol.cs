@@ -107,7 +107,13 @@ public class Symbol() : SymbolBase(), ISymbol
                                 // min, max en tick (in base amount)
                                 //if (symbolData.Base.PriceDecimals)
                                 //    symbol.QuantityTickSize = symbolData.LotSize.Value;
-                                symbol!.QuantityTickSize = symbolData.QuantityDecimals;
+                                // QuantityDecimals is szDecimals, a NUMBER of decimals and not a tick
+                                // size (see SymbolBase.TickSizeFromDecimals). Written straight into the
+                                // field it left 97 of the 233 instruments on a tick size of zero - the
+                                // ones with szDecimals 0 - and gave the rest a tick of 1, 2 or 3 base
+                                // units. The price tick below is derived from the mark price and was
+                                // never affected, so only order sizing suffered from this.
+                                symbol!.QuantityTickSize = TickSizeFromDecimals(symbolData.QuantityDecimals);
 
                                 //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;

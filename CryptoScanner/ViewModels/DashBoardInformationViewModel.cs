@@ -605,14 +605,14 @@ public partial class DashBoardInformationViewModel : ObservableObject
         float hiY = float.MinValue;
         int candleCount = blocks * 60; // minutes
         CandleTime candleTime;
-        try
-        {
-            candleTime = candleList.Keys.Last();
-        }
-        catch (InvalidOperationException)
-        {
+        // LastCandle instead of Keys.Last(): the save thread writes into this list while the bitmap is
+        // drawn, and enumerating it then throws "Collection was modified after the enumerator was
+        // instantiated". CryptoCandleList keeps the newest candle in a field of its own, maintained
+        // under its write lock, so reading it is both race free and O(1). OpenTime zero means the list
+        // has no newest candle (it was just emptied), and there is nothing to draw then.
+        candleTime = candleList.LastCandle.OpenTime;
+        if (candleTime == 0)
             return;
-        }
         while (candleCount-- > 0)
         {
             if (candleList.TryGetValue(candleTime, out CryptoCandle candle))
@@ -798,7 +798,9 @@ public partial class DashBoardInformationViewModel : ObservableObject
         SKPoint point1 = new(0, 0);
         SKPoint point2 = new(0, 0);
         candleCount = blocks * 60;
-        candleTime = candleList.Values.Last().OpenTime;
+        // Same story as the Keys.Last() higher up: hiX is the newest candle time the loop above found,
+        // so there is no reason to walk the list a second time while another thread writes into it.
+        candleTime = hiX;
         while (candleCount-- > 0)
         {
             if (candleList.TryGetValue(candleTime, out CryptoCandle candle))

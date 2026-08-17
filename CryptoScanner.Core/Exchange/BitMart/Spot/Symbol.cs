@@ -18,14 +18,10 @@ public class Symbol() : SymbolBase(), ISymbol
     /// price step of a spot pair as a number of digits instead of a step, and the double route
     /// (Math.Pow) would hand a value with a rounding tail to a field the whole candle store rounds
     /// against. Capped at 15 because CryptoCandle keeps its tick decimals in a nibble.
+    /// Moved to SymbolBase on 17-08-2026, because Kraken and HyperLiquid state their precision the
+    /// same way and were writing the number of decimals into the tick size field unconverted.
     /// </summary>
-    private static decimal TickSizeFromDecimals(int decimals)
-    {
-        decimal tickSize = 1m;
-        for (int i = 0; i < Math.Clamp(decimals, 0, 15); i++)
-            tickSize /= 10m;
-        return tickSize;
-    }
+    private static new decimal TickSizeFromDecimals(int decimals) => SymbolBase.TickSizeFromDecimals(decimals);
 
 
     public async Task GetSymbolsAsync()

@@ -70,6 +70,34 @@
       <AssemblyMetadata Include="GitCommit" Value="$(GitCommit)" />
       <AssemblyMetadata Include="GitCommitDate" Value="$(GitCommitDate)" />
     </ItemGroup>
+
+    <!--
+      Setting the properties above is not enough on its own. GenerateAssemblyInfo is incremental: it
+      compares the project files against the .AssemblyInfo.cs it wrote earlier and skips itself when
+      that file still looks current. Committing does not touch any project file, so a build straight
+      after a commit kept the PREVIOUS hash - measured, not feared: a publish stamped 44f1223f while
+      HEAD was two commits further along. A stamp that can be stale is worse than no stamp, because
+      it names a commit that did not produce this build.
+
+      So the hash is remembered next to the generated file, and the moment it differs that file is
+      deleted. GenerateAssemblyInfo then has no output to be up to date against, writes a new one,
+      and the compiler picks it up. Every commit therefore costs a rebuild of the projects - that is
+      the price of a stamp you can trust.
+    -->
+    <PropertyGroup>
+      <GitStampFile>$(IntermediateOutputPath)gitcommit.stamp</GitStampFile>
+    </PropertyGroup>
+
+    <ReadLinesFromFile File="$(GitStampFile)" Condition="Exists('$(GitStampFile)')">
+      <Output TaskParameter="Lines" PropertyName="PreviousGitStamp" />
+    </ReadLinesFromFile>
+
+    <Delete Files="$(GeneratedAssemblyInfoFile)"
+            Condition="'$(GitCommit)' != '' and '$(PreviousGitStamp)' != '$(GitCommit)' and Exists('$(GeneratedAssemblyInfoFile)')" />
+
+    <MakeDir Directories="$(IntermediateOutputPath)" Condition="'$(GitCommit)' != ''" />
+    <WriteLinesToFile File="$(GitStampFile)" Lines="$(GitCommit)" Overwrite="true"
+                      Condition="'$(GitCommit)' != ''" />
   </Target>
 
 

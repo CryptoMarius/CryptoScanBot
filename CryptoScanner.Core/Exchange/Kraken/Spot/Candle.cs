@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoExchange.Net.Objects.Errors;
+
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using Kraken.Net.Clients;
@@ -74,10 +76,26 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         int limit = Api.ExchangeOptions.CandleLimit;
         CandleTime maxTime = fetchFrom + (limit - 1) * interval.Duration;
 
+        // Should the exchange refuse a request anyway ("Too many requests"), then waiting out the
+        // window and asking again is the only sensible answer - the same treatment BitMart and
+        // Coinbase got. Giving up returns the same fetchFrom to the caller, which stops the loop over
+        // this symbol and interval and leaves a hole in the history until the next refresh cycle.
+        // Bounded on purpose: an address that stays blocked must not keep a fetch thread here forever.
+        int attempt = 0;
+    Again:
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             fetchFrom.ToDateTime());
         if (!result.Success)
         {
+            if (result.Error?.ErrorType == ErrorType.RateLimitRequest && ++attempt <= 5)
+            {
+                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits (attempt {attempt})");
+                await Task.Delay(5000);
+                if (ExchangeBase.CancellationToken.IsCancellationRequested)
+                    return (false, 0, fetchFrom);
+                LimitRate.WaitForFairWeight(1);
+                goto Again;
+            }
             GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }

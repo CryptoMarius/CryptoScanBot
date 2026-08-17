@@ -27,9 +27,20 @@ internal class KrakenWeight
 /// </summary>
 public static class LimitRate
 {
-    // Weight per 20 seconds, so 200 is 10 requests per second - the order of magnitude the exchange
-    // served without complaining, and far under the limit that would get us banned
-    private const long MaximumWeightPerWindow = 200;
+    // Weight per 20 seconds, so 20 is 1 request per second - the sustained rate the exchange
+    // documents for the public endpoints.
+    //
+    // This used to be 200 (10 per second), on the strength of the burst measurement in the remarks
+    // above. That measurement does not survive a real run: the night of 17-08-2026 produced 667
+    // "Too many requests" over 3.6 hours, about 13 per minute and spread evenly over the whole run
+    // instead of piling up at the start. No other exchange came above 12 error lines in total. The
+    // load itself is unremarkable - 1299 candle requests, where Coinbase did 3262 without a single
+    // complaint - so the burst is what Kraken objects to, not the volume. A cold start fires the
+    // fetch threads of dozens of symbols at once and ten of them go out per second.
+    //
+    // One per second is no bottleneck: those 1299 requests over 3.6 hours average 0.1 per second,
+    // so the brake only flattens the peaks.
+    private const long MaximumWeightPerWindow = 20;
 
     public static long CurrentWeight { get; set; }
     static private List<KrakenWeight> List { get; } = new List<KrakenWeight>();
