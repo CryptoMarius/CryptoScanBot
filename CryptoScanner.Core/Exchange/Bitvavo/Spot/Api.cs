@@ -34,7 +34,8 @@ public class Api : ExchangeBase
         // takes its whole set of symbols down with it for as long as the restart lasts. Lower it again
         // if a group turns out to be restarting more often than it used to.
         // 88 million EUR over 427 pairs a day (14-08-2026), 193 symbols stay above the boundary
-        ExchangeOptions.SetDefaultOptions("Bitvavo Spot", "EUR", 1440, false, 50, klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 30_000);
+        ExchangeOptions.SetDefaultOptions("Bitvavo Spot", "EUR", 1440, false, 50, 
+            klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 30_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KLineTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
