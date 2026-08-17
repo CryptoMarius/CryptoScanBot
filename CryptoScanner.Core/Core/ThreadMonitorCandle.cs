@@ -44,6 +44,15 @@ public class ThreadMonitorCandle
                         using PositionMonitor positionMonitor = new(symbol, candle);
                         await positionMonitor.NewCandleArrivedAsync();
                     }
+                    catch (Exception error)
+                    {
+                        // Nothing awaits this task, so without this catch the exception stays
+                        // unobserved until the finalizer rethrows it - minutes later, logged as a
+                        // nameless "Global Thread Exception" with no way to tell which symbol or
+                        // candle caused it. Log it here, where that context still exists.
+                        ScannerLog.Logger.Error(error, $"ThreadMonitorCandle {symbol.Name} {candle.OpenTime}");
+                        GlobalData.AddErrorToLogTab($"ThreadMonitorCandle {symbol.Name} {candle.OpenTime} ERROR {error.Message}");
+                    }
                     finally
                     {
                         Semaphore.Release();
