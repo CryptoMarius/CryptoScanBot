@@ -42,11 +42,20 @@ public class Api : ExchangeBase
         //   Socket connect  750 per second per IP address
         //   Socket messages   8 per second per IP address, unauthenticated
         // That last one is what bounds the layout below: every subscription costs one subscribe
-        // message and SubscriptionManager fires them all at once, so 4 symbols per subscription turns
-        // ~100 symbols into ~25 messages that the package spaces out over some three seconds at
-        // startup. Raising the 4 makes the startup shorter, not slower - it is not a per-message
-        // symbol limit of the exchange, the candles and market_trades channels take a whole list.
-        ExchangeOptions.SetDefaultOptions("Coinbase Spot", "USD", 300, false, 4,
+        // message and SubscriptionManager fires them all at once, so 25 symbols per subscription turns
+        // ~110 symbols into 5 messages that the package sends well inside one second. Raising the
+        // number makes the startup shorter, not slower - it is not a per-message symbol limit of the
+        // exchange, the candles and market_trades channels take a whole list.
+        //
+        // The number used to be 4, and that was the reason this exchange reconnected all night: the
+        // package drops a socket that received nothing for SocketNoDataTimeout, and this feed only
+        // carries trades. Individual Coinbase coins are quiet for a long time - measured over the
+        // night of 16-08-2026 the twelve quietest went 31 to 81 minutes without a single trade - so a
+        // subscription of 4 symbols regularly had nothing to deliver for over a minute. Replaying that
+        // night against the stored 1m candles: with 4 symbols per subscription the groups were
+        // completely silent for 1548 minutes (longest stretch 7 minutes), with 20 or 25 symbols not for
+        // a single minute. Hence 25, which leaves room for the symbol list to shrink.
+        ExchangeOptions.SetDefaultOptions("Coinbase Spot", "USD", 300, false, 25,
             klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 240_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
@@ -70,7 +79,12 @@ public class Api : ExchangeBase
             //options.Environment = CoinbaseEnvironment.Live;
             options.RequestTimeout = TimeSpan.FromSeconds(80); // standard=20 seconds
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
-            options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
+            // This is what closes a socket that stopped delivering, and on this exchange the feed is
+            // trades - so it doubles as a silence detector for the coins on that connection. Two
+            // minutes gives the 25 symbols of a subscription room to be quiet together on a slow
+            // night, and still leaves the socket reconnected well before the four minutes of
+            // SubscriptionManager.MaximumTickerSilence, which is the outer net.
+            options.SocketNoDataTimeout = TimeSpan.FromMinutes(2); // standard=30 seconds
             //options.Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
             //options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
 

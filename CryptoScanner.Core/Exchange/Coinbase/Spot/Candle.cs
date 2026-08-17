@@ -1,6 +1,8 @@
 ﻿using Coinbase.Net.Clients;
 using Coinbase.Net.Enums;
 
+using CryptoExchange.Net.Objects.Errors;
+
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
@@ -38,10 +40,28 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
         CandleTime maxTime = fetchFrom + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
 
+        // Should the exchange refuse a request anyway ("Server rate limit exceeded"), then waiting out
+        // the window and asking again is the only sensible answer. Both LimitRate and the rate limiter
+        // of the package stay under the stated 10 per second, but a cold start fires the fetch threads
+        // of a hundred symbols at once and their windows do not line up with the ones Coinbase counts.
+        // Giving up returns the same fetchFrom to the caller, which stops the loop over this symbol and
+        // interval and leaves a hole in the history until the next refresh cycle. Bounded on purpose:
+        // an address that stays blocked must not keep a fetch thread here forever.
+        int attempt = 0;
+    Again:
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
+            if (result.Error?.ErrorType == ErrorType.RateLimitRequest && ++attempt <= 5)
+            {
+                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits (attempt {attempt})");
+                await Task.Delay(5000);
+                if (ExchangeBase.CancellationToken.IsCancellationRequested)
+                    return (false, 0, fetchFrom);
+                LimitRate.WaitForFairWeight(1);
+                goto Again;
+            }
             GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }

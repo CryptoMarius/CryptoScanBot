@@ -42,7 +42,26 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     }
 
     public bool NeedsRestart = false;
+
+    /// <summary>
+    /// How often this subscription lost its connection since it was started. A statistic for the log
+    /// and <see cref="DumpSubscriptionInfo"/>; it says nothing about the state right now, because the
+    /// package reconnects and resubscribes on its own. Use <see cref="ConnectionIsLost"/> for that.
+    /// </summary>
     public int ConnectionLostCount = 0;
+
+    /// <summary>
+    /// Is the connection down at this moment? Set when the connection is lost, cleared when it is
+    /// restored - the package only raises that event after the resubscribe succeeded, a failed one
+    /// arrives as <see cref="TickerResubscribingFailed"/> instead.
+    ///
+    /// CheckSubscriptions used to look at ConnectionLostCount, which only ever grows until the next
+    /// restart. That made every refresh cycle tear down and rebuild a subscription that had been
+    /// healthy again for an hour, and for the cached tickers a rebuild throws away the 1m candle that
+    /// is being filled - the minute is then stored as a flat candle instead of the real one.
+    /// </summary>
+    public bool ConnectionIsLost = false;
+
     public bool ErrorDuringStartup = false;
 
     // Fixed part of the name, the quote plus a sequence number ("USDT#0"). The SubscriptionBundle it
@@ -117,6 +136,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
 
         NeedsRestart = false;
         ConnectionLostCount = 0;
+        ConnectionIsLost = false;
         ErrorDuringStartup = false;
         ScannerLog.Logger.Trace($"{TickerType} subscription {Name} starting");
 
@@ -131,6 +151,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
             _subscription.Exception += TickerException;
             _subscription.ConnectionLost += TickerConnectionLost;
             _subscription.ConnectionRestored += TickerConnectionRestored;
+            _subscription.ResubscribingFailed += TickerResubscribingFailed;
             ScannerLog.Logger.Trace($"{TickerType} subscription {Name} started");
         }
         else
@@ -140,6 +161,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
                 _subscription.Exception -= TickerException;
                 _subscription.ConnectionLost -= TickerConnectionLost;
                 _subscription.ConnectionRestored -= TickerConnectionRestored;
+                _subscription.ResubscribingFailed -= TickerResubscribingFailed;
                 _subscription = null;
             }
 
@@ -169,6 +191,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
         _subscription.Exception -= TickerException;
         _subscription.ConnectionLost -= TickerConnectionLost;
         _subscription.ConnectionRestored -= TickerConnectionRestored;
+        _subscription.ResubscribingFailed -= TickerResubscribingFailed;
 
         if (SubscriptionBundle!.SocketClient is not null)
             await SubscriptionBundle.SocketClient.UnsubscribeAsync(_subscription);
@@ -184,6 +207,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     internal void TickerConnectionLost()
     {
         ConnectionLostCount++;
+        ConnectionIsLost = true;
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} connection lost");
         IScannerSession _scannerSession = GlobalData.GetService<IScannerSession>()
             ?? throw new InvalidOperationException("IScannerSession not registered in services");
@@ -193,10 +217,22 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
 
     internal void TickerConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} connection restored");
+        ConnectionIsLost = false;
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} connection restored after {timeSpan.TotalSeconds:N0}s");
         IScannerSession _scannerSession = GlobalData.GetService<IScannerSession>()
             ?? throw new InvalidOperationException("IScannerSession not registered in services");
-        _scannerSession.ConnectionWasRestored("");
+        _scannerSession.ConnectionWasRestored("", timeSpan);
+    }
+
+
+    /// <summary>
+    /// The socket came back but the package could not resubscribe on it, so nothing is being delivered
+    /// even though the connection itself is up. Only a restart of this subscription fixes that.
+    /// </summary>
+    internal void TickerResubscribingFailed(Error error)
+    {
+        NeedsRestart = true;
+        GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} resubscribing failed {error}");
     }
 
 

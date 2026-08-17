@@ -175,6 +175,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         NeedsRestart = false;
         ConnectionLostCount = 0;
+        ConnectionIsLost = false;
         ErrorDuringStartup = false;
         ScannerLog.Logger.Trace($"Bitvavo kline ticker group {Name} starting ({SymbolList.Count} symbols)");
 

@@ -325,7 +325,7 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                 count++;
 
                 // Also restart subscriptions that lost their connection (flag set by TickerConnectionLost/TickerException)
-                if (subscription.NeedsRestart)
+                if (subscription.NeedsRestart || subscription.ConnectionIsLost)
                 {
                     restart = true;
                     continue;
@@ -375,12 +375,18 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
         // Only the subscriptions that reported a problem are restarted. They share a socket client per
         // group, but stopping and starting a single subscription does not disturb its neighbours, so
         // there is no reason to interrupt the healthy ones as well.
+        //
+        // A connection that is down RIGHT NOW is a reason to restart, a connection that was down an
+        // hour ago is not: the package reconnects and resubscribes on its own. This used to look at
+        // ConnectionLostCount, which only grows until the next restart, so one short hiccup made every
+        // refresh cycle after it rebuild that subscription for nothing - and each rebuild costs the
+        // cached tickers the 1m candle they were filling at that moment.
         List<Subscription> subscriptions = [];
         foreach (var bundle in SubscriptionBundleList)
         {
             foreach (var subscription in bundle.SubscriptionList)
             {
-                if (subscription.ConnectionLostCount > 0 || subscription.ErrorDuringStartup || subscription.NeedsRestart)
+                if (subscription.ConnectionIsLost || subscription.ErrorDuringStartup || subscription.NeedsRestart)
                     subscriptions.Add(subscription);
             }
         }
@@ -605,6 +611,7 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                 GlobalData.AddTextToLogTab($"{TickerType} subscription {subscription.Name} " +
                     $"ErrorDuringStartup={subscription.ErrorDuringStartup} " +
                     $"ConnectionLostCount={subscription.ConnectionLostCount} " +
+                    $"ConnectionIsLost={subscription.ConnectionIsLost} " +
                     $"TickerCount={subscription.TickerCount} " +
                     $"TickerCountLast={subscription.TickerCountLast} " +
                     $"NeedsRestart={subscription.NeedsRestart} " +

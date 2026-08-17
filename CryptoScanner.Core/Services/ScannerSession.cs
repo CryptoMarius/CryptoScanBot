@@ -543,8 +543,18 @@ public class ScannerSession : IScannerSession
     }
 
 
-    public void ConnectionWasRestored(string text)
+    // A reconnect shorter than this loses nothing worth a refresh cycle: the stream is back before the
+    // minute it interrupted is even closed, and the flush of that minute happens afterwards anyway.
+    // Below the boundary the refresh is left where it is - a full round is a REST call per symbol plus
+    // a re-read of the whole instrument list. Coinbase spent 82 of those rounds in the night of
+    // 16-08-2026 on reconnects that lasted half a second, and that is what ran into its rate limit.
+    private static readonly TimeSpan MinimumDowntimeForRefresh = TimeSpan.FromSeconds(30);
+
+    public void ConnectionWasRestored(string text, TimeSpan downtime)
     {
+        if (downtime < MinimumDowntimeForRefresh)
+            return;
+
         ConnectionWasRestoredEvent?.Invoke(text);
     }
 

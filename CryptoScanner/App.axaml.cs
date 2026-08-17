@@ -123,7 +123,8 @@ public partial class App : Application
             {
                 ScannerLog.Logger.Info("");
                 ScannerLog.Logger.Info("Error " + e.Exception.Message);
-                ScannerLog.Logger.Error("");
+                // No blank Error() line here: it lands in the error log as an empty entry, which the
+                // exchange-check report then counts as a second, nameless error next to the real one.
                 ScannerLog.Logger.Error(e.Exception, "Global Thread Exception");
 
                 Console.WriteLine($"UnobservedTaskException exception: {e.Exception.Message}");
