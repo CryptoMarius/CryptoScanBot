@@ -40,8 +40,14 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (tickerInfo.Data != null && tickerInfo.Data != null)
                 {
                     foreach (var tickerData in tickerInfo.Data)
-                        volumeTicker.Add(tickerData.Symbol, tickerData.QuoteVolume);
+                        volumeTicker.TryAdd(tickerData.Symbol, tickerData.QuoteVolume);
                 }
+
+                // Without the tickers every symbol would end up with a volume of 0, drop below the
+                // minimum volume and have its candles and subscriptions released. Stop instead, the
+                // next refresh cycle will try again.
+                if (volumeTicker.Count == 0)
+                    throw new ExchangeException("No ticker data received");
 
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
@@ -61,6 +67,12 @@ public class Symbol() : SymbolBase(), ISymbol
                 // Scanner names of the instruments we skip below. Intersected with the accepted names
                 // after the loop, that gives the symbols whose name covers more than one instrument.
                 List<string> rejectedSymbols = [];
+
+                // Symbols the tickers had no volume for. A handful is normal (a pair that has not
+                // traded at all), a large number means the two calls are not on the same naming
+                // again and everything silently falls below the volume boundary
+                int withoutVolume = 0;
+
                 using (var transaction = database.BeginTransaction())
                 {
                     List<CryptoSymbol> cache = [];
@@ -125,7 +137,10 @@ public class Symbol() : SymbolBase(), ISymbol
                                 if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
                                     symbol.Volume = (double)volume;
                                 else
+                                {
                                     symbol.Volume = 0;
+                                    withoutVolume++;
+                                }
 
                                 if (symbolData.Status == SymbolStatus.Trading | symbolData.Status == SymbolStatus.EndOfDay)
                                     symbol.Status = 1;
@@ -166,6 +181,9 @@ public class Symbol() : SymbolBase(), ISymbol
                             var symbols = string.Join(',', [.. reportSymbols]);
                             GlobalData.AddTextToLogTab($"{reportSymbols.Count} symbols deactivated {symbols}");
                         }
+                        if (withoutVolume > 0)
+                            GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} " +
+                                $"{withoutVolume} symbols without a 24 hour volume (of {activeSymbols.Count})");
 
 
                         transaction.Commit();

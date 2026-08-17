@@ -46,12 +46,18 @@ public class Symbol() : SymbolBase(), ISymbol
                         if (tickerData.Symbol != null)
                         {
                             SymbolInfo info = ParseSymbol(tickerData.Symbol, tickerData.Symbol, "USDC");
-                            volumeTicker.Add(info.ExchangeName, tickerData.NotionalVolume); // QuoteVolume?
+                            volumeTicker.TryAdd(info.ExchangeName, tickerData.NotionalVolume); // QuoteVolume?
                         }
                     }
                 }
 
 
+
+                // Without the tickers every symbol would end up with a volume of 0, drop below the
+                // minimum volume and have its candles and subscriptions released. Stop instead, the
+                // next refresh cycle will try again.
+                if (volumeTicker.Count == 0)
+                    throw new ExchangeException("No ticker data received");
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //LimitRate.WaitForFairWeight(1);
@@ -67,6 +73,11 @@ public class Symbol() : SymbolBase(), ISymbol
                 // Track which symbols are still active, to deactivate the ones we no longer follow
                 SortedList<string, CryptoSymbol> activeSymbols = [];
 
+
+                // Symbols the tickers had no volume for. A handful is normal (a pair that has not
+                // traded at all), a large number means the two calls are not on the same naming
+                // again and everything silently falls below the volume boundary
+                int withoutVolume = 0;
 
                 using (var transaction = database.BeginTransaction())
                 {
@@ -130,7 +141,10 @@ public class Symbol() : SymbolBase(), ISymbol
                                 if (volumeTicker.TryGetValue(symbol.ExchangeName, out decimal volume))
                                     symbol.Volume = (double)volume;
                                 else
+                                {
                                     symbol.Volume = 0;
+                                    withoutVolume++;
+                                }
 
                                 if (!symbolData.IsDelisted)
                                     symbol.Status = 1;
@@ -161,6 +175,10 @@ public class Symbol() : SymbolBase(), ISymbol
                         }
                         if (deactivated > 0)
                             GlobalData.AddTextToLogTab($"{deactivated} coins deactivated");
+
+                        if (withoutVolume > 0)
+                            GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} " +
+                                $"{withoutVolume} symbols without a 24 hour volume (of {activeSymbols.Count})");
 
                         transaction.Commit();
 

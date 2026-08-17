@@ -20,4 +20,57 @@
   </PropertyGroup>
 
 
+  <!--
+    Stamps the build with the commit it was made from. A version number alone does not identify a
+    build: 2.6.0 covers weeks of commits, so a report about an overnight run cannot say which code
+    produced it. The commit can.
+
+    It lands in InformationalVersion (2.6.0+e69536b1) and in two metadata attributes that the About
+    box reads; AssemblyVersion and FileVersion stay untouched, so nothing that binds against these
+    assemblies notices.
+
+    The describe call below appends "dirty" to the hash when the working tree has uncommitted
+    changes. That flag is the whole point during development: a build made from edited sources is
+    NOT the commit it names.
+
+    Everything is best effort. No git, no repository, git not on the path: the build carries on
+    without a stamp instead of failing. Set DisableGitStamp=true to skip it (a release from a source
+    archive, for instance).
+  -->
+  <Target Name="StampGitCommit" BeforeTargets="GetAssemblyVersion;GenerateAssemblyInfo"
+          Condition="'$(DisableGitStamp)' != 'true'">
+
+    <Exec Command="git describe --always --dirty --abbrev=8"
+          WorkingDirectory="$(MSBuildThisFileDirectory)"
+          ConsoleToMSBuild="true" ContinueOnError="true"
+          StandardOutputImportance="low" StandardErrorImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitOutput" />
+      <Output TaskParameter="ExitCode" PropertyName="GitCommitExitCode" />
+    </Exec>
+
+    <!-- %25%25 becomes %% in the generated batch file, which is how git ends up seeing %cs -->
+    <Exec Command="git log -1 --format=%25%25cs"
+          WorkingDirectory="$(MSBuildThisFileDirectory)"
+          ConsoleToMSBuild="true" ContinueOnError="true"
+          StandardOutputImportance="low" StandardErrorImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitDateOutput" />
+      <Output TaskParameter="ExitCode" PropertyName="GitDateExitCode" />
+    </Exec>
+
+    <PropertyGroup Condition="'$(GitCommitExitCode)' == '0' and '$(GitCommitOutput)' != ''">
+      <GitCommit>$(GitCommitOutput.Trim())</GitCommit>
+      <InformationalVersion>$(Version)+$(GitCommit)</InformationalVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(GitDateExitCode)' == '0' and '$(GitDateOutput)' != ''">
+      <GitCommitDate>$(GitDateOutput.Trim())</GitCommitDate>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(GitCommit)' != ''">
+      <AssemblyMetadata Include="GitCommit" Value="$(GitCommit)" />
+      <AssemblyMetadata Include="GitCommitDate" Value="$(GitCommitDate)" />
+    </ItemGroup>
+  </Target>
+
+
 </Project>

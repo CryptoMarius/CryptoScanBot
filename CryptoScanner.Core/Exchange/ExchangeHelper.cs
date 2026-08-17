@@ -27,7 +27,7 @@ public static class Helper
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new BybitEu.Spot.Api();
                 else
-                    return new BybitEu.Futures.Api();
+                    throw new Exception("Bybit EU Futures not supported");
             case CryptoExchangeType.Kraken:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Kraken.Spot.Api();
@@ -101,7 +101,7 @@ public static class Helper
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return BybitEu.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
-                    return BybitEu.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
+                    throw new Exception("Bybit EU Futures not supported");
             case CryptoExchangeType.Kraken:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return Kraken.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;

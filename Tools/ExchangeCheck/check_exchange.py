@@ -2149,6 +2149,22 @@ def linear_slope(points):
     return numerator / denominator if denominator else None
 
 
+def optional_number(value, converter=float):
+    """
+    Een getal uit de csv, of None als de kolom ontbreekt of leeg is.
+
+    Het verschil telt: 0 betekent "gemeten, er waren geen WebView2-processen", None betekent "deze
+    csv is geschreven voordat die kolommen bestonden". Het eerste mag in een totaal, het tweede zou
+    er een te laag totaal van maken.
+    """
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        return converter(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
 def read_memory_samples(path):
     """Leest de csv van sample-process.ps1 (puntkomma's, eerste regel is de kop)."""
     samples = []
@@ -2178,6 +2194,13 @@ def read_memory_samples(path):
                         "privateMb": float(row.get("privatemb") or 0),
                         "threads": int(float(row.get("threads") or 0)),
                         "handles": int(float(row.get("handles") or 0)),
+                        # De Photino-schil zet zijn venster in WebView2, dat in eigen processen
+                        # draait; hun geheugen zit niet in het werkgeheugen van het scannerproces.
+                        # Ontbreken deze kolommen, dan komt de csv van voor die meting en blijven ze
+                        # None - dan gaat het oordeel hieronder gewoon over het scannerproces alleen.
+                        "webviewProcesses": optional_number(row.get("webviewprocesses"), int),
+                        "webviewMb": optional_number(row.get("webviewworkingsetmb")),
+                        "totalMb": optional_number(row.get("totalworkingsetmb")),
                     })
                 except ValueError:
                     continue
@@ -2265,10 +2288,28 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
     if samples:
         first, last = samples[0], samples[-1]
         hours = (last["moment"] - first["moment"]).total_seconds() / 3600.0
-        peak = max(sample["workingSetMb"] for sample in samples)
+
+        # Waar het oordeel over gaat. Zijn de WebView2-processen meegemeten, dan is dat het totaal:
+        # een lek in de renderer laat het scannerproces zelf vlak en zou anders onzichtbaar blijven.
+        # Bij een csv van voor die meting blijft het het scannerproces alleen, en dat zegt het
+        # rapport er dan bij in plaats van een totaal te suggereren dat er niet is.
+        measured_total = all(sample["totalMb"] is not None for sample in samples)
+        basis = (lambda sample: sample["totalMb"]) if measured_total \
+            else (lambda sample: sample["workingSetMb"])
+        has_webview = measured_total and max(
+            (sample["webviewProcesses"] or 0) for sample in samples) > 0
+
+        peak = max(basis(sample) for sample in samples)
         slope = linear_slope([((sample["moment"] - first["moment"]).total_seconds() / 3600.0,
-                               sample["workingSetMb"]) for sample in samples])
+                               basis(sample)) for sample in samples])
         growth = slope if slope is not None else (
+            (basis(last) - basis(first)) / hours if hours else 0.0)
+
+        # Los bijgehouden zodat een nacht met en een nacht zonder WebView2-meting nog steeds op
+        # hetzelfde getal te vergelijken zijn.
+        host_slope = linear_slope([((sample["moment"] - first["moment"]).total_seconds() / 3600.0,
+                                    sample["workingSetMb"]) for sample in samples])
+        host_growth = host_slope if host_slope is not None else (
             (last["workingSetMb"] - first["workingSetMb"]) / hours if hours else 0.0)
 
         # Een helling over een paar minuten rekent ruis door naar honderden megabytes per uur.
@@ -2288,6 +2329,17 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
             "| Metingen | {} over {:.1f} uur |".format(len(samples), hours),
             "| Werkgeheugen aan het begin | {:.0f} MB |".format(first["workingSetMb"]),
             "| Werkgeheugen aan het eind | {:.0f} MB |".format(last["workingSetMb"]),
+        ])
+        if has_webview:
+            lines.extend([
+                "| WebView2 aan het begin | {:.0f} MB in {} processen |".format(
+                    first["webviewMb"], first["webviewProcesses"]),
+                "| WebView2 aan het eind | {:.0f} MB in {} processen |".format(
+                    last["webviewMb"], last["webviewProcesses"]),
+                "| **Totaal begin / eind** | **{:.0f} / {:.0f} MB** |".format(
+                    first["totalMb"], last["totalMb"]),
+            ])
+        lines.extend([
             "| Piek | {:.0f} MB |".format(peak),
             "| **Groei** | **{:+.1f} MB per uur** |".format(growth),
             "| Threads begin / eind | {} / {} |".format(first["threads"], last["threads"]),
@@ -2298,7 +2350,24 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
             "klim over vele uren is het handschrift van een lek.",
             "",
         ])
-        key_points.append("{:+.1f} MB per uur over {:.1f} uur".format(growth, hours))
+        if has_webview:
+            lines.extend([
+                "Piek en groei gaan hier over het **totaal**: het scannerproces plus zijn "
+                "WebView2-processen. Die laatste draaien naast de scanner en niet erin, dus hun "
+                "geheugen staat niet in het werkgeheugen hierboven. Het scannerproces op zichzelf "
+                "groeide {:+.1f} MB per uur; blijft dat vlak terwijl het totaal klimt, dan zit de "
+                "groei in de WebView2-processen en niet in de scanner.".format(host_growth),
+                "",
+            ])
+        elif not measured_total:
+            lines.extend([
+                "De WebView2-processen zijn niet meegemeten - deze csv is geschreven met een versie "
+                "van `sample-process.ps1` van voor die kolommen. Piek en groei gaan dus over het "
+                "scannerproces alleen, en wat de vensterschil aan geheugen gebruikt valt daarbuiten.",
+                "",
+            ])
+        key_points.append("{:+.1f} MB per uur over {:.1f} uur{}".format(
+            growth, hours, " (scanner + WebView2)" if has_webview else ""))
         if hours < MEMORY_MINIMAL_HOURS:
             lines.append("Maar {:.2f} uur aan metingen: te kort om te beoordelen. De groei "
                          "hierboven is doorgerekende ruis, geen trend.".format(hours))
@@ -2348,6 +2417,16 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
             "endMb": round(last["workingSetMb"], 1),
             "peakMb": round(peak, 1),
             "growthMbPerHour": round(growth, 2),
+            # Waar de groei hierboven over gaat, en het scannerproces apart. Zonder dat onderscheid
+            # is een nacht met WebView2-meting niet te vergelijken met een nacht zonder.
+            "growthBasis": "scanner+webview" if measured_total else "scanner",
+            "hostGrowthMbPerHour": round(host_growth, 2),
+            "webviewMeasured": measured_total,
+            "webviewProcesses": last["webviewProcesses"] if has_webview else None,
+            "webviewStartMb": round(first["webviewMb"], 1) if has_webview else None,
+            "webviewEndMb": round(last["webviewMb"], 1) if has_webview else None,
+            "totalStartMb": round(first["totalMb"], 1) if measured_total else None,
+            "totalEndMb": round(last["totalMb"], 1) if measured_total else None,
             "threadsStart": first["threads"], "threadsEnd": last["threads"],
             "handlesStart": first["handles"], "handlesEnd": last["handles"],
             "processId": last["pid"],

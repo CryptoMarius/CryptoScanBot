@@ -37,7 +37,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 
         Remove("Bybit EU");
         this.TryAdd("Bybit EU Spot", Exchange.BybitEu.Spot.Api.GetExchangeLinks());
-        this.TryAdd("Bybit EU Futures", Exchange.BybitEu.Futures.Api.GetExchangeLinks());
+        //this.TryAdd("Bybit EU Futures", Exchange.BybitEu.Futures.Api.GetExchangeLinks());
 
         Remove("BitMart");
         this.TryAdd("BitMart Spot", Exchange.BitMart.Spot.Api.GetExchangeLinks());

@@ -10,14 +10,37 @@ Two scripts, no dependencies beyond a Python 3 installation and Windows PowerShe
 | `sample-process.ps1` | Samples working set, threads and handles of a running scanner into a csv. Start it when the run starts. |
 | `check_exchange.py` | Reads the data folder afterwards and writes one markdown report with a verdict per subject. |
 
+The numbered `.cmd` files are the double-click front ends, one line per exchange so a market can be
+switched off by putting `rem` in front of it:
+
+| File | What it does |
+|---|---|
+| `1 Start memory sampling.cmd` | Only the sampler |
+| `2 Make reports.cmd` | Only the reports |
+| `3 Start all scanners.cmd` | Every exchange, then calls `1` |
+| `4 Stop all scanners.cmd` | Asks them all to close, then calls `2` |
+| `5 Start all scanners (Photino).cmd` | Same as `3` for the Photino build |
+| `6 Stop all scanners (Photino).cmd` | Same as `4` for the Photino build |
+| `7 Clear all logs.cmd` | Empties every Log folder, for a clean slate before a run |
+
 ## The evening: start the run
 
 One exchange per process, each with its own data folder - `GlobalData.ActiveExchange` is singular,
 so a process serves one exchange. Separate folders also keep the databases and the log files apart,
 which is what makes the morning report possible at all.
 
+Double click **`3 Start all scanners.cmd`** (or `5` for the Photino build). Every supported market
+from `CryptoDatabase.CreateExchangeList` is started in `<data>\<brand>\<market>`, five seconds
+apart, and the memory sampling then takes over that same window. The scanner creates its data folder
+itself, so a new market is one line in that file.
+
+Starting it twice starts a second process on the same folder; the data folder lock stops that one,
+so the damage is a message, not a broken database.
+
+By hand it is one process per market:
+
 ```
-CryptoScanner.exe -f "Data\Kraken Spot" -e "Kraken Spot"
+CryptoScanBot.exe -e "Kraken Spot" -f "E:\CryptoScanBot\Data\Kraken\Spot"
 ```
 
 Then start the sampler ONCE, after all the scanners are up. It picks up every running scanner and
@@ -32,9 +55,41 @@ powershell -File Tools\ExchangeCheck\sample-process.ps1 -Out "D:\runs"
 That produces `D:\runs\Kraken-Spot-memory.csv`, `D:\runs\Kraken-Futures-memory.csv` and so on. Use
 `-Id` to sample one specific process, and `-IntervalSeconds` to change the five minute default.
 
+Both user interfaces are picked up: the Avalonia scanner runs as `CryptoScanBot.exe` and the Photino
+one as `CryptoScanBot.Photino.exe`, which are two different process names. The emulator
+(`CryptoScanBot.Emulator.exe`) is deliberately left out - it is not a scanner and does not belong in
+an exchange report. Pass `-Name` if you want a different set.
+
+Each sample also adds up the WebView2 processes that hang under the scanner, because their memory is
+NOT part of its working set. Both user interfaces have them (Photino for its whole window, Avalonia
+for the hidden browser), and on a normal run they are good for several hundred megabytes - measured
+on Binance Futures: 743 MB in the scanner plus 497 MB in six WebView2 processes.
+
 The start time does not have to be written down: the report finds the last scanner startup in the
 log by itself (the plugin registration only happens at process start). Pass `--start`/`--end` when
 you want to look at a smaller slice than the whole run.
+
+Starting a fresh series? **`7 Clear all logs.cmd`** empties the Log folder of every exchange, so the
+report cannot pick up errors from the night before. It asks before it deletes, and it only takes the
+log files - databases, settings and candles stay. Run it with the scanners stopped: a running
+scanner holds its log file open, so those survive and you end up with half a reset. The file warns
+when it sees one running and lists afterwards what could not be deleted.
+
+## The morning: stop the run
+
+**`4 Stop all scanners.cmd`** (or `6` for Photino) runs `taskkill` **without** `/F`. That is a
+request, not a kill: it posts a close message to the window, the same thing as clicking the cross,
+and the scanner then runs its own shutdown. Measured on a test run the difference is visible from
+the outside - after a clean stop the `-wal` and `-shm` files next to the database are gone and a
+data folder that never had a settings file has one. Adding `/F` throws exactly that away, so do not.
+
+After the wait the file lists whatever is still running. Close those from their own window; their
+last candles are not on disk yet. Then the reports are built.
+
+Both builds share one process name each, so this stops all Avalonia scanners at once (or all Photino
+ones). A single exchange is closed from its own window.
+
+The memory sampling window does not stop by itself - close that one yourself.
 
 ## The morning: make the report
 
@@ -68,7 +123,7 @@ shows.
 | Streams | `Log\*.log` | Subscriptions started, connections lost and restored, restarts, symbol list changes |
 | Errors | `Log\* Error.log` | Every error grouped by normalised message, plus rate limits and bans |
 | Signals | `CryptoScanBot.db` | Signals, zones and (when trading was on) positions inside the window |
-| Memory | sampler csv, `$debug\Memory Dump` | Growth per hour, thread and handle growth, managed versus native split |
+| Memory | sampler csv, `$debug\Memory Dump` | Growth per hour of the scanner AND its WebView2 processes together, thread and handle growth, managed versus native split |
 
 Every database is opened read-only, so the report can be made while the scanner still runs.
 
@@ -84,6 +139,13 @@ Every database is opened read-only, so the report can be made while the scanner 
   quarter of an hour of lateness on a live process is the flush interval, not a missing candle.
 - **A window under fifteen minutes proves nothing about coverage**, and under an hour of samples
   proves nothing about memory. The report says so instead of guessing.
+- **The memory verdict is about the scanner plus its WebView2 processes.** A leak in the browser
+  side leaves the scanner process itself perfectly flat, so a verdict on that process alone would
+  call such a night healthy. The report prints both numbers: when the total climbs while the scanner
+  stays flat, the growth is on the WebView2 side.
+- **A csv from before those columns existed keeps its old layout.** The sampler does not widen an
+  existing file halfway through, and the report says out loud that it is then judging the scanner
+  process on its own. Start a fresh csv to get the full picture.
 
 ## Thresholds
 

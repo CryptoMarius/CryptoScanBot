@@ -71,6 +71,12 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
 
+                // Without the tickers every symbol would end up with a volume of 0, drop below the
+                // minimum volume and have its candles and subscriptions released. Stop instead, the
+                // next refresh cycle will try again.
+                if (volumeTicker.Count == 0)
+                    throw new ExchangeException("No ticker data received");
+
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //LimitRate.WaitForFairWeight(1);
                 var symbolInfo = await api.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("No exchange data retrieved (1)");

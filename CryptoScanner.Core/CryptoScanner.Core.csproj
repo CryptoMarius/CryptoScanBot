@@ -27,12 +27,6 @@
 	</PropertyGroup>
 	
 	<ItemGroup>
-    <Compile Remove="Exchange\BloFin\Spot\**" />
-    <EmbeddedResource Remove="Exchange\BloFin\Spot\**" />
-    <None Remove="Exchange\BloFin\Spot\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Remove="Exchange\Binance\Futures\Asset.cs" />
     <Compile Remove="Exchange\Binance\Futures\Order.cs" />
     <Compile Remove="Exchange\Binance\Futures\SubscriptionPriceTicker.cs" />
@@ -44,12 +38,6 @@
     <Compile Remove="Exchange\Binance\Spot\SubscriptionPriceTicker.cs" />
     <Compile Remove="Exchange\Binance\Spot\SubscriptionUserTicker.cs" />
     <Compile Remove="Exchange\Binance\Spot\Trade.cs" />
-    <Compile Remove="Exchange\BloFin\Spot\Api.cs" />
-    <Compile Remove="Exchange\BloFin\Spot\Candle.cs" />
-    <Compile Remove="Exchange\BloFin\Spot\Interval.cs" />
-    <Compile Remove="Exchange\BloFin\Spot\LimitRate.cs" />
-    <Compile Remove="Exchange\BloFin\Spot\SubscriptionKLineTicker.cs" />
-    <Compile Remove="Exchange\BloFin\Spot\Symbol.cs" />
     <Compile Remove="Exchange\BybitApi\Futures\Asset.cs" />
     <Compile Remove="Exchange\BybitApi\Futures\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\BybitApi\Futures\Order.cs" />
@@ -57,54 +45,15 @@
     <Compile Remove="Exchange\BybitApi\Futures\SubscriptionUserTicker.cs" />
     <Compile Remove="Exchange\BybitApi\Futures\Trade.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\Asset.cs" />
-    <Compile Remove="Exchange\BybitApi\Spot\CandlesEmulator.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\Order.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\SubscriptionPriceTicker.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\SubscriptionUserTicker.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\Trade.cs" />
-    <Compile Remove="Exchange\Coinbase\Spot\Asset.cs" />
-    <Compile Remove="Exchange\Coinbase\Spot\Order.cs" />
-    <Compile Remove="Exchange\Coinbase\Spot\SubscriptionPriceTicker.cs" />
-    <Compile Remove="Exchange\Coinbase\Spot\SubscriptionUserTicker.cs" />
-    <Compile Remove="Exchange\Coinbase\Spot\Trade.cs" />
-    <Compile Remove="Exchange\Kraken\Spot\Asset.cs" />
-    <Compile Remove="Exchange\Kraken\Spot\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\Kraken\Spot\Order.cs" />
-    <Compile Remove="Exchange\Kraken\Spot\SubscriptionKLineTicker - Copy.cs" />
-    <Compile Remove="Exchange\Kraken\Spot\SubscriptionPriceTicker.cs" />
-    <Compile Remove="Exchange\Kraken\Spot\SubscriptionUserTicker.cs" />
-    <Compile Remove="Exchange\Kraken\Spot\Trade.cs" />
-    <Compile Remove="Exchange\Kucoin\Spot\Asset.cs" />
-    <Compile Remove="Exchange\Kucoin\Spot\Order.cs" />
-    <Compile Remove="Exchange\Kucoin\Spot\SubscriptionPriceTicker.cs" />
-    <Compile Remove="Exchange\Kucoin\Spot\SubscriptionUserTicker.cs" />
-    <Compile Remove="Exchange\Kucoin\Spot\Trade.cs" />
-    <Compile Remove="Exchange\Mexc\Spot\Asset.cs" />
     <Compile Remove="Exchange\Mexc\Spot\Order.cs" />
-    <Compile Remove="Exchange\Mexc\Spot\SubscriptionPriceTicker.cs" />
-    <Compile Remove="Exchange\Mexc\Spot\Trade.cs" />
-    <Compile Remove="Exchange\Okx\Spot\Asset.cs" />
-    <Compile Remove="Exchange\Okx\Spot\Order.cs" />
-    <Compile Remove="Exchange\Okx\Spot\SubscriptionPriceTicker.cs" />
-    <Compile Remove="Exchange\Okx\Spot\SubscriptionUserTicker.cs" />
-    <Compile Remove="Exchange\Okx\Spot\Trade.cs" />
-    <Compile Remove="Signal\Other\SignalDoubleTopBottomLong.cs" />
-    <Compile Remove="Signal\Other\SignalDoubleTopBottomShort.cs" />
-    <Compile Remove="Signal\SignalMacdLtLong.cs" />
-    <Compile Remove="Signal\SignalMacdLtShort.cs" />
-    <Compile Remove="Signal\SignalMacdTestLong.cs" />
-    <Compile Remove="Signal\SignalMacdTestShort .cs" />
-    <Compile Remove="Trend\ZigZagIndicator10.cs" />
-    <Compile Remove="Trend\ZigZagIndicator11.cs" />
-    <Compile Remove="Trend\ZigZagIndicator14.cs" />
-    <Compile Remove="Trend\ZigZagIndicator7.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker - Copy original.cs.txt" />
-    <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker.old not okay.cs.txt" />
-    <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker.old okay.cs.txt" />
     <None Remove="Sounds\Old\sound-jump-down.wav" />
     <None Remove="Sounds\Old\sound-jump-up.wav" />
     <None Remove="Sounds\Old\sound-sbm-overbought.wav" />
@@ -157,8 +106,6 @@
     <None Remove="Sounds\sound-storsi-oversold.wav" />
     <None Remove="Sounds\sound-trade-notification.wav" />
     <None Remove="Sounds\sound-trade-notification2.wav" />
-    <None Remove="Sounds\sound-uuh-overbought.wav" />
-    <None Remove="Sounds\sound-uuh-oversold.wav" />
     <None Remove="Sounds\sound-vbs-overbought.wav" />
     <None Remove="Sounds\sound-vbs-oversold.wav" />
   </ItemGroup>

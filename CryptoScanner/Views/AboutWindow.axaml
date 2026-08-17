@@ -50,7 +50,11 @@
             
             <!-- Version -->
             <TextBlock Text="{Binding Version}" Classes="version"/>
-            
+
+            <!-- The commit this build was made from. Hidden when the build carries no stamp. -->
+            <TextBlock Text="{Binding Build}" Classes="copyright"
+                       IsVisible="{Binding HasBuild}"/>
+
             <!-- Copyright -->
             <TextBlock Text="{Binding Copyright}" Classes="copyright"/>
             

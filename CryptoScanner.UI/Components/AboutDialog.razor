@@ -12,6 +12,12 @@
             <div class="about-icon">&#x1F4B0;</div>
             <div class="about-app-name">CryptoScanBot</div>
             <div class="about-version">Version @GlobalData.AppVersion</div>
+            @* The commit this build was made from (see BuildInfo). Left out when the build carries
+               no stamp, because an empty "Build" line reads as a missing value. *@
+            @if (BuildInfo.Description != "")
+            {
+                <div class="about-copyright">Build @BuildInfo.Description</div>
+            }
             <div class="about-copyright">@_copyright</div>
             <div class="about-author">Author: Marius</div>
 

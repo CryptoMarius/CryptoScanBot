@@ -1,5 +1,6 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Helpers;
@@ -36,17 +37,47 @@ public static class ExternalLinkHelper
     }
 
     /// <summary>
-    /// Point the internal browser at BTC against the given quote, so the tab is not empty on
-    /// startup. Silently does nothing when the symbol does not exist yet.
+    /// Point the internal browser at bitcoin, so the tab is not empty on startup.
+    /// <para>
+    /// The name is looked up twice. First "BTC" plus the quote the user is looking at, because that
+    /// follows the barometer selection. When that does not exist, the exchange's own
+    /// <see cref="ExchangeOptions.PauseSymbol"/> is used - the same coin, under the name that market
+    /// gives it: XBTUSDT on Kucoin Futures, UBTCUSDC on HyperLiquid Spot, BTCUSD on Kraken Futures.
+    /// Only the first lookup existed before, so on those markets the startup symbol silently found
+    /// nothing and the browser tab stayed empty for the whole session.
+    /// </para>
+    /// <para>
+    /// Every way out now says why in the log. The previous silent returns made it impossible to tell
+    /// a market without a matching name apart from one where the symbol list was not loaded yet.
+    /// </para>
     /// </summary>
     public static void ActivateStartupSymbol(string quote)
     {
         if (GlobalData.ActiveExchange == null)
+        {
+            GlobalData.AddTextToLogTab("Linktools: no startup symbol, there is no active exchange");
             return;
+        }
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval30m, out CryptoInterval? interval))
+        {
+            GlobalData.AddTextToLogTab("Linktools: no startup symbol, the 30m interval is not loaded");
             return;
-        if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue("BTC" + quote, out CryptoSymbol? symbol))
-            return;
+        }
+
+        string wanted = "BTC" + quote;
+        if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(wanted, out CryptoSymbol? symbol))
+        {
+            string pauseSymbol = ExchangeBase.ExchangeOptions.PauseSymbol;
+            if (pauseSymbol != "" && pauseSymbol != wanted)
+                GlobalData.ActiveExchange.SymbolListName.TryGetValue(pauseSymbol, out symbol);
+
+            if (symbol == null)
+            {
+                GlobalData.AddTextToLogTab($"Linktools: no startup symbol, neither {wanted} nor {pauseSymbol} " +
+                    $"is in the symbol list of {GlobalData.ActiveExchange.Name} ({GlobalData.ActiveExchange.SymbolListName.Count} symbols)");
+                return;
+            }
+        }
 
         ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false);
     }

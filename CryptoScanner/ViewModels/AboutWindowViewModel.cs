@@ -16,6 +16,14 @@ public partial class AboutWindowViewModel : ObservableObject
     [ObservableProperty]
     private string _version = $"Version {GlobalData.AppVersion}";
 
+    // The commit this build was made from (see BuildInfo). The version number alone covers weeks of
+    // commits, so it does not say which code is running; this does. Empty when the build was not
+    // stamped, and then the line is hidden rather than showing an empty label.
+    [ObservableProperty]
+    private string _build = BuildInfo.Description == "" ? "" : $"Build {BuildInfo.Description}";
+
+    public bool HasBuild => Build != "";
+
     [ObservableProperty]
     private string _copyright = $"{CryptoScanner.Core.Const.Constants.AppName} © {DateTime.Now.Year}";
 

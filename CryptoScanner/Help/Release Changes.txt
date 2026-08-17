@@ -2,6 +2,9 @@ CryptoScanBot release historie:
 
 TODO:
 -Alle exchanges (laten) testen
+
+Beslissing, Bybit EU weg, die is om te janken en kan niet serieus genomen worden
+
 -Compilatie Mac + Testje op Mac vm.
 -Compilatie Linux + Testje op Linux vm.
 -De documentatie bijwerken, screenshots verversen (wiki heeft nu nog de oude opzet)
@@ -9,6 +12,7 @@ TODO:
 
 
 13-08-2025 2.6.0
+- Exchange Coinbase toegevoegd
 - Alpaca geactiveerd (om te testen!!!!)
 - Het minimale 24-uurs volume van een basismunt schaalt nu mee met de omzet van die exchange
 - De pauzeregels van de trader pakken nu zelf de bitcoin munt van de exchange (BTCUSDT bestaat niet overal)
@@ -46,7 +50,7 @@ TODO:
 - De onderhoudscyclus en de verversing van exchange informatie/verversing candles zitten elkaar in de weg, draait niet elk uur zoals gepland was
 
 Photino
-- Introductie van een nieuwe Photino applicatie (parallel aan de Avalonia app)
+- Introductie van een nieuwe Photino applicatie (doet hetzelfde als de Avalonia app maar dan met een html jasje)
 - Highlights: Een Tradingview gebaseerde chart die het Avalonia chart venster vervangt
 - De Tradingview is tabblad verwijderd en vervangen met een popup vanwege limitaties Tradingview
 
