@@ -54,6 +54,11 @@ public class CryptoDatabase : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    // Connection is deliberately left in place after Dispose (see the commented-out null below),
+    // so the object still looks usable afterwards. Remember that it is gone, so Open() can say so
+    // instead of failing deep inside SQLitePCL with a bare "Cannot access a disposed object".
+    private bool disposed;
+
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)
@@ -64,11 +69,13 @@ public class CryptoDatabase : IDisposable
                 Connection.Dispose();
                 //Connection = null;
             }
+            disposed = true;
         }
     }
 
     public void Open()
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         Connection.Open();
         // Make concurrent writers WAIT for the lock instead of failing with SQLITE_BUSY. SQLite allows
         // only one writer at a time; the emulator's parallel symbol processing can open several
