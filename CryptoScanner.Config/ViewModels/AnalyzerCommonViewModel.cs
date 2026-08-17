@@ -26,6 +26,16 @@ public partial class AnalyzerCommonViewModel : ObservableObject
     [ObservableProperty]
     private bool _analysisMaxEffectiveLog = false;
 
+    // Check the band range index (BandRangeTracker.Index)
+    [ObservableProperty]
+    private bool _analysisBandRangeIndexCheck = false;
+
+    [ObservableProperty]
+    private double _analysisMinBandRangeIndex = 3;
+
+    [ObservableProperty]
+    private bool _logAnalysisBandRangeIndex = false;
+
     // Check volume multiple days (groupBox10)
     [ObservableProperty]
     private bool _checkVolumeOverPeriod = false;
@@ -93,6 +103,10 @@ public partial class AnalyzerCommonViewModel : ObservableObject
         AnalysisEffectiveDays = settings.AnalysisEffectiveDays;
         AnalysisMaxEffectiveLog = settings.AnalysisMaxEffectiveLog;
 
+        AnalysisBandRangeIndexCheck = settings.AnalysisBandRangeIndexCheck;
+        AnalysisMinBandRangeIndex = settings.AnalysisMinBandRangeIndex;
+        LogAnalysisBandRangeIndex = settings.LogAnalysisBandRangeIndex;
+
         CheckVolumeOverPeriod = settings.CheckVolumeOverPeriod;
         CheckVolumeOverDays = settings.CheckVolumeOverDays;
 
@@ -123,6 +137,10 @@ public partial class AnalyzerCommonViewModel : ObservableObject
         settings.AnalysisEffectivePercentage = AnalysisEffectivePercentage;
         settings.AnalysisEffectiveDays = AnalysisEffectiveDays;
         settings.AnalysisMaxEffectiveLog = AnalysisMaxEffectiveLog;
+
+        settings.AnalysisBandRangeIndexCheck = AnalysisBandRangeIndexCheck;
+        settings.AnalysisMinBandRangeIndex = AnalysisMinBandRangeIndex;
+        settings.LogAnalysisBandRangeIndex = LogAnalysisBandRangeIndex;
 
         settings.CheckVolumeOverPeriod = CheckVolumeOverPeriod;
         settings.CheckVolumeOverDays = CheckVolumeOverDays;

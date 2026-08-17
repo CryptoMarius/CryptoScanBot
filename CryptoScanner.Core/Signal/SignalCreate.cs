@@ -366,6 +366,34 @@ public class SignalCreate
             signal.IsInvalid = true;
         }
 
+
+        // Record how much room this symbol has between its bands and how the price behaved after
+        // earlier band touches (see BandRangeTracker), so it can be measured afterwards whether a
+        // wide, well-behaved symbol really does better. Both stay null while the tracker has too few
+        // completed excursions to say anything.
+        BandRangeTracker? bandRange = Symbol.GetSymbolInterval(Interval.IntervalPeriod).BandRange;
+        if (bandRange != null)
+        {
+            signal.BandRangeIndex = bandRange.Index;
+            signal.BandRangeCount = (short)bandRange.MeasurementCount;
+        }
+
+        // Optionally reject a symbol that does not have enough room between its bands. An index that
+        // is still null is NOT rejected: that means the tracker is warming up, not that the symbol
+        // is a bad one.
+        if (GlobalData.Settings.Signal.AnalysisBandRangeIndexCheck && signal.BandRangeIndex.HasValue
+            && signal.BandRangeIndex.Value < GlobalData.Settings.Signal.AnalysisMinBandRangeIndex)
+        {
+            if (GlobalData.Settings.Signal.LogAnalysisBandRangeIndex)
+            {
+                string text = $"Analyse {Symbol.Name} band range index {signal.BandRangeIndex.Value:N2} below minimum {GlobalData.Settings.Signal.AnalysisMinBandRangeIndex:N2}";
+                GlobalData.AddTextToLogTab(text);
+            }
+            eventText.Add("range index to low");
+            signal.IsInvalid = true;
+        }
+
+
         if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
             return false;
 
@@ -393,16 +421,9 @@ public class SignalCreate
         }
 
 
-        // Record how much room this symbol had between its bands and how the price behaved after
-        // earlier band touches (see BandRangeTracker). Recorded only - nothing rejects a signal on
-        // it - so that it can be measured later whether a wide, well-behaved symbol does better.
-        // Both stay null while the tracker has too few completed excursions to say anything.
-        BandRangeTracker? bandRange = Symbol.GetSymbolInterval(Interval.IntervalPeriod).BandRange;
-        if (bandRange != null)
-        {
-            signal.BandRangeIndex = bandRange.Index;
-            signal.BandRangeCount = (short)bandRange.MeasurementCount;
-        }
+        // NOTE: the band-range statistics used to be recorded here. They moved up to just before the
+        // ShowInvalidSignals check, because the optional minimum-index check has to be able to mark
+        // the signal invalid before that early return.
 
 
 
