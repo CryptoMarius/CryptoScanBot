@@ -6,6 +6,10 @@ rem  Run this in the morning, after stopping the scanners.
 rem  It checks every scanner data folder it can find and writes one report per
 rem  exchange, then opens the folder holding them.
 rem
+rem  The reports are html: they open with a double click and carry the colours
+rem  and the table of contents. Add --format md to the line below for the plain
+rem  text version instead.
+rem
 rem  Change these lines if your folders are somewhere else:
 set "DATA_FOLDER=E:\CryptoScanBot\Data"
 set "SAMPLE_FOLDER=E:\CryptoScanBot\Data\Memory"
@@ -26,9 +30,9 @@ if errorlevel 1 (
 python "%~dp0check_all.py" --base "%DATA_FOLDER%" --memory "%SAMPLE_FOLDER%" --out "%REPORT_FOLDER%"
 set "RESULT=%ERRORLEVEL%"
 
-if "%RESULT%"=="0" (
-    if exist "%REPORT_FOLDER%" start "" "%REPORT_FOLDER%"
-)
+rem Always open the folder. It used to open only on exit code 0, which meant the
+rem folder stayed shut on exactly the mornings something needed looking at.
+if exist "%REPORT_FOLDER%" start "" "%REPORT_FOLDER%"
 
 echo.
 pause

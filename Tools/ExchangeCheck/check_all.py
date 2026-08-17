@@ -73,6 +73,9 @@ def main():
     parser.add_argument("--base", required=True, help="Folder holding the data folders.")
     parser.add_argument("--memory", help="Folder with the *-memory.csv files (optional).")
     parser.add_argument("--out", required=True, help="Where the reports are written.")
+    parser.add_argument("--format", choices=("html", "md"), default="html",
+                        help="html (default) opens with a double click and carries the colours and "
+                             "the table of contents; md is the plain text version.")
     parser.add_argument("--max-age-days", type=float, default=3.0,
                         help="Skip folders whose newest log is older than this (default 3). Use 0 "
                              "to check every folder found.")
@@ -119,7 +122,7 @@ def main():
 
     def check_one(folder):
         label = sample_name(folder)
-        report_path = output / "{}-report.md".format(label)
+        report_path = output / "{}-report.{}".format(label, arguments.format)
         facts_path = output / "{}-facts.json".format(label)
 
         command = [sys.executable, str(script), "--folder", str(folder),

@@ -23,7 +23,8 @@
 
 .PARAMETER Out
     Csv file, or a folder when more than one process is sampled. Existing files are appended to, so
-    restarting this script does not lose the earlier samples.
+    restarting this script does not lose the earlier samples. They do not have to be cleared between
+    runs either: check_exchange.py cuts the samples to the run's window and to its process id.
 
 .PARAMETER IntervalSeconds
     Seconds between samples. 300 (five minutes) is plenty for a night; sampling faster does not make
@@ -133,9 +134,33 @@ foreach ($process in $targets) {
 
 Write-Host "Interval: $IntervalSeconds seconds. Press Ctrl-C to stop; the script ends when the last process exits."
 
-while ($sampled.Count -gt 0) {
+while ($true) {
     $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     $alive = @()
+
+    # Look for new processes every round instead of only at startup. A scanner that is stopped and
+    # started again during the night gets a new process id, and sampling the old one just ends -
+    # which is how BitMart and Bitvavo ended up with five of their eleven hours measured. The csv is
+    # named after the data folder, so the restarted scanner appends to the same file it had before.
+    if (-not $Id) {
+        $known = @($sampled | ForEach-Object { $_.Process.Id })
+        foreach ($process in @(Get-Process -Name $Name -ErrorAction SilentlyContinue)) {
+            if ($known -contains $process.Id) {
+                continue
+            }
+            $path = if ($outIsFolder) {
+                Join-Path $Out ("{0}-memory.csv" -f (Get-DataFolderName -ProcessId $process.Id))
+            }
+            else {
+                $Out
+            }
+            if (-not (Test-Path -LiteralPath $path)) {
+                [System.IO.File]::WriteAllText($path, "timestamp;pid;workingSetMb;privateMb;threads;handles;cpuSeconds`r`n")
+            }
+            $sampled += [pscustomobject]@{ Process = $process; Path = $path }
+            Write-Host ("Picked up {0} ({1}) -> {2}" -f $process.Id, $process.ProcessName, $path)
+        }
+    }
 
     foreach ($item in $sampled) {
         try {
@@ -164,7 +189,10 @@ while ($sampled.Count -gt 0) {
     }
 
     $sampled = $alive
-    if ($sampled.Count -eq 0) {
+    # Not "break when empty" any more: a scanner that is restarting has no process for a round or
+    # two, and stopping there is exactly the gap this loop is meant to close. With -Id there is
+    # nothing to rediscover, so that case still ends when the last process is gone.
+    if ($Id -and $sampled.Count -eq 0) {
         break
     }
     Start-Sleep -Seconds $IntervalSeconds

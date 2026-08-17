@@ -67,6 +67,10 @@ ERRORS_BAD = 50
 MEMORY_ATTENTION_MB_PER_HOUR = 50.0
 MEMORY_BAD_MB_PER_HOUR = 200.0
 MEMORY_MINIMAL_HOURS = 1.0         # hieronder zegt de helling niets, dus wordt er niet geoordeeld
+# Houden de metingen langer dan dit voor het einde van het venster op, dan is het proces uit beeld
+# geraakt en gaat een oordeel over de verkeerde uren. Ruim boven het steekproefinterval van vijf
+# minuten, zodat een laatste ronde die net niet meer paste geen melding oplevert.
+MEMORY_COVERAGE_GAP_MINUTES = 30.0
 
 # Barometer. Het aantal munten waarop een meting rust is de betrouwbaarheidsmaat: zakt dat ver weg,
 # dan beschrijft de barometer nog maar een restje markt. Gemeten tegen het hoogste aantal van
@@ -77,6 +81,14 @@ BAROMETER_COINS_BAD_SHARE = 50.0
 # dus het aantal munten groeit in de eerste minuten naar zijn niveau toe. Zonder deze marge meldt
 # elke nette run de opstartdip als een gebrek.
 BAROMETER_WARMUP_MINUTES = 30
+# Die marge is alleen niet genoeg: bij een exchange met een strenge snelheidsbegrenzing loopt de
+# inhaalslag uren door, en zolang die bezig is groeit het aantal munten nog. Daarom wordt niet het
+# minimum over het hele venster beoordeeld maar het minimum NA het hoogtepunt - een zuiver stijgende
+# reeks is gezond, hoe laag hij ook begon; een terugval na de piek is de melding waard.
+# Een barometer die op minder munten dan dit rust beschrijft geen markt en krijgt geen oordeel:
+# een quote-munt met een of twee genoteerde munten (Bitvavo USDC, Bybit EU EUR) is een instelling,
+# geen gebrek.
+BAROMETER_MINIMAL_COINS = 5
 # Een gemiddelde verder dan dit van nul is geen markt maar een storing. Zelfde grens die de grafiek
 # hanteert (BarometerCandleFields.GetScale, IgnoreBeyond).
 BAROMETER_EXTREME_PERCENTAGE = 50.0
@@ -185,8 +197,191 @@ def percentage(part, whole):
     return 100.0 * part / whole if whole else 0.0
 
 
+# ==============================================================================================
+# Html-weergave
+# ==============================================================================================
+# De secties worden als markdown opgebouwd omdat dat prettig schrijft in de controles zelf. Voor het
+# lezen is html beter: kleur per oordeel, een inhoudsopgave die meescrolt, en geen editor nodig om
+# het te openen. Onderstaande omzetting kent alleen de markdown die de controles ook echt gebruiken
+# - tabellen, koppen, opsommingen, **vet** en `code`. Meer hoeft niet, en een volledige
+# markdown-bibliotheek zou een afhankelijkheid zijn voor een script dat nu met kale Python draait.
+INLINE_CODE = re.compile(r"`([^`]+)`")
+INLINE_BOLD = re.compile(r"\*\*([^*]+)\*\*")
+TABLE_DIVIDER = re.compile(r"^\|[\s:|-]+\|$")
+
+
+def html_inline(text):
+    """Escaped de tekst en zet daarna alleen de opmaak terug die we zelf geschreven hebben."""
+    out = (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+    # De enige tag die de controles zelf schrijven (meerdere meetwaarden in een cel). Hij is er net
+    # uitgeknikkerd door het escapen, dus hier weer terug - de rest blijft leesbare tekst, wat nodig
+    # is omdat foutmeldingen dingen als "SortedSet`1" en "<n>" bevatten.
+    out = out.replace("&lt;br&gt;", "<br>")
+    out = INLINE_CODE.sub(lambda m: "<code>{}</code>".format(m.group(1)), out)
+    out = INLINE_BOLD.sub(lambda m: "<strong>{}</strong>".format(m.group(1)), out)
+    return out
+
+
+def html_from_markdown(lines):
+    """Zet de regels van een sectie om naar html. Zie de toelichting bij INLINE_CODE."""
+    out = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        stripped = line.strip()
+
+        if not stripped:
+            index += 1
+            continue
+
+        # Tabel: kopregel, scheidingsregel, dan de rijen tot de eerste regel die geen pipe meer is.
+        if stripped.startswith("|") and index + 1 < len(lines) and TABLE_DIVIDER.match(
+                lines[index + 1].strip()):
+            headers = [cell.strip() for cell in stripped.strip("|").split("|")]
+            index += 2
+            body = []
+            while index < len(lines) and lines[index].strip().startswith("|"):
+                body.append([cell.strip() for cell in lines[index].strip().strip("|").split("|")])
+                index += 1
+            # De tabel krijgt een eigen schuifbalk: de foutentabellen bevatten stacktraces die op
+            # een smal scherm anders de hele pagina laten schuiven.
+            out.append('<div class="scroll"><table>')
+            out.append("<thead><tr>{}</tr></thead>".format(
+                "".join("<th>{}</th>".format(html_inline(cell)) for cell in headers)))
+            out.append("<tbody>")
+            for row in body:
+                cells = "".join('<td{}>{}</td>'.format(verdict_cell_class(cell), html_inline(cell))
+                                for cell in row)
+                out.append("<tr>{}</tr>".format(cells))
+            out.append("</tbody></table></div>")
+            continue
+
+        if stripped.startswith("- "):
+            out.append("<ul>")
+            while index < len(lines) and lines[index].strip().startswith("- "):
+                out.append("<li>{}</li>".format(html_inline(lines[index].strip()[2:])))
+                index += 1
+            out.append("</ul>")
+            continue
+
+        if stripped.startswith("#"):
+            level = len(stripped) - len(stripped.lstrip("#"))
+            out.append("<h{0}>{1}</h{0}>".format(min(level + 1, 6),
+                                                 html_inline(stripped.lstrip("#").strip())))
+            index += 1
+            continue
+
+        # Losse regels achter elkaar horen bij dezelfde alinea; een lege regel sluit hem af.
+        paragraph = []
+        while index < len(lines) and lines[index].strip() and \
+                not lines[index].strip().startswith(("|", "- ", "#")):
+            paragraph.append(lines[index].strip())
+            index += 1
+        out.append("<p>{}</p>".format(html_inline(" ".join(paragraph))))
+    return "\n".join(out)
+
+
+def verdict_cell_class(cell):
+    """Kleurt de cel waarin alleen een oordeelbolletje staat, zodat het in een oogopslag leest."""
+    for verdict, mark in VERDICT_MARK.items():
+        if cell.strip() == mark:
+            return ' class="mark {}"'.format(verdict)
+    return ""
+
+
+PAGE_STYLE = """
+:root {
+  color-scheme: light dark;
+  --bg: #f6f7f9; --card: #ffffff; --ink: #1c2024; --soft: #5c6570; --line: #d8dde3;
+  --good: #1a7f45; --good-bg: #e6f4ec;
+  --attention: #a8620a; --attention-bg: #fdf0dd;
+  --bad: #b3261e; --bad-bg: #fbe6e5;
+  --unknown: #5c6570; --unknown-bg: #eceff2;
+  --accent: #1f5fa8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171a; --card: #1c2024; --ink: #e6e9ec; --soft: #99a2ac; --line: #2e343b;
+    --good: #5bcf8b; --good-bg: #16301f;
+    --attention: #e5a13d; --attention-bg: #33260f;
+    --bad: #f0847c; --bad-bg: #351b1a;
+    --unknown: #99a2ac; --unknown-bg: #24292e;
+    --accent: #74a9e8;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 15px/1.55 "Segoe UI", system-ui, sans-serif; }
+.layout { display: flex; align-items: flex-start; gap: 24px; max-width: 1500px;
+          margin: 0 auto; padding: 24px; }
+nav { position: sticky; top: 24px; flex: 0 0 250px; background: var(--card);
+      border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+      max-height: calc(100vh - 48px); overflow-y: auto; }
+nav h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .07em;
+         color: var(--soft); margin: 0 0 10px; }
+nav a { display: flex; align-items: center; gap: 8px; padding: 5px 8px; margin: 0 -8px;
+        border-radius: 6px; color: var(--ink); text-decoration: none; font-size: 14px; }
+nav a:hover { background: var(--bg); }
+nav a .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+main { flex: 1 1 auto; min-width: 0; }
+section, .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+                 padding: 18px 22px; margin-bottom: 18px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+.subtitle { color: var(--soft); margin: 0 0 18px; }
+h2 { font-size: 18px; margin: 0 0 12px; display: flex; align-items: center; gap: 10px; }
+h3 { font-size: 15px; margin: 18px 0 8px; color: var(--soft);
+     text-transform: uppercase; letter-spacing: .05em; }
+h4 { font-size: 15px; margin: 16px 0 8px; }
+p { margin: 0 0 10px; }
+ul { margin: 0 0 12px; padding-left: 20px; }
+li { margin-bottom: 3px; }
+code { background: var(--bg); border: 1px solid var(--line); border-radius: 4px;
+       padding: 1px 5px; font: 13px/1.4 Consolas, "Cascadia Mono", monospace;
+       word-break: break-word; }
+.scroll { overflow-x: auto; margin: 0 0 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left;
+         vertical-align: top; }
+th { color: var(--soft); font-weight: 600; font-size: 12px; text-transform: uppercase;
+     letter-spacing: .05em; white-space: nowrap; }
+tbody tr:hover { background: var(--bg); }
+td.mark { width: 1%; text-align: center; font-size: 15px; }
+td.mark.good { background: var(--good-bg); }
+td.mark.attention { background: var(--attention-bg); }
+td.mark.bad { background: var(--bad-bg); }
+td.mark.unknown { background: var(--unknown-bg); }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px;
+         font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.badge.good { color: var(--good); background: var(--good-bg); }
+.badge.attention { color: var(--attention); background: var(--attention-bg); }
+.badge.bad { color: var(--bad); background: var(--bad-bg); }
+.badge.unknown { color: var(--unknown); background: var(--unknown-bg); }
+.verdict { font-size: 19px; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+.verdict.good { color: var(--good); }
+.verdict.attention { color: var(--attention); }
+.verdict.bad { color: var(--bad); }
+.verdict.unknown { color: var(--unknown); }
+section { border-left: 4px solid var(--line); }
+section.good { border-left-color: var(--good); }
+section.attention { border-left-color: var(--attention); }
+section.bad { border-left-color: var(--bad); }
+section.unknown { border-left-color: var(--unknown); }
+.dot.good { background: var(--good); }
+.dot.attention { background: var(--attention); }
+.dot.bad { background: var(--bad); }
+.dot.unknown { background: var(--unknown); }
+.top { font-size: 13px; color: var(--accent); text-decoration: none; margin-left: auto;
+       font-weight: 400; }
+.top:hover { text-decoration: underline; }
+@media (max-width: 900px) {
+  .layout { flex-direction: column; padding: 14px; }
+  nav { position: static; flex: 1 1 auto; width: 100%; max-height: none; }
+}
+"""
+
+
 class Report:
-    """Verzamelt secties en hun oordeel; levert aan het eind markdown en json."""
+    """Verzamelt secties en hun oordeel; levert aan het eind markdown, html en json."""
 
     def __init__(self):
         self.sections = []
@@ -260,6 +455,96 @@ class Report:
             out.append("")
             out.extend(section["lines"] or ["(niets te melden)"])
             out.append("")
+        return "\n".join(out)
+
+    def to_html(self, header_lines, header):
+        """Dezelfde inhoud als to_markdown, maar om te lezen in plaats van om te bewerken."""
+        overall = self.overall()
+        folder_name = Path(header.get("folder", "")).name or "exchange"
+        exchanges = ", ".join(header.get("exchanges") or []) or folder_name
+        attention = [s for s in self.sections if s["verdict"] in (ATTENTION, BAD)]
+
+        out = ['<!doctype html>', '<html lang="nl">', "<head>", '<meta charset="utf-8">',
+               '<meta name="viewport" content="width=device-width, initial-scale=1">',
+               "<title>Controle {} - {}</title>".format(
+                   html_inline(exchanges), VERDICT_TEXT[overall]),
+               "<style>{}</style>".format(PAGE_STYLE), "</head>", "<body>",
+               '<div class="layout">']
+
+        # ---- inhoudsopgave -----------------------------------------------------------------
+        # Het bolletje staat ernaast zodat je zonder scrollen ziet waar het misging, en de link
+        # brengt je er meteen heen. Dat was de reden om dit in html te doen.
+        out.append("<nav>")
+        out.append("<h2>Onderwerpen</h2>")
+        out.append('<a href="#top"><span class="dot {}"></span>Eindoordeel: {}</a>'.format(
+            overall, VERDICT_TEXT[overall]))
+        for section in self.sections:
+            out.append('<a href="#sec-{}"><span class="dot {}"></span>{}</a>'.format(
+                section["key"], section["verdict"], html_inline(section["title"])))
+        out.append("</nav>")
+
+        out.append("<main>")
+        out.append('<div class="card" id="top">')
+        out.append("<h1>Controle van de exchange-run</h1>")
+        out.append('<p class="subtitle">{}</p>'.format(html_inline(exchanges)))
+        out.append('<p class="verdict {}">{} Eindoordeel: {}</p>'.format(
+            overall, VERDICT_MARK[overall], VERDICT_TEXT[overall]))
+        out.append(html_from_markdown(header_lines))
+        out.append("</div>")
+
+        # ---- waar moet je naar kijken -------------------------------------------------------
+        out.append('<div class="card">')
+        out.append("<h2>Waar moet je naar kijken</h2>")
+        if attention:
+            out.append("<p><strong>{} van de {} onderwerpen vragen aandacht:</strong> {}</p>".format(
+                len(attention), len(self.sections),
+                ", ".join('<a href="#sec-{}"><span class="badge {}">{}</span></a>'.format(
+                    s["key"], s["verdict"], html_inline(s["title"])) for s in attention)))
+        else:
+            out.append("<p><strong>Geen enkel onderwerp vraagt aandacht.</strong> "
+                       "Alles staat goed.</p>")
+        decisive = [s for s in self.sections if s["key"] in DECISIVE_KEYS]
+        if decisive:
+            out.append('<div class="scroll"><table>')
+            out.append("<thead><tr><th></th><th>Beslissend onderwerp</th><th>Meting</th>"
+                       "</tr></thead><tbody>")
+            for section in decisive:
+                points = section["keyPoints"] or ["(niet gemeten)"]
+                out.append('<tr><td class="mark {}">{}</td><td><a href="#sec-{}">{}</a></td>'
+                           "<td>{}</td></tr>".format(
+                               section["verdict"], VERDICT_MARK[section["verdict"]],
+                               section["key"], html_inline(section["title"]),
+                               "<br>".join(html_inline(point) for point in points)))
+            out.append("</tbody></table></div>")
+            out.append("<p>Deze vier bepalen of een nacht deugt. De overige onderwerpen zijn "
+                       "naslag: ze verklaren meestal een instelling, niet een gebrek.</p>")
+        out.append("</div>")
+
+        # ---- samenvatting -------------------------------------------------------------------
+        out.append('<div class="card">')
+        out.append("<h2>Samenvatting</h2>")
+        out.append('<div class="scroll"><table>')
+        out.append("<thead><tr><th></th><th>Onderwerp</th><th>Oordeel</th></tr></thead><tbody>")
+        for section in self.sections:
+            out.append('<tr><td class="mark {0}">{1}</td><td><a href="#sec-{2}">{3}</a></td>'
+                       '<td><span class="badge {0}">{4}</span></td></tr>'.format(
+                           section["verdict"], VERDICT_MARK[section["verdict"]], section["key"],
+                           html_inline(section["title"]), VERDICT_TEXT[section["verdict"]]))
+        out.append("</tbody></table></div>")
+        out.append("</div>")
+
+        # ---- de secties zelf ----------------------------------------------------------------
+        for section in self.sections:
+            out.append('<section class="{}" id="sec-{}">'.format(section["verdict"],
+                                                                 section["key"]))
+            out.append('<h2>{} {} <span class="badge {}">{}</span>'
+                       '<a class="top" href="#top">terug naar boven</a></h2>'.format(
+                           VERDICT_MARK[section["verdict"]], html_inline(section["title"]),
+                           section["verdict"], VERDICT_TEXT[section["verdict"]]))
+            out.append(html_from_markdown(section["lines"] or ["(niets te melden)"]))
+            out.append("</section>")
+
+        out.extend(["</main>", "</div>", "</body>", "</html>"])
         return "\n".join(out)
 
     def to_json(self, header):
@@ -975,6 +1260,79 @@ def column_exists(connection, table, column):
 # ==============================================================================================
 # 3b. Barometer
 # ==============================================================================================
+def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, high, lines,
+                          key_points):
+    """
+    Beoordeelt het muntenaantal per barometer, niet over alle barometers van een exchange samen.
+
+    Een exchange heeft er een per quote-munt, en die zijn niet vergelijkbaar: BitMart heeft naast
+    een $BMPUSDT van 88 tot 91 munten een $BMPUSDC die altijd op een munt rust. Een MIN/MAX over
+    beide tegelijk vergelijkt het minimum van de ene met het maximum van de andere en meldt
+    "magerste meting op 1 van de 91 munten" terwijl er niets aan de hand is.
+
+    Beoordeeld wordt de terugval na het hoogtepunt (zie BAROMETER_MINIMAL_COINS). Het minimum over
+    het hele venster wordt wel getoond, want dat is de opbouwcurve en die is het lezen waard.
+    """
+    per_symbol = {}
+    lines.append("**Aantal munten per barometer**")
+    lines.append("")
+    lines.append("| Barometer | Laagste | Hoogste | Laagste na de piek | Oordeel |")
+    lines.append("|---|---|---|---|---|")
+    for identifier in sorted(barometer_ids, key=lambda i: local_symbols[i]):
+        name = local_symbols[identifier]
+        row = connection.execute(
+            "SELECT MIN(Volume) AS low, MAX(Volume) AS high FROM Candle WHERE SymbolId = ? "
+            "AND OpenTime BETWEEN ? AND ?", (identifier, settled, high)).fetchone()
+        if not row or row["low"] is None:
+            continue
+        lowest, highest = row["low"], row["high"]
+
+        # Het eerste moment waarop het hoogtepunt gehaald wordt; alles daarna moet dat niveau
+        # vasthouden. Wat ervoor ligt is opbouw en zegt niets over de gezondheid van de nacht.
+        peak_moment = connection.execute(
+            "SELECT MIN(OpenTime) FROM Candle WHERE SymbolId = ? AND OpenTime BETWEEN ? AND ? "
+            "AND Volume = ?", (identifier, settled, high, highest)).fetchone()[0]
+        after_peak = connection.execute(
+            "SELECT MIN(Volume) FROM Candle WHERE SymbolId = ? AND OpenTime BETWEEN ? AND ?",
+            (identifier, peak_moment, high)).fetchone()[0]
+
+        share = None
+        if highest < BAROMETER_MINIMAL_COINS:
+            judgement = "te weinig munten om te beoordelen"
+        else:
+            share = percentage(after_peak, highest)
+            if share < BAROMETER_COINS_BAD_SHARE:
+                judgement = "**viel terug naar {:.0f}%**".format(share)
+                key_points.append("{} viel na de piek terug naar {:.0f}% van {:.0f} munten".format(
+                    name, share, highest))
+            elif share < BAROMETER_COINS_ATTENTION_SHARE:
+                judgement = "zakte naar {:.0f}%".format(share)
+                key_points.append("{} zakte na de piek naar {:.0f}% van {:.0f} munten".format(
+                    name, share, highest))
+            elif lowest < highest:
+                judgement = "bouwde op van {:.0f}, hield {:.0f}% vast".format(lowest, share)
+            else:
+                judgement = "vlak"
+        lines.append("| {} | {:.0f} | {:.0f} | {:.0f} | {} |".format(
+            name, lowest, highest, after_peak, judgement))
+        per_symbol[name] = {
+            "minimum": lowest,
+            "maximum": highest,
+            "minimumAfterPeak": after_peak,
+            "declineSharePercentage": round(share, 1) if share is not None else None,
+        }
+    lines.append("")
+    lines.append("Het oordeel rust op de kolom \"laagste na de piek\": een aantal dat alleen maar "
+                 "groeit is een run die zijn abonnementen en historie nog aan het inhalen was, en "
+                 "dat duurt bij een strenge snelheidsbegrenzing uren in plaats van de {:.0f} "
+                 "minuten opwarming die hierboven al afgetrokken zijn. Pas een terugval NA het "
+                 "hoogtepunt betekent dat er munten wegvielen. Barometers met minder dan {} munten "
+                 "krijgen geen oordeel; die beschrijven geen markt."
+                 .format(BAROMETER_WARMUP_MINUTES, BAROMETER_MINIMAL_COINS))
+    lines.append("")
+    return per_symbol
+
+
 def check_barometer(report, candle_databases, main_db, window_start, window_end, subscribed=None,
                     still_running=False):
     """
@@ -1178,7 +1536,16 @@ def check_barometer(report, candle_databases, main_db, window_start, window_end,
             # Voordat BarometerCandleFields bestond droegen alle vier de prijsvelden hetzelfde
             # getal. Zulke rijen herkent de scanner zelf en berekent hij opnieuw, maar ze zouden
             # hier wel elke inhoudelijke regel schenden. Dus eerst apart zetten, dan pas toetsen.
-            legacy_test = "Open = High AND High = Low AND Low = Close"
+            # De nulrij valt hier bewust buiten. Een barometer die op een handvol munten rust
+            # schrijft een geldige meting waarin alle vier de cijfers nul zijn zodra geen van die
+            # munten bewoog: mediaan 0, percentage stijgers 0, spreiding 0, gemiddelde 0. Zonder
+            # deze uitzondering telt zo'n rij als oude opmaak - dat leverde 297 "oude" rijen op een
+            # $BMPEUR met twee munten. De scanner zelf gooit ze weg en rekent ze opnieuw
+            # (BarometerCandleFields.IsLegacyLayout noemt dit "the all-zero case"), maar het is geen
+            # opmaak van voor de wijziging. Een echte oude rij met vier keer nul valt hier ook
+            # buiten; die zou net zo goed doorstaan wat hieronder getoetst wordt.
+            legacy_test = ("Open = High AND High = Low AND Low = Close "
+                           "AND NOT (Open = 0 AND High = 0 AND Low = 0 AND Close = 0)")
             legacy_window = connection.execute(
                 "SELECT COUNT(*) FROM Candle WHERE SymbolId IN ({}) AND OpenTime BETWEEN ? AND ? "
                 "AND {}".format(identifiers, legacy_test), (low, high)).fetchone()[0]
@@ -1261,11 +1628,14 @@ def check_barometer(report, candle_databases, main_db, window_start, window_end,
                     row["e"] * tick, row["f"] * tick))
                 lines.append("| Gemiddelde | {:.2f}% | {:.2f}% |".format(
                     row["g"] * tick, row["h"] * tick))
-                lines.append("| Aantal munten | {:.0f} | {:.0f} |".format(row["i"], row["j"]))
                 lines.append("")
                 exchange_facts["coinsMinimum"] = row["i"]
                 exchange_facts["coinsMaximum"] = row["j"]
 
+                # Het aantal munten staat bewust niet in de tabel hierboven maar in een eigen tabel
+                # per barometer: die cijfers gaan over de hele exchange en zijn optelbaar, het
+                # muntenaantal is dat niet (zie judge_barometer_coins).
+                #
                 # Het aantal munten is de betrouwbaarheidsmaat van een meting. De noemer is bewust
                 # het eigen maximum van deze nacht en NIET het aantal geabonneerde symbolen: de
                 # barometer rekent alleen op munten met genoeg volume (CryptoBarometerPrice gebruikt
@@ -1273,28 +1643,20 @@ def check_barometer(report, candle_databases, main_db, window_start, window_end,
                 # exchange als 70 procent. Wat je wil weten is of het aantal onderweg wegzakte, en
                 # daarvoor is de reeks zijn eigen maatstaf.
                 if row["j"]:
-                    coin_share = percentage(row["i"], row["j"])
-                    lines.append("De magerste meting rust op {:.0f} munten, tegen {:.0f} op het "
-                                 "hoogtepunt van deze nacht ({:.0f}%). De eerste {:.0f} minuten van "
-                                 "het venster tellen hier niet mee: daar worden de abonnementen nog "
-                                 "opgebouwd.".format(row["i"], row["j"], coin_share,
-                                                     BAROMETER_WARMUP_MINUTES))
-                    lines.append("")
-                    if coin_share < BAROMETER_COINS_BAD_SHARE:
-                        verdict = worst(verdict, BAD)
-                        lines.append("Daarmee viel meer dan de helft van de munten weg; op dat "
-                                     "moment beschreef de barometer een restje van de markt.")
-                        lines.append("")
-                    elif coin_share < BAROMETER_COINS_ATTENTION_SHARE:
-                        verdict = worst(verdict, ATTENTION)
-                        lines.append("Er viel onderweg een deel van de munten weg. Meestal komt dat "
-                                     "doordat de abonnementen aan het begin van de run nog aan het "
-                                     "opstarten waren; blijft het bij een dip aan het begin, dan is "
-                                     "het geen gebrek.")
-                        lines.append("")
-                    key_points.append("magerste meting op {:.0f} van {:.0f} munten ({:.0f}%)".format(
-                        row["i"], row["j"], coin_share))
-                    exchange_facts["coinsSharePercentage"] = round(coin_share, 1)
+                    exchange_facts["coinsPerSymbol"] = judge_barometer_coins(
+                        connection, barometer_ids, local_symbols, settled, high, lines,
+                        key_points)
+                    worst_share = min(
+                        (entry["declineSharePercentage"]
+                         for entry in exchange_facts["coinsPerSymbol"].values()
+                         if entry["declineSharePercentage"] is not None),
+                        default=None)
+                    if worst_share is not None:
+                        exchange_facts["coinsSharePercentage"] = worst_share
+                        if worst_share < BAROMETER_COINS_BAD_SHARE:
+                            verdict = worst(verdict, BAD)
+                        elif worst_share < BAROMETER_COINS_ATTENTION_SHARE:
+                            verdict = worst(verdict, ATTENTION)
                     subscribed_count = (subscribed or {}).get(exchange_name)
                     if subscribed_count:
                         # Alleen ter informatie: het verschil met de abonnementen is de volumegrens,
@@ -1809,6 +2171,9 @@ def read_memory_samples(path):
                 try:
                     samples.append({
                         "moment": moment,
+                        # Het procesnummer scheidt de runs in een csv die aangevuld wordt; zonder
+                        # dat veld loopt een fit dwars door een herstart heen (select_run_samples).
+                        "pid": (row.get("pid") or "").strip(),
                         "workingSetMb": float(row.get("workingsetmb") or 0),
                         "privateMb": float(row.get("privatemb") or 0),
                         "threads": int(float(row.get("threads") or 0)),
@@ -1856,13 +2221,47 @@ def read_memory_dumps(folder):
     return dumps
 
 
-def check_memory(report, folder, memory_csv):
+def select_run_samples(samples, window_start, window_end):
+    """
+    Houdt van een csv over meerdere nachten alleen de metingen van DEZE run over.
+
+    Twee dingen zitten er anders in dan je zou willen. De csv wordt aangevuld en niet overschreven,
+    dus hij bevat ook de vorige nachten - die horen niet in de fit. En een scanner die herstart is
+    krijgt een nieuw procesnummer terwijl zijn geheugen weer bij nul begint; een helling door beide
+    processen heen meet die terugval mee en zegt niets.
+
+    Vandaar: eerst op het venster snijden, dan alleen het nieuwste procesnummer daarbinnen houden.
+    Wat afvalt wordt teruggegeven zodat het rapport het kan melden in plaats van stilzwijgend
+    minder te meten.
+    """
+    if window_start and window_end:
+        in_window = [s for s in samples if window_start <= s["moment"] <= window_end]
+    else:
+        in_window = list(samples)
+    dropped_outside = len(samples) - len(in_window)
+    if not in_window:
+        return [], dropped_outside, 0, None
+
+    # Het nieuwste procesnummer is de run waar het venster over gaat; een eerder nummer binnen het
+    # venster hoort bij een scanner die tijdens de nacht herstart is.
+    processes = []
+    for sample in in_window:
+        if not processes or processes[-1] != sample["pid"]:
+            processes.append(sample["pid"])
+    latest = in_window[-1]["pid"]
+    selected = [s for s in in_window if s["pid"] == latest]
+    return selected, dropped_outside, len(in_window) - len(selected), processes
+
+
+def check_memory(report, folder, memory_csv, window_start=None, window_end=None):
     lines = []
     verdict = UNKNOWN
     facts = {}
     key_points = []
 
-    samples = read_memory_samples(memory_csv) if memory_csv else []
+    all_samples = read_memory_samples(memory_csv) if memory_csv else []
+    samples, dropped_outside, dropped_older, processes = select_run_samples(
+        all_samples, window_start, window_end)
     if samples:
         first, last = samples[0], samples[-1]
         hours = (last["moment"] - first["moment"]).total_seconds() / 3600.0
@@ -1904,6 +2303,38 @@ def check_memory(report, folder, memory_csv):
             lines.append("Maar {:.2f} uur aan metingen: te kort om te beoordelen. De groei "
                          "hierboven is doorgerekende ruis, geen trend.".format(hours))
             lines.append("")
+
+        if dropped_outside:
+            lines.append("{:,} metingen lagen buiten het venster en tellen niet mee. De csv wordt "
+                         "aangevuld en niet overschreven, dus de nachten ervoor staan er ook in; "
+                         "die mogen blijven staan.".format(dropped_outside))
+            lines.append("")
+        if dropped_older:
+            lines.append("De scanner is tijdens deze nacht herstart: er staan {} procesnummers in "
+                         "het venster ({}). Alleen het nieuwste is gemeten - een helling door een "
+                         "herstart heen telt de terugval naar nul mee en zegt niets."
+                         .format(len(processes), ", ".join(processes)))
+            lines.append("")
+
+        # De steekproef hoort tot het einde van het venster door te lopen. Stopt hij eerder, dan is
+        # het proces uit beeld geraakt (sample-process.ps1 die het nieuwe procesnummer niet vond) en
+        # gaat het oordeel over de verkeerde uren. Dat is geen gezonde run, dat is een meetgat.
+        covered = None
+        if window_end:
+            missing_minutes = (window_end - last["moment"]).total_seconds() / 60.0
+            covered = percentage(hours, (window_end - window_start).total_seconds() / 3600.0) \
+                if window_start else None
+            if missing_minutes > MEMORY_COVERAGE_GAP_MINUTES:
+                verdict = UNKNOWN
+                lines.append("**De metingen houden {:.0f} minuten voor het einde van het venster "
+                             "op** ({:%Y-%m-%d %H:%M} tegen {:%H:%M}), dus er is over {:.0f}% van "
+                             "de run gemeten. Meestal is de scanner herstart en heeft "
+                             "`sample-process.ps1` het nieuwe procesnummer niet opgepakt. Er wordt "
+                             "hier daarom geen oordeel geveld: de cijfers hierboven gaan over de "
+                             "uren voor dat moment, niet over de nacht."
+                             .format(missing_minutes, last["moment"], window_end, covered or 0))
+                lines.append("")
+                key_points.append("meetgat: alleen {:.0f}% van de run gemeten".format(covered or 0))
         if last["threads"] > first["threads"] * 1.5 and last["threads"] - first["threads"] > 20:
             verdict = worst(verdict, ATTENTION)
             lines.append("Het aantal threads groeide ook, wat wijst op threads of timers die wel "
@@ -1919,6 +2350,26 @@ def check_memory(report, folder, memory_csv):
             "growthMbPerHour": round(growth, 2),
             "threadsStart": first["threads"], "threadsEnd": last["threads"],
             "handlesStart": first["handles"], "handlesEnd": last["handles"],
+            "processId": last["pid"],
+            "processesInWindow": processes,
+            "samplesOutsideWindow": dropped_outside,
+            "windowCoveragePercentage": round(covered, 1) if covered is not None else None,
+        }
+    elif all_samples:
+        lines.append("Er staan wel {:,} metingen in de csv, maar geen enkele binnen het venster "
+                     "van deze run (laatste meting {:%Y-%m-%d %H:%M}). Dat is het beeld als "
+                     "`sample-process.ps1` niet meer draaide toen de scanner startte, of als hij "
+                     "het procesnummer van een herstart niet heeft opgepakt."
+                     .format(len(all_samples), all_samples[-1]["moment"]))
+        lines.append("")
+        key_points.append("geen metingen binnen het venster")
+        # Wel vastleggen dat er gemeten IS, anders is een nacht zonder steekproef in de json niet te
+        # onderscheiden van een nacht waarin de steekproef het venster miste.
+        facts = {
+            "samples": 0,
+            "samplesOutsideWindow": len(all_samples),
+            "lastSampleOutsideWindow": str(all_samples[-1]["moment"]),
+            "windowCoveragePercentage": 0.0,
         }
     else:
         lines.append("Geen geheugenmetingen meegegeven. Start `sample-process.ps1` naast de scanner "
@@ -1962,7 +2413,9 @@ def main():
     parser.add_argument("--start", help="Begin van het venster, bijvoorbeeld \"2026-08-16 22:00\".")
     parser.add_argument("--end", help="Einde van het venster. Standaard de laatste logregel.")
     parser.add_argument("--memory-csv", help="Csv geschreven door sample-process.ps1.")
-    parser.add_argument("--out", help="Schrijf het markdown-rapport naar dit bestand.")
+    parser.add_argument("--out", help="Schrijf het rapport naar dit bestand. De extensie kiest de "
+                                      "vorm: .html geeft een gekleurde pagina met inhoudsopgave, "
+                                      "elke andere extensie geeft markdown.")
     parser.add_argument("--json", help="Schrijf de machineleesbare feiten naar dit bestand.")
     parser.add_argument("--top", type=int, default=20, help="Rijen per toplijst (standaard 20).")
     parser.add_argument("--deep", action="store_true",
@@ -2057,7 +2510,8 @@ def main():
     check_errors(report, window_entries, window_error_entries, arguments.top)
     check_signals(report, main_db, exchange_names, utc_start, utc_end,
                   settings_facts.get("tradingActive", False))
-    check_memory(report, folder, arguments.memory_csv)
+    # Lokale tijden: sample-process.ps1 schrijft Get-Date, niet UTC.
+    check_memory(report, folder, arguments.memory_csv, window_start, window_end)
 
     header = {
         "folder": str(folder),
@@ -2089,12 +2543,18 @@ def main():
         "| Rapport gemaakt op | {} |".format(header["generated"]),
     ]
 
-    markdown = report.to_markdown(header_lines)
+    # De extensie kiest de vorm. Html leest prettiger (kleur, inhoudsopgave, opent met een
+    # dubbelklik), markdown blijft bestaan voor wie het rapport wil doorzoeken of ergens in wil
+    # plakken. Zonder --out gaat de markdown naar het scherm, want html op een terminal is niets.
     if arguments.out:
-        Path(arguments.out).write_text(markdown, encoding="utf-8")
+        target = Path(arguments.out)
+        if target.suffix.lower() in (".html", ".htm"):
+            target.write_text(report.to_html(header_lines, header), encoding="utf-8")
+        else:
+            target.write_text(report.to_markdown(header_lines), encoding="utf-8")
         print("Rapport geschreven naar {}".format(arguments.out))
     else:
-        print(markdown)
+        print(report.to_markdown(header_lines))
 
     if arguments.json:
         Path(arguments.json).write_text(report.to_json(header), encoding="utf-8")
