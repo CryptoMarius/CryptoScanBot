@@ -53,6 +53,8 @@ public class CandleDatabase : IDisposable
 
     public SqliteConnection Connection { get; private set; }
 
+    private readonly string connectionString;
+
 
 
     /// <summary>
@@ -76,7 +78,8 @@ public class CandleDatabase : IDisposable
         string baseFolder = ResolveCandleFolder();
         Directory.CreateDirectory(baseFolder);
         string dbFile = Path.Combine(baseFolder, exchange.Name + ".db");
-        Connection = new SqliteConnection($"Filename={dbFile};Mode=ReadWriteCreate;");
+        connectionString = $"Filename={dbFile};Mode=ReadWriteCreate;";
+        Connection = new SqliteConnection(connectionString);
         //string folder = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
         //Directory.CreateDirectory(folder);
         //string dbFile = Path.Combine(folder, CandleDbFileName);
@@ -85,18 +88,41 @@ public class CandleDatabase : IDisposable
 
     public void Open()
     {
-        Connection.Open();
+        // See CryptoDatabase.Open: a handle leased from the Microsoft.Data.Sqlite pool can come back
+        // already disposed under heavy open/close churn. Retry on a fresh connection; no data is at
+        // risk because only the PRAGMAs below have run at that point.
+        const int maxAttempts = 3;
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                Connection.Open();
 
-        // Per-connection PRAGMAs. journal_mode = WAL is actually file-level (persists)
-        // but cheap to re-assert; synchronous and busy_timeout MUST be set per connection.
-        // busy_timeout: wait up to 30s for the write-lock instead of immediately failing
-        // with SQLITE_BUSY. SaveCandlesAsync already serialises writers via SemaphoreSlim;
-        // 30s is a generous safety net for edge cases (WAL checkpoint collisions, an
-        // external tool like DB Browser briefly holding a lock, exceptionally large
-        // INSERT transactions for symbols with tens of thousands of candles).
-        Connection.Execute("PRAGMA journal_mode = WAL;");
-        Connection.Execute("PRAGMA synchronous = NORMAL;");
-        Connection.Execute("PRAGMA busy_timeout = 30000;");
+                // Per-connection PRAGMAs. journal_mode = WAL is actually file-level (persists)
+                // but cheap to re-assert; synchronous and busy_timeout MUST be set per connection.
+                // busy_timeout: wait up to 30s for the write-lock instead of immediately failing
+                // with SQLITE_BUSY. SaveCandlesAsync already serialises writers via SemaphoreSlim;
+                // 30s is a generous safety net for edge cases (WAL checkpoint collisions, an
+                // external tool like DB Browser briefly holding a lock, exceptionally large
+                // INSERT transactions for symbols with tens of thousands of candles).
+                Connection.Execute("PRAGMA journal_mode = WAL;");
+                Connection.Execute("PRAGMA synchronous = NORMAL;");
+                Connection.Execute("PRAGMA busy_timeout = 30000;");
+                return;
+            }
+            catch (ObjectDisposedException) when (attempt < maxAttempts)
+            {
+                try
+                {
+                    Connection.Dispose();
+                }
+                catch (Exception)
+                {
+                    // ignore, the handle is gone anyway
+                }
+                Connection = new SqliteConnection(connectionString);
+            }
+        }
     }
 
     public void Close() => Connection.Close();

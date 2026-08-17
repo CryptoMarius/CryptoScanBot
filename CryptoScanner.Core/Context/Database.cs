@@ -24,10 +24,13 @@ public class CryptoDatabase : IDisposable
 
     public SqliteConnection Connection { get; set; }
 
+    private readonly string connectionString;
+
     public CryptoDatabase()
     {
         string dbFile = Path.Combine(GlobalData.AppDataFolder, Constants.AppName + ".db");
-        Connection = new($"Filename={dbFile};Mode=ReadWriteCreate;");
+        connectionString = $"Filename={dbFile};Mode=ReadWriteCreate;";
+        Connection = new(connectionString);
     }
 
     public SqliteTransaction BeginTransaction()
@@ -76,14 +79,51 @@ public class CryptoDatabase : IDisposable
     public void Open()
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        Connection.Open();
-        // Make concurrent writers WAIT for the lock instead of failing with SQLITE_BUSY. SQLite allows
-        // only one writer at a time; the emulator's parallel symbol processing can open several
-        // connections that each write (positions, zones). With WAL (set per run) + this timeout those
-        // writes simply serialize at the storage level instead of throwing. Per-connection setting, so
-        // it must be applied on every Open. Harmless for the live scanner (only matters under
-        // contention, which the single-threaded live path never hits).
-        Connection.Execute("PRAGMA busy_timeout=5000;");
+
+        // Microsoft.Data.Sqlite keeps a pool of native sqlite3 handles per connection string and prunes
+        // idle ones on a background timer. Under the scanner's constant open/close churn (a fresh
+        // connection per symbol per 1m candle, on several threads at once) a leased handle occasionally
+        // turns out to be already disposed, which surfaces as "ObjectDisposedException: Cannot access a
+        // disposed object. Object name: 'SQLitePCL.sqlite3'" on the first statement after Open. Nothing
+        // was written yet at that point, so throw the poisoned connection away and lease a new one
+        // instead of losing the whole candle.
+        const int maxAttempts = 3;
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                Connection.Open();
+                // Make concurrent writers WAIT for the lock instead of failing with SQLITE_BUSY. SQLite allows
+                // only one writer at a time; the emulator's parallel symbol processing can open several
+                // connections that each write (positions, zones). With WAL (set per run) + this timeout those
+                // writes simply serialize at the storage level instead of throwing. Per-connection setting, so
+                // it must be applied on every Open. Harmless for the live scanner (only matters under
+                // contention, which the single-threaded live path never hits).
+                Connection.Execute("PRAGMA busy_timeout=5000;");
+                return;
+            }
+            catch (ObjectDisposedException) when (attempt < maxAttempts)
+            {
+                ReplaceConnection();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Drop the current (poisoned) connection and create a fresh one, so the next Open leases another
+    /// handle from the pool. Disposing the old one may itself fail on the dead handle, hence the catch.
+    /// </summary>
+    private void ReplaceConnection()
+    {
+        try
+        {
+            Connection.Dispose();
+        }
+        catch (Exception)
+        {
+            // ignore, the handle is gone anyway
+        }
+        Connection = new(connectionString);
     }
 
     public void Close()
