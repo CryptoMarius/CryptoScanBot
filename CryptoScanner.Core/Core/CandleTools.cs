@@ -374,16 +374,14 @@ public static class CandleTools
                     // forward scan collecting the stale keys (stopping at the first key that's
                     // still in range) is enough — no need to re-resolve Keys.First() from the root
                     // of the tree once per removed item.
-                    List<CandleTime> staleCandleKeys = [];
-                    foreach (CandleTime key in symbolInterval.CandleList.Keys)
-                    {
-                        if (key < startFetchUnix)
-                            staleCandleKeys.Add(key);
-                        else
-                            break;
-                    }
-                    foreach (CandleTime key in staleCandleKeys)
-                        symbolInterval.CandleList.Remove(key);
+                    //
+                    // RemoveBefore does that scan under CryptoCandleList's own write lock. Doing it
+                    // here over CandleList.Keys used the inherited SortedDictionary key collection,
+                    // which bypasses that lock: a concurrent Add from the kline stream bumped the
+                    // tree version mid-scan and threw "Collection was modified after the enumerator
+                    // was instantiated". CandleLock below does not cover it - the writers take the
+                    // list's own lock, not this semaphore.
+                    symbolInterval.CandleList.RemoveBefore(startFetchUnix);
 
                     // Remove old candle indicator data
                     lock (symbolInterval.Data)
