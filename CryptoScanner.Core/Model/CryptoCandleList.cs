@@ -131,7 +131,10 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
 
     /// <summary>
     /// Thread-safe removal of all entries with a key strictly before <paramref name="cutoff"/>.
-    /// Used by the emulator's chunked replay to keep memory bounded between chunks.
+    /// Used by the emulator's chunked replay to keep memory bounded between chunks, and by the
+    /// live/zone paths that trim the front of the window (CandleTools.CleanCandleDataAsync,
+    /// ZoneCandleEngine.CleanLoadedCandlesAsync). Prefer this over enumerating Keys yourself:
+    /// the Keys collection is the inherited SortedDictionary one and bypasses this lock entirely.
     /// </summary>
     public int RemoveBefore(CandleTime cutoff)
     {
@@ -150,6 +153,12 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
             }
             foreach (var key in toRemove)
                 base.Remove(key);
+
+            // Remove(key) resets LastCandle when the newest entry disappears; this loop bypasses
+            // that path, so do it here. Only relevant when the cutoff empties the whole list -
+            // otherwise the newest candle is by definition at or after the cutoff and survives.
+            if (base.Count == 0)
+                LastCandle = default;
             return toRemove.Count;
         }
         finally
