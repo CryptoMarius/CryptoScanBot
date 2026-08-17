@@ -311,13 +311,11 @@ public class ZoneCandleEngine
 
                 CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
 
-                while (symbolInterval.CandleList.Count > 0)
-                {
-                    CandleTime openTime = symbolInterval.CandleList.Keys.First();
-                    if (openTime >= startFetchUnix)
-                        break;
-                    symbolInterval.CandleList.Remove(openTime);
-                }
+                // Keys.First() walks the inherited SortedDictionary key collection, which bypasses
+                // CryptoCandleList's own reader/writer lock - a concurrent Add from the kline stream
+                // then throws "Collection was modified after the enumerator was instantiated".
+                // RemoveBefore does the same front-trim under the write lock.
+                symbolInterval.CandleList.RemoveBefore(startFetchUnix);
             }
         }
         finally
