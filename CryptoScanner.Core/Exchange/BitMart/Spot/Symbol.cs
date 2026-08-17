@@ -83,6 +83,8 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 // Track which symbols are still active, to deactivate the ones we no longer follow
                 SortedList<string, CryptoSymbol> activeSymbols = [];
+                // How many pairs claim to be trading while they are not traded any more
+                int notTraded = 0;
 
 
                 using (var transaction = database.BeginTransaction())
@@ -151,7 +153,22 @@ public class Symbol() : SymbolBase(), ISymbol
                                 else
                                     symbol!.Volume = 0;
 
-                                if (symbolData.TradeStatus == SymbolStatus.Trading)
+                                // The ticker list holds the pairs that are really being traded, the same
+                                // way the funding rate list does for the futures. BitMart leaves the trade
+                                // status on trading long after the trading has stopped: on 16-08-2026 the
+                                // 65 pairs were all trading while only 45 of them had a ticker, and the
+                                // klines of the other 20 (PENDLE_USDT, LDO_USDT, ONDO_USDT and so on) show
+                                // a volume of zero over the whole day. Membership of the list is used
+                                // instead of a volume of zero because a thin pair can round down to almost
+                                // nothing while it is still traded (SOL_BTC turns over 0.0019 BTC a day).
+                                // The list is only believed when the call actually returned something,
+                                // because a failed call would otherwise deactivate the entire exchange.
+                                bool delisted = symbolData.PlannedDelistTime.HasValue && symbolData.PlannedDelistTime.Value <= DateTime.UtcNow;
+                                bool withoutTicker = volumeTicker.Count > 0 && !volumeTicker.ContainsKey(symbolData.Symbol);
+                                if (symbolData.TradeStatus == SymbolStatus.Trading && (delisted || withoutTicker))
+                                    notTraded++;
+
+                                if (symbolData.TradeStatus == SymbolStatus.Trading && !delisted && !withoutTicker)
                                     symbol.Status = 1;
                                 else
                                     symbol.Status = 0; //Pass the status on (PreTrading, PostTrading or Halt)
@@ -180,7 +197,9 @@ public class Symbol() : SymbolBase(), ISymbol
                             }
                         }
                         if (deactivated > 0)
-                            GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
+                            GlobalData.AddTextToLogTab($"{deactivated} coins deactivated");
+                        if (notTraded > 0)
+                            GlobalData.AddTextToLogTab($"{notTraded} coins report trading without being traded");
 
                         transaction.Commit();
 

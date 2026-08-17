@@ -62,8 +62,34 @@ public class Symbol() : SymbolBase(), ISymbol
                 SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
 
 
+                // The funding rate list holds the contracts that are really being traded, and that is
+                // the only reliable way to recognize the rest. BitMart leaves the status of a contract
+                // on Trading long after the trading has stopped: on 16-08-2026 that was true for 259 of
+                // the 359 Trading contracts, which have had a volume, turnover, high, low and change of
+                // zero since 25-07 (127 of them, with a delist time) or since 11-08 02:00 (132 of them,
+                // without any delist time at all). Their last price and open interest keep the old value,
+                // so those two say nothing. The list held exactly the 96 linear contracts that still have
+                // a turnover and not one of the dead ones. Note that the per symbol variant of this call
+                // does answer for a dead contract, so only the list can be used for this.
+                // The inverse contracts are absent from the list even though they are traded (XRPUSD has
+                // a turnover of 3.4 million), which does no harm because they are skipped below, before
+                // this list is consulted.
+                HashSet<string> tradedSymbols = [];
+                var fundingInfo = await api.ExchangeData.GetCurrentFundingRatesAsync();
+                if (!fundingInfo.Success)
+                    GlobalData.AddErrorToLogTab("error getting funding rates " + fundingInfo.Error);
+                if (fundingInfo.Data != null)
+                {
+                    SaveExchangeInfo(fundingInfo.OriginalData, "funding.json");
+                    foreach (var fundingData in fundingInfo.Data)
+                        tradedSymbols.Add(fundingData.Symbol);
+                }
+
+
                 // Track which symbols are still active, to deactivate the ones we no longer follow
                 SortedList<string, CryptoSymbol> activeSymbols = [];
+                // How many contracts claim to be Trading while they are not traded any more
+                int notTraded = 0;
                 // Scanner names of the instruments we skip below. Intersected with the accepted names
                 // after the loop, that gives the symbols whose name covers more than one instrument.
                 List<string> rejectedSymbols = [];
@@ -153,7 +179,17 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //else
                                 symbol.Volume = (double)symbolData.Turnover24h;
 
-                                if (symbolData.Status == ContractStatus.Trading)
+                                // A contract that is missing from the funding rate list, or whose delist
+                                // time has passed, is not traded any more whatever its status says (see
+                                // the remark above the list). The list is only believed when the call
+                                // actually returned something, because a failed call would otherwise
+                                // deactivate the entire exchange.
+                                bool delisted = symbolData.DelistTime.HasValue && symbolData.DelistTime.Value <= DateTime.UtcNow;
+                                bool withoutFunding = tradedSymbols.Count > 0 && !tradedSymbols.Contains(symbolData.Symbol);
+                                if (symbolData.Status == ContractStatus.Trading && (delisted || withoutFunding))
+                                    notTraded++;
+
+                                if (symbolData.Status == ContractStatus.Trading && !delisted && !withoutFunding)
                                     symbol.Status = 1;
                                 else
                                     symbol.Status = 0; //Pass the status on (PreTrading, PostTrading or Halt)
@@ -186,6 +222,8 @@ public class Symbol() : SymbolBase(), ISymbol
                         }
                         if (deactivated > 0)
                             GlobalData.AddTextToLogTab($"{deactivated} coins deactivated");
+                        if (notTraded > 0)
+                            GlobalData.AddTextToLogTab($"{notTraded} coins report Trading without being traded");
 
                         transaction.Commit();
 
