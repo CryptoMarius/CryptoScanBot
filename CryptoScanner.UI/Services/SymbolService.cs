@@ -61,7 +61,15 @@ public class SymbolService : IDisposable
         });
         WeakReferenceMessenger.Default.Register<ZonesCalculatedForSymbolMessage>(this,
             (_, message) => InvalidateDistance(message.Symbol));
-        WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, (_, _) => Reload());
+        WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, (_, _) =>
+        {
+            // Reload reuses the existing view models where it can, and those cache their volume text
+            // and volume colour. That colour is decided against QuoteData.MinimalVolume, so changing
+            // the minimum volume of a quote coin has to throw it away first - otherwise the grid
+            // keeps colouring against the old boundary and the change appears to do nothing.
+            InvalidateVolumes();
+            Reload();
+        });
 
         Reload();
 
@@ -178,7 +186,9 @@ public class SymbolService : IDisposable
     }
 
     /// <summary>
-    /// Invalidate volume on all symbols (called on timer tick).
+    /// Invalidate volume on all symbols. Called when the settings are applied, because the volume
+    /// colour is decided against QuoteData.MinimalVolume and Reload keeps the existing view models.
+    /// (The doc comment used to say "called on timer tick" while nothing called it at all.)
     /// </summary>
     public void InvalidateVolumes()
     {

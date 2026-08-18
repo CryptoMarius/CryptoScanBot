@@ -198,15 +198,13 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
 
 
         // Maak er taken van
-        List<Task> taskList = [];
+        List<Subscription> toStart = [];
         foreach (var bundle in SubscriptionBundleList)
         {
             foreach (var subscription in bundle.SubscriptionList)
-            {
-                Task task = Task.Run(subscription.StartAsync);
-                taskList.Add(task);
-            }
+                toStart.Add(subscription);
         }
+        List<Task> taskList = await StartStaggeredAsync(toStart);
 
 
         string text = "";
@@ -228,20 +226,23 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
 
 
         // Herkansing? (de echte vraag is waarom er fouten ontstaan tijdens het opstarten)
+        // Die vraag is op 18-08-2026 beantwoord: de golf hierboven ging in één keer de deur uit, en
+        // een beurs die het aantal berichten per seconde begrenst weigert dan een deel. Sinds de
+        // spreiding in StartStaggeredAsync hoort deze herkansing zeldzaam te worden.
         symbolCount = 0;
-        taskList.Clear();
+        List<Subscription> toRetry = [];
         foreach (var bundle in SubscriptionBundleList)
         {
             foreach (var subscription in bundle.SubscriptionList)
             {
                 if (subscription.ErrorDuringStartup || subscription.NeedsRestart)
                 {
-                    Task task = Task.Run(subscription.StartAsync);
-                    taskList.Add(task);
+                    toRetry.Add(subscription);
                     symbolCount += subscription.SymbolList.Count;
                 }
             }
         }
+        taskList = await StartStaggeredAsync(toRetry);
         if (taskList.Count != 0)
         {
             await Task.WhenAll(taskList).ConfigureAwait(false);
@@ -249,6 +250,51 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                 text = $" for {symbolCount} symbols";
             GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} retry - started {TickerType} subscriptions{text} over {SubscriptionBundleList.Count} bundles");
         }
+    }
+
+
+    // How long the whole set of subscriptions may take to go out, and the largest gap between two of
+    // them. The budget is what bounds a big set: 307 subscriptions (HyperLiquid Spot) leave 32
+    // milliseconds between two, so about 30 messages a second instead of 307 in one burst. The cap
+    // is what keeps a small set quick: without it seven subscriptions would sit 1.4 seconds apart for
+    // no reason, with it they are done in under two seconds.
+    private static readonly TimeSpan SubscribeBudget = TimeSpan.FromSeconds(10);
+    private const int MaximumStaggerMilliseconds = 250;
+
+    /// <summary>
+    /// Start every subscription in the list, spread out over <see cref="SubscribeBudget"/> instead of
+    /// all at once.
+    /// <para>
+    /// Every subscription is one message to the exchange, and they all used to leave in the same
+    /// instant. Exchanges that bound the number of messages per second answer that with a refusal for
+    /// part of the set - on the night of 17-08-2026 HyperLiquid Futures logged "retry - started for 55
+    /// symbols" after a restart of 70, and those refusals set the restart flag again, which triggered
+    /// the next restart. Spreading them costs at most ten seconds of a run that lasts all night.
+    /// </para>
+    /// <para>
+    /// The returned tasks are NOT awaited here; the caller decides when to wait for them, exactly as
+    /// it did when they were started in a plain loop.
+    /// </para>
+    /// </summary>
+    private static async Task<List<Task>> StartStaggeredAsync(List<Subscription> subscriptions)
+    {
+        List<Task> taskList = [];
+        if (subscriptions.Count == 0)
+            return taskList;
+
+        int stagger = Math.Min(MaximumStaggerMilliseconds,
+            (int)(SubscribeBudget.TotalMilliseconds / subscriptions.Count));
+
+        for (int index = 0; index < subscriptions.Count; index++)
+        {
+            var subscription = subscriptions[index];
+            taskList.Add(Task.Run(subscription.StartAsync));
+
+            // Not after the last one - that would only add a pause before the caller starts waiting.
+            if (stagger > 0 && index < subscriptions.Count - 1)
+                await Task.Delay(stagger).ConfigureAwait(false);
+        }
+        return taskList;
     }
 
 
@@ -395,7 +441,7 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
         {
 
             // Stop de getrande subscriptions
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} herstarten {subscriptions.Count} {TickerType} subscriptions (stopping)");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} restarting {subscriptions.Count} {TickerType} subscriptions (stopping)");
 
             List<Task> taskList = [];
             foreach (var subscription in subscriptions)
@@ -406,21 +452,18 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
             await Task.WhenAll(taskList).ConfigureAwait(false);
 
 
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} herstarten {subscriptions.Count} {TickerType} subscriptions (stopped)");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} restarting {subscriptions.Count} {TickerType} subscriptions (stopped)");
 
 
             // Start de getrande subscriptions opnieuw
-            taskList.Clear();
-            foreach (var subscription in subscriptions)
-            {
-                // We hergebruiken de group nu (de indeling is ingewikkelder geworden)
-                //TickerKLineItemBase tickerNew = (TickerKLineItemBase)Activator.CreateInstance(ExchangeOptions.KLineTickerItemType, [ExchangeOptions]);
-                //tickerNew.Symbols = subscription.Symbols;
-                Task task = Task.Run(subscription.StartAsync);
-                taskList.Add(task);
-            }
+            // We hergebruiken de group nu (de indeling is ingewikkelder geworden)
+            //TickerKLineItemBase tickerNew = (TickerKLineItemBase)Activator.CreateInstance(ExchangeOptions.KLineTickerItemType, [ExchangeOptions]);
+            //tickerNew.Symbols = subscription.Symbols;
+            // Gespreid, om dezelfde reden als bij het opstarten: een herstartronde was juist het
+            // moment waarop een golf abonnementen tegelijk de deur uit ging.
+            taskList = await StartStaggeredAsync(subscriptions);
             await Task.WhenAll(taskList).ConfigureAwait(false);
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} herstarten {subscriptions.Count} {TickerType} subscriptions (finished)");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} restarting {subscriptions.Count} {TickerType} subscriptions (finished)");
         }
 
         // En de applicatie status herstellen (niet 100% zuiver)

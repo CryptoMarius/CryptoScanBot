@@ -53,10 +53,22 @@ public class LiveDataViewModel : BaseConvertersViewModel
         }
     }
 
+    /// <summary>
+    /// Drop the cached values that were derived from the settings, so the row picks up the new ones.
+    /// <para>
+    /// The volume colour belongs here just as much as the symbol background: it is decided against
+    /// QuoteData.MinimalVolume, and that value moves when the user changes the minimum volume of a
+    /// quote coin. Only the background was cleared, so after such a change the volume column kept
+    /// showing red or green according to the OLD boundary until the row was rebuilt for another
+    /// reason - which for this grid never happens, its rows only get appended.
+    /// </para>
+    /// </summary>
     public void ResetSymbolBackground()
     {
         _SymbolBackground = null;
+        _SignalVolumeForeground = null;
         OnPropertyChanged(nameof(SymbolBackground));
+        OnPropertyChanged(nameof(SignalVolumeForeground));
     }
 
     //public string Interval => Object.Interval.Name;

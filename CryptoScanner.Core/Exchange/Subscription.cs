@@ -218,6 +218,20 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     internal void TickerConnectionRestored(TimeSpan timeSpan)
     {
         ConnectionIsLost = false;
+
+        // A failed resubscribe attempt sets NeedsRestart (see TickerResubscribingFailed), but the
+        // package keeps retrying on its own and this event says the retry succeeded: the socket is up
+        // AND the subscriptions are back on it. Leaving the flag standing made every recovered hiccup
+        // count as a broken subscription forever after, because nothing else clears it until the
+        // subscription is restarted. On HyperLiquid, where one drop produces two or three failed
+        // attempts before it recovers, that turned normal reconnects into restart rounds:
+        // SubscriptionManager.NeedsRestart() kept saying yes, so ScannerSession escalated to a full
+        // restart of every stream, which fires all subscribe messages at once, which drops more
+        // connections. The night of 17-08-2026 shows the difference - Kucoin Spot had 80 drops and all
+        // 80 recovered without a single restart round, HyperLiquid Futures had 283 and rebuilt its
+        // subscriptions 11 times over.
+        NeedsRestart = false;
+
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} connection restored after {timeSpan.TotalSeconds:N0}s");
         IScannerSession _scannerSession = GlobalData.GetService<IScannerSession>()
             ?? throw new InvalidOperationException("IScannerSession not registered in services");
@@ -228,11 +242,24 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     /// <summary>
     /// The socket came back but the package could not resubscribe on it, so nothing is being delivered
     /// even though the connection itself is up. Only a restart of this subscription fixes that.
+    /// <para>
+    /// That last sentence is only true when the package gives up, and it does not give up on one
+    /// failure: it drops the connection again and retries, and a ConnectionRestored follows as soon as
+    /// one of those attempts lands. So a single line here is an attempt, not an outcome. Written at
+    /// normal level for that reason - the night of 17-08-2026 produced 672 of these on HyperLiquid
+    /// Futures and 388 on HyperLiquid Spot, every one of them followed by a recovery within seconds,
+    /// and at error level they were the entire error log of both markets.
+    /// </para>
+    /// <para>
+    /// The flag still goes up, so a resubscribe that never lands is restarted; TickerConnectionRestored
+    /// takes it down again the moment the package succeeds. If it never succeeds, ConnectionIsLost stays
+    /// true as well, and the silence check in SubscriptionManager.NeedsRestart is the outer net.
+    /// </para>
     /// </summary>
     internal void TickerResubscribingFailed(Error error)
     {
         NeedsRestart = true;
-        GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} resubscribing failed {error}");
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} resubscribing failed {error}");
     }
 
 

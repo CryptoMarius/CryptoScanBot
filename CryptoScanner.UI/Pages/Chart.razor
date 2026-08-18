@@ -1117,10 +1117,10 @@
             return;
 
         _zigZagIndicators = [];
-        _zigZagIndicators.Add((TrendType.Primary, false), new(TrendType.Primary, false));
-        _zigZagIndicators.Add((TrendType.Primary, true), new(TrendType.Primary, true));
-        _zigZagIndicators.Add((TrendType.Secondary, false), new(TrendType.Secondary, false));
-        _zigZagIndicators.Add((TrendType.Secondary, true), new(TrendType.Secondary, true));
+        _zigZagIndicators[(TrendType.Primary, false)] = new(TrendType.Primary, false);
+        _zigZagIndicators[(TrendType.Primary, true)] = new(TrendType.Primary, true);
+        _zigZagIndicators[(TrendType.Secondary, false)] = new(TrendType.Secondary, false);
+        _zigZagIndicators[(TrendType.Secondary, true)] = new(TrendType.Secondary, true);
 
         await ZoneDlz.CalculatePivots(_currentSymbol, interval, minDate, maxDate, _zigZagIndicators);
         _zigZagBuiltFor = key;

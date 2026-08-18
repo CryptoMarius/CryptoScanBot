@@ -366,7 +366,9 @@ public class ThreadTelegramBotInstance
                         backOffSeconds = Math.Min(Math.Max(backOffSeconds, 1) * 2, backOffSecondsMaximum);
                         waitSeconds = backOffSeconds;
                     }
-                    ScannerLog.Logger.Error($"ERROR telegram thread {error.Message} (waiting {waitSeconds}s)"); // simplify error on 1 line
+                    // One call, not two: AddErrorToLogTab writes to the logger itself (see GlobalData),
+                    // so logging it here as well put every Telegram failure in both log files twice.
+                    // The message is simplified to one line on purpose, no stack trace.
                     GlobalData.AddErrorToLogTab($"ERROR telegram thread {error.Message} (waiting {waitSeconds}s)");
                     try
                     {
@@ -382,7 +384,7 @@ public class ThreadTelegramBotInstance
                 {
                     // Stupid Telegram is not playing nice
                     //ScannerLog.Logger.Error(error, "");
-                    ScannerLog.Logger.Error($"ERROR telegram thread {error.Message}"); // simplify error on 1 line
+                    // One call, not two - see the remark above. Simplified to one line on purpose.
                     GlobalData.AddErrorToLogTab($"ERROR telegram thread {error.Message}");
                 }
                 await Task.Delay(500);
@@ -391,6 +393,8 @@ public class ThreadTelegramBotInstance
         catch (Exception error)
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+            // The logger call stays here: this catch is the one that ends the thread, so the stack
+            // trace is worth having. AddErrorToLogTab below carries the short version to the log tab.
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddErrorToLogTab($"ERROR telegram thread {error.Message}");
         }

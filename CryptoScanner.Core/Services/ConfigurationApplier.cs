@@ -131,9 +131,13 @@ public static class ConfigurationApplier
             else
             {
                 await scannerSession.ApplyConfigurationAsync(false);
-                // Refresh symbol grid so filters like MinimalPrice take effect immediately
-                GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
             }
+
+            // Refresh the symbol grid so filters like MinimalPrice take effect immediately. On both
+            // paths, not only on the one below: a changed quote coin takes the branch above, and that
+            // one sent nothing at all unless the EXCHANGE had changed as well. Switching a quote coin
+            // on or off therefore left the grid showing the symbols of the previous selection.
+            GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
 
             // Reset cached strategy colors in the signal grid
             GlobalData.SendMvvmMessage(new ConfigurationChangedMessage());

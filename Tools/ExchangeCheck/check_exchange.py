@@ -89,6 +89,13 @@ BAROMETER_WARMUP_MINUTES = 30
 # een quote-munt met een of twee genoteerde munten (Bitvavo USDC, Bybit EU EUR) is een instelling,
 # geen gebrek.
 BAROMETER_MINIMAL_COINS = 5
+# En zelfs dat minimum is nog te scherp, want er zit een kortstondige dip in de reeks die niets met
+# de gezondheid van de nacht te maken heeft: bij elke verversing van de symbolenlijst (circa elke
+# drie uur) telt de barometer een paar minuten lang minder munten mee. Op HyperLiquid Futures zakte
+# hij daardoor vijf keer per nacht van 70 naar 14 a 39 en stond hij binnen vijf minuten weer op 68.
+# Een terugval telt daarom pas als hij zo veel metingen achter elkaar aanhoudt. Een echte instorting
+# (HyperLiquid Spot, 18-08-2026) houdt de hele nacht aan en wordt hier niet door gemist.
+BAROMETER_DIP_MINUTES = 10
 # Een gemiddelde verder dan dit van nul is geen markt maar een storing. Zelfde grens die de grafiek
 # hanteert (BarometerCandleFields.GetScale, IgnoreBeyond).
 BAROMETER_EXTREME_PERCENTAGE = 50.0
@@ -1260,6 +1267,23 @@ def column_exists(connection, table, column):
 # ==============================================================================================
 # 3b. Barometer
 # ==============================================================================================
+def sustained_low(values, minimum_length):
+    """
+    Het laagste niveau dat minimum_length metingen achter elkaar wordt vastgehouden.
+
+    Het gewone minimum pakt ook een dip van een enkele meting, en die zegt niets: de barometer
+    telt tijdens een verversing van de symbolenlijst een paar minuten minder munten mee. Door per
+    venster van minimum_length metingen de HOOGSTE waarde te nemen en daarvan de laagste te
+    houden, overleeft alleen een dip die het hele venster vult. Geeft None bij een lege reeks.
+    """
+    if not values:
+        return None
+    if len(values) <= minimum_length:
+        return max(values)
+    return min(max(values[index:index + minimum_length])
+               for index in range(len(values) - minimum_length + 1))
+
+
 def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, high, lines,
                           key_points):
     """
@@ -1272,6 +1296,14 @@ def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, hig
 
     Beoordeeld wordt de terugval na het hoogtepunt (zie BAROMETER_MINIMAL_COINS). Het minimum over
     het hele venster wordt wel getoond, want dat is de opbouwcurve en die is het lezen waard.
+
+    Piek en terugval worden PER INTERVAL bepaald en pas daarna samengenomen. De barometer schrijft
+    in tien intervallen en die beginnen niet tegelijk: een interval dat pas halverwege de nacht
+    genoeg historie heeft, start dan met zijn eigen opbouwcurve. Over alle intervallen tegelijk
+    gemeten valt die curve na het hoogtepunt van de reeks als geheel, en dan leest een opstart als
+    een instorting - Kraken Spot werd op 18-08-2026 zo als "viel terug naar 9% van 43 munten"
+    gemeld, terwijl de lage metingen de eerste zes minuten van de intervallen 13, 14 en 15 waren
+    (die om 09:08, 13:08 en 01:08 begonnen) en de reeks verder de hele nacht op 42 stond.
     """
     per_symbol = {}
     lines.append("**Aantal munten per barometer**")
@@ -1289,26 +1321,51 @@ def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, hig
 
         # Het eerste moment waarop het hoogtepunt gehaald wordt; alles daarna moet dat niveau
         # vasthouden. Wat ervoor ligt is opbouw en zegt niets over de gezondheid van de nacht.
-        peak_moment = connection.execute(
-            "SELECT MIN(OpenTime) FROM Candle WHERE SymbolId = ? AND OpenTime BETWEEN ? AND ? "
-            "AND Volume = ?", (identifier, settled, high, highest)).fetchone()[0]
-        after_peak = connection.execute(
-            "SELECT MIN(Volume) FROM Candle WHERE SymbolId = ? AND OpenTime BETWEEN ? AND ?",
-            (identifier, peak_moment, high)).fetchone()[0]
-
+        # Per interval, want elk interval heeft zijn eigen begin en dus zijn eigen opbouw (zie de
+        # toelichting boven deze functie). Het laagste dat een interval na ZIJN piek nog haalt is
+        # wat telt; het slechtste interval bepaalt het oordeel.
+        # Elk interval wordt tegen ZIJN EIGEN piek afgezet, niet tegen de hoogste van de reeks: een
+        # interval dat om zijn eigen redenen op een lager aantal draait is geen terugval. Het
+        # interval dat het minste van zijn eigen piek vasthoudt bepaalt het oordeel.
+        after_peak = None
+        peak_of_worst = None
         share = None
+        for (interval_id,) in connection.execute(
+                "SELECT DISTINCT IntervalId FROM Candle WHERE SymbolId = ? "
+                "AND OpenTime BETWEEN ? AND ?", (identifier, settled, high)).fetchall():
+            series = [row[0] for row in connection.execute(
+                "SELECT Volume FROM Candle WHERE SymbolId = ? AND IntervalId = ? "
+                "AND OpenTime BETWEEN ? AND ? ORDER BY OpenTime",
+                (identifier, interval_id, settled, high)).fetchall()]
+            if not series:
+                continue
+            interval_high = max(series)
+            if not interval_high:
+                continue
+            interval_after_peak = sustained_low(series[series.index(interval_high):],
+                                                BAROMETER_DIP_MINUTES)
+            if interval_after_peak is None:
+                continue
+            interval_share = percentage(interval_after_peak, interval_high)
+            if share is None or interval_share < share:
+                share = interval_share
+                after_peak = interval_after_peak
+                peak_of_worst = interval_high
+        if after_peak is None:
+            after_peak, peak_of_worst, share = lowest, highest, percentage(lowest, highest)
+
         if highest < BAROMETER_MINIMAL_COINS:
+            share = None
             judgement = "te weinig munten om te beoordelen"
         else:
-            share = percentage(after_peak, highest)
             if share < BAROMETER_COINS_BAD_SHARE:
                 judgement = "**viel terug naar {:.0f}%**".format(share)
                 key_points.append("{} viel na de piek terug naar {:.0f}% van {:.0f} munten".format(
-                    name, share, highest))
+                    name, share, peak_of_worst))
             elif share < BAROMETER_COINS_ATTENTION_SHARE:
                 judgement = "zakte naar {:.0f}%".format(share)
                 key_points.append("{} zakte na de piek naar {:.0f}% van {:.0f} munten".format(
-                    name, share, highest))
+                    name, share, peak_of_worst))
             elif lowest < highest:
                 judgement = "bouwde op van {:.0f}, hield {:.0f}% vast".format(lowest, share)
             else:
@@ -1329,6 +1386,14 @@ def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, hig
                  "hoogtepunt betekent dat er munten wegvielen. Barometers met minder dan {} munten "
                  "krijgen geen oordeel; die beschrijven geen markt."
                  .format(BAROMETER_WARMUP_MINUTES, BAROMETER_MINIMAL_COINS))
+    lines.append("")
+    lines.append("Piek en terugval worden per interval bepaald en tegen de eigen piek van dat "
+                 "interval afgezet, en een terugval telt pas als hij {} metingen achter elkaar "
+                 "aanhoudt. Zonder het eerste leest een interval dat later op de avond begint zijn "
+                 "eigen opbouw als een instorting; zonder het tweede telt de dip van een paar "
+                 "minuten bij elke verversing van de symbolenlijst mee. Het interval dat het minste "
+                 "van zijn eigen piek vasthoudt bepaalt de regel hierboven."
+                 .format(BAROMETER_DIP_MINUTES))
     lines.append("")
     return per_symbol
 

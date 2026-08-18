@@ -136,12 +136,19 @@ public partial class SignalViewModel : BaseConvertersViewModel
         }
     }
 
+    /// <summary>
+    /// Drop the cached colours that were derived from the settings. The volume colour is one of them:
+    /// it is decided against QuoteData.MinimalVolume, so it has to go when the user changes the
+    /// minimum volume of a quote coin - see the same reset in LiveDataViewModel.
+    /// </summary>
     public void ResetColors()
     {
         _StrategyBackground = null;
         _SymbolBackground = null;
+        _SignalVolumeForeground = null;
         OnPropertyChanged(nameof(StrategyBackground));
         OnPropertyChanged(nameof(SymbolBackground));
+        OnPropertyChanged(nameof(SignalVolumeForeground));
     }
     //public decimal SignalPrice => Object.SignalPrice;
     private string? _SignalPriceText;
