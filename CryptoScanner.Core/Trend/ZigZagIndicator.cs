@@ -3,7 +3,24 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Trend;
 
-public class TrendZigZagIndicatorList : Dictionary<(TrendType trendType, bool useHighLow), ZigZagIndicator>;
+/// <summary>
+/// The cached ZigZag indicators of one symbol+interval, keyed by (TrendType, UseHighLow).
+/// <para>
+/// Concurrent, not a plain Dictionary, because four different places touch this one instance and they
+/// do not share a lock: ZoneDlz.CalculatePivots and CandleTools.CleanCandleDataAsync read it under
+/// symbol.Data.CandleLock, TrendCalculator.CalculateBothAsync ADDS to it without that lock, and
+/// CryptoSymbolInterval.ResetTrendData clears it from the candle loading paths. On the night of
+/// 17/18-08-2026 that threw "Collection was modified; enumeration operation may not execute" five
+/// times on three exchanges, each time silently aborting the zone calculation for that symbol.
+/// </para>
+/// <para>
+/// Putting them all under CandleLock is not an option as it stands: TrendTools.AddCandlesToIndicatorsAsync
+/// takes that same semaphore, and SemaphoreSlim is not re-entrant, so the writer would deadlock against
+/// itself. A concurrent dictionary needs no lock discipline at all - its enumerator walks a snapshot,
+/// so an entry added or removed halfway through simply does not throw.
+/// </para>
+/// </summary>
+public class TrendZigZagIndicatorList : System.Collections.Concurrent.ConcurrentDictionary<(TrendType trendType, bool useHighLow), ZigZagIndicator>;
 
 public class ZigZagIndicator
 {

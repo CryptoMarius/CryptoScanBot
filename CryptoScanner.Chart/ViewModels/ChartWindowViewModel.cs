@@ -145,10 +145,10 @@ public partial class ChartWindowViewModel : ObservableObject
         optionsInChart["interval"] = intervalName;
 
         TrendZigZagIndicatorList.Clear();
-        TrendZigZagIndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false));
-        TrendZigZagIndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true));
-        TrendZigZagIndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false));
-        TrendZigZagIndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true));
+        TrendZigZagIndicatorList[(TrendType.Primary, false)] = new(TrendType.Primary, false);
+        TrendZigZagIndicatorList[(TrendType.Primary, true)] = new(TrendType.Primary, true);
+        TrendZigZagIndicatorList[(TrendType.Secondary, false)] = new(TrendType.Secondary, false);
+        TrendZigZagIndicatorList[(TrendType.Secondary, true)] = new(TrendType.Secondary, true);
     }
 
 

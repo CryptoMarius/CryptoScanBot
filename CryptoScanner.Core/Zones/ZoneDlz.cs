@@ -495,13 +495,20 @@ public class ZoneDlz
         {
             var candleList = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
 
+            // This list is shared with TrendCalculator and with the candle loading paths, and they do
+            // not share a lock with this method - see the remarks on TrendZigZagIndicatorList for the
+            // exception that used to cause. Values on a concurrent dictionary is already a snapshot,
+            // so an indicator added or removed while this loop runs cannot disturb it. One added
+            // halfway is fed by whoever added it, so missing it in this pass costs nothing.
+            var indicators = trendZigZagIndicatorList.Values;
+
             // Calculate "indicators"
             CandleTime loop = minDate;
             while (loop <= maxDate)
             {
                 if (candleList.TryGetValue(loop, out CryptoCandle candle))
                 {
-                    foreach (var trendZigZagIndicator in trendZigZagIndicatorList.Values)
+                    foreach (var trendZigZagIndicator in indicators)
                     {
                         trendZigZagIndicator.Calculate(candle, true);
                     }
@@ -522,7 +529,8 @@ public class ZoneDlz
             if (indicator.LastSwingHigh != null)
                 symbolIntervalData.DlzAdmin.LastSwingHigh = (decimal)indicator.LastSwingHigh.Value;
 
-            foreach (var indicatorX in trendZigZagIndicatorList.Values)
+            // Same snapshot as above, for the same reason.
+            foreach (var indicatorX in indicators)
                 indicatorX.FinishBatch();
         }
         finally
