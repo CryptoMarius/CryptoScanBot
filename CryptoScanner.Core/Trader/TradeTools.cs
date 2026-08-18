@@ -697,15 +697,15 @@ public class TradeTools
                         position.Symbol.LastLossDate = lastDateTime;
 
                     GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status changed to {position.Status}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Quantity={position.Quantity}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Dust={position.RemainingDust}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Remaining={remaining}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.LastPrice={position.Symbol.LastPrice}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuantityMinimum={position.Symbol.QuantityMinimum}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuoteValueMinimum={position.Symbol.QuoteValueMinimum}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} <= 0)");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({position.Quantity} < {position.Symbol.QuantityMinimum})");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining * position.Symbol.LastPrice} < {position.Symbol.QuoteValueMinimum})");
+                    //GlobalData.AddTextToLogTab($"TradeTools: debug ? Quantity={position.Quantity}");
+                    //GlobalData.AddTextToLogTab($"TradeTools: debug ? Dust={position.RemainingDust}");
+                    //GlobalData.AddTextToLogTab($"TradeTools: debug ? Remaining={remaining}");
+                    //GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.LastPrice={position.Symbol.LastPrice}");
+                    //GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuantityMinimum={position.Symbol.QuantityMinimum}");
+                    //GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuoteValueMinimum={position.Symbol.QuoteValueMinimum}");
+                    //GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} <= 0)");
+                    //GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({position.Quantity} < {position.Symbol.QuantityMinimum})");
+                    //GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining * position.Symbol.LastPrice} < {position.Symbol.QuoteValueMinimum})");
                 }
             }
 

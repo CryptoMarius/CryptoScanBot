@@ -754,10 +754,11 @@ public class ZoneDlz
                     }
 
                     int brokenCount = modifiedZones.Count(z => z.CloseTime != null);
-                    GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} incremental: " +
-                        $"pivots={trendZigZagIndicator.ZigZagList.Count}, newZones={newZones.Count} (weak={weakNew}), " +
-                        $"broken={brokenCount}, open long {openLongBefore}→{symbolIntervalData.DlzZones.LongOpen.Count}, " +
-                        $"open short {openShortBefore}→{symbolIntervalData.DlzZones.ShortOpen.Count}");
+                    // Diagnostics, deliberately switched off on 18-08-2026 - it was 40% of the log file. Left in place to switch back on.
+                    //GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} incremental: " +
+                    //    $"pivots={trendZigZagIndicator.ZigZagList.Count}, newZones={newZones.Count} (weak={weakNew}), " +
+                    //    $"broken={brokenCount}, open long {openLongBefore}→{symbolIntervalData.DlzZones.LongOpen.Count}, " +
+                    //    $"open short {openShortBefore}→{symbolIntervalData.DlzZones.ShortOpen.Count}");
                 }
                 else
                 {
@@ -802,12 +803,13 @@ public class ZoneDlz
                     ZoneTools.DeleteRemainingZones(oldZones, statistics);
                     symbolIntervalData.DlzZones = finalZones;
 
-                    GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} full scan: " +
-                        $"zigzag pivots={trendZigZagIndicator.ZigZagList.Count}, dominant={dominantPivots}, " +
-                        $"zones created={totalCreated} (weak={weakCreated}), " +
-                        $"open created long={openLongCreated} short={openShortCreated}, " +
-                        $"survived broken-check long={survivedLong} short={survivedShort}, " +
-                        $"final open long={finalZones.LongOpen.Count} short={finalZones.ShortOpen.Count}");
+                    // Diagnostics, deliberately switched off on 18-08-2026 - it was 40% of the log file. Left in place to switch back on.
+                    //GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} full scan: " +
+                    //    $"zigzag pivots={trendZigZagIndicator.ZigZagList.Count}, dominant={dominantPivots}, " +
+                    //    $"zones created={totalCreated} (weak={weakCreated}), " +
+                    //    $"open created long={openLongCreated} short={openShortCreated}, " +
+                    //    $"survived broken-check long={survivedLong} short={survivedShort}, " +
+                    //    $"final open long={finalZones.LongOpen.Count} short={finalZones.ShortOpen.Count}");
 
                     if (statistics.Untouched != statistics.Total)
                     {

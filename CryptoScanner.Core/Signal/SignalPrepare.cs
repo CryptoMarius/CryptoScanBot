@@ -190,11 +190,12 @@ public class SignalPrepare
                     if (symbolInterval.DlzAdmin.LastSwingLow == null || valueLow < symbolInterval.DlzAdmin.LastSwingLow ||
                        symbolInterval.DlzAdmin.LastSwingHigh == null || valueHigh > symbolInterval.DlzAdmin.LastSwingHigh)
                     {
-                        var dlzZones = symbolInterval.DlzZones;
-                        GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} recalc triggered " +
-                            $"(swingLow {symbolInterval.DlzAdmin.LastSwingLow}→{valueLow}, " +
-                            $"swingHigh {symbolInterval.DlzAdmin.LastSwingHigh}→{valueHigh}) " +
-                            $"open zones before: long={dlzZones.LongOpen.Count} short={dlzZones.ShortOpen.Count}");
+                        //var dlzZones = symbolInterval.DlzZones;
+                        // Diagnostics, deliberately switched off on 18-08-2026 - it was 40% of the log file. Left in place to switch back on.
+                        //GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} recalc triggered " +
+                        //    $"(swingLow {symbolInterval.DlzAdmin.LastSwingLow}→{valueLow}, " +
+                        //    $"swingHigh {symbolInterval.DlzAdmin.LastSwingHigh}→{valueHigh}) " +
+                        //    $"open zones before: long={dlzZones.LongOpen.Count} short={dlzZones.ShortOpen.Count}");
                         // Avoid duplicate calculation: remember the widest range seen so far, so only a
                         // candle that breaks OUT of it triggers the next recalculation.
                         // Assigning both values unconditionally (what happened here before) also moved
