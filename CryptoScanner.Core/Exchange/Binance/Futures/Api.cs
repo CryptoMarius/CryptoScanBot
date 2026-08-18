@@ -56,7 +56,16 @@ public class Api : ExchangeBase
 
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
-            options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
+            // Switched OFF on 18-08-2026 (zero disables the check: SocketConnection only starts its timeout
+            // task when Parameters.Timeout > 0). This watchdog measured the wrong thing on a kline feed -
+            // it closes a socket that received no MARKET DATA for a while, and an illiquid coin simply is
+            // not traded for minutes on end. On Coinbase the twelve quietest coins went 31 to 81 minutes
+            // without a trade. Liveness is already covered, and better: the library pings the socket every
+            // 10 seconds and aborts it when the pong does not arrive within 10 seconds
+            // (SocketApiClient.KeepAliveInterval / KeepAliveTimeout, both 10s by default), which works
+            // whether or not there is any trading. SubscriptionManager.MaximumTickerSilence is the outer
+            // net for a socket that stays up but stops delivering.
+            options.SocketNoDataTimeout = TimeSpan.Zero;
 
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new BinanceCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);

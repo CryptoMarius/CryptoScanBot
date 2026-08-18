@@ -96,6 +96,10 @@ BAROMETER_MINIMAL_COINS = 5
 # Een terugval telt daarom pas als hij zo veel metingen achter elkaar aanhoudt. Een echte instorting
 # (HyperLiquid Spot, 18-08-2026) houdt de hele nacht aan en wordt hier niet door gemist.
 BAROMETER_DIP_MINUTES = 10
+# De grens die SubscriptionManager.MaximumTickerSilence in de scanner aanhoudt. Alleen om de meting
+# in het rapport ernaast te kunnen zetten; wijzigen hier verandert niets in de scanner. Houd hem
+# gelijk aan de constante daar (5 minuten sinds 18-08-2026).
+SILENCE_LIMIT_MINUTES = 5
 # Een gemiddelde verder dan dit van nul is geen markt maar een storing. Zelfde grens die de grafiek
 # hanteert (BarometerCandleFields.GetScale, IgnoreBeyond).
 BAROMETER_EXTREME_PERCENTAGE = 50.0
@@ -1111,6 +1115,90 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
             exchange_facts["missingMinutes"] = total_missing
             exchange_facts["missingSharePercentage"] = round(share, 3)
             exchange_facts["symbolsWithGaps"] = len(gaps)
+
+            # ---- de langste stilte per symbool -------------------------------------------------
+            # Dit meet waar SubscriptionManager.MaximumTickerSilence op gezet moet worden. Die stond
+            # op vier minuten en staat sinds 18-08-2026 op vijf, en dat was een gok: geen enkele
+            # exchange documenteert hoe lang een munt zonder handel kan zitten, want dat is een
+            # eigenschap van de markt en niet van de API.
+            #
+            # Gemeten op VOLUME NUL, niet op ontbrekende candles. Dat onderscheid is het hele punt:
+            # bij KlineDelivery.TimerFlush schrijft de scanner elke minuut een candle weg, ook als er
+            # niets verhandeld is (hij herhaalt dan de vorige slotkoers met volume nul). De
+            # minuutreeks heeft dus geen gaten en zegt niets over stilte - op de nacht van
+            # 17/18-08-2026 leverde geen enkel symbool op vier van de vijf beproefde exchanges ook
+            # maar één ontbrekende minuut op. Een aaneengesloten reeks candles met volume nul is wel
+            # precies wat de websocket als "geen data" zou hebben gezien.
+            #
+            # De barometer blijft er buiten: die schrijft elke minuut en zijn volumeveld is het aantal
+            # munten, geen handelsvolume.
+            silences = []
+            for row in gap_rows:
+                if row["SymbolId"] in barometer_ids or row["have"] < 2:
+                    continue
+                longest = 0
+                current = 0
+                for (volume,) in connection.execute(
+                        "SELECT Volume FROM Candle WHERE SymbolId = ? AND IntervalId = ? "
+                        "AND OpenTime BETWEEN ? AND ? ORDER BY OpenTime",
+                        (row["SymbolId"], one_minute_id, low, high)):
+                    if not volume:
+                        current += 1
+                        if current > longest:
+                            longest = current
+                    else:
+                        current = 0
+                if longest > 0:
+                    silences.append((longest,
+                                     local_symbols.get(row["SymbolId"], str(row["SymbolId"]))))
+
+            lines.append("**Langste stilte per symbool**")
+            lines.append("")
+            lines.append("Het langste aaneengesloten aantal minuten zonder handel (candles met volume "
+                         "nul). Dit is de grootheid waar de stiltecontrole van de scanner tegenaan "
+                         "loopt, niet het aantal ontbrekende candles - die worden door de flush-timer "
+                         "opgevuld.")
+            lines.append("")
+            if not silences:
+                lines.append("Geen enkel symbool had een minuut zonder handel. Dat komt voor bij een "
+                             "exchange die alleen liquide munten in de selectie heeft, en dan zegt "
+                             "deze nacht niets over waar de grens moet liggen.")
+                exchange_facts["longestSilenceMinutes"] = 0
+                exchange_facts["symbolsAboveSilenceLimit"] = 0
+            else:
+                silences.sort(reverse=True)
+                longest_overall = silences[0][0]
+                above = [entry for entry in silences if entry[0] >= SILENCE_LIMIT_MINUTES]
+                lines.append("| Symbool | Langste stilte (minuten) |")
+                lines.append("|---|---|")
+                for minutes, name in silences[:top_count]:
+                    lines.append("| {} | {:,} |".format(name, minutes))
+                if len(silences) > top_count:
+                    lines.append("")
+                    lines.append("({} symbolen hadden een kortere stilte)".format(
+                        len(silences) - top_count))
+                lines.append("")
+                lines.append("Langste stilte van deze exchange: {:,} minuten. Symbolen die {} minuten "
+                             "of langer stil waren: {} van de {} met candles.".format(
+                                 longest_overall, SILENCE_LIMIT_MINUTES, len(above), len(gap_rows)))
+                lines.append("")
+                lines.append("De grens in de scanner staat op {} minuten "
+                             "(SubscriptionManager.MaximumTickerSilence)."
+                             .format(SILENCE_LIMIT_MINUTES))
+                lines.append("")
+                lines.append("**Lees dit getal niet als het aantal herstarts.** De stiltecontrole kijkt "
+                             "naar het ABONNEMENT en niet naar het symbool, en een abonnement bedient "
+                             "er tot SymbolLimitPerSubscription. Zolang één munt van de groep handelt "
+                             "is het abonnement actief. Op de nacht van 17/18-08-2026 waren op Coinbase "
+                             "Spot 87 van de 115 symbolen langer dan vijf minuten stil en waren er toch "
+                             "nul herstarts, want daar zitten 25 symbolen op een abonnement. Deze "
+                             "kolom is dus een bovengrens: hij valt alleen samen met het echte risico "
+                             "bij een exchange die op één symbool per abonnement staat (HyperLiquid). "
+                             "Vergelijk hem daarom met SymbolLimitPerSubscription van deze exchange en "
+                             "met de herstartrondes onder Streams.")
+                exchange_facts["longestSilenceMinutes"] = longest_overall
+                exchange_facts["symbolsAboveSilenceLimit"] = len(above)
+            lines.append("")
 
             # ---- plausibiliteit ---------------------------------------------------------------
             # Standaard beperkt tot het venster. De Candle-tabel heeft (SymbolId, IntervalId,

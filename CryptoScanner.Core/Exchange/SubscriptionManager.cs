@@ -354,7 +354,21 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
 
     // A 1m subscription that has not delivered anything for this long is considered dead. The check runs
     // in UTC so a daylight saving switch cannot make a healthy subscription look silent for an hour.
-    public static readonly TimeSpan MaximumTickerSilence = TimeSpan.FromMinutes(4);
+    //
+    // Five minutes since 18-08-2026, and since then this is the ONLY silence check we do ourselves: the
+    // SocketNoDataTimeout of one minute in every Api.cs is switched off (see the remarks there). That
+    // one fired on coins that were merely untraded, and each time it did, the reconnect cost the cached
+    // ticker the 1m candle it was filling.
+    //
+    // Five minutes is a deliberate guess, not a measurement, and Marius knows it: no exchange documents
+    // how long a coin may go without a trade, because that is a property of the market and not of the
+    // API. What we do know is the shape of the risk. Too short and we rebuild healthy subscriptions of
+    // quiet coins, which is what we just stopped doing. Too long and a socket that stays up but stops
+    // delivering is noticed later - and that case is already covered from the other side by the ping,
+    // every 10 seconds. So the cost of being generous here is small and the cost of being strict is
+    // what we measured. Worth revisiting with a real number: the longest gap per subscription over a
+    // night, which the nightly report can produce from the stored 1m candles.
+    public static readonly TimeSpan MaximumTickerSilence = TimeSpan.FromMinutes(5);
 
     public virtual bool NeedsRestart()
     {
