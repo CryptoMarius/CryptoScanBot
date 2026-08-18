@@ -71,6 +71,24 @@ public class TradingViewSymbolWebSocket(string tickerName)
     private readonly string TickerName = tickerName;
     private readonly ClientWebSocket ClientWebSocket = new();
     private readonly CancellationTokenSource CancellationTokenSource = new();
+
+    /// <summary>
+    /// Consecutive failed connects per ticker, so a hiccup does not put a whole stack trace in the
+    /// error log while the retry loop is quietly fixing it. Static and keyed by ticker because
+    /// TradingViewSymbolExtractor builds a NEW socket object for every attempt, so a field on the
+    /// instance would always read one.
+    /// </summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> ConnectFailures = new();
+
+    /// <summary>
+    /// Write the stack trace on every Nth consecutive failure, not on each one. On the night of
+    /// 17/18-08-2026 TradingView answered the websocket handshake with 429 sixty times over six
+    /// exchanges - twenty scanners open their own connection from one address - and each of those
+    /// put five lines in the error log, 300 in total. Nothing was broken: the retry loop reconnects.
+    /// The single message line still goes to the normal log every time, so the frequency stays
+    /// visible; only the stack trace is rationed, the way ThreadTelegramBot already does it.
+    /// </summary>
+    private const int StackTraceEveryNthFailure = 10;
     public event DataFetchedEvent? DataFetched;
 
     private static string ConstructRequest(string method, List<string> parameters, List<string> flags)
@@ -205,6 +223,10 @@ public class TradingViewSymbolWebSocket(string tickerName)
             string request = ConstructRequest("quote_create_session", ["my_session", ""], []);
             await SendData(request);
 
+            // Connected and the session is up: the run of failures is over, so the next hiccup starts
+            // counting from one again and gets its stack trace at the same distance as the first.
+            ConnectFailures.TryRemove(TickerName, out _);
+
             //request = ConstructRequest("set_auth_token", ["unauthorized_user_token"], []);
             //await SendData(request);
 
@@ -213,8 +235,10 @@ public class TradingViewSymbolWebSocket(string tickerName)
         }
         catch (Exception e)
         {
-            GlobalData.AddTextToLogTab($"TradingView {TickerName} connect exception: {e.Message}");
-            ScannerLog.Logger.Error(e, e.Message);
+            int failures = ConnectFailures.AddOrUpdate(TickerName, 1, (_, value) => value + 1);
+            GlobalData.AddTextToLogTab($"TradingView {TickerName} connect exception: {e.Message} (attempt {failures})");
+            if (failures % StackTraceEveryNthFailure == 0)
+                ScannerLog.Logger.Error(e, e.Message);
         }
     }
 
