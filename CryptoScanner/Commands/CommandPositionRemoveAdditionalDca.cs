@@ -64,7 +64,7 @@ public class CommandPositionRemoveAdditionalDca : CommandBase
                             {
                                 if (!step.CloseTime.HasValue && step.Side == entryOrderSide)
                                 {
-                                    string cancelReason = $"annuleren vanwege handmatig annuleren DCA positie {position.Id}";
+                                    string cancelReason = $"cancelling because the user removed the DCA of position {position.Id}";
                                     var (success, _) = await TradeTools.CancelOrder(databaseThread, position, part, step,
                                         lastCandle1mCloseTimeDate, CryptoOrderStatus.ManuallyByUser, cancelReason);
                                     if (success)
@@ -75,7 +75,7 @@ public class CommandPositionRemoveAdditionalDca : CommandBase
                                         position.ActiveDca = false;
                                         databaseThread.Connection.Update<CryptoPosition>(position);
 
-                                        GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} handmatig de openstaande DCA {part.PartNumber} annuleren");
+                                        GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} manually cancelling the open DCA {part.PartNumber}");
                                     }
                                 }
                             }

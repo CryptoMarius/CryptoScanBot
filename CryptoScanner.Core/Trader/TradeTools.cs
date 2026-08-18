@@ -696,7 +696,7 @@ public class TradeTools
                     if (position.Profit < 0)
                         position.Symbol.LastLossDate = lastDateTime;
 
-                    GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
+                    GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status changed to {position.Status}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Quantity={position.Quantity}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Dust={position.RemainingDust}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Remaining={remaining}");
@@ -720,7 +720,7 @@ public class TradeTools
                     {
                         part.CloseTime = null;
                         orderStatusChanged = true;
-                        GlobalData.AddTextToLogTab($"TradeTools: Part {position.Symbol.Name} opnieuw opengezet vanwege correctie {position.Status}");
+                        GlobalData.AddTextToLogTab($"TradeTools: Part {position.Symbol.Name} reopened because of correction {position.Status}");
                     }
                 }
             }
@@ -1009,7 +1009,7 @@ public class TradeTools
         // Het verschil is te groot, hier kunnen we niet instappen
         if (percentage > 125)
         {
-            GlobalData.AddTextToLogTab($"{symbol.Name} vanwege de quantity ticksize {symbol.QuantityTickSize} kunnen we niet instappen met de veel te hoge {clampedEntryValue} ({percentage:N2}%) (DEBUG)");
+            GlobalData.AddTextToLogTab($"{symbol.Name} because of the quantity tick size {symbol.QuantityTickSize} we cannot enter with the far too high {clampedEntryValue} ({percentage:N2}%) (DEBUG)");
             return 0;
         }
 
@@ -1023,7 +1023,7 @@ public class TradeTools
             {
                 // 2.5% marge is okay, we willen er niet te ver boven
                 if (percentage > 0.1m) // hele kleine verschillen willen we liever niet zien
-                    GlobalData.AddTextToLogTab($"{symbol.Name} vanwege de quantity ticksize {symbol.QuantityTickSize} is de entry value verhoogd naar {newEntryValue} ({percentage:N2}%) (DEBUG)");
+                    GlobalData.AddTextToLogTab($"{symbol.Name} because of the quantity tick size {symbol.QuantityTickSize} the entry value was raised to {newEntryValue} ({percentage:N2}%) (DEBUG)");
                 return newEntryQuantity;
             }
         }

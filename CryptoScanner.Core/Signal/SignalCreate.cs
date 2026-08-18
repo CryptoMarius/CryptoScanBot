@@ -361,7 +361,7 @@ public class SignalCreate
         {
             // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
             if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
-                GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} De tick size percentage is te hoog {barcodePercentage:N3}");
+                GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} the tick size percentage is too high {barcodePercentage:N3}");
             eventText.Add("tick perc to high");
             signal.IsInvalid = true;
         }

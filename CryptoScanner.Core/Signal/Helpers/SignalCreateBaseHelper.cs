@@ -1,4 +1,4 @@
-namespace CryptoScanner.Core.Signal.Helpers;
+﻿namespace CryptoScanner.Core.Signal.Helpers;
 
 public static class SignalCreateBaseHelper
 {
@@ -122,7 +122,7 @@ public static class SignalCreateBaseHelper
 
         if (bbDiffPerc < percentage)
         {
-            myBase.ExtraText = string.Format("Niet genoeg gestegen {0:N8} {1:N8}", bbDiffPerc, percentage);
+            myBase.ExtraText = string.Format("Did not rise enough {0:N8} {1:N8}", bbDiffPerc, percentage);
             return false;
         }
 

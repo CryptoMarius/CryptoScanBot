@@ -554,7 +554,7 @@ public class PositionMonitor : IDisposable
                                 // Its rounded towards zero
                                 if (entryBase <= 0)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" because of minimum quantity {Symbol.QuantityMinimum} en aankoopbedrag {entryQuote} lukt de aankoop niet");
+                                    GlobalData.AddTextToLogTab(text + $" because of minimum quantity {Symbol.QuantityMinimum} and entry value {entryQuote} the buy is not possible");
                                     Symbol.ClearSignals();
                                     return;
                                 }
@@ -562,7 +562,7 @@ public class PositionMonitor : IDisposable
                                 // Below the minimum allowed quantity
                                 if (entryBase == Symbol.QuantityMinimum)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" because of minimum quantity {entryBase} < {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
+                                    GlobalData.AddTextToLogTab(text + $" because of minimum quantity {entryBase} < {Symbol.QuantityMinimum} the buy is not possible (too little)");
                                     Symbol.ClearSignals();
                                     return;
                                 }
@@ -570,7 +570,7 @@ public class PositionMonitor : IDisposable
                                 // Below the minimum allowed value
                                 if (Symbol.QuoteValueMinimum > 0 && entryQuote < Symbol.QuoteValueMinimum)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" because of minimum value {entryQuote} < {Symbol.QuoteValueMinimum} lukt de aankoop niet (te weinig)");
+                                    GlobalData.AddTextToLogTab(text + $" because of minimum value {entryQuote} < {Symbol.QuoteValueMinimum} the buy is not possible (too little)");
                                     Symbol.ClearSignals();
                                     return;
                                 }
@@ -1245,7 +1245,7 @@ public class PositionMonitor : IDisposable
                         if (position.CloseTime.HasValue)
                         {
                             newStatus = CryptoOrderStatus.PositionClosed;
-                            cancelReason = "annuleren vanwege sluiten positie";
+                            cancelReason = "cancelling because the position is closing";
                         }
 
 
@@ -1275,7 +1275,7 @@ public class PositionMonitor : IDisposable
                                 {
                                     timeOut = true;
                                     newStatus = CryptoOrderStatus.Timeout;
-                                    cancelReason = "annuleren vanwege timeout";
+                                    cancelReason = "cancelling because of a timeout";
                                 }
                             }
                         }
@@ -1293,7 +1293,7 @@ public class PositionMonitor : IDisposable
                         if (position.Reposition)
                         {
                             newStatus = CryptoOrderStatus.ChangedBreakEven;
-                            cancelReason = "annuleren vanwege aanpassing BE";
+                            cancelReason = "cancelling because break even moved";
                         }
                     }
 
@@ -1559,7 +1559,7 @@ public class PositionMonitor : IDisposable
                     }
                     else
                     {
-                        GlobalData.AddErrorToLogTab($"Monitor {Symbol.Name} Niet alle orders konden verwijderd worden!!!! (partial filled or error?)");
+                        GlobalData.AddErrorToLogTab($"Monitor {Symbol.Name} not all orders could be removed!!!! (partial filled or error?)");
                         cancelFailed = true;
                     }
                 }
