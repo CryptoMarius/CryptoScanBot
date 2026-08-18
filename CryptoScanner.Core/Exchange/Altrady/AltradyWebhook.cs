@@ -66,6 +66,22 @@ public class AltradyWebhook
         Timeout = TimeSpan.FromSeconds(30)
     };
 
+    /// <summary>
+    /// Replace the value of api_key and api_secret in a flat json string by asterisks, so the webhook
+    /// can be logged without putting the credentials in the log file. Works on the serialized text
+    /// rather than on the payload object, because the payload is what gets posted a moment later.
+    /// A missing or empty key simply produces nothing to replace.
+    /// </summary>
+    internal static string MaskSecrets(string flatJson)
+    {
+        foreach (string secret in new[] { GlobalData.AltradyApi.Key, GlobalData.AltradyApi.Secret })
+        {
+            if (!string.IsNullOrEmpty(secret))
+                flatJson = flatJson.Replace(secret, new string('*', 8));
+        }
+        return flatJson;
+    }
+
     public static AltradyWebhookPayload? TryParse(string message)
     {
         //JsonDocument?
@@ -252,7 +268,14 @@ public class AltradyWebhook
             // Send request using HttpClient
             string json = request.ToString();
             string jsonFlat = request.ToString(Newtonsoft.Json.Formatting.None);
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook request {jsonFlat}");
+
+            // The api key and secret are part of the payload, so the flat json that goes to the log
+            // tab carries them in plain text - and that line is written at Info level, so it lands in
+            // CryptoScanBot.log and in the day archive. Masked on a COPY, because `request` is the
+            // object that is serialized into the body a few lines down. The Trace line below keeps the
+            // full json: trace is off by default and is where you look when a webhook is rejected.
+            string jsonFlatMasked = MaskSecrets(jsonFlat);
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook request {jsonFlatMasked}");
             ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook request {json}");
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
