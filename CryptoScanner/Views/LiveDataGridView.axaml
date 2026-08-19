@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -22,17 +22,22 @@
 			  BorderThickness="0" BorderBrush="Transparent"
 			  ColumnHeaderHeight="32" RowHeight="23">
 
+		<!-- x:DataType op de kolommen en sjablonen: die binden tegen een RIJ (LiveDataViewModel), terwijl de
+                 x:DataType op de UserControl hierboven de viewmodel noemt. Zonder dit lost Avalonia
+                 de naam op tegen de DataContext die de grid op dat moment erft, en tijdens het
+                 wisselen van tabblad in MainWindow.OnTabChanged is dat de viewmodel van een ander
+                 tabblad - vandaar de "Could not find a matching property accessor"-meldingen. -->
 		<DataGrid.Columns>
 			<!-- Date -->
-			<DataGridTextColumn Header="Date" Width="145" MinWidth="145" SortMemberPath="Date" Binding="{Binding Date}" />
+			<DataGridTextColumn x:DataType="vm:LiveDataViewModel" Header="Date" Width="145" MinWidth="145" SortMemberPath="Date" Binding="{Binding Date}" />
 
 			<!-- Exchange -->
-			<DataGridTextColumn Header="Exchange" Binding="{Binding Exchange}" Width="110" MinWidth="90" SortMemberPath="Exchange" IsVisible="False"/>
+			<DataGridTextColumn x:DataType="vm:LiveDataViewModel" Header="Exchange" Binding="{Binding Exchange}" Width="110" MinWidth="90" SortMemberPath="Exchange" IsVisible="False"/>
 
 			<!-- Symbol -->
 			<DataGridTemplateColumn Header="Symbol" Width="100" MinWidth="90" SortMemberPath="Symbol">
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<Border Background="{Binding SymbolBackground}">
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Symbol}" />
 						</Border >
@@ -43,7 +48,7 @@
 			<!-- Volume -->
 			<DataGridTemplateColumn Header="Volume" Width="75" SortMemberPath="Volume" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Volume}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -52,7 +57,7 @@
 			<!-- Interval -->
 			<DataGridTemplateColumn Header="Interval" Width="60" MinWidth="50" SortMemberPath="Interval" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding Interval}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -63,7 +68,7 @@
 			<!-- Price -->
 			<DataGridTemplateColumn Header="Price" Width="75" SortMemberPath="Price" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Price}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -72,7 +77,7 @@
 			<!-- BB% -->
 			<DataGridTemplateColumn Header="BB%" Width="75" SortMemberPath="BB" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Bb}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -81,7 +86,7 @@
 			<!-- BB.Lower -->
 			<DataGridTemplateColumn Header="BbLower" Width="60" SortMemberPath="BbLower">
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding BbLower}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -90,7 +95,7 @@
 			<!-- BB.Upper -->
 			<DataGridTemplateColumn Header="BbUpper" Width="60" SortMemberPath="BbUpper">
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding BbUpper}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -99,7 +104,7 @@
 			<!-- Range index: median band width x favourable/adverse ratio (see BandRangeTracker) -->
 			<DataGridTemplateColumn Header="Range" Width="60" SortMemberPath="RangeIndex">
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding RangeIndex}" Foreground="{Binding RangeIndexForeground}"/>
 					</DataTemplate>
@@ -109,7 +114,7 @@
 			<!-- Number of completed excursions behind the range index -->
 			<DataGridTemplateColumn Header="Range n" Width="60" SortMemberPath="RangeCount">
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding RangeCount}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -120,7 +125,7 @@
 			<!-- RSI -->
 			<DataGridTemplateColumn Header="Rsi" Width="60" SortMemberPath="Rsi">
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding Rsi}" Foreground="{Binding RsiForeground}" />
 					</DataTemplate>
@@ -130,7 +135,7 @@
 			<!-- LuxIndicator5m -->
 			<DataGridTemplateColumn Header="Lux 5m" Width="75" SortMemberPath="LuxIndicator5m">
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding LuxIndicator5m}" Foreground="{Binding LuxIndicator5mForeground}" />
 					</DataTemplate>
@@ -140,7 +145,7 @@
 			<!-- MacdValue -->
 			<DataGridTemplateColumn Header="Macd Value" Width="75" SortMemberPath="MacdValue" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding MacdValue}" Foreground="{Binding MacdValueForeground}" />
 					</DataTemplate>
@@ -150,7 +155,7 @@
 			<!-- MacdSignal -->
 			<DataGridTemplateColumn Header="Macd signal" Width="75" SortMemberPath="MacdSignal" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding MacdSignal}" Foreground="{Binding MacdSignalForeground}" />
 					</DataTemplate>
@@ -160,7 +165,7 @@
 			<!-- MacdHistogram -->
 			<DataGridTemplateColumn Header="Macd Histo" Width="75" SortMemberPath="MacdHistogram" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding MacdHistogram}" Foreground="{Binding MacdHistogramForeground}" />
 					</DataTemplate>
@@ -170,7 +175,7 @@
 			<!-- Stoch Oscillator -->
 			<DataGridTemplateColumn Header="Stoch Oscillator" Width="75" SortMemberPath="StochOscillator" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding StochOscillator}" Foreground="{Binding StochOscillatorForeground}" />
 					</DataTemplate>
@@ -180,7 +185,7 @@
 			<!-- Stoch signal -->
 			<DataGridTemplateColumn Header="Stoch Signal" Width="75" SortMemberPath="StochSignal" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding StochSignal}" Foreground="{Binding StochSignalForeground}" />
 					</DataTemplate>
@@ -190,7 +195,7 @@
 			<!-- Sma200 -->
 			<DataGridTemplateColumn Header="Sma200" Width="75" SortMemberPath="Sma200" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
                                     Text="{Binding Sma200}" />
 					</DataTemplate>
@@ -200,7 +205,7 @@
 			<!-- Sma50 -->
 			<DataGridTemplateColumn Header="Sma50" Width="75" SortMemberPath="Sma50" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
                                     Text="{Binding Sma50}" Foreground="{Binding Sma50Foreground}" />
 					</DataTemplate>
@@ -210,7 +215,7 @@
 			<!-- Sma20 -->
 			<DataGridTemplateColumn Header="Sma20" Width="75" SortMemberPath="Sma20" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
                                     Text="{Binding Sma20}" Foreground="{Binding Sma20Foreground}" />
 					</DataTemplate>
@@ -220,7 +225,7 @@
 			<!-- PSar -->
 			<DataGridTemplateColumn Header="PSar" Width="75" SortMemberPath="PSar" >
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								Text="{Binding PSar}" Foreground="{Binding PSarForeground}" />
 					</DataTemplate>

@@ -101,12 +101,45 @@ internal sealed class AvaloniaScannerLogSink : ILogSink
         return builder.ToString();
     }
 
+    /// <summary>
+    /// Avalonia messages that are demoted to Trace instead of being written at their own level.
+    /// <para>
+    /// They are not defects and there is nothing on our side to fix, but they do end up in the error
+    /// log and in front of users, who then ask about them. Trace keeps them available when you go
+    /// looking, and out of sight when you are not.
+    /// </para>
+    /// <para>
+    /// The compositor one is the render thread that did not get its frame committed in time and ticks
+    /// on by itself. With twenty scanner windows on one machine that is contention on the graphics
+    /// card and nothing else: no candle is lost and the scan does not notice. It was 73 of the 131
+    /// error lines on the night of 18/19-08-2026, which put nearly every exchange on "attention" for
+    /// something nobody would act on.
+    /// </para>
+    /// <para>
+    /// Add to this list only for a message that is understood AND outside our control - it is meant to
+    /// keep the error log meaningful, not to make it quiet.
+    /// </para>
+    /// </summary>
+    private static readonly string[] DemotedToTrace =
+    [
+        "RequestCommitAsync timed out",
+    ];
+
     private static void Write(LogEventLevel level, string area, object? source, string message)
     {
         string prefix = source != null
             ? $"[Avalonia/{area}] {source.GetType().Name}: "
             : $"[Avalonia/{area}] ";
         string fullMessage = prefix + message;
+
+        foreach (string fragment in DemotedToTrace)
+        {
+            if (message.Contains(fragment, StringComparison.Ordinal))
+            {
+                ScannerLog.Logger.Trace(fullMessage);
+                return;
+            }
+        }
 
         switch (level)
         {

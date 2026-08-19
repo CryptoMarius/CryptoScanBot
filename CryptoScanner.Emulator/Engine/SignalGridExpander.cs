@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Settings;
 
@@ -26,6 +26,15 @@ public static class SignalGridExpander
 
         foreach (var (sectionName, props) in entry.SignalOverrides)
         {
+            // "Signal" addresses SettingsSignal itself, for properties that do not live in one of
+            // its sections - AnalysisBandRangeIndexCheck / AnalysisMinBandRangeIndex for instance.
+            // Without this there is no way to switch the band range index filter per queue entry.
+            if (sectionName.Equals("Signal", StringComparison.OrdinalIgnoreCase))
+            {
+                ApplyProps(GlobalData.Settings.Signal, props, saved);
+                continue;
+            }
+
             // First try named fields on SettingsSignal (ZonesDlz, ZonesFvg, ZonesSmc)
             FieldInfo? field = typeof(SettingsSignal).GetField(sectionName);
             if (field != null)

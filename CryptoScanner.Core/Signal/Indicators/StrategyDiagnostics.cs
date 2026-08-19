@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 
 using NLog;
@@ -46,11 +46,30 @@ public static class StrategyDiagnostics
             RegisterAlgorithms.AlgorithmDefinitionList.Values.Select(d => d.Name),
             StringComparer.Ordinal);
 
+#if DEBUG
+        // Both reports below are DEBUG-only: a name mismatch is something to fix while developing,
+        // not something a release build can act on. The checks after this block do run in Release.
+        //
+        //   A name that matches a registered strategy apart from its CASING is a mistake that will
+        //   never work, in any build: SignalExecute.Prepare compares with a plain List<string>.Contains,
+        //   so "VBS" does not enable "vbs". That one is worth a warning while developing.
+        //
+        //   A name that matches nothing at all is almost always a plugin that is not in THIS build -
+        //   the experimental ones live behind #if DEBUG in AnalyzerRegistration, so switching between
+        //   Debug and Release produces this by design. It said nothing that could be acted on and it
+        //   turned up in every night report, so even in Debug it only goes to Trace.
+        var registeredIgnoringCase = new HashSet<string>(registered, StringComparer.OrdinalIgnoreCase);
         foreach (string name in enabled)
         {
-            if (!registered.Contains(name))
-                Report($"Strategy \"{name}\" is enabled but not registered in this build; it will never produce a signal");
+            if (registered.Contains(name))
+                continue;
+
+            if (registeredIgnoringCase.Contains(name))
+                Report($"Strategy \"{name}\" is enabled but only differs in casing from a registered one; it will never produce a signal");
+            else
+                Logger.Trace($"Strategy \"{name}\" is enabled but not registered in this build; it will never produce a signal");
         }
+#endif
 
         // 2. Enabled, registered, but the plugin lookup fails — the algorithm is known while the
         //    plugin that owns it is not, so nothing supplies its settings or its indicators.

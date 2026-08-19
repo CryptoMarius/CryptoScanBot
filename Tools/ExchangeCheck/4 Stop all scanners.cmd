@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal
 
 rem ==========================================================================
@@ -22,6 +22,17 @@ set "WAIT=120"
 rem ==========================================================================
 
 title Stop all scanners
+
+rem  Second heap snapshot and the comparison, BEFORE the scanners are asked to
+rem  close - a stopped process has no heap to look at. Skips itself in silence
+rem  when the start script did not take a first one. Keep HEAP_EXCHANGE equal to
+rem  the one in "3 Start all scanners.cmd".
+set "HEAP_EXCHANGE=Okx Futures"
+if not "%HEAP_EXCHANGE%"=="" (
+    echo Second heap snapshot of %HEAP_EXCHANGE% ...
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0heap-diff.ps1" -Mode Compare -Exchange "%HEAP_EXCHANGE%"
+    echo.
+)
 
 echo Asking the scanners to close...
 echo.

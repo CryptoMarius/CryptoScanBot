@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -26,7 +26,7 @@
             <!-- Id (Hidden by default) -->
             <DataGridTemplateColumn Header="Date" Width="125" SortMemberPath="Date">
                 <DataGridTemplateColumn.CellTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="vm:LogViewModel">
                         <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
                                     Text="{Binding Date}" />
                     </DataTemplate>
@@ -34,7 +34,13 @@
             </DataGridTemplateColumn>
 
             <!-- Name -->
-            <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="*" SortMemberPath="Text"/>
+            <!-- x:DataType on the column: these two bind against a ROW (LogViewModel), while the
+                 x:DataType on the UserControl above says LogGridViewModel. Without it Avalonia
+                 resolves "Text" against whatever DataContext the grid inherits at that moment, and
+                 while MainWindow swaps MainContent between the tab views that is the viewmodel of
+                 the tab being shown - hence "Could not find a matching property accessor for 'Text'
+                 on DashboardPositionsViewModel" in the log. -->
+            <DataGridTextColumn Header="Text" Binding="{Binding Text, x:DataType=vm:LogViewModel}" Width="*" SortMemberPath="Text"/>
                 
         </DataGrid.Columns>
 

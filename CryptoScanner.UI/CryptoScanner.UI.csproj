@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
+    <ProjectReference Include="..\CryptoScanner.Exchanges\CryptoScanner.Exchanges.csproj" />
     <ProjectReference Include="..\CryptoScanner.Analyzers\CryptoScanner.Analyzers.csproj" />
   </ItemGroup>
 

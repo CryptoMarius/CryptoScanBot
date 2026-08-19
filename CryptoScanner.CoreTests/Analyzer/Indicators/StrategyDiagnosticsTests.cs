@@ -1,4 +1,4 @@
-using CryptoScanner.Analyzers.Vbs;
+﻿using CryptoScanner.Analyzers.Vbs;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal.Indicators;
 
@@ -38,15 +38,20 @@ public class StrategyDiagnosticsTests : TestBase
     }
 
     [TestMethod]
-    public void EnabledButUnregisteredStrategy_IsReported()
+    public void EnabledButUnregisteredStrategy_IsNotReported()
     {
+        // Changed on 19-08-2026 at Marius' request: a name that matches nothing is nearly always a
+        // plugin that is not in THIS build - the experimental ones sit behind #if DEBUG, so switching
+        // between Debug and Release produces this by design and nobody can act on it. In a Debug build
+        // it is still written at Trace level; only the log tab no longer sees it. This expectation
+        // therefore holds in both configurations.
         const string bogus = "strategy-that-does-not-exist";
         GlobalData.Settings.Signal.Long.Strategy.Add(bogus);
         try
         {
             var lines = Capture();
-            Assert.IsTrue(lines.Any(l => l.Contains(bogus)),
-                $"Expected a warning naming \"{bogus}\", got: {string.Join(" | ", lines)}");
+            Assert.IsFalse(lines.Any(l => l.Contains(bogus)),
+                $"Did not expect a warning naming \"{bogus}\", got: {string.Join(" | ", lines)}");
         }
         finally
         {
@@ -54,10 +59,13 @@ public class StrategyDiagnosticsTests : TestBase
         }
     }
 
+#if DEBUG
     [TestMethod]
     public void CasingMismatch_IsReported()
     {
-        // SignalExecute.Prepare uses List<string>.Contains, so "VBS" does not enable "vbs".
+        // SignalExecute.Prepare uses List<string>.Contains, so "VBS" does not enable "vbs". The report
+        // itself lives behind #if DEBUG in StrategyDiagnostics, so this test has to follow it -
+        // otherwise it fails on a Release build of the test project for a reason that is by design.
         string wrongCase = VbsPlugin.StrategyInternal.ToUpper();
         GlobalData.Settings.Signal.Long.Strategy.Add(wrongCase);
         try
@@ -71,6 +79,7 @@ public class StrategyDiagnosticsTests : TestBase
             GlobalData.Settings.Signal.Long.Strategy.Remove(wrongCase);
         }
     }
+#endif
 
     [TestMethod]
     public void HealthyConfiguration_IsSilent()

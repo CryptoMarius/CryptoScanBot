@@ -95,6 +95,18 @@ BAROMETER_MINIMAL_COINS = 5
 # hij daardoor vijf keer per nacht van 70 naar 14 a 39 en stond hij binnen vijf minuten weer op 68.
 # Een terugval telt daarom pas als hij zo veel metingen achter elkaar aanhoudt. Een echte instorting
 # (HyperLiquid Spot, 18-08-2026) houdt de hele nacht aan en wordt hier niet door gemist.
+# Regels die in het foutenlog belanden maar niet van de scanner zijn. Ze verdwijnen niet uit het
+# rapport - ze worden apart geteld en getoond - maar ze bepalen het oordeel niet.
+#
+# De Avalonia-melding is de tekenlaag van het venster die zijn beeldcommit niet op tijd rond krijgt en
+# zelf doortikt. Met twintig scanners op een machine is dat drukte op de grafische kaart en verder
+# niets: hij raakt de scan niet, er gaat geen candle verloren, en er is van onze kant niets aan te
+# doen behalve minder vensters tegelijk openen. In de nacht van 18/19-08-2026 waren het 73 van de 131
+# foutregels, waarmee elke exchange op "aandacht" stond om iets waar geen beslissing uit volgt.
+ERRORS_NOT_OURS = (
+    "[Avalonia/Visual] RunLoopHandler",
+)
+
 BAROMETER_DIP_MINUTES = 10
 # De grens die SubscriptionManager.MaximumTickerSilence in de scanner aanhoudt. Alleen om de meting
 # in het rapport ernaast te kunnen zetten; wijzigen hier verandert niets in de scanner. Houd hem
@@ -1972,6 +1984,18 @@ def check_streams(report, entries, window_hours):
     drops = len(outages) + len(never_restored)
     drops_per_hour = drops / window_hours if window_hours else 0.0
 
+    # Tel er de VERBINDINGEN bij. Een onderbreking hierboven is er een van een abonnement, en een
+    # websocket draagt er meerdere: valt de verbinding weg, dan meldt elk abonnement dat apart. Op
+    # HyperLiquid Futures leverde dat in de nacht van 18/19-08-2026 208 meldingen op die in werkelijkheid
+    # 21 keer wegvallen waren, telkens tien abonnementen op dezelfde seconde - en elk van die 21 was na
+    # één seconde weer terug. "19 per uur" leest als een storing, "2 per uur, één seconde" als wat het is.
+    # Abonnementen die op dezelfde seconde wegvallen zaten op dezelfde socket; nauwkeuriger dan de seconde
+    # is het log niet en fijner hoeft ook niet.
+    connection_moments = {outage["start"] for outage in outages if outage["start"]}
+    connection_moments.update(start for start in open_outages.values() if start)
+    connection_drops = len(connection_moments)
+    connection_drops_per_hour = connection_drops / window_hours if window_hours else 0.0
+
     def minutes(outage):
         if not outage["start"] or not outage["end"]:
             return None
@@ -1981,17 +2005,22 @@ def check_streams(report, entries, window_hours):
     longest = max(durations) if durations else 0.0
     by_restart = sum(1 for outage in outages if outage["how"] == "herstart")
 
+    # Het oordeel rust op de VERBINDINGEN, niet op de abonnementen: anders krijgt een exchange met
+    # veel abonnementen per socket automatisch een slechter cijfer dan een met weinig, terwijl er
+    # precies evenveel misging.
     verdict = GOOD
     if never_restored:
         verdict = BAD
-    elif drops_per_hour > DROPS_BAD_PER_HOUR:
+    elif connection_drops_per_hour > DROPS_BAD_PER_HOUR:
         verdict = BAD
-    elif drops_per_hour > DROPS_ATTENTION_PER_HOUR or longest > OUTAGE_ATTENTION_MINUTES:
+    elif connection_drops_per_hour > DROPS_ATTENTION_PER_HOUR or longest > OUTAGE_ATTENTION_MINUTES:
         verdict = ATTENTION
 
     lines = ["| Meting | Waarde |", "|---|---|",
              "| Abonnementsgroepen gestart | {} |".format(counts["startedSubscriptions"]),
-             "| Onderbrekingen | {} ({:.2f} per uur) |".format(drops, drops_per_hour),
+             "| Verbindingen weggevallen | {} ({:.2f} per uur) |".format(
+                 connection_drops, connection_drops_per_hour),
+             "| Abonnementen die dat merkten | {} ({:.2f} per uur) |".format(drops, drops_per_hour),
              "| Daarvan opgelost door de verbinding zelf | {} |".format(len(outages) - by_restart),
              "| Daarvan opgelost door een herstart | {} |".format(by_restart),
              "| Niet hersteld | **{}** |".format(len(never_restored)),
@@ -2076,6 +2105,8 @@ def check_streams(report, entries, window_hours):
 
     facts = {
         "outages": drops,
+        "connectionDrops": connection_drops,
+        "connectionDropsPerHour": round(connection_drops_per_hour, 3),
         "recoveredByConnection": len(outages) - by_restart,
         "recoveredByRestart": by_restart,
         "neverRestored": sorted(never_restored),
@@ -2103,6 +2134,12 @@ def check_errors(report, entries, error_entries, top_count):
                      [message for _, level, _, message in entries if level.upper() == "ERROR"]
     warnings = [message for _, level, _, message in entries if level.upper() == "WARN"]
 
+    # Meldingen die wel in het foutenlog staan maar niet van de scanner zijn. Ze worden apart geteld
+    # en genoemd, maar tellen niet mee voor het oordeel: anders staat een exchange op "aandacht" om
+    # iets waar geen enkele beslissing uit volgt, en dan went het oordeel weg.
+    ignored = [m for m in error_messages if any(part in m for part in ERRORS_NOT_OURS)]
+    error_messages = [m for m in error_messages if not any(part in m for part in ERRORS_NOT_OURS)]
+
     grouped = Counter(normalise_message(message) for message in error_messages)
     trouble = Counter()
     for message in error_messages + warnings:
@@ -2122,6 +2159,16 @@ def check_errors(report, entries, error_entries, top_count):
              "| Waarschuwingsregels | {} |".format(len(warnings)),
              "| Verschillende fouten | {} |".format(len(grouped)),
              ""]
+
+    if ignored:
+        buiten = Counter(normalise_message(message) for message in ignored)
+        lines.append("Daarnaast {} regels die wel in het foutenlog staan maar niet van de scanner "
+                     "zijn; die tellen niet mee in het getal hierboven en niet voor het oordeel:"
+                     .format(len(ignored)))
+        lines.append("")
+        for message, count in buiten.most_common(5):
+            lines.append("- {}x `{}`".format(count, message.replace("|", "\|")))
+        lines.append("")
 
     if grouped:
         lines.append("| Aantal | Fout (getallen vervangen) |")
@@ -2143,6 +2190,7 @@ def check_errors(report, entries, error_entries, top_count):
         lines.append("")
 
     facts = {"errorLines": len(error_messages), "warningLines": len(warnings),
+             "errorLinesNotOurs": len(ignored),
              "distinctErrors": len(grouped), "trouble": dict(trouble)}
     report.add("errors", "Fouten", verdict, lines, facts)
     return facts

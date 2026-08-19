@@ -1,33 +1,44 @@
 # Finds out WHERE the memory of a running scanner goes, by comparing two heap snapshots.
 #
-# The memory sampling next to this script (sample-process.ps1) says how fast a process grows. It
-# cannot say what grows, so a slope of 27 megabyte an hour stays a mystery until something looks
-# inside the heap. That is what this does: two snapshots with a wait in between, then a table of the
-# types that gained the most bytes.
+# The memory sampling next to this script (sample-process.ps1) says HOW FAST a process grows. It
+# cannot say WHAT grows, so a slope of 27 megabyte an hour stays a mystery. This script answers that:
+# one snapshot at the start of the night, one at the end, and a table of the types that gained the
+# most bytes in between.
 #
-# It reads only; it never writes to the scanner or its data folder. The dumps land in the output
-# folder and can be deleted afterwards - they are large (roughly the working set of the process).
+# Two modes, because the two moments are hours apart and each belongs to a different .cmd file:
 #
-# Usage:
-#   .\heap-diff.ps1 -Exchange "Binance Futures"
-#   .\heap-diff.ps1 -ProcessId 12345 -WaitMinutes 45
+#   -Mode Snapshot   collect one heap dump and remember it   (called from "3 Start all scanners.cmd")
+#   -Mode Compare    collect the second and print the diff   (called from "4 Stop all scanners.cmd")
 #
-# Needs dotnet-dump (dotnet tool install --global dotnet-dump). Run the window as the same user that
-# started the scanner, otherwise attaching to the process is refused.
+# Why over the WHOLE night and not over 45 minutes: the slope we are chasing is 20 to 27 megabyte an
+# hour. Over 45 minutes that is 20 megabyte, which drowns in the noise of a garbage collection that
+# happens to fall inside the window. Over eleven hours it is a quarter of a gigabyte and whatever
+# caused it stands out on the first line of the table.
+#
+# Why ONE exchange and not all of them: a heap dump is roughly the working set of the process, and
+# these run to 1.6 gigabyte. Twenty exchanges times two snapshots is sixty gigabyte of disk for a
+# question you are asking about one of them. Set EXCHANGE in the .cmd file to whichever one you are
+# investigating.
+#
+# It reads only; it never writes to the scanner or its data folder. Needs dotnet-dump
+# (dotnet tool install --global dotnet-dump).
 
 [CmdletBinding()]
 param(
-    # Which scanner to look at. Matched against the command line, so "Binance Futures" finds the
-    # process started with -e "Binance Futures". Ignored when ProcessId is given.
+    [ValidateSet("Snapshot", "Compare")]
+    [string] $Mode = "Snapshot",
+
+    # Which scanner to look at. Matched against the command line, so "Okx Futures" finds the process
+    # started with -e "Okx Futures". Ignored when ProcessId is given.
     [string] $Exchange,
 
     [int] $ProcessId = 0,
 
-    # How long to wait between the two snapshots. Long enough that the growth is larger than the
-    # noise: at 27 megabyte an hour, 45 minutes is about 20 megabyte and that stands out fine.
-    [int] $WaitMinutes = 45,
-
     [string] $OutputFolder = "$env:TEMP\heap-diff",
+
+    # Minutes to let the scanner warm up before the first snapshot. The first half hour is spent
+    # filling the candle history, and counting that as growth would point at the candles every time.
+    [int] $WarmupMinutes = 30,
 
     # Types gaining less than this are left out of the table; they are the long tail.
     [int] $MinimumGrowthKb = 256
@@ -40,17 +51,17 @@ function Get-ScannerProcessId {
 
     # Match on the command line, not on the process name: every scanner is CryptoScanBot.exe and
     # there are twenty of them. Get-CimInstance is the only way to read the command line here.
-    $candidates = Get-CimInstance Win32_Process -Filter "Name = 'CryptoScanBot.exe'" |
-        Where-Object { $_.CommandLine -and $_.CommandLine -like "*$Exchange*" }
+    $candidates = @(Get-CimInstance Win32_Process -Filter "Name = 'CryptoScanBot.exe'" |
+        Where-Object { $_.CommandLine -and $_.CommandLine -like "*$Exchange*" })
 
-    if (-not $candidates) {
-        throw "No running CryptoScanBot.exe with '$Exchange' in its command line. Start the scanner first, or pass -ProcessId."
+    if ($candidates.Count -eq 0) {
+        throw "No running CryptoScanBot.exe with '$Exchange' in its command line."
     }
     if ($candidates.Count -gt 1) {
         $list = ($candidates | ForEach-Object { "  $($_.ProcessId)  $($_.CommandLine)" }) -join "`n"
         throw "More than one match, pass -ProcessId for the one you mean:`n$list"
     }
-    return [int] $candidates.ProcessId
+    return [int] $candidates[0].ProcessId
 }
 
 function Get-HeapStatistics {
@@ -73,9 +84,45 @@ function Get-HeapStatistics {
         }
     }
     if ($statistics.Count -eq 0) {
-        throw "dotnet-dump analyze returned no type statistics for $DumpPath. Is dotnet-dump installed and is the dump complete?"
+        throw "dotnet-dump analyze returned no type statistics for $DumpPath."
     }
     return $statistics
+}
+
+New-Item -ItemType Directory -Force -Path $OutputFolder | Out-Null
+$firstDump = Join-Path $OutputFolder "heap-first.dmp"
+$secondDump = Join-Path $OutputFolder "heap-second.dmp"
+
+# ------------------------------------------------------------------------------------------------
+if ($Mode -eq "Snapshot") {
+    if ($WarmupMinutes -gt 0) {
+        Write-Host "Waiting $WarmupMinutes minutes for the scanner to fill its candle history ..." -ForegroundColor Cyan
+        Start-Sleep -Seconds ($WarmupMinutes * 60)
+    }
+
+    if ($ProcessId -eq 0) {
+        if (-not $Exchange) { throw "Pass -Exchange or -ProcessId." }
+        $ProcessId = Get-ScannerProcessId -Exchange $Exchange
+    }
+
+    # An old pair would silently be compared against tonight's second snapshot, which produces a
+    # diff over the wrong period. Start clean.
+    Remove-Item $firstDump, $secondDump -ErrorAction SilentlyContinue
+
+    Write-Host "First snapshot of process $ProcessId ..." -ForegroundColor Cyan
+    & dotnet-dump collect --process-id $ProcessId --output $firstDump --type Heap
+    if ($LASTEXITCODE -ne 0) { throw "dotnet-dump collect failed." }
+
+    Write-Host ""
+    Write-Host "Done. The stop script takes the second one and prints the difference." -ForegroundColor Green
+    exit 0
+}
+
+# ------------------------------------------------------------------------------------------------
+if (-not (Test-Path $firstDump)) {
+    Write-Host "No first snapshot in $OutputFolder, so there is nothing to compare." -ForegroundColor Yellow
+    Write-Host "The start script takes that one; this run is skipped." -ForegroundColor Yellow
+    exit 0
 }
 
 if ($ProcessId -eq 0) {
@@ -83,34 +130,16 @@ if ($ProcessId -eq 0) {
     $ProcessId = Get-ScannerProcessId -Exchange $Exchange
 }
 
-$commandLine = (Get-CimInstance Win32_Process -Filter "ProcessId = $ProcessId").CommandLine
-Write-Host "Process $ProcessId" -ForegroundColor Cyan
-Write-Host "  $commandLine"
-Write-Host ""
-
-New-Item -ItemType Directory -Force -Path $OutputFolder | Out-Null
-$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$firstDump  = Join-Path $OutputFolder "heap-$ProcessId-$stamp-1.dmp"
-$secondDump = Join-Path $OutputFolder "heap-$ProcessId-$stamp-2.dmp"
-
-Write-Host "Snapshot 1 ..." -ForegroundColor Cyan
-& dotnet-dump collect --process-id $ProcessId --output $firstDump --type Heap
-if ($LASTEXITCODE -ne 0) { throw "dotnet-dump collect failed for the first snapshot." }
-
-Write-Host "Waiting $WaitMinutes minutes. Leave the scanner running." -ForegroundColor Cyan
-Start-Sleep -Seconds ($WaitMinutes * 60)
-
-Write-Host "Snapshot 2 ..." -ForegroundColor Cyan
+Write-Host "Second snapshot of process $ProcessId ..." -ForegroundColor Cyan
 & dotnet-dump collect --process-id $ProcessId --output $secondDump --type Heap
-if ($LASTEXITCODE -ne 0) { throw "dotnet-dump collect failed for the second snapshot." }
+if ($LASTEXITCODE -ne 0) { throw "dotnet-dump collect failed." }
 
-Write-Host "Reading the heaps (this takes a minute per dump) ..." -ForegroundColor Cyan
+$hours = [math]::Round(((Get-Item $secondDump).LastWriteTime - (Get-Item $firstDump).LastWriteTime).TotalHours, 1)
+Write-Host "Reading both heaps (a minute per dump) ..." -ForegroundColor Cyan
 $before = Get-HeapStatistics -DumpPath $firstDump
-$after  = Get-HeapStatistics -DumpPath $secondDump
+$after = Get-HeapStatistics -DumpPath $secondDump
 
 $rows = foreach ($name in $after.Keys) {
-    $bytesAfter  = $after[$name].Bytes
-    $countAfter  = $after[$name].Count
     $bytesBefore = 0
     $countBefore = 0
     if ($before.ContainsKey($name)) {
@@ -118,23 +147,25 @@ $rows = foreach ($name in $after.Keys) {
         $countBefore = $before[$name].Count
     }
     [PSCustomObject]@{
-        Type         = $name
-        GrowthKb     = [math]::Round(($bytesAfter - $bytesBefore) / 1KB, 0)
-        GrowthCount  = $countAfter - $countBefore
-        TotalKb      = [math]::Round($bytesAfter / 1KB, 0)
+        Type        = $name
+        GrowthKb    = [math]::Round(($after[$name].Bytes - $bytesBefore) / 1KB, 0)
+        GrowthCount = $after[$name].Count - $countBefore
+        TotalKb     = [math]::Round($after[$name].Bytes / 1KB, 0)
     }
 }
 
 $interesting = $rows | Where-Object { $_.GrowthKb -ge $MinimumGrowthKb } | Sort-Object GrowthKb -Descending
 
 Write-Host ""
-Write-Host "Growth over $WaitMinutes minutes, largest first:" -ForegroundColor Green
+Write-Host "Growth over $hours hours, largest first:" -ForegroundColor Green
 $interesting | Select-Object -First 30 | Format-Table -AutoSize
 
 $totalGrowthKb = ($rows | Measure-Object GrowthKb -Sum).Sum
-Write-Host ("Total heap growth: {0:N0} KB over {1} minutes ({2:N1} MB per hour)" -f `
-    $totalGrowthKb, $WaitMinutes, ($totalGrowthKb / 1KB) * (60 / $WaitMinutes)) -ForegroundColor Green
+if ($hours -gt 0) {
+    Write-Host ("Total heap growth: {0:N0} KB over {1} hours ({2:N1} MB per hour)" -f `
+        $totalGrowthKb, $hours, (($totalGrowthKb / 1KB) / $hours)) -ForegroundColor Green
+}
 Write-Host ""
 Write-Host "Dumps: $firstDump"
 Write-Host "       $secondDump"
-Write-Host "Delete them when you are done, they are large."
+Write-Host "They are large; delete them once you have read the table."

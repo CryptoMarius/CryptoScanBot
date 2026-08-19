@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal
 
 rem ==========================================================================
@@ -120,6 +120,19 @@ rem timeout /t %WAIT% /nobreak >nul
 echo.
 echo All scanners have been started.
 echo.
+
+rem  First heap snapshot of the exchange under investigation, in its OWN window
+rem  so the memory sampling below does not have to wait for the warm-up. The
+rem  stop script takes the second one and prints what grew in between. Set
+rem  HEAP_EXCHANGE to empty to switch this off.
+rem
+rem  One exchange, not all of them: a heap dump is about the working set of the
+rem  process and these run to 1.6 GB, so twenty exchanges times two snapshots
+rem  would be sixty gigabyte of disk for a question about one of them.
+set "HEAP_EXCHANGE=Okx Futures"
+if not "%HEAP_EXCHANGE%"=="" (
+    start "Heap snapshot" powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0heap-diff.ps1" -Mode Snapshot -Exchange "%HEAP_EXCHANGE%"
+)
 
 rem  The memory sampling runs in THIS window from here on: it keeps sampling
 rem  until the window is closed. Leave it open for the whole run - without it
