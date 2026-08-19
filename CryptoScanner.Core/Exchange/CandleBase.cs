@@ -281,7 +281,7 @@ public class CandleBase(ExchangeBase api)
     }
 
 
-    public async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CandleTime unixLoop, CandleTime unixMax)
+    public async Task<(bool anythingAdded, CandleTime askedUpTo)> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CandleTime unixLoop, CandleTime unixMax)
     {
         // Fetch the candles (we have coins starting and stopping, be aware for endless loops)
         // Kind of the same as the CandleBase.GetCandlesForIntervalAsync, but also different because
@@ -292,6 +292,10 @@ public class CandleBase(ExchangeBase api)
         //        $"{CandleTools.GetUnixDate(unixLoop).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()})");
 
         int totalFetched = 0;
+        // Everything below this point has been requested by the time the loop ends. Kept separately
+        // because unixLoop is also moved forward over candles that were already present, and because
+        // the loop can break out early - then only the part up to here was really asked for.
+        CandleTime askedUpTo = unixLoop;
         if (unixLoop < unixMax)
         {
             var api = symbol.Exchange.GetApiInstance();
@@ -329,6 +333,8 @@ public class CandleBase(ExchangeBase api)
 
                 if (unixLoop == minTime) // not moving forward
                     break;
+
+                askedUpTo = unixLoop;
             }
         }
 
@@ -337,7 +343,7 @@ public class CandleBase(ExchangeBase api)
         //    GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, " +
         //        $"{CandleTools.GetUnixDate(unixLoop).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()}) fetched {totalFetched}");
 
-        return totalFetched > 0;
+        return (totalFetched > 0, askedUpTo);
     }
 
 

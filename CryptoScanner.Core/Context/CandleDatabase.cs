@@ -1475,6 +1475,12 @@ public class CandleDatabase : IDisposable
                 "DELETE FROM SymbolInterval WHERE SymbolId = @SymbolId",
                 new { SymbolId = localSymbolId }, transaction: tx);
 
+            // Same for the in-memory "already asked the exchange for this period": with the candles
+            // gone it would claim history that is no longer there, and nothing would ever fetch it
+            // again. Whoever deletes candles shortens that period — see CryptoSymbolInterval.
+            foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+                symbolInterval.ForgetHistory();
+
             tx.Commit();
 
             if (candleRows > 0)
@@ -1508,6 +1514,8 @@ public class CandleDatabase : IDisposable
                 deleted = connection.Execute(
                     "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId",
                     new { SymbolId = localSymbolId, IntervalId = intervalId }, transaction: tx);
+                if (deleted > 0)
+                    symbolInterval.ForgetHistory();
             }
             else
             {
@@ -1545,10 +1553,22 @@ public class CandleDatabase : IDisposable
                     connection.Execute(sb.ToString(), batchParams, transaction: tx);
                 }
 
+                // Ask first WHICH candles are about to go: the newest one that falls outside every
+                // keep-range. Everything below it becomes unknown again, so the "already asked the
+                // exchange" period has to resume after it — otherwise the zone engine would trust a
+                // period whose candles this very statement removes and never fetch them again.
+                long? newestRemoved = connection.ExecuteScalar<long?>(
+                    "SELECT MAX(OpenTime) FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId " +
+                    "AND NOT EXISTS (SELECT 1 FROM keep_ranges WHERE Candle.OpenTime BETWEEN s AND e)",
+                    new { SymbolId = localSymbolId, IntervalId = intervalId }, transaction: tx);
+
                 deleted = connection.Execute(
                     "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId " +
                     "AND NOT EXISTS (SELECT 1 FROM keep_ranges WHERE Candle.OpenTime BETWEEN s AND e)",
                     new { SymbolId = localSymbolId, IntervalId = intervalId }, transaction: tx);
+
+                if (deleted > 0 && newestRemoved.HasValue)
+                    symbolInterval.ForgetHistoryUpTo(new CandleTime((uint)newestRemoved.Value));
             }
 
             if (deleted > 0)

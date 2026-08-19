@@ -978,6 +978,15 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
     facts = {}
     key_points = []
 
+    # A run that is younger than one save round can still have nothing of its own on disk: the save
+    # thread writes once an hour, so the newest candle may well belong to the previous session. Its
+    # distance to the window is then the time the scanner was off, not a lag of this run, and
+    # judging it anyway paints every fresh start red. The barometer section makes the same
+    # distinction. Whether it applies is decided per exchange, at the 1m row of the table.
+    window_minutes = ((window_end - window_start).total_seconds() / 60.0
+                      if window_start and window_end else 0.0)
+    young_run = still_running and window_minutes < LAG_RUNNING_ATTENTION_MINUTES
+
     for exchange_name, path in candle_databases:
         lines.append("### {}".format(exchange_name))
         lines.append("")
@@ -1018,6 +1027,7 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                 verdict = worst(verdict, BAD)
                 continue
 
+            lag_measurable = True
             lines.append("| Interval | Symbolen | Candles | Oudste | Nieuwste | Achterstand |")
             lines.append("|---|---|---|---|---|---|")
             for row in per_interval:
@@ -1034,11 +1044,21 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                         bad_limit = LAG_RUNNING_BAD_MINUTES if still_running else LAG_BAD_MINUTES
                         attention_limit = (LAG_RUNNING_ATTENTION_MINUTES if still_running
                                            else LAG_ATTENTION_MINUTES)
-                        if minutes > bad_limit:
-                            verdict = worst(verdict, BAD)
-                        elif minutes > attention_limit:
-                            verdict = worst(verdict, ATTENTION)
+                        # Nothing of this run on disk: the newest candle predates its own start, so
+                        # the distance says how long the scanner was off. Only forgiven while the
+                        # run is younger than a save round - after that the save thread really
+                        # should have written something and a lag is a lag.
+                        if young_run and window_start is not None and newest < window_start:
+                            lag_measurable = False
+                        if lag_measurable:
+                            if minutes > bad_limit:
+                                verdict = worst(verdict, BAD)
+                            elif minutes > attention_limit:
+                                verdict = worst(verdict, ATTENTION)
+                        else:
+                            verdict = worst(verdict, UNKNOWN)
                         exchange_facts["lagMinutes"] = round(max(0.0, minutes), 1)
+                        exchange_facts["lagJudged"] = lag_measurable
                 lines.append("| {} | {} | {:,} | {:%Y-%m-%d %H:%M} | {:%Y-%m-%d %H:%M} | {} |".format(
                     name, row["symbols"], row["candles"],
                     candle_time_to_datetime(row["first"]), newest, late))
@@ -1069,6 +1089,17 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                              "opslagdraad had alles weggeschreven en achterstand telt hier volledig "
                              "mee (melden vanaf {:.0f} minuten, fout vanaf {:.0f}).".format(
                                  LAG_ATTENTION_MINUTES, LAG_BAD_MINUTES))
+            if not lag_measurable:
+                lines.append("")
+                lines.append("Deze run is met {:.0f} minuten jonger dan een wegschrijfronde en "
+                             "de jongste candle op schijf is ouder dan de start ervan: wat "
+                             "hierboven staat komt dus nog van de vorige sessie. De achterstand "
+                             "meet dan hoe lang de scanner uit heeft gestaan en niet iets van deze "
+                             "run; daarom wordt er hier geen oordeel aan verbonden. Draai het "
+                             "rapport opnieuw zodra de opslagdraad een ronde heeft gedaan, dan "
+                             "gaat het candle-oordeel ergens over.".format(window_minutes))
+                key_points.append("achterstand niet beoordeeld - run pas {:.0f} minuten oud".format(
+                    window_minutes))
             lines.append("")
 
             # ---- gaten in de minuutreeks -----------------------------------------------------
@@ -1861,7 +1892,9 @@ PATTERNS = {
     "startedSubscriptions": re.compile(r"started (?P<type>\S+) subscriptions(?P<extra>.*)"),
     "connectionLost": re.compile(r"subscription (?P<name>.+) connection lost"),
     "connectionRestored": re.compile(r"subscription (?P<name>.+) connection restored"),
-    "restart": re.compile(r"herstarten (?P<count>\d+) (?P<type>\S+) subscriptions \((?P<state>\w+)\)"),
+    # The scanner logs this in English ("restarting N kline subscriptions (finished)");
+    # the Dutch verb is kept so logs from older builds still parse.
+    "restart": re.compile(r"(?:herstarten|restarting) (?P<count>\d+) (?P<type>\S+) subscriptions \((?P<state>\w+)\)"),
     "symbolsChanged": re.compile(r"(?P<type>\S+) symbols changed:"),
     "nowServing": re.compile(r"now serving (?P<rest>.*)"),
     "symbolCount": re.compile(r"symbols=(?P<count>\d+)"),

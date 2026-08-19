@@ -399,7 +399,22 @@ public class ZoneCandleEngine
             return;
 
         (CandleTime min, CandleTime max) = CalculateDates(interval, fetchFrom, fetchCount);
-        (CandleTime loop, bool dataAllLocal) = IsDataLocal(min, max, symbol, interval);
+
+        // Skip the part that was requested from the exchange before. IsDataLocal below can only answer
+        // with the candles it can see, and on an exchange that skips a minute without trades that
+        // answer stays "incomplete" forever - so without this the same history is downloaded on every
+        // recalculation. See CryptoSymbolInterval.HistoryAskedFrom for the measurements.
+        //
+        // The period asked for slides forward with the clock, so only its tail is ever new; searchFrom
+        // is where that tail begins. Nothing left over means nothing to do.
+        CryptoSymbolInterval symbolIntervalAsked = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        CandleTime searchFrom = symbolIntervalAsked.SkipHistoryAlreadyAsked(min);
+        if (searchFrom >= max)
+            return;
+
+        (CandleTime loop, bool dataAllLocal) = IsDataLocal(searchFrom, max, symbol, interval);
+        if (dataAllLocal)
+            symbolIntervalAsked.RememberHistoryAsked(min, max);
         try
         {
             if (!dataAllLocal)
@@ -414,9 +429,16 @@ public class ZoneCandleEngine
                         ScannerLog.Logger.Info($"CandleEngine.FetchFrom({symbol.Name}, {interval!.Name}, " +
                             $"{loop.ToDateTime()} .. {max.ToDateTime()}");
 
-                    bool result = await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, loop, max);
-                    if (result)
+                    var (anythingAdded, askedUpTo) = await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, loop, max);
+                    if (anythingAdded)
                         loadedCandlesInMemory[interval.IntervalPeriod] = true;
+
+                    // Everything below `loop` was already present or already asked for, everything
+                    // from there to askedUpTo has now been requested - together one uninterrupted
+                    // period starting at min. Only what the walk really reached: it stops early for a
+                    // symbol that has no history that far back.
+                    if (askedUpTo > min)
+                        symbolIntervalAsked.RememberHistoryAsked(min, askedUpTo);
                 }
                 else
                 {

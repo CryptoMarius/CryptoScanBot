@@ -59,8 +59,13 @@ public interface ICandle
     /// retrieve candles of this interval in daterange
     /// (uses GetCandlesForInterval)
     /// This method is for the virualisation of the zones and emulator
+    /// <para>
+    /// Also reports HOW FAR the walk got. The caller records that period as "asked the exchange"
+    /// (CryptoSymbolInterval.RememberHistoryAsked), and may only do so for the part that was really
+    /// requested - the loop can stop early when a symbol runs out of history.
+    /// </para>
     /// </summary>
-    public Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CandleTime unixLoop, CandleTime unixMax);
+    public Task<(bool anythingAdded, CandleTime askedUpTo)> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CandleTime unixLoop, CandleTime unixMax);
 }
 
 public interface IApi
