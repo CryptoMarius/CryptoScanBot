@@ -2,6 +2,7 @@
 using Avalonia.WebView.Desktop;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Services;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,11 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // Make the exchange implementations known to the core. The core loads this assembly by
+        // name on first use anyway, but calling it here keeps the project reference visible to
+        // the compiler and puts the registration in one predictable place.
+        ExchangeProvider.Register();
+
         // We need a version from the main assembly
         var assembly = Assembly.GetExecutingAssembly().GetName();
         string appVersion = assembly.Version!.ToString();
