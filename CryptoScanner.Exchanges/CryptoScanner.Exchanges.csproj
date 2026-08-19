@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    All concrete exchange implementations (Binance, Bybit, Kraken, ...) live here instead of in
+    CryptoScanner.Core. The namespace is deliberately unchanged (CryptoScanner.Core.Exchange.*),
+    so no source file outside this project needed a different using.
+
+    The core keeps the abstractions (ExchangeBase, CandleBase, SymbolBase, SubscriptionManager,
+    ...) because the core itself uses them. The other direction - the core needing a CONCRETE
+    exchange - runs through ExchangeRegistry, which this project fills in at startup. That keeps
+    the reference one-way: Exchanges -> Core.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CryptoScanner.Core.Exchange</RootNamespace>
+    <Configurations>Debug;Release;MaxOS-X-Debug</Configurations>
+  </PropertyGroup>
+
+  <!--
+    Files that were already excluded from the build in CryptoScanner.Core.csproj before the move.
+    They are kept on disk (order/trade/asset handling that is not wired up yet), but they do not
+    compile.
+  -->
+  <ItemGroup>
+    <Compile Remove="Binance\Futures\Asset.cs" />
+    <Compile Remove="Binance\Futures\Order.cs" />
+    <Compile Remove="Binance\Futures\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Binance\Futures\SubscriptionUserTicker.cs" />
+    <Compile Remove="Binance\Futures\Trade.cs" />
+    <Compile Remove="Binance\Spot\Asset.cs" />
+    <Compile Remove="Binance\Spot\FetchTradesForOrder.cs" />
+    <Compile Remove="Binance\Spot\Order.cs" />
+    <Compile Remove="Binance\Spot\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Binance\Spot\SubscriptionUserTicker.cs" />
+    <Compile Remove="Binance\Spot\Trade.cs" />
+    <Compile Remove="BybitApi\Futures\Asset.cs" />
+    <Compile Remove="BybitApi\Futures\FetchTradesForOrder.cs" />
+    <Compile Remove="BybitApi\Futures\Order.cs" />
+    <Compile Remove="BybitApi\Futures\SubscriptionPriceTicker.cs" />
+    <Compile Remove="BybitApi\Futures\SubscriptionUserTicker.cs" />
+    <Compile Remove="BybitApi\Futures\Trade.cs" />
+    <Compile Remove="BybitApi\Spot\Asset.cs" />
+    <Compile Remove="BybitApi\Spot\FetchTradesForOrder.cs" />
+    <Compile Remove="BybitApi\Spot\Order.cs" />
+    <Compile Remove="BybitApi\Spot\SubscriptionPriceTicker.cs" />
+    <Compile Remove="BybitApi\Spot\SubscriptionUserTicker.cs" />
+    <Compile Remove="BybitApi\Spot\Trade.cs" />
+    <Compile Remove="Mexc\Spot\Order.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Alpaca.Markets" Version="7.2.2" />
+    <PackageReference Include="Binance.Net" Version="13.4.0" />
+    <PackageReference Include="BitMart.Net" Version="4.3.0" />
+    <PackageReference Include="BloFin.Net" Version="3.3.0" />
+    <PackageReference Include="Bybit.Net" Version="7.4.0" />
+    <PackageReference Include="HyperLiquid.Net" Version="5.6.0" />
+    <PackageReference Include="JK.Mexc.Net" Version="6.5.0" />
+    <PackageReference Include="JK.OKX.Net" Version="5.3.2" />
+    <PackageReference Include="JKorf.Coinbase.Net" Version="4.4.1" />
+    <PackageReference Include="KrakenExchange.Net" Version="8.3.0" />
+    <PackageReference Include="Kucoin.Net" Version="9.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
+  </ItemGroup>
+
+</Project>

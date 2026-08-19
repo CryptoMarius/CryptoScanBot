@@ -36,6 +36,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
+		<ProjectReference Include="..\CryptoScanner.Exchanges\CryptoScanner.Exchanges.csproj" />
 		<ProjectReference Include="..\CryptoScanner.Config\CryptoScanner.Config.csproj" />
 		<ProjectReference Include="..\CryptoScanner.Chart\CryptoScanner.Chart.csproj" />
 		<!-- Analyzer strategy plugins (Baba, Bre, StoRsi). Without this reference the emulator

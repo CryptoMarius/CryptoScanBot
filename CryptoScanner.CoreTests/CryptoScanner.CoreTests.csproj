@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
+    <ProjectReference Include="..\CryptoScanner.Exchanges\CryptoScanner.Exchanges.csproj" />
     <!-- Needed for the VBS band parity tests: the band helper lives in the Analyzers plugin now. -->
     <ProjectReference Include="..\CryptoScanner.Analyzers\CryptoScanner.Analyzers.csproj" />
     <!-- Needed for the replay chunk-boundary tests (ReplayChunk lives in the emulator). -->

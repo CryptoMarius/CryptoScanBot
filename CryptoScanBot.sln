@@ -28,6 +28,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.UI", "CryptoS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.Web", "CryptoScanner.Web\CryptoScanner.Web.csproj", "{BA221526-AFC6-432E-AD32-A34CDDF2E4C6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.Exchanges", "CryptoScanner.Exchanges\CryptoScanner.Exchanges.csproj", "{2F898A42-3ECD-43AE-8826-8076B658DDF4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -221,6 +223,24 @@ Global
 		{BA221526-AFC6-432E-AD32-A34CDDF2E4C6}.Release|x64.Build.0 = Release|Any CPU
 		{BA221526-AFC6-432E-AD32-A34CDDF2E4C6}.Release|x86.ActiveCfg = Release|Any CPU
 		{BA221526-AFC6-432E-AD32-A34CDDF2E4C6}.Release|x86.Build.0 = Release|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Debug|x64.Build.0 = Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Debug|x86.Build.0 = Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.MaxOS-X-Debug|Any CPU.ActiveCfg = MaxOS-X-Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.MaxOS-X-Debug|Any CPU.Build.0 = MaxOS-X-Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.MaxOS-X-Debug|x64.ActiveCfg = MaxOS-X-Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.MaxOS-X-Debug|x64.Build.0 = MaxOS-X-Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.MaxOS-X-Debug|x86.ActiveCfg = MaxOS-X-Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.MaxOS-X-Debug|x86.Build.0 = MaxOS-X-Debug|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Release|x64.ActiveCfg = Release|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Release|x64.Build.0 = Release|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Release|x86.ActiveCfg = Release|Any CPU
+		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

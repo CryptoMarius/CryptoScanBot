@@ -1,6 +1,7 @@
 using Avalonia;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Exchange;
 
 using System.Reflection;
 
@@ -11,6 +12,11 @@ internal class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // Make the exchange implementations known to the core. The core loads this assembly by
+        // name on first use anyway, but calling it here keeps the project reference visible to
+        // the compiler and puts the registration in one predictable place.
+        ExchangeProvider.Register();
+
         // Identify ourselves so signal/position records and side-effect gates can branch on it.
         GlobalData.IsEmulatorMode = true;
         GlobalData.Clock = new EmulatorClock { UtcNow = DateTime.UtcNow };
