@@ -14,110 +14,34 @@ public class CryptoSymbolInterval
     // The last synchronized candle with the exchange (without gaps)
     public CandleTime? LastCandleSynchronized { get; set; }
 
-    // "Already asked the exchange for this period". The zone engine needs the deep history and
-    // decides whether it still has to fetch by walking the series and looking for the first missing
-    // candle. On an exchange that only produces a candle for a minute in which something was traded
-    // that minute never arrives, so the walk finds the same hole every hour and downloads the same
-    // history again - measured on Bitvavo Spot 19-08-2026: 255 requests, 203,471 candles, 7% of them
-    // new. What the candles cannot say, this pair says: the period below was requested at least once,
-    // so a candle missing inside it is missing at the exchange as well.
-    //
-    // ONE uninterrupted period, never a set of loose pieces: two zoom fetches around different pivots
-    // must not add up to a claim about the gap between them.
-    //
-    // Deliberately NOT persisted. After a restart it is empty and the whole history is checked once
-    // more, which is the escape hatch if it is ever wrong. Whoever removes candles from the store
-    // shortens it - see CandleDatabase.CleanCandlesForSymbol.
-    public CandleTime? HistoryAskedFrom { get; private set; }
-    public CandleTime? HistoryAskedTo { get; private set; }
+    // The periods that were already requested from the exchange for this interval. The zone engine
+    // asks this before it starts looking for missing candles, because on an exchange that skips a
+    // minute without trades the candles can never answer "complete" and the same history would be
+    // downloaded on every recalculation. See HistoryAskedRanges for the reasoning and the numbers.
+    public HistoryAskedRanges HistoryAsked { get; } = new();
+
+
+    /// <summary>True when this whole period was requested from the exchange before.</summary>
+    public bool HistoryWasAsked(CandleTime from, CandleTime to) => HistoryAsked.WasAsked(from, to);
+
+
+    /// <summary>Where a search still has to start, given what was requested before.</summary>
+    public CandleTime SkipHistoryAlreadyAsked(CandleTime from) => HistoryAsked.SkipAsked(from);
+
+
+    /// <summary>Remember that [from..to] was requested from the exchange.</summary>
+    public void RememberHistoryAsked(CandleTime from, CandleTime to) => HistoryAsked.Remember(from, to);
 
 
     /// <summary>
-    /// True when this whole period was requested from the exchange before, so nothing can be gained
-    /// by asking again: whatever is missing inside it does not exist at the exchange either.
+    /// Candles up to and including <paramref name="newestRemoved"/> were removed from the store, so
+    /// that part has to be fetched again when it is needed.
     /// </summary>
-    public bool HistoryWasAsked(CandleTime from, CandleTime to)
-    {
-        if (!HistoryAskedFrom.HasValue || !HistoryAskedTo.HasValue)
-            return false;
-        return from >= HistoryAskedFrom.Value && to <= HistoryAskedTo.Value;
-    }
-
-
-    /// <summary>
-    /// The moment from which a search still has to look. Everything between <paramref name="from"/>
-    /// and the returned moment was requested before, so examining it again cannot turn up anything.
-    /// Returns <paramref name="from"/> unchanged when nothing is remembered about it.
-    /// <para>
-    /// This is what makes the note usable hour after hour: the period the zone engine asks for slides
-    /// forward with the clock, so it never fits inside the note completely. Only its tail is new.
-    /// </para>
-    /// </summary>
-    public CandleTime SkipHistoryAlreadyAsked(CandleTime from)
-    {
-        if (!HistoryAskedFrom.HasValue || !HistoryAskedTo.HasValue)
-            return from;
-        if (from < HistoryAskedFrom.Value || from > HistoryAskedTo.Value)
-            return from;
-        return HistoryAskedTo.Value;
-    }
-
-
-    /// <summary>
-    /// Remember that [from..to] was requested from the exchange. Only merged with what is already
-    /// remembered when the two touch or overlap; a period that does not connect REPLACES it, because
-    /// the stretch in between was never requested and the pair may only describe one uninterrupted
-    /// period. The newest one wins - that is the one the zone engine keeps coming back for.
-    /// </summary>
-    public void RememberHistoryAsked(CandleTime from, CandleTime to)
-    {
-        if (to < from)
-            return;
-
-        if (HistoryAskedFrom.HasValue && HistoryAskedTo.HasValue
-            && from <= HistoryAskedTo.Value && to >= HistoryAskedFrom.Value)
-        {
-            if (HistoryAskedFrom.Value < from)
-                from = HistoryAskedFrom.Value;
-            if (HistoryAskedTo.Value > to)
-                to = HistoryAskedTo.Value;
-        }
-
-        HistoryAskedFrom = from;
-        HistoryAskedTo = to;
-    }
-
-
-    /// <summary>
-    /// Candles up to and including <paramref name="newestRemoved"/> were removed from the store. The
-    /// part below it is unknown again, so the remembered period resumes after it and the zone engine
-    /// will fetch the older part again - which is exactly what has to happen once the candles are
-    /// gone. The remembered period can only ever get shorter this way, never longer, so "never fetched
-    /// again" cannot happen.
-    /// </summary>
-    public void ForgetHistoryUpTo(CandleTime newestRemoved)
-    {
-        if (!HistoryAskedFrom.HasValue || !HistoryAskedTo.HasValue)
-            return;
-
-        CandleTime resumeFrom = newestRemoved + Interval.Duration;
-        if (resumeFrom >= HistoryAskedTo.Value)
-        {
-            ForgetHistory();
-            return;
-        }
-
-        if (resumeFrom > HistoryAskedFrom.Value)
-            HistoryAskedFrom = resumeFrom;
-    }
+    public void ForgetHistoryUpTo(CandleTime newestRemoved) => HistoryAsked.ForgetUpTo(newestRemoved, Interval.Duration);
 
 
     /// <summary>Nothing is known about what was asked any more (the candles were thrown away).</summary>
-    public void ForgetHistory()
-    {
-        HistoryAskedFrom = null;
-        HistoryAskedTo = null;
-    }
+    public void ForgetHistory() => HistoryAsked.Clear();
 
     // The candles for this interval
     public CryptoCandleList CandleList { get; set; } = [];

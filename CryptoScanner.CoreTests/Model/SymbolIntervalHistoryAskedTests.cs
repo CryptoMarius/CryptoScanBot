@@ -63,18 +63,43 @@ public class SymbolIntervalHistoryAskedTests
 
 
     [TestMethod]
-    public void PeriodsWithAGapBetweenThemAreNotMerged()
+    public void PeriodsWithAGapBetweenThemStaySeparate()
     {
         CryptoSymbolInterval symbolInterval = CreateSymbolInterval();
         symbolInterval.RememberHistoryAsked(Time(100), Time(200));
         symbolInterval.RememberHistoryAsked(Time(400), Time(500));
 
-        // The stretch 200..400 was never requested, so the note must not cover it - and it must not
-        // cover the older period either now that it describes the newer one.
+        // The stretch 200..400 was never requested, so the two must never add up to a claim about it.
+        Assert.AreEqual(2, symbolInterval.HistoryAsked.Count, "two separate periods");
         Assert.IsFalse(symbolInterval.HistoryWasAsked(Time(100), Time(500)), "across the gap");
         Assert.IsFalse(symbolInterval.HistoryWasAsked(Time(250), Time(300)), "inside the gap");
-        Assert.IsFalse(symbolInterval.HistoryWasAsked(Time(100), Time(200)), "the older period");
+        Assert.IsTrue(symbolInterval.HistoryWasAsked(Time(100), Time(200)), "the older period still stands");
         Assert.IsTrue(symbolInterval.HistoryWasAsked(Time(400), Time(500)), "the newer period");
+        Assert.AreEqual(Time(300), symbolInterval.SkipHistoryAlreadyAsked(Time(300)), "the gap is not skipped");
+    }
+
+
+    [TestMethod]
+    public void ZoomWindowsAroundDifferentPivotsAreAllRemembered()
+    {
+        // What a DLZ recalculation does: first the deep history of its own interval, then a small
+        // window around every dominant pivot, scattered over the past and in no particular order.
+        // Each of those has to be remembered on its own - with one single period every zoom would
+        // throw away what the previous one established.
+        CryptoSymbolInterval symbolInterval = CreateSymbolInterval();
+        symbolInterval.RememberHistoryAsked(Time(5000), Time(5060));
+        symbolInterval.RememberHistoryAsked(Time(1000), Time(1060));
+        symbolInterval.RememberHistoryAsked(Time(3000), Time(3060));
+
+        Assert.AreEqual(3, symbolInterval.HistoryAsked.Count);
+        Assert.IsTrue(symbolInterval.HistoryWasAsked(Time(1000), Time(1060)), "the oldest zoom");
+        Assert.IsTrue(symbolInterval.HistoryWasAsked(Time(3010), Time(3050)), "inside the middle zoom");
+        Assert.IsTrue(symbolInterval.HistoryWasAsked(Time(5000), Time(5060)), "the newest zoom");
+
+        // And they close up into one period as soon as the ranges meet.
+        symbolInterval.RememberHistoryAsked(Time(1060), Time(5000));
+        Assert.AreEqual(1, symbolInterval.HistoryAsked.Count);
+        Assert.IsTrue(symbolInterval.HistoryWasAsked(Time(1000), Time(5060)));
     }
 
 
@@ -120,6 +145,7 @@ public class SymbolIntervalHistoryAskedTests
 
         Assert.IsFalse(symbolInterval.HistoryWasAsked(Time(100), Time(200)), "the removed part must be fetched again");
         Assert.IsTrue(symbolInterval.HistoryWasAsked(Time(151), Time(200)), "the part after the removal still stands");
+        Assert.AreEqual(Time(100), symbolInterval.SkipHistoryAlreadyAsked(Time(100)), "and is not skipped over any more");
     }
 
 
@@ -132,7 +158,7 @@ public class SymbolIntervalHistoryAskedTests
         symbolInterval.ForgetHistoryUpTo(Time(200));
 
         Assert.IsFalse(symbolInterval.HistoryWasAsked(Time(100), Time(200)));
-        Assert.IsFalse(symbolInterval.HistoryAskedFrom.HasValue);
+        Assert.AreEqual(0, symbolInterval.HistoryAsked.Count);
     }
 
 
@@ -149,13 +175,32 @@ public class SymbolIntervalHistoryAskedTests
 
 
     [TestMethod]
+    public void RemovingCandlesDropsEveryPeriodBelowIt()
+    {
+        CryptoSymbolInterval symbolInterval = CreateSymbolInterval();
+        symbolInterval.RememberHistoryAsked(Time(1000), Time(1060));
+        symbolInterval.RememberHistoryAsked(Time(3000), Time(3060));
+        symbolInterval.RememberHistoryAsked(Time(5000), Time(5060));
+
+        // A cleanup that removed everything up to 3020 leaves the tail of the middle period and the
+        // whole newest one; the oldest one is gone and will be fetched again when it is needed.
+        symbolInterval.ForgetHistoryUpTo(Time(3020));
+
+        Assert.AreEqual(2, symbolInterval.HistoryAsked.Count);
+        Assert.IsFalse(symbolInterval.HistoryWasAsked(Time(1000), Time(1060)), "the oldest period is gone");
+        Assert.IsFalse(symbolInterval.HistoryWasAsked(Time(3000), Time(3060)), "the removed half of the middle one");
+        Assert.IsTrue(symbolInterval.HistoryWasAsked(Time(3021), Time(3060)), "the surviving half");
+        Assert.IsTrue(symbolInterval.HistoryWasAsked(Time(5000), Time(5060)), "the newest period");
+    }
+
+
+    [TestMethod]
     public void RemovingCandlesForAnEmptyNoteChangesNothing()
     {
         CryptoSymbolInterval symbolInterval = CreateSymbolInterval();
 
         symbolInterval.ForgetHistoryUpTo(Time(150));
 
-        Assert.IsFalse(symbolInterval.HistoryAskedFrom.HasValue);
-        Assert.IsFalse(symbolInterval.HistoryAskedTo.HasValue);
+        Assert.AreEqual(0, symbolInterval.HistoryAsked.Count);
     }
 }
