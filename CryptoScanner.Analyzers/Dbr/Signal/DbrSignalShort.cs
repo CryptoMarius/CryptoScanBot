@@ -36,6 +36,12 @@ public class DbrSignalShort : SignalCreateBase
 
         var settings = DbrPlugin.Settings;
 
+        if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
+        {
+            ExtraText = $"bb.width out of range {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            return false;
+        }
+
         if (settings.UseRsiFilter && !CandleLast.RsiOverbought())
         {
             ExtraText = $"rsi not overbought ({CandleLast.CandleData?.Rsi:N2})";

@@ -11,6 +11,12 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
     private double _mult = 2.5;
 
     [ObservableProperty]
+    private double _bbMinPercentage = 1.50;
+
+    [ObservableProperty]
+    private double _bbMaxPercentage = 0.0;
+
+    [ObservableProperty]
     private bool _useRsiFilter = true;
 
     [ObservableProperty]
@@ -39,6 +45,8 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
     {
         Length = settings.Length;
         Mult = settings.Mult;
+        BbMinPercentage = settings.BBMinPercentage;
+        BbMaxPercentage = settings.BBMaxPercentage;
         UseRsiFilter = settings.UseRsiFilter;
         UseStopLoss = settings.UseStopLoss;
         AcsFactor = settings.AcsFactor;
@@ -53,6 +61,8 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
     {
         settings.Length = Length;
         settings.Mult = Mult;
+        settings.BBMinPercentage = BbMinPercentage;
+        settings.BBMaxPercentage = BbMaxPercentage;
         settings.UseRsiFilter = UseRsiFilter;
         settings.UseStopLoss = UseStopLoss;
         settings.AcsFactor = AcsFactor;

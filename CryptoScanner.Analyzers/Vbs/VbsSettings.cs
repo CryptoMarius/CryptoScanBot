@@ -28,6 +28,18 @@ public class VbsSettings : SettingsSignalStrategyBase
     [SettingCaption("Multiplier (vw-stdev)", Group = GroupBands)]
     public double Mult { get; set; } = 2.5;
 
+    // Bollinger-band width gate, applied to BollingerBandsPercentage = 100 * (upper/lower - 1).
+    // The signal only fires when the BB width is inside [BBMinPercentage, BBMaxPercentage]; it is the
+    // first (and cheapest) check in VbsSignalLong/VbsSignalShort. A bound of 0 disables that side, so
+    // the default 0 max = no upper limit. Min and max share one caption, as in the axaml.
+    [SettingCaption("Filter on BB%", Group = GroupBands,
+        Tooltip = "Minimum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a signal to fire, followed by the maximum. A bound of 0 disables that side.")]
+    public double BBMinPercentage { get; set; } = 1.50;
+
+    [SettingCaption("", SameRowAs = nameof(BBMinPercentage),
+        Tooltip = "Maximum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a signal to fire. 0 disables the upper bound.")]
+    public double BBMaxPercentage { get; set; } = 0.0;
+
     // RSI confluence: only fire a sell on an upper-band break when RSI is overbought, and a buy on a
     // lower-band break when RSI is oversold. The overbought/oversold LEVELS are taken from the general
     // RSI settings (Indicators tab: GlobalData.Settings.General.SettingsRsi), so all strategies share them.
@@ -63,17 +75,6 @@ public class VbsSettings : SettingsSignalStrategyBase
     public bool UseTakeProfit { get; set; } = false;
     [SettingCaption("Risk-reward ratio (RRR)", Group = GroupTakeProfit, EnabledWhen = nameof(UseTakeProfit))]
     public double RiskRewardRatio { get; set; } = 1.0;
-
-    // Bollinger-band width gate, applied to BollingerBandsPercentage = 100 * (upper/lower - 1).
-    // A break is only flagged (signal fires / chart prints a label) when the BB width is inside
-    // [BBMinPercentage, BBMaxPercentage]. A bound of 0 disables that side (so the default 0 max =
-    // no upper limit). Both the atrrb signal and the chart drawer read these, so they stay in sync.
-    // Not on the Avalonia VBS tab, so not drawn here either; the values keep loading and saving.
-    [SettingCaption("BB width min %", Hidden = true)]
-    public double BBMinPercentage { get; set; } = 1.50;
-
-    [SettingCaption("BB width max %", Hidden = true)]
-    public double BBMaxPercentage { get; set; } = 0.0;
 
     // When true a long signal also requires Stochastic to be oversold, and a short signal requires
     // Stochastic to be overbought (uses the global Stoch OS/OB thresholds from SettingsStoch).

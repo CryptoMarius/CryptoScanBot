@@ -21,6 +21,18 @@ public class DbrSettings : SettingsSignalStrategyBase
         Tooltip = "Outer band multiplier: middle ± halfRange × (mult / 2.5) (Pine default 3.2). Higher = wider bands = fewer signals.")]
     public double OuterMult { get; set; } = 3.2;
 
+    // Bollinger-band width gate, applied to BollingerBandsPercentage = 100 * (upper/lower - 1).
+    // A break is only flagged (signal fires / chart prints a label) when the BB width is inside
+    // [BBMinPercentage, BBMaxPercentage]. A bound of 0 disables that side (so the default 0 max =
+    // no upper limit). Both the atrrb signal and the chart drawer read these, so they stay in sync.
+    [SettingCaption("Filter on BB%",
+        Tooltip = "Minimum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a break to be flagged, followed by the maximum. A bound of 0 disables that side. Applies to both the signal and the chart labels.")]
+    public double BBMinPercentage { get; set; } = 1.50;
+
+    [SettingCaption("", SameRowAs = nameof(BBMinPercentage),
+        Tooltip = "Maximum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a break to be flagged. 0 disables the upper bound. Applies to both the signal and the chart labels.")]
+    public double BBMaxPercentage { get; set; } = 0.0;
+
     // When true a long signal also requires RSI to be oversold, and a short signal requires RSI
     // to be overbought (uses the global RSI OS/OB thresholds from SettingsRsi).
     [SettingCaption("Require RSI overbought/oversold",

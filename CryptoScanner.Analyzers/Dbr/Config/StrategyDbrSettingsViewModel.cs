@@ -11,6 +11,12 @@ public partial class StrategyDbrSettingsViewModel : ObservableObject
     private double _outerMult = 3.2;
 
     [ObservableProperty]
+    private double _bbMinPercentage = 1.50;
+
+    [ObservableProperty]
+    private double _bbMaxPercentage = 0.0;
+
+    [ObservableProperty]
     private bool _useRsiFilter = false;
 
     [ObservableProperty]
@@ -29,6 +35,8 @@ public partial class StrategyDbrSettingsViewModel : ObservableObject
     {
         BandLength = settings.BandLength;
         OuterMult = settings.OuterMult;
+        BbMinPercentage = settings.BBMinPercentage;
+        BbMaxPercentage = settings.BBMaxPercentage;
         UseRsiFilter = settings.UseRsiFilter;
         RequireStochOsOb = settings.RequireStochOsOb;
         AllowStack = settings.AllowStack;
@@ -40,6 +48,8 @@ public partial class StrategyDbrSettingsViewModel : ObservableObject
     {
         settings.BandLength = BandLength;
         settings.OuterMult = OuterMult;
+        settings.BBMinPercentage = BbMinPercentage;
+        settings.BBMaxPercentage = BbMaxPercentage;
         settings.UseRsiFilter = UseRsiFilter;
         settings.RequireStochOsOb = RequireStochOsOb;
         settings.AllowStack = AllowStack;

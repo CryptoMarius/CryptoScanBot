@@ -42,11 +42,11 @@ public class AtrRbSettings : SettingsSignalStrategyBase
     // A break is only flagged (signal fires / chart prints a label) when the BB width is inside
     // [BBMinPercentage, BBMaxPercentage]. A bound of 0 disables that side (so the default 0 max =
     // no upper limit). Both the atrrb signal and the chart drawer read these, so they stay in sync.
-    [SettingCaption("BB width min %",
-        Tooltip = "Minimum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a break to be flagged. 0 disables the lower bound. Applies to both the signal and the chart labels.")]
+    [SettingCaption("Filter on BB%",
+        Tooltip = "Minimum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a break to be flagged, followed by the maximum. A bound of 0 disables that side. Applies to both the signal and the chart labels.")]
     public double BBMinPercentage { get; set; } = 1.50;
 
-    [SettingCaption("BB width max %",
+    [SettingCaption("", SameRowAs = nameof(BBMinPercentage),
         Tooltip = "Maximum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a break to be flagged. 0 disables the upper bound. Applies to both the signal and the chart labels.")]
     public double BBMaxPercentage { get; set; } = 0.0;
 
