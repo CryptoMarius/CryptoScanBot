@@ -132,6 +132,58 @@ public struct CryptoCandle : IQuote
 
 
 
+    /// <summary>
+    /// Lowers <paramref name="tickDecimals"/> until every one of the four prices fits in the int
+    /// that this candle keeps its prices in (the value stored is price / tickSize, see _openTicks).
+    /// Returns the number of decimals to use for THIS candle. Zero decimals is the floor, so a price
+    /// above int.MaxValue itself still throws in the setter - deliberately, because rounding that
+    /// away would store a number that is simply not the price.
+    /// <para>
+    /// TickDecimals is a per-candle field and is persisted per candle (TickDecimalsRaw), so a single
+    /// extreme candle can carry coarser decimals than its neighbours without the series becoming
+    /// inconsistent - the getters divide by the candle's own tick size. Losing a digit of precision
+    /// on such a candle is the cheap outcome; the alternative is the OverflowException that the
+    /// decimal-to-int conversion in the setters throws (it always throws, checked context or not).
+    /// </para>
+    /// <para>
+    /// Found on HyperLiquid Spot, 19/20-08-2026: the weekly candle of UBTC/USDC carries a print of
+    /// 100,002,060 while the market trades at 70,071. At the tick size that price justifies (0.001)
+    /// that is 1.0e11 ticks, fifty times what an int holds, and the whole 1w series of that symbol
+    /// stopped synchronising because every fetch threw. JEFF/USDC did the same with 41.515 at a tick
+    /// size of 0.00000001. SymbolBase.LimitDecimalsToCandleRange already caps the tick size of the
+    /// SYMBOL, but it can only measure against the price of the moment - it cannot know that the
+    /// history holds an outlier fifteen hundred times larger.
+    /// </para>
+    /// </summary>
+    public static byte FitTickDecimals(byte tickDecimals, decimal open, decimal high, decimal low, decimal close)
+    {
+        // The largest ABSOLUTE value decides: the barometer stores a median and an average in Open
+        // and Close and both are regularly negative (see BarometerTools), so taking the high alone
+        // would miss the value that actually overflows.
+        decimal largest = Math.Abs(open);
+        if (Math.Abs(high) > largest)
+            largest = Math.Abs(high);
+        if (Math.Abs(low) > largest)
+            largest = Math.Abs(low);
+        if (Math.Abs(close) > largest)
+            largest = Math.Abs(close);
+
+        while (tickDecimals > 0 && largest / TickSizeForDecimals(tickDecimals) > int.MaxValue)
+            tickDecimals--;
+        return tickDecimals;
+    }
+
+    /// <summary>
+    /// The tick size belonging to a number of decimals, from the same table the instance uses.
+    /// Static so <see cref="FitTickDecimals"/> can ask the question before a candle exists.
+    /// </summary>
+    private static decimal TickSizeForDecimals(byte tickDecimals)
+    {
+        if (tickDecimals < TickSizeLookup.Length)
+            return TickSizeLookup[tickDecimals];
+        return 1m / (decimal)Math.Pow(10, tickDecimals);
+    }
+
     // Better: Direct calculation
     public static byte CalculateDecimalsFromTickSize2(decimal tickSize)
     {

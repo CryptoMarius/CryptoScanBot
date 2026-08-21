@@ -23,6 +23,7 @@ public class BarometerTools
             if (quoteData.FetchCandles)
             {
                 CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
+                CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerExtra, quoteData);
             }
         }
     }
@@ -79,8 +80,8 @@ public class BarometerTools
     }
 
 
-    private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoInterval interval,
-        CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool priceBarometer)
+    private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoSymbol? bmSymbolExtra,
+        CryptoInterval interval, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool priceBarometer)
     {
         //if (priceBarometer)
         //    GlobalData.AddTextToLogTab($"Calculating price barometer chart {quoteData.Name} {interval.Name}");
@@ -89,6 +90,13 @@ public class BarometerTools
 
         CryptoSymbolInterval symbolInterval = bmSymbol.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList candles = symbolInterval.CandleList;
+
+        // A candle holds five numbers and one measurement produces more, so the rest goes into the
+        // candles of a second symbol. It is kept in lockstep with the first: same minutes, same
+        // clean-up, written in the same pass. Never calculated separately - that would cost a second
+        // full measurement for figures that are already in hand.
+        CryptoSymbolInterval? symbolIntervalExtra = bmSymbolExtra?.GetSymbolInterval(interval.IntervalPeriod);
+        CryptoCandleList? candlesExtra = symbolIntervalExtra?.CandleList;
 
         // Remove old candles from the barometer symbol (< 24 hours, 1440 candles).
         // Barometer does not run in the emulator (it needs the full symbol pool), so the
@@ -110,6 +118,17 @@ public class BarometerTools
             else break;
         }
 
+        // The second symbol ages out on the same schedule.
+        if (candlesExtra != null)
+        {
+            while (candlesExtra.TryGetFirstCandle(out CryptoCandle c))
+            {
+                if (c.OpenTime < startFetchUnix)
+                    candlesExtra.Remove(c.OpenTime);
+                else break;
+            }
+        }
+
         // Unusable candles are not only at the front. A session that stops and starts again leaves a
         // block of them BEHIND the valid ones, so the loop above would meet a good candle and stop
         // right before them. Sweep the whole window instead - it is a few hundred candles, and only
@@ -121,6 +140,10 @@ public class BarometerTools
                 if (recalculateFrom == null || candle.OpenTime < recalculateFrom.Value)
                     recalculateFrom = candle.OpenTime;
                 candles.Remove(candle.OpenTime);
+
+                // Drop the same minute from the second symbol, or the two would describe different
+                // moments until the recalculation catches up.
+                candlesExtra?.Remove(candle.OpenTime);
             }
         }
 
@@ -195,6 +218,26 @@ public class BarometerTools
                 BarometerCandleFields.Store(ref candle, result);
                 candles[periodStart] = candle;
 
+                // The remaining figures of the very same measurement, in the second symbol.
+                if (candlesExtra != null && bmSymbolExtra != null)
+                {
+                    if (!candlesExtra.TryGetValue(periodStart, out CryptoCandle candleExtra))
+                    {
+                        candleExtra = new CryptoCandle
+                        {
+                            OpenTime = periodStart,
+                        };
+                        candlesExtra.Add(candleExtra.OpenTime, candleExtra);
+                    }
+
+                    candleExtra.TickDecimals = bmSymbolExtra.PriceDecimals;
+                    BarometerCandleFields.StoreExtra(ref candleExtra, result);
+                    candlesExtra[periodStart] = candleExtra;
+
+                    if (symbolIntervalExtra != null && periodStart > symbolIntervalExtra.LastCandleSynchronized)
+                        symbolIntervalExtra.LastCandleSynchronized = periodStart;
+                }
+
 
                 // Administratie bijwerken
                 if (priceBarometer)
@@ -206,6 +249,8 @@ public class BarometerTools
                     barometerData.PriceSpread = result.Spread;
                     barometerData.PriceSymbolCount = result.SymbolCount;
                     barometerData.PriceOutlierCount = result.OutlierCount;
+                    barometerData.PriceMovement = result.AverageAbsolute;
+                    barometerData.PriceBitcoinVersusMarket = result.BitcoinVersusMarket;
                 }
                 else
                 {
@@ -268,8 +313,8 @@ public class BarometerTools
     /// <summary>
     /// Deze routine maakt barometer per 1m (ondanks dat we met de IntervalPeriod suggereren dat we het in een bepaald interval doen)
     /// </summary>
-    private static void CalculateBarometerIntervals(CryptoSymbol symbol, CryptoQuoteData quoteData,
-        CalcBarometerMethod calcBarometerMethod, bool pricebarometer)
+    private static void CalculateBarometerIntervals(CryptoSymbol symbol, CryptoSymbol? symbolExtra,
+        CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool pricebarometer)
     {
 #if debug
         TimerDebugCandles_Tick(quoteData);
@@ -290,7 +335,7 @@ public class BarometerTools
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
             {
                 //GlobalData.AddTextToLogTab("Calculating barometer chart " + bmSymbol.Name + " " + interval.Name);
-                CalculateBarometerInternal(symbol, interval, quoteData, calcBarometerMethod, pricebarometer);
+                CalculateBarometerInternal(symbol, symbolExtra, interval, quoteData, calcBarometerMethod, pricebarometer);
             }
         }
     }
@@ -300,9 +345,10 @@ public class BarometerTools
     {
         //GlobalData.AddTextToLogTab($"Barometer {quoteData.Name}");
         CryptoSymbol? symbol = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
+        CryptoSymbol? symbolExtra = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerExtra, quoteData);
         if (symbol != null)
         {
-            CalculateBarometerIntervals(symbol, quoteData, CryptoBarometerPrice.CalculatePriceBarometer, true);
+            CalculateBarometerIntervals(symbol, symbolExtra, quoteData, CryptoBarometerPrice.CalculatePriceBarometer, true);
         }
     }
 

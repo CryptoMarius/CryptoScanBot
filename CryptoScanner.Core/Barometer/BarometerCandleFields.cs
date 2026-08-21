@@ -7,11 +7,16 @@ namespace CryptoScanner.Core.Barometer;
 /// </summary>
 public enum BarometerGraphValue
 {
+    // Stored in the candles of the primary barometer symbol ($BMP)
     Average,
     Median,
     Rising,
     Spread,
     SymbolCount,
+
+    // Stored in the candles of the second symbol ($BMX)
+    Movement,
+    BitcoinVersusMarket,
 }
 
 /// <summary>
@@ -32,7 +37,7 @@ public enum BarometerGraphValue
 public static class BarometerCandleFields
 {
     /// <summary>
-    /// Write a completed measurement into the price fields of a barometer candle.
+    /// Write a completed measurement into the price fields of the PRIMARY barometer candle ($BMP).
     /// <para>
     /// The ref is essential: CryptoCandle is a STRUCT. Taking it by value would assign to a copy that
     /// is thrown away on return, and the caller would store an all-zero candle - which is exactly
@@ -46,6 +51,27 @@ public static class BarometerCandleFields
         candle.Low = result.Spread;
         candle.Close = result.Average;          // the original barometer value, unchanged
         candle.Volume = result.SymbolCount;
+    }
+
+
+    /// <summary>
+    /// Write the same measurement into the SECOND barometer candle ($BMX). A candle holds five
+    /// numbers and the first symbol is full, so the figures that came later live here. Two of the
+    /// five are in use; the rest is room for what comes next.
+    /// <para>
+    /// Both candles are written in the same pass from the same measurement, so they always describe
+    /// the same minute. Bitcoin-versus-market has no value on a quote without a bitcoin pair; a zero
+    /// is stored then, and the tooltip leaves the line out rather than showing a fake zero.
+    /// </para>
+    /// <para>Takes the candle by ref for the same reason as Store() above.</para>
+    /// </summary>
+    public static void StoreExtra(ref CryptoCandle candle, BarometerResult result)
+    {
+        candle.Open = result.BitcoinVersusMarket ?? 0m;
+        candle.High = 0m;                       // free
+        candle.Low = 0m;                        // free
+        candle.Close = result.AverageAbsolute;
+        candle.Volume = 0;                      // free
     }
 
 
@@ -70,17 +96,38 @@ public static class BarometerCandleFields
     }
 
 
-    /// Read one figure back out of a barometer candle.
+    /// <summary>
+    /// Read one figure back out of a barometer candle. The candle has to come from the symbol that
+    /// figure lives in - see GetSymbolName.
+    /// </summary>
     public static decimal Read(CryptoCandle candle, BarometerGraphValue value)
     {
         return value switch
         {
+            // Primary symbol ($BMP)
             BarometerGraphValue.Median => candle.Open,
             BarometerGraphValue.Rising => candle.High,
             BarometerGraphValue.Spread => candle.Low,
             BarometerGraphValue.SymbolCount => candle.Volume,
+
+            // Second symbol ($BMX)
+            BarometerGraphValue.BitcoinVersusMarket => candle.Open,
+            BarometerGraphValue.Movement => candle.Close,
+
             _ => candle.Close,
         };
+    }
+
+
+    /// <summary>
+    /// Which barometer symbol holds this figure. The name still needs the quote appended, the same
+    /// way the rest of the code builds it.
+    /// </summary>
+    public static string GetSymbolName(BarometerGraphValue value)
+    {
+        return value is BarometerGraphValue.Movement or BarometerGraphValue.BitcoinVersusMarket
+            ? Const.Constants.SymbolNameBarometerExtra
+            : Const.Constants.SymbolNameBarometerPrice;
     }
 
 
@@ -93,6 +140,8 @@ public static class BarometerCandleFields
             BarometerGraphValue.Rising => "Rising",
             BarometerGraphValue.Spread => "Spread",
             BarometerGraphValue.SymbolCount => "Coins",
+            BarometerGraphValue.Movement => "Movement",
+            BarometerGraphValue.BitcoinVersusMarket => "BTC vs rest",
             _ => "Average",
         };
     }
@@ -114,6 +163,8 @@ public static class BarometerCandleFields
         BarometerGraphValue.Median,
         BarometerGraphValue.Rising,
         BarometerGraphValue.Spread,
+        BarometerGraphValue.Movement,
+        BarometerGraphValue.BitcoinVersusMarket,
     ];
 
     /// The labels of the figures the graph can draw, in dropdown order.
@@ -153,6 +204,13 @@ public static class BarometerCandleFields
             lines.Add($"Rising {barometer.PricePercentageRising.Value:N1}% of the coins");
         if (barometer.PriceSpread.HasValue)
             lines.Add($"Spread {barometer.PriceSpread.Value:N2}% (75th minus 25th percentile)");
+        if (barometer.PriceMovement.HasValue)
+            lines.Add($"Movement {barometer.PriceMovement.Value:N2}% (regardless of direction)");
+
+        // Absent on a quote without a bitcoin pair - better no line than a fake zero, which would
+        // read as "bitcoin moves exactly with the market".
+        if (barometer.PriceBitcoinVersusMarket.HasValue)
+            lines.Add($"BTC vs rest {barometer.PriceBitcoinVersusMarket.Value:N2}%");
         if (barometer.PriceSymbolCount.HasValue)
             lines.Add($"Based on {barometer.PriceSymbolCount.Value} coins");
 
@@ -221,6 +279,28 @@ public static class BarometerCandleFields
                 ReferenceLine = null,
                 GridStep = null,
                 Decimals = 0,
+            },
+            // How far the typical coin moved, ignoring direction. Never negative, and like the
+            // spread it is neither good nor bad, so it gets no reference line.
+            BarometerGraphValue.Movement => new BarometerGraphScale
+            {
+                CenteredOnZero = false,
+                Low = 0m,
+                High = null,            // grows with the data
+                ReferenceLine = null,
+                GridStep = null,
+                Decimals = 2,
+            },
+            // Bitcoin against the median coin: zero means it moves exactly with the market, so this
+            // belongs on the same zero-centred scale as the average, and it moves in the same order
+            // of magnitude. Same floor of 1 therefore - erring high is the dangerous side, see the
+            // note on the average below.
+            BarometerGraphValue.BitcoinVersusMarket => new BarometerGraphScale
+            {
+                CenteredOnZero = true,
+                MinimumSpan = 1m,
+                IgnoreBeyond = 50m,     // same malfunction guard as the average
+                Decimals = 2,
             },
             // Average and median. MinimumSpan is deliberately NOT the 5 the graph was born with:
             // that number came from a comment reading "barometer, something like -5 .. +5", which is

@@ -626,7 +626,14 @@ public class DashboardService : IDisposable
         if (exchange == null)
             return false;
 
-        string symbolName = Constants.SymbolNameBarometerPrice + QuoteName;
+        // Which figure of the measurement is drawn follows the dropdown; Close (the average) is the
+        // barometer as it always was. ReadForGraph also shifts a figure whose neutral point is not
+        // zero (breadth), so the drawing code below only ever sees values around zero.
+        BarometerGraphValue graphValue = GraphValue;
+
+        // One candle holds five numbers, so the figures are spread over two symbols and the chosen
+        // figure decides which one to read.
+        string symbolName = BarometerCandleFields.GetSymbolName(graphValue) + QuoteName;
         if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             return false;
 
@@ -637,11 +644,6 @@ public class DashboardService : IDisposable
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         int maxPoints = Constants.BarometerGraphHours * 60;
-
-        // Which figure of the measurement is drawn follows the dropdown; Close (the average) is the
-        // barometer as it always was. ReadForGraph also shifts a figure whose neutral point is not
-        // zero (breadth), so the drawing code below only ever sees values around zero.
-        BarometerGraphValue graphValue = GraphValue;
 
         // Skip the whole rebuild when nothing behind the chart moved. The last candle covers both a
         // new measurement (its time changes) and the running minute being updated in place (its

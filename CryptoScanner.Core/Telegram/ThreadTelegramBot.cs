@@ -206,7 +206,13 @@ public class ThreadTelegramBotInstance
             // pause the 500 ms retry at the bottom of the loop turns one rejection into a burst of
             // them, which is what the log shows every night around 03:10. This grows the pause on
             // each consecutive failure and is reset as soon as a call succeeds.
+            // The first pause is five seconds and not two: nothing here is urgent (this loop only
+            // collects the commands typed into the chat), and the night of 19/20-08-2026 showed the
+            // shape of the problem - a 429 at 03:10:38 and a 502 seven seconds later, so the two
+            // second pause put us back at Telegram's door while it was still busy. Doubling from
+            // five means 5, 10, 20, 30 and the whole episode costs one log line instead of two.
             int backOffSeconds = 0;
+            const int backOffSecondsFirst = 5;
             const int backOffSecondsMaximum = 30;
 
             // Dat moet ook nog eens wat netter met een CT
@@ -363,7 +369,9 @@ public class ThreadTelegramBotInstance
                     int waitSeconds = error.Parameters?.RetryAfter ?? 0;
                     if (waitSeconds <= 0)
                     {
-                        backOffSeconds = Math.Min(Math.Max(backOffSeconds, 1) * 2, backOffSecondsMaximum);
+                        backOffSeconds = backOffSeconds == 0
+                            ? backOffSecondsFirst
+                            : Math.Min(backOffSeconds * 2, backOffSecondsMaximum);
                         waitSeconds = backOffSeconds;
                     }
                     // One call, not two: AddErrorToLogTab writes to the logger itself (see GlobalData),

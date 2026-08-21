@@ -60,6 +60,33 @@ public class BarometerResult
     /// </summary>
     public int OutlierCount { get; set; }
 
+    /// <summary>
+    /// Average of the percentages ignoring their sign: how far the typical coin moved, regardless of
+    /// direction. The figures above all describe WHERE the market went; this one says how hard it is
+    /// moving at all. A market where every coin does 0.1% and one where every coin does 3% can
+    /// produce the same average, the same median and the same breadth.
+    /// <para>It costs nothing: the loop in Calculate() already walks the percentages once.</para>
+    /// </summary>
+    public decimal AverageAbsolute { get; private set; }
+
+    /// <summary>
+    /// The percentage of bitcoin itself, if it took part in this measurement. Set by the caller,
+    /// which is the only place that knows which symbol bitcoin is on this exchange.
+    /// </summary>
+    public decimal? BitcoinPercentage { get; private set; }
+
+    /// <summary>
+    /// Bitcoin minus the median coin. Positive means bitcoin is outperforming the rest, which is
+    /// money moving towards safety; negative means the smaller coins are being bought, which is
+    /// appetite for risk. It says nothing about the direction of the market as a whole - both can
+    /// happen while everything rises or while everything falls.
+    /// <para>
+    /// Measured against the median and not the average on purpose: three altcoins doubling would
+    /// drag the average down and fake a rotation that never happened.
+    /// </para>
+    /// </summary>
+    public decimal? BitcoinVersusMarket { get; private set; }
+
 
     /// Clear the buffer and all figures, ready for the next measurement.
     public void Reset()
@@ -71,6 +98,9 @@ public class BarometerResult
         Spread = 0;
         SymbolCount = 0;
         OutlierCount = 0;
+        AverageAbsolute = 0;
+        BitcoinPercentage = null;
+        BitcoinVersusMarket = null;
     }
 
 
@@ -78,6 +108,17 @@ public class BarometerResult
     public void Add(decimal percentage)
     {
         percentages.Add(percentage);
+    }
+
+
+    /// <summary>
+    /// Register that this percentage belongs to bitcoin. It is also added through Add() like every
+    /// other coin - bitcoin is part of the market, so it counts towards the average and the breadth
+    /// as well. This only remembers it separately.
+    /// </summary>
+    public void SetBitcoin(decimal percentage)
+    {
+        BitcoinPercentage = percentage;
     }
 
 
@@ -91,16 +132,23 @@ public class BarometerResult
         if (SymbolCount == 0)
             return false;
 
+        // One pass over the percentages produces the sum, the count of risers and the sum of the
+        // absolute values. Adding the third costs one Math.Abs per coin inside a loop that was
+        // already running - next to the two candle lookups per coin that produced these numbers it
+        // does not register.
         decimal sum = 0;
+        decimal sumAbsolute = 0;
         int rising = 0;
         foreach (decimal percentage in percentages)
         {
             sum += percentage;
+            sumAbsolute += Math.Abs(percentage);
             if (percentage > 0)
                 rising++;
         }
 
         Average = decimal.Round(sum / SymbolCount, 8);
+        AverageAbsolute = decimal.Round(sumAbsolute / SymbolCount, 8);
         PercentageRising = decimal.Round(100m * rising / SymbolCount, 8);
 
         // The percentiles need a sorted list. Sorting a few hundred decimals is negligible next to
@@ -108,6 +156,11 @@ public class BarometerResult
         percentages.Sort();
         Median = decimal.Round(Percentile(50), 8);
         Spread = decimal.Round(Percentile(75) - Percentile(25), 8);
+
+        // Only meaningful once the median is known. Stays null when bitcoin did not take part, which
+        // happens on a quote that has no bitcoin pair.
+        if (BitcoinPercentage.HasValue)
+            BitcoinVersusMarket = decimal.Round(BitcoinPercentage.Value - Median, 8);
         return true;
     }
 

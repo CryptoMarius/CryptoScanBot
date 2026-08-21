@@ -117,7 +117,16 @@ public static class EmulatorBootstrap
         string trimmed = exchangeName.Trim();
         var match = GlobalData.ExchangeListName.Values
             .FirstOrDefault(x => x.Name.Equals(trimmed, StringComparison.CurrentCultureIgnoreCase));
-        if (match != null)
-            GlobalData.Settings.General.ExchangeName = match.Name;
+
+        // Same refusal as ScannerSession.PickupExchangeFromParameter. Quietly ignoring an unknown
+        // name meant the emulator ran against whatever stood in the settings while the user believed
+        // they had picked another exchange - a run that looks fine and answers the wrong question.
+        if (match == null)
+        {
+            string known = string.Join(", ", GlobalData.ExchangeListName.Values.Select(x => x.Name).Order());
+            throw new Exception($"Exchange \"{trimmed}\" (parameter -e) does not exist. Known exchanges: {known}");
+        }
+
+        GlobalData.Settings.General.ExchangeName = match.Name;
     }
 }

@@ -129,7 +129,17 @@ rem
 rem  One exchange, not all of them: a heap dump is about the working set of the
 rem  process and these run to 1.6 GB, so twenty exchanges times two snapshots
 rem  would be sixty gigabyte of disk for a question about one of them.
-set "HEAP_EXCHANGE=Okx Futures"
+rem  Which exchange the snapshots are taken of. Point this at the scanner you are actually
+rem  investigating: a heap dump runs to 1.6 GB and two of them per exchange is why this is one
+rem  name and not a list.
+rem
+rem  Kucoin Futures since 20-08-2026. It was Okx Futures, chosen because it showed the steepest
+rem  memory growth of the night - but that number was measured over the WHOLE run and so it was
+rem  mostly the one-off filling of the caches in the first hour. Over the last six hours Okx
+rem  Futures was at -2,7 MB per hour, so there is nothing there to catch. Kucoin Futures (+9,1)
+rem  and Bybit Spot (+6,8) were the only two still climbing after the warm-up; Kucoin Futures is
+rem  the worse of the two and goes first.
+set "HEAP_EXCHANGE=Kucoin Futures"
 if not "%HEAP_EXCHANGE%"=="" (
     start "Heap snapshot" powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0heap-diff.ps1" -Mode Snapshot -Exchange "%HEAP_EXCHANGE%"
 )

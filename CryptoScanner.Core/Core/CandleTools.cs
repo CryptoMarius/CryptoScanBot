@@ -34,6 +34,12 @@ public static class CandleTools
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList candles = symbolInterval.CandleList;
 
+        // The decimals of the SYMBOL are the starting point, but a single candle can carry a price
+        // the symbol's tick size cannot express in an int (an old print far above today's price).
+        // FitTickDecimals coarsens the tick size for this one candle instead of letting the setter
+        // throw; see CryptoCandle.FitTickDecimals for the case that brought this to light.
+        byte tickDecimals = CryptoCandle.FitTickDecimals(symbol.PriceDecimals, open, high, low, close);
+
         // Add the candle if it does not exist
         CandleTime candleOpenUnix = CandleTime.AlignFromDateTime(openTime, 1);
         if (!candles.TryGetValue(candleOpenUnix, out CryptoCandle candle))
@@ -41,7 +47,7 @@ public static class CandleTools
             // Create the candle
             candle = new CryptoCandle
             {
-                TickDecimals = symbol.PriceDecimals,
+                TickDecimals = tickDecimals,
                 OpenTime = candleOpenUnix,
                 Open = open,
                 High = high,
@@ -56,6 +62,9 @@ public static class CandleTools
         {
             // Update the candle. A real candle arriving later for the same OpenTime (e.g. a
             // repeated GetCandles fetch) clears IsFilled again, since isFilled defaults to false.
+            // The decimals go first: all four prices are re-assigned right below, so changing the
+            // tick size here cannot leave a value that was stored against the previous one.
+            candle.TickDecimals = tickDecimals;
             candle.Open = open;
             candle.High = high;
             candle.Low = low;
@@ -274,7 +283,10 @@ public static class CandleTools
                 candle = new()
                 {
                     OpenTime = loop,
-                    TickDecimals = symbol.PriceDecimals,
+                    // Same reasoning as in CreateCandle: the close being copied here comes from a
+                    // candle that may itself have needed coarser decimals to fit.
+                    TickDecimals = CryptoCandle.FitTickDecimals(symbol.PriceDecimals,
+                        realCandle.Close, realCandle.Close, realCandle.Close, realCandle.Close),
                     Open = realCandle.Close,
                     High = realCandle.Close,
                     Low = realCandle.Close,
@@ -306,9 +318,20 @@ public static class CandleTools
         //GlobalData.AddTextToLogTab($"{symbol.Name} BulkCalculateCandles {lowerTimeFrame.Name} {interval.Name}");
         CryptoSymbolInterval symbolSourceInterval = symbol.GetSymbolInterval(sourceInterval.IntervalPeriod);
         CryptoCandleList candleSourceInterval = symbolSourceInterval.CandleList;
-        if (candleSourceInterval.Count > 0)
+
+        // Both boundaries in one read-locked pass. This used to be Count > 0 followed by
+        // Keys.First() and Keys.Last(), and Keys is the inherited SortedDictionary collection: it
+        // enumerates outside CryptoCandleList's own lock, so an Add from the kline stream bumped
+        // the tree version mid-scan. That threw "Collection was modified after the enumerator was
+        // instantiated" on Okx Futures (BSBUSDT 2m, 20-08-2026 17:12) and aborted the zone
+        // calculation. Reading Count separately had the same hole: it can be answered from a state
+        // the two key reads no longer share.
+        //
+        // Only the boundaries are taken under the lock. The loop below reads through TryGetValue,
+        // which takes the read lock per candle and does not enumerate; holding the lock over the
+        // whole aggregation would stall the stream thread for as long as it runs.
+        if (candleSourceInterval.TryGetFirstAndLastKey(out CandleTime firstCandle, out CandleTime lastCandle))
         {
-            CandleTime firstCandle = candleSourceInterval.Keys.First();
             var (firstComplete, firstCandleDate) = IntervalTools.StartOfIntervalCandle3(firstCandle, sourceInterval.Duration, targetInterval.Duration);
             //firstCandleDateDebug = GetUnixDate(firstCandleDate);
             if (!firstComplete || firstCandleDate < firstCandle) // Has candles targetComplete and will not be complete and will be flagged as error
@@ -317,7 +340,6 @@ public static class CandleTools
                 //firstCandleDateDebug = GetUnixDate(firstCandleDate);
             }
 
-            CandleTime lastCandle = candleSourceInterval.Keys.Last();
             var (lastComplete, lastCandleDate) = IntervalTools.StartOfIntervalCandle3(lastCandle, sourceInterval.Duration, targetInterval.Duration);
             //lastCandleDateDebug = GetUnixDate(lastCandleDate);
             if (!lastComplete || lastCandleDate + targetInterval.Duration > fetchEndUnix) // Has candles targetComplete and will not be complete and will be flagged as error (also future candle)

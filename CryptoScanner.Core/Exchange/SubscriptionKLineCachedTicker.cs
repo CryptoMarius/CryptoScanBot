@@ -87,7 +87,13 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
             {
                 candles.TryAdd(candleOpen, new CryptoCandle
                 {
-                    TickDecimals = symbol.PriceDecimals,
+                    // Coarsen the tick size when this candle's prices do not fit the int the candle
+                    // stores them in (see CryptoCandle.FitTickDecimals). A live price sits close to
+                    // the price the symbol's tick size was chosen against, so this practically never
+                    // bites here - but a coin that multiplies between two symbol refreshes would.
+                    // Only on the branch that CREATES the candle: the update branch above runs per
+                    // kline tick and may not change the tick size under an already stored Open.
+                    TickDecimals = CryptoCandle.FitTickDecimals(symbol.PriceDecimals, open, high, low, close),
                     OpenTime = candleOpen,
                     Open = open,
                     High = high,
@@ -135,7 +141,8 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
             {
                 candles.TryAdd(candleOpen, new CryptoCandle
                 {
-                    TickDecimals = symbol.PriceDecimals,
+                    // See the kline variant above for why the tick size is fitted here.
+                    TickDecimals = CryptoCandle.FitTickDecimals(symbol.PriceDecimals, price, price, price, price),
                     OpenTime = candleOpen,
                     Open = price,
                     High = price,

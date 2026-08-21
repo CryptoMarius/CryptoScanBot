@@ -48,6 +48,13 @@ public class BarometerValuesDto
     /// <summary>Number of symbols the most recent measurement was based on.</summary>
     public int SymbolCount { get; set; }
 
+    /// <summary>
+    /// How far the typical coin moved in the last hour regardless of direction, and bitcoin measured
+    /// against the median coin. The second is 0 on a quote without a bitcoin pair.
+    /// </summary>
+    public decimal Movement1h { get; set; }
+    public decimal BitcoinVersusMarket1h { get; set; }
+
     /// <summary>True once the scanner has finished loading candles (ApplicationStatus == Running).</summary>
     public bool Ready { get; set; }
 

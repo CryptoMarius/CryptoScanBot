@@ -173,8 +173,16 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
             NeedsRestart = true;
             ErrorDuringStartup = true;
 
-            ScannerLog.Logger.Trace($"{TickerType} subscription {Name} error {subscriptionResult?.Error?.Message} {SymbolOverview}");
-            GlobalData.AddErrorToLogTab($"{TickerType} subscription {Name} error {subscriptionResult?.Error?.Message} {SymbolOverview}");
+            // Say WHICH exchange and WHAT went wrong. On Binance Spot, 20-08-2026 04:58:27, this line
+            // came out as "kline subscription USDT#0 (50) error" followed by fifty symbol names and
+            // nothing else: no exchange, and an empty message because the failed result carried no
+            // Error at all. That is precisely the moment the reason matters, so name the two cases
+            // apart instead of interpolating a null into thin air.
+            string reason = subscriptionResult is null
+                ? "no result from the exchange"
+                : (subscriptionResult.Error?.Message ?? "failed without an error message");
+            ScannerLog.Logger.Trace($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} error {reason} {SymbolOverview}");
+            GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} error {reason} {SymbolOverview}");
         }
     }
 

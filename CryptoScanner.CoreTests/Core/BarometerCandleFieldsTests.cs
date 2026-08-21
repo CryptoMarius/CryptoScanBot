@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.CoreTests.Core;
@@ -102,7 +103,89 @@ public class BarometerCandleFieldsTests
         // It is stored and shown in the tooltip, but as a graph it is a flat line by definition.
         CollectionAssert.DoesNotContain(BarometerCandleFields.Names.ToList(),
             BarometerCandleFields.GetName(BarometerGraphValue.SymbolCount));
-        Assert.AreEqual(4, BarometerCandleFields.Names.Count);
+        Assert.AreEqual(6, BarometerCandleFields.Names.Count);
+    }
+
+
+    [TestMethod]
+    public void MovementIgnoresDirection()
+    {
+        // Two coins up 2%, two coins down 2%: the market went nowhere on average, but every coin
+        // moved 2%. The average cannot tell this apart from a market standing perfectly still.
+        BarometerResult result = CreateResult([-2m, -2m, 2m, 2m]);
+
+        Assert.AreEqual(0m, result.Average, "the ups and downs cancel out");
+        Assert.AreEqual(2m, result.AverageAbsolute, "but every coin moved 2%");
+
+        BarometerResult still = CreateResult([0m, 0m, 0m, 0m]);
+        Assert.AreEqual(0m, still.Average);
+        Assert.AreEqual(0m, still.AverageAbsolute, "a market standing still moves 0%");
+    }
+
+
+    [TestMethod]
+    public void BitcoinIsMeasuredAgainstTheMedian()
+    {
+        // Median of -2, -1, 1, 4 is 0. Bitcoin at +3 is therefore 3 points ahead of the median coin.
+        BarometerResult result = new();
+        result.Reset();
+        foreach (decimal percentage in new[] { -2m, -1m, 1m, 4m })
+            result.Add(percentage);
+        result.SetBitcoin(3m);
+        Assert.IsTrue(result.Calculate());
+
+        Assert.AreEqual(0m, result.Median);
+        Assert.AreEqual(3m, result.BitcoinPercentage);
+        Assert.AreEqual(3m, result.BitcoinVersusMarket, "bitcoin minus the median coin");
+    }
+
+
+    [TestMethod]
+    public void BitcoinStaysEmptyWhenItDidNotTakePart()
+    {
+        // A quote without a bitcoin pair. Better no value than a zero, which would read as
+        // "bitcoin moves exactly with the market".
+        BarometerResult result = CreateResult([-2m, -1m, 1m, 4m]);
+
+        Assert.IsNull(result.BitcoinPercentage);
+        Assert.IsNull(result.BitcoinVersusMarket);
+    }
+
+
+    [TestMethod]
+    public void SecondPageRoundTripsThroughItsOwnCandle()
+    {
+        BarometerResult result = new();
+        result.Reset();
+        foreach (decimal percentage in new[] { -2m, -1m, 1m, 4m })
+            result.Add(percentage);
+        result.SetBitcoin(3m);
+        Assert.IsTrue(result.Calculate());
+
+        CryptoCandle extra = new() { TickDecimals = 2 };
+        BarometerCandleFields.StoreExtra(ref extra, result);
+
+        Assert.AreEqual(result.AverageAbsolute, BarometerCandleFields.Read(extra, BarometerGraphValue.Movement));
+        Assert.AreEqual(result.BitcoinVersusMarket, BarometerCandleFields.Read(extra, BarometerGraphValue.BitcoinVersusMarket));
+    }
+
+
+    [TestMethod]
+    public void EachFigureKnowsWhichSymbolHoldsIt()
+    {
+        // Reading a figure from the wrong symbol would silently plot another number entirely.
+        Assert.AreEqual(Constants.SymbolNameBarometerPrice, BarometerCandleFields.GetSymbolName(BarometerGraphValue.Average));
+        Assert.AreEqual(Constants.SymbolNameBarometerPrice, BarometerCandleFields.GetSymbolName(BarometerGraphValue.Median));
+        Assert.AreEqual(Constants.SymbolNameBarometerPrice, BarometerCandleFields.GetSymbolName(BarometerGraphValue.Rising));
+        Assert.AreEqual(Constants.SymbolNameBarometerPrice, BarometerCandleFields.GetSymbolName(BarometerGraphValue.Spread));
+        Assert.AreEqual(Constants.SymbolNameBarometerPrice, BarometerCandleFields.GetSymbolName(BarometerGraphValue.SymbolCount));
+
+        Assert.AreEqual(Constants.SymbolNameBarometerExtra, BarometerCandleFields.GetSymbolName(BarometerGraphValue.Movement));
+        Assert.AreEqual(Constants.SymbolNameBarometerExtra, BarometerCandleFields.GetSymbolName(BarometerGraphValue.BitcoinVersusMarket));
+
+        // Both barometer symbols must start with '$', that is how IsBarometerSymbol() keeps them out
+        // of the measurement itself and out of the volume clean-up.
+        Assert.IsTrue(Constants.SymbolNameBarometerExtra.StartsWith('$'));
     }
 
 

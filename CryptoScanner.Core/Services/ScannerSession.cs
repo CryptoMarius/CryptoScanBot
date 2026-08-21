@@ -108,11 +108,24 @@ public class ScannerSession : IScannerSession
         if (exchangeName != null)
         {
             // People forget to use the right casing
-            exchangeName = exchangeName.Trim().ToLower();
+            exchangeName = exchangeName.Trim();
             string? found = GlobalData.ExchangeListName.Values.Where(x => x.Name.Equals(exchangeName, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault()?.Name;
-            if (found != null)
-                exchangeName = found;
-            GlobalData.Settings.General.ExchangeName = exchangeName;
+
+            // An unknown name used to be lowercased and written into the settings anyway. That did
+            // three unpleasant things at once: ApplyConfigurationAsync threw "Exchange x does not
+            // exist" as an unhandled thread exception, the screens then crashed on the null
+            // ActiveExchange (PositionOpenGridViewModel.LoadOpenPositions), and the bad name was
+            // saved to the settings file, so the next start was broken as well - without the -e.
+            // Seen on 15-08-2026 with -e "Coinbase Futures", which is simply not implemented (only
+            // Coinbase Spot is). Refuse here, where the name is still the user's typo, and say
+            // which names DO exist.
+            if (found == null)
+            {
+                string known = string.Join(", ", GlobalData.ExchangeListName.Values.Select(x => x.Name).Order());
+                throw new Exception($"Exchange \"{exchangeName}\" (parameter -e) does not exist. Known exchanges: {known}");
+            }
+
+            GlobalData.Settings.General.ExchangeName = found;
         }
     }
 

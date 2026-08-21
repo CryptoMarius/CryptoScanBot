@@ -18,6 +18,11 @@ public class CryptoBarometerData
     public int? PriceSymbolCount { get; set; } = null;
     public int? PriceOutlierCount { get; set; } = null;
 
+    // How far the typical coin moved regardless of direction, and bitcoin measured against the
+    // median coin. The latter stays null on a quote that has no bitcoin pair.
+    public decimal? PriceMovement { get; set; } = null;
+    public decimal? PriceBitcoinVersusMarket { get; set; } = null;
+
     // Experimental, needs another attemp in the future!
     public CandleTime? VolumeDateTime { get; set; } = null;
     public decimal? VolumeBarometer { get; set; } = null;
@@ -33,6 +38,8 @@ public class CryptoBarometerData
         PriceSpread = null;
         PriceSymbolCount = null;
         PriceOutlierCount = null;
+        PriceMovement = null;
+        PriceBitcoinVersusMarket = null;
 
         VolumeDateTime = null;
         VolumeBarometer = null;

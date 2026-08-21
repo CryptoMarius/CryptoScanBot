@@ -68,6 +68,47 @@ def sample_name(folder):
     return folder.name
 
 
+def archive_previous_reports(output):
+    """
+    Move whatever is already in the report folder into Older/<date it was written>.
+
+    Two things went wrong without this, both on 20-08-2026:
+
+      - The folder held Coinbase-Futures-report.html from a crashed run of 15-08. Nothing had
+        refreshed it since (that data folder is gone), so it sat between the reports of last night
+        looking exactly as current as they did, full of "not measured" - and it was read as a report
+        about last night.
+
+      - Every night overwrote the *-facts.json of the night before. Those files exist to be able to
+        compare night four against night one, and there was never more than one night on disk.
+
+    Moving, not deleting: a report is cheap to keep and the user decides when it goes.
+    """
+    keep = [path for path in output.glob("*")
+            if path.is_file() and (path.name.endswith("-report.html")
+                                   or path.name.endswith("-report.md")
+                                   or path.name.endswith("-facts.json"))]
+    if not keep:
+        return 0
+
+    moved = 0
+    for path in keep:
+        stamp = time.strftime("%Y-%m-%d", time.localtime(path.stat().st_mtime))
+        target_folder = output / "Older" / stamp
+        target_folder.mkdir(parents=True, exist_ok=True)
+        target = target_folder / path.name
+        # A second run on the same day would collide with the first; number those instead of
+        # silently throwing one of them away.
+        if target.exists():
+            index = 2
+            while (target_folder / "{} ({}){}".format(target.stem, index, target.suffix)).exists():
+                index += 1
+            target = target_folder / "{} ({}){}".format(target.stem, index, target.suffix)
+        path.replace(target)
+        moved += 1
+    return moved
+
+
 def main():
     parser = argparse.ArgumentParser(description="Check every scanner data folder under one base.")
     parser.add_argument("--base", required=True, help="Folder holding the data folders.")
@@ -107,6 +148,12 @@ def main():
             else:
                 fresh.append(folder)
         folders = fresh
+
+    archived = archive_previous_reports(output)
+    if archived:
+        print("Moved {} report(s) from an earlier run to {}".format(archived, output / "Older"))
+        print("The folder now holds THIS run only, so nothing older can be mistaken for it.")
+        print()
 
     print("Found {} data folder(s) under {}".format(len(folders) + len(skipped), base))
     if skipped:

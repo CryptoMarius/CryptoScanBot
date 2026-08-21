@@ -24,11 +24,26 @@ public static class ExchangeProvider
     {
         switch (exchange.ExchangeType)
         {
+            case CryptoExchangeType.Alpaca:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new Alpaca.Spot.Api();
+                else
+                    throw new Exception("Alpaca Futures not supported");
             case CryptoExchangeType.Binance:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Binance.Spot.Api();
                 else
                     return new Binance.Futures.Api();
+            case CryptoExchangeType.Bitvavo:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new Bitvavo.Spot.Api();
+                else
+                    throw new Exception("Bitvavo Futures not supported");
+            case CryptoExchangeType.BitMart:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new BitMart.Spot.Api();
+                else
+                    return new BitMart.Futures.Api();
             case CryptoExchangeType.BloFin:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     throw new Exception("BloFin Spot not supported");
@@ -44,6 +59,11 @@ public static class ExchangeProvider
                     return new BybitEu.Spot.Api();
                 else
                     throw new Exception("Bybit EU Futures not supported");
+            case CryptoExchangeType.HyperLiquid:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new HyperLiquid.Spot.Api();
+                else
+                    return new HyperLiquid.Futures.Api();
             case CryptoExchangeType.Kraken:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Kraken.Spot.Api();
@@ -69,26 +89,6 @@ public static class ExchangeProvider
                     return new Coinbase.Spot.Api();
                 else
                     throw new Exception("Coinbase Futures not supported");
-            case CryptoExchangeType.HyperLiquid:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new HyperLiquid.Spot.Api();
-                else
-                    return new HyperLiquid.Futures.Api();
-            case CryptoExchangeType.BitMart:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new BitMart.Spot.Api();
-                else
-                    return new BitMart.Futures.Api();
-            case CryptoExchangeType.Alpaca:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Alpaca.Spot.Api();
-                else
-                    throw new Exception("Alpaca Futures not supported");
-            case CryptoExchangeType.Bitvavo:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Bitvavo.Spot.Api();
-                else
-                    throw new Exception("Bitvavo Futures not supported");
             default:
                 throw new Exception("Exchange not supported");
         }

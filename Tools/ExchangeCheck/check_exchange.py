@@ -67,6 +67,18 @@ ERRORS_BAD = 50
 MEMORY_ATTENTION_MB_PER_HOUR = 50.0
 MEMORY_BAD_MB_PER_HOUR = 200.0
 MEMORY_MINIMAL_HOURS = 1.0         # hieronder zegt de helling niets, dus wordt er niet geoordeeld
+
+# Een scanner vult zijn caches in het eerste uur of twee: candles, indicatoren en zigzag-pivots per
+# symbool en interval. Dat is een eenmalige klim en geen lek, maar een rechte lijn door "eerst steil,
+# daarna vlak" meldt wel degelijk een positieve helling. In de nacht van 19/20-08-2026 kwam elk van
+# de negentien scanners daardoor op +6 tot +30 MB per uur uit, terwijl er over de laatste zes uur nog
+# maar twee boven de +5 zaten en acht juist DAALDEN. Okx Futures was met +30,5 de ergste van de lijst
+# en zat op de vlakke staart op -2,7.
+#
+# Vandaar twee getallen: de helling over de hele run (wat er gebeurde) en de helling over de staart
+# (of er iets weglekt). Het oordeel hangt aan de staart.
+MEMORY_PLATEAU_HOURS = 6.0         # staart waarover het oordeel gaat
+MEMORY_PLATEAU_MINIMAL_HOURS = 3.0  # korter dan dit is er geen staart om apart te meten
 # Houden de metingen langer dan dit voor het einde van het venster op, dan is het proces uit beeld
 # geraakt en gaat een oordeel over de verkeerde uren. Ruim boven het steekproefinterval van vijf
 # minuten, zodat een laatste ronde die net niet meer paste geen melding oplevert.
@@ -133,7 +145,14 @@ CANDLE_EPOCH = datetime(2010, 1, 4, 0, 0, 0)
 # Barometermetingen worden als candles onder een pseudosymbool bewaard. Het zijn geen koersen maar
 # percentages, dus ze krijgen hun eigen sectie met eigen regels in plaats van te worden
 # meegerekend met de echte candles.
-BAROMETER_PREFIXES = ("$BMP", "$BMV")
+# A barometer measurement no longer fits in one candle: the primary symbol carries five figures and
+# the ones that came later live in a second symbol ($BMX, Constants.SymbolNameBarometerExtra). Both
+# are pseudo-symbols and neither must be counted with the real candles - $BMX stores zero in High,
+# Low and Volume by design (BarometerCandleFields.StoreExtra), so the plausibility test would call
+# every single one of them impossible. Recognising them follows CandleHelpers.IsBarometerSymbol: the
+# base starts with a dollar. The prefix list below only says WHICH series the field layout of
+# BAROMETER_FIELDS describes, and that is the primary one.
+BAROMETER_PRIMARY_PREFIXES = ("$BMP", "$BMV")
 
 # Wat er in de prijsvelden van een barometercandle staat. Dit volgt BarometerCandleFields.Store in
 # Core/Barometer: een barometer is een enkel getal, dus de vier prijsvelden dragen de losse cijfers
@@ -201,7 +220,14 @@ def to_utc(moment):
 
 
 def is_barometer(name):
-    return bool(name) and any(str(name).upper().startswith(prefix) for prefix in BAROMETER_PREFIXES)
+    """Every pseudo-symbol of the barometer, primary series and second page alike."""
+    return bool(name) and str(name).startswith("$")
+
+
+def is_primary_barometer(name):
+    """Only the series whose candles hold the layout of BAROMETER_FIELDS."""
+    return bool(name) and any(str(name).upper().startswith(prefix)
+                              for prefix in BAROMETER_PRIMARY_PREFIXES)
 
 
 def open_readonly(path):
@@ -1565,6 +1591,12 @@ def check_barometer(report, candle_databases, main_db, window_start, window_end,
 
         try:
             _, local_symbols, barometer_ids = read_symbol_maps(connection)
+            # Only the primary series is judged here. The second page ($BMX) is a barometer row for
+            # the purpose of keeping it out of the normal candle checks, but its price fields carry
+            # different figures - three of the five are deliberately zero - so measuring it against
+            # BAROMETER_FIELDS would report a violation on every row it ever wrote.
+            barometer_ids = {identifier for identifier in barometer_ids
+                             if is_primary_barometer(local_symbols.get(identifier))}
             if not barometer_ids:
                 lines.append("**Er staat geen enkele barometerrij in deze voorraad.** De barometer "
                              "is een vast onderdeel van de scanner, dus dit betekent dat hij niet "
@@ -2546,13 +2578,28 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
         host_growth = host_slope if host_slope is not None else (
             (last["workingSetMb"] - first["workingSetMb"]) / hours if hours else 0.0)
 
+        # De helling over de staart: dit is het getal dat over een lek gaat. Zie de toelichting bij
+        # MEMORY_PLATEAU_HOURS - de opwarming van de caches zit in het begin van de run en zou een
+        # vlakke nacht anders als een klim laten lezen.
+        plateau_growth = None
+        if hours >= MEMORY_PLATEAU_MINIMAL_HOURS:
+            plateau_start = last["moment"] - timedelta(hours=MEMORY_PLATEAU_HOURS)
+            plateau_samples = [sample for sample in samples if sample["moment"] >= plateau_start]
+            if len(plateau_samples) >= 5:
+                plateau_growth = linear_slope(
+                    [((sample["moment"] - plateau_samples[0]["moment"]).total_seconds() / 3600.0,
+                      basis(sample)) for sample in plateau_samples])
+
+        # Waarop geoordeeld wordt: de staart als die er is, anders de hele run.
+        judged_growth = plateau_growth if plateau_growth is not None else growth
+
         # Een helling over een paar minuten rekent ruis door naar honderden megabytes per uur.
         # Onder een uur aan metingen wordt het getal wel gemeld maar niet beoordeeld.
         if hours < MEMORY_MINIMAL_HOURS:
             verdict = UNKNOWN
-        elif growth > MEMORY_BAD_MB_PER_HOUR:
+        elif judged_growth > MEMORY_BAD_MB_PER_HOUR:
             verdict = BAD
-        elif growth > MEMORY_ATTENTION_MB_PER_HOUR:
+        elif judged_growth > MEMORY_ATTENTION_MB_PER_HOUR:
             verdict = ATTENTION
         else:
             verdict = GOOD
@@ -2575,15 +2622,41 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
             ])
         lines.extend([
             "| Piek | {:.0f} MB |".format(peak),
-            "| **Groei** | **{:+.1f} MB per uur** |".format(growth),
+            "| Groei over de hele run | {:+.1f} MB per uur |".format(growth),
+        ])
+        if plateau_growth is not None:
+            lines.append("| **Groei over de laatste {:.0f} uur** | **{:+.1f} MB per uur** |".format(
+                MEMORY_PLATEAU_HOURS, plateau_growth))
+        lines.extend([
             "| Threads begin / eind | {} / {} |".format(first["threads"], last["threads"]),
             "| Handles begin / eind | {} / {} |".format(first["handles"], last["handles"]),
             "",
-            "De groei is een kleinste-kwadratenfit over alle metingen, dus een enkele piek bepaalt "
-            "hem niet. Een vlak of negatief getal is hoe een gezonde run eruitziet; een gestage "
-            "klim over vele uren is het handschrift van een lek.",
-            "",
         ])
+        if plateau_growth is not None:
+            lines.extend([
+                "**Het oordeel hangt aan het tweede getal.** Een scanner vult in zijn eerste uur of "
+                "twee de caches die hij de rest van de nacht gebruikt: candles, indicatoren en "
+                "zigzag-pivots per symbool en per interval. Dat is een eenmalige klim, en een rechte "
+                "lijn door \"eerst steil, daarna vlak\" meldt daar een positieve helling over die "
+                "niets zegt over de uren erna.",
+                "",
+                "Hoe groot dat verschil is bleek in de nacht van 19/20-08-2026: over de hele run "
+                "stonden alle negentien scanners op +6 tot +30 MB per uur, maar over de laatste zes "
+                "uur zaten er nog twee boven de +5 en daalden er acht. Okx Futures was met +30,5 de "
+                "ergste van de lijst en zat op de staart op -2,7.",
+                "",
+                "Een vlak of negatief getal op de staart is hoe een gezonde run eruitziet; blijft de "
+                "staart klimmen, dan is dat het handschrift van een lek.",
+                "",
+            ])
+        else:
+            lines.extend([
+                "De groei is een kleinste-kwadratenfit over alle metingen, dus een enkele piek "
+                "bepaalt hem niet. Deze run is te kort om de opwarming van de caches eruit te "
+                "houden, dus dit getal bevat die klim nog - draai langer dan {:.0f} uur en het "
+                "rapport meldt de staart apart.".format(MEMORY_PLATEAU_MINIMAL_HOURS),
+                "",
+            ])
         if has_webview:
             lines.extend([
                 "Piek en groei gaan hier over het **totaal**: het scannerproces plus zijn "
@@ -2600,8 +2673,14 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
                 "scannerproces alleen, en wat de vensterschil aan geheugen gebruikt valt daarbuiten.",
                 "",
             ])
-        key_points.append("{:+.1f} MB per uur over {:.1f} uur{}".format(
-            growth, hours, " (scanner + WebView2)" if has_webview else ""))
+        if plateau_growth is not None:
+            key_points.append("{:+.1f} MB per uur over de laatste {:.0f} uur ({:+.1f} over de hele "
+                              "run, opwarming inbegrepen){}".format(
+                                  plateau_growth, MEMORY_PLATEAU_HOURS, growth,
+                                  " (scanner + WebView2)" if has_webview else ""))
+        else:
+            key_points.append("{:+.1f} MB per uur over {:.1f} uur{}".format(
+                growth, hours, " (scanner + WebView2)" if has_webview else ""))
         if hours < MEMORY_MINIMAL_HOURS:
             lines.append("Maar {:.2f} uur aan metingen: te kort om te beoordelen. De groei "
                          "hierboven is doorgerekende ruis, geen trend.".format(hours))
@@ -2651,6 +2730,10 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
             "endMb": round(last["workingSetMb"], 1),
             "peakMb": round(peak, 1),
             "growthMbPerHour": round(growth, 2),
+            # De helling over de staart van de run - dit is het getal waar het oordeel aan hangt,
+            # en het enige dat over een lek gaat. None als de run te kort was voor een staart.
+            "plateauGrowthMbPerHour": round(plateau_growth, 2) if plateau_growth is not None else None,
+            "plateauHours": MEMORY_PLATEAU_HOURS if plateau_growth is not None else None,
             # Waar de groei hierboven over gaat, en het scannerproces apart. Zonder dat onderscheid
             # is een nacht met WebView2-meting niet te vergelijken met een nacht zonder.
             "growthBasis": "scanner+webview" if measured_total else "scanner",

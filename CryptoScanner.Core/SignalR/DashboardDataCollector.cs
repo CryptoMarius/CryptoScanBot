@@ -142,6 +142,8 @@ public static class DashboardDataCollector
                 {
                     dto.Barometer1h = barometerData.PriceBarometer.Value;
                     dto.Rising1h = barometerData.PricePercentageRising ?? 0;
+                    dto.Movement1h = barometerData.PriceMovement ?? 0;
+                    dto.BitcoinVersusMarket1h = barometerData.PriceBitcoinVersusMarket ?? 0;
                 }
                 else if (period == CryptoIntervalPeriod.interval4h)
                 {

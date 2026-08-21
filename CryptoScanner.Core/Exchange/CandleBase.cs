@@ -13,6 +13,72 @@ public class CandleBase(ExchangeBase api)
 
     private ExchangeBase Api { get; set; } = api;
 
+    /// <summary>
+    /// How often a candle request is repeated after the exchange refused it for rate limiting, and
+    /// how long is waited in between. Bounded on purpose: an address that stays blocked must not
+    /// keep a fetch thread here forever.
+    /// </summary>
+    private const int MaximumRateLimitAttempts = 5;
+
+    /// <summary>
+    /// Waited after the first refusal; the wait grows with the attempt (5, 10, 15, 20, 25 seconds),
+    /// so a short throttle costs five seconds and a longer block still gets 75 seconds in total
+    /// before the interval is left to the next refresh cycle.
+    /// </summary>
+    private static readonly TimeSpan RateLimitAttemptDelay = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// Answers whether the caller should ask again after a refused request, and does the waiting.
+    ///
+    /// <para>
+    /// Every exchange needs this and each one used to carry its own copy - eight of the twenty-one
+    /// had it, the rest simply gave up on the first refusal. Giving up returns the same fetchFrom to
+    /// the caller, which stops the loop over that symbol and interval and leaves a hole in the
+    /// history until the next refresh cycle. The exchange-specific part is only the typed api call
+    /// itself, so the policy lives here and the call sites all read the same.
+    /// </para>
+    ///
+    /// <para>
+    /// The client-side limiters (LimitRate per exchange, plus the one inside the library) are what
+    /// keep us under the published limits; this is for the refusals that happen anyway. Those are
+    /// real: an exchange counts per IP address while a limiter counts per process, the published
+    /// limit is not always the whole story (Bybit refused three requests on 19/20-08-2026 while we
+    /// sat eleven times below its documented 600 per 5 seconds, every one of them during the
+    /// maximum-size history backfill of a freshly listed symbol), and a limiter cannot see the
+    /// traffic of other applications on the same address.
+    /// </para>
+    /// </summary>
+    /// <param name="error">The error the exchange returned; anything but a rate limit is left alone.</param>
+    /// <param name="prefix">Exchange, symbol and interval, for the log line.</param>
+    /// <param name="attempt">Which attempt this would be, counting from 1.</param>
+    protected static async Task<bool> RetryAfterRateLimitAsync(CryptoExchange.Net.Objects.Error? error,
+        string prefix, int attempt)
+    {
+        // Not every exchange lands in ErrorType.RateLimitRequest. Mexc answers 429 when the weight of
+        // an endpoint is exceeded and 418 once it decided to ban the address for ten minutes, and
+        // those arrive as a plain http code - which is why the Mexc, Kucoin, Okx and BloFin fetches
+        // each carried a second, near identical block for it.
+        // Kucoin puts its own string in ErrorCode ("429000: Too Many Requests", seen 13-07-2023).
+        bool rateLimited = error != null
+            && (error.ErrorType == CryptoExchange.Net.Objects.Errors.ErrorType.RateLimitRequest
+                || error.Code == 429
+                || error.Code == 418
+                || error.ErrorCode == "429000");
+        if (!rateLimited)
+            return false;
+        if (attempt > MaximumRateLimitAttempts)
+        {
+            GlobalData.AddTextToLogTab($"{prefix} still rate limited after {MaximumRateLimitAttempts} attempts, leaving it to the next round");
+            return false;
+        }
+
+        GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits (attempt {attempt})");
+        await Task.Delay(RateLimitAttemptDelay * attempt);
+
+        // Stopping (exchange switch, standby, shutdown) beats another attempt.
+        return !ExchangeBase.CancellationToken.IsCancellationRequested;
+    }
+
     internal static void SaveCandleInfo(object exchangeInfo, string name)
     {
         // Save for debug

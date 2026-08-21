@@ -264,26 +264,40 @@ public class ZoneCandleEngine
         // the others — failed intervals stay marked as changed and will retry on the next save.
         // The legacy WriteCandlesToFileAsync is kept around (private) as a backup path but
         // is no longer called from here; the database is now the authoritative store.
-        await Task.Run(() =>
+        // Take the same gate the periodic save and the cleanup take (CandleDatabase.WriteGate).
+        // Those two are the other writers of this very file, and without the gate this one raced
+        // them: their per-symbol transactions hold the write lock in bursts of a couple of seconds,
+        // and a BEGIN IMMEDIATE that lands in such a burst comes back with "database is locked".
+        // Waiting here costs a zone thread some time during a save or cleanup; failing costs the
+        // write, which is the worse of the two.
+        await Context.CandleDatabase.WriteGate.WaitAsync();
+        try
         {
-            using var candleDb = new Context.CandleDatabase(symbol.Exchange);
-            candleDb.Open();
-
-            foreach (var symbolInterval in changedIntervals)
+            await Task.Run(() =>
             {
-                try
+                using var candleDb = new Context.CandleDatabase(symbol.Exchange);
+                candleDb.Open();
+
+                foreach (var symbolInterval in changedIntervals)
                 {
-                    Context.CandleDatabase.SaveCandlesForSymbolInterval(candleDb.Connection, symbol, symbolInterval);
-                    loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
+                    try
+                    {
+                        Context.CandleDatabase.SaveCandlesForSymbolInterval(candleDb.Connection, symbol, symbolInterval);
+                        loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
+                    }
+                    catch (Exception error)
+                    {
+                        ScannerLog.Logger.Error(error, $"candles.db write failed for {symbol.Name} {symbolInterval.Interval.Name}");
+                        GlobalData.AddErrorToLogTab($"candles.db write failed for {symbol.Name} {symbolInterval.Interval.Name}: {error.Message}");
+                        // Leave loadedCandlesInMemory[...] = true so the next save retries.
+                    }
                 }
-                catch (Exception error)
-                {
-                    ScannerLog.Logger.Error(error, $"candles.db write failed for {symbol.Name} {symbolInterval.Interval.Name}");
-                    GlobalData.AddErrorToLogTab($"candles.db write failed for {symbol.Name} {symbolInterval.Interval.Name}: {error.Message}");
-                    // Leave loadedCandlesInMemory[...] = true so the next save retries.
-                }
-            }
-        });
+            });
+        }
+        finally
+        {
+            Context.CandleDatabase.WriteGate.Release();
+        }
     }
 
 

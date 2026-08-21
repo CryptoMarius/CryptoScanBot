@@ -43,6 +43,21 @@ public class CandleDatabase : IDisposable
     // SQLite serializes writers on the file lock anyway, so a single in-process gate is plenty.
     private static readonly SemaphoreSlim Semaphore = new(1);
 
+    /// <summary>
+    /// The same gate as the one above, for writers that live OUTSIDE this class but write to the
+    /// very same candles.db - today that is <see cref="Zones.ZoneCandleEngine.SaveCandleDataToDiskAsync"/>.
+    /// <para>
+    /// Without it that writer raced the periodic save and the cleanup: on Binance Spot, 19/20-08-2026,
+    /// two BEGIN IMMEDIATE statements came back with "SQLite Error 5: database is locked" (WLDUSDT 1m
+    /// at 22:04:12 and UUSDT 1d at 02:04:32), both of them roughly a minute into a cleanup run that
+    /// had started at 22:03:25 and 02:03:28. The candles were not lost - the interval keeps its
+    /// changed-flag and the next save picks it up - but the write did fail, and the design intent
+    /// stated at SaveCandlesAsync is that writers serialise explicitly instead of relying on
+    /// busy_timeout races.
+    /// </para>
+    /// </summary>
+    internal static SemaphoreSlim WriteGate => Semaphore;
+
     // Per-worker degree of parallelism. WAL-mode SQLite allows concurrent readers freely;
     // concurrent writers serialise on the file lock but queue politely via busy_timeout, so
     // parallel still pays off through overlapped connection-open + prepare + commit-fsync.

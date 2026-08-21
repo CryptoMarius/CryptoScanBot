@@ -913,7 +913,10 @@ public partial class DashBoardInformationViewModel : ObservableObject
             if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                 return false;
 
-            if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(CryptoScanner.Core.Const.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol))
+            // One candle holds five numbers, so the figures are spread over two barometer symbols and
+            // the figure picked in the dropdown decides which one the graph reads.
+            string barometerSymbolName = BarometerCandleFields.GetSymbolName(BarometerCandleFields.Parse(SelectedGraphValue)) + quoteData.Name;
+            if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(barometerSymbolName, out CryptoSymbol? symbol))
                 return false;
 
             CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
