@@ -207,6 +207,47 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
     }
 
+    /// <summary>
+    /// Thread-safe lookup of the lowest and highest key in a single read-locked pass.
+    /// <para>
+    /// Prefer this over Keys.First() and Keys.Last(): Keys is the inherited SortedDictionary
+    /// collection, so it enumerates without this lock and throws "Collection was modified after
+    /// the enumerator was instantiated" as soon as the kline stream adds a candle mid-scan.
+    /// </para>
+    /// <para>
+    /// The highest key is read from the tree and not from <see cref="LastCandle"/>: Remove() resets
+    /// that field when the newest entry disappears, so it can be empty while the list is not.
+    /// Walking the tree costs the same as the Keys.Last() this replaces.
+    /// </para>
+    /// <para>Returns false for an empty list; first and last are default then.</para>
+    /// </summary>
+    public bool TryGetFirstAndLastKey(out CandleTime first, out CandleTime last)
+    {
+        bool ownLock = !_lock.IsReadLockHeld && !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterReadLock();
+        try
+        {
+            first = default;
+            last = default;
+            bool any = false;
+            using var e = base.GetEnumerator();
+            while (e.MoveNext())
+            {
+                if (!any)
+                {
+                    first = e.Current.Key;
+                    any = true;
+                }
+                last = e.Current.Key;
+            }
+            return any;
+        }
+        finally
+        {
+            if (ownLock) _lock.ExitReadLock();
+        }
+    }
+
     // Thread-safe access to the last candle (highest key).
     // O(1) — reads the tracked LastCandle field instead of iterating the tree.
     public bool TryGetLastCandle(out CryptoCandle candle)

@@ -563,7 +563,11 @@ public class ZoneDlz
                 startTime = oldest2.OpenTime;
         }
 
-        if (startTime != null && candleList.Count > 0)
+        // TryGetFirstAndLastKey rather than Count > 0 plus Keys.Last(): Keys is the inherited
+        // SortedDictionary collection and enumerates outside CryptoCandleList's lock, which throws
+        // as soon as the kline stream adds a candle mid-scan. Same hole as the one that aborted
+        // BulkCalculateCandles on Okx Futures. The first key is not needed here.
+        if (startTime != null && candleList.TryGetFirstAndLastKey(out _, out CandleTime loopEnd))
         {
             // Loosened invalidation: a wick into the zone counts as a test (TouchCount++),
             // only a body-close through the far side or reaching MaxTouches closes the zone.
@@ -571,7 +575,6 @@ public class ZoneDlz
             int maxTouches = GlobalData.Settings.Signal.ZonesDlz.MaxTouches;
 
             CandleTime loop = startTime.Value;
-            CandleTime loopEnd = candleList.Keys.Last();
 
             while (loop <= loopEnd)
             {
