@@ -36,7 +36,8 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
-			<DataGridTextColumn x:DataType="vm:PositionViewModel" Header="AltradyId" Width="180" MinWidth="90" SortMemberPath="AltradyId" Binding="{Binding AltradyPositionId}" />
+			<!-- AltradyId (Hidden by default) -->
+			<DataGridTextColumn x:DataType="vm:PositionViewModel" Header="AltradyId" Width="180" MinWidth="90" SortMemberPath="AltradyId" Binding="{Binding AltradyPositionId}" IsVisible="False" />
 
 			<!-- CreateTime -->
 			<DataGridTextColumn x:DataType="vm:PositionViewModel" Header="Created" Width="105" MinWidth="105" SortMemberPath="CreateTime" Binding="{Binding CreateTime}" />
