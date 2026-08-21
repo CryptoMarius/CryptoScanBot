@@ -62,8 +62,54 @@ NO_CANDLE_BAD_PERCENTAGE = 40.0
 DROPS_ATTENTION_PER_HOUR = 2.0     # verbroken websocketverbindingen per uur
 DROPS_BAD_PER_HOUR = 10.0
 OUTAGE_ATTENTION_MINUTES = 5.0     # zolang duurde de langste onderbreking voordat het opvalt
-ERRORS_ATTENTION = 1               # regels in het foutenlog
-ERRORS_BAD = 50
+# Fouten worden INGEDEELD en niet geteld. Er is geen drempel meer, en dat is een besluit met een
+# meting eronder (Marius, 2026-08-21). Tellen kan de twee gevallen die er toe doen niet uit elkaar
+# houden, en beide kwamen in dezelfde week voor:
+#
+#   - De race in BulkCalculateCandles op Okx Futures, de enige echte fout van de nacht van
+#     20/21-08-2026, was TWEE regels. Die glipt onder elke drempel door.
+#   - Van de 131 foutregels van 18/19-08-2026 waren er 73 Avalonia-meldingen waar geen enkele
+#     beslissing uit volgt. Die tikken elke drempel aan.
+#
+# Losgelaten op alles wat er op schijf stond (418 meldingen, 21 combinaties van datamap en nacht)
+# meldt de indeling er acht, en die zijn alle acht iets: twee nachten Int32-overflow op HyperLiquid
+# Spot, twee mislukte schrijfacties naar candles.db op Binance Spot, de Okx-race, een ticker die
+# niets teruggaf op Bybit EU, en twee niet-thuis-te-brengen meldingen. De veertien nachten die
+# alleen herstelde netwerkhik hadden komen op goed uit - terwijl de oude drempel van 1 er veertien
+# van de negentien oranje zette.
+#
+# Drie vakjes, en de laatste is de belangrijkste:
+#
+#   1. ONZE CODE      - een uitzondering met onze eigen stackframes. Altijd melden, ongeacht aantal.
+#   2. HERSTELD       - een bekende vorm die zichzelf oplost. Wel tellen, nooit oordelen.
+#   3. NIET HERKEND   - al het overige. Dit vakje vervangt de oude bovengrens: een indeling die
+#                       alles opslokt is een filter en geen indeling, dus wat niet in een bekende
+#                       vorm past gaat mét zijn tekst naar boven zodat de lijst uitgebreid wordt.
+#
+# Dataverlies staat bewust NIET in deze lijst. Dat wordt al gemeten in plaats van afgeleid: niet-
+# herstelde abonnementen bij Streams en ontbrekende minuten bij Candles. Deze sectie hoeft niet te
+# raden wat een foutmelding voor de data betekende.
+
+# De stackframes van onze eigen assemblies. read_log_lines plakt vervolgregels achter de melding,
+# dus de hele stacktrace staat in dezelfde tekst en dit is genoeg om het te herkennen.
+ERRORS_OURS = re.compile(r"\bat CryptoScanner\.")
+
+# Vormen die we kennen én die zichzelf oplossen: het ophalen wordt opnieuw geprobeerd, het
+# abonnement wordt opnieuw opgebouwd. Bewust nauw gehouden - hoe ruimer deze lijst, hoe meer er
+# ongezien in "hersteld" verdwijnt. Een nieuwe vorm hoort in vakje 3 te vallen en pas hier bij te
+# komen als iemand ernaar gekeken heeft.
+ERRORS_RECOVERED = (
+    "error getting klines [weberror.timeout]",
+    "error getting klines [weberror.networkerror]",
+    "error getting klines [serverratelimiterror",
+    "error getting klines [servererror.ratelimitrequest]",
+    "kline subscription",
+    "the remote party closed the websocket connection",
+    "the server returned status code",
+)
+
+# Het oordeel bij een uitzondering uit onze code staat bij de oordeelconstanten zelf
+# (ERRORS_OURS_VERDICT, vlak onder GOOD/ATTENTION/BAD): die zijn hier nog niet gedefinieerd.
 MEMORY_ATTENTION_MB_PER_HOUR = 50.0
 MEMORY_BAD_MB_PER_HOUR = 200.0
 MEMORY_MINIMAL_HOURS = 1.0         # hieronder zegt de helling niets, dus wordt er niet geoordeeld
@@ -115,8 +161,17 @@ BAROMETER_MINIMAL_COINS = 5
 # niets: hij raakt de scan niet, er gaat geen candle verloren, en er is van onze kant niets aan te
 # doen behalve minder vensters tegelijk openen. In de nacht van 18/19-08-2026 waren het 73 van de 131
 # foutregels, waarmee elke exchange op "aandacht" stond om iets waar geen beslissing uit volgt.
+#
+# Telegram en TradingView staan er sinds 21-08-2026 bij. Allebei zijn het diensten van derden die
+# ons foutenlog halen langs onze eigen code, dus ze dragen onze stackframes en zouden zonder deze
+# lijst als "uit onze eigen code" gelezen worden. Vandaar dat classify_error dit vakje ALS EERSTE
+# toetst. Telegram begrenst ons zelf en de draad wacht en gaat door; de TradingView-socket wordt
+# geweigerd omdat er negentien scanners vanaf hetzelfde adres verbinden, en dat is een bewust
+# geaccepteerde situatie (zie de puntenlijst, punt 25).
 ERRORS_NOT_OURS = (
     "[Avalonia/Visual] RunLoopHandler",
+    "telegram thread",
+    "TradingView",
 )
 
 BAROMETER_DIP_MINUTES = 10
@@ -176,6 +231,12 @@ TRADE_SIDE = {0: "long", 1: "short"}
 # meerdere nachten moet vergelijkbaar blijven over deze vertaalslag heen. Alleen de weergave is
 # Nederlands, via VERDICT_TEXT hieronder.
 GOOD, ATTENTION, BAD, UNKNOWN = "good", "attention", "bad", "unknown"
+
+# Zie het blok bij ERRORS_OURS. Een uitzondering uit onze eigen code is per definitie een gebrek en
+# geen omstandigheid, dus die keurt de nacht af; een melding die de indeling niet thuis kan brengen
+# vraagt aandacht totdat iemand hem ingedeeld heeft. Twee constanten om dat zachter te zetten.
+ERRORS_OURS_VERDICT = BAD
+ERRORS_UNRECOGNISED_VERDICT = ATTENTION
 VERDICT_TEXT = {GOOD: "goed", ATTENTION: "aandacht", BAD: "slecht", UNKNOWN: "onbekend"}
 
 # Gekleurde bollen in plaats van tekst: markdown kent geen kleur, maar deze tekens worden overal
@@ -2188,6 +2249,24 @@ def check_streams(report, entries, window_hours):
     return facts
 
 
+def classify_error(message):
+    """
+    In welk vakje een foutmelding valt. Zie het blok bij ERRORS_OURS voor het waarom.
+
+    De volgorde is niet vrij. "niet van ons" gaat voorop, want een melding van Telegram of Avalonia
+    kan onze stackframes dragen zonder dat er iets van ons stuk is. Daarna onze code, want die weegt
+    het zwaarst. Pas dan de bekende herstelde vormen, en wat overblijft valt bewust door.
+    """
+    if any(part in message for part in ERRORS_NOT_OURS):
+        return "notOurs"
+    if ERRORS_OURS.search(message):
+        return "ours"
+    lowered = message.lower()
+    if any(part in lowered for part in ERRORS_RECOVERED):
+        return "recovered"
+    return "unrecognised"
+
+
 def check_errors(report, entries, error_entries, top_count):
     if not entries and not error_entries:
         report.add("errors", "Fouten", UNKNOWN, ["Geen logbestand gevonden."])
@@ -2199,13 +2278,23 @@ def check_errors(report, entries, error_entries, top_count):
                      [message for _, level, _, message in entries if level.upper() == "ERROR"]
     warnings = [message for _, level, _, message in entries if level.upper() == "WARN"]
 
-    # Meldingen die wel in het foutenlog staan maar niet van de scanner zijn. Ze worden apart geteld
-    # en genoemd, maar tellen niet mee voor het oordeel: anders staat een exchange op "aandacht" om
-    # iets waar geen enkele beslissing uit volgt, en dan went het oordeel weg.
-    ignored = [m for m in error_messages if any(part in m for part in ERRORS_NOT_OURS)]
-    error_messages = [m for m in error_messages if not any(part in m for part in ERRORS_NOT_OURS)]
+    buckets = defaultdict(list)
+    for message in error_messages:
+        buckets[classify_error(message)].append(message)
+    ours = buckets["ours"]
+    unrecognised = buckets["unrecognised"]
+    recovered = buckets["recovered"]
+    ignored = buckets["notOurs"]
 
-    grouped = Counter(normalise_message(message) for message in error_messages)
+    # Het oordeel hangt aan de SOORT en niet aan het aantal - er is geen drempel meer. Een herstelde
+    # time-out en een melding van Avalonia bepalen niets; ze staan er wel, want een aantal dat
+    # ineens vertienvoudigt is nog steeds het bekijken waard.
+    verdict = GOOD
+    if unrecognised:
+        verdict = worst(verdict, ERRORS_UNRECOGNISED_VERDICT)
+    if ours:
+        verdict = worst(verdict, ERRORS_OURS_VERDICT)
+
     trouble = Counter()
     for message in error_messages + warnings:
         lowered = message.lower()
@@ -2213,34 +2302,53 @@ def check_errors(report, entries, error_entries, top_count):
             if word in lowered:
                 trouble[word] += 1
 
-    verdict = GOOD
-    if len(error_messages) >= ERRORS_BAD:
-        verdict = BAD
-    elif len(error_messages) >= ERRORS_ATTENTION:
-        verdict = ATTENTION
-
-    lines = ["| Meting | Waarde |", "|---|---|",
-             "| Foutregels | {} |".format(len(error_messages)),
-             "| Waarschuwingsregels | {} |".format(len(warnings)),
-             "| Verschillende fouten | {} |".format(len(grouped)),
+    lines = ["| Soort | Regels | Weegt mee |", "|---|---|---|",
+             "| **Uit onze eigen code** | **{}** | ja, keurt de nacht af |".format(len(ours)),
+             "| **Niet herkend** | **{}** | ja, vraagt aandacht |".format(len(unrecognised)),
+             "| Bekend en hersteld | {} | nee |".format(len(recovered)),
+             "| Niet van de scanner | {} | nee |".format(len(ignored)),
+             "| Waarschuwingsregels | {} | nee |".format(len(warnings)),
              ""]
+    lines.append("Fouten worden ingedeeld en niet geteld: er is geen drempel. Een uitzondering uit "
+                 "onze eigen code wordt altijd gemeld, ook als het er maar één is - de race in "
+                 "`BulkCalculateCandles` van 20-08-2026 was twee regels en zou onder elke drempel "
+                 "zijn doorgeglipt. Een time-out die zichzelf herstelt bepaalt omgekeerd nooit het "
+                 "oordeel, hoe vaak hij ook voorkomt.")
+    lines.append("")
+    lines.append("Wat een fout voor de DATA betekende staat hier bewust niet: niet-herstelde "
+                 "abonnementen staan bij Streams en ontbrekende minuten bij Candles, allebei "
+                 "gemeten in plaats van uit een foutmelding afgeleid.")
+    lines.append("")
 
-    if ignored:
-        buiten = Counter(normalise_message(message) for message in ignored)
-        lines.append("Daarnaast {} regels die wel in het foutenlog staan maar niet van de scanner "
-                     "zijn; die tellen niet mee in het getal hierboven en niet voor het oordeel:"
-                     .format(len(ignored)))
+    def show(title, messages, explanation):
+        if not messages:
+            return
+        lines.append("#### {} ({})".format(title, len(messages)))
         lines.append("")
-        for message, count in buiten.most_common(5):
-            lines.append("- {}x `{}`".format(count, message.replace("|", "\|")))
+        lines.append(explanation)
         lines.append("")
-
-    if grouped:
-        lines.append("| Aantal | Fout (getallen vervangen) |")
+        lines.append("| Aantal | Melding (getallen vervangen) |")
         lines.append("|---|---|")
-        for message, count in grouped.most_common(top_count):
+        for message, count in Counter(
+                normalise_message(text) for text in messages).most_common(top_count):
             lines.append("| {} | `{}` |".format(count, message.replace("|", "\\|")))
         lines.append("")
+
+    show("Uit onze eigen code", ours,
+         "Deze dragen onze eigen stackframes, dus hier is code van ons over iets gestruikeld. "
+         "Dit is de reden dat deze sectie bestaat.")
+    show("Niet herkend", unrecognised,
+         "De indeling kan deze niet thuisbrengen. Dat is met opzet zichtbaar: een indeling die "
+         "alles opslokt is een filter en geen indeling. Hoort het bij een bekende, herstelde vorm, "
+         "zet hem dan in `ERRORS_RECOVERED`; is het iets nieuws, dan is dit precies waarvoor dit "
+         "vakje bedoeld is.")
+    show("Bekend en hersteld", recovered,
+         "Time-outs, snelheidsbegrenzingen en opnieuw opgebouwde abonnementen. Het ophalen wordt "
+         "herhaald en de dekking bij Candles laat zien of dat gelukt is.")
+    show("Niet van de scanner", ignored,
+         "Meldingen van derden die wel in ons foutenlog terechtkomen. Ze staan er zodat ze niet "
+         "verdwijnen, maar er volgt geen beslissing van ons uit.")
+
     if trouble:
         lines.append("Woorden die naar de kant van de exchange wijzen in plaats van naar ons: "
                      "{}".format(", ".join("{} = {}".format(word, count)
@@ -2254,9 +2362,20 @@ def check_errors(report, entries, error_entries, top_count):
             lines.append("- {}x `{}`".format(count, message.replace("|", "\\|")))
         lines.append("")
 
-    facts = {"errorLines": len(error_messages), "warningLines": len(warnings),
-             "errorLinesNotOurs": len(ignored),
-             "distinctErrors": len(grouped), "trouble": dict(trouble)}
+    facts = {
+        # errorLines telt vanaf nu de regels die het oordeel kunnen bepalen (onze code plus niet
+        # herkend). Het oude getal was alles behalve de meldingen van derden; wie twee nachten
+        # vergelijkt over de omslag van 21-08-2026 heen moet dat weten.
+        "errorLines": len(ours) + len(unrecognised),
+        "errorsOurs": len(ours),
+        "errorsUnrecognised": len(unrecognised),
+        "errorsRecovered": len(recovered),
+        "errorLinesNotOurs": len(ignored),
+        "warningLines": len(warnings),
+        "distinctErrors": len(Counter(normalise_message(text) for text in
+                                      ours + unrecognised + recovered)),
+        "trouble": dict(trouble),
+    }
     report.add("errors", "Fouten", verdict, lines, facts)
     return facts
 
