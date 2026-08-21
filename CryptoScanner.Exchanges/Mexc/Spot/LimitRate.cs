@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 
 namespace CryptoScanner.Core.Exchange.Mexc.Spot;
 
@@ -64,7 +64,13 @@ public static class LimitRate
 
                 // 400 of the 500 allowed weight leaves room for the requests that are already on
                 // their way, and for the difference between our clock and the one at the exchange
-                if (CurrentWeight > 400)
+                // Op de helft van wat de exchange toestaat blijven, zodat een andere applicatie op
+            // deze machine (de limiet geldt per IP-adres, niet per proces) er nog naast past.
+            // Mexc staat 20 aanvragen per seconde toe (de guard in de library: "Limit of 20 per 00:00:01").
+            // 100 per 10 seconden is 10 per seconde, de helft daarvan. Was 400 per 10 seconden = 40
+            // per seconde, het dubbele van wat de exchange toestaat - dit getal deed dus niets en de
+            // begrenzer van de library was de enige die remde.
+            if (CurrentWeight > 100)
                 {
                     GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (rate limits)");
                     // Release the lock while waiting. Sleeping inside Monitor.Enter(List) queues

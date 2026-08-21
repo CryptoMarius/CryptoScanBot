@@ -37,27 +37,14 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         int limit = Api.ExchangeOptions.CandleLimit;
         CandleTime maxTime = fetchFrom + (limit - 1) * interval.Duration;
 
+        int attempt = 0;
     Again:
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime());
         if (!result.Success)
         {
-            // We doen het gewoon over (dat is tenminste het advies)
-            // 13-07-2023 14:08:00 AOA-BTC 30m error getting klines 429000: Too Many Requests
-            if (result.Error?.ErrorCode == "429000")
-            {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
-                Thread.Sleep(15000);
-                //continue;
+            if (await RetryAfterRateLimitAsync(result.Error, prefix, ++attempt))
                 goto Again;
-            }
-            if (result.Error?.ErrorType == ErrorType.RateLimitRequest)
-            {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
-                Thread.Sleep(15000);
-                //continue;
-                goto Again;
-            }
             GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }

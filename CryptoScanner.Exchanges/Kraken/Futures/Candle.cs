@@ -41,10 +41,14 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
         // The "count" parameter returns the FIRST limit candles from startTime (ascending), so it
         // combines with the paging on fetchFrom instead of cutting the newest candles off.
+        int attempt = 0;
+    Again:
         var result = await api.ExchangeData.GetKlinesAsync(TickType.Trade, symbol.ExchangeName,
             (FuturesKlineInterval)exchangeInterval, fetchFrom.ToDateTime(), limit: limit);
         if (!result.Success)
         {
+            if (await RetryAfterRateLimitAsync(result.Error, prefix, ++attempt))
+                goto Again;
             GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }

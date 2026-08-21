@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoExchange.Net.Objects.Errors;
+
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using HyperLiquid.Net.Clients;
@@ -32,15 +34,30 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
             ?? throw new Exception($"Not supported interval");
 
-        //LimitRate.WaitForFairWeight(1);
+        LimitRate.WaitForFairWeight(LimitRate.InfoRequestWeight);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         CandleTime maxTime = fetchFrom + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
 
+        // Should the exchange refuse a request anyway ("Server rate limit exceeded"), then waiting
+        // out the window and asking again is the only sensible answer. Giving up returns the same
+        // fetchFrom to the caller, which stops the loop over this symbol and interval and leaves a
+        // hole in the history until the next refresh cycle.
+        //
+        // This one needs the retry more than the others: HyperLiquid grants 1200 request weight per
+        // minute and an info request such as this one weighs 20, so the library's rate limiter holds
+        // us to exactly 60 requests per minute - measured over the night of 19/20-08-2026, 58 minutes
+        // on Futures and 150 on Spot sat at precisely that ceiling. Running permanently AT the
+        // documented budget leaves no room for the calls the limiter does not see coming (the symbol
+        // and ticker refresh), which is where the four rejections of that night came from.
+        int attempt = 0;
+    Again:
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime()); //, limit: ExchangeOptions.CandleLimit
         if (!result.Success)
         {
+            if (await RetryAfterRateLimitAsync(result.Error, prefix, ++attempt))
+                goto Again;
             GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
 #if DEBUG
             SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no succes.json");

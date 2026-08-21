@@ -40,7 +40,14 @@ public static class LimitRate
     //
     // One per second is no bottleneck: those 1299 requests over 3.6 hours average 0.1 per second,
     // so the brake only flattens the peaks.
-    private const long MaximumWeightPerWindow = 20;
+    //
+    // Halved again on 20-08-2026, from 20 to 10 (half a request per second). The rule is to stay at
+    // about half of what an exchange allows, because the limit counts per IP ADDRESS and not per
+    // process - another trading application on this machine has to fit next to us. Kraken's own
+    // guard in the library sits at exactly 1 per second, so 20 was the full allowance and not a
+    // margin. Five times the measured average of 0.1 per second is still plenty; what gets slower
+    // is a cold start, where the history of dozens of symbols is fetched at once.
+    private const long MaximumWeightPerWindow = 10;
 
     public static long CurrentWeight { get; set; }
     static private List<KrakenWeight> List { get; } = new List<KrakenWeight>();

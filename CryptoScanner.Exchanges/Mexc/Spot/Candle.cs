@@ -37,6 +37,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
         CandleTime maxTime = fetchFrom + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
 
+        int attempt = 0;
     Again:
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
@@ -45,20 +46,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             // Mexc answers with 429 when the weight of an endpoint is exceeded, and with 418 once
             // it decided to ban the address. A ban is lifted after ten minutes, so waiting is the
             // only sensible response - see LimitRate for the weights we book.
-            if (result.Error?.Code == 429)
-            {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
-                Thread.Sleep(15000);
-                //continue;
+            if (await RetryAfterRateLimitAsync(result.Error, prefix, ++attempt))
                 goto Again;
-            }
-            if (result.Error?.ErrorType == ErrorType.RateLimitRequest)
-            {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
-                Thread.Sleep(15000);
-                //continue;
-                goto Again;
-            }
             GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }

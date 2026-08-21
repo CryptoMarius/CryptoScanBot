@@ -29,7 +29,9 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 // tickers for volumes... (need volume because of filtered kline and price tickers)
                 GlobalData.AddTextToLogTab($"Reading symbol and ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                //LimitRate.WaitForFairWeight(1);
+                // Counts against the same budget as the candle requests - it is an ordinary info
+                // request, so it weighs 20 as well.
+                LimitRate.WaitForFairWeight(LimitRate.InfoRequestWeight);
                 var tickerInfo = await api.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No ticker and symbol data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddErrorToLogTab($"error getting symbol ticker info {tickerInfo.Error}");

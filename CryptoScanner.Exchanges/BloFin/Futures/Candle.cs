@@ -39,25 +39,14 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
         CandleTime maxTime = fetchFrom + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
 
+        int attempt = 0;
     Again:
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
-            if (result.Error?.Code == 429) // not sure if this error exists on Mexc? Copied?
-            {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
-                Thread.Sleep(15000);
-                //continue;
+            if (await RetryAfterRateLimitAsync(result.Error, prefix, ++attempt))
                 goto Again;
-            }
-            if (result.Error?.ErrorType == ErrorType.RateLimitRequest)
-            {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
-                Thread.Sleep(15000);
-                //continue;
-                goto Again;
-            }
             GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }

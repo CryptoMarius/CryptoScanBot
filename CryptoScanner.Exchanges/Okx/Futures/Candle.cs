@@ -43,18 +43,14 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         // ExchangeName holds the instrument id ("BCH-USDT-SWAP"). Building it from base and quote would
         // request the spot instrument instead of the perpetual swap.
         string symbolName = symbol.ExchangeName;
+        int attempt = 0;
     Again:
         var result = await client.UnifiedApi.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
-        if (!result.Success && result.Error?.ErrorType == ErrorType.RateLimitRequest)
-        {
-            GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
-            Thread.Sleep(15000);
-            //continue;
-            goto Again;
-        }
         if (!result.Success)
         {
+            if (await RetryAfterRateLimitAsync(result.Error, prefix, ++attempt))
+                goto Again;
             GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
 #if DEBUG
             SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no succes.json");

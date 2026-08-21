@@ -17,6 +17,16 @@ internal class BinanceWeight
 /// </summary>
 public static class LimitRate
 {
+    /// <summary>Half of what the exchange allows per minute, in request weight.</summary>
+    private const long MaximumWeightPerWindow = 3000;
+    private const long WindowSeconds = 60;
+
+    /// <summary>
+    /// Weight of one klines request. Binance scales it with the number of candles asked for and
+    /// this scanner always asks for the maximum, which is the most expensive bracket.
+    /// </summary>
+    public const long KlineWeight = 10;
+
     public static long CurrentWeight { get; set; }
     static private List<BinanceWeight> List { get; } = [];
 
@@ -26,7 +36,15 @@ public static class LimitRate
         Monitor.Enter(List);
         try
         {
-            // Officiele limiet = 1,200 request weight per minute
+            // Binance Spot allows 6000 request WEIGHT per minute per IP address (the guard inside the
+            // library: "Limit of 6000 per 00:01:00"). We take half of that, because the limit counts
+            // per ADDRESS and not per process: nineteen scanners run on this machine and another
+            // trading application has to fit next to them.
+            //
+            // Weight, not requests. This used to be 600 per SECOND while counting every call as one
+            // unit, and that is the wrong measure here: Binance charges a klines call by the number
+            // of candles asked for, so the thousand-candle requests this scanner lives on are worth
+            // far more than one. The callers pass the real weight (see KlineWeight).
 
             // De registraties ouder dan 1 minuut verwijderen
             while (true)
@@ -36,7 +54,7 @@ public static class LimitRate
                 long unix = dateTimeOffset.ToUnixTimeSeconds();
 
                 // Een tijdstip 60 seconden geleden
-                long removeBeforeDate = unix - 1;
+                long removeBeforeDate = unix - WindowSeconds;
 
                 while (List.Count > 0)
                 {
@@ -51,7 +69,7 @@ public static class LimitRate
 
                 // De officiele limiet is 1200. maar daar zit ik regelmatig boven, daarom drastisch terug gezet naar 600
                 // (er draaien ook diverse taken en socket streams die de nodige weight gebruiken, dus lager is veiliger)
-                if (CurrentWeight > 600)
+                if (CurrentWeight > MaximumWeightPerWindow)
                 {
                     GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (rate limits)");
                     // Release the lock while waiting. Sleeping inside Monitor.Enter(List) queues

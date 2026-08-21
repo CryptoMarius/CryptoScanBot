@@ -30,7 +30,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
             ?? throw new Exception($"Not supported interval");
 
-        LimitRate.WaitForFairWeight(1);
+        LimitRate.WaitForFairWeight(LimitRate.KlineWeight);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         // No endTime: ask for "the next CandleLimit candles at or after startTime". With an
@@ -41,10 +41,14 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         // exist, so a gap costs one call instead of hundreds. The limit already caps the
         // response at CandleLimit candles, endTime added nothing for contiguous data.
         CandleTime maxTime = fetchFrom + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
+        int attempt = 0;
+    Again:
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
+            if (await RetryAfterRateLimitAsync(result.Error, prefix, ++attempt))
+                goto Again;
             GlobalData.AddErrorToLogTab($"{prefix} fetch from {fetchFrom.ToLocalTime()} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }

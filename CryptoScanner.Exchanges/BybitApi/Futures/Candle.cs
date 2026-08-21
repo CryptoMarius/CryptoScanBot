@@ -1,6 +1,8 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 
+using CryptoExchange.Net.Objects.Errors;
+
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
@@ -34,10 +36,26 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         CandleTime maxTime = fetchFrom + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
+
+        // Should the exchange refuse a request anyway ("Too many visits"), then waiting out the
+        // window and asking again is the only sensible answer. Giving up returns the same fetchFrom
+        // to the caller, which stops the loop over this symbol and interval and leaves a hole in the
+        // history until the next refresh cycle. Same shape as BitMart and BloFin already use.
+        //
+        // Our own LimitRate keeps this process to 200 requests per 20 seconds, twelve times below
+        // the 600 per 5 seconds Bybit documents per IP, and the busiest five seconds of the night of
+        // 19/20-08-2026 held 54 requests. The three rejections that night all landed during the
+        // history backfill of a freshly listed symbol (METUSDT, MAGMAUSDT), where every response is
+        // the maximum of 1000 candles - so the trigger is the weight of the responses, not the
+        // number of requests, and lowering the request rate would not have prevented them.
+        int attempt = 0;
+    Again:
         var result = await api.ExchangeData.GetKlinesAsync(Category.Linear, symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
+            if (await RetryAfterRateLimitAsync(result.Error, prefix, ++attempt))
+                goto Again;
             GlobalData.AddErrorToLogTab($"{prefix} fetch from {fetchFrom.ToLocalTime()} error getting klines {result.Error}");
             return (false, 0, fetchFrom);
         }

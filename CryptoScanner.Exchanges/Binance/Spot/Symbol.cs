@@ -30,7 +30,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 LimitRate.WaitForFairWeight(1);
                 var tickerInfo = await api.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
-                    GlobalData.AddErrorToLogTab("error getting symbol ticker {tickersInfos.Error}");
+                    GlobalData.AddErrorToLogTab($"error getting symbol ticker {tickerInfo.Error}");
                 if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
                 SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");

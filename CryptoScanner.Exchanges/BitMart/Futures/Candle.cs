@@ -51,14 +51,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime()); //, limit: ExchangeOptions.CandleLimit
         if (!result.Success)
         {
-            if (result.Error?.ErrorType == ErrorType.RateLimitRequest && ++attempt <= 5)
-            {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits (attempt {attempt})");
-                await Task.Delay(5000);
-                if (ExchangeBase.CancellationToken.IsCancellationRequested)
-                    return (false, 0, fetchFrom);
+            if (await RetryAfterRateLimitAsync(result.Error, prefix, ++attempt))
                 goto Again;
-            }
             GlobalData.AddErrorToLogTab($"{prefix} error getting klines {result.Error}");
 #if DEBUG
             SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no succes.json");

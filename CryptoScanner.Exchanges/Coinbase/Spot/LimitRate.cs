@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 
 namespace CryptoScanner.Core.Exchange.Coinbase.Spot;
 
@@ -68,7 +68,13 @@ public static class LimitRate
 
                 // 80 of the 100 requests that fit in the window, which leaves room for the requests
                 // that are already on their way and for the difference between our clock and theirs
-                if (CurrentWeight > 80)
+                // Op de helft van wat de exchange toestaat blijven, zodat een andere applicatie op
+            // deze machine (de limiet geldt per IP-adres, niet per proces) er nog naast past.
+            // Coinbase staat 10 aanvragen per seconde toe op de publieke rest-api (de guard in de library:
+            // "Limit of 10 per 00:00:01"). 50 per 10 seconden is 5 per seconde, de helft daarvan.
+            // Was 80 per 10 seconden = 8 per seconde, oftewel 80% van wat er mag - te dicht op de
+            // grens om er nog een tweede applicatie vanaf dit IP-adres naast te hebben.
+            if (CurrentWeight > 50)
                 {
                     GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (rate limits)");
                     // Release the lock while waiting. Sleeping inside Monitor.Enter(List) queues
