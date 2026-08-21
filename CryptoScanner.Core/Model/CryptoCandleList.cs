@@ -248,6 +248,48 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
     }
 
+    /// <summary>
+    /// Thread-safe snapshot of at most <paramref name="maximumCount"/> candles ending at
+    /// <paramref name="lastKey"/>, oldest first.
+    /// <para>
+    /// Walks from the front and stops at the first key past <paramref name="lastKey"/>, so a gap in
+    /// the series does not shorten the result: it reaches as far back as it needs to. That is why
+    /// this is not GetRange over a fixed span of maximumCount steps - on a series with holes the two
+    /// do not return the same candles.
+    /// </para>
+    /// <para>
+    /// Use this instead of a foreach over the list itself. Enumerating the instance goes through the
+    /// inherited SortedDictionary enumerator, which does not take this lock, and a lock() on the
+    /// list object does not help: the writers hold the ReaderWriterLockSlim above and never the
+    /// monitor on the object.
+    /// </para>
+    /// </summary>
+    public List<CryptoCandle> GetLastValuesUpTo(CandleTime lastKey, int maximumCount)
+    {
+        List<CryptoCandle> result = [];
+        bool ownLock = !_lock.IsReadLockHeld && !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterReadLock();
+        try
+        {
+            using var e = base.GetEnumerator();
+            while (e.MoveNext())
+            {
+                if (e.Current.Key > lastKey)
+                    break;
+                result.Add(e.Current.Value);
+            }
+        }
+        finally
+        {
+            if (ownLock) _lock.ExitReadLock();
+        }
+
+        // Trimmed outside the lock: it only touches the list built here.
+        if (result.Count > maximumCount)
+            result.RemoveRange(0, result.Count - maximumCount);
+        return result;
+    }
+
     // Thread-safe access to the last candle (highest key).
     // O(1) — reads the tracked LastCandle field instead of iterating the tree.
     public bool TryGetLastCandle(out CryptoCandle candle)

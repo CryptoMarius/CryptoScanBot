@@ -295,19 +295,12 @@ public sealed class BandRangeTracker
     /// <paramref name="lastOpenTime"/>, oldest first.</summary>
     private static List<CryptoCandle> CollectBuildCandles(CryptoSymbolInterval symbolInterval, CandleTime lastOpenTime)
     {
-        List<CryptoCandle> result = [];
-        lock (symbolInterval.CandleList)
-        {
-            foreach (var pair in symbolInterval.CandleList)
-            {
-                if (pair.Key > lastOpenTime)
-                    break;
-                result.Add(pair.Value);
-            }
-        }
-
-        if (result.Count > BuildWindow)
-            result.RemoveRange(0, result.Count - BuildWindow);
-        return result;
+        // This used to be a foreach over the list under lock (symbolInterval.CandleList). That lock
+        // protected nothing: CryptoCandleList guards itself with a ReaderWriterLockSlim, so the
+        // kline stream adds a candle without ever touching the monitor on the object, and the
+        // enumerator then throws "Collection was modified after the enumerator was instantiated".
+        // Same defect as the one that aborted BulkCalculateCandles on Okx Futures (20-08-2026).
+        // GetLastValuesUpTo does the identical walk under the read lock.
+        return symbolInterval.CandleList.GetLastValuesUpTo(lastOpenTime, BuildWindow);
     }
 }

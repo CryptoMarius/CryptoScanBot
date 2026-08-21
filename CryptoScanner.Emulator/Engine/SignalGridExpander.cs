@@ -125,6 +125,14 @@ public static class SignalGridExpander
             return JsonSerializer.Deserialize(element.GetRawText(), underlying,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
+        // A list-valued setting, such as the interval list of a zone strategy
+        // (ZonesDlz/ZonesFvg/ZonesSmc.IntervalList). Without this an array in the queue file
+        // ends in the NotSupportedException below, so those settings could only be changed in
+        // the settings file - which is exactly what left the zone strategies without intervals.
+        if (element.ValueKind == JsonValueKind.Array)
+            return JsonSerializer.Deserialize(element.GetRawText(), underlying,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
         return underlying switch
         {
             _ when underlying == typeof(int) => element.GetInt32(),
