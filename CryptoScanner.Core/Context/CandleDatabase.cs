@@ -1328,7 +1328,7 @@ public class CandleDatabase : IDisposable
             if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
                 continue;
 
-            CandleTime start = CandleTools.GetCandleFetchStartForZones(symbol, interval, GlobalData.Clock.UtcNow);
+            CandleTime start = CandleTools.GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
             if (!any || start.Minutes < earliest.Minutes)
             {
                 earliest = start;
@@ -1432,7 +1432,7 @@ public class CandleDatabase : IDisposable
         //    buffer that candle still falls just outside on every midnight rollover.
         foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
         {
-            CandleTime start = CandleTools.GetCandleFetchStartForZones(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
+            CandleTime start = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
             uint duration = symbolInterval.Interval.Duration;
             if (duration > 1)
             {

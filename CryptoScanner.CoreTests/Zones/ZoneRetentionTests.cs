@@ -208,12 +208,14 @@ public class ZoneRetentionTests : TestBase
     /// The retention window has to come from the PIVOTS, not from the candle window, because the two
     /// are trimmed by different rules and only happen to agree at the default setting.
     /// <para>
-    /// ZigZagList is trimmed on CandleTools.GetCandleFetchStart - a flat 500 candles - while the zone
-    /// calculation asks for ZonesDlz.CandleCount, which the setting itself suggests raising to 3000.
-    /// Take the candle window as the boundary and every zone in the 2500-candle gap counts as "the
-    /// calculation had its say and did not produce it", so it is deleted, while in truth no pivot for
-    /// it exists any more. That is the same pruning ZoneRetention was written to stop, returning
-    /// through the back door as soon as someone changes a number in the settings.
+    /// The two were separate numbers until 2026-08-22: ZigZagList was trimmed on a flat 500 candles
+    /// while the zone calculation asked for ZonesDlz.CandleCount, a setting that suggested 3000 next
+    /// to it. Every zone in that 2500-candle gap then counted as "the calculation had its say and did
+    /// not produce it" and was deleted, while in truth no pivot for it existed - the same pruning
+    /// ZoneRetention was written to stop, through the back door. That setting is gone and both now
+    /// follow CandleTools.CandleCountFetch, but the boundary still comes from the pivots: they are
+    /// what the calculation holds, and a restart, a gap or a trim can leave them shorter than the
+    /// window without any setting being involved.
     /// </para>
     /// </summary>
     [TestMethod]
@@ -240,5 +242,34 @@ public class ZoneRetentionTests : TestBase
         });
         Assert.AreEqual(T(5000), indicator.OldestPivotTime,
             "a dummy point is provisional and cannot extend the reach of the list");
+    }
+
+    /// <summary>
+    /// The case point 62 asked for: a zone that lies BEFORE the boundary has to survive a pass that
+    /// does not produce it, while one inside the boundary does not.
+    /// <para>
+    /// The chunk-invariance tests cannot see this. They run on one candle series in which nothing
+    /// falls outside the window, so both halves of the rule give the same answer there. This is the
+    /// test that actually stands on the line.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void AZoneBeforeTheBoundarySurvivesAPassThatDoesNotProduceIt()
+    {
+        CandleTime boundary = T(5000);
+
+        CryptoZone beforeAndOpen = Zone(T(4000), null, 1);
+        CryptoZone beforeAndClosedInside = Zone(T(4000), T(6000), 2);
+        CryptoZone beforeAndClosedOutside = Zone(T(4000), T(4500), 3);
+        CryptoZone insideAndOpen = Zone(T(7000), null, 4);
+
+        Assert.IsTrue(ZoneTools.OutOfSightButStillRelevant(beforeAndOpen, boundary),
+            "an open zone is tradeable however old it is");
+        Assert.IsTrue(ZoneTools.OutOfSightButStillRelevant(beforeAndClosedInside, boundary),
+            "its right edge is still in view, so it still explains what price did");
+        Assert.IsFalse(ZoneTools.OutOfSightButStillRelevant(beforeAndClosedOutside, boundary),
+            "both edges are behind the boundary - this one really is gone");
+        Assert.IsFalse(ZoneTools.OutOfSightButStillRelevant(insideAndOpen, boundary),
+            "inside the boundary the calculation had its say, so not producing it means rejected");
     }
 }

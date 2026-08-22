@@ -23,8 +23,16 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
 
     // --- Settings dominant zones ---
 
-    [SettingCaption("Candles back", Group = GroupDominantZones, Unit = "(1h candles)")]
-    public int CandleCount { get; set; } = 500; // 3000; // 3000=150 day's back, 500=20.8 day's
+    // "Candles back" used to live here, defaulting to 500 with 3000 suggested next to it. Removed on
+    // 2026-08-22: it was a depth the storage could not deliver. Candles and pivots are trimmed
+    // together now (ZigZagIndicator.TrimBefore runs on the candle window, because a pivot holds a
+    // candle alive), so asking for 3000 gave 500 candles of pivots and 2500 candles of bookkeeping
+    // that claimed otherwise - and zones in that gap were deleted for the wrong reason. There is one
+    // depth for the whole engine, CandleTools.CandleCountFetch, and raising it is a decision about
+    // memory across every symbol and interval at once rather than a knob for the zones.
+    //
+    // Existing settings files still carry the old key; unknown properties are skipped on load and it
+    // disappears the next time the file is written.
 
     // Signal percentage — used by SignalDominantLevelNearLong/Short for the "approaching zone" alarm.
     [SettingCaption("Approach warning percentage", Group = GroupDominantZones)]

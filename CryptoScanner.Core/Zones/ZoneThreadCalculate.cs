@@ -73,7 +73,7 @@ public class ZoneThreadCalculate
                         symbol.Data.ZonesLoadedRunId = GlobalData.CurrentEmulatorRunId;
                     }
 
-                    int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
+                    int candleFetchCount = CandleTools.CandleCountFetch;
                     CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
                     CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
                     //await ZoneDlz.LoadHistoricCandles(symbol, interval, loadedCandlesInMemory);

@@ -1633,7 +1633,7 @@ public partial class ChartWindowViewModel : ObservableObject
         }
         else
         {
-            int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
+            int candleFetchCount = CandleTools.CandleCountFetch;
             Session.MaxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
             Session.MinDate = Session.MaxDate - candleFetchCount * Interval.Duration;
         }

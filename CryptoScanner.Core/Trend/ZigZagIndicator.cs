@@ -78,13 +78,12 @@ public class ZigZagIndicator
     /// <summary>
     /// The candle time of the oldest real pivot still in the list, or null when there is none.
     /// <para>
-    /// This is how far back a conclusion drawn from these pivots can reach, and it is NOT the same
-    /// as how far back the candles go. The list is trimmed by <see cref="TrimBefore"/> on the candle
-    /// window of CandleTools.GetCandleFetchStart, a flat 500, while the zone calculation asks for
-    /// ZonesDlz.CandleCount candles - equal at the default, but at 3000 the caller would think it
-    /// judged 3000 candles' worth of pivots while the oldest one it actually holds is 500 back.
-    /// Anything that reasons about "could this have been produced" has to ask the pivots, not the
-    /// candles.
+    /// This is how far back a conclusion drawn from these pivots can reach, and that is not the same
+    /// question as how far back the candles go. Both follow CandleTools.CandleCountFetch since
+    /// 2026-08-22 - the zones no longer have a depth of their own, which is exactly what used to let
+    /// the two disagree - but the list can still be shorter than the window after a restart, a gap
+    /// or a trim. Anything reasoning about "could this have been produced" has to ask the pivots,
+    /// because they are what is actually there rather than what was asked for.
     /// </para>
     /// </summary>
     public CandleTime? OldestPivotTime

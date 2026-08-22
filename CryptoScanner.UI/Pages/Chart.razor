@@ -1110,7 +1110,7 @@
     {
         var interval = symbolInterval.Interval;
         CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
-        CandleTime minDate = maxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
+        CandleTime minDate = maxDate - CandleTools.CandleCountFetch * interval.Duration;
 
         string key = $"{_currentSymbol!.Name}|{interval.Name}|{minDate.Minutes}|{maxDate.Minutes}";
         if (key == _zigZagBuiltFor && _zigZagIndicators.Count > 0)

@@ -340,7 +340,7 @@ public class ZoneFvg
         // (2) GetSnapshot() would copy the WHOLE list, and for the lower intervals that is far more
         // than this scan uses: the loop below does nothing for a candle at or before minDate except
         // carry it as prev/prev2. The range is what the zones are actually built from, so the copy
-        // stays at roughly ZonesDlz.CandleCount entries whatever the list grows to.
+        // stays at roughly CandleTools.CandleCountFetch entries whatever the list grows to.
         CandleTime scanFrom = minDate - FvgScanLeadInCandles * interval.Duration;
         foreach (var candle in symbolInterval.CandleList.GetRange(scanFrom, maxDate, interval.Duration))
         {
@@ -379,8 +379,9 @@ public class ZoneFvg
     private static async Task<(CandleTime minDate, CandleTime maxDate)> LoadHistoricCandles(CryptoSymbol symbol, CryptoInterval interval,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
-        // Determine the period (using the candlecount)
-        int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
+        // Determine the period (using the candlecount). Same depth as DLZ and as the candles
+        // themselves - see CandleTools.CandleCountFetch.
+        int candleFetchCount = CandleTools.CandleCountFetch;
         CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
         CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
         await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, minDate, candleFetchCount);

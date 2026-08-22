@@ -92,9 +92,12 @@ public static class IndicatorWarmup
                 depth = barometerDepth;
         }
 
+        // The zones reach back CandleTools.CandleCountFetch candles, the same depth as the rest of
+        // the engine since 2026-08-22 - they no longer carry a setting of their own. Still asked per
+        // interval because only the intervals DLZ actually runs on need that depth.
         var dlzSettings = GlobalData.Settings.Signal.ZonesDlz;
-        if (dlzSettings.IntervalList.Contains(interval.Name) && dlzSettings.CandleCount > depth)
-            depth = dlzSettings.CandleCount;
+        if (dlzSettings.IntervalList.Contains(interval.Name) && CandleTools.CandleCountFetch > depth)
+            depth = CandleTools.CandleCountFetch;
         return depth;
     }
 

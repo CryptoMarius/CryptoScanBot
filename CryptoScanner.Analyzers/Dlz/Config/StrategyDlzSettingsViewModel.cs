@@ -7,9 +7,6 @@ namespace CryptoScanner.Analyzers.Dlz.Config;
 public partial class StrategyDlzSettingsViewModel : ObservableObject
 {
     [ObservableProperty]
-    private int _candleCount = 500; // int, max: 6000
-
-    [ObservableProperty]
     private int _candleCountZoom = 125; // int, max: 6000
 
     [ObservableProperty]
@@ -29,7 +26,6 @@ public partial class StrategyDlzSettingsViewModel : ObservableObject
 
     public void LoadConfig(SettingsSignalStrategyDlz settings)
     {
-        CandleCount = settings.CandleCount;
         CandleCountZoom = settings.CandleCountZoom;
         WarnPercentage = settings.WarnPercentage;
         NearZonePercentage = settings.NearZonePercentage;
@@ -40,7 +36,6 @@ public partial class StrategyDlzSettingsViewModel : ObservableObject
 
     public void SaveConfig(SettingsSignalStrategyDlz settings)
     {
-        settings.CandleCount = CandleCount;
         settings.CandleCountZoom = CandleCountZoom;
         settings.WarnPercentage = WarnPercentage;
         settings.NearZonePercentage = NearZonePercentage;

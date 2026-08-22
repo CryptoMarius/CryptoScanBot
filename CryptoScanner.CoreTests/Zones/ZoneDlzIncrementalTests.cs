@@ -48,6 +48,14 @@ namespace CryptoScanner.CoreTests.Zones;
 /// below measures the deepest a change ever reaches back (2 pivots on this data) and asserts a
 /// ceiling of 25, which is the constant the design is built against.
 ///
+/// WAT DEZE TESTS WEL EN NIET ZEGGEN. De eigenschap is "de uitkomst hangt niet af van hoe vaak je
+/// rekent", en dat geldt BINNEN het venster - over wat de berekening zelf kan afleiden. Sinds de
+/// bewaarregel (ZoneTools.OutOfSightButStillRelevant) dragen beide takken daarnaast zones mee die ze
+/// niet zelf konden afleiden: die van voor de oudste pivot die ze nog hebben. Die worden gedragen,
+/// niet berekend, en vallen dus buiten wat hier vergeleken wordt. Op deze candlereeks valt er niets
+/// buiten het venster, dus in de praktijk maakt het voor deze tests geen verschil - maar wie hier een
+/// langere reeks onder schuift moet dat onderscheid kennen. ZoneRetentionTests bewaakt die grens.
+///
 /// The intro grading moved into the same walk for the same reason. It used to be a second pass with
 /// a cursor of its own, and that one graded the DOMINANT pivot - always older than the confirmer that
 /// made it dominant - so it skipped exactly the pivots it was meant to grade and left Strength on

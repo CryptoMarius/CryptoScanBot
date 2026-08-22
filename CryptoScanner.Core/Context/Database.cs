@@ -923,7 +923,7 @@ public class CryptoDatabase : IDisposable
                 // Database cleanup (there is no need for old zones older than the configured value)
                 foreach (var interval in GlobalData.IntervalList)
                 {
-                    CandleTime openTime = CandleTime.FromDateTime(GlobalData.Clock.UtcNow.AddMinutes(-GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration));
+                    CandleTime openTime = CandleTime.FromDateTime(GlobalData.Clock.UtcNow.AddMinutes(-(long)CandleTools.CandleCountFetch * interval.Duration));
 
                     // we use the same candlecount for both the fvg and dlz zones
                     databaseThread.Connection.Execute("delete from zone where OpenTime < @OpenTime",

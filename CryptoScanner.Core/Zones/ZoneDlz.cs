@@ -610,8 +610,9 @@ public class ZoneDlz
     public static async Task<(CandleTime minDate, CandleTime maxDate)> LoadHistoricCandles(CryptoSymbol symbol, CryptoInterval interval,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
-        // Determine the period (using the candlecount)
-        int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
+        // Determine the period (using the candlecount). One depth for the whole engine - see
+        // CandleTools.CandleCountFetch for why the zones no longer have one of their own.
+        int candleFetchCount = CandleTools.CandleCountFetch;
         CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
         CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
         await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, minDate, candleFetchCount);
@@ -853,13 +854,11 @@ public class ZoneDlz
                 // else: already up to date — reuse the indicator as is, no feed needed.
 
                 // How far back this calculation can speak with authority. Deliberately the oldest
-                // PIVOT and not minDate: the pivot list is trimmed on CandleTools.GetCandleFetchStart,
-                // a flat 500 candles, while minDate follows ZonesDlz.CandleCount. At the default of
-                // 500 the two coincide and it makes no difference, but raise CandleCount to the 3000
-                // the setting itself suggests and minDate reaches 2500 candles further back than any
-                // pivot does - so every zone in that gap would count as "the calculation had its say"
-                // while no pivot for it exists, and would be deleted all over again. Asking the
-                // pivots keeps the two from drifting apart whatever the setting says.
+                // PIVOT and not minDate. Since 2026-08-22 both follow CandleTools.CandleCountFetch
+                // so they cannot disagree, but the pivots remain the honest answer to "could this
+                // zone have been produced": they are what the calculation actually holds, while
+                // minDate is what it asked for. Trimming, a restart or a gap can leave the list
+                // shorter than the window, and then only the pivots know.
                 //
                 // No pivots at all means nothing could be produced, so nothing may be deleted either;
                 // minDate is then only a fallback that keeps the previous behaviour.

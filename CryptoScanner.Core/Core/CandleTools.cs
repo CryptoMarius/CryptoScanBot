@@ -522,6 +522,27 @@ public static class CandleTools
     }
 
 
+    /// <summary>
+    /// How many candles are kept per interval, for everything except 1m and the barometer. This is
+    /// the single depth of the whole engine: indicators, trend, and the zones.
+    /// <para>
+    /// The zones used to have a depth of their own, ZonesDlz.CandleCount, and that was a promise the
+    /// storage could not keep. Candles and pivots live together now - ZigZagIndicator.TrimBefore
+    /// trims the pivot list on exactly this window, because a pivot holds a candle alive - so asking
+    /// the zone calculation to look 3000 candles back did not give 3000 candles of zones. It gave
+    /// 500 candles of pivots and 2500 candles of bookkeeping that said otherwise, and zones in that
+    /// gap were deleted for the wrong reason: not "the calculation rejected it" but "the calculation
+    /// never saw it". Removed on 2026-08-22; one number, no drift.
+    /// </para>
+    /// <para>
+    /// Raising this is not free. It multiplies through every interval and every symbol at once, so
+    /// it is memory across the board rather than a knob for one subject. That is exactly why the
+    /// separate setting is gone instead of this being made configurable.
+    /// </para>
+    /// </summary>
+    public const int CandleCountFetch = 500;
+
+
     public static CandleTime GetCandleFetchStart(CryptoSymbol symbol, CryptoInterval interval, DateTime currentTime)
     {
         CandleTime startTime = CandleTime.AlignFromDateTime(currentTime, 1);
@@ -538,37 +559,9 @@ public static class CandleTools
                 // 260 would be enough for calculating the standard indicator data.
                 // But we extended that amount because of the markettrend calculation.
                 //startTime = CandleTime.AlignFromDateTime(currentTime, 1) - 500 * interval.Duration;
-                startTime -= 500 * interval.Duration;
+                startTime -= CandleCountFetch * interval.Duration;
         }
         return startTime;
-    }
-
-
-    /// <summary>
-    /// Like GetCandleFetchStart but takes zone-depth into account: if this interval is
-    /// configured for DLZ the window is max(500, ZonesDlz.CandleCount) candles deep.
-    /// Used by the DB cleanup to avoid deleting candles that the zone calculator still needs.
-    /// </summary>
-    public static CandleTime GetCandleFetchStartForZones(CryptoSymbol symbol, CryptoInterval interval, DateTime currentTime)
-    {
-        CandleTime baseline = GetCandleFetchStart(symbol, interval, currentTime);
-
-        if (symbol.IsBarometerSymbol() || interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
-            return baseline;
-
-        bool isZoneInterval = GlobalData.Settings.Signal.ZonesDlz.IntervalList.Contains(interval.Name)
-            || GlobalData.Settings.Signal.ZonesFvg.IntervalList.Contains(interval.Name)
-            || GlobalData.Settings.Signal.ZonesSmc.IntervalList.Contains(interval.Name);
-
-        int zoneCandleCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
-        if (isZoneInterval && zoneCandleCount > 500)
-        {
-            CandleTime zoneStart = CandleTime.AlignFromDateTime(currentTime, 1) - zoneCandleCount * interval.Duration;
-            if (zoneStart.Minutes < baseline.Minutes)
-                return zoneStart;
-        }
-
-        return baseline;
     }
 
 }
