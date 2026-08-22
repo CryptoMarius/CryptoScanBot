@@ -358,30 +358,35 @@ public sealed class ReplayRunner
                 // ───── Between chunks: prune old candles to keep memory bounded ──────
                 if (useChunks && windowTo < replayTo)
                 {
+                    // The boundary, per interval. Count back from chunk.End, NOT from windowTo
+                    // (= chunk.LastBaseOpen). LastBaseOpen is the OPEN time of the last base candle,
+                    // so it sits one base interval before the chunk boundary and therefore moves with
+                    // the base interval: 1 minute earlier on a 1m run, 15 on a 15m run. chunk.End is
+                    // the boundary itself and is identical for every base interval.
+                    //
+                    // Aligning the cutoff on the interval below only hides that for intervals COARSER
+                    // than the difference. For 1m/2m/3m/5m/10m it does not, so those kept a different
+                    // number of candles per base interval — and that is exactly the set whose trend
+                    // drifted apart, with the differences piling up in the hours around a chunk
+                    // boundary.
+                    CandleTime CutoffFor(CryptoInterval interval)
+                    {
+                        int keepDepth = IndicatorWarmup.WarmupDepth(interval);
+                        uint cutoffMinutes = chunk.End.Minutes - (uint)keepDepth * interval.Duration;
+                        return new CandleTime(cutoffMinutes - cutoffMinutes % interval.Duration);
+                    }
+
+                    // The scanner's own routine, with our deeper boundary handed in. This used to be
+                    // a loop here that removed candles and nothing else, which meant a replay never
+                    // pruned the indicator data and never trimmed the ZigZag pivots - the two other
+                    // things CleanCandleDataAsync does against the same boundary. Measured on run 220:
+                    // 8.8 million indicator-data entries and 14 GB in one process, while a live
+                    // scanner that does run this sits at 600-900 MB. The pivot lists mattered just as
+                    // much for speed: ZoneDlz walks the whole list on every recalculation, and in a
+                    // seven-month replay that list only ever grew.
                     int pruned = 0;
                     foreach (var symbol in symbols)
-                    {
-                        foreach (CryptoInterval interval in GlobalData.IntervalList)
-                        {
-                            // Count back from chunk.End, NOT from windowTo (= chunk.LastBaseOpen).
-                            // LastBaseOpen is the OPEN time of the last base candle, so it sits one
-                            // base interval before the chunk boundary and therefore moves with the
-                            // base interval: 1 minute earlier on a 1m run, 15 on a 15m run. chunk.End
-                            // is the boundary itself and is identical for every base interval.
-                            //
-                            // Aligning the cutoff on the interval below only hides that for intervals
-                            // COARSER than the difference. For 1m/2m/3m/5m/10m it does not, so those
-                            // kept a different number of candles per base interval — and that is
-                            // exactly the set whose trend drifted apart, with the differences piling
-                            // up in the hours around a chunk boundary.
-                            int keepDepth = IndicatorWarmup.WarmupDepth(interval);
-                            uint cutoffMinutes = chunk.End.Minutes - (uint)keepDepth * interval.Duration;
-                            CandleTime cutoff = new(cutoffMinutes - cutoffMinutes % interval.Duration);
-
-                            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                            pruned += symbolInterval.CandleList.RemoveBefore(cutoff);
-                        }
-                    }
+                        pruned += await CandleTools.CleanCandleDataAsync(symbol, null, CutoffFor);
                     GlobalData.AddTextToLogTab($"Chunk {chunkIndex}: pruned {pruned} old candles from memory");
                 }
 
@@ -416,7 +421,9 @@ public sealed class ReplayRunner
         long Prepare, long Execute, long Trade, long PositionCheck,
         long SeStrategy, long SeEvaluations, long SeSignals,
         long Trend, long TrendCalls, long FvgInline, long SmcInline,
-        long DbFlush, long DbFlushItems, long CandleArrivals)
+        long DbFlush, long DbFlushItems, long CandleArrivals,
+        long DlzInline, long DlzInlineCalls, long DlzFeed, long DlzJudge, long DlzMerge,
+        long DlzBroken, long DlzFullRuns, long DlzIncrementalRuns)
     {
         public static ProfileSnapshot Capture(ReplayRunner runner) => new(
             runner.elapsedProcess1m, runner.elapsedPipeline, runner.elapsedZoneDrain, runner.elapsedFlush,
@@ -426,7 +433,11 @@ public sealed class ReplayRunner
             PipelineProfiler.TrendTicks, PipelineProfiler.TrendCalls,
             PipelineProfiler.FvgInlineTicks, PipelineProfiler.SmcInlineTicks,
             PipelineProfiler.DbFlushOpenTicks + PipelineProfiler.DbFlushWriteTicks + PipelineProfiler.DbFlushCommitTicks,
-            PipelineProfiler.DbFlushItems, PipelineProfiler.CandleArrivals);
+            PipelineProfiler.DbFlushItems, PipelineProfiler.CandleArrivals,
+            PipelineProfiler.DlzInlineTicks, PipelineProfiler.DlzInlineCalls,
+            PipelineProfiler.DlzFeedTicks, PipelineProfiler.DlzJudgeTicks,
+            PipelineProfiler.DlzMergeTicks, PipelineProfiler.DlzBrokenTicks,
+            PipelineProfiler.DlzFullRuns, PipelineProfiler.DlzIncrementalRuns);
     }
 
 
@@ -471,6 +482,27 @@ public sealed class ReplayRunner
             $"smcInline {Seconds(now.SmcInline - prev.SmcInline):F1}s, " +
             $"db {Seconds(now.DbFlush - prev.DbFlush):F1}s over {now.DbFlushItems - prev.DbFlushItems} item(s) " +
             $"|| candles processed {now.CandleArrivals - prev.CandleArrivals}");
+
+        // DLZ on its own line, because in the emulator it runs inline in SignalPrepare and therefore
+        // disappears into the "indicators" bucket above - which was routinely 99% of the pipeline,
+        // leaving DLZ and the indicator hub indistinguishable. The "zones" bucket is no help: it
+        // measures the queue drain the emulator never uses and prints 0.0 every chunk.
+        //
+        // Only printed when there is something to report, so a run without zone intervals does not
+        // get a line of zeroes on every chunk.
+        long dlzCalls = now.DlzInlineCalls - prev.DlzInlineCalls;
+        if (dlzCalls > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"Chunk {chunkIndex} dlz — inline {Seconds(now.DlzInline - prev.DlzInline):F1}s " +
+                $"over {dlzCalls} recalc " +
+                $"({now.DlzFullRuns - prev.DlzFullRuns} full / " +
+                $"{now.DlzIncrementalRuns - prev.DlzIncrementalRuns} incr) | " +
+                $"feed {Seconds(now.DlzFeed - prev.DlzFeed):F1}s, " +
+                $"judge {Seconds(now.DlzJudge - prev.DlzJudge):F1}s, " +
+                $"merge {Seconds(now.DlzMerge - prev.DlzMerge):F1}s, " +
+                $"broken {Seconds(now.DlzBroken - prev.DlzBroken):F1}s");
+        }
 
         // State that survives the chunk boundary. A bucket above that keeps rising while one of these
         // keeps rising too is the pair to look at: the phase re-walks a structure that never stops

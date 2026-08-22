@@ -189,6 +189,78 @@ public static class Helper
     /// <returns>Clamped value</returns>
     public static decimal Clamp(this decimal value, decimal minValue, decimal maxValue, decimal? stepSize)
     {
+        return ClampCore(value, minValue, maxValue, stepSize, RoundingDirection.Down);
+    }
+
+
+    /// <summary>
+    /// Clamp a PRICE to a min and max value. Which way it is put onto the tick grid is decided by
+    /// Settings.Trading.PriceRounding together with <paramref name="side"/>.
+    /// </summary>
+    /// <param name="minValue">Min value</param>
+    /// <param name="maxValue">Max value</param>
+    /// <param name="tickSize">Smallest unit value should be evenly divisible by</param>
+    /// <param name="value">Value to clamp</param>
+    /// <param name="side">Side of the trade this price belongs to; decides up or down for the two
+    /// direction-aware settings and is ignored by the other two</param>
+    /// <returns>Clamped value</returns>
+    /// <remarks>
+    /// Rounding down is right for a QUANTITY - up could cost more than the balance holds, and the
+    /// exchange rejects anything that is not a multiple of the step - but for a price it is the one
+    /// setting that treats a long and a short differently, because "down" is towards the entry on one
+    /// side and away from it on the other.
+    /// <para>
+    /// Measured over 50.683 positions of the emulator runs 98-163, on a nominal target of 1.8%: the
+    /// long target landed at 1.78772% and the short at 1.81225%, while the average half tick over
+    /// those same positions is 0.01220%. Equal, opposite, and matching the half tick to three
+    /// decimals. That is 43% of the gap in target distance between the two sides and about 0.27
+    /// percentage points of the gap in win rate - a real share of it, but not all of it: the rest is
+    /// the arithmetic of the anchor.
+    /// </para>
+    /// <para>
+    /// The three other settings all treat long and short the same. Nearest leaves no systematic shift
+    /// at all; AgainstPosition and FavourPosition shift every price by half a tick on average, the
+    /// first away from what the position wants and the second towards it. See CryptoPriceRounding.
+    /// </para>
+    /// <para>
+    /// Exactly halfway rounds up under Nearest. That is a hair's width on a tick and only reachable
+    /// when the value is an exact multiple of half a tick.
+    /// </para>
+    /// </remarks>
+    public static decimal ClampPrice(this decimal value, CryptoTradeSide side, decimal minValue, decimal maxValue, decimal? tickSize)
+    {
+        return ClampCore(value, minValue, maxValue, tickSize, ResolveRounding(side));
+    }
+
+
+    /// <summary>
+    /// Turns the setting plus the side of the trade into one of three plain rounding directions.
+    /// Kept separate so the decision is in one readable place instead of spread over the call sites.
+    /// </summary>
+    private static RoundingDirection ResolveRounding(CryptoTradeSide side)
+    {
+        return GlobalData.Settings.Trading.PriceRounding switch
+        {
+            CryptoPriceRounding.Nearest => RoundingDirection.Nearest,
+            // Away from what the position wants: a long is helped by a lower price, so up hurts it.
+            CryptoPriceRounding.AgainstPosition => side == CryptoTradeSide.Long ? RoundingDirection.Up : RoundingDirection.Down,
+            CryptoPriceRounding.FavourPosition => side == CryptoTradeSide.Long ? RoundingDirection.Down : RoundingDirection.Up,
+            // CryptoPriceRounding.Down, and anything unknown, keeps the original behaviour.
+            _ => RoundingDirection.Down,
+        };
+    }
+
+
+    private enum RoundingDirection
+    {
+        Down,
+        Up,
+        Nearest,
+    }
+
+
+    private static decimal ClampCore(decimal value, decimal minValue, decimal maxValue, decimal? stepSize, RoundingDirection direction)
+    {
         // TODO: Bybit heeft geen min- of maxPrice!?
         // Deze moeten dus nullable worden en moeten hieronder gecontroleerd worden
 
@@ -206,6 +278,16 @@ public static class Helper
                 throw new ArgumentOutOfRangeException(nameof(stepSize));
             decimal mod = value % stepSize.Value;
             value -= mod;
+            // Decimal remainder is exact, so no epsilon is needed here. mod is zero when the value
+            // was already on the grid, and then no direction may move it - rounding "up" a value
+            // that needs no rounding would add a whole tick out of nowhere.
+            if (mod > 0)
+            {
+                if (direction == RoundingDirection.Up)
+                    value += stepSize.Value;
+                else if (direction == RoundingDirection.Nearest && mod + mod >= stepSize.Value)
+                    value += stepSize.Value;
+            }
         }
 
         if (maxValue > 0)

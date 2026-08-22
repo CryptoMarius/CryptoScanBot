@@ -190,12 +190,20 @@ public class SignalPrepare
                     if (symbolInterval.Dlz.Admin.TriggerRangeLow == null || valueLow < symbolInterval.Dlz.Admin.TriggerRangeLow ||
                        symbolInterval.Dlz.Admin.TriggerRangeHigh == null || valueHigh > symbolInterval.Dlz.Admin.TriggerRangeHigh)
                     {
-                        //var dlzZones = symbolInterval.Dlz.Zones;
                         // Diagnostics, deliberately switched off on 18-08-2026 - it was 40% of the log file. Left in place to switch back on.
-                        //GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} recalc triggered " +
-                        //    $"(swingLow {symbolInterval.Dlz.Admin.LastSwingLow}→{valueLow}, " +
-                        //    $"swingHigh {symbolInterval.Dlz.Admin.LastSwingHigh}→{valueHigh}) " +
-                        //    $"open zones before: long={dlzZones.LongOpen.Count} short={dlzZones.ShortOpen.Count}");
+                        // Switched back ON on 22-08-2026 for one night, to measure whether the split
+                        // between the swing values and the trigger range actually cuts the number of
+                        // recalculations that end on nothing. Both pairs are printed: the swings say
+                        // where the trend is, the trigger range says how far we had already asked. If
+                        // the split works, a symbol no longer starts from identical bounds hour after
+                        // hour. SWITCH THIS BACK OFF after the measurement - it was 40% of the log.
+                        var dlzZones = symbolInterval.Dlz.Zones;
+                        GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} recalc triggered " +
+                            $"(swingLow {symbolInterval.Dlz.Admin.LastSwingLow}, " +
+                            $"swingHigh {symbolInterval.Dlz.Admin.LastSwingHigh}, " +
+                            $"triggerLow {symbolInterval.Dlz.Admin.TriggerRangeLow}→{valueLow}, " +
+                            $"triggerHigh {symbolInterval.Dlz.Admin.TriggerRangeHigh}→{valueHigh}) " +
+                            $"open zones before: long={dlzZones.LongOpen.Count} short={dlzZones.ShortOpen.Count}");
                         // Avoid duplicate calculation: remember the widest range seen so far, so only a
                         // candle that breaks OUT of it triggers the next recalculation.
                         // Assigning both values unconditionally (what happened here before) also moved

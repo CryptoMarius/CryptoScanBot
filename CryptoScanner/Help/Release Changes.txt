@@ -11,7 +11,7 @@ Beslissing, Bybit EU weg, die is om te janken en kan niet serieus genomen worden
 -Altrady meldt ook de shorts terug als long positie (nog uitzoeken?)
 
 
-13-08-2025 2.6.0
+xx-08-2025 2.6.0
 - Exchange Coinbase toegevoegd
 - Alpaca geactiveerd (om te testen!!!!)
 - Een lock op de data folder zodat er niet 2 scanners tegelijk gestart kunnen worden die de folder delen

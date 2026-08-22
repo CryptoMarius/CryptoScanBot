@@ -103,6 +103,25 @@ public class SettingsTrading
     // =Overkill in de logging
     public bool LogCanceledOrders { get; set; } = true;
 
+    /// <summary>
+    /// How a price is put onto the exchange's tick grid. Quantities are not affected - those always
+    /// round down. Default since 22-08-2026 is <see cref="CryptoPriceRounding.AgainstPosition"/>:
+    /// long up, short down, so both sides are treated the same and both the unfavourable way.
+    /// <para>
+    /// The reason for the setting is that the original rule (always down) was the only one that did
+    /// NOT treat the two sides the same, and that showed up in the numbers: measured over 50.683
+    /// positions of the runs 98-163 the long target landed at 1.78772% against 1.81225% for the
+    /// short, on a nominal 1.8%.
+    /// </para>
+    /// <para>
+    /// Set it to <see cref="CryptoPriceRounding.FavourPosition"/> to turn the same rule around, or to
+    /// <see cref="CryptoPriceRounding.Down"/> to put everything back exactly as it was before. Per
+    /// emulator run it goes in a queue entry as "TradingOverrides": {"PriceRounding": 2}, and it is
+    /// captured in the run's settings snapshot, so a finished run says which rule produced it.
+    /// </para>
+    /// </summary>
+    public CryptoPriceRounding PriceRounding { get; set; } = CryptoPriceRounding.AgainstPosition;
+
     //***************************
     // Slots
     //Maximaal aantal slots voor long en short

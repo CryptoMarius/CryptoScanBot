@@ -65,7 +65,7 @@ public class CommandPositionCreate : CommandBase
                 decimal entryQuote = resultAvailableAssets.entryQuoteAsset;
 
                 // Bepaal het entry bedrag
-                decimal entryPrice = symbol.LastPrice!.Value.Clamp(symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize);
+                decimal entryPrice = symbol.LastPrice!.Value.ClampPrice(tradeSide, symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize);
                 decimal entryBase = entryQuote / entryPrice;
                 entryBase = entryBase.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
                 entryBase = TradeTools.CorrectEntryQuantityIfWayLess(symbol, entryQuote, entryBase, entryPrice);

@@ -4,6 +4,7 @@ using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace CryptoScanner.Core.Zones;
 
@@ -79,7 +80,16 @@ public class ZoneThreadCalculate
                     //await ZoneDlz.LoadHistoricCandles(symbol, interval, loadedCandlesInMemory);
 
                     if (runDlz)
+                    {
+                        // Measured here and not in SignalPrepare: this way the FVG call below stays
+                        // out of the number, and both routes into a recalculation are covered - the
+                        // emulator calls this method directly while the live scanner arrives through
+                        // the queue drain. In the emulator the time inside lands in PrepareTicks
+                        // ("indicators"), where it was indistinguishable from the indicator hub.
+                        long profDlzStart = Stopwatch.GetTimestamp();
                         await ZoneDlz.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory);
+                        PipelineProfiler.RecordDlzInline(Stopwatch.GetTimestamp() - profDlzStart);
+                    }
                     if (runFvg)
                         await ZoneFvg.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory);
 

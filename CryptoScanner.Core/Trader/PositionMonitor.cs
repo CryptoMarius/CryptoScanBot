@@ -546,7 +546,7 @@ public class PositionMonitor : IDisposable
                                 // CHoCH/BOS break) enter at that level; otherwise at the current market price.
                                 decimal entryPrice = (signal.EntryPriceOverridden && signal.SignalPrice > 0
                                     ? signal.SignalPrice
-                                    : Symbol.LastPrice.Value).Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                                    : Symbol.LastPrice.Value).ClampPrice(signal.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
                                 decimal entryBase = entryQuote / entryPrice;
                                 entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
                                 entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
@@ -723,7 +723,7 @@ public class PositionMonitor : IDisposable
         int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
         decimal entryAnchor = position.TpGridAnchorPrice;
         decimal price = entryAnchor + (multiplier * entryAnchor * (percentage / 100));
-        return price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+        return price.ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
     }
 
     private (decimal? stop, decimal? limit) CalculateSlPrices(CryptoPosition position)
@@ -753,8 +753,8 @@ public class PositionMonitor : IDisposable
             $"(StopPct={GlobalData.Settings.Trading.StopLossPercentage} LimitPct={GlobalData.Settings.Trading.StopLossLimitPercentage})");
 
         // Clamp to symbol tick/min/max
-        decimal? stop = result.Stop?.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-        decimal? limit = result.Limit?.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+        decimal? stop = result.Stop?.ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+        decimal? limit = result.Limit?.ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
         // Profit lock: once the position has reached MoveSlToBreakEvenPercentage in profit,
         // move the SL to BE + that percentage to protect the profit (sticky — the flag never
@@ -780,10 +780,10 @@ public class PositionMonitor : IDisposable
             if (position.SlMovedToBreakEven)
             {
                 decimal lockStop = (position.BreakEvenPrice + multiplier * position.BreakEvenPrice * lockPct / 100m)
-                    .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+                    .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
                 decimal lockGap = Math.Abs(lockStop * 0.01m);
                 decimal lockLimit = (lockStop - multiplier * lockGap)
-                    .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+                    .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
                 // Tighten only: move the stop when there was none, or when the lock level is
                 // tighter than the current stop (long: higher is tighter; short: lower is tighter).
@@ -939,7 +939,7 @@ public class PositionMonitor : IDisposable
                     price = (decimal)entryPrice;
                     if (price == 0)
                         price = Symbol.LastPrice ?? 0;
-                    price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                    price = price.ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
                     entryQuantity = entryValue / price; // "afgerond"
                     entryQuantity = entryQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);

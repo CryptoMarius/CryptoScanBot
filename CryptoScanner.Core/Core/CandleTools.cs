@@ -378,9 +378,32 @@ public static class CandleTools
 
     /// <summary>
     /// Remove the outdated candle and data (from GetCandleFetchStart)
+    /// <para>
+    /// Three things go together here, all against the SAME boundary: the candles, the indicator data
+    /// derived from them, and the ZigZag pivots that point at them. They belong together because a
+    /// pivot keeps a candle object alive, so trimming one and not the other frees nothing and leaves
+    /// the calculation looking at history the rest of the engine has already forgotten.
+    /// </para>
+    /// <para>
+    /// <paramref name="cutoffFor"/> is how the emulator joins in. It used to skip this method and
+    /// prune candles itself between chunks, which meant a replay never pruned the indicator data and
+    /// never trimmed the pivots at all - 8.8 million data entries and 14 GB in one process, against
+    /// 600-900 MB for a live scanner that does run this. It did not skip it out of laziness: the
+    /// window of <see cref="GetCandleFetchStart"/> is too shallow for a replay (for 1m it collides
+    /// with the 1441 candles the 24-hour change reads back), so the replay needs a deeper boundary of
+    /// its own. That is the only thing that may differ, hence a parameter for the boundary rather
+    /// than a second copy of the routine.
+    /// </para>
     /// </summary>
-    public static async Task CleanCandleDataAsync(CryptoSymbol symbol, CandleTime? lastCandle1mCloseTime)
+    /// <param name="cutoffFor">
+    /// Supplies the boundary per interval. Null means <see cref="GetCandleFetchStart"/> against the
+    /// current clock, which is what the live scanner wants.
+    /// </param>
+    /// <returns>How many candles were removed, so a caller can report it.</returns>
+    public static async Task<int> CleanCandleDataAsync(CryptoSymbol symbol, CandleTime? lastCandle1mCloseTime,
+        Func<CryptoInterval, CandleTime>? cutoffFor = null)
     {
+        int removed = 0;
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             if (lastCandle1mCloseTime == null || lastCandle1mCloseTime % interval.Duration == 0)
@@ -390,7 +413,9 @@ public static class CandleTools
                 try
                 {
                     var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                    CandleTime startFetchUnix = GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
+                    CandleTime startFetchUnix = cutoffFor != null
+                        ? cutoffFor(interval)
+                        : GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
 
                     // Remove old candle objects. Both dictionaries are sorted by key, so a single
                     // forward scan collecting the stale keys (stopping at the first key that's
@@ -403,7 +428,7 @@ public static class CandleTools
                     // tree version mid-scan and threw "Collection was modified after the enumerator
                     // was instantiated". CandleLock below does not cover it - the writers take the
                     // list's own lock, not this semaphore.
-                    symbolInterval.CandleList.RemoveBefore(startFetchUnix);
+                    removed += symbolInterval.CandleList.RemoveBefore(startFetchUnix);
 
                     // Remove old candle indicator data
                     lock (symbolInterval.Data)
@@ -434,6 +459,7 @@ public static class CandleTools
                 }
             }
         }
+        return removed;
     }
 
 

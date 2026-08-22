@@ -60,6 +60,36 @@ public static class PipelineProfiler
     public static long FvgInlineTicks;
     public static long SmcInlineTicks;
 
+    // DLZ carve-out, same idea as FvgInline/SmcInline above but bigger, and until 2026-08-22 the only
+    // one missing. In the emulator SignalPrepare calls ZoneThreadCalculate.CalculateZones directly
+    // (SignalPrepare.cs, the IsEmulatorMode branch), so every second DLZ spends lands in PrepareTicks
+    // - the bucket the chunk report prints as "indicators". That made DLZ indistinguishable from the
+    // indicator hub in a report where "indicators" was routinely 99% of the pipeline. The "zones"
+    // bucket does not help: it measures the queue drain, which the emulator never uses, so it prints
+    // 0.0 every chunk.
+    //
+    // DlzInlineTicks overlaps PrepareTicks and is NOT additive to it. The four phase counters below
+    // do add up to DlzInlineTicks, minus the bookkeeping between them.
+    public static long DlzInlineTicks;
+    public static long DlzInlineCalls;
+
+    // Phases inside one CalculateZonesAsync, so a slow recalculation can be attributed:
+    //   • Feed   — LoadHistoricCandles + CalculatePivots: getting candles in and fed to the ZigZag.
+    //   • Judge  — CalculateDlzAsync: the dominance verdicts, the zoom and the intro grading.
+    //   • Merge  — the zone index, AddZonesToInternalLists, the retention/delete pass.
+    //   • Broken — CheckAndMarkBrokenZones.
+    public static long DlzFeedTicks;
+    public static long DlzJudgeTicks;
+    public static long DlzMergeTicks;
+    public static long DlzBrokenTicks;
+
+    // Which branch a recalculation took. The incremental branch is skipped whenever the candle marker
+    // has fallen behind the window (ZoneDlz, the ProcessedCandleMarker >= minDate test), so a symbol
+    // whose trigger fires less often than the window is long falls back to a complete rescan every
+    // single time. These two counters are what shows whether that is happening in practice.
+    public static long DlzFullRuns;
+    public static long DlzIncrementalRuns;
+
     // Sub-breakdown of the hub incremental path (PrepareViaHub non-warmup).
     public static long HubAddTicks;
     public static long HubBuildTicks;
@@ -170,6 +200,15 @@ public static class PipelineProfiler
         TrendCalls = 0;
         FvgInlineTicks = 0;
         SmcInlineTicks = 0;
+
+        DlzInlineTicks = 0;
+        DlzInlineCalls = 0;
+        DlzFeedTicks = 0;
+        DlzJudgeTicks = 0;
+        DlzMergeTicks = 0;
+        DlzBrokenTicks = 0;
+        DlzFullRuns = 0;
+        DlzIncrementalRuns = 0;
 
         TrendLockWaitTicks = 0;
         TrendCalcBothTicks = 0;
@@ -336,6 +375,38 @@ public static class PipelineProfiler
         if (!Enabled)
             return;
         Interlocked.Add(ref SmcInlineTicks, ticks);
+    }
+
+    /// <summary>
+    /// Adds one whole DLZ recalculation (ZoneDlz.CalculateZonesAsync) to the carve-out. Measured
+    /// around the call in ZoneThreadCalculate rather than in SignalPrepare, so the FVG call sitting
+    /// next to it stays out of the number and both call routes - the emulator's direct one and the
+    /// live queue drain - are covered by the same measurement.
+    /// </summary>
+    public static void RecordDlzInline(long ticks)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref DlzInlineTicks, ticks);
+        Interlocked.Increment(ref DlzInlineCalls);
+    }
+
+    /// <summary>
+    /// Adds the per-phase split of one DLZ recalculation, plus which branch it took.
+    /// See the counters for what each phase covers.
+    /// </summary>
+    public static void RecordDlzPhases(long feed, long judge, long merge, long broken, bool incremental)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref DlzFeedTicks, feed);
+        Interlocked.Add(ref DlzJudgeTicks, judge);
+        Interlocked.Add(ref DlzMergeTicks, merge);
+        Interlocked.Add(ref DlzBrokenTicks, broken);
+        if (incremental)
+            Interlocked.Increment(ref DlzIncrementalRuns);
+        else
+            Interlocked.Increment(ref DlzFullRuns);
     }
 
     /// <summary>Adds one CalculatePositionResultsViaOrders call's per-phase Stopwatch-tick deltas

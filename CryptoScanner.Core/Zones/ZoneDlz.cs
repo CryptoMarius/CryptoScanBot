@@ -6,6 +6,8 @@ using CryptoScanner.Core.Trend;
 
 using Dapper;
 
+using System.Diagnostics;
+
 namespace CryptoScanner.Core.Zones;
 
 // DLZ - Dominant Liquidity ZonesDlz
@@ -823,6 +825,12 @@ public class ZoneDlz
         CryptoSymbol symbol, CryptoInterval interval,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
+        // Phase timers for the DLZ carve-out. Plain locals: one recalculation runs start to finish
+        // on one thread, and the totals are handed to the profiler in a single call at the end.
+        long profFeed = 0, profJudge = 0, profMerge = 0, profBroken = 0;
+        bool profIncremental = false;
+        long profMark = Stopwatch.GetTimestamp();
+
         try
         {
             var (minDate, maxDate) = await LoadHistoricCandles(symbol, interval, loadedCandlesInMemory);
@@ -861,6 +869,8 @@ public class ZoneDlz
                     trendZigZagIndicator.LastFedCandleTime = maxDate;
                 }
                 // else: already up to date — reuse the indicator as is, no feed needed.
+                profFeed += Stopwatch.GetTimestamp() - profMark;
+                profMark = Stopwatch.GetTimestamp();
 
                 // How far back this calculation can speak with authority. Deliberately the oldest
                 // PIVOT and not minDate. Since 2026-08-22 both follow CandleTools.CandleCountFetch
@@ -876,6 +886,7 @@ public class ZoneDlz
                 if (symbolIntervalData.Dlz.ProcessedCandleMarker != null && symbolIntervalData.Dlz.ProcessedCandleMarker.Value >= minDate)
                 {
                     // ── Incremental path: only process new pivots since the cursor ──
+                    profIncremental = true;
                     var cursor = symbolIntervalData.Dlz.ProcessedCandleMarker;
                     int openLongBefore = symbolIntervalData.Dlz.Zones.LongOpen.Count;
                     int openShortBefore = symbolIntervalData.Dlz.Zones.ShortOpen.Count;
@@ -899,6 +910,8 @@ public class ZoneDlz
                     symbolIntervalData.Dlz.CommittedPivotMarker = await CalculateDlzAsync(
                         sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory,
                         symbolIntervalData.Dlz.CommittedPivotMarker, settledPivots, provisionalPivots);
+                    profJudge += Stopwatch.GetTimestamp() - profMark;
+                    profMark = Stopwatch.GetTimestamp();
 
                     // Settled verdicts are added to the store once and never recomputed.
                     CreateZonesFromZigZag(symbol, interval, settledPivots,
@@ -932,10 +945,15 @@ public class ZoneDlz
                         symbolIntervalData.Dlz.Zones = finalZones;
                     }
 
+                    profMerge += Stopwatch.GetTimestamp() - profMark;
+                    profMark = Stopwatch.GetTimestamp();
+
                     // Incremental broken-zone check: only scan candles after the cursor
                     // to avoid double-counting touches (TouchCount is not idempotent)
                     var modifiedZones = CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList,
                         symbolIntervalData.Dlz.Zones, afterTime: cursor);
+                    profBroken += Stopwatch.GetTimestamp() - profMark;
+                    profMark = Stopwatch.GetTimestamp();
                     foreach (var zone in modifiedZones)
                     {
                         if (zone.Id > 0)
@@ -944,10 +962,15 @@ public class ZoneDlz
 
                     int brokenCount = modifiedZones.Count(z => z.CloseTime != null);
                     // Diagnostics, deliberately switched off on 18-08-2026 - it was 40% of the log file. Left in place to switch back on.
-                    //GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} incremental: " +
-                    //    $"pivots={trendZigZagIndicator.ZigZagList.Count}, newZones={newZones.Count} (weak={weakNew}), " +
-                    //    $"broken={brokenCount}, open long {openLongBefore}→{symbolIntervalData.Dlz.Zones.LongOpen.Count}, " +
-                    //    $"open short {openShortBefore}→{symbolIntervalData.Dlz.Zones.ShortOpen.Count}");
+                    // Switched back ON on 22-08-2026 for one night. This is the other half of the
+                    // measurement: SignalPrepare logs that a recalculation was triggered, this line
+                    // says what came out of it. A run of these ending on newZones=0, broken=0 for the
+                    // same symbol is the waste the trigger split was meant to remove.
+                    // SWITCH THIS BACK OFF after the measurement.
+                    GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} incremental: " +
+                        $"pivots={trendZigZagIndicator.ZigZagList.Count}, newZones={newZones.Count} (weak={weakNew}), " +
+                        $"broken={brokenCount}, open long {openLongBefore}→{symbolIntervalData.Dlz.Zones.LongOpen.Count}, " +
+                        $"open short {openShortBefore}→{symbolIntervalData.Dlz.Zones.ShortOpen.Count}");
                 }
                 else
                 {
@@ -963,6 +986,8 @@ public class ZoneDlz
                     symbolIntervalData.Dlz.CommittedPivotMarker = await CalculateDlzAsync(sender, symbol,
                         interval, trendZigZagIndicator, loadedCandlesInMemory,
                         committedUpTo: null, settled: fullSettledPivots, provisional: fullProvisionalPivots);
+                    profJudge += Stopwatch.GetTimestamp() - profMark;
+                    profMark = Stopwatch.GetTimestamp();
 
                     symbolIntervalData.Dlz.CommittedZones = [];
                     CreateZonesFromZigZag(symbol, interval, fullSettledPivots,
@@ -1007,7 +1032,11 @@ public class ZoneDlz
                         tempZones.Add(zone);
 
                     // Check broken zones before DB comparison so CloseTime is set correctly on zone objects
+                    profMerge += Stopwatch.GetTimestamp() - profMark;
+                    profMark = Stopwatch.GetTimestamp();
                     CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList, tempZones);
+                    profBroken += Stopwatch.GetTimestamp() - profMark;
+                    profMark = Stopwatch.GetTimestamp();
 
                     int survivedLong = tempZones.LongOpen.Count;
                     int survivedShort = tempZones.ShortOpen.Count;
@@ -1046,6 +1075,10 @@ public class ZoneDlz
                 }
 
                 symbolIntervalData.Dlz.ProcessedCandleMarker = maxDate;
+
+                // Whatever is left over since the last mark is reconciliation work in both branches.
+                profMerge += Stopwatch.GetTimestamp() - profMark;
+                PipelineProfiler.RecordDlzPhases(profFeed, profJudge, profMerge, profBroken, profIncremental);
             }
 
 
