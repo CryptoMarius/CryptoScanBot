@@ -14,6 +14,7 @@ Beslissing, Bybit EU weg, die is om te janken en kan niet serieus genomen worden
 13-08-2025 2.6.0
 - Exchange Coinbase toegevoegd
 - Alpaca geactiveerd (om te testen!!!!)
+- Een lock op de data folder zodat er niet 2 scanners tegelijk gestart kunnen worden die de folder delen
 - Het minimale 24-uurs volume van een basismunt schaalt nu mee met de omzet van die exchange
 - De pauzeregels van de trader pakken nu zelf de bitcoin munt van de exchange (BTCUSDT bestaat niet overal)
 - Blofin Futures geactiveerd, de candle subscription, het 24-uurs volume en de inverse contracten gerepareerd
