@@ -1000,7 +1000,11 @@ public sealed class ReplayRunner
                         $"{symbol.Name} {symbolInterval.Interval!.Name}: " +
                         $"{symbolInterval.Data.Count} leftover indicator data entries.");
 
-                if (symbolInterval.Dlz.Admin.LastSwingHigh != null || symbolInterval.Dlz.Admin.LastSwingLow != null)
+                // The trigger range is checked alongside the swings: it is a second pair of fields
+                // that survives a chunk boundary just as easily, and a stale one decides whether the
+                // next chunk queues a recalculation at all.
+                if (symbolInterval.Dlz.Admin.LastSwingHigh != null || symbolInterval.Dlz.Admin.LastSwingLow != null
+                    || symbolInterval.Dlz.Admin.TriggerRangeHigh != null || symbolInterval.Dlz.Admin.TriggerRangeLow != null)
                     throw new InvalidOperationException(
                         $"{symbol.Name} {symbolInterval.Interval!.Name}: " +
                         "DlzAdmin swing points not null.");

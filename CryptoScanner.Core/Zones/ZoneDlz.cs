@@ -136,14 +136,21 @@ public class ZoneDlz
 
                         // Creation date is the date of the last swing point (SH/SL)
                         // TODO: The last swing low and high are now extracted from the boundaries of the zone, that is not 100% correct
+                        //
+                        // Which is why this seeds the TRIGGER range and no longer the swing values.
+                        // A zone boundary is not a swing, so writing it into LastSwingLow/High claimed
+                        // an accuracy this path does not have; all it is really for is giving the first
+                        // candle after a restart something to compare against, so the scanner does not
+                        // queue a full recalculation for every symbol at once. The real swings arrive
+                        // with the first CalculatePivots and take the trigger range with them.
                         CandleTime timeLastSwingPoint = zone.OpenTime;
                         if (symbolInterval.Dlz.Admin.TimeLastSwingPoint == null || timeLastSwingPoint > symbolInterval.Dlz.Admin.TimeLastSwingPoint)
                         {
                             symbolInterval.Dlz.Admin.TimeLastSwingPoint = timeLastSwingPoint;
-                            if (symbolInterval.Dlz.Admin.LastSwingLow == null || zone.Bottom > symbolInterval.Dlz.Admin.LastSwingLow)
-                                symbolInterval.Dlz.Admin.LastSwingLow = zone.Bottom;
-                            if (symbolInterval.Dlz.Admin.LastSwingHigh == null || zone.Top > symbolInterval.Dlz.Admin.LastSwingHigh)
-                                symbolInterval.Dlz.Admin.LastSwingHigh = zone.Top;
+                            if (symbolInterval.Dlz.Admin.TriggerRangeLow == null || zone.Bottom > symbolInterval.Dlz.Admin.TriggerRangeLow)
+                                symbolInterval.Dlz.Admin.TriggerRangeLow = zone.Bottom;
+                            if (symbolInterval.Dlz.Admin.TriggerRangeHigh == null || zone.Top > symbolInterval.Dlz.Admin.TriggerRangeHigh)
+                                symbolInterval.Dlz.Admin.TriggerRangeHigh = zone.Top;
                         }
                     }
                 }
@@ -662,10 +669,12 @@ public class ZoneDlz
             var indicator = trendZigZagIndicatorList[(trend.TrendType, trend.UseHighLow)];
             if (indicator.LastSwingPoint != null)
                 symbolIntervalData.Dlz.Admin.TimeLastSwingPoint = indicator.LastSwingPoint.Candle.OpenTime;
-            if (indicator.LastSwingLow != null)
-                symbolIntervalData.Dlz.Admin.LastSwingLow = (decimal)indicator.LastSwingLow.Value;
-            if (indicator.LastSwingHigh != null)
-                symbolIntervalData.Dlz.Admin.LastSwingHigh = (decimal)indicator.LastSwingHigh.Value;
+            // Writes the swing values, and re-seeds the trigger range only when they moved. Assigning
+            // the two separately here is what made the same symbol queue a recalculation every hour
+            // and end on nothing - see the remarks on CryptoSymbolIntervalZoneCalc.
+            symbolIntervalData.Dlz.Admin.ApplySwingRange(
+                indicator.LastSwingLow != null ? (decimal)indicator.LastSwingLow.Value : null,
+                indicator.LastSwingHigh != null ? (decimal)indicator.LastSwingHigh.Value : null);
 
             // Same snapshot as above, for the same reason.
             foreach (var indicatorX in indicators)
