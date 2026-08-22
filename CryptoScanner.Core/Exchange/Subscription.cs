@@ -117,7 +117,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     /// <summary>
     /// Is this subscription supposed to be delivering data right now? True for every exchange that
     /// trades around the clock, which is all of them except the stock broker: that one is closed at
-    /// night, in the weekend and on holidays. The silence check in
+    /// night, in the weekend and on holidays. The inactivity check in
     /// <see cref="SubscriptionManager.NeedsRestart"/> leaves a subscription that says no alone,
     /// because restarting it every four minutes only means reconnecting for nothing.
     /// </summary>
@@ -140,7 +140,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
         ErrorDuringStartup = false;
         ScannerLog.Logger.Trace($"{TickerType} subscription {Name} starting");
 
-        // Give the subscription a fresh starting point, otherwise the silence check would fire
+        // Give the subscription a fresh starting point, otherwise the inactivity check would fire
         // immediately on a ticker that has not had the chance to receive anything yet.
         MarkActivity();
 
@@ -261,7 +261,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     /// <para>
     /// The flag still goes up, so a resubscribe that never lands is restarted; TickerConnectionRestored
     /// takes it down again the moment the package succeeds. If it never succeeds, ConnectionIsLost stays
-    /// true as well, and the silence check in SubscriptionManager.NeedsRestart is the outer net.
+    /// true as well, and the inactivity check in SubscriptionManager.NeedsRestart is the outer net.
     /// </para>
     /// </summary>
     internal void TickerResubscribingFailed(Error error)

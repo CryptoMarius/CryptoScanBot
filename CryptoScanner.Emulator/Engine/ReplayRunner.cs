@@ -488,10 +488,10 @@ public sealed class ReplayRunner
                 dataCount += symbolInterval.Data.Count;
                 signalCount += symbolInterval.SignalList.Count;
                 // SMC keeps a single flat list, DLZ/FVG split theirs into open and closed lists.
-                zonesOpen += symbolInterval.DlzZones.LongOpen.Count + symbolInterval.DlzZones.ShortOpen.Count
+                zonesOpen += symbolInterval.Dlz.Zones.LongOpen.Count + symbolInterval.Dlz.Zones.ShortOpen.Count
                     + symbolInterval.FvgZones.LongOpen.Count + symbolInterval.FvgZones.ShortOpen.Count
                     + symbolInterval.SmcZones.Count;
-                zonesClosed += symbolInterval.DlzZones.LongClosed.Count + symbolInterval.DlzZones.ShortClosed.Count
+                zonesClosed += symbolInterval.Dlz.Zones.LongClosed.Count + symbolInterval.Dlz.Zones.ShortClosed.Count
                     + symbolInterval.FvgZones.LongClosed.Count + symbolInterval.FvgZones.ShortClosed.Count;
             }
         }
@@ -932,7 +932,7 @@ public sealed class ReplayRunner
                 symbolInterval.LastCandleSynchronized = null;
 
                 // DLZ swing tracking
-                symbolInterval.DlzAdmin.Reset();
+                symbolInterval.Dlz.Admin.Reset();
 
                 // SMC parameter cache (forces full rescan)
                 symbolInterval.SmcCachedAverageWindow = -1;
@@ -1000,7 +1000,7 @@ public sealed class ReplayRunner
                         $"{symbol.Name} {symbolInterval.Interval!.Name}: " +
                         $"{symbolInterval.Data.Count} leftover indicator data entries.");
 
-                if (symbolInterval.DlzAdmin.LastSwingHigh != null || symbolInterval.DlzAdmin.LastSwingLow != null)
+                if (symbolInterval.Dlz.Admin.LastSwingHigh != null || symbolInterval.Dlz.Admin.LastSwingLow != null)
                     throw new InvalidOperationException(
                         $"{symbol.Name} {symbolInterval.Interval!.Name}: " +
                         "DlzAdmin swing points not null.");

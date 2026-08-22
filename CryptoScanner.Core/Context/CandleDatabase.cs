@@ -213,8 +213,16 @@ public class CandleDatabase : IDisposable
             "  SymbolId    INTEGER NOT NULL," +
             "  IntervalId  INTEGER NOT NULL," +
             "  LastSync    INTEGER NULL," +
+            "  DlzMarker   INTEGER NULL," +
             "  PRIMARY KEY (SymbolId, IntervalId)" +
             ") WITHOUT ROWID");
+
+        // DlzMarker = CryptoSymbolIntervalDlz.CommittedPivotMarker: the confirming pivot up to which
+        // the dominance verdicts are final. Without it every restart redoes the settled part of the
+        // history, even though its zones are sitting in the main database already. Added later than
+        // the table, so an existing file needs the column bolted on - the same idempotent alter the
+        // main database uses for this.
+        try { db.Connection.Execute("alter table SymbolInterval add DlzMarker INTEGER NULL"); } catch { } // ignore
 
         // Local symbol registry. Candle.SymbolId / SymbolInterval.SymbolId point HERE, not at
         // the Symbol table in CryptoScanBot.db. That main database is regularly thrown away and
@@ -561,9 +569,9 @@ public class CandleDatabase : IDisposable
 
 
     /// <summary>
-    /// Upsert <see cref="CryptoSymbolInterval.LastCandleSynchronized"/> for one (symbol,
-    /// interval) into the SymbolInterval table. Runs inside the caller's transaction
-    /// so it commits atomically together with the candle inserts.
+    /// Upsert <see cref="CryptoSymbolInterval.LastCandleSynchronized"/> and the DLZ committed
+    /// marker for one (symbol, interval) into the SymbolInterval table. Runs inside the caller's
+    /// transaction so it commits atomically together with the candle inserts.
     /// </summary>
     private static void SaveSymbolInterval(SqliteConnection connection, SqliteTransaction tx, int localSymbolId,
         CryptoSymbolInterval symbolInterval)
@@ -571,8 +579,8 @@ public class CandleDatabase : IDisposable
         using var cmd = connection.CreateCommand();
         cmd.Transaction = tx;
         cmd.CommandText =
-            "INSERT OR REPLACE INTO SymbolInterval (SymbolId, IntervalId, LastSync) " +
-            "VALUES ($SymbolId, $IntervalId, $LastSync)";
+            "INSERT OR REPLACE INTO SymbolInterval (SymbolId, IntervalId, LastSync, DlzMarker) " +
+            "VALUES ($SymbolId, $IntervalId, $LastSync, $DlzMarker)";
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
@@ -591,19 +599,26 @@ public class CandleDatabase : IDisposable
             : (object)DBNull.Value;
         cmd.Parameters.Add(pLastSync);
 
+        var pDlzMarker = cmd.CreateParameter();
+        pDlzMarker.ParameterName = "$DlzMarker";
+        pDlzMarker.Value = symbolInterval.Dlz.CommittedPivotMarker.HasValue
+            ? (long)symbolInterval.Dlz.CommittedPivotMarker.Value.Minutes
+            : (object)DBNull.Value;
+        cmd.Parameters.Add(pDlzMarker);
+
         cmd.ExecuteNonQuery();
     }
 
 
     /// <summary>
-    /// Restore <see cref="CryptoSymbolInterval.LastCandleSynchronized"/> for every interval
-    /// of the symbol from the SymbolInterval table. Called by <see cref="LoadCandlesForSymbol"/>
-    /// after the candles themselves have been loaded.
+    /// Restore <see cref="CryptoSymbolInterval.LastCandleSynchronized"/> and the DLZ committed
+    /// marker for every interval of the symbol from the SymbolInterval table. Called by
+    /// <see cref="LoadCandlesForSymbol"/> after the candles themselves have been loaded.
     /// </summary>
     private static void LoadSymbolIntervals(SqliteConnection connection, int localSymbolId, CryptoSymbol symbol)
     {
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "SELECT IntervalId, LastSync FROM SymbolInterval WHERE SymbolId = $SymbolId";
+        cmd.CommandText = "SELECT IntervalId, LastSync, DlzMarker FROM SymbolInterval WHERE SymbolId = $SymbolId";
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
@@ -625,6 +640,14 @@ public class CandleDatabase : IDisposable
                 symbolInterval.LastCandleSynchronized = null;
             else
                 symbolInterval.LastCandleSynchronized = new CandleTime((uint)reader.GetInt64(1));
+
+            // The marker alone is not enough to resume on: the zones it vouches for live in the main
+            // database and are only put back by ZoneDlz.LoadZonesForSymbol, which rebuilds the
+            // committed store from them and drops the marker when it finds nothing behind it.
+            if (reader.IsDBNull(2))
+                symbolInterval.Dlz.CommittedPivotMarker = null;
+            else
+                symbolInterval.Dlz.CommittedPivotMarker = new CandleTime((uint)reader.GetInt64(2));
         }
     }
 

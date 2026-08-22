@@ -62,6 +62,20 @@ NO_CANDLE_BAD_PERCENTAGE = 40.0
 DROPS_ATTENTION_PER_HOUR = 2.0     # verbroken websocketverbindingen per uur
 DROPS_BAD_PER_HOUR = 10.0
 OUTAGE_ATTENTION_MINUTES = 5.0     # zolang duurde de langste onderbreking voordat het opvalt
+# Volledige herbouwrondes per uur: de scanner breekt AL zijn abonnementen af en zet ze opnieuw op.
+# Dat is de zware variant - een deelherstart raakt alleen de gemelde abonnementen, deze raakt alles,
+# en elke gecachte ticker verliest de 1m-candle die hij op dat moment aan het vullen was.
+#
+# Deze meting bestaat sinds 22-08-2026 omdat het rapport de nacht ervoor de verkeerde exchange
+# aanwees. HyperLiquid Spot kreeg "goed" terwijl hij 57 keer per nacht zijn hele feed opnieuw opbouwde
+# - eens per zeven minuten, de hele run - en HyperLiquid Futures kreeg "aandacht" voor drops die
+# binnen een seconde herstelden. De reden was simpel: deze regels stonden niet in PATTERNS, dus werden
+# ze niet gelezen.
+#
+# De grenzen zijn op die nacht geijkt: 17 van de 19 markten deden nul herbouwrondes, Kucoin Futures
+# 2,1 per uur en HyperLiquid Spot 5,7 per uur. Eén per uur is dus al ver buiten normaal.
+REBUILD_ATTENTION_PER_HOUR = 1.0
+REBUILD_BAD_PER_HOUR = 4.0
 # Fouten worden INGEDEELD en niet geteld. Er is geen drempel meer, en dat is een besluit met een
 # meting eronder (Marius, 2026-08-21). Tellen kan de twee gevallen die er toe doen niet uit elkaar
 # houden, en beide kwamen in dezelfde week voor:
@@ -175,10 +189,16 @@ ERRORS_NOT_OURS = (
 )
 
 BAROMETER_DIP_MINUTES = 10
-# De grens die SubscriptionManager.MaximumTickerSilence in de scanner aanhoudt. Alleen om de meting
-# in het rapport ernaast te kunnen zetten; wijzigen hier verandert niets in de scanner. Houd hem
-# gelijk aan de constante daar (5 minuten sinds 18-08-2026).
-SILENCE_LIMIT_MINUTES = 5
+# De grens die de scanner aanhoudt voor inactiviteit. Alleen om de meting in het rapport ernaast te
+# kunnen zetten; wijzigen hier verandert niets in de scanner.
+#
+# Sinds 22-08-2026 staat die grens per exchange in ExchangeOptions.MaximumTickerInactivity, omdat wat
+# "inactief" betekent een eigenschap van de markt is en niet van de scanner. De standaard daar is nog
+# steeds vijf minuten, en dat is wat hier als maatlat blijft staan: het rapport hoort te laten zien
+# hoeveel symbolen boven de STANDAARD uitkomen, want dat is het getal waaraan je ziet of een exchange
+# een eigen grens nodig heeft. HyperLiquid Spot staat sinds die dag op 12 uur en Kucoin Futures op
+# 45 minuten, allebei gemeten op de nacht van 21/22-08-2026.
+INACTIVITY_LIMIT_MINUTES = 5
 # Een gemiddelde verder dan dit van nul is geen markt maar een storing. Zelfde grens die de grafiek
 # hanteert (BarometerCandleFields.GetScale, IgnoreBeyond).
 BAROMETER_EXTREME_PERCENTAGE = 50.0
@@ -1246,8 +1266,8 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
             exchange_facts["missingSharePercentage"] = round(share, 3)
             exchange_facts["symbolsWithGaps"] = len(gaps)
 
-            # ---- de langste stilte per symbool -------------------------------------------------
-            # Dit meet waar SubscriptionManager.MaximumTickerSilence op gezet moet worden. Die stond
+            # ---- de langste inactiviteit per symbool -------------------------------------------------
+            # Dit meet waar ExchangeOptions.MaximumTickerInactivity op gezet moet worden. Die stond
             # op vier minuten en staat sinds 18-08-2026 op vijf, en dat was een gok: geen enkele
             # exchange documenteert hoe lang een munt zonder handel kan zitten, want dat is een
             # eigenschap van de markt en niet van de API.
@@ -1255,14 +1275,14 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
             # Gemeten op VOLUME NUL, niet op ontbrekende candles. Dat onderscheid is het hele punt:
             # bij KlineDelivery.TimerFlush schrijft de scanner elke minuut een candle weg, ook als er
             # niets verhandeld is (hij herhaalt dan de vorige slotkoers met volume nul). De
-            # minuutreeks heeft dus geen gaten en zegt niets over stilte - op de nacht van
+            # minuutreeks heeft dus geen gaten en zegt niets over inactiviteit - op de nacht van
             # 17/18-08-2026 leverde geen enkel symbool op vier van de vijf beproefde exchanges ook
             # maar één ontbrekende minuut op. Een aaneengesloten reeks candles met volume nul is wel
             # precies wat de websocket als "geen data" zou hebben gezien.
             #
             # De barometer blijft er buiten: die schrijft elke minuut en zijn volumeveld is het aantal
             # munten, geen handelsvolume.
-            silences = []
+            inactivities = []
             for row in gap_rows:
                 if row["SymbolId"] in barometer_ids or row["have"] < 2:
                     continue
@@ -1279,44 +1299,45 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                     else:
                         current = 0
                 if longest > 0:
-                    silences.append((longest,
+                    inactivities.append((longest,
                                      local_symbols.get(row["SymbolId"], str(row["SymbolId"]))))
 
-            lines.append("**Langste stilte per symbool**")
+            lines.append("**Langste inactiviteit per symbool**")
             lines.append("")
             lines.append("Het langste aaneengesloten aantal minuten zonder handel (candles met volume "
-                         "nul). Dit is de grootheid waar de stiltecontrole van de scanner tegenaan "
-                         "loopt, niet het aantal ontbrekende candles - die worden door de flush-timer "
-                         "opgevuld.")
+                         "nul). Dit is de grootheid waar de inactiviteitscontrole van de scanner "
+                         "tegenaan loopt, niet het aantal ontbrekende candles - die worden door de "
+                         "flush-timer opgevuld.")
             lines.append("")
-            if not silences:
+            if not inactivities:
                 lines.append("Geen enkel symbool had een minuut zonder handel. Dat komt voor bij een "
                              "exchange die alleen liquide munten in de selectie heeft, en dan zegt "
                              "deze nacht niets over waar de grens moet liggen.")
-                exchange_facts["longestSilenceMinutes"] = 0
-                exchange_facts["symbolsAboveSilenceLimit"] = 0
+                exchange_facts["longestInactivityMinutes"] = 0
+                exchange_facts["symbolsAboveInactivityLimit"] = 0
             else:
-                silences.sort(reverse=True)
-                longest_overall = silences[0][0]
-                above = [entry for entry in silences if entry[0] >= SILENCE_LIMIT_MINUTES]
-                lines.append("| Symbool | Langste stilte (minuten) |")
+                inactivities.sort(reverse=True)
+                longest_overall = inactivities[0][0]
+                above = [entry for entry in inactivities if entry[0] >= INACTIVITY_LIMIT_MINUTES]
+                lines.append("| Symbool | Langste inactiviteit (minuten) |")
                 lines.append("|---|---|")
-                for minutes, name in silences[:top_count]:
+                for minutes, name in inactivities[:top_count]:
                     lines.append("| {} | {:,} |".format(name, minutes))
-                if len(silences) > top_count:
+                if len(inactivities) > top_count:
                     lines.append("")
-                    lines.append("({} symbolen hadden een kortere stilte)".format(
-                        len(silences) - top_count))
+                    lines.append("({} symbolen waren korter inactief)".format(
+                        len(inactivities) - top_count))
                 lines.append("")
-                lines.append("Langste stilte van deze exchange: {:,} minuten. Symbolen die {} minuten "
-                             "of langer stil waren: {} van de {} met candles.".format(
-                                 longest_overall, SILENCE_LIMIT_MINUTES, len(above), len(gap_rows)))
+                lines.append("Langste inactiviteit van deze exchange: {:,} minuten. Symbolen die {} "
+                             "minuten of langer inactief waren: {} van de {} met candles.".format(
+                                 longest_overall, INACTIVITY_LIMIT_MINUTES, len(above), len(gap_rows)))
                 lines.append("")
-                lines.append("De grens in de scanner staat op {} minuten "
-                             "(SubscriptionManager.MaximumTickerSilence)."
-                             .format(SILENCE_LIMIT_MINUTES))
+                lines.append("De scanner beschouwt een abonnement als dood zodra het {} minuten niets "
+                             "geleverd heeft (ExchangeOptions.MaximumTickerInactivity, per exchange in "
+                             "te stellen; dit is de standaardwaarde)."
+                             .format(INACTIVITY_LIMIT_MINUTES))
                 lines.append("")
-                lines.append("**Lees dit getal niet als het aantal herstarts.** De stiltecontrole kijkt "
+                lines.append("**Lees dit getal niet als het aantal herstarts.** De inactiviteitscontrole kijkt "
                              "naar het ABONNEMENT en niet naar het symbool, en een abonnement bedient "
                              "er tot SymbolLimitPerSubscription. Zolang één munt van de groep handelt "
                              "is het abonnement actief. Op de nacht van 17/18-08-2026 waren op Coinbase "
@@ -1326,8 +1347,8 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                              "bij een exchange die op één symbool per abonnement staat (HyperLiquid). "
                              "Vergelijk hem daarom met SymbolLimitPerSubscription van deze exchange en "
                              "met de herstartrondes onder Streams.")
-                exchange_facts["longestSilenceMinutes"] = longest_overall
-                exchange_facts["symbolsAboveSilenceLimit"] = len(above)
+                exchange_facts["longestInactivityMinutes"] = longest_overall
+                exchange_facts["symbolsAboveInactivityLimit"] = len(above)
             lines.append("")
 
             # ---- plausibiliteit ---------------------------------------------------------------
@@ -1439,19 +1460,19 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                             lines.append("")
                             exchange_facts["subscribed"] = subscribed_count
                         elif subscribed_count:
-                            silent = subscribed_count - received
-                            silent_share = percentage(max(0, silent), subscribed_count)
-                            if silent > 0:
+                            without_candles = subscribed_count - received
+                            without_share = percentage(max(0, without_candles), subscribed_count)
+                            if without_candles > 0:
                                 lines.append("{} van de {} geabonneerde symbolen ({:.1f}%) leverden "
                                              "geen enkele candle tijdens het venster.".format(
-                                                 silent, subscribed_count, silent_share))
+                                                 without_candles, subscribed_count, without_share))
                                 lines.append("")
-                            if silent_share > NO_CANDLE_BAD_PERCENTAGE:
+                            if without_share > NO_CANDLE_BAD_PERCENTAGE:
                                 verdict = worst(verdict, BAD)
-                            elif silent_share > NO_CANDLE_ATTENTION_PERCENTAGE:
+                            elif without_share > NO_CANDLE_ATTENTION_PERCENTAGE:
                                 verdict = worst(verdict, ATTENTION)
                             exchange_facts["subscribed"] = subscribed_count
-                            exchange_facts["silentSymbols"] = max(0, silent)
+                            exchange_facts["symbolsWithoutCandlesInWindow"] = max(0, without_candles)
                         else:
                             lines.append("Geen abonnementsregel in het log, dus de dekking kan niet "
                                          "beoordeeld worden: de instrumentenlijst alleen zegt niet "
@@ -1989,6 +2010,14 @@ PATTERNS = {
     # the Dutch verb is kept so logs from older builds still parse.
     "restart": re.compile(r"(?:herstarten|restarting) (?P<count>\d+) (?P<type>\S+) subscriptions \((?P<state>\w+)\)"),
     "symbolsChanged": re.compile(r"(?P<type>\S+) symbols changed:"),
+    # De inactiviteitscontrole van ScannerSession.TimerCheckDataStream_Tick. Het nummer is een teller die
+    # doortelt zolang er iets stils gevonden wordt en pas op nul gaat als een controle helemaal
+    # schoon is - blijft hij oplopen, dan is de toestand blijvend en niet een incident.
+    "tickerStopped": re.compile(r"One of (?P<type>\S+) tickers has stopped \(check (?P<count>\d+)\)"),
+    # De volledige herbouw: alles afbreken en opnieuw opzetten. De deelherstart hierboven eindigt op
+    # "(stopping)" met haakjes en een aantal ervoor, deze regel eindigt kaal op "stopping". Vandaar
+    # het anker op het einde - zonder dat telt elke deelherstart hier ook mee.
+    "rebuildStarting": re.compile(r"(?P<type>\S+) subscriptions stopping\s*$"),
     "nowServing": re.compile(r"now serving (?P<rest>.*)"),
     "symbolCount": re.compile(r"symbols=(?P<count>\d+)"),
 }
@@ -2074,6 +2103,7 @@ def check_streams(report, entries, window_hours):
     # een herstart komt die regel er niet meer.
     outages = []                      # afgeronde storingen: naam, begin, einde, manier
     open_outages = {}                 # groepsnaam -> moment van wegvallen
+    highest_check = [0]               # hoogste stand van de checkteller van de inactiviteitscontrole
 
     for moment, level, logger, message in entries:
         for key, pattern in PATTERNS.items():
@@ -2098,6 +2128,8 @@ def check_streams(report, entries, window_hours):
                         outages.append({"name": name, "start": start, "end": moment,
                                         "how": "herstart"})
                     open_outages.clear()
+            elif key == "tickerStopped":
+                highest_check[0] = max(highest_check[0], int(match.group("count")))
             elif key == "startedSubscriptions":
                 started_lines.append("{:%Y-%m-%d %H:%M} {}".format(moment, message.strip())
                                      if moment else message.strip())
@@ -2134,12 +2166,28 @@ def check_streams(report, entries, window_hours):
     # Het oordeel rust op de VERBINDINGEN, niet op de abonnementen: anders krijgt een exchange met
     # veel abonnementen per socket automatisch een slechter cijfer dan een met weinig, terwijl er
     # precies evenveel misging.
+    # De inactiviteitscontrole en de volledige herbouw staan LOS van de onderbrekingen hierboven. Een
+    # abonnement dat wegvalt meldt dat zelf ("connection lost"); een abonnement dat blijft staan maar
+    # niets meer levert wordt door die controle gevonden, en die weg loopt via heel andere logregels.
+    # Alleen op de eerste letten laat precies de exchange met het echte probleem op groen staan.
+    ticker_stopped = counts["tickerStopped"]
+    rebuilds = counts["rebuildStarting"]
+    rebuilds_per_hour = rebuilds / window_hours if window_hours else 0.0
+    # De teller loopt door zolang er iets stils gevonden wordt en gaat pas op nul bij een schone
+    # controle. Staat hij aan het eind even hoog als het aantal meldingen, dan is er de hele run geen
+    # schone controle geweest en is de inactiviteit een blijvende toestand van deze markt, geen incident.
+    never_settled = ticker_stopped > 1 and highest_check[0] >= ticker_stopped
+
     verdict = GOOD
     if never_restored:
         verdict = BAD
     elif connection_drops_per_hour > DROPS_BAD_PER_HOUR:
         verdict = BAD
+    elif rebuilds_per_hour > REBUILD_BAD_PER_HOUR:
+        verdict = BAD
     elif connection_drops_per_hour > DROPS_ATTENTION_PER_HOUR or longest > OUTAGE_ATTENTION_MINUTES:
+        verdict = ATTENTION
+    elif rebuilds_per_hour > REBUILD_ATTENTION_PER_HOUR:
         verdict = ATTENTION
 
     lines = ["| Meting | Waarde |", "|---|---|",
@@ -2152,8 +2200,34 @@ def check_streams(report, entries, window_hours):
              "| Niet hersteld | **{}** |".format(len(never_restored)),
              "| Langste onderbreking | {:.1f} minuten |".format(longest),
              "| Herstartrondes (afgerond) | {} |".format(restart_states.get("finished", 0)),
+             "| Abonnementen te lang inactief | {} |".format(ticker_stopped),
+             "| Volledige herbouwrondes | {} ({:.2f} per uur) |".format(rebuilds, rebuilds_per_hour),
              "| Wijzigingen in de symbolenlijst | {} |".format(counts["symbolsChanged"]),
              ""]
+
+    if ticker_stopped or rebuilds:
+        lines.append("**Inactieve abonnementen**")
+        lines.append("")
+        lines.append("De scanner controleert elke vijf minuten of elk abonnement nog iets levert "
+                     "(`SubscriptionManager.NeedsRestart`, grens "
+                     "`ExchangeOptions.MaximumTickerInactivity`). Slaat die aan, dan volgt eerst een "
+                     "deelherstart van alleen de gemelde abonnementen; blijft het aanslaan, dan "
+                     "wordt ALLES afgebroken en opnieuw opgezet. Die tweede vorm is duur: elke "
+                     "gecachte ticker verliest de 1m-candle die hij op dat moment aan het vullen "
+                     "was, dus de gaten in de minuutreeks komen hier vandaan.")
+        lines.append("")
+        if never_settled:
+            lines.append("De checkteller liep op tot {} en is nooit teruggevallen naar nul. Er is "
+                         "dus geen enkele schone controle geweest in dit venster: de inactiviteit "
+                         "is een blijvende eigenschap van deze markt en niet een incident. Zet "
+                         "`MaximumTickerInactivity` voor deze exchange ruimer - de meting die daarvoor "
+                         "nodig is staat hierboven bij de langste inactiviteit per symbool.".format(
+                             highest_check[0]))
+            lines.append("")
+        elif ticker_stopped:
+            lines.append("De checkteller viel tussendoor terug naar nul, dus er waren ook schone "
+                         "controles. Het herstelt zichzelf, maar elke ronde kost wel candles.")
+            lines.append("")
 
     if outages or never_restored:
         lines.append("**Alle onderbrekingen**")
@@ -2228,6 +2302,11 @@ def check_streams(report, entries, window_hours):
         key_points.insert(0, "{} niet hersteld".format(len(never_restored)))
     if longest > OUTAGE_ATTENTION_MINUTES:
         key_points.append("langste {:.0f} minuten".format(longest))
+    if rebuilds:
+        key_points.append("{} volledige herbouwrondes ({:.2f} per uur)".format(
+            rebuilds, rebuilds_per_hour))
+    if never_settled:
+        key_points.append("de hele run abonnementen te lang inactief, nooit een schone controle")
 
     facts = {
         "outages": drops,
@@ -2239,6 +2318,11 @@ def check_streams(report, entries, window_hours):
         "dropsPerHour": round(drops_per_hour, 3),
         "longestOutageMinutes": round(longest, 2),
         "restartRounds": restart_states.get("finished", 0),
+        "tickerStopped": ticker_stopped,
+        "highestInactivityCheck": highest_check[0],
+        "inactivityNeverSettled": never_settled,
+        "fullRebuilds": rebuilds,
+        "fullRebuildsPerHour": round(rebuilds_per_hour, 3),
         "symbolListChanges": counts["symbolsChanged"],
         "outageList": [{"name": outage["name"],
                         "start": str(outage["start"]) if outage["start"] else None,

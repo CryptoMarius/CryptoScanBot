@@ -71,7 +71,7 @@ public class Api : ExchangeBase
             // without a trade. Liveness is already covered, and better: the library pings the socket every
             // 10 seconds and aborts it when the pong does not arrive within 10 seconds
             // (SocketApiClient.KeepAliveInterval / KeepAliveTimeout, both 10s by default), which works
-            // whether or not there is any trading. SubscriptionManager.MaximumTickerSilence is the outer
+            // whether or not there is any trading. SubscriptionManager.MaximumTickerInactivity is the outer
             // net for a socket that stays up but stops delivering.
             options.SocketNoDataTimeout = TimeSpan.Zero;
             //options.Options.SocketNoDataTimeout = options.SocketNoDataTimeout;

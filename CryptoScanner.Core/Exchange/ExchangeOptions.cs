@@ -105,12 +105,34 @@ public class ExchangeOptions // : IExchangeOptions
     // How the exchange delivers completed klines over its WebSocket feed.
     public KlineDelivery KlineDelivery { get; set; } = KlineDelivery.FinalEvent;
 
+    // A 1m subscription that has not delivered anything for this long is considered dead by
+    // SubscriptionManager.NeedsRestart. Five minutes is the value that used to be hardcoded there, so
+    // leaving an exchange on this default changes nothing.
+    //
+    // It belongs with the exchange because what "inactive" means is a property of the market, not of the
+    // scanner. An exchange that pushes a kline event every minute whether or not anyone trades keeps
+    // every subscription alive by itself; an exchange that only pushes on a trade lets an illiquid coin
+    // go quiet for as long as that coin is not traded, and five minutes then marks a perfectly healthy
+    // subscription as dead. Measured on the night of 21/22-08-2026: HyperLiquid Spot rebuilt all six of
+    // its bundles 57 times in ten hours, once every seven minutes, from the first check to the last,
+    // because 44 of its 55 subscriptions had gone quiet for longer than five minutes - the longest for
+    // ten hours straight. It was also the worst gap picture of all nineteen markets that night, 49
+    // missing minutes over 19 symbols where the runner-up had 12, which is the reconnect costing the
+    // cached ticker the 1m candle it was filling.
+    //
+    // Raising it is cheap: a socket that stays up but stops delivering is ALSO covered from the other
+    // side by the library ping every 10 seconds, so this is the outer net, not the only one.
+    public static readonly TimeSpan DefaultMaximumTickerInactivity = TimeSpan.FromMinutes(5);
+
+    public TimeSpan MaximumTickerInactivity { get; set; } = DefaultMaximumTickerInactivity;
+
 
     public void SetDefaultOptions(string exchangeName, string defaultQuote, int candleLimit, bool limitAmountOfSymbols,
         int symbolLimitPerSubscription, int subscriptionsPerBundle = 10,
         KlineDelivery klineDelivery = KlineDelivery.FinalEvent,
         double minimalVolume = DefaultMinimalVolume,
-        string? pauseSymbol = null)
+        string? pauseSymbol = null,
+        TimeSpan? maximumTickerInactivity = null)
     {
         ExchangeName = exchangeName;
         DefaultQuote = defaultQuote;
@@ -122,5 +144,7 @@ public class ExchangeOptions // : IExchangeOptions
         MinimalVolume = minimalVolume;
         // Most exchanges simply call it BTC plus the quote, so only the exceptions have to say so
         PauseSymbol = pauseSymbol ?? "BTC" + defaultQuote;
+        // Only the markets that are thin enough to go quiet on their own have to state a boundary
+        MaximumTickerInactivity = maximumTickerInactivity ?? DefaultMaximumTickerInactivity;
     }
 }

@@ -53,7 +53,7 @@ public class Api : ExchangeBase
         // night of 16-08-2026 the twelve quietest went 31 to 81 minutes without a single trade - so a
         // subscription of 4 symbols regularly had nothing to deliver for over a minute. Replaying that
         // night against the stored 1m candles: with 4 symbols per subscription the groups were
-        // completely silent for 1548 minutes (longest stretch 7 minutes), with 20 or 25 symbols not for
+        // completely inactive for 1548 minutes (longest stretch 7 minutes), with 20 or 25 symbols not for
         // a single minute. Hence 25, which leaves room for the symbol list to shrink.
         ExchangeOptions.SetDefaultOptions("Coinbase Spot", "USD", 300, false, 25,
             klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 240_000);
@@ -82,9 +82,9 @@ public class Api : ExchangeBase
             // Why it used to be two minutes here while the others were on one (kept as background, the
             // measurement is still the reason this exchange bundles 25 symbols per subscription):
             // this is what closes a socket that stopped delivering, and on this exchange the feed is
-            // trades - so it doubled as a silence detector for the coins on that connection. Two
+            // trades - so it doubled as an inactivity detector for the coins on that connection. Two
             // minutes gave the 25 symbols of a subscription room to be quiet together on a slow
-            // night, and still left the socket reconnected before SubscriptionManager.MaximumTickerSilence,
+            // night, and still left the socket reconnected before SubscriptionManager.MaximumTickerInactivity,
             // which is the outer net (four minutes then, five now).
             // Switched OFF on 18-08-2026 (zero disables the check: SocketConnection only starts its timeout
             // task when Parameters.Timeout > 0). This watchdog measured the wrong thing on a kline feed -
@@ -93,7 +93,7 @@ public class Api : ExchangeBase
             // without a trade. Liveness is already covered, and better: the library pings the socket every
             // 10 seconds and aborts it when the pong does not arrive within 10 seconds
             // (SocketApiClient.KeepAliveInterval / KeepAliveTimeout, both 10s by default), which works
-            // whether or not there is any trading. SubscriptionManager.MaximumTickerSilence is the outer
+            // whether or not there is any trading. SubscriptionManager.MaximumTickerInactivity is the outer
             // net for a socket that stays up but stops delivering.
             options.SocketNoDataTimeout = TimeSpan.Zero;
             //options.Options.SocketNoDataTimeout = options.SocketNoDataTimeout;

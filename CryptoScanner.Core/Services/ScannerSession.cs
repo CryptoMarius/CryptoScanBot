@@ -511,7 +511,7 @@ public class ScannerSession : IScannerSession
     }
 
     // Number of consecutive checks that found a stalled ticker. Restarting the whole scanner session is
-    // a heavy hammer for a single silent subscription, so the first attempt only restarts the affected
+    // a heavy hammer for a single inactive subscription, so the first attempt only restarts the affected
     // subscriptions and the session restart is kept as the fallback.
     private int _dataStreamProblemCount = 0;
 

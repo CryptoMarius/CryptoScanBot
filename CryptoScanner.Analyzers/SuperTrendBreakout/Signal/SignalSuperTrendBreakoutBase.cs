@@ -70,7 +70,7 @@ public class SignalSuperTrendBreakoutBase : SignalCreateBase
                 continue;
 
             var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
-            var zones = symbolIntervalData.DlzZones;
+            var zones = symbolIntervalData.Dlz.Zones;
 
             // Check open zones first
             if (settings.IncludeOpenZones)

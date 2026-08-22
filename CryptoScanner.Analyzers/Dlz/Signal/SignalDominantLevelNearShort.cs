@@ -25,7 +25,7 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
                 // Capture reference so a concurrent DlzZones swap mid-loop does not cause IndexOutOfRangeException
-                var shortOpen = symbolIntervalData.DlzZones.ShortOpen;
+                var shortOpen = symbolIntervalData.Dlz.Zones.ShortOpen;
                 int index = 0;
                 decimal distance = 100m;
                 while (index < shortOpen.Count) // sorted on Zone.Bottom (ascending)
@@ -79,9 +79,9 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                         break;
                 }
 
-                symbolIntervalData.DlzZoneDistance.BestShortZone = distance;
+                symbolIntervalData.Dlz.ZoneDistance.BestShortZone = distance;
                 if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                    ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.DlzZones.ShortOpen.Count} short zones, closest {distance}");
+                    ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.Dlz.Zones.ShortOpen.Count} short zones, closest {distance}");
                 if (distance < closestZone)
                     closestZone = distance;
             }

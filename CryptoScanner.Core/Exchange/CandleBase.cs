@@ -104,6 +104,7 @@ public class CandleBase(ExchangeBase api)
             return;
 
         using IDisposable client = Api.GetClient();
+        bool gapWasFilled = false;
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             // The session was stopped (exchange switch, standby, shutdown). One symbol means one round
@@ -113,11 +114,66 @@ public class CandleBase(ExchangeBase api)
             if (ExchangeBase.CancellationToken.IsCancellationRequested)
                 break;
 
+            // LastCandleSynchronized only moves when this fetch actually brought candles in. While the
+            // socket keeps up it is already at "now" and the loop inside returns without fetching, so
+            // a move means the socket missed that stretch - a dead stream, a standby, a restart.
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            CandleTime? synchronizedBefore = symbolInterval.LastCandleSynchronized;
+
             await Api.Candle.GetCandlesForIntervalAsync(client, symbol, interval);
+
+            if (symbolInterval.LastCandleSynchronized != synchronizedBefore)
+                gapWasFilled = true;
         }
+
+        if (gapWasFilled)
+            await ResetDerivedStateAfterGapAsync(symbol);
 
         // Remove the candles we needed because of the not supported intervals & bulk calculation
         await CandleTools.CleanCandleDataAsync(symbol, null);
+    }
+
+
+    /// <summary>
+    /// Throw away everything that was DERIVED from candles while a stretch of them was missing.
+    /// <para>
+    /// The candles themselves heal on their own: CandleTools.CreateCandle overwrites an existing
+    /// entry with the real one and clears IsFilled, and BulkCalculateCandles rebuilds the higher
+    /// intervals from the corrected minutes. What does not heal is anything built ON them while
+    /// they were wrong. During an outage the flush timer keeps synthesising flat candles at the
+    /// last known price and feeding them through the analysis, so the ZigZag has absorbed pivots
+    /// that were decided on prices which never traded - and since CryptoCandle is a struct, each
+    /// pivot holds its own COPY, so correcting the candle list does not reach them. Refreshing
+    /// those values would not be enough either: which points became pivots at all was decided on
+    /// the flat candles.
+    /// </para>
+    /// <para>
+    /// So the ZigZag is dropped and rebuilt, the zone cursors go back to "never run" so the next
+    /// calculation is a full rescan on the corrected history, and DlzAdmin is cleared so that
+    /// rescan is actually queued. Guarded on a gap having been filled: this is the expensive kind
+    /// of reset, and while the socket keeps up it must never run.
+    /// </para>
+    /// </summary>
+    private static async Task ResetDerivedStateAfterGapAsync(CryptoSymbol symbol)
+    {
+        // Same lock the candle (re)load paths take before calling this - the analysis threads share
+        // these objects, and the trend caches are rebuilt from the candle lists right after.
+        await symbol.Data.CandleLock.WaitAsync();
+        try
+        {
+            symbol.Data.ResetTrendDataAndCaches();
+            symbol.Data.ResetZoneCalculationCursors();
+        }
+        finally
+        {
+            symbol.Data.CandleLock.Release();
+        }
+
+        // Only worth a line once the scanner is up. During startup every symbol legitimately fills
+        // a gap - the scanner was off - and reporting that per symbol is three hundred lines saying
+        // "we just started". The reset itself does run then, and costs nothing on an empty cache.
+        if (GlobalData.ApplicationStatus == Enums.CryptoApplicationStatus.Running)
+            GlobalData.AddTextToLogTab($"{symbol.Name} candle gap filled, recalculating trend and zones");
     }
 
 

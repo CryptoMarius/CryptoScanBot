@@ -315,8 +315,12 @@ public class ZoneFvg
 
 
 
+    // The two candles before the first one this scan acts on. A gap right at the start of the window
+    // pushes them further back, so ask for a couple more than the arithmetic minimum of one.
+    private const int FvgScanLeadInCandles = 3;
+
     private static void CreateFvgZones(CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate,
-        CryptoSymbolInterval symbolIntervalData,
+        CandleTime maxDate, CryptoSymbolInterval symbolIntervalData,
         OrderedList<CryptoZone> longZones, OrderedList<CryptoZone> shortZones)
     {
 
@@ -324,7 +328,21 @@ public class ZoneFvg
         CryptoCandle prev = default;
         CryptoCandle prev2 = default;
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        foreach (var candle in symbolInterval.CandleList.Values)
+        // Read a bounded range under the read lock instead of enumerating the live list. Two reasons:
+        //
+        // (1) Values is the inherited SortedDictionary collection and does not take the
+        // ReaderWriterLockSlim that CryptoCandleList guards itself with, so an Add from the kline
+        // stream bumps the tree version and the enumerator throws "Collection was modified after the
+        // enumerator was instantiated". This runs inline in SignalPrepare, so it is on the signal path
+        // while that stream is writing. A lock() on the list object would not help - the writers hold
+        // the ReaderWriterLockSlim and never the monitor.
+        //
+        // (2) GetSnapshot() would copy the WHOLE list, and for the lower intervals that is far more
+        // than this scan uses: the loop below does nothing for a candle at or before minDate except
+        // carry it as prev/prev2. The range is what the zones are actually built from, so the copy
+        // stays at roughly ZonesDlz.CandleCount entries whatever the list grows to.
+        CandleTime scanFrom = minDate - FvgScanLeadInCandles * interval.Duration;
+        foreach (var candle in symbolInterval.CandleList.GetRange(scanFrom, maxDate, interval.Duration))
         {
             if (prev2.OpenTime != 0 && prev.OpenTime != 0 && candle.OpenTime > minDate) // Need the last 3 candles
             {
@@ -479,7 +497,7 @@ public class ZoneFvg
                     // Compute new zones into local lists (never visible to other threads)
                     OrderedList<CryptoZone> longZones = new(new CompareZoneDescending());
                     OrderedList<CryptoZone> shortZones = new(new CompareZoneAscending());
-                    CreateFvgZones(symbol, interval, minDate, symbolIntervalData, longZones, shortZones);
+                    CreateFvgZones(symbol, interval, minDate, maxDate, symbolIntervalData, longZones, shortZones);
 
                     // Merge with DB state into a fresh object, then atomically replace the live reference.
                     // Other threads always see either the old complete object or the new complete one —
@@ -487,7 +505,9 @@ public class ZoneFvg
                     CryptoSymbolIntervalZones freshZones = new();
                     ZoneTools.AddZonesToInternalLists(freshZones, oldZones, longZones, statistics);
                     ZoneTools.AddZonesToInternalLists(freshZones, oldZones, shortZones, statistics);
-                    ZoneTools.DeleteRemainingZones(oldZones, statistics);
+                    // Gaps older than the window cannot be rediscovered from the candles we hold, so
+                    // they are carried until their right edge leaves the window as well.
+                    ZoneTools.DeleteRemainingZones(oldZones, statistics, freshZones, minDate);
                     symbolIntervalData.FvgZones = freshZones;
                 }
 

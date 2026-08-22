@@ -26,7 +26,7 @@ public class SignalDominantLevelLong : SignalCreateBase
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
                 // Capture reference so a concurrent DlzZones swap mid-loop does not cause IndexOutOfRangeException
-                var longOpen = symbolIntervalData.DlzZones.LongOpen;
+                var longOpen = symbolIntervalData.Dlz.Zones.LongOpen;
                 int index = 0;
                 decimal distance = 100m;
                 while (index < longOpen.Count) // sorted on Zone.Top (descending)
@@ -96,9 +96,9 @@ public class SignalDominantLevelLong : SignalCreateBase
                         break;
                 }
 
-                symbolIntervalData.DlzZoneDistance.BestLongZone = distance;
+                symbolIntervalData.Dlz.ZoneDistance.BestLongZone = distance;
                 if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                    ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.DlzZones.LongOpen.Count} long zones, closest {distance}");
+                    ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.Dlz.Zones.LongOpen.Count} long zones, closest {distance}");
                 if (distance < closestZone)
                     closestZone = distance;
             }

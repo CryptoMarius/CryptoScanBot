@@ -95,14 +95,14 @@ public static class MemoryDump
                     if (symbolInterval.SignalList.Count > 0)
                         log.AppendLine($"      Signal count: {symbolInterval.SignalList.Count}");
 
-                    if (symbolInterval.DlzZones.LongOpen.Count > 0)
-                        log.AppendLine($"      DlzZones.LongOpen: {symbolInterval.DlzZones.LongOpen.Count}");
-                    if (symbolInterval.DlzZones.ShortOpen.Count > 0)
-                        log.AppendLine($"      DlzZones.ShortOpen: {symbolInterval.DlzZones.ShortOpen.Count}");
-                    if (symbolInterval.DlzZones.LongClosed.Count > 0)
-                        log.AppendLine($"      DlzZones.LongClosed: {symbolInterval.DlzZones.LongClosed.Count}");
-                    if (symbolInterval.DlzZones.ShortClosed.Count > 0)
-                        log.AppendLine($"      DlzZones.ShortClosed: {symbolInterval.DlzZones.ShortClosed.Count}");
+                    if (symbolInterval.Dlz.Zones.LongOpen.Count > 0)
+                        log.AppendLine($"      DlzZones.LongOpen: {symbolInterval.Dlz.Zones.LongOpen.Count}");
+                    if (symbolInterval.Dlz.Zones.ShortOpen.Count > 0)
+                        log.AppendLine($"      DlzZones.ShortOpen: {symbolInterval.Dlz.Zones.ShortOpen.Count}");
+                    if (symbolInterval.Dlz.Zones.LongClosed.Count > 0)
+                        log.AppendLine($"      DlzZones.LongClosed: {symbolInterval.Dlz.Zones.LongClosed.Count}");
+                    if (symbolInterval.Dlz.Zones.ShortClosed.Count > 0)
+                        log.AppendLine($"      DlzZones.ShortClosed: {symbolInterval.Dlz.Zones.ShortClosed.Count}");
 
                     if (symbolInterval.FvgZones.LongOpen.Count > 0)
                         log.AppendLine($"      FvgZones.LongOpen: {symbolInterval.FvgZones.LongOpen.Count}");

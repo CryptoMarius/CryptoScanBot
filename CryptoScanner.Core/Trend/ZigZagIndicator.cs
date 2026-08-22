@@ -44,6 +44,62 @@ public class ZigZagIndicator
     public ZigZagResult? LastSwingHigh = null; // the last High Primary
     public ZigZagResult? LastSwingPoint = null; // the last Primary added
 
+    /// <summary>
+    /// How many pivots at the right-hand edge can still change when the next candle arrives.
+    /// Everything before that is settled: it will never move, change value or disappear.
+    /// <para>
+    /// Three things mutate the list, and all three are confined to the tail. <see cref="OptimizeList"/>
+    /// starts at <c>Count - 10</c> and reads two positions further back, so it reaches twelve deep.
+    /// <see cref="ReusePoint"/> is only ever applied to <see cref="LastSwingPoint"/> - never to an
+    /// arbitrary older pivot - and <see cref="RecalculateSwingLowAndHigh"/> walks back only until it
+    /// has seen one low and one high, a handful of positions on an alternating list. Dummy points
+    /// sit at the very end by construction.
+    /// </para>
+    /// <para>
+    /// The number is measured, not guessed: ZoneDlzIncrementalTests.MeasureHowFarBackAChangeReaches
+    /// replays 3315 ETHUSDT 1h candles one at a time and the deepest a change ever reached back is
+    /// 2 pivots. Twenty-five is that with a wide margin, and the test asserts the ceiling so this
+    /// constant cannot quietly become wrong.
+    /// </para>
+    /// <para>
+    /// Deliberately NOT shared with TrimZigZagList's own <c>Count - 10</c>. That one answers a
+    /// different question - which entries may be dropped from the FRONT to free memory - and lining
+    /// the two up would tie a correctness boundary to a housekeeping one.
+    /// </para>
+    /// </summary>
+    public const int MutableTailLength = 25;
+
+    /// <summary>
+    /// The number of pivots at the head of <see cref="ZigZagList"/> that can no longer change, so a
+    /// conclusion drawn about them holds for good. See <see cref="MutableTailLength"/>.
+    /// </summary>
+    public int SettledCount => Math.Max(0, ZigZagList.Count - MutableTailLength);
+
+    /// <summary>
+    /// The candle time of the oldest real pivot still in the list, or null when there is none.
+    /// <para>
+    /// This is how far back a conclusion drawn from these pivots can reach, and it is NOT the same
+    /// as how far back the candles go. The list is trimmed by <see cref="TrimBefore"/> on the candle
+    /// window of CandleTools.GetCandleFetchStart, a flat 500, while the zone calculation asks for
+    /// ZonesDlz.CandleCount candles - equal at the default, but at 3000 the caller would think it
+    /// judged 3000 candles' worth of pivots while the oldest one it actually holds is 500 back.
+    /// Anything that reasons about "could this have been produced" has to ask the pivots, not the
+    /// candles.
+    /// </para>
+    /// </summary>
+    public CandleTime? OldestPivotTime
+    {
+        get
+        {
+            foreach (ZigZagResult zigZag in ZigZagList)
+            {
+                if (!zigZag.Dummy)
+                    return zigZag.Candle.OpenTime;
+            }
+            return null;
+        }
+    }
+
     // Marks the last candle fed into this instance. Lets a caller that caches this indicator across
     // calls (e.g. TrendCalculator, ZoneDlz) feed only the candles since the last call instead of
     // rebuilding from scratch every time — Calculate() is already incremental per candle, so resuming

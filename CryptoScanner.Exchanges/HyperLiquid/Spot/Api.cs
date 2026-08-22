@@ -34,8 +34,19 @@ public class Api : ExchangeBase
     {
         // 61 million USDC over 74 listed pairs a day (14-08-2026) - the whole spot side is smaller than
         // a single mid range coin on Binance. The old flat boundary left 4 symbols, this one keeps 18.
+        // The thinnest market in the whole list, and thin enough that inactivity says nothing about the
+        // health of a subscription. Measured over the night of 21/22-08-2026, on runs of 1m candles with
+        // volume zero: of the 51 symbols that went quiet at all, 28 were quiet for over an hour, 16 for
+        // over two hours and the worst for 598 minutes of a 605 minute window - a coin that traded once.
+        // With the default of five minutes the scanner tore down and rebuilt all six of its bundles 57
+        // times that night, once every seven minutes from the first check to the last, and paid for it
+        // with the worst gap picture of all nineteen markets (49 missing minutes over 19 symbols, where
+        // the runner-up had 12). Twelve hours is deliberately longer than any run: on this market the
+        // liveness check is the library ping every 10 seconds, and this is only the outer net for a
+        // socket that stays up and stops delivering for half a day.
         ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 300, false, 1,
-            klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 21_000, pauseSymbol: "UBTCUSDC");
+            klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 21_000, pauseSymbol: "UBTCUSDC",
+            maximumTickerInactivity: TimeSpan.FromHours(12));
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         HyperLiquidRestClient.SetDefaultOptions(options =>
@@ -61,7 +72,7 @@ public class Api : ExchangeBase
             // without a trade. Liveness is already covered, and better: the library pings the socket every
             // 10 seconds and aborts it when the pong does not arrive within 10 seconds
             // (SocketApiClient.KeepAliveInterval / KeepAliveTimeout, both 10s by default), which works
-            // whether or not there is any trading. SubscriptionManager.MaximumTickerSilence is the outer
+            // whether or not there is any trading. SubscriptionManager.MaximumTickerInactivity is the outer
             // net for a socket that stays up but stops delivering.
             options.SocketNoDataTimeout = TimeSpan.Zero;
             if (GlobalData.TradingApi.Key != "")

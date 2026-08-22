@@ -57,6 +57,51 @@ public class ZoneDlz
         {
             PutZoneInMemory(zone);
         }
+
+        RebuildCommittedStoreFromLoadedZones(symbol);
+    }
+
+
+    /// <summary>
+    /// Puts the committed store back in step with the zones that were just loaded.
+    /// <para>
+    /// The marker survives a restart (CandleDatabase.SymbolInterval.DlzMarker) but the store it
+    /// vouches for does not - it is a plain in-memory list. Restoring only the marker would be
+    /// worse than restoring nothing: the next pass would believe the settled part was already
+    /// accounted for, hand the reconciliation nothing but its tail, and everything else would be
+    /// treated as gone. So the store is rebuilt here from the zones themselves, which is where
+    /// those settled verdicts have been sitting all along.
+    /// </para>
+    /// <para>
+    /// A marker with nothing behind it is not trusted. That can be a database that was cleared
+    /// while the candle store was kept, or simply a stretch of history without a single dominant
+    /// pivot. Telling those apart is not worth the risk of silently dropping zones, and the cost of
+    /// being wrong is only one full rescan.
+    /// </para>
+    /// </summary>
+    internal static void RebuildCommittedStoreFromLoadedZones(CryptoSymbol symbol)
+    {
+        foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+        {
+            CryptoSymbolIntervalDlz dlz = symbolInterval.Dlz;
+            dlz.CommittedZones = [];
+            if (dlz.CommittedPivotMarker == null)
+                continue;
+
+            CandleTime marker = dlz.CommittedPivotMarker.Value;
+            foreach (var list in new[] { dlz.Zones.LongOpen, dlz.Zones.ShortOpen,
+                                         dlz.Zones.LongClosed, dlz.Zones.ShortClosed })
+            {
+                foreach (CryptoZone zone in list)
+                {
+                    if (zone.OpenTime <= marker)
+                        dlz.CommittedZones.Add(zone);
+                }
+            }
+
+            if (dlz.CommittedZones.Count == 0)
+                dlz.CommittedPivotMarker = null;
+        }
     }
 
 
@@ -87,18 +132,18 @@ public class ZoneDlz
                     }
                     else
                     {
-                        symbolInterval.DlzZones.Add(zone);
+                        symbolInterval.Dlz.Zones.Add(zone);
 
                         // Creation date is the date of the last swing point (SH/SL)
                         // TODO: The last swing low and high are now extracted from the boundaries of the zone, that is not 100% correct
                         CandleTime timeLastSwingPoint = zone.OpenTime;
-                        if (symbolInterval.DlzAdmin.TimeLastSwingPoint == null || timeLastSwingPoint > symbolInterval.DlzAdmin.TimeLastSwingPoint)
+                        if (symbolInterval.Dlz.Admin.TimeLastSwingPoint == null || timeLastSwingPoint > symbolInterval.Dlz.Admin.TimeLastSwingPoint)
                         {
-                            symbolInterval.DlzAdmin.TimeLastSwingPoint = timeLastSwingPoint;
-                            if (symbolInterval.DlzAdmin.LastSwingLow == null || zone.Bottom > symbolInterval.DlzAdmin.LastSwingLow)
-                                symbolInterval.DlzAdmin.LastSwingLow = zone.Bottom;
-                            if (symbolInterval.DlzAdmin.LastSwingHigh == null || zone.Top > symbolInterval.DlzAdmin.LastSwingHigh)
-                                symbolInterval.DlzAdmin.LastSwingHigh = zone.Top;
+                            symbolInterval.Dlz.Admin.TimeLastSwingPoint = timeLastSwingPoint;
+                            if (symbolInterval.Dlz.Admin.LastSwingLow == null || zone.Bottom > symbolInterval.Dlz.Admin.LastSwingLow)
+                                symbolInterval.Dlz.Admin.LastSwingLow = zone.Bottom;
+                            if (symbolInterval.Dlz.Admin.LastSwingHigh == null || zone.Top > symbolInterval.Dlz.Admin.LastSwingHigh)
+                                symbolInterval.Dlz.Admin.LastSwingHigh = zone.Top;
                         }
                     }
                 }
@@ -145,6 +190,45 @@ public class ZoneDlz
     //    List<ZigZagResult> zigZagList, DatabaseStatistics statistics)
     //{
     //}
+
+
+    /// <summary>
+    /// Swaps every freshly minted zone in <paramref name="rebuilt"/> for the live zone that already
+    /// describes the same thing, matched on the key the merge itself uses (side, open time, top,
+    /// bottom).
+    /// <para>
+    /// The provisional tail is rebuilt on every pass, and without this each rebuild would hand the
+    /// merge a brand new CryptoZone carrying TouchCount 0 and no CloseTime. The merge would read
+    /// that as a modification and replace the live zone, throwing away the touches it had collected
+    /// - and the incremental broken-zone check only scans candles after the cursor, so they would
+    /// never be counted again. Same geometry means the same zone, so it keeps its object.
+    /// </para>
+    /// <para>
+    /// A zone whose geometry DID change gets a different key, keeps the new instance, and is a new
+    /// zone as far as anything downstream is concerned. Which is correct: that is a different level.
+    /// </para>
+    /// </summary>
+    private static void KeepLiveInstanceWhereUnchanged(CryptoSymbolIntervalZones live,
+        List<CryptoZone> rebuilt)
+    {
+        if (rebuilt.Count == 0)
+            return;
+
+        Dictionary<(CryptoTradeSide, CandleTime, decimal, decimal), CryptoZone> byKey = [];
+        foreach (var list in new[] { live.LongOpen, live.ShortOpen, live.LongClosed, live.ShortClosed })
+        {
+            foreach (CryptoZone zone in list)
+                byKey[(zone.Side, zone.OpenTime, zone.Top, zone.Bottom)] = zone;
+        }
+
+        for (int index = 0; index < rebuilt.Count; index++)
+        {
+            CryptoZone zone = rebuilt[index];
+            if (byKey.TryGetValue((zone.Side, zone.OpenTime, zone.Top, zone.Bottom),
+                    out CryptoZone? existing))
+                rebuilt[index] = existing;
+        }
+    }
 
 
     private static bool UnzoomedPercentageBelowMinimum(ZigZagResult zigZag)
@@ -360,22 +444,63 @@ public class ZoneDlz
         }
     }
 
-    public static async Task CalculateDlzAsync(AddTextEvent? sender,
+    /// <summary>
+    /// Marks the dominant pivots. Judging a triple means looking at the candidate in the middle and
+    /// the pivot that confirms it, so a pivot can only be judged once its confirmer has arrived.
+    /// <para>
+    /// Incremental callers pass <paramref name="committedUpTo"/> and collect the result in the two
+    /// lists. The split is what makes the outcome independent of how often the caller asks:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description><paramref name="settled"/> - the confirmer lies before
+    /// <see cref="ZigZagIndicator.SettledCount"/> and can never change again, so this verdict is
+    /// final. The caller records it once and never recomputes it.</description></item>
+    /// <item><description><paramref name="provisional"/> - the confirmer is still in the mutable
+    /// tail. The verdict may look different after the next candle, so the caller must REPLACE its
+    /// previous provisional set with this one instead of adding to it.</description></item>
+    /// </list>
+    /// <para>
+    /// A time cursor alone cannot express "this triple has been judged", which is what made the
+    /// result depend on the calling rhythm. The pivot list stays mutable at its right edge, so the
+    /// pivot that confirms a triple today need not be the one that confirms it tomorrow: a triple
+    /// whose confirmer was still a dummy got skipped and then fell behind the cursor forever
+    /// (missing), and a triple whose confirmer changed got judged twice (duplicate). Inside the
+    /// settled region that ambiguity does not exist, so there a time cursor is exact - and outside
+    /// it nothing is remembered at all. See ZoneDlzIncrementalTests.
+    /// </para>
+    /// </summary>
+    /// <returns>
+    /// The confirming pivot time of the last SETTLED triple this pass judged, which is where the
+    /// caller's cursor belongs. Unchanged from <paramref name="committedUpTo"/> when this pass
+    /// judged nothing settled. Callers doing a full calculation ignore it.
+    /// </returns>
+    public static async Task<CandleTime?> CalculateDlzAsync(AddTextEvent? sender,
         CryptoSymbol symbol, CryptoInterval interval, ZigZagIndicator indicator,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory,
-        CandleTime? processAfter = null)
+        CandleTime? committedUpTo = null, List<ZigZagResult>? settled = null,
+        List<ZigZagResult>? provisional = null)
     {
         //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating newZones");
 
+        // A local, deliberately. This method awaits inside the loop, so the continuation can resume
+        // on a different thread - which rules out anything static, ThreadStatic included.
+        CandleTime? lastSettledConfirmer = committedUpTo;
+        int settledCount = indicator.SettledCount;
         ZigZagResult? previous = null;
         ZigZagResult? previous2 = null;
-        foreach (var zigZag in indicator.ZigZagList)
+        for (int index = 0; index < indicator.ZigZagList.Count; index++)
         {
+            ZigZagResult zigZag = indicator.ZigZagList[index];
             if (previous != null && previous2 != null && !zigZag.Dummy)
             {
-                // In incremental mode skip pivots that were already processed — but always
-                // keep walking to maintain the previous/previous2 sliding window.
-                if (processAfter != null && previous.Candle.OpenTime < processAfter)
+                // Whether this verdict can still change. The confirmer decides, not the candidate:
+                // the candidate is by definition older, so a settled confirmer implies a settled
+                // candidate, while the reverse says nothing.
+                bool isSettled = index < settledCount;
+
+                // Already judged in an earlier call, and settled, so the answer cannot have moved.
+                // Keep walking though - the sliding window has to stay intact.
+                if (isSettled && committedUpTo != null && zigZag.Candle.OpenTime <= committedUpTo)
                 {
                     previous2 = previous;
                     previous = zigZag;
@@ -386,87 +511,99 @@ public class ZoneDlz
 
                 // Check: a dominant Low leading to a new Higher High
                 if (zigZag.PointType == 'H' && previous.PointType == 'L' && previous2.PointType == 'H' && previous2.Value < zigZag.Value)
+                {
                     await MakeDominantAndZoomInAsync(symbol, interval, previous,
                         Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, loadedCandlesInMemory);
+                    // previous2 is the pivot immediately before previous, which is exactly the
+                    // predecessor the grading needs to bound its look-back.
+                    GradeIntro(symbol, interval, previous, previous2);
+                    (isSettled ? settled : provisional)?.Add(previous);
+                }
 
                 // Check: a dominant High leading to a new Lower Low
                 if (zigZag.PointType == 'L' && previous.PointType == 'H' && previous2.PointType == 'L' && previous2.Value > zigZag.Value)
+                {
                     await MakeDominantAndZoomInAsync(symbol, interval, previous,
                         previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), loadedCandlesInMemory);
+                    GradeIntro(symbol, interval, previous, previous2);
+                    (isSettled ? settled : provisional)?.Add(previous);
+                }
+
+                // The cursor only ever advances over settled ground. Moving it into the tail would
+                // freeze a verdict that is still allowed to change, which is the whole defect this
+                // replaces.
+                if (isSettled)
+                    lastSettledConfirmer = zigZag.Candle.OpenTime;
             }
             previous2 = previous;
             previous = zigZag;
         }
+        return lastSettledConfirmer;
     }
 
 
-    internal static void CalculateIntroZone(CryptoSymbol symbol, CryptoInterval interval,
-        ZigZagIndicator indicator, CandleTime? afterTime = null)
+    /// <summary>
+    /// Grades one dominant pivot Weak or Strong by how sharply price ran into it, looking back at
+    /// most ZoneStartCandleCount candles and never past <paramref name="previousPivot"/>.
+    /// <para>
+    /// Called at the moment the pivot is marked dominant, and deliberately so. It used to be a
+    /// second pass over the whole list with a cursor of its own, and that cursor could not be right:
+    /// it graded the DOMINANT pivot, which by definition is older than the confirmer that made it
+    /// dominant, so any cursor sitting at the newest candle skipped exactly the pivots that had just
+    /// been marked - leaving Strength on its default of None. Folding it in means dominance and
+    /// grading share one cursor and one walk, and the mismatch has nowhere left to live.
+    /// </para>
+    /// <para>
+    /// Pure per pivot: it reads the pivot, its predecessor and the candles between them, and writes
+    /// only Strength. So re-running it on the mutable tail costs nothing and changes nothing.
+    /// </para>
+    /// </summary>
+    internal static void GradeIntro(CryptoSymbol symbol, CryptoInterval interval,
+        ZigZagResult zigZag, ZigZagResult previousPivot)
     {
         // Determine if a liq. box/zone has an interesting intro
-        if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply)
+        if (!GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply)
+            return;
+
+        decimal boxLimit;
+        if (zigZag.PointType == 'L')
+            boxLimit = zigZag.Bottom;
+        else
+            boxLimit = zigZag.Top;
+        decimal price = boxLimit;
+
+        var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        CandleTime max = zigZag.Candle.OpenTime;
+        CandleTime min = max - GlobalData.Settings.Signal.ZonesDlz.ZoneStartCandleCount * interval.Duration;
+        // Is it on the right of the last zigzag point?
+        if (min < previousPivot.Candle.OpenTime)
+            min = previousPivot.Candle.OpenTime;
+        while (min < max)
         {
-            //var trendZigZagIndicator = data.IndicatorList[(session.TrendType, session.UseHighLow)];
-
-            ZigZagResult? previous = null;
-            foreach (var zigZag in indicator.ZigZagList)
+            if (symbolInterval.CandleList.TryGetValue(min, out CryptoCandle candle))
             {
-                if (previous != null)
+                if (zigZag.PointType == 'L')
                 {
-                    // In incremental mode only evaluate pivots that are new
-                    if (afterTime != null && zigZag.Candle.OpenTime <= afterTime)
-                    {
-                        previous = zigZag;
-                        continue;
-                    }
-
-                    if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all newZones (also the closed ones)
-                    {
-                        decimal boxLimit;
-                        if (zigZag.PointType == 'L')
-                            boxLimit = zigZag.Bottom;
-                        else
-                            boxLimit = zigZag.Top;
-                        decimal price = boxLimit;
-
-                        var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                        CandleTime max = zigZag.Candle.OpenTime;
-                        CandleTime min = max - GlobalData.Settings.Signal.ZonesDlz.ZoneStartCandleCount * interval.Duration;
-                        // Is it on the right of the last zigzag point?
-                        if (min < previous.Candle.OpenTime)
-                            min = previous.Candle.OpenTime;
-                        while (min < max)
-                        {
-                            if (symbolInterval.CandleList.TryGetValue(min, out CryptoCandle candle))
-                            {
-                                if (zigZag.PointType == 'L')
-                                {
-                                    if (candle.High > price)
-                                        price = candle.High;
-                                }
-                                else
-                                {
-                                    if (candle.Low < price)
-                                        price = candle.Low;
-                                }
-                            }
-                            min += interval.Duration;
-                        }
-
-
-                        double perc = (double)(100 * Math.Abs(boxLimit - price) / Math.Min(boxLimit, price));
-                        //zigZag.NiceIntro = $"\n\r(intro {perc:N2}%)";
-                        //zigZag.NiceIntro += $"\n\r{price}\n\r{boxLimit}";
-
-                        if (perc <= GlobalData.Settings.Signal.ZonesDlz.ZoneStartPercentage)
-                            zigZag.Strength = CryptoZoneStrength.Weak;
-                        else
-                            zigZag.Strength = CryptoZoneStrength.Strong;
-                    }
+                    if (candle.High > price)
+                        price = candle.High;
                 }
-                previous = zigZag;
+                else
+                {
+                    if (candle.Low < price)
+                        price = candle.Low;
+                }
             }
+            min += interval.Duration;
         }
+
+        double perc = (double)(100 * Math.Abs(boxLimit - price) / Math.Min(boxLimit, price));
+        //zigZag.NiceIntro = $"\n\r(intro {perc:N2}%)";
+        //zigZag.NiceIntro += $"\n\r{price}\n\r{boxLimit}";
+
+        if (perc <= GlobalData.Settings.Signal.ZonesDlz.ZoneStartPercentage)
+            zigZag.Strength = CryptoZoneStrength.Weak;
+        else
+            zigZag.Strength = CryptoZoneStrength.Strong;
     }
 
 
@@ -523,11 +660,11 @@ public class ZoneDlz
             var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
             var indicator = trendZigZagIndicatorList[(trend.TrendType, trend.UseHighLow)];
             if (indicator.LastSwingPoint != null)
-                symbolIntervalData.DlzAdmin.TimeLastSwingPoint = indicator.LastSwingPoint.Candle.OpenTime;
+                symbolIntervalData.Dlz.Admin.TimeLastSwingPoint = indicator.LastSwingPoint.Candle.OpenTime;
             if (indicator.LastSwingLow != null)
-                symbolIntervalData.DlzAdmin.LastSwingLow = (decimal)indicator.LastSwingLow.Value;
+                symbolIntervalData.Dlz.Admin.LastSwingLow = (decimal)indicator.LastSwingLow.Value;
             if (indicator.LastSwingHigh != null)
-                symbolIntervalData.DlzAdmin.LastSwingHigh = (decimal)indicator.LastSwingHigh.Value;
+                symbolIntervalData.Dlz.Admin.LastSwingHigh = (decimal)indicator.LastSwingHigh.Value;
 
             // Same snapshot as above, for the same reason.
             foreach (var indicatorX in indicators)
@@ -685,7 +822,7 @@ public class ZoneDlz
             {
                 CryptoSymbolData symbolData = symbol.Data;
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
-                CryptoSymbolIntervalZones zones = symbolIntervalData.DlzZones;
+                CryptoSymbolIntervalZones zones = symbolIntervalData.Dlz.Zones;
 
                 //if (symbol.Name == "1000PEPEUSDT")
                 //    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
@@ -715,20 +852,59 @@ public class ZoneDlz
                 }
                 // else: already up to date — reuse the indicator as is, no feed needed.
 
-                if (symbolIntervalData.DlzLastProcessedTime != null && symbolIntervalData.DlzLastProcessedTime.Value >= minDate)
+                // How far back this calculation can speak with authority. Deliberately the oldest
+                // PIVOT and not minDate: the pivot list is trimmed on CandleTools.GetCandleFetchStart,
+                // a flat 500 candles, while minDate follows ZonesDlz.CandleCount. At the default of
+                // 500 the two coincide and it makes no difference, but raise CandleCount to the 3000
+                // the setting itself suggests and minDate reaches 2500 candles further back than any
+                // pivot does - so every zone in that gap would count as "the calculation had its say"
+                // while no pivot for it exists, and would be deleted all over again. Asking the
+                // pivots keeps the two from drifting apart whatever the setting says.
+                //
+                // No pivots at all means nothing could be produced, so nothing may be deleted either;
+                // minDate is then only a fallback that keeps the previous behaviour.
+                CandleTime judgedFrom = trendZigZagIndicator.OldestPivotTime ?? minDate;
+
+                if (symbolIntervalData.Dlz.ProcessedCandleMarker != null && symbolIntervalData.Dlz.ProcessedCandleMarker.Value >= minDate)
                 {
                     // ── Incremental path: only process new pivots since the cursor ──
-                    var cursor = symbolIntervalData.DlzLastProcessedTime;
-                    int openLongBefore = symbolIntervalData.DlzZones.LongOpen.Count;
-                    int openShortBefore = symbolIntervalData.DlzZones.ShortOpen.Count;
-                    await CalculateDlzAsync(sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory,
-                        processAfter: cursor);
-                    CalculateIntroZone(symbol, interval, trendZigZagIndicator, afterTime: cursor);
+                    var cursor = symbolIntervalData.Dlz.ProcessedCandleMarker;
+                    int openLongBefore = symbolIntervalData.Dlz.Zones.LongOpen.Count;
+                    int openShortBefore = symbolIntervalData.Dlz.Zones.ShortOpen.Count;
 
-                    // Build zones only from the newly dominant pivots and merge them into existing zones
-                    List<CryptoZone> newZones = [];
-                    CreateZonesFromZigZag(symbol, interval, trendZigZagIndicator.ZigZagList, newZones,
-                        afterTime: cursor);
+                    // Age the committed store on the RIGHT edge of a zone, the same rule the
+                    // reconciliation below now uses: a zone leaves once it has been broken and that
+                    // break has itself scrolled out of the window. An open zone never ages out, however
+                    // old its pivot is - it is still tradeable, and it is exactly the kind of level that
+                    // held for months. Ageing on OpenTime (what this did before) pruned the history back
+                    // to the candle window on every full calculation instead.
+                    if (symbolIntervalData.Dlz.CommittedZones.Count > 0)
+                        symbolIntervalData.Dlz.CommittedZones.RemoveAll(
+                            zone => zone.CloseTime != null && zone.CloseTime.Value < minDate);
+                    // The pivots this pass judged, split by whether that verdict can still change.
+                    // Filtering the whole list on candle time afterwards would reintroduce the very
+                    // mismatch the split fixes: a candidate pivot is always older than the confirmer
+                    // that made it dominant, so a time filter drops exactly the zones that were just
+                    // found. See ZoneDlzIncrementalTests.
+                    List<ZigZagResult> settledPivots = [];
+                    List<ZigZagResult> provisionalPivots = [];
+                    symbolIntervalData.Dlz.CommittedPivotMarker = await CalculateDlzAsync(
+                        sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory,
+                        symbolIntervalData.Dlz.CommittedPivotMarker, settledPivots, provisionalPivots);
+
+                    // Settled verdicts are added to the store once and never recomputed.
+                    CreateZonesFromZigZag(symbol, interval, settledPivots,
+                        symbolIntervalData.Dlz.CommittedZones);
+
+                    // The tail is rebuilt from scratch every pass. Adding to it instead would leave
+                    // a copy behind of every zone that was judged twice, and would keep a zone that
+                    // the next candle turned out to disprove. Together with the committed store this
+                    // is exactly the set a full calculation produces.
+                    List<CryptoZone> provisionalZones = [];
+                    CreateZonesFromZigZag(symbol, interval, provisionalPivots, provisionalZones);
+                    KeepLiveInstanceWhereUnchanged(symbolIntervalData.Dlz.Zones, provisionalZones);
+
+                    List<CryptoZone> newZones = [.. symbolIntervalData.Dlz.CommittedZones, .. provisionalZones];
 
                     int weakNew = newZones.Count(z => z.Strength == CryptoZoneStrength.Weak);
                     if (newZones.Count > 0)
@@ -742,14 +918,16 @@ public class ZoneDlz
 
                         CryptoSymbolIntervalZones finalZones = new();
                         ZoneTools.AddZonesToInternalLists(finalZones, oldZones, newZones, statistics);
-                        ZoneTools.DeleteRemainingZones(oldZones, statistics);
-                        symbolIntervalData.DlzZones = finalZones;
+                        // Zones whose pivot has aged out are carried instead of deleted; this pass
+                        // could not have produced them, so their absence says nothing.
+                        ZoneTools.DeleteRemainingZones(oldZones, statistics, finalZones, judgedFrom);
+                        symbolIntervalData.Dlz.Zones = finalZones;
                     }
 
                     // Incremental broken-zone check: only scan candles after the cursor
                     // to avoid double-counting touches (TouchCount is not idempotent)
                     var modifiedZones = CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList,
-                        symbolIntervalData.DlzZones, afterTime: cursor);
+                        symbolIntervalData.Dlz.Zones, afterTime: cursor);
                     foreach (var zone in modifiedZones)
                     {
                         if (zone.Id > 0)
@@ -760,14 +938,27 @@ public class ZoneDlz
                     // Diagnostics, deliberately switched off on 18-08-2026 - it was 40% of the log file. Left in place to switch back on.
                     //GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} incremental: " +
                     //    $"pivots={trendZigZagIndicator.ZigZagList.Count}, newZones={newZones.Count} (weak={weakNew}), " +
-                    //    $"broken={brokenCount}, open long {openLongBefore}→{symbolIntervalData.DlzZones.LongOpen.Count}, " +
-                    //    $"open short {openShortBefore}→{symbolIntervalData.DlzZones.ShortOpen.Count}");
+                    //    $"broken={brokenCount}, open long {openLongBefore}→{symbolIntervalData.Dlz.Zones.LongOpen.Count}, " +
+                    //    $"open short {openShortBefore}→{symbolIntervalData.Dlz.Zones.ShortOpen.Count}");
                 }
                 else
                 {
                     // ── Full historical scan (first run or cursor invalidated) ──
-                    await CalculateDlzAsync(sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory);
-                    CalculateIntroZone(symbol, interval, trendZigZagIndicator);
+                    // The two lists are collected here as well, and that is not decoration. The
+                    // incremental pass that follows hands the merge its committed store PLUS the
+                    // tail, and reconciles the result with DeleteRemainingZones. If this branch left
+                    // the store empty, that very first incremental pass would submit only the tail
+                    // and the reconciliation would delete every zone this full scan just produced.
+                    // Seeding it here is what makes the hand-over between the two branches safe.
+                    List<ZigZagResult> fullSettledPivots = [];
+                    List<ZigZagResult> fullProvisionalPivots = [];
+                    symbolIntervalData.Dlz.CommittedPivotMarker = await CalculateDlzAsync(sender, symbol,
+                        interval, trendZigZagIndicator, loadedCandlesInMemory,
+                        committedUpTo: null, settled: fullSettledPivots, provisional: fullProvisionalPivots);
+
+                    symbolIntervalData.Dlz.CommittedZones = [];
+                    CreateZonesFromZigZag(symbol, interval, fullSettledPivots,
+                        symbolIntervalData.Dlz.CommittedZones);
 
                     // Index old zones for DB merge (must happen before zones are rebuilt)
                     DatabaseStatistics statistics = new();
@@ -777,9 +968,24 @@ public class ZoneDlz
                     ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
                     ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
 
-                    // Create new zones from the zigzag (local list, never visible to other threads)
-                    List<CryptoZone> newZones = [];
-                    CreateZonesFromZigZag(symbol, interval, trendZigZagIndicator.ZigZagList, newZones);
+                    // Create new zones from the zigzag (local list, never visible to other threads).
+                    // Built from the SAME instances that went into the committed store, not from a
+                    // second walk over ZigZagList. Two walks would mint two CryptoZone objects for
+                    // one pivot: the live set would hold one and the store the other, and the next
+                    // incremental pass would submit its copy - which carries TouchCount 0 and no
+                    // CloseTime - and the merge would treat that as a modification and overwrite the
+                    // touches the live zone had collected.
+                    //
+                    // It also settles a smaller difference in favour of the split. Walking ZigZagList
+                    // emits every pivot still carrying Dominant = true, including one left over from
+                    // an earlier pass whose triple no longer qualifies; nothing clears that flag but
+                    // a zoom rejection or a reuse. The split emits what THIS pass actually judged. On
+                    // a fresh indicator the two are identical, which is why the tests do not separate
+                    // them - it only shows on a forced rescan over a cached indicator, and there the
+                    // split is the answer that matches the pivots as they now stand.
+                    List<CryptoZone> provisionalZones = [];
+                    CreateZonesFromZigZag(symbol, interval, fullProvisionalPivots, provisionalZones);
+                    List<CryptoZone> newZones = [.. symbolIntervalData.Dlz.CommittedZones, .. provisionalZones];
 
                     int dominantPivots = trendZigZagIndicator.ZigZagList.Count(z => z.Dominant && !z.Dummy);
                     int totalCreated = newZones.Count;
@@ -803,8 +1009,11 @@ public class ZoneDlz
                     // never a half-built list (which was the source of null holes in OrderedList).
                     CryptoSymbolIntervalZones finalZones = new();
                     ZoneTools.AddZonesToInternalLists(finalZones, oldZones, newZones, statistics);
-                    ZoneTools.DeleteRemainingZones(oldZones, statistics);
-                    symbolIntervalData.DlzZones = finalZones;
+                    // Same as the incremental branch: even a full rescan only sees the pivots it
+                    // holds, so anything older is out of its authority - carry it, do not prune the
+                    // history back to the window.
+                    ZoneTools.DeleteRemainingZones(oldZones, statistics, finalZones, judgedFrom);
+                    symbolIntervalData.Dlz.Zones = finalZones;
 
                     // Diagnostics, deliberately switched off on 18-08-2026 - it was 40% of the log file. Left in place to switch back on.
                     //GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} full scan: " +
@@ -828,7 +1037,7 @@ public class ZoneDlz
                     }
                 }
 
-                symbolIntervalData.DlzLastProcessedTime = maxDate;
+                symbolIntervalData.Dlz.ProcessedCandleMarker = maxDate;
             }
 
 

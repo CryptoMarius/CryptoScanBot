@@ -32,7 +32,7 @@ namespace CryptoScanner.Core.Exchange.Bitvavo.Spot;
 /// answer, reconnecting with a policy, resubscribing by itself after a reconnect, and the
 /// ConnectionLost / ConnectionRestored / ResubscribingFailed events that Exchange/Subscription.cs
 /// already handles for every other market. The hand written socket had none of that, so a half open
-/// connection was only caught by the silence check five minutes later, and every repair to the shared
+/// connection was only caught by the inactivity check five minutes later, and every repair to the shared
 /// path had to be redone here by hand.
 /// </para>
 /// </summary>

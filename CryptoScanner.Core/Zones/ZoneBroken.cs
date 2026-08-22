@@ -49,9 +49,9 @@ public class ZoneBroken
         List<CryptoZone> zones = [];
         CryptoSymbolData symbolData = symbol.Data;
         var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
-        foreach (CryptoZone zone in symbolIntervalData.DlzZones.LongOpen)
+        foreach (CryptoZone zone in symbolIntervalData.Dlz.Zones.LongOpen)
             zones.Add(zone);
-        foreach (CryptoZone zone in symbolIntervalData.DlzZones.ShortOpen)
+        foreach (CryptoZone zone in symbolIntervalData.Dlz.Zones.ShortOpen)
             zones.Add(zone);
         foreach (CryptoZone zone in symbolIntervalData.FvgZones.LongOpen)
             zones.Add(zone);

@@ -120,8 +120,8 @@ shows.
 | Settings | `*-settings.json` | Was trading on, via which route, on which intervals and strategies |
 | Symbols | `CryptoScanBot.db` | Instrument count, quotes, tick sizes, missing instrument names |
 | Candles | `<Exchange>.db` | Coverage per interval, lateness, gaps in the minute series, impossible candles, subscribed versus delivered |
-| Streams | `Log\*.log` | Subscriptions started, connections lost and restored, restarts, symbol list changes |
-| Errors | `Log\* Error.log` | Every error grouped by normalised message, plus rate limits and bans |
+| Streams | `Log\*.log` | Subscriptions started, connections lost and restored, restarts, symbol list changes, and how often the inactivity check tore the whole feed down and rebuilt it |
+| Errors | `Log\* Error.log` | Errors CLASSIFIED, not counted: from our own code / not recognised / known and recovered / not the scanner's |
 | Signals | `CryptoScanBot.db` | Signals, zones and (when trading was on) positions inside the window |
 | Memory | sampler csv, `$debug\Memory Dump` | Growth per hour of the scanner AND its WebView2 processes together, thread and handle growth, managed versus native split |
 
@@ -130,6 +130,15 @@ Every database is opened read-only, so the report can be made while the scanner 
 ## Things worth knowing before reading a report
 
 - **The log is local time, the databases are UTC.** The report prints the window in both.
+- **A subscription can fail without ever saying "connection lost".** One that stays connected and
+  stops delivering is found by the inactivity check instead, which logs `One of ... tickers has
+  stopped` and then rebuilds. Those are separate log lines and a separate row in the report; a
+  market can be perfectly quiet on the drop count and still rebuild its whole feed every seven
+  minutes, which is exactly what HyperLiquid Spot did on 21/22-08-2026 while the report said good.
+  The check number in that line is a counter that only resets on a clean check, so one that keeps
+  climbing all night means the inactivity is a property of that market, not an incident - and the
+  fix is `ExchangeOptions.MaximumTickerInactivity` for that exchange, measured from the longest
+  inactivity per symbol in this same report.
 - **The instrument list is not the coverage target.** The minimal volume per quote coin keeps most
   instruments out on purpose, so coverage is measured against the number of symbols the log says
   were subscribed.
@@ -150,5 +159,17 @@ Every database is opened read-only, so the report can be made while the scanner 
 ## Thresholds
 
 All of them sit at the top of `check_exchange.py` as named constants: lateness, gap percentages,
-drops per hour, error counts and memory growth. They are a starting point measured on a healthy
-Binance Futures run, not a law - adjust them once you know what each exchange normally does.
+drops per hour and memory growth. They are a starting point measured on a healthy Binance Futures
+run, not a law - adjust them once you know what each exchange normally does.
+
+Errors are the exception: they have no threshold at all since 21-08-2026. Counting could not tell
+the two cases apart that matter, and both happened in the same week - the race in
+`BulkCalculateCandles` on Okx Futures was TWO lines and slipped under every threshold, while 73 of
+the 131 lines of 18/19-08 were Avalonia notices that decide nothing. So the verdict follows the KIND
+of error (`ERRORS_OURS`, `ERRORS_RECOVERED`, `ERRORS_NOT_OURS`, and everything else): an exception
+carrying our own stack frames is always reported no matter how few, a recovered timeout never sets
+the verdict no matter how many, and anything the classification cannot place goes up WITH its text.
+
+That last box is the one that keeps the rest honest. A classification that swallows everything is a
+filter, not a classification, so resist widening `ERRORS_RECOVERED` until someone has actually
+looked at the shape being added.

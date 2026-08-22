@@ -155,10 +155,10 @@ public static class ChartDataService
                     continue;
 
                 var dataInterval = symbolData.Get(interval.IntervalPeriod);
-                AddZones(result, dataInterval.DlzZones.LongOpen, from, to);
-                AddZones(result, dataInterval.DlzZones.ShortOpen, from, to);
-                AddZones(result, dataInterval.DlzZones.LongClosed, from, to);
-                AddZones(result, dataInterval.DlzZones.ShortClosed, from, to);
+                AddZones(result, dataInterval.Dlz.Zones.LongOpen, from, to);
+                AddZones(result, dataInterval.Dlz.Zones.ShortOpen, from, to);
+                AddZones(result, dataInterval.Dlz.Zones.LongClosed, from, to);
+                AddZones(result, dataInterval.Dlz.Zones.ShortClosed, from, to);
             }
         }
 

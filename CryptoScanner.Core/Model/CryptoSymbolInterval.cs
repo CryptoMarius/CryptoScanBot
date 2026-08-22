@@ -49,8 +49,11 @@ public class CryptoSymbolInterval
     // The signals generated for this interval
     public List<CryptoSignal> SignalList { get; set; } = [];
 
+    // Everything DLZ keeps for this interval - zones, both markers, the committed store, the
+    // trigger range and the distances. See CryptoSymbolIntervalDlz for why there are two markers.
+    public CryptoSymbolIntervalDlz Dlz { get; } = new();
+
     // All the calculated zones
-    public CryptoSymbolIntervalZones DlzZones { get; internal set; } = new();
     public CryptoSymbolIntervalZones FvgZones { get; internal set; } = new();
 
     // SMC (Smart Money Concepts) Order Blocks — in-memory only for now (no DB persistence),
@@ -58,23 +61,17 @@ public class CryptoSymbolInterval
     // Short = bearish OB (supply) above a swing high.
     public List<CryptoZone> SmcZones { get; internal set; } = [];
 
-    // Incremental zone-calculation cursors: the candle time up to (and including) which the
+    // Incremental zone-calculation markers: the candle time up to (and including) which the
     // zone scan has already run. Null means "never run, do a full historical scan". On every
     // later call only candles after this point need to be scanned — see ZoneFvg/ZoneSmc.
-    public CandleTime? DlzLastProcessedTime { get; set; }
+    // DLZ has its own pair, on Dlz above.
     public CandleTime? FvgLastProcessedTime { get; set; }
     public CandleTime? SmcLastProcessedTime { get; set; }
+
     // The AverageWindow/BaseMaxCandles settings the SMC cursor above was built with. If the user
     // changes these mid-run/session, the cached cursor is no longer valid and a full rescan is forced.
     public int SmcCachedAverageWindow { get; set; } = -1;
     public int SmcCachedBaseMaxCandles { get; set; } = -1;
-
-    // Zone administration (calculation and distances)
-    public CryptoSymbolIntervalZoneCalc DlzAdmin { get; internal set; } = new();
-
-    // For display in the symbol grid
-    // These are the closest DLZ zones (calculated from all the zones)
-    public CryptoZoneDistance DlzZoneDistance { get; } = new();
 
     // Primary and Secondary trend data (Dow Theory interpretation)
     public CryptoTrendData TrendPrimary = new();

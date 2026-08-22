@@ -1671,7 +1671,7 @@ public class DatabaseMigration
 
         //***********************************************************
         // 14-08-2026 Alpaca activated. It was added as an experiment and never worked: every kline
-        // group opened a data stream of its own while the account is allowed one, the silence check
+        // group opened a data stream of its own while the account is allowed one, the inactivity check
         // restarted those streams every four minutes of the seventeen hours a day the stock market is
         // closed, a period without bars (a weekend) stopped the candle history for good, the history
         // was not corrected for stock splits and the volume was a number of shares where the rest of

@@ -1,4 +1,4 @@
-using Alpaca.Markets;
+﻿using Alpaca.Markets;
 using Alpaca.Markets.Extensions;
 
 using CryptoExchange.Net.Objects;
@@ -30,7 +30,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     /// <summary>
     /// A closed stock market delivers nothing for seventeen hours a day and the whole weekend, and
-    /// that is not a defect. Without this the silence check would take a perfectly healthy stream down
+    /// that is not a defect. Without this the inactivity check would take a perfectly healthy stream down
     /// and build it up again every four minutes of that.
     /// </summary>
     public override bool IsExpectingData => MarketClock.IsOpen;
@@ -170,7 +170,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         ErrorDuringStartup = false;
         ScannerLog.Logger.Trace($"Alpaca kline subscription {Name} starting ({SymbolList.Count} symbols)");
 
-        // Give the subscription a fresh starting point, otherwise the silence check would fire
+        // Give the subscription a fresh starting point, otherwise the inactivity check would fire
         // immediately on a ticker that has not had the chance to receive anything yet. The base
         // StartAsync does the same; this override replaces it entirely.
         MarkActivity();

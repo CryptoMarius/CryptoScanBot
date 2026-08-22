@@ -23,7 +23,7 @@ namespace CryptoScanner.Core.Exchange.Bitvavo.Spot.Socket;
 /// own), reconnecting with a policy, resubscribing after a reconnect, and the events
 /// ConnectionLost / ConnectionRestored / ResubscribingFailed that Exchange/Subscription.cs already
 /// handles for every other exchange. Without them a half open Bitvavo socket was only noticed by our
-/// own silence check, five minutes later, and every repair to the shared path had to be redone here
+/// own inactivity check, five minutes later, and every repair to the shared path had to be redone here
 /// by hand.
 /// </para>
 /// <para>
@@ -43,7 +43,7 @@ public class BitvavoSocketClientSpotApi : SocketApiClient<BitvavoEnvironment>
     /// Convenience constructor with the defaults this scanner uses. The keep alive is left to the
     /// library (10 seconds, and it aborts the socket when the answer does not arrive), and
     /// SocketNoDataTimeout is deliberately NOT set: on a candle feed that only pushes when something
-    /// is traded it measures silence instead of trouble - see the remarks in the other Api.cs files.
+    /// is traded it measures inactivity instead of trouble - see the remarks in the other Api.cs files.
     /// </summary>
     public BitvavoSocketClientSpotApi() : this(null, new SocketExchangeOptions<BitvavoEnvironment>
     {

@@ -187,14 +187,14 @@ public class SignalPrepare
                     // Scan for new zones if candle is outside of the previous primary trend
                     decimal valueLow = lastCandle1m.GetLowValue(false);
                     decimal valueHigh = lastCandle1m.GetHighValue(false);
-                    if (symbolInterval.DlzAdmin.LastSwingLow == null || valueLow < symbolInterval.DlzAdmin.LastSwingLow ||
-                       symbolInterval.DlzAdmin.LastSwingHigh == null || valueHigh > symbolInterval.DlzAdmin.LastSwingHigh)
+                    if (symbolInterval.Dlz.Admin.LastSwingLow == null || valueLow < symbolInterval.Dlz.Admin.LastSwingLow ||
+                       symbolInterval.Dlz.Admin.LastSwingHigh == null || valueHigh > symbolInterval.Dlz.Admin.LastSwingHigh)
                     {
-                        //var dlzZones = symbolInterval.DlzZones;
+                        //var dlzZones = symbolInterval.Dlz.Zones;
                         // Diagnostics, deliberately switched off on 18-08-2026 - it was 40% of the log file. Left in place to switch back on.
                         //GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} recalc triggered " +
-                        //    $"(swingLow {symbolInterval.DlzAdmin.LastSwingLow}→{valueLow}, " +
-                        //    $"swingHigh {symbolInterval.DlzAdmin.LastSwingHigh}→{valueHigh}) " +
+                        //    $"(swingLow {symbolInterval.Dlz.Admin.LastSwingLow}→{valueLow}, " +
+                        //    $"swingHigh {symbolInterval.Dlz.Admin.LastSwingHigh}→{valueHigh}) " +
                         //    $"open zones before: long={dlzZones.LongOpen.Count} short={dlzZones.ShortOpen.Count}");
                         // Avoid duplicate calculation: remember the widest range seen so far, so only a
                         // candle that breaks OUT of it triggers the next recalculation.
@@ -203,10 +203,10 @@ public class SignalPrepare
                         // that same candle - after which almost any next candle triggered again. In the
                         // log that showed up as "swingHigh 0.3503→0.1827", a swing high walking downwards,
                         // and as a recalculation for nearly every symbol on every hour boundary.
-                        symbolInterval.DlzAdmin.LastSwingLow = symbolInterval.DlzAdmin.LastSwingLow.HasValue
-                            ? Math.Min(symbolInterval.DlzAdmin.LastSwingLow.Value, valueLow) : valueLow;
-                        symbolInterval.DlzAdmin.LastSwingHigh = symbolInterval.DlzAdmin.LastSwingHigh.HasValue
-                            ? Math.Max(symbolInterval.DlzAdmin.LastSwingHigh.Value, valueHigh) : valueHigh;
+                        symbolInterval.Dlz.Admin.LastSwingLow = symbolInterval.Dlz.Admin.LastSwingLow.HasValue
+                            ? Math.Min(symbolInterval.Dlz.Admin.LastSwingLow.Value, valueLow) : valueLow;
+                        symbolInterval.Dlz.Admin.LastSwingHigh = symbolInterval.Dlz.Admin.LastSwingHigh.HasValue
+                            ? Math.Max(symbolInterval.Dlz.Admin.LastSwingHigh.Value, valueHigh) : valueHigh;
                         // TODO: This is not 100% correct...
 
                         // Hand the recalculation to ZoneThreadCalculate instead of running it here.

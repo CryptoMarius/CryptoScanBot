@@ -299,7 +299,7 @@ public class ZoneDlzTests : TestBase
             });
         }
 
-        await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded, processAfter: cursor);
+        await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded, committedUpTo: cursor);
 
         // Previous results unchanged
         Assert.IsTrue(indicator.ZigZagList[1].Dominant, "Phase 2: L90 still dominant");
@@ -340,7 +340,7 @@ public class ZoneDlzTests : TestBase
             Candle = candle,
         });
 
-        await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded, processAfter: cursor);
+        await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded, committedUpTo: cursor);
 
         // With strict < check, H110 at cursor time IS re-evaluated as supply
         Assert.IsTrue(indicator.ZigZagList[2].Dominant,

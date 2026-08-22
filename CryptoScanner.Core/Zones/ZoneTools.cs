@@ -10,6 +10,7 @@ public class DatabaseStatistics
     public int Modified { get; set; }
     public int Deleted { get; set; }
     public int Untouched { get; set; }
+    public int Retained { get; set; }
     public int Total { get; set; }
 }
 
@@ -90,11 +91,35 @@ public class ZoneTools
 
 
 
-    public static void DeleteRemainingZones(SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase, DatabaseStatistics dbStats)
+    /// <summary>
+    /// Whatever the calculation did not produce this pass. Most of it is genuinely gone and is
+    /// deleted, but not all of it: a calculation may only delete zones it could have produced.
+    /// <para>
+    /// A zone is derived from a pivot, and its OpenTime is that pivot's candle. Once the pivot has
+    /// aged out of the candle window the calculation cannot produce that zone any more - not
+    /// because it is wrong, but because it is out of sight. Deleting it there meant the zone
+    /// history was pruned back to the window on every full calculation, so on every restart and on
+    /// every press of the chart's "Calculate" button, and the candles to rebuild it were long gone.
+    /// </para>
+    /// <para>
+    /// Those are carried into <paramref name="carryInto"/> instead, until their RIGHT edge leaves
+    /// the window too: CloseTime for a zone that has been broken, and never for one that is still
+    /// open - an open zone is still tradeable however old it is. Pass no window and the old
+    /// behaviour returns, which is what the callers that own their whole result want.
+    /// </para>
+    /// </summary>
+    public static void DeleteRemainingZones(SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase,
+        DatabaseStatistics dbStats, CryptoSymbolIntervalZones? carryInto = null, CandleTime? windowStart = null)
     {
-        // delete the remaining zones
         foreach (var zone in zonesFromDatabase.Values)
         {
+            if (carryInto != null && windowStart != null && OutOfSightButStillRelevant(zone, windowStart.Value))
+            {
+                carryInto.Add(zone);
+                dbStats.Retained++;
+                continue;
+            }
+
             if (zone.Id != 0)
             {
                 zone.Id *= -1;
@@ -104,6 +129,18 @@ public class ZoneTools
                 //    GlobalData.AddTextToLogTab($"{zone.ZoneText("Deleting")}");
             }
         }
+    }
+
+
+    /// <summary>
+    /// True when this zone starts before the calculation's window - so it could not have been
+    /// produced this pass - while its right edge is still inside it.
+    /// </summary>
+    public static bool OutOfSightButStillRelevant(CryptoZone zone, CandleTime windowStart)
+    {
+        if (zone.OpenTime >= windowStart)
+            return false; // inside the window: the calculation had its say and did not produce it
+        return zone.CloseTime == null || zone.CloseTime.Value >= windowStart;
     }
 
 

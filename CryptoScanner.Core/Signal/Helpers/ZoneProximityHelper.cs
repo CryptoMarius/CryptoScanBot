@@ -47,8 +47,8 @@ public static class ZoneProximityHelper
             var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
             // Capture reference so a concurrent DlzZones swap mid-loop does not cause IndexOutOfRangeException
             var openZones = myBase.SignalSide == CryptoTradeSide.Long
-                ? symbolIntervalData.DlzZones.LongOpen
-                : symbolIntervalData.DlzZones.ShortOpen;
+                ? symbolIntervalData.Dlz.Zones.LongOpen
+                : symbolIntervalData.Dlz.Zones.ShortOpen;
 
             int index = 0;
             while (index < openZones.Count)
@@ -354,8 +354,8 @@ public static class ZoneProximityHelper
 
             var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
             var openZones = myBase.SignalSide == CryptoTradeSide.Long
-                ? (isDlz ? symbolIntervalData.DlzZones.LongOpen : symbolIntervalData.FvgZones.LongOpen)
-                : (isDlz ? symbolIntervalData.DlzZones.ShortOpen : symbolIntervalData.FvgZones.ShortOpen);
+                ? (isDlz ? symbolIntervalData.Dlz.Zones.LongOpen : symbolIntervalData.FvgZones.LongOpen)
+                : (isDlz ? symbolIntervalData.Dlz.Zones.ShortOpen : symbolIntervalData.FvgZones.ShortOpen);
 
             int index = 0;
             while (index < openZones.Count)

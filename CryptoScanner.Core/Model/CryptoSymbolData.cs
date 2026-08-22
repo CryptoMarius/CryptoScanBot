@@ -99,7 +99,7 @@ public class CryptoSymbolData
     {
         foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
         {
-            symbolInterval.DlzZones.Reset();
+            symbolInterval.Dlz.Zones.Reset();
         }
     }
 
@@ -115,17 +115,30 @@ public class CryptoSymbolData
     /// Forces every incremental zone-calculation cursor (DLZ/FVG/SMC) back to "never run" so the
     /// next call does a full historical rescan instead of continuing from where it left off. Call
     /// this for a genuine forced recalculation: a fresh emulator run
-    /// (<see cref="Emulator.Engine.EmulatorDb.ClearZonesForSymbols"/>) or the chart's "Calculate"
-    /// force-recalc button — NOT from the routine Reset*Data methods above, which run on every
-    /// chart open/symbol switch and must stay cheap for the live engine.
+    /// (<see cref="Emulator.Engine.EmulatorDb.ClearZonesForSymbols"/>), the chart's "Calculate"
+    /// force-recalc button, or a candle catch-up that filled a gap the socket missed
+    /// (<see cref="Exchange.CandleBase.GetCandlesForAllIntervalsAsync"/>) — NOT from the routine
+    /// Reset*Data methods above, which run on every chart open/symbol switch and must stay cheap
+    /// for the live engine.
+    /// <para>
+    /// DlzAdmin goes with them. That is the price range deciding WHETHER a recalculation is queued
+    /// at all (SignalPrepare), so leaving it filled means the forced rescan still waits for price to
+    /// leave the range it held before — which after an outage it may never do, because price can
+    /// have come back inside that range while we were not looking.
+    /// </para>
     /// </summary>
     public void ResetZoneCalculationCursors()
     {
         foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
         {
-            symbolInterval.DlzLastProcessedTime = null;
+            symbolInterval.Dlz.ProcessedCandleMarker = null;
             symbolInterval.FvgLastProcessedTime = null;
             symbolInterval.SmcLastProcessedTime = null;
+            // The committed verdicts go with them. They are only meaningful against the pivot list
+            // they were drawn from, and a reset is exactly the moment that list is rebuilt.
+            symbolInterval.Dlz.CommittedPivotMarker = null;
+            symbolInterval.Dlz.CommittedZones = [];
+            symbolInterval.Dlz.Admin.Reset();
         }
     }
 

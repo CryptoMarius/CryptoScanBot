@@ -33,7 +33,14 @@ public class Api : ExchangeBase
         // 1.6 million a day, so that side of the exchange is nearly empty (and its boundary was 530).
         // The candle limit is 200: that is what the futures kline endpoint returns per call, whatever
         // larger window we ask for (the spot side really does hand over 1500).
-        ExchangeOptions.SetDefaultOptions("Kucoin Futures", "USDT", 200, true, 1, 20, KlineDelivery.TimerFlush, minimalVolume: 370_000, pauseSymbol: "XBTUSDT");
+        // Same story as HyperLiquid Spot but far milder, so a real boundary is enough here instead of
+        // switching the check off. Measured over the night of 21/22-08-2026, on runs of 1m candles with
+        // volume zero: 24 of the 102 symbols that went quiet went over five minutes, 4 went over fifteen
+        // and the worst was 28 minutes. The default of five minutes woke the watchdog 54 times that
+        // night and cost 46 partial restart rounds of 6 subscriptions each. Forty-five minutes clears
+        // the measured worst case with room to spare.
+        ExchangeOptions.SetDefaultOptions("Kucoin Futures", "USDT", 200, true, 1, 20, KlineDelivery.TimerFlush, minimalVolume: 370_000, pauseSymbol: "XBTUSDT",
+            maximumTickerInactivity: TimeSpan.FromMinutes(45));
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KucoinRestClient.SetDefaultOptions(options =>
@@ -58,7 +65,7 @@ public class Api : ExchangeBase
             // without a trade. Liveness is already covered, and better: the library pings the socket every
             // 10 seconds and aborts it when the pong does not arrive within 10 seconds
             // (SocketApiClient.KeepAliveInterval / KeepAliveTimeout, both 10s by default), which works
-            // whether or not there is any trading. SubscriptionManager.MaximumTickerSilence is the outer
+            // whether or not there is any trading. SubscriptionManager.MaximumTickerInactivity is the outer
             // net for a socket that stays up but stops delivering.
             options.SocketNoDataTimeout = TimeSpan.Zero;
             //options.V5Options.SocketNoDataTimeout = options.SocketNoDataTimeout;

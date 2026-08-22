@@ -38,7 +38,12 @@ MAXIMUM_DEPTH = 3          # how deep below the base folder to look
 # hundreds of thousands of rows. Checking them answers nothing and costs minutes.
 EXCLUDED_PARTS = ("emulator",)
 WORKERS = 4                # checks run in parallel; the work is disk bound, so more is not faster
-VERDICT_ORDER = {"bad": 0, "attention": 1, "unknown": 2, "good": 3}
+# Elke lijst met exchanges erin staat op NAAM, niet op oordeel. Worst-first leest lekker de eerste
+# keer, maar deze pagina wordt elke ochtend naast die van gisteren gelegd, en dan is een lijst die
+# per nacht van volgorde wisselt precies het verkeerde: je zoekt "waar staat Kraken Spot vandaag" en
+# niet "wie staat er bovenaan". Op naam staat een exchange elke nacht op dezelfde plek en springt het
+# verschil er vanzelf uit. Welke aandacht vragen staat in de koptekst en in de kleur van de bolletjes,
+# dus die informatie gaat niet verloren.
 
 # Leading underscore so it sorts above the per-exchange reports in the folder listing: this is the
 # one to open first. The name is kept from the hand-written version that preceded it.
@@ -188,13 +193,14 @@ def overview_row(facts_path):
         "numbers": {
             "symbols": total_over_exchanges(section_of(facts, "symbols"), "symbols"),
             "subscribed": total_over_exchanges(candles, "subscribed"),
-            "silent": total_over_exchanges(candles, "silentSymbols"),
+            "withoutCandles": total_over_exchanges(candles, "symbolsWithoutCandlesInWindow"),
             "missing": total_over_exchanges(candles, "missingMinutes"),
             "impossible": total_over_exchanges(candles, "impossibleCandles"),
             "outages": (streams.get("facts") or {}).get("outages") or 0,
             "drops": (streams.get("facts") or {}).get("connectionDrops") or 0,
             "dropsPerHour": (streams.get("facts") or {}).get("connectionDropsPerHour") or 0.0,
             "never": len((streams.get("facts") or {}).get("neverRestored") or []),
+            "rebuilds": (streams.get("facts") or {}).get("fullRebuilds") or 0,
             "errors": (errors.get("facts") or {}).get("errorLines") or 0,
             "signals": total_over_exchanges(signals, "signalsInWindow"),
             "memory": plateau,
@@ -263,7 +269,7 @@ def write_overview(output, rows, base, skipped, max_age_days):
     if not rows:
         return None
 
-    rows = sorted(rows, key=lambda row: (VERDICT_ORDER.get(row["verdict"], 9), row["label"]))
+    rows = sorted(rows, key=lambda row: row["label"])
     worst = max((row["verdict"] for row in rows),
                 key=lambda verdict: check_exchange.VERDICT_RANK.get(verdict, 0))
     counts = {verdict: sum(1 for row in rows if row["verdict"] == verdict)
@@ -402,25 +408,32 @@ def write_overview(output, rows, base, skipped, max_age_days):
     out.append("<p>Vergelijk de kolommen, niet de rijen. Het aantal onderbrekingen hangt af van "
                "hoeveel symbolen een exchange in een abonnement stopt, dus een exchange op een "
                "symbool per abonnement telt er onvermijdelijk meer; de verbindingsverbrekingen "
-               "ernaast zijn wel vergelijkbaar. Het geheugen is de helling over de staart van de "
-               "run, want de opwarming van de caches zit in de eerste uren.</p>")
+               "ernaast zijn wel vergelijkbaar. Geen candles telt de geabonneerde symbolen die in dit "
+               "venster geen enkele candle leverden - dat is iets anders dan een symbool zonder "
+               "candles in de instrumentenlijst, want daar houdt de volumegrens het grootste deel "
+               "bewust buiten. Het geheugen is de helling over de staart van de "
+               "run, want de opwarming van de caches zit in de eerste uren. Herbouw telt de keren "
+               "dat de scanner AL zijn abonnementen afbrak en opnieuw opzette; die kolom hoort op "
+               "nul te staan en verklaart, als hij dat niet doet, de ontbrekende minuten ernaast."
+               "</p>")
     out.append('<div class="scroll"><table>')
-    out.append("<thead><tr><th>Exchange</th><th>Symbolen</th><th>Abonn.</th><th>Stil</th>"
+    out.append("<thead><tr><th>Exchange</th><th>Symbolen</th><th>Abonn.</th><th>Geen candles</th>"
                "<th>Ontbr. min</th><th>Onmogelijk</th><th>Onderbr.</th><th>Verbr.</th>"
-               "<th>Verbr./uur</th><th>Niet hersteld</th><th>Foutregels</th><th>Signalen</th>"
-               "<th>Geheugen MB/uur</th></tr></thead><tbody>")
+               "<th>Verbr./uur</th><th>Niet hersteld</th><th>Herbouw</th><th>Foutregels</th>"
+               "<th>Signalen</th><th>Geheugen MB/uur</th></tr></thead><tbody>")
     for row in rows:
         numbers = row["numbers"]
         out.append('<tr><td><a href="{}">{}</a></td>'
                    "<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>"
-                   "<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+                   "<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>"
+                   "<td>{}</td></tr>".format(
                        escape(row["report"]), escape(row["label"]),
                        number_cell(numbers["symbols"]), number_cell(numbers["subscribed"]),
-                       number_cell(numbers["silent"]), number_cell(numbers["missing"]),
+                       number_cell(numbers["withoutCandles"]), number_cell(numbers["missing"]),
                        number_cell(numbers["impossible"]), number_cell(numbers["outages"]),
                        number_cell(numbers["drops"]), number_cell(numbers["dropsPerHour"], 2),
-                       number_cell(numbers["never"]), number_cell(numbers["errors"]),
-                       number_cell(numbers["signals"]),
+                       number_cell(numbers["never"]), number_cell(numbers["rebuilds"]),
+                       number_cell(numbers["errors"]), number_cell(numbers["signals"]),
                        number_cell(numbers["memory"], 1, signed=True)))
     out.append("</tbody></table></div>")
     out.append("</section>")
@@ -489,6 +502,15 @@ def main():
                              "to check every folder found.")
     parser.add_argument("--deep", action="store_true",
                         help="Pass --deep to every check (whole candle history instead of the run).")
+    # Normaal bepaalt elke controle zijn eigen venster uit de laatste scannerstart in zijn log, en
+    # dat is bijna altijd wat je wilt. Het gaat mis zodra een deel van de scanners inmiddels opnieuw
+    # gestart is: die meten dan een half uur van vandaag terwijl de rest de hele nacht meet, en dan
+    # staan er negentien rapporten naast elkaar over twee verschillende dingen. Met een expliciet
+    # venster meet iedereen dezelfde uren, ook achteraf.
+    parser.add_argument("--start", help='Begin van het venster voor ALLE mappen, bijvoorbeeld '
+                                        '"2026-08-20 15:54". Standaard bepaalt elke map zijn eigen '
+                                        'venster uit zijn laatste scannerstart.')
+    parser.add_argument("--end", help="Einde van dat venster.")
     arguments = parser.parse_args()
 
     base = Path(os.path.expandvars(arguments.base))
@@ -543,6 +565,10 @@ def main():
                    "--out", str(report_path), "--json", str(facts_path)]
         if arguments.deep:
             command.append("--deep")
+        if arguments.start:
+            command.extend(["--start", arguments.start])
+        if arguments.end:
+            command.extend(["--end", arguments.end])
 
         csv_path = None
         if memory:
@@ -582,7 +608,7 @@ def main():
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
         results = list(pool.map(check_one, folders))
 
-    results.sort(key=lambda row: (VERDICT_ORDER.get(row[1], 9), row[0]))
+    results.sort(key=lambda row: row[0])
 
     print()
     print("=" * 78)
@@ -612,7 +638,8 @@ def main():
     print("Reports written to: {}".format(output))
     if overview_path:
         print("Start here: {}".format(overview_path.name))
-    print("Worst first, so start at the top. Took {:.0f} seconds.".format(time.time() - started))
+    print("Sorted by exchange, so the same market is on the same line every night. "
+          "Took {:.0f} seconds.".format(time.time() - started))
     return 0
 
 

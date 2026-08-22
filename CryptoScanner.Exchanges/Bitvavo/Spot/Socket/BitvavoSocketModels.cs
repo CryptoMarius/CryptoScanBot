@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Exchange.Bitvavo.Spot.Socket;
@@ -49,7 +49,7 @@ internal class BitvavoSubscriptionResponse
 /// <summary>
 /// A rejected request: <c>{"action":"subscribe","errorCode":205,"error":"..."}</c>, without an event
 /// field. Worth its own model because ONE invalid market rejects the WHOLE subscribe message, and
-/// then the group receives nothing at all - previously the only symptom was the silence check
+/// then the group receives nothing at all - previously the only symptom was the inactivity check
 /// restarting it into the same rejection every few minutes.
 /// </summary>
 internal class BitvavoErrorResponse

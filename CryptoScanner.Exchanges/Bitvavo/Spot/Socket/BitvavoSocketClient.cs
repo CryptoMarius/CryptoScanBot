@@ -26,7 +26,7 @@ public class BitvavoSocketClient : BaseSocketClient
             Environment = BitvavoEnvironment.Live,
 
             // Same as the other exchanges use. SocketNoDataTimeout is deliberately left at its default
-            // of zero: on a candle feed that only pushes when something is traded it measures silence
+            // of zero: on a candle feed that only pushes when something is traded it measures inactivity
             // instead of trouble, and the keep alive of the library (10 seconds, and it aborts when the
             // answer stays away) is the one that really tells whether the connection is alive.
             ReconnectInterval = TimeSpan.FromSeconds(10),

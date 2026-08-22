@@ -353,9 +353,9 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     }
 
     // A 1m subscription that has not delivered anything for this long is considered dead. The check runs
-    // in UTC so a daylight saving switch cannot make a healthy subscription look silent for an hour.
+    // in UTC so a daylight saving switch cannot make a healthy subscription look inactive for an hour.
     //
-    // Five minutes since 18-08-2026, and since then this is the ONLY silence check we do ourselves: the
+    // Five minutes since 18-08-2026, and since then this is the ONLY inactivity check we do ourselves: the
     // SocketNoDataTimeout of one minute in every Api.cs is switched off (see the remarks there). That
     // one fired on coins that were merely untraded, and each time it did, the reconnect cost the cached
     // ticker the 1m candle it was filling.
@@ -368,15 +368,17 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     // every 10 seconds. So the cost of being generous here is small and the cost of being strict is
     // what we measured. Worth revisiting with a real number: the longest gap per subscription over a
     // night, which the nightly report can produce from the stored 1m candles.
-    public static readonly TimeSpan MaximumTickerSilence = TimeSpan.FromMinutes(5);
-
+    //
+    // That night arrived on 21/22-08-2026 and the number said five minutes is too strict for the thin
+    // markets, so the value moved to ExchangeOptions.MaximumTickerInactivity and each exchange states its
+    // own. The default there is still five minutes, so an exchange that says nothing behaves as before.
     public virtual bool NeedsRestart()
     {
         // this get called every 4 or 5 candles, if there was no activity in that period we will schedule a restart
 
         int count = 0;
         bool restart = false;
-        DateTime deadline = GlobalData.Clock.UtcNow - MaximumTickerSilence;
+        DateTime deadline = GlobalData.Clock.UtcNow - ExchangeOptions.MaximumTickerInactivity;
 
         foreach (var bundle in SubscriptionBundleList)
         {
@@ -392,7 +394,7 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                 }
 
                 // A market that is closed delivers nothing, and both checks below would read that as a
-                // broken subscription: the silence check because nothing came in, and the ticker count
+                // broken subscription: the inactivity check because nothing came in, and the ticker count
                 // check because the count has not moved. Only the stock broker ever says no here; every
                 // crypto exchange trades around the clock.
                 if (!subscription.IsExpectingData)
@@ -406,7 +408,7 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                 {
                     restart = true;
                     subscription.NeedsRestart = true;
-                    ScannerLog.Logger.Trace($"{TickerType} subscription {subscription.Name} silent since {subscription.LastActivity} (utc) {subscription.SymbolOverview}");
+                    ScannerLog.Logger.Trace($"{TickerType} subscription {subscription.Name} inactive since {subscription.LastActivity} (utc) {subscription.SymbolOverview}");
                     continue;
                 }
 
