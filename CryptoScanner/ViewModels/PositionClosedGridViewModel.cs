@@ -29,6 +29,7 @@ public partial class PositionClosedGridViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<PositionIsClosedMessage>(this, OnPositionIsClosed);
         WeakReferenceMessenger.Default.Register<PositionIsDeletedMessage>(this, OnPositionIsDeleted);
         WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
+        WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, OnThemeChanged);
 
         LoadClosedPositions();
     }
@@ -39,12 +40,23 @@ public partial class PositionClosedGridViewModel : ObservableObject
         WeakReferenceMessenger.Default.Unregister<PositionIsClosedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PositionIsDeletedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ThemeChangedMessage>(this);
     }
 
     private void OnConfigurationChanged(object recipient, ConfigurationChangedMessage message)
     {
         foreach (var position in Positions)
             position.ResetColors();
+    }
+
+    /// <summary>
+    /// Green and red come from the theme, and a row keeps the brush it was first drawn with, so the
+    /// rows that are already on screen have to let go of theirs when the theme changes.
+    /// </summary>
+    private void OnThemeChanged(object recipient, ThemeChangedMessage message)
+    {
+        foreach (var position in Positions)
+            position.ResetCachedBrushes();
     }
 
     //public void TimerUpdatePositionsTick(object? sender, EventArgs? e)

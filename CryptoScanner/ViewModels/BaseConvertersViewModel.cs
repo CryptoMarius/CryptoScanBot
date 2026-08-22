@@ -1,4 +1,6 @@
-﻿using Avalonia.Media;
+﻿using System.Reflection;
+
+using Avalonia.Media;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -10,16 +12,68 @@ namespace CryptoScanner.ViewModels;
 
 public partial class BaseConvertersViewModel : ObservableObject
 {
-    internal readonly IBrush BrushGreen;
-    internal readonly IBrush BrushRed;
-    internal readonly IBrush BrushNeutral;
+    // Read on every use instead of captured in the constructor. A row that was built before the
+    // theme from the settings had been applied used to freeze the brushes it saw at that moment and
+    // kept them for the rest of the session, so the grids that load their rows at startup drifted
+    // away from the symbol grid and the information dashboard (which reads App.PriceUp/PriceDown per
+    // update). The cells still cache the brush per row, but only from their first render - by then
+    // the theme is settled.
+    internal IBrush BrushGreen => App.PriceUp;
+    internal IBrush BrushRed => App.PriceDown;
+    internal IBrush BrushNeutral => App.PriceNeutral;
 
-    public BaseConvertersViewModel()
+
+    /// <summary>
+    /// Drop every cached brush of this row so the next render works them out again. Used when the
+    /// theme changes (green and red come from the theme) and when the settings change (the volume
+    /// boundary, the RSI and stochastic levels and the quote/strategy colours all decide a colour).
+    /// <para>
+    /// The fields are collected by reflection on purpose. Naming them one by one is what went wrong
+    /// before: a reset that listed the symbol background but not the volume colour left that column
+    /// showing the previous boundary until the row was rebuilt for another reason. A row holds up to
+    /// thirty of these, and every new coloured column would have to be added to the list by hand.
+    /// </para>
+    /// </summary>
+    public void ResetCachedBrushes()
     {
-        BrushGreen = App.GetBrushResource("PriceUpBrush");
-        BrushRed = App.GetBrushResource("PriceDownBrush");
-        BrushNeutral = App.GetBrushResource("PriceNeutralBrush");
+        foreach (var field in GetBrushFields(GetType()))
+            field.SetValue(this, null);
+
+        // One notification for the entire row: a null property name tells the bindings to re-read
+        // everything, which is both cheaper and safer than naming thirty properties.
+        OnPropertyChanged((string?)null);
     }
+
+
+    /// <summary>
+    /// The IBrush backing fields of a row type, including the ones its base types declare. Worked
+    /// out once per type: reflection is fine for an occasional theme or settings change, but not
+    /// per row.
+    /// </summary>
+    private static FieldInfo[] GetBrushFields(Type type)
+    {
+        lock (BrushFieldsPerType)
+        {
+            if (BrushFieldsPerType.TryGetValue(type, out var cached))
+                return cached;
+
+            List<FieldInfo> fields = [];
+            for (Type? walk = type; walk != null && walk != typeof(ObservableObject); walk = walk.BaseType)
+            {
+                // DeclaredOnly: private fields of a base type are invisible to a lookup on the
+                // derived type, so the hierarchy is walked instead.
+                fields.AddRange(walk
+                    .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                    .Where(x => typeof(IBrush).IsAssignableFrom(x.FieldType) && !x.IsInitOnly));
+            }
+
+            var result = fields.ToArray();
+            BrushFieldsPerType.Add(type, result);
+            return result;
+        }
+    }
+
+    private static readonly Dictionary<Type, FieldInfo[]> BrushFieldsPerType = [];
 
     /// <summary>
     /// Colours the band-range index (see BandRangeTracker). Three buckets, no finer: the difference

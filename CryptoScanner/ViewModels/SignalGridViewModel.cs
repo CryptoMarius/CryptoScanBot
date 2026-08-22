@@ -29,6 +29,7 @@ public partial class SignalGridViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
         WeakReferenceMessenger.Default.Register<ExchangeSwitchedMessage>(this, OnExchangeSwitched);
         WeakReferenceMessenger.Default.Register<SignalDeleteAllMessage>(this, OnSignalsDeleted);
+        WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, OnThemeChanged);
 
         _timerAddSignalsFromQueue.Tick += TimerAddSignalsFromQueueTick;
         _timerAddSignalsFromQueue.Start();
@@ -47,6 +48,7 @@ public partial class SignalGridViewModel : ObservableObject
         WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<ExchangeSwitchedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<SignalDeleteAllMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ThemeChangedMessage>(this);
 
         _timerAddSignalsFromQueue.Stop();
         _timerAddSignalsFromQueue.Tick -= TimerAddSignalsFromQueueTick;
@@ -69,6 +71,16 @@ public partial class SignalGridViewModel : ObservableObject
     {
         foreach (var signal in Signals)
             signal.ResetColors();
+    }
+
+    /// <summary>
+    /// Green and red come from the theme, and a row keeps the brush it was first drawn with, so the
+    /// rows that are already on screen have to let go of theirs when the theme changes.
+    /// </summary>
+    private void OnThemeChanged(object recipient, ThemeChangedMessage message)
+    {
+        foreach (var signal in Signals)
+            signal.ResetCachedBrushes();
     }
 
     private void OnExchangeSwitched(object recipient, ExchangeSwitchedMessage message)

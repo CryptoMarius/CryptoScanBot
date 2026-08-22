@@ -30,6 +30,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<PositionIsCreatedMessage>(this, OnPositionIsCreated);
         WeakReferenceMessenger.Default.Register<PositionIsDeletedMessage>(this, OnPositionIsDeleted);
         WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
+        WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, OnThemeChanged);
         WeakReferenceMessenger.Default.Register<ExchangeSwitchedMessage>(this, OnExchangeSwitched);
 
         _timerRefreshFields.Tick += TimerRefreshFieldsTick;
@@ -45,6 +46,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
         WeakReferenceMessenger.Default.Unregister<PositionIsCreatedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PositionIsDeletedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ThemeChangedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<ExchangeSwitchedMessage>(this);
 
 
@@ -90,6 +92,16 @@ public partial class PositionOpenGridViewModel : ObservableObject
     {
         foreach (var position in Positions)
             position.ResetColors();
+    }
+
+    /// <summary>
+    /// Green and red come from the theme, and a row keeps the brush it was first drawn with, so the
+    /// rows that are already on screen have to let go of theirs when the theme changes.
+    /// </summary>
+    private void OnThemeChanged(object recipient, ThemeChangedMessage message)
+    {
+        foreach (var position in Positions)
+            position.ResetCachedBrushes();
     }
 
     private void OnExchangeSwitched(object recipient, ExchangeSwitchedMessage message)

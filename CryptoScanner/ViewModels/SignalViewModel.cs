@@ -143,12 +143,10 @@ public partial class SignalViewModel : BaseConvertersViewModel
     /// </summary>
     public void ResetColors()
     {
-        _StrategyBackground = null;
-        _SymbolBackground = null;
-        _SignalVolumeForeground = null;
-        OnPropertyChanged(nameof(StrategyBackground));
-        OnPropertyChanged(nameof(SymbolBackground));
-        OnPropertyChanged(nameof(SignalVolumeForeground));
+        // Every cached brush of the row, not just these three: the indicator columns are coloured
+        // against the RSI and stochastic levels from the settings, and green and red themselves come
+        // from the theme.
+        ResetCachedBrushes();
     }
     //public decimal SignalPrice => Object.SignalPrice;
     private string? _SignalPriceText;

@@ -3,10 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.Threading;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.SignalR;
 using CryptoScanner.Core.Sounds;
@@ -58,6 +60,16 @@ public partial class App : Application
         CryptoScanner.Helpers.CommandHelper.OpenHiddenBrowser = OpenInHiddenBrowser;
 
         GlobalData.RunOnUiThread = action => Dispatcher.UIThread.Post(action);
+
+        // Repaint the grids when the theme changes. The rows cache the brush they were drawn with,
+        // so without this a switch left the already visible rows in the colours of the previous
+        // theme. Both events matter: ActualThemeVariantChanged covers a switch from the settings,
+        // ColorValuesChanged covers the operating system changing its theme while the application is
+        // set to follow it (ActualThemeVariant stays Default in that case and does not fire).
+        ActualThemeVariantChanged += (_, _) => GlobalData.SendMvvmMessage(new ThemeChangedMessage());
+        if (PlatformSettings != null)
+            PlatformSettings.ColorValuesChanged += (_, _) => GlobalData.SendMvvmMessage(new ThemeChangedMessage());
+
         GlobalData.SetTheme = theme =>
         {
             if (Application.Current != null)
@@ -171,6 +183,15 @@ public partial class App : Application
             var scannerSession = GlobalData.GetService<IScannerSession>()
                 ?? throw new InvalidOperationException("ScannerSession not registered");
             scannerSession.AfterStartup();
+
+            // Apply the theme BEFORE the main window and its grids are built. ApplyConfigurationAsync
+            // sets it too, but it runs fire-and-forget, so the rows the signal, live data and position
+            // grids load from the database at startup resolved their colours against a theme that was
+            // still Default - and kept the light green and red for the rest of the session. The symbol
+            // grid is filled from ApplyConfigurationAsync itself (after the theme is set), which is why
+            // only that one, and the information dashboard, showed the right colours.
+            GlobalData.SetTheme?.Invoke(GlobalData.Settings.General.Theme ?? "Default");
+
             _ = scannerSession.ApplyConfigurationAsync(true);
             scannerSession.Start(0);
 
@@ -335,7 +356,8 @@ public partial class App : Application
 
     public static IBrush GetBrushResource(string resourceKey)
     {
-        if (Application.Current?.TryGetResource(resourceKey, Application.Current.ActualThemeVariant, out var resource) == true
+        var app = Application.Current;
+        if (app != null && app.TryGetResource(resourceKey, ResolveThemeVariant(app), out var resource)
             && resource is IBrush brush)
         {
             return brush;
@@ -344,6 +366,28 @@ public partial class App : Application
         // Fallback
         System.Diagnostics.Debug.WriteLine($"GetBrushResource({resourceKey}) returned default");
         return Brushes.Black;
+    }
+
+
+    /// <summary>
+    /// The theme variant to look a themed resource up with, never ThemeVariant.Default.
+    /// <para>
+    /// ActualThemeVariant stays Default until the theme from the settings has been applied, and it
+    /// also stays Default for as long as the application follows the operating system. Asking for a
+    /// resource with Default silently falls back to the FIRST theme dictionary - the light one -
+    /// while the controls themselves are already drawn dark. That is how the grids ended up with the
+    /// light green and red on the dark theme.
+    /// </para>
+    /// </summary>
+    private static ThemeVariant ResolveThemeVariant(Application app)
+    {
+        var variant = app.ActualThemeVariant;
+        if (variant != ThemeVariant.Default)
+            return variant;
+
+        return app.PlatformSettings?.GetColorValues().ThemeVariant == PlatformThemeVariant.Dark
+            ? ThemeVariant.Dark
+            : ThemeVariant.Light;
     }
 
 

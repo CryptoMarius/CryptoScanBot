@@ -175,10 +175,10 @@ public partial class PositionViewModel : BaseConvertersViewModel
 
     public void ResetColors()
     {
-        _StrategyBackground = null;
-        _SymbolBackground = null;
-        OnPropertyChanged(nameof(StrategyBackground));
-        OnPropertyChanged(nameof(SymbolBackground));
+        // Every cached brush of the row, not just the two backgrounds: the indicator columns are
+        // coloured against the RSI and stochastic levels from the settings, and green and red
+        // themselves come from the theme.
+        ResetCachedBrushes();
     }
 
     //public CryptoPositionStatus Status => Object.Status;

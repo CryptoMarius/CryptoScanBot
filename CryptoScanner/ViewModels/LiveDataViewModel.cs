@@ -65,10 +65,10 @@ public class LiveDataViewModel : BaseConvertersViewModel
     /// </summary>
     public void ResetSymbolBackground()
     {
-        _SymbolBackground = null;
-        _SignalVolumeForeground = null;
-        OnPropertyChanged(nameof(SymbolBackground));
-        OnPropertyChanged(nameof(SignalVolumeForeground));
+        // Every cached brush of the row, not just these two: the indicator columns are coloured
+        // against the RSI and stochastic levels from the settings, and green and red themselves come
+        // from the theme.
+        ResetCachedBrushes();
     }
 
     //public string Interval => Object.Interval.Name;

@@ -27,6 +27,7 @@ public partial class SymbolGridViewModel : ObservableObject
 
         WeakReferenceMessenger.Default.Register<SymbolsHaveChangedMessage>(this, OnSymbolsHaveChanged);
         WeakReferenceMessenger.Default.Register<ZonesCalculatedForSymbolMessage>(this, OnZonesCalculatedForSymbol);
+        WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, OnThemeChanged);
 
         _timerRefreshZones.Tick += TimerRefreshZonesTick;
         _timerRefreshZones.Start();
@@ -38,6 +39,7 @@ public partial class SymbolGridViewModel : ObservableObject
     {
         WeakReferenceMessenger.Default.Unregister<SymbolsHaveChangedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<ZonesCalculatedForSymbolMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ThemeChangedMessage>(this);
 
         _timerRefreshZones.Stop();
         _timerRefreshZones.Tick -= TimerRefreshZonesTick;
@@ -65,6 +67,17 @@ public partial class SymbolGridViewModel : ObservableObject
     private void OnSymbolsHaveChanged(object recipient, SymbolsHaveChangedMessage message)
     {
         ReloadSymbolsWithFilter(); // for now..
+    }
+
+    /// <summary>
+    /// The volume colour comes from the theme and a row keeps the brush it was first drawn with.
+    /// This grid does get rebuilt regularly, but not on the spot, so the rows are told to work their
+    /// colour out again instead of waiting for the next symbol update.
+    /// </summary>
+    private void OnThemeChanged(object recipient, ThemeChangedMessage message)
+    {
+        foreach (var symbol in Symbols)
+            symbol.ResetCachedBrushes();
     }
 
     public void OnFilterTextChanged(object? sender, string filterText)

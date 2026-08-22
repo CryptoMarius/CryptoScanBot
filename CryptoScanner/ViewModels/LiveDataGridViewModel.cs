@@ -30,6 +30,7 @@ public partial class LiveDataGridViewModel : ObservableObject
         _updateTimer.Start();
 
         WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
+        WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, OnThemeChanged);
     }
 
     public void Dispose()
@@ -38,12 +39,24 @@ public partial class LiveDataGridViewModel : ObservableObject
         _updateTimer.Tick -= TimerAddLiveDataTick;
 
         WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ThemeChangedMessage>(this);
     }
 
     private void OnConfigurationChanged(object recipient, ConfigurationChangedMessage message)
     {
         foreach (var liveData in LiveDatas)
             liveData.ResetSymbolBackground();
+    }
+
+    /// <summary>
+    /// Green and red come from the theme, and a row keeps the brush it was first drawn with. The
+    /// rows of this grid are only ever appended, so without this reset they would keep the colours
+    /// of the previous theme until the application is restarted.
+    /// </summary>
+    private void OnThemeChanged(object recipient, ThemeChangedMessage message)
+    {
+        foreach (var liveData in LiveDatas)
+            liveData.ResetCachedBrushes();
     }
 
 
