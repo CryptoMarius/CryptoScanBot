@@ -202,6 +202,36 @@ public class ZoneDlz
 
 
     /// <summary>
+    /// Splits the live zones on <paramref name="mergeFrom"/>: everything older is carried straight
+    /// into <paramref name="carryInto"/> untouched, everything at or after it goes into
+    /// <paramref name="index"/> to be reconciled against what this pass produced.
+    /// <para>
+    /// The older ones rest on pivots that can no longer move, so a recalculation would produce them
+    /// unchanged - reconciling them is work with a guaranteed outcome. Keeping them out is what makes
+    /// the cost of an incremental pass depend on the tail instead of on the whole history.
+    /// </para>
+    /// </summary>
+    internal static void SplitOnMergeBoundary(CryptoSymbolIntervalZones live, CandleTime mergeFrom,
+        CryptoSymbolIntervalZones carryInto,
+        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> index,
+        DatabaseStatistics statistics)
+    {
+        foreach (var list in new[] { live.LongOpen, live.ShortOpen, live.LongClosed, live.ShortClosed })
+        {
+            List<CryptoZone> recent = [];
+            foreach (CryptoZone zone in list)
+            {
+                if (zone.OpenTime < mergeFrom)
+                    carryInto.Add(zone);
+                else
+                    recent.Add(zone);
+            }
+            ZoneTools.CreateZoneIndex(recent, index, statistics);
+        }
+    }
+
+
+    /// <summary>
     /// Swaps every freshly minted zone in <paramref name="rebuilt"/> for the live zone that already
     /// describes the same thing, matched on the key the merge itself uses (side, open time, top,
     /// bottom).
@@ -913,9 +943,14 @@ public class ZoneDlz
                     profJudge += Stopwatch.GetTimestamp() - profMark;
                     profMark = Stopwatch.GetTimestamp();
 
-                    // Settled verdicts are added to the store once and never recomputed.
+                    // Settled verdicts are added to the store once and never recomputed. The ones
+                    // added by THIS pass are kept apart: they are the only settled zones the merge
+                    // below still has to hear about.
+                    int committedBefore = symbolIntervalData.Dlz.CommittedZones.Count;
                     CreateZonesFromZigZag(symbol, interval, settledPivots,
                         symbolIntervalData.Dlz.CommittedZones);
+                    List<CryptoZone> newlyCommitted = symbolIntervalData.Dlz.CommittedZones.GetRange(
+                        committedBefore, symbolIntervalData.Dlz.CommittedZones.Count - committedBefore);
 
                     // The tail is rebuilt from scratch every pass. Adding to it instead would leave
                     // a copy behind of every zone that was judged twice, and would keep a zone that
@@ -925,19 +960,32 @@ public class ZoneDlz
                     CreateZonesFromZigZag(symbol, interval, provisionalPivots, provisionalZones);
                     KeepLiveInstanceWhereUnchanged(symbolIntervalData.Dlz.Zones, provisionalZones);
 
-                    List<CryptoZone> newZones = [.. symbolIntervalData.Dlz.CommittedZones, .. provisionalZones];
+                    List<CryptoZone> newZones = [.. newlyCommitted, .. provisionalZones];
+
+                    // Only the part of the zone set this pass could have changed goes through the
+                    // merge. Everything older rests on a settled pivot: the calculation would
+                    // produce it identically and the merge would call it Untouched, so submitting
+                    // it made the cost of a recalculation scale with how many zones EXIST instead
+                    // of with how many changed - which is what an incremental calculation is for.
+                    //
+                    // The boundary is where the mutable tail starts, pulled back to cover the zones
+                    // that just became settled (their pivot sits right before the tail). Zones older
+                    // than that are carried across untouched: same objects, no index, no compare, no
+                    // database write.
+                    CandleTime mergeFrom = trendZigZagIndicator.TailStartTime ?? judgedFrom;
+                    foreach (CryptoZone zone in newZones)
+                    {
+                        if (zone.OpenTime < mergeFrom)
+                            mergeFrom = zone.OpenTime;
+                    }
 
                     int weakNew = newZones.Count(z => z.Strength == CryptoZoneStrength.Weak);
-                    if (newZones.Count > 0)
                     {
                         DatabaseStatistics statistics = new();
-                        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
-                        ZoneTools.CreateZoneIndex(zones.LongOpen, oldZones, statistics);
-                        ZoneTools.CreateZoneIndex(zones.ShortOpen, oldZones, statistics);
-                        ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
-                        ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
-
                         CryptoSymbolIntervalZones finalZones = new();
+                        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
+                        SplitOnMergeBoundary(zones, mergeFrom, finalZones, oldZones, statistics);
+
                         ZoneTools.AddZonesToInternalLists(finalZones, oldZones, newZones, statistics);
                         // Zones whose pivot has aged out are carried instead of deleted; this pass
                         // could not have produced them, so their absence says nothing.

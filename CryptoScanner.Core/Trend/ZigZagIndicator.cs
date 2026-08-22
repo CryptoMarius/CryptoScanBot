@@ -99,6 +99,29 @@ public class ZigZagIndicator
         }
     }
 
+    /// <summary>
+    /// Where the mutable tail begins: the candle time of the first pivot that can still change, or
+    /// null when the whole list is settled (shorter than <see cref="MutableTailLength"/>).
+    /// <para>
+    /// This is the boundary a caller needs to know which of its own conclusions are still in play.
+    /// Everything derived from a pivot before it is final, so recomputing or re-checking it is work
+    /// that cannot change the answer.
+    /// </para>
+    /// </summary>
+    public CandleTime? TailStartTime
+    {
+        get
+        {
+            int settled = SettledCount;
+            for (int index = settled; index < ZigZagList.Count; index++)
+            {
+                if (!ZigZagList[index].Dummy)
+                    return ZigZagList[index].Candle.OpenTime;
+            }
+            return null;
+        }
+    }
+
     // Marks the last candle fed into this instance. Lets a caller that caches this indicator across
     // calls (e.g. TrendCalculator, ZoneDlz) feed only the candles since the last call instead of
     // rebuilding from scratch every time — Calculate() is already incremental per candle, so resuming
