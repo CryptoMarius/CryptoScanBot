@@ -166,7 +166,12 @@ class Program
         // Global exception handlers — surface errors that would otherwise be silently swallowed
         AppDomain.CurrentDomain.UnhandledException += (sender, error) =>
         {
-            ScannerLog.Logger.Error($"Unhandled exception: {error.ExceptionObject}");
+            if (error.ExceptionObject is Exception exception)
+                ScannerLog.LogGlobalException(exception, error.IsTerminating
+                    ? "appdomain (terminating)"
+                    : "appdomain (not terminating)");
+            else
+                ScannerLog.Logger.Error($"Unhandled exception: {error.ExceptionObject}");
             app.MainWindow.ShowMessage("Fatal Exception", error.ExceptionObject.ToString());
         };
 
@@ -176,7 +181,7 @@ class Program
             ScannerLog.Logger.Info("Error " + e.Exception.Message);
             // No blank Error() line here: it lands in the error log as an empty entry, which the
             // exchange-check report then counts as a second, nameless error next to the real one.
-            ScannerLog.Logger.Error(e.Exception, "Global Thread Exception");
+            ScannerLog.LogGlobalException(e.Exception, "unobserved task");
 
             Console.WriteLine($"UnobservedTaskException exception: {e.Exception.Message}");
             e.SetObserved();

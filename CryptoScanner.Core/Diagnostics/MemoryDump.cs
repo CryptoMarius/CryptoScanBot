@@ -104,17 +104,17 @@ public static class MemoryDump
                     if (symbolInterval.Dlz.Zones.ShortClosed.Count > 0)
                         log.AppendLine($"      DlzZones.ShortClosed: {symbolInterval.Dlz.Zones.ShortClosed.Count}");
 
-                    if (symbolInterval.FvgZones.LongOpen.Count > 0)
-                        log.AppendLine($"      FvgZones.LongOpen: {symbolInterval.FvgZones.LongOpen.Count}");
-                    if (symbolInterval.FvgZones.ShortOpen.Count > 0)
-                        log.AppendLine($"      FvgZones.ShortOpen: {symbolInterval.FvgZones.ShortOpen.Count}");
-                    if (symbolInterval.FvgZones.LongClosed.Count > 0)
-                        log.AppendLine($"      FvgZones.LongClosed: {symbolInterval.FvgZones.LongClosed.Count}");
-                    if (symbolInterval.FvgZones.ShortClosed.Count > 0)
-                        log.AppendLine($"      FvgZones.ShortClosed: {symbolInterval.FvgZones.ShortClosed.Count}");
+                    if (symbolInterval.Fvg.Zones.LongOpen.Count > 0)
+                        log.AppendLine($"      FvgZones.LongOpen: {symbolInterval.Fvg.Zones.LongOpen.Count}");
+                    if (symbolInterval.Fvg.Zones.ShortOpen.Count > 0)
+                        log.AppendLine($"      FvgZones.ShortOpen: {symbolInterval.Fvg.Zones.ShortOpen.Count}");
+                    if (symbolInterval.Fvg.Zones.LongClosed.Count > 0)
+                        log.AppendLine($"      FvgZones.LongClosed: {symbolInterval.Fvg.Zones.LongClosed.Count}");
+                    if (symbolInterval.Fvg.Zones.ShortClosed.Count > 0)
+                        log.AppendLine($"      FvgZones.ShortClosed: {symbolInterval.Fvg.Zones.ShortClosed.Count}");
 
-                    if (symbolInterval.SmcZones.Count > 0)
-                        log.AppendLine($"      SmcZones: {symbolInterval.SmcZones.Count}");
+                    if (symbolInterval.Smc.Zones.Count > 0)
+                        log.AppendLine($"      SmcZones: {symbolInterval.Smc.Zones.Count}");
 
                     if (symbolInterval.TrendPrimary.Trend != CryptoTrendIndicator.Unknown)
                         log.AppendLine($"      TrendPrimary: {symbolInterval.TrendPrimary.Trend}");

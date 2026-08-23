@@ -104,17 +104,17 @@ public class FvgZones
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
             {
                 var symbolDataInterval = symbolData.Get(interval.IntervalPeriod);
-                foreach (var zone in symbolDataInterval.FvgZones.LongOpen)
+                foreach (var zone in symbolDataInterval.Fvg.Zones.LongOpen)
                     DrawZone(chart, zone, minDate, maxDate, group);
-                foreach (var zone in symbolDataInterval.FvgZones.ShortOpen)
+                foreach (var zone in symbolDataInterval.Fvg.Zones.ShortOpen)
                     DrawZone(chart, zone, minDate, maxDate, group);
 
-                foreach (var zone in symbolDataInterval.FvgZones.LongClosed)
+                foreach (var zone in symbolDataInterval.Fvg.Zones.LongClosed)
                 {
                     if (RecentlyClosed(zone, interval))
                         DrawZone(chart, zone, minDate, maxDate, group);
                 }
-                foreach (var zone in symbolDataInterval.FvgZones.ShortClosed)
+                foreach (var zone in symbolDataInterval.Fvg.Zones.ShortClosed)
                 {
                     if (RecentlyClosed(zone, interval))
                         DrawZone(chart, zone, minDate, maxDate, group);

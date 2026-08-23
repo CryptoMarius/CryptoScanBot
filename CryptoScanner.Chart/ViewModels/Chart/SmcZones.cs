@@ -10,7 +10,7 @@ namespace CryptoScanner.Chart.ViewModels.Chart;
 // https://www.youtube.com/watch?v=0YNWLzBEX2E
 
 /// <summary>
-/// Renders the SMC Order Blocks (from <see cref="CryptoSymbolInterval.SmcZones"/>) as
+/// Renders the SMC Order Blocks (from <see cref="CryptoSymbolIntervalSmc.Zones"/>) as
 /// rectangle annotations on the chart, using the same visual idiom as DLZ / FVG zones.
 /// Re-uses Const.ColorList for the colour scheme so SMC blocks pop visually distinct from
 /// DLZ / FVG.
@@ -90,7 +90,7 @@ public class SmcZones
 
             var symbolDataInterval = symbolData.Get(interval.IntervalPeriod);
 
-            foreach (var zone in SelectSurroundingZones(symbolDataInterval.SmcZones, currentPrice))
+            foreach (var zone in SelectSurroundingZones(symbolDataInterval.Smc.Zones, currentPrice))
                 DrawZone(chart, zone, minDate, maxDate, group);
         }
     }

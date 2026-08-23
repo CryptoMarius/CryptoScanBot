@@ -16,7 +16,7 @@ namespace CryptoScanner.Analyzers.Smc.Signal;
 ///   • smc.rejection (this) waits for the close-back-outside, so you enter on the rejection.
 ///
 /// Zones are produced by <see cref="Zones.ZoneSmc"/> and live in
-/// <see cref="CryptoSymbolInterval.SmcZones"/>. This class only reads them and sets AlarmDate.
+/// <see cref="CryptoSymbolIntervalSmc.Zones"/>. This class only reads them and sets AlarmDate.
 /// </summary>
 public class SignalOrderBlockRejectionShort : SignalCreateBase
 {
@@ -45,7 +45,7 @@ public class SignalOrderBlockRejectionShort : SignalCreateBase
             var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
             // Capture reference so a concurrent SmcZones swap mid-loop is safe.
-            var zones = symbolIntervalData.SmcZones;
+            var zones = symbolIntervalData.Smc.Zones;
             for (int index = 0; index < zones.Count; index++)
             {
                 var zone = zones[index];

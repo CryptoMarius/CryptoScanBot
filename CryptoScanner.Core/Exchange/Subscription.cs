@@ -178,12 +178,61 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
             // nothing else: no exchange, and an empty message because the failed result carried no
             // Error at all. That is precisely the moment the reason matters, so name the two cases
             // apart instead of interpolating a null into thin air.
-            string reason = subscriptionResult is null
-                ? "no result from the exchange"
-                : (subscriptionResult.Error?.Message ?? "failed without an error message");
+            string reason = DescribeFailure(subscriptionResult);
             ScannerLog.Logger.Trace($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} error {reason} {SymbolOverview}");
             GlobalData.AddErrorToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} error {reason} {SymbolOverview}");
+
+            // The stack trace goes to the log file separately. It is too long for the log tab, but it
+            // is the one thing that turns a user supplied log into something that can be diagnosed.
+            if (subscriptionResult?.Error?.Exception is Exception exception)
+                ScannerLog.Logger.Error(exception, $"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} failed");
         }
+    }
+
+
+    /// <summary>
+    /// Everything the package knows about a failed subscribe, on one line.
+    ///
+    /// Only <c>Error.Message</c> was logged before, and that is the field an exchange leaves empty
+    /// exactly when it matters: a connect timeout, a refused socket or a connection rate limit never
+    /// carries a server message, so the line came out as "failed without an error message" and said
+    /// nothing at all. In those cases the type, the code, the description and the underlying
+    /// exception ARE filled, and the url and the connection id say which socket it was about.
+    ///
+    /// Empty fields are left out, so an ordinary server error still reads as one short line.
+    /// </summary>
+    private static string DescribeFailure(WebSocketResult<UpdateSubscription>? result)
+    {
+        if (result is null)
+            return "no result from the exchange";
+
+        List<string> parts = [];
+        if (result.Error is Error error)
+        {
+            parts.Add($"type={error.ErrorType}");
+            if (!string.IsNullOrEmpty(error.ErrorCode))
+                parts.Add($"code={error.ErrorCode}");
+            if (!string.IsNullOrEmpty(error.Message))
+                parts.Add($"message={error.Message}");
+            if (!string.IsNullOrEmpty(error.ErrorDescription))
+                parts.Add($"description={error.ErrorDescription}");
+            parts.Add($"transient={error.IsTransient}");
+            if (error.Exception is Exception inner)
+                parts.Add($"exception={inner.GetType().Name}: {inner.Message}");
+        }
+
+        // The transport facts come from the result itself and are filled even when there is no Error
+        // at all, which is the case this method exists for.
+        if (!string.IsNullOrEmpty(result.Url))
+            parts.Add($"url={result.Url}");
+        if (result.ConnectionId is int connectionId)
+            parts.Add($"connection={connectionId}");
+        if (result.RequestId is int requestId)
+            parts.Add($"request={requestId}");
+        if (result.ResponseTime is TimeSpan responseTime)
+            parts.Add($"after={responseTime.TotalSeconds:F1}s");
+
+        return parts.Count > 0 ? string.Join(", ", parts) : "failed without an error message";
     }
 
 

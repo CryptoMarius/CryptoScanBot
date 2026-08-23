@@ -8,7 +8,7 @@ namespace CryptoScanner.Analyzers.Smc.Signal;
 /// <summary>
 /// SMC demand order block — long, TOUCH variant ("smc"). Fires when price actually enters a
 /// fresh/strong demand base zone (a candle wicks into [Bottom, Top]). Mirror of
-/// SignalDominantLevelLong, reading <see cref="CryptoSymbolInterval.SmcZones"/>.
+/// SignalDominantLevelLong, reading <see cref="CryptoSymbolIntervalSmc.Zones"/>.
 ///
 /// The companion <see cref="SignalOrderBlockRejectionLong"/> ("smc.rejection") waits for the
 /// confirmed bounce (close back outside the proximal edge) — the entry-grade signal.
@@ -31,7 +31,7 @@ public class SignalOrderBlockLong : SignalCreateBase
             var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
             // Capture reference so a concurrent SmcZones swap mid-loop is safe.
-            var zones = symbolIntervalData.SmcZones;
+            var zones = symbolIntervalData.Smc.Zones;
             for (int index = 0; index < zones.Count; index++)
             {
                 var zone = zones[index];

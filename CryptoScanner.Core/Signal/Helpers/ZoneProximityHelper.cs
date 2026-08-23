@@ -136,8 +136,8 @@ public static class ZoneProximityHelper
             var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
             // Capture reference so a concurrent FvgZones swap mid-loop does not cause IndexOutOfRangeException
             var openZones = myBase.SignalSide == CryptoTradeSide.Long
-                ? symbolIntervalData.FvgZones.LongOpen
-                : symbolIntervalData.FvgZones.ShortOpen;
+                ? symbolIntervalData.Fvg.Zones.LongOpen
+                : symbolIntervalData.Fvg.Zones.ShortOpen;
 
             int index = 0;
             while (index < openZones.Count)
@@ -230,7 +230,7 @@ public static class ZoneProximityHelper
     /// <summary>
     /// Returns true when the most recent candle on the signal's interval shows a rejection
     /// off an open SMC Order Block matching the signal direction. Mirrors the DLZ/FVG
-    /// rejection criteria but reads from <see cref="CryptoSymbolInterval.SmcZones"/> (a flat
+    /// rejection criteria but reads from <see cref="CryptoSymbolIntervalSmc.Zones"/> (a flat
     /// list, no Long/Short split) and honours the SMC-specific freshness gates
     /// (<see cref="SettingsSignalStrategySmc.OnlyStrong"/>, <see cref="SettingsSignalStrategySmc.MaxTouches"/>).
     /// NearZonePercentage is intentionally fixed at 0 — SMC uses strict inside-the-band
@@ -252,7 +252,7 @@ public static class ZoneProximityHelper
 
             var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
             // Capture reference so a concurrent SmcZones swap mid-loop is safe.
-            var zones = symbolIntervalData.SmcZones;
+            var zones = symbolIntervalData.Smc.Zones;
             for (int idx = 0; idx < zones.Count; idx++)
             {
                 var zone = zones[idx];
@@ -354,8 +354,8 @@ public static class ZoneProximityHelper
 
             var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
             var openZones = myBase.SignalSide == CryptoTradeSide.Long
-                ? (isDlz ? symbolIntervalData.Dlz.Zones.LongOpen : symbolIntervalData.FvgZones.LongOpen)
-                : (isDlz ? symbolIntervalData.Dlz.Zones.ShortOpen : symbolIntervalData.FvgZones.ShortOpen);
+                ? (isDlz ? symbolIntervalData.Dlz.Zones.LongOpen : symbolIntervalData.Fvg.Zones.LongOpen)
+                : (isDlz ? symbolIntervalData.Dlz.Zones.ShortOpen : symbolIntervalData.Fvg.Zones.ShortOpen);
 
             int index = 0;
             while (index < openZones.Count)

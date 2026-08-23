@@ -8,7 +8,7 @@ namespace CryptoScanner.Analyzers.Smc.Signal;
 /// <summary>
 /// SMC supply order block — short, TOUCH variant ("smc"). Fires when price actually enters a
 /// fresh/strong supply base zone (a candle wicks into [Bottom, Top]). Mirror of
-/// SignalDominantLevelShort, reading <see cref="CryptoSymbolInterval.SmcZones"/>.
+/// SignalDominantLevelShort, reading <see cref="CryptoSymbolIntervalSmc.Zones"/>.
 ///
 /// The companion <see cref="SignalOrderBlockRejectionShort"/> ("smc.rejection") waits for the
 /// confirmed rejection (close back outside the proximal edge) — the entry-grade signal.
@@ -31,7 +31,7 @@ public class SignalOrderBlockShort : SignalCreateBase
             var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
             // Capture reference so a concurrent SmcZones swap mid-loop is safe.
-            var zones = symbolIntervalData.SmcZones;
+            var zones = symbolIntervalData.Smc.Zones;
             for (int index = 0; index < zones.Count; index++)
             {
                 var zone = zones[index];

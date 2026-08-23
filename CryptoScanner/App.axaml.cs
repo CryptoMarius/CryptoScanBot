@@ -137,7 +137,7 @@ public partial class App : Application
                 ScannerLog.Logger.Info("Error " + e.Exception.Message);
                 // No blank Error() line here: it lands in the error log as an empty entry, which the
                 // exchange-check report then counts as a second, nameless error next to the real one.
-                ScannerLog.Logger.Error(e.Exception, "Global Thread Exception");
+                ScannerLog.LogGlobalException(e.Exception, "unobserved task");
 
                 Console.WriteLine($"UnobservedTaskException exception: {e.Exception.Message}");
                 e.SetObserved(); // Mark as observed to avoid crash
@@ -402,7 +402,7 @@ public partial class App : Application
         ScannerLog.Logger.Info("");
         ScannerLog.Logger.Info("Unhandled UI exception " + e.Exception.Message);
 
-        ScannerLog.Logger.Error(e.Exception, "Global Thread Exception");
+        ScannerLog.LogGlobalException(e.Exception, "ui dispatcher");
         e.Handled = true;
     }
 
@@ -414,10 +414,9 @@ public partial class App : Application
         ScannerLog.Logger.Info("");
         ScannerLog.Logger.Info("Unhandled exception " + e.Message);
 
-        if (eventArgs.IsTerminating)
-            ScannerLog.Logger.Error(e, "UnhandledException (terminating)");
-        else
-            ScannerLog.Logger.Error(e, "UnhandledException (not terminating)");
+        ScannerLog.LogGlobalException(e, eventArgs.IsTerminating
+            ? "appdomain (terminating)"
+            : "appdomain (not terminating)");
     }
 
 }

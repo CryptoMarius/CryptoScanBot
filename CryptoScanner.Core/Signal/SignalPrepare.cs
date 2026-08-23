@@ -187,8 +187,8 @@ public class SignalPrepare
                     // Scan for new zones if candle is outside of the previous primary trend
                     decimal valueLow = lastCandle1m.GetLowValue(false);
                     decimal valueHigh = lastCandle1m.GetHighValue(false);
-                    if (symbolInterval.Dlz.Admin.TriggerRangeLow == null || valueLow < symbolInterval.Dlz.Admin.TriggerRangeLow ||
-                       symbolInterval.Dlz.Admin.TriggerRangeHigh == null || valueHigh > symbolInterval.Dlz.Admin.TriggerRangeHigh)
+                    if (symbolInterval.Dlz.TriggerRangeLow == null || valueLow < symbolInterval.Dlz.TriggerRangeLow ||
+                       symbolInterval.Dlz.TriggerRangeHigh == null || valueHigh > symbolInterval.Dlz.TriggerRangeHigh)
                     {
                         // Diagnostics, deliberately switched off on 18-08-2026 - it was 40% of the log file. Left in place to switch back on.
                         // Switched back ON on 22-08-2026 for one night, to measure whether the split
@@ -199,10 +199,10 @@ public class SignalPrepare
                         // hour. SWITCH THIS BACK OFF after the measurement - it was 40% of the log.
                         var dlzZones = symbolInterval.Dlz.Zones;
                         GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} recalc triggered " +
-                            $"(swingLow {symbolInterval.Dlz.Admin.LastSwingLow}, " +
-                            $"swingHigh {symbolInterval.Dlz.Admin.LastSwingHigh}, " +
-                            $"triggerLow {symbolInterval.Dlz.Admin.TriggerRangeLow}→{valueLow}, " +
-                            $"triggerHigh {symbolInterval.Dlz.Admin.TriggerRangeHigh}→{valueHigh}) " +
+                            $"(swingLow {symbolInterval.Dlz.LastSwingLow}, " +
+                            $"swingHigh {symbolInterval.Dlz.LastSwingHigh}, " +
+                            $"triggerLow {symbolInterval.Dlz.TriggerRangeLow}→{valueLow}, " +
+                            $"triggerHigh {symbolInterval.Dlz.TriggerRangeHigh}→{valueHigh}) " +
                             $"open zones before: long={dlzZones.LongOpen.Count} short={dlzZones.ShortOpen.Count}");
                         // Avoid duplicate calculation: remember the widest range seen so far, so only a
                         // candle that breaks OUT of it triggers the next recalculation.
@@ -216,10 +216,10 @@ public class SignalPrepare
                         // are written back by CalculatePivots at the end of every recalculation, which
                         // undid the widening and brought the hourly retrigger back through the other
                         // door. See the remarks on CryptoSymbolIntervalZoneCalc.
-                        symbolInterval.Dlz.Admin.TriggerRangeLow = symbolInterval.Dlz.Admin.TriggerRangeLow.HasValue
-                            ? Math.Min(symbolInterval.Dlz.Admin.TriggerRangeLow.Value, valueLow) : valueLow;
-                        symbolInterval.Dlz.Admin.TriggerRangeHigh = symbolInterval.Dlz.Admin.TriggerRangeHigh.HasValue
-                            ? Math.Max(symbolInterval.Dlz.Admin.TriggerRangeHigh.Value, valueHigh) : valueHigh;
+                        symbolInterval.Dlz.TriggerRangeLow = symbolInterval.Dlz.TriggerRangeLow.HasValue
+                            ? Math.Min(symbolInterval.Dlz.TriggerRangeLow.Value, valueLow) : valueLow;
+                        symbolInterval.Dlz.TriggerRangeHigh = symbolInterval.Dlz.TriggerRangeHigh.HasValue
+                            ? Math.Max(symbolInterval.Dlz.TriggerRangeHigh.Value, valueHigh) : valueHigh;
                         // TODO: This is not 100% correct...
 
                         // Hand the recalculation to ZoneThreadCalculate instead of running it here.

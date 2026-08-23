@@ -170,10 +170,10 @@ public static class ChartDataService
                     continue;
 
                 var dataInterval = symbolData.Get(interval.IntervalPeriod);
-                AddZones(result, dataInterval.FvgZones.LongOpen, from, to);
-                AddZones(result, dataInterval.FvgZones.ShortOpen, from, to);
-                AddZones(result, dataInterval.FvgZones.LongClosed, from, to);
-                AddZones(result, dataInterval.FvgZones.ShortClosed, from, to);
+                AddZones(result, dataInterval.Fvg.Zones.LongOpen, from, to);
+                AddZones(result, dataInterval.Fvg.Zones.ShortOpen, from, to);
+                AddZones(result, dataInterval.Fvg.Zones.LongClosed, from, to);
+                AddZones(result, dataInterval.Fvg.Zones.ShortClosed, from, to);
             }
         }
 
@@ -186,7 +186,7 @@ public static class ChartDataService
 
                 // SMC order blocks live in a plain list, ZoneSmc mutates it in place
                 var dataInterval = symbolData.Get(interval.IntervalPeriod);
-                AddZones(result, dataInterval.SmcZones.ToList(), from, to);
+                AddZones(result, dataInterval.Smc.Zones.ToList(), from, to);
             }
         }
 

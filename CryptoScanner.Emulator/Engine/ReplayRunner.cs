@@ -521,10 +521,10 @@ public sealed class ReplayRunner
                 signalCount += symbolInterval.SignalList.Count;
                 // SMC keeps a single flat list, DLZ/FVG split theirs into open and closed lists.
                 zonesOpen += symbolInterval.Dlz.Zones.LongOpen.Count + symbolInterval.Dlz.Zones.ShortOpen.Count
-                    + symbolInterval.FvgZones.LongOpen.Count + symbolInterval.FvgZones.ShortOpen.Count
-                    + symbolInterval.SmcZones.Count;
+                    + symbolInterval.Fvg.Zones.LongOpen.Count + symbolInterval.Fvg.Zones.ShortOpen.Count
+                    + symbolInterval.Smc.Zones.Count;
                 zonesClosed += symbolInterval.Dlz.Zones.LongClosed.Count + symbolInterval.Dlz.Zones.ShortClosed.Count
-                    + symbolInterval.FvgZones.LongClosed.Count + symbolInterval.FvgZones.ShortClosed.Count;
+                    + symbolInterval.Fvg.Zones.LongClosed.Count + symbolInterval.Fvg.Zones.ShortClosed.Count;
             }
         }
 
@@ -964,11 +964,10 @@ public sealed class ReplayRunner
                 symbolInterval.LastCandleSynchronized = null;
 
                 // DLZ swing tracking
-                symbolInterval.Dlz.Admin.Reset();
+                symbolInterval.Dlz.Reset();
 
                 // SMC parameter cache (forces full rescan)
-                symbolInterval.SmcCachedAverageWindow = -1;
-                symbolInterval.SmcCachedBaseMaxCandles = -1;
+                symbolInterval.Smc.ResetParameterCache();
             }
 
             // Trend data (Dow + BOS, symbol-level and per-interval, including ZigZag caches)
@@ -1035,8 +1034,8 @@ public sealed class ReplayRunner
                 // The trigger range is checked alongside the swings: it is a second pair of fields
                 // that survives a chunk boundary just as easily, and a stale one decides whether the
                 // next chunk queues a recalculation at all.
-                if (symbolInterval.Dlz.Admin.LastSwingHigh != null || symbolInterval.Dlz.Admin.LastSwingLow != null
-                    || symbolInterval.Dlz.Admin.TriggerRangeHigh != null || symbolInterval.Dlz.Admin.TriggerRangeLow != null)
+                if (symbolInterval.Dlz.LastSwingHigh != null || symbolInterval.Dlz.LastSwingLow != null
+                    || symbolInterval.Dlz.TriggerRangeHigh != null || symbolInterval.Dlz.TriggerRangeLow != null)
                     throw new InvalidOperationException(
                         $"{symbol.Name} {symbolInterval.Interval!.Name}: " +
                         "DlzAdmin swing points not null.");

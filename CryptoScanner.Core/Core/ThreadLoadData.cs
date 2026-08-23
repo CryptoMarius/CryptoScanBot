@@ -243,7 +243,13 @@ public class ThreadLoadData
 
             // TODO: controleren of we de info van de juiste exchange halen (of juist bewust multi exchyange laten zien)
 
-            if (GlobalData.ActiveExchange != null)
+            // Op de lokale kopie controleren en niet op GlobalData.ActiveExchange: het hele blok
+            // hieronder gebruikt activeExchange, en dat is de kopie van het begin van deze methode.
+            // Wisselt de exchange daartussen, dan zou de controle over het ene gaan en het gebruik
+            // over het andere - en bij een lege kopie is dat een NullReferenceException op de eerste
+            // regel hierna (CS8602). De rest van deze methode gaat al zo te werk, tot en met de
+            // ReferenceEquals-controle hierboven.
+            if (activeExchange != null)
             {
                 //************************************************************************************
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.

@@ -107,7 +107,7 @@ public class ZoneFvg
                 {
                     //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Long} FVG {prev2.High}..{candle.Low} {zone.Description}");
                     var symbolDataInterval = symbol.Data.Get(interval.IntervalPeriod);
-                    symbolDataInterval.FvgZones.LongOpen.Add(zone);
+                    symbolDataInterval.Fvg.Zones.LongOpen.Add(zone);
                     GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                 }
             }
@@ -120,7 +120,7 @@ public class ZoneFvg
                 {
                     //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Short} FVG {candle.Low}..{prev2.High} {zone.Description}");
                     var symbolDataInterval = symbol.Data.Get(interval.IntervalPeriod);
-                    symbolDataInterval.FvgZones.ShortOpen.Add(zone);
+                    symbolDataInterval.Fvg.Zones.ShortOpen.Add(zone);
                     GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                 }
             }
@@ -132,11 +132,11 @@ public class ZoneFvg
             var symbolDataIntervalForInvalidate = symbol.Data.Get(interval.IntervalPeriod);
             int maxTouches = GlobalData.Settings.Signal.ZonesFvg.MaxTouches;
 
-            InvalidateRealtime(symbolDataIntervalForInvalidate.FvgZones.LongOpen,
-                symbolDataIntervalForInvalidate.FvgZones.LongClosed,
+            InvalidateRealtime(symbolDataIntervalForInvalidate.Fvg.Zones.LongOpen,
+                symbolDataIntervalForInvalidate.Fvg.Zones.LongClosed,
                 candle, interval, maxTouches);
-            InvalidateRealtime(symbolDataIntervalForInvalidate.FvgZones.ShortOpen,
-                symbolDataIntervalForInvalidate.FvgZones.ShortClosed,
+            InvalidateRealtime(symbolDataIntervalForInvalidate.Fvg.Zones.ShortOpen,
+                symbolDataIntervalForInvalidate.Fvg.Zones.ShortClosed,
                 candle, interval, maxTouches);
 
             // Keep CalculateZonesAsync's incremental cursor in sync with what this realtime tick
@@ -148,8 +148,8 @@ public class ZoneFvg
             // increments on a wick, regardless of whether it already saw this candle).
             // Only advance if the cursor is already set: null means the first full historical scan
             // (CalculateZonesAsync's "first run" branch) hasn't happened yet, and must not be skipped.
-            if (symbolDataIntervalForInvalidate.FvgLastProcessedTime != null)
-                symbolDataIntervalForInvalidate.FvgLastProcessedTime = candle.OpenTime;
+            if (symbolDataIntervalForInvalidate.Fvg.ProcessedCandleMarker != null)
+                symbolDataIntervalForInvalidate.Fvg.ProcessedCandleMarker = candle.OpenTime;
         }
         finally
         {
@@ -243,7 +243,7 @@ public class ZoneFvg
             //{
             //    //zoneList.RemoveAt(index);
             //    //GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-            //    //symbolIntervalData.FvgZones.LongClosed.Add(zone);
+            //    //symbolIntervalData.Fvg.Zones.LongClosed.Add(zone);
             //    //GlobalData.AddTextToLogTab($"{symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
             //}
             //else index++;
@@ -305,7 +305,7 @@ public class ZoneFvg
             //{
             //    //zoneList.RemoveAt(index);
             //    //GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-            //    //symbolIntervalData.FvgZones.ShortClosed.Add(zone);
+            //    //symbolIntervalData.Fvg.Zones.ShortClosed.Add(zone);
             //    //GlobalData.AddTextToLogTab($"{symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
             //}
             //else index++;
@@ -465,15 +465,15 @@ public class ZoneFvg
 
                 CryptoSymbolData symbolData = symbol.Data;
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
-                CryptoSymbolIntervalZones zones = symbolIntervalData.FvgZones;
+                CryptoSymbolIntervalZones zones = symbolIntervalData.Fvg.Zones;
 
-                if (symbolIntervalData.FvgLastProcessedTime != null && symbolIntervalData.FvgLastProcessedTime.Value >= minDate)
+                if (symbolIntervalData.Fvg.ProcessedCandleMarker != null && symbolIntervalData.Fvg.ProcessedCandleMarker.Value >= minDate)
                 {
                     // Already scanned this window once before: only the candles that arrived since the
                     // last call can contain a new gap. No DB diff needed — the live lists are already
                     // the authoritative state (see ZoneThreadCalculate's load-once guard).
                     ProcessNewCandlesIncremental(symbol, interval, symbolIntervalData, zones,
-                        symbolIntervalData.FvgLastProcessedTime.Value, maxDate);
+                        symbolIntervalData.Fvg.ProcessedCandleMarker.Value, maxDate);
                 }
                 else
                 {
@@ -509,10 +509,10 @@ public class ZoneFvg
                     // Gaps older than the window cannot be rediscovered from the candles we hold, so
                     // they are carried until their right edge leaves the window as well.
                     ZoneTools.DeleteRemainingZones(oldZones, statistics, freshZones, minDate);
-                    symbolIntervalData.FvgZones = freshZones;
+                    symbolIntervalData.Fvg.Zones = freshZones;
                 }
 
-                symbolIntervalData.FvgLastProcessedTime = maxDate;
+                symbolIntervalData.Fvg.ProcessedCandleMarker = maxDate;
             }
             catch (Exception error)
             {

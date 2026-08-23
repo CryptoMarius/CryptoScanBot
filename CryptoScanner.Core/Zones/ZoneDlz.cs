@@ -124,13 +124,13 @@ public class ZoneDlz
 
                     if (zone.Kind == CryptoZoneKind.FairValueGap)
                     {
-                        symbolInterval.FvgZones.Add(zone);
+                        symbolInterval.Fvg.Zones.Add(zone);
                     }
                     else if (zone.Kind == CryptoZoneKind.OrderBlock)
                     {
                         // SMC zones use a flat list; TouchCount/IsMitigated are recomputed by
                         // the next ZoneSmc.Detect (they are [Computed], not persisted).
-                        symbolInterval.SmcZones.Add(zone);
+                        symbolInterval.Smc.Zones.Add(zone);
                     }
                     else
                     {
@@ -146,13 +146,13 @@ public class ZoneDlz
                         // queue a full recalculation for every symbol at once. The real swings arrive
                         // with the first CalculatePivots and take the trigger range with them.
                         CandleTime timeLastSwingPoint = zone.OpenTime;
-                        if (symbolInterval.Dlz.Admin.TimeLastSwingPoint == null || timeLastSwingPoint > symbolInterval.Dlz.Admin.TimeLastSwingPoint)
+                        if (symbolInterval.Dlz.TimeLastSwingPoint == null || timeLastSwingPoint > symbolInterval.Dlz.TimeLastSwingPoint)
                         {
-                            symbolInterval.Dlz.Admin.TimeLastSwingPoint = timeLastSwingPoint;
-                            if (symbolInterval.Dlz.Admin.TriggerRangeLow == null || zone.Bottom > symbolInterval.Dlz.Admin.TriggerRangeLow)
-                                symbolInterval.Dlz.Admin.TriggerRangeLow = zone.Bottom;
-                            if (symbolInterval.Dlz.Admin.TriggerRangeHigh == null || zone.Top > symbolInterval.Dlz.Admin.TriggerRangeHigh)
-                                symbolInterval.Dlz.Admin.TriggerRangeHigh = zone.Top;
+                            symbolInterval.Dlz.TimeLastSwingPoint = timeLastSwingPoint;
+                            if (symbolInterval.Dlz.TriggerRangeLow == null || zone.Bottom > symbolInterval.Dlz.TriggerRangeLow)
+                                symbolInterval.Dlz.TriggerRangeLow = zone.Bottom;
+                            if (symbolInterval.Dlz.TriggerRangeHigh == null || zone.Top > symbolInterval.Dlz.TriggerRangeHigh)
+                                symbolInterval.Dlz.TriggerRangeHigh = zone.Top;
                         }
                     }
                 }
@@ -700,11 +700,11 @@ public class ZoneDlz
             var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
             var indicator = trendZigZagIndicatorList[(trend.TrendType, trend.UseHighLow)];
             if (indicator.LastSwingPoint != null)
-                symbolIntervalData.Dlz.Admin.TimeLastSwingPoint = indicator.LastSwingPoint.Candle.OpenTime;
+                symbolIntervalData.Dlz.TimeLastSwingPoint = indicator.LastSwingPoint.Candle.OpenTime;
             // Writes the swing values, and re-seeds the trigger range only when they moved. Assigning
             // the two separately here is what made the same symbol queue a recalculation every hour
             // and end on nothing - see the remarks on CryptoSymbolIntervalZoneCalc.
-            symbolIntervalData.Dlz.Admin.ApplySwingRange(
+            symbolIntervalData.Dlz.ApplySwingRange(
                 indicator.LastSwingLow != null ? (decimal)indicator.LastSwingLow.Value : null,
                 indicator.LastSwingHigh != null ? (decimal)indicator.LastSwingHigh.Value : null);
 

@@ -25,7 +25,7 @@ public class SignalFairValueGapShort : SignalCreateBase
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
                 // Capture reference so a concurrent FvgZones swap mid-loop does not cause IndexOutOfRangeException
-                var shortOpen = symbolIntervalData.FvgZones.ShortOpen;
+                var shortOpen = symbolIntervalData.Fvg.Zones.ShortOpen;
                 int index = 0;
                 while (index < shortOpen.Count) // sorted on Zone.Bottom ascending
                 {

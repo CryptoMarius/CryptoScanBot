@@ -53,9 +53,9 @@ public class ZoneBroken
             zones.Add(zone);
         foreach (CryptoZone zone in symbolIntervalData.Dlz.Zones.ShortOpen)
             zones.Add(zone);
-        foreach (CryptoZone zone in symbolIntervalData.FvgZones.LongOpen)
+        foreach (CryptoZone zone in symbolIntervalData.Fvg.Zones.LongOpen)
             zones.Add(zone);
-        foreach (CryptoZone zone in symbolIntervalData.FvgZones.ShortOpen)
+        foreach (CryptoZone zone in symbolIntervalData.Fvg.Zones.ShortOpen)
             zones.Add(zone);
 
 

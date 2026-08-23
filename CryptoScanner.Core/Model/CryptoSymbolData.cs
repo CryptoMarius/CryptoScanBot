@@ -81,7 +81,7 @@ public class CryptoSymbolData
     // NOTE: these three Reset*Data methods are called from ZoneDlz.LoadZonesForSymbol/LoadAllZones,
     // which runs every time a chart window opens/changes symbol (to scope the in-memory zones to the
     // viewed run) — NOT just on a genuine fresh start. They deliberately do NOT touch the incremental
-    // cursors (DlzLastProcessedTime/FvgLastProcessedTime/SmcLastProcessedTime) below: LoadZonesForSymbol always
+    // cursors (Dlz/Fvg/Smc.ProcessedCandleMarker) below: LoadZonesForSymbol always
     // immediately repopulates the cleared lists from the DB in the same call, so the zone contents
     // stay correct either way — but nulling the cursors here would force the *live engine* (sharing
     // the same CryptoSymbolInterval objects) into a full historical rescan on its next tick just
@@ -91,7 +91,7 @@ public class CryptoSymbolData
     {
         foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
         {
-            symbolInterval.FvgZones.Reset();
+            symbolInterval.Fvg.ResetZones();
         }
     }
 
@@ -107,7 +107,7 @@ public class CryptoSymbolData
     {
         foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
         {
-            symbolInterval.SmcZones.Clear();
+            symbolInterval.Smc.ResetZones();
         }
     }
 
@@ -132,13 +132,13 @@ public class CryptoSymbolData
         foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
         {
             symbolInterval.Dlz.ProcessedCandleMarker = null;
-            symbolInterval.FvgLastProcessedTime = null;
-            symbolInterval.SmcLastProcessedTime = null;
+            symbolInterval.Fvg.ResetCursor();
+            symbolInterval.Smc.ResetCursor();
             // The committed verdicts go with them. They are only meaningful against the pivot list
             // they were drawn from, and a reset is exactly the moment that list is rebuilt.
             symbolInterval.Dlz.CommittedPivotMarker = null;
             symbolInterval.Dlz.CommittedZones = [];
-            symbolInterval.Dlz.Admin.Reset();
+            symbolInterval.Dlz.Reset();
         }
     }
 

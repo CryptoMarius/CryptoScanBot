@@ -120,6 +120,31 @@ ERRORS_RECOVERED = (
     "kline subscription",
     "the remote party closed the websocket connection",
     "the server returned status code",
+    # Tien keer op HyperLiquid Spot in de nacht van 22/23-08-2026, telkens een andere munt en
+    # telkens dezelfde onbekende serverfout. Komt van de exchange, wordt opnieuw geprobeerd, en de
+    # dekking bij Candles laat zien of dat gelukt is.
+    "error getting klines [servererror.unknown]",
+    # De regel die dezelfde nacht op HyperLiquid Futures vlak voor de noodrem hieronder stond: de
+    # tickerlijst kwam leeg terug. Eén voorval, twee regels - deze van de exchange, de volgende van
+    # onze eigen noodrem. Ze horen in hetzelfde vakje.
+    "error getting symbol ticker info [servererror.unknown]",
+)
+
+# Uitzonderingen die onze eigen code MET OPZET gooit om schoon te stoppen. Ze dragen onze
+# stackframes en zouden dus in vakje 1 vallen en de nacht afkeuren, terwijl ze juist het bewijs zijn
+# dat een noodrem gewerkt heeft. Daarom worden ze vóór ERRORS_OURS afgevangen.
+#
+# HyperLiquid Futures, 23-08-2026: de tickerlijst kwam één keer leeg terug. Zonder die noodrem was
+# elk symbool op volume nul beland, onder de volumegrens gezakt en had het zijn abonnement én zijn
+# candles verloren - de code stopt daarom en probeert het de volgende ronde gewoon opnieuw (zie de
+# toelichting in HyperLiquid/Futures/Symbol.cs). Dat was die nacht het enige "slecht" van negentien
+# exchanges, en het was precies het gedrag dat je wil.
+#
+# Even nauw houden als ERRORS_RECOVERED: alleen een vorm waar iemand naar gekeken heeft, en alleen
+# wanneer de code er aantoonbaar zelf voor gekozen heeft.
+ERRORS_DELIBERATE = (
+    "exchangeexception: no ticker data received",
+    "exchangeexception: no ticker and symbol data received",
 )
 
 # Het oordeel bij een uitzondering uit onze code staat bij de oordeelconstanten zelf
@@ -149,6 +174,10 @@ MEMORY_COVERAGE_GAP_MINUTES = 30.0
 # diezelfde nacht, niet tegen de abonnementen - zie de toelichting bij de controle zelf.
 BAROMETER_COINS_ATTENTION_SHARE = 80.0   # percentage van het eigen hoogtepunt
 BAROMETER_COINS_BAD_SHARE = 50.0
+# Hoeveel de barometer op de symbolenlijst achter mag lopen voordat het toch een bevinding wordt.
+# De barometer telt alleen munten met genoeg volume, dus hij zakt iets eerder dan het abonnement;
+# een paar procent verschil is die drempel en geen wegvallende data.
+BAROMETER_COINS_FOLLOW_MARGIN = 5.0
 # Het begin van een run telt niet mee voor dat minimum: de abonnementen worden dan nog opgebouwd,
 # dus het aantal munten groeit in de eerste minuten naar zijn niveau toe. Zonder deze marge meldt
 # elke nette run de opstartdip als een gebrek.
@@ -1050,6 +1079,38 @@ def subscribed_per_exchange(entries):
     return result
 
 
+def serving_per_exchange(entries):
+    """
+    Hoeveel symbolen de run aan het EIND van het venster nog bediende, uit regels als
+
+        Okx Futures kline now serving 169 symbols over 1 bundles
+
+    Dit is de maatstaf voor de dekking, en niet het hoogste abonnementsaantal hierboven.
+
+    De symbolenlijst wordt elk uur ververst en een munt die onder de volumegrens zakt gaat er dan
+    uit. Zijn candles gaan mee - die ruimt de scanner op - dus achteraf is er geen enkel spoor meer
+    van dat hij ooit iets geleverd heeft. Tegen het hoogste aantal meten telt elke verwijderde munt
+    dus als een munt die nooit iets stuurde.
+
+    Gemeten in de nacht van 22/23-08-2026: Okx Futures ging van 213 naar 169 en de controle meldde
+    44 symbolen die "geen enkele candle" geleverd hadden. Dat waren exact de 44 die onderweg
+    verwijderd waren, en op alle achttien exchanges met een krimpende lijst klopte dat verschil tot
+    op een enkel symbool. Het weekend haalt overal ongeveer een vijfde van de lijst weg, dus zonder
+    dit getal geeft elk weekend achttien keer vals alarm.
+
+    Waarom het vier nachten goed leek: op 17, 18, 20 en 21 augustus GROEIDE de lijst. Dan is het
+    aantal geleverde symbolen groter dan het abonnement, wordt het verschil negatief en klemt
+    max(0, ...) het naar nul. De controle stond dus vier nachten op nul zonder ooit iets te meten.
+    """
+    pattern = re.compile(r"^(?P<exchange>.+?) \S+ now serving (?P<count>\d+) symbols")
+    result = {}
+    for _, _, _, message in entries:
+        match = pattern.match(message.strip())
+        if match:
+            result[match.group("exchange").strip()] = int(match.group("count"))
+    return result
+
+
 def read_symbol_maps(connection):
     """
     Levert (instrument, lokale naam, barometer-ids) uit de Symbol-tabel van een candle-voorraad.
@@ -1073,7 +1134,7 @@ def read_symbol_maps(connection):
 
 
 def check_candles(report, candle_databases, main_db, window_start, window_end, top_count,
-                  subscribed=None, deep=False, still_running=False):
+                  subscribed=None, deep=False, still_running=False, serving=None):
     """window_start/window_end staan hier in UTC; de aanroeper rekent het lokale logvenster om."""
     if not candle_databases:
         report.add("candles", "Candles", UNKNOWN, ["Geen candle-voorraad in deze map gevonden."])
@@ -1436,6 +1497,14 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                         received = len([row for row in gap_rows
                                         if row["SymbolId"] not in barometer_ids])
 
+                        # De maatstaf is het aantal dat aan het EIND nog bediend werd, niet het
+                        # hoogste van de nacht: een munt die onderweg onder de volumegrens zakt gaat
+                        # uit het abonnement en zijn candles worden opgeruimd, dus die kan achteraf
+                        # niet meer bewijzen dat hij geleverd heeft. Zie serving_per_exchange voor de
+                        # meting waar dit uit volgt.
+                        serving_count = (serving or {}).get(exchange_name)
+                        yardstick = serving_count if serving_count is not None else subscribed_count
+
                         lines.append("| Dekking instrumenten | Waarde |")
                         lines.append("|---|---|")
                         lines.append("| Symbolen in de instrumentenlijst | {} |".format(len(listed)))
@@ -1443,35 +1512,50 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                             len(listed) - len(without)))
                         lines.append("| Geabonneerd tijdens deze run (uit het log) | {} |".format(
                             subscribed_count if subscribed_count is not None else "onbekend"))
+                        lines.append("| Bediend aan het eind van het venster | {} |".format(
+                            serving_count if serving_count is not None else "onbekend"))
                         lines.append("| Candles geleverd binnen het venster | {} |".format(received))
                         lines.append("| Candles voor een symbool dat niet meer genoteerd is | {} |"
                                      .format(len(orphan)))
                         lines.append("")
+
+                        if (subscribed_count and serving_count is not None
+                                and subscribed_count > serving_count):
+                            lines.append("De symbolenlijst kromp deze run van {} naar {}: {} munten "
+                                         "zakten onder de volumegrens en zijn uit het abonnement "
+                                         "gehaald. Hun candles zijn mee opgeruimd, dus de dekking "
+                                         "hieronder wordt tegen de {} gemeten die aan het eind nog "
+                                         "bediend werden."
+                                         .format(subscribed_count, serving_count,
+                                                 subscribed_count - serving_count, serving_count))
+                            lines.append("")
 
                         # Een venster van een paar minuten kan geen dekking bewijzen: op de meeste
                         # exchanges komt de eerste candle pas als de minuut sluit, en een symbool
                         # dat gewoon stil is heeft nog niets te sturen.
                         short_window = (window_start and window_end
                                         and (window_end - window_start) < timedelta(minutes=15))
-                        if subscribed_count and short_window:
+                        if yardstick and short_window:
                             lines.append("Het venster is korter dan een kwartier, dus de dekking "
-                                         "wordt niet beoordeeld: {} van de {} geabonneerde "
-                                         "symbolen leverden iets.".format(received, subscribed_count))
+                                         "wordt niet beoordeeld: {} van de {} bediende "
+                                         "symbolen leverden iets.".format(received, yardstick))
                             lines.append("")
                             exchange_facts["subscribed"] = subscribed_count
-                        elif subscribed_count:
-                            without_candles = subscribed_count - received
-                            without_share = percentage(max(0, without_candles), subscribed_count)
+                            exchange_facts["serving"] = serving_count
+                        elif yardstick:
+                            without_candles = yardstick - received
+                            without_share = percentage(max(0, without_candles), yardstick)
                             if without_candles > 0:
-                                lines.append("{} van de {} geabonneerde symbolen ({:.1f}%) leverden "
+                                lines.append("{} van de {} bediende symbolen ({:.1f}%) leverden "
                                              "geen enkele candle tijdens het venster.".format(
-                                                 without_candles, subscribed_count, without_share))
+                                                 without_candles, yardstick, without_share))
                                 lines.append("")
                             if without_share > NO_CANDLE_BAD_PERCENTAGE:
                                 verdict = worst(verdict, BAD)
                             elif without_share > NO_CANDLE_ATTENTION_PERCENTAGE:
                                 verdict = worst(verdict, ATTENTION)
                             exchange_facts["subscribed"] = subscribed_count
+                            exchange_facts["serving"] = serving_count
                             exchange_facts["symbolsWithoutCandlesInWindow"] = max(0, without_candles)
                         else:
                             lines.append("Geen abonnementsregel in het log, dus de dekking kan niet "
@@ -1524,7 +1608,7 @@ def sustained_low(values, minimum_length):
 
 
 def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, high, lines,
-                          key_points):
+                          key_points, subscription_share=None):
     """
     Beoordeelt het muntenaantal per barometer, niet over alle barometers van een exchange samen.
 
@@ -1593,11 +1677,21 @@ def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, hig
         if after_peak is None:
             after_peak, peak_of_worst, share = lowest, highest, percentage(lowest, highest)
 
+        # Een terugval die de symbolenlijst volgt is geen gebrek. Zakt het abonnement zelf van 213
+        # naar 169 omdat munten onder de volumegrens raken, dan HOORT het muntenaantal mee te zakken;
+        # de barometer beschrijft dan gewoon een kleinere markt. Alleen wat de symbolenlijst niet
+        # verklaart is een bevinding. Zie serving_per_exchange voor waar dat percentage vandaan komt.
+        follows_subscription = (share is not None and subscription_share is not None
+                                and share >= subscription_share - BAROMETER_COINS_FOLLOW_MARGIN)
+
         if highest < BAROMETER_MINIMAL_COINS:
             share = None
             judgement = "te weinig munten om te beoordelen"
         else:
-            if share < BAROMETER_COINS_BAD_SHARE:
+            if follows_subscription and share < BAROMETER_COINS_ATTENTION_SHARE:
+                judgement = "zakte naar {:.0f}%, volgt de symbolenlijst ({:.0f}%)".format(
+                    share, subscription_share)
+            elif share < BAROMETER_COINS_BAD_SHARE:
                 judgement = "**viel terug naar {:.0f}%**".format(share)
                 key_points.append("{} viel na de piek terug naar {:.0f}% van {:.0f} munten".format(
                     name, share, peak_of_worst))
@@ -1616,6 +1710,9 @@ def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, hig
             "maximum": highest,
             "minimumAfterPeak": after_peak,
             "declineSharePercentage": round(share, 1) if share is not None else None,
+            # Het percentage blijft staan; deze vlag zegt of het een bevinding is. Het getal
+            # verbergen zou de volgende lezer laten zoeken naar een terugval die er wel degelijk was.
+            "followsSubscription": bool(follows_subscription),
         }
     lines.append("")
     lines.append("Het oordeel rust op de kolom \"laagste na de piek\": een aantal dat alleen maar "
@@ -1638,7 +1735,7 @@ def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, hig
 
 
 def check_barometer(report, candle_databases, main_db, window_start, window_end, subscribed=None,
-                    still_running=False):
+                    still_running=False, serving=None):
     """
     De barometer staat als candles in dezelfde tabel, maar het zijn geen koersen: de vier
     prijsvelden dragen de losse cijfers van een enkele meting (zie BarometerCandleFields.Store).
@@ -1953,13 +2050,22 @@ def check_barometer(report, candle_databases, main_db, window_start, window_end,
                 # exchange als 70 procent. Wat je wil weten is of het aantal onderweg wegzakte, en
                 # daarvoor is de reeks zijn eigen maatstaf.
                 if row["j"]:
+                    # Hoeveel van zijn eigen abonnement de run aan het eind nog overhield. Daar
+                    # wordt de terugval van het muntenaantal tegen gehouden: zakt de symbolenlijst
+                    # zelf even hard, dan volgt de barometer die en is er niets aan de hand.
+                    subscribed_count = (subscribed or {}).get(exchange_name)
+                    serving_count = (serving or {}).get(exchange_name)
+                    subscription_share = (percentage(serving_count, subscribed_count)
+                                          if subscribed_count and serving_count is not None
+                                          else None)
                     exchange_facts["coinsPerSymbol"] = judge_barometer_coins(
                         connection, barometer_ids, local_symbols, settled, high, lines,
-                        key_points)
+                        key_points, subscription_share)
                     worst_share = min(
                         (entry["declineSharePercentage"]
                          for entry in exchange_facts["coinsPerSymbol"].values()
-                         if entry["declineSharePercentage"] is not None),
+                         if entry["declineSharePercentage"] is not None
+                         and not entry.get("followsSubscription")),
                         default=None)
                     if worst_share is not None:
                         exchange_facts["coinsSharePercentage"] = worst_share
@@ -1967,15 +2073,24 @@ def check_barometer(report, candle_databases, main_db, window_start, window_end,
                             verdict = worst(verdict, BAD)
                         elif worst_share < BAROMETER_COINS_ATTENTION_SHARE:
                             verdict = worst(verdict, ATTENTION)
-                    subscribed_count = (subscribed or {}).get(exchange_name)
+                    if subscription_share is not None:
+                        exchange_facts["subscriptionSharePercentage"] = round(subscription_share, 1)
                     if subscribed_count:
                         # Alleen ter informatie: het verschil met de abonnementen is de volumegrens,
                         # geen tekort.
                         lines.append("Ter vergelijking: er waren {} symbolen geabonneerd. Het "
                                      "verschil is de volumegrens - de barometer telt alleen munten "
                                      "met genoeg volume mee.".format(subscribed_count))
+                        if serving_count is not None and serving_count < subscribed_count:
+                            lines.append("")
+                            lines.append("Aan het eind van het venster werden er nog {} bediend "
+                                         "({:.0f}% van het abonnement). Een terugval van het "
+                                         "muntenaantal tot dat niveau volgt de symbolenlijst en "
+                                         "telt niet als bevinding."
+                                         .format(serving_count, subscription_share))
                         lines.append("")
                         exchange_facts["subscribed"] = subscribed_count
+                        exchange_facts["serving"] = serving_count
 
             exchange_facts.update({
                 "present": True,
@@ -2338,14 +2453,18 @@ def classify_error(message):
     In welk vakje een foutmelding valt. Zie het blok bij ERRORS_OURS voor het waarom.
 
     De volgorde is niet vrij. "niet van ons" gaat voorop, want een melding van Telegram of Avalonia
-    kan onze stackframes dragen zonder dat er iets van ons stuk is. Daarna onze code, want die weegt
-    het zwaarst. Pas dan de bekende herstelde vormen, en wat overblijft valt bewust door.
+    kan onze stackframes dragen zonder dat er iets van ons stuk is. Daarna de uitzonderingen die
+    onze code met opzet gooit, want die dragen diezelfde stackframes en zouden anders als een
+    struikeling gelden. Daarna onze code, want die weegt het zwaarst. Pas dan de bekende herstelde
+    vormen, en wat overblijft valt bewust door.
     """
+    lowered = message.lower()
     if any(part in message for part in ERRORS_NOT_OURS):
         return "notOurs"
+    if any(part in lowered for part in ERRORS_DELIBERATE):
+        return "recovered"
     if ERRORS_OURS.search(message):
         return "ours"
-    lowered = message.lower()
     if any(part in lowered for part in ERRORS_RECOVERED):
         return "recovered"
     return "unrecognised"
@@ -3084,6 +3203,7 @@ def main():
     # Taken from the whole log it picks up the largest count of any earlier session in the same
     # file, and a night that subscribed 125 symbols then gets measured against yesterday's 157.
     subscribed = subscribed_per_exchange(window_entries)
+    serving = serving_per_exchange(window_entries)
 
     # Draait het proces nog? Dat verandert wat een achterstand betekent: de opslagdraad heeft dan
     # nog niet weggeschreven, en zonder dat onderscheid staat elk rapport van een levende scanner
@@ -3102,9 +3222,9 @@ def main():
     settings_facts = check_settings(report, folder)
     check_symbols(report, main_db, exchange_names)
     check_candles(report, candle_databases, main_db, utc_start, utc_end, arguments.top,
-                  subscribed, arguments.deep, still_running)
+                  subscribed, arguments.deep, still_running, serving)
     check_barometer(report, candle_databases, main_db, utc_start, utc_end, subscribed,
-                    still_running)
+                    still_running, serving)
     check_streams(report, window_entries, window_hours or 1.0)
     check_errors(report, window_entries, window_error_entries, arguments.top)
     check_signals(report, main_db, exchange_names, utc_start, utc_end,

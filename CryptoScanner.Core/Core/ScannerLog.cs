@@ -9,6 +9,57 @@ public class ScannerLog
     // The global logger class
     public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
+    /// <summary>
+    /// One line for an exception that reached a global handler, carrying the facts that make a log
+    /// somebody sends in actually usable.
+    ///
+    /// "Global Thread Exception" on its own answered none of the first questions. Four handlers wrote
+    /// that same name - the unobserved task exception of the task scheduler, the unhandled exception
+    /// of the UI dispatcher, and the one of the AppDomain, in both user interfaces - so which of them
+    /// fired was not in the log at all. And the message shown was the OUTER exception while the reason
+    /// sits in the innermost one: on the night of 22/23-08-2026 the line read "IOException: Unable to
+    /// read data from the transport connection", where the point was SocketException 995
+    /// (OperationAborted), a socket closed while a read was still pending during the hourly
+    /// subscription rebuild. Neither the socket code nor the handler nor the exchange was visible.
+    ///
+    /// The full stacktrace still follows on the next line; NLog appends it through ${onexception}.
+    /// </summary>
+    /// <param name="exception">The exception as the handler received it, aggregate and all.</param>
+    /// <param name="source">Which handler fired, for example "unobserved task".</param>
+    public static void LogGlobalException(Exception exception, string source)
+    {
+        // An unobserved task exception always arrives wrapped in an AggregateException, and sometimes
+        // more than one level deep. Walk to the bottom: the innermost exception is the one that says
+        // what actually happened.
+        Exception innermost = exception;
+        List<string> chain = [];
+        while (true)
+        {
+            chain.Add(innermost.GetType().Name);
+            Exception? next = innermost is AggregateException aggregate
+                ? aggregate.InnerExceptions.FirstOrDefault()
+                : innermost.InnerException;
+            if (next is null)
+                break;
+            innermost = next;
+        }
+
+        List<string> parts = [$"source={source}"];
+        if (GlobalData.ActiveExchange?.Name is string exchangeName)
+            parts.Add($"exchange={exchangeName}");
+        parts.Add($"chain={string.Join(" -> ", chain)}");
+        parts.Add($"reason={innermost.Message}");
+        // The socket code is what identifies these: 995 (OperationAborted) is a read cancelled because
+        // the socket was being closed, which is a teardown race and not a broken connection. Naming it
+        // separates that case from a genuine ConnectionReset without having to read the prose.
+        if (innermost is System.Net.Sockets.SocketException socketException)
+            parts.Add($"socket={socketException.SocketErrorCode} ({socketException.ErrorCode})");
+        if (innermost.TargetSite is not null)
+            parts.Add($"at={innermost.TargetSite.DeclaringType?.Name}.{innermost.TargetSite.Name}");
+
+        Logger.Error(exception, "Global Thread Exception " + string.Join(", ", parts));
+    }
+
     // ${onexception} appends the full exception (incl. stacktrace) only on calls like Logger.Error(ex, "...") -
     // without it, every Logger.Error(exception, ...) call in the codebase silently drops the stacktrace.
     private const string ScannerLogLayout = "${longdate}|${level:uppercase=true}|${logger}|${message}${onexception:${newline}${exception:format=ToString}}";

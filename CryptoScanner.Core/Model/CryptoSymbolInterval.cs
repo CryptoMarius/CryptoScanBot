@@ -53,25 +53,12 @@ public class CryptoSymbolInterval
     // trigger range and the distances. See CryptoSymbolIntervalDlz for why there are two markers.
     public CryptoSymbolIntervalDlz Dlz { get; } = new();
 
-    // All the calculated zones
-    public CryptoSymbolIntervalZones FvgZones { get; internal set; } = new();
+    // Everything FVG keeps for this interval - the calculated zones and its incremental marker.
+    public CryptoSymbolIntervalFvg Fvg { get; } = new();
 
-    // SMC (Smart Money Concepts) Order Blocks — in-memory only for now (no DB persistence),
-    // rebuilt by ZoneSmc.Detect on demand. Long  = bullish OB (demand) below a swing low;
-    // Short = bearish OB (supply) above a swing high.
-    public List<CryptoZone> SmcZones { get; internal set; } = [];
-
-    // Incremental zone-calculation markers: the candle time up to (and including) which the
-    // zone scan has already run. Null means "never run, do a full historical scan". On every
-    // later call only candles after this point need to be scanned — see ZoneFvg/ZoneSmc.
-    // DLZ has its own pair, on Dlz above.
-    public CandleTime? FvgLastProcessedTime { get; set; }
-    public CandleTime? SmcLastProcessedTime { get; set; }
-
-    // The AverageWindow/BaseMaxCandles settings the SMC cursor above was built with. If the user
-    // changes these mid-run/session, the cached cursor is no longer valid and a full rescan is forced.
-    public int SmcCachedAverageWindow { get; set; } = -1;
-    public int SmcCachedBaseMaxCandles { get; set; } = -1;
+    // Everything SMC (Smart Money Concepts) keeps for this interval - the order blocks, its
+    // incremental marker and the settings that marker was built with.
+    public CryptoSymbolIntervalSmc Smc { get; } = new();
 
     // Primary and Secondary trend data (Dow Theory interpretation)
     public CryptoTrendData TrendPrimary = new();

@@ -30,7 +30,7 @@ namespace CryptoScanner.Core.Zones;
 ///   - Liquidity sweep filter (only zones that swept BSL/SSL first)
 ///   - Premium/Discount tagging using a Fib midpoint of the dominant leg
 ///   - BOS/CHoCH structure-event linkage
-///   - DB persistence — these zones live in <see cref="CryptoSymbolInterval.SmcZones"/> only
+///   - DB persistence — these zones live in <see cref="CryptoSymbolIntervalSmc.Zones"/> only
 ///   - Per-zone realtime invalidation through <see cref="ZoneInvalidation"/>
 /// </summary>
 public static class ZoneSmc
@@ -40,7 +40,7 @@ public static class ZoneSmc
 
     /// <summary>
     /// Recompute the SMC supply/demand zones for one (symbol, interval) from scratch and store
-    /// them in <see cref="CryptoSymbolInterval.SmcZones"/>. The new list is diffed against the
+    /// them in <see cref="CryptoSymbolIntervalSmc.Zones"/>. The new list is diffed against the
     /// existing one on (Side, OpenTime, Bottom, Top); unchanged zones keep their DB Id and
     /// AlarmDate, modified zones are queued for UPDATE, fresh zones for INSERT, and old zones
     /// that no longer appear are queued for DELETE — mirroring the DLZ persistence flow.
@@ -73,9 +73,9 @@ public static class ZoneSmc
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-        bool cacheValid = symbolInterval.SmcLastProcessedTime != null
-            && symbolInterval.SmcCachedAverageWindow == averageWindow
-            && symbolInterval.SmcCachedBaseMaxCandles == baseMaxCandles;
+        bool cacheValid = symbolInterval.Smc.ProcessedCandleMarker != null
+            && symbolInterval.Smc.CachedAverageWindow == averageWindow
+            && symbolInterval.Smc.CachedBaseMaxCandles == baseMaxCandles;
 
         if (cacheValid)
         {
@@ -88,8 +88,8 @@ public static class ZoneSmc
             DetectFull(symbol, interval, symbolInterval, averageWindow, baseMaxRangeFactor,
                 expansionMinRangeFactor, expansionBodyFraction, strongExpansionFactor, baseMaxCandles,
                 maxBlocksPerInterval, requireOppositeBaseColor);
-            symbolInterval.SmcCachedAverageWindow = averageWindow;
-            symbolInterval.SmcCachedBaseMaxCandles = baseMaxCandles;
+            symbolInterval.Smc.CachedAverageWindow = averageWindow;
+            symbolInterval.Smc.CachedBaseMaxCandles = baseMaxCandles;
         }
     }
 
@@ -225,18 +225,18 @@ public static class ZoneSmc
 
         // Candles is never empty here (the early-return above already handled that case), so the
         // cursor can safely advance to the last candle actually scanned.
-        symbolInterval.SmcLastProcessedTime = candles[^1].OpenTime;
+        symbolInterval.Smc.ProcessedCandleMarker = candles[^1].OpenTime;
     }
 
 
     /// <summary>
     /// Incremental SMC scan: only looks at candles that arrived since
-    /// <see cref="CryptoSymbolInterval.SmcLastProcessedTime"/>, plus a small bounded lookback window
+    /// <see cref="CryptoSymbolIntervalSmc.ProcessedCandleMarker"/>, plus a small bounded lookback window
     /// (averageWindow/baseMaxCandles) for context — never the full candle history. Base→expansion
     /// classification is causal (only looks at the trailing window and i-1), so a candle's
     /// classification never changes once later candles arrive — replaying it is genuinely unnecessary,
     /// not just an approximation.
-    /// New zones are appended straight to the live <see cref="CryptoSymbolInterval.SmcZones"/> list and
+    /// New zones are appended straight to the live <see cref="CryptoSymbolIntervalSmc.Zones"/> list and
     /// queued for DB insert immediately (no full diff needed — see ZoneThreadCalculate's load-once
     /// guard, the in-memory list is already authoritative). Mitigation/touch/break bookkeeping for
     /// existing open zones continues from each zone's own <see cref="CryptoZone.InsideExcursion"/> /
@@ -251,7 +251,7 @@ public static class ZoneSmc
             return; // no candles at all (yet) — leave the cursor as-is and retry next call
 
         CandleTime latestTime = lastCandle.OpenTime;
-        CandleTime cursor = symbolInterval.SmcLastProcessedTime!.Value;
+        CandleTime cursor = symbolInterval.Smc.ProcessedCandleMarker!.Value;
         if (latestTime <= cursor)
             return; // nothing new since the previous call
 
@@ -338,7 +338,7 @@ public static class ZoneSmc
 
         foreach (var zone in createdZones)
         {
-            symbolInterval.SmcZones.Add(zone);
+            symbolInterval.Smc.Zones.Add(zone);
             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
         }
 
@@ -347,7 +347,7 @@ public static class ZoneSmc
         // entirely (this is also why the list doesn't need splitting into open/closed sub-lists the
         // way DLZ/FVG do: zone count here is capped by maxBlocksPerInterval, so a linear scan is cheap).
         List<CryptoCandle> newCandles = window.GetRange(firstNewIndex, window.Count - firstNewIndex);
-        foreach (var zone in symbolInterval.SmcZones)
+        foreach (var zone in symbolInterval.Smc.Zones)
         {
             if (zone.CloseTime != null || zone.MitigationStartTime == null)
                 continue;
@@ -366,35 +366,35 @@ public static class ZoneSmc
         }
 
         // Trim to the newest N, mirroring DetectFull's trim but applied to the live cumulative list.
-        if (symbolInterval.SmcZones.Count > maxBlocksPerInterval)
+        if (symbolInterval.Smc.Zones.Count > maxBlocksPerInterval)
         {
-            symbolInterval.SmcZones.Sort((a, b) => a.OpenTime.Minutes.CompareTo(b.OpenTime.Minutes));
-            int excess = symbolInterval.SmcZones.Count - maxBlocksPerInterval;
+            symbolInterval.Smc.Zones.Sort((a, b) => a.OpenTime.Minutes.CompareTo(b.OpenTime.Minutes));
+            int excess = symbolInterval.Smc.Zones.Count - maxBlocksPerInterval;
             for (int k = 0; k < excess; k++)
             {
-                var zone = symbolInterval.SmcZones[k];
+                var zone = symbolInterval.Smc.Zones[k];
                 if (zone.Id > 0)
                 {
                     zone.Id *= -1;
                     GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                 }
             }
-            symbolInterval.SmcZones.RemoveRange(0, excess);
+            symbolInterval.Smc.Zones.RemoveRange(0, excess);
         }
 
-        symbolInterval.SmcLastProcessedTime = latestTime;
+        symbolInterval.Smc.ProcessedCandleMarker = latestTime;
     }
 
     /// <summary>
     /// Diff the freshly built <paramref name="newZones"/> against the existing
-    /// <see cref="CryptoSymbolInterval.SmcZones"/> and queue insert/update/delete via
+    /// <see cref="CryptoSymbolIntervalSmc.Zones"/> and queue insert/update/delete via
     /// <see cref="ThreadSaveObjects"/>. Matching is on (Side, OpenTime, Bottom, Top), same as
     /// DLZ/FVG. Matched zones keep their DB Id and AlarmDate so alarms are NOT re-fired after
     /// a restart. After the diff the SmcZones reference is atomically replaced.
     /// </summary>
     private static void ReconcileWithDatabase(CryptoSymbolInterval symbolInterval, List<CryptoZone> newZones)
     {
-        var oldList = symbolInterval.SmcZones;
+        var oldList = symbolInterval.Smc.Zones;
         DatabaseStatistics statistics = new();
         SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
         ZoneTools.CreateZoneIndex(oldList, oldZones, statistics);
@@ -451,7 +451,7 @@ public static class ZoneSmc
         statistics.Total = newZones.Count;
 
         // Atomic swap so readers (signal classes, chart) always see a complete list.
-        symbolInterval.SmcZones = newZones;
+        symbolInterval.Smc.Zones = newZones;
     }
 
     /// <summary>
