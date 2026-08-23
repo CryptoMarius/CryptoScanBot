@@ -1776,7 +1776,7 @@ public partial class ChartWindowViewModel : ObservableObject
 
             HideAnnototionCursor();
 
-            SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
+            ZoneCandleWindows loadedCandlesInMemory = new();
 
             await Symbol.Data.ZoneLock.WaitAsync();
             try

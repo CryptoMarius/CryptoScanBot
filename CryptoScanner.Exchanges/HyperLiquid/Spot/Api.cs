@@ -44,7 +44,15 @@ public class Api : ExchangeBase
         // the runner-up had 12). Twelve hours is deliberately longer than any run: on this market the
         // liveness check is the library ping every 10 seconds, and this is only the outer net for a
         // socket that stays up and stops delivering for half a day.
+        //
+        // SubscriptionsPerBundle is raised for the same reason as on HyperLiquid Futures, and the two
+        // markets share the budget: HyperLiquid allows ten websocket connections PER IP ADDRESS and a
+        // thousand subscriptions, and one symbol per subscription is forced by the exchange. On the
+        // default of 10 per bundle these 54 symbols became 6 socket clients, which together with the
+        // 14 of the Futures scanner on this machine was 20 connections on an allowance of 10. At 30
+        // they become 2, and the two scanners together sit at 7. See the fuller note in Futures/Api.cs.
         ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 300, false, 1,
+            subscriptionsPerBundle: 30,
             klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 21_000, pauseSymbol: "UBTCUSDC",
             maximumTickerInactivity: TimeSpan.FromHours(12));
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");

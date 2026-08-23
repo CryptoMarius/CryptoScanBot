@@ -378,7 +378,7 @@
     private void OnMenuOpenChart()
     {
         if (_contextMenuPosition?.Object.Symbol != null)
-            GridCommandService.OpenChart(_contextMenuPosition.Object.Symbol);
+            GridCommandService.OpenChart(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.Interval);
         CloseContextMenu();
     }
 

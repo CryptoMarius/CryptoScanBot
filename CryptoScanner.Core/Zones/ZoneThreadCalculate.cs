@@ -56,7 +56,7 @@ public class ZoneThreadCalculate
                 //trendZigZagIndicatorList.Add((trend.TrendType, trend.UseHighLow),
                 //    new(trend.TrendType, trend.UseHighLow, 1.0m));
 
-                SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
+                ZoneCandleWindows loadedCandlesInMemory = new();
 
                 // Hold ZoneLock for the entire load + recalculation so ScanForNew cannot
                 // concurrently write to the same OrderedList (non-thread-safe List<T> inside).
@@ -113,19 +113,35 @@ public class ZoneThreadCalculate
                 }
                 finally
                 {
-                    // In emulator mode the replay owns the in-memory CandleList and drives a
-                    // virtual clock. Persisting per tick and pruning candles here would hurt:
-                    // CleanLoadedCandlesAsync drops everything before
-                    // GetCandleFetchStart(Clock.UtcNow), removing history the replay (higher-TF
-                    // synthesis + indicator lookback) still needs, and SaveCandleDataToDiskAsync
-                    // adds a slow disk write on every tick. The emulator persists the candles
-                    // once at the end of the run instead, so we skip both side-effects here.
+                    // The write back is live-only. Not to keep the two engines apart, but because
+                    // there is nothing to write: during a replay every candle in memory came out of
+                    // candles.db to begin with, and the run persists once at the end. Writing per
+                    // tick would take the shared write gate on every zone calculation.
+                    //
+                    // Ahead of the two lines below, deliberately: the save reads which intervals are
+                    // still unsaved out of loadedCandlesInMemory, and clearing it first would hand it
+                    // an empty list and silently write nothing.
                     if (!GlobalData.IsEmulatorMode)
-                    {
                         await ZoneCandleEngine.SaveCandleDataToDiskAsync(symbol, loadedCandlesInMemory);
-                        loadedCandlesInMemory.Clear();
-                        _ = ZoneCandleEngine.CleanLoadedCandlesAsync(symbol);
-                    }
+
+                    loadedCandlesInMemory.Clear();
+
+                    // Pruning runs in the emulator too, since 23-08-2026. It used to be skipped there,
+                    // and the replay then kept every candle the zoom had pulled in until the chunk
+                    // boundary seven replay-days later - 23.6 million of them at chunk 30 of run 229.
+                    // That is a different engine from the one the live scanner runs, and the emulator
+                    // exists to predict the live scanner. Whatever the depth costs us here, the scanner
+                    // pays it too; better to meet that in a replay than in production. The depth is
+                    // per interval (CandleTools.GetCandleFetchStart): 500 candles for everything
+                    // except 1m, and a day plus the barometer window for 1m.
+                    //
+                    // Awaited, where it used to be fire-and-forget. A replay has to produce the same
+                    // answer twice, and a prune that lands somewhere in the next tick instead of in
+                    // this one decides which candles that tick can still see. The lock order is
+                    // unchanged - ZoneLock then CandleLock, the same way CalculatePivots takes them
+                    // a few lines up - so waiting here cannot introduce a deadlock the old path did
+                    // not already have.
+                    await ZoneCandleEngine.CleanLoadedCandlesAsync(symbol);
                     symbol.Data.ZoneLock.Release();
                 }
             }

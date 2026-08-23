@@ -29,9 +29,12 @@ public class GridCommandService
         _navigationManager = navigationManager;
     }
 
-    public void OpenChart(CryptoSymbol symbol)
+    /// <param name="interval">Interval of the row the chart was opened from, so the chart lands on
+    /// the same interval the user was looking at (the Avalonia ChartWindowLauncher does the same).
+    /// Null means the caller has no opinion: the chart keeps the interval of its own session.</param>
+    public void OpenChart(CryptoSymbol symbol, CryptoInterval? interval = null)
     {
-        _symbolService.SetSelectedSymbol(symbol);
+        _symbolService.SetSelectedSymbol(symbol, interval);
         _navigationManager.NavigateTo("/chart");
     }
 
@@ -386,8 +389,9 @@ public class GridCommandService
     {
         if (GlobalData.Settings.General.DoubleClickAction == CryptoDoubleClickAction.ActivateChartForm)
         {
-            // Chart window is Avalonia-only; in Blazor we open TradingView externally as fallback
-            OpenTradingViewExternal(symbol, interval);
+            // This host has its own chart page now, so "Show chart form" shows that chart instead of
+            // the old TradingView-in-an-external-browser fallback (same as Avalonia CommandShowChart).
+            OpenChart(symbol, interval);
         }
         else
         {

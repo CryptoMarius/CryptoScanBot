@@ -300,7 +300,7 @@ public partial class MainWindowViewModel : ObservableObject
                     // ZoneCandleEngine.FetchFrom which intervals it has already materialised from
                     // disk/candles.db into the in-memory CandleList, so the IsDataLocal verify
                     // step sees the full picture instead of only the bounded startup load.
-                    SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
+                    ZoneCandleWindows loadedCandlesInMemory = new();
 
 
                     // ── Step 1: determine the fetch start per interval ───────────────────────
@@ -361,7 +361,10 @@ public partial class MainWindowViewModel : ObservableObject
                             {
                                 CryptoInterval targetInterval = GlobalData.IntervalListPeriod[interval.IntervalPeriod + 1];
                                 CandleTools.BulkCalculateCandles(symbol, targetInterval.ConstructFrom!, targetInterval, fetchEnd);
-                                loadedCandlesInMemory[targetInterval.IntervalPeriod] = true;
+                                // Built in memory rather than read, which is what the single "= true"
+                                // said here before: nothing to read from disk, and something to write back.
+                                loadedCandlesInMemory.MarkAllLoaded(targetInterval.IntervalPeriod);
+                                loadedCandlesInMemory.MarkChanged(targetInterval.IntervalPeriod);
                             }
                             CandleTools.UpdateCandleFetched(symbol, interval);
                         }

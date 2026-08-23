@@ -61,8 +61,12 @@ public static class IndicatorEngine
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         if (symbolInterval.Data.ContainsKey(candleOpenTime))
+        {
+            PipelineProfiler.RecordPrepCall(alreadyPresent: true);
             return true;
+        }
 
+        PipelineProfiler.RecordPrepCall(alreadyPresent: false);
         return PrepareViaHub(symbol, interval, symbolInterval, candleOpenTime, calculateCandles);
     }
 
@@ -76,21 +80,31 @@ public static class IndicatorEngine
     private static bool PrepareViaHub(CryptoSymbol symbol, CryptoInterval interval,
         CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime, int calculateCandles = -1)
     {
-        bool warmup = symbolInterval.IndicatorHub == null
-            || symbolInterval.IndicatorHubLastAdded == null
-            || symbolInterval.IndicatorHubLastAdded.Value + interval.Duration != candleOpenTime
-            || calculateCandles > 0
-            // Settings changed since this hub was built: its indicator parameters and its set of
-            // plugin extensions are frozen at construction, so rebuild instead of feeding it further.
-            || symbolInterval.IndicatorHub.ConfigVersion != IndicatorConfiguration.Version;
+        // Split out instead of written as one condition, because WHICH of them is true is the whole
+        // question: a hub that is rebuilt on every candle costs a 260-candle warm-up per candle, and
+        // the reason it cannot continue tells you whether that is fixable.
+        bool hubNull = symbolInterval.IndicatorHub == null || symbolInterval.IndicatorHubLastAdded == null;
+        bool gap = !hubNull && symbolInterval.IndicatorHubLastAdded!.Value + interval.Duration != candleOpenTime;
+        bool explicitWindow = calculateCandles > 0;
+        // Settings changed since this hub was built: its indicator parameters and its set of
+        // plugin extensions are frozen at construction, so rebuild instead of feeding it further.
+        bool configChanged = !hubNull && symbolInterval.IndicatorHub!.ConfigVersion != IndicatorConfiguration.Version;
+
+        bool warmup = hubNull || gap || explicitWindow || configChanged;
 
         if (warmup)
         {
+            PipelineProfiler.RecordPrepWarmupReason(hubNull, gap, explicitWindow, configChanged);
+            long profWarmupStart = Stopwatch.GetTimestamp();
+
             long profCollectStart = Stopwatch.GetTimestamp();
             List<IQuote>? history = CollectCandles(symbol, interval, candleOpenTime, out _, calculateCandles);
             PipelineProfiler.RecordPrepCollect(Stopwatch.GetTimestamp() - profCollectStart);
             if (history == null)
+            {
+                PipelineProfiler.RecordPrepNotEnoughHistory();
                 return false;
+            }
 
             // The hub advances its Lux Multi-RSI over the candles it is fed, so on a 15m or 1h hub
             // that value is a Lux over 15m/1h candles — not the 5m value the field promises.
@@ -98,6 +112,7 @@ public static class IndicatorEngine
             // get that treatment, so clear it there rather than leave a wrong-timeframe number behind.
             bool is5m = symbolInterval.IntervalPeriod == CryptoIntervalPeriod.interval5m;
 
+            long profFeedStart = Stopwatch.GetTimestamp();
             var hub = new IntervalIndicatorHub();
             foreach (IQuote quote in history)
             {
@@ -111,13 +126,19 @@ public static class IndicatorEngine
                         symbolInterval.Data[candle.OpenTime] = built;
                 }
             }
+            long profFeedTicks = Stopwatch.GetTimestamp() - profFeedStart;
             symbolInterval.IndicatorHub = hub;
             symbolInterval.IndicatorHubLastAdded = candleOpenTime;
             symbolInterval.IndicatorHubAddCount = history.Count;
 
             // The band-range tracker is rebuilt alongside the hub, but from the candle list instead
             // of from this 260-candle warm-up window — its statistics need a few hundred more.
+            long profBandStart = Stopwatch.GetTimestamp();
             symbolInterval.BandRange = BandRangeTracker.Build(symbolInterval, candleOpenTime);
+            long profBandTicks = Stopwatch.GetTimestamp() - profBandStart;
+
+            PipelineProfiler.RecordPrepWarmup(Stopwatch.GetTimestamp() - profWarmupStart,
+                profFeedTicks, history.Count, profBandTicks);
         }
         else
         {

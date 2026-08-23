@@ -106,13 +106,23 @@ public class SymbolService : IDisposable
 
     public CryptoSymbol? SelectedSymbol { get; private set; }
 
-    public void SetSelectedSymbol(CryptoSymbol? symbol)
+    /// <summary>
+    /// Interval of the row the selection came from, null when the caller has none to give (the
+    /// symbol panel). The chart page uses it to land on the interval the user was looking at.
+    /// </summary>
+    public CryptoInterval? SelectedInterval { get; private set; }
+
+    public void SetSelectedSymbol(CryptoSymbol? symbol) => SetSelectedSymbol(symbol, null);
+
+    public void SetSelectedSymbol(CryptoSymbol? symbol, CryptoInterval? interval)
     {
-        if (SelectedSymbol != symbol)
-        {
-            SelectedSymbol = symbol;
+        // An interval on its own counts as a change: double clicking a 15m signal while the chart
+        // already shows that same symbol on 1h still has to move the chart to 15m.
+        bool changed = SelectedSymbol != symbol || (interval != null && interval != SelectedInterval);
+        SelectedSymbol = symbol;
+        SelectedInterval = interval;
+        if (changed)
             SelectedSymbolChanged?.Invoke();
-        }
     }
 
     public GridSortState<SymbolColumnEnum> SortState => _sortState;

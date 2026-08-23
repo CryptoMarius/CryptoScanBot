@@ -172,12 +172,13 @@ MEMORY_COVERAGE_GAP_MINUTES = 30.0
 # Barometer. Het aantal munten waarop een meting rust is de betrouwbaarheidsmaat: zakt dat ver weg,
 # dan beschrijft de barometer nog maar een restje markt. Gemeten tegen het hoogste aantal van
 # diezelfde nacht, niet tegen de abonnementen - zie de toelichting bij de controle zelf.
-BAROMETER_COINS_ATTENTION_SHARE = 80.0   # percentage van het eigen hoogtepunt
-BAROMETER_COINS_BAD_SHARE = 50.0
-# Hoeveel de barometer op de symbolenlijst achter mag lopen voordat het toch een bevinding wordt.
-# De barometer telt alleen munten met genoeg volume, dus hij zakt iets eerder dan het abonnement;
-# een paar procent verschil is die drempel en geen wegvallende data.
-BAROMETER_COINS_FOLLOW_MARGIN = 5.0
+# Het muntenaantal van de barometer krijgt GEEN oordeel meer; de drempels die hier stonden
+# (80% van de eigen piek voor aandacht, 50% voor slecht) zijn op 23-08-2026 weggehaald. Het aantal
+# is het gevolg van de volumegrens die de gebruiker per quote instelt, en munten kruisen die grens
+# de hele dag. Wat er wel toe doet - een meting die helemaal niet gemaakt kon worden - komt niet
+# als een laag muntenaantal binnen maar als een ONTBREKENDE meting, want bij nul munten schrijft
+# BarometerResult.Calculate() geen candle. Die ontbrekende metingen worden verderop geteld en
+# bepalen daar het oordeel. Zie judge_barometer_coins voor het hele verhaal.
 # Het begin van een run telt niet mee voor dat minimum: de abonnementen worden dan nog opgebouwd,
 # dus het aantal munten groeit in de eerste minuten naar zijn niveau toe. Zonder deze marge meldt
 # elke nette run de opstartdip als een gebrek.
@@ -1608,7 +1609,7 @@ def sustained_low(values, minimum_length):
 
 
 def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, high, lines,
-                          key_points, subscription_share=None):
+                          key_points):
     """
     Beoordeelt het muntenaantal per barometer, niet over alle barometers van een exchange samen.
 
@@ -1677,42 +1678,36 @@ def judge_barometer_coins(connection, barometer_ids, local_symbols, settled, hig
         if after_peak is None:
             after_peak, peak_of_worst, share = lowest, highest, percentage(lowest, highest)
 
-        # Een terugval die de symbolenlijst volgt is geen gebrek. Zakt het abonnement zelf van 213
-        # naar 169 omdat munten onder de volumegrens raken, dan HOORT het muntenaantal mee te zakken;
-        # de barometer beschrijft dan gewoon een kleinere markt. Alleen wat de symbolenlijst niet
-        # verklaart is een bevinding. Zie serving_per_exchange voor waar dat percentage vandaan komt.
-        follows_subscription = (share is not None and subscription_share is not None
-                                and share >= subscription_share - BAROMETER_COINS_FOLLOW_MARGIN)
-
-        if highest < BAROMETER_MINIMAL_COINS:
-            share = None
-            judgement = "te weinig munten om te beoordelen"
+        # Beschrijven, niet beoordelen. Het muntenaantal is het GEVOLG van een instelling: de
+        # gebruiker legt per quote een volumegrens op, en munten gaan daar de hele dag onder en
+        # overheen. Dat het aantal wisselt is dus geen gebrek maar precies wat die grens doet, en hoe
+        # laag hij mag staan is een afweging van de gebruiker - te hoog en de barometer wordt
+        # hakkerig, dus de grens hoort ruwweg de helft van de munten mee te laten doen.
+        #
+        # Er valt hier ook niets te vangen dat niet al gevangen wordt. Bij nul munten geeft
+        # BarometerResult.Calculate() false terug en wordt er GEEN candle geschreven, dus de enige
+        # werkelijk waardeloze meting verschijnt vanzelf als een ONTBREKENDE meting - en die worden
+        # hierboven al geteld en bepalen daar het oordeel. Een drempel op het muntenaantal zou daar
+        # niets aan toevoegen en alleen vals alarm geven op een quote met vijf munten.
+        #
+        # Dit stond tot 23-08-2026 wel op oordeel (een percentage van de eigen piek). Dat meldde die
+        # nacht veertien van de negentien exchanges, allemaal omdat het weekend het volume onder de
+        # grens duwde. Niet opnieuw invoeren zonder een storing die het aantoonbaar vangt.
+        if lowest == highest:
+            judgement = "vlak op {:.0f}".format(lowest)
+        elif after_peak < highest:
+            judgement = "{:.0f} tot {:.0f}, na de piek {:.0f}".format(lowest, highest, after_peak)
         else:
-            if follows_subscription and share < BAROMETER_COINS_ATTENTION_SHARE:
-                judgement = "zakte naar {:.0f}%, volgt de symbolenlijst ({:.0f}%)".format(
-                    share, subscription_share)
-            elif share < BAROMETER_COINS_BAD_SHARE:
-                judgement = "**viel terug naar {:.0f}%**".format(share)
-                key_points.append("{} viel na de piek terug naar {:.0f}% van {:.0f} munten".format(
-                    name, share, peak_of_worst))
-            elif share < BAROMETER_COINS_ATTENTION_SHARE:
-                judgement = "zakte naar {:.0f}%".format(share)
-                key_points.append("{} zakte na de piek naar {:.0f}% van {:.0f} munten".format(
-                    name, share, peak_of_worst))
-            elif lowest < highest:
-                judgement = "bouwde op van {:.0f}, hield {:.0f}% vast".format(lowest, share)
-            else:
-                judgement = "vlak"
+            judgement = "bouwde op van {:.0f} naar {:.0f}".format(lowest, highest)
         lines.append("| {} | {:.0f} | {:.0f} | {:.0f} | {} |".format(
             name, lowest, highest, after_peak, judgement))
         per_symbol[name] = {
             "minimum": lowest,
             "maximum": highest,
             "minimumAfterPeak": after_peak,
+            # Blijft in de feiten staan omdat het de meting leesbaar maakt - een barometer op 12
+            # munten zegt iets anders dan een op 380 - maar het bepaalt geen oordeel meer.
             "declineSharePercentage": round(share, 1) if share is not None else None,
-            # Het percentage blijft staan; deze vlag zegt of het een bevinding is. Het getal
-            # verbergen zou de volgende lezer laten zoeken naar een terugval die er wel degelijk was.
-            "followsSubscription": bool(follows_subscription),
         }
     lines.append("")
     lines.append("Het oordeel rust op de kolom \"laagste na de piek\": een aantal dat alleen maar "
@@ -2050,31 +2045,22 @@ def check_barometer(report, candle_databases, main_db, window_start, window_end,
                 # exchange als 70 procent. Wat je wil weten is of het aantal onderweg wegzakte, en
                 # daarvoor is de reeks zijn eigen maatstaf.
                 if row["j"]:
-                    # Hoeveel van zijn eigen abonnement de run aan het eind nog overhield. Daar
-                    # wordt de terugval van het muntenaantal tegen gehouden: zakt de symbolenlijst
-                    # zelf even hard, dan volgt de barometer die en is er niets aan de hand.
                     subscribed_count = (subscribed or {}).get(exchange_name)
                     serving_count = (serving or {}).get(exchange_name)
-                    subscription_share = (percentage(serving_count, subscribed_count)
-                                          if subscribed_count and serving_count is not None
-                                          else None)
                     exchange_facts["coinsPerSymbol"] = judge_barometer_coins(
                         connection, barometer_ids, local_symbols, settled, high, lines,
-                        key_points, subscription_share)
+                        key_points)
+                    # Het laagste percentage blijft als feit staan zodat een reeks nachten naast
+                    # elkaar te leggen is, maar het bepaalt geen oordeel meer. Zie de toelichting in
+                    # judge_barometer_coins: het muntenaantal volgt de volumegrens van de gebruiker,
+                    # en een meting zonder munten bestaat niet - die telt al als ontbrekende meting.
                     worst_share = min(
                         (entry["declineSharePercentage"]
                          for entry in exchange_facts["coinsPerSymbol"].values()
-                         if entry["declineSharePercentage"] is not None
-                         and not entry.get("followsSubscription")),
+                         if entry["declineSharePercentage"] is not None),
                         default=None)
                     if worst_share is not None:
                         exchange_facts["coinsSharePercentage"] = worst_share
-                        if worst_share < BAROMETER_COINS_BAD_SHARE:
-                            verdict = worst(verdict, BAD)
-                        elif worst_share < BAROMETER_COINS_ATTENTION_SHARE:
-                            verdict = worst(verdict, ATTENTION)
-                    if subscription_share is not None:
-                        exchange_facts["subscriptionSharePercentage"] = round(subscription_share, 1)
                     if subscribed_count:
                         # Alleen ter informatie: het verschil met de abonnementen is de volumegrens,
                         # geen tekort.
@@ -2083,11 +2069,10 @@ def check_barometer(report, candle_databases, main_db, window_start, window_end,
                                      "met genoeg volume mee.".format(subscribed_count))
                         if serving_count is not None and serving_count < subscribed_count:
                             lines.append("")
-                            lines.append("Aan het eind van het venster werden er nog {} bediend "
-                                         "({:.0f}% van het abonnement). Een terugval van het "
-                                         "muntenaantal tot dat niveau volgt de symbolenlijst en "
-                                         "telt niet als bevinding."
-                                         .format(serving_count, subscription_share))
+                            lines.append("Aan het eind van het venster werden er nog {} bediend. "
+                                         "Het muntenaantal volgt die lijst, dus dat het onderweg "
+                                         "zakt hoort bij de volumegrens en is hier geen oordeel."
+                                         .format(serving_count))
                         lines.append("")
                         exchange_facts["subscribed"] = subscribed_count
                         exchange_facts["serving"] = serving_count

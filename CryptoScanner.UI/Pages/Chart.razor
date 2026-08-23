@@ -264,6 +264,11 @@
             _currentSymbolName = _currentSymbol.Name;
             _selectedBase = _currentSymbol.Base;
             _selectedQuote = _currentSymbol.Quote;
+
+            // Interval of the row the chart was opened from. Null means the caller had none to
+            // give, and the interval restored from the session above stays as it is.
+            if (SymbolService.SelectedInterval != null)
+                _selectedInterval = SymbolService.SelectedInterval.IntervalPeriod.ToString();
         }
         else if (GlobalData.ActiveExchange != null
             && GlobalData.ActiveExchange.SymbolListName.TryGetValue(_selectedBase + _selectedQuote, out CryptoSymbol? stored))
@@ -722,17 +727,27 @@
         InvokeAsync(async () =>
         {
             var symbol = SymbolService.SelectedSymbol;
-            if (symbol != null && symbol != _currentSymbol)
-            {
-                _currentSymbol = symbol;
-                _currentSymbolName = symbol.Name;
-                _selectedBase = symbol.Base;
-                _selectedQuote = symbol.Quote;
-                RefreshSymbolOptions();
-                StateHasChanged();
-                await ResetChartViewAsync();
-                await LoadChartAsync();
-            }
+            if (symbol == null)
+                return;
+
+            // The interval belongs to the selection as well, so opening the chart from a 15m row
+            // while it already shows that symbol on 1h still has to switch it over.
+            string? interval = SymbolService.SelectedInterval?.IntervalPeriod.ToString();
+            bool intervalChanged = interval != null && interval != _selectedInterval;
+            if (symbol == _currentSymbol && !intervalChanged)
+                return;
+
+            _currentSymbol = symbol;
+            _currentSymbolName = symbol.Name;
+            _selectedBase = symbol.Base;
+            _selectedQuote = symbol.Quote;
+            if (intervalChanged)
+                _selectedInterval = interval!;
+            RefreshSymbolOptions();
+            SaveSession();
+            StateHasChanged();
+            await ResetChartViewAsync();
+            await LoadChartAsync();
         });
     }
 

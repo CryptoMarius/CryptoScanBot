@@ -132,7 +132,7 @@ public class ZoneDlzTests : TestBase
     public async Task FullCalculation_MarksDominantPivots()
     {
         var (symbol, interval, indicator) = BuildPivotTestData();
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
 
         await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded);
 
@@ -155,7 +155,7 @@ public class ZoneDlzTests : TestBase
     public async Task FullCalculation_DemandZoneBoundaries()
     {
         var (symbol, interval, indicator) = BuildPivotTestData();
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
 
         await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded);
 
@@ -171,7 +171,7 @@ public class ZoneDlzTests : TestBase
     public async Task FullCalculation_SupplyZoneBoundaries()
     {
         var (symbol, interval, indicator) = BuildPivotTestData();
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
 
         await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded);
 
@@ -187,7 +187,7 @@ public class ZoneDlzTests : TestBase
     public async Task FullCalculation_NonDominantPivotStaysUnmarked()
     {
         var (symbol, interval, indicator) = BuildPivotTestData();
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
 
         await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded);
 
@@ -206,7 +206,7 @@ public class ZoneDlzTests : TestBase
     public async Task CreateZonesFromZigZag_ProducesCorrectZones()
     {
         var (symbol, interval, indicator) = BuildPivotTestData();
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
 
         await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded);
 
@@ -227,7 +227,7 @@ public class ZoneDlzTests : TestBase
     public async Task CreateZonesFromZigZag_ZoneBoundariesMatchPivots()
     {
         var (symbol, interval, indicator) = BuildPivotTestData();
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
 
         await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded);
 
@@ -249,7 +249,7 @@ public class ZoneDlzTests : TestBase
     public async Task CreateZonesFromZigZag_AfterTimeFiltersOldPivots()
     {
         var (symbol, interval, indicator) = BuildPivotTestData();
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
 
         await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded);
 
@@ -272,7 +272,7 @@ public class ZoneDlzTests : TestBase
     {
         // Phase 1: full calculation with pivots 0-4 (H100, L90, H110, L85, H105)
         var (symbol, interval, indicator) = BuildPivotTestData(pivotCount: 5);
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
 
         await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded);
 
@@ -321,7 +321,7 @@ public class ZoneDlzTests : TestBase
     {
         // Phase 1: 3 pivots — only L90 becomes dominant (H110 is just a trigger)
         var (symbol, interval, indicator) = BuildPivotTestData(pivotCount: 3);
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
         await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded);
         Assert.IsFalse(indicator.ZigZagList[2].Dominant, "Phase 1: H110 not yet dominant (no L after it)");
 

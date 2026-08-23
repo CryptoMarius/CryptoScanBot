@@ -329,7 +329,7 @@ public class ZoneDlz
 
     public static async Task MakeDominantAndZoomInAsync(CryptoSymbol symbol, CryptoInterval interval,
         ZigZagResult zigZag, decimal top, decimal bottom,
-        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+        ZoneCandleWindows loadedCandlesInMemory)
     {
         zigZag.Top = top;
         zigZag.Bottom = bottom;
@@ -409,6 +409,7 @@ public class ZoneDlz
             while (zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage && zoom > CryptoIntervalPeriod.interval1m)
             {
                 zoom--;
+                PipelineProfiler.RecordDlzZoomStep();
                 //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot zooming {zoom} {zigZag.Percentage:N2}%");
 
                 // Is IntervalList supported by Exchange
@@ -515,7 +516,7 @@ public class ZoneDlz
     /// </returns>
     public static async Task<CandleTime?> CalculateDlzAsync(AddTextEvent? sender,
         CryptoSymbol symbol, CryptoInterval interval, ZigZagIndicator indicator,
-        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory,
+        ZoneCandleWindows loadedCandlesInMemory,
         CandleTime? committedUpTo = null, List<ZigZagResult>? settled = null,
         List<ZigZagResult>? provisional = null)
     {
@@ -541,6 +542,7 @@ public class ZoneDlz
                 // Keep walking though - the sliding window has to stay intact.
                 if (isSettled && committedUpTo != null && zigZag.Candle.OpenTime <= committedUpTo)
                 {
+                    PipelineProfiler.RecordDlzPivot(skipped: true, judged: false);
                     previous2 = previous;
                     previous = zigZag;
                     continue;
@@ -548,25 +550,39 @@ public class ZoneDlz
 
                 sender?.Invoke($"Calculating dlz zones {symbol.Exchange.Name} {symbol.Name} {interval.Name} {zigZag.Candle.Date}");
 
+                bool judged = false;
+
                 // Check: a dominant Low leading to a new Higher High
                 if (zigZag.PointType == 'H' && previous.PointType == 'L' && previous2.PointType == 'H' && previous2.Value < zigZag.Value)
                 {
+                    long profZoomStart = Stopwatch.GetTimestamp();
                     await MakeDominantAndZoomInAsync(symbol, interval, previous,
                         Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, loadedCandlesInMemory);
+                    PipelineProfiler.RecordDlzZoom(Stopwatch.GetTimestamp() - profZoomStart);
                     // previous2 is the pivot immediately before previous, which is exactly the
                     // predecessor the grading needs to bound its look-back.
+                    long profGradeStart = Stopwatch.GetTimestamp();
                     GradeIntro(symbol, interval, previous, previous2);
+                    PipelineProfiler.RecordDlzGrade(Stopwatch.GetTimestamp() - profGradeStart);
                     (isSettled ? settled : provisional)?.Add(previous);
+                    judged = true;
                 }
 
                 // Check: a dominant High leading to a new Lower Low
                 if (zigZag.PointType == 'L' && previous.PointType == 'H' && previous2.PointType == 'L' && previous2.Value > zigZag.Value)
                 {
+                    long profZoomStart = Stopwatch.GetTimestamp();
                     await MakeDominantAndZoomInAsync(symbol, interval, previous,
                         previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), loadedCandlesInMemory);
+                    PipelineProfiler.RecordDlzZoom(Stopwatch.GetTimestamp() - profZoomStart);
+                    long profGradeStart = Stopwatch.GetTimestamp();
                     GradeIntro(symbol, interval, previous, previous2);
+                    PipelineProfiler.RecordDlzGrade(Stopwatch.GetTimestamp() - profGradeStart);
                     (isSettled ? settled : provisional)?.Add(previous);
+                    judged = true;
                 }
+
+                PipelineProfiler.RecordDlzPivot(skipped: false, judged: judged);
 
                 // The cursor only ever advances over settled ground. Moving it into the tail would
                 // freeze a verdict that is still allowed to change, which is the whole defect this
@@ -647,14 +663,21 @@ public class ZoneDlz
 
 
     public static async Task<(CandleTime minDate, CandleTime maxDate)> LoadHistoricCandles(CryptoSymbol symbol, CryptoInterval interval,
-        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+        ZoneCandleWindows loadedCandlesInMemory)
     {
         // Determine the period (using the candlecount). One depth for the whole engine - see
         // CandleTools.CandleCountFetch for why the zones no longer have one of their own.
         int candleFetchCount = CandleTools.CandleCountFetch;
         CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
         CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
-        await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, minDate, candleFetchCount);
+        // One candle further back than the window itself, and deliberately not by widening minDate:
+        // that one bounds the pivot calculation and the incremental cursor check, while this only
+        // bounds what is read. MakeDominantAndZoomInAsync looks at the candle BEFORE a dominant pivot
+        // to borrow its wick, so for the oldest pivot in the list - which can sit exactly on minDate -
+        // it reaches one candle outside the window. That candle used to be there because the read
+        // pulled in the whole series regardless of what was asked; now it has to be asked for.
+        await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval,
+            minDate - interval.Duration, candleFetchCount + 1);
 
 #if DEBUG
         var count = symbol.GetSymbolInterval(interval).CandleList.Count;
@@ -853,7 +876,7 @@ public class ZoneDlz
 
     public static async Task CalculateZonesAsync(AddTextEvent? sender,
         CryptoSymbol symbol, CryptoInterval interval,
-        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+        ZoneCandleWindows loadedCandlesInMemory)
     {
         // Phase timers for the DLZ carve-out. Plain locals: one recalculation runs start to finish
         // on one thread, and the totals are handed to the profiler in a single call at the end.

@@ -377,7 +377,7 @@ public class ZoneFvg
 
 
     private static async Task<(CandleTime minDate, CandleTime maxDate)> LoadHistoricCandles(CryptoSymbol symbol, CryptoInterval interval,
-        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+        ZoneCandleWindows loadedCandlesInMemory)
     {
         // Determine the period (using the candlecount). Same depth as DLZ and as the candles
         // themselves - see CandleTools.CandleCountFetch.
@@ -454,7 +454,7 @@ public class ZoneFvg
 
 
     public static async Task CalculateZonesAsync(AddTextEvent? sender, CryptoSymbol symbol, CryptoInterval interval,
-        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+        ZoneCandleWindows loadedCandlesInMemory)
     {
         if (SignalPrepare.ZoneFvgActive())
         {

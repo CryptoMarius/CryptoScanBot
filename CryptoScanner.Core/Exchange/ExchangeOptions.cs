@@ -92,6 +92,18 @@ public class ExchangeOptions // : IExchangeOptions
 
     // Aantal subscriptions per client (een keuze in de techniek)
     // Every bundle owns one socket client, so this also decides how many socket clients are created.
+    //
+    // "Een keuze in de techniek" as long as an exchange has no opinion about it - but several of them
+    // do, and they count CONNECTIONS PER IP ADDRESS while being generous about subscriptions.
+    // HyperLiquid allows ten connections and a thousand subscriptions per address, and since its
+    // candle feed is one symbol per subscription, the default of 10 turned 131 symbols into 14 socket
+    // clients there. With its Spot market on the same machine that was 20 connections on an allowance
+    // of 10 (23-08-2026), so both markets state 30 of their own.
+    //
+    // Per IP ADDRESS, not per process: nineteen scanners share one address on this machine, so an
+    // exchange with two markets spends its allowance twice. Same reasoning as the request weight in
+    // the LimitRate classes. Whoever raises this trades connections for blast radius - one lost
+    // connection marks every subscription in that bundle at once.
     public int SubscriptionsPerBundle { get; set; } = 10;
 
     // Reduce the amount of symbols using the volume (if possible)

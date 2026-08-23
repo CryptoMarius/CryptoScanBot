@@ -759,14 +759,20 @@ public class CandleDatabase : IDisposable
 
 
     /// <summary>
-    /// Read ALL candles for one (symbol, interval) from the candle DB into the in-memory
-    /// CandleList. No OpenTime filter — counterpart to the per-interval bulk file that
-    /// ZoneCandleEngine used to read on demand for DLZ zoom-refinement. Uses TryAdd so
-    /// candles that are already in memory (loaded earlier via the bounded startup path)
-    /// are silently skipped.
+    /// Read the candles of one (symbol, interval) from the candle DB into the in-memory CandleList.
+    /// Counterpart to the per-interval bulk file that ZoneCandleEngine used to read on demand for
+    /// DLZ zoom-refinement. Uses TryAdd so candles that are already in memory (loaded earlier via
+    /// the bounded startup path) are silently skipped.
+    /// <para>
+    /// <paramref name="from"/> and <paramref name="to"/> bound the read to the window the caller
+    /// actually needs; both null reads the whole series, which is what the migration and the chart
+    /// want. Passing the window matters for the zone engine: a DLZ zoom asks for the 60 one-minute
+    /// candles inside one hourly pivot, and reading the whole series for that meant hundreds of
+    /// thousands of rows per recalculation - see ZoneCandleWindows for the measurements.
+    /// </para>
     /// </summary>
     public static void LoadCandlesForSymbolInterval(SqliteConnection connection, CryptoSymbol symbol,
-        CryptoSymbolInterval symbolInterval)
+        CryptoSymbolInterval symbolInterval, CandleTime? from = null, CandleTime? to = null)
     {
         // Unknown to this candle database = no candles were ever stored for it. Nothing to read.
         if (!TryGetLocalSymbolId(connection, symbol, out int localSymbolId))
@@ -777,10 +783,30 @@ public class CandleDatabase : IDisposable
             "SELECT OpenTime, Ticks, Open, High, Low, Close, Volume " +
             "FROM Candle " +
             "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId ";
+        if (from != null)
+            cmd.CommandText += " and OpenTime >= $FromTime ";
+        if (to != null)
+            cmd.CommandText += " and OpenTime <= $ToTime ";
         // Do not read future candles
         if (GlobalData.IsEmulatorMode)
             cmd.CommandText += " and OpenTime <= $OpenTime ";
         cmd.CommandText += "ORDER BY OpenTime";
+
+        if (from != null)
+        {
+            var pFrom = cmd.CreateParameter();
+            pFrom.ParameterName = "$FromTime";
+            pFrom.Value = (long)from.Value.Minutes;
+            cmd.Parameters.Add(pFrom);
+        }
+
+        if (to != null)
+        {
+            var pTo = cmd.CreateParameter();
+            pTo.ParameterName = "$ToTime";
+            pTo.Value = (long)to.Value.Minutes;
+            cmd.Parameters.Add(pTo);
+        }
 
         var pSymbol = cmd.CreateParameter();
         pSymbol.ParameterName = "$SymbolId";
@@ -801,12 +827,16 @@ public class CandleDatabase : IDisposable
         }
 
 
+        long profReadStart = System.Diagnostics.Stopwatch.GetTimestamp();
+        long profRows = 0;
+
         symbolInterval.CandleList.Lock();
         try
         {
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
+                profRows++;
                 uint openTimeMinutes = (uint)reader.GetInt64(0);
                 byte ticksRaw = (byte)reader.GetInt32(1);
                 decimal tickSize = TickSizeFor((byte)(ticksRaw & 0x0F));
@@ -829,6 +859,9 @@ public class CandleDatabase : IDisposable
         {
             symbolInterval.CandleList.Unlock();
         }
+
+        Core.PipelineProfiler.RecordCandleRead(
+            System.Diagnostics.Stopwatch.GetTimestamp() - profReadStart, profRows);
     }
 
 

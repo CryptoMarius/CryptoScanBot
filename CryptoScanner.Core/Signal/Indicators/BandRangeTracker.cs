@@ -301,6 +301,12 @@ public sealed class BandRangeTracker
         // enumerator then throws "Collection was modified after the enumerator was instantiated".
         // Same defect as the one that aborted BulkCalculateCandles on Okx Futures (20-08-2026).
         // GetLastValuesUpTo does the identical walk under the read lock.
-        return symbolInterval.CandleList.GetLastValuesUpTo(lastOpenTime, BuildWindow);
+        //
+        // Which is where it went wrong: that walk starts at the OLDEST candle and copies everything
+        // it passes, so asking for 750 cost whatever the store happened to hold. This runs once per
+        // indicator warm-up, and a warm-up runs once per pipeline tick - see ZoneCandleWindows for
+        // why those stores had grown to hundreds of thousands of candles. GetLastValues steps
+        // backwards from lastOpenTime instead and gives the same answer for a fixed price.
+        return symbolInterval.CandleList.GetLastValues(lastOpenTime, BuildWindow, symbolInterval.Interval.Duration);
     }
 }

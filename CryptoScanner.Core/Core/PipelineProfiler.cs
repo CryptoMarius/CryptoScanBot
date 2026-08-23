@@ -40,6 +40,31 @@ public static class PipelineProfiler
     // incremental hub reports its own split through the Hub* counters below.
     public static long PrepCollectTicks;   // CollectCandles (build the history window)
 
+    // The rest of the warm-up branch in PrepareViaHub, which PrepCollectTicks above only covered the
+    // first step of. Everything after CollectCandles - a fresh IntervalIndicatorHub fed the whole
+    // history one candle at a time, a BuildCurrent per candle, and the BandRangeTracker rebuild - was
+    // measured by nothing at all, which is why the emulator report showed "indicators 36,638s" with
+    // 159s attributed underneath it (run 229, 23-08-2026).
+    //
+    // PrepWarmupTicks contains PrepCollectTicks, PrepHubFeedTicks and PrepBandRangeTicks; the
+    // remainder is bookkeeping between them.
+    public static long PrepCalls;              // PrepareIndicators calls
+    public static long PrepAlreadyPresent;     // returned immediately: Data already held this candle
+    public static long PrepNotEnoughHistory;   // CollectCandles said no
+    public static long PrepWarmupCalls;
+    public static long PrepWarmupTicks;
+    public static long PrepHubFeedTicks;       // the per-candle hub.Add + BuildCurrent + Data insert loop
+    public static long PrepHubFeedCandles;     // how many candles that loop processed
+    public static long PrepBandRangeTicks;     // BandRangeTracker.Build
+
+    // WHY a warm-up was needed, which is the number that decides whether this is worth fixing: an
+    // incremental hub that never gets to be incremental costs a full 260-candle rebuild per candle.
+    // Tested in the order below, each call counted once for the first reason that applied.
+    public static long PrepWarmupHubNull;      // no hub yet (or nothing added to it yet)
+    public static long PrepWarmupGap;          // this candle does not directly follow the last one added
+    public static long PrepWarmupExplicit;     // caller asked for a bigger window (chart)
+    public static long PrepWarmupConfig;       // settings changed since the hub was built
+
     // Sub-breakdown of the ExecuteTicks ("algorithms") bucket, accumulated inside
     // SignalExecute.ExecuteAsync. Tells us whether the dominant SignalExecute time is normal-strategy
     // evaluation, zone-touch detection (FVG/DLZ/SMC), or scales with the number of signals created.
@@ -89,6 +114,26 @@ public static class PipelineProfiler
     // single time. These two counters are what shows whether that is happening in practice.
     public static long DlzFullRuns;
     public static long DlzIncrementalRuns;
+
+    // Sub-breakdown of DlzJudgeTicks (CalculateDlzAsync). The walk itself covers every pivot in the
+    // list to keep the previous/previous2 window intact, but only the ones outside the committed
+    // region are actually judged - and judging one means zooming down the intervals until the zone is
+    // narrow enough, which is where the candles come from. Counting the walk, the verdicts and the
+    // zoom steps separately is what tells whether the cost is the NUMBER of pivots judged or what
+    // judging one costs.
+    public static long DlzPivotsWalked;
+    public static long DlzPivotsSkipped;       // settled and already committed: no verdict recomputed
+    public static long DlzPivotsJudged;        // MakeDominantAndZoomInAsync actually ran
+    public static long DlzZoomTicks;           // MakeDominantAndZoomInAsync, total
+    public static long DlzZoomSteps;           // how many intervals down the zoom walked, summed
+    public static long DlzGradeTicks;          // GradeIntro
+
+    // Candle reads from candles.db, wherever they come from. The zone engine is by far the biggest
+    // caller, and until 23-08-2026 it read the COMPLETE series for an interval whatever window the
+    // caller asked for - so this is the counter that says whether bounding the read actually landed.
+    public static long CandleReadCalls;
+    public static long CandleReadRows;
+    public static long CandleReadTicks;
 
     // Sub-breakdown of the hub incremental path (PrepareViaHub non-warmup).
     public static long HubAddTicks;
@@ -184,6 +229,18 @@ public static class PipelineProfiler
         CandleArrivals = 0;
 
         PrepCollectTicks = 0;
+        PrepCalls = 0;
+        PrepAlreadyPresent = 0;
+        PrepNotEnoughHistory = 0;
+        PrepWarmupCalls = 0;
+        PrepWarmupTicks = 0;
+        PrepHubFeedTicks = 0;
+        PrepHubFeedCandles = 0;
+        PrepBandRangeTicks = 0;
+        PrepWarmupHubNull = 0;
+        PrepWarmupGap = 0;
+        PrepWarmupExplicit = 0;
+        PrepWarmupConfig = 0;
 
         SeStrategyTicks = 0;
         SeZoneTouchTicks = 0;
@@ -209,6 +266,16 @@ public static class PipelineProfiler
         DlzBrokenTicks = 0;
         DlzFullRuns = 0;
         DlzIncrementalRuns = 0;
+        DlzPivotsWalked = 0;
+        DlzPivotsSkipped = 0;
+        DlzPivotsJudged = 0;
+        DlzZoomTicks = 0;
+        DlzZoomSteps = 0;
+        DlzGradeTicks = 0;
+
+        CandleReadCalls = 0;
+        CandleReadRows = 0;
+        CandleReadTicks = 0;
 
         TrendLockWaitTicks = 0;
         TrendCalcBothTicks = 0;
@@ -276,6 +343,107 @@ public static class PipelineProfiler
         if (!Enabled)
             return;
         Interlocked.Add(ref PrepCollectTicks, collect);
+    }
+
+
+    /// <summary>One PrepareIndicators call, and how far it got.</summary>
+    public static void RecordPrepCall(bool alreadyPresent)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Increment(ref PrepCalls);
+        if (alreadyPresent)
+            Interlocked.Increment(ref PrepAlreadyPresent);
+    }
+
+
+    /// <summary>Why this call could not continue the hub incrementally. Counted once per warm-up.</summary>
+    public static void RecordPrepWarmupReason(bool hubNull, bool gap, bool explicitWindow, bool configChanged)
+    {
+        if (!Enabled)
+            return;
+        if (hubNull)
+            Interlocked.Increment(ref PrepWarmupHubNull);
+        else if (gap)
+            Interlocked.Increment(ref PrepWarmupGap);
+        else if (explicitWindow)
+            Interlocked.Increment(ref PrepWarmupExplicit);
+        else if (configChanged)
+            Interlocked.Increment(ref PrepWarmupConfig);
+    }
+
+
+    /// <summary>One completed warm-up: the whole branch, the feed loop inside it and the band-range rebuild.</summary>
+    public static void RecordPrepWarmup(long total, long hubFeed, long candles, long bandRange)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Increment(ref PrepWarmupCalls);
+        Interlocked.Add(ref PrepWarmupTicks, total);
+        Interlocked.Add(ref PrepHubFeedTicks, hubFeed);
+        Interlocked.Add(ref PrepHubFeedCandles, candles);
+        Interlocked.Add(ref PrepBandRangeTicks, bandRange);
+    }
+
+
+    /// <summary>A warm-up that stopped because there was not enough history.</summary>
+    public static void RecordPrepNotEnoughHistory()
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Increment(ref PrepNotEnoughHistory);
+    }
+
+
+    /// <summary>One read of candles out of candles.db: how long it took and how many rows it produced.</summary>
+    public static void RecordCandleRead(long ticks, long rows)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Increment(ref CandleReadCalls);
+        Interlocked.Add(ref CandleReadRows, rows);
+        Interlocked.Add(ref CandleReadTicks, ticks);
+    }
+
+
+    /// <summary>One walked pivot in CalculateDlzAsync, and whether its verdict was recomputed.</summary>
+    public static void RecordDlzPivot(bool skipped, bool judged)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Increment(ref DlzPivotsWalked);
+        if (skipped)
+            Interlocked.Increment(ref DlzPivotsSkipped);
+        if (judged)
+            Interlocked.Increment(ref DlzPivotsJudged);
+    }
+
+
+    /// <summary>One MakeDominantAndZoomInAsync call, measured around it by the caller.</summary>
+    public static void RecordDlzZoom(long ticks)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref DlzZoomTicks, ticks);
+    }
+
+
+    /// <summary>One step down the intervals inside a zoom. Counted where it happens, because the
+    /// loop leaves as soon as the zone is narrow enough and the number of steps is the point.</summary>
+    public static void RecordDlzZoomStep()
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Increment(ref DlzZoomSteps);
+    }
+
+
+    /// <summary>One GradeIntro call.</summary>
+    public static void RecordDlzGrade(long ticks)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref DlzGradeTicks, ticks);
     }
 
     /// <summary>Adds one hub incremental call's sub-phase ticks.</summary>

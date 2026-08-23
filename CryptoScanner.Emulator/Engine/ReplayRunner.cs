@@ -614,6 +614,35 @@ public sealed class ReplayRunner
                 $"hubIncremental {incremental:F1}s ({incremental / prepMeasured:P0})");
         }
 
+        // The warm-up branch as a whole, which the line above only covered the first step of. The
+        // ratio between warmups and incremental calls is the number to read first: a hub that is
+        // rebuilt on every candle pays a full history rebuild per candle, and the reason column says
+        // whether that is a startup effect or something structural.
+        double warmupTotal = Seconds(PipelineProfiler.PrepWarmupTicks);
+        double hubFeed = Seconds(PipelineProfiler.PrepHubFeedTicks);
+        double bandRange = Seconds(PipelineProfiler.PrepBandRangeTicks);
+        long prepCalls = PipelineProfiler.PrepCalls;
+        long warmupCalls = PipelineProfiler.PrepWarmupCalls;
+        if (prepCalls > 0)
+        {
+            double perWarmup = warmupCalls > 0 ? 1000.0 * warmupTotal / warmupCalls : 0;
+            double candlesPerWarmup = warmupCalls > 0 ? (double)PipelineProfiler.PrepHubFeedCandles / warmupCalls : 0;
+            GlobalData.AddTextToLogTab(
+                $"PrepareIndicators — {prepCalls} call(s) | " +
+                $"alreadyPresent {PipelineProfiler.PrepAlreadyPresent}, " +
+                $"warmup {warmupCalls}, incremental {PipelineProfiler.HubIncrementalCalls}, " +
+                $"notEnoughHistory {PipelineProfiler.PrepNotEnoughHistory}");
+            GlobalData.AddTextToLogTab(
+                $"Warmup — {warmupTotal:F1}s over {warmupCalls} call(s) ({perWarmup:F1} ms each, " +
+                $"{candlesPerWarmup:F0} candles each) | " +
+                $"collect {collect:F1}s, hubFeed {hubFeed:F1}s, bandRange {bandRange:F1}s");
+            GlobalData.AddTextToLogTab(
+                $"Warmup reason — hubNull {PipelineProfiler.PrepWarmupHubNull}, " +
+                $"gap {PipelineProfiler.PrepWarmupGap}, " +
+                $"explicitWindow {PipelineProfiler.PrepWarmupExplicit}, " +
+                $"configChanged {PipelineProfiler.PrepWarmupConfig}");
+        }
+
         // Sub-breakdown of the algorithms (SignalExecute) bucket: normal-strategy evaluation vs.
         // zone-touch (FVG/DLZ/SMC) vs. the rest (barometer + loop overhead, derived from the total).
         // The eval/signal counters reveal whether the cost scales with evaluations or with signals.
@@ -667,6 +696,39 @@ public sealed class ReplayRunner
                 $"ingest {trendIngest:F1}s ({trendIngest / trendCalcBoth:P0}) over {ingestCandles} candle(s) ({avgCandlesPerCall:F0}/call), " +
                 $"dow {trendDow:F1}s ({trendDow / trendCalcBoth:P0}), " +
                 $"bos {trendBos:F1}s ({trendBos / trendCalcBoth:P0})");
+        }
+
+        // Sub-breakdown of the DLZ judge phase (CalculateDlzAsync): whether the cost is the NUMBER of
+        // pivots that get a verdict or what one verdict costs. Walked counts every pivot the sliding
+        // window steps over, skipped the ones whose verdict is settled and already committed, judged
+        // the ones that actually went through the zoom.
+        double dlzZoom = Seconds(PipelineProfiler.DlzZoomTicks);
+        double dlzGrade = Seconds(PipelineProfiler.DlzGradeTicks);
+        double dlzJudgeTotal = Seconds(PipelineProfiler.DlzJudgeTicks);
+        if (PipelineProfiler.DlzPivotsWalked > 0)
+        {
+            long judgedPivots = PipelineProfiler.DlzPivotsJudged;
+            double perJudged = judgedPivots > 0 ? 1000.0 * dlzZoom / judgedPivots : 0;
+            double stepsPerZoom = judgedPivots > 0 ? (double)PipelineProfiler.DlzZoomSteps / judgedPivots : 0;
+            double walkedPerCall = PipelineProfiler.DlzInlineCalls > 0
+                ? (double)PipelineProfiler.DlzPivotsWalked / PipelineProfiler.DlzInlineCalls : 0;
+            GlobalData.AddTextToLogTab(
+                $"Dlz judge — {dlzJudgeTotal:F1}s | pivots walked {PipelineProfiler.DlzPivotsWalked} " +
+                $"({walkedPerCall:F0}/recalc), skipped {PipelineProfiler.DlzPivotsSkipped}, judged {judgedPivots} | " +
+                $"zoom {dlzZoom:F1}s ({perJudged:F1} ms each, {stepsPerZoom:F1} interval(s) down), " +
+                $"gradeIntro {dlzGrade:F1}s, " +
+                $"other(walk+bookkeeping) {dlzJudgeTotal - dlzZoom - dlzGrade:F1}s");
+        }
+
+        // Every read of candles out of candles.db. Rows per call is the number the bounded read was
+        // built for: it used to be the complete series for the interval whatever window was asked.
+        double candleRead = Seconds(PipelineProfiler.CandleReadTicks);
+        if (PipelineProfiler.CandleReadCalls > 0)
+        {
+            double rowsPerCall = (double)PipelineProfiler.CandleReadRows / PipelineProfiler.CandleReadCalls;
+            GlobalData.AddTextToLogTab(
+                $"Candle reads (candles.db) — {candleRead:F1}s over {PipelineProfiler.CandleReadCalls} call(s), " +
+                $"{PipelineProfiler.CandleReadRows} row(s) ({rowsPerCall:F0}/call)");
         }
 
         // Sub-breakdown of the positionCheck bucket: where inside CalculatePositionResultsViaOrders

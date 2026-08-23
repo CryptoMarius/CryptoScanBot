@@ -85,7 +85,18 @@ public class ZoneCandleEngine
         }
     }
 
-    public static async Task ReadCandlesFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval)
+    /// <summary>
+    /// Brings the candles of one (symbol, interval) into the in-memory CandleList, from the legacy
+    /// per-interval file when one is still there (which also migrates it into candles.db) and from
+    /// candles.db otherwise.
+    /// <para>
+    /// <paramref name="from"/> and <paramref name="to"/> bound the read from candles.db to the window
+    /// the caller needs; both null reads the whole series. The legacy file is always read whole - it
+    /// is being migrated, not queried, and it disappears afterwards.
+    /// </para>
+    /// </summary>
+    public static async Task ReadCandlesFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval,
+        CandleTime? from = null, CandleTime? to = null)
     {
         string oldFileName = Path.Combine(GlobalData.AppDataFolder, "Pivots", $"{symbol.Name}-{interval.Name}.bin");
         string newFileName = Path.Combine(GlobalData.AppDataFolder, symbol.Exchange.Name.ToLower(), symbol.Quote.ToLower(), $"{symbol.Base.ToLower()}-{interval.Name}.compressed");
@@ -162,7 +173,7 @@ public class ZoneCandleEngine
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 using var candleDb = new Context.CandleDatabase(symbol.Exchange);
                 candleDb.Open();
-                Context.CandleDatabase.LoadCandlesForSymbolInterval(candleDb.Connection, symbol, symbolInterval);
+                Context.CandleDatabase.LoadCandlesForSymbolInterval(candleDb.Connection, symbol, symbolInterval, from, to);
             }
             catch (Exception dbError)
             {
@@ -242,14 +253,14 @@ public class ZoneCandleEngine
     */
 
 
-    public static async Task SaveCandleDataToDiskAsync(CryptoSymbol symbol, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    public static async Task SaveCandleDataToDiskAsync(CryptoSymbol symbol, ZoneCandleWindows loadedCandlesInMemory)
     {
         // Snapshot which intervals were touched so the DB work can run off-thread without
         // enumerating the shared loadedCandlesInMemory dictionary from inside Task.Run.
         List<CryptoSymbolInterval> changedIntervals = [];
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
         {
-            if (loadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
+            if (loadedCandlesInMemory.HasUnsavedChanges(symbolInterval.IntervalPeriod))
                 changedIntervals.Add(symbolInterval);
         }
         if (changedIntervals.Count == 0)
@@ -283,7 +294,7 @@ public class ZoneCandleEngine
                     try
                     {
                         Context.CandleDatabase.SaveCandlesForSymbolInterval(candleDb.Connection, symbol, symbolInterval);
-                        loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
+                        loadedCandlesInMemory.MarkSaved(symbolInterval.IntervalPeriod); // in memory, nothing changed
                     }
                     catch (Exception error)
                     {
@@ -392,14 +403,37 @@ public class ZoneCandleEngine
     // ff experimenteren...
     // TODO: Limit the load from disk (we now load everything we have which can be too much)
     // TODO: CalculateDates: Can now be less candles than fetchCount if some candles where present (is this bad?)?
-    public static async Task FetchFrom(SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory,
+    public static async Task FetchFrom(ZoneCandleWindows loadedCandlesInMemory,
         CryptoSymbol symbol, CryptoInterval interval, CandleTime fetchFrom, int fetchCount)
     {
-        // Load candles from disk
-        if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
+        // The window the caller asked for, computed before the disk read because that read is now
+        // bounded by it. Pure (clock + arithmetic), so moving it up changes nothing else.
+        (CandleTime min, CandleTime max) = CalculateDates(interval, fetchFrom, fetchCount);
+
+        // Load candles from disk — only the window that was asked for, and only the part of it that
+        // was not read during this calculation already. Reading the whole series here (what this did
+        // until 23-08-2026) is what made a DLZ recalculation cost hundreds of thousands of rows to
+        // look at a few hundred, growing with the position of a replay. See ZoneCandleWindows.
+        if (!loadedCandlesInMemory.IsLoaded(interval.IntervalPeriod, min, max))
         {
-            await ReadCandlesFromDiskAsync(symbol, interval);
-            loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // for now (because of klines)
+            // Whether this interval is being touched for the first time in this calculation. Only
+            // then does it get marked as changed, which is what the TryAdd(period, true) here did
+            // before: a later read of another window is the same data from the same file and says
+            // nothing new about whether it has to be written back.
+            bool firstWindowOfThisInterval = !loadedCandlesInMemory.Contains(interval.IntervalPeriod);
+
+            // Only open the database for a window that is not in memory already. Bounding the read
+            // trades one huge query per interval for one small query per window, and a zoom asks for
+            // a window per dominant pivot - so without this check the connection overhead takes the
+            // place of the row count: CandleDatabase.Open runs three PRAGMAs before the first row is
+            // read, and the windows around recent pivots are in memory anyway.
+            (_, bool alreadyInMemory) = IsDataLocal(min, max, symbol, interval);
+            if (!alreadyInMemory)
+                await ReadCandlesFromDiskAsync(symbol, interval, min, max);
+
+            loadedCandlesInMemory.MarkLoaded(interval.IntervalPeriod, min, max);
+            if (firstWindowOfThisInterval)
+                loadedCandlesInMemory.MarkChanged(interval.IntervalPeriod); // for now (because of klines)
         }
 
         // In emulator mode the replay owns the candle timeline — never fetch from the
@@ -411,8 +445,6 @@ public class ZoneCandleEngine
         // pull missing history from the exchange.
         if (GlobalData.IsEmulatorMode && GlobalData.CurrentEmulatorRunId.HasValue)
             return;
-
-        (CandleTime min, CandleTime max) = CalculateDates(interval, fetchFrom, fetchCount);
 
         // Skip the part that was requested from the exchange before. IsDataLocal below can only answer
         // with the candles it can see, and on an exchange that skips a minute without trades that
@@ -445,7 +477,7 @@ public class ZoneCandleEngine
 
                     var (anythingAdded, askedUpTo) = await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, loop, max);
                     if (anythingAdded)
-                        loadedCandlesInMemory[interval.IntervalPeriod] = true;
+                        loadedCandlesInMemory.MarkChanged(interval.IntervalPeriod);
 
                     // Everything below `loop` was already present or already asked for, everything
                     // from there to askedUpTo has now been requested - together one uninterrupted
@@ -467,7 +499,11 @@ public class ZoneCandleEngine
                     CandleTime nowTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 0);
                     nowTime = IntervalTools.StartOfIntervalCandle(nowTime, lowerInterval.Duration);
                     CandleTools.BulkCalculateCandles(symbol, lowerInterval, interval, nowTime);
-                    loadedCandlesInMemory[interval.IntervalPeriod] = true;
+                    // This interval was just built in memory rather than read, which is what the
+                    // single "= true" said here before: nothing to read from disk, and something to
+                    // write back.
+                    loadedCandlesInMemory.MarkAllLoaded(interval.IntervalPeriod);
+                    loadedCandlesInMemory.MarkChanged(interval.IntervalPeriod);
                 }
             }
         }

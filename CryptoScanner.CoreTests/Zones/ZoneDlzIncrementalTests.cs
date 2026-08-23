@@ -124,13 +124,12 @@ public class ZoneDlzIncrementalTests : TestBase
     /// </summary>
     private static async Task<List<CryptoZone>> Replay(CryptoSymbol symbol, CryptoInterval interval,
         CryptoCandleList candles, int blockSize,
-        SortedList<CryptoIntervalPeriod, bool>? alreadyLoaded = null)
+        ZoneCandleWindows? alreadyLoaded = null)
     {
         ZigZagIndicator indicator = new(TrendType.Primary, false);
         // Marking an interval as loaded is what keeps the zoom from going to disk or to the exchange
         // for it: ZoneCandleEngine.FetchFrom skips the read for anything already in this map.
-        SortedList<CryptoIntervalPeriod, bool> loaded = alreadyLoaded == null
-            ? [] : new SortedList<CryptoIntervalPeriod, bool>(alreadyLoaded);
+        ZoneCandleWindows loaded = alreadyLoaded == null ? new() : new(alreadyLoaded);
 
         // The reference: everything in one go, straight down the full branch of CalculateZonesAsync.
         // Kept as its own path on purpose - the moment the reference runs through the incremental
@@ -308,7 +307,7 @@ public class ZoneDlzIncrementalTests : TestBase
         var (symbol, interval, candles) = LoadScenario();
 
         ZigZagIndicator indicator = new(TrendType.Primary, false);
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
         foreach (CryptoCandle candle in candles.Values)
         {
             indicator.Calculate(candle, batchProcess: true);
@@ -349,7 +348,7 @@ public class ZoneDlzIncrementalTests : TestBase
     /// zoom into. Returns the map that tells ZoneCandleEngine those intervals are already available.
     /// </summary>
     private static (CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candles,
-        SortedList<CryptoIntervalPeriod, bool> loaded) LoadZoomScenario()
+        ZoneCandleWindows loaded) LoadZoomScenario()
     {
         InitTestSession();
         ZoneDlzTests.ConfigureSettingsForTest();
@@ -378,12 +377,12 @@ public class ZoneDlzIncrementalTests : TestBase
             (CryptoIntervalPeriod.interval1m, "1m"),
         ];
 
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
         foreach ((CryptoIntervalPeriod period, string file) in wanted)
         {
             LoadCandleDataFromDisk(symbol.GetSymbolInterval(period).CandleList,
                 Path.Combine(path, $"Analyzer\\Bbma\\ADAUSDT\\ADAUSDT-{file}.json"));
-            loaded[period] = true;
+            loaded.MarkAllLoaded(period);
         }
 
         return (symbol, interval, symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList, loaded);
@@ -483,7 +482,7 @@ public class ZoneDlzIncrementalTests : TestBase
         var (symbol, interval, candles) = LoadScenario();
 
         ZigZagIndicator indicator = new(TrendType.Primary, false);
-        SortedList<CryptoIntervalPeriod, bool> loaded = [];
+        ZoneCandleWindows loaded = new();
 
         List<ZoneKey> previous = [];
         int worstZoneReach = 0;

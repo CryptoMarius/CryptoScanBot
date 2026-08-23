@@ -31,7 +31,25 @@ public class Api : ExchangeBase
     {
         // 3 billion USDC over 177 listed perpetuals a day (14-08-2026), about 1/15 of Binance Futures.
         // 49 symbols stay above the boundary.
+        //
+        // One symbol per subscription is forced by the exchange, not a choice: the candle subscription
+        // is {"type":"candle","coin":"<coin>","interval":"1m"} with a single coin field, and none of
+        // the three subscriptions that do cover every coin at once (allMids, allDexsAssetCtxs,
+        // fastAssetCtxs) carries candles. So the symbol count IS the subscription count here.
+        //
+        // Which makes SubscriptionsPerBundle the number that matters, because HyperLiquid counts
+        // websocket connections PER IP ADDRESS and allows only ten of them - against a thousand
+        // subscriptions. On the default of 10 per bundle, 131 symbols became 14 socket clients, and
+        // with HyperLiquid Spot alongside it on the same machine that was 20 connections on an
+        // allowance of 10 (measured 23-08-2026, the night both markets together lost their connection
+        // 98 times, by far the worst of nineteen markets). Thirty per bundle turns those 131 into 5
+        // and the Spot side into 2, so both scanners together sit at 7 of the 10 with room to grow,
+        // while the subscriptions stay at 185 of the 1000 allowed.
+        //
+        // Same trap as the request weight in LimitRate - see the comment there. Raising this further
+        // costs nothing at the exchange, but every drop then takes more subscriptions down with it.
         ExchangeOptions.SetDefaultOptions("HyperLiquid Futures", "USDC", 300, false, 1,
+            subscriptionsPerBundle: 30,
             klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 1_000_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
