@@ -711,18 +711,18 @@ public class PositionMonitor : IDisposable
 
     /// <summary>
     /// Absolute TP price for one level's profit distance (%), anchored on
-    /// position.TpGridAnchorPrice (Entry+Dca fills only, fee-corrected) - NOT on
+    /// position.TpGridBreakEvenPrice (Entry+Dca fills only, fee-corrected) - NOT on
     /// position.BreakEvenPrice, which also shifts every time a sibling TP level fills (it banks the
     /// realized profit into Returned and shrinks Quantity), causing every still-open TP level to be
-    /// repriced and re-placed. TpGridAnchorPrice does shift on a new DCA fill, same as
+    /// repriced and re-placed. TpGridBreakEvenPrice does shift on a new DCA fill, same as
     /// GetMissingFixedPercentageDcaPrices below already assumes.
     /// multiplier = +1 long / -1 short, so the TP sits above for a long, below for a short.
     /// </summary>
     private decimal CalculateTpPrice(CryptoPosition position, decimal percentage)
     {
         int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
-        decimal entryAnchor = position.TpGridAnchorPrice;
-        decimal price = entryAnchor + (multiplier * entryAnchor * (percentage / 100));
+        decimal breakEven = position.TpGridBreakEvenPrice;
+        decimal price = breakEven + (multiplier * breakEven * (percentage / 100));
         return price.ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
     }
 
@@ -1109,13 +1109,13 @@ public class PositionMonitor : IDisposable
         List<decimal> prices = [];
 
         // Een DCA zonder een voorgaande entry is onmogelijk
-        if (!position.EntryPrice.HasValue || position.TpGridAnchorPrice == 0 || position.Invested == 0)
+        if (!position.EntryPrice.HasValue || position.TpGridBreakEvenPrice == 0 || position.Invested == 0)
             return prices;
 
         // Afgesloten DCA parts sluiten we uit (omdat we zogenaamde jojo's uitvoeren, zie CanOpenAdditionalDca)
         int existingDcaParts = position.PartList.Values.Count(p => p.Purpose == CryptoPartPurpose.Dca && !p.CloseTime.HasValue);
 
-        decimal entryPrice = position.TpGridAnchorPrice;
+        decimal entryPrice = position.TpGridBreakEvenPrice;
         for (int i = existingDcaParts; i < GlobalData.Settings.Trading.DcaList.Count; i++)
         {
             var dcaEntry = GlobalData.Settings.Trading.DcaList[i];

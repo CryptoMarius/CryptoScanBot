@@ -625,6 +625,11 @@ public class ScannerSession : IScannerSession
                 // refreshed, so the synchronisation and the candle fetch below agree on who qualifies.
                 CandleBase.UpdateVolumeDecisions();
 
+                // The symbols and their volumes were just replaced in place. Both user interfaces
+                // cache the formatted volume per row and only rebuild on this message, so without it
+                // the symbol grid keeps showing the volumes of the moment the scanner was started.
+                GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
+
                 if (ExchangeBase.KLineTicker != null)
                     await ExchangeBase.KLineTicker.CheckSubscriptions(); // herstarten van ticker indien errors
                 //if (ExchangeBase.PriceTicker != null)

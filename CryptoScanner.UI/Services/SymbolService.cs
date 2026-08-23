@@ -53,7 +53,15 @@ public class SymbolService : IDisposable
     /// </summary>
     public void Start()
     {
-        WeakReferenceMessenger.Default.Register<SymbolsHaveChangedMessage>(this, (_, _) => Reload());
+        WeakReferenceMessenger.Default.Register<SymbolsHaveChangedMessage>(this, (_, _) =>
+        {
+            // Reload reuses the existing view models, so their cached volume text survives it. The
+            // hourly refresh updates symbol.Volume in place, which left the column showing the
+            // volumes of the moment the scanner was started while the sort - which reads
+            // Object.Volume - did follow the new values, so the list no longer looked sorted.
+            InvalidateVolumes();
+            Reload();
+        });
         WeakReferenceMessenger.Default.Register<ExchangeSwitchedMessage>(this, (_, _) =>
         {
             SetSelectedSymbol(null);
@@ -189,6 +197,10 @@ public class SymbolService : IDisposable
     /// Invalidate volume on all symbols. Called when the settings are applied, because the volume
     /// colour is decided against QuoteData.MinimalVolume and Reload keeps the existing view models.
     /// (The doc comment used to say "called on timer tick" while nothing called it at all.)
+    /// <para>
+    /// Also called on SymbolsHaveChangedMessage, which the hourly refresh of the exchange
+    /// information sends once the new volumes are in.
+    /// </para>
     /// </summary>
     public void InvalidateVolumes()
     {

@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 84;
+    public readonly static int CurrentDatabaseVersion = 85;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1729,6 +1729,44 @@ public class DatabaseMigration
             database.Connection.Execute("alter table Signal add column BandRangeCount INTEGER null", transaction);
             database.Connection.Execute("alter table Position add column BandRangeIndex TEXT null", transaction);
             database.Connection.Execute("alter table Position add column BandRangeCount INTEGER null", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 23-08-2026 TpGridAnchorPrice renamed to TpGridBreakEvenPrice. It is not an "anchor", it is
+        // simply the break-even price as anyone would compute it: the average buy price of the entry
+        // and every DCA fill, plus the commission of both sides (0.1% in and 0.1% predicted out at
+        // Binance Futures). The name came from the code and meant nothing to the reader, and it kept
+        // being confused with the Position.BreakEvenPrice field next to it - which is a narrower
+        // thing, the break-even of what is still HELD, so it only differs once profit is taken in
+        // parts. With one take profit level at 100% the two are the same number throughout.
+        // Renaming the column rather than adding a second one: a value that lives under two names is
+        // exactly how the confusion started.
+        if (CurrentVersion > version.Version && version.Version == 84)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // Three cases, and all three occur in the wild. The step that introduced the column
+            // (version 70) swallows its own failure with an empty catch, so there are databases at
+            // this version that never got it - the test database in bin\Debug is one. Renaming
+            // blindly throws on those, and an empty catch here would hide a real failure just as
+            // effectively, so ask the table what it has.
+            List<string> columns = [.. database.Connection.Query<string>(
+                "select name from pragma_table_info('Position')", transaction: transaction)];
+
+            if (columns.Contains("TpGridBreakEvenPrice"))
+            {
+                // Already there - a database created after the rename, nothing to do.
+            }
+            else if (columns.Contains("TpGridAnchorPrice"))
+                database.Connection.Execute("alter table Position rename column TpGridAnchorPrice to TpGridBreakEvenPrice", transaction);
+            else
+                database.Connection.Execute("alter table Position add column TpGridBreakEvenPrice TEXT null", transaction);
 
             // update version
             version.Version += 1;

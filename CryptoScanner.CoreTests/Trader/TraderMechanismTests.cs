@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -211,7 +211,7 @@ public class TraderMechanismTests
     private static decimal CalculateTpPrice(CryptoPosition position, decimal percentage)
     {
         int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
-        return position.TpGridAnchorPrice + (multiplier * position.TpGridAnchorPrice * (percentage / 100m));
+        return position.TpGridBreakEvenPrice + (multiplier * position.TpGridBreakEvenPrice * (percentage / 100m));
     }
 
     /// <summary>
@@ -220,13 +220,13 @@ public class TraderMechanismTests
     private static List<decimal> GetDcaPrices(CryptoPosition position, List<CryptoDcaEntry> dcaList)
     {
         List<decimal> prices = [];
-        if (!position.EntryPrice.HasValue || position.TpGridAnchorPrice == 0 || position.Invested == 0)
+        if (!position.EntryPrice.HasValue || position.TpGridBreakEvenPrice == 0 || position.Invested == 0)
             return prices;
 
         int existingDcaParts = position.PartList.Values.Count(
             p => p.Purpose == CryptoPartPurpose.Dca && !p.CloseTime.HasValue);
 
-        decimal entryPrice = position.TpGridAnchorPrice;
+        decimal entryPrice = position.TpGridBreakEvenPrice;
         for (int i = existingDcaParts; i < dcaList.Count; i++)
         {
             decimal diffPrice = entryPrice * Math.Abs(dcaList[i].Percentage) / 100m;
@@ -546,7 +546,7 @@ public class TraderMechanismTests
         AddFilledStep(entryPart, CryptoOrderSide.Buy, 100m, 2m, FeeRate);
 
         TradeTools.CalculateProfitAndBreakEvenPrice(position);
-        decimal anchorBeforeTp = position.TpGridAnchorPrice;
+        decimal anchorBeforeTp = position.TpGridBreakEvenPrice;
 
         // TP: sell 1 @ 102 (partial TP)
         var tpPart = AddPart(position, CryptoPartPurpose.TakeProfit, exchange, symbol);
@@ -554,8 +554,8 @@ public class TraderMechanismTests
 
         TradeTools.CalculateProfitAndBreakEvenPrice(position);
 
-        Assert.AreEqual(anchorBeforeTp, position.TpGridAnchorPrice,
-            "TpGridAnchorPrice must NOT move on TP fill — only on DCA fill");
+        Assert.AreEqual(anchorBeforeTp, position.TpGridBreakEvenPrice,
+            "TpGridBreakEvenPrice must NOT move on TP fill — only on DCA fill");
     }
 
     [TestMethod]
@@ -572,7 +572,7 @@ public class TraderMechanismTests
         AddFilledStep(entryPart, CryptoOrderSide.Buy, 100m, 1m, FeeRate);
 
         TradeTools.CalculateProfitAndBreakEvenPrice(position);
-        decimal anchorBeforeDca = position.TpGridAnchorPrice;
+        decimal anchorBeforeDca = position.TpGridBreakEvenPrice;
 
         // DCA: buy 1 @ 90
         var dcaPart = AddPart(position, CryptoPartPurpose.Dca, exchange, symbol);
@@ -580,9 +580,9 @@ public class TraderMechanismTests
 
         TradeTools.CalculateProfitAndBreakEvenPrice(position);
 
-        Assert.AreNotEqual(anchorBeforeDca, position.TpGridAnchorPrice,
-            "TpGridAnchorPrice MUST move on DCA fill (cost basis shifts)");
-        Assert.IsTrue(position.TpGridAnchorPrice < anchorBeforeDca,
+        Assert.AreNotEqual(anchorBeforeDca, position.TpGridBreakEvenPrice,
+            "TpGridBreakEvenPrice MUST move on DCA fill (cost basis shifts)");
+        Assert.IsTrue(position.TpGridBreakEvenPrice < anchorBeforeDca,
             "Long DCA at lower price should lower the TP anchor");
     }
 
@@ -606,10 +606,10 @@ public class TraderMechanismTests
         TradeTools.CalculateProfitAndBreakEvenPrice(position);
 
         decimal tpPrice = CalculateTpPrice(position, 1.5m); // 1.5% TP
-        decimal expected = position.TpGridAnchorPrice * (1 + 1.5m / 100m);
+        decimal expected = position.TpGridBreakEvenPrice * (1 + 1.5m / 100m);
 
         Assert.AreEqual(expected, tpPrice, "Long TP at 1.5% above anchor");
-        Assert.IsTrue(tpPrice > position.TpGridAnchorPrice);
+        Assert.IsTrue(tpPrice > position.TpGridBreakEvenPrice);
     }
 
     [TestMethod]
@@ -627,10 +627,10 @@ public class TraderMechanismTests
         TradeTools.CalculateProfitAndBreakEvenPrice(position);
 
         decimal tpPrice = CalculateTpPrice(position, 1.5m);
-        decimal expected = position.TpGridAnchorPrice * (1 - 1.5m / 100m);
+        decimal expected = position.TpGridBreakEvenPrice * (1 - 1.5m / 100m);
 
         Assert.AreEqual(expected, tpPrice, "Short TP at 1.5% below anchor");
-        Assert.IsTrue(tpPrice < position.TpGridAnchorPrice);
+        Assert.IsTrue(tpPrice < position.TpGridBreakEvenPrice);
     }
 
 
@@ -662,7 +662,7 @@ public class TraderMechanismTests
 
         Assert.AreEqual(2, prices.Count);
 
-        decimal anchor = position.TpGridAnchorPrice;
+        decimal anchor = position.TpGridBreakEvenPrice;
         Assert.AreEqual(anchor - anchor * 1.5m / 100m, prices[0], "DCA1 at 1.5% below anchor");
         Assert.AreEqual(anchor - anchor * 4.5m / 100m, prices[1], "DCA2 at 4.5% below anchor");
         Assert.IsTrue(prices[0] > prices[1], "DCA2 is lower than DCA1");
@@ -692,7 +692,7 @@ public class TraderMechanismTests
 
         Assert.AreEqual(2, prices.Count);
 
-        decimal anchor = position.TpGridAnchorPrice;
+        decimal anchor = position.TpGridBreakEvenPrice;
         Assert.AreEqual(anchor + anchor * 1.5m / 100m, prices[0], "Short DCA1 at 1.5% above anchor");
         Assert.AreEqual(anchor + anchor * 4.5m / 100m, prices[1], "Short DCA2 at 4.5% above anchor");
         Assert.IsTrue(prices[0] < prices[1], "Short DCA2 is higher than DCA1");

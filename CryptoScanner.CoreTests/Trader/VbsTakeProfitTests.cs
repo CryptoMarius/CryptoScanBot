@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -123,7 +123,7 @@ public class VbsTakeProfitTests : TestBase
     public void TpGridAnchor_LowersAfterDcaFill_SoTheTakeProfitLowers()
     {
         // The user's requirement: a DCA lowers the average cost basis, so the TP (a % above break-even)
-        // must LOWER in price after a DCA fills. The TP is anchored on TpGridAnchorPrice, which is the
+        // must LOWER in price after a DCA fills. The TP is anchored on TpGridBreakEvenPrice, which is the
         // cost basis of filled Entry+DCA fills, so this test proves the anchor (and thus the TP) drops.
         CryptoPosition position = CreateVbsPosition(tpPercentage: 3.0m);
         position.Exchange.FeeRate = 0m;                 // no fees -> clean averages
@@ -134,14 +134,14 @@ public class VbsTakeProfitTests : TestBase
         // 1) Entry only, filled at 100 -> anchor = 100, TP would sit at 103.
         AddFilledBuyPart(position, CryptoPartPurpose.Entry, 1, price: 100m, quantity: 1m);
         TradeTools.CalculateProfitAndBreakEvenPrice(position);
-        decimal anchorEntryOnly = position.TpGridAnchorPrice;
+        decimal anchorEntryOnly = position.TpGridBreakEvenPrice;
         Assert.AreEqual(100m, anchorEntryOnly, "entry-only cost basis = entry price");
         decimal tpEntryOnly = anchorEntryOnly * tpFactor;   // 103
 
         // 2) A DCA fills lower, at 90 -> cost basis averages down to 95 -> TP drops to ~97.85.
         AddFilledBuyPart(position, CryptoPartPurpose.Dca, 2, price: 90m, quantity: 1m);
         TradeTools.CalculateProfitAndBreakEvenPrice(position);
-        decimal anchorAfterDca = position.TpGridAnchorPrice;
+        decimal anchorAfterDca = position.TpGridBreakEvenPrice;
         Assert.AreEqual(95m, anchorAfterDca, "cost basis after DCA = (100 + 90) / 2 = 95");
         decimal tpAfterDca = anchorAfterDca * tpFactor;     // 97.85
 

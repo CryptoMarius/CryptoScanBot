@@ -62,7 +62,7 @@ public partial class CryptoPosition : CryptoData2
     // GetMissingFixedPercentageDcaPrices). Same formula as BreakEvenPrice, but built only from
     // Entry+Dca fills (see TradeTools.CalculateProfitAndBreakEvenPrice) - a sibling TP filling never
     // moves it, only a new DCA does (unlike BreakEvenPrice, which also reacts to a TP fill).
-    public decimal TpGridAnchorPrice { get; set; }
+    public decimal TpGridBreakEvenPrice { get; set; }
 
     // Hulpmiddelen voor statistiek en dca (niet noodzakelijk)
     public decimal? EntryPrice { get; set; }

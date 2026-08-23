@@ -99,7 +99,7 @@ public class TradeTools
 
         decimal totalValue = 0;
         decimal totalQuantity = 0;
-        // Commission from Entry+Dca parts only (excludes TP parts) - used for TpGridAnchorPrice,
+        // Commission from Entry+Dca parts only (excludes TP parts) - used for TpGridBreakEvenPrice,
         // see below.
         decimal entryDcaCommission = 0;
         // One entry per TP level (multi-level take profit; a legacy/single-TP position just has one)
@@ -292,7 +292,7 @@ public class TradeTools
         if (totalQuantity > 0 && position.Status == CryptoPositionStatus.Trading)
         {
             decimal entryPredictedCommission = avgPrice * (decimal)position.Exchange.FeeRate * totalQuantity / 100m;
-            position.TpGridAnchorPrice = position.Side == CryptoTradeSide.Long
+            position.TpGridBreakEvenPrice = position.Side == CryptoTradeSide.Long
                 ? (totalValue + entryDcaCommission + entryPredictedCommission) / totalQuantity
                 : (totalValue - entryDcaCommission - entryPredictedCommission) / totalQuantity;
         }

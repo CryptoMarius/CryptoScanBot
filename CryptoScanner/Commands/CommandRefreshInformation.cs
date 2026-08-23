@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Messages;
 
 namespace CryptoScanner.Commands;
 
@@ -12,6 +13,10 @@ public class CommandRefreshInformation : CommandBase
             var api = GlobalData.ActiveExchange!.GetApiInstance();
             await api.Symbol.GetSymbolsAsync(); // niet wachten tot deze klaar is
             CandleBase.UpdateVolumeDecisions(); // een antwoord voor deze hele ronde
+            // The symbols and their volumes were just replaced in place. The grid caches the formatted
+            // volume per row, so without this the column keeps the numbers it was built with - the same
+            // reason the hourly refresh in ScannerSession sends it.
+            GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
             if (ExchangeBase.KLineTicker != null)
                 await ExchangeBase.KLineTicker!.CheckSubscriptions(); // herstarten van ticker indien errors
             //if (ExchangeBase.PriceTicker != null)
