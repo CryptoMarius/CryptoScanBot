@@ -90,6 +90,12 @@ public class CryptoSymbolInterval
     // For the new QuoteHub from Dave Skender — incremental indicator state (see IntervalIndicatorHub).
     public IntervalIndicatorHub? IndicatorHub = null;
     public CandleTime? IndicatorHubLastAdded = null;
+
+    // The Lux value belongs to a 5m candle, so it only changes when a new 5m candle closes. These
+    // two remember which one was computed last and what came out, so the candles in between reuse it
+    // instead of recomputing the same number. See IndicatorData.ApplyLux for what that was costing.
+    public CandleTime? LuxCachedFor = null;
+    public short? LuxCachedValue = null;
     public int IndicatorHubAddCount = 0;
     public SortedDictionary<CandleTime, CryptoData> Data = [];
 

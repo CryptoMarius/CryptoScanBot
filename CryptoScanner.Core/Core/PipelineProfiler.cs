@@ -148,6 +148,12 @@ public static class PipelineProfiler
     public static long ZoneGapRefetches;       // EnsureHistoryLoadedAsync actually read something
     public static long ZoneGapRefetchCandles;  // candles those reads covered
 
+    // Where ApplyLux got its number. The value belongs to a 5m candle, so on any finer interval most
+    // calls should be answered from the cache; a "computed" is a 260-candle recalculation.
+    public static long LuxFromCache;
+    public static long LuxFrom5mData;
+    public static long LuxComputed;
+
     // Sub-breakdown of the hub incremental path (PrepareViaHub non-warmup).
     public static long HubAddTicks;
     public static long HubBuildTicks;
@@ -257,6 +263,19 @@ public static class PipelineProfiler
     }
 
 
+    public static void RecordLux(bool fromCache, bool from5mData)
+    {
+        if (!Enabled)
+            return;
+        if (fromCache)
+            LuxFromCache++;
+        else if (from5mData)
+            LuxFrom5mData++;
+        else
+            LuxComputed++;
+    }
+
+
     public static void Reset()
     {
         PrepareTicks = 0;
@@ -264,6 +283,10 @@ public static class PipelineProfiler
         TradeTicks = 0;
         PositionCheckTicks = 0;
         CandleArrivals = 0;
+
+        LuxFromCache = 0;
+        LuxFrom5mData = 0;
+        LuxComputed = 0;
 
         ZoneGapWalks = 0;
         ZoneGapCandles = 0;

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Indicators;
@@ -281,9 +281,29 @@ public static class IndicatorEngine
         // 5m sub-candle that has closed, not the first — see LuxIndicator.LastClosed5mCandle.
         CryptoSymbolInterval si5m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m);
         CandleTime aligned5m = LuxIndicator.LastClosed5mCandle(candleOpenTime, symbolInterval.Interval.Duration);
+
+        // One value per 5m candle, so every candle of the analysed interval that falls inside the
+        // same 5m candle gets the same number. Without this the fallback below recomputed it every
+        // time: 260 candles times an eleven-deep inner loop, per candle of the analysed interval.
+        // On emulator run 240 (24-08-2026, base interval 1m) that was 874.7s of the 2092.9s the whole
+        // run measured - the single biggest item, and four out of five of those calls were producing
+        // a number that was already known.
+        //
+        // Safe whatever order the caller walks in: the key IS the 5m candle, so a hit can only ever
+        // return the value that belongs to it. Walking backwards just misses and recomputes.
+        if (symbolInterval.LuxCachedFor == aligned5m)
+        {
+            data.Lux5mValue = symbolInterval.LuxCachedValue;
+            PipelineProfiler.RecordLux(fromCache: true, from5mData: false);
+            return;
+        }
+
         if (si5m.Data.TryGetValue(aligned5m, out CryptoData? data5m) && data5m.Lux5mValue.HasValue)
         {
             data.Lux5mValue = data5m.Lux5mValue;
+            symbolInterval.LuxCachedFor = aligned5m;
+            symbolInterval.LuxCachedValue = data5m.Lux5mValue;
+            PipelineProfiler.RecordLux(fromCache: false, from5mData: true);
             return;
         }
 
@@ -298,6 +318,9 @@ public static class IndicatorEngine
         if (luxOverSold > 0)
             luxValue -= luxOverSold;
         data.Lux5mValue = (short)luxValue;
+        symbolInterval.LuxCachedFor = aligned5m;
+        symbolInterval.LuxCachedValue = (short)luxValue;
+        PipelineProfiler.RecordLux(fromCache: false, from5mData: false);
     }
 
 }

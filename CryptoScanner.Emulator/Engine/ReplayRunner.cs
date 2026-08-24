@@ -724,6 +724,18 @@ public sealed class ReplayRunner
                 $"other(walk+bookkeeping) {dlzJudgeTotal - dlzZoom - dlzGrade:F1}s");
         }
 
+        // Where ApplyLux got its number. A "computed" is a full 260-candle recalculation of the Lux
+        // over the 5m candles; the other two are lookups. On a base interval finer than 5m the vast
+        // majority should be cache hits - if it is not, the cache key is wrong.
+        long luxTotal = PipelineProfiler.LuxFromCache + PipelineProfiler.LuxFrom5mData + PipelineProfiler.LuxComputed;
+        if (luxTotal > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"Lux — {luxTotal} call(s) | from cache {PipelineProfiler.LuxFromCache} " +
+                $"({(double)PipelineProfiler.LuxFromCache / luxTotal:P0}), from 5m data " +
+                $"{PipelineProfiler.LuxFrom5mData}, recalculated {PipelineProfiler.LuxComputed}");
+        }
+
         // Candles the zone walks expected and did not find. Until 24-08-2026 a missing candle fell
         // through the if and read as "nothing happened", so a run could produce a different zone set
         // without a single line saying why. Interrupted is the subset longer than
