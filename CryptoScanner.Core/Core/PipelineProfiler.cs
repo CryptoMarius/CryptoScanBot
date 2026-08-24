@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace CryptoScanner.Core.Core;
 
@@ -135,6 +135,19 @@ public static class PipelineProfiler
     public static long CandleReadRows;
     public static long CandleReadTicks;
 
+    // Holes the zone walks stepped over. Every zone loop reads its candles by key and a key that is
+    // not in memory used to fall through the if - so a missing candle read as "nothing happened" and
+    // said nothing about it. ZoneCandleGaps counts them as the existing loops walk; GapsInterrupted
+    // is the subset longer than ZoneCandleGaps.ToleratedGap, i.e. the ones that can actually change
+    // which zones survive. Refetches are the stretches that were read back in because the walk
+    // started before the loaded window.
+    public static long ZoneGapWalks;           // walks that found at least one missing candle
+    public static long ZoneGapCandles;         // missing candles, summed over those walks
+    public static long ZoneGapWorst;           // longest run of consecutive missing candles seen
+    public static long ZoneGapInterrupted;     // walks whose longest run exceeded ToleratedGap
+    public static long ZoneGapRefetches;       // EnsureHistoryLoadedAsync actually read something
+    public static long ZoneGapRefetchCandles;  // candles those reads covered
+
     // Sub-breakdown of the hub incremental path (PrepareViaHub non-warmup).
     public static long HubAddTicks;
     public static long HubBuildTicks;
@@ -220,6 +233,30 @@ public static class PipelineProfiler
 
 
     /// <summary>Clears all counters. Call once at the start of a run before enabling.</summary>
+    /// <summary>One zone walk that found holes; see <see cref="Zones.ZoneCandleGaps"/>.</summary>
+    public static void RecordZoneCandleGap(int missing, int longestGap, bool interrupted)
+    {
+        if (!Enabled)
+            return;
+        ZoneGapWalks++;
+        ZoneGapCandles += missing;
+        if (longestGap > ZoneGapWorst)
+            ZoneGapWorst = longestGap;
+        if (interrupted)
+            ZoneGapInterrupted++;
+    }
+
+
+    /// <summary>One stretch that was read back in because a walk started before the loaded window.</summary>
+    public static void RecordZoneCandleRefetch(int candles)
+    {
+        if (!Enabled)
+            return;
+        ZoneGapRefetches++;
+        ZoneGapRefetchCandles += candles;
+    }
+
+
     public static void Reset()
     {
         PrepareTicks = 0;
@@ -227,6 +264,13 @@ public static class PipelineProfiler
         TradeTicks = 0;
         PositionCheckTicks = 0;
         CandleArrivals = 0;
+
+        ZoneGapWalks = 0;
+        ZoneGapCandles = 0;
+        ZoneGapWorst = 0;
+        ZoneGapInterrupted = 0;
+        ZoneGapRefetches = 0;
+        ZoneGapRefetchCandles = 0;
 
         PrepCollectTicks = 0;
         PrepCalls = 0;

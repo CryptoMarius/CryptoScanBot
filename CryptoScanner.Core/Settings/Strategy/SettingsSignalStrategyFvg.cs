@@ -1,4 +1,6 @@
-﻿namespace CryptoScanner.Core.Settings.Strategy;
+﻿using CryptoScanner.Core.Enums;
+
+namespace CryptoScanner.Core.Settings.Strategy;
 
 [Serializable]
 public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
@@ -28,16 +30,31 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
     [SettingCaption("Max touches (0=off)", Group = GroupZoneStrength)]
     public int MaxTouches { get; set; } = 2;
 
+    // How far price has to come into the zone before it counts as one visit. The ONLY thing that
+    // differs between the three zone kinds - everything else about counting, weakening and closing
+    // is one implementation in ZoneInvalidation. See CryptoZoneTouchLevel.
+    [SettingCaption("Touch level", Group = GroupZoneStrength)]
+    public CryptoZoneTouchLevel TouchLevel { get; set; } = CryptoZoneTouchLevel.Edge;
+
     // How many candles back (including the current one) the rejection check may inspect.
     // 1 = only the current candle must show the test+close-back-outside pattern.
     // 2 = a previous candle may have done the wick, with the current candle as confirmation close.
     [SettingCaption("Rejection lookback", Group = GroupZoneStrength)]
     public int RejectionLookback { get; set; } = 2;
 
-    // ICT consequent encroachment: when true, a zone is disqualified for new combined-signals
-    // once price has pierced past its 50% midpoint, even if TouchCount has not yet hit MaxTouches.
-    [SettingCaption("Disqualify on mitigation (CE)", Group = GroupZoneStrength)]
-    public bool DisqualifyOnMitigation { get; set; } = false;
+    // When true, a zone closes as soon as price has been at or past its middle - regardless of how
+    // many visits it has left. The reasoning: half of what made the level hold has been taken out of
+    // it, and what remains is not worth trading a bounce off. Off by default.
+    //
+    // Was DisqualifyOnMitigation, which did something narrower: leave the zone open but do not offer
+    // it as a place to trade. The only code that did that was ZoneProximityHelper, which nothing ever
+    // called and which was deleted on 24-08-2026 - so the setting had no reader left. It is a closing
+    // rule now, in the one place where a zone's life is decided (ZoneInvalidation).
+    //
+    // Note with TouchLevel = Midpoint: every counted visit reaches the midpoint there, so switching
+    // this on is the same as setting MaxTouches to 1.
+    [SettingCaption("Close zones past the midpoint", Group = GroupZoneStrength)]
+    public bool CloseZonesPastMidpoint { get; set; } = false;
 
     // The intervals this strategy reports signals for. Avalonia renders this with IntervalView.
     [SettingCaption("Intervals", Group = GroupIntervals)]

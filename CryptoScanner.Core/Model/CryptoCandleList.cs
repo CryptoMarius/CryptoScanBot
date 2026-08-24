@@ -221,6 +221,33 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
     /// </para>
     /// <para>Returns false for an empty list; first and last are default then.</para>
     /// </summary>
+    /// <summary>
+    /// Thread-safe lookup of the lowest key only, without walking the whole tree the way
+    /// <see cref="TryGetFirstAndLastKey"/> has to for the highest one. Keys.First() stops at the
+    /// leftmost node, and the read lock this takes is the one Keys itself does not.
+    /// <para>Returns false for an empty list; first is default then.</para>
+    /// </summary>
+    public bool TryGetFirstKey(out CandleTime first)
+    {
+        bool ownLock = !_lock.IsReadLockHeld && !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterReadLock();
+        try
+        {
+            if (base.Count == 0)
+            {
+                first = default;
+                return false;
+            }
+            first = base.Keys.First();
+            return true;
+        }
+        finally
+        {
+            if (ownLock) _lock.ExitReadLock();
+        }
+    }
+
+
     public bool TryGetFirstAndLastKey(out CandleTime first, out CandleTime last)
     {
         bool ownLock = !_lock.IsReadLockHeld && !_lock.IsWriteLockHeld;

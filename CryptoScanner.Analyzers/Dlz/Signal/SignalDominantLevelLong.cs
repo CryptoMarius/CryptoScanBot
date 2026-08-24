@@ -34,20 +34,29 @@ public class SignalDominantLevelLong : SignalCreateBase
                     var zone = longOpen[index];
                     if (CandleLast.Candle.OpenTime >= zone.OpenTime) // emulator..
                     {
-                        // Close old invalid zone without notifications..
-                        if (CandleLast.Candle.High <= zone.Bottom)
+                        // Report-only, the same arrangement the Near variants and the FVG signal
+                        // class already use: the lifetime of a zone is decided by the touch and
+                        // weakening rules in ZoneInvalidation, applied on every zone-interval candle
+                        // by ZoneDlz.InvalidateRealtime and again by CheckAndMarkBrokenZones during
+                        // a recalculation.
+                        //
+                        // This class used to decide it too, and with the older, coarser rule: close
+                        // the zone outright on the first touch, and close it when the whole candle
+                        // sat below the zone. Neither touched TouchCount or ReachedMidpoint, so
+                        // MaxTouches never applied to a zone this path reached first - and it
+                        // reached 1,793 of the 4,075 zone closures of emulator run 237. The
+                        // walked-away-below case needs nothing here either: ZoneInvalidation closes
+                        // a demand zone on a body close through the floor, which is the same event
+                        // and a little earlier.
                         {
-                            zone.CloseTime = CandleLast.Candle.OpenTime;
-                            GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            //GlobalData.AddTextToLogTab($"DLZ diag {Symbol.Name} long zone BROKEN (price below): {zone.Description} {zone.Bottom}..{zone.Top}");
-                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
-                        }
-                        else
-                        {
-                            // Signal and close if the candle touched the zone..
-                            if (CandleLast.Candle.Low <= zone.Top)
+                            // Signal when the candle touched the zone..
+                            // Throttled through AlarmDate, exactly as SignalDominantLevelNearLong
+                            // throttles its proximity alarm: a zone now survives its first touch
+                            // (MaxTouches decides that), so without this it would report on every
+                            // candle of the same test.
+                            if (CandleLast.Candle.Low <= zone.Top
+                                && (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1)))
                             {
-                                zone.CloseTime = CandleLast.Candle.OpenTime;
                                 if (settings.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
                                 {
                                     //GlobalData.AddTextToLogTab($"DLZ diag {Symbol.Name} long zone TOUCHED but WEAK (no signal): {zone.Description} {zone.Bottom}..{zone.Top}");
@@ -59,9 +68,9 @@ public class SignalDominantLevelLong : SignalCreateBase
                                     zone.AlarmDate = CandleLast.Candle.OpenTime;
                                     ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top}";
                                     //GlobalData.AddTextToLogTab($"DLZ diag {Symbol.Name} long zone SIGNAL: {zone.Description} {zone.Bottom}..{zone.Top}, price low={CandleLast.Candle.Low}");
-                                    GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
+                                    GlobalData.AddTextToLogTab($"{zone.ZoneText("Touched dlz zone")}");
+                                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                                 }
-                                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                             }
 
 
@@ -83,9 +92,14 @@ public class SignalDominantLevelLong : SignalCreateBase
                         }
                     }
 
+                    // Defensive only: this class no longer closes a zone, ZoneDlz.InvalidateRealtime
+                    // moves them out of the open list itself. If one does turn up here it is moved to
+                    // the closed list rather than dropped - both charts draw the closed list too, so a
+                    // zone that is only removed vanishes from the chart instead of ending where it ended.
                     if (zone.CloseTime != null)
                     {
                         longOpen.RemoveAt(index);
+                        symbolIntervalData.Dlz.Zones.LongClosed.Add(zone);
                         GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed dlz zone")}");
                     }
                     else index++;

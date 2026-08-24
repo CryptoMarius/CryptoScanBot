@@ -844,7 +844,7 @@ public class CryptoDatabase : IDisposable
                 "Description TEXT NULL," +
                 "IsValid INTEGER not null," +
                 "TouchCount INTEGER NOT NULL DEFAULT 0," +
-                "IsMitigated INTEGER NOT NULL DEFAULT 0," +
+                "ReachedMidpoint INTEGER NOT NULL DEFAULT 0," +
                 "EmulatorRunId INTEGER NULL," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +

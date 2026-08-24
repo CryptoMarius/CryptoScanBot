@@ -126,18 +126,18 @@ public class ZoneFvg
             }
 
             // Realtime invalidation: apply the just-closed candle to all open zones so that
-            // TouchCount, IsMitigated and CloseTime stay current between full recalc cycles.
+            // TouchCount, ReachedMidpoint and CloseTime stay current between full recalc cycles.
             // Without this the live LongOpen/ShortOpen lists would keep showing zones that
             // have already been wicked or even body-broken, producing stale entry signals.
             var symbolDataIntervalForInvalidate = symbol.Data.Get(interval.IntervalPeriod);
-            int maxTouches = GlobalData.Settings.Signal.ZonesFvg.MaxTouches;
+            var rules = ZoneInvalidation.RulesFor(CryptoZoneKind.FairValueGap);
 
             InvalidateRealtime(symbolDataIntervalForInvalidate.Fvg.Zones.LongOpen,
                 symbolDataIntervalForInvalidate.Fvg.Zones.LongClosed,
-                candle, interval, maxTouches);
+                candle, interval, rules);
             InvalidateRealtime(symbolDataIntervalForInvalidate.Fvg.Zones.ShortOpen,
                 symbolDataIntervalForInvalidate.Fvg.Zones.ShortClosed,
-                candle, interval, maxTouches);
+                candle, interval, rules);
 
             // Keep CalculateZonesAsync's incremental cursor in sync with what this realtime tick
             // just covered. Without this, the periodic catch-up (triggered by DLZ's queue, often
@@ -164,7 +164,7 @@ public class ZoneFvg
     /// <paramref name="closedZones"/> and queued for DB persistence.
     /// </summary>
     private static void InvalidateRealtime(OrderedList<CryptoZone> openZones,
-        OrderedList<CryptoZone> closedZones, CryptoCandle candle, CryptoInterval interval, int maxTouches)
+        OrderedList<CryptoZone> closedZones, CryptoCandle candle, CryptoInterval interval, ZoneInvalidation.ZoneTouchRules rules)
     {
         if (openZones.Count == 0)
             return;
@@ -174,7 +174,7 @@ public class ZoneFvg
         {
             var zone = openZones[i];
             bool wasOpen = zone.CloseTime == null;
-            ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches);
+            ZoneInvalidation.ApplyToCandle(zone, candle, interval, rules);
 
             if (wasOpen && zone.CloseTime != null)
             {
@@ -182,7 +182,7 @@ public class ZoneFvg
                 closedZones.Add(zone);
                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
             }
-            // TouchCount/IsMitigated are in-memory only (Computed in the DB schema). They are
+            // TouchCount/ReachedMidpoint are in-memory only (Computed in the DB schema). They are
             // rebuilt deterministically by CalculateZonesAsync from candle history, so no DB
             // persistence is needed for them between recalc cycles.
         }
@@ -196,7 +196,7 @@ public class ZoneFvg
         if (count == 0)
             return;
 
-        int maxTouches = GlobalData.Settings.Signal.ZonesFvg.MaxTouches;
+        var rules = ZoneInvalidation.RulesFor(CryptoZoneKind.FairValueGap);
         int index = 0;
         //if (count > 10)
         //{
@@ -237,7 +237,7 @@ public class ZoneFvg
             // Loosened invalidation: only a body-close through the floor truly breaks a zone.
             // Wicks into the zone are TESTS (TouchCount++) until MaxTouches exhausts it.
             // See ZoneInvalidation for the rationale (supply/demand & ICT theory).
-            ZoneInvalidation.ApplyToCandle(zone, candle, symbolIntervalData.Interval, maxTouches);
+            ZoneInvalidation.ApplyToCandle(zone, candle, symbolIntervalData.Interval, rules);
 
             //if (zone.CloseTime != null) // remove all closed oldZones
             //{
@@ -259,7 +259,7 @@ public class ZoneFvg
         if (count == 0)
             return;
 
-        int maxTouches = GlobalData.Settings.Signal.ZonesFvg.MaxTouches;
+        var rules = ZoneInvalidation.RulesFor(CryptoZoneKind.FairValueGap);
         int index = 0;
         //if (count > 10)
         //{
@@ -299,7 +299,7 @@ public class ZoneFvg
 
             // Loosened invalidation: only a body-close through the ceiling truly breaks a zone.
             // Wicks into the zone are TESTS (TouchCount++) until MaxTouches exhausts it.
-            ZoneInvalidation.ApplyToCandle(zone, candle, symbolIntervalData.Interval, maxTouches);
+            ZoneInvalidation.ApplyToCandle(zone, candle, symbolIntervalData.Interval, rules);
 
             //if (zone.CloseTime != null) // remove all closed oldZones
             //{
@@ -412,6 +412,10 @@ public class ZoneFvg
         if (!SignalPrepare.ZoneFvgActive())
             return;
 
+        // A gap needs three consecutive candles, so a missing one does not just skip a candle here -
+        // it removes three chances to find a zone, without a word. Counted for the same reason the
+        // DLZ walks are: see ZoneCandleGaps.
+        CandleGapWalk gaps = new();
         CandleTime loop = lastProcessed + interval.Duration;
         while (loop <= maxDate)
         {
@@ -419,6 +423,7 @@ public class ZoneFvg
                 && symbolIntervalData.CandleList.TryGetValue(loop - interval.Duration, out CryptoCandle prev)
                 && symbolIntervalData.CandleList.TryGetValue(loop - (2 * interval.Duration), out CryptoCandle prev2))
             {
+                gaps.Hit();
                 var longZone = ScanForLongFvg(symbol, interval, prev2, prev, candle);
                 if (longZone != null)
                 {
@@ -435,8 +440,12 @@ public class ZoneFvg
                 }
                 InvalidateRealtimeList(zones.ShortOpen, zones.ShortClosed, candle, interval);
             }
+            else
+                gaps.Miss(loop);
             loop += interval.Duration;
         }
+        ZoneCandleGaps.Report(symbol, interval, "fvgIncremental", gaps,
+            lastProcessed + interval.Duration, maxDate);
     }
 
 
@@ -448,8 +457,8 @@ public class ZoneFvg
     private static void InvalidateRealtimeList(OrderedList<CryptoZone> openZones,
         OrderedList<CryptoZone> closedZones, CryptoCandle candle, CryptoInterval interval)
     {
-        int maxTouches = GlobalData.Settings.Signal.ZonesFvg.MaxTouches;
-        InvalidateRealtime(openZones, closedZones, candle, interval, maxTouches);
+        var rules = ZoneInvalidation.RulesFor(CryptoZoneKind.FairValueGap);
+        InvalidateRealtime(openZones, closedZones, candle, interval, rules);
     }
 
 

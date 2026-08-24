@@ -128,7 +128,7 @@ public class ZoneDlz
                     }
                     else if (zone.Kind == CryptoZoneKind.OrderBlock)
                     {
-                        // SMC zones use a flat list; TouchCount/IsMitigated are recomputed by
+                        // SMC zones use a flat list; TouchCount/ReachedMidpoint are recomputed by
                         // the next ZoneSmc.Detect (they are [Computed], not persisted).
                         symbolInterval.Smc.Zones.Add(zone);
                     }
@@ -338,47 +338,66 @@ public class ZoneDlz
         zigZag.Percentage = (double)(100 * ((zigZag.Top - zigZag.Bottom) / zigZag.Bottom));
         //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot at {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
 
-        // Borrow the wick from the neighbour if higher or lower
+        // Borrow the wick from the neighbour if higher or lower.
+        // Both neighbours are counted: a pivot carried from before the loaded window has neither of
+        // them in memory, and then this quietly keeps the width the pivot candle alone gave it. The
+        // candle BEFORE the oldest pivot inside the window is the one LoadHistoricCandles asks for
+        // on purpose - see the remark there.
+        CandleGapWalk neighbours = new();
         if (zigZag.PointType == 'L')
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval!.IntervalPeriod);
             if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle candle))
             {
+                neighbours.Hit();
                 if (candle.Low < zigZag.Bottom)
                 {
                     zigZag.Top = Math.Max(candle.Close, candle.Open);
                     zigZag.Bottom = candle.Low;
                 }
             }
+            else
+                neighbours.Miss(zigZag.Candle.OpenTime + interval.Duration);
             if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime - interval.Duration, out candle))
             {
+                neighbours.Hit();
                 if (candle.Low < zigZag.Bottom)
                 {
                     zigZag.Top = Math.Max(candle.Close, candle.Open);
                     zigZag.Bottom = candle.Low;
                 }
             }
+            else
+                neighbours.Miss(zigZag.Candle.OpenTime - interval.Duration);
         }
         else if (zigZag.PointType == 'H')
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval!.IntervalPeriod);
             if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle candle))
             {
+                neighbours.Hit();
                 if (candle.High > zigZag.Top)
                 {
                     zigZag.Top = candle.High;
                     zigZag.Bottom = Math.Min(candle.Close, candle.Open);
                 }
             }
+            else
+                neighbours.Miss(zigZag.Candle.OpenTime + interval.Duration);
             if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime - interval.Duration, out candle))
             {
+                neighbours.Hit();
                 if (candle.High > zigZag.Top)
                 {
                     zigZag.Top = candle.High;
                     zigZag.Bottom = Math.Min(candle.Close, candle.Open);
                 }
             }
+            else
+                neighbours.Miss(zigZag.Candle.OpenTime - interval.Duration);
         }
+        ZoneCandleGaps.Report(symbol, interval!, "neighbour", neighbours,
+            zigZag.Candle.OpenTime - interval!.Duration, zigZag.Candle.OpenTime + interval.Duration);
         if (zigZag.Top != top || zigZag.Bottom != bottom)
         {
             zigZag.Percentage = (double)(100 * ((zigZag.Top - zigZag.Bottom) / zigZag.Bottom));
@@ -429,6 +448,12 @@ public class ZoneDlz
                     int count = (int)interval.Duration / (int)zoomInterval.Interval.Duration;
                     await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, zoomInterval.Interval, unixStart, count);
 
+                    // The window this walks was asked for one line above and IsDataLocal checks every
+                    // key of it, so a hole here means candles.db does not have those candles either.
+                    // That is the likely place for it: below the emulator's base interval nothing is
+                    // synthesised, so 5m/3m/1m come purely from the database. A missing candle leaves
+                    // the pivot at the width the higher interval gave it - a silently wider zone.
+                    CandleGapWalk gaps = new();
                     CandleTime loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
                     while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage)
                     {
@@ -437,6 +462,7 @@ public class ZoneDlz
                         {
                             if (zoomInterval.CandleList.TryGetValue(loop, out CryptoCandle candle))
                             {
+                                gaps.Hit();
                                 if (zigZag.PointType == 'L')
                                 {
                                     decimal bodyTop = Math.Max(candle.Open, candle.Close);
@@ -466,9 +492,15 @@ public class ZoneDlz
                                     }
                                 }
                             }
+                            else
+                                gaps.Miss(loop);
                         }
                         loop += zoomInterval.Interval.Duration;
                     }
+                    // The zoom stops the moment the percentage drops below the limit, so loop is
+                    // where it really got to - reporting unixEinde would claim a wider range.
+                    ZoneCandleGaps.Report(symbol, zoomInterval.Interval, "zoom", gaps,
+                        zigZag.Candle.OpenTime, loop > unixEinde ? unixEinde : loop);
                 }
 
                 if (zigZag.Percentage <= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage)
@@ -633,10 +665,17 @@ public class ZoneDlz
         // Is it on the right of the last zigzag point?
         if (min < previousPivot.Candle.OpenTime)
             min = previousPivot.Candle.OpenTime;
+        // This looks BACK from a pivot, and the pivot can be older than the loaded window (the
+        // ZigZag list carries pivots that have aged out of it). Missing candles here mean the run-up
+        // is measured over the part that happens to be in memory, which grades a zone Weak that the
+        // full run-up would have called Strong.
+        CandleGapWalk gaps = new();
+        CandleTime gradedFrom = min;
         while (min < max)
         {
             if (symbolInterval.CandleList.TryGetValue(min, out CryptoCandle candle))
             {
+                gaps.Hit();
                 if (zigZag.PointType == 'L')
                 {
                     if (candle.High > price)
@@ -648,8 +687,11 @@ public class ZoneDlz
                         price = candle.Low;
                 }
             }
+            else
+                gaps.Miss(min);
             min += interval.Duration;
         }
+        ZoneCandleGaps.Report(symbol, interval, "gradeIntro", gaps, gradedFrom, max);
 
         double perc = (double)(100 * Math.Abs(boxLimit - price) / Math.Min(boxLimit, price));
         //zigZag.NiceIntro = $"\n\r(intro {perc:N2}%)";
@@ -703,18 +745,27 @@ public class ZoneDlz
             var indicators = trendZigZagIndicatorList.Values;
 
             // Calculate "indicators"
+            // The walk stays inside the window LoadHistoricCandles asked for, and IsDataLocal checks
+            // every key of that window before deciding not to read it - so a hole here means
+            // candles.db is short, not that this loop wandered off. Counted either way: a pivot
+            // computed over a stretch with missing candles is not the pivot the settings describe.
+            CandleGapWalk gaps = new();
             CandleTime loop = minDate;
             while (loop <= maxDate)
             {
                 if (candleList.TryGetValue(loop, out CryptoCandle candle))
                 {
+                    gaps.Hit();
                     foreach (var trendZigZagIndicator in indicators)
                     {
                         trendZigZagIndicator.Calculate(candle, true);
                     }
                 }
+                else
+                    gaps.Miss(loop);
                 loop += interval.Duration;
             }
+            ZoneCandleGaps.Report(symbol, interval, "pivots", gaps, minDate, maxDate);
 
 
             // Remember the last swing point for the automatic zone calculation
@@ -742,28 +793,123 @@ public class ZoneDlz
 
     }
 
-    internal static HashSet<CryptoZone> CheckAndMarkBrokenZones(CryptoInterval interval,
-        CryptoCandleList candleList, CryptoSymbolIntervalZones zones,
-        CandleTime? afterTime = null)
+    /// <summary>
+    /// Apply the just-closed zone-interval candle to every open DLZ zone, on EVERY interval
+    /// boundary and not only when a recalculation happens to be triggered.
+    /// <para>
+    /// This is the counterpart of what <see cref="ZoneFvg"/> got when the touch/weakening rules
+    /// were introduced and the DLZ zones never did. Without it a DLZ zone could only be
+    /// invalidated inside <see cref="CalculateZonesAsync"/>, and that only runs when price leaves
+    /// the widened trigger range - so a price sitting quietly inside a zone invalidated nothing.
+    /// What filled that hole instead was SignalDominantLevelLong/Short, which closed a zone
+    /// outright on its first touch: no TouchCount, no ReachedMidpoint, and MaxTouches never applied.
+    /// On emulator run 237 that path accounted for 1,793 of the 4,075 zone closures.
+    /// </para>
+    /// <para>
+    /// Advancing ProcessedCandleMarker afterwards is what keeps this and the incremental
+    /// broken-check from counting the same candle twice: ApplyToCandle always increments on a
+    /// wick, it does not remember which candles it has already seen. Same reasoning, and the same
+    /// null check, as ZoneFvg.ScanForNew.
+    /// </para>
+    /// </summary>
+    public static void InvalidateRealtime(CryptoSymbol symbol, CryptoInterval interval,
+        CandleTime lastCandleCloseTime)
     {
-        HashSet<CryptoZone> modified = [];
+        // Non-blocking, same rule as ZoneFvg.Detect: skip when a full recalculation holds the lock,
+        // because the OrderedLists underneath are not thread safe.
+        if (!symbol.Data.ZoneLock.Wait(0))
+            return;
+        try
+        {
+            CryptoSymbolInterval symbolInterval = symbol.Data.Get(interval.IntervalPeriod);
+            if (!symbolInterval.CandleList.TryGetValue(lastCandleCloseTime - interval.Duration,
+                out CryptoCandle candle))
+                return;
 
-        CandleTime? startTime;
+            var rules = ZoneInvalidation.RulesFor(CryptoZoneKind.DominantLevel);
+            var zones = symbolInterval.Dlz.Zones;
+            ApplyToOpenZones(zones.LongOpen, zones.LongClosed, candle, interval, rules);
+            ApplyToOpenZones(zones.ShortOpen, zones.ShortClosed, candle, interval, rules);
+
+            // Only once the first full scan has run; null means CalculateZonesAsync still owes its
+            // historical pass and must not be told it can skip this candle.
+            if (symbolInterval.Dlz.ProcessedCandleMarker != null)
+                symbolInterval.Dlz.ProcessedCandleMarker = candle.OpenTime;
+        }
+        finally
+        {
+            symbol.Data.ZoneLock.Release();
+        }
+    }
+
+
+    /// <summary>
+    /// One candle against every open zone in a list. Zones that close move to
+    /// <paramref name="closedZones"/> - never just removed: both charts draw the open AND the
+    /// closed lists out of memory, so a zone that is only dropped here disappears from the chart
+    /// at the moment it closes instead of being drawn up to its CloseTime.
+    /// </summary>
+    private static void ApplyToOpenZones(OrderedList<CryptoZone> openZones,
+        OrderedList<CryptoZone> closedZones, CryptoCandle candle, CryptoInterval interval, ZoneInvalidation.ZoneTouchRules rules)
+    {
+        if (openZones.Count == 0)
+            return;
+
+        // From the back, so a removal does not shift the items still to be visited.
+        for (int i = openZones.Count - 1; i >= 0; i--)
+        {
+            var zone = openZones[i];
+            bool wasOpen = zone.CloseTime == null;
+            ZoneInvalidation.ApplyToCandle(zone, candle, interval, rules);
+
+            if (wasOpen && zone.CloseTime != null)
+            {
+                openZones.RemoveAt(i);
+                closedZones.Add(zone);
+                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// The first candle <see cref="CheckAndMarkBrokenZones"/> will look at, worked out separately so
+    /// the caller can make sure those candles are in memory BEFORE the walk starts - the walk itself
+    /// cannot, it is synchronous and the tests call it directly. Null when there is nothing to walk.
+    /// <para>
+    /// Note what the full branch returns: the oldest OPEN zone, and an open zone never ages out
+    /// however old its pivot is. That start therefore has no relation to the candle window this pass
+    /// loaded and regularly sits before it - which is exactly the case ZoneCandleGaps exists for.
+    /// </para>
+    /// </summary>
+    internal static CandleTime? BrokenCheckStart(CryptoInterval interval,
+        CryptoSymbolIntervalZones zones, CandleTime? afterTime)
+    {
         if (afterTime != null)
         {
             // Incremental: only check candles we haven't seen yet
-            startTime = afterTime.Value + interval.Duration;
+            return afterTime.Value + interval.Duration;
         }
-        else
-        {
-            // Full historical: start from the oldest open zone
-            var oldest1 = zones.LongOpen.MinBy(z => z.OpenTime);
-            var oldest2 = zones.ShortOpen.MinBy(z => z.OpenTime);
-            startTime = null;
-            if (oldest1 != null) startTime = oldest1.OpenTime;
-            if (oldest2 != null && (startTime == null || oldest2.OpenTime < startTime))
-                startTime = oldest2.OpenTime;
-        }
+
+        // Full historical: start from the oldest open zone
+        var oldest1 = zones.LongOpen.MinBy(z => z.OpenTime);
+        var oldest2 = zones.ShortOpen.MinBy(z => z.OpenTime);
+        CandleTime? startTime = null;
+        if (oldest1 != null) startTime = oldest1.OpenTime;
+        if (oldest2 != null && (startTime == null || oldest2.OpenTime < startTime))
+            startTime = oldest2.OpenTime;
+        return startTime;
+    }
+
+
+    internal static HashSet<CryptoZone> CheckAndMarkBrokenZones(CryptoInterval interval,
+        CryptoCandleList candleList, CryptoSymbolIntervalZones zones,
+        CandleTime? afterTime = null, CryptoSymbol? symbol = null)
+    {
+        HashSet<CryptoZone> modified = [];
+
+        CandleTime? startTime = BrokenCheckStart(interval, zones, afterTime);
 
         // TryGetFirstAndLastKey rather than Count > 0 plus Keys.Last(): Keys is the inherited
         // SortedDictionary collection and enumerates outside CryptoCandleList's lock, which throws
@@ -774,14 +920,20 @@ public class ZoneDlz
             // Loosened invalidation: a wick into the zone counts as a test (TouchCount++),
             // only a body-close through the far side or reaching MaxTouches closes the zone.
             // See ZoneInvalidation for the theoretical background.
-            int maxTouches = GlobalData.Settings.Signal.ZonesDlz.MaxTouches;
+            var rules = ZoneInvalidation.RulesFor(CryptoZoneKind.DominantLevel);
 
+            // This is the walk that can leave the loaded window: the full branch starts at the oldest
+            // open zone. A key that is not there means "no candle touched this zone", which is the one
+            // wrong answer that keeps a broken zone tradeable. The caller pre-loads what it can (see
+            // ZoneCandleGaps.EnsureHistoryLoadedAsync); whatever is still missing is counted here.
+            CandleGapWalk gaps = new();
             CandleTime loop = startTime.Value;
 
             while (loop <= loopEnd)
             {
                 if (candleList.TryGetValue(loop, out CryptoCandle candle))
                 {
+                    gaps.Hit();
                     List<CryptoZone> closed = [];
                     //CheckBrokenZones(zones, candle, touched);
 
@@ -799,14 +951,14 @@ public class ZoneDlz
                                 //if (candle.Low < zone.Top)
                                 //    touched.Add(zone);
                                 int oldTouchCount = zone.TouchCount;
-                                bool oldMitigated = zone.IsMitigated;
-                                if (ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches)
+                                bool oldMitigated = zone.ReachedMidpoint;
+                                if (ZoneInvalidation.ApplyToCandle(zone, candle, interval, rules)
                                     && zone.CloseTime == candle.OpenTime + interval.Duration)
                                 {
                                     closed.Add(zone);
                                     modified.Add(zone);
                                 }
-                                else if (zone.TouchCount != oldTouchCount || zone.IsMitigated != oldMitigated)
+                                else if (zone.TouchCount != oldTouchCount || zone.ReachedMidpoint != oldMitigated)
                                 {
                                     modified.Add(zone);
                                 }
@@ -830,14 +982,14 @@ public class ZoneDlz
                                 //if (candle.High > zone.Bottom)
                                 //    touched.Add(zone);
                                 int oldTouchCount = zone.TouchCount;
-                                bool oldMitigated = zone.IsMitigated;
-                                if (ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches)
+                                bool oldMitigated = zone.ReachedMidpoint;
+                                if (ZoneInvalidation.ApplyToCandle(zone, candle, interval, rules)
                                     && zone.CloseTime == candle.OpenTime + interval.Duration)
                                 {
                                     closed.Add(zone);
                                     modified.Add(zone);
                                 }
-                                else if (zone.TouchCount != oldTouchCount || zone.IsMitigated != oldMitigated)
+                                else if (zone.TouchCount != oldTouchCount || zone.ReachedMidpoint != oldMitigated)
                                 {
                                     modified.Add(zone);
                                 }
@@ -866,8 +1018,14 @@ public class ZoneDlz
                     if (zones.LongOpen.Count + zones.ShortOpen.Count == 0)
                         break;
                 }
+                else
+                    gaps.Miss(loop);
                 loop += interval.Duration;
             }
+            // loop sits one candle past the end after a normal finish, and on the candle it stopped
+            // at after the early exit above - so this reports the range that was really walked.
+            ZoneCandleGaps.Report(symbol, interval, "broken", gaps,
+                startTime.Value, loop > loopEnd ? loopEnd : loop);
         }
 
         return modified;
@@ -902,8 +1060,12 @@ public class ZoneDlz
                 //        $"dlz zones short = {zones.ShortOpen.Count} ");
 
                 // Reuse the shared cached ZigZag indicator across calls (one per queue-drain) instead of
-                // rebuilding it from the full [minDate, maxDate] window every time — same hub instance
-                // as TrendCalculator.CalculateBothAsync uses.
+                // rebuilding it from the full [minDate, maxDate] window every time.
+                // The list is shared with TrendCalculator.CalculateBothAsync, the INSTANCE normally is
+                // not: the key is (TrendType, UseHighLow), and on the default settings the DLZ runs with
+                // UseHighLow = false where the trend uses true. So they sit side by side in the same
+                // dictionary and are fed separately. (An earlier comment here claimed one shared
+                // instance, which sent readers looking for a coupling that is not there.)
                 var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
                 var dlzCacheKey = (trend.TrendType, trend.UseHighLow);
                 TrendZigZagIndicatorList trendZigZagIndicatorList = symbolIntervalData.ZigZagIndicators;
@@ -918,6 +1080,15 @@ public class ZoneDlz
                 else if (trendZigZagIndicator.LastFedCandleTime!.Value < maxDate)
                 {
                     CandleTime feedFrom = trendZigZagIndicator.LastFedCandleTime.Value + interval.Duration;
+                    // The catch-up feed starts where this indicator was last fed, and that has no
+                    // relation to the candle window this pass loaded: a symbol that was not
+                    // recalculated for weeks asks to be fed from weeks ago, while only the last
+                    // CandleTools.CandleCountFetch candles are in memory. Everything older would be
+                    // stepped over, and a ZigZag fed a history with holes in it produces different
+                    // pivots for the rest of the run - measured on emulator run 237 (24-08-2026):
+                    // LTCUSDT asked for 2,789 candles and 2,162 of them were not there.
+                    await ZoneCandleGaps.EnsureHistoryLoadedAsync(loadedCandlesInMemory, symbol,
+                        interval, feedFrom, "pivots");
                     await CalculatePivots(symbol, interval, feedFrom, maxDate, trendZigZagIndicatorList);
                     trendZigZagIndicator.LastFedCandleTime = maxDate;
                 }
@@ -1021,8 +1192,12 @@ public class ZoneDlz
 
                     // Incremental broken-zone check: only scan candles after the cursor
                     // to avoid double-counting touches (TouchCount is not idempotent)
+                    CandleTime? brokenFrom = BrokenCheckStart(interval, symbolIntervalData.Dlz.Zones, cursor);
+                    if (brokenFrom != null)
+                        await ZoneCandleGaps.EnsureHistoryLoadedAsync(loadedCandlesInMemory, symbol,
+                            interval, brokenFrom.Value, "broken");
                     var modifiedZones = CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList,
-                        symbolIntervalData.Dlz.Zones, afterTime: cursor);
+                        symbolIntervalData.Dlz.Zones, afterTime: cursor, symbol: symbol);
                     profBroken += Stopwatch.GetTimestamp() - profMark;
                     profMark = Stopwatch.GetTimestamp();
                     foreach (var zone in modifiedZones)
@@ -1038,10 +1213,18 @@ public class ZoneDlz
                     // says what came out of it. A run of these ending on newZones=0, broken=0 for the
                     // same symbol is the waste the trigger split was meant to remove.
                     // SWITCH THIS BACK OFF after the measurement.
-                    GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} incremental: " +
-                        $"pivots={trendZigZagIndicator.ZigZagList.Count}, newZones={newZones.Count} (weak={weakNew}), " +
-                        $"broken={brokenCount}, open long {openLongBefore}→{symbolIntervalData.Dlz.Zones.LongOpen.Count}, " +
-                        $"open short {openShortBefore}→{symbolIntervalData.Dlz.Zones.ShortOpen.Count}");
+                    //
+                    // Switched off again on 23-08-2026. What it measured, over the 35,169 incremental
+                    // recalculations of run 230: 43.7 pivots in the list, 12.0 zones re-derived per
+                    // pass, 27.5% of passes changed the open-zone count and 22.4% broke one, and only
+                    // 0.14% produced nothing at all. The waste is not the trigger, it is that a pass
+                    // re-derives twelve verdicts where one or two moved. The counters in
+                    // PipelineProfiler (Dlz judge) now answer the same question without a log line
+                    // per recalculation.
+                    //GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} incremental: " +
+                    //    $"pivots={trendZigZagIndicator.ZigZagList.Count}, newZones={newZones.Count} (weak={weakNew}), " +
+                    //    $"broken={brokenCount}, open long {openLongBefore}→{symbolIntervalData.Dlz.Zones.LongOpen.Count}, " +
+                    //    $"open short {openShortBefore}→{symbolIntervalData.Dlz.Zones.ShortOpen.Count}");
                 }
                 else
                 {
@@ -1105,7 +1288,15 @@ public class ZoneDlz
                     // Check broken zones before DB comparison so CloseTime is set correctly on zone objects
                     profMerge += Stopwatch.GetTimestamp() - profMark;
                     profMark = Stopwatch.GetTimestamp();
-                    CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList, tempZones);
+                    // The full branch starts at the oldest OPEN zone, which never ages out of the
+                    // window - so this is the walk that regularly begins before the candles this pass
+                    // loaded. Ask for that stretch first; without it the walk reads an interruption as
+                    // "no candle touched this zone" and a broken zone stays tradeable.
+                    CandleTime? fullBrokenFrom = BrokenCheckStart(interval, tempZones, null);
+                    if (fullBrokenFrom != null)
+                        await ZoneCandleGaps.EnsureHistoryLoadedAsync(loadedCandlesInMemory, symbol,
+                            interval, fullBrokenFrom.Value, "broken");
+                    CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList, tempZones, symbol: symbol);
                     profBroken += Stopwatch.GetTimestamp() - profMark;
                     profMark = Stopwatch.GetTimestamp();
 

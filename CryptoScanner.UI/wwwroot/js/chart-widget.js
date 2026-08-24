@@ -40,6 +40,26 @@ function createRectanglePrimitive() {
                         if (visible) {
                             if (time < visible.from) return 0;
                             if (time > visible.to) return widthPx;
+
+                            // A KNOWN time, inside the visible window, that timeToCoordinate cannot
+                            // map: lightweight-charts only maps timestamps that sit on a bar of the
+                            // displayed series, so a zone that closed on a 1h boundary has no
+                            // coordinate on a 4h chart. Falling through to `fallback` here painted
+                            // such a zone all the way to the RIGHT EDGE - the same picture as a zone
+                            // that never broke at all. That is why broken zones looked unbroken in
+                            // this chart while the Avalonia one, which puts CloseTime straight onto a
+                            // continuous axis, showed them ending where they ended.
+                            // Interpolating over the visible range puts the edge back where it
+                            // belongs, to within one bar.
+                            var fromX = null, toX = null;
+                            try {
+                                fromX = timeScale.timeToCoordinate(visible.from);
+                                toX = timeScale.timeToCoordinate(visible.to);
+                            } catch (e) { fromX = null; toX = null; }
+                            if (fromX !== null && toX !== null && visible.to > visible.from) {
+                                var part = (time - visible.from) / (visible.to - visible.from);
+                                return fromX + (toX - fromX) * part;
+                            }
                         }
                         return fallback;
                     };
@@ -289,6 +309,19 @@ function createSegmentPrimitive() {
                         if (visible) {
                             if (time < visible.from) return 0;
                             if (time > visible.to) return widthPx;
+                            // Same trap as in the rectangle overlay above: a known time inside the
+                            // visible window that does not sit on a bar of the displayed series has
+                            // no coordinate, and falling through to `fallback` stretched the segment
+                            // to the chart edge instead of ending it where it ends.
+                            var fromX = null, toX = null;
+                            try {
+                                fromX = timeScale.timeToCoordinate(visible.from);
+                                toX = timeScale.timeToCoordinate(visible.to);
+                            } catch (e) { fromX = null; toX = null; }
+                            if (fromX !== null && toX !== null && visible.to > visible.from) {
+                                var part = (time - visible.from) / (visible.to - visible.from);
+                                return fromX + (toX - fromX) * part;
+                            }
                         }
                         return fallback;
                     };

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -26,6 +26,16 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
+            <!-- How far price has to come in before it counts as a visit; the one knob that differs
+                 per zone kind - see CryptoZoneTouchLevel. -->
+            <Grid ColumnDefinitions="Auto,*,110" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Touch level:" VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <ComboBox Grid.Column="2" ItemsSource="{Binding TouchLevels}"
+                          SelectedItem="{Binding TouchLevel, Mode=TwoWay}"
+                          Height="26" FontSize="12" HorizontalAlignment="Stretch"/>
+            </Grid>
+
             <!-- Rejection lookback (candles) -->
             <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto">
                 <TextBlock Grid.Column="0" Text="Rejection lookback:" VerticalAlignment="Center"
@@ -36,9 +46,9 @@
 
             <!-- Disqualify zones after they crossed the 50% midpoint (ICT CE) -->
             <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="Disqualify on mitigation (CE):" VerticalAlignment="Center"
+                <TextBlock Grid.Column="0" Text="Close zones past the midpoint:" VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>
-                <CheckBox Grid.Column="2" IsChecked="{Binding DisqualifyOnMitigation, Mode=TwoWay}"
+                <CheckBox Grid.Column="2" IsChecked="{Binding CloseZonesPastMidpoint, Mode=TwoWay}"
                           VerticalAlignment="Center"/>
             </Grid>
 

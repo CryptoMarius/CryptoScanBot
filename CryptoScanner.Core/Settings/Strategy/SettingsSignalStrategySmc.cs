@@ -1,9 +1,17 @@
+﻿using CryptoScanner.Core.Enums;
+
 namespace CryptoScanner.Core.Settings.Strategy;
 
 /// <summary>
-/// Settings for the SMC (Smart Money Concepts) supply/demand strategy. Persisted in
-/// appsettings.json under Signal.ZonesSmc — there is no graphical settings UI in this app,
-/// all configuration lives in that JSON file (same as DLZ / FVG).
+/// Settings for the SMC (Smart Money Concepts) supply/demand strategy. Persisted under
+/// Signal.ZonesSmc in CryptoScanBot-settings.json, in the data folder of the instance
+/// (GlobalData.AppDataFolder) — not in an appsettings.json, and there is one such file per scanner
+/// instance and per emulator session.
+///
+/// Both user interfaces can edit them, same as DLZ and FVG: Avalonia through the hand-built
+/// SmcConfigView tab, Photino by building the screen out of the SettingCaption attributes below
+/// (PluginSettingsEditState), which is why a new setting shows up there on its own and has to be
+/// added to the Avalonia view by hand.
 ///
 /// Two groups of knobs:
 ///   • Detector tuning — how a base + expansion is recognised (read by ZoneSmc.Detect)
@@ -72,10 +80,35 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
 
     // ---- Signal tuning (entry) ----
 
-    // Maximum number of CE (50%) touches a zone may already have and still produce a signal.
-    // 0 = only fresh (unmitigated) zones. 1 = also allow the first retest, etc.
-    [SettingCaption("Max touches (0=only fresh)", Group = GroupSignal)]
-    public int MaxTouches { get; set; } = 1;
+    // Maximum number of visits before the zone is used up and closed - the same meaning as for the
+    // DLZ and FVG zones since 24-08-2026, when the three grew one shared implementation
+    // (ZoneInvalidation). It used to mean something narrower here: how many touches a zone could
+    // ALREADY have and still produce a signal, tested with > instead of >=, and it never closed the
+    // zone. The default moved from 1 to 2 because that is the value that keeps the old behaviour:
+    // old "allow 0 and 1 touches" is new "used up at 2".
+    // 0 disables touch-based closure entirely; a zone then only closes on a break.
+    [SettingCaption("Max touches (0=off)", Group = GroupSignal)]
+    public int MaxTouches { get; set; } = 2;
+
+    // How far price has to come into the zone before it counts as one visit. The ONLY thing that
+    // differs between the three zone kinds - everything else about counting, weakening and closing
+    // is one implementation in ZoneInvalidation. See CryptoZoneTouchLevel.
+    [SettingCaption("Touch level", Group = GroupSignal)]
+    public CryptoZoneTouchLevel TouchLevel { get; set; } = CryptoZoneTouchLevel.Midpoint;
+
+    // When true, a zone closes as soon as price has been at or past its middle - regardless of how
+    // many visits it has left. The reasoning: half of what made the level hold has been taken out of
+    // it, and what remains is not worth trading a bounce off. Off by default.
+    //
+    // Was DisqualifyOnMitigation, which did something narrower: leave the zone open but do not offer
+    // it as a place to trade. The only code that did that was ZoneProximityHelper, which nothing ever
+    // called and which was deleted on 24-08-2026 - so the setting had no reader left. It is a closing
+    // rule now, in the one place where a zone's life is decided (ZoneInvalidation).
+    //
+    // Note with TouchLevel = Midpoint: every counted visit reaches the midpoint there, so switching
+    // this on is the same as setting MaxTouches to 1.
+    [SettingCaption("Close zones past the midpoint", Group = GroupSignal)]
+    public bool CloseZonesPastMidpoint { get; set; } = false;
 
     // How many candles back (including the current one) the smc.rejection variant may look
     // for the "tested the zone" wick. 1 = the rejection wick + close-back-outside must happen

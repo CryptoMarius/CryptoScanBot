@@ -1,5 +1,6 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Smc.Config;
@@ -37,6 +38,15 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _onlyStrong = true;
 
+    /// <summary>The values the touch level ComboBox offers; see CryptoZoneTouchLevel.</summary>
+    public static CryptoZoneTouchLevel[] TouchLevels { get; } = Enum.GetValues<CryptoZoneTouchLevel>();
+
+    [ObservableProperty]
+    private bool _closeZonesPastMidpoint = false;
+
+    [ObservableProperty]
+    private CryptoZoneTouchLevel _touchLevel = CryptoZoneTouchLevel.Midpoint;
+
     [ObservableProperty]
     private int _maxTouches = 0;
 
@@ -57,6 +67,8 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
 
         OnlyStrong = settings.OnlyStrong;
         MaxTouches = settings.MaxTouches;
+        TouchLevel = settings.TouchLevel;
+        CloseZonesPastMidpoint = settings.CloseZonesPastMidpoint;
         RejectionLookback = settings.RejectionLookback;
     }
 
@@ -73,6 +85,8 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
 
         settings.OnlyStrong = OnlyStrong;
         settings.MaxTouches = MaxTouches;
+        settings.TouchLevel = TouchLevel;
+        settings.CloseZonesPastMidpoint = CloseZonesPastMidpoint;
         settings.RejectionLookback = RejectionLookback;
     }
 }

@@ -482,21 +482,25 @@ public class ZoneDlzTests : TestBase
         CryptoSymbolIntervalZones zones = new();
         zones.Add(zone);
 
-        // Two consecutive wick touches exhaust the zone
+        // Two VISITS exhaust the zone - with a candle in between on which price left it again.
+        // Two consecutive candles inside the zone (what this test used to do) are one visit since
+        // 24-08-2026: the counting moved from per candle to per visit, so a test that lasts several
+        // candles no longer burns several touches. See ZoneInvalidationTests.
         CryptoCandleList candles = [];
-        for (uint i = 1; i <= 2; i++)
-        {
-            CandleTime time = zone.OpenTime + i * interval.Duration;
-            candles.TryAdd(time, new CryptoCandle
+        void Add(uint i, decimal low, decimal high) => candles.TryAdd(zone.OpenTime + i * interval.Duration,
+            new CryptoCandle
             {
-                OpenTime = time,
+                OpenTime = zone.OpenTime + i * interval.Duration,
                 Open = 96m,
-                High = 98m,
-                Low = 93m,
+                High = high,
+                Low = low,
                 Close = 97m,
                 Volume = 1000m,
             });
-        }
+
+        Add(1, 93m, 98m);    // visit 1: wick into the zone
+        Add(2, 96m, 99m);    // left it again (low above the top of 95)
+        Add(3, 93m, 98m);    // visit 2: exhausted
 
         ZoneDlz.CheckAndMarkBrokenZones(interval, candles, zones);
 
@@ -575,7 +579,7 @@ public class ZoneDlzTests : TestBase
         ZoneDlz.CheckAndMarkBrokenZones(interval, candles, zones);
 
         Assert.AreEqual(1, zones.LongOpen.Count, "Zone should remain open");
-        Assert.IsTrue(zone.IsMitigated, "Zone should be marked as mitigated (wick past midpoint)");
+        Assert.IsTrue(zone.ReachedMidpoint, "Zone should be marked as mitigated (wick past midpoint)");
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -604,7 +608,7 @@ public class ZoneDlzTests : TestBase
             Volume = 1000m,
         };
 
-        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches: 0);
+        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, new(0, CryptoZoneTouchLevel.Edge, false));
 
         Assert.IsFalse(broken, "Close=91 > Bottom=90 -> not broken");
         Assert.AreEqual(1, zone.TouchCount, "Wick into zone counts as a touch");
@@ -632,7 +636,7 @@ public class ZoneDlzTests : TestBase
             Volume = 1000m,
         };
 
-        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches: 0);
+        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, new(0, CryptoZoneTouchLevel.Edge, false));
 
         Assert.IsTrue(broken, "Close=89 < Bottom=90 -> broken");
         Assert.IsNotNull(zone.CloseTime);
@@ -660,7 +664,7 @@ public class ZoneDlzTests : TestBase
             Volume = 1000m,
         };
 
-        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches: 0);
+        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, new(0, CryptoZoneTouchLevel.Edge, false));
 
         Assert.IsTrue(broken, "Close=111 > Top=110 -> broken");
         Assert.IsNotNull(zone.CloseTime);

@@ -9,12 +9,14 @@ public class ZoneBroken
 
     private static void CalculateBrokenZones(CryptoSymbolInterval symbolInterval,
         ref CandleTime key, CandleTime checkUpTo, long delay,
-        List<CryptoZone> zonesLong, List<CryptoZone> zonesShort)
+        List<CryptoZone> zonesLong, List<CryptoZone> zonesShort,
+        ref CandleGapWalk gaps)
     {
         while (key <= checkUpTo)
         {
             if (symbolInterval.CandleList.TryGetValue(key, out CryptoCandle candle))
             {
+                gaps.Hit();
                 // Note: A candle could break multiple long or short boxes, that might be an unforseen problem..
 
                 foreach (var zone in zonesLong)
@@ -38,6 +40,8 @@ public class ZoneBroken
                     }
                 }
             }
+            else
+                gaps.Miss(key);
             key += symbolInterval.Interval.Duration;
         }
     }
@@ -69,10 +73,22 @@ public class ZoneBroken
 
             // Kind of brute force (on 1h candles so its not that bad)..
             int last = zones.Count - 1;
+            // Sort BEFORE the cursor is taken. zones was filled from LongOpen/ShortOpen, and those are
+            // OrderedLists on PRICE - descending by Top for long, ascending by Bottom for short (see
+            // CryptoSymbolIntervalZones). So zones.First() is the zone with the most extreme price, at
+            // an arbitrary moment in time. Taking the candle cursor from it (what happened here until
+            // 24-08-2026) started the walk at that arbitrary moment, and every zone older than it never
+            // had a single candle checked against it - they could not break, whatever price did.
+            zones.Sort((zoneA, zoneB) => zoneA.OpenTime.CompareTo(zoneB.OpenTime));
             CandleTime key = zones.First().OpenTime;
             key = IntervalTools.StartOfIntervalCandle(key, interval.Duration);
+            // Startup path: this walks from the oldest zone in the database up to now, which reaches
+            // far outside any window the zone engine loaded. A key that is not in memory is read as
+            // "no candle touched this zone", so it is counted and reported rather than skipped in
+            // silence - see ZoneCandleGaps.
+            CandleGapWalk gaps = new();
+            CandleTime gapsFrom = key;
 
-            zones.Sort((zoneA, zoneB) => zoneA.OpenTime.CompareTo(zoneB.OpenTime));
             for (int i = 0; i <= last; i++)
             {
                 // Might have a problem with equal times?
@@ -91,9 +107,10 @@ public class ZoneBroken
                 else
                     checkUpTo = maxTime;
 
-                CalculateBrokenZones(symbolInterval, ref key, checkUpTo, delay, zonesLong, zonesShort);
+                CalculateBrokenZones(symbolInterval, ref key, checkUpTo, delay, zonesLong, zonesShort, ref gaps);
             }
-            CalculateBrokenZones(symbolInterval, ref key, maxTime, delay, zonesLong, zonesShort);
+            CalculateBrokenZones(symbolInterval, ref key, maxTime, delay, zonesLong, zonesShort, ref gaps);
+            ZoneCandleGaps.Report(symbol, interval, "brokenStartup", gaps, gapsFrom, maxTime);
         }
     }
 

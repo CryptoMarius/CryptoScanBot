@@ -51,6 +51,12 @@ public class Api : ExchangeBase
         // default of 10 per bundle these 54 symbols became 6 socket clients, which together with the
         // 14 of the Futures scanner on this machine was 20 connections on an allowance of 10. At 30
         // they become 2, and the two scanners together sit at 7. See the fuller note in Futures/Api.cs.
+        //
+        // Correction, measured 24-08-2026 on the Futures side: bundles are socket clients, and a
+        // client opens another connection for every SocketSubscriptionsCombineTarget subscriptions.
+        // With that target on the library default of ten, these 54 symbols kept costing 6 connections
+        // however few bundles they were packed into. The target is set to thirty in the socket options
+        // below, which is what actually turns them into 2. Same reasoning as Futures/Api.cs.
         ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 300, false, 1,
             subscriptionsPerBundle: 30,
             klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 21_000, pauseSymbol: "UBTCUSDC",
@@ -83,6 +89,10 @@ public class Api : ExchangeBase
             // whether or not there is any trading. SubscriptionManager.MaximumTickerInactivity is the outer
             // net for a socket that stays up but stops delivering.
             options.SocketNoDataTimeout = TimeSpan.Zero;
+            // Kept equal to SubscriptionsPerBundle so a bundle really is one websocket connection;
+            // without it the library falls back to ten per connection and the bundle setting above
+            // buys nothing. See the fuller note in Futures/Api.cs.
+            options.SocketSubscriptionsCombineTarget = 30;
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new HyperLiquidCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });

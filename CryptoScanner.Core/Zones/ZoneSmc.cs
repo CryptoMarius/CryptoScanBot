@@ -1,14 +1,14 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Zones;
 
 /// <summary>
-/// SMC (Smart Money Concepts) supply/demand detector — base + expansion model. Intended to be
-/// visualised in the chart window and finetuned later. NOT yet wired into the periodic
-/// zone-calculation pipeline; the chart window calls <see cref="Detect"/> directly when the
-/// user toggles the "SMC zones" option.
+/// SMC (Smart Money Concepts) supply/demand detector — base + expansion model.
+/// <see cref="Detect"/> runs on every candle boundary of the configured intervals, from
+/// SignalPrepare, and the chart window calls it directly as well when the user toggles the
+/// "SMC zones" option.
 ///
 /// Anatomy modelled (classic supply/demand: RBR / DBR / RBD / DBD):
 ///   1. BASE      — a short cluster of small "consolidation" candles (range below average).
@@ -25,13 +25,21 @@ namespace CryptoScanner.Core.Zones;
 /// The zone price band is the full base range [min low, max high of the base candles]; OpenTime
 /// is the first base candle. (A tighter proximal/distal body-based band is a later refinement.)
 ///
+/// A zone's life after creation is NOT decided here. Counting visits, marking that price reached the
+/// midpoint and closing the zone on a break or once it is used up all live in
+/// <see cref="ZoneInvalidation"/> — one implementation for the order blocks, the DLZ and the FVG
+/// zones since 24-08-2026. What used to be different here, that a visit only counts from the 50%
+/// midpoint, is the TouchLevel setting.
+///
 /// What's INTENTIONALLY still missing (to add later):
-///   - Mitigation tracking (CE 50% touch) and TouchCount — we only do a hard break invalidation
 ///   - Liquidity sweep filter (only zones that swept BSL/SSL first)
 ///   - Premium/Discount tagging using a Fib midpoint of the dominant leg
 ///   - BOS/CHoCH structure-event linkage
-///   - DB persistence — these zones live in <see cref="CryptoSymbolIntervalSmc.Zones"/> only
-///   - Per-zone realtime invalidation through <see cref="ZoneInvalidation"/>
+///   - A tighter proximal/distal body-based band instead of the full base range
+///
+/// What this list used to claim and no longer should: mitigation and TouchCount (both implemented,
+/// through ZoneInvalidation), DB persistence (the diff in <see cref="Detect"/> queues INSERT,
+/// UPDATE and DELETE the same way the DLZ zones do) and realtime invalidation (see above).
 /// </summary>
 public static class ZoneSmc
 {
@@ -239,8 +247,8 @@ public static class ZoneSmc
     /// New zones are appended straight to the live <see cref="CryptoSymbolIntervalSmc.Zones"/> list and
     /// queued for DB insert immediately (no full diff needed — see ZoneThreadCalculate's load-once
     /// guard, the in-memory list is already authoritative). Mitigation/touch/break bookkeeping for
-    /// existing open zones continues from each zone's own <see cref="CryptoZone.InsideExcursion"/> /
-    /// <see cref="CryptoZone.MitigationStartTime"/> state instead of replaying their whole history.
+    /// existing open zones continues from each zone's own <see cref="CryptoZone.LastInsideCandle"/> /
+    /// <see cref="CryptoZone.TouchCountingFrom"/> state instead of replaying their whole history.
     /// </summary>
     private static void DetectIncremental(CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval,
         int averageWindow, decimal baseMaxRangeFactor, decimal expansionMinRangeFactor, decimal expansionBodyFraction,
@@ -332,7 +340,7 @@ public static class ZoneSmc
 
             CryptoZone zone = BuildZone(symbol, interval, window[baseStart].OpenTime, top, bottom,
                 side, strength, interval.Name);
-            zone.MitigationStartTime = impulse.OpenTime;
+            zone.TouchCountingFrom = impulse.OpenTime;
             createdZones.Add(zone);
         }
 
@@ -347,16 +355,18 @@ public static class ZoneSmc
         // entirely (this is also why the list doesn't need splitting into open/closed sub-lists the
         // way DLZ/FVG do: zone count here is capped by maxBlocksPerInterval, so a linear scan is cheap).
         List<CryptoCandle> newCandles = window.GetRange(firstNewIndex, window.Count - firstNewIndex);
+        // Read once, not per candle: this loop runs over every zone times every new candle.
+        var rules = ZoneInvalidation.RulesFor(CryptoZoneKind.OrderBlock);
         foreach (var zone in symbolInterval.Smc.Zones)
         {
-            if (zone.CloseTime != null || zone.MitigationStartTime == null)
+            if (zone.CloseTime != null || zone.TouchCountingFrom == null)
                 continue;
 
             foreach (var c in newCandles)
             {
-                if (c.OpenTime.Minutes <= zone.MitigationStartTime.Value.Minutes)
+                if (c.OpenTime.Minutes <= zone.TouchCountingFrom.Value.Minutes)
                     continue;
-                if (ApplyMitigationStep(zone, c))
+                if (ApplyMitigationStep(zone, c, rules))
                 {
                     // Broke this tick — the CloseTime change must reach the DB.
                     GlobalData.ThreadSaveObjects!.AddToQueue(zone);
@@ -461,7 +471,7 @@ public static class ZoneSmc
     /// zones into memory:
     ///   1. After a fresh deploy (no SMC rows in the DB yet) the in-memory list is empty
     ///      for every symbol — this populates the DB for the first time.
-    ///   2. <see cref="CryptoZone.TouchCount"/> and <see cref="CryptoZone.IsMitigated"/> are
+    ///   2. <see cref="CryptoZone.TouchCount"/> and <see cref="CryptoZone.ReachedMidpoint"/> are
     ///      <c>[Computed]</c> — they are NOT persisted, so they would all read as 0/false
     ///      after a restart until the next interval boundary runs Detect. This refreshes
     ///      them immediately.
@@ -559,7 +569,7 @@ public static class ZoneSmc
     ///                   per excursion: price must first LEAVE the zone again (back past the
     ///                   proximal edge) before a return can count as the next touch. This is
     ///                   the supply/demand "freshness" gauge: 0 = fresh, 1 = tested, 2+ = used.
-    ///   • IsMitigated — true as soon as TouchCount >= 1 (price has reached CE at least once).
+    ///   • ReachedMidpoint — true as soon as TouchCount >= 1 (price has reached CE at least once).
     ///   • CloseTime   — set when price BREAKS the zone: a close beyond the distal edge
     ///                   (below the bottom for a demand zone, above the top for a supply zone).
     ///                   Counting stops at the break — a broken zone is dead.
@@ -572,22 +582,24 @@ public static class ZoneSmc
     /// </summary>
     private static void ApplyMitigationAndInvalidation(List<CryptoZone> zones, List<CandleTime> impulseTimes, List<CryptoCandle> candles)
     {
+        // Read once, not per candle: this loop runs over every zone times every candle.
+        var rules = ZoneInvalidation.RulesFor(CryptoZoneKind.OrderBlock);
         for (int zi = 0; zi < zones.Count; zi++)
         {
             var zone = zones[zi];
             // Start counting AFTER the impulse candle. Stored on the zone (not just a local var) so
             // DetectIncremental can resume this same zone's bookkeeping on a later call without
             // replaying candles it already accounted for.
-            zone.MitigationStartTime = impulseTimes[zi];
+            zone.TouchCountingFrom = impulseTimes[zi];
 
             // candles is in OpenTime ascending order (CandleList is a SortedList).
             for (int k = 0; k < candles.Count; k++)
             {
                 CryptoCandle c = candles[k];
-                if (c.OpenTime.Minutes <= zone.MitigationStartTime.Value.Minutes)
+                if (c.OpenTime.Minutes <= zone.TouchCountingFrom.Value.Minutes)
                     continue;
 
-                if (ApplyMitigationStep(zone, c))
+                if (ApplyMitigationStep(zone, c, rules))
                     break; // broken — dead, stop feeding it candles
             }
         }
@@ -595,63 +607,21 @@ public static class ZoneSmc
 
 
     /// <summary>
-    /// Apply a single candle to a single zone's CE mitigation / touch-count / break bookkeeping.
-    /// Shared by <see cref="ApplyMitigationAndInvalidation"/> (the full historical scan, looped over
-    /// every candle once) and <see cref="DetectIncremental"/> (looped over only the newly-arrived
-    /// candles, continuing from <see cref="CryptoZone.InsideExcursion"/> instead of restarting).
-    /// Returns true once the zone has just been broken (CloseTime set) so the caller can stop.
+    /// One candle against one order block. Since 24-08-2026 this is the shared rule in
+    /// <see cref="ZoneInvalidation"/> and no longer a second implementation: the three zone kinds
+    /// count visits, mark the midpoint and break on a body close through the far side in exactly the
+    /// same way, and the only thing that was ever really different here - a visit counts from the
+    /// 50% midpoint rather than from the edge - is now the TouchLevel setting.
+    /// <para>
+    /// One behaviour DOES change for order blocks: they are now used up after MaxTouches visits, the
+    /// way the other two already were. Until now they only ever closed on a break, and MaxTouches was
+    /// read at the signal side alone.
+    /// </para>
+    /// Returns true once the zone is closed, so the caller can stop feeding it candles.
     /// </summary>
-    private static bool ApplyMitigationStep(CryptoZone zone, CryptoCandle c)
+    private static bool ApplyMitigationStep(CryptoZone zone, CryptoCandle c,
+        ZoneInvalidation.ZoneTouchRules rules)
     {
-        decimal ce = (zone.Top + zone.Bottom) / 2m; // 50% midpoint (Consequent Encroachment)
-
-        if (zone.Side == CryptoTradeSide.Short)
-        {
-            // Supply zone: price approaches from BELOW (proximal = Bottom, distal = Top).
-            // Break first — a close above the top kills the zone.
-            if (c.Close > zone.Top)
-            {
-                zone.CloseTime = c.OpenTime;
-                return true;
-            }
-
-            // CE touch: a wick reaching up to the 50% midpoint.
-            if (!zone.InsideExcursion && c.High >= ce)
-            {
-                zone.TouchCount++;
-                zone.IsMitigated = true;
-                zone.InsideExcursion = true;
-            }
-            // Excursion ends once price drops back below the proximal edge (left the zone).
-            else if (zone.InsideExcursion && c.High < zone.Bottom)
-            {
-                zone.InsideExcursion = false;
-            }
-        }
-        else
-        {
-            // Demand zone: price approaches from ABOVE (proximal = Top, distal = Bottom).
-            // Break first — a close below the bottom kills the zone.
-            if (c.Close < zone.Bottom)
-            {
-                zone.CloseTime = c.OpenTime;
-                return true;
-            }
-
-            // CE touch: a wick reaching down to the 50% midpoint.
-            if (!zone.InsideExcursion && c.Low <= ce)
-            {
-                zone.TouchCount++;
-                zone.IsMitigated = true;
-                zone.InsideExcursion = true;
-            }
-            // Excursion ends once price rises back above the proximal edge (left the zone).
-            else if (zone.InsideExcursion && c.Low > zone.Top)
-            {
-                zone.InsideExcursion = false;
-            }
-        }
-
-        return false;
+        return ZoneInvalidation.ApplyToCandle(zone, c, zone.Interval, rules);
     }
 }

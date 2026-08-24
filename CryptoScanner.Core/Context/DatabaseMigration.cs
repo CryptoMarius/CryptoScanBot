@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 85;
+    public readonly static int CurrentDatabaseVersion = 86;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1767,6 +1767,37 @@ public class DatabaseMigration
                 database.Connection.Execute("alter table Position rename column TpGridAnchorPrice to TpGridBreakEvenPrice", transaction);
             else
                 database.Connection.Execute("alter table Position add column TpGridBreakEvenPrice TEXT null", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // 24-08-2026 Zone.IsMitigated renamed to Zone.ReachedMidpoint. "Mitigated" is a term from the
+        // order-block school - the story that the unfilled orders which made this level are getting
+        // filled as price comes back, so there is less left to push with. The column does not store
+        // that story, it stores one fact: price has been at or past the middle of the zone. The name
+        // said nothing about what it measures and could not be checked against a chart; this one can.
+        // Renaming rather than adding a second column, for the same reason as version 85.
+        if (CurrentVersion > version.Version && version.Version == 85)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // Same three cases as version 85: the step that added IsMitigated swallows its own
+            // failure with an empty catch, so there are databases at this version that never got it.
+            List<string> columns = [.. database.Connection.Query<string>(
+                "select name from pragma_table_info('Zone')", transaction: transaction)];
+
+            if (columns.Contains("ReachedMidpoint"))
+            {
+                // Already there - a database created after the rename, nothing to do.
+            }
+            else if (columns.Contains("IsMitigated"))
+                database.Connection.Execute("alter table Zone rename column IsMitigated to ReachedMidpoint", transaction);
+            else
+                database.Connection.Execute("alter table Zone add ReachedMidpoint INTEGER NOT NULL DEFAULT 0", transaction);
 
             // update version
             version.Version += 1;

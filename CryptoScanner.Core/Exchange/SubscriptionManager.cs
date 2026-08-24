@@ -27,6 +27,11 @@ public enum CryptoTickerType
 /// A bundle is not the websocket connection itself - the exchange library owns those and decides
 /// how many subscriptions share one. In practice they share a single connection per bundle, which
 /// is why losing a connection marks every subscription in that bundle at the same time.
+///
+/// Correction, measured 24-08-2026: only when the exchange sets SocketSubscriptionsCombineTarget to
+/// the same number as SubscriptionsPerBundle. Left on the library default a client spreads its
+/// subscriptions over connections of ten, so a bundle of thirty is three connections and a drop
+/// marks ten subscriptions, not thirty. See the note above ExchangeOptions.SubscriptionsPerBundle.
 /// </summary>
 public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscriptionType, CryptoTickerType tickerType)
 {

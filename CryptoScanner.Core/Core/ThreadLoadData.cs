@@ -350,7 +350,7 @@ public class ThreadLoadData
                 _ = Task.Run(GlobalData.ThreadZoneCalculate!.ExecuteAsync).ConfigureAwait(false);
                 _ = Task.Run(async () => { await ZoneBroken.CalculateBrokenZonesForAllSymbols(); }).ConfigureAwait(false);
 
-                // SMC: refresh TouchCount/IsMitigated on the loaded zones and populate any
+                // SMC: refresh TouchCount/ReachedMidpoint on the loaded zones and populate any
                 // (symbol, interval) that has no SMC rows in the DB yet (e.g. fresh deploy).
                 // The diff in Detect suppresses no-op writes so this is cheap when nothing
                 // changed since the previous shutdown.

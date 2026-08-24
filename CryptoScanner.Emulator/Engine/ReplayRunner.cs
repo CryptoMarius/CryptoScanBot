@@ -2,6 +2,7 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
+using CryptoScanner.Core.Zones;
 
 using System.Diagnostics;
 
@@ -167,6 +168,9 @@ public sealed class ReplayRunner
         // NewCandleArrivedAsync down into indicators / algorithms / trade handling / position check,
         // so the LogPhaseTimings summary can show where the dominant "pipeline" time actually goes.
         PipelineProfiler.Reset();
+        // Same reason: a second run in the same queue has to report its own candle gaps, not stay
+        // quiet because the previous run already mentioned that symbol.
+        ZoneCandleGaps.Reset();
         PipelineProfiler.Enabled = true;
         runWall.Restart();
         try
@@ -718,6 +722,22 @@ public sealed class ReplayRunner
                 $"zoom {dlzZoom:F1}s ({perJudged:F1} ms each, {stepsPerZoom:F1} interval(s) down), " +
                 $"gradeIntro {dlzGrade:F1}s, " +
                 $"other(walk+bookkeeping) {dlzJudgeTotal - dlzZoom - dlzGrade:F1}s");
+        }
+
+        // Candles the zone walks expected and did not find. Until 24-08-2026 a missing candle fell
+        // through the if and read as "nothing happened", so a run could produce a different zone set
+        // without a single line saying why. Interrupted is the subset longer than
+        // ZoneCandleGaps.ToleratedGap - those are the ones that can change which zones survive, and
+        // a run with any of them has not measured the strategy but the holes in its candle history.
+        if (PipelineProfiler.ZoneGapWalks > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"Zone candle gaps — {PipelineProfiler.ZoneGapWalks} walk(s) found " +
+                $"{PipelineProfiler.ZoneGapCandles} missing candle(s), longest run " +
+                $"{PipelineProfiler.ZoneGapWorst} | interruptions (> {ZoneCandleGaps.ToleratedGap} " +
+                $"in a row) {PipelineProfiler.ZoneGapInterrupted} | read back in " +
+                $"{PipelineProfiler.ZoneGapRefetches} time(s) over " +
+                $"{PipelineProfiler.ZoneGapRefetchCandles} candle(s)");
         }
 
         // Every read of candles out of candles.db. Rows per call is the number the bounded read was

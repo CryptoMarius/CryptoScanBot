@@ -48,6 +48,16 @@ public class Api : ExchangeBase
         //
         // Same trap as the request weight in LimitRate - see the comment there. Raising this further
         // costs nothing at the exchange, but every drop then takes more subscriptions down with it.
+        //
+        // Correction, measured 24-08-2026: SubscriptionsPerBundle on its own does NOT decide how many
+        // websocket connections there are. A bundle is one socket client, but the library hands that
+        // client another connection for every SocketSubscriptionsCombineTarget subscriptions, and that
+        // target was still on the library default of ten. Over the night of 23/24-08 the 42 lost
+        // connections arrived in fixed groups of exactly ten consecutive subscription names while a
+        // bundle held thirty, so 102 symbols ran over eleven connections and not the four that four
+        // bundles suggest. The run before it, on 10 per bundle, showed fourteen such groups of ten for
+        // 137 symbols. The connection count follows subscriptions / combine target, which is why that
+        // target is now set to the same thirty in the socket options below.
         ExchangeOptions.SetDefaultOptions("HyperLiquid Futures", "USDC", 300, false, 1,
             subscriptionsPerBundle: 30,
             klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 1_000_000);
@@ -77,6 +87,16 @@ public class Api : ExchangeBase
             // whether or not there is any trading. SubscriptionManager.MaximumTickerInactivity is the outer
             // net for a socket that stays up but stops delivering.
             options.SocketNoDataTimeout = TimeSpan.Zero;
+            // The library, not SubscriptionsPerBundle, decides how many subscriptions share one
+            // websocket connection: a socket client gets another connection for every
+            // SocketSubscriptionsCombineTarget of them. Left on the library default of ten it undid
+            // the bundle setting above - see the correction in that comment. Matching the two makes a
+            // bundle of thirty one connection again, which takes this market from eleven connections
+            // to four of the ten HyperLiquid allows per IP address. The price of matching them is
+            // blast radius: a drop now marks thirty subscriptions instead of ten. Measured over
+            // 23/24-08-2026 every drop recovered within one to three seconds without a single missing
+            // minute, so that trade is cheap here - but it is the number to watch in the next check.
+            options.SocketSubscriptionsCombineTarget = 30;
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new HyperLiquidCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });

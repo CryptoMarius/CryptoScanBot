@@ -184,6 +184,13 @@ public class SignalPrepare
                 {
                     CryptoSymbolInterval symbolInterval = symbol.Data.Get(interval.IntervalPeriod);
 
+                    // Apply this candle to the open zones on EVERY interval boundary, before the
+                    // trigger range below decides whether a recalculation is due at all. The touch
+                    // and weakening rules only ever ran inside such a recalculation, so a price that
+                    // sat quietly inside a zone invalidated nothing - see ZoneDlz.InvalidateRealtime.
+                    // This is what ZoneFvg.Detect already does for the FVG zones.
+                    ZoneDlz.InvalidateRealtime(symbol, interval, lastCandle1mCloseTime);
+
                     // Scan for new zones if candle is outside of the previous primary trend
                     decimal valueLow = lastCandle1m.GetLowValue(false);
                     decimal valueHigh = lastCandle1m.GetHighValue(false);
@@ -197,13 +204,18 @@ public class SignalPrepare
                         // where the trend is, the trigger range says how far we had already asked. If
                         // the split works, a symbol no longer starts from identical bounds hour after
                         // hour. SWITCH THIS BACK OFF after the measurement - it was 40% of the log.
-                        var dlzZones = symbolInterval.Dlz.Zones;
-                        GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} recalc triggered " +
-                            $"(swingLow {symbolInterval.Dlz.LastSwingLow}, " +
-                            $"swingHigh {symbolInterval.Dlz.LastSwingHigh}, " +
-                            $"triggerLow {symbolInterval.Dlz.TriggerRangeLow}→{valueLow}, " +
-                            $"triggerHigh {symbolInterval.Dlz.TriggerRangeHigh}→{valueHigh}) " +
-                            $"open zones before: long={dlzZones.LongOpen.Count} short={dlzZones.ShortOpen.Count}");
+                        //
+                        // Switched off again on 23-08-2026, the measurement is done. Run 230 wrote
+                        // 35,169 of these lines, and they answered the question: 48 of those
+                        // recalculations produced no zone at all (0.14%), against the 148-out-of-161
+                        // the split was meant to fix. The trigger is no longer where the waste is.
+                        //var dlzZones = symbolInterval.Dlz.Zones;
+                        //GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} recalc triggered " +
+                        //    $"(swingLow {symbolInterval.Dlz.LastSwingLow}, " +
+                        //    $"swingHigh {symbolInterval.Dlz.LastSwingHigh}, " +
+                        //    $"triggerLow {symbolInterval.Dlz.TriggerRangeLow}→{valueLow}, " +
+                        //    $"triggerHigh {symbolInterval.Dlz.TriggerRangeHigh}→{valueHigh}) " +
+                        //    $"open zones before: long={dlzZones.LongOpen.Count} short={dlzZones.ShortOpen.Count}");
                         // Avoid duplicate calculation: remember the widest range seen so far, so only a
                         // candle that breaks OUT of it triggers the next recalculation.
                         // Assigning both values unconditionally (what happened here before) also moved

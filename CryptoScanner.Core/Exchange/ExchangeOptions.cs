@@ -104,6 +104,13 @@ public class ExchangeOptions // : IExchangeOptions
     // exchange with two markets spends its allowance twice. Same reasoning as the request weight in
     // the LimitRate classes. Whoever raises this trades connections for blast radius - one lost
     // connection marks every subscription in that bundle at once.
+    //
+    // Correction, measured 24-08-2026: raising this alone does NOT lower the connection count, and a
+    // drop does NOT take a whole bundle with it. A socket client opens another connection for every
+    // SocketSubscriptionsCombineTarget subscriptions, so the connections follow subscriptions divided
+    // by that target, not by this one. On HyperLiquid Futures the lost connections came in fixed
+    // groups of exactly ten while a bundle held thirty. An exchange that counts connections has to set
+    // both numbers, in its own socket options - Kucoin and HyperLiquid do.
     public int SubscriptionsPerBundle { get; set; } = 10;
 
     // Reduce the amount of symbols using the volume (if possible)
