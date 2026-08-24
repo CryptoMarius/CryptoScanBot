@@ -2,7 +2,7 @@
 rem =================================================================================================
 rem  Builds the release packages for CryptoScanBot.
 rem
-rem  Two packages, each a folder plus a zip under publish\ :
+rem  Two packages, each a folder plus a zip under %PUBLISHDIR% (see the set below) :
 rem
 rem    CryptoScanBot-<version>-win-x64    scanner + emulator + Photino, Windows
 rem    CryptoScanBot-<version>-osx-arm64  scanner + emulator + Photino, Apple Silicon
@@ -31,7 +31,8 @@ rem  effect. On osx-arm64 no file differs at all, but the same order is used the
 rem  blocks identical.
 rem
 rem  Every command below is a plain one-liner: copy any single line into a command prompt to rerun
-rem  or test that step on its own (run the "set VERSION" line first, it is used everywhere).
+rem  or test that step on its own (run the "set VERSION" and "set PUBLISHDIR" lines first, they
+rem  are used everywhere).
 rem
 rem  Notes:
 rem  - Self-contained: the .NET runtime ships inside the package, users install nothing.
@@ -55,7 +56,11 @@ cd /d "%~dp0"
 rem Keep this in sync with <Version> in Directory.Build.props.
 set VERSION=2.6.0
 
-if not exist "publish" mkdir "publish"
+rem Output folder for both packages and their zips. Absolute path, so it does not matter from
+rem where the script is started.
+set PUBLISHDIR=E:\CryptoScanBot\bin
+
+if not exist "%PUBLISHDIR%" mkdir "%PUBLISHDIR%"
 
 echo.
 echo ==================================================================
@@ -65,35 +70,35 @@ echo ==================================================================
 
 echo.
 echo --- 1/2  CryptoScanBot %VERSION% win-x64 (scanner + emulator + Photino) ---
-if exist "publish\CryptoScanBot-%VERSION%-win-x64" rmdir /s /q "publish\CryptoScanBot-%VERSION%-win-x64"
-if exist "publish\photino-tmp-win-x64" rmdir /s /q "publish\photino-tmp-win-x64"
-dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r win-x64 --self-contained true -o "publish\CryptoScanBot-%VERSION%-win-x64" --nologo -v minimal
+if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64" rmdir /s /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64"
+if exist "%PUBLISHDIR%\photino-tmp-win-x64" rmdir /s /q "%PUBLISHDIR%\photino-tmp-win-x64"
+dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r win-x64 --self-contained true -o "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64" --nologo -v minimal
 if errorlevel 1 goto failed
-dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r win-x64 --self-contained true -o "publish\photino-tmp-win-x64" --nologo -v minimal
+dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r win-x64 --self-contained true -o "%PUBLISHDIR%\photino-tmp-win-x64" --nologo -v minimal
 if errorlevel 1 goto failed
-xcopy "publish\photino-tmp-win-x64\*" "publish\CryptoScanBot-%VERSION%-win-x64\" /e /y /r /q >nul
+xcopy "%PUBLISHDIR%\photino-tmp-win-x64\*" "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64\" /e /y /r /q >nul
 if errorlevel 1 goto failed
-rmdir /s /q "publish\photino-tmp-win-x64"
-if exist "publish\CryptoScanBot-%VERSION%-win-x64\libSkiaSharp.pdb" del /q "publish\CryptoScanBot-%VERSION%-win-x64\libSkiaSharp.pdb"
-if exist "publish\CryptoScanBot-%VERSION%-win-x64.zip" del /q "publish\CryptoScanBot-%VERSION%-win-x64.zip"
-"%SystemRoot%\System32\tar.exe" -a -c -f "publish\CryptoScanBot-%VERSION%-win-x64.zip" -C "publish" "CryptoScanBot-%VERSION%-win-x64"
+rmdir /s /q "%PUBLISHDIR%\photino-tmp-win-x64"
+if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64\libSkiaSharp.pdb" del /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64\libSkiaSharp.pdb"
+if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64.zip" del /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64.zip"
+"%SystemRoot%\System32\tar.exe" -a -c -f "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64.zip" -C "%PUBLISHDIR%" "CryptoScanBot-%VERSION%-win-x64"
 if errorlevel 1 goto failed
 
 
 echo.
 echo --- 2/2  CryptoScanBot %VERSION% osx-arm64 (scanner + emulator + Photino) ---
-if exist "publish\CryptoScanBot-%VERSION%-osx-arm64" rmdir /s /q "publish\CryptoScanBot-%VERSION%-osx-arm64"
-if exist "publish\photino-tmp-osx-arm64" rmdir /s /q "publish\photino-tmp-osx-arm64"
-dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r osx-arm64 --self-contained true -o "publish\CryptoScanBot-%VERSION%-osx-arm64" --nologo -v minimal
+if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64" rmdir /s /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64"
+if exist "%PUBLISHDIR%\photino-tmp-osx-arm64" rmdir /s /q "%PUBLISHDIR%\photino-tmp-osx-arm64"
+dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r osx-arm64 --self-contained true -o "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64" --nologo -v minimal
 if errorlevel 1 goto failed
-dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r osx-arm64 --self-contained true -o "publish\photino-tmp-osx-arm64" --nologo -v minimal
+dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r osx-arm64 --self-contained true -o "%PUBLISHDIR%\photino-tmp-osx-arm64" --nologo -v minimal
 if errorlevel 1 goto failed
-xcopy "publish\photino-tmp-osx-arm64\*" "publish\CryptoScanBot-%VERSION%-osx-arm64\" /e /y /r /q >nul
+xcopy "%PUBLISHDIR%\photino-tmp-osx-arm64\*" "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64\" /e /y /r /q >nul
 if errorlevel 1 goto failed
-rmdir /s /q "publish\photino-tmp-osx-arm64"
-if exist "publish\CryptoScanBot-%VERSION%-osx-arm64\libSkiaSharp.pdb" del /q "publish\CryptoScanBot-%VERSION%-osx-arm64\libSkiaSharp.pdb"
-if exist "publish\CryptoScanBot-%VERSION%-osx-arm64.zip" del /q "publish\CryptoScanBot-%VERSION%-osx-arm64.zip"
-"%SystemRoot%\System32\tar.exe" -a -c -f "publish\CryptoScanBot-%VERSION%-osx-arm64.zip" -C "publish" "CryptoScanBot-%VERSION%-osx-arm64"
+rmdir /s /q "%PUBLISHDIR%\photino-tmp-osx-arm64"
+if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64\libSkiaSharp.pdb" del /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64\libSkiaSharp.pdb"
+if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64.zip" del /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64.zip"
+"%SystemRoot%\System32\tar.exe" -a -c -f "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64.zip" -C "%PUBLISHDIR%" "CryptoScanBot-%VERSION%-osx-arm64"
 if errorlevel 1 goto failed
 
 
@@ -101,7 +106,7 @@ echo.
 echo ==================================================================
 echo  Release %VERSION% ready - attach these to the GitHub release:
 echo ==================================================================
-dir /b "publish\*-%VERSION%-*.zip"
+dir /b "%PUBLISHDIR%\*-%VERSION%-*.zip"
 echo.
 echo The macOS package is unsigned and was zipped on Windows, so the
 echo executable bit is gone. After unpacking, on the Mac:
