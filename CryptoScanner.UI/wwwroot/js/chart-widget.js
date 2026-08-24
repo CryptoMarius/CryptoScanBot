@@ -1396,29 +1396,40 @@ window.ChartWidget = {
         }
 
         if (luxData) {
-            // Lux counts are unbounded, so it gets its own overlay scale to avoid
-            // squashing the 0..100 oscillators sharing this pane
+            // Drawn the way the Avalonia chart draws it: both readings are PERCENTAGES of the
+            // multi-length RSI bucket, so 0..100, on the same scale the RSI and the stochastic use.
+            // Overbought grows up from 0, oversold hangs down from 100.
+            //
+            // What was here before assumed "Lux counts are unbounded" and gave it a private,
+            // auto-scaling axis squeezed into the bottom quarter of the pane, with overbought
+            // mirrored below zero. The values are bounded and always were - LuxIndicator.CalculateRange
+            // returns 100 * count / N - so that axis stretched whatever happened to be in view to fill
+            // its quarter, and the same reading looked different from one screen to the next.
+            var pinTo0to100 = function () {
+                return { priceRange: { minValue: 0, maxValue: 100 } };
+            };
+
+            // Oversold: bars hanging from the top, exactly Pine's per_under (100 - oversold).
             var osSeries = entry.chart.addHistogramSeries({
                 color: this._styleFor('luxOversold').color,
                 lastValueVisible: false, priceLineVisible: false,
-                priceScaleId: 'lux',
+                base: 100,
+                autoscaleInfoProvider: pinTo0to100,
             });
             osSeries.setData(luxData.map(function (d) {
-                return { time: d.time, value: d.oversold };
+                return { time: d.time, value: 100 - d.oversold };
             }));
 
+            // Overbought: bars rising from the baseline.
             var obSeries = entry.chart.addHistogramSeries({
                 color: this._styleFor('luxOverbought').color,
                 lastValueVisible: false, priceLineVisible: false,
-                priceScaleId: 'lux',
+                base: 0,
+                autoscaleInfoProvider: pinTo0to100,
             });
             obSeries.setData(luxData.map(function (d) {
-                return { time: d.time, value: -d.overbought };
+                return { time: d.time, value: d.overbought };
             }));
-
-            entry.chart.priceScale('lux').applyOptions({
-                scaleMargins: { top: 0.75, bottom: 0 },
-            });
 
             entry.series.luxOversold = osSeries;
             entry.series.luxOverbought = obSeries;

@@ -1001,28 +1001,36 @@
 
             if (_showLux && rawCandles.Count > 0)
             {
-                var luxSymbolInterval = _currentSymbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m);
+                // Computed on the interval the chart is SHOWING, the same way the Avalonia chart does
+                // it (CryptoScanner.Chart Lux.Draw passes interval.IntervalPeriod). This used to be
+                // pinned to 5m whatever the chart showed, and the resulting values were then pasted
+                // onto the chart's candles one for one - so on a 15m chart, three hours of 5m readings
+                // were stretched across nine hours of candles. The numbers were right, the time axis
+                // under them was not.
                 int luxCount = rawCandles.Count;
-                var lastCandle = rawCandles[^1];
-                CandleTime endTime = IntervalTools.StartOfIntervalCandle(lastCandle.OpenTime, luxSymbolInterval.Interval.Duration);
+                CandleTime endTime = rawCandles[^1].OpenTime;
 
-                LuxIndicator.CalculateRange(_currentSymbol, CryptoIntervalPeriod.interval5m,
+                LuxIndicator.CalculateRange(_currentSymbol, period,
                     endTime, luxCount, out int[] overSoldHistory, out int[] overBoughtHistory);
 
+                // CalculateRange writes output[i] for the candle endTime - (count-1-i) steps back, so
+                // it lines up with rawCandles[i] only while those are consecutive. Checked per point
+                // rather than assumed: one missing candle would otherwise shift the whole indicator
+                // sideways without anything looking wrong.
+                uint luxDuration = symbolInterval.Interval.Duration;
+                CandleTime luxStart = endTime - (uint)(luxCount - 1) * luxDuration;
+
                 var luxData = new List<object>();
-                int offset = rawCandles.Count - luxCount;
-                for (int i = 0; i < luxCount && i < rawCandles.Count; i++)
+                for (int i = 0; i < luxCount; i++)
                 {
-                    int idx = offset + i;
-                    if (idx >= 0 && idx < rawCandles.Count)
+                    if (rawCandles[i].OpenTime != luxStart + (uint)i * luxDuration)
+                        continue;
+                    luxData.Add(new
                     {
-                        luxData.Add(new
-                        {
-                            time = rawCandles[idx].OpenTime.ToUnixSeconds(),
-                            oversold = overSoldHistory[i],
-                            overbought = overBoughtHistory[i],
-                        });
-                    }
+                        time = rawCandles[i].OpenTime.ToUnixSeconds(),
+                        oversold = overSoldHistory[i],
+                        overbought = overBoughtHistory[i],
+                    });
                 }
                 panels["lux"] = luxData;
             }
