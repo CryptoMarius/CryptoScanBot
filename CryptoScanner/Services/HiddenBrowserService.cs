@@ -5,6 +5,7 @@ using Avalonia.Threading;
 using AvaloniaWebView;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
 //https://github.com/MicroSugarDeveloperOrg/Webviews.Avalonia
 
 namespace CryptoScanner.Services;
@@ -127,10 +128,15 @@ public class HiddenBrowserService : IDisposable
                     // Set WebView als content van de window
                     _hiddenWindow.Content = _webView;
 
+                    // Before Show, so the window is never in the taskbar or the Alt-Tab list to
+                    // begin with
+                    KeepOutOfTheTaskbar();
+
                     // Show de window off-screen so WebView2 receives a valid native HWND it can
                     // keep using for the whole app lifetime. Do NOT call Hide() afterwards.
                     _hiddenWindow.Show();
                     _hiddenWindow.Position = new PixelPoint(-32000, -32000); // re-park after Show in case Position was reset
+                    KeepOutOfTheTaskbar(); // again, in case the handle did not exist yet before Show
 
                     Log("WebView initialized successfully");
                 }
@@ -146,6 +152,22 @@ public class HiddenBrowserService : IDisposable
         {
             LogError("Failed to initialize WebView", ex);
         }
+    }
+
+    /// <summary>
+    /// Ask the platform to leave this window out of the taskbar and out of the Alt-Tab list.
+    /// ShowInTaskbar=false only covers the taskbar button: the window still showed up as
+    /// "Hidden Browser (exchange)" in Alt-Tab, once for every running scanner, and switching to it
+    /// does nothing at all because it is parked far off-screen.
+    /// </summary>
+    private void KeepOutOfTheTaskbar()
+    {
+        // refreshWindow stays false on purpose: hiding and showing a window that hosts a WebView2 is
+        // exactly what broke the trading app launch before (see the note in Initialize), and the
+        // style is set before Show, so there is no taskbar button left to get rid of.
+        nint handle = _hiddenWindow?.TryGetPlatformHandle()?.Handle ?? 0;
+        if (handle != 0)
+            GlobalData.GetService<IPlatformService>()?.KeepWindowOutOfTheTaskbar(handle, false);
     }
 
     public void Navigate(string url)

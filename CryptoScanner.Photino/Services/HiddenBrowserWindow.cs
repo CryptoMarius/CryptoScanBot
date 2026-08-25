@@ -1,8 +1,7 @@
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
 
 using Photino.NET;
-
-using System.Runtime.InteropServices;
 
 namespace CryptoScanner.Photino.Services;
 
@@ -140,30 +139,16 @@ public sealed class HiddenBrowserWindow
 
     /// <summary>
     /// Take the window out of the taskbar and out of Alt-Tab. Windows only; elsewhere the window is
-    /// merely off-screen, which is what the Avalonia host settles for as well.
+    /// merely off-screen. The window styles this needs live in the platform service, because the
+    /// Avalonia host has the very same off-screen browser window and needs the very same treatment.
     /// </summary>
     private static void KeepOutOfTheTaskbar(PhotinoWindow window)
     {
-        if (!OperatingSystem.IsWindows())
-            return;
-
         try
         {
-            nint handle = window.WindowHandle;
-            if (handle == 0)
-                return;
-
-            nint style = GetWindowLongPtr(handle, GwlExStyle);
-            nint wanted = (style & ~(nint)WsExAppWindow) | WsExToolWindow;
-            if (style == wanted)
-                return;
-
-            // The taskbar only re-reads this style when the window is shown, so hide it first. It
-            // sits off-screen, so nothing of this is visible; SW_SHOWNOACTIVATE keeps the focus
-            // where the user left it.
-            ShowWindow(handle, SwHide);
-            SetWindowLongPtr(handle, GwlExStyle, wanted);
-            ShowWindow(handle, SwShowNoActivate);
+            // refreshWindow: the window is already on screen (off-screen, but shown), so the shell
+            // has made its taskbar button and only drops it when the window is shown again.
+            GlobalData.GetService<IPlatformService>()?.KeepWindowOutOfTheTaskbar(window.WindowHandle, true);
         }
         catch (Exception error)
         {
@@ -171,21 +156,4 @@ public sealed class HiddenBrowserWindow
             ScannerLog.Logger.Error(error, "HiddenBrowserWindow.KeepOutOfTheTaskbar");
         }
     }
-
-    private const int GwlExStyle = -20;
-    private const int WsExToolWindow = 0x00000080;
-    private const int WsExAppWindow = 0x00040000;
-    private const int SwHide = 0;
-    private const int SwShowNoActivate = 4;
-
-    // The Ptr variants are the 64 bit exports; the application is built and published as 64 bit.
-    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW", SetLastError = true)]
-    private static extern nint GetWindowLongPtr(nint window, int index);
-
-    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
-    private static extern nint SetWindowLongPtr(nint window, int index, nint value);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool ShowWindow(nint window, int command);
 }
