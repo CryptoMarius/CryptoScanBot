@@ -40,6 +40,28 @@ public class WindowsPlatformService : IPlatformService
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true, EntryPoint = "MessageBoxW")]
     private static extern int MessageBox(nint hwnd, string text, string caption, uint type);
 
+    // The extended styles that decide whether a window gets a taskbar button and an Alt-Tab entry.
+    // A tool window gets neither, which is exactly what the off-screen helper windows need.
+    private const int GwlExStyle = -20;
+    private const int WsExToolWindow = 0x00000080;
+    private const int WsExAppWindow = 0x00040000;
+    private const int SwHide = 0;
+    private const int SwShowNoActivate = 4;
+
+    // The Ptr variants are the 64 bit exports; the application is built and published as 64 bit.
+    [SupportedOSPlatform("windows")]
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW", SetLastError = true)]
+    private static extern nint GetWindowLongPtr(nint hwnd, int index);
+
+    [SupportedOSPlatform("windows")]
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
+    private static extern nint SetWindowLongPtr(nint hwnd, int index, nint value);
+
+    [SupportedOSPlatform("windows")]
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindow(nint hwnd, int command);
+
     /// <summary>
     /// Switch the title bar between its light and dark variant.
     /// <para>
@@ -115,6 +137,44 @@ public class WindowsPlatformService : IPlatformService
         {
             ScannerLog.Logger.Error(error, "ShowMessage");
             Console.WriteLine($"{title}: {message}");
+        }
+    }
+
+    /// <summary>
+    /// Turn the window into a tool window: that is the one flag Windows reads to keep a window out
+    /// of the taskbar and out of the Alt-Tab list. Clearing WS_EX_APPWINDOW as well, because that
+    /// flag says the opposite and would win.
+    /// </summary>
+    public void KeepWindowOutOfTheTaskbar(nint windowHandle, bool refreshWindow)
+    {
+        if (windowHandle == 0 || !OperatingSystem.IsWindows())
+            return;
+
+        try
+        {
+            nint style = GetWindowLongPtr(windowHandle, GwlExStyle);
+            nint wanted = (style & ~(nint)WsExAppWindow) | WsExToolWindow;
+            if (style == wanted)
+                return;
+
+            if (refreshWindow)
+            {
+                // The taskbar only re-reads this style when the window is shown, so hide it first.
+                // These windows sit off-screen, so nothing of this is visible; SW_SHOWNOACTIVATE
+                // keeps the focus where the user left it.
+                ShowWindow(windowHandle, SwHide);
+                SetWindowLongPtr(windowHandle, GwlExStyle, wanted);
+                ShowWindow(windowHandle, SwShowNoActivate);
+            }
+            else
+            {
+                SetWindowLongPtr(windowHandle, GwlExStyle, wanted);
+            }
+        }
+        catch (Exception error)
+        {
+            // A stray taskbar button or Alt-Tab entry is not worth failing over
+            ScannerLog.Logger.Error(error, "KeepWindowOutOfTheTaskbar");
         }
     }
 
