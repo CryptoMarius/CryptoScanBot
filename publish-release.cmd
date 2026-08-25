@@ -57,8 +57,12 @@ rem Keep this in sync with <Version> in Directory.Build.props.
 set VERSION=2.6.0
 
 rem Output folder for both packages and their zips. Absolute path, so it does not matter from
-rem where the script is started.
-set PUBLISHDIR=E:\CryptoScanBot\bin
+rem where the script is started. Do NOT end it with a backslash - the next line strips one if it
+rem is there anyway, because tar.exe would otherwise choke: in -C "%PUBLISHDIR%" a trailing
+rem backslash escapes the closing quote, the directory argument swallows the folder name that
+rem follows it, and tar reports "no files or directories specified".
+set PUBLISHDIR=E:\CryptoScanBot\bin\Build
+if "%PUBLISHDIR:~-1%"=="\" set PUBLISHDIR=%PUBLISHDIR:~0,-1%
 
 if not exist "%PUBLISHDIR%" mkdir "%PUBLISHDIR%"
 
