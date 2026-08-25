@@ -107,8 +107,26 @@ public class CryptoSymbolInterval
 
     public bool TryGetCandle(CandleTime time, out MyData? myData)
     {
-        if (CandleList.TryGetValue(time, out CryptoCandle candle) &&
-            Data.TryGetValue(time, out CryptoData? indicator))
+        // Under the same lock CandleTools.CleanCandleDataAsync takes to remove from Data. A
+        // SortedDictionary rebalances on a remove, so a read walking the tree at that moment can miss
+        // an entry that is there or walk into a node that is being relinked. It was harmless while
+        // Data was trimmed on the candle boundary, because it never reached that boundary and nothing
+        // was ever removed; since Data has its own, much closer boundary
+        // (CandleTools.IndicatorDataKeepCount) entries are removed on every round, and the chart reads
+        // this from its own thread while the candle thread cleans up.
+        //
+        // Only Data needs it: CandleList does its locking inside CryptoCandleList.
+        CryptoData? indicator;
+        lock (Data)
+        {
+            if (!Data.TryGetValue(time, out indicator))
+            {
+                myData = null;
+                return false;
+            }
+        }
+
+        if (CandleList.TryGetValue(time, out CryptoCandle candle))
         {
             myData = new()
             {
