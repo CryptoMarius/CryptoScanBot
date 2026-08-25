@@ -460,9 +460,31 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
 
         if (subscriptions.Count != 0)
         {
+            // Name the subscriptions and say WHY each one is being restarted. Without this the log only
+            // said how many, and a market that restarts the same handful every time is then
+            // indistinguishable from one that restarts a different set each round. Kucoin Futures did
+            // exactly that on the night of 24/25-08-2026: eleven rounds, exactly fifty minutes apart,
+            // always three subscriptions - and nothing in the log or the stored candles could say which
+            // three, because the only line carrying the name sits at Trace level in NeedsRestart.
+            //
+            // Inactivity also prints how long, since that is the number ExchangeOptions
+            // .MaximumTickerInactivity has to be measured against.
+            DateTime now = GlobalData.Clock.UtcNow;
+            List<string> reasons = [];
+            foreach (var subscription in subscriptions)
+            {
+                string reason;
+                if (subscription.ConnectionIsLost)
+                    reason = "connection lost";
+                else if (subscription.ErrorDuringStartup)
+                    reason = "error during startup";
+                else
+                    reason = $"inactive for {(now - subscription.LastActivity).TotalMinutes:N0} minutes";
+                reasons.Add($"{subscription.Name} {subscription.SymbolOverview} ({reason})");
+            }
 
             // Stop de getrande subscriptions
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} restarting {subscriptions.Count} {TickerType} subscriptions (stopping)");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} restarting {subscriptions.Count} {TickerType} subscriptions (stopping): {string.Join(", ", reasons)}");
 
             List<Task> taskList = [];
             foreach (var subscription in subscriptions)
