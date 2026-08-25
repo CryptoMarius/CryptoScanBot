@@ -1314,19 +1314,40 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                 "FROM Candle WHERE IntervalId = ? AND OpenTime BETWEEN ? AND ? "
                 "GROUP BY SymbolId", (one_minute_id, low, high)))
 
+            # Measure up to the END of the window, not up to each symbol's own last candle. That
+            # second form has a blind spot that hid a real case: a symbol that STOPS delivering
+            # halfway drags its own end point back with it, so its expected count shrinks by exactly
+            # the minutes it lost and the gap comes out at zero. On Kucoin Futures 24/25-08-2026 that
+            # was PEPEUSDT, PTBUSDT and SHIBUSDT - all three silent from 04:30 utc while the run went
+            # on to 05:18 - and the report said "0 ontbrekende minuten".
+            #
+            # A symbol that JOINS halfway is a different case and stays measured from its own first
+            # candle: a new listing has no minutes to lose before it existed.
+            #
+            # The deadline sits before the end of the window because the save thread writes once an
+            # hour. On a running scanner the youngest minutes are still in memory, and counting those
+            # as lost would paint every live report red; on a stopped one, only the last flush.
+            deadline = high - (LAG_RUNNING_ATTENTION_MINUTES if still_running else 2)
+
             gaps = []
+            stopped = []
             total_missing = 0
             total_expected = 0
             for row in gap_rows:
                 if row["SymbolId"] in barometer_ids:
                     continue
-                expected = row["last"] - row["first"] + 1
+                name = local_symbols.get(row["SymbolId"], str(row["SymbolId"]))
+                last = max(row["last"], deadline)
+                expected = last - row["first"] + 1
                 missing = expected - row["have"]
                 total_missing += max(0, missing)
                 total_expected += expected
+                trailing = deadline - row["last"]
+                if trailing > 0:
+                    stopped.append((trailing, name,
+                                    candle_time_to_datetime(row["last"]).strftime("%Y-%m-%d %H:%M")))
                 if missing > 0:
-                    gaps.append((missing, percentage(missing, expected),
-                                 local_symbols.get(row["SymbolId"], str(row["SymbolId"]))))
+                    gaps.append((missing, percentage(missing, expected), name))
 
             share = percentage(total_missing, total_expected)
             lines.append("**Gaten in de minuutreeks over {}**".format(scope))
@@ -1351,6 +1372,29 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                     lines.append("({} symbolen hebben nog meer gaten; alleen de ergste {} staan "
                                  "hier)".format(len(gaps) - top_count, top_count))
             lines.append("")
+
+            # Named separately from the gaps above, because the two say different things. A gap in
+            # the middle is a hiccup the scanner recovered from; a series that stops and never comes
+            # back is a symbol that was silently dropped, and the minutes after it are lost for good.
+            if stopped:
+                stopped.sort(reverse=True)
+                lines.append("**Symbolen die halverwege stopten**")
+                lines.append("")
+                lines.append("De minuutreeks houdt op voor het einde van het venster. Dit zit ook in "
+                             "de ontbrekende minuten hierboven. Een symbool dat de exchange niet "
+                             "meer noteert hoort hier thuis; staat er een symbool tussen dat nog wel "
+                             "verhandeld wordt, dan heeft dat abonnement niets meer geleverd.")
+                lines.append("")
+                lines.append("| Symbool | Laatste candle | Minuten daarna |")
+                lines.append("|---|---|---|")
+                for minutes, name, moment in stopped[:top_count]:
+                    lines.append("| {} | {} | {:,} |".format(name, moment, minutes))
+                if len(stopped) > top_count:
+                    lines.append("")
+                    lines.append("({} symbolen stopten ook, alleen de {} vroegste staan hier)".format(
+                        len(stopped) - top_count, top_count))
+                lines.append("")
+            exchange_facts["symbolsStoppedEarly"] = len(stopped)
             exchange_facts["missingMinutes"] = total_missing
             exchange_facts["missingSharePercentage"] = round(share, 3)
             exchange_facts["symbolsWithGaps"] = len(gaps)

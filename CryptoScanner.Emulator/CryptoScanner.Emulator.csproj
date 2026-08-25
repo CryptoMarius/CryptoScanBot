@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net8.0</TargetFramework>
@@ -44,4 +44,9 @@
 		     their Configure tabs absent, and SaveConfiguration would persist nothing for them. -->
 		<ProjectReference Include="..\CryptoScanner.Analyzers\CryptoScanner.Analyzers.csproj" />
 	</ItemGroup>
+  <ItemGroup>
+    <!-- The run-label logic is a pure function worth testing on its own; see RunLabelTests. -->
+    <InternalsVisibleTo Include="CryptoScanner.CoreTests" />
+  </ItemGroup>
+
 </Project>

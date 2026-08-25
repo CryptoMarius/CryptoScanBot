@@ -871,13 +871,8 @@ public partial class MainWindowViewModel : ObservableObject
                         string baseInterval = !string.IsNullOrWhiteSpace(entry.BaseInterval)
                             ? entry.BaseInterval! : baseConfig.BaseInterval;
 
-                        // ...and then it goes into the label, because a queue that compares base
-                        // intervals produces runs that are otherwise identical on screen. The label is
-                        // what the results grid and the report show; leaving three runs called the
-                        // same thing is how a comparison silently turns into nonsense.
-                        string runLabel = !string.IsNullOrWhiteSpace(entry.BaseInterval)
-                            ? $"{algoName} {entryLabel} [{baseInterval}]"
-                            : $"{algoName} {entryLabel}";
+                        string runLabel = BuildRunLabel(algoName, entryLabel,
+                            !string.IsNullOrWhiteSpace(entry.BaseInterval) ? baseInterval : null);
 
                         EmulatorRunConfig runConfig = new()
                         {
@@ -951,6 +946,34 @@ public partial class MainWindowViewModel : ObservableObject
     /// keep it true across multiple calls.
     /// </summary>
     /// <returns>True if the run completed normally; false if it was cancelled or failed.</returns>
+    /// <summary>
+    /// The label a run is stored and shown under: "&lt;algorithm&gt; &lt;entry label&gt; [&lt;base interval&gt;]".
+    /// <para>
+    /// The algorithm is only put in front when the entry label does not already name it. Writing the
+    /// strategy into the label is what everyone does when editing a queue by hand, and prefixing it
+    /// again produced "storsi storsi 3 limiet" in the results grid and in every report built from it.
+    /// The match is on a word boundary, so a "dlz" entry does not swallow the front of a label about
+    /// "dlz.near".
+    /// </para>
+    /// <para>
+    /// The base interval is only appended when the ENTRY chose one. A queue that compares base
+    /// intervals otherwise produces runs that look identical on screen, and a comparison between two
+    /// rows with the same name is how one silently turns into nonsense.
+    /// </para>
+    /// </summary>
+    internal static string BuildRunLabel(string algoName, string entryLabel, string? baseInterval)
+    {
+        bool labelAlreadyNamesTheAlgorithm =
+            !string.IsNullOrEmpty(algoName)
+            && entryLabel.StartsWith(algoName, StringComparison.OrdinalIgnoreCase)
+            && (entryLabel.Length == algoName.Length
+                || (!char.IsLetterOrDigit(entryLabel[algoName.Length]) && entryLabel[algoName.Length] != '.'));
+
+        string label = labelAlreadyNamesTheAlgorithm ? entryLabel : $"{algoName} {entryLabel}";
+        return string.IsNullOrWhiteSpace(baseInterval) ? label : $"{label} [{baseInterval}]";
+    }
+
+
     private async Task<bool> RunOnceAsync(EmulatorRunConfig config)
     {
         ProgressValue = 0;

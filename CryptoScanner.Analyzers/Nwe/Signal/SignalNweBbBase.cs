@@ -9,6 +9,10 @@ namespace CryptoScanner.Analyzers.Nwe.Signal;
 /// </summary>
 public abstract class SignalNweBbBase : SignalCreateBase
 {
+    // The deepest walk back through CryptoSymbolInterval.Data of any strategy, and therefore the one
+    // that sets the floor under CandleTools.IndicatorDataKeepCount (62). Raising this without raising
+    // that one costs no exception: GetPrevCandle simply finds nothing and the signal reports
+    // "No prev candle or data" for every candle.
     private const int Lookback = 60;
 
     protected readonly struct NweBbBar
