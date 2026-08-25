@@ -1134,6 +1134,33 @@ def read_symbol_maps(connection):
     return instrument, local_symbols, barometer_ids
 
 
+def read_symbol_volumes(main_db, exchange_name):
+    """
+    Returns {instrument: 24h volume} from the main database for one exchange.
+
+    Keyed on the exchange instrument, the same key read_symbol_maps prefers, so a candle stock and
+    the symbol table can be joined without falling back to the scanner name on either side.
+
+    This is the very number the minimal volume per quote coin filters on, which is why it belongs
+    next to the inactivity: a coin that passed that filter and still went quiet for minutes says
+    something different from a coin that barely scraped over the boundary.
+    """
+    if main_db is None:
+        return {}
+    connection = open_readonly(main_db)
+    try:
+        exchange_id = connection.execute(
+            "SELECT Id FROM Exchange WHERE Name = ?", (exchange_name,)).fetchone()
+        if not exchange_id:
+            return {}
+        return {(row["ExchangeName"] or row["Name"]): as_number(row["Volume"])
+                for row in connection.execute(
+                    "SELECT Name, ExchangeName, Volume FROM Symbol WHERE ExchangeId = ?",
+                    (exchange_id[0],))}
+    finally:
+        connection.close()
+
+
 def check_candles(report, candle_databases, main_db, window_start, window_end, top_count,
                   subscribed=None, deep=False, still_running=False, serving=None):
     """window_start/window_end staan hier in UTC; de aanroeper rekent het lokale logvenster om."""
@@ -1344,6 +1371,11 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
             #
             # De barometer blijft er buiten: die schrijft elke minuut en zijn volumeveld is het aantal
             # munten, geen handelsvolume.
+            # The 24h volume comes from the symbol table in the main database, not from the candles:
+            # it is the field the minimal volume per quote coin filters on, so it answers whether a
+            # quiet coin is a thin one that slipped through or a liquid one that really went silent.
+            symbol_volumes = read_symbol_volumes(main_db, exchange_name)
+
             inactivities = []
             for row in gap_rows:
                 if row["SymbolId"] in barometer_ids or row["have"] < 2:
@@ -1362,7 +1394,8 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                         current = 0
                 if longest > 0:
                     inactivities.append((longest,
-                                     local_symbols.get(row["SymbolId"], str(row["SymbolId"]))))
+                                     local_symbols.get(row["SymbolId"], str(row["SymbolId"])),
+                                     symbol_volumes.get(instrument.get(row["SymbolId"]))))
 
             lines.append("**Langste inactiviteit per symbool**")
             lines.append("")
@@ -1371,6 +1404,12 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                          "tegenaan loopt, niet het aantal ontbrekende candles - die worden door de "
                          "flush-timer opgevuld.")
             lines.append("")
+            lines.append("Het volume ernaast is het 24-uursvolume uit de symbolentabel, hetzelfde "
+                         "getal waar het minimale volume per quote-munt op filtert. Elk symbool in "
+                         "deze lijst is daar dus al doorheen gekomen: een munt met een hoog volume "
+                         "die toch minuten stilvalt is een andere waarneming dan een munt die net "
+                         "over de grens kwam.")
+            lines.append("")
             if not inactivities:
                 lines.append("Geen enkel symbool had een minuut zonder handel. Dat komt voor bij een "
                              "exchange die alleen liquide munten in de selectie heeft, en dan zegt "
@@ -1378,13 +1417,16 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                 exchange_facts["longestInactivityMinutes"] = 0
                 exchange_facts["symbolsAboveInactivityLimit"] = 0
             else:
-                inactivities.sort(reverse=True)
+                # Sort on the two fields that are always filled: a volume can be missing, and None
+                # against a number is not comparable in a tuple sort.
+                inactivities.sort(key=lambda entry: (entry[0], entry[1]), reverse=True)
                 longest_overall = inactivities[0][0]
                 above = [entry for entry in inactivities if entry[0] >= INACTIVITY_LIMIT_MINUTES]
-                lines.append("| Symbool | Langste inactiviteit (minuten) |")
-                lines.append("|---|---|")
-                for minutes, name in inactivities[:top_count]:
-                    lines.append("| {} | {:,} |".format(name, minutes))
+                lines.append("| Symbool | Langste inactiviteit (minuten) | Volume (24u) |")
+                lines.append("|---|---|---|")
+                for minutes, name, volume in inactivities[:top_count]:
+                    lines.append("| {} | {:,} | {} |".format(
+                        name, minutes, "{:,.0f}".format(volume) if volume is not None else "?"))
                 if len(inactivities) > top_count:
                     lines.append("")
                     lines.append("({} symbolen waren korter inactief)".format(
@@ -1394,6 +1436,28 @@ def check_candles(report, candle_databases, main_db, window_start, window_end, t
                              "minuten of langer inactief waren: {} van de {} met candles.".format(
                                  longest_overall, INACTIVITY_LIMIT_MINUTES, len(above), len(gap_rows)))
                 lines.append("")
+                # Whether the quiet coins are the thin ones is a question the list itself cannot
+                # answer: it is sorted on minutes, so the volumes only line up next to each other by
+                # accident. Put the two ranges beside one another and the answer is one comparison.
+                # Against the symbols this run actually WATCHED, not against the whole instrument
+                # list: the minimal volume keeps most instruments out on purpose, so the exchange
+                # wide range would compare the quiet coins to symbols that were never subscribed.
+                quiet_volumes = sorted(entry[2] for entry in above if entry[2] is not None)
+                watched_volumes = sorted(
+                    value for value in (symbol_volumes.get(instrument.get(row["SymbolId"]))
+                                        for row in gap_rows
+                                        if row["SymbolId"] not in barometer_ids)
+                    if value)
+                if quiet_volumes and watched_volumes:
+                    lines.append("Volume van de {} stille symbolen: {:,.0f} tot {:,.0f} (mediaan "
+                                 "{:,.0f}). Over alle {} gevolgde symbolen: {:,.0f} tot {:,.0f} "
+                                 "(mediaan {:,.0f})."
+                                 .format(len(quiet_volumes), quiet_volumes[0], quiet_volumes[-1],
+                                         quiet_volumes[len(quiet_volumes) // 2],
+                                         len(watched_volumes), watched_volumes[0],
+                                         watched_volumes[-1],
+                                         watched_volumes[len(watched_volumes) // 2]))
+                    lines.append("")
                 lines.append("De scanner beschouwt een abonnement als dood zodra het {} minuten niets "
                              "geleverd heeft (ExchangeOptions.MaximumTickerInactivity, per exchange in "
                              "te stellen; dit is de standaardwaarde)."
@@ -2397,7 +2461,13 @@ def check_streams(report, entries, window_hours):
                          "netwerkverbinding van deze machine dan op de exchange.")
             lines.append("")
 
-    key_points = ["{} onderbrekingen ({:.2f} per uur)".format(drops, drops_per_hour)]
+    # Lead with the number the verdict is actually made on. This line used to show the SUBSCRIPTION
+    # count, which put "35.11 per uur" in the "what should you look at" table of HyperLiquid Futures
+    # on 24/25-08-2026 while the orange came from 2.33 connections per hour against a boundary of 2.
+    # A headline figure that decided nothing teaches you to distrust the headline.
+    key_points = ["{} verbindingen weggevallen ({:.2f} per uur, grens {:.0f}), goed voor {} "
+                  "gemelde abonnementen".format(connection_drops, connection_drops_per_hour,
+                                                DROPS_ATTENTION_PER_HOUR, drops)]
     if never_restored:
         key_points.insert(0, "{} niet hersteld".format(len(never_restored)))
     if longest > OUTAGE_ATTENTION_MINUTES:
