@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Settings;
+﻿using CryptoScanner.Core.Settings;
 
 using System.Text.Json;
 
@@ -192,6 +192,20 @@ public class EmulatorQueueEntry
     /// null fields on the other side. Enabled is never mirrored.
     /// </summary>
     public string? MirrorFrom { get; set; }
+
+    /// <summary>
+    /// The base interval this run replays on ("1m", "5m", "15m", ...). Null or omitted keeps
+    /// whatever the run configuration says, which is what the dropdown in the run-config window sets.
+    /// <para>
+    /// It is here so one queue can compare base intervals in a single pass. That matters more than it
+    /// sounds: the base interval decides how often the strategy is evaluated AND how orders are
+    /// filled, so two runs that differ only in this are not a small variation - they are two
+    /// different measurements of the same strategy. Before this field the only way to compare them
+    /// was to start the queue three times and change the dropdown in between, which is exactly the
+    /// kind of manual step that ends up mislabelled.
+    /// </para>
+    /// </summary>
+    public string? BaseInterval { get; set; }
 
     /// <summary>
     /// Trading/risk config (SL, TP, DCA). Takes precedence over the entry-level

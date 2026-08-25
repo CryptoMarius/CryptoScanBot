@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -361,9 +361,22 @@ public partial class MainWindowViewModel : ObservableObject
                             {
                                 CryptoInterval targetInterval = GlobalData.IntervalListPeriod[interval.IntervalPeriod + 1];
                                 CandleTools.BulkCalculateCandles(symbol, targetInterval.ConstructFrom!, targetInterval, fetchEnd);
-                                // Built in memory rather than read, which is what the single "= true"
-                                // said here before: nothing to read from disk, and something to write back.
-                                loadedCandlesInMemory.MarkAllLoaded(targetInterval.IntervalPeriod);
+                                // Changed, so it still has to be written back - but NOT marked as
+                                // loaded. MarkAllLoaded claims MinValue..MaxValue: the whole timeline,
+                                // for ever. What was actually built here is only what could be derived
+                                // from the source candles that happened to be in memory at this moment,
+                                // and that is a good deal less than what candles.db already holds.
+                                //
+                                // With the claim in place, FetchFrom skipped its bounded disk read when
+                                // the loop reached this interval, found the holes the derivation had
+                                // left, and asked the EXCHANGE to fill them - one request per symbol per
+                                // interval, for candles that were sitting in candles.db all along. That
+                                // is why a fetch kept downloading history that was never deleted, and
+                                // why 1m was the only interval that stayed quiet: nothing derives 1m, so
+                                // it was the only one that still did its disk read.
+                                //
+                                // Reading from disk cannot undo the derivation either: the read uses
+                                // TryAdd, so a candle already in memory wins over the stored one.
                                 loadedCandlesInMemory.MarkChanged(targetInterval.IntervalPeriod);
                             }
                             CandleTools.UpdateCandleFetched(symbol, interval);
@@ -853,7 +866,18 @@ public partial class MainWindowViewModel : ObservableObject
                     {
                         string entryLabel = !string.IsNullOrWhiteSpace(entry.Label) ? entry.Label : $"queue-{i + 1}";
                         string algoName = !string.IsNullOrEmpty(entry.Algorithm) ? entry.Algorithm : algorithm.Name;
-                        string runLabel = $"{algoName} {entryLabel}";
+
+                        // The entry may pick its own base interval; without one the run config decides.
+                        string baseInterval = !string.IsNullOrWhiteSpace(entry.BaseInterval)
+                            ? entry.BaseInterval! : baseConfig.BaseInterval;
+
+                        // ...and then it goes into the label, because a queue that compares base
+                        // intervals produces runs that are otherwise identical on screen. The label is
+                        // what the results grid and the report show; leaving three runs called the
+                        // same thing is how a comparison silently turns into nonsense.
+                        string runLabel = !string.IsNullOrWhiteSpace(entry.BaseInterval)
+                            ? $"{algoName} {entryLabel} [{baseInterval}]"
+                            : $"{algoName} {entryLabel}";
 
                         EmulatorRunConfig runConfig = new()
                         {
@@ -861,7 +885,7 @@ public partial class MainWindowViewModel : ObservableObject
                             Symbols = baseConfig.Symbols,
                             FromDate = baseConfig.FromDate,
                             ToDate = baseConfig.ToDate,
-                            BaseInterval = baseConfig.BaseInterval,
+                            BaseInterval = baseInterval,
                             Label = runLabel,
                         };
 
