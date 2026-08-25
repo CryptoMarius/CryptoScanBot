@@ -58,9 +58,33 @@ public sealed class IntervalIndicatorHub
 
     private readonly List<IIndicatorExtension> _pluginExtensions = [];
 
-    // SMA(200) is the longest lookback; 300 gives comfortable headroom.
-    // Keeps Skender's internal cache small so pruning stays O(300) instead of O(100k).
-    private const int HubCacheSize = 300;
+    // How many quotes the QuoteHub keeps. This is the INPUT series the window indicators read, so it
+    // has to reach as far back as the widest window among them - and that is SMA(200). Two hundred is
+    // therefore exactly enough: the newest quote plus the 199 before it is the window SMA(200) sums.
+    //
+    // Checked over everything the hub builds, including what the plugins declare and the highest
+    // value configured in any of the nineteen data folders (25-08-2026): SMA(200) at 200, then
+    // SMA(100), then the Ichimoku SenkouB period at 52. Nothing else passes 52.
+    //
+    // It stood at 300 for headroom. That headroom bought nothing measurable and cost about 27 MB per
+    // scanner once the cache filled, so it is gone. Running it exactly to the edge is safe because
+    // Skender guards this itself, at construction and not at the first wrong number - measured on
+    // 25-08-2026 with a cache of 200 and an SMA(300):
+    //
+    //   ArgumentOutOfRangeException: Insufficient cache size for SMA(300). Requires at least 300
+    //   periods for proper initialization, but inherited MaxCacheSize is 200. Increase the provider's
+    //   MaxCacheSize to at least 300.
+    //
+    // So a plugin that declares a wider window, or a fixed period above that is made configurable and
+    // set higher, fails loudly and says which number to raise. The same probe with an SMA(200) on a
+    // cache of 200 returned the value of an unbounded hub to the digit.
+    //
+    // The recursive indicators do not constrain it. Ema(50), the Macd chain and the ParabolicSar carry
+    // their own state instead of re-reading a window, and they converge well inside 200 (Skender's own
+    // rule of thumb is period plus a hundred, so 126 for the Macd's slow leg and 150 for Ema(50)).
+    //
+    // Keeping it small also keeps pruning O(200) instead of O(100k).
+    private const int HubCacheSize = 200;
 
     // The CryptoData fields BuildCurrent knows how to fill from a declared indicator. Anything a
     // plugin declares outside this list is still built and shared through the registry, it just has
