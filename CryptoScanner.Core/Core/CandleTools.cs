@@ -430,13 +430,36 @@ public static class CandleTools
                     // list's own lock, not this semaphore.
                     removed += symbolInterval.CandleList.RemoveBefore(startFetchUnix);
 
-                    // Remove old candle indicator data
+                    // Remove old candle indicator data, on its OWN boundary and not on the candle one.
+                    //
+                    // This is what the routine did before 20-02-2026: keep IndicatorDataKeepCount
+                    // entries and drop everything older. It lost that boundary when CryptoCandle
+                    // became a struct (commit 6d113f4b) - the indicator data moved off the candle into
+                    // this dictionary and the old loop, which nulled a field on the candle, had nothing
+                    // left to null. Nobody re-decided the depth, so it silently became the candle
+                    // window: 500 per interval and 1450 for 1m, against the 62 it used to keep.
+                    //
+                    // Only on the live path. The emulator manages its own depth through
+                    // IndicatorWarmup.WarmupDepth; narrowing it here would change what a replay can
+                    // see and with it the outcome of a run. Two conditions, not one: ReplayRunner
+                    // supplies cutoffFor, but EmulatorBootstrap reaches this same method through
+                    // CandleBase.GetCandlesForAllIntervalsAsync, which passes null.
+                    CandleTime dataStart = startFetchUnix;
+                    if (cutoffFor == null && !GlobalData.IsEmulatorMode)
+                    {
+                        CandleTime reference = lastCandle1mCloseTime
+                            ?? CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
+                        CandleTime ownStart = reference - IndicatorDataKeepCount * interval.Duration;
+                        if (ownStart > dataStart)
+                            dataStart = ownStart;
+                    }
+
                     lock (symbolInterval.Data)
                     {
                         List<CandleTime> staleDataKeys = [];
                         foreach (CandleTime key in symbolInterval.Data.Keys)
                         {
-                            if (key < startFetchUnix)
+                            if (key < dataStart)
                                 staleDataKeys.Add(key);
                             else
                                 break;
@@ -567,6 +590,31 @@ public static class CandleTools
     /// </para>
     /// </summary>
     public const int CandleCountFetch = 500;
+
+
+    /// <summary>
+    /// How many entries of indicator data (<see cref="CryptoSymbolInterval.Data"/>) are kept per
+    /// interval. NOT the same window as the candles: the candles feed the trend and the zones, this
+    /// only has to reach as far back as a strategy looks.
+    /// <para>
+    /// The deepest reader is nwe, which walks 60 candles back through GetPrevCandle
+    /// (SignalNweBbBase.Lookback). Counting the candle it starts from that is 61 entries, so 61 is the
+    /// floor and the routine that ran until 20-02-2026 sat one above it at 62. Sixty-five instead,
+    /// because one spare entry is not a margin: a strategy that adds a single step back, or an off-by-
+    /// one in a walk, falls off the end without an exception - GetPrevCandle just finds nothing and
+    /// the signal reports "No prev candle or data" for every candle, which reads as "no setup" and not
+    /// as a defect. Five entries cost 2 KB per symbol and interval and make that class of mistake
+    /// survivable. Runners-up behind nwe: bbma.omni at 22 (MaxBars) and the sbm setting
+    /// Ma200AndMa50Lookback, which stands at 30 in the deepest of the nineteen data folders - so the
+    /// jump from 30 to 60 is what makes nwe the number to watch here.
+    /// </para>
+    /// <para>
+    /// This is not the warm-up depth. A hub is warmed up over 260 candles (CollectCandles) and writes
+    /// a CryptoData for each of them; the next cleanup round cuts that back to this number. The
+    /// indicators themselves keep their own series, capped at IntervalIndicatorHub.HubCacheSize.
+    /// </para>
+    /// </summary>
+    public const int IndicatorDataKeepCount = 65;
 
 
     public static CandleTime GetCandleFetchStart(CryptoSymbol symbol, CryptoInterval interval, DateTime currentTime)
