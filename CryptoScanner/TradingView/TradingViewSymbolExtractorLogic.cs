@@ -89,6 +89,27 @@ public class TradingViewSymbolWebSocket(string tickerName)
     /// visible; only the stack trace is rationed, the way ThreadTelegramBot already does it.
     /// </summary>
     private const int StackTraceEveryNthFailure = 10;
+
+    /// <summary>
+    /// How long the retry loop waits before it builds the next socket for this ticker.
+    ///
+    /// It used to be a fixed 250 ms in TradingViewSymbolExtractor, which meant the 429 that
+    /// TradingView answers the handshake with was read as "try again immediately". On 26-08-2026
+    /// 04:22 that produced 12,194 handshakes over the nineteen scanners in four minutes, a peak of
+    /// 123 per second from one address - we kept our own rate limit alive. A 429 says how long to
+    /// wait and that answer is now used.
+    /// </summary>
+    public TimeSpan RetryDelay { get; private set; } = DefaultRetryDelay;
+
+    /// <summary>Wait after a failure that is not a rate limit: a hiccup, so try again quickly.</summary>
+    private static readonly TimeSpan DefaultRetryDelay = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>Wait after a 429 that carries no Retry-After header of its own.</summary>
+    private static readonly TimeSpan RateLimitFallbackDelay = TimeSpan.FromSeconds(60);
+
+    /// <summary>A Retry-After above this is logged, because it stalls the dashboard ticker that long.</summary>
+    private static readonly TimeSpan RetryAfterWorthMentioning = TimeSpan.FromSeconds(60);
+
     public event DataFetchedEvent? DataFetched;
 
     private static string ConstructRequest(string method, List<string> parameters, List<string> flags)
@@ -206,6 +227,10 @@ public class TradingViewSymbolWebSocket(string tickerName)
     {
         ClientWebSocket.Options.UseDefaultCredentials = true;
         ClientWebSocket.Options.SetRequestHeader("Origin", "https://www.tradingview.com");
+        // Keep the handshake response around. Without this the status code and the headers are gone
+        // by the time ConnectAsync has thrown, and a rate limit cannot be told apart from a network
+        // error - which is exactly why the 429 went unanswered for so long.
+        ClientWebSocket.Options.CollectHttpResponseDetails = true;
         try
         {
             Uri uri = new("wss://data.tradingview.com/socket.io/websocket");
@@ -226,6 +251,7 @@ public class TradingViewSymbolWebSocket(string tickerName)
             // Connected and the session is up: the run of failures is over, so the next hiccup starts
             // counting from one again and gets its stack trace at the same distance as the first.
             ConnectFailures.TryRemove(TickerName, out _);
+            RetryDelay = DefaultRetryDelay;
 
             //request = ConstructRequest("set_auth_token", ["unauthorized_user_token"], []);
             //await SendData(request);
@@ -235,8 +261,9 @@ public class TradingViewSymbolWebSocket(string tickerName)
         }
         catch (Exception e)
         {
+            RetryDelay = DetermineRetryDelay();
             int failures = ConnectFailures.AddOrUpdate(TickerName, 1, (_, value) => value + 1);
-            GlobalData.AddTextToLogTab($"TradingView {TickerName} connect exception: {e.Message} (attempt {failures})");
+            GlobalData.AddTextToLogTab($"TradingView {TickerName} connect exception: {e.Message} (attempt {failures}, retry in {RetryDelay.TotalSeconds:N0}s)");
             // Name the ticker in the ERROR line as well. Without it the error log holds a bare
             // "The server returned status code '429' when status code '101' was expected." with no
             // hint of where it came from, and it reads as an exchange rate limit while it is
@@ -244,6 +271,50 @@ public class TradingViewSymbolWebSocket(string tickerName)
             if (failures % StackTraceEveryNthFailure == 0)
                 ScannerLog.Logger.Error(e, $"TradingView {TickerName} {e.Message}");
         }
+    }
+
+
+    /// <summary>
+    /// How long to wait before the next handshake, taken from the answer the server just gave.
+    ///
+    /// Only a 429 gets a long wait. Everything else - a dropped connection, a name that does not
+    /// resolve - keeps the short one, because waiting a minute on those only means the dashboard
+    /// stands still for no reason.
+    /// </summary>
+    private TimeSpan DetermineRetryDelay()
+    {
+        if (ClientWebSocket.HttpStatusCode != System.Net.HttpStatusCode.TooManyRequests)
+            return DefaultRetryDelay;
+
+        // Header names arrive with whatever casing the server used, and the dictionary compares
+        // ordinally, so look it up without assuming "Retry-After".
+        IEnumerable<string>? values = null;
+        if (ClientWebSocket.HttpResponseHeaders is not null)
+        {
+            foreach (var header in ClientWebSocket.HttpResponseHeaders)
+            {
+                if (string.Equals(header.Key, "Retry-After", StringComparison.OrdinalIgnoreCase))
+                {
+                    values = header.Value;
+                    break;
+                }
+            }
+        }
+
+        // Retry-After is either a number of seconds or an http date (rfc 9110). Both occur in the
+        // wild, so both are read; anything else falls through to the fallback.
+        string? value = values?.FirstOrDefault();
+        TimeSpan delay = RateLimitFallbackDelay;
+        if (int.TryParse(value, out int seconds) && seconds > 0)
+            delay = TimeSpan.FromSeconds(seconds);
+        else if (DateTimeOffset.TryParse(value, out DateTimeOffset moment) && moment > DateTimeOffset.UtcNow)
+            delay = moment - DateTimeOffset.UtcNow;
+
+        // The value is honoured as given, so a server that asks for an hour gets an hour and this
+        // ticker stands still that long. Say so, otherwise a silent dashboard has no explanation.
+        if (delay > RetryAfterWorthMentioning)
+            GlobalData.AddTextToLogTab($"TradingView {TickerName} rate limited, waiting {delay.TotalSeconds:N0}s as asked");
+        return delay;
     }
 
 
