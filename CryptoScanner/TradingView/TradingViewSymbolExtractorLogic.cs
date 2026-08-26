@@ -237,8 +237,12 @@ public class TradingViewSymbolWebSocket(string tickerName)
         {
             int failures = ConnectFailures.AddOrUpdate(TickerName, 1, (_, value) => value + 1);
             GlobalData.AddTextToLogTab($"TradingView {TickerName} connect exception: {e.Message} (attempt {failures})");
+            // Name the ticker in the ERROR line as well. Without it the error log holds a bare
+            // "The server returned status code '429' when status code '101' was expected." with no
+            // hint of where it came from, and it reads as an exchange rate limit while it is
+            // TradingView. Only the stack trace named us, and only if you scrolled to it.
             if (failures % StackTraceEveryNthFailure == 0)
-                ScannerLog.Logger.Error(e, e.Message);
+                ScannerLog.Logger.Error(e, $"TradingView {TickerName} {e.Message}");
         }
     }
 
