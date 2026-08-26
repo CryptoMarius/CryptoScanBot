@@ -80,7 +80,11 @@ public class TradingViewSymbolExtractor
                     // Failed, connect again..
                     //reconnectCount++;
                     //GlobalData.AddTextToLogTab($"TradingView {tickerName} reconnecting (attempt {reconnectCount})");
-                    await Task.Delay(250, cancellationToken);
+                    // Wait what the socket that just failed says is right: the short hiccup pause,
+                    // or what a 429 asked for. This used to be a fixed 250 ms regardless of the
+                    // answer, which is how four tickers times nineteen scanners hammered TradingView
+                    // 12,194 times in four minutes on 26-08-2026 and kept the 429 alive themselves.
+                    await Task.Delay(socket.RetryDelay, cancellationToken);
                     socket = new TradingViewSymbolWebSocket(tickerName);
                     socket.DataFetched += OnValueFetched;
                     socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
