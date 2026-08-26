@@ -57,7 +57,27 @@ public class ScannerLog
         if (innermost.TargetSite is not null)
             parts.Add($"at={innermost.TargetSite.DeclaringType?.Name}.{innermost.TargetSite.Name}");
 
-        Logger.Error(exception, "Global Thread Exception " + string.Join(", ", parts));
+        // OperationAborted is a read that was cancelled because the socket was being closed. That is a
+        // race inside the reconnect of the exchange library and not something of ours that broke: on
+        // 26-08-2026 all six of these (BitMart Futures four, Bitvavo Spot two) followed a
+        // "connection lost" that was restored within three seconds, and neither exchange missed a
+        // single minute of candles. The task belongs to the socket client of the package, so there is
+        // no await of ours to put it behind - this handler IS where we get to see it.
+        //
+        // It stays in the normal log at warning level, so a count that suddenly multiplies is still
+        // visible, but it leaves the error log - that file is the list which decides whether a night
+        // was good. Deliberately narrow: only OperationAborted. A ConnectionReset or a timeout still
+        // counts as an error, because those are not the teardown race.
+        bool isTeardownRace = innermost is System.Net.Sockets.SocketException
+        {
+            SocketErrorCode: System.Net.Sockets.SocketError.OperationAborted
+        };
+
+        string message = "Global Thread Exception " + string.Join(", ", parts);
+        if (isTeardownRace)
+            Logger.Warn(exception, message);
+        else
+            Logger.Error(exception, message);
     }
 
     // ${onexception} appends the full exception (incl. stacktrace) only on calls like Logger.Error(ex, "...") -
