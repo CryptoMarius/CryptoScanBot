@@ -24,7 +24,7 @@ public class PositionViewModel
             PositionColumnEnum.CloseTime => Object.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "",
             PositionColumnEnum.Duration => Object.DurationText(),
             PositionColumnEnum.Exchange => Object.Exchange.Name,
-            PositionColumnEnum.Symbol => Object.Symbol.Name,
+            PositionColumnEnum.Symbol => Object.Symbol.DisplayName,
             PositionColumnEnum.Interval => Object.Interval?.Name ?? "",
             PositionColumnEnum.Side => Object.SideText,
             PositionColumnEnum.Strategy => Object.StrategyText,

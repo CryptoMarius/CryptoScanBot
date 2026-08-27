@@ -217,6 +217,14 @@ public sealed class ReplayRunner
             ResetRunState(exchange, symbols);
             AssertCleanState(exchange, symbols);
 
+            // ───── Hand out the paper-trading start capital ─────────────────────────
+            // After the clean-state assert on purpose: the assert wants an empty asset list, and the
+            // seeding is what fills it. Every run therefore starts with exactly the same amount of
+            // money, so two runs over the same period stay comparable.
+            decimal startCapital = config.StartCapital > 0 ? config.StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital;
+            PaperAssets.ResetAssets(exchange, startCapital);
+            GlobalData.AddTextToLogTab($"Start capital: {startCapital:N2} per quote coin");
+
             // ───── Warmup all symbols up-front ──────────────────────────────────────
             long warmupStart = Stopwatch.GetTimestamp();
             foreach (var symbol in symbols)

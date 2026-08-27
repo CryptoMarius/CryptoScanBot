@@ -38,7 +38,7 @@ namespace CryptoScanner.CoreTests.Analyzer.Indicators;
 public class BandRangeIndexExportTests
 {
     /// <summary>Candle database to read. Empty = skip.</summary>
-    private const string CandleDatabasePath = @"E:\CryptoScanBot\Data\Binance\Emulator\Binance Futures.db";
+    private const string CandleDatabasePath = @"E:\CryptoScanBot\Data\Binance\Emulator\Binance Perpetual.db";
 
     /// <summary>Where the export lands.</summary>
     private const string OutputPath = @"E:\CryptoScanBot\Data\Reports\EntryTiming\band_index_csharp.csv";

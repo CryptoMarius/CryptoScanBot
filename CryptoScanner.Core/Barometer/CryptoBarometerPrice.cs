@@ -24,7 +24,7 @@ internal class CryptoBarometerPrice
         // out of that same list afterwards, without a single extra candle lookup.
         result.Reset();
 
-        // Bitcoin does not trade under the same name everywhere - XBT on Kucoin Futures, UBTC on
+        // Bitcoin does not trade under the same name everywhere - XBT on Kucoin Perpetual, UBTC on
         // HyperLiquid Spot - and ExchangeOptions.PauseSymbol already carries the right name for this
         // exchange. Take its base coin, so the same coin is found against whatever quote this
         // barometer is for (the pause symbol itself is against the default quote).

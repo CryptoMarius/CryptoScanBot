@@ -116,7 +116,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
         // GlobalData.AddTextToLogTab("Reading open positions");
 
         // There is no active exchange while the session failed to start - a settings file naming an
-        // exchange this build does not have (Coinbase Futures, for instance) leaves it null. The
+        // exchange this build does not have (Coinbase Perpetual, for instance) leaves it null. The
         // null-forgiving ! below then turned into an UnhandledException that terminated the whole
         // application, hiding the actual error behind a NullReferenceException. Without an exchange
         // there are simply no positions to show.

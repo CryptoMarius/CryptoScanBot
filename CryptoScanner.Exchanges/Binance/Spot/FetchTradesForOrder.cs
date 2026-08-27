@@ -5,7 +5,7 @@ using CryptoScanner.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
-namespace CryptoScanner.Core.Exchange.BinanceSpot;
+namespace CryptoScanner.Core.Exchange.Binance.Spot;
 
 #if TRADEBOT
 public class FetchTradeForOrder

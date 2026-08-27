@@ -83,4 +83,44 @@ public class RunLabelTests
         Assert.AreEqual("dlz referentie",
             MainWindowViewModel.BuildRunLabel("dlz", "referentie", "   "));
     }
+
+
+    [TestMethod]
+    public void Label_GetsTheStartCapitalAppendedWhenTheEntryChoseOne()
+    {
+        Assert.AreEqual("dlz referentie [start 5000]",
+            MainWindowViewModel.BuildRunLabel("dlz", "referentie", null, 5000m));
+    }
+
+
+    [TestMethod]
+    public void Label_ShowsBaseIntervalAndStartCapitalTogether()
+    {
+        Assert.AreEqual("dlz referentie [5m] [start 25000]",
+            MainWindowViewModel.BuildRunLabel("dlz", "referentie", "5m", 25000m));
+    }
+
+
+    [TestMethod]
+    public void Label_WithoutAStartCapitalGetsNoBrackets()
+    {
+        Assert.AreEqual("dlz referentie",
+            MainWindowViewModel.BuildRunLabel("dlz", "referentie", null, null));
+    }
+
+
+    /// <summary>
+    /// The queue file is edited by hand, so the fallback rule matters: only a positive amount counts
+    /// as a choice. An omitted digit or a stray minus must not start a run with no money - since the
+    /// balances really constrain trading, such a run makes zero trades and reads as a strategy that
+    /// never signals.
+    /// </summary>
+    [TestMethod]
+    public void StartCapital_OnlyAPositiveAmountOverridesTheRunConfig()
+    {
+        Assert.AreEqual((5000m, true), MainWindowViewModel.ResolveStartCapital(5000m, 10000m));
+        Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(null, 10000m));
+        Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(0m, 10000m));
+        Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(-5000m, 10000m));
+    }
 }

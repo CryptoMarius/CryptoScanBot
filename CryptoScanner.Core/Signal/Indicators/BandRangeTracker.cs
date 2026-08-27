@@ -25,7 +25,7 @@ namespace CryptoScanner.Core.Signal.Indicators;
 /// </list>
 ///
 /// <para>
-/// <see cref="Index"/> multiplies the two. Measured over 48 Binance Futures symbols on 1h candles it
+/// <see cref="Index"/> multiplies the two. Measured over 48 Binance Perpetual symbols on 1h candles it
 /// is the best single predictor of what a naive mean-reversion entry actually returns; the width
 /// alone and the ratio alone are both weaker. Above 3 is where it starts to pay off.
 /// </para>
@@ -299,7 +299,7 @@ public sealed class BandRangeTracker
         // protected nothing: CryptoCandleList guards itself with a ReaderWriterLockSlim, so the
         // kline stream adds a candle without ever touching the monitor on the object, and the
         // enumerator then throws "Collection was modified after the enumerator was instantiated".
-        // Same defect as the one that aborted BulkCalculateCandles on Okx Futures (20-08-2026).
+        // Same defect as the one that aborted BulkCalculateCandles on Okx Perpetual (20-08-2026).
         // GetLastValuesUpTo does the identical walk under the read lock.
         //
         // Which is where it went wrong: that walk starts at the OLDEST candle and copies everything

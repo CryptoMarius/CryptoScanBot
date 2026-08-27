@@ -1,4 +1,6 @@
-﻿using Dapper;
+﻿using CryptoScanner.Core.Core;
+
+using Dapper;
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanner.Core.Context;
@@ -6,7 +8,49 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 86;
+    public readonly static int CurrentDatabaseVersion = 88;
+
+
+    /// <summary>
+    /// Renames the candle database of every market that version 87 renamed: "&lt;exchange&gt; Futures.db"
+    /// becomes "&lt;exchange&gt; Perpetual.db". Without this each renamed market opens an empty store and
+    /// fetches its entire history again.
+    ///
+    /// The write ahead log and the shared memory file travel with it. SQLite derives their names from
+    /// the database file, so moving the .db on its own would orphan whatever the last session had not
+    /// checkpointed yet. Nothing has these files open at this point - the migration runs before the
+    /// first candle database is constructed.
+    ///
+    /// Best effort: a file that cannot be moved, or whose target already exists, is left where it is
+    /// and that market simply starts with an empty store.
+    /// </summary>
+    private static void RenameFuturesCandleDatabases()
+    {
+        try
+        {
+            string folder = CandleDatabase.ResolveCandleFolder();
+            if (!Directory.Exists(folder))
+                return;
+
+            foreach (string file in Directory.GetFiles(folder, "* Futures.db"))
+            {
+                string target = file[..^" Futures.db".Length] + " Perpetual.db";
+                if (File.Exists(target))
+                    continue;
+
+                foreach (string suffix in new[] { "", "-wal", "-shm" })
+                {
+                    if (File.Exists(file + suffix))
+                        File.Move(file + suffix, target + suffix);
+                }
+                GlobalData.AddTextToLogTab($"Candle database renamed to {Path.GetFileName(target)}");
+            }
+        }
+        catch (Exception error)
+        {
+            GlobalData.AddTextToLogTab($"Renaming the candle databases failed, they will be rebuilt: {error.Message}");
+        }
+    }
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1798,6 +1842,52 @@ public class DatabaseMigration
                 database.Connection.Execute("alter table Zone rename column IsMitigated to ReachedMidpoint", transaction);
             else
                 database.Connection.Execute("alter table Zone add ReachedMidpoint INTEGER NOT NULL DEFAULT 0", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 27-08-2026 Every derivatives market renamed from "<exchange> Futures" to
+        // "<exchange> Perpetual", and the "Okx XPerp" market added. What the scanner follows on those
+        // markets are perpetuals: contracts without an expiry date. "Futures" is the name of a
+        // contract that DOES expire, which is exactly the product the scanner deliberately leaves
+        // alone - so the old name pointed at the one thing it is not.
+        //
+        // The name is an identity here, not a label: UpdateExchanges() below matches the Exchange row
+        // on it, the settings file holds it, and the candle database file is called "<name>.db". So
+        // the rows are RENAMED rather than re-inserted, which keeps every symbol, signal and position
+        // attached to their ExchangeId, and the candle files are renamed with them.
+        if (CurrentVersion > version.Version && version.Version == 86)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute(
+                "update Exchange set Name = replace(Name, ' Futures', ' Perpetual') where Name like '% Futures'",
+                transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+
+            RenameFuturesCandleDatabases();
+        }
+
+
+        // Which market inside the exchange a symbol lives on. HyperLiquid runs the markets that
+        // outside parties deployed next to its own ("xyz:GOLD" beside "BTC"), and this column is
+        // what separates them in the symbol list. Empty for everything that existed before, which
+        // is exactly right: all of it came from the exchange's own market.
+        if (CurrentVersion > version.Version && version.Version == 87)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute(
+                "alter table Symbol add column SubMarket TEXT NOT NULL DEFAULT ''", transaction);
 
             // update version
             version.Version += 1;

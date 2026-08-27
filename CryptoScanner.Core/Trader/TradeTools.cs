@@ -15,21 +15,17 @@ namespace CryptoScanner.Core.Trader;
 
 public class TradeTools
 {
+    /// <summary>
+    /// ALLE assets laden. Kept as the entry point the trader calls; the loading itself (including
+    /// seeding the start capital) lives in <see cref="PaperAssets.LoadAssets"/> so there is one
+    /// implementation instead of the copy that used to sit here and in GlobalData.
+    /// </summary>
     public static void LoadAssets()
     {
         //GlobalData.AddTextToLogTab("Reading asset information");
 
         if (GlobalData.ActiveExchange != null)
-        {
-            // ALLE assets laden
-            GlobalData.ActiveExchange.Data.AssetList.Clear();
-
-            using var database = new CryptoDatabase();
-            foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
-            {
-                GlobalData.ActiveExchange.Data.AssetList.TryAdd(asset.Name, asset);
-            }
-        }
+            PaperAssets.LoadAssets(GlobalData.ActiveExchange);
     }
 
 
@@ -605,7 +601,7 @@ public class TradeTools
                             PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, step.Quantity, step.QuoteQuantityFilled, "TradeTools.CalculatePositionResultsViaOrders.Filled");
                             // Extract the initial base commission (papertrading/emulator)
                             if (step.CommissionBase > 0 || step.CommissionQuote > 0)
-                                PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, -step.CommissionBase, -step.CommissionQuote, "TradeTools.CalculatePositionResultsViaOrders.Fees");
+                                PaperAssets.BookCommission(GlobalData.ActiveExchange!, position.Symbol, step.CommissionBase, step.CommissionQuote, "TradeTools.CalculatePositionResultsViaOrders.Fees");
 
                             step.IsCalculated = true;
                             database.Connection.Update<CryptoPositionStep>(step);
@@ -894,7 +890,7 @@ public class TradeTools
         decimal remainingDust;
         decimal takeProfitQuantity = quantity;
         decimal takeProfitQuantityOriginal = quantity;
-        if (position.Symbol.Exchange.TradingType == CryptoTradingType.Futures)
+        if (position.Symbol.Exchange.TradingType != CryptoTradingType.Spot)
         {
             remainingDust = 0; // Futures deals with contracts and can never has dust
             takeProfitQuantity = quantity;
@@ -909,7 +905,7 @@ public class TradeTools
             // Only the level that absorbs the remainder (includeDust) should also absorb leftover
             // exchange dust - otherwise it would get added to every TP level's order.
             if (includeDust && GlobalData.Settings.Trading.AddDustToTp && position.Side == CryptoTradeSide.Long &&
-                position.Symbol.Exchange.TradingType != CryptoTradingType.Futures)
+                position.Symbol.Exchange.TradingType == CryptoTradingType.Spot)
             {
                 StringBuilder stringBuilder = new();
                 stringBuilder.AppendLine($"");
@@ -985,9 +981,12 @@ public class TradeTools
     public static decimal GetEntryAmount(CryptoSymbol symbol, decimal quoteAssetQuantity)
     {
         // Opmerking: Er is geen percentage bij papertrading mogelijk (of we moeten een werkende papertrade asset management implementeren)
+        // That working paper-trade asset management now exists: the balances are maintained on every
+        // order event and read back by AssetTools.GetAsset, so a percentage works for paper trading
+        // and the emulator too.
 
         // Heeft de gebruiker een percentage of een aantal ingegeven?
-        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading && symbol.QuoteData!.EntryPercentage > 0)
+        if (symbol.QuoteData!.EntryPercentage > 0)
             return (decimal)symbol.QuoteData.EntryPercentage * quoteAssetQuantity / 100.0m;
         else
             return symbol.QuoteData!.EntryAmount;

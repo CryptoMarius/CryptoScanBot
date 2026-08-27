@@ -112,8 +112,14 @@ public class TestBase
                     QuoteValueMaximum = 200000,
                 };
 
-                GlobalData.AddSymbol(symbol);
+                // Insert FIRST: it is what fills symbol.Id (autoincrement). AddSymbol indexes the
+                // symbol into SymbolListId under whatever Id it has at that moment, so doing it the
+                // other way round registered every test symbol under Id=0. The name index was still
+                // correct, which is why most tests never noticed - but every lookup by Id failed,
+                // and PositionTools.AddPosition is one of those: it silently did nothing, so a test
+                // position never reached PositionList.
                 database.Connection.Insert(symbol);
+                GlobalData.AddSymbol(symbol);
             }
 
             symbol.ClearCandles();

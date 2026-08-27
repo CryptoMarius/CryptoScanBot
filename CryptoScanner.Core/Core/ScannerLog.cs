@@ -59,7 +59,7 @@ public class ScannerLog
 
         // OperationAborted is a read that was cancelled because the socket was being closed. That is a
         // race inside the reconnect of the exchange library and not something of ours that broke: on
-        // 26-08-2026 all six of these (BitMart Futures four, Bitvavo Spot two) followed a
+        // 26-08-2026 all six of these (BitMart Perpetual four, Bitvavo Spot two) followed a
         // "connection lost" that was restored within three seconds, and neither exchange missed a
         // single minute of candles. The task belongs to the socket client of the package, so there is
         // no await of ours to put it behind - this handler IS where we get to see it.

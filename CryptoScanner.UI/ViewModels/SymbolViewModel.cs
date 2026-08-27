@@ -14,7 +14,7 @@ public class SymbolViewModel
     }
 
     // Immutable (never change after creation)
-    public string Symbol => Object.Name;
+    public string Symbol => Object.DisplayName;
 
     private string? _idText;
     public string Id

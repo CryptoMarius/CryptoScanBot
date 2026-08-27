@@ -107,8 +107,9 @@ public class ScannerSession : IScannerSession
         string? exchangeName = ApplicationParams.Options!.ExchangeName;
         if (exchangeName != null)
         {
-            // People forget to use the right casing
-            exchangeName = exchangeName.Trim();
+            // People forget to use the right casing, and a shortcut made before 27-08-2026 still says
+            // "<exchange> Futures" where the market is now called "<exchange> Perpetual"
+            exchangeName = GlobalData.FixLegacyExchangeName(exchangeName.Trim());
             string? found = GlobalData.ExchangeListName.Values.Where(x => x.Name.Equals(exchangeName, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault()?.Name;
 
             // An unknown name used to be lowercased and written into the settings anyway. That did
@@ -116,7 +117,7 @@ public class ScannerSession : IScannerSession
             // exist" as an unhandled thread exception, the screens then crashed on the null
             // ActiveExchange (PositionOpenGridViewModel.LoadOpenPositions), and the bad name was
             // saved to the settings file, so the next start was broken as well - without the -e.
-            // Seen on 15-08-2026 with -e "Coinbase Futures", which is simply not implemented (only
+            // Seen on 15-08-2026 with -e "Coinbase Perpetual", which is simply not implemented (only
             // Coinbase Spot is). Refuse here, where the name is still the user's typo, and say
             // which names DO exist.
             if (found == null)

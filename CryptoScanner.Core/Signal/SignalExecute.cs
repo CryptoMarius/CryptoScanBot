@@ -84,6 +84,17 @@ public class SignalExecute
     {
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
 
+        // The barometer rests on the quote coin and the side, not on the strategy or the interval, so
+        // every combination below reaches the same verdict and used to write the same line again. On
+        // BitMart Perpetual (8 intervals x 5 strategies on the long side) that put the identical
+        // rejection in the log up to twenty times on the same millisecond, and 19,800 of the 33,437
+        // lines of 26-08-2026 were those rejections - 59% of the file.
+        //
+        // Keyed on the text and not on the side: the consensus check below DOES vary per interval, so
+        // its message differs and still deserves its own line. Same text within one call means the
+        // same verdict, and once is enough.
+        HashSet<string> reactionsLogged = [];
+
         //List<CryptoSignal> signalList = [];
         foreach (var entry in Executing.ToList())
         {
@@ -99,7 +110,7 @@ public class SignalExecute
                             // Barometer check
                             if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveExchange!, symbol.Quote, TradingConfig.Signals[side].Barometer, out string reaction))
                             {
-                                if (TradingConfig.Signals[side].BarometerLog)
+                                if (TradingConfig.Signals[side].BarometerLog && reactionsLogged.Add($"{side} {reaction}"))
                                     GlobalData.AddTextToLogTab($"{symbol.Name} {side} {reaction}");
                                 continue;
                             }
@@ -109,7 +120,7 @@ public class SignalExecute
                                 !BarometerHelper.CheckConsensusBarometer(GlobalData.ActiveExchange!, symbol.Quote,
                                     interval.IntervalPeriod, TradingConfig.Signals[side].Barometer, TradingConfig.Signals[side].BarometerMinConsensus, side, out reaction))
                             {
-                                if (TradingConfig.Signals[side].BarometerLog)
+                                if (TradingConfig.Signals[side].BarometerLog && reactionsLogged.Add($"{side} {reaction}"))
                                     GlobalData.AddTextToLogTab($"{symbol.Name} {side} {reaction}");
                                 continue;
                             }

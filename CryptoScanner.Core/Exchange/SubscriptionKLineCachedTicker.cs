@@ -7,7 +7,7 @@ namespace CryptoScanner.Core.Exchange;
 /// <summary>
 /// Base class for exchanges that deliver kline data as a continuous stream of partial (open-candle)
 /// updates rather than a single definitive "final" event per closed candle (e.g. HyperLiquid, Kraken
-/// Futures). Encapsulates the per-symbol candle cache, the minute-boundary timer, the flush logic, and
+/// Perpetual). Encapsulates the per-symbol candle cache, the minute-boundary timer, the flush logic, and
 /// the flat-candle synthesis for minutes with no trades — eliminating the need to duplicate that
 /// machinery in every exchange-specific subclass.
 ///
@@ -112,7 +112,7 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
     /// <summary>
     /// Merge an individual trade into the running candle for <paramref name="exchangeName"/>.
     /// Volume is additive (each trade contributes its own quote volume). Call this from a
-    /// trade-stream callback (e.g. Kraken Futures which has no kline feed).
+    /// trade-stream callback (e.g. Kraken Perpetual which has no kline feed).
     /// Acquires the cache semaphore synchronously so trade ordering is preserved.
     /// </summary>
     protected void UpdateCacheFromTrade(string exchangeName,

@@ -71,6 +71,17 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
+            <!-- Close a position that has been open too long -->
+            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                  ToolTip.Tip="Days a position may stay open before it is closed at whatever the market offers, counted from the moment it was created. Zero switches it off. Decimals are allowed, so 0.5 is twelve hours. Meant for the rare position that walks away and never comes back: it holds capital that cannot be put to work anywhere else.">
+                <TextBlock Grid.Column="0" Text="Close position after (days):"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding MaxPositionDurationDays, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
             <!-- Slot Limits -->
             <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,2,0,0">
                 <StackPanel Margin="6" Spacing="4">

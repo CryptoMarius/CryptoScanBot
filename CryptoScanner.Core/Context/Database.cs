@@ -215,17 +215,17 @@ public class CryptoDatabase : IDisposable
         [
             // You must have an account and register the api key, otherwise "error unauthorized"
             new() { Name = "Alpaca", IsSupported = true, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Alpaca Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Futures},
+            new() { Name = "Alpaca Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Perpetual},
 
             new() { Name = "Binance Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Binance Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
+            new() { Name = "Binance Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Perpetual},
 
             // The spot side is small: the exchange offers 65 pairs here, of which 32 are quoted in USDT
             new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
-            new() { Name = "BitMart Futures", IsSupported = true, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
+            new() { Name = "BitMart Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Perpetual },
 
             new() { Name = "Bitvavo Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Bitvavo Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Futures},
+            new() { Name = "Bitvavo Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Perpetual},
 
             // The exchange does offer spot (241 instruments), but the BloFin.Net package (JKorf) only
             // implements the futures and account api - there is no spot client to talk to. The source
@@ -233,11 +233,11 @@ public class CryptoDatabase : IDisposable
             // was removed on 17-08-2026; only this registration is left, to keep the market visible as
             // an unsupported one.
             new() { Name = "BloFin Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Spot },
-            new() { Name = "BloFin Futures", IsSupported = true, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Futures },
+            new() { Name = "BloFin Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Perpetual },
 
             // Bybit global
             new() { Name = "Bybit Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Bybit Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Bybit Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Perpetual },
 
             // Bybit EU (the MiCA regulated european entity, api.bybit.eu) is a spot only exchange:
             // instruments-info returns 132 spot instruments (111 USDC, 17 EUR, 4 PLN) and an empty
@@ -246,32 +246,42 @@ public class CryptoDatabase : IDisposable
             // futures source was removed on 17-08-2026; only this registration is left, to keep the
             // market visible as an unsupported one.
             new() { Name = "Bybit EU Spot", IsSupported = true, ExchangeType = CryptoExchangeType.BybitEu, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Bybit EU Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BybitEu, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Bybit EU Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.BybitEu, TradingType=CryptoTradingType.Perpetual },
 
             // The kline stream of this exchange is fixed at 5 minutes, which is of no use for the 1m
-            // candles, so those are built from the trade feed instead (as with Kraken Futures).
+            // candles, so those are built from the trade feed instead (as with Kraken Perpetual).
             new() { Name = "Coinbase Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Spot },
             // There is no Coinbase futures implementation at all, ExchangeHelper.GetApi throws for it
-            new() { Name = "Coinbase Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Coinbase Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Perpetual },
 
             // HyperLiquid
             new() { Name = "HyperLiquid Spot", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Spot },
-            new() { Name = "HyperLiquid Futures", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Futures },
+            new() { Name = "HyperLiquid Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Perpetual },
 
-            // Kraken Futures has no kline websocket feed, the 1m candles are built from the trades
+            // Kraken Perpetual has no kline websocket feed, the 1m candles are built from the trades
             new() { Name = "Kraken Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Kraken Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Kraken Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Perpetual },
 
             new() { Name = "Kucoin Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Kucoin Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Kucoin Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Perpetual },
 
-            // Mexc Futures: market data only, the order endpoints of that exchange have been marked
+            // Mexc Perpetual: market data only, the order endpoints of that exchange have been marked
             // "(Under maintenance)" since 25-07-2022 - so it can be scanned but never traded on
             new() { Name = "Mexc Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Mexc Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Mexc Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Perpetual },
 
             new() { Name = "Okx Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Okx Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Okx Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Perpetual },
+
+            // A third market on the same exchange: same CryptoExchangeType, another product.
+            // "Okx Perpetual" above asks for InstrumentType.Swap, and every one of those 442 linear
+            // swaps is quoted and settled in USDT - Okx has no USDC swap at all (BTC-USDC-SWAP answers
+            // with error 51001). The USDC route on this exchange runs over the USD_UM family, which Okx
+            // markets as X-Perps and reports under InstrumentType.Futures with ruleType xperp: they
+            // settle in USD value, payable in USDC, and take USDC as margin. Keeping them in their own
+            // market separates them in the symbol list, the candle database and the settings, which the
+            // USDT quote of Okx Perpetual needs anyway.
+            new() { Name = "Okx XPerp", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.XPerp },
         ];
     }
 
@@ -316,6 +326,7 @@ public class CryptoDatabase : IDisposable
                 "Base TEXT NOT NULL," +
                 "Quote TEXT NOT NULL," +
                 "ExchangeName TEXT NOT NULL," +
+                "SubMarket TEXT NOT NULL DEFAULT ''," +
                 "Status INTEGER NOT NULL," +
                 "Volume TEXT NULL," +
 
@@ -339,7 +350,7 @@ public class CryptoDatabase : IDisposable
                 "LastTradeDate TEXT NULL," +
                 "LastLossDate TEXT NULL," +
 
-                // Bybit Futures, ondersteunen van de FundingRate en FundingInterval
+                // Bybit Perpetual, ondersteunen van de FundingRate en FundingInterval
                 "FundingRate TEXT NULL," +
                 "FundingInterval TEXT NULL," +
 

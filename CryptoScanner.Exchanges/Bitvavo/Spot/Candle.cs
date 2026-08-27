@@ -64,7 +64,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 // Bitvavo reports the volume in the BASE asset (140.87 BTC for a day of BTC-EUR),
                 // while the scanner works in quote volume everywhere else - the 24 hour volume of
                 // the symbol comes from volumeQuote as well. Convert it with the middle of the
-                // candle, the same way Kraken Futures does.
+                // candle, the same way Kraken Perpetual does.
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, bar.OpenTime,
                     bar.Open, bar.High, bar.Low, bar.Close,
                     bar.Volume * 0.5m * (bar.High + bar.Low));

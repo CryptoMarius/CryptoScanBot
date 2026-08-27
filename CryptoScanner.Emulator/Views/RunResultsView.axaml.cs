@@ -130,7 +130,17 @@ public partial class RunResultsView : UserControl
     }
 
 
-    private void OnRunDoubleTapped(object? sender, TappedEventArgs e)
+    private void OnRunDoubleTapped(object? sender, TappedEventArgs e) => ShowPositionsForSelectedRun();
+
+
+    private void OnShowPositionsClick(object? sender, RoutedEventArgs e) => ShowPositionsForSelectedRun();
+
+
+    /// <summary>
+    /// Opens the positions window for the currently selected run. Shared by the double-click and by
+    /// the "Show positions…" context-menu entry so both do exactly the same thing.
+    /// </summary>
+    private void ShowPositionsForSelectedRun()
     {
         if (RunsGrid.SelectedItem is not RunRow row)
             return;

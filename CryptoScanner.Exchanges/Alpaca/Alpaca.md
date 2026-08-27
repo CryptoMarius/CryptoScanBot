@@ -45,7 +45,7 @@ because Alpaca authenticates every request, including market data.
   the usual `Subscribe()` pattern, and why `Symbol.GetSymbolsAsync` passes `null` for
   the `api` parameter.
 * **Spot only.** There is no futures variant; `ExchangeHelper` throws for
-  `CryptoTradingType.Futures`.
+  `CryptoTradingType.Perpetual`.
 * **One asset per symbol.** The ticker is used as both exchange name and base, with USD
   as the fixed quote. This mirrors how HyperLiquid handles single-asset instruments.
 * **Market hours.** US equities do not trade 24/7. Gaps in the candle series over nights,

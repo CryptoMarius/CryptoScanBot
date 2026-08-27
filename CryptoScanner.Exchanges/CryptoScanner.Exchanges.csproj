@@ -24,23 +24,23 @@
     compile.
   -->
   <ItemGroup>
-    <Compile Remove="Binance\Futures\Asset.cs" />
-    <Compile Remove="Binance\Futures\Order.cs" />
-    <Compile Remove="Binance\Futures\SubscriptionPriceTicker.cs" />
-    <Compile Remove="Binance\Futures\SubscriptionUserTicker.cs" />
-    <Compile Remove="Binance\Futures\Trade.cs" />
+    <Compile Remove="Binance\Perpetual\Asset.cs" />
+    <Compile Remove="Binance\Perpetual\Order.cs" />
+    <Compile Remove="Binance\Perpetual\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Binance\Perpetual\SubscriptionUserTicker.cs" />
+    <Compile Remove="Binance\Perpetual\Trade.cs" />
     <Compile Remove="Binance\Spot\Asset.cs" />
     <Compile Remove="Binance\Spot\FetchTradesForOrder.cs" />
     <Compile Remove="Binance\Spot\Order.cs" />
     <Compile Remove="Binance\Spot\SubscriptionPriceTicker.cs" />
     <Compile Remove="Binance\Spot\SubscriptionUserTicker.cs" />
     <Compile Remove="Binance\Spot\Trade.cs" />
-    <Compile Remove="BybitApi\Futures\Asset.cs" />
-    <Compile Remove="BybitApi\Futures\FetchTradesForOrder.cs" />
-    <Compile Remove="BybitApi\Futures\Order.cs" />
-    <Compile Remove="BybitApi\Futures\SubscriptionPriceTicker.cs" />
-    <Compile Remove="BybitApi\Futures\SubscriptionUserTicker.cs" />
-    <Compile Remove="BybitApi\Futures\Trade.cs" />
+    <Compile Remove="BybitApi\Perpetual\Asset.cs" />
+    <Compile Remove="BybitApi\Perpetual\FetchTradesForOrder.cs" />
+    <Compile Remove="BybitApi\Perpetual\Order.cs" />
+    <Compile Remove="BybitApi\Perpetual\SubscriptionPriceTicker.cs" />
+    <Compile Remove="BybitApi\Perpetual\SubscriptionUserTicker.cs" />
+    <Compile Remove="BybitApi\Perpetual\Trade.cs" />
     <Compile Remove="BybitApi\Spot\Asset.cs" />
     <Compile Remove="BybitApi\Spot\FetchTradesForOrder.cs" />
     <Compile Remove="BybitApi\Spot\Order.cs" />

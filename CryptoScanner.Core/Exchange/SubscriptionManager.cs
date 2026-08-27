@@ -272,7 +272,7 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     /// <para>
     /// Every subscription is one message to the exchange, and they all used to leave in the same
     /// instant. Exchanges that bound the number of messages per second answer that with a refusal for
-    /// part of the set - on the night of 17-08-2026 HyperLiquid Futures logged "retry - started for 55
+    /// part of the set - on the night of 17-08-2026 HyperLiquid Perpetual logged "retry - started for 55
     /// symbols" after a restart of 70, and those refusals set the restart flag again, which triggered
     /// the next restart. Spreading them costs at most ten seconds of a run that lasts all night.
     /// </para>
@@ -462,7 +462,7 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
         {
             // Name the subscriptions and say WHY each one is being restarted. Without this the log only
             // said how many, and a market that restarts the same handful every time is then
-            // indistinguishable from one that restarts a different set each round. Kucoin Futures did
+            // indistinguishable from one that restarts a different set each round. Kucoin Perpetual did
             // exactly that on the night of 24/25-08-2026: eleven rounds, exactly fifty minutes apart,
             // always three subscriptions - and nothing in the log or the stored candles could say which
             // three, because the only line carrying the name sits at Trace level in NeedsRestart.

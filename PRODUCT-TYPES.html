@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Producttypes op een exchange - wat betekenen ze?</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1d21;
+    --muted: #5b6572;
+    --line: #e2e6ea;
+    --panel: #f7f9fb;
+    --accent: #2563eb;
+    --yes: #16794a;
+    --yes-bg: #e8f6ee;
+    --no: #9a3412;
+    --no-bg: #fdf0e6;
+    --maybe: #6b21a8;
+    --maybe-bg: #f4ecfb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171a;
+      --fg: #e8ebee;
+      --muted: #9aa4b0;
+      --line: #2b3138;
+      --panel: #1b1f24;
+      --accent: #7aa2f7;
+      --yes: #7ee0ac;
+      --yes-bg: #16281f;
+      --no: #f0a878;
+      --no-bg: #2b1e14;
+      --maybe: #d0aef5;
+      --maybe-bg: #241a2e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto; padding: 32px 24px 80px; max-width: 1000px;
+    background: var(--bg); color: var(--fg);
+    font: 16px/1.65 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  h1 { font-size: 30px; line-height: 1.25; margin: 0 0 6px; letter-spacing: -0.4px; }
+  h2 { font-size: 22px; margin: 44px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--line); letter-spacing: -0.2px; }
+  h3 { font-size: 17px; margin: 0 0 6px; }
+  p { margin: 0 0 12px; }
+  .lead { color: var(--muted); font-size: 15px; margin-bottom: 28px; }
+  a { color: var(--accent); }
+
+  .toc { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; margin: 24px 0 8px; }
+  .toc ol { margin: 6px 0 0; padding-left: 22px; }
+  .toc li { margin: 3px 0; }
+
+  .card {
+    border: 1px solid var(--line); border-left: 5px solid var(--line);
+    border-radius: 10px; padding: 18px 20px; margin: 16px 0; background: var(--panel);
+  }
+  .card.yes { border-left-color: var(--yes); }
+  .card.no  { border-left-color: var(--no); }
+  .card.gap { border-left-color: var(--maybe); }
+  .card .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+  .card .alias { color: var(--muted); font-size: 14px; }
+
+  .badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .badge.yes { background: var(--yes-bg); color: var(--yes); }
+  .badge.no  { background: var(--no-bg);  color: var(--no); }
+  .badge.gap { background: var(--maybe-bg); color: var(--maybe); }
+
+  dl.facts { display: grid; grid-template-columns: 190px 1fr; gap: 6px 18px; margin: 12px 0 0; font-size: 15px; }
+  dl.facts dt { color: var(--muted); }
+  dl.facts dd { margin: 0; }
+  @media (max-width: 620px) {
+    dl.facts { grid-template-columns: 1fr; gap: 2px; }
+    dl.facts dt { margin-top: 8px; font-weight: 600; }
+  }
+
+  .scroll { overflow-x: auto; margin: 14px 0 4px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { background: var(--panel); font-weight: 600; white-space: nowrap; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr:hover td { background: var(--panel); }
+
+  .note { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 18px 0; font-size: 15px; }
+  code { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: 13.5px; }
+  footer { margin-top: 56px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px; }
+  @media print { body { max-width: none; } .card, .note, th { background: none; } }
+</style>
+</head>
+<body>
+
+<h1>Producttypes op een exchange</h1>
+<p class="lead">Wat een exchange precies verkoopt, in gewone taal - en wat de scanner ermee doet. Peildatum 27 augustus 2026.</p>
+
+<div class="toc">
+  <strong>Inhoud</strong>
+  <ol>
+    <li><a href="#drie">Drie vragen die alles bepalen</a></li>
+    <li><a href="#types">De producttypes, een voor een</a></li>
+    <li><a href="#exchanges">Wat elke exchange heeft</a></li>
+    <li><a href="#usdc">USDC, en waarom dat in Europa uitmaakt</a></li>
+    <li><a href="#woorden">Woordenlijst</a></li>
+  </ol>
+</div>
+
+<h2 id="drie">1. Drie vragen die alles bepalen</h2>
+
+<p>Een exchange verkoopt zelden een ding. Achter een woord als "futures" zitten vijf tot tien varianten die
+onderling flink verschillen. U kunt elk product terugbrengen tot drie vragen.</p>
+
+<div class="card">
+  <h3>Vraag 1 - Krijgt u de munt zelf, of een afspraak over de prijs?</h3>
+  <p>Bij <strong>spot</strong> koopt u de munt echt: er staat daarna bitcoin op uw account. Bij een
+  <strong>contract</strong> koopt u niets tastbaars, u sluit een afspraak over de prijs. U kunt daarbij ook
+  omlaag mikken (short) en u kunt met geleend geld werken (hefboom).</p>
+</div>
+
+<div class="card">
+  <h3>Vraag 2 - Waarin wordt afgerekend?</h3>
+  <p>De winst moet ergens in uitgekeerd worden. Twee smaken:</p>
+  <p><strong>Lineair</strong>: u zet dollars in en krijgt dollars terug (meestal USDT of USDC). Stijgt bitcoin
+  10 procent, dan is uw winst 10 procent van uw inleg. Simpel te rekenen.</p>
+  <p><strong>Inverse</strong>: u zet bitcoin in en krijgt bitcoin terug. Uw winst is dan in munten, en die munt
+  beweegt zelf ook. Twee bewegingen door elkaar, en de scanner rekent daar niet mee.</p>
+</div>
+
+<div class="card">
+  <h3>Vraag 3 - Loopt het een keer af?</h3>
+  <p>Een <strong>perpetual</strong> loopt nooit af. U houdt een positie zolang u wilt. Een
+  <strong>termijncontract</strong> heeft een einddatum: op die dag wordt het afgerekend en houdt het op te
+  bestaan. Daarna verhuist de handel naar het volgende contract, met een nieuwe naam.</p>
+  <p>Dat laatste is voor de scanner een probleem. De candle-geschiedenis hangt aan de naam van het instrument.
+  Verloopt het contract, dan is die geschiedenis van een instrument dat niet meer bestaat.</p>
+</div>
+
+<h2 id="types">2. De producttypes, een voor een</h2>
+
+<div class="card yes">
+  <div class="head"><h3>Spot</h3><span class="alias">handelspaar, cash market</span><span class="badge yes">de scanner doet dit</span></div>
+  <p>U koopt de munt zelf, met geld dat u heeft. Geen einddatum, geen hefboom, geen kosten om een positie aan te
+  houden. Wat u koopt kunt u opnemen naar een eigen wallet.</p>
+  <dl class="facts">
+    <dt>Voorbeeld</dt><dd>BTC/USDC op Coinbase</dd>
+    <dt>Afrekening</dt><dd>in de tweede munt van het paar (de quote)</dd>
+    <dt>Kosten om aan te houden</dt><dd>geen</dd>
+    <dt>Voor de scanner</dt><dd>het eenvoudigste geval; prijs en volume zijn direct bruikbaar</dd>
+  </dl>
+</div>
+
+<div class="card no">
+  <div class="head"><h3>Margin</h3><span class="alias">spot met geleend geld</span><span class="badge no">bewust niet</span></div>
+  <p>Gewone spothandel, maar de exchange leent u geld bij zodat u voor meer kunt kopen dan u heeft. Het is
+  geen apart product: het zijn dezelfde handelsparen, met een lening eromheen. OKX geeft ze zelfs terug als een
+  aparte lijst van 196 stuks, maar het zijn dezelfde markten als in de spotlijst.</p>
+  <dl class="facts">
+    <dt>Voor de scanner</dt><dd>niets nieuws - dezelfde candles als spot. Alleen bij het handelen zelf zou het iets betekenen.</dd>
+  </dl>
+</div>
+
+<div class="card yes">
+  <div class="head"><h3>Perpetual, lineair</h3><span class="alias">perp, perpetual swap, USDT-margined</span><span class="badge yes">de scanner doet dit</span></div>
+  <p>Verreweg het belangrijkste product in crypto. Een contract op de prijs van bitcoin dat nooit afloopt. U zet
+  USDT of USDC in als onderpand en krijgt uw winst in diezelfde munt.</p>
+  <p>Omdat er geen einddatum is die de prijs terugtrekt naar de echte markt, is er een ander mechanisme nodig:
+  de <strong>funding</strong>. Elke acht uur (soms elk uur) betaalt de ene kant de andere een klein bedrag.
+  Staat de contractprijs boven de echte prijs, dan betalen de kopers aan de verkopers, en dat duwt de boel weer
+  bij elkaar. Voor een positie die u een paar uur aanhoudt is dat verwaarloosbaar; voor een positie van weken
+  telt het op.</p>
+  <dl class="facts">
+    <dt>Voorbeeld</dt><dd>BTCUSDT op Binance, BTC-PERP op Coinbase International</dd>
+    <dt>Afrekening</dt><dd>USDT of USDC</dd>
+    <dt>Kosten om aan te houden</dt><dd>funding, meestal elke acht uur</dd>
+    <dt>Voor de scanner</dt><dd>dit heette tot 27 augustus 2026 "Futures", wat de verkeerde naam was: een future loopt af en deze niet. De markten heten nu "Binance Perpetual", "Bybit Perpetual", enzovoort.</dd>
+  </dl>
+</div>
+
+<div class="card no">
+  <div class="head"><h3>Perpetual, inverse</h3><span class="alias">coin-margined, COIN-M, crypto-margined</span><span class="badge no">bewust niet</span></div>
+  <p>Hetzelfde contract, maar u zet bitcoin in en u krijgt bitcoin terug. Handig als u toch al bitcoin aanhoudt
+  en die niet wilt verkopen. Lastig om te rekenen: uw winst in munten is iets anders waard zodra de munt
+  beweegt, en dat is precies wat er gebeurt als uw positie winst maakt.</p>
+  <dl class="facts">
+    <dt>Voorbeeld</dt><dd>BTCUSD_PERP op Binance COIN-M, PI_XBTUSD op Kraken</dd>
+    <dt>Afrekening</dt><dd>in de munt zelf (bitcoin, ether, ...)</dd>
+    <dt>Aantallen</dt><dd>klein: 4 tot 30 per exchange, tegenover honderden lineaire</dd>
+    <dt>Voor de scanner</dt><dd>de winstberekening klopt niet en prijs en volume zijn niet te vergelijken met de rest. We slaan ze over.</dd>
+  </dl>
+</div>
+
+<div class="card no">
+  <div class="head"><h3>Termijncontract met einddatum</h3><span class="alias">dated futures, kwartaalcontract, delivery futures</span><span class="badge no">bewust niet</span></div>
+  <p>Dit is wat een econoom "futures" noemt: een contract dat op een afgesproken dag afloopt. U ziet de datum
+  in de naam staan, bijvoorbeeld <code>BTCUSDT_260925</code> voor 25 september 2026. Op die dag wordt het
+  afgerekend tegen de dan geldende prijs en is het contract weg.</p>
+  <p>De prijs wijkt af van de spotprijs, en dat verschil loopt naar nul naarmate de einddatum nadert. Twee
+  contracten op dezelfde munt met twee einddatums hebben dus twee verschillende prijzen.</p>
+  <dl class="facts">
+    <dt>Voorbeeld</dt><dd>BTC-USD_UM-260925 op OKX, BIT-28AUG26-CDE op Coinbase</dd>
+    <dt>Voor de scanner</dt><dd>de candle-geschiedenis hangt aan de instrumentnaam. Bij elke doorrol verandert die naam en is de geschiedenis onbruikbaar. Daarom niet.</dd>
+  </dl>
+</div>
+
+<div class="card no">
+  <div class="head"><h3>Opties</h3><span class="alias">calls en puts</span><span class="badge no">bewust niet</span></div>
+  <p>Het recht - niet de plicht - om te kopen of te verkopen tegen een vaste prijs, tot een vaste datum. Per
+  munt bestaan er honderden varianten tegelijk: elke combinatie van datum en prijs is een eigen instrument.
+  Bitcoin op OKX heeft er 838.</p>
+  <p>De waarde hangt niet alleen aan de prijs van de munt, maar ook aan de tijd tot de einddatum en aan hoe
+  onrustig de markt is. Een grafiek met candles zegt daar weinig over.</p>
+  <dl class="facts">
+    <dt>Waar</dt><dd>Binance 1.774 stuks, Bybit 754, OKX 1.578 (alleen bitcoin en ether)</dd>
+    <dt>Voor de scanner</dt><dd>past niet in het model. Het gaat niet om een prijs die stijgt of daalt.</dd>
+  </dl>
+</div>
+
+<div class="card yes">
+  <div class="head"><h3>Perpetual met gemengd onderpand</h3><span class="alias">USD-margined, USD_UM, X-Perps (OKX)</span><span class="badge yes">de scanner doet dit</span></div>
+  <p>De nieuwste variant, en de reden dat dit stuk er ligt. Het contract luidt in dollars, maar u mag zelf
+  kiezen waarmee u betaalt: USDC, euro, bitcoin, ether. De exchange rekent alles om naar dollarwaarde en houdt
+  daar een gezamenlijke boekhouding voor aan.</p>
+  <p>OKX noemt het <strong>X-Perps</strong>. In de instrumentenlijst zien ze eruit als termijncontracten - er
+  staat zelfs een einddatum in de naam - maar die datum ligt in 2031 en er is gewoon funding. In de praktijk
+  zijn het perpetuals.</p>
+  <dl class="facts">
+    <dt>Voorbeeld</dt><dd><code>BTC-USD_UM_XPERP-310404</code> op OKX</dd>
+    <dt>Afrekening</dt><dd>in dollarwaarde, uit te betalen in USDC of een andere toegestane munt</dd>
+    <dt>Waarom het telt</dt><dd>dit is bij OKX de enige manier om iets met USDC te doen dat op een perpetual lijkt. USDC-swaps bestaan daar niet.</dd>
+    <dt>Voor de scanner</dt><dd>sinds 27 augustus 2026 een eigen markt, "Okx XPerp", naast "Okx Spot" en "Okx Perpetual" — dezelfde exchange, een ander product. 152 contracten, waarvan 86 boven de volumegrens. De symbolen heten BTCUSD, want dat is wat het instrument zelf zegt.</dd>
+  </dl>
+</div>
+
+<div class="card gap">
+  <div class="head"><h3>Perpetual op aandelen en grondstoffen</h3><span class="alias">TradFi perpetual</span><span class="badge gap">nog niet</span></div>
+  <p>Precies hetzelfde contract als een gewone perpetual, alleen gaat het niet over een munt maar over goud,
+  olie, de S&amp;P 500 of het aandeel Tesla. U rekent nog steeds af in USDT of USDC en u krijgt nooit een echt
+  aandeel; het gaat puur om de prijs.</p>
+  <p>Of zoiets in de scanner staat, hangt volledig af van hoe de exchange het indeelt. Bybit, OKX, BloFin en
+  Kucoin zetten ze gewoon tussen de crypto-perpetuals, dus die krijgen we vanzelf mee. Binance zet ze in een
+  eigen soort <code>TRADIFI_PERPETUAL</code> en HyperLiquid in een aparte deelmarkt, en daar staan we op nul.</p>
+  <dl class="facts">
+    <dt>Voorbeeld</dt><dd>XAUUSDT (goud) en TSLAUSDT op Binance</dd>
+    <dt>Let op</dt><dd>de onderliggende markt is 's nachts en in het weekend dicht. De perpetual handelt door, maar met een veel dunner orderboek. Dat geeft gaten en sprongen in de candles.</dd>
+  </dl>
+</div>
+
+<div class="card gap">
+  <div class="head"><h3>Deelmarkten van derden</h3><span class="alias">builder-deployed perp dexes (HyperLiquid)</span><span class="badge gap">nog niet</span></div>
+  <p>Alleen HyperLiquid. Naast de eigen markt mogen externe partijen daar hun eigen perpetual-markt neerzetten,
+  op dezelfde techniek. Het zijn gewone lineaire perpetuals in USDC, maar ze staan in een aparte lijst die u
+  apart moet opvragen.</p>
+  <p>De grootste, <code>xyz</code>, is inmiddels 102 markten en bijna de helft van het volume van de hoofdmarkt
+  van HyperLiquid zelf. De namen dragen het voorvoegsel van de deelmarkt (<code>xyz:GOLD</code>), dus botsen
+  met de hoofdmarkt kan niet.</p>
+</div>
+
+<div class="card no">
+  <div class="head"><h3>Pre-market</h3><span class="alias">pre-launch, preopen</span><span class="badge no">valt vanzelf af</span></div>
+  <p>Handel in een munt die nog niet bestaat, vooruitlopend op de uitgifte. De prijs is een gok, het volume is
+  dun en de exchange kan het contract nog aanpassen. OKX heeft er drie.</p>
+  <dl class="facts">
+    <dt>Voor de scanner</dt><dd>ze hebben vaak nog geen base- en quotemunt ingevuld en vallen daarom al af op de controle die we hebben.</dd>
+  </dl>
+</div>
+
+<h2 id="exchanges">3. Wat elke exchange heeft</h2>
+
+<p>Uit de publieke instrumentenlijst van elke exchange, op 27 augustus 2026. "Wij halen op" is wat de scanner
+in deze vorm ophaalt.</p>
+
+<div class="scroll">
+<table>
+  <thead>
+    <tr><th>Exchange</th><th>Wat er is</th><th>Wij halen op</th><th>Blijft liggen</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Alpaca</td>
+      <td>Amerikaanse aandelen, cryptospot, aandelenopties</td>
+      <td>aandelen</td>
+      <td>cryptospot, opties</td>
+    </tr>
+    <tr>
+      <td>Binance</td>
+      <td>spot 1.358; perpetual 567; perpetual op aandelen en grondstoffen 175; kwartaalcontracten 4; inverse 30; opties 1.774</td>
+      <td>spot 1.358, perpetual 567</td>
+      <td><strong>de 175 op aandelen en grondstoffen</strong>, kwartaal, inverse, opties</td>
+    </tr>
+    <tr>
+      <td>BitMart</td>
+      <td>spot 65; perpetual 355; inverse 4</td>
+      <td>perpetual 355 (na de volumezeef blijven er 96 over)</td>
+      <td>spot (die instantie staat uit), inverse</td>
+    </tr>
+    <tr>
+      <td>Bitvavo</td>
+      <td>alleen spot 441</td>
+      <td>spot 441</td>
+      <td>niets - de exchange heeft geen derivaten</td>
+    </tr>
+    <tr>
+      <td>BloFin</td>
+      <td>perpetual 467; inverse 14</td>
+      <td>perpetual 467</td>
+      <td>inverse</td>
+    </tr>
+    <tr>
+      <td>Bybit</td>
+      <td>spot 549; perpetual 800; termijncontracten 40; inverse 26; opties 754</td>
+      <td>spot 549, perpetual 800</td>
+      <td>termijn, inverse, opties</td>
+    </tr>
+    <tr>
+      <td>Bybit EU</td>
+      <td>alleen spot 133</td>
+      <td>spot 133</td>
+      <td>niets - de Europese tak heeft nog geen derivaten</td>
+    </tr>
+    <tr>
+      <td>Coinbase</td>
+      <td>spot 929; termijncontracten 119; en op de aparte International-omgeving: perpetual 264 en spot 46, alles in USDC</td>
+      <td>spot 929</td>
+      <td><strong>de 264 perpetuals van International</strong>, termijncontracten</td>
+    </tr>
+    <tr>
+      <td>HyperLiquid</td>
+      <td>spot 326; perpetual 176 op de hoofdmarkt; 148 in tien deelmarkten van derden</td>
+      <td>spot 326, perpetual 176</td>
+      <td><strong>de deelmarkten van derden</strong></td>
+    </tr>
+    <tr>
+      <td>Kraken</td>
+      <td>spot 1.382; perpetual 276; termijncontracten 8; inverse perpetual 4; inverse termijn 10</td>
+      <td>spot 1.382, perpetual 276</td>
+      <td>termijn, inverse</td>
+    </tr>
+    <tr>
+      <td>Kucoin</td>
+      <td>spot 1.002; perpetual 668; inverse 5</td>
+      <td>spot 1.002, perpetual 668</td>
+      <td>inverse</td>
+    </tr>
+    <tr>
+      <td>Mexc</td>
+      <td>spot 2.123; perpetual 1.132; inverse 10</td>
+      <td>spot 2.123, perpetual 1.132</td>
+      <td>inverse</td>
+    </tr>
+    <tr>
+      <td>Okx</td>
+      <td>spot 1.383; margin 196; perpetual 442; inverse perpetual 15; met gemengd onderpand 155; termijncontracten 32; opties 1.578</td>
+      <td>spot 1.383, perpetual 442, met gemengd onderpand 152</td>
+      <td>margin, inverse, termijn, opties</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="usdc">4. USDC, en waarom dat in Europa uitmaakt</h2>
+
+<p>Sinds 1 juli 2026 mag een exchange met een Europese vergunning geen USDT meer aanbieden aan klanten in de
+Europese Economische Ruimte. USDT voldoet niet aan de Europese regels voor stablecoins; USDC en EURC wel. Wie
+vanuit Europa handelt op een Europese tak, houdt dus USDC en euro over.</p>
+
+<p>Voor de scanner betekent dat: bij elke exchange is de vraag waar de USDC-markten zitten, en of we daar met
+het huidige ophaalpad bij komen.</p>
+
+<div class="scroll">
+<table>
+  <thead>
+    <tr><th>Exchange</th><th class="num">USDC spot</th><th class="num">USDC perpetual</th><th>Staat het in de scanner?</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Binance</td><td class="num">267</td><td class="num">38</td><td>ja, allebei</td></tr>
+    <tr><td>BitMart</td><td class="num">12</td><td class="num">1</td><td>de perpetual wel, spot draait niet</td></tr>
+    <tr><td>Bitvavo</td><td class="num">11</td><td class="num">-</td><td>ja</td></tr>
+    <tr><td>BloFin</td><td class="num">-</td><td class="num">10</td><td>ja</td></tr>
+    <tr><td>Bybit</td><td class="num">86</td><td class="num">68</td><td>ja, allebei</td></tr>
+    <tr><td>Bybit EU</td><td class="num">112</td><td class="num">-</td><td>ja</td></tr>
+    <tr><td>Coinbase</td><td class="num">409</td><td class="num">264</td><td>spot ja, de perpetuals staan op International en die halen we niet op</td></tr>
+    <tr><td>HyperLiquid</td><td class="num">309</td><td class="num">176</td><td>ja - daar is alles USDC</td></tr>
+    <tr><td>Kraken</td><td class="num">44</td><td class="num">0</td><td>spot ja. De perpetuals luiden in dollar, maar u mag USDC als onderpand inleggen.</td></tr>
+    <tr><td>Kucoin</td><td class="num">58</td><td class="num">5</td><td>ja, allebei</td></tr>
+    <tr><td>Mexc</td><td class="num">246</td><td class="num">78</td><td>ja, allebei</td></tr>
+    <tr><td>Okx</td><td class="num">265</td><td class="num">0</td><td>spot ja. USDC-swaps bestaan er niet; de USDC-route loopt via de contracten met gemengd onderpand, en die staan sinds 27 augustus 2026 in de markt "Okx XPerp".</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <strong>Let op het verschil tussen de munt in de naam en de munt waarmee u betaalt.</strong>
+  Bij Kraken en bij de X-Perps van OKX staat er "USD" in de naam, terwijl u in de praktijk USDC inlegt. Een
+  markt met USDC in de naam is dus niet hetzelfde als een markt die u met USDC kunt handelen - en andersom.
+</div>
+
+<h2 id="woorden">5. Woordenlijst</h2>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>Term</th><th>In gewone taal</th></tr></thead>
+  <tbody>
+    <tr><td>Base en quote</td><td>In BTC/USDC is BTC de base (wat u koopt) en USDC de quote (waarin de prijs staat).</td></tr>
+    <tr><td>Onderpand (margin)</td><td>Wat u opzij zet zodat de exchange u een positie laat innemen die groter is dan uw inleg.</td></tr>
+    <tr><td>Afrekenmunt (settlement)</td><td>De munt waarin uw winst of verlies wordt uitgekeerd. Hoeft niet dezelfde te zijn als de quote.</td></tr>
+    <tr><td>Funding</td><td>Kleine betaling tussen kopers en verkopers van een perpetual, meestal elke acht uur, die de contractprijs bij de echte prijs houdt.</td></tr>
+    <tr><td>Lineair</td><td>Inleg en uitbetaling in dollars of een stablecoin. Winst is recht evenredig met de prijsbeweging.</td></tr>
+    <tr><td>Inverse</td><td>Inleg en uitbetaling in de munt zelf. Winst hangt aan twee bewegingen tegelijk.</td></tr>
+    <tr><td>Perpetual</td><td>Contract zonder einddatum.</td></tr>
+    <tr><td>Doorrollen</td><td>Een aflopend contract sluiten en het volgende openen. Kost geld en breekt de geschiedenis.</td></tr>
+    <tr><td>Open interest</td><td>Hoeveel contracten er op dit moment openstaan. Zegt iets over hoe druk een markt is.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<footer>
+  Cijfers uit de publieke instrumentenlijsten van de exchanges zelf, opgehaald op 27 augustus 2026. Aantallen
+  zijn instrumenten met de status "in handel", voordat de scanner er zijn eigen volumezeef overheen legt.
+</footer>
+
+</body>
+</html>

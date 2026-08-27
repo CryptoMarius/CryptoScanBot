@@ -22,7 +22,7 @@ public class SignalViewModel
             SignalColumnEnum.Id => Object.Id.ToString(),
             SignalColumnEnum.Date => FormatDate(),
             SignalColumnEnum.Exchange => Object.Exchange?.Name ?? "",
-            SignalColumnEnum.Symbol => Object.Symbol?.Name ?? "",
+            SignalColumnEnum.Symbol => Object.Symbol?.DisplayName ?? "",
             SignalColumnEnum.Side => Object.SideText,
             SignalColumnEnum.Interval => Object.Interval?.Name ?? "",
             SignalColumnEnum.Strategy => Object.StrategyText,

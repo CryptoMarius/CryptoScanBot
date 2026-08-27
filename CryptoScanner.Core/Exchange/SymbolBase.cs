@@ -23,17 +23,23 @@ public class SymbolBase()
         public string ScannerName { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// Where the exchange dumps (symbols.json, tickers.json) go: straight into the data folder.
+    /// They used to sit in a subfolder named after the market, which said nothing extra - a data
+    /// folder serves one market. Subfolders left by an older version can be deleted by hand.
+    /// </summary>
+    private static string ExchangeInfoFileName(string name)
+    {
+        return Path.Combine(GlobalData.AppDataFolder, name);
+    }
+
     internal static void SaveExchangeInfo(object exchangeInfo, string name = "symbols.json")
     {
         // Save for debug
         try
         {
-            string folderName = Path.Combine(GlobalData.AppDataFolder, ExchangeBase.ExchangeOptions.ExchangeName);
-            Directory.CreateDirectory(folderName);
-            string filename = Path.Combine(folderName, name);
-
             string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
-            File.WriteAllText(filename, text);
+            File.WriteAllText(ExchangeInfoFileName(name), text);
         }
         catch
         {
@@ -53,11 +59,7 @@ public class SymbolBase()
         // Save for debug
         try
         {
-            string folderName = Path.Combine(GlobalData.AppDataFolder, ExchangeBase.ExchangeOptions.ExchangeName);
-            Directory.CreateDirectory(folderName);
-            string filename = Path.Combine(folderName, name);
-
-            File.WriteAllText(filename, text);
+            File.WriteAllText(ExchangeInfoFileName(name), text);
         }
         catch
         {
@@ -110,7 +112,7 @@ public class SymbolBase()
     /// <summary>
     /// Turns a number of decimals into a tick size (3 -> 0.001). Multiplying stays exact in decimal,
     /// where the Math.Pow detour would go through a double first. Negative decimals are valid and
-    /// mean the opposite (Kraken Futures states -2 for a contract that trades in steps of 100).
+    /// mean the opposite (Kraken Perpetual states -2 for a contract that trades in steps of 100).
     /// <para>
     /// Exchanges state their precision either way: as a tick size (Binance stepSize, Okx lotSize) or
     /// as a number of decimals (Kraken lot_decimals, HyperLiquid szDecimals). Only the first kind can

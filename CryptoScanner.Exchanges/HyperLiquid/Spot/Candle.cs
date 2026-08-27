@@ -47,7 +47,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         // This one needs the retry more than the others: HyperLiquid grants 1200 request weight per
         // minute and an info request such as this one weighs 20, so the library's rate limiter holds
         // us to exactly 60 requests per minute - measured over the night of 19/20-08-2026, 58 minutes
-        // on Futures and 150 on Spot sat at precisely that ceiling. Running permanently AT the
+        // on Perpetual and 150 on Spot sat at precisely that ceiling. Running permanently AT the
         // documented budget leaves no room for the calls the limiter does not see coming (the symbol
         // and ticker refresh), which is where the four rejections of that night came from.
         int attempt = 0;

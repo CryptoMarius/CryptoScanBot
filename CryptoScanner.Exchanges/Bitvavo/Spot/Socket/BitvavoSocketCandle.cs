@@ -31,7 +31,7 @@ internal readonly struct BitvavoSocketCandle
     /// The scanner works in quote volume everywhere (the 24 hour figure of a symbol comes from
     /// volumeQuote), so the base volume has to be converted. The value is cumulative over the open
     /// candle, and multiplying it by the middle of that same candle keeps it growing monotonically -
-    /// which is what the Math.Max in the ticker cache expects. Same conversion as Kraken Futures.
+    /// which is what the Math.Max in the ticker cache expects. Same conversion as Kraken Perpetual.
     /// </summary>
     public decimal QuoteVolume => BaseVolume * 0.5m * (High + Low);
 

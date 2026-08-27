@@ -37,12 +37,7 @@ public class PaperTradingIntrabarTests : TestBase
         DeleteAllPositionRelatedStuff(database);
         CryptoSymbol symbol = CreateTestSymbol(database);
 
-        // CreateTestSymbol registers the symbol before the DB assigns its Id; re-register under the
-        // real Id so order/trade lookups resolve (same fixup as PaperTradingTests).
         var exchange = symbol.Exchange;
-        if (!exchange.SymbolListId.ContainsKey(symbol.Id))
-            exchange.SymbolListId[symbol.Id] = symbol;
-
         CandleDatabase.InitializeSchema(exchange);
         return (database, symbol);
     }

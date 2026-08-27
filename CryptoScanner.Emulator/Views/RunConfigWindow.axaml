@@ -53,12 +53,16 @@
 								SelectedDateFormat="Custom" CustomDateFormatString="dd-MM-yyyy"/>
         </Grid>
 
-        <!-- Base interval -->
-        <Grid Grid.Row="2" ColumnDefinitions="90,*">
+        <!-- Base interval + start capital -->
+        <Grid Grid.Row="2" ColumnDefinitions="90,*,90,*">
             <TextBlock Grid.Column="0" Text="Base interval:" VerticalAlignment="Center"/>
             <ComboBox Grid.Column="1" ItemsSource="{Binding BaseIntervals}"
                       SelectedItem="{Binding SelectedBaseInterval}"
                       ToolTip.Tip="Replay resolution: 1m = full precision, 5m = ~5× faster (less precise order-fill timing)"/>
+            <TextBlock Grid.Column="2" Text="Start capital:" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            <NumericUpDown Grid.Column="3" Value="{Binding StartCapital}"
+                           Minimum="0" Increment="1000" FormatString="N2"
+                           ToolTip.Tip="Paper-trading capital per traded quote coin. The balances are wiped and handed out again at the start of every run, so two runs over the same period start with the same amount of money."/>
         </Grid>
 
         <!-- Symbols header + filter -->

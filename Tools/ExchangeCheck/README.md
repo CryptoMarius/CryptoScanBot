@@ -52,7 +52,7 @@ nothing.
 powershell -File Tools\ExchangeCheck\sample-process.ps1 -Out "D:\runs"
 ```
 
-That produces `D:\runs\Kraken-Spot-memory.csv`, `D:\runs\Kraken-Futures-memory.csv` and so on. Use
+That produces `D:\runs\Kraken-Spot-memory.csv`, `D:\runs\Kraken-Perpetual-memory.csv` and so on. Use
 `-Id` to sample one specific process, and `-IntervalSeconds` to change the five minute default.
 
 Both user interfaces are picked up: the Avalonia scanner runs as `CryptoScanBot.exe` and the Photino
@@ -63,7 +63,7 @@ an exchange report. Pass `-Name` if you want a different set.
 Each sample also adds up the WebView2 processes that hang under the scanner, because their memory is
 NOT part of its working set. Both user interfaces have them (Photino for its whole window, Avalonia
 for the hidden browser), and on a normal run they are good for several hundred megabytes - measured
-on Binance Futures: 743 MB in the scanner plus 497 MB in six WebView2 processes.
+on Binance Perpetual: 743 MB in the scanner plus 497 MB in six WebView2 processes.
 
 The start time does not have to be written down: the report finds the last scanner startup in the
 log by itself (the plugin registration only happens at process start). Pass `--start`/`--end` when
@@ -159,12 +159,12 @@ Every database is opened read-only, so the report can be made while the scanner 
 ## Thresholds
 
 All of them sit at the top of `check_exchange.py` as named constants: lateness, gap percentages,
-drops per hour and memory growth. They are a starting point measured on a healthy Binance Futures
+drops per hour and memory growth. They are a starting point measured on a healthy Binance Perpetual
 run, not a law - adjust them once you know what each exchange normally does.
 
 Errors are the exception: they have no threshold at all since 21-08-2026. Counting could not tell
 the two cases apart that matter, and both happened in the same week - the race in
-`BulkCalculateCandles` on Okx Futures was TWO lines and slipped under every threshold, while 73 of
+`BulkCalculateCandles` on Okx Perpetual was TWO lines and slipped under every threshold, while 73 of
 the 131 lines of 18/19-08 were Avalonia notices that decide nothing. So the verdict follows the KIND
 of error (`ERRORS_OURS`, `ERRORS_RECOVERED`, `ERRORS_NOT_OURS`, and everything else): an exception
 carrying our own stack frames is always reported no matter how few, a recovered timeout never sets

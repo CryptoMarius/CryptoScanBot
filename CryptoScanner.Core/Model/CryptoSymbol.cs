@@ -2,6 +2,8 @@
 
 using Dapper.Contrib.Extensions;
 
+using System.Text.Json.Serialization;
+
 namespace CryptoScanner.Core.Model;
 
 [Table("Symbol")]
@@ -17,6 +19,55 @@ public partial class CryptoSymbol
     public required string Base { get; set; } // (ADA, NKN, LTC, etc)
     public required string Quote { get; set; } // (BTC, ETH, EUR, USDT etc)
     public required string ExchangeName { get; set; }
+    /// <summary>
+    /// Which market inside the exchange this symbol lives on, empty for the exchange's own market.
+    /// <para>
+    /// One exchange can run several order books side by side. HyperLiquid lets outside parties deploy
+    /// their own perpetual market on its infrastructure - same address, same account, same USDC as
+    /// margin - and names those markets after their deployer: the gold market of the party calling
+    /// itself XYZ is "xyz:GOLD", next to the plain "BTC" of HyperLiquid's own market. This field holds
+    /// that short name ("xyz", "hyna"), so the symbol list can tell the two apart and the user
+    /// interface can mark them.
+    /// </para>
+    /// <para>
+    /// It is not a contract type: everything the scanner accepts is a linear perpetual, whichever
+    /// market it comes from. What differs is the order book, its depth, and who runs it.
+    /// </para>
+    /// </summary>
+    public string SubMarket { get; set; } = "";
+
+    /// <summary>
+    /// How the symbol is written wherever a user reads it: the name, followed by the market it lives
+    /// on when that is not the exchange's own one. "BTCUSDC" stays "BTCUSDC", "xyz:GOLD" reads as
+    /// "XYZGOLDUSDC (xyz)".
+    /// <para>
+    /// Text rather than a picture on purpose: every grid in both user interfaces shows the symbol in
+    /// a plain text column, so this reaches all of them at once - the symbol list, the signals, the
+    /// positions, the live data, the dashboard and the chart selector. A graphic would need a
+    /// template column in each of those grids separately.
+    /// </para>
+    /// <para>
+    /// Precomputed on first use and cached, the same reason the view models cache their own texts:
+    /// a grid asks for this on every scroll, and building the string each time is what made other
+    /// columns slow.
+    /// </para>
+    /// <para>
+    /// Never use this to look a symbol up or to hand a name to an exchange - that is what
+    /// <see cref="Name"/> and <see cref="ExchangeName"/> are for.
+    /// </para>
+    /// </summary>
+    [Computed]
+    [JsonIgnore]
+    public string DisplayName
+    {
+        get
+        {
+            _displayName ??= SubMarket.Length > 0 ? $"{Name} ({SubMarket})" : Name;
+            return _displayName;
+        }
+    }
+    private string? _displayName;
+
     public int Status { get; set; } // 0 for inactive, 1 voor active
 
     // The minimal quantity of an order
@@ -52,7 +103,7 @@ public partial class CryptoSymbol
     //public bool IsMarginTradingAllowed { get; set; }
 
 
-    // Bybit Futures, ondersteunen van de FundingRate en FundingInterval
+    // Bybit Perpetual, ondersteunen van de FundingRate en FundingInterval
     // Wat het inhoud weet ik niet maar toegevoegde waarde is er voor het traden wel.
     // https://bybit-exchange.github.io/docs/v5/market/History-fund-rate
     public decimal FundingRate { get; set; }

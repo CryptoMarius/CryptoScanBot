@@ -20,152 +20,100 @@ public static class ExchangeProvider
         ExchangeRegistry.Register(GetApiInstance, IsIntervalSupported, InitializeUrls);
     }
 
+    /// <summary>
+    /// The api that serves one market, chosen on the exchange AND the product. Both halves matter:
+    /// Okx appears three times below, once per product it offers.
+    /// A combination that is missing here is a market that has no implementation - the exchange list
+    /// carries those with IsSupported = false, so the user can see the market exists.
+    /// </summary>
     public static ExchangeBase GetApiInstance(Model.CryptoExchange exchange)
     {
-        switch (exchange.ExchangeType)
+        return (exchange.ExchangeType, exchange.TradingType) switch
         {
-            case CryptoExchangeType.Alpaca:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Alpaca.Spot.Api();
-                else
-                    throw new Exception("Alpaca Futures not supported");
-            case CryptoExchangeType.Binance:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Binance.Spot.Api();
-                else
-                    return new Binance.Futures.Api();
-            case CryptoExchangeType.Bitvavo:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Bitvavo.Spot.Api();
-                else
-                    throw new Exception("Bitvavo Futures not supported");
-            case CryptoExchangeType.BitMart:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new BitMart.Spot.Api();
-                else
-                    return new BitMart.Futures.Api();
-            case CryptoExchangeType.BloFin:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    throw new Exception("BloFin Spot not supported");
-                else
-                    return new BloFin.Futures.Api();
-            case CryptoExchangeType.Bybit:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new BybitApi.Spot.Api();
-                else
-                    return new BybitApi.Futures.Api();
-            case CryptoExchangeType.BybitEu:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new BybitEu.Spot.Api();
-                else
-                    throw new Exception("Bybit EU Futures not supported");
-            case CryptoExchangeType.HyperLiquid:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new HyperLiquid.Spot.Api();
-                else
-                    return new HyperLiquid.Futures.Api();
-            case CryptoExchangeType.Kraken:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Kraken.Spot.Api();
-                else
-                    return new Kraken.Futures.Api();
-            case CryptoExchangeType.Kucoin:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Kucoin.Spot.Api();
-                else
-                    return new Kucoin.Futures.Api();
-            case CryptoExchangeType.Mexc:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Mexc.Spot.Api();
-                else
-                    return new Mexc.Futures.Api();
-            case CryptoExchangeType.Okx:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Okx.Spot.Api();
-                else
-                    return new Okx.Futures.Api();
-            case CryptoExchangeType.Coinbase:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Coinbase.Spot.Api();
-                else
-                    throw new Exception("Coinbase Futures not supported");
-            default:
-                throw new Exception("Exchange not supported");
-        }
+            (CryptoExchangeType.Alpaca, CryptoTradingType.Spot) => new Alpaca.Spot.Api(),
+
+            (CryptoExchangeType.Binance, CryptoTradingType.Spot) => new Binance.Spot.Api(),
+            (CryptoExchangeType.Binance, CryptoTradingType.Perpetual) => new Binance.Perpetual.Api(),
+
+            (CryptoExchangeType.BitMart, CryptoTradingType.Spot) => new BitMart.Spot.Api(),
+            (CryptoExchangeType.BitMart, CryptoTradingType.Perpetual) => new BitMart.Perpetual.Api(),
+
+            (CryptoExchangeType.Bitvavo, CryptoTradingType.Spot) => new Bitvavo.Spot.Api(),
+
+            (CryptoExchangeType.BloFin, CryptoTradingType.Perpetual) => new BloFin.Perpetual.Api(),
+
+            (CryptoExchangeType.Bybit, CryptoTradingType.Spot) => new BybitApi.Spot.Api(),
+            (CryptoExchangeType.Bybit, CryptoTradingType.Perpetual) => new BybitApi.Perpetual.Api(),
+
+            (CryptoExchangeType.BybitEu, CryptoTradingType.Spot) => new BybitEu.Spot.Api(),
+
+            (CryptoExchangeType.Coinbase, CryptoTradingType.Spot) => new Coinbase.Spot.Api(),
+
+            (CryptoExchangeType.HyperLiquid, CryptoTradingType.Spot) => new HyperLiquid.Spot.Api(),
+            (CryptoExchangeType.HyperLiquid, CryptoTradingType.Perpetual) => new HyperLiquid.Perpetual.Api(),
+
+            (CryptoExchangeType.Kraken, CryptoTradingType.Spot) => new Kraken.Spot.Api(),
+            (CryptoExchangeType.Kraken, CryptoTradingType.Perpetual) => new Kraken.Perpetual.Api(),
+
+            (CryptoExchangeType.Kucoin, CryptoTradingType.Spot) => new Kucoin.Spot.Api(),
+            (CryptoExchangeType.Kucoin, CryptoTradingType.Perpetual) => new Kucoin.Perpetual.Api(),
+
+            (CryptoExchangeType.Mexc, CryptoTradingType.Spot) => new Mexc.Spot.Api(),
+            (CryptoExchangeType.Mexc, CryptoTradingType.Perpetual) => new Mexc.Perpetual.Api(),
+
+            (CryptoExchangeType.Okx, CryptoTradingType.Spot) => new Okx.Spot.Api(),
+            (CryptoExchangeType.Okx, CryptoTradingType.Perpetual) => new Okx.Perpetual.Api(),
+            (CryptoExchangeType.Okx, CryptoTradingType.XPerp) => new Okx.XPerp.Api(),
+
+            _ => throw new Exception($"{exchange.Name} is not supported"),
+        };
     }
 
+    /// <summary>
+    /// Whether a market can deliver candles for this interval. False for a market without an
+    /// implementation as well - GetApiInstance would throw for it anyway.
+    /// </summary>
     public static bool IsIntervalSupported(Model.CryptoExchange exchange, CryptoIntervalPeriod intervalPeriod)
     {
-        switch (exchange.ExchangeType)
+        return (exchange.ExchangeType, exchange.TradingType) switch
         {
-            case CryptoExchangeType.Binance:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Binance.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return Binance.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
-            case CryptoExchangeType.BloFin:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    throw new Exception("BloFin Spot not supported");
-                else
-                    return BloFin.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
-            case CryptoExchangeType.Bybit:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return BybitApi.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return BybitApi.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
-            case CryptoExchangeType.BybitEu:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return BybitEu.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    throw new Exception("Bybit EU Futures not supported");
-            case CryptoExchangeType.Kraken:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Kraken.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return Kraken.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
-            case CryptoExchangeType.Kucoin:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Kucoin.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return Kucoin.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
-            case CryptoExchangeType.Mexc:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Mexc.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return Mexc.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
-            case CryptoExchangeType.Okx:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Okx.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return Okx.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
-            case CryptoExchangeType.Coinbase:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Coinbase.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return false;
-            case CryptoExchangeType.HyperLiquid:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return HyperLiquid.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return HyperLiquid.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
-            case CryptoExchangeType.BitMart:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return BitMart.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return BitMart.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
-            case CryptoExchangeType.Alpaca:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Alpaca.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return false;
-            case CryptoExchangeType.Bitvavo:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Bitvavo.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return false;
-            default:
-                return false;
-        }
+            (CryptoExchangeType.Alpaca, CryptoTradingType.Spot) => Alpaca.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.Binance, CryptoTradingType.Spot) => Binance.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+            (CryptoExchangeType.Binance, CryptoTradingType.Perpetual) => Binance.Perpetual.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.BitMart, CryptoTradingType.Spot) => BitMart.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+            (CryptoExchangeType.BitMart, CryptoTradingType.Perpetual) => BitMart.Perpetual.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.Bitvavo, CryptoTradingType.Spot) => Bitvavo.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.BloFin, CryptoTradingType.Perpetual) => BloFin.Perpetual.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.Bybit, CryptoTradingType.Spot) => BybitApi.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+            (CryptoExchangeType.Bybit, CryptoTradingType.Perpetual) => BybitApi.Perpetual.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.BybitEu, CryptoTradingType.Spot) => BybitEu.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.Coinbase, CryptoTradingType.Spot) => Coinbase.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.HyperLiquid, CryptoTradingType.Spot) => HyperLiquid.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+            (CryptoExchangeType.HyperLiquid, CryptoTradingType.Perpetual) => HyperLiquid.Perpetual.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.Kraken, CryptoTradingType.Spot) => Kraken.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+            (CryptoExchangeType.Kraken, CryptoTradingType.Perpetual) => Kraken.Perpetual.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.Kucoin, CryptoTradingType.Spot) => Kucoin.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+            (CryptoExchangeType.Kucoin, CryptoTradingType.Perpetual) => Kucoin.Perpetual.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.Mexc, CryptoTradingType.Spot) => Mexc.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+            (CryptoExchangeType.Mexc, CryptoTradingType.Perpetual) => Mexc.Perpetual.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            (CryptoExchangeType.Okx, CryptoTradingType.Spot) => Okx.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
+            (CryptoExchangeType.Okx, CryptoTradingType.Perpetual) => Okx.Perpetual.Interval.GetExchangeInterval(intervalPeriod) != null,
+            (CryptoExchangeType.Okx, CryptoTradingType.XPerp) => Okx.XPerp.Interval.GetExchangeInterval(intervalPeriod) != null,
+
+            _ => false,
+        };
     }
 
     /// <summary>
@@ -184,51 +132,53 @@ public static class ExchangeProvider
 
         list.Remove("Binance");
         list.TryAdd("Binance Spot", Binance.Spot.Api.GetExchangeLinks());
-        list.TryAdd("Binance Futures", Binance.Futures.Api.GetExchangeLinks());
+        list.TryAdd("Binance Perpetual", Binance.Perpetual.Api.GetExchangeLinks());
 
         list.Remove("Bitvavo");
         list.TryAdd("Bitvavo Spot", Bitvavo.Spot.Api.GetExchangeLinks());
-        //list.TryAdd("Bitvavo Futures", Bitvavo.Futures.Api.GetExchangeLinks());
+        //list.TryAdd("Bitvavo Perpetual", Bitvavo.Perpetual.Api.GetExchangeLinks());
 
         list.Remove("Bybit");
         list.TryAdd("Bybit Spot", BybitApi.Spot.Api.GetExchangeLinks());
-        list.TryAdd("Bybit Futures", BybitApi.Futures.Api.GetExchangeLinks());
+        list.TryAdd("Bybit Perpetual", BybitApi.Perpetual.Api.GetExchangeLinks());
 
         list.Remove("Bybit EU");
         list.TryAdd("Bybit EU Spot", BybitEu.Spot.Api.GetExchangeLinks());
-        //list.TryAdd("Bybit EU Futures", BybitEu.Futures.Api.GetExchangeLinks());
+        //list.TryAdd("Bybit EU Perpetual", BybitEu.Perpetual.Api.GetExchangeLinks());
 
         list.Remove("BitMart");
         list.TryAdd("BitMart Spot", BitMart.Spot.Api.GetExchangeLinks());
-        list.TryAdd("BitMart Futures", BitMart.Futures.Api.GetExchangeLinks());
+        list.TryAdd("BitMart Perpetual", BitMart.Perpetual.Api.GetExchangeLinks());
 
         list.Remove("BloFin");
         //list.TryAdd("BloFin Spot", BloFin.Spot.Api.GetExchangeLinks());
-        list.TryAdd("BloFin Futures", BloFin.Futures.Api.GetExchangeLinks());
+        list.TryAdd("BloFin Perpetual", BloFin.Perpetual.Api.GetExchangeLinks());
 
         list.Remove("Coinbase");
         list.TryAdd("Coinbase Spot", Coinbase.Spot.Api.GetExchangeLinks());
-        // (there is no Coinbase.Futures api, this line used to be a copy of the Bybit EU Futures one)
+        // (there is no Coinbase.Perpetual api, this line used to be a copy of the Bybit EU Perpetual one)
 
         list.Remove("HyperLiquid");
         list.TryAdd("HyperLiquid Spot", HyperLiquid.Spot.Api.GetExchangeLinks());
-        list.TryAdd("HyperLiquid Futures", HyperLiquid.Futures.Api.GetExchangeLinks());
+        list.TryAdd("HyperLiquid Perpetual", HyperLiquid.Perpetual.Api.GetExchangeLinks());
 
         list.Remove("Kucoin");
         list.TryAdd("Kucoin Spot", Kucoin.Spot.Api.GetExchangeLinks());
-        list.TryAdd("Kucoin Futures", Kucoin.Futures.Api.GetExchangeLinks());
+        list.TryAdd("Kucoin Perpetual", Kucoin.Perpetual.Api.GetExchangeLinks());
 
         list.Remove("Kraken");
         list.TryAdd("Kraken Spot", Kraken.Spot.Api.GetExchangeLinks());
-        list.TryAdd("Kraken Futures", Kraken.Futures.Api.GetExchangeLinks());
+        list.TryAdd("Kraken Perpetual", Kraken.Perpetual.Api.GetExchangeLinks());
 
         list.Remove("Mexc");
         list.TryAdd("Mexc Spot", Mexc.Spot.Api.GetExchangeLinks());
-        list.TryAdd("Mexc Futures", Mexc.Futures.Api.GetExchangeLinks());
+        list.TryAdd("Mexc Perpetual", Mexc.Perpetual.Api.GetExchangeLinks());
 
         list.Remove("Okx");
         list.TryAdd("Okx Spot", Okx.Spot.Api.GetExchangeLinks());
-        list.TryAdd("Okx Futures", Okx.Futures.Api.GetExchangeLinks());
+        list.TryAdd("Okx Perpetual", Okx.Perpetual.Api.GetExchangeLinks());
+        // Registered under the name it has in the database, which is "Okx XPerp" and not "Okx XPerp Futures"
+        list.TryAdd("Okx XPerp", Okx.XPerp.Api.GetExchangeLinks());
 
         list.Remove("Coinbase");
         list.TryAdd("Coinbase Spot", Coinbase.Spot.Api.GetExchangeLinks());

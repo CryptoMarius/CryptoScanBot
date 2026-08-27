@@ -158,7 +158,7 @@ public class ZoneBroken
                 // Only the symbols whose candles are in memory. The walk reads its candles from the
                 // in-memory CandleList, so a symbol that was skipped while loading has an empty one:
                 // every key is a miss, not one zone can be broken, and ZoneCandleGaps reports the
-                // whole stretch as "not in memory". Measured on HyperLiquid Futures 24-08-2026: of
+                // whole stretch as "not in memory". Measured on HyperLiquid Perpetual 24-08-2026: of
                 // the 59 ZONE GAP lines at startup, 37 came from symbols without candles, together
                 // good for 250 zones that were walked over for nothing. The rule below is the one
                 // that decides whether the CandleList was filled at all, see the load loop in

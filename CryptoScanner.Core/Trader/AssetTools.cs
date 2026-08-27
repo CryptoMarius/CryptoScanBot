@@ -56,6 +56,17 @@ public class AssetTools
         //    GlobalData.ActiveExchange!.Data.LastRefreshAssets = GlobalData.GetCurrentDateTime();
         //}
 
+        if (activeExchange == null)
+            return (false, "No active exchange");
+
+        // Paper trading keeps its balances in memory and in the database and they are updated on
+        // every order event, so there is nothing to refresh. Reading the balances from a real
+        // exchange is not wired up: the per-exchange Asset.cs files are excluded from the build in
+        // CryptoScanner.Exchanges.csproj, and only Binance and Bybit have one at all.
+        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading)
+            return (false, "Reading balances from the exchange is not implemented");
+
+        activeExchange.Data.LastRefreshAssets = GlobalData.Clock.UtcNow;
 
         // okay
         return (true, "");
@@ -71,34 +82,22 @@ public class AssetTools
         activeExchange.Data.AssetListSemaphore.Wait();
         try
         {
-            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading)
+            // Paper trading and the emulator used to get a hardcoded 1,000,000 here, which meant the
+            // balances PaperAssets so carefully maintained were never actually read by the trader.
+            // They are read now, so a paper run really can run out of money.
+            // Locked is derived from the orders that are open right now, so refresh it before reading.
+            PaperAssets.RecalculateLocked(activeExchange);
+
+            if (activeExchange.Data.AssetList.TryGetValue(symbol.Base, out CryptoAsset? assetBase))
             {
-                if (activeExchange.Data.AssetList.TryGetValue(symbol.Base, out CryptoAsset? asset))
-                {
-                    info.BaseFree = asset.Free;
-                    info.BaseTotal = asset.Total;
-                }
-            }
-            else
-            {
-                // Enough for backtest or papertrading?
-                info.BaseFree = 1000000m;
-                info.BaseTotal = 1000000m;
+                info.BaseFree = assetBase.Free;
+                info.BaseTotal = assetBase.Total;
             }
 
-            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading)
+            if (activeExchange.Data.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? assetQuote))
             {
-                if (activeExchange.Data.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? asset))
-                {
-                    info.QuoteFree = asset.Free;
-                    info.QuoteTotal = asset.Total;
-                }
-            }
-            else
-            {
-                // Enough for backtest or papertrading?
-                info.QuoteFree = 1000000m;
-                info.QuoteTotal = 1000000m;
+                info.QuoteFree = assetQuote.Free;
+                info.QuoteTotal = assetQuote.Total;
             }
 
         }

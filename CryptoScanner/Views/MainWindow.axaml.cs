@@ -320,6 +320,7 @@ public partial class MainWindow : Window
         MenuTools.Items.Add(new MenuItem { Header = "Export all signal information to Excel", Command = new CommandExcelSignalsInformation(), CommandParameter = this });
         MenuTools.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = this });
         MenuTools.Items.Add(new MenuItem { Header = "Dump memory info", Command = new CommandShowMemoryObjects(), CommandParameter = this });
+        MenuTools.Items.Add(new MenuItem { Header = "Paper assets", Command = new CommandShowAssets(), CommandParameter = this });
 
         MenuTools.Items.Add(new MenuItem { Header = "-" });
 #if DEBUG

@@ -37,7 +37,12 @@ public static class RunConfigFile
         {
             using FileStream stream = File.OpenRead(path);
             EmulatorRunConfig? loaded = JsonSerializer.Deserialize<EmulatorRunConfig>(stream, ReadOptions);
-            return loaded ?? BuildPlaceholder();
+            if (loaded == null)
+                return BuildPlaceholder();
+
+            // A file written before 27-08-2026 still says "<exchange> Futures"
+            loaded.ExchangeName = GlobalData.FixLegacyExchangeName(loaded.ExchangeName);
+            return loaded;
         }
         catch (Exception ex)
         {
@@ -65,7 +70,7 @@ public static class RunConfigFile
         DateTime from = to.AddDays(-7);
         return new EmulatorRunConfig
         {
-            ExchangeName = GlobalData.ActiveExchange?.Name ?? "Binance Futures",
+            ExchangeName = GlobalData.ActiveExchange?.Name ?? "Binance Perpetual",
             Symbols = ["BTCUSDT"],
             FromDate = from,
             ToDate = to,

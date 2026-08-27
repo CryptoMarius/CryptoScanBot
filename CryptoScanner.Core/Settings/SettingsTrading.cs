@@ -95,6 +95,13 @@ public class SettingsTrading
     // De 3 account types zijn raar gekozen
     public CryptoTradeVia TradeVia { get; set; } = CryptoTradeVia.PaperTrade;
 
+    /// <summary>
+    /// Start capital per traded quote coin for paper trading and the emulator. It is handed out once
+    /// per quote coin that has no balance yet - an existing balance is the result of earlier trading
+    /// and is never topped up. Use the emulator's reset or PaperAssets.ResetAssets to start over.
+    /// </summary>
+    public decimal PaperAssetStartCapital { get; set; } = 10000m;
+
     // Trade via exchange (instelling enkel omdat we nu keuze hebben)
     public bool TradeViaExchange { get; set; } = false;
     // Geen nieuwe posities openen (wel bijkopen voor openstaande posities)
@@ -175,6 +182,20 @@ public class SettingsTrading
     // timed out never bought anything, so it is not a losing trade.
     public int LossCooldownTime { get; set; } = 0;
 
+    // Days a position may stay open before it is closed at whatever the market offers, counted
+    // from position.CreateTime. Zero switches it off, which is the default: nothing changes until
+    // a value is entered.
+    //
+    // It exists because the take profit sets no deadline of its own. A wide take profit turns the
+    // rare position that never comes back into one that stays open for months - measured on a dbr
+    // run with take profit 7.5%: four positions of 2527 ran past 30 days, the longest 64.6 days.
+    // They are a small drag (-19.77 USDT on a +511.89 run) but they hold capital that cannot be
+    // put to work anywhere else.
+    //
+    // Fractional values are allowed, so sub-day deadlines can be measured too.
+    public decimal MaxPositionDurationDays { get; set; } = 0m;
+
+
     //***************************
     // Take profit
     public CryptoOrderType TakeProfitOrderType { get; set; } = CryptoOrderType.Limit;
@@ -233,7 +254,7 @@ public class SettingsTrading
 
         // No symbol on purpose: the exchange fills it in with its own name for bitcoin (see
         // ExchangeOptions.PauseSymbol). "BTCUSDT" was hardcoded here, which does not exist on
-        // Kraken (BTCUSD), Kucoin Futures (XBTUSDC) or HyperLiquid Spot (UBTCUSDC), so on those
+        // Kraken (BTCUSD), Kucoin Perpetual (XBTUSDC) or HyperLiquid Spot (UBTCUSDC), so on those
         // exchanges the rule quietly did nothing. An empty symbol keeps working after switching
         // exchange; filling one in yourself pins the rule to that one coin.
         PauseTradingRules.Add(new PauseTradingRule()

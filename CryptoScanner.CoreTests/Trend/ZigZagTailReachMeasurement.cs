@@ -43,7 +43,9 @@ public class ZigZagTailReachMeasurement : TestBase
     /// </summary>
     private static readonly string[] CandleDatabaseCandidates =
     [
+        @"E:\CryptoScanBot\Data\Binance\Emulator\Binance Perpetual.db",
         @"E:\CryptoScanBot\Data\Binance\Emulator\Binance Futures.db",
+        @"E:\CryptoScanBot\Data\Binance\Futures\Binance Perpetual.db",
         @"E:\CryptoScanBot\Data\Binance\Futures\Binance Futures.db",
     ];
 

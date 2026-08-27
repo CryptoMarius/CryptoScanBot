@@ -52,6 +52,14 @@ public class EmulatorRunConfig
     public string BaseInterval { get; set; } = "1m";
 
     /// <summary>
+    /// Paper-trading start capital for this run, per traded quote coin. The balances are wiped and
+    /// handed out again at the start of every run, so two runs of the same period start with exactly
+    /// the same amount of money and stay comparable. 0 falls back to
+    /// Settings.Trading.PaperAssetStartCapital.
+    /// </summary>
+    public decimal StartCapital { get; set; } = 10000m;
+
+    /// <summary>
     /// Column header text of the last user-chosen sort in the Results grid.
     /// Null/empty means default sort (StartedAt descending).
     /// </summary>

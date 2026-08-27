@@ -16,7 +16,7 @@ namespace CryptoScanner.Core.Exchange.Coinbase.Spot;
 /// a per-symbol cache (open on the first trade, high/low/close as trades arrive, quote-volume =
 /// sum of price x quantity). A timer (~6s after each minute) flushes the just-completed candles through
 /// CandleTools.Process1mCandleAsync and queues the last one for analysis. Same approach as Kraken
-/// Futures, which has no kline feed at all.
+/// Perpetual, which has no kline feed at all.
 /// </summary>
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
     : SubscriptionKLineCachedTicker(exchangeOptions)

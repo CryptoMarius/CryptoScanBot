@@ -25,13 +25,6 @@ public class PaperTradingTests : TestBase
         DeleteAllPositionRelatedStuff(database);
         CryptoSymbol symbol = CreateTestSymbol(database);
 
-        // CreateTestSymbol calls GlobalData.AddSymbol before DB Insert, so the
-        // symbol is registered in SymbolListId under Id=0. Fix by re-registering
-        // with the real DB-assigned Id so that AddOrder/AddTrade lookups work.
-        var exchange = symbol.Exchange;
-        if (!exchange.SymbolListId.ContainsKey(symbol.Id))
-            exchange.SymbolListId[symbol.Id] = symbol;
-
         return (database, symbol);
     }
 

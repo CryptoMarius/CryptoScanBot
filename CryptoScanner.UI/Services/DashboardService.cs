@@ -733,7 +733,7 @@ public class DashboardSymbolInfo
     /// "BTC" — which also makes the fallback to the USDT pair visible when the coin is not listed
     /// against the selected quote.
     /// </summary>
-    public string DisplayName => Symbol?.Name ?? BaseName;
+    public string DisplayName => Symbol?.DisplayName ?? BaseName;
 
     /// <summary>
     /// False while no price has been seen at all. The dashboard shows a limited number of rows, so

@@ -28,7 +28,7 @@ namespace CryptoScanner.ViewModels
         {
             get
             {
-                _SymbolText ??= Object.Name;
+                _SymbolText ??= Object.DisplayName;
                 return _SymbolText!;
             }
         }

@@ -97,11 +97,12 @@ public class PaperTrading
         // full commission = 0.1%, met BNB korting = 0.075% (zonder kickback, anders 0.065%)
         decimal feeRate = position.Exchange.FeeRate;
 
-        if (position.Exchange.TradingType == CryptoTradingType.Futures)
+        // Everything that is not spot trades in contracts (perpetuals, X-Perps)
+        if (position.Exchange.TradingType != CryptoTradingType.Spot)
         {
             // Linear futures (USDT-margined): commission is always in quote, for both entry and TP.
             // Contract quantity is never reduced by commission — only cash (quote) is deducted.
-            // This matches Bybit Futures behaviour (CommissionAsset hardcoded to Quote in real trade pickup).
+            // This matches Bybit Perpetual behaviour (CommissionAsset hardcoded to Quote in real trade pickup).
             trade.CommissionAsset = symbol.Quote;
             trade.Commission = (decimal)(step.Quantity * price * feeRate / 100);
         }

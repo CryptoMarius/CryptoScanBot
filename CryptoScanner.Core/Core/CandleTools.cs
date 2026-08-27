@@ -323,7 +323,7 @@ public static class CandleTools
         // Keys.First() and Keys.Last(), and Keys is the inherited SortedDictionary collection: it
         // enumerates outside CryptoCandleList's own lock, so an Add from the kline stream bumped
         // the tree version mid-scan. That threw "Collection was modified after the enumerator was
-        // instantiated" on Okx Futures (BSBUSDT 2m, 20-08-2026 17:12) and aborted the zone
+        // instantiated" on Okx Perpetual (BSBUSDT 2m, 20-08-2026 17:12) and aborted the zone
         // calculation. Reading Count separately had the same hole: it can be answered from a state
         // the two key reads no longer share.
         //

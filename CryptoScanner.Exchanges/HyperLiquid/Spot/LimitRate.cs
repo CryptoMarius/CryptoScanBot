@@ -23,7 +23,7 @@ internal class HyperLiquidWeight
 ///
 /// PER IP is what this class exists for. The rate limiter inside the library counts per process and
 /// therefore holds EVERY process to 60 requests a minute - measured over the night of 19/20-08-2026,
-/// HyperLiquid Spot sat at precisely that ceiling for 150 minutes and HyperLiquid Futures for 58.
+/// HyperLiquid Spot sat at precisely that ceiling for 150 minutes and HyperLiquid Perpetual for 58.
 /// Two scanners on one machine is one IP address asking twice the allowance, which is exactly why
 /// that night produced "Server rate limit exceeded" while both processes believed they were behaving.
 ///
@@ -37,14 +37,14 @@ internal class HyperLiquidWeight
 /// Raise ScannersOnThisAddress when a third HyperLiquid scanner is added, or lower RequestsPerMinute when
 /// another application starts using the same address. Catching up a fresh candle history is the
 /// only thing that really feels this cap; the steady state of a night needed 10 requests a minute
-/// on Spot and 4 on Futures.
+/// on Spot and 4 on Perpetual.
 ///
 /// The requests are SPREAD over the minute (see <see cref="MinimumSpacing"/>) instead of being spent
 /// as fast as they are asked for. Counting weight is by itself enough to stay inside the allowance,
 /// but it hands out the whole budget in one burst and then blocks until the oldest registration
 /// leaves the window - and because those registrations were all made within a second of each other,
 /// they also expire within a second of each other. Measured during the startup of 24-08-2026 on
-/// HyperLiquid Futures: 25 requests inside 1.2 seconds, then 42.9 seconds in which nothing happened,
+/// HyperLiquid Perpetual: 25 requests inside 1.2 seconds, then 42.9 seconds in which nothing happened,
 /// and that eight times in a row. Of the 429 seconds the catch-up took, roughly 31 were spent
 /// sending requests. The longest wait drops from 43 seconds to 2.4, and with it the reason for the
 /// log line that used to be written on every waiting round.
@@ -63,7 +63,7 @@ public static class LimitRate
     /// <summary>What the exchange allows one IP address per minute.</summary>
     private const long AddressBudgetPerMinute = 1200;
 
-    /// <summary>HyperLiquid scanners expected to run on this machine (Spot and Futures).</summary>
+    /// <summary>HyperLiquid scanners expected to run on this machine (Spot and Perpetual).</summary>
     private const long ScannersOnThisAddress = 2;
 
     /// <summary>

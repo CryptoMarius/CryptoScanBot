@@ -20,7 +20,7 @@ public class LiveDataViewModel
         {
             LiveDataColumnEnum.Date => FormatDate(),
             LiveDataColumnEnum.Exchange => Object.Symbol.Exchange.Name,
-            LiveDataColumnEnum.Symbol => Object.Symbol.Name,
+            LiveDataColumnEnum.Symbol => Object.Symbol.DisplayName,
             LiveDataColumnEnum.Volume => Object.Symbol.Volume.ToString("N0"),
             LiveDataColumnEnum.Interval => Object.Interval.Name,
             LiveDataColumnEnum.Price => Object.Candle.Close.ToString0(Object.Symbol.PriceDisplayFormat),

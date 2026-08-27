@@ -1,7 +1,7 @@
 # Binance
 
 Notes about placing orders on Binance. These used to sit as a comment block at the top of
-`Spot/Api.cs` and `Futures/Api.cs`; they say nothing about the scanner itself, only about what
+`Spot/Api.cs` and `Perpetual/Api.cs`; they say nothing about the scanner itself, only about what
 the exchange answers when an order is rejected, so they live here instead.
 
 Error code overview:

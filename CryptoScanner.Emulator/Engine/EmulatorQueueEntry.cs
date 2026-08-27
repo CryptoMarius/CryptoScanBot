@@ -208,6 +208,19 @@ public class EmulatorQueueEntry
     public string? BaseInterval { get; set; }
 
     /// <summary>
+    /// The paper-trading start capital this run gets, per traded quote coin. Null or omitted keeps
+    /// whatever the run configuration says, which is what the field in the run-config window sets.
+    /// <para>
+    /// It is here for the same reason as <see cref="BaseInterval"/>: one queue can now compare
+    /// position sizes in a single pass. Since the balances really do constrain trading, the start
+    /// capital decides how many positions can be open at the same time - a run on 1.000 and the same
+    /// run on 100.000 are two different measurements, not a small variation. A value of 0 or less is
+    /// ignored, so a typo cannot silently start a run with no money.
+    /// </para>
+    /// </summary>
+    public decimal? StartCapital { get; set; }
+
+    /// <summary>
     /// Trading/risk config (SL, TP, DCA). Takes precedence over the entry-level
     /// StopLossPercentage/TpList/DcaList properties.
     /// </summary>

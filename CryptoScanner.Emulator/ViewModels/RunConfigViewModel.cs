@@ -58,6 +58,13 @@ public partial class RunConfigViewModel : ObservableObject
     [ObservableProperty]
     private string _selectedBaseInterval = "1m";
 
+    /// <summary>
+    /// Paper-trading start capital per traded quote coin. The balances are wiped and handed out again
+    /// at the start of every run, so two runs over the same period start with the same amount of money.
+    /// </summary>
+    [ObservableProperty]
+    private decimal _startCapital = 10000m;
+
     /// <summary>Live text filter over the symbol list (substring, case-insensitive).</summary>
     [ObservableProperty]
     private string _symbolFilter = "";
@@ -88,6 +95,7 @@ public partial class RunConfigViewModel : ObservableObject
         FromDate = config.FromDate == default ? DateTime.UtcNow.Date.AddDays(-7) : config.FromDate;
         ToDate = config.ToDate == default ? DateTime.UtcNow.Date : config.ToDate;
         SelectedBaseInterval = BaseIntervals.Contains(config.BaseInterval) ? config.BaseInterval : "1m";
+        StartCapital = config.StartCapital > 0 ? config.StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital;
 
         // Pre-check the symbols already in the run config. Build the full list from the active
         // exchange's known symbols; any config symbol not (yet) on the exchange is still added so
@@ -212,6 +220,7 @@ public partial class RunConfigViewModel : ObservableObject
             ToDate = DateTime.SpecifyKind(ToDate.Value.Date, DateTimeKind.Utc),
             Label = Label ?? "",
             BaseInterval = SelectedBaseInterval ?? "1m",
+            StartCapital = StartCapital > 0 ? StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital,
         };
         return true;
     }

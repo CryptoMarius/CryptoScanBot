@@ -13,7 +13,7 @@ public enum KlineDelivery
     FinalEvent,
 
     /// Exchange sends continuous partial updates for the currently open candle and never sends a
-    /// definitive "closed" signal (HyperLiquid, Kraken Futures, Kucoin). A local cache and a
+    /// definitive "closed" signal (HyperLiquid, Kraken Perpetual, Kucoin). A local cache and a
     /// minute-boundary timer are required to extract the completed candle.
     TimerFlush,
 }
@@ -50,7 +50,7 @@ public class ExchangeOptions // : IExchangeOptions
 {
     // Fallback for exchanges that do not state a boundary of their own. This is the value that used
     // to be hardcoded in ScannerSession, so leaving an exchange on this default changes nothing.
-    // Since the sources of BloFin Spot and Bybit EU Futures were removed on 17-08-2026, every market
+    // Since the sources of BloFin Spot and Bybit EU Perpetual were removed on 17-08-2026, every market
     // that is left states a boundary of its own, so nothing uses this value any more. Alpaca states a
     // boundary of zero: it picks its symbols itself and the volume it reports is the volume of one feed.
     // Whoever adds a market has to measure a boundary for it first, the way the comment above every
@@ -69,9 +69,9 @@ public class ExchangeOptions // : IExchangeOptions
     //
     // The value each exchange states is 0.034% of everything that exchange trades in its default quote
     // over 24 hours, measured on 14-08-2026 and rounded to two digits. That fraction is calibrated on
-    // Binance Futures, where 15 million is the boundary in daily use. Scaling it to the size of the
+    // Binance Perpetual, where 15 million is the boundary in daily use. Scaling it to the size of the
     // exchange is what makes the boundary comparable: it leaves roughly 100 to 140 symbols standing on
-    // the large exchanges, where one flat number left 240 on Binance Futures and 1 on Bybit EU Spot.
+    // the large exchanges, where one flat number left 240 on Binance Perpetual and 1 on Bybit EU Spot.
     // Remeasuring is a manual job (see the volume comment above each SetDefaultOptions call); the
     // numbers age slowly because they follow the whole exchange, not an individual coin.
     //
@@ -82,7 +82,7 @@ public class ExchangeOptions // : IExchangeOptions
 
     // Scanner name of the coin the pause trading rules watch - bitcoin against the default quote, the
     // coin the rest of the market follows. Also exchange specific: it is BTCUSDT on Binance, BTCUSD on
-    // Kraken, XBTUSDC on Kucoin Futures and UBTCUSDC on HyperLiquid Spot, where the same rule with
+    // Kraken, XBTUSDC on Kucoin Perpetual and UBTCUSDC on HyperLiquid Spot, where the same rule with
     // "BTCUSDT" in it silently does nothing and only logs "symbol does not exist" every minute.
     // Used to fill in a pause rule that has no symbol of its own (see ScannerSession).
     public string PauseSymbol { get; set; } = "";
@@ -108,7 +108,7 @@ public class ExchangeOptions // : IExchangeOptions
     // Correction, measured 24-08-2026: raising this alone does NOT lower the connection count, and a
     // drop does NOT take a whole bundle with it. A socket client opens another connection for every
     // SocketSubscriptionsCombineTarget subscriptions, so the connections follow subscriptions divided
-    // by that target, not by this one. On HyperLiquid Futures the lost connections came in fixed
+    // by that target, not by this one. On HyperLiquid Perpetual the lost connections came in fixed
     // groups of exactly ten while a bundle held thirty. An exchange that counts connections has to set
     // both numbers, in its own socket options - Kucoin and HyperLiquid do.
     public int SubscriptionsPerBundle { get; set; } = 10;

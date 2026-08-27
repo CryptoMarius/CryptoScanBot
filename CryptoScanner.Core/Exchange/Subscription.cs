@@ -285,7 +285,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
         // SubscriptionManager.NeedsRestart() kept saying yes, so ScannerSession escalated to a full
         // restart of every stream, which fires all subscribe messages at once, which drops more
         // connections. The night of 17-08-2026 shows the difference - Kucoin Spot had 80 drops and all
-        // 80 recovered without a single restart round, HyperLiquid Futures had 283 and rebuilt its
+        // 80 recovered without a single restart round, HyperLiquid Perpetual had 283 and rebuilt its
         // subscriptions 11 times over.
         NeedsRestart = false;
 
@@ -304,7 +304,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     /// failure: it drops the connection again and retries, and a ConnectionRestored follows as soon as
     /// one of those attempts lands. So a single line here is an attempt, not an outcome. Written at
     /// normal level for that reason - the night of 17-08-2026 produced 672 of these on HyperLiquid
-    /// Futures and 388 on HyperLiquid Spot, every one of them followed by a recovery within seconds,
+    /// Perpetual and 388 on HyperLiquid Spot, every one of them followed by a recovery within seconds,
     /// and at error level they were the entire error log of both markets.
     /// </para>
     /// <para>

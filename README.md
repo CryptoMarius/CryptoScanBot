@@ -1,16 +1,16 @@
 CryptoScanBot signal scanner for the following exchanges:
-- Binance Spot and Futures
-- Bitmart Spot and Futures
+- Binance Spot and Perpetual
+- Bitmart Spot and Perpetual
 - Bitvavo Spot
-- BloFin Futures
-- Bybit Spot and Futures
+- BloFin Perpetual
+- Bybit Spot and Perpetual
 - Bybit EU Spot
 - Coinbase Spot
-- HyperLiquid Spot and Futures
-- Kraken Spot and Futures
-- Kucoin Spot and Futures
-- Mexc Spot and Futures (futures has no api-order endpoints)
-- OKX Spot and Futures
+- HyperLiquid Spot and Perpetual
+- Kraken Spot and Perpetual
+- Kucoin Spot and Perpetual
+- Mexc Spot and Perpetual (the perpetual market has no api-order endpoints)
+- OKX Spot, Perpetual and XPerp (the USD_UM contracts, settled in USD value and payable in USDC)
 
 And, not a crypto exchange but plugged in as one so the same analyzers can run on US equities:
 - Alpaca (paper trading, an api key is mandatory even for market data)

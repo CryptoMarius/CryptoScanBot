@@ -114,10 +114,17 @@ def run_settings(row):
             frame["entry_amount"] = quotes[name]["EntryAmount"]
             break
 
-    frame["take_profit"] = percentage_list(trading.get("TpList"))
-    frame["dca"] = percentage_list(trading.get("DcaList"))
-    frame["stop_loss"] = trading.get("StopLossPercentage")
-    frame["stop_loss_limit"] = trading.get("StopLossLimitPercentage")
+    # Take profit, stop loss and DCA used to sit in the FRAME, the set of settings that has to be
+    # equal before two runs may be compared. That is wrong for exactly the runs that matter most: a
+    # sweep over the take profit varies them on purpose, and every run then landed in a group of its
+    # own - 36 "different settings groups" for one experiment, with the numbers themselves nowhere in
+    # the table. They are variables: shown per row, compared freely.
+    # What stays in the frame is what sets the SCALE of the money (entry amount, slots, leverage) and
+    # the window (period, symbols, exchange, base interval). Those still have to match.
+    variables["take_profit"] = percentage_list(trading.get("TpList"))
+    variables["dca"] = percentage_list(trading.get("DcaList"))
+    variables["stop_loss"] = trading.get("StopLossPercentage")
+    variables["stop_loss_limit"] = trading.get("StopLossLimitPercentage")
     frame["slots"] = "{}/{}".format(trading.get("SlotsMaximalLong"),
                                     trading.get("SlotsMaximalShort"))
     frame["leverage"] = trading.get("Leverage")
@@ -198,6 +205,41 @@ def days_between(from_date, to_date):
         return 1
 
 
+def open_position_range(connection, run_id, profit):
+    """What the still-open positions could still do to the result.
+
+    Profit counts CLOSED positions only - a loss is only a loss once the position is closed, and
+    Position.Profit on an open one is meaningless anyway (Returned is still 0, so a long reads as
+    -100% of its stake and a short as +100%).
+
+    They are not a random sample though: the winners hit their take profit and closed, so what is
+    left at the end leans to the losing side. So instead of ignoring them, say what the run becomes
+    if every one of them ends as the average winner (best case) and as the average loser (worst
+    case). On the reference runs of 25-08-2026 the count was small - 0.2 to 0.8% of all positions -
+    but smc's 13 open positions were worth up to 78% of its reported loss, and that was one of the
+    two least-bad strategies.
+
+    Deliberately NOT called a range, band or margin: this codebase already has Bollinger bands, VBS
+    bands, BABA bands and a band range index, and one word for two things is how a report starts
+    being misread.
+    """
+    closed = [number(r["Profit"]) for r in connection.execute(
+        "select CAST(Profit AS REAL) as Profit from Position "
+        "where EmulatorRunId = ? and Status = 2", (run_id,))]
+    open_count = connection.execute(
+        "select count(*) from Position where EmulatorRunId = ? and Status = 1",
+        (run_id,)).fetchone()[0]
+
+    wins = [p for p in closed if p > 0]
+    losses = [p for p in closed if p <= 0]
+    if open_count == 0 or not wins or not losses:
+        return open_count, profit, profit
+
+    best = profit + open_count * (sum(wins) / len(wins))
+    worst = profit + open_count * (sum(losses) / len(losses))
+    return open_count, best, worst
+
+
 def measure_run(connection, row):
     positions = load_positions(connection, row["Id"])
     frame, variables = run_settings(row)
@@ -231,6 +273,11 @@ def measure_run(connection, row):
         "frame": frame,
         "variables": variables,
     }
+    open_count, best, worst = open_position_range(connection, row["Id"], profit)
+    measured["open_best"] = best
+    measured["open_worst"] = worst
+    measured["end_best"] = peak_money + best
+    measured["end_worst"] = peak_money + worst
     measured["end_capital"] = peak_money + profit
     measured["return_on_peak"] = 100 * profit / peak_money if peak_money else 0.0
 
@@ -306,14 +353,38 @@ FRAME_LABELS = [
     ("symbols", "Aantal munten"),
     ("base_interval", "Basisinterval"),
     ("entry_amount", "Inleg per instap"),
-    ("take_profit", "Take profit"),
-    ("stop_loss", "Stop loss"),
-    ("stop_loss_limit", "Stop loss limiet"),
-    ("dca", "DCA"),
     ("slots", "Slots long/short"),
     ("leverage", "Hefboom"),
     ("entry_remove_time", "Instap vervalt na (candles)"),
 ]
+
+
+# The entry conditions, in the words the report uses for them. Anything not listed falls back to the
+# raw property name, so a new condition shows up as itself instead of disappearing.
+WAIT_RULE_LABELS = {
+    "WaitForRsiRecovery": "rsi-herstel",
+    "WaitForStochRecovery": "stoch-herstel",
+    "CheckIncreasingRsi": "rsi stijgt",
+    "CheckIncreasingStoch": "stoch stijgt",
+    "CheckIncreasingMacd": "macd stijgt",
+    "CheckFurtherPriceMove": "prijs door",
+    "CheckTrendPrimaryDirection": "trend primair",
+    "CheckTrendSecondaryDirection": "trend secundair",
+    "CheckPriceAboveMa200": "ma200",
+}
+
+
+def wait_rules_text(rules):
+    """What the run waits for before it enters. "-" when it enters straight away.
+
+    Shown as its own column because switching one of these on is a whole experiment: it is the
+    difference between taking a signal and waiting for the market to confirm it first. The report
+    carried the value from the start and never showed it, which is how 36 runs with every condition
+    switched off got built without anyone noticing.
+    """
+    if not rules:
+        return "-"
+    return ", ".join(WAIT_RULE_LABELS.get(rule, rule) for rule in rules)
 
 
 def frame_value(frame, key):
@@ -395,18 +466,26 @@ def write_markdown(runs, ladders, groups):
         lines.append("")
         lines.append(PEAK_EXPLANATION)
         lines.append("")
-        lines.append("| id | run | filter | order | zijde | signalen | posities | gesloten "
-                     "| per dag | piekinleg | max tegelijk | winst | eind |")
-        lines.append("|---:|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+        lines.append("| id | run | tp | sl | dca | wacht op | filter | start | eind | winst | winst% "
+                     "| trades | per dag | open | eind beste geval | eind slechtste geval "
+                     "| signalen | max tegelijk | order | zijde |")
+        lines.append("|---:|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|")
         for run in produced:
             variables = run["variables"]
-            lines.append("| {} | {} | {} | {} | {} | {} | {} | {} | {:.2f} | {:.2f} | {} "
-                         "| {:+.2f} | {:.2f} |".format(
-                             run["id"], run["label"], threshold_text(variables["band_range_index"]),
-                             variables["order_type"] or "-", variables["sides"],
-                             run["signals"], run["positions"], run["closed"], run["per_day"],
-                             run["peak_capital"], run["peak_positions"],
-                             run["profit"], run["end_capital"]))
+            pct = 100 * run["profit"] / run["peak_capital"] if run["peak_capital"] else 0
+            lines.append("| {} | {} | {} | {} | {} | {} | {} | {:.2f} | {:.2f} | {:+.2f} | {:+.1f}% "
+                         "| {} | {:.2f} | {} | {:.2f} | {:.2f} | {} | {} | {} | {} |".format(
+                             run["id"], run["label"],
+                             format_percentages(variables["take_profit"]),
+                             "-" if variables["stop_loss"] is None else "%g%%" % variables["stop_loss"],
+                             format_percentages(variables["dca"]),
+                             wait_rules_text(variables["wait_rules"]),
+                             threshold_text(variables["band_range_index"]),
+                             run["peak_capital"], run["end_capital"], run["profit"], pct,
+                             run["closed"], run["per_day"],
+                             run["open"], run["end_best"], run["end_worst"],
+                             run["signals"], run["peak_positions"],
+                             variables["order_type"] or "-", variables["sides"]))
         lines.append("")
 
     return "\n".join(lines)
@@ -444,9 +523,9 @@ def esc(value):
     return html.escape(str(value))
 
 
-def money_cell(value):
+def money_cell(value, suffix=""):
     css = "pos" if value > 0 else ("neg" if value < 0 else "")
-    return '<td class="{}">{:+.2f}</td>'.format(css, value)
+    return '<td class="{}">{:+.2f}{}</td>'.format(css, value, suffix)
 
 
 def frame_block(frame):
@@ -519,23 +598,37 @@ def write_html(runs, ladders, groups, database_path):
         out.append("<h2>Wat je moest inleggen en wat je overhield</h2>")
         out.append("<p class='note'>{}</p>".format(esc(PEAK_EXPLANATION)))
         out.append("<div class='scroll'><table><thead><tr>"
-                   "<th>id</th><th class='left'>run</th><th class='left'>filter</th>"
+                   "<th>id</th><th class='left'>run</th>"
+                   "<th class='left'>tp</th><th class='left'>sl</th><th class='left'>dca</th>"
+                   "<th class='left'>wacht op</th><th class='left'>filter</th>"
                    "<th class='left'>order</th><th class='left'>zijde</th>"
-                   "<th>signalen</th><th>posities</th><th>gesloten</th><th>per dag</th>"
-                   "<th>piekinleg</th><th>max tegelijk</th><th>winst</th><th>eind</th>"
+                   "<th>start</th><th>eind</th><th>winst</th><th>winst%</th>"
+                   "<th>trades</th><th>per dag</th>"
+                   "<th>open</th><th>eind beste geval</th><th>eind slechtste geval</th>"
+                   "<th>signalen</th><th>max tegelijk</th>"
                    "</tr></thead><tbody>")
         for run in produced:
             variables = run["variables"]
-            out.append("<tr><td>{}</td><td class='left'>{}</td><td class='left'>{}</td>"
-                       "<td class='left'>{}</td><td class='left'>{}</td><td>{}</td><td>{}</td>"
-                       "<td>{}</td><td>{:.2f}</td><td>{:.2f}</td><td>{}</td>{}<td>{:.2f}</td>"
+            pct = 100 * run["profit"] / run["peak_capital"] if run["peak_capital"] else 0
+            out.append("<tr><td>{}</td><td class='left'>{}</td>"
+                       "<td class='left'>{}</td><td class='left'>{}</td><td class='left'>{}</td>"
+                       "<td class='left'>{}</td><td class='left'>{}</td>"
+                       "<td class='left'>{}</td><td class='left'>{}</td>"
+                       "<td>{:.2f}</td><td>{:.2f}</td>{}{}<td>{}</td><td>{:.2f}</td>"
+                       "<td>{}</td><td>{:.2f}</td><td>{:.2f}</td><td>{}</td><td>{}</td>"
                        "</tr>".format(
                            run["id"], esc(run["label"]),
+                           esc(format_percentages(variables["take_profit"])),
+                           esc("-" if variables["stop_loss"] is None else "%g%%" % variables["stop_loss"]),
+                           esc(format_percentages(variables["dca"])),
+                           esc(wait_rules_text(variables["wait_rules"])),
                            esc(threshold_text(variables["band_range_index"])),
                            esc(variables["order_type"] or "-"), esc(variables["sides"]),
-                           run["signals"], run["positions"], run["closed"], run["per_day"],
-                           run["peak_capital"], run["peak_positions"],
-                           money_cell(run["profit"]), run["end_capital"]))
+                           run["peak_capital"], run["end_capital"],
+                           money_cell(run["profit"]), money_cell(pct, suffix="%"),
+                           run["closed"], run["per_day"],
+                           run["open"], run["end_best"], run["end_worst"],
+                           run["signals"], run["peak_positions"]))
         out.append("</tbody></table></div>")
 
     out.append("<h2>Configuratie per run</h2>")

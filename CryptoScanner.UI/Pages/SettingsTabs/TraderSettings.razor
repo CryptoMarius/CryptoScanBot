@@ -71,6 +71,10 @@
                 <label>Cool down after loss (m)</label>
                 <input type="number" class="input-number" min="0" @bind="_lossCooldown" />
             </div>
+            <div class="field" title="Days a position may stay open before it is closed at whatever the market offers, counted from the moment it was created. Zero switches it off. Decimals are allowed, so 0.5 is twelve hours. Meant for the rare position that walks away and never comes back: it holds capital that cannot be put to work anywhere else.">
+                <label>Close position after (days)</label>
+                <input type="number" class="input-number" min="0" step="0.5" @bind="_maxPositionDurationDays" />
+            </div>
 
             <div class="settings-group settings-group-nested">
                 <div class="settings-group-header">Slot limits</div>
@@ -340,6 +344,7 @@
     private int _buyCooldown;
     private int _signalCooldownAfterTrade;
     private int _lossCooldown;
+    private decimal _maxPositionDurationDays;
     private CryptoOrderType _tpOrderType;
     private CryptoTakeProfitStrategy _tpStrategy;
     private bool _addDustToTp;
@@ -460,6 +465,7 @@
         _buyCooldown = t.GlobalBuyCooldownTime;
         _signalCooldownAfterTrade = t.SignalCooldownAfterTradeTime;
         _lossCooldown = t.LossCooldownTime;
+        _maxPositionDurationDays = t.MaxPositionDurationDays;
         _tpOrderType = t.TakeProfitOrderType;
         _tpStrategy = t.TakeProfitStrategy;
         _addDustToTp = t.AddDustToTp;
@@ -505,6 +511,7 @@
         t.GlobalBuyCooldownTime = _buyCooldown;
         t.SignalCooldownAfterTradeTime = _signalCooldownAfterTrade;
         t.LossCooldownTime = _lossCooldown;
+        t.MaxPositionDurationDays = _maxPositionDurationDays;
         t.TakeProfitOrderType = _tpOrderType;
         t.TakeProfitStrategy = _tpStrategy;
         t.AddDustToTp = _addDustToTp;

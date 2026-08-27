@@ -496,7 +496,7 @@ public class PositionMonitor : IDisposable
                             }
 
                             // Alleen deze 2 ondersteunen we op dit moment (bool CanTrade introduceren ofzo)
-                            // Voorlopig alleen traden op Bybit Spot en Futures (alleen daar kan ik het testen)
+                            // Voorlopig alleen traden op Bybit Spot en Perpetual (alleen daar kan ik het testen)
                             if (!GlobalData.ActiveExchange!.IsSupported)
                             {
                                 GlobalData.AddTextToLogTab(text + $" trader not supported on {GlobalData.ActiveExchange.Name} (removed)");
@@ -721,10 +721,46 @@ public class PositionMonitor : IDisposable
     private decimal CalculateTpPrice(CryptoPosition position, decimal percentage)
     {
         int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
+
+        // Past its deadline the profit target is abandoned and the position leaves at whatever the
+        // market offers. Aiming one tick THROUGH the last price rather than at it is what makes
+        // this an exit instead of another target: an order sitting exactly at the last close only
+        // fills if price comes back to it, which for the positions this rule is meant to catch -
+        // the ones that walked away and did not return - is precisely what will not happen.
+        if (IsPastMaxDuration(position))
+        {
+            decimal tick = Symbol.PriceTickSize;
+            decimal exit = LastCandle1m.Close - (multiplier * tick);
+            return exit.ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+        }
+
         decimal breakEven = position.TpGridBreakEvenPrice;
         decimal price = breakEven + (multiplier * breakEven * (percentage / 100));
         return price.ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
     }
+
+
+    /// <summary>
+    /// Whether this position has been open longer than Trading.MaxPositionDurationDays allows.
+    /// Zero (the default) switches the rule off entirely.
+    /// <para>
+    /// Static and taking the clock reading as an argument because two callers need the same answer
+    /// from different places: the pricing above, and CandleCanMovePosition - the gate that decides
+    /// whether a candle is worth looking at. Without the gate agreeing, a position whose deadline
+    /// passes on a quiet candle is skipped and never leaves.
+    /// </para>
+    /// </summary>
+    internal static bool IsPastMaxDuration(CryptoPosition position, DateTime now)
+    {
+        decimal days = GlobalData.Settings.Trading.MaxPositionDurationDays;
+        if (days <= 0)
+            return false;
+        return now >= position.CreateTime.AddDays((double)days);
+    }
+
+
+    private bool IsPastMaxDuration(CryptoPosition position)
+        => IsPastMaxDuration(position, LastCandle1mCloseTimeDate);
 
     private (decimal? stop, decimal? limit) CalculateSlPrices(CryptoPosition position)
     {
@@ -1768,6 +1804,13 @@ public class PositionMonitor : IDisposable
             if (candleCloseTime.ToDateTime() >= timeoutAt)
                 return true;
         }
+
+        // A position past its maximum duration has to be looked at even on a candle that reaches
+        // no trigger price - that is the whole point of the deadline, and those candles are exactly
+        // the quiet ones this gate would otherwise skip.
+        if (IsPastMaxDuration(position, candleCloseTime.ToDateTime()))
+            return true;
+
         return false;
     }
 

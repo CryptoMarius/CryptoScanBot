@@ -404,21 +404,17 @@ public static class GlobalData
     }
 
 
+    /// <summary>
+    /// Load all assets. The implementation (including seeding the start capital for the quote coins
+    /// we trade) lives in <see cref="Trader.PaperAssets.LoadAssets"/> - this used to be a second,
+    /// identical copy next to the one in TradeTools.
+    /// </summary>
     public static void LoadAssets()
     {
         //GlobalData.AddTextToLogTab("Reading asset information");
 
         if (GlobalData.ActiveExchange != null)
-        {
-            // Load all assets
-            GlobalData.ActiveExchange.Data.AssetList.Clear();
-
-            using var database = new CryptoDatabase();
-            foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
-            {
-                GlobalData.ActiveExchange.Data.AssetList.TryAdd(asset.Name, asset);
-            }
-        }
+            Trader.PaperAssets.LoadAssets(GlobalData.ActiveExchange);
     }
 
     public static void AddExchange(Model.CryptoExchange exchange)
@@ -648,6 +644,10 @@ public static class GlobalData
             if (Settings!.General.GetCandleInterval < 30)
                 Settings.General.GetCandleInterval = 30;
 
+            // A settings file written before 27-08-2026 names a market that no longer exists
+            Settings.General.ExchangeName = FixLegacyExchangeName(Settings.General.ExchangeName);
+            Settings.General.ActivateExchangeName = FixLegacyExchangeName(Settings.General.ActivateExchangeName);
+
             // Fill in empty activate exchange
             if (Settings.General.ActivateExchangeName == "")
                 Settings.General.ActivateExchangeName = Settings.General.ExchangeName;
@@ -657,6 +657,23 @@ public static class GlobalData
             ScannerLog.Logger.Error(error, "");
             AddErrorToLogTab("Error loading setting " + error.ToString());
         }
+    }
+
+
+    /// <summary>
+    /// Translates a market name from before 27-08-2026, when every derivatives market was called
+    /// "&lt;exchange&gt; Futures". Those markets are perpetuals and the name says so now. The database
+    /// rows are renamed by the migration, but a settings file, an emulator run configuration or an
+    /// -e parameter written before that day still carries the old name - and a name that resolves to
+    /// nothing makes the application refuse to start.
+    /// Anything else is returned unchanged.
+    /// </summary>
+    public static string FixLegacyExchangeName(string exchangeName)
+    {
+        const string legacy = " Futures";
+        if (exchangeName != null && exchangeName.EndsWith(legacy, StringComparison.OrdinalIgnoreCase))
+            return string.Concat(exchangeName.AsSpan(0, exchangeName.Length - legacy.Length), " Perpetual");
+        return exchangeName ?? "";
     }
 
 

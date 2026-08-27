@@ -1,0 +1,60 @@
+<Window xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:vm="using:CryptoScanner.ViewModels"
+		mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="420"
+		x:Class="CryptoScanner.Views.AssetWindow"
+		x:DataType="vm:AssetWindowViewModel"
+		x:CompileBindings="False"
+		Title="Paper assets"
+		Width="520" Height="440" MinWidth="420" MinHeight="320"
+		WindowStartupLocation="CenterOwner" CanResize="True" ShowInTaskbar="False">
+
+	<!-- Border around entire content -->
+	<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
+	<Grid RowDefinitions="Auto,*,Auto,Auto" Margin="10" RowSpacing="8">
+
+		<TextBlock Grid.Row="0" Text="{Binding Summary}" Foreground="Gray" FontSize="11"
+				   VerticalAlignment="Center"/>
+
+		<!-- The balances. Only Total is editable: Locked follows from the orders that are open
+			 right now and Free follows from Total minus Locked. -->
+		<Border Grid.Row="1" BorderBrush="#808080" BorderThickness="1" CornerRadius="3">
+			<DataGrid ItemsSource="{Binding Assets}"
+					  AutoGenerateColumns="False"
+					  CanUserReorderColumns="False"
+					  CanUserResizeColumns="True"
+					  CanUserSortColumns="False"
+					  GridLinesVisibility="Horizontal"
+					  HeadersVisibility="Column">
+				<DataGrid.Columns>
+					<DataGridTextColumn Header="Asset" Binding="{Binding Name}" IsReadOnly="True" Width="120"/>
+					<DataGridTextColumn Header="Total" Binding="{Binding Total, Mode=TwoWay}" Width="130"/>
+					<DataGridTextColumn Header="Locked" Binding="{Binding LockedText}" IsReadOnly="True" Width="120"/>
+					<DataGridTextColumn Header="Free" Binding="{Binding FreeText}" IsReadOnly="True" Width="*"/>
+				</DataGrid.Columns>
+			</DataGrid>
+		</Border>
+
+		<!-- Start over -->
+		<Grid Grid.Row="2" ColumnDefinitions="Auto,140,*">
+			<TextBlock Grid.Column="0" Text="Start capital:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+			<NumericUpDown Grid.Column="1" Value="{Binding StartCapital}"
+						   Minimum="0" Increment="1000" FormatString="N2"
+						   ToolTip.Tip="Amount handed out per traded quote coin when you press Reset"/>
+			<Button Grid.Column="2" Content="Reset to start capital" Margin="8,0,0,0"
+					HorizontalAlignment="Left" Click="OnResetClick"
+					ToolTip.Tip="Throw every paper balance away and hand out the start capital again for each traded quote coin"/>
+		</Grid>
+
+		<!-- Action buttons -->
+		<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+			<Button Content="Refresh" HorizontalContentAlignment="Center" Click="OnRefreshClick" Width="90"/>
+			<Button Content="Apply" HorizontalContentAlignment="Center" Click="OnApplyClick" Width="90"/>
+			<Button Content="Close" HorizontalContentAlignment="Center" Click="OnCloseClick" Width="90"/>
+		</StackPanel>
+
+	</Grid>
+	</Border>
+</Window>

@@ -312,7 +312,7 @@ public static class BarometerCandleFields
             {
                 CenteredOnZero = true,
                 MinimumSpan = 1m,
-                IgnoreBeyond = 50m,     // malfunctions seen on Bybit Futures
+                IgnoreBeyond = 50m,     // malfunctions seen on Bybit Perpetual
                 Decimals = 2,
             },
         };

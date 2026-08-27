@@ -84,8 +84,24 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             urlTemplate = urlTemplate.Replace("{BASE}", symbol.Base.ToUpper());
             urlTemplate = urlTemplate.Replace("{QUOTE}", symbol.Quote.ToUpper());
 
+            // The base without the market it lives on. A market that an outside party deployed on
+            // HyperLiquid carries its deployer in the scanner name - "xyz:GOLD" is XYZGOLDUSDC here,
+            // because HyENA runs a BTC of its own that would collide otherwise - but the outside
+            // world does not know that prefix: TradingView calls the same market GOLDUSDC.P and
+            // Altrady lists it as GOLD/USDC. Equal to {BASE} for every symbol that has no such
+            // prefix, so a template may use it wherever {BASE} would do.
+            string baseMarket = symbol.Base;
+            if (symbol.SubMarket.Length > 0 && baseMarket.StartsWith(symbol.SubMarket, StringComparison.OrdinalIgnoreCase))
+                baseMarket = baseMarket[symbol.SubMarket.Length..];
+            urlTemplate = urlTemplate.Replace("{basemarket}", baseMarket.ToLower());
+            urlTemplate = urlTemplate.Replace("{BASEMARKET}", baseMarket.ToUpper());
+
+            // Which market inside the exchange, empty for the exchange's own market
+            urlTemplate = urlTemplate.Replace("{submarket}", symbol.SubMarket.ToLower());
+            urlTemplate = urlTemplate.Replace("{SUBMARKET}", symbol.SubMarket.ToUpper());
+
             // The name the instrument has on the exchange itself, which is not always base + quote:
-            // Kraken Futures calls BTCUSD "PF_XBTUSD" and Okx Futures calls it "BTC-USDT-SWAP". Those
+            // Kraken Perpetual calls BTCUSD "PF_XBTUSD" and Okx Perpetual calls it "BTC-USDT-SWAP". Those
             // trade pages cannot be addressed with {BASE} and {QUOTE} alone.
             urlTemplate = urlTemplate.Replace("{exchangename}", symbol.ExchangeName.ToLower());
             urlTemplate = urlTemplate.Replace("{EXCHANGENAME}", symbol.ExchangeName.ToUpper());

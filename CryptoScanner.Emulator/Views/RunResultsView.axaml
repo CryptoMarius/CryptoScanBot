@@ -29,6 +29,7 @@
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Edit label…" Click="OnEditLabelClick"/>
+                    <MenuItem Header="Show positions…" Click="OnShowPositionsClick"/>
                     <MenuItem Header="Show signals…" Click="OnShowSignalsClick"/>
                     <MenuItem Header="Show settings GUI" Click="OnShowSettingsGuiClick"/>
                     <MenuItem Header="Show settings JSON" Click="OnShowJsonClick"/>

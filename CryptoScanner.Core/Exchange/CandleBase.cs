@@ -84,9 +84,9 @@ public class CandleBase(ExchangeBase api)
         // Save for debug
         try
         {
-            string folderName = Path.Combine(GlobalData.AppDataFolder, ExchangeBase.ExchangeOptions.ExchangeName);
-            Directory.CreateDirectory(folderName);
-            string filename = Path.Combine(folderName, name);
+            // Straight into the data folder, next to symbols.json and tickers.json. The subfolder
+            // named after the market is gone: a data folder serves one market anyway.
+            string filename = Path.Combine(GlobalData.AppDataFolder, name);
 
             string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
             File.WriteAllText(filename, text);

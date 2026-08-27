@@ -14,7 +14,7 @@ public class ApplicationParams
 
     private string? _ExchangeName;
     // No list of names here, it went stale as soon as an exchange was added or switched off
-    [Option('e', "exchange", Required = false, HelpText = "Initialize to exchange, under the name it is registered with (\"Bybit Spot\", \"Binance Futures\", ...). Which markets are available is in CryptoDatabase.CreateExchangeList; a name that is unknown or switched off stops the scanner")]
+    [Option('e', "exchange", Required = false, HelpText = "Initialize to exchange, under the name it is registered with (\"Bybit Spot\", \"Binance Perpetual\", ...). Which markets are available is in CryptoDatabase.CreateExchangeList; a name that is unknown or switched off stops the scanner")]
     public string? ExchangeName { get { return _ExchangeName; } set { _ExchangeName = value!.Trim(); } }
 
     public string? _AppLimitSymbols;
@@ -34,7 +34,7 @@ public class ApplicationParams
             {
                 Options = new()
                 {
-                    ExchangeName = "Binance Futures",
+                    ExchangeName = "Binance Perpetual",
                     AppDataFolder = Path.Combine("CryptoScanBot", "Design"),
                 };
             }

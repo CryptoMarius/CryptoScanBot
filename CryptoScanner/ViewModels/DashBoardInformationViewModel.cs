@@ -624,7 +624,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
                 float value = (float)BarometerCandleFields.ReadForGraph(candle, graphValue);
 
-                // Ignore very high barometer values (malfunctions Bybit Futures). Only figures with a
+                // Ignore very high barometer values (malfunctions Bybit Perpetual). Only figures with a
                 // ceiling drop their outliers, see BarometerGraphScale.IgnoreBeyond.
                 if (!graphScale.IgnoreBeyond.HasValue || Math.Abs(value) < (float)graphScale.IgnoreBeyond.Value)
                 {

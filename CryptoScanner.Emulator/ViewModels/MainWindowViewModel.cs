@@ -20,6 +20,7 @@ using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Emulator.Views;
 
 using System.Diagnostics;
+using System.Globalization;
 
 namespace CryptoScanner.Emulator.ViewModels;
 
@@ -611,6 +612,7 @@ public partial class MainWindowViewModel : ObservableObject
                     FromDate = baseConfig.FromDate,
                     ToDate = baseConfig.ToDate,
                     BaseInterval = baseConfig.BaseInterval,
+                    StartCapital = baseConfig.StartCapital,
                     Label = labelRest.Length > 0 ? $"{algorithm.Name} {labelRest}" : algorithm.Name,
                 };
 
@@ -871,8 +873,13 @@ public partial class MainWindowViewModel : ObservableObject
                         string baseInterval = !string.IsNullOrWhiteSpace(entry.BaseInterval)
                             ? entry.BaseInterval! : baseConfig.BaseInterval;
 
+                        // Same for the start capital; without one the run config decides.
+                        var (startCapital, startCapitalOverridden) =
+                            ResolveStartCapital(entry.StartCapital, baseConfig.StartCapital);
+
                         string runLabel = BuildRunLabel(algoName, entryLabel,
-                            !string.IsNullOrWhiteSpace(entry.BaseInterval) ? baseInterval : null);
+                            !string.IsNullOrWhiteSpace(entry.BaseInterval) ? baseInterval : null,
+                            startCapitalOverridden ? startCapital : null);
 
                         EmulatorRunConfig runConfig = new()
                         {
@@ -881,6 +888,7 @@ public partial class MainWindowViewModel : ObservableObject
                             FromDate = baseConfig.FromDate,
                             ToDate = baseConfig.ToDate,
                             BaseInterval = baseInterval,
+                            StartCapital = startCapital,
                             Label = runLabel,
                         };
 
@@ -960,8 +968,36 @@ public partial class MainWindowViewModel : ObservableObject
     /// intervals otherwise produces runs that look identical on screen, and a comparison between two
     /// rows with the same name is how one silently turns into nonsense.
     /// </para>
+    /// <para>
+    /// The start capital follows the same rule and is appended as "[start 5000]". It is worth naming
+    /// for the same reason: since the balances really constrain trading, it decides how many
+    /// positions can be open at the same time.
+    /// </para>
+    /// <para>
+    /// Written without a thousands separator and in the invariant culture on purpose. The label is
+    /// stored in the database and read back by the reports, so it has to come out the same on every
+    /// machine - and "5.000" versus "5,000" means the opposite thing depending on the locale.
+    /// </para>
     /// </summary>
-    internal static string BuildRunLabel(string algoName, string entryLabel, string? baseInterval)
+    /// <summary>
+    /// The paper-trading start capital a queue entry runs on, and whether the entry chose it itself.
+    /// <para>
+    /// A value of 0 or less counts as "not set" and falls back to the run configuration. Without that
+    /// rule a typo in the hand-edited queue file - an omitted digit, a stray minus - would start a run
+    /// with no money at all, and since the balances really constrain trading that run would produce
+    /// zero trades and look like a strategy that never signals.
+    /// </para>
+    /// </summary>
+    internal static (decimal value, bool overridden) ResolveStartCapital(decimal? entryStartCapital, decimal configStartCapital)
+    {
+        if (entryStartCapital is decimal value && value > 0)
+            return (value, true);
+        return (configStartCapital, false);
+    }
+
+
+    internal static string BuildRunLabel(string algoName, string entryLabel, string? baseInterval,
+        decimal? startCapital = null)
     {
         bool labelAlreadyNamesTheAlgorithm =
             !string.IsNullOrEmpty(algoName)
@@ -970,7 +1006,11 @@ public partial class MainWindowViewModel : ObservableObject
                 || (!char.IsLetterOrDigit(entryLabel[algoName.Length]) && entryLabel[algoName.Length] != '.'));
 
         string label = labelAlreadyNamesTheAlgorithm ? entryLabel : $"{algoName} {entryLabel}";
-        return string.IsNullOrWhiteSpace(baseInterval) ? label : $"{label} [{baseInterval}]";
+        if (!string.IsNullOrWhiteSpace(baseInterval))
+            label = $"{label} [{baseInterval}]";
+        if (startCapital.HasValue)
+            label = $"{label} [start {startCapital.Value.ToString("0.##", CultureInfo.InvariantCulture)}]";
+        return label;
     }
 
 
