@@ -98,10 +98,34 @@ public partial class PositionViewModel : BaseConvertersViewModel
     {
         get
         {
-            _SymbolText ??= Object.Symbol.DisplayName;
+            _SymbolText ??= Object.Symbol.Name;
             return _SymbolText!;
         }
     }
+
+    /// <summary>
+    /// The market label shown as a coloured badge behind the name (see CryptoSymbol.MarketLabel).
+    /// The name itself stays bare: what the badge carries used to be glued behind the name as text.
+    /// </summary>
+    private string? _MarketLabelText;
+    public string MarketLabel
+    {
+        get
+        {
+            _MarketLabelText ??= Object.Symbol.MarketLabel;
+            return _MarketLabelText!;
+        }
+    }
+    private IBrush? _MarketLabelBackground;
+    public IBrush MarketLabelBackground
+    {
+        get
+        {
+            _MarketLabelBackground ??= GetBrushColorMarketLabel(MarketLabel);
+            return _MarketLabelBackground!;
+        }
+    }
+
     private IBrush? _SymbolBackground;
     public IBrush SymbolBackground
     {

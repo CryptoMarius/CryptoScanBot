@@ -29,7 +29,16 @@ public class TestBase
             CryptoDatabase.SetDatabaseDefaults();
             GlobalData.LoadExchanges();
             GlobalData.LoadIntervals();
-            GlobalData.ActiveExchange = GlobalData.ExchangeListId.Values[0];
+            // The exchange the test symbols belong to - CreateTestSymbol resolves the very same name.
+            // It used to be ExchangeListId.Values[0] (whichever exchange happens to have the lowest
+            // id, Alpaca), which put the session on a different exchange than the test symbols. Two
+            // things went wrong because of that. LoadSymbols only reads the symbols of ActiveExchange,
+            // so it never found the stored TESTUSDT and every suite run inserted another copy of it.
+            // And the trading code reads positions and assets from ActiveExchange, so a test had to
+            // line the two up by hand before any of that worked.
+            if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out var testExchange))
+                throw new Exception($"Exchange '{GlobalData.Settings.General.ExchangeName}' bestaat niet");
+            GlobalData.ActiveExchange = testExchange;
             GlobalData.LoadSymbols();
             GlobalData.IsEmulatorMode = true;
         }

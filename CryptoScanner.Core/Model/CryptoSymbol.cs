@@ -68,6 +68,38 @@ public partial class CryptoSymbol
     }
     private string? _displayName;
 
+    /// <summary>
+    /// The short marker shown beside the symbol in the grids, the way a trading app tags every line
+    /// in its market list: what kind of contract this is, and on whose order book it trades.
+    /// <para>
+    /// A symbol on the exchange's own market carries the trading type of that exchange - "Spot",
+    /// "Perp" or "xPerp". A symbol on a market that an outside party deployed carries that party
+    /// instead ("xyz", "hyna"), because within a perpetual exchange that is what sets it apart from
+    /// every other line: the contract behaves the same, the order book behind it does not.
+    /// </para>
+    /// <para>
+    /// Precomputed on first use and cached, for the same reason <see cref="DisplayName"/> is: a grid
+    /// asks for this on every scroll.
+    /// </para>
+    /// </summary>
+    [Computed]
+    [JsonIgnore]
+    public string MarketLabel
+    {
+        get
+        {
+            _marketLabel ??= SubMarket.Length > 0 ? SubMarket : Exchange.TradingType switch
+            {
+                CryptoTradingType.Spot => "Spot",
+                CryptoTradingType.Perpetual => "Perp",
+                CryptoTradingType.XPerp => "xPerp",
+                _ => "",
+            };
+            return _marketLabel;
+        }
+    }
+    private string? _marketLabel;
+
     public int Status { get; set; } // 0 for inactive, 1 voor active
 
     // The minimal quantity of an order

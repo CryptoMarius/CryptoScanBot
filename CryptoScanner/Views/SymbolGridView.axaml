@@ -25,7 +25,7 @@
 			<!-- Id (Hidden by default) -->
 			<DataGridTemplateColumn Header="Id" Width="60" SortMemberPath="Id" IsVisible="False">
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:SymbolViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Id, StringFormat='{}{0:#,##0}'}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -34,9 +34,16 @@
 			<!-- Symbol -->
 			<DataGridTemplateColumn Header="Symbol" Width="100" MinWidth="90" SortMemberPath="Symbol">
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:SymbolViewModel">
 						<Border Background="{Binding SymbolBackground}">
-							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Symbol}"  />
+							<StackPanel Orientation="Horizontal">
+								<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Symbol}"  />
+								<!-- Market label: the contract type, or the party that deployed the market -->
+								<Border Classes="marketLabel" Background="{Binding MarketLabelBackground}"
+								        IsVisible="{Binding MarketLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+									<TextBlock Classes="marketLabel" Text="{Binding MarketLabel}" />
+								</Border>
+							</StackPanel>
 						</Border >
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -49,7 +56,7 @@
 					<TextBlock Text="Volume" HorizontalAlignment="Right" />
 				</DataGridTemplateColumn.Header>
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:SymbolViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
 								   Text="{Binding Volume}" Foreground="{Binding VolumeForeground}" />
 					</DataTemplate>
@@ -59,7 +66,7 @@
 			<!-- Distance -->
 			<DataGridTemplateColumn Header="Distance" Width="Auto" SortMemberPath="Distance">
 				<DataGridTemplateColumn.CellTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="vm:SymbolViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
 								Text ="{Binding Distance}" />
 					</DataTemplate>

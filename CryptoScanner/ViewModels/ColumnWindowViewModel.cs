@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -90,8 +90,40 @@ public partial class SignalColumnVisibilityItem : ObservableObject
     public SignalColumnVisibilityItem(DataGridColumn column)
     {
         _column = column;
-        _header = column.Header?.ToString() ?? "Unknown";
+        _header = GetHeaderText(column);
         _isVisible = column.IsVisible;
+    }
+
+    /// <summary>
+    /// The text to show for a column. A header is not always a plain string: a column can carry a
+    /// control as its header (a TextBlock, for instance, to align the header text), and calling
+    /// ToString() on that yields the type name ("Avalonia.Controls.TextBlock") instead of the text.
+    /// </summary>
+    private static string GetHeaderText(DataGridColumn column)
+    {
+        string? text = ExtractText(column.Header);
+        if (string.IsNullOrWhiteSpace(text))
+            text = column.SortMemberPath;
+        if (string.IsNullOrWhiteSpace(text))
+            return "Unknown";
+        return text;
+    }
+
+    /// <summary>
+    /// Dig the text out of a header, whatever it was built from. Anything else that is a control
+    /// returns null, so the caller can fall back to the sort member path.
+    /// </summary>
+    private static string? ExtractText(object? header)
+    {
+        return header switch
+        {
+            null => null,
+            string text => text,
+            TextBlock textBlock => textBlock.Text,
+            ContentControl contentControl => ExtractText(contentControl.Content),
+            Control => null,
+            _ => header.ToString(),
+        };
     }
 
     /// <summary>

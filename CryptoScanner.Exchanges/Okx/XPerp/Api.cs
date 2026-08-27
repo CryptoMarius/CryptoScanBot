@@ -38,7 +38,8 @@ public class Api : ExchangeBase
         // OKX allows subscribing to multiple instruments in one message (the combined channel list may be
         // up to 64 KB), so there is no need for a websocket connection per symbol.
         // 361 million USD over 151 contracts a day (27-08-2026), 86 symbols stay above the boundary
-        ExchangeOptions.SetDefaultOptions("Okx XPerp", "USD", 300, false, 50, minimalVolume: 120_000);
+        // The quote is USDC and not the USD the instrument definition states, see Symbol.ScannerQuote.
+        ExchangeOptions.SetDefaultOptions("Okx XPerp", "USDC", 300, false, 50, minimalVolume: 120_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         OKXEnvironment environment = OKXEnvironment.Live;
@@ -144,12 +145,17 @@ public class Api : ExchangeBase
     {
         return new()
         {
-            // No Altrady and no TradingView: both know the Okx perpetual swaps (OKEXF_USDT_BTC_SWAP,
-            // OKX:BTCUSDT.P) but neither lists an X-Perp. A link built the way the Okx Perpetual market
-            // builds it would be worse than none here, because OKX:BTCUSD.P does exist on TradingView -
-            // it is the INVERSE swap, a different instrument that happens to chart the same price.
+            // Altrady DOES list these: its Markets widget has a separate Xperp tab under Futures, where
+            // they are named after the settlement coin (AAVE/USDC), the same way the scanner names them
+            // since ScannerQuote. Still empty because the market code Altrady uses in its url is not
+            // confirmed yet - the perpetual swaps are OKEXF_USDT_BTC_SWAP, and what the X-Perps carry in
+            // place of that _SWAP suffix has to be read from an opened chart before it can be built here.
             // https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
             Altrady = null,
+            // No TradingView: it knows the Okx perpetual swaps (OKX:BTCUSDT.P) but not the X-Perps. A
+            // link built the way the Okx Perpetual market builds it would be worse than none here,
+            // because OKX:BTCUSD.P does exist - it is the INVERSE swap, a different instrument that
+            // happens to chart the same price.
             HyperTrader = null,
             TradingView = null,
             ExchangeUrl = new()

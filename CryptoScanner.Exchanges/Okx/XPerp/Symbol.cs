@@ -14,6 +14,24 @@ namespace CryptoScanner.Core.Exchange.Okx.XPerp;
 public class Symbol() : SymbolBase(), ISymbol
 {
 
+    /// <summary>
+    /// The quote of an X-Perp under the name the coin has that actually moves. Okx states USD as the
+    /// settlement asset of every one of them, because these contracts settle in USD VALUE rather than
+    /// in one fixed coin. Under Okx Europe that value is paid in USDC or USDG, with USDC as the
+    /// default when the account makes no choice of its own, so fees, funding, margin and pnl all run
+    /// in USDC. The exchange interface and Altrady both name these markets after that coin
+    /// (AAVE/USDC), and the scanner follows them: USD becomes USDC, every other settlement asset
+    /// (the inverse contracts, which settle in the base coin) is left alone.
+    /// </summary>
+    private static string ScannerQuote(string? settlementAsset)
+    {
+        string asset = (settlementAsset ?? "").ToUpper();
+        if (asset == "USD")
+            return "USDC";
+        return asset;
+    }
+
+
     public async Task GetSymbolsAsync()
     {
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
@@ -95,12 +113,14 @@ public class Symbol() : SymbolBase(), ISymbol
                             // This filter must run BEFORE IsSymbolAccepted, the way the Binance and Bybit
                             // markets do it: a dated USD_UM contract carries the same contract value and
                             // settlement asset as its X-Perp (BTC-USD_UM-260828 next to
-                            // BTC-USD_UM_XPERP-310404), so both parse to the scanner name BTCUSD. Four
-                            // names are shared that way today (BTCUSD, ETHUSD, SOLUSD, XAUUSD) and
-                            // RegisterAmbiguousSymbolNames below is what records them.
+                            // BTC-USD_UM_XPERP-310404), so both parse to the scanner name BTCUSDC. Four
+                            // names are shared that way today (BTCUSDC, ETHUSDC, SOLUSDC, XAUUSDC) and
+                            // RegisterAmbiguousSymbolNames below is what records them. The rejected name
+                            // goes through ScannerQuote as well, otherwise the two sides no longer match
+                            // and the check silently records nothing.
                             if (symbolData.RuleType != SymbolRuleType.Perp)
                             {
-                                rejectedSymbols.Add((symbolData.ContractValueAsset ?? "").ToUpper() + (symbolData.SettlementAsset ?? "").ToUpper());
+                                rejectedSymbols.Add((symbolData.ContractValueAsset ?? "").ToUpper() + ScannerQuote(symbolData.SettlementAsset));
                                 continue;
                             }
 
@@ -116,10 +136,10 @@ public class Symbol() : SymbolBase(), ISymbol
                             // what the contract is on, the settlement asset is what it pays out in. That
                             // settlement asset reads USD for every one of them - Okx settles these in USD
                             // VALUE, to be paid in USDC (or another accepted currency), which is exactly
-                            // what makes them the USDC route on this exchange. The scanner name is BTCUSD,
-                            // and it says what the instrument says.
+                            // what makes them the USDC route on this exchange. ScannerQuote turns that
+                            // USD into the coin that actually moves, so the scanner name is BTCUSDC.
                             string baseAsset = symbolData.ContractValueAsset ?? "";
-                            string quoteAsset = symbolData.SettlementAsset ?? "";
+                            string quoteAsset = ScannerQuote(symbolData.SettlementAsset);
 
                             SymbolInfo info = ParseSymbol(symbolData.Symbol, baseAsset, quoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))

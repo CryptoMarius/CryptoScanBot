@@ -91,6 +91,24 @@ public partial class BaseConvertersViewModel : ObservableObject
         return BrushNeutral;
     }
 
+    /// <summary>
+    /// The colour of the market label beside a symbol (see CryptoSymbol.MarketLabel). The exchange's
+    /// own markets are told apart by contract type; everything an outside party deployed shares one
+    /// colour, because there are ten such markets on HyperLiquid alone and a colour per deployer
+    /// would be a rainbow nobody can read. All four are dark enough to carry white text in both
+    /// themes, so the label does not need a colour per theme.
+    /// </summary>
+    internal static IBrush GetBrushColorMarketLabel(string label)
+    {
+        return label switch
+        {
+            "Spot" => new SolidColorBrush(Color.FromRgb(0x2E, 0x7D, 0x9A)),
+            "Perp" => new SolidColorBrush(Color.FromRgb(0xC2, 0x70, 0x1C)),
+            "xPerp" => new SolidColorBrush(Color.FromRgb(0x9A, 0x7B, 0x12)),
+            _ => new SolidColorBrush(Color.FromRgb(0x6D, 0x3F, 0xA0)),
+        };
+    }
+
     internal IBrush GetBrushColorViaSign(double value)
     {
         if (value < 0)

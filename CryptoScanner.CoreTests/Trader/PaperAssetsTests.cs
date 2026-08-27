@@ -53,10 +53,9 @@ public class PaperAssetsTests : TestBase
 
         CryptoSymbol symbol = CreateTestSymbol(database);
 
-        // The live scanner and the emulator each run one exchange at a time, so ActiveExchange IS the
-        // exchange the symbols belong to. Line them up here as well: the position administration is
-        // kept per exchange, and PaperAssets reads the open orders from the exchange it is handed.
-        GlobalData.ActiveExchange = symbol.Exchange;
+        // No need to line ActiveExchange up with the symbol's exchange here: TestBase.SetupOnce puts
+        // the session on the exchange the test symbols belong to, the same way the scanner runs one
+        // exchange at a time.
         DeleteAllPositionRelatedStuff(database);
 
         CryptoAsset assetQuote = new() { Name = symbol.Quote, Total = startCapital, Free = startCapital, Locked = 0 };

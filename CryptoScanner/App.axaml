@@ -1,4 +1,4 @@
-<Application xmlns="https://github.com/avaloniaui"
+﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="CryptoScanner.App"
              xmlns:helper="using:CryptoScanner.Helpers"
@@ -166,6 +166,24 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         
+        <!-- Market label: the coloured badge behind the symbol name in every grid, holding the
+             contract type or the party that deployed the market. Small and tight on purpose - it
+             shares a cell of 100 pixels with the symbol name, on a row of 23 pixels. The colour
+             comes from the row (BaseConvertersViewModel.GetBrushColorMarketLabel) and is always
+             dark enough for white text, in both themes. -->
+        <Style Selector="Border.marketLabel">
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="Padding" Value="3,0,3,0"/>
+            <Setter Property="Margin" Value="0,2,0,2"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBlock.marketLabel">
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
         <!-- Optioneel: Voor andere controls zoals Button, Label, etc. -->
         <Style Selector="Button">
             <Setter Property="FontSize" Value="12" />

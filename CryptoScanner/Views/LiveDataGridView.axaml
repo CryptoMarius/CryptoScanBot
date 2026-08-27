@@ -39,7 +39,14 @@
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate x:DataType="vm:LiveDataViewModel">
 						<Border Background="{Binding SymbolBackground}">
-							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Symbol}" />
+							<StackPanel Orientation="Horizontal">
+								<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Symbol}" />
+								<!-- Market label: the contract type, or the party that deployed the market -->
+								<Border Classes="marketLabel" Background="{Binding MarketLabelBackground}"
+								        IsVisible="{Binding MarketLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+									<TextBlock Classes="marketLabel" Text="{Binding MarketLabel}" />
+								</Border>
+							</StackPanel>
 						</Border >
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>

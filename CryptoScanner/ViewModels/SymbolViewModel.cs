@@ -28,10 +28,34 @@ namespace CryptoScanner.ViewModels
         {
             get
             {
-                _SymbolText ??= Object.DisplayName;
+                _SymbolText ??= Object.Name;
                 return _SymbolText!;
             }
         }
+
+        /// <summary>
+        /// The market label shown as a coloured badge behind the name (see CryptoSymbol.MarketLabel).
+        /// The name itself stays bare: what the badge carries used to be glued behind the name as text.
+        /// </summary>
+        private string? _MarketLabelText;
+        public string MarketLabel
+        {
+            get
+            {
+                _MarketLabelText ??= Object.MarketLabel;
+                return _MarketLabelText!;
+            }
+        }
+        private IBrush? _MarketLabelBackground;
+        public IBrush MarketLabelBackground
+        {
+            get
+            {
+                _MarketLabelBackground ??= GetBrushColorMarketLabel(MarketLabel);
+                return _MarketLabelBackground!;
+            }
+        }
+
         private IBrush? _SymbolBackground;
         public IBrush SymbolBackground
         {
