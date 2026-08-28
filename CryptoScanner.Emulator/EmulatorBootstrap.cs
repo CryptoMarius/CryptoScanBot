@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Barometer;
+﻿using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
@@ -100,6 +100,14 @@ public static class EmulatorBootstrap
 
         SignalPrepare.Prepare();
         SignalExecute.Prepare();
+
+        // The same report the live scanner runs after these two (ScannerSession), and it was the one
+        // call the emulator did not copy. Without it a strategy that can never signal - a name the
+        // settings still carry after a rename, a plugin that is not in this build - produces a run
+        // that finishes as "completed" with zero signals and says nothing about why. That cost a
+        // whole afternoon on 28-08-2026: ten runs in a row with indicators 0.0s and no line anywhere
+        // naming the cause. Silent when everything is in order.
+        CryptoScanner.Core.Signal.Indicators.StrategyDiagnostics.Report();
     }
 
 

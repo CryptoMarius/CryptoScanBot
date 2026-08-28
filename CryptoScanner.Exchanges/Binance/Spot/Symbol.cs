@@ -101,8 +101,10 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.IsSpotTradingAllowed = symbolData.IsSpotTradingAllowed;
                                 //symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
 
-                                // volume from the tickers
-                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                // volume from the tickers, looked up on the PAIR: the ticker list is keyed on the
+                                // exchange's own spelling and knows nothing of the product behind the dot. On the
+                                // scanner name it matched nothing at all and every symbol silently ended up at zero.
+                                if (volumeTicker.TryGetValue(CryptoProduct.PairOf(symbol.Name), out decimal volume))
                                     symbol.Volume = (double)volume;
                                 else
                                 {

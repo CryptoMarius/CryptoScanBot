@@ -36,6 +36,29 @@ public static class CryptoProduct
     public const char Separator = '.';
 
     /// <summary>
+    /// The pair part of a scanner name: everything in front of the separator. A name without a
+    /// product comes back unchanged, so this is safe to call on any name.
+    /// <para>
+    /// This is the spelling every exchange uses in its OWN answers that are not per instrument - a
+    /// ticker list keyed on BTCUSDT, a 24 hour volume, a price. The scanner name carries the product
+    /// behind a dot since 27-08-2026 and no exchange knows about that, so looking a symbol up in
+    /// such an answer by <see cref="CryptoSymbol.Name"/> matches nothing at all. That is not a
+    /// missing value but a silent one: the volume falls back to zero, the symbol drops below the
+    /// minimum volume, and the market ends up with no subscriptions and no barometer.
+    /// </para>
+    /// <para>
+    /// Not the same as <see cref="CryptoSymbol.PairName"/>, which is built from Base and Quote as
+    /// the exchange spelled them. This one is cut out of the name itself, so it is always the
+    /// uppercase spelling the name was composed with (SymbolBase.ParseSymbol).
+    /// </para>
+    /// </summary>
+    public static string PairOf(string name)
+    {
+        int dot = name.IndexOf(Separator);
+        return dot > 0 ? name[..dot] : name;
+    }
+
+    /// <summary>
     /// The codes above, so the part behind the dot can be told apart from the old spelling of a
     /// deployed market. The black and white list is what needs that: before the product existed the
     /// deployer sat IN FRONT of the base (GOLDUSDC.XYZ was called XYZGOLDUSDC), so a rule from that
