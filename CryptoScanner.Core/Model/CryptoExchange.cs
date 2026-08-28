@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 
 using Dapper.Contrib.Extensions;
 
@@ -179,8 +180,23 @@ public class CryptoExchange
 
         // Not present while the symbol is new: GlobalData.AddSymbol puts it in the indexes once it
         // has an id from the database.
-        if (SymbolListId.ContainsKey(symbol.Id) && !SymbolListName.ContainsKey(name))
-            SymbolListName.Add(name, symbol);
+        if (!SymbolListId.ContainsKey(symbol.Id))
+            return;
+
+        // A name that is already taken means two instruments of this market compose the same scanner
+        // name, which is exactly what the product behind the dot exists to prevent. Leaving the key
+        // on the symbol that holds it is still the safest thing to do - taking it over would make
+        // THAT symbol unreachable instead - but it is not something to swallow: this symbol is now
+        // missing from the name index, so every lookup by name walks past it.
+        if (SymbolListName.TryGetValue(name, out CryptoSymbol? occupant))
+        {
+            if (occupant != symbol)
+                GlobalData.AddErrorToLogTab($"{Name}: the name {name} is already held by instrument " +
+                    $"{occupant.ExchangeName} (id {occupant.Id}), so {symbol.ExchangeName} is missing from the name index");
+            return;
+        }
+
+        SymbolListName.Add(name, symbol);
     }
 
 

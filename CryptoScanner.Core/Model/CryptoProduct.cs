@@ -36,8 +36,17 @@ public static class CryptoProduct
     public const char Separator = '.';
 
     /// <summary>
-    /// The codes above, to check that a market deployed by an outside party is not called after one
-    /// of them. A market named "perp" would produce a name that says something it is not.
+    /// The codes above, so the part behind the dot can be told apart from the old spelling of a
+    /// deployed market. The black and white list is what needs that: before the product existed the
+    /// deployer sat IN FRONT of the base (GOLDUSDC.XYZ was called XYZGOLDUSDC), so a rule from that
+    /// era is matched against that spelling as well - but only when the part behind the dot is a
+    /// deployer and not one of ours, otherwise "PERPBTCUSDT" would suddenly mean something.
+    /// <para>
+    /// It says nothing about what a deployer may call itself: nothing checks that at the moment a
+    /// symbol is composed, so a market deployed under the name "perp" would produce BTCUSDC.PERP.
+    /// No such market exists today - the ten on HyperLiquid are named after their party - and the
+    /// place to catch it would be SymbolBase.ParseSymbol.
+    /// </para>
     /// </summary>
     private static readonly HashSet<string> Reserved =
         new(StringComparer.OrdinalIgnoreCase) { Spot, Perpetual, Inverse, XPerp, Future };

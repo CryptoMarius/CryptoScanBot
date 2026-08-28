@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using Dapper;
@@ -163,7 +163,7 @@ public class CandleDatabase : IDisposable
     /// to this database's own Symbol table, keyed by symbol NAME. Version 1 databases
     /// (no Meta table) carry foreign ids and need an explicit migration.
     /// </summary>
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 
 
     /// <summary>
@@ -320,6 +320,12 @@ public class CandleDatabase : IDisposable
         if (version == "2")
         {
             MigrateToVersion3(connection, exchange);
+            version = "3";
+        }
+
+        if (version == "3")
+        {
+            MigrateToVersion4(connection, exchange);
             version = CurrentSchemaVersion.ToString();
         }
 
@@ -411,9 +417,12 @@ public class CandleDatabase : IDisposable
         connection.Execute("DROP TABLE [Symbol]", transaction: tx);
         connection.Execute("ALTER TABLE [SymbolVersion3] RENAME TO [Symbol]", transaction: tx);
 
+        // The literal 3, not CurrentSchemaVersion: what this produced is a version-3 file, and
+        // VerifySchemaVersion takes it on to 4 right after. Stamping the current version here would
+        // skip that step and leave the Name column carrying pre-rename names for ever.
         connection.Execute(
             "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', $Version)",
-            new { Version = CurrentSchemaVersion.ToString() }, transaction: tx);
+            new { Version = "3" }, transaction: tx);
         tx.Commit();
 
         // The cache maps instrument -> id from here on, the old entries map name -> id
@@ -422,6 +431,83 @@ public class CandleDatabase : IDisposable
         GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: converted to version {CurrentSchemaVersion} — " +
             $"{adopted} symbol(s) kept, {ambiguous} fetched again (the name covers more than one " +
             $"instrument), {orphan} orphan(s) removed");
+    }
+
+
+    /// <summary>
+    /// Version 4 changes no layout - it repairs the contents of one column. The Name column of a
+    /// version-3 file carries the scanner name as it was when the row was written, and the scanner
+    /// renamed its symbols on 27-08-2026 to carry the product behind a dot (ZECUSDT became
+    /// ZECUSDT.PERP). Rows written before that keep the bare name.
+    /// <para>
+    /// Nothing broke, which is exactly why it is worth repairing: the row is addressed by
+    /// ExchangeName, the exchange's own name for the instrument, and the rename did not touch that.
+    /// So every candle stayed reachable and the mismatch stayed invisible - measured on Binance
+    /// Perpetual 28-08-2026, 697 of 877 rows still held the old name while the file was in daily
+    /// use. It is a trap for later: MigrateToVersion3 resolves a row through
+    /// <see cref="Model.CryptoExchange.TryGetSymbolByPair"/> on exactly this Name, so a future
+    /// conversion of a file left in this state would fail to adopt those rows and delete their
+    /// candles.
+    /// </para>
+    /// <para>
+    /// A row whose instrument the exchange no longer lists is left untouched rather than deleted.
+    /// Its candles are still addressable and a delisted instrument can come back; version 3 already
+    /// decides what is an orphan, and that is not this migration's call to make.
+    /// </para>
+    /// </summary>
+    private static void MigrateToVersion4(SqliteConnection connection, Model.CryptoExchange exchange)
+    {
+        // Same reason as version 3: without the instruments there is nothing to read a name from,
+        // and a run that quietly renamed nothing would stamp the file as done.
+        if (exchange.SymbolListExchangeName.Count == 0)
+        {
+            throw new CandleDatabaseSchemaException(
+                $"the symbol list of '{exchange.Name}' is not loaded yet, conversion to version " +
+                $"{CurrentSchemaVersion} needs it to read the current names");
+        }
+
+        using var tx = connection.BeginTransaction();
+
+        List<LocalInstrumentNameRow> rows = [.. connection.Query<LocalInstrumentNameRow>(
+            "SELECT SymbolId, ExchangeName, Name FROM Symbol", transaction: tx)];
+
+        int renamed = 0;
+        int unchanged = 0;
+        int unknown = 0;
+        foreach (LocalInstrumentNameRow row in rows)
+        {
+            if (!exchange.SymbolListExchangeName.TryGetValue(row.ExchangeName, out CryptoSymbol? symbol))
+            {
+                unknown++;
+                continue;
+            }
+
+            if (string.Equals(row.Name, symbol.Name, StringComparison.Ordinal))
+            {
+                unchanged++;
+                continue;
+            }
+
+            connection.Execute("UPDATE Symbol SET Name = $Name WHERE SymbolId = $SymbolId",
+                new { symbol.Name, row.SymbolId }, transaction: tx);
+            renamed++;
+        }
+
+        connection.Execute(
+            "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', $Version)",
+            new { Version = CurrentSchemaVersion.ToString() }, transaction: tx);
+        tx.Commit();
+
+        GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: converted to version {CurrentSchemaVersion} — " +
+            $"{renamed} name(s) updated, {unchanged} already current, {unknown} instrument(s) the exchange no longer lists");
+    }
+
+
+    private sealed class LocalInstrumentNameRow
+    {
+        public int SymbolId { get; set; }
+        public string ExchangeName { get; set; } = "";
+        public string Name { get; set; } = "";
     }
 
 

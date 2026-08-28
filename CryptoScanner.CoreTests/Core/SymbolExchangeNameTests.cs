@@ -9,6 +9,7 @@ namespace CryptoScanner.CoreTests.Core;
 /// The index on the instrument name is the only one the exchange itself can address: a price ticker
 /// arrives with the name the exchange gave the instrument, never with the scanner name. These tests
 /// guard that the index keeps up when that name changes, which is what makes it usable as a lookup.
+/// The last two cover the same question for the scanner-name index beside it.
 /// </summary>
 [TestClass]
 public class SymbolExchangeNameTests
@@ -21,16 +22,18 @@ public class SymbolExchangeNameTests
 
     private static CryptoSymbol AddSymbol(TestExchange exchange, int id, string name, string exchangeName)
     {
+        // Without the product, so a name that carries one still gives a sane base and quote
+        string pair = name.Split(CryptoProduct.Separator)[0];
         CryptoSymbol symbol = new()
         {
             Id = id,
             Exchange = exchange,
             ExchangeId = exchange.Id,
             Name = name,
-            Base = name.Replace("USDT", "").Replace("USDC", ""),
-            Quote = name.EndsWith("USDC") ? "USDC" : "USDT",
+            Base = pair.Replace("USDT", "").Replace("USDC", ""),
+            Quote = pair.EndsWith("USDC") ? "USDC" : "USDT",
             ExchangeName = exchangeName,
-            QuoteData = new CryptoQuoteData { Name = name.EndsWith("USDC") ? "USDC" : "USDT" },
+            QuoteData = new CryptoQuoteData { Name = pair.EndsWith("USDC") ? "USDC" : "USDT" },
             Status = 1,
         };
         exchange.SymbolListId.Add(symbol.Id, symbol);
@@ -135,5 +138,47 @@ public class SymbolExchangeNameTests
 
         Assert.AreEqual("ETH-USD_UM_XPERP-310404", symbol.ExchangeName);
         Assert.AreEqual(0, exchange.SymbolListExchangeName.Count);
+    }
+
+
+    /// <summary>
+    /// The scanner-name index has to move along as well, or every lookup by the new name keeps
+    /// missing until a restart - TryGetSymbolByPair included.
+    /// </summary>
+    [TestMethod]
+    public void RenamedSymbolMovesToTheNewScannerName()
+    {
+        TestExchange exchange = CreateExchange();
+        CryptoSymbol symbol = AddSymbol(exchange, 1, "BTCUSDT", "BTC-USDT-SWAP");
+
+        exchange.SetSymbolName(symbol, "BTCUSDT.PERP");
+
+        Assert.AreEqual("BTCUSDT.PERP", symbol.Name);
+        Assert.IsTrue(exchange.SymbolListName.TryGetValue("BTCUSDT.PERP", out CryptoSymbol? found));
+        Assert.AreSame(symbol, found);
+        Assert.IsFalse(exchange.SymbolListName.ContainsKey("BTCUSDT"));
+    }
+
+
+    /// <summary>
+    /// A name that another symbol already holds stays with that symbol. Taking the key over would
+    /// make the one that holds it unreachable instead, which trades one invisible symbol for
+    /// another; the renamed symbol is left out of the index and the error log says so, because two
+    /// instruments composing the same scanner name is the thing the product behind the dot exists
+    /// to prevent.
+    /// </summary>
+    [TestMethod]
+    public void ANameThatIsTakenStaysWithTheSymbolThatHoldsIt()
+    {
+        TestExchange exchange = CreateExchange();
+        CryptoSymbol holder = AddSymbol(exchange, 1, "BTCUSDT.PERP", "BTC-USDT-SWAP");
+        CryptoSymbol other = AddSymbol(exchange, 2, "BTCUSDC.PERP", "BTC-USDC-SWAP");
+
+        exchange.SetSymbolName(other, "BTCUSDT.PERP");
+
+        Assert.AreEqual("BTCUSDT.PERP", other.Name);
+        Assert.AreSame(holder, exchange.SymbolListName["BTCUSDT.PERP"]);
+        Assert.IsFalse(exchange.SymbolListName.ContainsKey("BTCUSDC.PERP"));
+        Assert.AreEqual(1, exchange.SymbolListName.Count);
     }
 }

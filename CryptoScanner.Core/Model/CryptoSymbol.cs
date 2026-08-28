@@ -44,16 +44,19 @@ public partial class CryptoSymbol
     public string Product { get; set; } = "";
 
     /// <summary>
-    /// The pair as a reader wants to see it: base, a hyphen, quote. This is what the grids show in
-    /// their symbol column, with the product beside it as a badge - putting the product in the text
-    /// as well said the same thing twice ("SUSDT.PERP" next to a PERP badge).
+    /// The pair as a reader wants to see it: base and quote, written the way they always were. This
+    /// is what the grids show in their symbol column, with the product beside it as a badge - putting
+    /// the product in the text as well said the same thing twice ("SUSDT.PERP" next to a PERP badge).
     /// <para>
-    /// The hyphen is not decoration. A pair like S against USDT reads as SUSDT without it, and a
-    /// base of one or two letters is common enough that guessing where the pair splits is real work.
+    /// It carried a hyphen for a day (S-USDT), which reads better for a base of one or two letters
+    /// but made people doubt how a symbol is spelled: the black and white list wants BTCUSDT and
+    /// splits a rule on a hyphen, so what the grid showed could not be typed straight into a rule.
+    /// One spelling everywhere beats a readable one in one place.
     /// </para>
     /// <para>
     /// For reading only. <see cref="Name"/> is the key and carries the product, because a name has
-    /// to be unique; this one does not and may repeat.
+    /// to be unique; this one does not and may repeat - two instruments on the same pair show the
+    /// same text and are told apart by their badge.
     /// </para>
     /// </summary>
     [Computed]
@@ -62,7 +65,7 @@ public partial class CryptoSymbol
     {
         get
         {
-            _pairName ??= Base + "-" + Quote;
+            _pairName ??= Base + Quote;
             return _pairName;
         }
     }
