@@ -59,11 +59,11 @@ public static class LimitRate
                 // Het is nu een beetje gokken, 120*5 = 600 calls, met 300 per 20 sec blijven we daar RUIM onder lijkt me
                 // Maar het is ook niet plezierig om gebanned te worden, dus begin maar ietwat voorzichtig lijkt me..
                 // Op de helft van wat de exchange toestaat blijven, zodat een andere applicatie op
-            // deze machine (de limiet geldt per IP-adres, niet per proces) er nog naast past.
-            // BloFin staat 500 aanvragen per minuut toe (de guard in de library: "Limit of 500 per 00:01:00"),
-            // oftewel 8,3 per seconde. 83 per 20 seconden is 4,15 per seconde, de helft daarvan. Was
-            // 300 per 20 seconden = 15 per seconde, bijna het dubbele van wat er mag.
-            if (CurrentWeight > 83)
+                // deze machine (de limiet geldt per IP-adres, niet per proces) er nog naast past.
+                // BloFin staat 500 aanvragen per minuut toe (de guard in de library: "Limit of 500 per 00:01:00"),
+                // oftewel 8,3 per seconde. 83 per 20 seconden is 4,15 per seconde, de helft daarvan. Was
+                // 300 per 20 seconden = 15 per seconde, bijna het dubbele van wat er mag.
+                if (CurrentWeight > 83)
                 {
                     GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (rate limits)");
                     // Release the lock while waiting. Sleeping inside Monitor.Enter(List) queues

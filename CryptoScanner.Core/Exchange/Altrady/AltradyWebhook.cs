@@ -146,6 +146,18 @@ public class AltradyWebhook
 
             //request.signal_id = $"MyPositionId{position.Id}"; // optional (problem, this is not a unique id <after deleting the db for example>)
 
+            // The webhook symbol format below is Code_Quote_Base, which can only express a spot or
+            // regular perpetual market. An X-Perp (dated contract) or a deployed market shares its
+            // base+quote with another instrument, so sending Code_Quote_Base would open the WRONG
+            // contract at Altrady. Refuse loudly instead of trading the wrong market.
+            string product = position.Symbol.Product;
+            if (product != "" && product != CryptoProduct.Spot && product != CryptoProduct.Perpetual)
+            {
+                GlobalData.AddErrorToLogTab($"error webhook {position.Symbol.Name} {position.Interval!.Name} " +
+                    $"product {product} cannot be expressed in the Altrady webhook symbol format, position not delegated");
+                return;
+            }
+
             request.exchange = externalUrls.Altrady.Code;
             request.symbol = $"{externalUrls.Altrady.Code}_{position.Symbol.Quote}_{position.Symbol.Base}";
             request.adjust_fee = true; // Adjust the order size to ensure there is enough to pay the fee (problems when managing position from our side)

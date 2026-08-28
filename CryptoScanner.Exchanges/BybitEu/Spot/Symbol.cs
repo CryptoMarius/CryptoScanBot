@@ -77,7 +77,7 @@ public class Symbol() : SymbolBase(), ISymbol
                         //HttpResult<BybitResponse<BybitSpotSymbol>> x;
                         foreach (var symbolData in symbolInfo.Data.List)
                         {
-                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset, ProductOfExchange(exchange));
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
                                 //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.

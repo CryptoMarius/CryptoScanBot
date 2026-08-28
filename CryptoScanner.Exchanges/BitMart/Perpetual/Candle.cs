@@ -1,8 +1,6 @@
 ﻿using BitMart.Net.Clients;
 using BitMart.Net.Enums;
 
-using CryptoExchange.Net.Objects.Errors;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 

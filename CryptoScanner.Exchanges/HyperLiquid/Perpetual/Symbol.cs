@@ -33,7 +33,6 @@ public class Symbol() : SymbolBase(), ISymbol
                 GlobalData.AddTextToLogTab($"Reading symbol and ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 // Counts against the same budget as the candle requests - it is an ordinary info
                 // request, so it weighs 20 as well.
-                LimitRate.WaitForFairWeight(LimitRate.InfoRequestWeight);
                 var tickerInfo = await api.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No ticker and symbol data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddErrorToLogTab($"error getting symbol ticker info {tickerInfo.Error}");
@@ -49,7 +48,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         if (tickerData.Symbol != null)
                         {
-                            SymbolInfo info = ParseSymbol(tickerData.Symbol, tickerData.Symbol, "USDC");
+                            SymbolInfo info = ParseSymbol(tickerData.Symbol, tickerData.Symbol, "USDC", ProductOfExchange(exchange));
                             volumeTicker.TryAdd(info.ExchangeName, tickerData.NotionalVolume); // QuoteVolume?
                         }
                     }
@@ -94,7 +93,7 @@ public class Symbol() : SymbolBase(), ISymbol
                             var symbolData = symbolInfo.Data.ExchangeInfo.Symbols[i];
 
                             // TODO: 
-                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.Name, "USDC");
+                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.Name, "USDC", ProductOfExchange(exchange));
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
 
@@ -251,10 +250,9 @@ public class Symbol() : SymbolBase(), ISymbol
     /// 101 traded markets against 176 in HyperLiquid's own market.
     /// </para>
     /// <para>
-    /// The scanner name carries the deployer, "xyz:GOLD" becoming XYZGOLDUSDC, and that is not
-    /// decoration: HyENA runs a BTC of its own ("hyna:BTC"), which would take the scanner name of
-    /// the BTC in HyperLiquid's own market and overwrite its instrument name. SubMarket holds the
-    /// bare deployer name for the symbol list to show.
+    /// The deployer is the product of these symbols, so "xyz:GOLD" becomes GOLDUSDC.XYZ. That is not
+    /// decoration: HyENA runs a BTC of its own ("hyna:BTC"), and without the product both it and the
+    /// BTC of HyperLiquid's own market would be called BTCUSDC.
     /// </para>
     /// </summary>
     private async Task<int> AddDeployedMarketsAsync(
@@ -267,7 +265,6 @@ public class Symbol() : SymbolBase(), ISymbol
     {
         int withoutVolume = 0;
 
-        LimitRate.WaitForFairWeight(LimitRate.InfoRequestWeight);
         var dexList = await client.FuturesApi.ExchangeData.GetPerpDexesAsync(ExchangeBase.CancellationToken);
         if (!dexList.Success || dexList.Data == null)
         {
@@ -282,8 +279,13 @@ public class Symbol() : SymbolBase(), ISymbol
             if (dex == null || string.IsNullOrEmpty(dex.Name))
                 continue;
 
-            LimitRate.WaitForFairWeight(LimitRate.InfoRequestWeight);
-            var markets = await PerpDexClient.GetMarketsAsync(dex.Name);
+            var (markets, rawJson) = await PerpDexClient.GetMarketsAsync(dex.Name);
+
+            // One file per deployed market, next to the symbols.json of HyperLiquid's own market.
+            // Without it these instruments are nowhere on disk and a name like HYNA1000PEPEUSDC
+            // cannot be traced back to the "hyna:1000PEPE" it came from.
+            SaveExchangeInfo(rawJson, $"symbols.{dex.Name}.json");
+
             if (markets.Count == 0)
                 continue;
 
@@ -300,11 +302,12 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (parts.Length != 2 || parts[1].Length == 0)
                     continue;
 
-                SymbolInfo info = ParseSymbol(market.Name, parts[0].ToUpper() + parts[1].ToUpper(), "USDC");
+                // The deployer is the product, so "hyna:BTC" becomes BTCUSDC.HYNA. The base stays the
+                // coin itself: putting the deployer in front of it made {BASE} in the links read
+                // HYNABTC, which neither TradingView nor Altrady knows.
+                SymbolInfo info = ParseSymbol(market.Name, parts[1].ToUpper(), "USDC", parts[0]);
                 if (!IsSymbolAccepted(exchange, info, client.FuturesApi, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                     continue;
-
-                symbol!.SubMarket = dex.Name;
 
                 // QuantityDecimals is szDecimals, a NUMBER of decimals and not a tick size
                 symbol.QuantityTickSize = TickSizeFromDecimals(market.QuantityDecimals);

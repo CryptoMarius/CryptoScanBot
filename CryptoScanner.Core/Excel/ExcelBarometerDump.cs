@@ -11,7 +11,7 @@ public class ExcelBarometerDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
     {
         var quoteData = Symbol.QuoteData;
         var bmName = Const.Constants.SymbolNameBarometerPrice + quoteData.Name;
-        if (!Symbol.Exchange.SymbolListName.TryGetValue(bmName, out CryptoSymbol? bmSymbol))
+        if (!Symbol.Exchange.TryGetSymbolByPair(bmName, out CryptoSymbol? bmSymbol))
             return;
 
         var bmSymbolInterval = bmSymbol.GetSymbolInterval(interval);

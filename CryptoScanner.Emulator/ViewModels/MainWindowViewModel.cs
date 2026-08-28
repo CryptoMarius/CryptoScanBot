@@ -288,7 +288,8 @@ public partial class MainWindowViewModel : ObservableObject
                     }
 
                     symbolIdx++;
-                    if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                    // Config names may be bare pairs from before the product moved into the name
+                    if (!GlobalData.ActiveExchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol))
                     {
                         SetStatus($"Symbol '{symbolName}' not in exchange list — did you Fetch symbols first?");
                         GlobalData.AddTextToLogTab($"Fetch candles: SKIP {symbolName} — not in exchange list");
@@ -1211,7 +1212,8 @@ public partial class MainWindowViewModel : ObservableObject
         // Activte quoteData
         foreach (string symbolName in config.Symbols)
         {
-            if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            // Config names may be bare pairs from before the product moved into the name
+            if (!exchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol))
                 continue;
             if (symbol.QuoteData == null)
                 continue;

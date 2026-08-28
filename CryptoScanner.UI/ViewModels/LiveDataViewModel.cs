@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Indicators;
@@ -20,7 +20,7 @@ public class LiveDataViewModel
         {
             LiveDataColumnEnum.Date => FormatDate(),
             LiveDataColumnEnum.Exchange => Object.Symbol.Exchange.Name,
-            LiveDataColumnEnum.Symbol => Object.Symbol.DisplayName,
+            LiveDataColumnEnum.Symbol => Object.Symbol.PairName,
             LiveDataColumnEnum.Volume => Object.Symbol.Volume.ToString("N0"),
             LiveDataColumnEnum.Interval => Object.Interval.Name,
             LiveDataColumnEnum.Price => Object.Candle.Close.ToString0(Object.Symbol.PriceDisplayFormat),
@@ -109,4 +109,7 @@ public class LiveDataViewModel
         return Object.CandleData.PSar > Object.CandleData.Sma20
             ? ColorHelper.Red : ColorHelper.Green;
     }
+
+    // Which market inside the exchange, shown as a coloured badge behind the name
+    public string MarketLabel => Object.Symbol.MarketLabel;
 }

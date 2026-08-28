@@ -1,4 +1,4 @@
-using Alpaca.Markets;
+﻿using Alpaca.Markets;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -97,7 +97,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                         // Use the ticker as both the exchange symbol and as base, USD as quote.
                         // This mirrors how HyperLiquid handles single-asset instruments.
-                        SymbolInfo info = ParseSymbol(asset.Symbol, asset.Symbol, "USD");
+                        SymbolInfo info = ParseSymbol(asset.Symbol, asset.Symbol, "USD", ProductOfExchange(exchange));
                         // api parameter not applicable for Alpaca (no CryptoExchange.Net client)
 #pragma warning disable CS8625
                         if (IsSymbolAccepted(exchange, info, null, global::CryptoExchange.Net.SharedApis.TradingMode.Spot, out CryptoSymbol? symbol))

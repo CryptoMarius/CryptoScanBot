@@ -25,6 +25,15 @@ public partial class CryptoSignal : CryptoData2
 
     public bool IsInvalid { get; set; }
 
+    // Worst move against the signal since it fired, as a positive percentage of SignalPrice, while
+    // EntryConditions.EntryWaitMinutes holds the signal back. In memory only: it is scratch state
+    // for a signal that is still being watched, not something a restart needs back. A signal
+    // reloaded from the database after a restart therefore starts counting again from zero, which
+    // can admit one that would otherwise have been dropped - rare, and the alternative is a column
+    // plus a migration for a value that lives a few minutes.
+    [Computed]
+    public decimal WorstAdversePercentage { get; set; }
+
     // FK to EmulatorRun (null on live signals; populated by the emulator's TickRunner via
     // GlobalData.CurrentEmulatorRunId so each run's signals can be retrieved / compared).
     public int? EmulatorRunId { get; set; }

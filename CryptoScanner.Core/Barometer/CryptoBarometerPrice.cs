@@ -30,7 +30,7 @@ internal class CryptoBarometerPrice
         // barometer is for (the pause symbol itself is against the default quote).
         string bitcoinBase = "";
         if (GlobalData.ActiveExchange != null &&
-            GlobalData.ActiveExchange.SymbolListName.TryGetValue(Exchange.ExchangeBase.ExchangeOptions.PauseSymbol, out CryptoSymbol? bitcoinSymbol))
+            GlobalData.ActiveExchange.TryGetSymbolByPair(Exchange.ExchangeBase.ExchangeOptions.PauseSymbol, out CryptoSymbol? bitcoinSymbol))
             bitcoinBase = bitcoinSymbol.Base;
 
         for (int i = 0; i < quoteData.SymbolList.Count; i++)

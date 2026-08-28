@@ -186,7 +186,8 @@ public static class DashboardDataCollector
             foreach (var quoteCoin in GlobalData.Settings.QuoteCoins)
             {
                 string symbolName = baseName + quoteCoin.Key;
-                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                // Base + quote is a bare pair; the symbol list is keyed on the product-suffixed name
+                if (exchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol))
                 {
                     decimal price = 0;
                     if (symbol.LastPrice.HasValue)

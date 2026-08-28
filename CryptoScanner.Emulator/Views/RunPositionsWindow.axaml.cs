@@ -54,9 +54,10 @@ public partial class RunPositionsWindow : Window
         if (DataContext is not RunPositionsViewModel viewModel)
             return;
 
-        // Resolve the symbol (base/quote) from the run's exchange, loaded in memory.
+        // Resolve the symbol (base/quote) from the run's exchange, loaded in memory. Rows written
+        // by a pre-migration run hold the bare pair, so resolve via the pair lookup.
         var exchange = GlobalData.ActiveExchange;
-        if (exchange == null || !exchange.SymbolListName.TryGetValue(row.Symbol, out var symbol))
+        if (exchange == null || !exchange.TryGetSymbolByPair(row.Symbol, out var symbol))
         {
             viewModel.Status = $"Symbol {row.Symbol} not found in the active exchange.";
             return;

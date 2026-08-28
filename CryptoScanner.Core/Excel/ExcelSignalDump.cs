@@ -43,7 +43,7 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
         int columns = 0;
         ISheet sheet = Book.CreateSheet("Signal");
 
-        if (Signal.Symbol.Exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + Signal.Symbol.Quote, out CryptoSymbol? bmSymbol))
+        if (Signal.Symbol.Exchange.TryGetSymbolByPair(Constants.SymbolNameBarometerPrice + Signal.Symbol.Quote, out CryptoSymbol? bmSymbol))
         {
             CryptoSymbolInterval bmSymbolInterval = bmSymbol.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
             CryptoCandleList bmCandles = bmSymbolInterval.CandleList;

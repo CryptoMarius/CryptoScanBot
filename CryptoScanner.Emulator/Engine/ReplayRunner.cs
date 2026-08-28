@@ -202,7 +202,9 @@ public sealed class ReplayRunner
             foreach (string symbolName in config.Symbols)
             {
                 ct.ThrowIfCancellationRequested();
-                if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                // Configs and the hand-edited queue JSON hold bare pairs ("BTCUSDT") from before
+                // the product moved into the name; TryGetSymbolByPair accepts both spellings.
+                if (!exchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol))
                     throw new InvalidOperationException($"Symbol '{symbolName}' not found on exchange '{config.ExchangeName}'.");
                 symbols.Add(symbol);
             }

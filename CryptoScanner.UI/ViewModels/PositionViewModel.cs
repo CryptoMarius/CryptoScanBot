@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
@@ -24,7 +24,7 @@ public class PositionViewModel
             PositionColumnEnum.CloseTime => Object.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "",
             PositionColumnEnum.Duration => Object.DurationText(),
             PositionColumnEnum.Exchange => Object.Exchange.Name,
-            PositionColumnEnum.Symbol => Object.Symbol.DisplayName,
+            PositionColumnEnum.Symbol => Object.Symbol.PairName,
             PositionColumnEnum.Interval => Object.Interval?.Name ?? "",
             PositionColumnEnum.Side => Object.SideText,
             PositionColumnEnum.Strategy => Object.StrategyText,
@@ -170,4 +170,7 @@ public class PositionViewModel
             return (Object.RemainingDust * Object.ProfitPrice).ToString0(Object.Symbol.QuoteData.DisplayFormat);
         return (Object.RemainingDust * Object.Symbol.LastPrice).ToString0(Object.Symbol.QuoteData.DisplayFormat);
     }
+
+    // Which market inside the exchange, shown as a coloured badge behind the name
+    public string MarketLabel => Object.Symbol.MarketLabel;
 }

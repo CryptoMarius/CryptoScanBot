@@ -71,6 +71,14 @@
                 <label>Cool down after loss (m)</label>
                 <input type="number" class="input-number" min="0" @bind="_lossCooldown" />
             </div>
+            <div class="field" title="Minutes to watch a signal before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below EntryRemoveTime x the interval duration, otherwise the signal expires before the wait is over and nothing is ever entered.">
+                <label>Wait after signal (m)</label>
+                <input type="number" class="input-number" min="0" @bind="_entryWaitMinutes" />
+            </div>
+            <div class="field" title="How far price may run against the signal during that wait, as a positive percentage of the signal price. Above this the signal is dropped. Zero means no limit: the wait then only delays the entry and skips none.">
+                <label>Max move against the signal (%)</label>
+                <input type="number" class="input-number" min="0" step="0.5" @bind="_entryMaxAdverse" />
+            </div>
             <div class="field" title="Days a position may stay open before it is closed at whatever the market offers, counted from the moment it was created. Zero switches it off. Decimals are allowed, so 0.5 is twelve hours. Meant for the rare position that walks away and never comes back: it holds capital that cannot be put to work anywhere else.">
                 <label>Close position after (days)</label>
                 <input type="number" class="input-number" min="0" step="0.5" @bind="_maxPositionDurationDays" />
@@ -338,13 +346,13 @@
     private int _slotsShort;
     private CryptoOrderType _entryOrderType;
     private int _entryRemoveTime;
-    private decimal _entryPullback;
     private CryptoOrderType _dcaOrderType;
-    private decimal _dcaPullback;
     private int _buyCooldown;
     private int _signalCooldownAfterTrade;
     private int _lossCooldown;
     private decimal _maxPositionDurationDays;
+    private int _entryWaitMinutes;
+    private decimal _entryMaxAdverse;
     private CryptoOrderType _tpOrderType;
     private CryptoTakeProfitStrategy _tpStrategy;
     private bool _addDustToTp;
@@ -459,13 +467,13 @@
         _slotsShort = t.SlotsMaximalShort;
         _entryOrderType = t.EntryOrderType;
         _entryRemoveTime = t.EntryRemoveTime;
-        _entryPullback = t.EntryPullbackPercentage;
         _dcaOrderType = t.DcaOrderType;
-        _dcaPullback = t.DcaPullbackPercentage;
         _buyCooldown = t.GlobalBuyCooldownTime;
         _signalCooldownAfterTrade = t.SignalCooldownAfterTradeTime;
         _lossCooldown = t.LossCooldownTime;
         _maxPositionDurationDays = t.MaxPositionDurationDays;
+        _entryWaitMinutes = t.EntryConditions.EntryWaitMinutes;
+        _entryMaxAdverse = t.EntryConditions.EntryMaxAdversePercentage;
         _tpOrderType = t.TakeProfitOrderType;
         _tpStrategy = t.TakeProfitStrategy;
         _addDustToTp = t.AddDustToTp;
@@ -505,13 +513,13 @@
         t.SlotsMaximalShort = _slotsShort;
         t.EntryOrderType = _entryOrderType;
         t.EntryRemoveTime = _entryRemoveTime;
-        t.EntryPullbackPercentage = _entryPullback;
         t.DcaOrderType = _dcaOrderType;
-        t.DcaPullbackPercentage = _dcaPullback;
         t.GlobalBuyCooldownTime = _buyCooldown;
         t.SignalCooldownAfterTradeTime = _signalCooldownAfterTrade;
         t.LossCooldownTime = _lossCooldown;
         t.MaxPositionDurationDays = _maxPositionDurationDays;
+        t.EntryConditions.EntryWaitMinutes = _entryWaitMinutes;
+        t.EntryConditions.EntryMaxAdversePercentage = _entryMaxAdverse;
         t.TakeProfitOrderType = _tpOrderType;
         t.TakeProfitStrategy = _tpStrategy;
         t.AddDustToTp = _addDustToTp;

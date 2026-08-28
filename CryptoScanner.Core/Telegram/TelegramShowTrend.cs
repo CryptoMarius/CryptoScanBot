@@ -21,7 +21,8 @@ public class TelegramShowTrend
         var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
-            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            // The user types a bare pair; the symbol list is keyed on the product-suffixed name
+            if (exchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol))
             {
                 CryptoTrendData symbolTrend = await MarketTrend.CalculateMarketTrendAsync(symbol, trend);
 

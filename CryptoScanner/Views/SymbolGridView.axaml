@@ -31,6 +31,18 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
+			<!-- Exchange name (Hidden by default) -->
+			<!-- The name the instrument has at the exchange, which is what every call actually sends.
+			     A debug column: switch it on when a symbol behaves oddly and you want to see which
+			     instrument is really behind it. -->
+			<DataGridTemplateColumn Header="Exchange name" Width="180" SortMemberPath="ExchangeName" IsVisible="False">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate x:DataType="vm:SymbolViewModel">
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding ExchangeName}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
 			<!-- Symbol -->
 			<DataGridTemplateColumn Header="Symbol" Width="100" MinWidth="90" SortMemberPath="Symbol">
 				<DataGridTemplateColumn.CellTemplate>

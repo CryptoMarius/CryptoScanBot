@@ -53,20 +53,49 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         return TryGetValue(exchange.Name, out externalUrls);
     }
 
+    /// <summary>
+    /// The expiry in the tail of an instrument name, for the addresses that need it. Altrady puts it
+    /// at the end of its own name for an Okx X-Perp: "APR-USD_UM_XPERP-310815" is APR_UM-XPERP-310815
+    /// there, so the link cannot be built from base and quote alone.
+    /// <para>
+    /// Only a tail of digits counts. The last part of "BTC-USDT-SWAP" is SWAP and that is not an
+    /// expiry, so an instrument without one answers with an empty string.
+    /// </para>
+    /// </summary>
+    internal static string ExpiryOf(string exchangeName)
+    {
+        int dash = exchangeName.LastIndexOf('-');
+        if (dash <= 0 || dash >= exchangeName.Length - 1)
+            return "";
+
+        string tail = exchangeName[(dash + 1)..];
+        return tail.All(char.IsDigit) ? tail : "";
+    }
+
+
     public (string Url, CryptoExternalUrlType Execute) GetExternalRef(Model.CryptoExchange exchange, CryptoTradingApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)
     {
         if (GetExternalRef(exchange, out CryptoExternalUrls? externalUrls0))
         {
             CryptoExternalUrls externalUrls = externalUrls0!;
 
-            CryptoExternalUrl? externalUrl = externalApp switch
+            static CryptoExternalUrl? Pick(CryptoExternalUrls urls, CryptoTradingApp app) => app switch
             {
-                CryptoTradingApp.Altrady => externalUrls.Altrady,
-                CryptoTradingApp.Hypertrader => externalUrls.HyperTrader,
-                CryptoTradingApp.TradingView => externalUrls.TradingView,
-                CryptoTradingApp.ExchangeUrl => externalUrls.ExchangeUrl,
+                CryptoTradingApp.Altrady => urls.Altrady,
+                CryptoTradingApp.Hypertrader => urls.HyperTrader,
+                CryptoTradingApp.TradingView => urls.TradingView,
+                CryptoTradingApp.ExchangeUrl => urls.ExchangeUrl,
                 _ => null
             };
+
+            // A market that carries several products can state an address for one of them, because
+            // the outside world does not name them the same way: TradingView calls an Okx swap
+            // BTCUSDT.P and an X-Perp BTCUSD.UM. Anything the override leaves out falls back to the
+            // address of the market itself.
+            CryptoExternalUrl? externalUrl = null;
+            if (symbol.Product.Length > 0 && externalUrls.PerProduct.TryGetValue(symbol.Product, out CryptoExternalUrls? perProduct))
+                externalUrl = Pick(perProduct, externalApp);
+            externalUrl ??= Pick(externalUrls, externalApp);
 
             if (externalUrl == null)
                 return ("", CryptoExternalUrlType.Internal);
@@ -84,21 +113,14 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             urlTemplate = urlTemplate.Replace("{BASE}", symbol.Base.ToUpper());
             urlTemplate = urlTemplate.Replace("{QUOTE}", symbol.Quote.ToUpper());
 
-            // The base without the market it lives on. A market that an outside party deployed on
-            // HyperLiquid carries its deployer in the scanner name - "xyz:GOLD" is XYZGOLDUSDC here,
-            // because HyENA runs a BTC of its own that would collide otherwise - but the outside
-            // world does not know that prefix: TradingView calls the same market GOLDUSDC.P and
-            // Altrady lists it as GOLD/USDC. Equal to {BASE} for every symbol that has no such
-            // prefix, so a template may use it wherever {BASE} would do.
-            string baseMarket = symbol.Base;
-            if (symbol.SubMarket.Length > 0 && baseMarket.StartsWith(symbol.SubMarket, StringComparison.OrdinalIgnoreCase))
-                baseMarket = baseMarket[symbol.SubMarket.Length..];
-            urlTemplate = urlTemplate.Replace("{basemarket}", baseMarket.ToLower());
-            urlTemplate = urlTemplate.Replace("{BASEMARKET}", baseMarket.ToUpper());
+            string expiry = ExpiryOf(symbol.ExchangeName);
+            urlTemplate = urlTemplate.Replace("{expiry}", expiry);
+            urlTemplate = urlTemplate.Replace("{EXPIRY}", expiry);
 
-            // Which market inside the exchange, empty for the exchange's own market
-            urlTemplate = urlTemplate.Replace("{submarket}", symbol.SubMarket.ToLower());
-            urlTemplate = urlTemplate.Replace("{SUBMARKET}", symbol.SubMarket.ToUpper());
+            // Which instrument this is - the part of the name behind the dot. PERP, SPOT, XPERP, or
+            // the market an outside party deployed (HYNA). Empty for a barometer symbol.
+            urlTemplate = urlTemplate.Replace("{product}", symbol.Product.ToLower());
+            urlTemplate = urlTemplate.Replace("{PRODUCT}", symbol.Product.ToUpper());
 
             // The name the instrument has on the exchange itself, which is not always base + quote:
             // Kraken Perpetual calls BTCUSD "PF_XBTUSD" and Okx Perpetual calls it "BTC-USDT-SWAP". Those

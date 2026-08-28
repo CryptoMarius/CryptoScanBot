@@ -6,8 +6,11 @@ using CryptoScanner.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
+using Microsoft.Data.Sqlite;
+
 using OKX.Net.Clients;
 using OKX.Net.Enums;
+using OKX.Net.Interfaces.Clients.UnifiedApi;
 
 namespace CryptoScanner.Core.Exchange.Okx.Perpetual;
 
@@ -105,7 +108,7 @@ public class Symbol() : SymbolBase(), ISymbol
                             if (!string.Equals(symbolData.SettlementAsset, family[1], StringComparison.OrdinalIgnoreCase))
                                 continue;
 
-                            SymbolInfo info = ParseSymbol(symbolData.Symbol, family[0], family[1]);
+                            SymbolInfo info = ParseSymbol(symbolData.Symbol, family[0], family[1], ProductOfExchange(exchange));
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
                                 //Temporarily copy everything (because of the new fields)
@@ -167,6 +170,25 @@ public class Symbol() : SymbolBase(), ISymbol
                             }
                         }
 
+                        // The X-Perps of the same exchange, in the same market. Okx files them under
+                        // InstrumentType.Futures, but they are perpetuals like everything above: no real
+                        // expiry (the date in the name lies in 2031), a funding rate, and a settlement in
+                        // the stablecoin rather than in the base coin. Same rest client, same socket
+                        // client, same account and one rate limit at Okx for all of it.
+                        //
+                        // They can share this market because their scanner names do not collide with the
+                        // swaps: an X-Perp settles in USD (read as USDC) and a swap in USDT, so BTCUSDC
+                        // sits next to BTCUSDT. Counted on 27-08-2026: 0 shared names out of 443 swaps and
+                        // 155 X-Perps. Spot is the one that cannot join - 215 of its names are also a swap
+                        // and 85 also an X-Perp, and a name that means two instruments is a name that
+                        // silently drops one of them in GlobalData.AddSymbol.
+                        // Dated contracts sharing a pair with an accepted X-Perp, see
+                        // RegisterAmbiguousSymbolNames below
+                        List<string> rejectedSymbols = [];
+                        withoutVolume += await AddXPerpsAsync(exchange, api, database, transaction, cache, activeSymbols, rejectedSymbols);
+
+                        RegisterAmbiguousSymbolNames(exchange, rejectedSymbols, activeSymbols.Keys);
+
                         // Deactivate the symbols who have disappeared
                         int deactivated = 0;
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
@@ -216,5 +238,57 @@ public class Symbol() : SymbolBase(), ISymbol
             }
 
         }
+    }
+
+
+    /// <summary>
+    /// Adds the X-Perps to this market. Answers with the number of instruments that had no volume,
+    /// which the caller adds to its own count. The instrument mapping itself is shared with the
+    /// standalone XPerp market (see <see cref="XPerpInstruments"/>); dated contracts land in
+    /// <paramref name="rejectedSymbols"/> for the caller's RegisterAmbiguousSymbolNames.
+    /// </summary>
+    private static async Task<int> AddXPerpsAsync(
+        Model.CryptoExchange exchange,
+        IOKXRestClientUnifiedApi api,
+        CryptoDatabase database,
+        SqliteTransaction transaction,
+        List<CryptoSymbol> cache,
+        SortedList<string, CryptoSymbol> activeSymbols,
+        List<string> rejectedSymbols)
+    {
+        LimitRate.WaitForFairWeight(1);
+        var tickerInfo = await api.ExchangeData.GetTickersAsync(InstrumentType.Futures);
+        if (!tickerInfo.Success || tickerInfo.Data == null)
+        {
+            // Abort the whole refresh, exactly like a failed swap fetch does. Returning here
+            // would leave activeSymbols without a single X-Perp, after which the caller's
+            // deactivation loop switches every X-Perp off over a hiccup at Okx.
+            throw new ExchangeException($"error getting X-Perp ticker info {tickerInfo.Error}");
+        }
+        // Stored under its own name, next to the tickers.json of the swaps: the two are separate
+        // calls at Okx and one would otherwise overwrite the other.
+        SaveExchangeInfo(tickerInfo.OriginalData, "tickers.xperp.json");
+
+        // Indexed on the instrument id ("BTC-USD_UM_XPERP-310404") because the scanner name of these
+        // contracts cannot be reconstructed from it - the expiry date in the tail is part of the name.
+        // For derivatives Okx reports volCcy24h in the contract value asset, so multiply by the last
+        // price to get the volume in the settlement asset.
+        SortedList<string, decimal> volumeTicker = [];
+        foreach (var tickerData in tickerInfo.Data)
+            volumeTicker.TryAdd(tickerData.Symbol, tickerData.QuoteVolume * (tickerData.LastPrice ?? 0));
+
+        LimitRate.WaitForFairWeight(1);
+        var symbolInfo = await api.ExchangeData.GetSymbolsAsync(InstrumentType.Futures);
+        if (!symbolInfo.Success || symbolInfo.Data == null)
+        {
+            // Same as above: abort instead of mass-deactivating the X-Perps.
+            throw new ExchangeException($"error getting X-Perp symbol information {symbolInfo.Error}");
+        }
+        SaveExchangeInfo(symbolInfo.OriginalData, "symbols.xperp.json");
+
+        // Not ProductOfExchange: this market holds the swaps AND the X-Perps, so the product
+        // is named per instrument. BTCUSDC.XPERP next to BTCUSDT.PERP.
+        return XPerpInstruments.AddInstruments(exchange, api, symbolInfo.Data, volumeTicker,
+            CryptoProduct.XPerp, database, transaction, cache, activeSymbols, rejectedSymbols);
     }
 }

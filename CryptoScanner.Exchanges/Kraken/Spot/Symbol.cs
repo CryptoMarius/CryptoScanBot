@@ -95,7 +95,7 @@ public class Symbol() : SymbolBase(), ISymbol
                             //"WebsocketName": "AAVE/EUR",
                             //"Base": "AAVE",
                             //"Quote": "ZEUR",
-                            SymbolInfo info = ParseSymbol(key, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            SymbolInfo info = ParseSymbol(key, symbolData.BaseAsset, symbolData.QuoteAsset, ProductOfExchange(exchange));
 
                             // Safety net against two pairs parsing to the same scanner name: a
                             // duplicate must never take the entire fetch down, because the exception

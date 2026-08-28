@@ -495,6 +495,11 @@ public static class GlobalData
             if (!exchange.SymbolListExchangeName.ContainsKey(symbol.ExchangeName))
                 exchange.SymbolListExchangeName.Add(symbol.ExchangeName, symbol);
 
+            // Which products this market turns out to hold, so the grids know whether the badge
+            // beside a symbol tells the reader anything
+            if (symbol.Product.Length > 0)
+                exchange.Products.Add(symbol.Product);
+
             symbol.QuoteData = AddQuoteData(symbol.Quote);
 
             string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;

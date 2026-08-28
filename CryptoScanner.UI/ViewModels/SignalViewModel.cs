@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
@@ -22,7 +22,7 @@ public class SignalViewModel
             SignalColumnEnum.Id => Object.Id.ToString(),
             SignalColumnEnum.Date => FormatDate(),
             SignalColumnEnum.Exchange => Object.Exchange?.Name ?? "",
-            SignalColumnEnum.Symbol => Object.Symbol?.DisplayName ?? "",
+            SignalColumnEnum.Symbol => Object.Symbol?.PairName ?? "",
             SignalColumnEnum.Side => Object.SideText,
             SignalColumnEnum.Interval => Object.Interval?.Name ?? "",
             SignalColumnEnum.Strategy => Object.StrategyText,
@@ -175,4 +175,7 @@ public class SignalViewModel
             return "-";
         return FormatTrend(trend.Value);
     }
+
+    // Which market inside the exchange, shown as a coloured badge behind the name
+    public string MarketLabel => Object.Symbol?.MarketLabel ?? "";
 }

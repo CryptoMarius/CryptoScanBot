@@ -40,7 +40,10 @@ public static class TradingConfig
     public static void InitWhiteAndBlackListHelper(List<string> list, SortedList<string, bool> target, string caption)
     {
         // Het 1e woord is de symbol
-        char[] delimiterChars = [' ', ',', '-', '.', ':', '\t'];
+        // No '.' in here: the product lives behind a dot in the name (BTCUSDT.PERP), and a rule
+        // may name it to cover only that product (see SettingsCompiled.Covers). Splitting on the
+        // dot would silently reduce every such rule to the bare pair.
+        char[] delimiterChars = [' ', ',', '-', ':', '\t'];
 
         target.Clear();
         foreach (string text in list)
@@ -57,7 +60,12 @@ public static class TradingConfig
                     var exchange = GlobalData.ActiveExchange;
                     if (exchange != null)
                     {
-                        if (!exchange.SymbolListName.ContainsKey(symbol))
+                        // A rule is a bare pair or a pair.PRODUCT; TryGetSymbolByPair accepts both.
+                        // A pair that covers SEVERAL instruments makes it answer false, but such a
+                        // rule is valid too (it covers them all), so only warn when no instrument
+                        // carries the pair at all.
+                        if (!exchange.TryGetSymbolByPair(symbol, out _)
+                            && !exchange.SymbolListName.Keys.Any(name => name.StartsWith(symbol + Model.CryptoProduct.Separator, StringComparison.OrdinalIgnoreCase)))
                         {
                             if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running && !string.IsNullOrEmpty(caption))
                                 GlobalData.AddErrorToLogTab($"Error {caption} {symbol} does not exist!");

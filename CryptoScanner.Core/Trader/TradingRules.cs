@@ -26,7 +26,9 @@ public static class TradingRules
                 if (string.IsNullOrEmpty(ruleSymbol))
                     ruleSymbol = Exchange.ExchangeBase.ExchangeOptions.PauseSymbol;
 
-                if (exchange.SymbolListName.TryGetValue(ruleSymbol, out CryptoSymbol? symbol))
+                // The rule holds a bare pair (BTCUSDT) while the symbol list is keyed on the
+                // product-suffixed name (BTCUSDT.PERP), so resolve via the pair lookup.
+                if (exchange.TryGetSymbolByPair(ruleSymbol, out CryptoSymbol? symbol))
                 {
                     CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(rule.Interval);
                     if (symbolInterval.CandleList.Count != 0)

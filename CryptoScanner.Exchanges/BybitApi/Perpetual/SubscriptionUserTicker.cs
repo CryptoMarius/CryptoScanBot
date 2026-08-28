@@ -44,7 +44,10 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                 {
                     if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                     {
-                        if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol? symbol))
+                        // The exchange names the instrument, not the scanner. SymbolListExchangeName is keyed on
+                        // exactly what arrives here, and it stays right when one market carries two instruments
+                        // that share a scanner name.
+                        if (exchange.SymbolListExchangeName.TryGetValue(data.Symbol, out CryptoSymbol? symbol))
                         {
                             // Converteer de data naar een (tijdelijke) trade
                             CryptoOrder orderTemp = new()

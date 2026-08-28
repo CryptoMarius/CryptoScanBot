@@ -57,11 +57,44 @@ public class Api : ExchangeBase
         // With that target on the library default of ten, these 54 symbols kept costing 6 connections
         // however few bundles they were packed into. The target is set to thirty in the socket options
         // below, which is what actually turns them into 2. Same reasoning as Perpetual/Api.cs.
-        ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 300, false, 1,
+        // The candle window per request. Measured against the live API on 28-08-2026: candleSnapshot
+        // returns at most 5000 candles, and both ends of the window are inclusive (a window of 400
+        // minutes gives 401 one-minute candles). The library has no limit parameter at all, only
+        // startTime/endTime, so this number IS the window and nothing else caps it.
+        //
+        // It must never be raised above 5000. Asked for more, the exchange answers with the NEWEST
+        // 5000 of the window instead of the oldest - a request for 20000 minutes came back with the
+        // last 4902. In the loop of CandleBase.FetchFrom that would leave the front of the window
+        // unfetched while fetchedUpTo jumps past it, so the hole is never filled.
+        //
+        // It stood at 300 until 28-08-2026, which is what made a cold start unusable: 1860 candles of
+        // 1m plus 500 of each of the eleven higher intervals is 29 requests per symbol, and at the 25
+        // requests a minute LimitRate hands out that is 3 hours 21 minutes for 173 symbols. On 5000
+        // every interval fits in one request, so the same start is 12 requests per symbol.
+        ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 5000, false, 1,
             subscriptionsPerBundle: 30,
             klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 21_000, pauseSymbol: "UBTCUSDC",
             maximumTickerInactivity: TimeSpan.FromHours(12));
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
+
+        // The share of HyperLiquid's budget this process may spend, handed to the rate limiter the
+        // package already carries instead of to a limiter of our own.
+        //
+        // HyperLiquid allows 1200 request weight per minute PER IP ADDRESS and an ordinary info
+        // request - candleSnapshot, the symbol and ticker refresh - weighs 20, so the whole machine
+        // gets 60 requests a minute and not one per scanner. 450 is 75% of that budget divided over
+        // the two markets this scanner can run, so Perpetual and Spot together stay at 900 of the
+        // 1200 whether one of them runs or both. That works out at 22 requests a minute per market.
+        //
+        // Chosen on 28-08-2026 over the two alternatives: 900 (45 requests a minute, but 150% of the
+        // limit once the second market starts) and a live count of the running scanners (which does
+        // give a lone scanner the full 45, at the price of machinery of our own). What it costs is
+        // the cold start - 173 symbols take some 94 minutes at 22 a minute against 46 at 45 a minute.
+        //
+        // Everything this market sends goes through the package, so the ceiling above covers all of it.
+        // (Perpetual has one call of its own, see the note in its Api.cs.)
+        LibraryRateLimit.Lower(HyperLiquidExchange.RateLimiter, "HyperLiquidRest", 450, ExchangeOptions.ExchangeName);
+
 
         HyperLiquidRestClient.SetDefaultOptions(options =>
         {

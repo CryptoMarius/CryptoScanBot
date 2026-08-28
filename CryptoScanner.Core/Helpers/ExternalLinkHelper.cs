@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
@@ -64,12 +64,13 @@ public static class ExternalLinkHelper
             return;
         }
 
+        // A bare pair; the symbol list is keyed on the product-suffixed name
         string wanted = "BTC" + quote;
-        if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(wanted, out CryptoSymbol? symbol))
+        if (!GlobalData.ActiveExchange.TryGetSymbolByPair(wanted, out CryptoSymbol? symbol))
         {
             string pauseSymbol = ExchangeBase.ExchangeOptions.PauseSymbol;
             if (pauseSymbol != "" && pauseSymbol != wanted)
-                GlobalData.ActiveExchange.SymbolListName.TryGetValue(pauseSymbol, out symbol);
+                GlobalData.ActiveExchange.TryGetSymbolByPair(pauseSymbol, out symbol);
 
             if (symbol == null)
             {

@@ -1,4 +1,4 @@
-using CryptoExchange.Net.SharedApis;
+﻿using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -73,7 +73,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         // Market format on Bitvavo: "BTC-EUR" (base-quote with dash)
                         // ParseSymbol(exchangeSymbol, base, quote)
-                        SymbolInfo info = ParseSymbol(market.Market, market.Base, market.Quote);
+                        SymbolInfo info = ParseSymbol(market.Market, market.Base, market.Quote, ProductOfExchange(exchange));
 
 #pragma warning disable CS8625
                         if (IsSymbolAccepted(exchange, info, null, TradingMode.Spot, out CryptoSymbol? symbol))

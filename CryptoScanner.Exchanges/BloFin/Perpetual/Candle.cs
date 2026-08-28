@@ -1,8 +1,6 @@
 ﻿using BloFin.Net.Clients;
 using BloFin.Net.Enums;
 
-using CryptoExchange.Net.Objects.Errors;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 

@@ -135,8 +135,22 @@ public class SignalCreateBase
         if (CandleLast.Candle.OpenTime >= expiryTime)
         {
             ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
+
+            // A wait that outlives the signal's lifetime means NO signal of this strategy can
+            // ever be entered - the expiry above always wins from the watch window. Say so in
+            // every reject instead of producing a silent zero-trade run.
+            var entryConditions = ResolveEntryConditions();
+            if (entryConditions.EntryWaitMinutes > 0 && !WatchWindowHasPassed(signal, entryConditions))
+                ExtraText += $" (EntryWaitMinutes {entryConditions.EntryWaitMinutes} never elapsed within the signal's lifetime, no entry is ever made)";
             return true;
         }
+
+        // Track how far price has run against the signal, and drop it once the watch window is over
+        // and it ran too far. This sits in GiveUp rather than in AllowStepIn because AllowStepIn
+        // returning false means "not yet, keep waiting" - the signal stays in SignalList and is
+        // re-examined on every candle for every symbol. A rejected signal has to leave that list.
+        if (TrackAndRejectOnAdverseMove(signal))
+            return true;
 
         // Avoid duplicate signals — but allow a newer signal to replace a Waiting (unfilled) position
         var position = PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol);
@@ -147,6 +161,63 @@ public class SignalCreateBase
         }
 
         return false;
+    }
+
+
+    /// <summary>
+    /// Updates signal.WorstAdversePercentage from the candle being evaluated, and reports whether
+    /// the signal has to be abandoned: the watch window has passed and price ran further against it
+    /// than EntryMaxAdversePercentage allows.
+    /// <para>
+    /// The tracking runs on every candle, including the one on which the window expires - the move
+    /// that pushes a signal past the limit is often that same candle.
+    /// </para>
+    /// </summary>
+    protected bool TrackAndRejectOnAdverseMove(CryptoSignal signal)
+    {
+        var settings = ResolveEntryConditions();
+        if (settings.EntryWaitMinutes <= 0)
+            return false;
+
+        // Without a limit the wait only delays the entry - there is nothing the tracking
+        // could ever act on, so skip the per-candle bookkeeping altogether.
+        if (settings.EntryMaxAdversePercentage <= 0)
+            return false;
+
+        // The first evaluation happens on the tick that closed the signal candle itself, and
+        // SignalPrice is that candle's CLOSE. Its low/high describe what happened BEFORE the
+        // signal fired, so counting them would reject a signal for its own pre-signal wick.
+        // Only candles after the signal candle describe movement against the signal.
+        decimal reference = signal.SignalPrice;
+        if (reference > 0 && CandleLast.Candle.OpenTime.ToDateTime() > signal.OpenDate)
+        {
+            decimal adverse = signal.Side == CryptoTradeSide.Long
+                ? 100m * (reference - CandleLast.Candle.Low) / reference
+                : 100m * (CandleLast.Candle.High - reference) / reference;
+            if (adverse > signal.WorstAdversePercentage)
+                signal.WorstAdversePercentage = adverse;
+        }
+        if (!WatchWindowHasPassed(signal, settings))
+            return false;
+        if (signal.WorstAdversePercentage <= settings.EntryMaxAdversePercentage)
+            return false;
+
+        ExtraText = $"price ran {signal.WorstAdversePercentage:N2}% against the signal, "
+            + $"more than the {settings.EntryMaxAdversePercentage}% allowed";
+        return true;
+    }
+
+
+    /// <summary>
+    /// Whether the EntryWaitMinutes watch window has elapsed, measured from the signal candle's
+    /// open time to the open of the candle being evaluated.
+    /// </summary>
+    protected bool WatchWindowHasPassed(CryptoSignal signal, SettingsEntryConditions settings)
+    {
+        if (settings.EntryWaitMinutes <= 0)
+            return true;
+        DateTime enterFrom = signal.OpenDate.AddMinutes(settings.EntryWaitMinutes);
+        return CandleLast.Candle.OpenTime.ToDateTime() >= enterFrom;
     }
 
 
@@ -427,6 +498,15 @@ public class SignalCreateBase
     public virtual bool AllowStepIn(CryptoSignal signal)
     {
         var settings = ResolveEntryConditions();
+
+        // Watch first, act later. Returning false keeps the signal in SignalList so the next candle
+        // examines it again; GiveUp above is what removes it, either because it ran too far against
+        // us or because EntryRemoveTime expired.
+        if (!WatchWindowHasPassed(signal, settings))
+        {
+            ExtraText = $"watching for {settings.EntryWaitMinutes} minutes after the signal";
+            return false;
+        }
 
         if (!CheckCheapEntryConditions(settings))
             return false;

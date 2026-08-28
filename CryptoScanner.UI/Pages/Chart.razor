@@ -271,7 +271,7 @@
                 _selectedInterval = SymbolService.SelectedInterval.IntervalPeriod.ToString();
         }
         else if (GlobalData.ActiveExchange != null
-            && GlobalData.ActiveExchange.SymbolListName.TryGetValue(_selectedBase + _selectedQuote, out CryptoSymbol? stored))
+            && GlobalData.ActiveExchange.TryGetSymbolByPair(_selectedBase + _selectedQuote, out CryptoSymbol? stored))
         {
             // No grid selection yet: fall back on the symbol stored in the session
             _currentSymbol = stored;
@@ -378,8 +378,9 @@
 
     private async Task OnSymbolSelectionChanged()
     {
+        // Base + quote is a bare pair; the symbol list is keyed on the product-suffixed name
         var exchange = GlobalData.ActiveExchange;
-        if (exchange != null && exchange.SymbolListName.TryGetValue(_selectedBase + _selectedQuote, out CryptoSymbol? symbol))
+        if (exchange != null && exchange.TryGetSymbolByPair(_selectedBase + _selectedQuote, out CryptoSymbol? symbol))
         {
             _currentSymbol = symbol;
             _currentSymbolName = symbol.Name;

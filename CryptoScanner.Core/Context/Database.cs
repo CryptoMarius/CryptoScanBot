@@ -273,15 +273,6 @@ public class CryptoDatabase : IDisposable
             new() { Name = "Okx Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot },
             new() { Name = "Okx Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Perpetual },
 
-            // A third market on the same exchange: same CryptoExchangeType, another product.
-            // "Okx Perpetual" above asks for InstrumentType.Swap, and every one of those 442 linear
-            // swaps is quoted and settled in USDT - Okx has no USDC swap at all (BTC-USDC-SWAP answers
-            // with error 51001). The USDC route on this exchange runs over the USD_UM family, which Okx
-            // markets as X-Perps and reports under InstrumentType.Futures with ruleType xperp: they
-            // settle in USD value, payable in USDC, and take USDC as margin. Keeping them in their own
-            // market separates them in the symbol list, the candle database and the settings, which the
-            // USDT quote of Okx Perpetual needs anyway.
-            new() { Name = "Okx XPerp", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.XPerp },
         ];
     }
 
@@ -326,7 +317,7 @@ public class CryptoDatabase : IDisposable
                 "Base TEXT NOT NULL," +
                 "Quote TEXT NOT NULL," +
                 "ExchangeName TEXT NOT NULL," +
-                "SubMarket TEXT NOT NULL DEFAULT ''," +
+                "Product TEXT NOT NULL DEFAULT ''," +
                 "Status INTEGER NOT NULL," +
                 "Volume TEXT NULL," +
 

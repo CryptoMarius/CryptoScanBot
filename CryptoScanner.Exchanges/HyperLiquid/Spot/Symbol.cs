@@ -29,7 +29,6 @@ public class Symbol() : SymbolBase(), ISymbol
                 GlobalData.AddTextToLogTab($"Reading symbol and ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 // Counts against the same budget as the candle requests - it is an ordinary info
                 // request, so it weighs 20 as well.
-                LimitRate.WaitForFairWeight(LimitRate.InfoRequestWeight);
                 var tickerInfo = await api.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No ticker and symbol data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddErrorToLogTab($"error getting symbol ticker info {tickerInfo.Error}");
@@ -90,7 +89,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data.ExchangeInfo.Symbols)
                         {
-                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset.Name, symbolData.QuoteAsset.Name);
+                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset.Name, symbolData.QuoteAsset.Name, ProductOfExchange(exchange));
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
 

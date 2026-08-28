@@ -632,6 +632,19 @@ select.dashboard-combo {
 .data-table tbody tr:last-child td { border-bottom: none; }
 
 .symbol-name { font-weight: 500; }
+/* The market label beside a symbol name: which market inside the exchange the instrument lives on.
+   Only the shape lives here - the background colour comes from CryptoProduct.ColorOf (via the
+   MarketBadge component), the same table the Avalonia side uses, so the two UIs cannot drift. */
+.market-label {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-size: 9px;
+    line-height: 14px;
+    color: #fff;
+    vertical-align: middle;
+}
 /* Avalonia sets no FontFamily anywhere, so its grids render in the system UI font. Using a
    programmer font here was what put the slashed zero on screen. tabular-nums keeps the columns
    aligned, which is the only thing the monospace font was really needed for. */

@@ -1,7 +1,6 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
-using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Exchange.Bitvavo.Spot.Socket;
 
 namespace CryptoScanner.Core.Exchange.Bitvavo.Spot;

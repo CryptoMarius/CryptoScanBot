@@ -332,7 +332,9 @@ public class DataStore
                             string symbolName = baseWithoutSuffix.ToUpperInvariant() + quoteUpper;
                             string intervalName = stem[(stem.LastIndexOf('-') + 1)..];
 
-                            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol)
+                            // The filename is a bare pair, the live list is keyed on the
+                            // product-suffixed name — resolve via the pair lookup.
+                            if (exchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol)
                                 && !CandleDatabase.SymbolHasNoUse(symbol)
                                 && GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                             {
@@ -347,9 +349,10 @@ public class DataStore
                         }
                         else
                         {
-                            // Main DataStore file → only remove when symbol is no longer in use
+                            // Main DataStore file → only remove when symbol is no longer in use.
+                            // The filename is a bare pair, so resolve via the pair lookup.
                             string symbolName = stem.ToUpperInvariant() + quoteUpper;
-                            bool orphan = !exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol)
+                            bool orphan = !exchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol)
                                           || CandleDatabase.SymbolHasNoUse(symbol);
                             if (orphan && TryDeleteFile(filePath))
                                 quoteDeleted++;
@@ -420,8 +423,9 @@ public class DataStore
                         continue;
                     }
 
-                    // Active-exchange-only lookup.
-                    if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? sym)
+                    // Active-exchange-only lookup. The filename predates the product suffix,
+                    // so resolve the bare pair via the pair lookup.
+                    if (exchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? sym)
                         && !CandleDatabase.SymbolHasNoUse(sym))
                     {
                         if (await TryMigrateAsync(sym, interval))

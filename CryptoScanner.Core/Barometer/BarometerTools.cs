@@ -33,7 +33,7 @@ public class BarometerTools
         var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
-            if (!exchange.SymbolListName.TryGetValue(baseName + quoteData.Name, out CryptoSymbol? symbol))
+            if (!exchange.TryGetSymbolByPair(baseName + quoteData.Name, out CryptoSymbol? symbol))
             {
                 symbol = new CryptoSymbol
                 {
@@ -290,7 +290,7 @@ public class BarometerTools
                 startTime = now;
 
             var exchange = GlobalData.ActiveExchange!;
-            if (exchange.SymbolListName.TryGetValue("BTC" + quoteData.Name, out CryptoSymbol? symbol))
+            if (exchange.TryGetSymbolByPair("BTC" + quoteData.Name, out CryptoSymbol? symbol))
             {
 
                 StringBuilder writer = new();

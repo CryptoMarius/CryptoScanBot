@@ -381,8 +381,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
             // Might just sort de exchange symbols and take the top 5 based on volume?
             foreach (string baseCoin in GlobalData.Settings.ShowSymbolInformation)
             {
-                if (exchange.SymbolListName.TryGetValue(baseCoin + quoteData.Name, out CryptoSymbol? symbol)
-                    || exchange.SymbolListName.TryGetValue(baseCoin + "USDT", out symbol))
+                if (exchange.TryGetSymbolByPair(baseCoin + quoteData.Name, out CryptoSymbol? symbol)
+                    || exchange.TryGetSymbolByPair(baseCoin + "USDT", out symbol))
                 {
                     list.Add(new(IndicatorType.Exchange, symbol.Name, symbol.Name, symbol.PriceDisplayFormat));
                 }
@@ -916,7 +916,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
             // One candle holds five numbers, so the figures are spread over two barometer symbols and
             // the figure picked in the dropdown decides which one the graph reads.
             string barometerSymbolName = BarometerCandleFields.GetSymbolName(BarometerCandleFields.Parse(SelectedGraphValue)) + quoteData.Name;
-            if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(barometerSymbolName, out CryptoSymbol? symbol))
+            if (!GlobalData.ActiveExchange.TryGetSymbolByPair(barometerSymbolName, out CryptoSymbol? symbol))
                 return false;
 
             CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);

@@ -162,7 +162,7 @@ def load_positions(connection, run_id):
     """Only positions that put money to work; a cancelled entry tells us nothing."""
     return connection.execute(
         "select Side, CreateTime, CloseTime, CAST(Profit AS REAL) as Profit, "
-        "       CAST(Invested AS REAL) as Invested "
+        "       CAST(Invested AS REAL) as Invested, PartCount "
         "from Position "
         "where EmulatorRunId = ? and CloseTime is not null and CAST(Invested AS REAL) > 0",
         (run_id,)).fetchall()
@@ -194,6 +194,49 @@ def peak_exposure(positions):
         peak_money = max(peak_money, money)
         peak_count = max(peak_count, count)
     return peak_money, peak_count
+
+
+def dca_breakdown(positions):
+    """Split a run's positions by how many DCA parts actually filled.
+
+    PartCount is the number of FILLED dca parts - not ActiveDca, which is a bool saying a dca order
+    is still pending. Getting those two mixed up turns the table inside out: it makes the positions
+    that averaged down look like they win every time, because a position that closed before its
+    next dca order filled still had one pending.
+
+    Worth its own table because the totals hide it completely. On run 401 the run made +511.89, and
+    underneath that the positions that never needed the ladder made +500.57 and won every single
+    time, while the 64% that used both steps lost -1304.29 at seven times the capital. The profit
+    and the risk live in different groups.
+    """
+    groups = {}
+    for position in positions:
+        filled = position["PartCount"] or 0
+        bucket = groups.setdefault(filled, {"count": 0, "profit": 0.0, "invested": 0.0, "won": 0})
+        bucket["count"] += 1
+        bucket["profit"] += position["Profit"]
+        bucket["invested"] += position["Invested"]
+        if position["Profit"] > 0:
+            bucket["won"] += 1
+    total = len(positions)
+    rows = []
+    for filled in sorted(groups):
+        bucket = groups[filled]
+        count = bucket["count"]
+        rows.append({
+            "fills": filled,
+            "count": count,
+            "share": 100.0 * count / total if total else 0.0,
+            "profit": bucket["profit"],
+            "per_trade": bucket["profit"] / count if count else 0.0,
+            "win_rate": 100.0 * bucket["won"] / count if count else 0.0,
+            "avg_invested": bucket["invested"] / count if count else 0.0,
+        })
+    return rows
+
+
+def dca_label(fills):
+    return {0: "nooit", 1: "1 keer"}.get(fills, "%d keer" % fills)
 
 
 def days_between(from_date, to_date):
@@ -280,6 +323,7 @@ def measure_run(connection, row):
     measured["end_worst"] = peak_money + worst
     measured["end_capital"] = peak_money + profit
     measured["return_on_peak"] = 100 * profit / peak_money if peak_money else 0.0
+    measured["dca_breakdown"] = dca_breakdown(positions)
 
     for side, name in ((SIDE_LONG, "long"), (SIDE_SHORT, "short")):
         subset = [p for p in positions if p["Side"] == side]
@@ -488,6 +532,21 @@ def write_markdown(runs, ladders, groups):
                              variables["order_type"] or "-", variables["sides"]))
         lines.append("")
 
+    metDca = [r for r in produced if len(r["dca_breakdown"]) > 1]
+    if metDca:
+        lines.append("## Bijkopen: waar de winst zit en waar het geld vaststaat")
+        lines.append("")
+        lines.append(DCA_EXPLANATION)
+        lines.append("")
+        lines.append("| id | run | bijgekocht | trades | aandeel | winst | per trade | win% | gem. inleg |")
+        lines.append("|---:|---|---|---:|---:|---:|---:|---:|---:|")
+        for run in metDca:
+            for row in run["dca_breakdown"]:
+                lines.append("| {} | {} | {} | {} | {:.1f}% | {:+.2f} | {:+.4f} | {:.0f}% | {:.2f} |".format(
+                    run["id"], run["label"], dca_label(row["fills"]), row["count"], row["share"],
+                    row["profit"], row["per_trade"], row["win_rate"], row["avg_invested"]))
+        lines.append("")
+
     return "\n".join(lines)
 
 
@@ -517,6 +576,14 @@ details { margin: 6px 0; } summary { cursor: pointer; }
 pre { background: #8881; padding: 10px; overflow-x: auto; font-size: 12px; border-radius: 4px; }
 .scroll { overflow-x: auto; }
 """
+
+
+DCA_EXPLANATION = (
+    "Uitgesplitst naar hoe vaak er daadwerkelijk is bijgekocht. Dit staat er apart bij omdat "
+    "het totaal het verbergt: de instappen die de ladder niet nodig hadden winnen vrijwel "
+    "altijd, en de groep die hem helemaal afloopt draagt het verlies en zet tegelijk het meeste "
+    "geld vast. Twee groepen met een tegengesteld karakter tellen op tot een middelmatig "
+    "totaal, en dan lijkt er niets aan de hand.")
 
 
 def esc(value):
@@ -652,6 +719,23 @@ def write_html(runs, ladders, groups, database_path):
         }
         out.append("<pre>{}</pre>".format(esc(json.dumps(payload, indent=1, ensure_ascii=False))))
         out.append("</details>")
+
+    metDca = [r for r in runs if r["closed"] > 0 and len(r["dca_breakdown"]) > 1]
+    if metDca:
+        out.append("<h2>Bijkopen: waar de winst zit en waar het geld vaststaat</h2>")
+        out.append("<p class='note'>{}</p>".format(esc(DCA_EXPLANATION)))
+        out.append("<table><thead><tr><th>id</th><th class='left'>run</th>"
+                   "<th class='left'>bijgekocht</th><th>trades</th><th>aandeel</th><th>winst</th>"
+                   "<th>per trade</th><th>win%</th><th>gem. inleg</th></tr></thead><tbody>")
+        for run in metDca:
+            for row in run["dca_breakdown"]:
+                out.append("<tr><td>{}</td><td class='left'>{}</td><td class='left'>{}</td>"
+                           "<td>{}</td><td>{:.1f}%</td><td>{}</td><td>{}</td><td>{:.0f}%</td>"
+                           "<td>{:.2f}</td></tr>".format(
+                               run["id"], esc(run["label"]), esc(dca_label(row["fills"])),
+                               row["count"], row["share"], money_cell(row["profit"]),
+                               money_cell(row["per_trade"]), row["win_rate"], row["avg_invested"]))
+        out.append("</tbody></table>")
 
     out.append("</body></html>")
     return "\n".join(out)

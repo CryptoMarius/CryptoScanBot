@@ -1,6 +1,4 @@
-﻿using CryptoExchange.Net.Objects.Errors;
-
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using HyperLiquid.Net.Clients;
@@ -20,6 +18,11 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         // The maximum is 1000 candles per GetKlinesAsync call.
         // The results can be from new to old (wrong order).
         // The results can contain in progress candles.
+        //
+        // Correction, measured against the live API on 28-08-2026: the maximum is 5000, not 1000, and
+        // it is a count and not a time span - 5000 x 15m came back with 4994 rows. Over that count the
+        // exchange returns the NEWEST 5000 of the window, so the window itself has to stay inside it.
+        // ExchangeOptions.CandleLimit carries that number and the reasoning, see Api.cs.
 
         // Weird piece of code, unable todo: (!clientBase is BinanceRestClient client1)
         HyperLiquidRestClient client;
@@ -34,7 +37,6 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
             ?? throw new Exception($"Not supported interval");
 
-        LimitRate.WaitForFairWeight(LimitRate.InfoRequestWeight);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         CandleTime maxTime = fetchFrom + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;

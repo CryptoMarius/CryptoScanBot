@@ -675,7 +675,7 @@ public class ScannerSession : IScannerSession
                 string intervalName = match.Groups["interval"].Value;
                 if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                 {
-                    if (exchange.SymbolListName.TryGetValue(symbolName + quoteData.Name, out CryptoSymbol? symbol))
+                    if (exchange.TryGetSymbolByPair(symbolName + quoteData.Name, out CryptoSymbol? symbol))
                     {
                         if (symbol.IsBarometerSymbol())
                             return;
@@ -688,7 +688,7 @@ public class ScannerSession : IScannerSession
                     }
                 }
             }
-            else if (exchange.SymbolListName.TryGetValue(baseName + quoteData.Name, out CryptoSymbol? symbol))
+            else if (exchange.TryGetSymbolByPair(baseName + quoteData.Name, out CryptoSymbol? symbol))
             {
                 if (!symbol.QuoteData.FetchCandles || symbol.Status != 1)
                 {

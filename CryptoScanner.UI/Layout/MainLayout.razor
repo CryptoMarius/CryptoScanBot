@@ -154,7 +154,14 @@
                                             @* Avalonia wraps only the Symbol cell in a Border with the quote colour
                                                (SymbolGridView.axaml), so the tint marks the coin, not the whole row. *@
                                             <td class="@GetSymbolCellClass(col, vm)"
-                                                style="@(col.Column == SymbolColumnEnum.Symbol ? vm.BackgroundStyle : "")">@GetSymbolCellValue(col, vm)</td>
+                                                style="@(col.Column == SymbolColumnEnum.Symbol ? vm.BackgroundStyle : "")">
+                                                @GetSymbolCellValue(col, vm)@*
+                                                *@@if (col.Column == SymbolColumnEnum.Symbol && vm.MarketLabel.Length > 0)
+                                                {
+                                                    @* Which market inside the exchange, as a coloured badge behind the name *@
+                                                    <MarketBadge Label="@vm.MarketLabel" />
+                                                }
+                                            </td>
                                         }
                                     </tr>
                                 }
@@ -316,6 +323,9 @@
         new() { Column = SymbolColumnEnum.Symbol, Header = "Symbol", CssClass = "symbol-name", DefaultVisible = true, DefaultDisplayIndex = 1 },
         new() { Column = SymbolColumnEnum.Volume, Header = "Volume", CssClass = "text-right", DefaultVisible = true, DefaultDisplayIndex = 2 },
         new() { Column = SymbolColumnEnum.Distance, Header = "Distance", CssClass = "text-right", DefaultVisible = true, DefaultDisplayIndex = 3 },
+        // A debug column: switch it on when a symbol behaves oddly and you want to see which
+        // instrument is really behind it.
+        new() { Column = SymbolColumnEnum.ExchangeName, Header = "Exchange name", DefaultVisible = false, DefaultDisplayIndex = 4 },
     ];
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -758,6 +768,7 @@
             SymbolColumnEnum.Symbol => vm.Symbol,
             SymbolColumnEnum.Volume => vm.VolumeText,
             SymbolColumnEnum.Distance => vm.DistanceText,
+            SymbolColumnEnum.ExchangeName => vm.ExchangeName,
             _ => "",
         };
     }

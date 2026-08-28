@@ -1677,6 +1677,29 @@ public class PositionMonitor : IDisposable
     }
 
 
+    /// <summary>
+    /// The price fence above, plus the one reason to look at a position that has nothing to do with
+    /// price: its maximum duration has run out.
+    /// <para>
+    /// There are TWO gates between a candle and a repriced order, and both have to agree.
+    /// CandleCanMovePosition decides whether the replay descends into the minute candles at all;
+    /// this one decides whether the orders are recomputed once it has. Teaching only the first one
+    /// about the deadline is not enough, and it fails in a way that looks like it works: measured on
+    /// runs 436-438 (28-08-2026) a "7 day" limit still left positions running 36.8 days and a
+    /// "30 day" limit changed nothing whatsoever, because the exit order was only ever repriced on a
+    /// candle that happened to reach a trigger - which is exactly what the walked-away positions the
+    /// rule exists for do not do.
+    /// </para>
+    /// </summary>
+    internal static bool ShouldRunHandlePosition(CryptoPosition position, decimal candleHigh,
+        decimal candleLow, DateTime now)
+    {
+        if (IsPastMaxDuration(position, now))
+            return true;
+        return ShouldRunHandlePosition(position, candleHigh, candleLow);
+    }
+
+
     internal static void UpdateTriggerPrices(CryptoPosition position, decimal nearestTpPrice, decimal? slStop, decimal? nearestDcaPrice = null)
     {
         bool isLong = position.Side == CryptoTradeSide.Long;
@@ -1759,7 +1782,7 @@ public class PositionMonitor : IDisposable
                 // Gate: skip when the candle stays inside the trigger boundaries (TP/SL
                 // prices only change on order fills, settings changes, or profit-lock —
                 // all of which invalidate the triggers via ForceCheckPosition or above).
-                if (ShouldRunHandlePosition(position, LastCandle1m.High, LastCandle1m.Low))
+                if (ShouldRunHandlePosition(position, LastCandle1m.High, LastCandle1m.Low, LastCandle1mCloseTimeDate))
                     await HandlePosition(position);
                 profHandleTicks = Stopwatch.GetTimestamp() - profHandleStart;
             }

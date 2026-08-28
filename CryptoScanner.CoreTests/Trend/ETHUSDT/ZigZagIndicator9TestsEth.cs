@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -81,7 +81,6 @@ public class ZigZagIndicator9TestsEth : TestBase
         Console.WriteLine("=== End discovery ===");
 
         // Always passes — output is used manually to update CalculateTestEthUsdt.
-        Assert.IsTrue(true);
     }
 
 

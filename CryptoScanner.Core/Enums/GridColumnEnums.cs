@@ -1,4 +1,4 @@
-namespace CryptoScanner.Core.Enums;
+﻿namespace CryptoScanner.Core.Enums;
 
 
 public enum SymbolColumnEnum
@@ -9,6 +9,13 @@ public enum SymbolColumnEnum
     //Price
     Distance,
     //MarketTrendPrimary, to much cpu needed
+
+    /// <summary>
+    /// The name the instrument has at the exchange ("BTC-USDT-SWAP"), which is not the same as the
+    /// scanner name and is what every call to the exchange actually sends. Hidden by default: it is
+    /// there to look something up when a symbol behaves oddly, not to read every day.
+    /// </summary>
+    ExchangeName,
 }
 
 

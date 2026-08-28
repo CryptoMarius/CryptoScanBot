@@ -1,6 +1,4 @@
-﻿using CryptoExchange.Net.Objects.Errors;
-
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using Mexc.Net.Clients;

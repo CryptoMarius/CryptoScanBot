@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Const;
+﻿using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
@@ -49,7 +49,7 @@ public class CryptoSignalHub : Hub
             return result;
 
         string barometerSymbolName = Constants.SymbolNameBarometerPrice + quote;
-        if (!Core.GlobalData.ActiveExchange.SymbolListName.TryGetValue(barometerSymbolName, out CryptoSymbol? symbol))
+        if (!Core.GlobalData.ActiveExchange.TryGetSymbolByPair(barometerSymbolName, out CryptoSymbol? symbol))
             return result;
 
         var symbolInterval = symbol.GetSymbolInterval(cryptoInterval.IntervalPeriod);

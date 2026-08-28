@@ -22,7 +22,10 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
 
                 var tick = data.Data;
                 {
-                    if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol? symbol))
+                    // The exchange names the instrument, not the scanner. SymbolListExchangeName is keyed on
+                    // exactly what arrives here, and it stays right when one market carries two instruments
+                    // that share a scanner name.
+                    if (exchange.SymbolListExchangeName.TryGetValue(tick.Symbol, out CryptoSymbol? symbol))
                     {
                         IncrementTickerCount();
 

@@ -104,7 +104,7 @@ public class Symbol() : SymbolBase(), ISymbol
                             }
 
                             // TODO? Inspect
-                            SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset, ProductOfExchange(exchange));
 
                             // Safety net for the same collision: a duplicate name must never take
                             // the entire fetch down, because the exception rolls back the whole

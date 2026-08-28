@@ -63,7 +63,6 @@ public static class ExchangeProvider
 
             (CryptoExchangeType.Okx, CryptoTradingType.Spot) => new Okx.Spot.Api(),
             (CryptoExchangeType.Okx, CryptoTradingType.Perpetual) => new Okx.Perpetual.Api(),
-            (CryptoExchangeType.Okx, CryptoTradingType.XPerp) => new Okx.XPerp.Api(),
 
             _ => throw new Exception($"{exchange.Name} is not supported"),
         };
@@ -110,7 +109,6 @@ public static class ExchangeProvider
 
             (CryptoExchangeType.Okx, CryptoTradingType.Spot) => Okx.Spot.Interval.GetExchangeInterval(intervalPeriod) != null,
             (CryptoExchangeType.Okx, CryptoTradingType.Perpetual) => Okx.Perpetual.Interval.GetExchangeInterval(intervalPeriod) != null,
-            (CryptoExchangeType.Okx, CryptoTradingType.XPerp) => Okx.XPerp.Interval.GetExchangeInterval(intervalPeriod) != null,
 
             _ => false,
         };
@@ -177,8 +175,6 @@ public static class ExchangeProvider
         list.Remove("Okx");
         list.TryAdd("Okx Spot", Okx.Spot.Api.GetExchangeLinks());
         list.TryAdd("Okx Perpetual", Okx.Perpetual.Api.GetExchangeLinks());
-        // Registered under the name it has in the database, which is "Okx XPerp" and not "Okx XPerp Futures"
-        list.TryAdd("Okx XPerp", Okx.XPerp.Api.GetExchangeLinks());
 
         list.Remove("Coinbase");
         list.TryAdd("Coinbase Spot", Coinbase.Spot.Api.GetExchangeLinks());

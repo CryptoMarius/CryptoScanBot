@@ -94,7 +94,7 @@ public class Symbol() : SymbolBase(), ISymbol
                             if (symbolData.ContractType == ContractType.Inverse)
                                 continue;
 
-                            SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset, ProductOfExchange(exchange));
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
                                 //Temporarily copy everything (because of the new fields)

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -176,7 +176,8 @@ public class ZigZagIncrementalTests : TestBase
             Console.WriteLine($"{label,9}  {ind.ZigZagList.Count,6}  "
                 + $"{ind.LastSwingLow?.Candle.Date:yyyy-MM-dd HH:mm}  {ind.LastSwingHigh?.Candle.Date:yyyy-MM-dd HH:mm}");
         }
-        Assert.IsTrue(true);
+        // No assertion on purpose: this is a Discover... test and its value is the output above,
+        // which is read by hand when the pinned values have to be renewed.
     }
 
 
@@ -211,7 +212,8 @@ public class ZigZagIncrementalTests : TestBase
             Console.WriteLine($"{n,9}  {ind.ZigZagList.Count,6}  "
                 + $"{ind.LastSwingLow?.Candle.Date:yyyy-MM-dd HH:mm}  {ind.LastSwingHigh?.Candle.Date:yyyy-MM-dd HH:mm}");
         }
-        Assert.IsTrue(true);
+        // No assertion on purpose: this is a Discover... test and its value is the output above,
+        // which is read by hand when the pinned values have to be renewed.
     }
 
 
@@ -232,7 +234,8 @@ public class ZigZagIncrementalTests : TestBase
         Console.WriteLine();
         Console.WriteLine(Fingerprint(indicator));
 
-        Assert.IsTrue(true);
+        // No assertion on purpose: this is a Discover... test and its value is the output above,
+        // which is read by hand when the pinned values have to be renewed.
     }
 
 

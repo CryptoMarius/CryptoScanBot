@@ -109,7 +109,7 @@ public partial class RunSignalsViewModel : ObservableObject
             foreach (var row in rows)
             {
                 if (exchange != null && row.Symbol != null
-                    && exchange.SymbolListName.TryGetValue(row.Symbol, out var symbol) && symbol.QuoteData != null)
+                    && exchange.TryGetSymbolByPair(row.Symbol, out var symbol) && symbol.QuoteData != null)
                 {
                     row.QuoteDisplayFormat = symbol.QuoteData.DisplayFormat;
                 }

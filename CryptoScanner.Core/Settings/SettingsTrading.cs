@@ -146,10 +146,6 @@ public class SettingsTrading
     public CryptoOrderType EntryOrderType { get; set; } = CryptoOrderType.Market;
     // Verwijder de order indien niet na zoveel candles gevuld
     public int EntryRemoveTime { get; set; } = 5;
-    // Pullback (in %) applied when EntryOrderPrice == SignalPriceWithPullback. Positive value:
-    // long limit goes below SignalPrice by this percentage, short limit goes above. Designed
-    // to land the entry inside a zone for zone-style strategies (smc.rejection, dlz.near …).
-    public decimal EntryPullbackPercentage { get; set; } = 0.5m;
     // Het afwijkend percentage bij het kopen
     //public decimal GlobalBuyVarying { get; set; } = -0.01m; // verlagen
 
@@ -157,8 +153,11 @@ public class SettingsTrading
     //***************************
     // Dca
     public CryptoOrderType DcaOrderType { get; set; } = CryptoOrderType.Limit; // Alway's! but stoplimit when trailing
-    // Same role as EntryPullbackPercentage but for DCA orders.
-    public decimal DcaPullbackPercentage { get; set; } = 0.5m;
+    // EntryPullbackPercentage and DcaPullbackPercentage sat here until 28-08-2026. The mechanism
+    // behind them went out in d6fc08e3 (03-06-2026, "Removed EntryPullbackPercentage + UI") and
+    // 2acb3b2e (01-08-2026, "Removed CryptoEntryOrDcaPricing"); the two values stayed behind, still
+    // loaded and saved by the Photino settings screen and read by nothing at all. Old settings
+    // files keep the keys until they are next saved - they are skipped on load.
 
     // Tijd na een buy om niets te doen (om ladders te voorkomen)
     public int GlobalBuyCooldownTime { get; set; } = 30;

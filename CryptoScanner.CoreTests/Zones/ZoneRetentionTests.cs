@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -58,7 +58,7 @@ public class ZoneRetentionTests : TestBase
 
 
     // windowStart is 1000 in every case; the zone moves around it.
-    [DataTestMethod]
+    [TestMethod]
     // Starts inside the window: the calculation had its say. Not producing it means it is gone.
     [DataRow(1200u, null, false, "open, pivot inside the window")]
     [DataRow(1200u, 1300u, false, "closed, pivot inside the window")]

@@ -1,8 +1,6 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 
-using CryptoExchange.Net.Objects.Errors;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 

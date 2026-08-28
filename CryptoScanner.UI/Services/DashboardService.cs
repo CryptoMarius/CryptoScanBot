@@ -583,8 +583,8 @@ public class DashboardService : IDisposable
         {
             // Same fallback as Avalonia: if the coin is not listed against the selected quote,
             // show the USDT pair instead of an empty row.
-            if (!exchange.SymbolListName.TryGetValue(baseName + quote, out CryptoSymbol? symbol))
-                exchange.SymbolListName.TryGetValue(baseName + "USDT", out symbol);
+            if (!exchange.TryGetSymbolByPair(baseName + quote, out CryptoSymbol? symbol))
+                exchange.TryGetSymbolByPair(baseName + "USDT", out symbol);
 
             // A coin the exchange does not list has no price to show. Avalonia leaves the row out
             // altogether; adding it anyway put a "PAXG - -" line on the dashboard.
@@ -733,7 +733,7 @@ public class DashboardSymbolInfo
     /// "BTC" — which also makes the fallback to the USDT pair visible when the coin is not listed
     /// against the selected quote.
     /// </summary>
-    public string DisplayName => Symbol?.DisplayName ?? BaseName;
+    public string DisplayName => Symbol?.Name ?? BaseName;
 
     /// <summary>
     /// False while no price has been seen at all. The dashboard shows a limited number of rows, so

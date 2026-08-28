@@ -147,12 +147,44 @@ public class SettingsCompiled
     }
 
 
+    /// <summary>
+    /// Whether a rule covers this symbol. A rule without a product covers the PAIR, so "BTCUSDT"
+    /// blocks BTCUSDT.SPOT, BTCUSDT.PERP and BTCUSDT.INVERSE alike - which is what someone typing a
+    /// coin means. A rule that does name a product ("BTCUSDT.PERP") covers only that one.
+    /// <para>
+    /// This is also why the lists needed no migration when the product moved into the name: a rule
+    /// written before that day keeps meaning exactly what it meant. A deployed market is the one
+    /// exception - its old name carried the deployer IN FRONT of the base (XYZGOLDUSDC), so a rule
+    /// typed in that era is matched against that spelling too.
+    /// </para>
+    /// </summary>
+    private static bool Covers(SortedList<string, bool> list, string name)
+    {
+        if (list.ContainsKey(name))
+            return true;
+
+        // The rule named no product, so compare on the pair alone
+        int dot = name.IndexOf(CryptoProduct.Separator);
+        if (dot <= 0)
+            return false;
+        if (list.ContainsKey(name[..dot]))
+            return true;
+
+        // Legacy spelling of a deployed market: the deployer used to sit in front of the base
+        // (GOLDUSDC.XYZ was called XYZGOLDUSDC). The reserved product codes never did, so a rule
+        // like "PERPBTCUSDT" stays the nonsense it looks like.
+        string product = name[(dot + 1)..];
+        return product.Length > 0 && !CryptoProduct.IsReserved(product)
+            && list.ContainsKey(product + name[..dot]);
+    }
+
+
     public MatchBlackAndWhiteList InBlackList(string name)
     {
         if (BlackList.Count == 0)
             return MatchBlackAndWhiteList.Empty;
 
-        if (BlackList.ContainsKey(name))
+        if (Covers(BlackList, name))
             return MatchBlackAndWhiteList.Present;
         else
             return MatchBlackAndWhiteList.NotPresent;
@@ -164,7 +196,7 @@ public class SettingsCompiled
         if (WhiteList.Count == 0)
             return MatchBlackAndWhiteList.Empty;
 
-        if (WhiteList.ContainsKey(name))
+        if (Covers(WhiteList, name))
             return MatchBlackAndWhiteList.Present;
         else
             return MatchBlackAndWhiteList.NotPresent;

@@ -64,13 +64,24 @@ internal static class PerpDexClient
     /// the markets it already has and this one deployed market delivers nothing this cycle.
     /// </para>
     /// </summary>
-    public static async Task<List<PerpDexMarket>> GetMarketsAsync(string dex)
+    /// <returns>
+    /// The markets, and the untouched answer so the caller can store it beside the other exchange
+    /// dumps. Without that raw text these markets appear nowhere on disk - symbols.json only holds
+    /// HyperLiquid's own market - and a symbol like HYNA1000PEPEUSDC cannot be traced back to the
+    /// instrument it came from.
+    /// </returns>
+    public static async Task<(List<PerpDexMarket> Markets, string? RawJson)> GetMarketsAsync(string dex)
     {
         List<PerpDexMarket> result = [];
 
         string json;
         try
         {
+            // Same endpoint and the same budget as everything the package sends, so it is booked
+            // there instead of riding on top of it. An ordinary info request weighs 20.
+            await LibraryRateLimit.SpendAsync("HyperLiquidRest", "https://api.hyperliquid.xyz", "/info",
+                20, ExchangeBase.CancellationToken);
+
             string body = JsonSerializer.Serialize(new { type = "metaAndAssetCtxs", dex });
             using StringContent content = new(body, Encoding.UTF8, "application/json");
             using var response = await _http.PostAsync(InfoUrl, content, ExchangeBase.CancellationToken);
@@ -80,24 +91,24 @@ internal static class PerpDexClient
         catch (OperationCanceledException)
         {
             // The session was stopped (exchange switch, standby, shutdown), that is not an error
-            return result;
+            return (result, null);
         }
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddErrorToLogTab($"HyperLiquid: no data for the '{dex}' market, {error.Message}");
-            return result;
+            return (result, null);
         }
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
         if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() < 2)
-            return result;
+            return (result, json);
 
         var universe = root[0].TryGetProperty("universe", out var u) ? u : default;
         var contexts = root[1];
         if (universe.ValueKind != JsonValueKind.Array || contexts.ValueKind != JsonValueKind.Array)
-            return result;
+            return (result, json);
 
         int count = Math.Min(universe.GetArrayLength(), contexts.GetArrayLength());
         for (int i = 0; i < count; i++)
@@ -119,7 +130,7 @@ internal static class PerpDexClient
                 delisted));
         }
 
-        return result;
+        return (result, json);
     }
 
 

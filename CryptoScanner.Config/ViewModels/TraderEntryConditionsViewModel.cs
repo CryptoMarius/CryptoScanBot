@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Settings;
 
@@ -41,6 +41,12 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     private int _ma200ConfirmationCandles = 0;
 
     [ObservableProperty]
+    private int _entryWaitMinutes = 0; // minutes; 0 = off
+
+    [ObservableProperty]
+    private decimal _entryMaxAdversePercentage = 0m; // %; 0 = no limit
+
+    [ObservableProperty]
     private bool _waitForStochRecovery = false;
 
     [ObservableProperty]
@@ -77,6 +83,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         CheckPriceAboveMa200 = ec.CheckPriceAboveMa200;
         Ma200MinDistancePercentage = ec.Ma200MinDistancePercentage;
         Ma200ConfirmationCandles = ec.Ma200ConfirmationCandles;
+        EntryWaitMinutes = ec.EntryWaitMinutes;
+        EntryMaxAdversePercentage = ec.EntryMaxAdversePercentage;
         WaitForStochRecovery = ec.WaitForStochRecovery;
         WaitForRsiRecovery = ec.WaitForRsiRecovery;
 
@@ -104,6 +112,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         ec.CheckPriceAboveMa200 = CheckPriceAboveMa200;
         ec.Ma200MinDistancePercentage = Ma200MinDistancePercentage;
         ec.Ma200ConfirmationCandles = Ma200ConfirmationCandles;
+        ec.EntryWaitMinutes = EntryWaitMinutes;
+        ec.EntryMaxAdversePercentage = EntryMaxAdversePercentage;
         ec.WaitForStochRecovery = WaitForStochRecovery;
         ec.WaitForRsiRecovery = WaitForRsiRecovery;
 

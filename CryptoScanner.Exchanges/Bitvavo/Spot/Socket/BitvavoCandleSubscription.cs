@@ -4,12 +4,11 @@ using CryptoExchange.Net.Sockets;
 using CryptoExchange.Net.Sockets.Default;
 using CryptoExchange.Net.Sockets.Default.Routing;
 
+using Microsoft.Extensions.Logging;
 // De scanner heeft zelf een Exchange.Subscription, en dit bestand staat in een namespace daaronder,
 // dus zonder alias erft deze klasse van de verkeerde. Dat kost een compileerfout over Subscribe(),
 // wat lastig te plaatsen is als je de oorzaak niet kent - vandaar deze regel.
 using LibrarySubscription = CryptoExchange.Net.Sockets.Default.Subscription;
-
-using Microsoft.Extensions.Logging;
 
 namespace CryptoScanner.Core.Exchange.Bitvavo.Spot.Socket;
 

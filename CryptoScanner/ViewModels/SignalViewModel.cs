@@ -61,7 +61,7 @@ public partial class SignalViewModel : BaseConvertersViewModel
     {
         get
         {
-            _SymbolText ??= Object.Symbol.Name;
+            _SymbolText ??= Object.Symbol.PairName;
             return _SymbolText!;
         }
     }

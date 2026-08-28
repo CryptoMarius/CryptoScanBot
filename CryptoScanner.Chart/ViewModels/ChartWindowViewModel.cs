@@ -1565,7 +1565,7 @@ public partial class ChartWindowViewModel : ObservableObject
             return (false, reason);
         }
 
-        if (!exchange.SymbolListName.TryGetValue(Session.SymbolBase + Session.SymbolQuote, out CryptoSymbol? symbol))
+        if (!exchange.TryGetSymbolByPair(Session.SymbolBase + Session.SymbolQuote, out CryptoSymbol? symbol))
         {
             reason = "Symbol not found";
             ScannerLog.Logger.Info($"{reason}");

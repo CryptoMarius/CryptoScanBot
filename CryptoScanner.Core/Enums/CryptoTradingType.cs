@@ -6,7 +6,10 @@
 /// it: Okx is one exchange with three markets here.
 ///
 /// The numbers are stored in the Exchange table, so they may never be renumbered. Spot and
-/// Perpetual carry the values that Spot and "Futures" had before 27-08-2026.
+/// Perpetual carry the values that Spot and "Futures" had before 27-08-2026. Value 2 was XPerp,
+/// a market of its own for the X-Perps of Okx; those now live in the Perpetual market beside the
+/// swaps, told apart by their product. The number stays unused rather than being handed to
+/// something else, so an old row can never read as a market it never was.
 ///
 /// A value only earns a place here once there is an implementation behind it. The products the
 /// scanner deliberately leaves alone - inverse contracts, contracts with an expiry date, options -
@@ -26,11 +29,4 @@ public enum CryptoTradingType
     /// </summary>
     Perpetual = 1,
 
-    /// <summary>
-    /// The X-Perps of Okx (the USD_UM family, ruleType xperp). Perpetual in behaviour - the expiry
-    /// in the name lies in 2031 and they pay funding - but settled in USD VALUE, to be paid in USDC
-    /// or another accepted currency, with a margin basket instead of one fixed stablecoin. That is
-    /// the only route to USDC on Okx: every one of its swaps is quoted and settled in USDT.
-    /// </summary>
-    XPerp = 2,
 }

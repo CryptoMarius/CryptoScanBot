@@ -296,7 +296,41 @@ public class Api : ExchangeBase
                 // bounces every perpetual page back to its home page.
                 Execute = CryptoExternalUrlType.External,
                 Url = "https://www.okx.com/trade-swap/{exchangename}",
-            }
+            },
+
+            // The X-Perps live in this market too, and the outside world does not name them the way
+            // it names the swaps. Only what differs is stated here.
+            PerProduct =
+            {
+                [CryptoProduct.XPerp] = new()
+                {
+                    Altrady = new()
+                    {
+                        Code = "OKEXF",
+                        Execute = CryptoExternalUrlType.Internal,
+                        // Altrady rebuilds the instrument name of Okx: "APR-USD_UM_XPERP-310815"
+                        // becomes APR_UM-XPERP-310815, and the quote it files it under is USDC.
+                        // Confirmed against their own code for APRUSDC on 28-08-2026, and the same
+                        // shape holds for every one of the 155 contracts.
+                        Url = "https://app.altrady.com/d/OKEXF_{QUOTE}_{BASE}_UM-XPERP-{expiry}:{interval}",
+                    },
+                    TradingView = new()
+                    {
+                        // TradingView follows the USD_UM family of Okx: AAPLUSD.UM, XAUUSD.UM,
+                        // BTCUSD.UM. Not USDC and not .P, checked on 28-08-2026 through their symbol
+                        // search.
+                        Execute = CryptoExternalUrlType.External,
+                        Url = "https://www.tradingview.com/chart/?symbol=OKX:{BASE}USD.UM&interval={interval}",
+                    },
+                    ExchangeUrl = new()
+                    {
+                        // Okx serves these from trade-futures, not trade-swap: they are filed under
+                        // InstrumentType.Futures whatever their behaviour says.
+                        Execute = CryptoExternalUrlType.External,
+                        Url = "https://www.okx.com/trade-futures/{exchangename}",
+                    },
+                },
+            },
         };
     }
 }

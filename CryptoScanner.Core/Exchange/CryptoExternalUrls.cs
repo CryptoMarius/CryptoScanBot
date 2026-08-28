@@ -21,4 +21,19 @@ public class CryptoExternalUrls
     public CryptoExternalUrl? HyperTrader { get; set; }
     public CryptoExternalUrl? TradingView { get; set; }
     public CryptoExternalUrl? ExchangeUrl { get; set; }
+
+    /// <summary>
+    /// Addresses that differ per product, for a market that carries more than one. Keyed on
+    /// <see cref="Model.CryptoSymbol.Product"/>.
+    /// <para>
+    /// Okx Perpetual is the reason: it holds the swaps and the X-Perps, and the outside world does
+    /// not name those the same way. TradingView calls the swap OKX:BTCUSDT.P and the X-Perp
+    /// OKX:BTCUSD.UM, and the exchange itself serves them from trade-swap and trade-futures.
+    /// </para>
+    /// <para>
+    /// Only what actually differs belongs here. An app the override does not mention falls back to
+    /// the address above it, so a market states one exception rather than a whole second set.
+    /// </para>
+    /// </summary>
+    public Dictionary<string, CryptoExternalUrls> PerProduct { get; set; } = [];
 }

@@ -58,10 +58,45 @@ public class Api : ExchangeBase
         // bundles suggest. The run before it, on 10 per bundle, showed fourteen such groups of ten for
         // 137 symbols. The connection count follows subscriptions / combine target, which is why that
         // target is now set to the same thirty in the socket options below.
-        ExchangeOptions.SetDefaultOptions("HyperLiquid Perpetual", "USDC", 300, false, 1,
+        // The candle window per request. Measured against the live API on 28-08-2026: candleSnapshot
+        // returns at most 5000 candles, and both ends of the window are inclusive (a window of 400
+        // minutes gives 401 one-minute candles). The library has no limit parameter at all, only
+        // startTime/endTime, so this number IS the window and nothing else caps it.
+        //
+        // It must never be raised above 5000. Asked for more, the exchange answers with the NEWEST
+        // 5000 of the window instead of the oldest - a request for 20000 minutes came back with the
+        // last 4902. In the loop of CandleBase.FetchFrom that would leave the front of the window
+        // unfetched while fetchedUpTo jumps past it, so the hole is never filled.
+        //
+        // It stood at 300 until 28-08-2026, which is what made a cold start unusable: 1860 candles of
+        // 1m plus 500 of each of the eleven higher intervals is 29 requests per symbol, and at the 25
+        // requests a minute LimitRate hands out that is 3 hours 21 minutes for 173 symbols. On 5000
+        // every interval fits in one request, so the same start is 12 requests per symbol.
+        ExchangeOptions.SetDefaultOptions("HyperLiquid Perpetual", "USDC", 5000, false, 1,
             subscriptionsPerBundle: 30,
             klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 1_000_000);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
+
+        // The share of HyperLiquid's budget this process may spend, handed to the rate limiter the
+        // package already carries instead of to a limiter of our own.
+        //
+        // HyperLiquid allows 1200 request weight per minute PER IP ADDRESS and an ordinary info
+        // request - candleSnapshot, the symbol and ticker refresh - weighs 20, so the whole machine
+        // gets 60 requests a minute and not one per scanner. 450 is 75% of that budget divided over
+        // the two markets this scanner can run, so Perpetual and Spot together stay at 900 of the
+        // 1200 whether one of them runs or both. That works out at 22 requests a minute per market.
+        //
+        // Chosen on 28-08-2026 over the two alternatives: 900 (45 requests a minute, but 150% of the
+        // limit once the second market starts) and a live count of the running scanners (which does
+        // give a lone scanner the full 45, at the price of machinery of our own). What it costs is
+        // the cold start - 173 symbols take some 94 minutes at 22 a minute against 46 at 45 a minute.
+        //
+        // PerpDexClient sends its request over an HttpClient of its own - the package has no call that
+        // takes a dex - so the package cannot see it. It books its weight into this same gate through
+        // LibraryRateLimit.SpendAsync, which keeps the ten requests of the hourly symbol refresh inside
+        // the 450 instead of on top of it.
+        LibraryRateLimit.Lower(HyperLiquidExchange.RateLimiter, "HyperLiquidRest", 450, ExchangeOptions.ExchangeName);
+
 
         HyperLiquidRestClient.SetDefaultOptions(options =>
         {
@@ -192,14 +227,14 @@ public class Api : ExchangeBase
     {
         return new()
         {
-            // {BASEMARKET} rather than {BASE}: a market that an outside party deployed carries its
-            // deployer in the scanner name (XYZGOLDUSDC), which neither Altrady nor TradingView
-            // knows - both call that market GOLD. For every other symbol the two are equal.
+            // {BASE} is the coin itself again: the deployer of a market now sits in the product
+            // behind the dot (GOLDUSDC.XYZ), not in front of the base. Altrady and TradingView both
+            // call that market GOLD, which is exactly what {BASE} hands them.
             Altrady = new()
             {
                 Code = "HYPERLIQUIDF",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/HYPERLIQUIDF_{QUOTE}_{BASEMARKET}:{interval}",
+                Url = "https://app.altrady.com/d/HYPERLIQUIDF_{QUOTE}_{BASE}:{interval}",
             },
             // TradingView carries part of the deployed markets and not all of them: XYZ100USDC.P,
             // SP500USDC.P and BRENTOILUSDC.P exist there on 27-08-2026, GOLDUSDC.P and SNDKUSDC.P do
@@ -208,7 +243,7 @@ public class Api : ExchangeBase
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://www.tradingview.com/chart/?symbol=HYPERLIQUID:{BASEMARKET}{QUOTE}.P&interval={interval}",
+                Url = "https://www.tradingview.com/chart/?symbol=HYPERLIQUID:{BASE}{QUOTE}.P&interval={interval}",
             },
             // The exchange addresses its markets by the name it gave them, "BTC" for its own and
             // "xyz:GOLD" for a deployed one, which is exactly what ExchangeName holds.

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -133,6 +133,22 @@
                              Text="{Binding Ma200ConfirmationCandles, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
                              ToolTip.Tip="Number of preceding candles that must also close on the correct side of MA200 (0 = disabled)."/>
+                </Grid>
+
+                <!-- Watch the signal for a while before acting on it -->
+                <Grid ColumnDefinitions="Auto,6,60,12,Auto,6,60" Margin="0,6,0,0">
+                    <TextBlock Grid.Column="0" Text="Wait after signal (m)"
+                               VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding EntryWaitMinutes, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                             ToolTip.Tip="Minutes to watch a signal before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below EntryRemoveTime x the interval duration, otherwise the signal expires before the wait is over and nothing is ever entered."/>
+                    <TextBlock Grid.Column="4" Text="Max against %"
+                               VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="6"
+                             Text="{Binding EntryMaxAdversePercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                             ToolTip.Tip="How far price may run against the signal during that wait, as a positive percentage of the signal price. Above this the signal is dropped. Zero means no limit: the wait then only delays the entry."/>
                 </Grid>
 
                 <!-- The band break confirmation used to sit here as "Timeframe consensus count".

@@ -170,6 +170,49 @@ public class MaxPositionDurationTests
 
 
     /// <summary>
+    /// The SECOND gate. CandleCanMovePosition only decides whether the replay descends into the
+    /// minute candles; ShouldRunHandlePosition decides whether the orders are actually recomputed
+    /// once it has. Both have to know about the deadline.
+    /// <para>
+    /// Teaching only the first one was the original mistake, and it failed while looking like it
+    /// worked: on runs 436-438 a "7 day" limit still left positions running 36.8 days, and a
+    /// "30 day" limit changed nothing at all - the exit order was only ever repriced on a candle
+    /// that reached a trigger price, which the walked-away positions never do.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void SecondGate_PastTheDeadline_RepricesEvenWhenThePriceIsInsideTheFence()
+    {
+        GlobalData.Settings.Trading.MaxPositionDurationDays = 30m;
+        var position = MakePosition(Opened);
+        position.TriggerPriceTop = 110m;
+        position.TriggerPriceBottom = 90m;
+
+        // The candle sits well inside the fence, so on price alone this is a skip.
+        Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 105m, candleLow: 95m),
+            "inside the price fence and inside the deadline: skip");
+        Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, 105m, 95m, Opened.AddDays(5)),
+            "same candle, well inside the deadline: still a skip");
+        Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, 105m, 95m, Opened.AddDays(31)),
+            "same candle, deadline passed: handle it now");
+    }
+
+
+    [TestMethod]
+    public void SecondGate_WithTheSettingOff_IsUnchangedAtAnyAge()
+    {
+        GlobalData.Settings.Trading.MaxPositionDurationDays = 0m;
+        var position = MakePosition(Opened);
+        position.TriggerPriceTop = 110m;
+        position.TriggerPriceBottom = 90m;
+
+        Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, 105m, 95m, Opened.AddDays(365)));
+        Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, 115m, 95m, Opened.AddDays(365)),
+            "the price fence keeps working as it did");
+    }
+
+
+    /// <summary>
     /// And with the setting off the gate behaves exactly as it did before this feature existed,
     /// however long the position has been open.
     /// </summary>

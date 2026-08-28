@@ -1,0 +1,13 @@
+@* The product badge beside a symbol name (see CryptoSymbol.MarketLabel). One component so the
+   grids that show it stay identical; the colour comes from CryptoProduct.ColorOf, the same table
+   the Avalonia side uses. Renders nothing when the label is empty (a single-product market). *@
+@using CryptoScanner.Core.Model
+
+@if (!string.IsNullOrEmpty(Label))
+{
+    <span class="market-label" style="background: @CryptoProduct.ColorOf(Label)">@Label</span>
+}
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+}

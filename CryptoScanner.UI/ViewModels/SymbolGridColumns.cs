@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Zones;
 
 namespace CryptoScanner.UI.ViewModels;
@@ -24,6 +24,7 @@ public class SymbolColumnComparer : IComparer<SymbolViewModel>
             {
                 SymbolColumnEnum.Id => string.Compare(x.Id, y.Id, StringComparison.OrdinalIgnoreCase),
                 SymbolColumnEnum.Symbol => string.Compare(x.Symbol, y.Symbol, StringComparison.OrdinalIgnoreCase),
+                SymbolColumnEnum.ExchangeName => string.Compare(x.ExchangeName, y.ExchangeName, StringComparison.OrdinalIgnoreCase),
                 SymbolColumnEnum.Volume => x.Object.Volume.CompareTo(y.Object.Volume),
                 SymbolColumnEnum.Distance => Nullable.Compare(
                     ZoneTools.ZoneDistance(x.Object),

@@ -50,7 +50,14 @@
                         @foreach (var col in _columnState!.VisibleColumns)
                         {
                             var bg = vm.GetBackgroundStyle(col.Column);
-                            <td class="@GetCellClass(col, vm)" style="@bg">@vm.GetCellValue(col.Column)</td>
+                            <td class="@GetCellClass(col, vm)" style="@bg">
+                                @vm.GetCellValue(col.Column)@*
+                                *@@if (col.Column == LiveDataColumnEnum.Symbol && vm.MarketLabel.Length > 0)
+                                {
+                                    @* Which market inside the exchange, as a coloured badge behind the name *@
+                                    <MarketBadge Label="@vm.MarketLabel" />
+                                }
+                            </td>
                         }
                     </tr>
                 }

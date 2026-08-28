@@ -380,15 +380,19 @@ public class CandleDatabase : IDisposable
             bool isAmbiguous = !string.IsNullOrEmpty(row.Name)
                 && exchange.Data.AmbiguousSymbolNames.Contains(row.Name);
 
+            // A version-2 file predates the product suffix, so its names are bare pairs
+            // ("BTCUSDT") while the live list is keyed "BTCUSDT.PERP". TryGetSymbolByPair
+            // resolves both spellings and refuses a pair that covers several instruments,
+            // which then correctly falls through to the delete below.
             if (!isAmbiguous && !string.IsNullOrEmpty(row.Name)
-                && exchange.SymbolListName.TryGetValue(row.Name, out CryptoSymbol? symbol)
+                && exchange.TryGetSymbolByPair(row.Name, out CryptoSymbol? symbol)
                 && !string.IsNullOrEmpty(symbol.ExchangeName))
             {
                 // Keep the SymbolId so none of the (millions of) Candle rows have to be rewritten
                 connection.Execute(
                     "INSERT OR IGNORE INTO SymbolVersion3 (SymbolId, ExchangeName, Name) " +
                     "VALUES ($SymbolId, $ExchangeName, $Name)",
-                    new { row.SymbolId, symbol.ExchangeName, row.Name }, transaction: tx);
+                    new { row.SymbolId, symbol.ExchangeName, symbol.Name }, transaction: tx);
                 adopted++;
                 continue;
             }

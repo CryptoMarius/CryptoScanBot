@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -224,7 +224,7 @@ public class ZoneDlzIncrementalTests : TestBase
     /// disagree about the same candles purely because of their calling rhythm - and the emulator
     /// calls once per candle while the live scanner calls once an hour.
     /// </summary>
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(1)]
     [DataRow(5)]
     [DataRow(15)]
@@ -257,7 +257,7 @@ public class ZoneDlzIncrementalTests : TestBase
     /// confirmer that made it dominant, so it skipped exactly the pivots it was meant to grade.
     /// </para>
     /// </summary>
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(1)]
     [DataRow(5)]
     [DataRow(15)]
@@ -405,7 +405,7 @@ public class ZoneDlzIncrementalTests : TestBase
     /// exchange. Without it this test would depend on the network.
     /// </para>
     /// </summary>
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(1)]
     [DataRow(5)]
     [DataRow(15)]

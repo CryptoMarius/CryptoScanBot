@@ -53,7 +53,9 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                 // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
                 if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                 {
-                    if (exchange.SymbolListName.TryGetValue(data.Data.Symbol, out CryptoSymbol? symbol))
+                    // The exchange names the instrument, not the scanner. SymbolListExchangeName is keyed
+                    // on exactly what arrives here.
+                    if (exchange.SymbolListExchangeName.TryGetValue(data.Data.Symbol, out CryptoSymbol? symbol))
                     {
                         // Converteer de data naar een (tijdelijke) trade
                         CryptoOrder orderTemp = new()

@@ -1,12 +1,12 @@
-﻿using System.Reflection;
-
-using Avalonia.Media;
+﻿using Avalonia.Media;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+
+using System.Reflection;
 
 namespace CryptoScanner.ViewModels;
 
@@ -92,21 +92,13 @@ public partial class BaseConvertersViewModel : ObservableObject
     }
 
     /// <summary>
-    /// The colour of the market label beside a symbol (see CryptoSymbol.MarketLabel). The exchange's
-    /// own markets are told apart by contract type; everything an outside party deployed shares one
-    /// colour, because there are ten such markets on HyperLiquid alone and a colour per deployer
-    /// would be a rainbow nobody can read. All four are dark enough to carry white text in both
-    /// themes, so the label does not need a colour per theme.
+    /// The colour of the market label beside a symbol (see CryptoSymbol.MarketLabel). The hex
+    /// values live in CryptoProduct.ColorOf, one table shared with the Photino side, so the two
+    /// UIs can never show the same product in different colours.
     /// </summary>
     internal static IBrush GetBrushColorMarketLabel(string label)
     {
-        return label switch
-        {
-            "Spot" => new SolidColorBrush(Color.FromRgb(0x2E, 0x7D, 0x9A)),
-            "Perp" => new SolidColorBrush(Color.FromRgb(0xC2, 0x70, 0x1C)),
-            "xPerp" => new SolidColorBrush(Color.FromRgb(0x9A, 0x7B, 0x12)),
-            _ => new SolidColorBrush(Color.FromRgb(0x6D, 0x3F, 0xA0)),
-        };
+        return new SolidColorBrush(Color.Parse(CryptoProduct.ColorOf(label)));
     }
 
     internal IBrush GetBrushColorViaSign(double value)

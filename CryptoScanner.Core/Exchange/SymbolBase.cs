@@ -5,6 +5,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace CryptoScanner.Core.Exchange;
@@ -19,7 +20,10 @@ public class SymbolBase()
         public string Base { get; set; } = string.Empty;
         public string Quote { get; set; } = string.Empty;
 
-        // The combination of base and quote
+        // Which instrument this is: a code from CryptoProduct, or the market an outside party deployed
+        public string Product { get; set; } = string.Empty;
+
+        // Base, quote and the product: BTCUSDT.PERP
         public string ScannerName { get; set; } = string.Empty;
     }
 
@@ -68,16 +72,46 @@ public class SymbolBase()
 
     }
 
-    static internal SymbolInfo ParseSymbol(string exchangeName, string baseAsset, string quoteAsset)
+    /// <summary>
+    /// Turns one instrument of an exchange into the four things the scanner keeps about it.
+    /// <para>
+    /// The scanner name carries the product behind a dot: BTCUSDT.PERP, BTCUSDT.SPOT, BTCUSDC.HYNA.
+    /// That is what makes it unique. An exchange can offer the same pair as several instruments -
+    /// BTC-USDT next to BTC-USDT-SWAP - and both parse to the pair BTCUSDT; without the product the
+    /// second one silently disappears in GlobalData.AddSymbol and the market ends up holding candles
+    /// that belong to the other instrument.
+    /// </para>
+    /// <para>
+    /// It also means the product is readable wherever the name travels and the badge does not come
+    /// along: a log line, the clipboard, the black and white list, an Altrady link.
+    /// </para>
+    /// </summary>
+    /// <param name="exchangeName">The name the exchange gave the instrument, unique at that exchange.</param>
+    /// <param name="product">One of <see cref="CryptoProduct"/>, or the name of the market an outside party deployed.</param>
+    static internal SymbolInfo ParseSymbol(string exchangeName, string baseAsset, string quoteAsset, string product)
     {
+        string pair = baseAsset.ToUpper() + quoteAsset.ToUpper();
         var info = new SymbolInfo
         {
             Base = baseAsset,
             Quote = quoteAsset.ToUpper(),
             ExchangeName = exchangeName,
-            ScannerName = baseAsset.ToUpper() + quoteAsset.ToUpper(),
+            Product = product.ToUpper(),
+            ScannerName = product.Length > 0 ? pair + CryptoProduct.Separator + product.ToUpper() : pair,
         };
         return info;
+    }
+
+
+    /// <summary>
+    /// The product code that belongs to the market this instance serves, for the markets that offer
+    /// one product and say so through their trading type. A market that carries several products -
+    /// Okx Perpetual holds the swaps and the X-Perps - names the product per instrument instead.
+    /// </summary>
+    static internal string ProductOfExchange(Model.CryptoExchange exchange)
+    {
+        // One mapping, kept on the exchange so the pair lookup uses the exact same one
+        return exchange.DefaultProduct;
     }
 
     /// <summary>
@@ -92,13 +126,27 @@ public class SymbolBase()
     static internal void RegisterAmbiguousSymbolNames(Model.CryptoExchange exchange,
         IEnumerable<string> rejectedScannerNames, IEnumerable<string> acceptedScannerNames)
     {
-        HashSet<string> accepted = new(acceptedScannerNames, StringComparer.OrdinalIgnoreCase);
+        // Compared in PAIR space, without the product suffix. The version-2 candle files this set
+        // protects were written before the product moved into the name, so their rows carry the
+        // bare pair - and the callers hand in a mix as well: rejected names are usually built as
+        // base + quote while accepted names carry the suffix. Comparing the raw strings would
+        // therefore never intersect and silently record nothing.
+        static string PairOf(string name)
+        {
+            int dot = name.IndexOf(CryptoProduct.Separator);
+            return dot > 0 ? name[..dot] : name;
+        }
+
+        HashSet<string> accepted = new(StringComparer.OrdinalIgnoreCase);
+        foreach (string name in acceptedScannerNames)
+            accepted.Add(PairOf(name));
 
         exchange.Data.AmbiguousSymbolNames.Clear();
         foreach (string name in rejectedScannerNames)
         {
-            if (accepted.Contains(name))
-                exchange.Data.AmbiguousSymbolNames.Add(name);
+            string pair = PairOf(name);
+            if (accepted.Contains(pair))
+                exchange.Data.AmbiguousSymbolNames.Add(pair);
         }
 
         if (exchange.Data.AmbiguousSymbolNames.Count != 0)
@@ -156,7 +204,7 @@ public class SymbolBase()
         return decimals;
     }
 
-    static internal bool IsSymbolAccepted(Model.CryptoExchange exchange, SymbolInfo info, IRestApiClient api, TradingMode mode, out CryptoSymbol? symbol)
+    static internal bool IsSymbolAccepted(Model.CryptoExchange exchange, SymbolInfo info, IRestApiClient api, TradingMode mode, [NotNullWhen(true)] out CryptoSymbol? symbol)
     {
         // Some exchanges publish instruments without a base and/or quote asset (Okx does this
         // for instruments in the "preopen" state). Those would all end up with the same empty
@@ -167,7 +215,14 @@ public class SymbolBase()
             return false;
         }
 
-        if (!exchange.SymbolListName.TryGetValue(info.ScannerName, out symbol))
+        // Recognised by the name the EXCHANGE gave the instrument, not by the scanner name. Those two
+        // are not the same question: an exchange can offer one pair as several instruments, and every
+        // one of them parses to the same pair. Looking up by the scanner name handed back the symbol
+        // of the OTHER instrument and then overwrote its instrument name, so the market kept fetching
+        // candles for something else while the database looked perfectly normal. The instrument name
+        // is unique at every exchange the scanner talks to - checked on 28-08-2026 over the complete
+        // answer of all of them, including the products we filter out.
+        if (!exchange.SymbolListExchangeName.TryGetValue(info.ExchangeName, out symbol))
         {
             var quoteData = GlobalData.AddQuoteData(info.Quote);
             symbol = new()
@@ -177,14 +232,25 @@ public class SymbolBase()
                 Name = info.ScannerName,
                 Base = info.Base,
                 Quote = info.Quote,
+                Product = info.Product,
                 QuoteData = quoteData,
                 ExchangeName = info.ExchangeName,
                 Status = 1,
             };
         }
 
-        // Fill the new storage ExchangeName field
-        symbol.ExchangeName = info.ExchangeName;
+        // An instrument that changed pair or product keeps its identity and gets the new name. Rare,
+        // but a name that no longer matches what the exchange says is worse than a renamed symbol.
+        // Through the exchange so the scanner-name index moves along with the rename.
+        symbol.Base = info.Base;
+        symbol.Quote = info.Quote;
+        symbol.Product = info.Product;
+        exchange.SetSymbolName(symbol, info.ScannerName);
+
+        // Fill the new storage ExchangeName field, through the exchange so the index on that name
+        // moves along. A price ticker is looked up by the name the exchange uses, so an index left
+        // on the old key means the symbol stops being found.
+        exchange.SetSymbolExchangeName(symbol, info.ExchangeName);
         return true;
     }
 }

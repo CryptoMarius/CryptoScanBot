@@ -20,85 +20,62 @@ public partial class CryptoSymbol
     public required string Quote { get; set; } // (BTC, ETH, EUR, USDT etc)
     public required string ExchangeName { get; set; }
     /// <summary>
-    /// Which market inside the exchange this symbol lives on, empty for the exchange's own market.
+    /// Which instrument this is, in one word. It is the part of <see cref="Name"/> behind the dot,
+    /// and the badge shown beside the symbol in every grid - both come from here, so they can never
+    /// disagree.
     /// <para>
-    /// One exchange can run several order books side by side. HyperLiquid lets outside parties deploy
-    /// their own perpetual market on its infrastructure - same address, same account, same USDC as
-    /// margin - and names those markets after their deployer: the gold market of the party calling
-    /// itself XYZ is "xyz:GOLD", next to the plain "BTC" of HyperLiquid's own market. This field holds
-    /// that short name ("xyz", "hyna"), so the symbol list can tell the two apart and the user
-    /// interface can mark them.
+    /// For a market the exchange runs itself this is one of the codes in <see cref="CryptoProduct"/>:
+    /// SPOT, PERP, INVERSE, XPERP, FUTURE. For a market an outside party deployed it is the name of
+    /// that party instead - HYNA, XYZ - because on a perpetual exchange that is exactly what sets
+    /// the line apart: the contract behaves the same, the order book behind it does not.
     /// </para>
     /// <para>
-    /// It is not a contract type: everything the scanner accepts is a linear perpetual, whichever
-    /// market it comes from. What differs is the order book, its depth, and who runs it.
+    /// Both live in one field on purpose. They answer the same question - which of the instruments
+    /// on this pair is this one - and a second field for the second half would be two places holding
+    /// one fact.
+    /// </para>
+    /// <para>
+    /// This is what makes the name unique. BTC-USDT and BTC-USDT-SWAP are two instruments that both
+    /// parse to the pair BTCUSDT; BTCUSDT.SPOT and BTCUSDT.PERP are two names. Without it the second
+    /// one silently disappears in <see cref="Core.GlobalData.AddSymbol"/>, which is what used to
+    /// make a market carry candles that belonged to another instrument.
     /// </para>
     /// </summary>
-    public string SubMarket { get; set; } = "";
+    public string Product { get; set; } = "";
 
     /// <summary>
-    /// How the symbol is written wherever a user reads it: the name, followed by the market it lives
-    /// on when that is not the exchange's own one. "BTCUSDC" stays "BTCUSDC", "xyz:GOLD" reads as
-    /// "XYZGOLDUSDC (xyz)".
+    /// The pair as a reader wants to see it: base, a hyphen, quote. This is what the grids show in
+    /// their symbol column, with the product beside it as a badge - putting the product in the text
+    /// as well said the same thing twice ("SUSDT.PERP" next to a PERP badge).
     /// <para>
-    /// Text rather than a picture on purpose: every grid in both user interfaces shows the symbol in
-    /// a plain text column, so this reaches all of them at once - the symbol list, the signals, the
-    /// positions, the live data, the dashboard and the chart selector. A graphic would need a
-    /// template column in each of those grids separately.
+    /// The hyphen is not decoration. A pair like S against USDT reads as SUSDT without it, and a
+    /// base of one or two letters is common enough that guessing where the pair splits is real work.
     /// </para>
     /// <para>
-    /// Precomputed on first use and cached, the same reason the view models cache their own texts:
-    /// a grid asks for this on every scroll, and building the string each time is what made other
-    /// columns slow.
-    /// </para>
-    /// <para>
-    /// Never use this to look a symbol up or to hand a name to an exchange - that is what
-    /// <see cref="Name"/> and <see cref="ExchangeName"/> are for.
+    /// For reading only. <see cref="Name"/> is the key and carries the product, because a name has
+    /// to be unique; this one does not and may repeat.
     /// </para>
     /// </summary>
     [Computed]
     [JsonIgnore]
-    public string DisplayName
+    public string PairName
     {
         get
         {
-            _displayName ??= SubMarket.Length > 0 ? $"{Name} ({SubMarket})" : Name;
-            return _displayName;
+            _pairName ??= Base + "-" + Quote;
+            return _pairName;
         }
     }
-    private string? _displayName;
+    private string? _pairName;
 
     /// <summary>
-    /// The short marker shown beside the symbol in the grids, the way a trading app tags every line
-    /// in its market list: what kind of contract this is, and on whose order book it trades.
-    /// <para>
-    /// A symbol on the exchange's own market carries the trading type of that exchange - "Spot",
-    /// "Perp" or "xPerp". A symbol on a market that an outside party deployed carries that party
-    /// instead ("xyz", "hyna"), because within a perpetual exchange that is what sets it apart from
-    /// every other line: the contract behaves the same, the order book behind it does not.
-    /// </para>
-    /// <para>
-    /// Precomputed on first use and cached, for the same reason <see cref="DisplayName"/> is: a grid
-    /// asks for this on every scroll.
-    /// </para>
+    /// The product badge shown beside the symbol in the grids: the product, but only on a market
+    /// that holds more than one product - on a single-product market a badge that is always the
+    /// same marks nothing. One property so both UIs and every grid agree on when the badge shows.
     /// </summary>
     [Computed]
     [JsonIgnore]
-    public string MarketLabel
-    {
-        get
-        {
-            _marketLabel ??= SubMarket.Length > 0 ? SubMarket : Exchange.TradingType switch
-            {
-                CryptoTradingType.Spot => "Spot",
-                CryptoTradingType.Perpetual => "Perp",
-                CryptoTradingType.XPerp => "xPerp",
-                _ => "",
-            };
-            return _marketLabel;
-        }
-    }
-    private string? _marketLabel;
+    public string MarketLabel => Exchange != null && Exchange.HasSeveralProducts ? Product : "";
 
     public int Status { get; set; } // 0 for inactive, 1 voor active
 

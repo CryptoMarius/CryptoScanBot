@@ -487,12 +487,12 @@ public static class Helper
                             CryptoSymbol? symbol;
                             if (asset.Name == "USDT")
                                 valueUsdt += asset.Total;
-                            else if (exchange.SymbolListName.TryGetValue(asset.Name + "USDT", out symbol))
+                            else if (exchange.TryGetSymbolByPair(asset.Name + "USDT", out symbol))
                             {
                                 if (symbol.LastPrice.HasValue)
                                     valueUsdt += (decimal)symbol.LastPrice * asset.Total;
                             }
-                            else if (exchange.SymbolListName.TryGetValue("USDT" + asset.Name, out symbol))
+                            else if (exchange.TryGetSymbolByPair("USDT" + asset.Name, out symbol))
                             {
                                 if (symbol.LastPrice.HasValue)
                                     valueUsdt += asset.Total / (decimal)symbol.LastPrice;
@@ -501,12 +501,12 @@ public static class Helper
 
                             if (asset.Name == "BTC")
                                 valueBtc += asset.Total;
-                            else if (exchange.SymbolListName.TryGetValue(asset.Name + "BTC", out symbol))
+                            else if (exchange.TryGetSymbolByPair(asset.Name + "BTC", out symbol))
                             {
                                 if (symbol.LastPrice.HasValue)
                                     valueBtc += (decimal)symbol.LastPrice * asset.Total;
                             }
-                            else if (exchange.SymbolListName.TryGetValue("BTC" + asset.Name, out symbol))
+                            else if (exchange.TryGetSymbolByPair("BTC" + asset.Name, out symbol))
                             {
                                 if (symbol.LastPrice.HasValue)
                                     valueBtc += asset.Total / (decimal)symbol.LastPrice;

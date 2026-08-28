@@ -49,7 +49,14 @@
                         @oncontextmenu:preventDefault="true">
                         @foreach (var col in _columnState!.VisibleColumns)
                         {
-                            <td class="@GetCellClass(col, vm)" style="@vm.GetBackgroundStyle(col.Column)">@vm.GetCellValue(col.Column)</td>
+                            <td class="@GetCellClass(col, vm)" style="@vm.GetBackgroundStyle(col.Column)">
+                                @vm.GetCellValue(col.Column)@*
+                                *@@if (col.Column == SignalColumnEnum.Symbol && vm.MarketLabel.Length > 0)
+                                {
+                                    @* Which market inside the exchange, as a coloured badge behind the name *@
+                                    <MarketBadge Label="@vm.MarketLabel" />
+                                }
+                            </td>
                         }
                     </tr>
                 }

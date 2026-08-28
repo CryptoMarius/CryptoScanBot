@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Zones;
 
@@ -14,7 +14,14 @@ public class SymbolViewModel
     }
 
     // Immutable (never change after creation)
-    public string Symbol => Object.DisplayName;
+    public string Symbol => Object.PairName;
+
+    // Which market inside the exchange, shown as a coloured badge behind the name
+    public string MarketLabel => Object.MarketLabel;
+
+    // The name the instrument has at the exchange, for the hidden debug column. Not the scanner
+    // name: "BTC-USDT-SWAP" against "BTCUSDT", and for an X-Perp the two look nothing alike.
+    public string ExchangeName => Object.ExchangeName;
 
     private string? _idText;
     public string Id

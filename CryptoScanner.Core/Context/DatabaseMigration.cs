@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 88;
+    public readonly static int CurrentDatabaseVersion = 90;
 
 
     /// <summary>
@@ -1888,6 +1888,103 @@ public class DatabaseMigration
 
             database.Connection.Execute(
                 "alter table Symbol add column SubMarket TEXT NOT NULL DEFAULT ''", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // The product a symbol is - SPOT, PERP, XPERP, or the market an outside party deployed - moves
+        // into the name behind a dot, and SubMarket becomes that same field. Two things made this
+        // necessary at once: one market can now hold several products (Okx Perpetual carries the swaps
+        // and the X-Perps), and IsSymbolAccepted recognises a symbol by the name the exchange gave it
+        // rather than by base + quote. Without the product in the name BTC-USDT and BTC-USDT-SWAP both
+        // read BTCUSDT, and GlobalData.AddSymbol drops the second one without a word.
+        //
+        // Renaming symbols is cheap here: candles, positions and signals all refer to SymbolId, never
+        // to the name. Only the black and white list hold a name, and their match now ignores the part
+        // behind the dot, so the rules a user typed keep meaning what they meant.
+        if (CurrentVersion > version.Version && version.Version == 88)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Symbol rename column SubMarket to Product", transaction);
+
+            // The deployer of a market used to sit IN FRONT of the base ("hyna:BTC" became HYNABTCUSDC),
+            // which was the only way to keep that name unique before the product existed. It made the
+            // base a lie - BTC is the coin, HYNABTC is not - and {BASE} in a link unusable. Now that the
+            // product carries it, the base is the coin again.
+            database.Connection.Execute(
+                "update Symbol set Base = substr(Base, length(Product) + 1) " +
+                " where Product <> '' and upper(substr(Base, 1, length(Product))) = upper(Product)", transaction);
+
+            // Everything else came from a market that offers one product, so its trading type says
+            // which. The numbers are the values of CryptoTradingType: Spot 0, Perpetual 1, XPerp 2.
+            database.Connection.Execute(
+                "update Symbol set Product = (select case e.TradingType" +
+                "   when 0 then 'SPOT' when 1 then 'PERP' when 2 then 'XPERP' else '' end" +
+                "   from Exchange e where e.Id = Symbol.ExchangeId)" +
+                " where Product = ''", transaction);
+
+            // The barometer symbols are ours, not an instrument of any exchange. Their name already
+            // cannot collide with anything ($BMPUSDT), so they keep it unchanged.
+            database.Connection.Execute("update Symbol set Product = '' where Name like '$BM%'", transaction);
+
+            database.Connection.Execute("update Symbol set Product = upper(Product)", transaction);
+
+            database.Connection.Execute(
+                "update Symbol set Name = upper(Base) || upper(Quote) || " +
+                " case when Product <> '' then '.' || Product else '' end", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // The X-Perps of Okx no longer have a market of their own. They sit in Okx Perpetual now,
+        // beside the swaps, told apart by their product - which is what the product in the name was
+        // built for. Every data folder carries the full exchange list, so the row exists in all of
+        // them and has to go everywhere.
+        //
+        // The symbols of that market go with it. They are not lost: Okx Perpetual fetches the same
+        // contracts and gives them a row of its own, with the candles fetched again. Anything that
+        // ever traded there would be kept - a position refers to a symbol - so the delete stops at
+        // the first sign of one rather than tearing history out from under it.
+        if (CurrentVersion > version.Version && version.Version == 89)
+        {
+            using var transaction = database.BeginTransaction();
+
+            int? exchangeId = database.Connection.QueryFirstOrDefault<int?>(
+                "select Id from Exchange where Name = 'Okx XPerp'", null, transaction);
+
+            if (exchangeId.HasValue)
+            {
+                int traded = database.Connection.QueryFirstOrDefault<int>(
+                    "select count(*) from Position where SymbolId in (select Id from Symbol where ExchangeId = @id)",
+                    new { id = exchangeId.Value }, transaction);
+
+                if (traded > 0)
+                {
+                    // Left alone on purpose, and said out loud: a market with a history behind it is
+                    // not something to remove without the user knowing.
+                    GlobalData.AddTextToLogTab($"Okx XPerp still has {traded} positions, so the market is kept. " +
+                        "Its contracts are also in Okx Perpetual now.");
+                }
+                else
+                {
+                    database.Connection.Execute(
+                        "delete from Signal where SymbolId in (select Id from Symbol where ExchangeId = @id)",
+                        new { id = exchangeId.Value }, transaction);
+                    database.Connection.Execute("delete from Symbol where ExchangeId = @id",
+                        new { id = exchangeId.Value }, transaction);
+                    database.Connection.Execute("delete from Exchange where Id = @id",
+                        new { id = exchangeId.Value }, transaction);
+                }
+            }
 
             // update version
             version.Version += 1;

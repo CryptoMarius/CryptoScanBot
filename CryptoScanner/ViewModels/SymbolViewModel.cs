@@ -28,8 +28,22 @@ namespace CryptoScanner.ViewModels
         {
             get
             {
-                _SymbolText ??= Object.Name;
+                _SymbolText ??= Object.PairName;
                 return _SymbolText!;
+            }
+        }
+
+        /// <summary>
+        /// The name the instrument has at the exchange, for the hidden debug column. Not the scanner
+        /// name: "BTC-USDT-SWAP" against "BTCUSDT", and for an X-Perp the two look nothing alike.
+        /// </summary>
+        private string? _ExchangeNameText;
+        public string ExchangeName
+        {
+            get
+            {
+                _ExchangeNameText ??= Object.ExchangeName;
+                return _ExchangeNameText!;
             }
         }
 

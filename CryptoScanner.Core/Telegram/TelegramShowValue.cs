@@ -24,7 +24,7 @@ public class TelegramShowValue
         {
             foreach (string symbolName in parameters)
             {
-                if (exchange.SymbolListName.TryGetValue(symbolName + "USDT", out CryptoSymbol? symbol))
+                if (exchange.TryGetSymbolByPair(symbolName + "USDT", out CryptoSymbol? symbol))
                 {
                     if (symbol.LastPrice.HasValue)
                     {

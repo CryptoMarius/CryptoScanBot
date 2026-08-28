@@ -54,7 +54,8 @@ public static class EmulatorDb
     {
         foreach (string name in symbolNames)
         {
-            if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol? symbol))
+            // Config names may be bare pairs from before the product moved into the symbol name
+            if (!exchange.TryGetSymbolByPair(name, out CryptoSymbol? symbol))
                 continue;
 
             symbol.Data.ResetFvgData();
