@@ -52,6 +52,13 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         // on Perpetual and 150 on Spot sat at precisely that ceiling. Running permanently AT the
         // documented budget leaves no room for the calls the limiter does not see coming (the symbol
         // and ticker refresh), which is where the four rejections of that night came from.
+        //
+        // Correction, checked against the API documentation on 28-08-2026: a candle request does NOT
+        // weigh a flat 20. candleSnapshot carries an additional weight per 60 candles in the answer,
+        // which the package cannot know beforehand and therefore never books. So 60 requests per
+        // minute was never reachable - our average request came to 32 weight, which puts the address
+        // ceiling at some 37 of them. The surcharge is booked below, once the answer is in; the whole
+        // reasoning and the measurements live in HyperLiquidLimits.
         int attempt = 0;
     Again:
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
@@ -78,6 +85,13 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             return (false, 0, fetchFrom);
         }
 
+
+        // What the exchange charged on top of the flat 20 the package booked. Deliberately here and
+        // not after the loop below: this call waits when the budget is full, and holding the candle
+        // lock of a symbol while waiting out a rate limit window would block the analysis threads for
+        // up to a minute.
+        int count = result.Data.Count();
+        await HyperLiquidLimits.BookCandleWeightAsync(count);
 
         CandleTime fetchedUpTo = CandleTime.MinValue;
         await symbol.Data.CandleLock.WaitAsync();
@@ -119,7 +133,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         }
 
 
-        int count = result.Data.Count();
+        // count was already taken above, where the rate limit surcharge is booked
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList candles = symbolPeriod.CandleList;
         string s = $"{symbol.Exchange.Name} {symbol.Name} {interval.Name} fetch from {fetchFrom.ToLocalTime()} .. {fetchedUpTo.ToLocalTime()}";

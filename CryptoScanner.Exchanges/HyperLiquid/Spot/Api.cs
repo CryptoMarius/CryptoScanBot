@@ -93,7 +93,21 @@ public class Api : ExchangeBase
         //
         // Everything this market sends goes through the package, so the ceiling above covers all of it.
         // (Perpetual has one call of its own, see the note in its Api.cs.)
-        LibraryRateLimit.Lower(HyperLiquidExchange.RateLimiter, "HyperLiquidRest", 450, ExchangeOptions.ExchangeName);
+        //
+        // Correction, 28-08-2026: the 450 above rested on a weight of 20 per candle request, and that
+        // is not what the exchange charges - candleSnapshot carries an extra weight per 60 candles in
+        // the answer. Measured on the Perpetual market that afternoon the package counted 440 weight
+        // per minute where the exchange counted some 700, so the "75% of the budget, divided over two
+        // markets" this paragraph describes was in reality 117% of it per market. The surcharge is now
+        // booked in Candle.cs, which makes the number below mean what it says, and the number itself
+        // moved to HyperLiquidLimits - one place for both markets, with the measurements next to it.
+        LibraryRateLimit.Lower(HyperLiquidExchange.RateLimiter, HyperLiquidLimits.GateName,
+            HyperLiquidLimits.WeightPerMinute, ExchangeOptions.ExchangeName);
+        // Spelled out because the ceiling is the budget of the whole ADDRESS, not a share per market:
+        // start HyperLiquid Perpetual next to this one and both believe they may spend it.
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} takes {HyperLiquidLimits.WeightPerMinute} " +
+            $"of the {HyperLiquidLimits.AddressWeightPerMinute} weight per minute this address is allowed, " +
+            $"which assumes no second HyperLiquid market runs alongside it");
 
 
         HyperLiquidRestClient.SetDefaultOptions(options =>

@@ -79,8 +79,10 @@ internal static class PerpDexClient
         {
             // Same endpoint and the same budget as everything the package sends, so it is booked
             // there instead of riding on top of it. An ordinary info request weighs 20.
-            await LibraryRateLimit.SpendAsync("HyperLiquidRest", "https://api.hyperliquid.xyz", "/info",
-                20, ExchangeBase.CancellationToken);
+            // metaAndAssetCtxs is one of those - it is candleSnapshot that carries a surcharge per 60
+            // items, and this call returns one object and not a list of candles.
+            await LibraryRateLimit.SpendAsync(HyperLiquidLimits.GateName, HyperLiquidLimits.BaseAddress,
+                HyperLiquidLimits.InfoPath, HyperLiquidLimits.InfoRequestWeight, ExchangeBase.CancellationToken);
 
             string body = JsonSerializer.Serialize(new { type = "metaAndAssetCtxs", dex });
             using StringContent content = new(body, Encoding.UTF8, "application/json");
