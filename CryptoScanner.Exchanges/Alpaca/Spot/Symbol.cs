@@ -186,7 +186,9 @@ public class Symbol() : SymbolBase(), ISymbol
     /// the other exchanges use for their 24 hour volume.
     ///
     /// Returns an empty list when Alpaca says nothing at all, so a hiccup over there does not empty
-    /// out the whole exchange in the database.
+    /// out the whole exchange in the database. The same goes for a volume that only half arrived:
+    /// this list is a ranking, and a ranking on half the measurements is not a smaller answer but a
+    /// different one.
     /// </summary>
     private static async Task<List<Candidate>> DetermineSymbolsAsync(IAlpacaDataClient dataClient,
         Dictionary<string, AlpacaAsset> tradable, Model.CryptoExchange exchange)
@@ -230,7 +232,19 @@ public class Symbol() : SymbolBase(), ISymbol
         if (candidates.Count == 0)
             return [];
 
-        await FetchSnapshotsAsync(dataClient, candidates);
+        // A batch that did not arrive leaves its candidates on a volume of 0, and the ranking below
+        // then reads that as "hardly traded" instead of "not measured". With 100 symbols per batch
+        // and four times MaxSymbols candidates that is up to a hundred instruments sinking to the
+        // bottom at once, after which the cut on MaxSymbols hands back a selection built on the
+        // batches that did arrive - and everything it dropped is deactivated by the caller. Rather
+        // hand back nothing, which the caller already reads as "leave the current selection alone".
+        // The caller says what happens next, so this only states why
+        if (!await FetchSnapshotsAsync(dataClient, candidates))
+        {
+            GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} not every volume snapshot arrived, " +
+                $"so the ranking cannot be trusted");
+            return [];
+        }
 
         // The most money traded wins. A candidate without a snapshot has a volume of 0 and ends up at
         // the bottom, which is where an instrument we know nothing about belongs.
@@ -258,12 +272,18 @@ public class Symbol() : SymbolBase(), ISymbol
     /// <summary>
     /// Fill in the last price and the 24 hour volume (in the quote currency, so in dollars) of every
     /// candidate. Uses IAlpacaDataClient.ListSnapshotsAsync, which takes 100 symbols per request.
+    /// <para>
+    /// Answers whether every batch arrived. A batch that failed is not the same as a batch of
+    /// instruments without volume, and the caller ranks on exactly that volume - see the call site
+    /// for what an unnoticed failure does to the selection.
+    /// </para>
     /// </summary>
-    private static async Task FetchSnapshotsAsync(IAlpacaDataClient dataClient, Dictionary<string, Candidate> candidates)
+    private static async Task<bool> FetchSnapshotsAsync(IAlpacaDataClient dataClient, Dictionary<string, Candidate> candidates)
     {
         List<string> names = [.. candidates.Keys];
         const int batchSize = 100;
         int fetched = 0;
+        bool complete = true;
 
         for (int i = 0; i < names.Count; i += batchSize)
         {
@@ -297,11 +317,13 @@ public class Symbol() : SymbolBase(), ISymbol
             }
             catch (Exception error)
             {
+                complete = false;
                 GlobalData.AddErrorToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} snapshot batch {i / batchSize + 1} error: {error.Message}");
             }
         }
 
         GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} volume snapshots received for {fetched} symbols");
+        return complete;
     }
 
 

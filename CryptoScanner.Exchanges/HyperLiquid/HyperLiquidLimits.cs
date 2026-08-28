@@ -67,18 +67,24 @@ public static class HyperLiquidLimits
     /// What ONE running HyperLiquid market may spend per minute, in the exchange's own weight units.
     ///
     /// <para>
-    /// 1000 of the 1200 the address allows, so 200 stays free for the calls that arrive outside the
-    /// candle fetch: the hourly symbol and ticker refresh, the ten deployed-market requests of
-    /// PerpDexClient, and the retries of whatever the exchange refuses anyway. Against the measured
-    /// 32 weight per candle request that is about 31 requests per minute, where 450 gave 22.
+    /// 1150 of the 1200 the address allows. The 50 that stays free is NOT for other calls - the
+    /// hourly symbol and ticker refresh and the ten deployed-market requests of PerpDexClient all book
+    /// into this same gate, so they are already inside the number. It is slack for the one thing we
+    /// cannot control: our minute and the exchange's minute do not start at the same second, so a
+    /// client-side window that sits exactly on the limit tips over it now and then. A refusal is not
+    /// free either, it costs the five seconds of the first retry in CandleBase.
+    /// Against the measured 33 weight per candle request this is about 35 requests per minute, where
+    /// 450 gave 22 and 1000 gave 31.
     /// </para>
     /// <para>
-    /// The number that matters for the user is the cold start: 181 symbols x 12 intervals x 32 weight
-    /// is roughly 69000 weight, which at 1000 per minute is some 70 minutes against the 100 minutes
-    /// measured on 28-08-2026. Below that hour lies a floor this dial cannot reach - even the full
-    /// 1200 only brings it to 58 minutes. Shortening it further means asking for FEWER candles, not
-    /// asking faster: the 1h interval alone fetches 3000 candles per symbol because 6h is built from
-    /// 3h which is built from 1h, and neither of those two exists on HyperLiquid.
+    /// The number that matters for the user is the cold start: 181 symbols x 12 intervals x 33 weight
+    /// is roughly 71700 weight, which at 1150 per minute is some 62 minutes against the 100 minutes
+    /// measured on 28-08-2026. This dial is now empty - 1200 itself would only take another 3 minutes
+    /// off. Shortening it further means asking FEWER TIMES, because 240 of the 410 weight per symbol
+    /// is the flat 20 per request and only 170 is candles. Two ways, both in Core and both untouched
+    /// so far: derive 3m, 2h and 4h from candles that are already being fetched (12 requests become 9),
+    /// and stop dragging the 1h interval to 3000 candles per symbol, which happens only because 6h is
+    /// built from 3h which is built from 1h and HyperLiquid has neither.
     /// </para>
     /// <para>
     /// IT IS THE WHOLE BUDGET OF ONE ADDRESS, NOT A SHARE PER MARKET. Running HyperLiquid Spot and
@@ -88,7 +94,7 @@ public static class HyperLiquidLimits
     /// weight model that turned out to be wrong, so it protected nothing and only cost speed.
     /// </para>
     /// </summary>
-    public const int WeightPerMinute = 1000;
+    public const int WeightPerMinute = 1150;
 
 
     /// <summary>

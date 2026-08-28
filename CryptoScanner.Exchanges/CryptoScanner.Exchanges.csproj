@@ -18,6 +18,15 @@
     <Configurations>Debug;Release;MaxOS-X-Debug</Configurations>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!--
+      The same reasoning as in CryptoScanner.Core.csproj: the rules an exchange applies to its own
+      instrument list are internal, and a test that has to make them public first would widen the
+      api for everyone. OkxProduct is the first of those to be tested.
+    -->
+    <InternalsVisibleTo Include="CryptoScanner.CoreTests" />
+  </ItemGroup>
+
   <!--
     Files that were already excluded from the build in CryptoScanner.Core.csproj before the move.
     They are kept on disk (order/trade/asset handling that is not wired up yet), but they do not

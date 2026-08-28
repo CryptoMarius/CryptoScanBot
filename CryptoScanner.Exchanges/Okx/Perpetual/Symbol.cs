@@ -108,7 +108,11 @@ public class Symbol() : SymbolBase(), ISymbol
                             if (!string.Equals(symbolData.SettlementAsset, family[1], StringComparison.OrdinalIgnoreCase))
                                 continue;
 
-                            SymbolInfo info = ParseSymbol(symbolData.Symbol, family[0], family[1], ProductOfExchange(exchange));
+                            // Not ProductOfExchange on its own: a third of the swaps follows a share,
+                            // an index or a commodity instead of a coin, and Okx says which is which
+                            // per instrument (see OkxProduct). Those become TRADFI, the rest PERP.
+                            SymbolInfo info = ParseSymbol(symbolData.Symbol, family[0], family[1],
+                                OkxProduct.Of(symbolData.SymbolCategory, ProductOfExchange(exchange)));
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
                                 //Temporarily copy everything (because of the new fields)

@@ -268,8 +268,14 @@ public class Symbol() : SymbolBase(), ISymbol
         var dexList = await client.FuturesApi.ExchangeData.GetPerpDexesAsync(ExchangeBase.CancellationToken);
         if (!dexList.Success || dexList.Data == null)
         {
-            GlobalData.AddErrorToLogTab($"error getting the deployed markets {dexList.Error}");
-            return withoutVolume;
+            // Abort the whole refresh instead of returning. Returning leaves activeSymbols without a
+            // single symbol of a deployed market, after which the caller's deactivation loop
+            // switches every one of them off over a hiccup at HyperLiquid. That is not theory: on
+            // 28-08-2026 at 19:40 this call was cut short by the rate limiter and 47 symbols across
+            // HYNA, IO, MKTS and PARA went to status 0 in one go, while the markets themselves were
+            // perfectly alive. The transaction is rolled back by the caller, so this cycle writes
+            // nothing at all and the next one tries again.
+            throw new ExchangeException($"error getting the deployed markets {dexList.Error}");
         }
 
         foreach (var dex in dexList.Data)
@@ -279,13 +285,22 @@ public class Symbol() : SymbolBase(), ISymbol
             if (dex == null || string.IsNullOrEmpty(dex.Name))
                 continue;
 
-            var (markets, rawJson) = await PerpDexClient.GetMarketsAsync(dex.Name);
+            var (success, markets, rawJson) = await PerpDexClient.GetMarketsAsync(dex.Name);
 
             // One file per deployed market, next to the symbols.json of HyperLiquid's own market.
             // Without it these instruments are nowhere on disk and a name like HYNA1000PEPEUSDC
             // cannot be traced back to the "hyna:1000PEPE" it came from.
             SaveExchangeInfo(rawJson, $"symbols.{dex.Name}.json");
 
+            // Same reasoning as above, now for one deployed market: an answer that did not arrive
+            // says nothing about which instruments this market has, so it may not end up as an
+            // empty list that deactivates all of them.
+            if (!success)
+                throw new ExchangeException($"error getting the instruments of the '{dex.Name}' market");
+
+            // An answer that DID arrive and holds nothing is an ordinary answer - four of the ten
+            // deployed markets have no instruments at all today - and anything this market had
+            // before is deactivated by the caller, exactly like a delisted market.
             if (markets.Count == 0)
                 continue;
 

@@ -115,7 +115,14 @@ public class Api : ExchangeBase
             //options.OutputOriginalData = true;
             //options.SpotOptions.AutoTimestamp = true;
             //options.ReceiveWindow = TimeSpan.FromSeconds(15);
-            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            // 90 and not 40 since 28-08-2026: the timeout has to outlast the rate limiter, not just
+            // the network. The guard in LibraryRateLimit is a SLIDING window of one minute, so a
+            // request that arrives when the budget is spent is held until the oldest weight falls out
+            // of that window - up to a full 60 seconds. At 40 the request died INSIDE the limiter and
+            // came back as a TaskCanceledException out of RateLimitGate.ProcessAsync, which is not a
+            // network problem and reads like one. Costs a slower verdict on a genuinely dead
+            // connection; that is the cheaper of the two.
+            options.RequestTimeout = TimeSpan.FromSeconds(90); // standard=20 seconds
             //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new HyperLiquidCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);

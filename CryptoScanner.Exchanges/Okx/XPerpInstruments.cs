@@ -97,7 +97,11 @@ static internal class XPerpInstruments
             if (baseAsset.Length == 0 || quoteAsset.Length == 0)
                 continue;
 
-            SymbolBase.SymbolInfo info = SymbolBase.ParseSymbol(symbolData.Symbol, baseAsset, quoteAsset, product);
+            // 49 of these follow a share or a commodity rather than a coin, and Okx states which is
+            // which per instrument (see OkxProduct). Those carry TRADFI, the rest the code the
+            // caller handed in.
+            SymbolBase.SymbolInfo info = SymbolBase.ParseSymbol(symbolData.Symbol, baseAsset, quoteAsset,
+                OkxProduct.Of(symbolData.SymbolCategory, product));
             if (!SymbolBase.IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                 continue;
 

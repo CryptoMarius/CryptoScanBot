@@ -60,17 +60,26 @@ internal static class PerpDexClient
     /// the state of each of them in the same order.
     /// </para>
     /// <para>
-    /// An empty list on any failure, which is not fatal for the fetch as a whole: the caller keeps
-    /// the markets it already has and this one deployed market delivers nothing this cycle.
+    /// A failure and a deployed market that genuinely holds nothing both give an empty list, so the
+    /// two are told apart by <c>Success</c> and not by the count. They mean the opposite to the
+    /// caller: nothing to add for an empty market, and stop the whole refresh for a failure -
+    /// without that distinction one timeout deactivates every symbol of that market. Four of the
+    /// ten deployed markets (vntl, km, flx, cash) hold nothing at all today, so an empty answer is
+    /// an ordinary answer here.
+    /// </para>
+    /// <para>
+    /// An answer that arrived but does not have the shape described above counts as a failure. A
+    /// deployed market without instruments answers with a valid pair holding an empty universe, so
+    /// anything else means the answer could not be read - not that the market is empty.
     /// </para>
     /// </summary>
     /// <returns>
-    /// The markets, and the untouched answer so the caller can store it beside the other exchange
-    /// dumps. Without that raw text these markets appear nowhere on disk - symbols.json only holds
-    /// HyperLiquid's own market - and a symbol like HYNA1000PEPEUSDC cannot be traced back to the
-    /// instrument it came from.
+    /// Whether the answer could be read, the markets, and the untouched answer so the caller can
+    /// store it beside the other exchange dumps. Without that raw text these markets appear nowhere
+    /// on disk - symbols.json only holds HyperLiquid's own market - and a symbol like
+    /// HYNA1000PEPEUSDC cannot be traced back to the instrument it came from.
     /// </returns>
-    public static async Task<(List<PerpDexMarket> Markets, string? RawJson)> GetMarketsAsync(string dex)
+    public static async Task<(bool Success, List<PerpDexMarket> Markets, string? RawJson)> GetMarketsAsync(string dex)
     {
         List<PerpDexMarket> result = [];
 
@@ -92,25 +101,27 @@ internal static class PerpDexClient
         }
         catch (OperationCanceledException)
         {
-            // The session was stopped (exchange switch, standby, shutdown), that is not an error
-            return (result, null);
+            // The session was stopped (exchange switch, standby, shutdown), that is not an error.
+            // Still a failure towards the caller: a refresh that was cut short may not be read as
+            // "this market no longer has instruments".
+            return (false, result, null);
         }
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddErrorToLogTab($"HyperLiquid: no data for the '{dex}' market, {error.Message}");
-            return (result, null);
+            return (false, result, null);
         }
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
         if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() < 2)
-            return (result, json);
+            return (false, result, json);
 
         var universe = root[0].TryGetProperty("universe", out var u) ? u : default;
         var contexts = root[1];
         if (universe.ValueKind != JsonValueKind.Array || contexts.ValueKind != JsonValueKind.Array)
-            return (result, json);
+            return (false, result, json);
 
         int count = Math.Min(universe.GetArrayLength(), contexts.GetArrayLength());
         for (int i = 0; i < count; i++)
@@ -132,7 +143,7 @@ internal static class PerpDexClient
                 delisted));
         }
 
-        return (result, json);
+        return (true, result, json);
     }
 
 

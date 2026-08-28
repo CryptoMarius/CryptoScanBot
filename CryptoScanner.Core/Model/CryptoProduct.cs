@@ -29,6 +29,20 @@ public static class CryptoProduct
     public const string Future = "FUTURE";
 
     /// <summary>
+    /// A perpetual on something that is not a coin: a share, an index, a commodity. Mechanically the
+    /// same contract as the one beside it - no expiry, a funding rate, a stablecoin as margin and
+    /// payout - so this is the one code that answers what the contract is ON rather than what it is.
+    /// <para>
+    /// It earns that place because it is the only distinction a reader cannot make from the pair
+    /// itself. AAOIUSDC and AAVEUSDC are the same contract type at Okx and read the same in a grid,
+    /// while one follows a share on the Nasdaq and the other a coin - with opening hours, gaps over
+    /// the weekend and a completely different reason to move. Altrady splits its Okx list on exactly
+    /// this line ("TradFi" beside "xPerp"), and the exchange states it per instrument.
+    /// </para>
+    /// </summary>
+    public const string TradFi = "TRADFI";
+
+    /// <summary>
     /// The separator between the pair and the product in a symbol name. A dot cannot occur in a base
     /// or a quote, so splitting on it is unambiguous - which is what lets the black and white list
     /// match on the pair alone.
@@ -72,7 +86,7 @@ public static class CryptoProduct
     /// </para>
     /// </summary>
     private static readonly HashSet<string> Reserved =
-        new(StringComparer.OrdinalIgnoreCase) { Spot, Perpetual, Inverse, XPerp, Future };
+        new(StringComparer.OrdinalIgnoreCase) { Spot, Perpetual, Inverse, XPerp, Future, TradFi };
 
     public static bool IsReserved(string product) => Reserved.Contains(product);
 
@@ -94,6 +108,7 @@ public static class CryptoProduct
             XPerp => "#9A7B12",
             Inverse => "#8A3B3B",
             Future => "#4A5E35",
+            TradFi => "#8E3B6B",
             _ => "#6D3FA0",
         };
     }

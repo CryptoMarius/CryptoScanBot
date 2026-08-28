@@ -61,8 +61,15 @@ public class Symbol() : SymbolBase(), ISymbol
                     tickerResults.Add(tickerInfo);
                     if (!tickerInfo.Success || tickerInfo.Data == null)
                     {
+                        // Abort rather than skip this chunk. A chunk holds 250 of the 1430 pairs, and
+                        // skipping it leaves every one of them on a volume of zero - which is not a
+                        // missing value but a wrong one: they drop below the volume boundary and have
+                        // their candles and subscriptions released, while the pairs themselves are
+                        // perfectly alive. The check below only catches the case where ALL chunks
+                        // failed. The transaction has not been opened yet, so nothing is written and
+                        // the next refresh cycle tries again.
                         GlobalData.AddErrorToLogTab($"error getting symbol ticker {tickerInfo.Error}");
-                        continue;
+                        throw new ExchangeException($"No ticker data received for {chunk.Length} symbols");
                     }
 
                     // The key is the name Kraken echoed back, the safest thing to match on
