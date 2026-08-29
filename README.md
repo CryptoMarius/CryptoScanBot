@@ -25,4 +25,4 @@ The list at the top is the current state, all of those are switched on and scann
 
 Furthermore: Very nice that you try this application, in the wiki you can find an explanation of what the application does, the installation, necessary settings etc.. I hope you enjoy trading, the communities and have some luck in this special world!
 
-<img width="1464" height="901" alt="Main screen + signals" src="https://github.com/user-attachments/assets/8e40ea81-7403-4400-ada2-9ef783b6941e" />
+<img width="1920" height="1200" alt="Main screen + signals" src="https://github.com/user-attachments/assets/7f50955d-66bd-416c-b9cf-b7cd1eee4b29" />
