@@ -25,5 +25,6 @@ The list at the top is the current state, all of those are switched on and scann
 
 Furthermore: Very nice that you try this application, below is an explanation of what the application does, the installation, necessary settings and so on. I hope you enjoy trading, the communities and so on. Good luck in this special world!
 
-![CryptoMarius_CryptoScanBot](https://github.com/user-attachments/assets/1509b67c-6891-4d32-9a4b-e6cdebd61022)
+<img width="1464" height="901" alt="Main screen + signals" src="https://github.com/user-attachments/assets/8e40ea81-7403-4400-ada2-9ef783b6941e" />
+
 ![HBARUSDT chart form](https://github.com/user-attachments/assets/6e94d55e-309d-4f93-a6ff-1c226227306e)
