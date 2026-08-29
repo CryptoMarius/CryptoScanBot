@@ -62,29 +62,29 @@ echo.
 set "FAILED="
 
 call :database Binance Spot
-call :database Binance Futures
-call :database BitMart Futures
+call :database Binance Perpetual
+call :database BitMart Perpetual
 call :database Bitvavo Spot
-call :database BloFin Futures
+call :database BloFin Perpetual
 call :database Bybit Spot
-call :database Bybit Futures
+call :database Bybit Perpetual
 call :database "Bybit EU" Spot
 call :database Coinbase Spot
 call :database HyperLiquid Spot
-call :database HyperLiquid Futures
+call :database HyperLiquid Perpetual
 call :database Kraken Spot
-call :database Kraken Futures
+call :database Kraken Perpetual
 call :database Kucoin Spot
-call :database Kucoin Futures
+call :database Kucoin Perpetual
 call :database Mexc Spot
-call :database Mexc Futures
+call :database Mexc Perpetual
 call :database Okx Spot
-call :database Okx Futures
+call :database Okx Perpetual
 
 rem  Alpaca, same as in the start files - remove the rem to take it along:
 rem call :database Alpaca Spot
 
-rem  The emulator folders (Binance\Emulator, Binance\Futures.Emulator) are left
+rem  The emulator folders (Binance\Emulator, Binance\Perpetual.Emulator) are left
 rem  out on purpose: their database IS the recorded run, and emptying it throws
 rem  away the thing the emulator exists for.
 

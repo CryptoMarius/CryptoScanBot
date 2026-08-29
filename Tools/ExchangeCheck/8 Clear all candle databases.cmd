@@ -62,29 +62,29 @@ echo.
 set "FAILED="
 
 call :candles Binance Spot
-call :candles Binance Futures
-call :candles BitMart Futures
+call :candles Binance Perpetual
+call :candles BitMart Perpetual
 call :candles Bitvavo Spot
-call :candles BloFin Futures
+call :candles BloFin Perpetual
 call :candles Bybit Spot
-call :candles Bybit Futures
+call :candles Bybit Perpetual
 call :candles "Bybit EU" Spot
 call :candles Coinbase Spot
 call :candles HyperLiquid Spot
-call :candles HyperLiquid Futures
+call :candles HyperLiquid Perpetual
 call :candles Kraken Spot
-call :candles Kraken Futures
+call :candles Kraken Perpetual
 call :candles Kucoin Spot
-call :candles Kucoin Futures
+call :candles Kucoin Perpetual
 call :candles Mexc Spot
-call :candles Mexc Futures
+call :candles Mexc Perpetual
 call :candles Okx Spot
-call :candles Okx Futures
+call :candles Okx Perpetual
 
 rem  Alpaca, same as in the start files - remove the rem to take it along:
 rem call :candles Alpaca Spot
 
-rem  The emulator folders (Binance\Emulator, Binance\Futures.Emulator) are left
+rem  The emulator folders (Binance\Emulator, Binance\Perpetual.Emulator) are left
 rem  out on purpose: those hold a recorded run, not a live exchange, and
 rem  refetching does not bring one back.
 

@@ -34,28 +34,28 @@ echo Binance Spot
 start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Binance Spot" -f "%DATA%\Binance\Spot"
 timeout /t %WAIT% /nobreak >nul
 
-echo Binance Futures
-start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Binance Futures" -f "%DATA%\Binance\Futures"
+echo Binance Perpetual
+start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Binance Perpetual" -f "%DATA%\Binance\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
-echo BitMart Futures
-start "" "%BIN%\CryptoScanBot.Photino.exe" -e "BitMart Futures" -f "%DATA%\BitMart\Futures"
+echo BitMart Perpetual
+start "" "%BIN%\CryptoScanBot.Photino.exe" -e "BitMart Perpetual" -f "%DATA%\BitMart\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
 echo Bitvavo Spot
 start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Bitvavo Spot" -f "%DATA%\Bitvavo\Spot"
 timeout /t %WAIT% /nobreak >nul
 
-echo BloFin Futures
-start "" "%BIN%\CryptoScanBot.Photino.exe" -e "BloFin Futures" -f "%DATA%\BloFin\Futures"
+echo BloFin Perpetual
+start "" "%BIN%\CryptoScanBot.Photino.exe" -e "BloFin Perpetual" -f "%DATA%\BloFin\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
 echo Bybit Spot
 start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Bybit Spot" -f "%DATA%\Bybit\Spot"
 timeout /t %WAIT% /nobreak >nul
 
-echo Bybit Futures
-start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Bybit Futures" -f "%DATA%\Bybit\Futures"
+echo Bybit Perpetual
+start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Bybit Perpetual" -f "%DATA%\Bybit\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
 echo Bybit EU Spot
@@ -70,40 +70,40 @@ echo HyperLiquid Spot
 start "" "%BIN%\CryptoScanBot.Photino.exe" -e "HyperLiquid Spot" -f "%DATA%\HyperLiquid\Spot"
 timeout /t %WAIT% /nobreak >nul
 
-echo HyperLiquid Futures
-start "" "%BIN%\CryptoScanBot.Photino.exe" -e "HyperLiquid Futures" -f "%DATA%\HyperLiquid\Futures"
+echo HyperLiquid Perpetual
+start "" "%BIN%\CryptoScanBot.Photino.exe" -e "HyperLiquid Perpetual" -f "%DATA%\HyperLiquid\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
 echo Kraken Spot
 start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Kraken Spot" -f "%DATA%\Kraken\Spot"
 timeout /t %WAIT% /nobreak >nul
 
-echo Kraken Futures
-start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Kraken Futures" -f "%DATA%\Kraken\Futures"
+echo Kraken Perpetual
+start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Kraken Perpetual" -f "%DATA%\Kraken\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
 echo Kucoin Spot
 start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Kucoin Spot" -f "%DATA%\Kucoin\Spot"
 timeout /t %WAIT% /nobreak >nul
 
-echo Kucoin Futures
-start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Kucoin Futures" -f "%DATA%\Kucoin\Futures"
+echo Kucoin Perpetual
+start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Kucoin Perpetual" -f "%DATA%\Kucoin\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
 echo Mexc Spot
 start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Mexc Spot" -f "%DATA%\Mexc\Spot"
 timeout /t %WAIT% /nobreak >nul
 
-echo Mexc Futures
-start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Mexc Futures" -f "%DATA%\Mexc\Futures"
+echo Mexc Perpetual
+start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Mexc Perpetual" -f "%DATA%\Mexc\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
 echo Okx Spot
 start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Okx Spot" -f "%DATA%\Okx\Spot"
 timeout /t %WAIT% /nobreak >nul
 
-echo Okx Futures
-start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Okx Futures" -f "%DATA%\Okx\Futures"
+echo Okx Perpetual
+start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Okx Perpetual" -f "%DATA%\Okx\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
 echo.

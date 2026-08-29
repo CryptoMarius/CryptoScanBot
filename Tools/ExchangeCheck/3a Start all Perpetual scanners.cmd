@@ -2,8 +2,19 @@
 setlocal
 
 rem ==========================================================================
-rem  Starts every supported exchange in its own scanner process, one per data
-rem  folder, and then starts the memory sampling.
+rem  The PERPETUAL half of "3 Start all scanners.cmd": every supported
+rem  perpetual market in its own scanner process, one per data folder, and
+rem  then the memory sampling.
+rem
+rem  Nine markets. The spot side lives in "3b Start all Spot scanners.cmd" and
+rem  the two together are the same nineteen that "3" starts in one go. Use
+rem  this one when a night is about the perpetual markets only - it halves the
+rem  number of processes, and on an exchange that counts per IP ADDRESS it
+rem  also halves what the machine asks of it.
+rem
+rem  Running 3a and 3b at the same time is the same as running 3, with one
+rem  difference: each of them starts a memory sampling and a heap snapshot of
+rem  its own. Use "3" if you want them both, not these two side by side.
 rem
 rem  One exchange per process: GlobalData.ActiveExchange is singular, so a
 rem  process serves one exchange. The data folder is what keeps the databases
@@ -21,7 +32,7 @@ rem  and the disk in the same second only makes the slow ones slower.
 set "WAIT=5"
 rem ==========================================================================
 
-title Start all scanners
+title Start all Perpetual scanners
 
 if not exist "%BIN%\CryptoScanBot.exe" (
     echo Not found: %BIN%\CryptoScanBot.exe
@@ -31,12 +42,8 @@ if not exist "%BIN%\CryptoScanBot.exe" (
     exit /b 1
 )
 
-echo Starting the scanners, %WAIT% seconds apart...
+echo Starting the perpetual scanners, %WAIT% seconds apart...
 echo.
-
-echo Binance Spot
-start "" "%BIN%\CryptoScanBot.exe" -e "Binance Spot" -f "%DATA%\Binance\Spot"
-timeout /t %WAIT% /nobreak >nul
 
 echo Binance Perpetual
 start "" "%BIN%\CryptoScanBot.exe" -e "Binance Perpetual" -f "%DATA%\Binance\Perpetual"
@@ -46,79 +53,41 @@ echo BitMart Perpetual
 start "" "%BIN%\CryptoScanBot.exe" -e "BitMart Perpetual" -f "%DATA%\BitMart\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
-echo Bitvavo Spot
-start "" "%BIN%\CryptoScanBot.exe" -e "Bitvavo Spot" -f "%DATA%\Bitvavo\Spot"
-timeout /t %WAIT% /nobreak >nul
-
 echo BloFin Perpetual
 start "" "%BIN%\CryptoScanBot.exe" -e "BloFin Perpetual" -f "%DATA%\BloFin\Perpetual"
-timeout /t %WAIT% /nobreak >nul
-
-echo Bybit Spot
-start "" "%BIN%\CryptoScanBot.exe" -e "Bybit Spot" -f "%DATA%\Bybit\Spot"
 timeout /t %WAIT% /nobreak >nul
 
 echo Bybit Perpetual
 start "" "%BIN%\CryptoScanBot.exe" -e "Bybit Perpetual" -f "%DATA%\Bybit\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
-echo Bybit EU Spot
-start "" "%BIN%\CryptoScanBot.exe" -e "Bybit EU Spot" -f "%DATA%\Bybit EU\Spot"
-timeout /t %WAIT% /nobreak >nul
-
-echo Coinbase Spot
-start "" "%BIN%\CryptoScanBot.exe" -e "Coinbase Spot" -f "%DATA%\Coinbase\Spot"
-timeout /t %WAIT% /nobreak >nul
-
-echo HyperLiquid Spot
-start "" "%BIN%\CryptoScanBot.exe" -e "HyperLiquid Spot" -f "%DATA%\HyperLiquid\Spot"
-timeout /t %WAIT% /nobreak >nul
-
 echo HyperLiquid Perpetual
 start "" "%BIN%\CryptoScanBot.exe" -e "HyperLiquid Perpetual" -f "%DATA%\HyperLiquid\Perpetual"
-timeout /t %WAIT% /nobreak >nul
-
-echo Kraken Spot
-start "" "%BIN%\CryptoScanBot.exe" -e "Kraken Spot" -f "%DATA%\Kraken\Spot"
 timeout /t %WAIT% /nobreak >nul
 
 echo Kraken Perpetual
 start "" "%BIN%\CryptoScanBot.exe" -e "Kraken Perpetual" -f "%DATA%\Kraken\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
-echo Kucoin Spot
-start "" "%BIN%\CryptoScanBot.exe" -e "Kucoin Spot" -f "%DATA%\Kucoin\Spot"
-timeout /t %WAIT% /nobreak >nul
-
 echo Kucoin Perpetual
 start "" "%BIN%\CryptoScanBot.exe" -e "Kucoin Perpetual" -f "%DATA%\Kucoin\Perpetual"
-timeout /t %WAIT% /nobreak >nul
-
-echo Mexc Spot
-start "" "%BIN%\CryptoScanBot.exe" -e "Mexc Spot" -f "%DATA%\Mexc\Spot"
 timeout /t %WAIT% /nobreak >nul
 
 echo Mexc Perpetual
 start "" "%BIN%\CryptoScanBot.exe" -e "Mexc Perpetual" -f "%DATA%\Mexc\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
-echo Okx Spot
-start "" "%BIN%\CryptoScanBot.exe" -e "Okx Spot" -f "%DATA%\Okx\Spot"
-timeout /t %WAIT% /nobreak >nul
-
 echo Okx Perpetual
 start "" "%BIN%\CryptoScanBot.exe" -e "Okx Perpetual" -f "%DATA%\Okx\Perpetual"
 timeout /t %WAIT% /nobreak >nul
 
-rem  Alpaca is supported as well, but it needs an api key of its own ("error
-rem  unauthorized" without one) and it trades stocks on exchange hours, so it
-rem  is not part of a crypto night. Remove the rem to take it along:
-rem echo Alpaca
-rem start "" "%BIN%\CryptoScanBot.exe" -e "Alpaca" -f "%DATA%\Alpaca"
-rem timeout /t %WAIT% /nobreak >nul
+rem  Not here: BitMart Spot, BloFin Spot, Bybit EU Perpetual, Alpaca Perpetual,
+rem  Bitvavo Perpetual and Coinbase Perpetual all stand at IsSupported = false in
+rem  CryptoDatabase.CreateExchangeList, each with the reason next to it. Alpaca
+rem  itself is a spot market and stands in "3b Start all Spot scanners.cmd".
 
 echo.
-echo All scanners have been started.
+echo All perpetual scanners have been started.
 echo.
 
 rem  First heap snapshot of the exchange under investigation, in its OWN window
@@ -129,20 +98,13 @@ rem
 rem  One exchange, not all of them: a heap dump is about the working set of the
 rem  process and these run to 1.6 GB, so twenty exchanges times two snapshots
 rem  would be sixty gigabyte of disk for a question about one of them.
-rem  Which exchange the snapshots are taken of. Point this at the scanner you are actually
-rem  investigating: a heap dump runs to 1.6 GB and two of them per exchange is why this is one
-rem  name and not a list.
 rem
-rem  Kucoin Futures since 20-08-2026. It was Okx Futures, chosen because it showed the steepest
-rem  memory growth of the night - but that number was measured over the WHOLE run and so it was
-rem  mostly the one-off filling of the caches in the first hour. Over the last six hours Okx
-rem  Futures was at -2,7 MB per hour, so there is nothing there to catch. Kucoin Futures (+9,1)
-rem  and Bybit Spot (+6,8) were the only two still climbing after the warm-up; Kucoin Futures is
-rem  the worse of the two and goes first.
-rem
-rem  The paragraph above keeps the names of the night it was measured. Every "<name> Futures" in
-rem  it is called "<name> Perpetual" since the rename of 27-08-2026 (commit d695b574), which is
-rem  the name the setting below has to use - the scanner matches it against the exchange name.
+rem  Kucoin Perpetual, the same choice "3 Start all scanners.cmd" makes and for
+rem  the same reason: measured over the night of 20-08-2026 it was the market
+rem  that was still climbing hardest after the warm-up (+9,1 MB per hour). The
+rem  market was called Kucoin Futures then; it was renamed on 27-08-2026
+rem  (commit d695b574) and the scanner matches this setting against the name it
+rem  has now.
 set "HEAP_EXCHANGE=Kucoin Perpetual"
 if not "%HEAP_EXCHANGE%"=="" (
     start "Heap snapshot" powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0heap-diff.ps1" -Mode Snapshot -Exchange "%HEAP_EXCHANGE%"

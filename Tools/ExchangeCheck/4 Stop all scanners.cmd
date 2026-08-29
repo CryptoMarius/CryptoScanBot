@@ -37,7 +37,7 @@ rem  mostly the one-off filling of the caches in the first hour. Over the last s
 rem  Futures was at -2,7 MB per hour, so there is nothing there to catch. Kucoin Futures (+9,1)
 rem  and Bybit Spot (+6,8) were the only two still climbing after the warm-up; Kucoin Futures is
 rem  the worse of the two and goes first.
-set "HEAP_EXCHANGE=Kucoin Futures"
+set "HEAP_EXCHANGE=Kucoin Perpetual"
 if not "%HEAP_EXCHANGE%"=="" (
     echo Second heap snapshot of %HEAP_EXCHANGE% ...
     powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0heap-diff.ps1" -Mode Compare -Exchange "%HEAP_EXCHANGE%"

@@ -49,22 +49,22 @@ echo Binance Spot
 del /f /q "%DATA%\Binance\Spot\Log\*.*" 2>nul
 
 echo Binance Futures
-del /f /q "%DATA%\Binance\Futures\Log\*.*" 2>nul
+del /f /q "%DATA%\Binance\Perpetual\Log\*.*" 2>nul
 
 echo BitMart Futures
-del /f /q "%DATA%\BitMart\Futures\Log\*.*" 2>nul
+del /f /q "%DATA%\BitMart\Perpetual\Log\*.*" 2>nul
 
 echo Bitvavo Spot
 del /f /q "%DATA%\Bitvavo\Spot\Log\*.*" 2>nul
 
 echo BloFin Futures
-del /f /q "%DATA%\BloFin\Futures\Log\*.*" 2>nul
+del /f /q "%DATA%\BloFin\Perpetual\Log\*.*" 2>nul
 
 echo Bybit Spot
 del /f /q "%DATA%\Bybit\Spot\Log\*.*" 2>nul
 
 echo Bybit Futures
-del /f /q "%DATA%\Bybit\Futures\Log\*.*" 2>nul
+del /f /q "%DATA%\Bybit\Perpetual\Log\*.*" 2>nul
 
 echo Bybit EU Spot
 del /f /q "%DATA%\Bybit EU\Spot\Log\*.*" 2>nul
@@ -76,31 +76,31 @@ echo HyperLiquid Spot
 del /f /q "%DATA%\HyperLiquid\Spot\Log\*.*" 2>nul
 
 echo HyperLiquid Futures
-del /f /q "%DATA%\HyperLiquid\Futures\Log\*.*" 2>nul
+del /f /q "%DATA%\HyperLiquid\Perpetual\Log\*.*" 2>nul
 
 echo Kraken Spot
 del /f /q "%DATA%\Kraken\Spot\Log\*.*" 2>nul
 
 echo Kraken Futures
-del /f /q "%DATA%\Kraken\Futures\Log\*.*" 2>nul
+del /f /q "%DATA%\Kraken\Perpetual\Log\*.*" 2>nul
 
 echo Kucoin Spot
 del /f /q "%DATA%\Kucoin\Spot\Log\*.*" 2>nul
 
 echo Kucoin Futures
-del /f /q "%DATA%\Kucoin\Futures\Log\*.*" 2>nul
+del /f /q "%DATA%\Kucoin\Perpetual\Log\*.*" 2>nul
 
 echo Mexc Spot
 del /f /q "%DATA%\Mexc\Spot\Log\*.*" 2>nul
 
 echo Mexc Futures
-del /f /q "%DATA%\Mexc\Futures\Log\*.*" 2>nul
+del /f /q "%DATA%\Mexc\Perpetual\Log\*.*" 2>nul
 
 echo Okx Spot
 del /f /q "%DATA%\Okx\Spot\Log\*.*" 2>nul
 
 echo Okx Futures
-del /f /q "%DATA%\Okx\Futures\Log\*.*" 2>nul
+del /f /q "%DATA%\Okx\Perpetual\Log\*.*" 2>nul
 
 rem  Alpaca, same as in the start files - remove the rem to take it along:
 rem echo Alpaca
