@@ -815,9 +815,12 @@ public partial class DashBoardInformationViewModel : ObservableObject
                     // Green above the reference line, red below it. Figures without such a line
                     // (spread) are never good or bad, so those get one neutral colour. Not grey:
                     // that vanished against the grey grid lines on a dark background.
+                    // WhiteSmoke was that neutral colour, and on the light theme it failed the same
+                    // way round the other side: near white on a near white background. It now takes
+                    // the theme text colour, exactly as the Photino chart uses --text-primary.
                     if (!referenceLine.HasValue)
                     {
-                        paint.Color = SKColors.WhiteSmoke;
+                        paint.Color = fgColor;
                         paint.StrokeWidth = 1;
                         paint.Style = SKPaintStyle.Stroke;
                     }
