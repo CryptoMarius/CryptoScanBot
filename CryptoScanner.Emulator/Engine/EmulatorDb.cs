@@ -134,7 +134,8 @@ public static class EmulatorDb
 
     /// <summary>
     /// Marks the active run as finished — updates FinishedAt, Result and the
-    /// signal/position counters — and clears <see cref="GlobalData.CurrentEmulatorRunId"/>.
+    /// signal/position counters — clears <see cref="GlobalData.CurrentEmulatorRunId"/> and puts
+    /// the clock back on real time.
     /// </summary>
     public static void FinishRun(string result)
     {
@@ -155,6 +156,15 @@ public static class EmulatorDb
         }
 
         GlobalData.CurrentEmulatorRunId = null;
+
+        // Put the clock back on real time. The replay parks it on the moment it last replayed and
+        // nothing moved it back, so everything that happened between two runs saw the end of the
+        // previous run as "now". "Fetch candles" is what suffered: ZoneCandleEngine will not ask an
+        // exchange for candles beyond the clock (they would be in the future), so after a run it
+        // could no longer synchronise past that run's end date - the gap between the last run and
+        // today stayed empty however often the button was pressed, until the emulator was restarted.
+        if (GlobalData.Clock is EmulatorClock clock)
+            clock.UtcNow = DateTime.UtcNow;
 
         // Release the position-check handler's reused DB connection so the file is not left locked
         // (a Reset deletes it, which fails on Windows while a handle is open). Reopened next run.

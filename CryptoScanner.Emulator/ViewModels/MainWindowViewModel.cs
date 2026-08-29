@@ -223,6 +223,14 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
+        // A run parks the clock on the moment it last replayed. FinishRun puts it back on real time,
+        // but a run that never reached it - a crash, a kill - leaves it standing. Repeat it here,
+        // because this is the routine that suffers: ZoneCandleEngine will not ask an exchange for
+        // candles beyond the clock, so a stale one quietly limits the synchronisation to that old
+        // date and reports "done" without having fetched a thing.
+        if (GlobalData.Clock is EmulatorClock clock)
+            clock.UtcNow = DateTime.UtcNow;
+
         EmulatorRunConfig config;
         try
         {
