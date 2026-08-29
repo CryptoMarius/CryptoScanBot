@@ -53,8 +53,16 @@ rem ============================================================================
 setlocal
 cd /d "%~dp0"
 
-rem Keep this in sync with <Version> in Directory.Build.props.
-set VERSION=2.6.0
+rem The version is read from Directory.Build.props, so it is written down in exactly one place. A
+rem second copy here would silently drift the moment one of the two is bumped and the other is not,
+rem and the zip would then name a version that the binaries inside it do not carry.
+rem
+rem A space is part of delims, so the indentation of the XML line is skipped along with the angle
+rem brackets: token 1 is "Version", token 2 the number itself. <AssemblyVersion> and <FileVersion>
+rem do not contain the literal text "<Version>", so they cannot be picked up by mistake.
+set VERSION=
+for /f "tokens=2 delims=<> " %%v in ('findstr /c:"<Version>" Directory.Build.props') do set VERSION=%%v
+if not defined VERSION goto noversion
 
 rem Output folder for both packages and their zips. Absolute path, so it does not matter from
 rem where the script is started. Do NOT end it with a backslash - the next line strips one if it
@@ -123,5 +131,11 @@ exit /b 0
 :failed
 echo.
 echo *** BUILD FAILED (errorlevel %errorlevel%) - see the output above ***
+endlocal
+exit /b 1
+
+:noversion
+echo.
+echo *** Could not read ^<Version^> from Directory.Build.props ***
 endlocal
 exit /b 1
