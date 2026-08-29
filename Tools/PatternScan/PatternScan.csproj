@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>PatternScan</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The same shapes the scanner uses, so this measurement and a run cannot disagree. -->
+    <ProjectReference Include="..\..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+  </ItemGroup>
+
+</Project>

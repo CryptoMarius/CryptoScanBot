@@ -1,13 +1,14 @@
 CryptoScanBot release historie:
 
--Compilatie Mac + Testje op Mac vm.
--Compilatie Linux + Testje op Linux vm.
--De screenshots van de documentatie bijwerken (wiki heeft nu nog de oude opzet)
--Altrady meldt short terug als we een long positie openen (nog uitzoeken/melden)
+TODO:
+-Testje op Mac vm.
+-Testje op de Linux vm.
+-Screenshots van de wikie bijwerken
+-Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
 
-xx-09-2025 2.6.1
-- Vanaf nu wis Futures vervangen met Perpetual 9zoals het vanaf het begin had moeten zijn)
+29-08-2025 2.6.1
+- Vanaf nu wis Futures vervangen met Perpetual (zoals het vanaf het begin had moeten zijn)
 - Exchange Coinbase toegevoegd
 - Alpaca geactiveerd (om te testen!!!!)
 - Een lock op de data folder zodat er niet 2 scanners tegelijk gestart kunnen worden die de folder delen

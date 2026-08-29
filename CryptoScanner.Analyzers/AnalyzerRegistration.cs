@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 
 namespace CryptoScanner.Analyzers;
 
@@ -13,6 +13,12 @@ public static class AnalyzerRegistration
         // ATR based bands, but it does not perform well enough
         // tijdelijk terug..
         PluginManager.Register(new AtrRb.AtrRbPlugin());
+        // tijdelijk terug..
+        PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
+
+        // The classic reversal shapes, one strategy with the pattern as a setting so a run can vary
+        // it and nothing else. Measuring whether reacting to them works at all.
+        PluginManager.Register(new CandlePattern.CandlePatternPlugin());
 
         // A band strategy which does rather well
         PluginManager.Register(new Dbr.DbrPlugin());
@@ -42,7 +48,6 @@ public static class AnalyzerRegistration
 
         // From the Malysian trader Oma Ally, not much signals but performs well (no profits yet)
         PluginManager.Register(new Bbma.BbmaPlugin());
-        PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
         // Very disapointing, expected more of this strategy
         PluginManager.Register(new Choch.ChochPlugin());
         // Lots of noise, there is alway's some sort of dtd to be found
