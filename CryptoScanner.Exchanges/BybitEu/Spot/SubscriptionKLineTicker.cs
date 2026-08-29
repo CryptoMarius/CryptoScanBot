@@ -49,7 +49,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     {
         SubscriptionBundle!.SocketClient ??= new BybitSocketClient();
         var subscriptionResult = await ((BybitSocketClient)SubscriptionBundle.SocketClient).V5SpotApi.SubscribeToKlineUpdatesAsync(
-            Symbols, KlineInterval.OneMinute, data =>
+            ExchangeNames, KlineInterval.OneMinute, data =>
         {
             //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.ScannerSymbol));
             foreach (BybitKlineUpdate kline in data.Data)

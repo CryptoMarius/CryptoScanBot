@@ -48,7 +48,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     {
         SubscriptionBundle!.SocketClient ??= new BybitSocketClient();
         var subscriptionResult = await ((BybitSocketClient)SubscriptionBundle.SocketClient).V5LinearApi.SubscribeToKlineUpdatesAsync(
-            Symbols, KlineInterval.OneMinute, data =>
+            ExchangeNames, KlineInterval.OneMinute, data =>
         {
             // Er zit tot ongeveer 8 a 10 seconden vertraging is van de exchange tot hier, dat moet ansich genoeg zijn
             //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.ScannerSymbol));

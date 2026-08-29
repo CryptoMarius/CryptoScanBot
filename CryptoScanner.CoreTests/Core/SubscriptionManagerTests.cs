@@ -253,6 +253,6 @@ public class SubscriptionManagerTests
         Assert.IsTrue(subscription.SymbolByExchangeName.ContainsKey($"BBB-{Quote}"),
             "an update for the added symbol would be dropped without this entry");
         Assert.AreEqual(subscription.SymbolList.Count, subscription.SymbolByExchangeName.Count);
-        Assert.AreEqual(subscription.SymbolList.Count, subscription.Symbols.Count);
+        Assert.AreEqual(subscription.SymbolList.Count, subscription.ExchangeNames.Count);
     }
 }

@@ -41,7 +41,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     {
         SubscriptionBundle!.SocketClient ??= new BinanceSocketClient();
         WebSocketResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)SubscriptionBundle.SocketClient).SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
-            Symbols, KlineInterval.OneMinute, (data) =>
+            ExchangeNames, KlineInterval.OneMinute, (data) =>
         {
             if (data.Data.Data.Final)
             {

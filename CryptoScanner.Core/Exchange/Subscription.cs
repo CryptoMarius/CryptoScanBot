@@ -79,9 +79,14 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     internal UpdateSubscription? _subscription;
 
     // Deze worden niet gebruikt bij de userticker
-    // Symbols  = the scanner names ("BTCUSDT"), only used to build SymbolOverview for the log
-    // SymbolList = the symbols this subscription serves, Subscribe() takes their ExchangeName
-    public List<string> Symbols = [];
+    // ExchangeNames = what the exchange itself calls these instruments ("BTCUSDT", "BTC-USDT-SWAP"),
+    //   this is the list Subscribe() hands to the exchange. It used to be a list of scanner names
+    //   ("BTCUSDT.PERP") and every exchange that passed it straight on was subscribing to instruments
+    //   that do not exist: Bybit Perpetual answered "handler not found" on all of them from
+    //   28-08-2026 21:29 onwards, Binance Perpetual accepted the unknown streams and silently
+    //   delivered nothing. Scanner names only ever belonged in SymbolOverview, which is for the log.
+    // SymbolList = the symbols this subscription serves
+    public List<string> ExchangeNames = [];
     public List<CryptoSymbol> SymbolList = [];
     public string SymbolOverview = "";
 
@@ -94,21 +99,23 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     {
         Dictionary<string, CryptoSymbol> lookup = [];
         List<string> names = [];
+        List<string> exchangeNames = [];
         foreach (var symbol in symbols)
         {
             lookup[symbol.ExchangeName] = symbol;
             names.Add(symbol.Name);
+            exchangeNames.Add(symbol.ExchangeName);
         }
 
         SymbolList = symbols;
-        Symbols = names;
+        ExchangeNames = exchangeNames;
         SymbolByExchangeName = lookup;
         SymbolOverview = string.Join(',', names);
     }
 
     // Lookup from exchange symbol name to CryptoSymbol — avoids the global exchange-dictionary
     // lookup in socket callbacks. Filled in SubscriptionManager.CreateTheSubscriptions right next to
-    // SymbolList and Symbols, so the three always describe the same set. Whoever changes SymbolList afterwards has
+    // SymbolList and ExchangeNames, so the three always describe the same set. Whoever changes SymbolList afterwards has
     // to update this one as well, otherwise updates for the added symbols are silently dropped in
     // the callback. Replace it as a whole in that case, a Dictionary cannot be written to while a
     // socket callback is reading it.

@@ -13,7 +13,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         SubscriptionBundle!.SocketClient ??= new BybitSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((BybitSocketClient)SubscriptionBundle.SocketClient).V5LinearApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
+        CallResult<UpdateSubscription> subscriptionResult = await ((BybitSocketClient)SubscriptionBundle.SocketClient).V5LinearApi.SubscribeToTickerUpdatesAsync(ExchangeNames, data =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {
