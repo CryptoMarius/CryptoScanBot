@@ -997,13 +997,13 @@ window.ChartWidget = {
         });
     },
 
-    _addPriceLine: function (series, price, color, lineStyle, title) {
+    _addPriceLine: function (series, price, color, lineStyle, title, axisLabelVisible) {
         return series.createPriceLine({
             price: price,
             color: color,
             lineWidth: 1,
             lineStyle: lineStyle === undefined ? 2 : lineStyle,
-            axisLabelVisible: true,
+            axisLabelVisible: axisLabelVisible === undefined ? true : axisLabelVisible,
             title: title || '',
         });
     },
@@ -1063,6 +1063,28 @@ window.ChartWidget = {
         if (user)
             return user;
         return this._overlayStyles[key] || { color: '#888', lineWidth: 1, lineStyle: 0 };
+    },
+
+    // The same colour at another transparency. A style entry holds one colour per series, while a
+    // filled area needs both a translucent body and a firmer outline, so the outline is derived
+    // from the configured colour here instead of adding a second entry to the settings screen.
+    _withAlpha: function (color, alpha) {
+        if (!color)
+            return color;
+
+        var rgb = color.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+        if (rgb)
+            return 'rgba(' + rgb[1] + ',' + rgb[2] + ',' + rgb[3] + ',' + alpha + ')';
+
+        var hex = color.replace('#', '');
+        if (hex.length === 3)
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        if (hex.length !== 6 && hex.length !== 8)
+            return color;
+
+        return 'rgba(' + parseInt(hex.substr(0, 2), 16) + ',' +
+            parseInt(hex.substr(2, 2), 16) + ',' +
+            parseInt(hex.substr(4, 2), 16) + ',' + alpha + ')';
     },
 
     // lightweight-charts renders every UTCTimestamp in UTC, so a candle that opened at 16:00 here
@@ -1409,22 +1431,45 @@ window.ChartWidget = {
                 return { priceRange: { minValue: 0, maxValue: 100 } };
             };
 
-            // Oversold: bars hanging from the top, exactly Pine's per_under (100 - oversold).
-            var osSeries = entry.chart.addHistogramSeries({
-                color: this._styleFor('luxOversold').color,
-                lastValueVisible: false, priceLineVisible: false,
-                base: 100,
+            // Filled areas, not bars, the same shape the Avalonia chart draws with its OxyPlot
+            // AreaSeries: an outline at the reading with a translucent body running back to the
+            // level it is measured from. A baseline series is used rather than an area series
+            // because its fill stops at an exact price (0 and 100) instead of at the edge of the
+            // pane, so both areas meet the reference levels the readings are defined against.
+            var osStyle = this._styleFor('luxOversold');
+            var obStyle = this._styleFor('luxOverbought');
+            var transparent = 'rgba(0,0,0,0)';
+
+            // Oversold: filled from the top (100) down to the reading, exactly Pine's per_under.
+            var osSeries = entry.chart.addBaselineSeries({
+                baseValue: { type: 'price', price: 100 },
+                bottomLineColor: this._withAlpha(osStyle.color, 0.9),
+                bottomFillColor1: osStyle.color,
+                bottomFillColor2: osStyle.color,
+                topLineColor: transparent,
+                topFillColor1: transparent,
+                topFillColor2: transparent,
+                lineWidth: osStyle.lineWidth || 1,
+                lineStyle: osStyle.lineStyle || 0,
+                lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false,
                 autoscaleInfoProvider: pinTo0to100,
             });
             osSeries.setData(luxData.map(function (d) {
                 return { time: d.time, value: 100 - d.oversold };
             }));
 
-            // Overbought: bars rising from the baseline.
-            var obSeries = entry.chart.addHistogramSeries({
-                color: this._styleFor('luxOverbought').color,
-                lastValueVisible: false, priceLineVisible: false,
-                base: 0,
+            // Overbought: filled from the baseline (0) up to the reading.
+            var obSeries = entry.chart.addBaselineSeries({
+                baseValue: { type: 'price', price: 0 },
+                topLineColor: this._withAlpha(obStyle.color, 0.9),
+                topFillColor1: obStyle.color,
+                topFillColor2: obStyle.color,
+                bottomLineColor: transparent,
+                bottomFillColor1: transparent,
+                bottomFillColor2: transparent,
+                lineWidth: obStyle.lineWidth || 1,
+                lineStyle: obStyle.lineStyle || 0,
+                lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false,
                 autoscaleInfoProvider: pinTo0to100,
             });
             obSeries.setData(luxData.map(function (d) {
@@ -1433,6 +1478,18 @@ window.ChartWidget = {
 
             entry.series.luxOversold = osSeries;
             entry.series.luxOverbought = obSeries;
+
+            // The levels the two readings are measured against, the same three dashed lines the
+            // Avalonia chart draws: 0 (overbought grows from here), 100 (oversold hangs from here)
+            // and the Pine mid-line at 50. A pane showing only Lux has nothing else to read the
+            // fills against. No axis labels - the price scale already prints those values, and the
+            // RSI and stochastic thresholds are the ones worth naming there. The colour is the one
+            // the MACD zero line already uses, so both sub-panels mark their reference levels the
+            // same way; OxyPlot draws these at grey alpha 60/255, which comes out the same.
+            var luxLevel = 'rgba(150,150,150,0.3)';
+            this._addPriceLine(obSeries, 0, luxLevel, 2, '', false);
+            this._addPriceLine(obSeries, 50, luxLevel, 2, '', false);
+            this._addPriceLine(obSeries, 100, luxLevel, 2, '', false);
         }
 
         this._charts.oscillator = entry;

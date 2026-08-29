@@ -6,9 +6,11 @@ TODO:
 -Screenshots van de wikie bijwerken
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
+xx-09-2025 2.6.2
+- ???
 
 29-08-2025 2.6.1
-- Vanaf nu wis Futures vervangen met Perpetual (zoals het vanaf het begin had moeten zijn)
+- Vanaf nu Futures vervangen met Perpetual (zoals het vanaf het begin had moeten zijn)
 - Exchange Coinbase toegevoegd
 - Alpaca geactiveerd (om te testen!!!!)
 - Een lock op de data folder zodat er niet 2 scanners tegelijk gestart kunnen worden die de folder delen

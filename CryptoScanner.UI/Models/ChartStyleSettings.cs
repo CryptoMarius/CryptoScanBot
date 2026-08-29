@@ -119,7 +119,7 @@ public class ChartStyleSettings
         new("fibZigzag", "Trend", "fibZigzag", "FIB ZigZag", new() { Color = "#FFffeb3b", LineStyle = 2 }),
 
         // Sub-panel indicators. Line width and style apply to the lines; the histogram bars
-        // (Lux, MACD, volume) only take the colour.
+        // (MACD, volume) only take the colour. Lux is drawn as a filled area and uses all three.
         new("rsi", "RSI", "rsi",           "RSI",        new() { Color = "#FFab47bc" }),
         new("rsi", "RSI", "rsiOversold",   "Oversold",   new() { Color = "#6622c55e", LineStyle = 2 }),
         new("rsi", "RSI", "rsiOverbought", "Overbought", new() { Color = "#66f0616d", LineStyle = 2 }),
@@ -133,8 +133,8 @@ public class ChartStyleSettings
         // original: this is a strength reading, not a reversal colouring. The two were the other way
         // round here until 24-08-2026, so a Photino chart showed the opposite of the same moment in
         // the Avalonia one. A saved style keeps whatever the user picked - only these defaults moved.
-        new("lux", "Lux", "luxOversold",   "Oversold bars",   new() { Color = "#8cf0616d" }),
-        new("lux", "Lux", "luxOverbought", "Overbought bars", new() { Color = "#8c22c55e" }),
+        new("lux", "Lux", "luxOversold",   "Oversold area",   new() { Color = "#8cf0616d" }),
+        new("lux", "Lux", "luxOverbought", "Overbought area", new() { Color = "#8c22c55e" }),
 
         new("macd", "MACD", "macdLine",      "MACD",           new() { Color = "#FF2196F3" }),
         new("macd", "MACD", "macdSignal",    "Signal",         new() { Color = "#FFff9800" }),
