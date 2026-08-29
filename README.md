@@ -23,6 +23,6 @@ In latest editions we also try to show dominant zones and FVG (see chart form).
 
 The list at the top is the current state, all of those are switched on and scanning. A few more are in the source but switched off, because they cannot deliver what the scanner needs: BitMart floods the log with rate limit errors, Coinbase only streams 5m candles which is too coarse, BloFin has no spot client in the library we use, and the european Bybit entity lists no futures contracts at all. The application is built in a mix of English and Dutch, because a number of tools have been combined (please indicate whether any texts are disturbing and/or should be adjusted), so apologies in advance for English crypto terms, for an explanation you have to be on the internet or ask in a crypto group what it means (but always do your own research first).
 
-Furthermore: Very nice that you try this application, below is an explanation of what the application does, the installation, necessary settings and so on. I hope you enjoy trading, the communities and so on. Good luck in this special world!
+Furthermore: Very nice that you try this application, in the wiki you can find an explanation of what the application does, the installation, necessary settings etc.. I hope you enjoy trading, the communities and have some luck in this special world!
 
 <img width="1464" height="901" alt="Main screen + signals" src="https://github.com/user-attachments/assets/8e40ea81-7403-4400-ada2-9ef783b6941e" />
