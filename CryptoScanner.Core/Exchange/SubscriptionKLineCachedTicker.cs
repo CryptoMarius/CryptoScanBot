@@ -159,6 +159,47 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
     }
 
     /// <summary>
+    /// The price a synthesized flat candle repeats: the last price this market delivered, and failing
+    /// that the close of the newest 1m candle already held for the symbol.
+    /// <para>
+    /// That second source is what keeps an instrument alive that has not traded since the scanner
+    /// started. <see cref="CryptoSymbol.LastPrice"/> is cleared when the candles are loaded and is only
+    /// ever assigned by <see cref="CandleTools.Process1mCandleAsync"/>, so on a market without a price
+    /// ticker - HyperLiquid has none - it stays null until the websocket pushes a kline. Without a
+    /// price there is no flat candle AND no <see cref="Subscription.IncrementTickerCount"/>, so the
+    /// subscription never reports activity, <see cref="SubscriptionManager.NeedsRestart"/> declares it
+    /// dead every cycle, and the restart cannot repair anything because there was nothing wrong with
+    /// it. On HyperLiquid Perpetual, 29-08-2026, RIVNUSDC.XYZ and VSTUSDC.PARA were rebuilt every ten
+    /// minutes from the moment the scanner started and wrote no minute of their own for an hour and a
+    /// half; the only candles they got came from the hourly REST gap fill.
+    /// </para>
+    /// <para>
+    /// The candle list is the same value by another route - LastPrice is assigned the close of the
+    /// candle that goes into that list - so this widens where the price may come from and changes
+    /// nothing about what is stored.
+    /// </para>
+    /// </summary>
+    internal static bool TryGetPriceToRepeat(CryptoSymbol symbol, out decimal price)
+    {
+        if (symbol.LastPrice.HasValue)
+        {
+            price = symbol.LastPrice.Value;
+            return true;
+        }
+
+        if (symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m).CandleList.TryGetLastCandle(out CryptoCandle candle)
+            && candle.Close > 0)
+        {
+            price = candle.Close;
+            return true;
+        }
+
+        price = 0;
+        return false;
+    }
+
+
+    /// <summary>
     /// Start the minute-boundary flush timer. Call after a successful socket subscription.
     /// The timer fires ~6 s past each UTC minute, flushes all completed candles from the cache
     /// through <see cref="CandleTools.Process1mCandleAsync"/>, and synthesizes a flat candle for
@@ -212,11 +253,10 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                         // If the expected minute had no trades the cache had no entry for it, and
                         // Process1mCandleAsync was never called. Synthesize a flat candle so the 1m
                         // CandleList stays contiguous and CollectCandles keeps finding >= 260 candles.
-                        if (candleLast.OpenTime != expectedUpto && symbol.LastPrice.HasValue)
+                        if (candleLast.OpenTime != expectedUpto && TryGetPriceToRepeat(symbol, out decimal lastPrice))
                         {
                             IncrementTickerCount();
 
-                            decimal lastPrice = symbol.LastPrice.Value;
                             await CandleTools.Process1mCandleAsync(symbol, expectedUpto.ToDateTime(),
                                 lastPrice, lastPrice, lastPrice, lastPrice, 0, isFilled: true);
                             candleLast = new CryptoCandle

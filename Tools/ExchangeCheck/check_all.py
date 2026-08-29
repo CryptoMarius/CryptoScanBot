@@ -7,7 +7,7 @@ folders itself, matches each one to its memory samples, writes a report per fold
 overview line per exchange.
 
 A data folder is any folder holding a CryptoScanBot.db - so both
-    %APPDATA%\\CryptoScanBot\\Data\\Binance\\Futures
+    %APPDATA%\\CryptoScanBot\\Data\\Binance\\Perpetual
     %APPDATA%\\CryptoScanBot-KRTest
 are found without having to list them anywhere.
 
@@ -80,7 +80,7 @@ def last_activity(folder):
 def sample_name(folder):
     """
     Same naming as sample-process.ps1: the last two parts of the data folder joined with a dash,
-    so "...\\Data\\Binance\\Futures" pairs with "Binance-Futures-memory.csv".
+    so "...\\Data\\Binance\\Perpetual" pairs with "Binance-Perpetual-memory.csv".
     """
     parts = [part for part in folder.parts if part not in ("\\", "/")]
     if len(parts) >= 2:

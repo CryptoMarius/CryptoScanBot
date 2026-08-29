@@ -83,7 +83,7 @@ function Get-DataFolderName {
     if ($commandLine -match '(?:-f|--folder)\s+"([^"]+)"' -or $commandLine -match '(?:-f|--folder)\s+(\S+)') {
         $folder = $Matches[1].TrimEnd('\', '/')
         # Keep the last two path parts: "Data\Kraken\Spot" becomes "Kraken-Spot", which is readable
-        # and still unique between the spot and the futures run of the same exchange.
+        # and still unique between the spot and the perpetual run of the same exchange.
         $parts = @($folder -split '[\\/]' | Where-Object { $_ -and $_ -ne '.' })
         if ($parts.Count -ge 2) {
             $label = ($parts[-2..-1]) -join '-'

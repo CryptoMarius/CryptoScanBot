@@ -7,11 +7,6 @@ using Dapper;
 
 using System.Text;
 
-using Telegram.Bot;
-using Telegram.Bot.Exceptions;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
-
 namespace CryptoScanner.Core.Telegram;
 
 
@@ -89,7 +84,7 @@ public static class ThreadTelegramBot
 public class ThreadTelegramBotInstance
 {
     private static int offset;
-    private TelegramBotClient? bot;
+    private TelegramApiClient? bot;
     public CancellationTokenSource cancellationToken = new();
 
     public void Stop()
@@ -111,8 +106,8 @@ public class ThreadTelegramBotInstance
         try
         {
             //var DisableLink = new LinkPreviewOptions { IsDisabled = true };
-            //await bot.SendMessage(ThreadTelegramBot.ChatId, text, parseMode: ParseMode.Html, linkPreviewOptions: DisableLink);
-            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, text, parseMode: ParseMode.Html, disableWebPagePreview: true);
+            //await bot.SendMessage(ThreadTelegramBot.ChatId, text, parseMode: TelegramParseMode.Html, linkPreviewOptions: DisableLink);
+            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, text, parseMode: TelegramParseMode.Html, disableWebPagePreview: true);
         }
         catch (Exception error)
         {
@@ -132,7 +127,7 @@ public class ThreadTelegramBotInstance
         {
             string text = TelegramGenerateSignalText.Execute(signal);
             if (text != string.Empty)
-                _ = await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, text, parseMode: ParseMode.Html, disableWebPagePreview: true);
+                _ = await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, text, parseMode: TelegramParseMode.Html, disableWebPagePreview: true);
         }
         catch (Exception error)
         {
@@ -178,9 +173,12 @@ public class ThreadTelegramBotInstance
 
         // System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
         //    // Extra parameters vanwege ambigious constructor (die ik niet geheel kon volgen)
-        bot = new(token); //, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot"
         try
         {
+            // Inside the try: the client refuses a token that is not shaped like one, and both
+            // the Avalonia and the Photino settings screen await this method, so that refusal
+            // has to end up in the log here instead of on the caller's doorstep.
+            bot = new(token); //, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot"
             //SendMessage("Started telegram bot!");
 
             var me = await bot.GetMeAsync();
@@ -221,10 +219,10 @@ public class ThreadTelegramBotInstance
                 try
                 {
                     //SendMessage("hello over there!");
-                    Update[] updates = await bot.GetUpdatesAsync(offset, cancellationToken: cancellationToken.Token);
+                    TelegramUpdate[] updates = await bot.GetUpdatesAsync(offset, cancellationToken: cancellationToken.Token);
                     backOffSeconds = 0;
 
-                    foreach (Update update in updates)
+                    foreach (TelegramUpdate update in updates)
                     {
                         //// Only process Message updates: https://core.telegram.org/bots/api#message
                         if (update.Message == null)
@@ -244,7 +242,7 @@ public class ThreadTelegramBotInstance
                         {
                             switch (update.Message.Type)
                             {
-                                case MessageType.Text:
+                                case TelegramMessageType.Text:
                                     {
                                         bool showInHtml = false;
                                         StringBuilder stringBuilder = new();
@@ -322,14 +320,14 @@ public class ThreadTelegramBotInstance
                                         if (s != "")
                                         {
                                             if (showInHtml)
-                                                await bot.SendTextMessageAsync(update.Message.Chat.Id, s, parseMode: ParseMode.Html, disableWebPagePreview: true);
+                                                await bot.SendTextMessageAsync(update.Message.Chat.Id, s, parseMode: TelegramParseMode.Html, disableWebPagePreview: true);
                                             else
                                                 await bot.SendTextMessageAsync(update.Message.Chat.Id, s);
                                         }
                                     }
                                     break;
 
-                                    //    case MessageType.Photo:
+                                    //    case TelegramMessageType.Photo:
                                     //        {
                                     //            // geen idee, niet belangrijk in een bot denk ik
                                     //            // await ProcessPhotoMessage(update.Message);
@@ -345,7 +343,7 @@ public class ThreadTelegramBotInstance
                             ScannerLog.Logger.Error(error.Message);
                             await Task.Delay(5000);
                         }
-                        catch (RequestException error)
+                        catch (TelegramApiException error)
                         {
                             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
                             ScannerLog.Logger.Error(error.Message);
@@ -360,7 +358,7 @@ public class ThreadTelegramBotInstance
 
                     }
                 }
-                catch (ApiRequestException error)
+                catch (TelegramApiException error)
                 {
                     // Stupid Telegram is not playing nice
                     // Telegram tells us how long to wait ("retry after 5"); honour that value when it is
@@ -386,6 +384,14 @@ public class ThreadTelegramBotInstance
                     {
                         // Stopping, the while condition takes care of the rest
                     }
+                    continue;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // Stopping. With long polling the getUpdates request is left open at Telegram,
+                    // so cancelling aborts a request that is in flight - that is the normal way out
+                    // of this loop and not something to log. A timeout of the http client itself is
+                    // a different matter and falls through to the catch below.
                     continue;
                 }
                 catch (Exception error)

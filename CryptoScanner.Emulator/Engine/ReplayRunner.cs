@@ -139,11 +139,19 @@ public sealed class ReplayRunner
                     continue;
 
                 CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
+                bool isDaily = interval.IntervalPeriod == CryptoIntervalPeriod.interval1d;
                 CandleTime at = cursor[interval.IntervalPeriod];
                 while (at + interval.Duration <= clockTime)
                 {
                     if (source.TryGetValue(at, out CryptoCandle candle))
+                    {
                         symbolInterval.CandleList.TryAdd(at, candle);
+
+                        // The symbol's 24 hour volume, taken from the day being replayed instead of
+                        // from the last "fetch symbols". See EmulatorVolume for why.
+                        if (isDaily)
+                            EmulatorVolume.ApplyDailyVolume(Symbol, candle);
+                    }
                     at += interval.Duration;
                 }
                 cursor[interval.IntervalPeriod] = at;
@@ -229,6 +237,7 @@ public sealed class ReplayRunner
 
             // ───── Warmup all symbols up-front ──────────────────────────────────────
             long warmupStart = Stopwatch.GetTimestamp();
+            EmulatorVolume.ResetDiagnostics();
             foreach (var symbol in symbols)
             {
                 ct.ThrowIfCancellationRequested();
@@ -238,6 +247,14 @@ public sealed class ReplayRunner
             GlobalData.AddTextToLogTab($"Warmup ({symbols.Count} symbol(s)): " +
                 $"{(double)elapsedWarmup / Stopwatch.Frequency:F1}s " +
                 $"[base interval: {baseInterval.Name}]");
+
+            // The volume follows the replayed day from here on, so say so - the minimum-volume check
+            // is the symbol selection in practice, and a silent switch of what feeds it would make
+            // this run incomparable with every earlier one without a trace in the log.
+            GlobalData.AddTextToLogTab($"Volume: taken from the daily candle being replayed" +
+                (EmulatorVolume.SymbolsWithoutDailyVolume > 0
+                    ? $" ({EmulatorVolume.SymbolsWithoutDailyVolume} symbol(s) start at zero, no daily candle in the warmup)"
+                    : ""));
 
 
             // ───── Determine chunks ─────────────────────────────────────────────────

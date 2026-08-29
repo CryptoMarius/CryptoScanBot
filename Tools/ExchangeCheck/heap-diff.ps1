@@ -28,8 +28,8 @@ param(
     [ValidateSet("Snapshot", "Compare")]
     [string] $Mode = "Snapshot",
 
-    # Which scanner to look at. Matched against the command line, so "Okx Futures" finds the process
-    # started with -e "Okx Futures". Ignored when ProcessId is given.
+    # Which scanner to look at. Matched against the command line, so "Okx Perpetual" finds the
+    # process started with -e "Okx Perpetual". Ignored when ProcessId is given.
     [string] $Exchange,
 
     [int] $ProcessId = 0,

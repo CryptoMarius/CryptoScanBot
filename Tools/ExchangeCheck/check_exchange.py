@@ -226,7 +226,7 @@ BAROMETER_DIP_MINUTES = 10
 # "inactief" betekent een eigenschap van de markt is en niet van de scanner. De standaard daar is nog
 # steeds vijf minuten, en dat is wat hier als maatlat blijft staan: het rapport hoort te laten zien
 # hoeveel symbolen boven de STANDAARD uitkomen, want dat is het getal waaraan je ziet of een exchange
-# een eigen grens nodig heeft. HyperLiquid Spot staat sinds die dag op 12 uur en Kucoin Futures op
+# een eigen grens nodig heeft. HyperLiquid Spot staat sinds die dag op 12 uur en Kucoin Perpetual op
 # 45 minuten, allebei gemeten op de nacht van 21/22-08-2026.
 INACTIVITY_LIMIT_MINUTES = 5
 # Een gemiddelde verder dan dit van nul is geen markt maar een storing. Zelfde grens die de grafiek
@@ -1084,7 +1084,7 @@ def serving_per_exchange(entries):
     """
     Hoeveel symbolen de run aan het EIND van het venster nog bediende, uit regels als
 
-        Okx Futures kline now serving 169 symbols over 1 bundles
+        Okx Perpetual kline now serving 169 symbols over 1 bundles
 
     Dit is de maatstaf voor de dekking, en niet het hoogste abonnementsaantal hierboven.
 

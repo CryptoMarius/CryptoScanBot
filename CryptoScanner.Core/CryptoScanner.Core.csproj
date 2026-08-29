@@ -273,12 +273,14 @@
     <PackageReference Include="Microsoft.Diagnostics.Runtime" Version="4.0.732401" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.11" />
+    <!-- Altrady's webhook and the Rectangle converter are written against Newtonsoft; this used to
+         arrive as a transitive dependency of Telegram.Bot, which is no longer referenced. -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NLog" Version="6.2.0" />
     <PackageReference Include="NPOI" Version="2.8.0" />
     <PackageReference Include="Skender.Stock.Indicators" Version="3.0.0-preview.3.1" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.11" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.11" />
-    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
     <PackageReference Include="Tmds.DBus" Version="0.94.2" />
   </ItemGroup>
 

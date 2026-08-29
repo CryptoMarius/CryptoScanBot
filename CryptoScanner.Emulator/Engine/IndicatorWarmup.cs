@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
@@ -206,6 +206,12 @@ public static class IndicatorWarmup
             //if (interval.ConstructFrom != null && symbolInterval.CandleList.Count == 0)
             //    CandleTools.BulkCalculateCandles(symbol, interval.ConstructFrom, interval, replayFrom);
         }
+
+        // Start the run on the volume of the last day BEFORE it, not on whatever the most recent
+        // "fetch symbols" left behind. Without this the first replayed day still decides on today's
+        // volume, and on a symbol whose daily candles start later it would keep that value for the
+        // whole run.
+        EmulatorVolume.SeedFromWarmup(symbol);
     }
 
 
