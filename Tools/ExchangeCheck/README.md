@@ -18,10 +18,16 @@ switched off by putting `rem` in front of it:
 | `1 Start memory sampling.cmd` | Only the sampler |
 | `2 Make reports.cmd` | Only the reports |
 | `3 Start all scanners.cmd` | Every exchange, then calls `1` |
+| `3a Start all Perpetual scanners.cmd` | The nine perpetual markets of `3` |
+| `3b Start all Spot scanners.cmd` | The ten spot markets of `3` |
 | `4 Stop all scanners.cmd` | Asks them all to close, then calls `2` |
 | `5 Start all scanners (Photino).cmd` | Same as `3` for the Photino build |
+| `5a Start all Perpetual scanners (Photino).cmd` | Same as `3a` for the Photino build |
+| `5b Start all Spot scanners (Photino).cmd` | Same as `3b` for the Photino build |
 | `6 Stop all scanners (Photino).cmd` | Same as `4` for the Photino build |
 | `7 Clear all logs.cmd` | Empties every Log folder, for a clean slate before a run |
+| `8 Clear all candle databases.cmd` | Deletes the candle database of every exchange, asks first |
+| `9 Clear all scanner databases.cmd` | Deletes `CryptoScanBot.db` of every exchange, wants the word DELETE typed |
 
 ## The evening: start the run
 
@@ -36,6 +42,11 @@ itself, so a new market is one line in that file.
 
 Starting it twice starts a second process on the same folder; the data folder lock stops that one,
 so the damage is a message, not a broken database.
+
+A night about one market type only is `3a` for the nine perpetual markets and `3b` for the ten spot
+ones, `5a` and `5b` for the same halves of the Photino build. Half the processes, and on an exchange
+that counts per ip address half of what the machine asks of it. Running both halves at once is the
+same as running the whole one, except that each half starts a memory sampling of its own.
 
 By hand it is one process per market:
 
