@@ -1,14 +1,12 @@
 CryptoScanBot release historie:
 
-Beslissing, Bybit EU weg, die is om te janken en kan niet serieus genomen worden
-
 -Compilatie Mac + Testje op Mac vm.
 -Compilatie Linux + Testje op Linux vm.
--De documentatie bijwerken, screenshots verversen (wiki heeft nu nog de oude opzet)
--Altrady meldt ook de shorts terug als long positie (nog uitzoeken?)
+-De screenshots van de documentatie bijwerken (wiki heeft nu nog de oude opzet)
+-Altrady meldt short terug als we een long positie openen (nog uitzoeken/melden)
 
 
-xx-08-2025 2.6.0
+xx-09-2025 2.6.1
 - Vanaf nu wis Futures vervangen met Perpetual 9zoals het vanaf het begin had moeten zijn)
 - Exchange Coinbase toegevoegd
 - Alpaca geactiveerd (om te testen!!!!)
@@ -35,7 +33,10 @@ xx-08-2025 2.6.0
 - De munt die gebruikt wordt voro de trafing rulez wordt nu door de exchange api gestuurd (btc geeft wel eens een andere naam)
 - Het minimale volume van een basismunt wordt nu geinitialiseerd op de exchange grootte (een inschatting)
 - De kleur rood en groen aangepast waardoor het beter te lezen is op een zwarte achtergrond
-- De laatste fouten uit Kraken perpetual gehaald
+- De onderhoudscyclus en de verversing van exchange informatie/verversing candles zitten elkaar in de weg, draait niet elk uur zoals gepland was
+
+13-08-2025 2.6.0
+- De laatste fouten uit Kraken Futures gehaald
 - Extra help link naar de Cryptoscanner wiki pagina op github
 - Fix ZigZag punt berekening (met impact op de trend, marktrend enzovoort)
 - De afkortingen voor de strategien wordt nu beknopt uitgewerkt in het analyzer tabblad
@@ -45,13 +46,12 @@ xx-08-2025 2.6.0
 - Chart venster, de opties iets anders ingedeeld zodat de opties beter ingedeeld zijn + opties op naam sorteren
 - Papertrading op de andere exchanges werkzaam gemaakt (was alleen actief voor Bybit en Binance)
 - BB Squeuze strategie toegevoegd (maar daar zijn niet veel signalen op)
-- Kraken perpetual weer geactiveerd, de symbols, candles en de trade subscription zijn gerepareerd
-- De onderhoudscyclus en de verversing van exchange informatie/verversing candles zitten elkaar in de weg, draait niet elk uur zoals gepland was
+- Kraken futures weer geactiveerd, de symbols, candles en de trade subscription zijn gerepareerd
 
 Photino
-- Introductie van een nieuwe Photino applicatie (doet hetzelfde als de Avalonia app maar dan met een html jasje)
-- Highlights: Een Tradingview gebaseerde chart die het Avalonia chart venster vervangt
-- De Tradingview is tabblad verwijderd en vervangen met een popup vanwege limitaties Tradingview
+- Introductie van een nieuwe Photino applicatie (parallel aan de Avalonia app)
+- Nieuw Tradingview gebaseerde chart die het Avalonia chart venster vervangt
+- Tradingview tabblad verwijderd en vervangen met een popup vanwege limitaties Tradingview
 
 22-07-2025 2.5.9
 - SignalR toegevoegd voor een experiment met een andere applicatie (heeft ASP.NET package nodig)
