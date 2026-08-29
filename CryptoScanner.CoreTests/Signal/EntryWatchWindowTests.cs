@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -9,7 +9,7 @@ using Exchange = CryptoScanner.Core.Model.CryptoExchange;
 namespace CryptoScanner.CoreTests.Signal;
 
 /// <summary>
-/// EntryConditions.EntryWaitMinutes / EntryMaxAdversePercentage: watch a signal for a while before
+/// EntryConditions.EntryWaitCandles / EntryMaxAdversePercentage: watch a signal for a while before
 /// acting on it, and drop it when price ran too far the wrong way in the meantime.
 /// <para>
 /// The two halves live in different methods on purpose, and that split is what these tests guard.
@@ -53,9 +53,15 @@ public class EntryWatchWindowTests : TestBase
         };
     }
 
-    private static CryptoInterval MakeInterval() => GlobalData.IntervalListPeriod.Count > 0
-        ? GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m]
-        : new CryptoInterval { Id = 4, Name = "5m", Duration = 300 };
+    /// <summary>
+    /// Duration is in MINUTES (CryptoInterval builds 1d as 24 * 60), so a 5m interval is 5. The
+    /// fallback said 300 - seconds - which stayed harmless while the rule counted wall-clock
+    /// minutes and would not now that it multiplies by the duration.
+    /// </summary>
+    private static CryptoInterval MakeInterval(CryptoIntervalPeriod period = CryptoIntervalPeriod.interval5m)
+        => GlobalData.IntervalListPeriod.Count > 0
+            ? GlobalData.IntervalListPeriod[period]
+            : new CryptoInterval { Id = 4, Name = "5m", Duration = 5 };
 
     /// <summary>A signal at price 100, on the side under test.</summary>
     private static CryptoSignal MakeSignal(CryptoTradeSide side)
@@ -118,7 +124,7 @@ public class EntryWatchWindowTests : TestBase
     [TestMethod]
     public void WithTheRuleOff_TheSignalIsActedOnStraightAway()
     {
-        GlobalData.Settings.Trading.EntryConditions.EntryWaitMinutes = 0;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 0;
         var signal = MakeSignal(CryptoTradeSide.Long);
         var algorithm = MakeAlgorithm(signal, SignalOpen, 100m, 100m);
 
@@ -131,7 +137,7 @@ public class EntryWatchWindowTests : TestBase
     [DataRow(CryptoTradeSide.Short, DisplayName = "short")]
     public void InsideTheWatchWindow_TheSignalWaits(CryptoTradeSide side)
     {
-        GlobalData.Settings.Trading.EntryConditions.EntryWaitMinutes = 15;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
         var signal = MakeSignal(side);
 
         var tooEarly = MakeAlgorithm(signal, SignalOpen.AddMinutes(14), 100m, 100m);
@@ -139,6 +145,38 @@ public class EntryWatchWindowTests : TestBase
 
         var onTime = MakeAlgorithm(signal, SignalOpen.AddMinutes(15), 100m, 100m);
         Assert.IsTrue(onTime.AllowStepIn(signal), "at the end of the window entry is allowed");
+    }
+
+
+    /// <summary>
+    /// The reason this is counted in candles and no longer in minutes. The same setting has to hold
+    /// a signal back for the same NUMBER of candles whatever interval it fired on - three candles is
+    /// 15 minutes on 5m and 45 minutes on 15m.
+    /// <para>
+    /// In minutes it did not: a signal is only re-examined when a candle of its own interval closes,
+    /// so a wall-clock wait was rounded up to the next candle. On runs 492 and 493 a setting of 5
+    /// and one of 15 produced the identical delay on every interval except 5m.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void TheWaitCountsCandles_NotMinutes()
+    {
+        if (GlobalData.IntervalListPeriod.Count == 0)
+            Assert.Inconclusive("de intervallen zijn niet geladen, dit vergelijkt er twee");
+
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
+
+        var onFive = MakeSignal(CryptoTradeSide.Long);
+        Assert.IsFalse(MakeAlgorithm(onFive, SignalOpen.AddMinutes(14), 100m, 100m).AllowStepIn(onFive));
+        Assert.IsTrue(MakeAlgorithm(onFive, SignalOpen.AddMinutes(15), 100m, 100m).AllowStepIn(onFive),
+            "drie candles van 5 minuten is een kwartier");
+
+        var onFifteen = MakeSignal(CryptoTradeSide.Long);
+        onFifteen.Interval = MakeInterval(CryptoIntervalPeriod.interval15m);
+        Assert.IsFalse(MakeAlgorithm(onFifteen, SignalOpen.AddMinutes(30), 100m, 100m).AllowStepIn(onFifteen),
+            "op candles van een kwartier is een half uur nog niet genoeg");
+        Assert.IsTrue(MakeAlgorithm(onFifteen, SignalOpen.AddMinutes(45), 100m, 100m).AllowStepIn(onFifteen),
+            "drie candles van 15 minuten is drie kwartier");
     }
 
 
@@ -153,7 +191,7 @@ public class EntryWatchWindowTests : TestBase
     [TestMethod]
     public void Long_ThatRanTooFarDown_IsGivenUpAfterTheWindow()
     {
-        GlobalData.Settings.Trading.EntryConditions.EntryWaitMinutes = 15;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
         GlobalData.Settings.Trading.EntryConditions.EntryMaxAdversePercentage = 2m;
         var signal = MakeSignal(CryptoTradeSide.Long);
 
@@ -169,7 +207,7 @@ public class EntryWatchWindowTests : TestBase
     [TestMethod]
     public void Short_ThatRanTooFarUp_IsGivenUpAfterTheWindow()
     {
-        GlobalData.Settings.Trading.EntryConditions.EntryWaitMinutes = 15;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
         GlobalData.Settings.Trading.EntryConditions.EntryMaxAdversePercentage = 2m;
         var signal = MakeSignal(CryptoTradeSide.Short);
 
@@ -190,7 +228,7 @@ public class EntryWatchWindowTests : TestBase
     [TestMethod]
     public void ADipWithinTheLimit_SurvivesAndIsTaken()
     {
-        GlobalData.Settings.Trading.EntryConditions.EntryWaitMinutes = 15;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
         GlobalData.Settings.Trading.EntryConditions.EntryMaxAdversePercentage = 2m;
         var signal = MakeSignal(CryptoTradeSide.Long);
 
@@ -211,7 +249,7 @@ public class EntryWatchWindowTests : TestBase
     [TestMethod]
     public void ARecoveryDoesNotEraseTheWorstMove()
     {
-        GlobalData.Settings.Trading.EntryConditions.EntryWaitMinutes = 15;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
         GlobalData.Settings.Trading.EntryConditions.EntryMaxAdversePercentage = 2m;
         var signal = MakeSignal(CryptoTradeSide.Long);
 
@@ -231,7 +269,7 @@ public class EntryWatchWindowTests : TestBase
     [TestMethod]
     public void AWaitWithoutALimit_DelaysButNeverSkips()
     {
-        GlobalData.Settings.Trading.EntryConditions.EntryWaitMinutes = 15;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
         GlobalData.Settings.Trading.EntryConditions.EntryMaxAdversePercentage = 0m;
         var signal = MakeSignal(CryptoTradeSide.Long);
 
@@ -252,7 +290,7 @@ public class EntryWatchWindowTests : TestBase
     [TestMethod]
     public void TheSignalCandlesOwnWick_DoesNotCountAsAdverseMovement()
     {
-        GlobalData.Settings.Trading.EntryConditions.EntryWaitMinutes = 15;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
         GlobalData.Settings.Trading.EntryConditions.EntryMaxAdversePercentage = 2m;
         var signal = MakeSignal(CryptoTradeSide.Long);
 

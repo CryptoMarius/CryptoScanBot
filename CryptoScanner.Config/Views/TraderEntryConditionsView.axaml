@@ -137,12 +137,12 @@
 
                 <!-- Watch the signal for a while before acting on it -->
                 <Grid ColumnDefinitions="Auto,6,60,12,Auto,6,60" Margin="0,6,0,0">
-                    <TextBlock Grid.Column="0" Text="Wait after signal (m)"
+                    <TextBlock Grid.Column="0" Text="Wait after signal (candles)"
                                VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="2"
-                             Text="{Binding EntryWaitMinutes, Mode=TwoWay}"
+                             Text="{Binding EntryWaitCandles, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-                             ToolTip.Tip="Minutes to watch a signal before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below EntryRemoveTime x the interval duration, otherwise the signal expires before the wait is over and nothing is ever entered."/>
+                             ToolTip.Tip="Candles of the signal's own interval to watch before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below EntryRemoveTime, otherwise the signal expires before the wait is over and nothing is ever entered."/>
                     <TextBlock Grid.Column="4" Text="Max against %"
                                VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="6"

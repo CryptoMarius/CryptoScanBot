@@ -71,9 +71,9 @@
                 <label>Cool down after loss (m)</label>
                 <input type="number" class="input-number" min="0" @bind="_lossCooldown" />
             </div>
-            <div class="field" title="Minutes to watch a signal before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below EntryRemoveTime x the interval duration, otherwise the signal expires before the wait is over and nothing is ever entered.">
-                <label>Wait after signal (m)</label>
-                <input type="number" class="input-number" min="0" @bind="_entryWaitMinutes" />
+            <div class="field" title="Candles of the signal's own interval to watch before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below EntryRemoveTime, otherwise the signal expires before the wait is over and nothing is ever entered.">
+                <label>Wait after signal (candles)</label>
+                <input type="number" class="input-number" min="0" @bind="_entryWaitCandles" />
             </div>
             <div class="field" title="How far price may run against the signal during that wait, as a positive percentage of the signal price. Above this the signal is dropped. Zero means no limit: the wait then only delays the entry and skips none.">
                 <label>Max move against the signal (%)</label>
@@ -351,7 +351,7 @@
     private int _signalCooldownAfterTrade;
     private int _lossCooldown;
     private decimal _maxPositionDurationDays;
-    private int _entryWaitMinutes;
+    private int _entryWaitCandles;
     private decimal _entryMaxAdverse;
     private CryptoOrderType _tpOrderType;
     private CryptoTakeProfitStrategy _tpStrategy;
@@ -472,7 +472,7 @@
         _signalCooldownAfterTrade = t.SignalCooldownAfterTradeTime;
         _lossCooldown = t.LossCooldownTime;
         _maxPositionDurationDays = t.MaxPositionDurationDays;
-        _entryWaitMinutes = t.EntryConditions.EntryWaitMinutes;
+        _entryWaitCandles = t.EntryConditions.EntryWaitCandles;
         _entryMaxAdverse = t.EntryConditions.EntryMaxAdversePercentage;
         _tpOrderType = t.TakeProfitOrderType;
         _tpStrategy = t.TakeProfitStrategy;
@@ -518,7 +518,7 @@
         t.SignalCooldownAfterTradeTime = _signalCooldownAfterTrade;
         t.LossCooldownTime = _lossCooldown;
         t.MaxPositionDurationDays = _maxPositionDurationDays;
-        t.EntryConditions.EntryWaitMinutes = _entryWaitMinutes;
+        t.EntryConditions.EntryWaitCandles = _entryWaitCandles;
         t.EntryConditions.EntryMaxAdversePercentage = _entryMaxAdverse;
         t.TakeProfitOrderType = _tpOrderType;
         t.TakeProfitStrategy = _tpStrategy;

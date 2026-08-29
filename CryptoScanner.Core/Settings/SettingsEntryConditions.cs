@@ -20,8 +20,8 @@ public class SettingsEntryConditions
     public bool WaitForStochRecovery { get; set; } = false;
     public bool WaitForRsiRecovery { get; set; } = false;
 
-    // Minutes to watch a signal before acting on it, counted from the signal candle's open. Zero
-    // switches the whole rule off, which is the default.
+    // How many candles OF THE SIGNAL'S OWN INTERVAL to watch a signal before acting on it, counted
+    // from the signal candle's open. Zero switches the whole rule off, which is the default.
     //
     // Every signal is followed by a small pullback - the coin dips and the oscillators briefly turn
     // the other way - and the trader steps in during that dip without knowing whether the coin is
@@ -30,12 +30,18 @@ public class SettingsEntryConditions
     // the first five minutes (median -0.219% against, versus -0.223%). They only start to differ
     // further out, which is why this waits instead of testing an indicator at signal time.
     //
-    // Keep this BELOW EntryRemoveTime * interval duration, or GiveUp removes the signal before the
-    // wait is over and nothing is ever entered. With EntryRemoveTime = 5 a 5m signal lives 25
-    // minutes, so 15 costs nothing extra - the signal was being kept alive anyway. Waiting longer
-    // means keeping signals in SignalList longer, and that list is walked for every symbol on every
-    // candle.
-    public int EntryWaitMinutes { get; set; } = 0;
+    // This was EntryWaitMinutes until 29-08-2026, and minutes turned out to measure four different
+    // things at once. A signal is only re-examined when a candle of its own interval closes, so a
+    // wait in minutes is rounded UP to the next candle: on runs 492/493 a setting of 5 and one of
+    // 15 produced an identical 15, 30 and 60 minute delay on the 15m, 30m and 1h signals, and
+    // differed only on 5m. One number, four meanings, and the two runs were not comparable on
+    // anything except their 5m entries. In candles the delay is the same everywhere.
+    //
+    // Keep this BELOW EntryRemoveTime, or GiveUp removes the signal before the wait is over and
+    // nothing is ever entered - both are now counted in candles of the same interval, so that is a
+    // straight comparison. Waiting longer also means keeping signals in SignalList longer, and that
+    // list is walked for every symbol on every candle.
+    public int EntryWaitCandles { get; set; } = 0;
 
     // How far price may run AGAINST the signal during that wait, as a positive percentage of the
     // signal price. Zero means no limit: the wait then only delays the entry, it does not skip any.

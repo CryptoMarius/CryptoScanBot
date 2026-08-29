@@ -140,8 +140,8 @@ public class SignalCreateBase
             // ever be entered - the expiry above always wins from the watch window. Say so in
             // every reject instead of producing a silent zero-trade run.
             var entryConditions = ResolveEntryConditions();
-            if (entryConditions.EntryWaitMinutes > 0 && !WatchWindowHasPassed(signal, entryConditions))
-                ExtraText += $" (EntryWaitMinutes {entryConditions.EntryWaitMinutes} never elapsed within the signal's lifetime, no entry is ever made)";
+            if (entryConditions.EntryWaitCandles > 0 && !WatchWindowHasPassed(signal, entryConditions))
+                ExtraText += $" (EntryWaitCandles {entryConditions.EntryWaitCandles} never elapsed within the signal's lifetime, no entry is ever made)";
             return true;
         }
 
@@ -176,7 +176,7 @@ public class SignalCreateBase
     protected bool TrackAndRejectOnAdverseMove(CryptoSignal signal)
     {
         var settings = ResolveEntryConditions();
-        if (settings.EntryWaitMinutes <= 0)
+        if (settings.EntryWaitCandles <= 0)
             return false;
 
         // Without a limit the wait only delays the entry - there is nothing the tracking
@@ -209,14 +209,24 @@ public class SignalCreateBase
 
 
     /// <summary>
-    /// Whether the EntryWaitMinutes watch window has elapsed, measured from the signal candle's
+    /// Whether the EntryWaitCandles watch window has elapsed, measured from the signal candle's
     /// open time to the open of the candle being evaluated.
+    /// <para>
+    /// The window is expressed in candles of the SIGNAL'S OWN interval, not in wall-clock time. A
+    /// signal is only re-examined when a candle of that interval closes, so a wall-clock window is
+    /// rounded up to the next candle anyway - which made one setting mean four different delays
+    /// across a run with 5m, 15m, 30m and 1h signals. Multiplying by the interval duration here
+    /// makes the delay the same number of candles on every interval.
+    /// </para>
     /// </summary>
     protected bool WatchWindowHasPassed(CryptoSignal signal, SettingsEntryConditions settings)
     {
-        if (settings.EntryWaitMinutes <= 0)
+        if (settings.EntryWaitCandles <= 0)
             return true;
-        DateTime enterFrom = signal.OpenDate.AddMinutes(settings.EntryWaitMinutes);
+        // signal.Interval, not the algorithm's Interval: the signal carries the interval it was
+        // created on, and that is the one whose candles drive its re-examination.
+        double minutes = (double)settings.EntryWaitCandles * signal.Interval.Duration;
+        DateTime enterFrom = signal.OpenDate.AddMinutes(minutes);
         return CandleLast.Candle.OpenTime.ToDateTime() >= enterFrom;
     }
 
@@ -504,7 +514,7 @@ public class SignalCreateBase
         // us or because EntryRemoveTime expired.
         if (!WatchWindowHasPassed(signal, settings))
         {
-            ExtraText = $"watching for {settings.EntryWaitMinutes} minutes after the signal";
+            ExtraText = $"watching for {settings.EntryWaitCandles} candle(s) after the signal";
             return false;
         }
 
