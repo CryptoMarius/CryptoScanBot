@@ -260,6 +260,70 @@ public class CandleDatabase : IDisposable
             ") WITHOUT ROWID");
 
         VerifySchemaVersion(db.Connection, exchange);
+        VerifyExchangeName(db.Connection, exchange);
+    }
+
+
+    /// <summary>
+    /// Keeps <c>Meta.ExchangeName</c> in step with the market this file belongs to.
+    ///
+    /// The stamp is written once, when the file is created, and no schema migration since has
+    /// touched it. So after 27-08-2026, when every derivatives market was renamed from
+    /// "&lt;exchange&gt; Futures" to "&lt;exchange&gt; Perpetual", every store that already existed kept
+    /// the old name. Database version 87 renamed the FILES and left what is inside them alone,
+    /// which is the gap this closes: without it those stores read as "copied from another exchange"
+    /// for the rest of their life, on a candle history that is perfectly correct.
+    ///
+    /// Only that one rename is accepted, and only when the exchange part matches to the letter.
+    /// Any other difference is left exactly as it is and reported instead - "Binance Spot" in the
+    /// "Binance Perpetual" folder is precisely what the stamp exists to catch, and rewriting that
+    /// one too would turn the guard into a rubber stamp.
+    ///
+    /// Reported, not thrown: this runs on every save pass, and refusing to open the store over a
+    /// name would cost a whole night of candles for something that costs nothing to read past.
+    /// </summary>
+    private static void VerifyExchangeName(SqliteConnection connection, Model.CryptoExchange exchange)
+    {
+        string? stored = connection.QueryFirstOrDefault<string>(
+            "SELECT Value FROM Meta WHERE Key = 'ExchangeName'");
+
+        if (string.Equals(stored, exchange.Name, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (!string.IsNullOrEmpty(stored) && !IsNameBeforeTheRename(stored, exchange.Name))
+        {
+            GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: this file is stamped as " +
+                $"'{stored}', which is another market. Its candles are used as {exchange.Name} " +
+                $"anyway - move the file aside if that is not what you want.");
+            return;
+        }
+
+        // Either there is no stamp (a file from before the Meta table carried one) or it is the
+        // pre-rename name of this same market. Both describe THIS market, so record what it is
+        // called today and the file stops looking foreign.
+        connection.Execute(
+            "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('ExchangeName', $Name)",
+            new { Name = exchange.Name });
+
+        if (!string.IsNullOrEmpty(stored))
+            GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: stamp updated from '{stored}'");
+    }
+
+
+    /// <summary>
+    /// Whether <paramref name="stored"/> is what <paramref name="current"/> was called before the
+    /// rename of 27-08-2026. Mirrors the SQL of database version 87 - "&lt;exchange&gt; Futures"
+    /// became "&lt;exchange&gt; Perpetual" - so nothing but that suffix may differ.
+    /// </summary>
+    private static bool IsNameBeforeTheRename(string stored, string current)
+    {
+        const string was = " Futures";
+        const string now = " Perpetual";
+
+        if (!current.EndsWith(now, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return string.Equals(stored, current[..^now.Length] + was, StringComparison.OrdinalIgnoreCase);
     }
 
 
