@@ -23,7 +23,6 @@ In latest editions we also try to show dominant zones and FVG (see chart form).
 
 The list at the top is the current state, all of those are switched on and scanning. A few more are in the source but switched off, because they cannot deliver what the scanner needs: BitMart floods the log with rate limit errors, Coinbase only streams 5m candles which is too coarse, BloFin has no spot client in the library we use, and the european Bybit entity lists no futures contracts at all. The application is built in a mix of English and Dutch, because a number of tools have been combined (please indicate whether any texts are disturbing and/or should be adjusted), so apologies in advance for English crypto terms, for an explanation you have to be on the internet or ask in a crypto group what it means (but always do your own research first).
 
-Furthermore: Very nice that you try this application, below is an explanation of what the application does, the installation, necessary settings and so on. I hope you enjoy trading, the communities and so on. Good luck in this special world!
+Furthermore: Very nice that you try this application, in the wiki you can find an explanation of what the application does, the installation, necessary settings etc.. I hope you enjoy trading, the communities and have some luck in this special world!
 
-![CryptoMarius_CryptoScanBot](https://github.com/user-attachments/assets/1509b67c-6891-4d32-9a4b-e6cdebd61022)
-![HBARUSDT chart form](https://github.com/user-attachments/assets/6e94d55e-309d-4f93-a6ff-1c226227306e)
+<img width="1920" height="1200" alt="Main screen + signals" src="https://github.com/user-attachments/assets/7f50955d-66bd-416c-b9cf-b7cd1eee4b29" />
