@@ -38,7 +38,7 @@
                 <CheckBox IsChecked="{Binding SendSignalsToTelegram, Mode=TwoWay}"
                           Content="Stuur meldingen naar telegram" FontSize="12"
                           VerticalAlignment="Center"/>
-                <Button Content="Stop/Start"  Command="{Binding StartStopTelegramCommand}" Width="90"
+                <Button Content="{Binding StartStopCaption}"  Command="{Binding StartStopTelegramCommand}" Width="90"
                         FontSize="12"/> <Button Content="Test" Command="{Binding TestTelegramCommand}"
                         Width="75" FontSize="12"/>
             </StackPanel>

@@ -36,29 +36,99 @@ public static class ThreadTelegramBot
     public static string Token { get; set; } = "";
     public static string ChatId { get; set; } = "";
     private static ThreadTelegramBotInstance? bot;
+    private static Task? botTask;
+
+    /// <summary>
+    /// Whether the polling loop is running. The settings screens put this on their Start/Stop button.
+    /// </summary>
+    public static bool IsRunning => bot != null;
 
 
-    public static async Task Start(string token, string chatId)
+    /// <summary>
+    /// Start the bot. Returns false when Telegram refuses the token, which is what the settings
+    /// screen wants to know; the reason is in the log.
+    /// </summary>
+    public static async Task<bool> Start(string token, string chatId)
     {
         // herstart?
         if (bot != null)
-            Stop();
+            await StopAsync();
 
         //GlobalData.AddTextToLogTab(string.Format("Start telegram handler"));
         Token = token;
         ChatId = chatId;
 
-        bot = new();
-        await bot.ExecuteAsync(token);
+        ThreadTelegramBotInstance instance = new();
+        if (!await instance.PrepareAsync(token))
+            return false;
+        bot = instance;
+
+        // Everything AddTextToTelegram() gathers travels over this event: the startup message, the
+        // position notifications, the Altrady webhook and the test button of the settings screen.
+        // Nothing has been subscribed to it since the winforms ui was removed in f3cb6623
+        // (11-12-2025), so all of that went nowhere. Subscribing here and dropping it in StopAsync
+        // keeps the subscription alive exactly as long as the bot is.
+        GlobalData.LogToTelegram -= SendMessage;
+        GlobalData.LogToTelegram += SendMessage;
+
+        // ExecuteAsync does not return until the bot is stopped, so it gets a task of its own.
+        // Awaiting it here hung the caller: ApplyConfigurationAsync awaits this method, and never
+        // reached its ScheduleRefresh and the messages behind it whenever the token had changed.
+        botTask = Task.Run(async () =>
+        {
+            try
+            {
+                await instance.ExecuteAsync(token);
+            }
+            finally
+            {
+                // The loop can also end on its own (a withdrawn token, an error it cannot recover
+                // from). Clearing the state here keeps IsRunning honest for the button.
+                if (ReferenceEquals(bot, instance))
+                {
+                    bot = null;
+                    GlobalData.LogToTelegram -= SendMessage;
+                }
+            }
+        });
+        return true;
     }
 
 
+    /// <summary>
+    /// Stop the bot and wait for the polling loop to end. ScannerSession hands this method to
+    /// Task.Run, which is why the blocking form is kept next to <see cref="StopAsync"/>.
+    /// </summary>
     public static void Stop()
     {
-        if (bot != null)
+        StopAsync().GetAwaiter().GetResult();
+    }
+
+
+    public static async Task StopAsync()
+    {
+        ThreadTelegramBotInstance? instance = bot;
+        if (instance == null)
+            return;
+
+        //GlobalData.AddTextToLogTab(string.Format("Stop telegram handler"));
+        bot = null;
+        GlobalData.LogToTelegram -= SendMessage;
+        instance.Stop();
+
+        Task? running = botTask;
+        botTask = null;
+        if (running != null)
         {
-            //GlobalData.AddTextToLogTab(string.Format("Stop telegram handler"));
-            bot.Stop();
+            try
+            {
+                // Cancelling aborts the poll that is in flight, so this returns straight away. The
+                // loop logs its own failures, there is nothing to pass on here.
+                await running;
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 
@@ -164,6 +234,40 @@ public class ThreadTelegramBotInstance
     }
 
 
+    /// <summary>
+    /// Build the client and ask Telegram who we are. False means the token was refused - that is the
+    /// answer the settings screen is after, and the reason is in the log.
+    /// </summary>
+    public async Task<bool> PrepareAsync(string token)
+    {
+        if (token == "")
+            return false;
+
+        // System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+        //    // Extra parameters vanwege ambigious constructor (die ik niet geheel kon volgen)
+        try
+        {
+            // Both of these have to end up in the log instead of on the caller's doorstep, because
+            // two settings screens await this by way of ThreadTelegramBot.Start: the client refuses
+            // a token that is not shaped like one, and getMe says whether Telegram accepts it.
+            bot = new(token); //, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot"
+            //SendMessage("Started telegram bot!");
+
+            var me = await bot.GetMeAsync();
+            //GlobalData.AddTextToLogTab($"Hello, World! I am user {me.Id} and my name is {me.FirstName}.");
+            //return; //t'ding crasht en is niet fijn
+            return true;
+        }
+        catch (Exception error)
+        {
+            bot = null;
+            // One line, no stack trace - AddErrorToLogTab writes to the logger itself
+            GlobalData.AddErrorToLogTab($"ERROR telegram thread {error.Message}");
+            return false;
+        }
+    }
+
+
     public async Task ExecuteAsync(string token)
     {
         if (token == "")
@@ -171,22 +275,17 @@ public class ThreadTelegramBotInstance
 
         // Bij het testen staat vaak de scanner aan, daarom bij sql telegram ff uit
 
-        // System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-        //    // Extra parameters vanwege ambigious constructor (die ik niet geheel kon volgen)
+        // Started through ThreadTelegramBot.Start the client is already built and the token already
+        // checked; this is here for a caller that skips that step.
+        if (bot == null && !await PrepareAsync(token))
+            return;
+        // PrepareAsync either filled the client in or returned false, so it is there by now.
+        // Spelled out because the compiler cannot see that through the condition above.
+        if (bot == null)
+            return;
+
         try
         {
-            // Inside the try: the client refuses a token that is not shaped like one, and both
-            // the Avalonia and the Photino settings screen await this method, so that refusal
-            // has to end up in the log here instead of on the caller's doorstep.
-            bot = new(token); //, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot"
-            //SendMessage("Started telegram bot!");
-
-            var me = await bot.GetMeAsync();
-            //GlobalData.AddTextToLogTab($"Hello, World! I am user {me.Id} and my name is {me.FirstName}.");
-            //return; //t'ding crasht en is niet fijn
-
-
-
             //// StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
             //ReceiverOptions receiverOptions = new()
             //{

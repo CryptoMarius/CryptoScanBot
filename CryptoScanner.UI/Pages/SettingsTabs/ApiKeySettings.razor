@@ -29,7 +29,7 @@
                 <input type="checkbox" class="input-checkbox" @bind="_telegramSendSignals" />
                 <label>Stuur meldingen naar telegram</label>
                 <span class="field-control">
-                    <button class="btn btn-secondary" @onclick="StartStopTelegram">Stop/Start</button>
+                    <button class="btn btn-secondary" @onclick="StartStopTelegram">@(ThreadTelegramBot.IsRunning ? "Stop" : "Start")</button>
                     <button class="btn btn-secondary" @onclick="TestTelegram">Test</button>
                 </span>
             </div>
@@ -104,14 +104,35 @@
         return string.IsNullOrEmpty(text) || text.Length < 4 ? "" : $"{text[..3]}.. {text[^3..]}";
     }
 
+    /// <summary>
+    /// Stop the bot, or start it with the token that is typed in the screen at this moment. That is
+    /// the point of the button: trying out a changed token without restarting the scanner. The
+    /// settings themselves are only written by SaveInto.
+    /// </summary>
     private async Task StartStopTelegram()
     {
-        await ThreadTelegramBot.Start(_telegramToken, _telegramChatId);
+        if (ThreadTelegramBot.IsRunning)
+        {
+            await ThreadTelegramBot.StopAsync();
+            GlobalData.AddTextToLogTab("Telegram bot stopped");
+        }
+        else
+        {
+            if (await ThreadTelegramBot.Start(_telegramToken.Trim(), _telegramChatId.Trim()))
+                GlobalData.AddTextToLogTab("Telegram bot started");
+            // A refused token is reported by Start itself, on the same log tab
+        }
     }
 
     private void TestTelegram()
     {
-        ThreadTelegramBot.ChatId = _telegramChatId;
+        ThreadTelegramBot.ChatId = _telegramChatId.Trim();
+        if (!ThreadTelegramBot.IsRunning)
+        {
+            // Without this the button did nothing at all and said nothing either
+            GlobalData.AddTextToLogTab("Telegram bot is not running, press Start first");
+            return;
+        }
         GlobalData.AddTextToTelegram("This is a test message");
     }
 

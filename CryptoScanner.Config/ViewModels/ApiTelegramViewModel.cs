@@ -28,7 +28,13 @@ public partial class ApiTelegramViewModel : ObservableObject
     private string _chatIdDisplay = ""; // Display version
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StartStopCaption))]
     private bool _isTelegramRunning = false; // For Start/Stop button state
+
+    /// <summary>
+    /// Caption of the Start/Stop button, so the screen shows whether the bot is running.
+    /// </summary>
+    public string StartStopCaption => IsTelegramRunning ? "Stop" : "Start";
 
     partial void OnTokenChanged(string value)
     {
@@ -51,6 +57,7 @@ public partial class ApiTelegramViewModel : ObservableObject
         ChatId = settings.ChatId;
         EmojiInTrend = settings.EmojiInTrend;
         SendSignalsToTelegram = settings.SendSignalsToTelegram;
+        IsTelegramRunning = ThreadTelegramBot.IsRunning;
     }
 
     public void SaveConfig(SettingsTelegram settings)
@@ -61,17 +68,38 @@ public partial class ApiTelegramViewModel : ObservableObject
         settings.SendSignalsToTelegram = SendSignalsToTelegram;
     }
 
+    /// <summary>
+    /// Stop the bot, or start it with the token that is typed in the screen at this moment. That is
+    /// the point of the button: trying out a changed token without restarting the scanner. The
+    /// settings themselves are only written by SaveConfig.
+    /// </summary>
     [RelayCommand]
     private async Task StartStopTelegram()
     {
-        await ThreadTelegramBot.Start(Token, ChatId);
-        IsTelegramRunning = !IsTelegramRunning;
+        if (ThreadTelegramBot.IsRunning)
+        {
+            await ThreadTelegramBot.StopAsync();
+            GlobalData.AddTextToLogTab("Telegram bot stopped");
+        }
+        else
+        {
+            if (await ThreadTelegramBot.Start(Token.Trim(), ChatId.Trim()))
+                GlobalData.AddTextToLogTab("Telegram bot started");
+            // A refused token is reported by Start itself, on the same log tab
+        }
+        IsTelegramRunning = ThreadTelegramBot.IsRunning;
     }
 
     [RelayCommand]
     private void TestTelegram()
     {
-        ThreadTelegramBot.ChatId = ChatId;
+        ThreadTelegramBot.ChatId = ChatId.Trim();
+        if (!ThreadTelegramBot.IsRunning)
+        {
+            // Without this the button did nothing at all and said nothing either
+            GlobalData.AddTextToLogTab("Telegram bot is not running, press Start first");
+            return;
+        }
         GlobalData.AddTextToTelegram("This is a test message");
     }
 }
