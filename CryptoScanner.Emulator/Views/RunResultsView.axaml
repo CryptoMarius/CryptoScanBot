@@ -56,7 +56,9 @@
 				<DataGridTextColumn Header="Period" Binding="{Binding Period}" Width="210"/>
 				<DataGridTextColumn Header="Finished" Binding="{Binding FinishedLocal}" Width="130" IsVisible="False"/>
 				<DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="90"/>
-                <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="90"/>
+                <!-- Wide enough for "duplicate of run 515": a recognised repeat is recorded as a row
+                     whose Result names the run it matched, so the reference has to be readable. -->
+                <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="160"/>
                 <DataGridTemplateColumn Header="Signals" Width="65" SortMemberPath="SignalCount">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

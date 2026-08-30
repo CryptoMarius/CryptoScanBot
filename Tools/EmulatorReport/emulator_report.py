@@ -356,6 +356,15 @@ def dca_breakdown_from_summary(buckets):
     return rows
 
 
+def label_with_result(run):
+    """The run label, with a warning appended when the run did not complete. Without it a cancelled
+    run sits in the table looking like a measurement."""
+    result = run.get("result", "")
+    if result and result != "completed":
+        return "{} — LET OP: {}".format(run["label"], result)
+    return run["label"]
+
+
 def measure_run(connection, row):
     positions = load_positions(connection, row["Id"])
     summary = stored_summary(row)
@@ -384,6 +393,11 @@ def measure_run(connection, row):
         "label": row["Label"] or "",
         "started": (row["StartedAt"] or "")[:16],
         "git_sha": str(column(row, "GitSha", ""))[:8],
+        # "completed", "cancelled", "failed: ...", or "duplicate of run N". A run that did not
+        # finish measured only the part it got to, and its profit reads exactly like a bad result:
+        # run 483 was read as "3m + 5m loses money" on 23 positions before anyone noticed it had
+        # been stopped. Carried through so the label can say so.
+        "result": str(column(row, "Result", "") or ""),
         "days": days,
         "signals": row["SignalCount"] or 0,
         "positions": row["PositionCount"] or 0,
@@ -625,7 +639,7 @@ def write_markdown(runs, ladders, groups):
             pct = 100 * run["profit"] / run["peak_capital"] if run["peak_capital"] else 0
             lines.append("| {} | {} | {} | {} | {} | {} | {} | {} | {} | {:+.2f} | {} "
                          "| {} | {:.2f} | {:.2f} | {} | {} | {} | {} | {} | {} | {} |".format(
-                             run["id"], run["label"],
+                             run["id"], label_with_result(run),
                              format_percentages(variables["take_profit"]),
                              "-" if variables["stop_loss"] is None else "%g%%" % variables["stop_loss"],
                              format_percentages(variables["dca"]),
@@ -650,7 +664,7 @@ def write_markdown(runs, ladders, groups):
         for run in metDca:
             for row in run["dca_breakdown"]:
                 lines.append("| {} | {} | {} | {} | {:.1f}% | {:+.2f} | {:+.4f} | {:.0f}% | {:.2f} |".format(
-                    run["id"], run["label"], dca_label(row["fills"]), row["count"], row["share"],
+                    run["id"], label_with_result(run), dca_label(row["fills"]), row["count"], row["share"],
                     row["profit"], row["per_trade"], row["win_rate"], row["avg_invested"]))
         lines.append("")
 

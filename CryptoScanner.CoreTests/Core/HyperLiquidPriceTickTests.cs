@@ -1,4 +1,4 @@
-using HyperLiquidPerpetual = CryptoScanner.Core.Exchange.HyperLiquid.Perpetual.Symbol;
+﻿using HyperLiquidPerpetual = CryptoScanner.Core.Exchange.HyperLiquid.Perpetual.Symbol;
 
 namespace CryptoScanner.CoreTests.Core;
 

@@ -8,9 +8,9 @@ namespace CryptoScanner.CoreTests.Emulator;
 /// naming the experiment, so a repeat under a new name has to hash the same, while anything that
 /// reaches the replay has to change the hash.
 /// <para>
-/// Measured on the 540 runs in Session1: 111 of them reproduce an earlier run exactly. Five of
-/// those are from the queue era - runs 484 to 488 repeat 479 to 483 - and cost 72 minutes for
-/// numbers that were already on the row.
+/// Measured on the 538 completed runs in Session1 with a fourteen-day window: 109 of them would be
+/// recorded as a repeat. Four are from the queue era - runs 484 to 487 repeat 479 to 482 - and cost
+/// 57 minutes for numbers that were already on the row.
 /// </para>
 /// </summary>
 [TestClass]
@@ -112,8 +112,8 @@ public class EmulatorRunFingerprintTests : TestBase
     public void WithoutAWindowTheCheckReachesBackNoFurtherThanTheBuild()
     {
         // A run from before the current build may have been produced by different code, so it does
-        // not count as already measured. Runs 483 and 488 have byte-identical settings and produced
-        // -11.20 and +437.99 two hours apart, with a repaired signal condition in between.
+        // not count as already measured. Runs 507 and 509 differ only in code and produced +432.07
+        // and +734.17.
         DateTime? since = EmulatorRunFingerprint.GetRecentSince(0);
 
         Assert.IsNotNull(since);

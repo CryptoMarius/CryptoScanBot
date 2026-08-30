@@ -63,9 +63,10 @@ public static class EmulatorRunFingerprint
     /// <para>
     /// The floor is the build time of the running emulator: an earlier run on the SAME build cannot
     /// produce a different answer, while a run from before it can - the code in between may have
-    /// changed what a replay does. That is not a theoretical worry. Runs 483 and 488 have
-    /// byte-identical settings and produced -11.20 over 23 positions and +437.99 over 1987
-    /// positions, two hours apart, with a repaired signal condition in between.
+    /// changed what a replay does. How much that matters is on record: runs 507 and 509 differ only
+    /// in code and produced +432.07 and +734.17. Their checksums differ too (a setting was renamed
+    /// in the same change), so no case of an IDENTICAL checksum straddling a code change has
+    /// actually been observed - the floor is precaution, not a repair.
     /// </para>
     /// <para>
     /// On its own that floor is too strict to be useful, because the emulator is rebuilt often and

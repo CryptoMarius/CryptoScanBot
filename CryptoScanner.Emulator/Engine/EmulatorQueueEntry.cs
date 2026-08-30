@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Settings;
 
 using System.Text.Json;
 
@@ -229,11 +229,11 @@ public class EmulatorQueueEntry
     /// <summary>
     /// Runs this entry even when the same configuration was already measured on this build.
     /// <para>
-    /// Without it the queue skips an entry whose configuration checksum matches a completed run
-    /// from the current build - see <see cref="EmulatorRunFingerprint"/>. That check is deliberately
-    /// blunt, so this is the way out when a run has to be repeated anyway: verifying that a replay
-    /// is still deterministic, or re-measuring after something outside the settings changed (the
-    /// candle database, for instance).
+    /// Without it an entry whose configuration checksum matches an earlier completed run is recorded
+    /// as a duplicate and not replayed - see <see cref="EmulatorRunFingerprint"/>. That check is
+    /// deliberately blunt, so this is the way out when a run has to be repeated anyway: verifying
+    /// that a replay is still deterministic, or re-measuring after something outside the settings
+    /// changed (the candle database, for instance).
     /// </para>
     /// </summary>
     public bool Force { get; set; }
