@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Emulator.Engine;
 
@@ -58,6 +58,36 @@ public class EmulatorRunConfig
     /// Settings.Trading.PaperAssetStartCapital.
     /// </summary>
     public decimal StartCapital { get; set; } = 10000m;
+
+    /// <summary>
+    /// Whether the paper balances constrain this run (Settings.Trading.UseAssetManagement for the
+    /// duration of the run). On: an entry is paid out of the free balance and a position is only
+    /// opened when the entry and its DCA levels fit, so the run can run out of money. Off: the
+    /// balances are still booked - so the equity curve stays available - but nothing is refused for
+    /// lack of money and every entry is the plain entry amount of the quote coin.
+    /// </summary>
+    public bool UseAssetManagement { get; set; } = true;
+
+    /// <summary>
+    /// How far back a queue entry is compared against runs that already exist, in days. An entry
+    /// whose configuration checksum matches one of them is recorded as a duplicate instead of being
+    /// replayed - see <see cref="EmulatorRunFingerprint"/>.
+    /// <para>
+    /// The window is always at least "since the emulator was built", because an earlier run on the
+    /// same build cannot produce a different answer. This number widens it beyond that, which is
+    /// what makes the check useful in practice: the emulator is rebuilt often, and without it the
+    /// first queue after every rebuild compares against nothing.
+    /// </para>
+    /// <para>
+    /// The wider the window, the larger the chance that a run from before a code change is treated
+    /// as the same measurement - runs 507 and 509 share their settings and produced +432.07 and
+    /// +734.17. That is why a match is recorded rather than silently dropped: the row says which run
+    /// it matched, and "Force": true on the queue entry replays it anyway. Fourteen days covers the
+    /// current way of working (a series of experiments over a week or two). 0 = only since the
+    /// build, negative = no check at all.
+    /// </para>
+    /// </summary>
+    public int DuplicateCheckDays { get; set; } = 14;
 
     /// <summary>
     /// Column header text of the last user-chosen sort in the Results grid.

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -21,6 +21,23 @@
                           DisplayMemberBinding="{Binding Key}"
                           SelectedValueBinding="{Binding Value}"
                           FontSize="12"/>
+            </Grid>
+
+            <!-- Asset management -->
+            <CheckBox IsChecked="{Binding UseAssetManagement, Mode=TwoWay}"
+                      Content="Asset management"
+                      FontSize="12"
+                      ToolTip.Tip="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode."/>
+
+            <!-- Paper Start Capital -->
+            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                  ToolTip.Tip="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets.">
+                <TextBlock Grid.Column="0" Text="Paper start capital:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding PaperAssetStartCapital, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
             <!-- Sound Trade Notification -->

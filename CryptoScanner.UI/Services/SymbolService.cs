@@ -112,15 +112,36 @@ public class SymbolService : IDisposable
     /// </summary>
     public CryptoInterval? SelectedInterval { get; private set; }
 
+    /// <summary>
+    /// Lifetime of the position the chart was opened from, null when the caller has none to give.
+    /// The chart page draws that stretch of history instead of the clock window — see the remarks
+    /// on ChartWindowViewModel.WindowStart, which is the same idea in the Avalonia chart.
+    /// <see cref="SelectedWindowEnd"/> is null for a position that is still open: "until now".
+    /// </summary>
+    public DateTime? SelectedWindowStart { get; private set; }
+    public DateTime? SelectedWindowEnd { get; private set; }
+
     public void SetSelectedSymbol(CryptoSymbol? symbol) => SetSelectedSymbol(symbol, null);
 
     public void SetSelectedSymbol(CryptoSymbol? symbol, CryptoInterval? interval)
+        => SetSelectedSymbol(symbol, interval, null, null);
+
+    public void SetSelectedSymbol(CryptoSymbol? symbol, CryptoInterval? interval,
+        DateTime? windowStart, DateTime? windowEnd)
     {
         // An interval on its own counts as a change: double clicking a 15m signal while the chart
-        // already shows that same symbol on 1h still has to move the chart to 15m.
-        bool changed = SelectedSymbol != symbol || (interval != null && interval != SelectedInterval);
+        // already shows that same symbol on 1h still has to move the chart to 15m. So does a
+        // window: two closed positions on the same symbol and interval differ in nothing else.
+        bool changed = SelectedSymbol != symbol
+            || (interval != null && interval != SelectedInterval)
+            || windowStart != SelectedWindowStart
+            || windowEnd != SelectedWindowEnd;
+
         SelectedSymbol = symbol;
         SelectedInterval = interval;
+        SelectedWindowStart = windowStart;
+        SelectedWindowEnd = windowEnd;
+
         if (changed)
             SelectedSymbolChanged?.Invoke();
     }

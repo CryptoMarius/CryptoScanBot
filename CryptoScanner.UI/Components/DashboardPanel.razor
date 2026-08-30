@@ -87,7 +87,10 @@
 
     <!-- Section 3: Barometer chart (400x100) -->
     <div class="dashboard-section dashboard-chart-section">
-        @if (DashboardService.BarometerChartPoints.Count > 0)
+        @* Not on the points alone: the barometer symbols already hold the candles of the
+           previous run while this session is still fetching, and drawing those hid the progress
+           text underneath. See DashboardService.BarometerChartReady. *@
+        @if (DashboardService.BarometerChartReady && DashboardService.BarometerChartPoints.Count > 0)
         {
             @((MarkupString)RenderBarometerSvg())
         }

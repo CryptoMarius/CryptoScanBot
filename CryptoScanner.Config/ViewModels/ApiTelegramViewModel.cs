@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Telegram;
 
@@ -16,10 +17,22 @@ public partial class ApiTelegramViewModel : ObservableObject
     private string _chatId = ""; // string (EXACT match)
 
     [ObservableProperty]
+    private bool _enabled = true; // bool (EXACT match)
+
+    [ObservableProperty]
     private bool _emojiInTrend = true; // bool (EXACT match)
 
     [ObservableProperty]
     private bool _sendSignalsToTelegram = false; // bool (EXACT match)
+
+    [ObservableProperty]
+    private bool _sendOrdersToTelegram = true; // bool (EXACT match)
+
+    [ObservableProperty]
+    private bool _sendFilledOrdersToTelegram = true; // bool (EXACT match)
+
+    [ObservableProperty]
+    private bool _sendSystemMessagesToTelegram = true; // bool (EXACT match)
 
     [ObservableProperty]
     private string _tokenDisplay = ""; // Display version
@@ -55,8 +68,12 @@ public partial class ApiTelegramViewModel : ObservableObject
     {
         Token = settings.Token;
         ChatId = settings.ChatId;
+        Enabled = settings.Enabled;
         EmojiInTrend = settings.EmojiInTrend;
         SendSignalsToTelegram = settings.SendSignalsToTelegram;
+        SendOrdersToTelegram = settings.SendOrdersToTelegram;
+        SendFilledOrdersToTelegram = settings.SendFilledOrdersToTelegram;
+        SendSystemMessagesToTelegram = settings.SendSystemMessagesToTelegram;
         IsTelegramRunning = ThreadTelegramBot.IsRunning;
     }
 
@@ -64,8 +81,12 @@ public partial class ApiTelegramViewModel : ObservableObject
     {
         settings.Token = Token.Trim();
         settings.ChatId = ChatId.Trim();
+        settings.Enabled = Enabled;
         settings.EmojiInTrend = EmojiInTrend;
         settings.SendSignalsToTelegram = SendSignalsToTelegram;
+        settings.SendOrdersToTelegram = SendOrdersToTelegram;
+        settings.SendFilledOrdersToTelegram = SendFilledOrdersToTelegram;
+        settings.SendSystemMessagesToTelegram = SendSystemMessagesToTelegram;
     }
 
     /// <summary>
@@ -100,6 +121,6 @@ public partial class ApiTelegramViewModel : ObservableObject
             GlobalData.AddTextToLogTab("Telegram bot is not running, press Start first");
             return;
         }
-        GlobalData.AddTextToTelegram("This is a test message");
+        GlobalData.AddTextToTelegram("This is a test message", CryptoTelegramCategory.Test);
     }
 }

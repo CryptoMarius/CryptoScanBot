@@ -224,8 +224,12 @@ public class PaperAssets
         {
             asset.Locked = lockedPerAsset.TryGetValue(asset.Name, out decimal locked) ? locked : 0;
             asset.Free = asset.Total - asset.Locked;
-            if (asset.Free < 0)
-                asset.Free = 0; // an asset cannot have more reserved than it holds
+            // An asset cannot have more reserved than it holds - as long as asset management is what
+            // hands out the money. With it switched off the trader spends money it does not have on
+            // purpose, and flooring the result here would hide exactly the number the run is meant
+            // to show.
+            if (asset.Free < 0 && GlobalData.Settings.Trading.UseAssetManagement)
+                asset.Free = 0;
         }
     }
 
@@ -295,12 +299,15 @@ public class PaperAssets
     public static void UpdateAsset(Model.CryptoExchange activeExchange, CryptoDatabase database, SqliteTransaction transaction, CryptoAsset asset)
     {
         // Quote
-        if (asset.Total < 0)
+        // The floors only apply while asset management guards the entries; without that guard a
+        // balance is allowed to go negative, see RecalculateLocked.
+        bool useAssetManagement = GlobalData.Settings.Trading.UseAssetManagement;
+        if (asset.Total < 0 && useAssetManagement)
             asset.Total = 0; // fix
         if (asset.Locked < 0)
             asset.Locked = 0; // fix
         asset.Free = asset.Total - asset.Locked;
-        if (asset.Free < 0)
+        if (asset.Free < 0 && useAssetManagement)
             asset.Free = 0; // fix
 
         // Only drop an asset once it is really gone: nothing left AND nothing reserved for an open

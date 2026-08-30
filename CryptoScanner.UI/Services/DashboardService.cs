@@ -170,6 +170,29 @@ public class DashboardService : IDisposable
     /// </summary>
     public int BarometerChartVersion { get; private set; }
 
+    /// <summary>
+    /// True once the barometer has actually been calculated for THIS session. The panel keeps
+    /// its loading animation - and with it the candle fetching progress - until then.
+    /// <para>
+    /// The chart is drawn from the candles of the internal barometer symbols, and those come out
+    /// of candles.db: they are the history of the PREVIOUS run and sit in memory long before the
+    /// exchange has delivered a single candle for this one. Drawing them put a graph on screen
+    /// within seconds of the start that no measurement of this session backed, and it replaced
+    /// the placeholder that carries the fetching progress - so the one moment that progress is
+    /// worth reading was the one moment it was not visible.
+    /// </para>
+    /// <para>
+    /// Avalonia never had this: CalculateBarometer() refuses to run while the application status
+    /// is not Running, so its bitmap simply does not exist yet. Here the flag follows the refresh
+    /// message instead, which is sent right after the first calculation - ThreadLoadData already
+    /// sends it for exactly this purpose, even when that calculation failed.
+    /// </para>
+    /// </summary>
+    public bool BarometerChartReady { get; private set; }
+
+    /// <summary>Whether the application was running on the previous poll, see <see cref="UpdateBarometerChartReady"/>.</summary>
+    private bool _wasRunning;
+
     // Fingerprint of what BarometerChartPoints currently holds. Poll() runs every 2 seconds while
     // the barometer produces one candle per MINUTE, so without this the point list was rebuilt (and
     // reported as changed, repainting the whole panel) about 30 times per new measurement.
@@ -252,6 +275,9 @@ public class DashboardService : IDisposable
     {
         BarometerChartPoints = [];
         BarometerChartVersion++;
+        // The new exchange has to calculate its own barometer first (Avalonia sets ChartImage to
+        // null here for the same reason).
+        BarometerChartReady = false;
         // The new exchange has its own candle list; without this the fingerprint of the old one
         // could match it by accident and the chart would stay empty.
         ResetBarometerChartStamp();
@@ -275,7 +301,12 @@ public class DashboardService : IDisposable
     {
         if (_disposed)
             return;
-        bool changed = UpdateBarometers();
+
+        // A calculation of this session has run, so the chart may be shown, see BarometerChartReady.
+        bool changed = !BarometerChartReady;
+        BarometerChartReady = true;
+
+        changed |= UpdateBarometers();
         changed |= UpdateBarometerChart();
         changed |= UpdateBarometerTime();
         if (changed)
@@ -294,6 +325,7 @@ public class DashboardService : IDisposable
         changed |= UpdateCryptoPrices();
         changed |= UpdateExchangeName();
         changed |= UpdateApplicationStatus();
+        changed |= UpdateBarometerChartReady();
         // Refresh the chart on every tick instead of only in PollSlow. PollSlow runs once at
         // startup (when no candles are loaded yet) and then only once a minute, which is why the
         // loading animation kept spinning for a minute or two after the candles were already in.
@@ -322,6 +354,25 @@ public class DashboardService : IDisposable
 
         if (changed)
             DashboardChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// A stop or a restart begins a new load, and with it a new candle catch-up. Hand the panel
+    /// back to its loading animation so the progress of that catch-up is readable again, and so
+    /// the graph of the previous session is not presented as the current one.
+    /// </summary>
+    private bool UpdateBarometerChartReady()
+    {
+        bool running = IsRunning;
+        bool wasRunning = _wasRunning;
+        _wasRunning = running;
+
+        if (wasRunning && !running && BarometerChartReady)
+        {
+            BarometerChartReady = false;
+            return true;
+        }
+        return false;
     }
 
     private bool UpdateApplicationStatus()

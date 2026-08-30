@@ -92,6 +92,40 @@ public class SettingsGeneral
 
     public int GetCandleInterval { get; set; } = 60;
 
+    /// <summary>
+    /// What THIS scanner may spend per minute on HyperLiquid, in the exchange's own weight units.
+    /// <para>
+    /// It is a share and not a budget: HyperLiquid counts per IP ADDRESS, so every scanner on this
+    /// machine that talks to HyperLiquid draws from the same pool. One scanner may have all of it,
+    /// two have to be set to half each. Nothing enforces that across processes - a scanner cannot
+    /// see the others - so this number is the place where the division is stated by hand.
+    /// </para>
+    /// <para>
+    /// Measured on 30-08-2026 (see CryptoScanner.Exchanges/HyperLiquid/HyperLiquid.md): the address
+    /// was allowed about 3730 weight per minute, three times the 1200 the documentation names. 3000
+    /// is a lone scanner at some distance below the measured figure. Halve it before starting a
+    /// second HyperLiquid market alongside it, and read back "delay needed because of rate limits"
+    /// in the log - that line, and only that line, means the exchange itself refused.
+    /// </para>
+    /// <para>
+    /// Takes effect when the exchange is (re)activated, so on a restart or an exchange switch.
+    /// </para>
+    /// </summary>
+    public int HyperLiquidWeightPerMinute { get; set; } = HyperLiquidWeightPerMinuteDefault;
+
+    /// <summary>Default of <see cref="HyperLiquidWeightPerMinute"/>: one scanner having the address
+    /// to itself, at some distance below the 3730 that was measured on 30-08-2026.</summary>
+    public const int HyperLiquidWeightPerMinuteDefault = 3000;
+
+    /// <summary>Lower bound of <see cref="HyperLiquidWeightPerMinute"/>: below this a start of a
+    /// hundred symbols would take longer than the hour between two refresh cycles.</summary>
+    public const int HyperLiquidWeightPerMinuteMinimum = 200;
+
+    /// <summary>Upper bound of <see cref="HyperLiquidWeightPerMinute"/>. The measurement of
+    /// 30-08-2026 put the address at about 3730 weight per minute; this stays under it, because
+    /// past that point every request costs five seconds of retry instead of buying speed.</summary>
+    public const int HyperLiquidWeightPerMinuteMaximum = 3600;
+
     // Wil not be supported?
     public bool HideSelectedRow { get; set; } = false;
     public bool ShowInvalidSignals { get; set; } = false;

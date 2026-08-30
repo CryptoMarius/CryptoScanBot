@@ -395,26 +395,70 @@ function createSegmentPrimitive() {
                     // Captions of the band overlays. Sorted by time, and one is skipped when it
                     // would land on top of the previous one — so zooming in reveals more of them
                     // instead of leaving an unreadable pile at every band break.
+                    //
+                    // Several captions can belong to the SAME candle and the same side: VBS sends a
+                    // stop-loss and a take-profit line per band break. Those were both drawn at the
+                    // very same spot, so the skip below dropped the second one every single time and
+                    // the take-profit line was never on screen. They are stacked outward from the bar
+                    // instead - the first one nearest to it, in the order the overlay emitted them -
+                    // and the skip then works per candle, so a stack survives or is dropped whole.
                     var lastRight = { above: -1e9, below: -1e9 };
+                    var lineHeight = 12 * vRatio;
                     ctx.font = Math.round(10 * vRatio) + 'px sans-serif';
-                    source._labels.forEach(function (l) {
-                        var y = source._series.priceToCoordinate(l.price);
-                        if (!isFinite(y)) return;
 
+                    var index = 0;
+                    while (index < source._labels.length) {
+                        // The labels are sorted by time and Array.sort keeps equal elements in their
+                        // original order, so one candle's captions sit together in emission order.
+                        var first = source._labels[index];
+                        var group = [first];
+                        while (index + group.length < source._labels.length) {
+                            var candidate = source._labels[index + group.length];
+                            if (candidate.time !== first.time || !candidate.above !== !first.above)
+                                break;
+                            group.push(candidate);
+                        }
+                        index += group.length;
+
+                        // null, not NaN, is what these two return for a price or a time they cannot
+                        // place, and isFinite(null) is true - so an unplaceable caption used to be
+                        // drawn at coordinate 0 instead of being skipped.
                         var x = null;
-                        try { x = timeScale.timeToCoordinate(l.time); } catch (e) { x = null; }
-                        if (!isFinite(x)) return;
+                        try { x = timeScale.timeToCoordinate(first.time); } catch (e) { x = null; }
+                        if (x === null || !isFinite(x)) continue;
 
-                        var w = ctx.measureText(l.text).width;
+                        // Widest line of the stack decides whether it fits next to the previous one
+                        var w = 0;
+                        for (var g = 0; g < group.length; g++)
+                            w = Math.max(w, ctx.measureText(group[g].text).width);
+
                         var left = x * hRatio - w / 2;
-                        var lane = l.above ? 'above' : 'below';
-                        if (left < lastRight[lane]) return;
+                        var lane = first.above ? 'above' : 'below';
+                        if (left < lastRight[lane]) continue;
                         lastRight[lane] = left + w + 6 * hRatio;
 
-                        ctx.fillStyle = l.color || '#ffffff';
-                        ctx.textBaseline = l.above ? 'bottom' : 'top';
-                        ctx.fillText(l.text, left, y * vRatio + (l.above ? -8 : 8) * vRatio);
-                    });
+                        ctx.textBaseline = first.above ? 'bottom' : 'top';
+
+                        var previous = null;
+                        for (var k = 0; k < group.length; k++) {
+                            var l = group[k];
+                            var y = source._series.priceToCoordinate(l.price);
+                            if (y === null || !isFinite(y)) continue;
+
+                            // Each caption starts at its own price, but never lands on top of the
+                            // one before it: overlays that mark the same candle keep their own
+                            // anchor while a pair sharing one anchor ends up as two clean lines.
+                            var yText = y * vRatio + (first.above ? -8 : 8) * vRatio;
+                            if (previous !== null)
+                                yText = first.above
+                                    ? Math.min(yText, previous - lineHeight)
+                                    : Math.max(yText, previous + lineHeight);
+                            previous = yText;
+
+                            ctx.fillStyle = l.color || '#ffffff';
+                            ctx.fillText(l.text, x * hRatio - ctx.measureText(l.text).width / 2, yText);
+                        }
+                    }
                     }
                     finally {
                         ctx.restore();
@@ -466,6 +510,88 @@ function createSegmentPrimitive() {
     return SegmentPrimitive;
 }
 
+/// Full-height vertical lines at given times, for the sub-panels.
+///
+/// The main chart draws its position markers as segments between two prices, which is what keeps
+/// them clear of the candle wicks. A sub-panel has no meaningful price to bound them by — the point
+/// there is only "this moment", carried down through volume, RSI/stochastic and MACD so the eye can
+/// follow one instant across all four panes. So: no prices, top to bottom of whatever pane it is
+/// attached to.
+function createVerticalPrimitive() {
+    class VerticalRenderer {
+        constructor(source) { this._source = source; }
+
+        draw(target) {
+            var source = this._source;
+            if (!source._chart || !source._lines || source._lines.length === 0)
+                return;
+
+            try {
+                var timeScale = source._chart.timeScale();
+                target.useBitmapCoordinateSpace(function (scope) {
+                    var ctx = scope.context;
+                    var hRatio = scope.horizontalPixelRatio;
+                    var vRatio = scope.verticalPixelRatio;
+                    var heightPx = scope.mediaSize.height;
+
+                    ctx.save();
+                    try {
+                        // Same dotted pattern as the vertical open markers on the main chart
+                        ctx.setLineDash([2 * hRatio, 4 * hRatio]);
+                        ctx.lineWidth = Math.max(1, Math.round(hRatio));
+
+                        source._lines.forEach(function (line) {
+                            var x = null;
+                            try { x = timeScale.timeToCoordinate(line.time); } catch (e) { x = null; }
+                            if (x === null || !isFinite(x)) return;
+
+                            ctx.strokeStyle = line.color || '#888888';
+                            ctx.beginPath();
+                            ctx.moveTo(x * hRatio, 0);
+                            ctx.lineTo(x * hRatio, heightPx * vRatio);
+                            ctx.stroke();
+                        });
+                    }
+                    finally {
+                        ctx.restore();
+                    }
+                });
+            }
+            catch (e) {
+                if (window.console) console.error('vertical overlay draw failed', e);
+            }
+        }
+    }
+
+    class VerticalPaneView {
+        constructor(source) { this._renderer = new VerticalRenderer(source); }
+        renderer() { return this._renderer; }
+        // Behind the data: these are reference marks, not something to read a value off
+        zOrder() { return 'bottom'; }
+    }
+
+    class VerticalPrimitive {
+        constructor(lines) {
+            this._lines = lines || [];
+            this._paneView = new VerticalPaneView(this);
+        }
+        attached(param) {
+            this._chart = param.chart;
+            this._series = param.series;
+            this._requestUpdate = param.requestUpdate;
+        }
+        detached() { }
+        paneViews() { return [this._paneView]; }
+        updateAllViews() { }
+        setLines(lines) {
+            this._lines = lines || [];
+            if (this._requestUpdate) this._requestUpdate();
+        }
+    }
+
+    return VerticalPrimitive;
+}
+
 window.ChartWidget = {
     _charts: {},
     _isDark: true,
@@ -476,6 +602,11 @@ window.ChartWidget = {
     _RectanglePrimitive: null,
     _SegmentPrimitive: null,
     _MeasurePrimitive: null,
+    _VerticalPrimitive: null,
+
+    // Times the position markers stand at, carried down into the sub-panels. Held here because the
+    // panels are rebuilt on every setData and have to be able to ask for them again.
+    _verticals: [],
     _measurePrimitive: null,
     _measureHandlers: null,
     _verticalHandlers: null,
@@ -502,6 +633,7 @@ window.ChartWidget = {
         this._RectanglePrimitive = createRectanglePrimitive();
         this._SegmentPrimitive = createSegmentPrimitive();
         this._MeasurePrimitive = createMeasurePrimitive();
+        this._VerticalPrimitive = createVerticalPrimitive();
         this.dispose();
         this._createMainChart();
         this._attachVerticalControl();
@@ -968,20 +1100,26 @@ window.ChartWidget = {
             chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
         }).observe(container);
 
-        this._syncTimeScale(chart);
-        return { chart: chart, container: container, series: {} };
+        // Keep the handler: the sub-charts are destroyed and rebuilt on every setData, and the
+        // subscription this puts on the MAIN chart outlives them unless it is cancelled.
+        var mainHandler = this._syncTimeScale(chart);
+        return { chart: chart, container: container, series: {}, mainRangeHandler: mainHandler };
     },
 
+    /// Two-way link between the main chart and one sub-panel. Returns the handler installed on the
+    /// MAIN chart, which the caller must hand back to _unsyncTimeScale when the sub-chart goes —
+    /// see _removeSubCharts.
     _syncTimeScale: function (subChart) {
         var self = this;
         var mainChart = this._charts.main.chart;
 
-        mainChart.timeScale().subscribeVisibleLogicalRangeChange(function (range) {
+        var mainHandler = function (range) {
             if (self._syncing || !range) return;
             self._syncing = true;
             try { subChart.timeScale().setVisibleLogicalRange(range); } catch (e) { }
             self._syncing = false;
-        });
+        };
+        mainChart.timeScale().subscribeVisibleLogicalRangeChange(mainHandler);
 
         subChart.timeScale().subscribeVisibleLogicalRangeChange(function (range) {
             if (self._syncing || !range) return;
@@ -994,6 +1132,72 @@ window.ChartWidget = {
             self._syncing = true;
             try { mainChart.timeScale().setVisibleLogicalRange(range); } catch (e) { }
             self._syncing = false;
+        });
+
+        return mainHandler;
+    },
+
+    /// Hang the position markers in one sub-panel. Any of its series will do as the anchor — a
+    /// primitive draws over the whole pane, it does not belong to the series it is attached to.
+    _attachVerticals: function (entry) {
+        if (!entry || !this._VerticalPrimitive) return;
+
+        var keys = Object.keys(entry.series || {});
+        if (keys.length === 0) return;
+
+        try {
+            var primitive = new this._VerticalPrimitive(this._verticals);
+            entry.series[keys[0]].attachPrimitive(primitive);
+            entry.verticalPrimitive = primitive;
+        } catch (e) { }
+    },
+
+    /// The time axis belongs on the BOTTOM pane, so the sub-panels sit above it instead of each
+    /// being cut off by an axis of their own (or, as before, by no axis at all while the main chart
+    /// kept it halfway up the screen). Which pane that is depends on what is switched on, so it is
+    /// decided here, after the panels exist, rather than fixed when they are created.
+    ///
+    /// Chart.razor reserves the extra height for it — see BottomPanelKey there; the order below is
+    /// the order of the panes in that markup and the two have to agree.
+    _applyBottomTimeScale: function () {
+        var order = ['main', 'volume', 'oscillator', 'macd'];
+
+        var bottom = 'main';
+        for (var i = 0; i < order.length; i++) {
+            if (this._charts[order[i]]) bottom = order[i];
+        }
+
+        for (var j = 0; j < order.length; j++) {
+            var entry = this._charts[order[j]];
+            if (!entry) continue;
+            try { entry.chart.applyOptions({ timeScale: { visible: order[j] === bottom } }); }
+            catch (e) { }
+        }
+    },
+
+    /// Drop every sub-panel, subscription included.
+    ///
+    /// The subscription is the point. Each rebuild used to add another handler to the MAIN chart
+    /// pointing at a sub-chart that had just been removed, so after a few overlay clicks the main
+    /// chart fired a growing stack of handlers on every scroll. Each one takes the _syncing guard,
+    /// throws on its dead chart and releases it again — which left the guard held at the moment the
+    /// live panel's handler ran, so the panels stopped following, and the main chart could be
+    /// dragged off its own candles by a range that belonged to nothing. That is the chart going
+    /// black after the third click on an overlay.
+    _removeSubCharts: function () {
+        var self = this;
+        Object.keys(this._charts).forEach(function (key) {
+            if (key === 'main') return;
+
+            var entry = self._charts[key];
+            if (entry.mainRangeHandler) {
+                try {
+                    self._charts.main.chart.timeScale()
+                        .unsubscribeVisibleLogicalRangeChange(entry.mainRangeHandler);
+                } catch (e) { }
+            }
+            try { entry.chart.remove(); } catch (e) { }
+            delete self._charts[key];
         });
     },
 
@@ -1136,7 +1340,13 @@ window.ChartWidget = {
         // to its own data and reports that through subscribeVisibleLogicalRangeChange, and the
         // two-way sync then pushes that range onto the main chart. Those callbacks arrive after
         // setData has returned, so the plain _syncing flag never caught them.
+        //
+        // Numbered, because the guard is released from a setTimeout and two runs can overlap:
+        // clicking overlays quickly queues one setData behind another, and the older run's timeout
+        // would then clear the flag while the newer run is still rebuilding its panels — letting
+        // through exactly the callbacks this is here to block. Only the newest run releases it.
         this._settingData = true;
+        var setDataRun = ++this._setDataRun;
 
         // Remember where the user was looking, so a toggle does not move the chart.
         //
@@ -1254,12 +1464,11 @@ window.ChartWidget = {
             });
         }
 
-        // Remove old sub-charts (except main)
-        Object.keys(this._charts).forEach(function (key) {
-            if (key === 'main') return;
-            try { self._charts[key].chart.remove(); } catch (e) { }
-            delete self._charts[key];
-        });
+        // Remove old sub-charts (except main), subscriptions included
+        this._removeSubCharts();
+
+        // Set BEFORE the panels are built: each one picks these up as it is created
+        this._verticals = (extras && extras.verticals) ? extras.verticals : [];
 
         // Create sub-panels
         if (panels) {
@@ -1271,11 +1480,31 @@ window.ChartWidget = {
             if (panels.macd) this._createMacdPanel(panels.macd);
         }
 
+        // Which pane carries the time axis depends on which of them exist, so this comes last
+        this._applyBottomTimeScale();
+
         // Only reset the view when the chart shows something else than before. Fitting on every
         // call threw away the zoom and scroll position on each overlay toggle.
         if (this._pendingFit) {
             this._pendingFit = false;
-            this._zoomLast(candles ? candles.length : 0);
+
+            // The PRICE axis has to come back too, not just the time axis. Dragging that axis turns
+            // autoScale off and the manual range then sticks - across a symbol change as well. A
+            // coin at 3.46 shown on a scale still set to 84..91 draws its candles far below the
+            // pane: an empty chart, with nothing on screen saying why.
+            try { mainEntry.chart.priceScale('right').applyOptions({ autoScale: true }); } catch (e) { }
+
+            // Opened from a position: the interesting stretch sits in the MIDDLE of the series,
+            // with margin candles drawn on both sides, so zooming to the last N would land past it.
+            if (this._pendingWindow) {
+                var w = this._pendingWindow;
+                this._pendingWindow = null;
+                try { mainEntry.chart.timeScale().setVisibleRange({ from: w.time1, to: w.time2 }); }
+                catch (e) { this._zoomLast(candles ? candles.length : 0); }
+            }
+            else {
+                this._zoomLast(candles ? candles.length : 0);
+            }
         }
         else if (visibleTimeRange) {
             try { mainEntry.chart.timeScale().setVisibleRange(visibleTimeRange); }
@@ -1289,7 +1518,77 @@ window.ChartWidget = {
 
         // Release the sync guard only once the sub-charts have settled. Their range callbacks are
         // queued, not immediate, so clearing it here and now would let them through after all.
-        setTimeout(function () { self._settingData = false; }, 0);
+        setTimeout(function () {
+            // A newer setData took over; it owns the guard and will release it itself.
+            if (self._setDataRun !== setDataRun) return;
+
+            self._settingData = false;
+
+            // After the pane has laid out, so priceToCoordinate answers on the scale actually in
+            // use. An overlay toggle does not go through the reset above, which is how ticking a
+            // band on and off could leave the candles off screen for good. Time axis first: a
+            // window with no bars in it makes the price question meaningless.
+            self._ensureCandlesInView(candles);
+            self._ensureCandlesVisible(candles);
+        }, 0);
+    },
+
+    _setDataRun: 0,
+
+
+    /// Safety net for a time scale scrolled clear of the candles. A price scale off its range still
+    /// leaves an axis to read; a time scale off its range leaves nothing at all — no candles, no
+    /// price axis, an empty pane — which is what a rebuilt sub-panel pushing its own range onto the
+    /// main chart used to cause. Snaps back to the last candles only when not a single bar is in
+    /// view, so a deliberate scroll into the empty space on the right is left alone.
+    _ensureCandlesInView: function (candles) {
+        var mainEntry = this._charts.main;
+        if (!mainEntry || !candles || candles.length === 0) return;
+
+        try {
+            var range = mainEntry.chart.timeScale().getVisibleLogicalRange();
+            if (!range) return;
+
+            // Logical indices run 0..length-1 over the bars themselves; anything outside that on
+            // both sides means the window sits entirely before or entirely after the series.
+            if (range.to < 0 || range.from > candles.length - 1)
+                this._zoomLast(candles.length);
+        } catch (e) { }
+    },
+
+    /// Safety net for a price scale that no longer covers the candles at all.
+    ///
+    /// autoScale is deliberately switched off by lightweight-charts as soon as the price axis is
+    /// dragged, and that is worth keeping - a manual range is a choice. What is not a choice is
+    /// that range surviving a switch to a coin two orders of magnitude away, or an overlay whose
+    /// values pushed the scale somewhere the candles are not. The chart then looks broken with no
+    /// way back except a double click on an axis nobody knows is clickable.
+    ///
+    /// Only fires when EVERY candle is outside the pane. A deliberate zoom always keeps some of
+    /// them in view, so a real manual range is never taken away.
+    _ensureCandlesVisible: function (candles) {
+        var mainEntry = this._charts.main;
+        if (!mainEntry || !candles || candles.length === 0) return;
+
+        var height = mainEntry.container.clientHeight;
+        if (!height) return;
+
+        var high = -Infinity, low = Infinity;
+        for (var i = 0; i < candles.length; i++) {
+            if (candles[i].high > high) high = candles[i].high;
+            if (candles[i].low < low) low = candles[i].low;
+        }
+        if (!isFinite(high) || !isFinite(low)) return;
+
+        try {
+            var yHigh = mainEntry.series.candles.priceToCoordinate(high);
+            var yLow = mainEntry.series.candles.priceToCoordinate(low);
+            if (yHigh === null || yLow === null) return;
+
+            // Both ends above the top edge, or both below the bottom edge: nothing is on screen.
+            if ((yHigh < 0 && yLow < 0) || (yHigh > height && yLow > height))
+                mainEntry.chart.priceScale('right').applyOptions({ autoScale: true });
+        } catch (e) { }
     },
 
     // How many candles the initial view shows. fitContent squeezed the whole loaded history into
@@ -1301,6 +1600,20 @@ window.ChartWidget = {
         if (typeof count === 'number' && count > 0)
             this._zoomCandles = count;
     },
+
+    /// Land the next reset-view on an explicit time window instead of on the last candles. Pass
+    /// {time1, time2} in the same UTC seconds the candles use — _localizeTimes shifts those two
+    /// keys along with everything else, so the window and the candles stay on one clock. Cleared
+    /// by the setData that consumes it; call it again for the next window.
+    zoomToWindow: function (window) {
+        if (!window) {
+            this._pendingWindow = null;
+            return;
+        }
+        this._pendingWindow = this._localizeTimes({ time1: window.time1, time2: window.time2 });
+    },
+
+    _pendingWindow: null,
 
     _zoomLast: function (candleCount) {
         var timeScale = this._charts.main.chart.timeScale();
@@ -1322,6 +1635,14 @@ window.ChartWidget = {
     /// Ask the next setData to zoom to the most recent candles again (symbol or interval changed).
     resetView: function () {
         this._pendingFit = true;
+    },
+
+    /// Hand the price axis back to autoScale without touching the time axis, so the reload button
+    /// fixes a scale that was dragged out of range while keeping the stretch you were looking at.
+    /// The double click on the axis does the same thing, but nothing on screen says it exists.
+    resetPriceScale: function () {
+        if (!this._charts.main) return;
+        try { this._charts.main.chart.priceScale('right').applyOptions({ autoScale: true }); } catch (e) { }
     },
 
     _applySegments: function (segments) {
@@ -1364,6 +1685,7 @@ window.ChartWidget = {
             };
         }));
         entry.series.volume = series;
+        this._attachVerticals(entry);
         this._charts.volume = entry;
     },
 
@@ -1492,6 +1814,7 @@ window.ChartWidget = {
             this._addPriceLine(obSeries, 100, luxLevel, 2, '', false);
         }
 
+        this._attachVerticals(entry);
         this._charts.oscillator = entry;
     },
 
@@ -1523,6 +1846,7 @@ window.ChartWidget = {
         entry.series.histogram = histSeries;
         entry.series.macd = macdSeries;
         entry.series.signal = signalSeries;
+        this._attachVerticals(entry);
         this._charts.macd = entry;
     },
 

@@ -11,6 +11,8 @@ using CryptoScanner.Core.Model;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
+using System.Text.Json;
+
 namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
@@ -176,24 +178,50 @@ public static class EmulatorDb
 
 
     /// <summary>
+    /// Whether a run's aggregates may be recomputed from the position table.
+    ///
+    /// <para>
+    /// No, when the table holds no positions for it while the run row says it had some: those
+    /// positions were archived away, and the counters and summary on the row ARE the run now.
+    /// Recomputing would replace them with zeros and destroy the only record that is left. Session0
+    /// is the whole argument - 6.366 runs of stored aggregates and an empty Position table, so one
+    /// press of Recalculate would wipe out every result in it.
+    /// </para>
+    /// <para>
+    /// A run that genuinely traded nothing (a zone strategy with an empty interval list, say) has a
+    /// stored count of zero as well, so it loses nothing by being skipped.
+    /// </para>
+    /// </summary>
+    internal static bool CanRecalculate(int positionsInTable, int storedPositionCount) =>
+        positionsInTable > 0 || storedPositionCount <= 0;
+
+
+    /// <summary>
     /// Fills a run's stored aggregates from its current signals and positions: signal/position
     /// counts, the open/won/lost/timeout split, and the realised Profit and Invested totals over the
     /// CLOSED positions. Profit/Invested are stored as TEXT (decimal), so they are CAST to REAL for the
     /// numeric comparison and SUM. Caller is responsible for persisting the run (Update).
+    ///
+    /// <para>Returns false and changes nothing when the run's positions are gone; see
+    /// <see cref="CanRecalculate"/>.</para>
     /// </summary>
-    private static void ComputeRunStats(CryptoDatabase database, CryptoEmulatorRun run)
+    private static bool ComputeRunStats(CryptoDatabase database, CryptoEmulatorRun run)
     {
         int id = run.Id;
         int timeoutStatus = (int)CryptoPositionStatus.Timeout;
         int cancelledStatus = (int)CryptoPositionStatus.Cancelled;
+
+        int positions = database.Connection.ExecuteScalar<int>(
+            "select count(*) from position where EmulatorRunId = @id", new { id });
+        if (!CanRecalculate(positions, run.PositionCount))
+            return false;
 
         // Because we delete the signals afterwards (db gets way to large)
         int count = database.Connection.ExecuteScalar<int>(
             "select count(*) from signal where EmulatorRunId = @id", new { id });
         if (count > 0)
             run.SignalCount = count;
-        run.PositionCount = database.Connection.ExecuteScalar<int>(
-            "select count(*) from position where EmulatorRunId = @id", new { id });
+        run.PositionCount = positions;
 
         // Outcome split. Open = no CloseTime yet. Timeout = the entry order never filled (status
         // Timeout) — it never became a real trade, so it is excluded from Won/Lost and counted on its
@@ -219,31 +247,180 @@ public static class EmulatorDb
         double invested = database.Connection.ExecuteScalar<double?>(
             "select sum(CAST(Invested as REAL)) from position where EmulatorRunId = @id and CloseTime is not null", new { id }) ?? 0.0;
         run.Invested = (decimal)invested;
+
+        ComputeRunSummary(database, run);
+        return true;
     }
 
 
     /// <summary>
-    /// Recomputes and stores the aggregates (counts, open/won/lost split, Profit and Invested) for the
-    /// given runs from their current signals and positions. Use to backfill runs created before a stat
-    /// column existed (e.g. Invested → the Profit % column) or after positions were edited. Does NOT
-    /// touch FinishedAt/Result/config. Returns the number of runs updated.
+    /// Fills the part of the run row that is DERIVED from its positions and therefore has to be
+    /// computed while they are still there: peak capital and peak position count, the long/short
+    /// split, the average winner and loser, the position durations, and the DCA breakdown.
+    ///
+    /// <para>
+    /// Everything here is scoped to the positions that actually put money to work: closed, and with
+    /// a positive Invested. A cancelled or timed-out entry never became a trade and would otherwise
+    /// drag every average towards zero.
+    /// </para>
     /// </summary>
-    public static int RecalculateRuns(IEnumerable<int> runIds)
+    private static void ComputeRunSummary(CryptoDatabase database, CryptoEmulatorRun run)
+    {
+        int id = run.Id;
+
+        // Peak capital: walk the open and close moments and keep the running total's high-water mark.
+        var peak = database.Connection.QueryFirstOrDefault<PeakRow>(PeakExposureSql, new { id });
+        run.PeakInvested = (decimal)(peak?.Money ?? 0.0);
+        run.PeakPositions = (int)(peak?.Positions ?? 0.0);
+
+        // Long and short kept apart. A short's stop sits nearer and its target further, so a
+        // directional claim can only be made per side - the aggregate hides exactly that.
+        run.PositionsLong = 0;
+        run.PositionsShort = 0;
+        run.ProfitLong = 0m;
+        run.ProfitShort = 0m;
+        foreach (var row in database.Connection.Query<SideRow>(
+            "select Side, count(*) as Trades, sum(CAST(Profit as REAL)) as Profit from position " +
+            "where " + TradedPositions + " group by Side", new { id }))
+        {
+            if (row.Side == (int)CryptoTradeSide.Long)
+            {
+                run.PositionsLong = row.Trades;
+                run.ProfitLong = (decimal)row.Profit;
+            }
+            else
+            {
+                run.PositionsShort = row.Trades;
+                run.ProfitShort = (decimal)row.Profit;
+            }
+        }
+
+        // Mean winner and mean loser. With PositionsOpen they say what the run becomes if every
+        // still-open position ends as the average winner, and as the average loser - which is how a
+        // run with a lot of them has to be read, because the winners already closed at take profit
+        // and what is left leans to the losing side.
+        run.AverageWin = (decimal)(database.Connection.ExecuteScalar<double?>(
+            "select avg(CAST(Profit as REAL)) from position where " + TradedPositions + " and CAST(Profit as REAL) > 0",
+            new { id }) ?? 0.0);
+        run.AverageLoss = (decimal)(database.Connection.ExecuteScalar<double?>(
+            "select avg(CAST(Profit as REAL)) from position where " + TradedPositions + " and (Profit is null or CAST(Profit as REAL) <= 0)",
+            new { id }) ?? 0.0);
+
+        // Durations, so the Results grid no longer has to aggregate the whole Position table on every
+        // refresh - and still shows them once the positions are archived away.
+        var duration = database.Connection.QueryFirstOrDefault<DurationRow>(
+            "select avg((julianday(CloseTime) - julianday(CreateTime)) * 86400) as AvgDurationSec, " +
+            "       min((julianday(CloseTime) - julianday(CreateTime)) * 86400) as MinDurationSec, " +
+            "       max((julianday(CloseTime) - julianday(CreateTime)) * 86400) as MaxDurationSec " +
+            "from position where " + TradedPositions, new { id });
+        run.AvgDurationSec = duration?.AvgDurationSec;
+        run.MinDurationSec = duration?.MinDurationSec;
+        run.MaxDurationSec = duration?.MaxDurationSec;
+
+        // The DCA breakdown, on PartCount (the parts that actually FILLED) and not on ActiveDca -
+        // that one is a bool saying a DCA order is still pending, and mixing the two up makes the
+        // averaged-down positions look like they win every time.
+        var breakdown = database.Connection.Query<CryptoDcaBucket>(
+            "select PartCount as Parts, count(*) as Count, " +
+            "       sum(case when CAST(Profit as REAL) > 0 then 1 else 0 end) as Won, " +
+            "       sum(CAST(Profit as REAL)) as Profit, sum(CAST(Invested as REAL)) as Invested " +
+            "from position where " + TradedPositions + " group by PartCount order by PartCount", new { id }).AsList();
+
+        run.DcaBreakdownJson = breakdown.Count > 0 ? JsonSerializer.Serialize(breakdown) : null;
+    }
+
+
+    /// <summary>
+    /// The positions of one run that actually put money to work: closed, and with a positive
+    /// Invested. A cancelled or timed-out entry never became a trade and would otherwise drag every
+    /// average in the summary towards zero.
+    /// </summary>
+    internal const string TradedPositions =
+        "EmulatorRunId = @id and CloseTime is not null and CAST(Invested as REAL) > 0";
+
+    /// <summary>
+    /// Peak capital and the peak number of simultaneously open positions, in one pass: turn every
+    /// position into an open event and a close event, run a signed total over them in time order and
+    /// keep the high-water mark of both.
+    /// <para>
+    /// The ordering carries the only real decision here. At an identical timestamp the closes go
+    /// first, because <c>order by At, Amount</c> puts the negative deltas in front - a position that
+    /// frees its money in the same minute another one takes it does not stack. That is the
+    /// conservative reading, and it is what makes the answer stable when many positions open on the
+    /// same candle.
+    /// </para>
+    /// </summary>
+    internal const string PeakExposureSql =
+        "select max(Money) as Money, max(Positions) as Positions from (" +
+        "  select sum(Amount) over (order by At, Amount rows between unbounded preceding and current row) as Money, " +
+        "         sum(One) over (order by At, Amount rows between unbounded preceding and current row) as Positions " +
+        "  from (" +
+        "    select CreateTime as At, CAST(Invested as REAL) as Amount, 1 as One from position where " + TradedPositions +
+        "    union all " +
+        "    select CloseTime as At, -CAST(Invested as REAL) as Amount, -1 as One from position where " + TradedPositions +
+        "  )" +
+        ")";
+
+    /// <summary>Projection for the peak-exposure query; both aggregates come back as REAL.</summary>
+    internal class PeakRow
+    {
+        public double? Money { get; set; }
+        public double? Positions { get; set; }
+    }
+
+
+    /// <summary>Projection for the per-side totals.</summary>
+    private class SideRow
+    {
+        public int Side { get; set; }
+        public int Trades { get; set; }
+        public double Profit { get; set; }
+    }
+
+
+    /// <summary>Projection for the duration aggregates; all three are null without closed positions.</summary>
+    private class DurationRow
+    {
+        public double? AvgDurationSec { get; set; }
+        public double? MinDurationSec { get; set; }
+        public double? MaxDurationSec { get; set; }
+    }
+
+
+    /// <summary>
+    /// Recomputes and stores the aggregates (counts, open/won/lost split, Profit and Invested) plus
+    /// the run summary for the given runs from their current signals and positions. Use to backfill
+    /// runs created before a stat column existed (e.g. Invested → the Profit % column, or the whole
+    /// summary added in database version 91) or after positions were edited. Does NOT touch
+    /// FinishedAt/Result/config.
+    ///
+    /// <para>
+    /// Runs whose positions have been archived away are LEFT ALONE - see <see cref="CanRecalculate"/>.
+    /// Returns how many were updated and how many were skipped for that reason, so the caller can say
+    /// so rather than reporting a smaller number without explanation.
+    /// </para>
+    /// </summary>
+    public static (int Updated, int Skipped) RecalculateRuns(IEnumerable<int> runIds)
     {
         using var database = new CryptoDatabase();
         database.Open();
 
         int updated = 0;
+        int skipped = 0;
         foreach (int id in runIds)
         {
             var run = database.Connection.Get<CryptoEmulatorRun>(id);
             if (run == null)
                 continue;
-            ComputeRunStats(database, run);
+            if (!ComputeRunStats(database, run))
+            {
+                skipped++;
+                continue;
+            }
             database.Connection.Update(run);
             updated++;
         }
-        return updated;
+        return (updated, skipped);
     }
 
 
@@ -280,7 +457,7 @@ public static class EmulatorDb
 
 
     /// <summary>Recalculates every run in the EmulatorRun table. Convenience wrapper for the full backfill.</summary>
-    public static int RecalculateAllRuns()
+    public static (int Updated, int Skipped) RecalculateAllRuns()
     {
         List<int> ids;
         using (var database = new CryptoDatabase())

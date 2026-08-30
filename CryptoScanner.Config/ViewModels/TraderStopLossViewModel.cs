@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Settings;
 
@@ -18,12 +18,16 @@ public partial class TraderStopLossViewModel : ObservableObject
     [ObservableProperty]
     private decimal _moveSlToBreakEvenPercentage = 0.5m;
 
+    [ObservableProperty]
+    private decimal _moveSlToBreakEvenSlPercentage = 0.5m;
+
     public void LoadConfig(SettingsTrading settings)
     {
         StopLossPercentage = settings.StopLossPercentage;
         StopLossLimitPercentage = settings.StopLossLimitPercentage;
         MoveSlToBreakEven = settings.MoveSlToBreakEven;
         MoveSlToBreakEvenPercentage = settings.MoveSlToBreakEvenPercentage;
+        MoveSlToBreakEvenSlPercentage = settings.MoveSlToBreakEvenSlPercentage;
     }
 
     public void SaveConfig(SettingsTrading settings)
@@ -32,5 +36,6 @@ public partial class TraderStopLossViewModel : ObservableObject
         settings.StopLossLimitPercentage = StopLossLimitPercentage;
         settings.MoveSlToBreakEven = MoveSlToBreakEven;
         settings.MoveSlToBreakEvenPercentage = MoveSlToBreakEvenPercentage;
+        settings.MoveSlToBreakEvenSlPercentage = MoveSlToBreakEvenSlPercentage;
     }
 }

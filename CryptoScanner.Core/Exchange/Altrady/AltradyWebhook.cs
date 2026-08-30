@@ -1,4 +1,5 @@
 ﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -322,7 +323,7 @@ public class AltradyWebhook
             // log response
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook result {result} {info}");
             ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name}Altrady webhook result {result} {info}");
-            GlobalData.AddTextToTelegram($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook {position.Side} price={position.EntryPrice}", position);
+            GlobalData.AddTextToTelegram($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook {position.Side} price={position.EntryPrice}", position, CryptoTelegramCategory.OrderPlaced);
         }
         catch (HttpRequestException error)
         {

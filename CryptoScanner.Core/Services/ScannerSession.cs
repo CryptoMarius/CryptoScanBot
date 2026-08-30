@@ -200,7 +200,16 @@ public class ScannerSession : IScannerSession
         }
 
         // Restart Telegram if token changed
-        if (GlobalData.Telegram.Token != ThreadTelegramBot.Token || GlobalData.Telegram.ChatId != ThreadTelegramBot.ChatId)
+        if (!GlobalData.Telegram.Enabled)
+        {
+            // Switching Telegram off stops the bot. The remembered token has to go as well: it is what
+            // the comparison below looks at, so leaving it there would make an unchanged token compare
+            // equal and the bot would never come back when Telegram is switched on again.
+            await ThreadTelegramBot.StopAsync();
+            ThreadTelegramBot.Token = "";
+            ThreadTelegramBot.ChatId = "";
+        }
+        else if (GlobalData.Telegram.Token != ThreadTelegramBot.Token || GlobalData.Telegram.ChatId != ThreadTelegramBot.ChatId)
             await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
         //ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
     }
@@ -476,7 +485,7 @@ public class ScannerSession : IScannerSession
     private async void TimerRestartStreams_Tick(object? sender, EventArgs? e)
     {
         GlobalData.AddTextToLogTab("ScannerSession.Restart");
-        GlobalData.AddTextToTelegram("ScannerSession.Restart");
+        GlobalData.AddTextToTelegram("ScannerSession.Restart", CryptoTelegramCategory.System);
 
         TimerRestartStreams.Enabled = false;
         TimerCheckDataStream.Enabled = false;

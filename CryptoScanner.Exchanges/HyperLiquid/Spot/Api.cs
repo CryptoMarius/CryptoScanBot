@@ -104,10 +104,15 @@ public class Api : ExchangeBase
         LibraryRateLimit.Lower(HyperLiquidExchange.RateLimiter, HyperLiquidLimits.GateName,
             HyperLiquidLimits.WeightPerMinute, ExchangeOptions.ExchangeName);
         // Spelled out because the ceiling is the budget of the whole ADDRESS, not a share per market:
-        // start HyperLiquid Perpetual next to this one and both believe they may spend it.
+        // start HyperLiquid Perpetual next to this one and both believe they may spend it. Both numbers are
+        // named because they disagree - the documentation says 1200 and the measurement of 30-08-2026
+        // says about 3730 - and the share is a setting because only the user knows how many scanners
+        // on this machine are drawing from that pool.
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} takes {HyperLiquidLimits.WeightPerMinute} " +
-            $"of the {HyperLiquidLimits.AddressWeightPerMinute} weight per minute this address is allowed, " +
-            $"which assumes no second HyperLiquid market runs alongside it");
+            $"weight per minute of this address, which was measured at about " +
+            $"{HyperLiquidLimits.MeasuredAddressWeightPerMinute} and is documented as " +
+            $"{HyperLiquidLimits.AddressWeightPerMinute}. Halve the setting when a second HyperLiquid " +
+            $"market runs alongside this one");
 
 
         HyperLiquidRestClient.SetDefaultOptions(options =>

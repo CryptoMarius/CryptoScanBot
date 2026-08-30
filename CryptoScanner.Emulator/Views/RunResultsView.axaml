@@ -51,9 +51,9 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="400"/>
-                <DataGridTextColumn Header="Period" Binding="{Binding Period}" Width="230"/>
-                <DataGridTextColumn Header="Started" Binding="{Binding StartedLocal}" Width="130"/>
+				<DataGridTextColumn Header="Started" Binding="{Binding StartedLocal}" Width="120"/>
+				<DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="400"/>
+				<DataGridTextColumn Header="Period" Binding="{Binding Period}" Width="210"/>
 				<DataGridTextColumn Header="Finished" Binding="{Binding FinishedLocal}" Width="130" IsVisible="False"/>
 				<DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="90"/>
                 <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="90"/>
@@ -124,6 +124,62 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding InvestedText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- Peak capital is the money the run actually needed at its busiest moment, which is
+                     what says whether an account could have run it. Invested above is the same stake
+                     going round and grows with the trade count, so its percentage flatters a strategy
+                     that trades little. Peak % is the honest one, and sits next to it on purpose. -->
+                <DataGridTemplateColumn Header="Peak cap." Width="90" SortMemberPath="PeakInvested">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PeakInvestedText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Peak pos" Width="70" SortMemberPath="PeakPositions">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PeakPositions}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Peak %" Width="80" SortMemberPath="PeakProfitPercentage">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PeakProfitPercentageText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Profit long" Width="90" SortMemberPath="ProfitLong" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ProfitLongText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Profit short" Width="90" SortMemberPath="ProfitShort" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ProfitShortText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- Best and worst case for the positions still open at the end. They are not a random
+                     sample - the winners hit take profit and closed - so what is left leans to the
+                     losing side, and these two say how much that can still move the run. -->
+                <DataGridTemplateColumn Header="Best case" Width="90" SortMemberPath="BestCase" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding BestCaseText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Worst case" Width="90" SortMemberPath="WorstCase" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding WorstCaseText}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
@@ -65,6 +65,15 @@ public partial class RunConfigViewModel : ObservableObject
     [ObservableProperty]
     private decimal _startCapital = 10000m;
 
+    /// <summary>
+    /// Whether the balances constrain this run. On: an entry is paid out of the free balance and a
+    /// position is only opened when the entry and its DCA levels fit, so the run can run out of
+    /// money. Off: the balances are still booked, but nothing is refused for lack of money and every
+    /// entry is the plain entry amount of the quote coin.
+    /// </summary>
+    [ObservableProperty]
+    private bool _useAssetManagement = true;
+
     /// <summary>Live text filter over the symbol list (substring, case-insensitive).</summary>
     [ObservableProperty]
     private string _symbolFilter = "";
@@ -96,6 +105,7 @@ public partial class RunConfigViewModel : ObservableObject
         ToDate = config.ToDate == default ? DateTime.UtcNow.Date : config.ToDate;
         SelectedBaseInterval = BaseIntervals.Contains(config.BaseInterval) ? config.BaseInterval : "1m";
         StartCapital = config.StartCapital > 0 ? config.StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital;
+        UseAssetManagement = config.UseAssetManagement;
 
         // Pre-check the symbols already in the run config. Build the full list from the active
         // exchange's known symbols; any config symbol not (yet) on the exchange is still added so
@@ -221,6 +231,7 @@ public partial class RunConfigViewModel : ObservableObject
             Label = Label ?? "",
             BaseInterval = SelectedBaseInterval ?? "1m",
             StartCapital = StartCapital > 0 ? StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital,
+            UseAssetManagement = UseAssetManagement,
         };
         return true;
     }

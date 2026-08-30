@@ -54,7 +54,8 @@ public class CommandPositionCreate : CommandBase
                 }
 
                 // Enough stuff to take position? + entryAmount
-                var resultAvailableAssets = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange!, symbol);
+                // reserveForDca: a new position commits the entry and every DCA level behind it.
+                var resultAvailableAssets = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange!, symbol, reserveForDca: true);
                 if (!resultAvailableAssets.success)
                 {
                     GlobalData.AddTextToLogTab($"{symbol.Name} {resultAvailableAssets.reaction}");

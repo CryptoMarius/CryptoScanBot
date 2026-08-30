@@ -510,7 +510,9 @@ public partial class MainWindowViewModel : ObservableObject
         IsRunning = true;
         try
         {
-            await RunOnceAsync(config);
+            // force: a run started by hand is an explicit instruction — the duplicate check belongs
+            // to the queue, where entries pile up unattended.
+            await RunOnceAsync(config, force: true);
             try { EmulatorDb.Vacuum(); }
             catch { /* best-effort */ }
         }
@@ -625,7 +627,8 @@ public partial class MainWindowViewModel : ObservableObject
                     Label = labelRest.Length > 0 ? $"{algorithm.Name} {labelRest}" : algorithm.Name,
                 };
 
-                bool completed = await RunOnceAsync(algoConfig);
+                // force: same reason as the single run above — this batch is started by hand.
+                bool completed = await RunOnceAsync(algoConfig, force: true);
                 if (!completed)
                     break; // Stop was pressed (or the run failed) — abandon the rest of the batch.
             }
@@ -904,7 +907,7 @@ public partial class MainWindowViewModel : ObservableObject
                         Status = $"Queue {runIndex}/{totalRuns}: {algoName} — {entryLabel}";
                         _queueProgress = $"{runIndex}/{totalRuns}";
                         OnPropertyChanged(nameof(ProgressLabel));
-                        bool completed = await RunOnceAsync(runConfig);
+                        bool completed = await RunOnceAsync(runConfig, entry.Force);
                         if (!completed)
                             return;
                     }
@@ -1023,7 +1026,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
 
-    private async Task<bool> RunOnceAsync(EmulatorRunConfig config)
+    private async Task<bool> RunOnceAsync(EmulatorRunConfig config, bool force = false)
     {
         ProgressValue = 0;
         Status = $"Starting run \"{config.Label}\"";
@@ -1052,9 +1055,37 @@ public partial class MainWindowViewModel : ObservableObject
             Core.Contracts.PluginManager.CollectSettings(GlobalData.Settings.Signal.AnalyzerSettings);
             string settingsJson = System.Text.Json.JsonSerializer.Serialize(
                 GlobalData.Settings, Core.Json.JsonTools.JsonSerializerIndented);
+
+            // Both blobs are complete now, which is the first moment the run can be recognised as
+            // one that has already been measured. Checked here rather than in the queue loop so the
+            // checksum is taken over exactly the two strings that end up on the row.
+            EmulatorRunFingerprint.Match? duplicateOf = null;
+            if (!force && EmulatorRunFingerprint.GetRecentSince(config.DuplicateCheckDays) is DateTime notBefore)
+            {
+                string fingerprint = EmulatorRunFingerprint.Compute(configJson, settingsJson);
+                duplicateOf = EmulatorRunFingerprint.FindRecentMatch(fingerprint, notBefore);
+            }
+
             string? gitSha = GetGitShortSha();
             run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label, settingsJson, gitSha);
             GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
+
+            // A recognised repeat still gets its row, so the Results grid shows that the experiment
+            // was asked for and what it pointed at. Nothing is replayed, so the counters stay zero
+            // and the row is finished straight away.
+            if (duplicateOf != null)
+            {
+                string result = $"duplicate of run {duplicateOf.Id}";
+                GlobalData.AddTextToLogTab(
+                    $"Run #{run.Id} \"{config.Label}\" not replayed — identical configuration to run "
+                    + $"#{duplicateOf.Id} \"{duplicateOf.Label}\" ({duplicateOf.Profit:N2} over "
+                    + $"{duplicateOf.PositionCount} position(s), finished {duplicateOf.FinishedAt:yyyy-MM-dd HH:mm}). "
+                    + "Add \"Force\": true to the queue entry to replay it anyway.");
+                EmulatorDb.FinishRun(result);
+                Status = $"\"{config.Label}\" — {result}";
+                completed = true;
+                return true;
+            }
 
             // RunParallel deliberately not set here: TickRunner owns the default, so it can be changed
             // in one place. Setting it here as well meant the default was silently overruled.
@@ -1209,6 +1240,14 @@ public partial class MainWindowViewModel : ObservableObject
         GlobalData.Settings.Signal.Active = true;
         GlobalData.Settings.Trading.Active = true;
         GlobalData.Settings.Trading.TradeVia = CryptoTradeVia.PaperTrade;
+
+        // The run's own asset choices win over settings.json for the duration of the run. Both land
+        // in the settings snapshot that is written just after this call, so a finished run says which
+        // amount it started from and whether the balances constrained it - reading that back from the
+        // label alone has burned us before.
+        GlobalData.Settings.Trading.UseAssetManagement = config.UseAssetManagement;
+        if (config.StartCapital > 0)
+            GlobalData.Settings.Trading.PaperAssetStartCapital = config.StartCapital;
 
         // Start from a clean IN-MEMORY zone slate. Stored zones are now tagged per run (EmulatorRunId)
         // and loaded per run, so a fresh run already starts with no zones of its own — no DB wipe and no

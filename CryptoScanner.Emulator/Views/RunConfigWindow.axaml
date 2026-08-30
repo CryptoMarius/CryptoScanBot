@@ -1,4 +1,4 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -54,7 +54,7 @@
         </Grid>
 
         <!-- Base interval + start capital -->
-        <Grid Grid.Row="2" ColumnDefinitions="90,*,90,*">
+        <Grid Grid.Row="2" ColumnDefinitions="90,*,90,*,Auto">
             <TextBlock Grid.Column="0" Text="Base interval:" VerticalAlignment="Center"/>
             <ComboBox Grid.Column="1" ItemsSource="{Binding BaseIntervals}"
                       SelectedItem="{Binding SelectedBaseInterval}"
@@ -63,6 +63,9 @@
             <NumericUpDown Grid.Column="3" Value="{Binding StartCapital}"
                            Minimum="0" Increment="1000" FormatString="N2"
                            ToolTip.Tip="Paper-trading capital per traded quote coin. The balances are wiped and handed out again at the start of every run, so two runs over the same period start with the same amount of money."/>
+            <CheckBox Grid.Column="4" Content="Asset management" IsChecked="{Binding UseAssetManagement}"
+                      Margin="8,0,0,0" VerticalAlignment="Center"
+                      ToolTip.Tip="On: entries are paid out of the free balance and a position is only opened when the entry and its DCA levels fit, so the run can run out of money. Off: the balances are still booked (the equity curve keeps working) but nothing is refused for lack of money, and every entry is the plain entry amount of the quote coin - a percentage needs a balance to be a percentage of."/>
         </Grid>
 
         <!-- Symbols header + filter -->

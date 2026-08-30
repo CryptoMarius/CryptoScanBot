@@ -7,10 +7,19 @@ TODO:
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
 xx-09-2025 2.6.2
-- ???
+- Hyperliquid: Snelheidswinst bij het opstarten (het was echt te traag bij het opstarten)
+- Telegram: Wat onderverdeling voor een ietwat meer fijnmazige aansturing
+- Photino: Het asset management opgenomen zoals dat ook in Avalonia zit
+- Photino: Fix voor de lux display (met lijnen in plaats van bars)
+- Photino: Fix voor de chart display voor een oude positie waarvan er geen candles meer zijn
+- Photino: De barometer vervangt de voortgang van het ophalen van de candles (met verouderde data)
+- Photino: Diverse fixes en aanpassingen in het chart venster vanwege het compleet wegvallen van de chart
+- Emulator: Diverse wijzigingen voor het runnen van een queue (met veel ingewikkelde instellingen)
+
 
 29-08-2025 2.6.1
-- Vanaf nu Futures vervangen met Perpetual (zoals het vanaf het begin had moeten zijn)
+- Nieuwe strategie voor candle patronen die een omkeer kunnen signaleren (Harami, Tweezer, Hammer en PiercingLine)
+- De naam Futures vervangen met Perpetual (zoals het vanaf het begin had moeten zijn)
 - Exchange Coinbase toegevoegd
 - Alpaca geactiveerd (om te testen!!!!)
 - Een lock op de data folder zodat er niet 2 scanners tegelijk gestart kunnen worden die de folder delen
@@ -33,7 +42,7 @@ xx-09-2025 2.6.2
 - BitMart perpetual geactiveerd
 - Okx perpetual, haalt symbols op van de categorie spot ipv perpetual
 - Okx perpetual, symbols met de status prepare geven een probleem
-- De munt die gebruikt wordt voro de trafing rulez wordt nu door de exchange api gestuurd (btc geeft wel eens een andere naam)
+- De munt die gebruikt wordt voor de trafing rulez wordt nu door de exchange api gestuurd (btc geeft wel eens een andere naam)
 - Het minimale volume van een basismunt wordt nu geinitialiseerd op de exchange grootte (een inschatting)
 - De kleur rood en groen aangepast waardoor het beter te lezen is op een zwarte achtergrond
 - De onderhoudscyclus en de verversing van exchange informatie/verversing candles zitten elkaar in de weg, draait niet elk uur zoals gepland was

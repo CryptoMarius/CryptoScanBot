@@ -1612,6 +1612,75 @@ code {
     border-top: 1px solid var(--border-low);
 }
 
+/* "You are looking at a position, not at now" — sits in the header bar next to the pickers */
+.chart-window-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 4px 2px 8px;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    font-size: 11px;
+    white-space: nowrap;
+    color: var(--text-primary);
+}
+.chart-window-close {
+    border: none;
+    background: none;
+    padding: 0 3px;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+.chart-window-close:hover {
+    color: var(--text-primary);
+}
+
+/* Explanation drawn over an empty chart. Absolute so it does not take part in the flex layout
+   (the chart widget sizes itself on the pane's clientHeight), and click-through so the header
+   bar above it keeps working while the message is up. */
+.chart-empty-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 5;
+}
+.chart-empty-box {
+    max-width: 520px;
+    padding: 16px 20px;
+    border: 1px solid var(--border-low);
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    text-align: center;
+}
+.chart-empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.chart-empty-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+.chart-empty-note {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-low);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
 /* ══════════════════════════════════════
    Context menu (matches Avalonia MenuFlyout)
    ══════════════════════════════════════ */
@@ -1712,6 +1781,41 @@ code {
     display: flex;
     gap: 8px;
     justify-content: flex-end;
+}
+
+/* ══════════════════════════════════════
+   Movable dialog (matches an Avalonia window that can be dragged and resized)
+   ══════════════════════════════════════ */
+.modal-dialog.dialog-window .modal-header {
+    cursor: move;
+    /* Dragging a title bar must not paint the title blue as if it were being selected. */
+    user-select: none;
+}
+
+/* Room for the grip in the corner, so it never lands on top of the last button. */
+.modal-dialog.dialog-window .modal-footer {
+    padding-right: 24px;
+}
+
+.modal-resize-grip {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    z-index: 1;
+}
+
+.modal-resize-grip::after {
+    content: '';
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-bottom: 9px solid var(--text-muted);
 }
 
 .column-check-item {
@@ -2212,6 +2316,53 @@ code {
     font-size: 12px;
     padding: 1px 0;
     color: var(--text-secondary);
+}
+
+
+/* Paper assets dialog (matches the Avalonia AssetWindow, 520x440) */
+.assets-dialog {
+    width: 520px;
+    max-width: 90vw;
+}
+
+/* RowSpacing="8" on the Avalonia grid, instead of the 2px the modal body uses by default. */
+.assets-body {
+    gap: 8px;
+}
+
+.assets-summary {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* The bordered box the DataGrid sits in. The list scrolls on its own so the start-capital row and
+   the buttons stay where they are, the way the * row of the Avalonia grid behaves. */
+.assets-list {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+/* Fill the dialog: the header widths above are fixed and the last column takes what is left,
+   matching Width="*" on the Free column. */
+.assets-list .data-table {
+    width: 100%;
+}
+
+.assets-total-input {
+    width: 100%;
+}
+
+/* Grid ColumnDefinitions="Auto,140,*": label, amount, button. */
+.assets-reset {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.assets-start-capital {
+    width: 140px;
 }
 
 

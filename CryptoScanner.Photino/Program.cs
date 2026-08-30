@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Photino.Blazor;
 
+using System.Diagnostics;
 using System.Reflection;
 
 namespace CryptoScanner.Photino;
@@ -503,16 +504,25 @@ class Program
         {
             var stopTask = Task.Run(async () =>
             {
-                ScannerLog.Logger.Trace("Shutdown(SignalRService.StopAsync)");
+                // Info and not Trace, and AFTER each step with the time it took. The main log writes
+                // from Info up (ScannerLog), so the two Trace lines that used to sit here never
+                // reached the file - and on 30-08-2026 six of the nineteen scanners logged
+                // "Shutdown(error stopping services)" within one second of each other without
+                // anything saying WHICH of these two used up the 30 seconds. Logged afterwards, the
+                // last line in the file is the step that finished and the missing one is the step
+                // that hung.
+                Stopwatch stopwatch = Stopwatch.StartNew();
                 if (GlobalData.SignalRService != null)
                 {
                     await GlobalData.SignalRService.StopAsync();
                     GlobalData.SignalRService = null;
                 }
+                ScannerLog.Logger.Info($"Shutdown(SignalRService.StopAsync) took {stopwatch.Elapsed.TotalSeconds:N1}s");
 
-                ScannerLog.Logger.Trace("Shutdown(ScannerSession.StopAsync)");
+                stopwatch.Restart();
                 if (_scannerSession != null)
                     await _scannerSession.StopAsync();
+                ScannerLog.Logger.Info($"Shutdown(ScannerSession.StopAsync) took {stopwatch.Elapsed.TotalSeconds:N1}s");
             });
             await stopTask.WaitAsync(TimeSpan.FromSeconds(30));
         }

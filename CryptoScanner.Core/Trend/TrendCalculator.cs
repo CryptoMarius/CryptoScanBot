@@ -73,26 +73,49 @@ public class TrendCalculator
     /// </summary>
     private static void WritePivotData(ZigZagIndicator indicator, CryptoTrendData target)
     {
-        if (indicator.ZigZagList.Count > 0)
+        // Walk backwards to find the two most recent CONFIRMED (non-dummy) pivots.
+        // Dummy pivots are provisional edge points that can shift or disappear on
+        // the next candle — using them would let the pullback signal fire on an
+        // unconfirmed swing point.
+        ZigZagResult? lastReal = null;
+        ZigZagResult? prevReal = null;
+        for (int i = indicator.ZigZagList.Count - 1; i >= 0; i--)
         {
-            var lastPivot = indicator.ZigZagList[^1];
-            target.LastPivotType = lastPivot.PointType;
-            target.LastPivotValue = (decimal)lastPivot.Value;
-            target.LastPivotTime = lastPivot.Candle.OpenTime;
-
-            if (indicator.ZigZagList.Count > 1)
-            {
-                var prevPivot = indicator.ZigZagList[^2];
-                target.PrevPivotType = prevPivot.PointType;
-                target.PrevPivotValue = (decimal)prevPivot.Value;
-                target.PrevPivotTime = prevPivot.Candle.OpenTime;
-            }
+            if (indicator.ZigZagList[i].Dummy)
+                continue;
+            if (lastReal == null)
+                lastReal = indicator.ZigZagList[i];
             else
             {
-                target.PrevPivotType = null;
-                target.PrevPivotValue = null;
-                target.PrevPivotTime = null;
+                prevReal = indicator.ZigZagList[i];
+                break;
             }
+        }
+
+        if (lastReal != null)
+        {
+            target.LastPivotType = lastReal.PointType;
+            target.LastPivotValue = (decimal)lastReal.Value;
+            target.LastPivotTime = lastReal.Candle.OpenTime;
+        }
+        else
+        {
+            target.LastPivotType = null;
+            target.LastPivotValue = null;
+            target.LastPivotTime = null;
+        }
+
+        if (prevReal != null)
+        {
+            target.PrevPivotType = prevReal.PointType;
+            target.PrevPivotValue = (decimal)prevReal.Value;
+            target.PrevPivotTime = prevReal.Candle.OpenTime;
+        }
+        else
+        {
+            target.PrevPivotType = null;
+            target.PrevPivotValue = null;
+            target.PrevPivotTime = null;
         }
     }
 

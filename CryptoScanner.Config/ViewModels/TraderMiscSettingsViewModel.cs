@@ -21,6 +21,12 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     private bool _disableNewPositions = false; // bool (EXACT match)
 
     [ObservableProperty]
+    private bool _useAssetManagement = true; // bool (EXACT match)
+
+    [ObservableProperty]
+    private decimal _paperAssetStartCapital = 10000m; // decimal (EXACT match)
+
+    [ObservableProperty]
     private bool _soundTradeNotification = false; // bool (stored in SettingsGeneral!)
 
     [ObservableProperty]
@@ -51,6 +57,8 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     {
         TradeVia = settings.TradeVia;
         DisableNewPositions = settings.DisableNewPositions;
+        UseAssetManagement = settings.UseAssetManagement;
+        PaperAssetStartCapital = settings.PaperAssetStartCapital;
         LogCanceledOrders = settings.LogCanceledOrders;
         GlobalBuyCooldownTime = settings.GlobalBuyCooldownTime;
         SignalCooldownAfterTradeTime = settings.SignalCooldownAfterTradeTime;
@@ -66,6 +74,8 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     {
         settings.TradeVia = TradeVia;
         settings.DisableNewPositions = DisableNewPositions;
+        settings.UseAssetManagement = UseAssetManagement;
+        settings.PaperAssetStartCapital = PaperAssetStartCapital;
         settings.LogCanceledOrders = LogCanceledOrders;
         settings.GlobalBuyCooldownTime = GlobalBuyCooldownTime;
         settings.SignalCooldownAfterTradeTime = SignalCooldownAfterTradeTime;

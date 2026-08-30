@@ -649,6 +649,15 @@ public static class GlobalData
             if (Settings!.General.GetCandleInterval < 30)
                 Settings.General.GetCandleInterval = 30;
 
+            // A settings file written before 30-08-2026 does not name this share at all and keeps
+            // the default, but a hand edited one can hold anything. Both ends matter: too low and a
+            // start never finishes, too high and the exchange refuses every request at the price of
+            // a five second retry each.
+            if (Settings.General.HyperLiquidWeightPerMinute < SettingsGeneral.HyperLiquidWeightPerMinuteMinimum)
+                Settings.General.HyperLiquidWeightPerMinute = SettingsGeneral.HyperLiquidWeightPerMinuteMinimum;
+            if (Settings.General.HyperLiquidWeightPerMinute > SettingsGeneral.HyperLiquidWeightPerMinuteMaximum)
+                Settings.General.HyperLiquidWeightPerMinute = SettingsGeneral.HyperLiquidWeightPerMinuteMaximum;
+
             // A settings file written before 27-08-2026 names a market that no longer exists
             Settings.General.ExchangeName = FixLegacyExchangeName(Settings.General.ExchangeName);
             Settings.General.ActivateExchangeName = FixLegacyExchangeName(Settings.General.ActivateExchangeName);
@@ -908,10 +917,14 @@ public static class GlobalData
         }
     }
 
-    public static void AddTextToTelegram(string text)
+    public static void AddTextToTelegram(string text, CryptoTelegramCategory category)
     {
         if (!IsEmulatorMode)
         {
+            // The category decides whether this kind of message is wanted at all; the master switch
+            // is part of that answer (see SettingsTelegram.IsAllowed).
+            if (!Telegram.IsAllowed(category))
+                return;
             try
             {
                 LogToTelegram?.Invoke(text);
@@ -924,11 +937,13 @@ public static class GlobalData
         }
     }
 
-    public static void AddTextToTelegram(string text, CryptoPosition position)
+    public static void AddTextToTelegram(string text, CryptoPosition position, CryptoTelegramCategory category)
     {
         if (!IsEmulatorMode)
         {
             if (LogToTelegram is null)
+                return;
+            if (!Telegram.IsAllowed(category))
                 return;
             try
             {

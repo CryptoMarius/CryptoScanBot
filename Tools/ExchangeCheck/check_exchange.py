@@ -2597,8 +2597,14 @@ def check_errors(report, entries, error_entries, top_count):
     if ours:
         verdict = worst(verdict, ERRORS_OURS_VERDICT)
 
+    # Alleen de regels die NIET al aan onszelf of aan een derde partij zijn toegeschreven. De zin
+    # onder deze telling zegt "wijst naar de kant van de exchange in plaats van naar ons", en dan mag
+    # hij niet ook onze eigen meldingen tellen. Marius wees daarop 30-08-2026: de TimeoutException uit
+    # PerformShutdownAsync (Program.cs, stopTask.WaitAsync van 30 seconden) is onze eigen afsluiting
+    # die te lang duurde, stond terecht bij "uit onze eigen code" en werd tegelijk geteld als
+    # "timeout = 1, timed out = 1" alsof de exchange traag was. Twee tabellen die elkaar tegenspraken.
     trouble = Counter()
-    for message in error_messages + warnings:
+    for message in recovered + unrecognised + warnings:
         lowered = message.lower()
         for word in TROUBLE_WORDS:
             if word in lowered:
@@ -2652,7 +2658,8 @@ def check_errors(report, entries, error_entries, top_count):
          "verdwijnen, maar er volgt geen beslissing van ons uit.")
 
     if trouble:
-        lines.append("Woorden die naar de kant van de exchange wijzen in plaats van naar ons: "
+        lines.append("Woorden die naar de kant van de exchange wijzen, geteld over de regels die "
+                     "NIET aan onze eigen code of aan een derde partij zijn toegeschreven: "
                      "{}".format(", ".join("{} = {}".format(word, count)
                                            for word, count in trouble.most_common())))
         lines.append("")

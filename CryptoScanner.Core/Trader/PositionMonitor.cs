@@ -529,7 +529,9 @@ public class PositionMonitor : IDisposable
                                 }
 
                                 // Enough stuff to take position? + entryAmount
-                                var resultAvailableAssets = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange, Symbol);
+                                // reserveForDca: a new position commits the entry and every DCA level
+                                // behind it, because those are all placed as soon as the entry fills.
+                                var resultAvailableAssets = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange, Symbol, reserveForDca: true);
                                 if (!resultAvailableAssets.success)
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {resultAvailableAssets.reaction}");
@@ -792,24 +794,30 @@ public class PositionMonitor : IDisposable
         decimal? stop = result.Stop?.ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
         decimal? limit = result.Limit?.ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
-        // Profit lock: once the position has reached MoveSlToBreakEvenPercentage in profit,
-        // move the SL to BE + that percentage to protect the profit (sticky — the flag never
-        // resets, so a later pullback cannot loosen it). Open DCA orders are cancelled separately
-        // in CancelOrdersIfClosedOrTimeoutOrReposition once the flag is set.
+        // Profit lock: once the position has reached MoveSlToBreakEvenPercentage in profit (the
+        // trigger), move the SL to BE + MoveSlToBreakEvenSlPercentage to protect the profit (sticky
+        // — the flag never resets, so a later pullback cannot loosen it). Keeping the SL percentage
+        // below the trigger leaves room between the price and the stop; equal percentages put the
+        // stop right where the trigger fired, which is what the setting did when it was one value.
+        // Open DCA orders are cancelled separately in CancelOrdersIfClosedOrTimeoutOrReposition
+        // once the flag is set.
         if (GlobalData.Settings.Trading.MoveSlToBreakEven
             && position.BreakEvenPrice > 0)
         {
             int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
-            decimal lockPct = GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage;
+            decimal triggerPct = GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage;
+            // Never place the stop beyond the trigger level: that is at or through the price that
+            // just armed the lock, so it would fill on the spot.
+            decimal lockPct = Math.Min(GlobalData.Settings.Trading.MoveSlToBreakEvenSlPercentage, triggerPct);
 
             if (!position.SlMovedToBreakEven)
             {
                 decimal favorable = position.Side == CryptoTradeSide.Long ? LastCandle1m.High : LastCandle1m.Low;
                 decimal profitPct = multiplier * (favorable - position.BreakEvenPrice) / position.BreakEvenPrice * 100m;
-                if (profitPct >= lockPct)
+                if (profitPct >= triggerPct)
                 {
                     position.SlMovedToBreakEven = true;
-                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} profit lock: SL moved to BE+{lockPct:N2}% (profit reached {profitPct:N2}%)");
+                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} profit lock: SL moved to BE+{lockPct:N2}% (trigger {triggerPct:N2}%, profit reached {profitPct:N2}%)");
                 }
             }
 
@@ -1139,10 +1147,13 @@ public class PositionMonitor : IDisposable
 
     /// Determine which fixed-percentage DCA levels (GlobalData.Settings.Trading.DcaList) still need to be
     /// created for this position - i.e. levels that have no Dca part yet, filled or still open/pending.
-    /// Returns the (fixed % from the original entry price) target price for each missing level, in order.
-    private List<decimal> GetMissingFixedPercentageDcaPrices(CryptoPosition position)
+    /// Returns the (fixed % from the original entry price) target price for each missing level, in order,
+    /// together with its index in the DCA list. That index is needed to price a level: its cost is the
+    /// entry amount times ITS factor, and levels beyond the signal SL are skipped below - so counting
+    /// on from existingDcaParts would line the factors up one level off.
+    private List<(int levelIndex, decimal price)> GetMissingFixedPercentageDcaPrices(CryptoPosition position)
     {
-        List<decimal> prices = [];
+        List<(int levelIndex, decimal price)> prices = [];
 
         // Een DCA zonder een voorgaande entry is onmogelijk
         if (!position.EntryPrice.HasValue || position.TpGridBreakEvenPrice == 0 || position.Invested == 0)
@@ -1162,7 +1173,7 @@ public class PositionMonitor : IDisposable
                 continue;
 
             decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
-            prices.Add(position.Side == CryptoTradeSide.Long ? entryPrice - diffPrice : entryPrice + diffPrice);
+            prices.Add((i, position.Side == CryptoTradeSide.Long ? entryPrice - diffPrice : entryPrice + diffPrice));
         }
         return prices;
     }
@@ -1187,6 +1198,52 @@ public class PositionMonitor : IDisposable
     }
 
 
+    /// <summary>
+    /// Which of the missing DCA levels can be paid for right now, nearest level first.
+    /// <para>
+    /// What used to guard this spot was AssetTools.CheckAvailableAssets, and that asked the wrong
+    /// question: it measures one ENTRY amount against the free balance, while what is about to be
+    /// placed is a set of DCA orders of an entirely different size (entry x factor per level). So it
+    /// refused on a balance that had room for the orders and passed on one that did not - which is
+    /// where the "not enough cash available" lines in the log came from.
+    /// </para>
+    /// <para>
+    /// Levels are dropped from the far end: the nearest one is hit first, so that is the one worth
+    /// having. Whatever does not fit is simply missing from the position and gets another chance on
+    /// the next pass, once a take profit or a stop loss has freed money up.
+    /// </para>
+    /// </summary>
+    private List<(int levelIndex, decimal price)> AffordableDcaLevels(CryptoPosition position,
+        List<(int levelIndex, decimal price)> missingLevels, string text)
+    {
+        // Without asset management nothing is refused for lack of money, and without a known entry
+        // amount there is nothing to compute a level's cost from (HandleDcaPart falls back to
+        // doubling the invested amount there, which is not ours to predict).
+        if (!GlobalData.Settings.Trading.UseAssetManagement || !position.EntryAmount.HasValue)
+            return missingLevels;
+
+        var info = AssetTools.GetAsset(GlobalData.ActiveExchange!, Symbol);
+
+        List<(int levelIndex, decimal price)> affordable = [];
+        decimal committed = 0;
+        foreach (var level in missingLevels)
+        {
+            // Same sum HandleDcaPart uses: the factor is a percentage of the entry amount
+            decimal cost = (decimal)position.EntryAmount * GlobalData.Settings.Trading.DcaList[level.levelIndex].Factor / 100m;
+            if (committed + cost > info.QuoteFree)
+                break;
+            committed += cost;
+            affordable.Add(level);
+        }
+
+        if (affordable.Count < missingLevels.Count)
+            GlobalData.AddTextToLogTab($"{text}: {affordable.Count} of {missingLevels.Count} level(s) fit in the free "
+                + $"{Symbol.Quote}={info.QuoteFree} - the rest follows once money is freed up");
+
+        return affordable;
+    }
+
+
     private async Task CheckAddDcaFixedPercentage(CryptoPosition position)
     {
         // Alle resterende DCA-niveaus in 1x plaatsen zodra de entry gevuld is (in plaats van steeds te
@@ -1198,10 +1255,10 @@ public class PositionMonitor : IDisposable
             if (position.SlMovedToBreakEven)
                 return;
 
-            List<decimal> missingPrices = GetMissingFixedPercentageDcaPrices(position);
-            if (missingPrices.Count > 0)
+            List<(int levelIndex, decimal price)> missingLevels = GetMissingFixedPercentageDcaPrices(position);
+            if (missingLevels.Count > 0)
             {
-                string text = $"{position.Symbol.Name} + {missingPrices.Count} DCA('s) bijplaatsen";
+                string text = $"{position.Symbol.Name} + {missingLevels.Count} DCA('s) bijplaatsen";
 
                 // Zo laat mogelijk controleren vanwege extra calls naar de exchange
                 var (success, reaction) = AssetTools.FetchAssets(GlobalData.ActiveExchange);
@@ -1212,15 +1269,15 @@ public class PositionMonitor : IDisposable
                     return;
                 }
 
-                var resultCheckAssets = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange!, Symbol);
-                if (!resultCheckAssets.success)
+                // Only the levels there is money for - measured against what a DCA order really costs
+                missingLevels = AffordableDcaLevels(position, missingLevels, text);
+                if (missingLevels.Count == 0)
                 {
-                    GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
                     Symbol.ClearSignals();
                     return;
                 }
 
-                foreach (decimal dcaPrice in missingPrices)
+                foreach ((_, decimal dcaPrice) in missingLevels)
                 {
                     // Corrigeer de prijs indien de koers ondertussen al lager of hoger ligt dan dit niveau
                     decimal price = dcaPrice;
@@ -1475,6 +1532,36 @@ public class PositionMonitor : IDisposable
     }
 
 
+    /// <summary>
+    /// Whether an exit order has to be cancelled and placed again because its price no longer
+    /// matches what the calculation asks for. A difference of one tick or less does not count: that
+    /// is the price grid shifting under an unchanged calculation, not a decision to exit somewhere
+    /// else.
+    /// <para>
+    /// HyperLiquid publishes no tick size, so the scanner derives one per symbol and it used to come
+    /// out one decimal finer or coarser than the hour before (see PriceTickFromMarkPrice in the
+    /// HyperLiquid Perpetual Symbol.cs, fixed on 30-08-2026). Every take profit and stop loss order
+    /// of an open position then differed from the recomputed price by a fraction of a tick, was
+    /// cancelled and placed again in the same spot, and announced itself over Telegram as "cancel
+    /// because of change BE" - while the break-even price had not moved at all. Costing the order
+    /// its place in the queue and two exchange calls over a difference the exchange cannot even
+    /// represent is not worth it, whichever exchange starts doing this next.
+    /// </para>
+    /// <para>
+    /// A tick size of zero - an exchange that states none - falls back to the exact comparison this
+    /// replaced.
+    /// </para>
+    /// </summary>
+    internal static bool PriceMoved(decimal? current, decimal? wanted, decimal tickSize)
+    {
+        if (current == null && wanted == null)
+            return false;
+        if (current == null || wanted == null)
+            return true;
+        return Math.Abs(current.Value - wanted.Value) > tickSize;
+    }
+
+
     public async Task HandlePosition(CryptoPosition position)
     {
         //GlobalData.Logger.Info($"position:" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
@@ -1561,11 +1648,15 @@ public class PositionMonitor : IDisposable
 
                 bool anyChange = false;
                 Dictionary<int, bool> hadExistingOrder = [];
+                decimal tickSize = Symbol.PriceTickSize;
                 foreach (var t in targets)
                 {
                     CryptoPositionStep? order = PositionTools.FindPositionPartStep(t.Part, takeProfitOrderSide, false);
                     hadExistingOrder[t.Level] = order != null;
-                    if (order == null || order.Price != t.Price || order.Quantity != t.Quantity || order.StopPrice != sl.stop || order.StopLimitPrice != sl.limit)
+                    if (order == null || order.Quantity != t.Quantity
+                        || PriceMoved(order.Price, t.Price, tickSize)
+                        || PriceMoved(order.StopPrice, sl.stop, tickSize)
+                        || PriceMoved(order.StopLimitPrice, sl.limit, tickSize))
                     {
                         if (order != null)
                             GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction TP{t.Level + 1}: {order.Price:N6} to {t.Price.ToString0()}");

@@ -1,6 +1,7 @@
 ﻿@page "/chart"
 @using CryptoScanner.Analyzers.Nwe
 @using CryptoScanner.Analyzers.Nwe.Signal
+@using CryptoScanner.Core.Context
 @using CryptoScanner.Core.Contracts
 @using CryptoScanner.Core.Core
 @using CryptoScanner.Core.Enums
@@ -57,9 +58,20 @@
         </div>
 
         <button class="chart-icon-button" @onclick="LoadChart"
-                title="Reload the chart with the latest candles, signals and positions">&#10227;</button>
+                title="Reload the chart with the latest candles, signals and positions, and put the price axis back on the candles">&#10227;</button>
         <button class="chart-icon-button" @onclick="Calculate"
                 title="Force a full recalculation of the liquidity zones">&#8721;</button>
+
+        @* Opened from a position: say so, and give the way back. Without this the chart silently
+           sits in the past — every refresh looks frozen and picking another coin is the only exit
+           anyone would find. *@
+        @if (_windowStart != null)
+        {
+            <span class="chart-window-banner" title="@WindowBannerTooltip">
+                @WindowBannerText
+                <button class="chart-window-close" @onclick="OnLeaveWindow" title="Back to the live chart">&times;</button>
+            </span>
+        }
 
         @* Open/high/low/close/volume of the candle under the mouse. Filled by the chart widget
            itself — the crosshair fires on every mouse move, which is far too often to route
@@ -156,10 +168,29 @@
             </div>
         </div>
     }
+    @* An empty chart used to be an empty chart: a black pane with no explanation, which reads as a
+       defect while it is nearly always a symbol whose candles the scanner does not hold. Sibling of
+       the panes rather than a child of #chart-main, because the chart widget owns that element and
+       Blazor must not diff its canvases. pointer-events:none keeps the header bar usable. *@
+    @if (_emptyReason != null)
+    {
+        <div class="chart-empty-overlay">
+            <div class="chart-empty-box">
+                <div class="chart-empty-title">Nothing to draw here</div>
+                <div class="chart-empty-text">@_emptyReason</div>
+                @if (_emptyWindow != null)
+                {
+                    <div class="chart-empty-note">@_emptyWindow</div>
+                }
+            </div>
+        </div>
+    }
+    @* The bottom pane carries the time axis (ChartWidget._applyBottomTimeScale), so it needs the
+       height for it on top of its own — otherwise the axis eats into the indicator it belongs to. *@
     <div id="chart-main" class="chart-panel chart-panel-main"></div>
-    <div id="chart-volume" class="chart-panel chart-panel-sub" style="display:@(_showVolume ? "block" : "none"); height:80px;"></div>
-    <div id="chart-oscillator" class="chart-panel chart-panel-sub" style="display:@(ShowOscillatorPanel ? "block" : "none"); height:120px;"></div>
-    <div id="chart-macd" class="chart-panel chart-panel-sub" style="display:@(_showMacd ? "block" : "none"); height:120px;"></div>
+    <div id="chart-volume" class="chart-panel chart-panel-sub" style="display:@(_showVolume ? "block" : "none"); height:@(PanelHeight(80, "volume"))px;"></div>
+    <div id="chart-oscillator" class="chart-panel chart-panel-sub" style="display:@(ShowOscillatorPanel ? "block" : "none"); height:@(PanelHeight(120, "oscillator"))px;"></div>
+    <div id="chart-macd" class="chart-panel chart-panel-sub" style="display:@(_showMacd ? "block" : "none"); height:@(PanelHeight(120, "macd"))px;"></div>
 </div>
 </div>
 
@@ -177,6 +208,32 @@
     private bool _initialized;
 
     private ZoneSession _session = new();
+
+    // Text of the overlay shown when the chart has no candles to draw, null while it has. Filled by
+    // UpdateEmptyReason on every load.
+    private string? _emptyReason;
+    private string? _emptyWindow;
+
+    // Lifetime of the position the chart was opened from; null on both = the normal clock window.
+    // _windowEnd null while _windowStart is set means "until now" (a position that is still open).
+    private DateTime? _windowStart;
+    private DateTime? _windowEnd;
+
+    // Candles of context drawn on each side of the position's lifetime, and the extra candles read
+    // before that purely to warm up the indicators (the longest lookback drawn is SMA(200)). Same
+    // two numbers as ChartWindowViewModel.WindowMarginCandles / WindowCalcWarmupCandles, so both
+    // charts show a position with the same amount of surroundings.
+    private const int WindowMarginCandles = 200;
+    private const int WindowCalcWarmupCandles = 300;
+
+    // Of those 200 margin candles, how many are actually in view: the rest is context you can
+    // scroll into. Mirrors the (WindowMarginCandles - 30) the Avalonia chart zooms with.
+    private const int WindowZoomMarginCandles = 30;
+
+    // Candles read from candles.db for the active window, kept out of the scanner's own CandleList
+    // on purpose — see LoadWindowCandles.
+    private CryptoCandleList? _windowCandles;
+    private string _windowCandlesBuiltFor = "";
 
     // Double top/bottom rectangles, filled while building the zigzag overlays
     private readonly List<ChartDataService.ChartRect> _dtbZones = [];
@@ -239,6 +296,24 @@
 
     private bool ShowOscillatorPanel => _showRsi || _showStoch || _showLux;
 
+    // Height the time axis needs. Measured against the axis the main chart used to draw: the labels
+    // are 10px, and lightweight-charts puts its own padding and tick marks around them.
+    private const int TimeAxisHeight = 26;
+
+    /// <summary>
+    /// Which pane sits at the bottom, and so carries the time axis for all of them. Empty when no
+    /// sub-panel is switched on and the main chart keeps it. Must stay in step with the pane order
+    /// in ChartWidget._applyBottomTimeScale.
+    /// </summary>
+    private string BottomPanelKey =>
+        _showMacd ? "macd"
+        : ShowOscillatorPanel ? "oscillator"
+        : _showVolume ? "volume"
+        : "";
+
+    private int PanelHeight(int height, string key) =>
+        BottomPanelKey == key ? height + TimeAxisHeight : height;
+
     private readonly Dictionary<string, string> _pluginOverlays = [];
     private readonly Dictionary<string, bool> _pluginOverlayStates = [];
 
@@ -269,6 +344,9 @@
             // give, and the interval restored from the session above stays as it is.
             if (SymbolService.SelectedInterval != null)
                 _selectedInterval = SymbolService.SelectedInterval.IntervalPeriod.ToString();
+
+            _windowStart = SymbolService.SelectedWindowStart;
+            _windowEnd = SymbolService.SelectedWindowEnd;
         }
         else if (GlobalData.ActiveExchange != null
             && GlobalData.ActiveExchange.TryGetSymbolByPair(_selectedBase + _selectedQuote, out CryptoSymbol? stored))
@@ -378,6 +456,12 @@
 
     private async Task OnSymbolSelectionChanged()
     {
+        // Picking a coin by hand is a fresh start: a position window belongs to the row it came
+        // from, and carrying it over to another coin would leave the chart in a past that has
+        // nothing to do with what was just asked for. Switching INTERVAL keeps it — that is the
+        // same position seen at a different resolution.
+        ClearWindow();
+
         // Base + quote is a bare pair; the symbol list is keyed on the product-suffixed name
         var exchange = GlobalData.ActiveExchange;
         if (exchange != null && exchange.TryGetSymbolByPair(_selectedBase + _selectedQuote, out CryptoSymbol? symbol))
@@ -388,6 +472,56 @@
         }
 
         SaveSession();
+        await ResetChartViewAsync();
+        await LoadChartAsync();
+    }
+
+    /// <summary>
+    /// Back to the live chart. Also clears the window held by the SymbolService, otherwise the
+    /// selection there would still carry it and clicking the same position row again would be
+    /// seen as "no change" — leaving the chart on "now" with no way back in.
+    /// </summary>
+    private void ClearWindow()
+    {
+        _windowStart = null;
+        _windowEnd = null;
+        _windowCandles = null;
+        _windowCandlesBuiltFor = "";
+        if (SymbolService.SelectedWindowStart != null || SymbolService.SelectedWindowEnd != null)
+            SymbolService.SetSelectedSymbol(SymbolService.SelectedSymbol, SymbolService.SelectedInterval, null, null);
+    }
+
+    /// <summary>Caption of the window banner: the stretch of history the chart is parked on.</summary>
+    private string WindowBannerText
+    {
+        get
+        {
+            if (_windowStart == null)
+                return "";
+
+            DateTime start = _windowStart.Value.ToLocalTime();
+            if (_windowEnd == null)
+                return $"Position from {start:dd-MM HH:mm} (still open)";
+
+            DateTime end = _windowEnd.Value.ToLocalTime();
+
+            // Same day: the date once is enough, the rest is just the two times
+            return end.Date == start.Date
+                ? $"Position {start:dd-MM HH:mm} → {end:HH:mm}"
+                : $"Position {start:dd-MM HH:mm} → {end:dd-MM HH:mm}";
+        }
+    }
+
+    private string WindowBannerTooltip =>
+        "The chart is showing this position instead of the live market. Candles come straight from "
+        + "candles.db, so history older than the scanner keeps in memory is drawn too. "
+        + "Lux is left out here — it computes on the live candles only. Click × to go back to now.";
+
+    /// <summary>The "back to now" button next to the window banner.</summary>
+    private async Task OnLeaveWindow()
+    {
+        ClearWindow();
+        await ResetChartViewAsync();
         await LoadChartAsync();
     }
 
@@ -571,6 +705,12 @@
         if (!Enum.TryParse<CryptoIntervalPeriod>(_selectedInterval, out var period))
             return "";
 
+        // A CLOSED position is finished history: no candle arriving now can change any of it, so
+        // the signature is constant and the timer never reloads it. An open one (_windowEnd null)
+        // still grows, and falls through to the live signature below.
+        if (_windowStart != null && _windowEnd != null)
+            return $"{_currentSymbol.Name}|{_selectedInterval}|{_windowStart:O}|{_windowEnd:O}";
+
         var text = new System.Text.StringBuilder();
         text.Append(_currentSymbol.Name).Append('|').Append(_selectedInterval).Append('|');
 
@@ -732,10 +872,14 @@
                 return;
 
             // The interval belongs to the selection as well, so opening the chart from a 15m row
-            // while it already shows that symbol on 1h still has to switch it over.
+            // while it already shows that symbol on 1h still has to switch it over. So does the
+            // window: two closed positions on the same symbol and interval differ in nothing else,
+            // and without this the second one would leave the chart on the first one's window.
             string? interval = SymbolService.SelectedInterval?.IntervalPeriod.ToString();
             bool intervalChanged = interval != null && interval != _selectedInterval;
-            if (symbol == _currentSymbol && !intervalChanged)
+            bool windowChanged = SymbolService.SelectedWindowStart != _windowStart
+                || SymbolService.SelectedWindowEnd != _windowEnd;
+            if (symbol == _currentSymbol && !intervalChanged && !windowChanged)
                 return;
 
             _currentSymbol = symbol;
@@ -744,6 +888,8 @@
             _selectedQuote = symbol.Quote;
             if (intervalChanged)
                 _selectedInterval = interval!;
+            _windowStart = SymbolService.SelectedWindowStart;
+            _windowEnd = SymbolService.SelectedWindowEnd;
             RefreshSymbolOptions();
             SaveSession();
             StateHasChanged();
@@ -775,6 +921,12 @@
     private async Task LoadChart()
     {
         SaveSession();
+
+        // The reload button doubles as the way out of a price axis that was dragged off the
+        // candles: autoScale back on, zoom and scroll position untouched.
+        try { await JS.InvokeVoidAsync("ChartWidget.resetPriceScale"); }
+        catch (JSException) { }
+
         await LoadChartAsync();
     }
 
@@ -789,8 +941,17 @@
     /// </summary>
     private async Task LoadChartAsync()
     {
-        if (!_initialized || _currentSymbol == null)
+        if (!_initialized)
             return;
+
+        // No symbol at all: the load below would return without drawing anything and without saying
+        // why, which is the same black pane the empty-candle case used to leave behind.
+        if (_currentSymbol == null)
+        {
+            SetEmptyReason("There is no symbol to draw yet. Pick a coin above, or open the chart "
+                + "from a row in one of the grids.", null);
+            return;
+        }
 
         if (_loadingChart)
         {
@@ -825,7 +986,11 @@
             return;
 
         if (!Enum.TryParse<CryptoIntervalPeriod>(_selectedInterval, out var period))
+        {
+            SetEmptyReason($"\"{_selectedInterval}\" is not an interval this scanner knows, "
+                + "so there is nothing to load. Pick another one above.", null);
             return;
+        }
 
         // Re-sent on every refresh, so a change on the Chart styles settings tab shows up without
         // having to reopen the chart
@@ -843,16 +1008,43 @@
             // Same zoom depth as the Avalonia chart's ZoomLast
             await JS.InvokeVoidAsync("ChartWidget.setZoomCandles",
                 GlobalData.Settings.Signal.ZonesDlz.CandleCountZoom);
+
+            // Opened from a position: the view has to land on the position, which sits in the
+            // middle of the drawn series with margin candles on both sides — zooming to the last
+            // candles would put it off screen to the left. Cleared again when the window is left.
+            if (_windowStart != null && GlobalData.IntervalListPeriod.TryGetValue(period, out CryptoInterval? zoomInterval))
+            {
+                var zoom = WindowRange(zoomInterval);
+                await JS.InvokeVoidAsync("ChartWidget.zoomToWindow",
+                    new { time1 = zoom.ZoomFrom.ToUnixSeconds(), time2 = zoom.ZoomTo.ToUnixSeconds() });
+            }
+            else
+                await JS.InvokeVoidAsync("ChartWidget.zoomToWindow", null);
         }
         catch (JSException) { }
 
         try
         {
             var symbolInterval = _currentSymbol.GetSymbolInterval(period);
-            var snapshot = symbolInterval.CandleList.GetSnapshot();
+
+            // Which candles this chart runs on: the scanner's live list, or the window read from
+            // candles.db when the chart was opened from a position. Everything below — indicators,
+            // overlays, the zone/signal/position bounds — works off candleSource and rawCandles, so
+            // the two cases differ in exactly one place: here.
+            CryptoCandleList candleSource = symbolInterval.CandleList;
+            if (_windowStart != null)
+            {
+                var range = WindowRange(symbolInterval.Interval);
+                candleSource = LoadWindowCandles(_currentSymbol, symbolInterval.Interval, range.Load, range.DrawTo)
+                    ?? symbolInterval.CandleList;
+            }
+
+            var snapshot = candleSource.GetSnapshot();
 
             var rawCandles = snapshot.Select(kv => kv.Value).ToList();
             var quotes = rawCandles.AsQuotes();
+
+            UpdateEmptyReason(_currentSymbol, symbolInterval.Interval, rawCandles.Count);
 
             var candles = new List<object>(rawCandles.Count);
             foreach (var candle in rawCandles)
@@ -874,6 +1066,7 @@
             var priceLines = new List<ChartDataService.ChartPriceLine>();
             var segments = new List<ChartDataService.ChartSegment>();
             var dots = new List<ChartDataService.ChartDot>();
+            var verticals = new List<ChartDataService.ChartVertical>();
             var overlayLabels = new List<object>();
             _dtbZones.Clear();
 
@@ -910,13 +1103,13 @@
             }
 
             if (_showNwe)
-                AddNweOverlays(overlays, symbolInterval, smoothRepainting: false, prefix: "nwe");
+                AddNweOverlays(overlays, candleSource, smoothRepainting: false, prefix: "nwe");
             if (_showNweRepainting)
-                AddNweOverlays(overlays, symbolInterval, smoothRepainting: true, prefix: "nweRepaint");
+                AddNweOverlays(overlays, candleSource, smoothRepainting: true, prefix: "nweRepaint");
 
             if (_showZigZag || _showPivots || _showFib || _showDtb || _showFibZigZag)
             {
-                await BuildZigZagIndicatorsAsync(symbolInterval);
+                await BuildZigZagIndicatorsAsync(symbolInterval, candleSource);
                 AddZigZagOverlays(overlays, symbolInterval, priceLines, markers);
             }
 
@@ -1000,7 +1193,11 @@
                 };
             }
 
-            if (_showLux && rawCandles.Count > 0)
+            // Lux is the one indicator that reads symbolInterval.CandleList itself instead of taking
+            // the candles it is given (LuxIndicator.CalculateRange), so in a position window it
+            // would compute over the live candles and paste the result onto history. Left out
+            // there, and the window banner says so, rather than drawing something that is wrong.
+            if (_showLux && rawCandles.Count > 0 && _windowStart == null)
             {
                 // Computed on the interval the chart is SHOWING, the same way the Avalonia chart does
                 // it (CryptoScanner.Chart Lux.Draw passes interval.IntervalPeriod). This used to be
@@ -1053,10 +1250,11 @@
                     _showDlzZones, _showFvgZones, _showSmcZones, from, to);
 
                 if (_showSignals)
-                    markers.AddRange(ChartDataService.BuildSignalMarkers(_currentSymbol, symbolInterval.Interval, from, to));
+                    dots.AddRange(ChartDataService.BuildSignalDots(_currentSymbol, symbolInterval.Interval, from, to));
 
                 if (_showPositions)
-                    ChartDataService.BuildPositionOverlays(_currentSymbol, symbolInterval.Interval, from, to, segments, dots);
+                    ChartDataService.BuildPositionOverlays(_currentSymbol, symbolInterval.Interval, from, to,
+                        segments, dots, verticals);
             }
 
             if (_dtbZones.Count > 0)
@@ -1069,6 +1267,7 @@
                 priceLines,
                 segments,
                 dots,
+                verticals,
                 labels = overlayLabels,
             };
 
@@ -1083,7 +1282,173 @@
         }
     }
 
-    private void AddNweOverlays(Dictionary<string, object> overlays, CryptoSymbolInterval symbolInterval,
+    /// <summary>
+    /// Decide what the overlay on an empty chart says, and clear it again as soon as there are
+    /// candles. The chart draws from memory only (CandleList), and the scanner releases the candles
+    /// of a symbol it has no use for, so "no candles" is a normal state with several distinct
+    /// causes — each of which the user can act on once it is named.
+    /// </summary>
+    private void UpdateEmptyReason(CryptoSymbol symbol, CryptoInterval interval, int candleCount)
+    {
+        string? reason = null;
+        string? window = null;
+
+        if (candleCount == 0 && _windowStart != null)
+        {
+            // In a position window the candles come from candles.db, not from memory, so none of
+            // the reasons below apply. Empty here means the file does not reach back that far —
+            // the cleanup keeps the standard window per interval plus the lifetime of every pivot
+            // zone, and this position falls outside both.
+            var range = WindowRange(interval);
+            SetEmptyReason(
+                $"candles.db holds no {interval.Name} candles for {symbol.Name} around this position. "
+                + "The cleanup keeps recent history plus whatever a pivot zone still needs, and this "
+                + "stretch is older than both.",
+                $"Looked for {interval.Name} candles between "
+                + $"{range.DrawFrom.ToDateTime().ToLocalTime():dd-MM-yyyy HH:mm} and "
+                + $"{range.DrawTo.ToDateTime().ToLocalTime():dd-MM-yyyy HH:mm}.");
+            return;
+        }
+
+        if (candleCount == 0)
+        {
+            // Does the symbol have nothing at all, or only nothing on THIS interval? The two have
+            // different causes: released candles versus an interval not built up yet.
+            int total = 0;
+            foreach (var si in symbol.Data.SymbolIntervalList)
+                total += si.CandleList.Count;
+
+            if (total > 0)
+                reason = $"{symbol.Name} has no {interval.Name} candles in memory yet, "
+                    + "while other intervals do. The scanner builds this one up from the interval below it.";
+            else if (symbol.QuoteData == null || !symbol.QuoteData.FetchCandles)
+                reason = $"Candles for the quote coin {symbol.Quote} are switched off, "
+                    + $"so the scanner never fetches any for {symbol.Name}.";
+            else if (symbol.Status != 1)
+                reason = $"{symbol.Name} is no longer trading on {symbol.Exchange?.Name}, "
+                    + "so the scanner released its candles.";
+            else if (!symbol.EnoughVolume() && !symbol.IsTrading())
+                reason = $"{symbol.Name} is below the minimum volume for {symbol.Quote} "
+                    + $"({symbol.Volume:N0} against {symbol.QuoteData.MinimalVolume:N0}), "
+                    + "so the scanner released its candles to save memory.";
+            else
+                reason = $"The scanner is holding no candles for {symbol.Name} — it may still be "
+                    + "starting up, or this symbol was only just added.";
+
+            // The window itself is worth naming whatever the cause: it is also the answer to
+            // "why does my position from last week not show up", which is the same story one
+            // step further along.
+            CandleTime start = CandleTools.GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
+            window = $"The chart only draws what the scanner keeps in memory: "
+                + $"{interval.Name} candles from {start.ToDateTime().ToLocalTime():dd-MM-yyyy HH:mm} onwards. "
+                + "Anything older stays in candles.db and is not drawn here.";
+        }
+
+        SetEmptyReason(reason, window);
+    }
+
+    /// <summary>
+    /// The stretch of history the active position window covers, on this interval.
+    /// <para>
+    /// draw = what ends up on screen, the position's lifetime plus WindowMarginCandles of context
+    /// on each side. load = that plus WindowCalcWarmupCandles in front of it, read purely so
+    /// SMA(200) and everything shorter is warmed up at the left edge instead of starting from
+    /// nothing there. zoom = the part the view lands on, a much tighter margin around the position
+    /// itself; the rest is context to scroll into.
+    /// </para>
+    /// </summary>
+    private (CandleTime Load, CandleTime DrawFrom, CandleTime DrawTo, CandleTime ZoomFrom, CandleTime ZoomTo)
+        WindowRange(CryptoInterval interval)
+    {
+        uint duration = interval.Duration;
+
+        // An open position (_windowEnd null) runs up to now, so its window follows the clock and
+        // keeps growing while you watch it.
+        CandleTime start = CandleTime.AlignFromDateTime(_windowStart!.Value, duration);
+        CandleTime end = CandleTime.AlignFromDateTime(_windowEnd ?? GlobalData.Clock.UtcNow, duration);
+
+        CandleTime drawFrom = start - WindowMarginCandles * duration;
+        CandleTime drawTo = end + WindowMarginCandles * duration;
+        return (
+            drawFrom - WindowCalcWarmupCandles * duration,
+            drawFrom,
+            drawTo,
+            start - WindowZoomMarginCandles * duration,
+            end + WindowZoomMarginCandles * duration);
+    }
+
+    /// <summary>
+    /// Read the candles the active window covers straight from candles.db, into a list belonging to
+    /// this screen.
+    /// <para>
+    /// Deliberately NOT added to symbolInterval.CandleList, which is what the Avalonia chart does —
+    /// there it only ever runs in the emulator. Here the live scanner is running underneath: it
+    /// trims that list back to GetCandleFetchStart on every candle boundary (CleanCandleDataAsync)
+    /// and TrendCalculator builds the trend over whatever it finds in it, clamping the window only
+    /// when IsEmulatorMode is set. Pushing weeks of old candles in would widen what the scanner's
+    /// own ZigZag sees — and the cleanup would throw them out again on the next boundary, so the
+    /// chart would have to re-read them every refresh anyway. A private list has neither problem.
+    /// </para>
+    /// </summary>
+    private CryptoCandleList? LoadWindowCandles(CryptoSymbol symbol, CryptoInterval interval,
+        CandleTime from, CandleTime to)
+    {
+        string key = $"{symbol.Name}|{interval.Name}|{from.Minutes}|{to.Minutes}";
+        if (key == _windowCandlesBuiltFor && _windowCandles != null)
+            return _windowCandles;
+
+        try
+        {
+            using var db = new CandleDatabase(symbol.Exchange);
+            db.Open();
+            var candles = CandleDatabase.LoadCandlesInRange(db.Connection, symbol, interval,
+                from.Minutes, to.Minutes);
+
+            var list = new CryptoCandleList();
+            foreach (CryptoCandle candle in candles)
+                list.TryAdd(candle.OpenTime, candle);
+
+            // An open position runs up to now, and the newest candles are still forming: those live
+            // in memory and have not been written to candles.db yet. Top the window up from the
+            // scanner's own list so the right edge is current instead of stopping at the last save.
+            foreach (var pair in symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.GetSnapshot())
+            {
+                if (pair.Key >= from && pair.Key <= to)
+                    list.TryAdd(pair.Key, pair.Value);
+            }
+
+            _windowCandles = list;
+            _windowCandlesBuiltFor = key;
+            return list;
+        }
+        catch (Exception error)
+        {
+            GlobalData.AddTextToLogTab($"chart window candle load failed for {symbol.Name} {interval.Name}: {error.Message}");
+            _windowCandles = null;
+            _windowCandlesBuiltFor = "";
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Put the overlay up, change its text, or take it down again (both arguments null). Kept apart
+    /// from <see cref="UpdateEmptyReason"/> so the paths that never reach the candles — no symbol,
+    /// an interval that does not parse — can say something too instead of leaving a black pane.
+    /// </summary>
+    private void SetEmptyReason(string? reason, string? window)
+    {
+        if (reason == _emptyReason && window == _emptyWindow)
+            return;
+
+        _emptyReason = reason;
+        _emptyWindow = window;
+
+        // The refresh timer calls this outside an event handler, so Blazor does not re-render by
+        // itself. Only on a real change — see the comparison above.
+        StateHasChanged();
+    }
+
+    private void AddNweOverlays(Dictionary<string, object> overlays, CryptoCandleList candleSource,
         bool smoothRepainting, string prefix)
     {
         var settings = NwePlugin.Settings;
@@ -1092,7 +1457,7 @@
             multiplier: settings.Multiplication,
             smoothRepainting: smoothRepainting);
 
-        var results = indicator.Calculate(symbolInterval.CandleList);
+        var results = indicator.Calculate(candleSource);
 
         var upper = new List<object>();
         var middle = new List<object>();
@@ -1130,11 +1495,25 @@
     /// way the Avalonia chart does through ZoneDlz.CalculatePivots. FinishBatch (inside that call)
     /// is what makes LastSwingHigh/LastSwingLow — and therefore the FIB levels — valid.
     /// </summary>
-    private async Task BuildZigZagIndicatorsAsync(CryptoSymbolInterval symbolInterval)
+    private async Task BuildZigZagIndicatorsAsync(CryptoSymbolInterval symbolInterval, CryptoCandleList candleSource)
     {
         var interval = symbolInterval.Interval;
-        CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
-        CandleTime minDate = maxDate - CandleTools.CandleCountFetch * interval.Duration;
+
+        CandleTime minDate;
+        CandleTime maxDate;
+        if (_windowStart != null)
+        {
+            // Over the window, warmup prefix included — the pivots have to be settled by the time
+            // the drawn stretch starts, exactly as they are on the live path.
+            var range = WindowRange(interval);
+            minDate = range.Load;
+            maxDate = range.DrawTo;
+        }
+        else
+        {
+            maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
+            minDate = maxDate - CandleTools.CandleCountFetch * interval.Duration;
+        }
 
         string key = $"{_currentSymbol!.Name}|{interval.Name}|{minDate.Minutes}|{maxDate.Minutes}";
         if (key == _zigZagBuiltFor && _zigZagIndicators.Count > 0)
@@ -1146,8 +1525,38 @@
         _zigZagIndicators[(TrendType.Secondary, false)] = new(TrendType.Secondary, false);
         _zigZagIndicators[(TrendType.Secondary, true)] = new(TrendType.Secondary, true);
 
-        await ZoneDlz.CalculatePivots(_currentSymbol, interval, minDate, maxDate, _zigZagIndicators);
+        if (_windowStart != null)
+            FeedZigZagIndicators(interval, candleSource, minDate, maxDate);
+        else
+            await ZoneDlz.CalculatePivots(_currentSymbol, interval, minDate, maxDate, _zigZagIndicators);
+
         _zigZagBuiltFor = key;
+    }
+
+    /// <summary>
+    /// Feed this screen's zigzag indicators over the window, the way ZoneDlz.CalculatePivots feeds
+    /// them over the live one. Not that method itself: besides feeding, it writes the last swing
+    /// point and the swing range onto the scanner's CryptoSymbolInterval, and re-seeds the zone
+    /// trigger range from them. Calling it from a chart parked in last week's candles would hand
+    /// the live zone calculation swing levels from a moment that has nothing to do with now.
+    /// </summary>
+    private void FeedZigZagIndicators(CryptoInterval interval, CryptoCandleList candles,
+        CandleTime from, CandleTime to)
+    {
+        var indicators = _zigZagIndicators.Values;
+
+        for (CandleTime loop = from; loop <= to; loop += interval.Duration)
+        {
+            if (candles.TryGetValue(loop, out CryptoCandle candle))
+            {
+                foreach (var indicator in indicators)
+                    indicator.Calculate(candle, true);
+            }
+        }
+
+        // What makes LastSwingHigh/LastSwingLow — and with them the FIB levels — valid.
+        foreach (var indicator in indicators)
+            indicator.FinishBatch();
     }
 
     private void AddZigZagOverlays(Dictionary<string, object> overlays, CryptoSymbolInterval symbolInterval,

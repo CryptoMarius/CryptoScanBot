@@ -3,12 +3,18 @@
 @using CryptoScanner.Core.Services
 @using CryptoScanner.Core.Settings
 @inject IScannerSession ScannerSession
+@inject ApplicationStateService StateService
+@inject IJSRuntime JS
+@implements IDisposable
 
 @if (Visible)
 {
     <div class="modal-overlay" @onclick="Cancel"></div>
-    <div class="modal-dialog settings-dialog" @onclick:stopPropagation="true">
-        <div class="modal-header">
+    @* Draggable by its title bar and resizable by the corner, like the Avalonia configuration
+       window. The overlay stays: the dialog can be slid aside to read the grids underneath, but
+       they cannot be clicked while unsaved settings are open. *@
+    <div class="modal-dialog settings-dialog dialog-window" @ref="_dialogRef" @onclick:stopPropagation="true">
+        <div class="modal-header" @ref="_headerRef">
             <span class="modal-title">Scanner configuration</span>
         </div>
 
@@ -82,6 +88,8 @@
             <button class="btn btn-primary" @onclick="Save" disabled="@_saving">Save</button>
             <button class="btn btn-secondary" @onclick="Cancel" disabled="@_saving">Cancel</button>
         </div>
+
+        <div class="modal-resize-grip" @ref="_gripRef"></div>
     </div>
 }
 
@@ -90,6 +98,7 @@
     [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
 
     private int _activeTab = 0;
+    private bool _wasVisible;
     private string _statusMessage = "";
     private bool _statusIsError;
     private bool _saving;
@@ -106,7 +115,81 @@
     private SettingsTabs.DebugSettings? _debugSettings;
     private SettingsTabs.ChartStyleSettingsTab? _chartStyleSettings;
 
+    /// <summary>
+    /// Where the position and size of this dialog are stored. Deliberately not the "SettingsWindow"
+    /// of the Avalonia configuration window: that one is a real window and stores desktop
+    /// coordinates, while this one lives inside the browser view and stores coordinates within it.
+    /// </summary>
+    private const string WindowStateName = "SettingsDialog";
+
+    private ElementReference _dialogRef;
+    private ElementReference _headerRef;
+    private ElementReference _gripRef;
+    private DotNetObjectReference<Settings>? _dotNetRef;
+    private bool _dialogAttached;
+
     private string TabStyle(int index) => _activeTab == index ? "" : "display:none;";
+
+    /// <summary>
+    /// The dialog is only hidden when it closes, so the tab that was open last would still be the
+    /// selected one the next time it opens. Reset to the first tab on every open, like the Avalonia
+    /// configuration window which is built from scratch each time.
+    /// </summary>
+    protected override void OnParametersSet()
+    {
+        if (Visible && !_wasVisible)
+            _activeTab = 0;
+        _wasVisible = Visible;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible && !_dialogAttached)
+        {
+            _dialogAttached = true;
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+
+            // A width of zero means the dialog has never been moved or resized; it then opens
+            // centred at the size the stylesheet gives it.
+            var state = StateService.GetOrCreateWindowState(WindowStateName);
+            try
+            {
+                await JS.InvokeVoidAsync("cryptoScannerDialog.attach", _dialogRef, _headerRef, _gripRef,
+                    _dotNetRef, state.X, state.Y, state.Width, state.Height);
+            }
+            catch (JSException)
+            {
+            }
+        }
+        else if (!Visible && _dialogAttached)
+        {
+            _dialogAttached = false;
+            try
+            {
+                await JS.InvokeVoidAsync("cryptoScannerDialog.detach");
+            }
+            catch (JSException)
+            {
+            }
+        }
+    }
+
+    /// <summary>
+    /// The dialog was dragged to another place or resized by its corner. Stored right away, in the
+    /// same shared file the window positions of the other windows go to, so it survives a restart
+    /// and a switch to another data folder.
+    /// </summary>
+    [JSInvokable]
+    public void OnDialogBoundsChanged(double x, double y, double width, double height)
+    {
+        StateService.SaveWindowStateValues(WindowStateName, x, y, width, height, "Normal");
+        StateService.FlushWindowStateToDisk();
+    }
+
+    public void Dispose()
+    {
+        _dotNetRef?.Dispose();
+    }
 
     private async Task Save()
     {

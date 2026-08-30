@@ -303,4 +303,126 @@ public class EntryWatchWindowTests : TestBase
         Assert.IsFalse(after.GiveUp(signal), "nothing moved against the signal after it fired");
         Assert.IsTrue(after.AllowStepIn(signal));
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  Waiting for a reversal pattern
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>The algorithm on a candle with a shape of its own, rather than the flat one above.</summary>
+    private static SignalCreateBase MakeShapedAlgorithm(CryptoSignal signal, DateTime candleTime,
+        decimal open, decimal high, decimal low, decimal close)
+    {
+        SignalCreateBase algorithm = MakeAlgorithm(signal, candleTime, low, high);
+        algorithm.CandleLast!.Candle = new CryptoCandle
+        {
+            TickDecimals = 2,
+            OpenTime = CandleTime.FromDateTime(candleTime),
+            Open = open,
+            High = high,
+            Low = low,
+            Close = close,
+        };
+        return algorithm;
+    }
+
+    /// <summary>A hammer: small body at the top, long lower wick. Needs no previous candle.</summary>
+    private static SignalCreateBase MakeHammer(CryptoSignal signal, DateTime candleTime)
+        => MakeShapedAlgorithm(signal, candleTime, open: 108m, high: 110m, low: 100m, close: 110m);
+
+    /// <summary>The same candle with wicks at both ends, so it is no pattern at all.</summary>
+    private static SignalCreateBase MakeNothing(CryptoSignal signal, DateTime candleTime)
+        => MakeShapedAlgorithm(signal, candleTime, open: 104m, high: 110m, low: 100m, close: 106m);
+
+
+    /// <summary>
+    /// With a pattern asked for, the window stops being a delay and becomes a search: the entry is
+    /// taken on the first candle inside it that forms the shape, not at the end of it.
+    /// </summary>
+    [TestMethod]
+    public void APatternInsideTheWindow_IsTakenStraightAway()
+    {
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitForPatterns = ["Hammer"];
+        CryptoSignal signal = MakeSignal(CryptoTradeSide.Long);
+
+        SignalCreateBase early = MakeHammer(signal, SignalOpen.AddMinutes(5));
+        Assert.IsFalse(early.GiveUp(signal), "binnen het venster wordt niets weggegooid");
+        Assert.IsTrue(early.AllowStepIn(signal), "de vorm is er, dus instappen mag meteen");
+    }
+
+
+    [TestMethod]
+    public void WithoutThePattern_TheSignalKeepsWaiting()
+    {
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitForPatterns = ["Hammer"];
+        CryptoSignal signal = MakeSignal(CryptoTradeSide.Long);
+
+        SignalCreateBase plain = MakeNothing(signal, SignalOpen.AddMinutes(5));
+        Assert.IsFalse(plain.GiveUp(signal));
+        Assert.IsFalse(plain.AllowStepIn(signal), "geen vorm, dus nog niet instappen");
+    }
+
+
+    /// <summary>
+    /// And when the window closes without one, the signal has to LEAVE the list - AllowStepIn saying
+    /// no would keep it there and it would be re-examined for every symbol on every candle.
+    /// </summary>
+    [TestMethod]
+    public void NoPatternBeforeTheWindowCloses_DropsTheSignal()
+    {
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitForPatterns = ["Hammer"];
+        CryptoSignal signal = MakeSignal(CryptoTradeSide.Long);
+
+        SignalCreateBase after = MakeNothing(signal, SignalOpen.AddMinutes(15));
+        Assert.IsTrue(after.GiveUp(signal), "venster dicht en geen vorm gezien");
+    }
+
+
+    /// <summary>
+    /// The edge that the order of the two calls creates: GiveUp runs BEFORE AllowStepIn, so a
+    /// pattern arriving on the very last candle of the window would be thrown away by a GiveUp that
+    /// only looks at the clock.
+    /// </summary>
+    [TestMethod]
+    public void APatternOnTheLastCandleOfTheWindow_IsStillTaken()
+    {
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitForPatterns = ["Hammer"];
+        CryptoSignal signal = MakeSignal(CryptoTradeSide.Long);
+
+        SignalCreateBase last = MakeHammer(signal, SignalOpen.AddMinutes(15));
+        Assert.IsFalse(last.GiveUp(signal), "de vorm is er, dus niet weggooien");
+        Assert.IsTrue(last.AllowStepIn(signal));
+    }
+
+
+    /// <summary>
+    /// A misspelled pattern would otherwise reject every signal, and a strategy that produces
+    /// nothing is the most expensive thing to diagnose here. So it throws.
+    /// </summary>
+    [TestMethod]
+    public void AMisspelledPatternName_FailsLoudly()
+    {
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitForPatterns = ["Hamer"];
+        CryptoSignal signal = MakeSignal(CryptoTradeSide.Long);
+
+        SignalCreateBase algorithm = MakeHammer(signal, SignalOpen.AddMinutes(5));
+        Assert.ThrowsExactly<InvalidOperationException>(() => algorithm.AllowStepIn(signal));
+    }
+
+
+    /// <summary>Without a list the rule is off and the plain wait still behaves as it did.</summary>
+    [TestMethod]
+    public void WithoutAPatternList_TheOrdinaryWaitStillApplies()
+    {
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitCandles = 3;
+        GlobalData.Settings.Trading.EntryConditions.EntryWaitForPatterns = [];
+        CryptoSignal signal = MakeSignal(CryptoTradeSide.Long);
+
+        Assert.IsFalse(MakeNothing(signal, SignalOpen.AddMinutes(5)).AllowStepIn(signal));
+        Assert.IsTrue(MakeNothing(signal, SignalOpen.AddMinutes(15)).AllowStepIn(signal));
+    }
 }

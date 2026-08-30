@@ -102,6 +102,29 @@ public class SettingsTrading
     /// </summary>
     public decimal PaperAssetStartCapital { get; set; } = 10000m;
 
+    /// <summary>
+    /// Whether the balances actually constrain the trader (paper trading and the emulator only).
+    /// <para>
+    /// On (the default): an entry is paid for out of the free balance, and a position is only opened
+    /// when the entry AND every DCA level behind it fit in what is free. A run can therefore run out
+    /// of money, which is what a real account does.
+    /// </para>
+    /// <para>
+    /// Off: the balances are still booked on every fill - so the assets screen and any chart built on
+    /// it keep working, and the balance is allowed to go negative - but nothing is refused for lack of
+    /// money. The entry is then the plain <c>EntryAmount</c> of the quote coin: with a balance that may
+    /// run negative there is nothing left to take a percentage OF, so a quote coin configured with only
+    /// a percentage cannot trade in this mode. Every entry is therefore the same size, and the run
+    /// shows what the strategy does without a capital limit.
+    /// </para>
+    /// <para>
+    /// Real trading never gets this far - reading balances from an exchange is not implemented, so
+    /// AssetTools.FetchAssets refuses first. Altrady keeps whatever balance the database holds and
+    /// never books against it, so there "on" measures against a balance that does not move.
+    /// </para>
+    /// </summary>
+    public bool UseAssetManagement { get; set; } = true;
+
     // Trade via exchange (instelling enkel omdat we nu keuze hebben)
     public bool TradeViaExchange { get; set; } = false;
     // Geen nieuwe posities openen (wel bijkopen voor openstaande posities)
@@ -214,7 +237,14 @@ public class SettingsTrading
     // the stop-loss is pulled up to the break-even price and kept there (sticky, never loosened again).
     // Paper-trade only, same as the rest of the stop-loss handling.
     public bool MoveSlToBreakEven { get; set; } = false;
+    // The trigger: how far above (long) or below (short) break-even the price has to reach before
+    // the profit lock arms itself.
     public decimal MoveSlToBreakEvenPercentage { get; set; } = 0.5m;
+    // Where the stop-loss is placed once the trigger is reached, again measured from break-even.
+    // Keeping this below the trigger leaves room between the price and the stop, so the position is
+    // not stopped out by the very move that armed the lock. Values above the trigger are capped to
+    // the trigger, which reproduces the original behaviour (stop exactly at the trigger level).
+    public decimal MoveSlToBreakEvenSlPercentage { get; set; } = 0.5m;
 
 
     //***************************

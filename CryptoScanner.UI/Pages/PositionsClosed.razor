@@ -384,8 +384,15 @@
 
     private void OnMenuOpenChart()
     {
+        // A closed position is nearly always older than the 500 candles per interval the scanner
+        // keeps in memory, so the chart is told which stretch of history to draw. Without the
+        // window it opens on "now" and the position is simply not on screen.
         if (_contextMenuPosition?.Object.Symbol != null)
-            GridCommandService.OpenChart(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.Interval);
+        {
+            var position = _contextMenuPosition.Object;
+            GridCommandService.OpenChart(position.Symbol, position.Interval,
+                position.CreateTime, position.CloseTime);
+        }
         CloseContextMenu();
     }
 

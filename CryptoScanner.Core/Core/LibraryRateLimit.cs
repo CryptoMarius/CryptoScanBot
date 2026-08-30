@@ -1,4 +1,4 @@
-using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.RateLimiting;
 using CryptoExchange.Net.RateLimiting.Guards;
 using CryptoExchange.Net.RateLimiting.Interfaces;
@@ -35,31 +35,53 @@ namespace CryptoScanner.Core.Core;
 public static class LibraryRateLimit
 {
     /// <summary>
-    /// The gates already lowered in this process, by gate name. Kept for two reasons: a second call
-    /// is a no-op instead of a second guard, and <see cref="SpendAsync"/> needs to find the gate back.
-    /// The gate name alone is the key: it is all <see cref="SpendAsync"/> has, and the packages name
-    /// their gates after themselves ("HyperLiquidRest"), so it identifies the package as well.
+    /// The gates whose ceiling this process has taken over, by gate name, with the weight per minute
+    /// that was applied. Kept for two reasons: a repeat of the same value is a no-op instead of a
+    /// second guard, and <see cref="SpendAsync"/> needs to find the gate back. The gate name alone is
+    /// the key: it is all <see cref="SpendAsync"/> has, and the packages name their gates after
+    /// themselves ("HyperLiquidRest"), so it identifies the package as well.
     /// </summary>
-    private static readonly Dictionary<string, IRateLimitGate> Lowered = [];
+    private static readonly Dictionary<string, (IRateLimitGate Gate, int WeightPerMinute)> Lowered = [];
 
     /// <summary>Only there because ProcessAsync wants an id per item; nothing reads it back.</summary>
     private static int itemId;
 
 
     /// <summary>
-    /// Add a guard to one of a package's rate limit gates. Safe to call more than once - the exchange
-    /// defaults are applied again on every exchange switch.
+    /// Take over the ceiling of one of a package's rate limit gates, so this scanner asks for exactly
+    /// <paramref name="weightPerMinute"/> and not for whatever the package believes the exchange
+    /// allows. Safe to call more than once - the exchange defaults are applied again on every
+    /// exchange switch - and a call with a different value replaces the previous one.
+    ///
+    /// <para>
+    /// It REPLACES the package's guards instead of adding one next to them, and that is the whole
+    /// point. Guards are conditions that all have to pass, so an added guard can only ever make the
+    /// ceiling stricter: with HyperLiquid's own guard of 1200 still in place, a setting of 3000 would
+    /// silently keep running at 1200. That was harmless while every value we ever passed was below
+    /// the documented budget, and stopped being harmless when the budget turned out to be measured
+    /// too low - see CryptoScanner.Exchanges/HyperLiquid/HyperLiquid.md.
+    /// </para>
+    /// <para>
+    /// The guard list is a ConcurrentBag on the gate, reached by reflection like the gate itself, and
+    /// it has no Remove - so the whole bag is cleared and one guard of ours is put back. Two things
+    /// follow from that. Anything else the package had on this gate is gone as well, which is why
+    /// this is only called from ExchangeDefaults, when no request is in flight and no retry-after
+    /// guard can be pending. And when the bag cannot be reached the call falls back to ADDING a
+    /// guard, which still holds for any value below what the package allows and is reported as such,
+    /// because a ceiling that quietly means something other than what it says is the thing this whole
+    /// class exists to prevent.
+    /// </para>
     /// </summary>
     /// <param name="rateLimiters">The package's rate limiter object, for example HyperLiquidExchange.RateLimiter.</param>
     /// <param name="gateName">Name of the gate property on it, for example "HyperLiquidRest".</param>
     /// <param name="weightPerMinute">What this process may spend per minute, in the exchange's own weight units.</param>
     /// <param name="exchangeName">Only for the log line.</param>
-    /// <returns>False when the gate could not be reached, which means no ceiling was added.</returns>
+    /// <returns>False when the gate could not be reached, which means no ceiling was set at all.</returns>
     public static bool Lower(object rateLimiters, string gateName, int weightPerMinute, string exchangeName)
     {
         lock (Lowered)
         {
-            if (Lowered.ContainsKey(gateName))
+            if (Lowered.TryGetValue(gateName, out var applied) && applied.WeightPerMinute == weightPerMinute)
                 return true;
 
             try
@@ -71,11 +93,18 @@ public static class LibraryRateLimit
                 if (property.GetValue(rateLimiters) is not IRateLimitGate gate)
                     throw new Exception($"{gateName} did not hold an IRateLimitGate");
 
+                bool replaced = TryClearGuards(gate, out int removed);
+
                 gate.AddGuard(new RateLimitGuard(RateLimitGuard.PerHost, Array.Empty<IGuardFilter>(),
                     weightPerMinute, TimeSpan.FromMinutes(1), RateLimitWindowType.Sliding));
 
-                Lowered.Add(gateName, gate);
-                GlobalData.AddTextToLogTab($"{exchangeName} rate limit lowered to {weightPerMinute} weight per minute");
+                Lowered[gateName] = (gate, weightPerMinute);
+                if (replaced)
+                    GlobalData.AddTextToLogTab($"{exchangeName} rate limit set to {weightPerMinute} weight per minute " +
+                        $"(replaced {removed} guard(s) of the package)");
+                else
+                    GlobalData.AddErrorToLogTab($"{exchangeName} could not replace the guards of the package, so " +
+                        $"{weightPerMinute} weight per minute only holds as far as the package itself allows");
                 return true;
             }
             catch (Exception error)
@@ -87,6 +116,42 @@ public static class LibraryRateLimit
                     $"({error.Message}) - this process now spends whatever the package allows");
                 return false;
             }
+        }
+    }
+
+
+    /// <summary>
+    /// Empty the guard list of a gate, so the guard added right after it is the only condition left.
+    /// Reflection, because the list is private and a ConcurrentBag has no Remove; a failure is not
+    /// thrown but reported, so the caller can say what the ceiling really means.
+    /// </summary>
+    /// <param name="removed">How many guards were dropped, for the log line.</param>
+    /// <returns>False when the field could not be reached or holds nothing that can be cleared.</returns>
+    private static bool TryClearGuards(IRateLimitGate gate, out int removed)
+    {
+        removed = 0;
+        try
+        {
+            FieldInfo? field = gate.GetType().GetField("_guards",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field?.GetValue(gate) is not System.Collections.ICollection guards)
+                return false;
+
+            removed = guards.Count;
+
+            // ConcurrentBag<T> does have a Clear, but the field is typed as that concrete bag and
+            // this class must not depend on which collection the package happened to pick.
+            MethodInfo? clear = guards.GetType().GetMethod("Clear", Type.EmptyTypes);
+            if (clear == null)
+                return false;
+
+            clear.Invoke(guards, null);
+            return true;
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "LibraryRateLimit.TryClearGuards");
+            return false;
         }
     }
 
@@ -117,7 +182,7 @@ public static class LibraryRateLimit
         IRateLimitGate? gate;
         lock (Lowered)
         {
-            Lowered.TryGetValue(gateName, out gate);
+            gate = Lowered.TryGetValue(gateName, out var applied) ? applied.Gate : null;
         }
 
         if (gate == null)

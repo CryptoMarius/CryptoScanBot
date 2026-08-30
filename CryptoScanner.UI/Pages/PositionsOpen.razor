@@ -388,8 +388,14 @@
 
     private void OnMenuOpenChart()
     {
+        // CloseTime is null here by definition, so the window runs from the entry up to now — a
+        // position opened days ago still starts on screen where it was entered.
         if (_contextMenuPosition?.Object.Symbol != null)
-            GridCommandService.OpenChart(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.Interval);
+        {
+            var position = _contextMenuPosition.Object;
+            GridCommandService.OpenChart(position.Symbol, position.Interval,
+                position.CreateTime, position.CloseTime);
+        }
         CloseContextMenu();
     }
 

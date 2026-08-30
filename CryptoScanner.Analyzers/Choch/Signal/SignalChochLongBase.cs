@@ -78,15 +78,19 @@ public abstract class SignalChochLongBase : SignalCreateBase
             return false;
         }
 
-        // Warm-start guard: on the very first evaluation after a restart,
-        // adopt the current event silently so only NEW events fire.
+        // Warm-start guard: on the very first evaluation after a restart in the LIVE
+        // scanner, adopt the current event silently so only NEW events fire. The emulator
+        // starts from a clean slate and should not skip its first opportunity.
         if (!trendData.LastFiredStructureEventTimes.ContainsKey(SignalStrategy))
         {
-            trendData.LastFiredStructureEventTimes[SignalStrategy] = lastChoCh.Time;
-            ExtraText = "warm start: existing CHoCH adopted silently";
-            if (debugLog)
-                ScannerLog.Logger.Info($"CHoCH diag {Symbol.Name} {Interval.Name} {SignalStrategy} long: {ExtraText} (eventTime={lastChoCh.Time.ToDateTime()}, trend={trendData.Trend})");
-            return false;
+            if (!GlobalData.IsEmulatorMode)
+            {
+                trendData.LastFiredStructureEventTimes[SignalStrategy] = lastChoCh.Time;
+                ExtraText = "warm start: existing CHoCH adopted silently";
+                if (debugLog)
+                    ScannerLog.Logger.Info($"CHoCH diag {Symbol.Name} {Interval.Name} {SignalStrategy} long: {ExtraText} (eventTime={lastChoCh.Time.ToDateTime()}, trend={trendData.Trend})");
+                return false;
+            }
         }
 
         if (trendData.LastFiredStructureEventTimes.TryGetValue(SignalStrategy, out var firedAt) &&
@@ -101,12 +105,9 @@ public abstract class SignalChochLongBase : SignalCreateBase
 
         if (RequirePullback)
         {
-            CandleTime pivotAfter = requireBos
-                ? firedAt
-                : lastChoCh.Time;
             if (trendData.LastPivotType != 'L' ||
                 trendData.LastPivotTime == null ||
-                trendData.LastPivotTime <= pivotAfter)
+                trendData.LastPivotTime <= lastChoCh.Time)
             {
                 ExtraText = "waiting for pullback pivot (ZigZag Low after CHoCH)";
                 return false;

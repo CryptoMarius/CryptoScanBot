@@ -109,18 +109,70 @@ public class AssetTools
     }
 
 
-    public static (bool success, decimal entryQuoteAsset, AssetInfo info, string reaction) CheckAvailableAssets(Model.CryptoExchange activeExchange, CryptoSymbol symbol)
+    /// <summary>
+    /// What every DCA level behind an entry of <paramref name="entryQuoteAsset"/> costs together, in
+    /// quote. The trader puts all remaining levels on the book the moment the entry fills (see
+    /// PositionMonitor.CheckAddDcaFixedPercentage), so opening a position really commits this much on
+    /// top of the entry itself.
+    /// <para>
+    /// The factor is a percentage of the entry amount: 100 = the same amount again, 200 = twice the
+    /// amount. It is NOT a multiplier, however much "2" looks like one.
+    /// </para>
+    /// </summary>
+    public static decimal GetDcaReservation(decimal entryQuoteAsset)
+    {
+        decimal reserved = 0;
+        foreach (var dcaEntry in GlobalData.Settings.Trading.DcaList)
+            reserved += entryQuoteAsset * dcaEntry.Factor / 100m;
+        return reserved;
+    }
+
+
+    /// <summary>
+    /// Whether there is room for an entry, and how big that entry may be.
+    /// </summary>
+    /// <param name="reserveForDca">
+    /// True when a NEW position is being opened: the DCA levels behind the entry have to fit as well,
+    /// because they all go onto the book as soon as the entry fills. False when something is added to
+    /// a position that is already open - those orders are already in the locked amount.
+    /// </param>
+    public static (bool success, decimal entryQuoteAsset, AssetInfo info, string reaction) CheckAvailableAssets(
+        Model.CryptoExchange activeExchange, CryptoSymbol symbol, bool reserveForDca = false)
     {
         // GetSymbolData asset amounts
         var info = GetAsset(activeExchange, symbol);
-        if (info.QuoteTotal <= 0)
+
+        bool useAssetManagement = GlobalData.Settings.Trading.UseAssetManagement;
+        if (useAssetManagement && info.QuoteTotal <= 0)
             return (false, 0, info, $"No assets available for {symbol.Quote}");
 
 
-        // The entry value (in quote)
-        decimal entryQuoteAsset = TradeTools.GetEntryAmount(symbol, info.QuoteTotal);
+        // The entry value (in quote). With asset management on it is sized against what is FREE - the
+        // rest is reserved by orders that are already on the book, so spending it would be spending
+        // the same money twice.
+        decimal entryQuoteAsset;
+        if (useAssetManagement)
+            entryQuoteAsset = TradeTools.GetEntryAmount(symbol, info.QuoteFree);
+        else
+        {
+            // With it off there is no balance to take a percentage OF - the balance is allowed to run
+            // negative and a percentage of that shrinks every entry to nothing. So the plain entry
+            // amount is the entry, and a quote coin configured with only a percentage cannot trade in
+            // this mode. Saying so beats silently entering with a number nobody chose.
+            entryQuoteAsset = symbol.QuoteData!.EntryAmount;
+            if (entryQuoteAsset <= 0)
+                return (false, entryQuoteAsset, info, $"No entry amount given for {symbol.Quote} (a percentage needs asset management)");
+        }
+
         if (entryQuoteAsset <= 0)
             return (false, entryQuoteAsset, info, "No amount/percentage given");
+
+
+        // A percentage of a shrinking balance produces ever smaller entries. The entry AMOUNT is the
+        // floor under that: below it an entry is not worth taking any more. Only when both are filled
+        // in - a percentage without an amount has no floor, which is how it always worked.
+        if (symbol.QuoteData!.EntryPercentage > 0 && symbol.QuoteData.EntryAmount > 0 && entryQuoteAsset < symbol.QuoteData.EntryAmount)
+            return (false, entryQuoteAsset, info, $"Not enough cash available entryamount {entryQuoteAsset} < minimum entry amount {symbol.QuoteData.EntryAmount}");
 
 
         // Check [min..max]
@@ -130,12 +182,27 @@ public class AssetTools
             return (false, entryQuoteAsset, info, $"Not enough cash available entryamount {entryQuoteAsset} > maximum instap van {symbol.QuoteValueMaximum}");
 
 
-        // TODO Short/Long, bij futures/margin && short hoef je dit te bezitten (wel een onderpand?) - uitzoeken
-        if (entryQuoteAsset > info.QuoteFree)
-            return (false, entryQuoteAsset, info, $"Not enough cash available entryamount {entryQuoteAsset} >= free assets {symbol.Quote}={info.QuoteFree}");
-        // Totaal overbodig
-        if (entryQuoteAsset > info.QuoteTotal)
-            return (false, entryQuoteAsset, info, $"Not enough cash available entryamount {entryQuoteAsset} >= total assets {symbol.Quote}={info.QuoteTotal}");
+        if (useAssetManagement)
+        {
+            // Opening a position commits the entry AND every DCA level behind it, so both have to fit.
+            // Without this a position could be opened that cannot be defended: the entry fills, and
+            // the DCA orders that were supposed to catch the drop are refused for lack of money.
+            decimal requiredQuoteAsset = entryQuoteAsset;
+            if (reserveForDca)
+                requiredQuoteAsset += GetDcaReservation(entryQuoteAsset);
+
+            // TODO Short/Long, bij futures/margin && short hoef je dit te bezitten (wel een onderpand?) - uitzoeken
+            if (requiredQuoteAsset > info.QuoteFree)
+            {
+                string required = requiredQuoteAsset > entryQuoteAsset
+                    ? $"entryamount {entryQuoteAsset} + dca's {requiredQuoteAsset - entryQuoteAsset}"
+                    : $"entryamount {entryQuoteAsset}";
+                return (false, entryQuoteAsset, info, $"Not enough cash available {required} >= free assets {symbol.Quote}={info.QuoteFree}");
+            }
+            // Totaal overbodig
+            if (requiredQuoteAsset > info.QuoteTotal)
+                return (false, entryQuoteAsset, info, $"Not enough cash available entryamount {entryQuoteAsset} >= total assets {symbol.Quote}={info.QuoteTotal}");
+        }
 
 
         // okay

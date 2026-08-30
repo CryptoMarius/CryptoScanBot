@@ -144,7 +144,7 @@ public abstract class ExchangeBase
         string text = builder.ToString();
 
         GlobalData.AddTextToLogTab(text);
-        GlobalData.AddTextToTelegram(text, position);
+        GlobalData.AddTextToTelegram(text, position, CryptoTelegramCategory.OrderPlaced);
     }
 
 

@@ -238,10 +238,16 @@ public class PositionService : IDisposable
             foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { exchangeid = GlobalData.ActiveExchange.Id }))
             {
                 // AddPosition is idempotent on the position id, so reloading does not duplicate
-                // the entries ThreadLoadData already put in exchange.Data.PositionList.
-                PositionTools.AddPosition(position);
-                PositionTools.LoadPosition(database, position);
-                viewModels.Add(new PositionViewModel(position));
+                // the entries ThreadLoadData already put in exchange.Data.PositionList. It returns
+                // the position that list holds, which is the live one the trader keeps updating.
+                // The row has to follow that instance: bound to the copy read from the database the
+                // grid froze on the values of the reload, so a dca filling an hour later - the
+                // hourly exchange refresh sends SymbolsHaveChangedMessage and lands here - never
+                // showed up in invested, quantity, break-even or parts.
+                CryptoPosition livePosition = PositionTools.AddPosition(position);
+                if (ReferenceEquals(livePosition, position))
+                    PositionTools.LoadPosition(database, position);
+                viewModels.Add(new PositionViewModel(livePosition));
             }
             lock (_lock)
             {

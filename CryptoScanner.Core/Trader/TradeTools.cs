@@ -494,7 +494,7 @@ public class TradeTools
                             {
                                 string s = $"{msgInfo} user takeover";
                                 GlobalData.AddTextToLogTab(s);
-                                GlobalData.AddTextToTelegram(s, position);
+                                GlobalData.AddTextToTelegram(s, position, CryptoTelegramCategory.OrderFilled);
                             }
                             ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} {order.Side} -> Canceled by user");
                         }
@@ -592,7 +592,7 @@ public class TradeTools
                         if (!isOrderClosed)
                         {
                             GlobalData.AddTextToLogTab(msgInfo);
-                            GlobalData.AddTextToTelegram(msgInfo, position);
+                            GlobalData.AddTextToTelegram(msgInfo, position, CryptoTelegramCategory.OrderFilled);
                         }
 
                         if (!step.IsCalculated)

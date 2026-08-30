@@ -47,6 +47,14 @@
                     }
                 </select>
             </div>
+            <div class="field" title="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode.">
+                <input type="checkbox" class="input-checkbox" @bind="_useAssetManagement" />
+                <label>Asset management</label>
+            </div>
+            <div class="field" title="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets.">
+                <label>Paper start capital</label>
+                <input type="number" class="input-number" min="0" step="1000" @bind="_paperAssetStartCapital" />
+            </div>
             <div class="field">
                 <input type="checkbox" class="input-checkbox" @bind="_soundTradeNotification" />
                 <label>Sound trade notification</label>
@@ -269,16 +277,23 @@
                     <span class="field-unit">%</span>
                 </span>
             </div>
-            <div class="field" title="Once the position reaches the profit % below, the SL moves to that level above break-even to lock in profit. Open DCA orders are cancelled at that point.">
+            <div class="field" title="Once the position reaches the trigger % below, the SL moves to the stop loss % above break-even to lock in profit. Open DCA orders are cancelled at that point.">
                 <input type="checkbox" class="input-checkbox" @bind="_moveSlBe" />
                 <label>Profit lock</label>
             </div>
             @if (_moveSlBe)
             {
-                <div class="field" title="The SL moves to BE + this % once the price has reached this profit level. E.g. 1% means the SL protects 1% profit above break-even.">
-                    <label>Profit lock %</label>
+                <div class="field" title="How far above break-even (below for a short) the price has to reach before the profit lock arms itself. E.g. 2% arms the lock once the position has been 2% in profit.">
+                    <label>Profit lock trigger %</label>
                     <span class="field-control">
                         <input type="number" class="input-number" step="0.1" min="0" @bind="_moveSlBePct" />
+                        <span class="field-unit">%</span>
+                    </span>
+                </div>
+                <div class="field" title="Where the SL is placed once the trigger is reached, measured from break-even. Keep it below the trigger to leave room between the price and the stop; e.g. trigger 2% with stop loss 1% locks in 1% profit and gives the position 1% of room. A value above the trigger is capped to the trigger.">
+                    <label>Profit lock stop loss %</label>
+                    <span class="field-control">
+                        <input type="number" class="input-number" step="0.1" min="0" @bind="_moveSlBeSlPct" />
                         <span class="field-unit">%</span>
                     </span>
                 </div>
@@ -336,6 +351,8 @@
     private bool _active;
     private CryptoTradeVia _tradeVia;
     private bool _disableNewPositions;
+    private bool _useAssetManagement;
+    private decimal _paperAssetStartCapital;
     private bool _logCanceledOrders;
     /// <summary>
     /// Lives in Settings.General, but the Avalonia TraderMiscSettingsView edits it here. This tab is
@@ -360,6 +377,7 @@
     private decimal _stopLossLimit;
     private bool _moveSlBe;
     private decimal _moveSlBePct;
+    private decimal _moveSlBeSlPct;
 
     /// <summary>
     /// The choices of the Trading dropdown, identical to TraderMiscSettingsViewModel.TradeViaList:
@@ -461,6 +479,8 @@
         _active = t.Active;
         _tradeVia = t.TradeVia;
         _disableNewPositions = t.DisableNewPositions;
+        _useAssetManagement = t.UseAssetManagement;
+        _paperAssetStartCapital = t.PaperAssetStartCapital;
         _logCanceledOrders = t.LogCanceledOrders;
         _soundTradeNotification = settings.General.SoundTradeNotification;
         _slotsLong = t.SlotsMaximalLong;
@@ -481,6 +501,7 @@
         _stopLossLimit = t.StopLossLimitPercentage;
         _moveSlBe = t.MoveSlToBreakEven;
         _moveSlBePct = t.MoveSlToBreakEvenPercentage;
+        _moveSlBeSlPct = t.MoveSlToBreakEvenSlPercentage;
 
         // Work on copies so Cancel does not leave edited entries behind
         _dcaList.Clear();
@@ -507,6 +528,8 @@
         t.Active = _active;
         t.TradeVia = _tradeVia;
         t.DisableNewPositions = _disableNewPositions;
+        t.UseAssetManagement = _useAssetManagement;
+        t.PaperAssetStartCapital = _paperAssetStartCapital;
         t.LogCanceledOrders = _logCanceledOrders;
         settings.General.SoundTradeNotification = _soundTradeNotification;
         t.SlotsMaximalLong = _slotsLong;
@@ -527,6 +550,7 @@
         t.StopLossLimitPercentage = _stopLossLimit;
         t.MoveSlToBreakEven = _moveSlBe;
         t.MoveSlToBreakEvenPercentage = _moveSlBePct;
+        t.MoveSlToBreakEvenSlPercentage = _moveSlBeSlPct;
 
         t.DcaList.Clear();
         foreach (var dca in _dcaList)

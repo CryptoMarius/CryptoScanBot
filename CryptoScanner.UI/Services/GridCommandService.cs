@@ -38,6 +38,19 @@ public class GridCommandService
         _navigationManager.NavigateTo("/chart");
     }
 
+    /// <summary>
+    /// Open the chart on the stretch of history a position covers, instead of on "now". Without
+    /// this a position that closed before the scanner's in-memory window starts (500 candles per
+    /// interval — ten days on 30m) cannot be shown at all: its candles are still in candles.db,
+    /// but nothing put them on screen. Same idea as ChartWindowLauncher's windowStart/windowEnd.
+    /// </summary>
+    /// <param name="closeTime">Null for a position that is still open — the window then runs to now.</param>
+    public void OpenChart(CryptoSymbol symbol, CryptoInterval? interval, DateTime createTime, DateTime? closeTime)
+    {
+        _symbolService.SetSelectedSymbol(symbol, interval, createTime, closeTime);
+        _navigationManager.NavigateTo("/chart");
+    }
+
     public void OpenTradingViewInternal(CryptoSymbol symbol, CryptoInterval? interval = null)
     {
         // No NavigateTo("/tradingview") any more: that tab is gone. It was an iframe, and

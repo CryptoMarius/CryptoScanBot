@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 90;
+    public readonly static int CurrentDatabaseVersion = 91;
 
 
     /// <summary>
@@ -1985,6 +1985,38 @@ public class DatabaseMigration
                         new { id = exchangeId.Value }, transaction);
                 }
             }
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 30-08-2026 Run summary on EmulatorRun. Peak capital, the long/short split, the average
+        // winner and loser, the position durations and the DCA breakdown are all derived from the
+        // run's positions - and were therefore lost the moment those positions were archived away.
+        // Session0 is the warning: 6.366 runs of which only the counters survive, so not one of them
+        // can be put in a money table any more. Computing the summary at run end fixes that going
+        // forward; EmulatorDb.RecalculateRuns fills it in for existing runs that still have their
+        // positions.
+        if (CurrentVersion > version.Version && version.Version == 90)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table EmulatorRun add PeakInvested TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add PeakPositions INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add PositionsLong INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add PositionsShort INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add ProfitLong TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add ProfitShort TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add AverageWin TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add AverageLoss TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add AvgDurationSec REAL NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add MinDurationSec REAL NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add MaxDurationSec REAL NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add DcaBreakdownJson TEXT NULL", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

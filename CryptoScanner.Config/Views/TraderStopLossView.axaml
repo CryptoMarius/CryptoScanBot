@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -38,16 +38,29 @@
             <CheckBox IsChecked="{Binding MoveSlToBreakEven, Mode=TwoWay}"
                       Content="Profit lock"
                       FontSize="12"
-                      ToolTip.Tip="Once the position reaches the profit % below, the SL moves to that level above break-even to lock in profit. Open DCA orders are cancelled at that point."/>
+                      ToolTip.Tip="Once the position reaches the trigger % below, the SL moves to the stop loss % above break-even to lock in profit. Open DCA orders are cancelled at that point."/>
 
             <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
                   IsVisible="{Binding MoveSlToBreakEven}">
-                <TextBlock Grid.Column="0" Text="Profit lock %:"
+                <TextBlock Grid.Column="0" Text="Profit lock trigger %:"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"
-                           ToolTip.Tip="The SL moves to BE + this % once the price has reached this profit level. E.g. 1% means the SL protects 1% profit above break-even."/>
+                           ToolTip.Tip="How far above break-even (below for a short) the price has to reach before the profit lock arms itself. E.g. 2% arms the lock once the position has been 2% in profit."/>
                 <TextBox Grid.Column="2"
                          Text="{Binding MoveSlToBreakEvenPercentage, Mode=TwoWay, StringFormat=N2}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"
+                         IsEnabled="{Binding MoveSlToBreakEven}" />
+                <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
+                  IsVisible="{Binding MoveSlToBreakEven}">
+                <TextBlock Grid.Column="0" Text="Profit lock stop loss %:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"
+                           ToolTip.Tip="Where the SL is placed once the trigger is reached, measured from break-even. Keep it below the trigger to leave room between the price and the stop; e.g. trigger 2% with stop loss 1% locks in 1% profit and gives the position 1% of room. A value above the trigger is capped to the trigger."/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding MoveSlToBreakEvenSlPercentage, Mode=TwoWay, StringFormat=N2}"
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"
                          IsEnabled="{Binding MoveSlToBreakEven}" />
                 <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>

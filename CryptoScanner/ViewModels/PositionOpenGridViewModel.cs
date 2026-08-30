@@ -131,9 +131,13 @@ public partial class PositionOpenGridViewModel : ObservableObject
         string sql = "select * from position where exchangeid=@exchangeid and closetime is null and status < 2";
         foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
         {
-            PositionTools.AddPosition(position);
-            PositionTools.LoadPosition(database, position);
-            viewModels.Add(new PositionViewModel { Object = position });
+            // AddPosition returns the position the list holds, which is the live one the trader
+            // keeps updating when it was already in memory. The row has to follow that instance,
+            // a copy read from the database freezes on the values of this reload.
+            CryptoPosition livePosition = PositionTools.AddPosition(position);
+            if (ReferenceEquals(livePosition, position))
+                PositionTools.LoadPosition(database, position);
+            viewModels.Add(new PositionViewModel { Object = livePosition });
         }
         Positions.Clear();
         Positions.AddRange([.. viewModels]);
@@ -170,6 +174,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
             try
             {
                 // "Distance" from current price
+                position.UpdateTime = string.Empty;
                 position.Status = string.Empty;
                 position.Invested = string.Empty;
                 position.Returned = string.Empty;

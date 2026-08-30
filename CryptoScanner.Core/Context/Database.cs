@@ -964,7 +964,21 @@ public class CryptoDatabase : IDisposable
                 "PositionsTimeout INTEGER NOT NULL DEFAULT 0," +
                 "PositionsCancelled INTEGER NOT NULL DEFAULT 0," +
                 "Profit TEXT NULL," +
-                "Invested TEXT NULL" +
+                "Invested TEXT NULL," +
+                // Run summary, derived from the positions at run end so it outlives them (see
+                // CryptoEmulatorRun for why). Decimals are TEXT like Profit/Invested above.
+                "PeakInvested TEXT NULL," +
+                "PeakPositions INTEGER NOT NULL DEFAULT 0," +
+                "PositionsLong INTEGER NOT NULL DEFAULT 0," +
+                "PositionsShort INTEGER NOT NULL DEFAULT 0," +
+                "ProfitLong TEXT NULL," +
+                "ProfitShort TEXT NULL," +
+                "AverageWin TEXT NULL," +
+                "AverageLoss TEXT NULL," +
+                "AvgDurationSec REAL NULL," +
+                "MinDurationSec REAL NULL," +
+                "MaxDurationSec REAL NULL," +
+                "DcaBreakdownJson TEXT NULL" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxEmulatorRunId ON EmulatorRun(Id)");
         }

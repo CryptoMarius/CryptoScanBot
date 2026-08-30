@@ -79,7 +79,7 @@ public static class TradingRules
                                     pause.Until = pauseUntilDate;
                                     pause.Text = $"{symbol.Name} #{index} price={symbol.LastPrice.ToString0()} heeft {percentage:N2}% bewogen (gepauseerd tot {pauseUntilDate.ToLocalTime()})";
                                     GlobalData.AddTextToLogTab(pause.Text);
-                                    GlobalData.AddTextToTelegram(pause.Text);
+                                    GlobalData.AddTextToTelegram(pause.Text, CryptoTelegramCategory.System);
                                 }
                             }
                         }

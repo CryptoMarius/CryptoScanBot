@@ -213,7 +213,14 @@ public static class PositionTools
     }
 
 
-    public static void AddPosition(CryptoPosition position)
+    /// <summary>
+    /// Register the position in the position list of its exchange and return the instance that is
+    /// in that list afterwards. A position for the same symbol that was already in memory keeps its
+    /// place, so a position just read from the database is then a detached copy and the live one is
+    /// returned instead. Callers that keep a reference (the grids) must use what comes back: a
+    /// detached copy stops following the trader and freezes on the values of that moment.
+    /// </summary>
+    public static CryptoPosition AddPosition(CryptoPosition position)
     {
         if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
         {
@@ -224,9 +231,10 @@ public static class PositionTools
                 if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
                     position.Interval = interval;
 
-                exchange.Data.PositionList.TryAdd(symbol.Name, position);
+                return exchange.Data.PositionList.GetOrAdd(symbol.Name, position);
             }
         }
+        return position;
     }
 
 

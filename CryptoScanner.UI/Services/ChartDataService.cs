@@ -95,6 +95,18 @@ public static class ChartDataService
     }
 
     /// <summary>
+    /// One moment, drawn top to bottom in the sub-panels (volume, RSI/stochastic, MACD) so a
+    /// position's open can be followed across all four panes at once. The main chart draws the same
+    /// moment as a pair of bounded <see cref="ChartSegment"/> verticals instead, which is what keeps
+    /// them off the candle it belongs to.
+    /// </summary>
+    public sealed class ChartVertical
+    {
+        public long time { get; set; }
+        public string color { get; set; } = "#888888";
+    }
+
+    /// <summary>
     /// The candle that CONTAINS this moment. A fill that lands exactly on a candle boundary belongs
     /// to the candle that just closed, not to the one starting at that instant — and paper trading
     /// stamps every fill with the close time of the base candle it happened in, so plain alignment
@@ -227,10 +239,21 @@ public static class ChartDataService
         }
     }
 
-    public static List<ChartMarker> BuildSignalMarkers(CryptoSymbol symbol, CryptoInterval interval,
+    /// <summary>
+    /// Signals as small dots, the way the Avalonia chart draws them (Chart/Signals.cs: a
+    /// ScatterSeries of MarkerSize 2, yellow for long and red for short, placed just off the
+    /// candle at 0.99x / 1.01x the signal price).
+    /// <para>
+    /// Dots and not series markers, for two reasons. The captions: an arrow per signal carried its
+    /// StrategyText, and on a busy symbol those piled into an unreadable wall over the candles.
+    /// And the size: lightweight-charts' own marker shapes start out bigger than the candles, which
+    /// is the same reason the order fills are drawn this way — see the remarks in chart-widget.js.
+    /// </para>
+    /// </summary>
+    public static List<ChartDot> BuildSignalDots(CryptoSymbol symbol, CryptoInterval interval,
         CandleTime from, CandleTime to)
     {
-        var markers = new List<ChartMarker>();
+        var dots = new List<ChartDot>();
 
         string sql = "select * from signal where SymbolId = @SymbolId " +
             "and CloseDate > @From and CloseDate <= @To and EmulatorRunId is null";
@@ -242,16 +265,18 @@ public static class ChartDataService
                 new { SymbolId = symbol.Id, From = from.ToDateTime(), To = to.ToDateTime() }))
             {
                 bool isLong = signal.Side == CryptoTradeSide.Long;
-                markers.Add(new ChartMarker
+                dots.Add(new ChartDot
                 {
-                    // Aligned onto the candle grid of the interval SHOWN. A marker only renders
-                    // when its time matches a bar, and a signal's close time is the end of its own
-                    // (often smaller) candle - on an hourly chart nothing lined up at all.
+                    // Aligned onto the candle grid of the interval SHOWN. A signal's close time is
+                    // the end of its own (often smaller) candle, so on an hourly chart nothing
+                    // lined up with a bar at all.
                     time = CandleTime.AlignFromDateTime(signal.CloseDate, interval.Duration).ToUnixSeconds(),
-                    position = isLong ? "belowBar" : "aboveBar",
+
+                    // Off the candle rather than on it, the same 1% either way as Avalonia: a dot
+                    // exactly on the signal price disappears into the body it belongs to.
+                    price = (double)(isLong ? 0.99m * signal.SignalPrice : 1.01m * signal.SignalPrice),
                     color = isLong ? "#ffeb3b" : "#e53935",
-                    shape = isLong ? "arrowUp" : "arrowDown",
-                    text = signal.StrategyText ?? "",
+                    radius = 2,
                 });
             }
         }
@@ -264,11 +289,14 @@ public static class ChartDataService
             database.Close();
         }
 
-        return markers;
+        return dots;
     }
 
+    /// <param name="verticals">Filled with the open moment of every position drawn, for the
+    /// sub-panels to carry down. Same times as the vertical markers on the main chart.</param>
     public static void BuildPositionOverlays(CryptoSymbol symbol, CryptoInterval interval,
-        CandleTime from, CandleTime to, List<ChartSegment> segments, List<ChartDot> dots)
+        CandleTime from, CandleTime to, List<ChartSegment> segments, List<ChartDot> dots,
+        List<ChartVertical> verticals)
     {
         string sql = "select * from position where SymbolId = @SymbolId " +
             "and CreateTime <= @To and (CloseTime is null or CloseTime >= @From) " +
@@ -302,10 +330,15 @@ public static class ChartDataService
 
             foreach (CryptoPosition position in positions)
             {
-                long xStart = CandleTime.AlignFromDateTime(position.CreateTime, interval.Duration).ToUnixSeconds();
+                // CandleContaining, not plain alignment. A position is created from a signal on a
+                // candle that has just CLOSED, so its CreateTime lands exactly on a candle
+                // boundary — and aligning that forward puts the whole position one candle to the
+                // right of the candle that actually triggered it. Same reasoning, and the same
+                // helper, as the fill dots below.
+                long xStart = CandleContaining(position.CreateTime, interval.Duration).ToUnixSeconds();
                 long xEnd = position.CloseTime == null
                     ? rightEdge
-                    : CandleTime.AlignFromDateTime(position.CloseTime.Value, interval.Duration).ToUnixSeconds();
+                    : CandleContaining(position.CloseTime.Value, interval.Duration).ToUnixSeconds();
                 long firstEntry = xStart;
 
                 decimal entry = position.EntryPrice ?? 0m;
@@ -340,10 +373,12 @@ public static class ChartDataService
                         // or sold.
                         bool stepFilled = step.Status.IsFilled();
 
-                        long stepStart = CandleTime.AlignFromDateTime(step.CreateTime, interval.Duration).ToUnixSeconds();
+                        // Same boundary rule as the position itself: an order placed or closed
+                        // exactly on a candle boundary belongs to the candle that just ended.
+                        long stepStart = CandleContaining(step.CreateTime, interval.Duration).ToUnixSeconds();
                         long stepEnd = step.CloseTime == null
                             ? rightEdge
-                            : CandleTime.AlignFromDateTime(step.CloseTime.Value, interval.Duration).ToUnixSeconds();
+                            : CandleContaining(step.CloseTime.Value, interval.Duration).ToUnixSeconds();
 
                         bool levelDrawn = true;
 
@@ -423,8 +458,10 @@ public static class ChartDataService
 
                     decimal candleAbove = entry;
                     decimal candleBelow = entry;
+                    // The candle the marker is drawn ON, so the gap it leaves matches that candle's
+                    // own wicks — the same one xStart resolved to.
                     var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                    CandleTime openCandleTime = CandleTime.AlignFromDateTime(position.CreateTime, interval.Duration);
+                    CandleTime openCandleTime = CandleContaining(position.CreateTime, interval.Duration);
                     if (symbolInterval.CandleList.TryGetValue(openCandleTime, out CryptoCandle openCandle))
                     {
                         candleAbove = openCandle.High + 0.01m * openCandle.High;
@@ -448,6 +485,10 @@ public static class ChartDataService
 
                     segments.Add(Vertical(xStart, boxAbove, candleAbove, positionColor, caption, captionPrice));
                     segments.Add(Vertical(xStart, boxBelow, candleBelow, positionColor));
+
+                    // The same moment for the sub-panels, where it runs the full height: volume,
+                    // RSI/stochastic and MACD at the open are exactly what you compare afterwards.
+                    verticals.Add(new ChartVertical { time = xStart, color = positionColor });
                 }
 
                 // Break-even only while the position is open. Blue and without a caption: it sits

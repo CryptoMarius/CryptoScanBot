@@ -1,4 +1,4 @@
-@using CryptoScanner.Core.Core
+﻿@using CryptoScanner.Core.Core
 @using CryptoScanner.Core.Enums
 @using CryptoScanner.Core.Settings
 
@@ -46,6 +46,14 @@
                 @* Avalonia's ExchangeViewModel binds this label to General.GetCandleInterval. *@
                 <label>Refresh symbols every x minutes</label>
                 <input type="number" class="input-number" @bind="_getCandleInterval" min="10" max="300" />
+            </div>
+            <div class="field">
+                @* HyperLiquid counts per IP address, so every scanner on this machine that talks to
+                   HyperLiquid draws from the same pool. Same field as Avalonia's ExchangeView. *@
+                <label title="HyperLiquid counts per IP address, so every scanner on this machine that talks to HyperLiquid draws from the same pool. 3000 is one scanner having it to itself; halve it when a second HyperLiquid market runs alongside. Takes effect on a restart or an exchange switch.">HyperLiquid weight per minute</label>
+                <input type="number" class="input-number" @bind="_hyperLiquidWeightPerMinute"
+                       min="@SettingsGeneral.HyperLiquidWeightPerMinuteMinimum"
+                       max="@SettingsGeneral.HyperLiquidWeightPerMinuteMaximum" />
             </div>
         </div>
     </div>
@@ -139,6 +147,7 @@
     private string _extraCaption = "";
     private string _theme = ThemeHelper.Dark;
     private int _getCandleInterval;
+    private int _hyperLiquidWeightPerMinute;
     private bool _hideSelectedRow;
     private bool _hideSymbolsOnTheLeft;
     private bool _soundTradeNotification;
@@ -163,6 +172,7 @@
         _extraCaption = g.ExtraCaption;
         _theme = ThemeHelper.Normalize(g.Theme);
         _getCandleInterval = g.GetCandleInterval;
+        _hyperLiquidWeightPerMinute = g.HyperLiquidWeightPerMinute;
         _hideSelectedRow = g.HideSelectedRow;
         _hideSymbolsOnTheLeft = g.HideSymbolsOnTheLeft;
         _soundTradeNotification = g.SoundTradeNotification;
@@ -192,6 +202,8 @@
         g.ExtraCaption = _extraCaption;
         g.Theme = ThemeHelper.Normalize(_theme);
         g.GetCandleInterval = _getCandleInterval;
+        g.HyperLiquidWeightPerMinute = Math.Clamp(_hyperLiquidWeightPerMinute,
+            SettingsGeneral.HyperLiquidWeightPerMinuteMinimum, SettingsGeneral.HyperLiquidWeightPerMinuteMaximum);
         g.HideSelectedRow = _hideSelectedRow;
         g.HideSymbolsOnTheLeft = _hideSymbolsOnTheLeft;
         g.SoundTradeNotification = _soundTradeNotification;

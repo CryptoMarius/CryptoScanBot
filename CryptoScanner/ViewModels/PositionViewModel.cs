@@ -47,6 +47,11 @@ public partial class PositionViewModel : BaseConvertersViewModel
             _UpdateTimeText ??= Object.UpdateTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")!;
             return _UpdateTimeText!;
         }
+        set
+        {
+            _UpdateTimeText = null;
+            OnPropertyChanged(nameof(UpdateTime));
+        }
     }
 
     //public string CloseTime => Object.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")!;

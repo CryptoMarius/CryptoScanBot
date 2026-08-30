@@ -35,12 +35,25 @@
 
             <!-- Buttons -->
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                <CheckBox IsChecked="{Binding SendSignalsToTelegram, Mode=TwoWay}"
-                          Content="Stuur meldingen naar telegram" FontSize="12"
+                <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}"
+                          Content="Telegram gebruiken" FontSize="12"
                           VerticalAlignment="Center"/>
                 <Button Content="{Binding StartStopCaption}"  Command="{Binding StartStopTelegramCommand}" Width="90"
                         FontSize="12"/> <Button Content="Test" Command="{Binding TestTelegramCommand}"
                         Width="75" FontSize="12"/>
+            </StackPanel>
+
+            <!-- Per category, so the trader can be silenced without losing the signals -->
+            <TextBlock Text="Verstuur naar telegram:" FontSize="12" Margin="0,4,0,0"/>
+            <StackPanel Margin="16,0,0,0" Spacing="4">
+                <CheckBox IsChecked="{Binding SendSignalsToTelegram, Mode=TwoWay}"
+                          Content="Signalen" FontSize="12"/>
+                <CheckBox IsChecked="{Binding SendOrdersToTelegram, Mode=TwoWay}"
+                          Content="Geplaatste orders (entry, dca, take profit, annuleren)" FontSize="12"/>
+                <CheckBox IsChecked="{Binding SendFilledOrdersToTelegram, Mode=TwoWay}"
+                          Content="Gevulde orders" FontSize="12"/>
+                <CheckBox IsChecked="{Binding SendSystemMessagesToTelegram, Mode=TwoWay}"
+                          Content="Systeemmeldingen (opstarten, herstarten, pauzeregels)" FontSize="12"/>
             </StackPanel>
 
             <!-- Emoji Option -->

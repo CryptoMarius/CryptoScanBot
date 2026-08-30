@@ -1,4 +1,5 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Settings;
 
 namespace CryptoScanner.Core.Exchange.HyperLiquid;
 
@@ -40,6 +41,11 @@ namespace CryptoScanner.Core.Exchange.HyperLiquid;
 /// and 100 simultaneous inflight post messages. The connection count is the tight one - see the
 /// SubscriptionsPerBundle and SocketSubscriptionsCombineTarget comments in both Api classes.
 /// </para>
+///
+/// <para>
+/// HyperLiquid.md next to this file carries the same limits with their source url, the measured cost
+/// of four consecutive starts on 30-08-2026, and the two leads that could still make a start faster.
+/// </para>
 /// </summary>
 public static class HyperLiquidLimits
 {
@@ -55,8 +61,21 @@ public static class HyperLiquidLimits
     /// <summary>What the exchange charges for an ordinary info request, before any per-item surcharge.</summary>
     public const int InfoRequestWeight = 20;
 
-    /// <summary>Everything the exchange allows ONE ADDRESS to spend per minute, over all endpoints.</summary>
+    /// <summary>What the DOCUMENTATION says one address may spend per minute, over all endpoints.</summary>
     public const int AddressWeightPerMinute = 1200;
+
+    /// <summary>
+    /// What the address was MEASURED to be allowed per minute on 30-08-2026, which is not the same
+    /// thing and is three times as much. Two burst sizes five times apart in weight - 177 requests of
+    /// 21 weight, 36 requests of 104 - both settled on this figure within 0.7%, which confirms the
+    /// documented weight model exactly while contradicting the documented ceiling. The measurement is
+    /// Tools/HyperLiquidRateTest and the write-up is HyperLiquid.md next to this file.
+    /// <para>
+    /// Here only to be read next to the number above. Nothing computes from it: what the scanner
+    /// actually spends is the setting, see <see cref="WeightPerMinute"/>.
+    /// </para>
+    /// </summary>
+    public const int MeasuredAddressWeightPerMinute = 3730;
 
     /// <summary>
     /// How many candles in one answer cost one extra weight on top of <see cref="InfoRequestWeight"/>.
@@ -64,37 +83,50 @@ public static class HyperLiquidLimits
     public const int CandlesPerExtraWeight = 60;
 
     /// <summary>
-    /// What ONE running HyperLiquid market may spend per minute, in the exchange's own weight units.
+    /// What THIS market may spend per minute, in the exchange's own weight units. Comes from
+    /// <see cref="SettingsGeneral.HyperLiquidWeightPerMinute"/>, because the right value depends on
+    /// something the code cannot see: how many scanners on this machine are talking to HyperLiquid.
     ///
     /// <para>
-    /// 1150 of the 1200 the address allows. The 50 that stays free is NOT for other calls - the
-    /// hourly symbol and ticker refresh and the ten deployed-market requests of PerpDexClient all book
-    /// into this same gate, so they are already inside the number. It is slack for the one thing we
-    /// cannot control: our minute and the exchange's minute do not start at the same second, so a
-    /// client-side window that sits exactly on the limit tips over it now and then. A refusal is not
-    /// free either, it costs the five seconds of the first retry in CandleBase.
-    /// Against the measured 33 weight per candle request this is about 35 requests per minute, where
-    /// 450 gave 22 and 1000 gave 31.
+    /// IT IS A SHARE OF ONE ADDRESS, NOT A BUDGET PER MARKET. HyperLiquid counts per IP address, so
+    /// HyperLiquid Spot and HyperLiquid Perpetual running side by side each spend from the same pool
+    /// and neither can see the other. One scanner may have the lot; two have to be set to half each.
+    /// The setting is the only place where that division is stated.
     /// </para>
     /// <para>
-    /// The number that matters for the user is the cold start: 181 symbols x 12 intervals x 33 weight
-    /// is roughly 71700 weight, which at 1150 per minute is some 62 minutes against the 100 minutes
-    /// measured on 28-08-2026. This dial is now empty - 1200 itself would only take another 3 minutes
-    /// off. Shortening it further means asking FEWER TIMES, because 240 of the 410 weight per symbol
-    /// is the flat 20 per request and only 170 is candles. Two ways, both in Core and both untouched
-    /// so far: derive 3m, 2h and 4h from candles that are already being fetched (12 requests become 9),
-    /// and stop dragging the 1h interval to 3000 candles per symbol, which happens only because 6h is
-    /// built from 3h which is built from 1h and HyperLiquid has neither.
+    /// The default is 3000 against a measured ceiling of about 3730
+    /// (<see cref="MeasuredAddressWeightPerMinute"/>) and a documented one of 1200. The distance to
+    /// the measured figure is deliberate. Our minute and the exchange's minute do not start on the
+    /// same second, so a client-side window sitting exactly on the limit tips over it now and then,
+    /// and a refusal is not free - it costs the five seconds of the first retry in CandleBase.
     /// </para>
     /// <para>
-    /// IT IS THE WHOLE BUDGET OF ONE ADDRESS, NOT A SHARE PER MARKET. Running HyperLiquid Spot and
-    /// HyperLiquid Perpetual on the same machine at the same time spends 2000 of the 1200 allowed and
-    /// the exchange starts refusing; halve this number when that becomes the normal situation. The
-    /// earlier value of 450 was a share meant to survive that case, but it was measured against a
-    /// weight model that turned out to be wrong, so it protected nothing and only cost speed.
+    /// It stood at a fixed 1150 until 30-08-2026, and the history of that number is worth keeping
+    /// because it explains what to distrust here. 450 was chosen as "75% of the documented budget
+    /// divided over two markets", against a weight model that did not yet know candleSnapshot carries
+    /// a surcharge per 60 candles; correcting the model moved it to 1150, and the start of 117
+    /// symbols still took three minutes. Only measuring the exchange instead of reading it showed the
+    /// ceiling itself was the wrong number. The measurement is one address on one afternoon, so this
+    /// setting can be wrong in the same way - the log line to watch is "delay needed because of rate
+    /// limits", which appears when the exchange itself refused and never for a client-side wait.
+    /// </para>
+    /// <para>
+    /// Where the remaining minutes of a start have to come from, once this dial is right: asking
+    /// FEWER TIMES. 88% of the weight of a start is the flat 20 per request and only 12% is candles.
+    /// Two ways, both in Core: derive 3m, 2h and 4h from candles that are already being fetched (12
+    /// requests per fresh symbol become 9), and stop dragging the 1h interval to 3000 candles per
+    /// symbol, which happens only because 6h is built from 3h which is built from 1h and HyperLiquid
+    /// has neither.
     /// </para>
     /// </summary>
-    public const int WeightPerMinute = 1150;
+    public static int WeightPerMinute =>
+        GlobalData.Settings?.General.HyperLiquidWeightPerMinute ?? DefaultWeightPerMinute;
+
+    /// <summary>
+    /// What <see cref="WeightPerMinute"/> falls back to before the settings have been read. The same
+    /// constant the setting itself defaults to, so the two cannot drift apart.
+    /// </summary>
+    public const int DefaultWeightPerMinute = SettingsGeneral.HyperLiquidWeightPerMinuteDefault;
 
 
     /// <summary>

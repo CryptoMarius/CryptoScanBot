@@ -10,8 +10,6 @@ using HyperLiquid.Net.Clients;
 
 using Microsoft.Data.Sqlite;
 
-using System.Text;
-
 namespace CryptoScanner.Core.Exchange.HyperLiquid.Perpetual;
 
 public class Symbol() : SymbolBase(), ISymbol
@@ -131,7 +129,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.PriceMinimum = symbolInfo.LotSizeFilter.MinOrderValue;
                                 //symbol.PriceMaximum = symbolInfo.LotSizeFilter.MaxOrderValue;
 
-                                symbol.PriceTickSize = PriceTickFromMarkPrice(tickerData.MarkPrice);
+                                symbol.PriceTickSize = PriceTickFromMarkPrice(tickerData.MarkPrice, symbolData.QuantityDecimals);
 
                                 //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
@@ -220,23 +218,69 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
     /// <summary>
-    /// Derives a price tick from a mark price: 4581.4 becomes 0000.1, so the tick carries as many
-    /// decimals as the price itself. HyperLiquid publishes no tick size of its own, and the number
-    /// of decimals it does publish (szDecimals) is about the QUANTITY, not the price.
+    /// How many decimals a PERPETUAL price may carry at most, minus szDecimals. HyperLiquid states
+    /// 8 for a spot price - see the Spot/Symbol.cs of this exchange, which applies the same rule.
     /// </summary>
-    private static decimal PriceTickFromMarkPrice(decimal markPrice)
+    private const int MaxPriceDecimals = 6;
+
+
+    /// <summary>
+    /// The price tick of a perpetual market. HyperLiquid publishes no tick size of its own, and the
+    /// number of decimals it does publish (szDecimals) is about the QUANTITY, not the price, so the
+    /// tick has to come from the two rules HyperLiquid states for an ORDER price instead: at most
+    /// five significant figures, and at most 6 - szDecimals decimals. Whichever of the two is the
+    /// tighter decides.
+    /// <para>
+    /// Counting the decimals the mark price happened to be written with - what this did until
+    /// 30-08-2026 - answers a different question, and the answer moves with the price: HyperLiquid
+    /// drops trailing zeros, so 0.8549 gave a tick of 0.0001 where 0.85497 gave 0.00001. With the
+    /// symbol refresh running every hour that is not a rare event. On 30-08-2026 at 14:05 DOT and
+    /// WIF changed tick over nothing else, after which every take profit and stop loss order of an
+    /// open position was cancelled and replaced one tick away and reported over Telegram as a
+    /// changed break-even price - while the break-even price had not moved at all. In that same
+    /// answer the mark price and the oracle price, two prices of the same instant, disagreed about
+    /// the tick for 92 of the 232 markets. It also landed on ticks the exchange does not accept:
+    /// BTC ended up at 0.1 while HyperLiquid rejects 78270.1 (six significant figures and not an
+    /// integer), and AVAX at 0.001 where 0.0001 is allowed.
+    /// </para>
+    /// <para>
+    /// A price is still needed, but only for its ORDER OF MAGNITUDE - the digit position the first
+    /// significant figure sits in - and that is stable where the exact spelling is not. Five
+    /// significant figures also keep price/tick under 100.000, so the int a candle stores its price
+    /// in cannot overflow here and SymbolBase.LimitDecimalsToCandleRange has nothing left to cap.
+    /// </para>
+    /// </summary>
+    /// <param name="markPrice">A current price of the market; only its magnitude is used</param>
+    /// <param name="quantityDecimals">szDecimals of the market</param>
+    internal static decimal PriceTickFromMarkPrice(decimal markPrice, int quantityDecimals)
     {
-        string x = markPrice.ToString();
-        StringBuilder sb = new(x);
-        for (int j = 0; j < x.Length; j++)
+        int maxDecimals = MaxPriceDecimals - quantityDecimals;
+
+        // Without a price there is no magnitude to measure, so only the decimals rule is left.
+        if (markPrice <= 0)
+            return TickSizeFromDecimals(Math.Max(0, maxDecimals));
+
+        // Power of ten of the first significant digit: 78270 -> 4, 7.392 -> 0, 0.85497 -> -1.
+        int exponent = 0;
+        decimal value = markPrice;
+        while (value >= 10m)
         {
-            if (sb[j] != '.')
-                sb[j] = '0';
+            value /= 10m;
+            exponent++;
         }
-        if (sb[x.Length - 1] != '.')
-            sb[x.Length - 1] = '1';
-        x = sb.ToString();
-        return Convert.ToDecimal(x);
+        while (value < 1m)
+        {
+            value *= 10m;
+            exponent--;
+        }
+
+        // Five significant figures: the fifth one sits four positions behind the first.
+        int decimals = 4 - exponent;
+        if (decimals > maxDecimals)
+            decimals = maxDecimals;
+        if (decimals < 0)
+            decimals = 0;
+        return TickSizeFromDecimals(decimals);
     }
 
 
@@ -327,7 +371,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 // QuantityDecimals is szDecimals, a NUMBER of decimals and not a tick size
                 symbol.QuantityTickSize = TickSizeFromDecimals(market.QuantityDecimals);
                 if (market.MarkPrice > 0)
-                    symbol.PriceTickSize = PriceTickFromMarkPrice(market.MarkPrice);
+                    symbol.PriceTickSize = PriceTickFromMarkPrice(market.MarkPrice, market.QuantityDecimals);
 
                 if (market.DayVolume > 0)
                     symbol.Volume = (double)market.DayVolume;

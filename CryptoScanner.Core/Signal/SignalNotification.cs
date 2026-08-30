@@ -56,7 +56,7 @@ public static class SignalNotification
                 }
             }
 
-            if (GlobalData.Telegram.SendSignalsToTelegram)
+            if (GlobalData.Telegram.IsAllowed(CryptoTelegramCategory.Signal))
                 ThreadTelegramBot.SendSignal(signal);
         }
     }

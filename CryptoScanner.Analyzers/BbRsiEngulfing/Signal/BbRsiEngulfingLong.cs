@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Analyzers.Stobb;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Analyzers.BbRsiEngulfing.Signal;
@@ -51,8 +52,17 @@ public class BbRsiEngulfingLong : SignalCreateBase
             return false;
         }
 
-        // Candle last closes above the high of the previous
-        if (CandleLast.Candle.Close <= prev!.Candle.High)
+        // Candle last closes above the high of the previous — or a real engulfing, see UseStrictEngulfing
+        if (BbRsiEngulfingPlugin.Settings.UseStrictEngulfing)
+        {
+            if (!CandlePatternHelper.Matches(CryptoCandlePattern.Engulfing, CryptoTradeSide.Long,
+                    CandleLast.Candle, prev!.Candle, null, new CandlePatternSettings()))
+            {
+                ExtraText = "not engulfing (strict)";
+                return false;
+            }
+        }
+        else if (CandleLast.Candle.Close <= prev!.Candle.High)
         {
             ExtraText = "not engulfing";
             return false;

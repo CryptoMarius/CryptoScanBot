@@ -72,11 +72,14 @@ public abstract class SignalChochShortBase : SignalCreateBase
 
         if (!trendData.LastFiredStructureEventTimes.ContainsKey(SignalStrategy))
         {
-            trendData.LastFiredStructureEventTimes[SignalStrategy] = lastChoCh.Time;
-            ExtraText = "warm start: existing CHoCH adopted silently";
-            if (debugLog)
-                ScannerLog.Logger.Info($"CHoCH diag {Symbol.Name} {Interval.Name} {SignalStrategy} short: {ExtraText} (eventTime={lastChoCh.Time.ToDateTime()}, trend={trendData.Trend})");
-            return false;
+            if (!GlobalData.IsEmulatorMode)
+            {
+                trendData.LastFiredStructureEventTimes[SignalStrategy] = lastChoCh.Time;
+                ExtraText = "warm start: existing CHoCH adopted silently";
+                if (debugLog)
+                    ScannerLog.Logger.Info($"CHoCH diag {Symbol.Name} {Interval.Name} {SignalStrategy} short: {ExtraText} (eventTime={lastChoCh.Time.ToDateTime()}, trend={trendData.Trend})");
+                return false;
+            }
         }
 
         if (trendData.LastFiredStructureEventTimes.TryGetValue(SignalStrategy, out var firedAt) &&
@@ -91,12 +94,9 @@ public abstract class SignalChochShortBase : SignalCreateBase
 
         if (RequirePullback)
         {
-            CandleTime pivotAfter = requireBos
-                ? firedAt
-                : lastChoCh.Time;
             if (trendData.LastPivotType != 'H' ||
                 trendData.LastPivotTime == null ||
-                trendData.LastPivotTime <= pivotAfter)
+                trendData.LastPivotTime <= lastChoCh.Time)
             {
                 ExtraText = "waiting for pullback pivot (ZigZag High after CHoCH)";
                 return false;

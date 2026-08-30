@@ -235,6 +235,15 @@ def dca_breakdown(positions):
     return rows
 
 
+def money(value, known=True):
+    """A money column, or a dash when the database cannot answer it.
+
+    Printing 0.00 for a run whose positions are gone and that has no stored summary would read as
+    "this needed no capital", which is the opposite of the truth - it is unmeasured, not zero.
+    """
+    return "%.2f" % value if known else "-"
+
+
 def dca_label(fills):
     return {0: "nooit", 1: "1 keer"}.get(fills, "%d keer" % fills)
 
@@ -283,8 +292,81 @@ def open_position_range(connection, run_id, profit):
     return open_count, best, worst
 
 
+def column(row, name, default=None):
+    """A column that older databases may not have.
+
+    Session0 was written before PositionsCancelled existed and long before the run summary, and
+    sqlite3.Row raises IndexError rather than returning None for a column that is not in the query.
+    Reading through this keeps one report able to describe every generation of database.
+    """
+    if name not in row.keys():
+        return default
+    value = row[name]
+    return default if value is None else value
+
+
+def stored_summary(row):
+    """The run summary the emulator writes at run end, when this database has it.
+
+    Everything the report measures from the positions - peak capital, the DCA breakdown, the
+    long/short split, the average winner and loser - is now also computed once by the emulator and
+    kept on the EmulatorRun row. That is what makes an archived database still answerable: the
+    positions of the runs nobody opens any more can be thrown away without the run becoming
+    unreadable, which is exactly what went wrong with Session0 (6.366 runs, aggregates only, not one
+    of them can be put in a money table).
+
+    Returns None for a database written before database version 91.
+    """
+    if column(row, "PeakInvested") is None:
+        return None
+    try:
+        breakdown = json.loads(column(row, "DcaBreakdownJson", "[]"))
+    except ValueError:
+        breakdown = []
+    return {
+        "peak_capital": number(column(row, "PeakInvested")),
+        "peak_positions": column(row, "PeakPositions", 0),
+        "average_win": number(column(row, "AverageWin")),
+        "average_loss": number(column(row, "AverageLoss")),
+        "long": {"closed": column(row, "PositionsLong", 0),
+                 "profit": number(column(row, "ProfitLong")), "won": None},
+        "short": {"closed": column(row, "PositionsShort", 0),
+                  "profit": number(column(row, "ProfitShort")), "won": None},
+        "dca": breakdown,
+    }
+
+
+def dca_breakdown_from_summary(buckets):
+    """Same shape as dca_breakdown(), built from the stored buckets instead of the positions."""
+    total = sum(b.get("Count", 0) for b in buckets)
+    rows = []
+    for bucket in sorted(buckets, key=lambda b: b.get("Parts", 0)):
+        count = bucket.get("Count", 0)
+        if not count:
+            continue
+        rows.append({
+            "fills": bucket.get("Parts", 0),
+            "count": count,
+            "share": 100.0 * count / total if total else 0.0,
+            "profit": bucket.get("Profit", 0.0),
+            "per_trade": bucket.get("Profit", 0.0) / count,
+            "win_rate": 100.0 * bucket.get("Won", 0) / count,
+            "avg_invested": bucket.get("Invested", 0.0) / count,
+        })
+    return rows
+
+
 def measure_run(connection, row):
     positions = load_positions(connection, row["Id"])
+    summary = stored_summary(row)
+    # An archived database keeps the positions of a handful of runs and the summary of all of them.
+    # Prefer the positions when they are there (they answer more), fall back on the summary when
+    # they were archived away, and say plainly which of the two a row rests on.
+    from_summary = not positions and summary is not None
+    # Three kinds of database now: one with the positions, an archive that kept only the run
+    # summary, and Session0 which has neither. The third cannot answer what an account needed, and
+    # has to say so instead of printing a 0.00 that reads like a measurement.
+    source = "posities" if positions else ("samenvatting" if summary is not None else "onbekend")
     frame, variables = run_settings(row)
     profit = number(row["Profit"])
     won = row["PositionsWon"] or 0
@@ -292,13 +374,16 @@ def measure_run(connection, row):
     timeout = row["PositionsTimeout"] or 0
     closed = won + lost + timeout
     days = days_between((row["FromDate"] or "")[:10], (row["ToDate"] or "")[:10])
-    peak_money, peak_count = peak_exposure(positions)
+    if from_summary:
+        peak_money, peak_count = summary["peak_capital"], summary["peak_positions"]
+    else:
+        peak_money, peak_count = peak_exposure(positions)
 
     measured = {
         "id": row["Id"],
         "label": row["Label"] or "",
         "started": (row["StartedAt"] or "")[:16],
-        "git_sha": (row["GitSha"] or "")[:8],
+        "git_sha": str(column(row, "GitSha", ""))[:8],
         "days": days,
         "signals": row["SignalCount"] or 0,
         "positions": row["PositionCount"] or 0,
@@ -306,26 +391,42 @@ def measure_run(connection, row):
         "won": won,
         "lost": lost,
         "timeout": timeout,
-        "cancelled": row["PositionsCancelled"] or 0,
+        "cancelled": column(row, "PositionsCancelled", 0),
         "open": row["PositionsOpen"] or 0,
         "per_day": closed / days,
         "staked": number(row["Invested"]),
+        # The average capital a single trade tied up. Derivable from the run row alone, which makes
+        # it the ONLY thing a database without positions can still say about the DCA ladder: with an
+        # entry of 15 and a ladder at factor 200 and 400 the rungs are 15, 45 and 105, so an average
+        # of 61 means most trades walked at least one rung. Session0 has nothing else left.
+        "avg_stake": number(row["Invested"]) / closed if closed else 0.0,
         "profit": profit,
         "peak_capital": peak_money,
         "peak_positions": peak_count,
         "frame": frame,
         "variables": variables,
+        "from_summary": from_summary,
+        "source": source,
     }
-    open_count, best, worst = open_position_range(connection, row["Id"], profit)
+    if from_summary:
+        open_count = row["PositionsOpen"] or 0
+        best = profit + open_count * summary["average_win"]
+        worst = profit + open_count * summary["average_loss"]
+    else:
+        open_count, best, worst = open_position_range(connection, row["Id"], profit)
     measured["open_best"] = best
     measured["open_worst"] = worst
     measured["end_best"] = peak_money + best
     measured["end_worst"] = peak_money + worst
     measured["end_capital"] = peak_money + profit
     measured["return_on_peak"] = 100 * profit / peak_money if peak_money else 0.0
-    measured["dca_breakdown"] = dca_breakdown(positions)
+    measured["dca_breakdown"] = (dca_breakdown_from_summary(summary["dca"]) if from_summary
+                                 else dca_breakdown(positions))
 
     for side, name in ((SIDE_LONG, "long"), (SIDE_SHORT, "short")):
+        if from_summary:
+            measured[name] = summary[name]
+            continue
         subset = [p for p in positions if p["Side"] == side]
         measured[name] = {
             "closed": len(subset),
@@ -389,7 +490,11 @@ PEAK_EXPLANATION = (
     "minder geld had je posities gemist en was de uitkomst een andere; het is een ondergrens, "
     "geen herrekening. Daarnaast staat het hoogste aantal posities dat tegelijk openstond: bij "
     "een inleg van 15 met een DCA erbovenop kost een positie tot 45, dus dat aantal maal 45 is "
-    "waar je rekening mee moet houden.")
+    "waar je rekening mee moet houden. Bij een database zonder posities staat er een streepje: "
+    "niet gemeten is niet nul. Wat daar wel overblijft is de gemiddelde inzet per trade - de "
+    "inzet gedeeld door het aantal trades. Met een instap van 15 en een ladder op factor 200 en "
+    "400 liggen de treden op 15, 45 en 105, dus dat ene getal zegt nog altijd hoe diep de ladder "
+    "gemiddeld liep.")
 
 FRAME_LABELS = [
     ("exchange", "Beurs"),
@@ -511,24 +616,26 @@ def write_markdown(runs, ladders, groups):
         lines.append(PEAK_EXPLANATION)
         lines.append("")
         lines.append("| id | run | tp | sl | dca | wacht op | filter | start | eind | winst | winst% "
-                     "| trades | per dag | open | eind beste geval | eind slechtste geval "
+                     "| trades | per dag | gem. inzet | open | eind beste geval | eind slechtste geval "
                      "| signalen | max tegelijk | order | zijde |")
-        lines.append("|---:|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|")
+        lines.append("|---:|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|")
         for run in produced:
             variables = run["variables"]
+            known = run["source"] != "onbekend"
             pct = 100 * run["profit"] / run["peak_capital"] if run["peak_capital"] else 0
-            lines.append("| {} | {} | {} | {} | {} | {} | {} | {:.2f} | {:.2f} | {:+.2f} | {:+.1f}% "
-                         "| {} | {:.2f} | {} | {:.2f} | {:.2f} | {} | {} | {} | {} |".format(
+            lines.append("| {} | {} | {} | {} | {} | {} | {} | {} | {} | {:+.2f} | {} "
+                         "| {} | {:.2f} | {:.2f} | {} | {} | {} | {} | {} | {} | {} |".format(
                              run["id"], run["label"],
                              format_percentages(variables["take_profit"]),
                              "-" if variables["stop_loss"] is None else "%g%%" % variables["stop_loss"],
                              format_percentages(variables["dca"]),
                              wait_rules_text(variables["wait_rules"]),
                              threshold_text(variables["band_range_index"]),
-                             run["peak_capital"], run["end_capital"], run["profit"], pct,
-                             run["closed"], run["per_day"],
-                             run["open"], run["end_best"], run["end_worst"],
-                             run["signals"], run["peak_positions"],
+                             money(run["peak_capital"], known), money(run["end_capital"], known),
+                             run["profit"], "%+.1f%%" % pct if known else "-",
+                             run["closed"], run["per_day"], run["avg_stake"],
+                             run["open"], money(run["end_best"], known), money(run["end_worst"], known),
+                             run["signals"], run["peak_positions"] if known else "-",
                              variables["order_type"] or "-", variables["sides"]))
         lines.append("")
 
@@ -670,19 +777,20 @@ def write_html(runs, ladders, groups, database_path):
                    "<th class='left'>wacht op</th><th class='left'>filter</th>"
                    "<th class='left'>order</th><th class='left'>zijde</th>"
                    "<th>start</th><th>eind</th><th>winst</th><th>winst%</th>"
-                   "<th>trades</th><th>per dag</th>"
+                   "<th>trades</th><th>per dag</th><th>gem. inzet</th>"
                    "<th>open</th><th>eind beste geval</th><th>eind slechtste geval</th>"
                    "<th>signalen</th><th>max tegelijk</th>"
                    "</tr></thead><tbody>")
         for run in produced:
             variables = run["variables"]
+            known = run["source"] != "onbekend"
             pct = 100 * run["profit"] / run["peak_capital"] if run["peak_capital"] else 0
             out.append("<tr><td>{}</td><td class='left'>{}</td>"
                        "<td class='left'>{}</td><td class='left'>{}</td><td class='left'>{}</td>"
                        "<td class='left'>{}</td><td class='left'>{}</td>"
                        "<td class='left'>{}</td><td class='left'>{}</td>"
-                       "<td>{:.2f}</td><td>{:.2f}</td>{}{}<td>{}</td><td>{:.2f}</td>"
-                       "<td>{}</td><td>{:.2f}</td><td>{:.2f}</td><td>{}</td><td>{}</td>"
+                       "<td>{}</td><td>{}</td>{}{}<td>{}</td><td>{:.2f}</td><td>{:.2f}</td>"
+                       "<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>"
                        "</tr>".format(
                            run["id"], esc(run["label"]),
                            esc(format_percentages(variables["take_profit"])),
@@ -691,11 +799,12 @@ def write_html(runs, ladders, groups, database_path):
                            esc(wait_rules_text(variables["wait_rules"])),
                            esc(threshold_text(variables["band_range_index"])),
                            esc(variables["order_type"] or "-"), esc(variables["sides"]),
-                           run["peak_capital"], run["end_capital"],
-                           money_cell(run["profit"]), money_cell(pct, suffix="%"),
-                           run["closed"], run["per_day"],
-                           run["open"], run["end_best"], run["end_worst"],
-                           run["signals"], run["peak_positions"]))
+                           money(run["peak_capital"], known), money(run["end_capital"], known),
+                           money_cell(run["profit"]),
+                           money_cell(pct, suffix="%") if known else "<td>-</td>",
+                           run["closed"], run["per_day"], run["avg_stake"],
+                           run["open"], money(run["end_best"], known), money(run["end_worst"], known),
+                           run["signals"], run["peak_positions"] if known else "-"))
         out.append("</tbody></table></div>")
 
     out.append("<h2>Configuratie per run</h2>")

@@ -20,8 +20,16 @@ public static class AnalyzerRegistration
         // it and nothing else. Measuring whether reacting to them works at all.
         PluginManager.Register(new CandlePattern.CandlePatternPlugin());
 
+        // Very disapointing, expected more of this strategy
+        // tijdelijk terug..
+        PluginManager.Register(new Choch.ChochPlugin());
+
         // A band strategy which does rather well
         PluginManager.Register(new Dbr.DbrPlugin());
+
+        // The break that did not hold - a strategy of its own, not a filter. Everything we added as
+        // a filter this month cost money; the shapes measured as strategies did make money.
+        PluginManager.Register(new FailedBreakout.FailedBreakoutPlugin());
 
         PluginManager.Register(new Dlz.DlzPlugin());
         PluginManager.Register(new Fvg.FvgPlugin());
@@ -48,8 +56,6 @@ public static class AnalyzerRegistration
 
         // From the Malysian trader Oma Ally, not much signals but performs well (no profits yet)
         PluginManager.Register(new Bbma.BbmaPlugin());
-        // Very disapointing, expected more of this strategy
-        PluginManager.Register(new Choch.ChochPlugin());
         // Lots of noise, there is alway's some sort of dtd to be found
         PluginManager.Register(new DoubleTopBottom.DoubleTopBottomPlugin());
         PluginManager.Register(new SuperTrendBreakout.SuperTrendBreakoutPlugin());

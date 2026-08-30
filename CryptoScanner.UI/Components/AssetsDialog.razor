@@ -1,0 +1,166 @@
+﻿@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Trader
+
+@* Shows the paper-trading balances and lets them be corrected by hand. Reset throws everything away
+   and hands out the start capital again - the same thing the emulator does at the start of a run.
+   Mirrors the Avalonia AssetWindow; the actions themselves live in PaperAssetsEditor. *@
+
+@if (Visible)
+{
+    <div class="modal-overlay" @onclick="OnClose" @oncontextmenu:preventDefault="true">
+    </div>
+    <div class="modal-dialog assets-dialog" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <span class="modal-title">Paper assets</span>
+        </div>
+        <div class="modal-body assets-body">
+
+            <div class="assets-summary">@_summary</div>
+
+            @* The balances. Only Total is editable: Locked follows from the orders that are open
+               right now and Free follows from Total minus Locked. *@
+            <div class="assets-list">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">Asset</th>
+                            <th style="width: 130px;">Total</th>
+                            <th style="width: 120px;">Locked</th>
+                            <th>Free</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < _rows.Count; i++)
+                        {
+                            int index = i;
+                            <tr>
+                                <td>@_rows[index].Name</td>
+                                <td>
+                                    <input type="number" class="input-number assets-total-input" step="any"
+                                           value="@_rows[index].Total"
+                                           @onchange="e => _rows[index].Total = ParseDecimal(e.Value)" />
+                                </td>
+                                <td>@_rows[index].LockedText</td>
+                                <td>@_rows[index].FreeText</td>
+                            </tr>
+                        }
+                        @if (_rows.Count == 0)
+                        {
+                            <tr><td colspan="4" class="empty-state">No assets</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Start over -->
+            <div class="assets-reset">
+                <span>Start capital:</span>
+                <input type="number" class="input-number assets-start-capital" min="0" step="1000"
+                       value="@_startCapital"
+                       @onchange="e => _startCapital = ParseDecimal(e.Value)"
+                       title="Amount handed out per traded quote coin when you press Reset" />
+                <button class="btn" @onclick="OnResetClick"
+                        title="Throw every paper balance away and hand out the start capital again for each traded quote coin">
+                    Reset to start capital
+                </button>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button class="btn" @onclick="Reload">Refresh</button>
+            <button class="btn btn-primary" @onclick="OnApply">Apply</button>
+            <button class="btn btn-secondary" @onclick="OnClose">Close</button>
+        </div>
+    </div>
+
+    @* Deliberately behind a confirmation: this wipes the balances of a running paper session.
+       Placed after the dialog so it lands on top of it. *@
+    <ConfirmDialog @bind-Visible="_confirmResetVisible"
+                   Title="Reset paper assets"
+                   Message="Throw every paper balance away and hand out the start capital again?"
+                   OnConfirmed="OnResetConfirmed" />
+}
+
+@code {
+    /// <summary>One editable row. Only Total can be changed, Locked and Free are shown as text.</summary>
+    private sealed class AssetRow
+    {
+        public string Name { get; init; } = "";
+        public decimal Total { get; set; }
+        public string LockedText { get; init; } = "";
+        public string FreeText { get; init; } = "";
+
+        /// <summary>The amount this row started with, so Apply only writes what the user really changed.</summary>
+        public decimal OriginalTotal { get; init; }
+    }
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    private List<AssetRow> _rows = [];
+    private decimal _startCapital;
+    private string _summary = "";
+    private bool _confirmResetVisible;
+
+    /// <summary>Loaded once per opening, the way the Avalonia window builds its view model.</summary>
+    private bool _loaded;
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && !_loaded)
+        {
+            _startCapital = GlobalData.Settings.Trading.PaperAssetStartCapital;
+            Reload();
+            _loaded = true;
+        }
+        else if (!Visible)
+            _loaded = false;
+    }
+
+    private void Reload()
+    {
+        var exchange = GlobalData.ActiveExchange;
+        _rows = [.. PaperAssetsEditor.LoadRows(exchange).Select(row => new AssetRow
+        {
+            Name = row.Name,
+            Total = row.Total,
+            LockedText = row.Locked.ToString0(),
+            FreeText = row.Free.ToString0(),
+            OriginalTotal = row.Total,
+        })];
+        _summary = PaperAssetsEditor.Describe(exchange, _rows.Count);
+    }
+
+    /// <summary>Write back the rows the user actually changed.</summary>
+    private void OnApply()
+    {
+        PaperAssetsEditor.Apply(GlobalData.ActiveExchange, _rows.Select(row => new PaperAssetEdit
+        {
+            Name = row.Name,
+            OriginalTotal = row.OriginalTotal,
+            NewTotal = row.Total,
+        }));
+        Reload();
+    }
+
+    private void OnResetClick()
+    {
+        _confirmResetVisible = true;
+    }
+
+    private void OnResetConfirmed()
+    {
+        PaperAssetsEditor.Reset(GlobalData.ActiveExchange, _startCapital);
+        Reload();
+    }
+
+    private async Task OnClose()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private static decimal ParseDecimal(object? value) =>
+        decimal.TryParse(value?.ToString(), System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out decimal result) ? result : 0m;
+}

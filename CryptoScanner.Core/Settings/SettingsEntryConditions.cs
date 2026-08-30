@@ -1,4 +1,6 @@
-﻿namespace CryptoScanner.Core.Settings;
+﻿using CryptoScanner.Core.Signal.Helpers;
+
+namespace CryptoScanner.Core.Settings;
 
 [Serializable]
 public class SettingsEntryConditions
@@ -51,6 +53,30 @@ public class SettingsEntryConditions
     // cost of roughly one entry in ten. The optimum is a broad valley rather than a sharp point and
     // it shifts with the wait, so it is worth re-measuring whenever the wait changes.
     public decimal EntryMaxAdversePercentage { get; set; } = 0m;
+
+    // Reversal patterns to wait for after a signal, by name (see CryptoCandlePattern). An empty list
+    // switches the rule off, which is the default.
+    //
+    // With a list set, EntryWaitCandles stops being a delay and becomes a SEARCH WINDOW: the entry
+    // is taken on the first candle within it that forms one of these shapes, and the signal is
+    // dropped when the window closes without one. The band strategies fire on a PLACE - price
+    // touched a band - and say nothing about the MOMENT; this is meant to supply that.
+    //
+    // Which names are worth using was measured on runs 525-531, each of which traded one shape on
+    // its own over seven months: Hammer +396.55, Harami +384.83, Tweezer +292.88 and PiercingLine
+    // +157.38 made money, while MorningStar (-34.47), Engulfing (-149.21) and InvertedHammer
+    // (-174.55) lost it. How OFTEN they occur decides whether they are usable as a filter at all:
+    // within three candles Harami turns up 22% of the time and Hammer only 7%, so a single rare
+    // shape would cut nine entries out of ten - which is not a filter, it is stopping trading.
+    //
+    // An unknown name is a hard error rather than a silent miss: a typo would otherwise reject every
+    // signal and read exactly like "the strategy produced nothing".
+    public List<string> EntryWaitForPatterns { get; set; } = [];
+
+    // The thresholds those shapes are measured against, every one a percentage of the candle's own
+    // range. Reachable per run through "EntryConditions.EntryPatternShape.MinWickPercentage" and so
+    // on, so a pattern that turns out to be too rare or too common can be loosened without code.
+    public CandlePatternSettings EntryPatternShape { get; set; } = new();
 
     public int StochExtremeLookback { get; set; } = 20;
     public int StochMinExtremeBars { get; set; } = 0;

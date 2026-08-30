@@ -298,7 +298,9 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Start the Telegram bot
                 //************************************************************************************
-                if (GlobalData.Telegram.Token != "")
+                // Switched off means the bot is not started at all: no polling loop, and so none of
+                // the nightly getUpdates rejections in the log either.
+                if (GlobalData.Telegram.Enabled && GlobalData.Telegram.Token != "")
                 {
                     var _ = Task.Run(async () => { await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId); });
                 }
@@ -405,8 +407,8 @@ public class ThreadLoadData
                 ScannerLog.Logger.Trace("");
                 ScannerLog.Logger.Trace(Constants.AppName + " " + GlobalData.AppVersion + " ready");
                 GlobalData.AddTextToLogTab(Constants.AppName + " " + GlobalData.AppVersion + " ready");
-                GlobalData.AddTextToTelegram(Constants.AppName + " " + GlobalData.AppVersion + " ready");
-                GlobalData.AddTextToTelegram("");
+                GlobalData.AddTextToTelegram(Constants.AppName + " " + GlobalData.AppVersion + " ready", CryptoTelegramCategory.System);
+                GlobalData.AddTextToTelegram("", CryptoTelegramCategory.System);
 
 
                 // Dit is een enorme cpu drain, eventjes 3 * 250 * ~3 intervallen bijlangs

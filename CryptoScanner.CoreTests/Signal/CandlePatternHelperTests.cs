@@ -241,4 +241,105 @@ public class CandlePatternHelperTests
         Assert.IsFalse(CandlePatternHelper.Matches(CryptoCandlePattern.MorningStar, CryptoTradeSide.Long,
             last, last, null, Settings));
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  Symmetry
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>Mirrors a candle around a price: what was a low becomes a high and the body flips.</summary>
+    private static CryptoCandle Mirror(in CryptoCandle candle, decimal around = 200m)
+        => new()
+        {
+            TickDecimals = 4,
+            Open = around - candle.Open,
+            High = around - candle.Low,
+            Low = around - candle.High,
+            Close = around - candle.Close,
+        };
+
+
+    /// <summary>
+    /// Hammer and inverted hammer are each other's reflection, and so are long and short. So mirror
+    /// the candles, mirror the pattern, mirror the side, and the answer has to be identical - for
+    /// EVERY pattern and every candle. Anything that treats one direction differently from the other
+    /// breaks this and nothing else would show it.
+    /// <para>
+    /// This exists because the measured results of the mirror pairs were nowhere near each other
+    /// (Hammer +396.55 against InvertedHammer -174.55 on run 525/526, and Harami +384.83 against
+    /// Engulfing -149.21). That difference has to come from the market or from the setup, and this
+    /// test is what rules out the third possibility: the detection itself.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void EveryPattern_IsExactlyItsOwnMirrorImage()
+    {
+        // Pattern under reflection: only the two hammers swap, the rest map onto themselves.
+        Dictionary<CryptoCandlePattern, CryptoCandlePattern> mirrored = new()
+        {
+            [CryptoCandlePattern.Hammer] = CryptoCandlePattern.InvertedHammer,
+            [CryptoCandlePattern.InvertedHammer] = CryptoCandlePattern.Hammer,
+            [CryptoCandlePattern.Engulfing] = CryptoCandlePattern.Engulfing,
+            [CryptoCandlePattern.Harami] = CryptoCandlePattern.Harami,
+            [CryptoCandlePattern.PiercingLine] = CryptoCandlePattern.PiercingLine,
+            [CryptoCandlePattern.MorningStar] = CryptoCandlePattern.MorningStar,
+            [CryptoCandlePattern.Tweezer] = CryptoCandlePattern.Tweezer,
+        };
+
+        // A spread of shapes: hammers, engulfings, haramis, stars, tweezers and plain candles, so
+        // every branch is actually reached in both directions.
+        CryptoCandle[] shapes =
+        [
+            Candle(108m, 110m, 100m, 110m),     // hammer
+            Candle(100m, 110m, 100m, 102m),     // inverted hammer
+            Candle(108m, 109m, 103m, 104m),     // red body
+            Candle(103m, 110m, 102m, 109m),     // green body covering it
+            Candle(110m, 111m, 99m, 100m),      // long red
+            Candle(103m, 108m, 102m, 106m),     // small green inside
+            Candle(99m, 100m, 97m, 98.5m),      // small body
+            Candle(99m, 107m, 98m, 106m),       // long green
+            Candle(102m, 107m, 100.2m, 106m),   // equal-ish low
+            Candle(104m, 110m, 100m, 106m),     // wicks both ends
+        ];
+
+        int checks = 0;
+        foreach (CryptoCandlePattern pattern in Enum.GetValues<CryptoCandlePattern>())
+        {
+            foreach (CryptoTradeSide side in new[] { CryptoTradeSide.Long, CryptoTradeSide.Short })
+            {
+                for (int i = 2; i < shapes.Length; i++)
+                {
+                    bool straight = CandlePatternHelper.Matches(pattern, side,
+                        shapes[i], shapes[i - 1], shapes[i - 2], Settings);
+
+                    CryptoTradeSide otherSide = side == CryptoTradeSide.Long
+                        ? CryptoTradeSide.Short : CryptoTradeSide.Long;
+                    bool reflected = CandlePatternHelper.Matches(mirrored[pattern], otherSide,
+                        Mirror(shapes[i]), Mirror(shapes[i - 1]), Mirror(shapes[i - 2]), Settings);
+
+                    Assert.AreEqual(straight, reflected,
+                        $"{pattern}/{side} op candle {i} wijkt af van {mirrored[pattern]}/{otherSide} gespiegeld");
+                    checks++;
+                }
+            }
+        }
+
+        Assert.AreEqual(112, checks, "alle zeven patronen maal twee zijden maal acht candles");
+    }
+
+
+    /// <summary>
+    /// And the geometry underneath it: mirroring a candle swaps its two wicks and leaves the body
+    /// alone. If that does not hold, the test above is comparing two different shapes.
+    /// </summary>
+    [TestMethod]
+    public void MirroringACandle_SwapsItsWicks()
+    {
+        CryptoCandle candle = Candle(open: 102m, high: 110m, low: 100m, close: 104m);
+        CryptoCandle flipped = Mirror(candle);
+
+        Assert.AreEqual(CandlePatternHelper.BodyPercentage(candle), CandlePatternHelper.BodyPercentage(flipped));
+        Assert.AreEqual(CandlePatternHelper.UpperWickPercentage(candle), CandlePatternHelper.LowerWickPercentage(flipped));
+        Assert.AreEqual(CandlePatternHelper.LowerWickPercentage(candle), CandlePatternHelper.UpperWickPercentage(flipped));
+        Assert.AreEqual(CandlePatternHelper.IsBullish(candle), CandlePatternHelper.IsBearish(flipped));
+    }
 }

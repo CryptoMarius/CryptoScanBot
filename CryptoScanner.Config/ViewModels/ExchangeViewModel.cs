@@ -19,6 +19,15 @@ public partial class ExchangeViewModel : ObservableObject
     [ObservableProperty]
     private int _refreshSymbols = 60;
 
+    /// <summary>
+    /// The share of HyperLiquid's per-address budget this scanner may spend. Only meaningful for the
+    /// two HyperLiquid markets, but it lives here rather than on a market of its own because there is
+    /// no per-exchange settings screen and because the division it describes is between PROCESSES:
+    /// every scanner on this machine that talks to HyperLiquid draws from the same pool.
+    /// </summary>
+    [ObservableProperty]
+    private int _hyperLiquidWeightPerMinute = SettingsGeneral.HyperLiquidWeightPerMinuteDefault;
+
     [ObservableProperty]
     private List<KeyValuePair<int, string>> _exchangeList = [];
 
@@ -74,6 +83,7 @@ public partial class ExchangeViewModel : ObservableObject
                 ActivateExchange = -1;
 
             RefreshSymbols = general.GetCandleInterval;
+            HyperLiquidWeightPerMinute = general.HyperLiquidWeightPerMinute;
         }
         finally
         {
@@ -89,5 +99,7 @@ public partial class ExchangeViewModel : ObservableObject
         if (GlobalData.ExchangeListId.TryGetValue(ActivateExchange, out exchange))
             general.ActivateExchangeName = exchange.Name;
         general.GetCandleInterval = RefreshSymbols;
+        general.HyperLiquidWeightPerMinute = Math.Clamp(HyperLiquidWeightPerMinute,
+            SettingsGeneral.HyperLiquidWeightPerMinuteMinimum, SettingsGeneral.HyperLiquidWeightPerMinuteMaximum);
     }
 }

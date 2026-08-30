@@ -1,11 +1,12 @@
 @using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Enums
 @using CryptoScanner.Core.Settings
 @using CryptoScanner.Core.Telegram
 
 <div class="settings-wrap">
 
     @* Captions, order and the "first three .. last three" hint next to every key are the ones of
-       ApiTelegramView / ApiAltradyView. The two Dutch captions are copied verbatim from that view,
+       ApiTelegramView / ApiAltradyView. The Dutch captions are copied verbatim from that view,
        so both applications say the same thing. *@
     <!-- Telegram -->
     <div class="settings-group">
@@ -26,12 +27,32 @@
                 </span>
             </div>
             <div class="field">
-                <input type="checkbox" class="input-checkbox" @bind="_telegramSendSignals" />
-                <label>Stuur meldingen naar telegram</label>
+                <input type="checkbox" class="input-checkbox" @bind="_telegramEnabled" />
+                <label>Telegram gebruiken</label>
                 <span class="field-control">
                     <button class="btn btn-secondary" @onclick="StartStopTelegram">@(ThreadTelegramBot.IsRunning ? "Stop" : "Start")</button>
                     <button class="btn btn-secondary" @onclick="TestTelegram">Test</button>
                 </span>
+            </div>
+            @* Per category, so the trader can be silenced without losing the signals *@
+            <div class="field">
+                <label>Verstuur naar telegram</label>
+            </div>
+            <div class="field" style="margin-left:16px;">
+                <input type="checkbox" class="input-checkbox" @bind="_telegramSendSignals" />
+                <label>Signalen</label>
+            </div>
+            <div class="field" style="margin-left:16px;">
+                <input type="checkbox" class="input-checkbox" @bind="_telegramSendOrders" />
+                <label>Geplaatste orders (entry, dca, take profit, annuleren)</label>
+            </div>
+            <div class="field" style="margin-left:16px;">
+                <input type="checkbox" class="input-checkbox" @bind="_telegramSendFilledOrders" />
+                <label>Gevulde orders</label>
+            </div>
+            <div class="field" style="margin-left:16px;">
+                <input type="checkbox" class="input-checkbox" @bind="_telegramSendSystemMessages" />
+                <label>Systeemmeldingen (opstarten, herstarten, pauzeregels)</label>
             </div>
             <div class="field">
                 <input type="checkbox" class="input-checkbox" @bind="_telegramEmoji" />
@@ -88,8 +109,12 @@
 @code {
     private string _telegramToken = "";
     private string _telegramChatId = "";
+    private bool _telegramEnabled = true;
     private bool _telegramEmoji;
     private bool _telegramSendSignals;
+    private bool _telegramSendOrders = true;
+    private bool _telegramSendFilledOrders = true;
+    private bool _telegramSendSystemMessages = true;
     private string _apiKey = "";
     private string _apiSecret = "";
     private string _altradyKey = "";
@@ -133,7 +158,7 @@
             GlobalData.AddTextToLogTab("Telegram bot is not running, press Start first");
             return;
         }
-        GlobalData.AddTextToTelegram("This is a test message");
+        GlobalData.AddTextToTelegram("This is a test message", CryptoTelegramCategory.Test);
     }
 
     protected override void OnInitialized()
@@ -145,8 +170,12 @@
     {
         _telegramToken = GlobalData.Telegram.Token;
         _telegramChatId = GlobalData.Telegram.ChatId;
+        _telegramEnabled = GlobalData.Telegram.Enabled;
         _telegramEmoji = GlobalData.Telegram.EmojiInTrend;
         _telegramSendSignals = GlobalData.Telegram.SendSignalsToTelegram;
+        _telegramSendOrders = GlobalData.Telegram.SendOrdersToTelegram;
+        _telegramSendFilledOrders = GlobalData.Telegram.SendFilledOrdersToTelegram;
+        _telegramSendSystemMessages = GlobalData.Telegram.SendSystemMessagesToTelegram;
         _apiKey = GlobalData.TradingApi.Key;
         _apiSecret = GlobalData.TradingApi.Secret;
         _altradyKey = GlobalData.AltradyApi.Key;
@@ -157,8 +186,12 @@
     {
         GlobalData.Telegram.Token = _telegramToken;
         GlobalData.Telegram.ChatId = _telegramChatId;
+        GlobalData.Telegram.Enabled = _telegramEnabled;
         GlobalData.Telegram.EmojiInTrend = _telegramEmoji;
         GlobalData.Telegram.SendSignalsToTelegram = _telegramSendSignals;
+        GlobalData.Telegram.SendOrdersToTelegram = _telegramSendOrders;
+        GlobalData.Telegram.SendFilledOrdersToTelegram = _telegramSendFilledOrders;
+        GlobalData.Telegram.SendSystemMessagesToTelegram = _telegramSendSystemMessages;
         GlobalData.TradingApi.Key = _apiKey;
         GlobalData.TradingApi.Secret = _apiSecret;
         GlobalData.AltradyApi.Key = _altradyKey;

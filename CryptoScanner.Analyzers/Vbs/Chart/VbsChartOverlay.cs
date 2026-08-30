@@ -82,7 +82,9 @@ public class VbsChartOverlay : IChartOverlay
 
             // Take-profit distance the signal would hand to the trader: RiskRewardRatio * SL-distance.
             // Only shown when the take-profit is enabled, so the label matches what actually gets placed.
-            double? tpPct = settings.RiskRewardRatio * slPct;
+            // The condition itself was missing here, so AddLabel drew the second line even with the
+            // take-profit switched off.
+            double? tpPct = settings.UseTakeProfit ? settings.RiskRewardRatio * slPct : null;
 
             // Same pass criteria as the signal: short needs rsi >= Overbought, long needs rsi <= Oversold.
             // With the RSI filter disabled every break is labeled, as before.
@@ -180,23 +182,33 @@ public class VbsChartOverlay : IChartOverlay
                 Price = anchor,
                 Text = "SL " + slPct.ToString("0.##") + "%",
             };
-            var takeProfit = new ChartOverlayLabel
+            // Only when the take-profit is switched on, so the second line matches what the trader
+            // actually places - the same rule Draw already follows. With it off the signal hands no
+            // take-profit over at all, and at the default risk-reward ratio of 1.0 the line would
+            // repeat the stop-loss percentage word for word.
+            ChartOverlayLabel? takeProfit = null;
+            if (settings.UseTakeProfit)
             {
-                Time = time,
-                Above = upperBreak,
-                Price = anchor,
-                Text = "TP " + tpPct.ToString("0.##") + "%",
-            };
+                takeProfit = new ChartOverlayLabel
+                {
+                    Time = time,
+                    Above = upperBreak,
+                    Price = anchor,
+                    Text = "TP " + tpPct.ToString("0.##") + "%",
+                };
+            }
 
             if (upperBreak)
             {
-                labels.Add(takeProfit);
+                if (takeProfit != null)
+                    labels.Add(takeProfit);
                 labels.Add(stopLoss);
             }
             else
             {
                 labels.Add(stopLoss);
-                labels.Add(takeProfit);
+                if (takeProfit != null)
+                    labels.Add(takeProfit);
             }
         }
 

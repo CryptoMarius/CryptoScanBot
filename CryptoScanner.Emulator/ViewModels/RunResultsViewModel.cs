@@ -50,11 +50,43 @@ public class RunRow
     // written before this column existed; Dapper maps a NULL to 0 for a non-nullable decimal.
     public decimal Invested { get; set; }
 
-    // Position duration stats (in seconds) computed via subquery on the Position table. Nullable
-    // because a run with zero closed positions has no durations to aggregate.
+    // Position duration stats (in seconds), now read straight from the run row. They used to be
+    // computed with a subquery that aggregated the WHOLE Position table on every refresh; the run
+    // stores them at run end instead, which is both cheaper and still right once a run's positions
+    // have been archived away. Nullable: a run with zero closed positions has nothing to aggregate.
     public double? AvgDurationSec { get; set; }
     public double? MinDurationSec { get; set; }
     public double? MaxDurationSec { get; set; }
+
+    // Run summary, also stored on the run row so it outlives the positions it was derived from.
+    // PeakInvested is the money that answers "could an account have run this" - unlike Invested,
+    // which is the same stake going round and says nothing about the capital needed.
+    public decimal PeakInvested { get; set; }
+    public int PeakPositions { get; set; }
+    public int PositionsLong { get; set; }
+    public int PositionsShort { get; set; }
+    public decimal ProfitLong { get; set; }
+    public decimal ProfitShort { get; set; }
+    public decimal AverageWin { get; set; }
+    public decimal AverageLoss { get; set; }
+
+    /// <summary>
+    /// Return over the capital that was actually tied up: 100 * Profit / PeakInvested. This is the
+    /// percentage that means something — <see cref="ProfitPercentage"/> divides by the summed stake,
+    /// which grows with the number of trades and therefore flatters a strategy that trades little.
+    /// Zero for legacy runs written before the column existed.
+    /// </summary>
+    public decimal PeakProfitPercentage => PeakInvested > 0 ? 100m * Profit / PeakInvested : 0m;
+
+    /// <summary>
+    /// What the run ends on if every still-open position closes as the average winner. The open
+    /// positions are not a random sample — the winners already hit take profit and closed — so the
+    /// pair with <see cref="WorstCase"/> brackets what the run is really worth.
+    /// </summary>
+    public decimal BestCase => Profit + PositionsOpen * AverageWin;
+
+    /// <summary>What the run ends on if every still-open position closes as the average loser.</summary>
+    public decimal WorstCase => Profit + PositionsOpen * AverageLoss;
 
     /// <summary>
     /// Total return as a percentage of the invested capital (100 * Profit / Invested). Returns 0
@@ -85,6 +117,12 @@ public class RunRow
     public string ProfitPercentageText => ProfitPercentage.ToString("N2") + "%";
     public string WinPercentageText => WinPercentage.ToString("N2") + "%";
     public string InvestedText => Invested.ToString("N2");
+    public string PeakInvestedText => PeakInvested.ToString("N2");
+    public string PeakProfitPercentageText => PeakProfitPercentage.ToString("N2") + "%";
+    public string BestCaseText => BestCase.ToString("N2");
+    public string WorstCaseText => WorstCase.ToString("N2");
+    public string ProfitLongText => ProfitLong.ToString("N2");
+    public string ProfitShortText => ProfitShort.ToString("N2");
 
     public string AvgDurationText => FormatDuration(AvgDurationSec);
     public string MinDurationText => FormatDuration(MinDurationSec);
@@ -232,23 +270,27 @@ public partial class RunResultsViewModel : ObservableObject
     }
 
 
+    /// <summary>
+    /// The grid's projection of a run. Everything comes from the EmulatorRun row itself — the
+    /// duration columns used to be a LEFT JOIN that aggregated the whole Position table on every
+    /// refresh, and EmulatorDb now stores them (with the rest of the run summary) at run end. That
+    /// keeps the grid correct for a database whose positions have been archived away.
+    /// </summary>
+    private const string RunSelect =
+        "SELECT r.Id, r.StartedAt, r.FinishedAt, r.Label, r.FromDate, r.ToDate, r.Result, " +
+        "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.Profit, r.Invested, " +
+        "       r.PeakInvested, r.PeakPositions, r.PositionsLong, r.PositionsShort, r.ProfitLong, r.ProfitShort, " +
+        "       r.AverageWin, r.AverageLoss, r.AvgDurationSec, r.MinDurationSec, r.MaxDurationSec " +
+        "FROM EmulatorRun r ";
+
+
     /// <summary>Loads a single run row (same projection as <see cref="Refresh"/>); null when not found.</summary>
     private static RunRow? LoadRun(int runId)
     {
         using var database = new CryptoDatabase();
         database.Open();
         return database.Connection.QueryFirstOrDefault<RunRow>(
-            "SELECT r.Id, r.StartedAt, r.FinishedAt, r.Label, r.FromDate, r.ToDate, r.Result, " +
-            "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.Profit, r.Invested, " +
-            "       d.AvgDurationSec, d.MinDurationSec, d.MaxDurationSec " +
-            "FROM EmulatorRun r " +
-            "LEFT JOIN (SELECT EmulatorRunId, " +
-            "           AVG((julianday(CloseTime) - julianday(CreateTime)) * 86400) as AvgDurationSec, " +
-            "           MIN((julianday(CloseTime) - julianday(CreateTime)) * 86400) as MinDurationSec, " +
-            "           MAX((julianday(CloseTime) - julianday(CreateTime)) * 86400) as MaxDurationSec " +
-            "           FROM Position WHERE CloseTime IS NOT NULL GROUP BY EmulatorRunId) d ON d.EmulatorRunId = r.Id " +
-            "WHERE r.Id = @runId",
-            new { runId });
+            RunSelect + "WHERE r.Id = @runId", new { runId });
     }
 
 
@@ -267,17 +309,7 @@ public partial class RunResultsViewModel : ObservableObject
             using var database = new CryptoDatabase();
             database.Open();
 
-            var rows = database.Connection.Query<RunRow>(
-                "SELECT r.Id, r.StartedAt, r.FinishedAt, r.Label, r.FromDate, r.ToDate, r.Result, " +
-                "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.Profit, r.Invested, " +
-                "       d.AvgDurationSec, d.MinDurationSec, d.MaxDurationSec " +
-                "FROM EmulatorRun r " +
-                "LEFT JOIN (SELECT EmulatorRunId, " +
-                "           AVG((julianday(CloseTime) - julianday(CreateTime)) * 86400) as AvgDurationSec, " +
-                "           MIN((julianday(CloseTime) - julianday(CreateTime)) * 86400) as MinDurationSec, " +
-                "           MAX((julianday(CloseTime) - julianday(CreateTime)) * 86400) as MaxDurationSec " +
-                "           FROM Position WHERE CloseTime IS NOT NULL GROUP BY EmulatorRunId) d ON d.EmulatorRunId = r.Id " +
-                "ORDER BY r.StartedAt DESC");
+            var rows = database.Connection.Query<RunRow>(RunSelect + "ORDER BY r.StartedAt DESC");
 
             var sortedRows = ApplyConfigSort(rows);
             foreach (var row in sortedRows)
@@ -384,9 +416,14 @@ public partial class RunResultsViewModel : ObservableObject
 
         try
         {
-            int updated = EmulatorDb.RecalculateRuns(rows.Select(r => r.Id));
+            var (updated, skipped) = EmulatorDb.RecalculateRuns(rows.Select(r => r.Id));
             Refresh();
-            Status = $"Recalculated {updated} run(s).";
+            // Say what was skipped instead of quietly reporting a smaller number: a run whose
+            // positions have been archived away cannot be recalculated, and is deliberately left as
+            // it stands rather than being overwritten with zeros.
+            Status = skipped == 0
+                ? $"Recalculated {updated} run(s)."
+                : $"Recalculated {updated} run(s); {skipped} left alone (positions no longer stored).";
         }
         catch (Exception ex)
         {
@@ -437,6 +474,13 @@ public partial class RunResultsViewModel : ObservableObject
             "Profit" => r => r.Profit,
             "ProfitPercentage" => r => r.ProfitPercentage,
             "Invested" => r => r.Invested,
+            "PeakInvested" => r => r.PeakInvested,
+            "PeakPositions" => r => r.PeakPositions,
+            "PeakProfitPercentage" => r => r.PeakProfitPercentage,
+            "ProfitLong" => r => r.ProfitLong,
+            "ProfitShort" => r => r.ProfitShort,
+            "BestCase" => r => r.BestCase,
+            "WorstCase" => r => r.WorstCase,
             "AvgDurationText" => r => r.AvgDurationSec,
             "MinDurationText" => r => r.MinDurationSec,
             "MaxDurationText" => r => r.MaxDurationSec,

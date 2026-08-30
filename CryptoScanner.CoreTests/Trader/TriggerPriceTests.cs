@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
@@ -72,12 +72,14 @@ public class TriggerPriceTests
 
     private bool _savedMoveSlToBreakEven;
     private decimal _savedMoveSlToBreakEvenPercentage;
+    private decimal _savedMoveSlToBreakEvenSlPercentage;
 
     [TestInitialize]
     public void SaveSettings()
     {
         _savedMoveSlToBreakEven = GlobalData.Settings.Trading.MoveSlToBreakEven;
         _savedMoveSlToBreakEvenPercentage = GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage;
+        _savedMoveSlToBreakEvenSlPercentage = GlobalData.Settings.Trading.MoveSlToBreakEvenSlPercentage;
     }
 
     [TestCleanup]
@@ -85,6 +87,7 @@ public class TriggerPriceTests
     {
         GlobalData.Settings.Trading.MoveSlToBreakEven = _savedMoveSlToBreakEven;
         GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage = _savedMoveSlToBreakEvenPercentage;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenSlPercentage = _savedMoveSlToBreakEvenSlPercentage;
     }
 
 
@@ -875,5 +878,49 @@ public class TriggerPriceTests
         Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 99, candleLow: 95));
         // Price reaches entry → must run (limit sell can fill)
         Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 100, candleLow: 97));
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  Profit lock: the fence follows the TRIGGER, not where the SL lands
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void Long_ProfitLockFenceUsesTriggerNotSlPercentage()
+    {
+        GlobalData.Settings.Trading.MoveSlToBreakEven = true;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage = 2m;    // trigger
+        GlobalData.Settings.Trading.MoveSlToBreakEvenSlPercentage = 1m;  // where the SL lands
+        var position = MakePosition(CryptoTradeSide.Long, breakEvenPrice: 100m);
+
+        PositionMonitor.UpdateTriggerPrices(position, nearestTpPrice: 105m, slStop: 95m);
+
+        // The fence has to open at the trigger (102), not at the SL level (101) - the lock only
+        // arms when the price reaches the trigger.
+        Assert.AreEqual(102m, position.TriggerPriceTop);
+        Assert.AreEqual(95m, position.TriggerPriceBottom);
+
+        // A candle that only reaches the SL level must not wake HandlePosition
+        Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 101.5m, candleLow: 100.5m));
+        // A candle that reaches the trigger must
+        Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 102.5m, candleLow: 101m));
+    }
+
+    [TestMethod]
+    public void Short_ProfitLockFenceUsesTriggerNotSlPercentage()
+    {
+        GlobalData.Settings.Trading.MoveSlToBreakEven = true;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage = 2m;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenSlPercentage = 1m;
+        var position = MakePosition(CryptoTradeSide.Short, breakEvenPrice: 100m);
+
+        PositionMonitor.UpdateTriggerPrices(position, nearestTpPrice: 95m, slStop: 105m);
+
+        // Short: trigger sits below break-even (98), the SL would land at 99
+        Assert.AreEqual(98m, position.TriggerPriceBottom);
+        Assert.AreEqual(105m, position.TriggerPriceTop);
+
+        Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 99.5m, candleLow: 98.5m));
+        Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 99m, candleLow: 97.5m));
     }
 }
