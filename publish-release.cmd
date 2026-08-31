@@ -2,10 +2,11 @@
 rem =================================================================================================
 rem  Builds the release packages for CryptoScanBot.
 rem
-rem  Two packages, each a folder plus a zip under %PUBLISHDIR% (see the set below) :
+rem  Three packages, each a folder plus a zip under %PUBLISHDIR% (see the set below) :
 rem
 rem    CryptoScanBot-<version>-win-x64    scanner + emulator + Photino, Windows
 rem    CryptoScanBot-<version>-osx-arm64  scanner + emulator + Photino, Apple Silicon
+rem    CryptoScanBot-<version>-linux-x64  scanner + emulator + Photino, Linux (glibc, x64)
 rem
 rem  All three applications share one folder. They are built against the same project references, so
 rem  483 of the 505 files are byte for byte identical (the whole .NET runtime, the exchange
@@ -27,8 +28,8 @@ rem  from the runtime pack, so it was silently skipped. Hence the temp folder pl
 rem  which overwrites unconditionally and makes the result independent of package timestamps.
 rem  The 8.0.0.0 file itself comes from the emulator bundle (the emulator publishes the runtime pack
 rem  version while its own deps.json declares 10.0.7); the Photino merge repairs that as a side
-rem  effect. On osx-arm64 no file differs at all, but the same order is used there to keep the two
-rem  blocks identical.
+rem  effect. On osx-arm64 and linux-x64 no file differs at all, but the same order is used there to
+rem  keep the three blocks identical.
 rem
 rem  Every command below is a plain one-liner: copy any single line into a command prompt to rerun
 rem  or test that step on its own (run the "set VERSION" and "set PUBLISHDIR" lines first, they
@@ -44,8 +45,12 @@ rem    Skia symbols that never help with our own exceptions.
 rem  - Zipping uses the tar.exe that ships with Windows (bsdtar). It writes forward slashes in the
 rem    zip, which matters for the macOS packages - a zip made by Windows Explorer or PowerShell 5.1
 rem    stores backslashes and unpacks into a mess on a Mac.
-rem  - For an extra runtime (osx-x64 for Intel Macs, linux-x64) copy one block and replace the
+rem  - For an extra runtime (osx-x64 for Intel Macs, linux-arm64) copy one block and replace the
 rem    runtime identifier everywhere in it.
+rem  - The Linux package cannot be fully self-contained: GTK and WebKit are system libraries and
+rem    have to come from the distribution itself. Photino.Native.so links against libgtk-3.so.0,
+rem    libwebkit2gtk-4.1.so.0 and libnotify.so.4, Avalonia needs libX11 and fontconfig on top of
+rem    that. The apt-get line for it is echoed at the end of this script.
 rem  - Do not run two publishes at the same time: they share the Core/Config/Chart/Analyzers
 rem    projects and the second one fails on a locked .pdb in obj\.
 rem =================================================================================================
@@ -81,7 +86,7 @@ echo ==================================================================
 
 
 echo.
-echo --- 1/2  CryptoScanBot %VERSION% win-x64 (scanner + emulator + Photino) ---
+echo --- 1/3  CryptoScanBot %VERSION% win-x64 (scanner + emulator + Photino) ---
 if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64" rmdir /s /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64"
 if exist "%PUBLISHDIR%\photino-tmp-win-x64" rmdir /s /q "%PUBLISHDIR%\photino-tmp-win-x64"
 dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r win-x64 --self-contained true -o "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64" --nologo -v minimal
@@ -98,7 +103,7 @@ if errorlevel 1 goto failed
 
 
 echo.
-echo --- 2/2  CryptoScanBot %VERSION% osx-arm64 (scanner + emulator + Photino) ---
+echo --- 2/3  CryptoScanBot %VERSION% osx-arm64 (scanner + emulator + Photino) ---
 if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64" rmdir /s /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64"
 if exist "%PUBLISHDIR%\photino-tmp-osx-arm64" rmdir /s /q "%PUBLISHDIR%\photino-tmp-osx-arm64"
 dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r osx-arm64 --self-contained true -o "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64" --nologo -v minimal
@@ -115,6 +120,23 @@ if errorlevel 1 goto failed
 
 
 echo.
+echo --- 3/3  CryptoScanBot %VERSION% linux-x64 (scanner + emulator + Photino) ---
+if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64" rmdir /s /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64"
+if exist "%PUBLISHDIR%\photino-tmp-linux-x64" rmdir /s /q "%PUBLISHDIR%\photino-tmp-linux-x64"
+dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r linux-x64 --self-contained true -o "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64" --nologo -v minimal
+if errorlevel 1 goto failed
+dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r linux-x64 --self-contained true -o "%PUBLISHDIR%\photino-tmp-linux-x64" --nologo -v minimal
+if errorlevel 1 goto failed
+xcopy "%PUBLISHDIR%\photino-tmp-linux-x64\*" "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64\" /e /y /r /q >nul
+if errorlevel 1 goto failed
+rmdir /s /q "%PUBLISHDIR%\photino-tmp-linux-x64"
+if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64\libSkiaSharp.pdb" del /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64\libSkiaSharp.pdb"
+if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64.zip" del /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64.zip"
+"%SystemRoot%\System32\tar.exe" -a -c -f "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64.zip" -C "%PUBLISHDIR%" "CryptoScanBot-%VERSION%-linux-x64"
+if errorlevel 1 goto failed
+
+
+echo.
 echo ==================================================================
 echo  Release %VERSION% ready - attach these to the GitHub release:
 echo ==================================================================
@@ -124,6 +146,11 @@ echo The macOS package is unsigned and was zipped on Windows, so the
 echo executable bit is gone. After unpacking, on the Mac:
 echo     chmod +x CryptoScanBot CryptoScanBot.Emulator CryptoScanBot.Photino
 echo     xattr -dr com.apple.quarantine .
+echo.
+echo The Linux package loses the executable bit for the same reason, and
+echo GTK/WebKit have to come from the distribution. After unpacking:
+echo     chmod +x CryptoScanBot CryptoScanBot.Emulator CryptoScanBot.Photino
+echo     sudo apt-get install libgtk-3-0 libwebkit2gtk-4.1-0 libnotify4 libx11-6 libfontconfig1
 echo.
 endlocal
 exit /b 0
