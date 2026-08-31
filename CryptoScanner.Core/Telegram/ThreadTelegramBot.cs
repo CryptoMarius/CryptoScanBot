@@ -87,6 +87,22 @@ public static class ThreadTelegramBot
     /// </summary>
     private static async Task<bool> StartInternalAsync(string token, string chatId)
     {
+        // A bot that is already polling on exactly this token and chat is what the caller is asking
+        // for, so leave it alone. Two callers start the bot on one application start - the settings
+        // are applied first (ScannerSession.ApplyConfigurationAsync, where the remembered token is
+        // still empty and therefore always differs) and ThreadLoadData starts it again once the
+        // candles are loaded - and without this guard the second one tore the working loop down and
+        // built a new one. On 31-08-2026 19:53 that cost 22 seconds of a bot that answered nothing:
+        // loop 1 at 19:53:07, "Task Telegram stopped" at 19:53:16 and loop 2 only at 19:53:38,
+        // because the getMe of the new instance had to wait for a machine that was busy fetching
+        // candles. A changed token or chat id still restarts, which is what the settings screen and
+        // the comparison in ApplyConfigurationAsync are after.
+        if (bot != null && Token == token && ChatId == chatId)
+        {
+            ScannerLog.Logger.Trace("Telegram bot already running on this token, leaving it alone");
+            return true;
+        }
+
         // herstart?
         if (bot != null)
             await StopInternalAsync();
