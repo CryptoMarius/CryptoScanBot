@@ -234,24 +234,10 @@ public class SignalCreateBase
         if (previous != null)
             GetPrevCandle(previous, out before);
 
-        foreach (string name in settings.EntryWaitForPatterns)
-        {
-            if (!Enum.TryParse(name, ignoreCase: true, out CryptoCandlePattern pattern))
-            {
-                // Loud on purpose. A typo here rejects every signal, and a strategy that produces
-                // nothing is the most expensive thing to diagnose in this codebase.
-                throw new InvalidOperationException(
-                    $"EntryWaitForPatterns contains '{name}', which is not a CryptoCandlePattern");
-            }
-
-            if (CandlePatternHelper.Matches(pattern, SignalSide, CandleLast.Candle,
-                    previous?.Candle, before?.Candle, settings.EntryPatternShape))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        // Loud on a name that is not a pattern - see CandlePatternHelper.MatchesAny.
+        return CandlePatternHelper.MatchesAny(settings.EntryWaitForPatterns, SignalSide, CandleLast.Candle,
+            previous?.Candle, before?.Candle, settings.EntryPatternShape,
+            nameof(settings.EntryWaitForPatterns), out _);
     }
 
 

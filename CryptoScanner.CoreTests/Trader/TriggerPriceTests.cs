@@ -3,7 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
 
-using Exchange = CryptoScanner.Core.Model.CryptoExchange;
+using ExchangeModel = CryptoScanner.Core.Model.CryptoExchange;
 
 namespace CryptoScanner.CoreTests.Trader;
 
@@ -17,14 +17,14 @@ public class TriggerPriceTests
 {
     // ── Helpers ─────────────────────────────────────────────────────────────
 
-    private static Exchange MakeExchange() => new()
+    private static ExchangeModel MakeExchange() => new()
     {
         Id = 1,
         Name = "TestExchange",
         FeeRate = 0.1m,
     };
 
-    private static CryptoSymbol MakeSymbol(Exchange exchange) => new()
+    private static CryptoSymbol MakeSymbol(ExchangeModel exchange) => new()
     {
         Id = 1,
         Name = "TESTUSDT",
@@ -73,6 +73,8 @@ public class TriggerPriceTests
     private bool _savedMoveSlToBreakEven;
     private decimal _savedMoveSlToBreakEvenPercentage;
     private decimal _savedMoveSlToBreakEvenSlPercentage;
+    private CryptoProfitLockMethod _savedMoveSlToBreakEvenMethod;
+    private decimal _savedMoveSlToBreakEvenTrailPercentage;
 
     [TestInitialize]
     public void SaveSettings()
@@ -80,6 +82,8 @@ public class TriggerPriceTests
         _savedMoveSlToBreakEven = GlobalData.Settings.Trading.MoveSlToBreakEven;
         _savedMoveSlToBreakEvenPercentage = GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage;
         _savedMoveSlToBreakEvenSlPercentage = GlobalData.Settings.Trading.MoveSlToBreakEvenSlPercentage;
+        _savedMoveSlToBreakEvenMethod = GlobalData.Settings.Trading.MoveSlToBreakEvenMethod;
+        _savedMoveSlToBreakEvenTrailPercentage = GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage;
     }
 
     [TestCleanup]
@@ -88,6 +92,8 @@ public class TriggerPriceTests
         GlobalData.Settings.Trading.MoveSlToBreakEven = _savedMoveSlToBreakEven;
         GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage = _savedMoveSlToBreakEvenPercentage;
         GlobalData.Settings.Trading.MoveSlToBreakEvenSlPercentage = _savedMoveSlToBreakEvenSlPercentage;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenMethod = _savedMoveSlToBreakEvenMethod;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage = _savedMoveSlToBreakEvenTrailPercentage;
     }
 
 
@@ -922,5 +928,73 @@ public class TriggerPriceTests
 
         Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 99.5m, candleLow: 98.5m));
         Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 99m, candleLow: 97.5m));
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  Trailing profit lock: the fence has to open on every new extreme
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void Long_TrailingProfitLock_FenceOpensAtTheNextNewHigh()
+    {
+        GlobalData.Settings.Trading.MoveSlToBreakEven = true;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage = 3m;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenMethod = CryptoProfitLockMethod.TrailingPercentage;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage = 1.5m;
+
+        var position = MakePosition(CryptoTradeSide.Long, breakEvenPrice: 100m, slMovedToBreakEven: true);
+        position.TrailingStopPrice = 108.35m;   // trailing 1.5% behind a high of 110
+
+        PositionMonitor.UpdateTriggerPrices(position, nearestTpPrice: 130m, slStop: 108.35m);
+
+        // The boundary is the price that would move the stop again, not the far-away take profit
+        Assert.AreEqual(110m, Math.Round(position.TriggerPriceTop!.Value, 8));
+        Assert.AreEqual(108.35m, position.TriggerPriceBottom);
+
+        // Inside the fence nothing has to happen
+        Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 109.5m, candleLow: 109m));
+        // A new high has to move the stop
+        Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 111m, candleLow: 109m));
+        // And so does a touch of the stop itself
+        Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 109m, candleLow: 108m));
+    }
+
+    [TestMethod]
+    public void Short_TrailingProfitLock_FenceOpensAtTheNextNewLow()
+    {
+        GlobalData.Settings.Trading.MoveSlToBreakEven = true;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage = 3m;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenMethod = CryptoProfitLockMethod.TrailingPercentage;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage = 1.5m;
+
+        var position = MakePosition(CryptoTradeSide.Short, breakEvenPrice: 100m, slMovedToBreakEven: true);
+        position.TrailingStopPrice = 91.35m;    // trailing 1.5% above a low of 90
+
+        PositionMonitor.UpdateTriggerPrices(position, nearestTpPrice: 70m, slStop: 91.35m);
+
+        Assert.AreEqual(90m, Math.Round(position.TriggerPriceBottom!.Value, 8));
+        Assert.AreEqual(91.35m, position.TriggerPriceTop);
+
+        Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 91m, candleLow: 90.5m));
+        Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 91m, candleLow: 89m));
+    }
+
+    [TestMethod]
+    public void Long_FixedProfitLockAfterArming_FenceStaysOnTheTakeProfit()
+    {
+        GlobalData.Settings.Trading.MoveSlToBreakEven = true;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage = 3m;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenMethod = CryptoProfitLockMethod.Fixed;
+        GlobalData.Settings.Trading.MoveSlToBreakEvenSlPercentage = 1.5m;
+
+        var position = MakePosition(CryptoTradeSide.Long, breakEvenPrice: 100m, slMovedToBreakEven: true);
+        position.TrailingStopPrice = 0m;
+
+        PositionMonitor.UpdateTriggerPrices(position, nearestTpPrice: 130m, slStop: 101.5m);
+
+        // A fixed stop does not move any more, so there is nothing to wake up for below the TP
+        Assert.AreEqual(130m, position.TriggerPriceTop);
+        Assert.AreEqual(101.5m, position.TriggerPriceBottom);
     }
 }

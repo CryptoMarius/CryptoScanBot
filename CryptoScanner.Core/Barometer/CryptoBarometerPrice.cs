@@ -12,6 +12,19 @@ internal class CryptoBarometerPrice
     public static bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols,
         CryptoInterval interval, CandleTime unixCandleLast, BarometerResult result)
     {
+        return CalculatePriceBarometer(quoteData, quoteData.SymbolList, interval, unixCandleLast, result);
+    }
+
+
+    /// <summary>
+    /// The same measurement over an explicit symbol list instead of the whole quote coin. The
+    /// emulator hands in the symbols of its run: during a replay the rest of the quote has no
+    /// candles in memory at all, so walking them would be a lookup per symbol per replayed minute
+    /// that can only miss.
+    /// </summary>
+    public static bool CalculatePriceBarometer(CryptoQuoteData quoteData, IReadOnlyList<CryptoSymbol> symbolList,
+        CryptoInterval interval, CandleTime unixCandleLast, BarometerResult result)
+    {
         // Wat is de candle in het vorige interval
         CandleTime unixCandlePrev = unixCandleLast - interval.Duration;
 
@@ -33,9 +46,9 @@ internal class CryptoBarometerPrice
             GlobalData.ActiveExchange.TryGetSymbolByPair(Exchange.ExchangeBase.ExchangeOptions.PauseSymbol, out CryptoSymbol? bitcoinSymbol))
             bitcoinBase = bitcoinSymbol.Base;
 
-        for (int i = 0; i < quoteData.SymbolList.Count; i++)
+        for (int i = 0; i < symbolList.Count; i++)
         {
-            CryptoSymbol symbol = quoteData.SymbolList[i];
+            CryptoSymbol symbol = symbolList[i];
 
             if (symbol.QuoteData!.FetchCandles && !symbol.IsBarometerSymbol() && symbol.EnoughVolume())
             {

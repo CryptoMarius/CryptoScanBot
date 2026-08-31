@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 
@@ -13,7 +14,7 @@ public partial class PositionOpenGridView : UserControlWithGrid<PositionViewMode
 {
     public PositionOpenGridView()
     {
-        _gridName = "PositionOpenGrid";
+        _gridName = GridNames.PositionOpen;
         _targetMenu = TargetMenu.Position;
         InitializeComponent();
 

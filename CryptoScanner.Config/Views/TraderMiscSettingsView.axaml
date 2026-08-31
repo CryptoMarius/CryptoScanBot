@@ -31,7 +31,7 @@
 
             <!-- Paper Start Capital -->
             <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
-                  ToolTip.Tip="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets.">
+                  ToolTip.Tip="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Not used at all when the default asset list below holds anything.">
                 <TextBlock Grid.Column="0" Text="Paper start capital:"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>
@@ -39,6 +39,43 @@
                          Text="{Binding PaperAssetStartCapital, Mode=TwoWay}"
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
+
+            <!-- Default paper assets: the list that replaces the single amount above -->
+            <HeaderedContentControl Classes="groupbox" Header="Default paper assets" Margin="0,2,0,0"
+                  ToolTip.Tip="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. Filled in, this list replaces the start capital above, the start capital on the quote coins and the one of an emulator run; empty leaves all of those as they were.">
+                <StackPanel Margin="6" Spacing="4">
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button Content="Add asset" Command="{Binding AddPaperAssetDefaultCommand}"
+                                Width="130" FontSize="12"/>
+                        <Button Content="Remove asset" Command="{Binding RemovePaperAssetDefaultCommand}"
+                                Width="130" FontSize="12"/>
+                    </StackPanel>
+
+                    <ItemsControl ItemsSource="{Binding PaperAssetDefaults}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="4"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PaperAssetDefaultItemViewModel">
+                                <Grid ColumnDefinitions="Auto,90,Auto,*" RowDefinitions="Auto">
+                                    <TextBlock Grid.Column="0" Text="Asset:"
+                                               VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"/>
+                                    <TextBox Grid.Column="1" Text="{Binding Name, Mode=TwoWay}" Watermark="BTC"
+                                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                                    <TextBlock Grid.Column="2" Text="Amount:"
+                                               VerticalAlignment="Center" Margin="12,0,8,0" FontSize="12"/>
+                                    <TextBox Grid.Column="3" Text="{Binding Total, Mode=TwoWay}"
+                                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                </StackPanel>
+            </HeaderedContentControl>
 
             <!-- Sound Trade Notification -->
             <CheckBox IsChecked="{Binding SoundTradeNotification, Mode=TwoWay}"

@@ -39,6 +39,26 @@ public static class ThreadTelegramBot
     private static Task? botTask;
 
     /// <summary>
+    /// Serialises <see cref="Start"/> and <see cref="StopAsync"/>: one starter at a time.
+    /// </summary>
+    /// <remarks>
+    /// Start is reached from two places that both fire at startup without anyone awaiting them -
+    /// ThreadLoadData hands it to Task.Run, and ScannerSession.ApplyConfigurationAsync is itself
+    /// started fire-and-forget by the ui - and between the "is there a bot already" check and the
+    /// assignment sits an await on PrepareAsync, a network round trip to Telegram. Without this lock
+    /// both callers could get past that check, both build an instance, and the second would
+    /// overwrite the first. Nothing held a reference to the loser any more, so StopAsync could never
+    /// reach it and it kept polling until the process ended. Telegram answers a second getUpdates on
+    /// the same token with "Conflict: terminated by other getUpdates request", which is what filled
+    /// the HyperLiquid Perpetual error log with three to four lines a minute from 31-08-2026 07:43
+    /// onwards, straight through a restart of the bot at 07:59.
+    /// </remarks>
+    private static readonly SemaphoreSlim startStopLock = new(1, 1);
+
+    /// <summary>Counts the polling loops this process has started, for the log line in <see cref="StartInternalAsync"/>.</summary>
+    private static int botInstanceNumber;
+
+    /// <summary>
     /// Whether the polling loop is running. The settings screens put this on their Start/Stop button.
     /// </summary>
     public static bool IsRunning => bot != null;
@@ -50,9 +70,26 @@ public static class ThreadTelegramBot
     /// </summary>
     public static async Task<bool> Start(string token, string chatId)
     {
+        await startStopLock.WaitAsync();
+        try
+        {
+            return await StartInternalAsync(token, chatId);
+        }
+        finally
+        {
+            startStopLock.Release();
+        }
+    }
+
+
+    /// <summary>
+    /// The body of <see cref="Start"/>, called with <see cref="startStopLock"/> already held.
+    /// </summary>
+    private static async Task<bool> StartInternalAsync(string token, string chatId)
+    {
         // herstart?
         if (bot != null)
-            await StopAsync();
+            await StopInternalAsync();
 
         //GlobalData.AddTextToLogTab(string.Format("Start telegram handler"));
         Token = token;
@@ -62,6 +99,12 @@ public static class ThreadTelegramBot
         if (!await instance.PrepareAsync(token))
             return false;
         bot = instance;
+
+        // The number is what makes a double start visible: two of these lines on one process start
+        // means two polling loops, and that is the shape the getUpdates conflicts came in. It stays
+        // in - one line per start is nothing, and without it the next occurrence is guesswork again.
+        botInstanceNumber++;
+        GlobalData.AddTextToLogTab($"Telegram polling loop {botInstanceNumber} started");
 
         // Everything AddTextToTelegram() gathers travels over this event: the startup message, the
         // position notifications, the Altrady webhook and the test button of the settings screen.
@@ -106,6 +149,25 @@ public static class ThreadTelegramBot
 
 
     public static async Task StopAsync()
+    {
+        await startStopLock.WaitAsync();
+        try
+        {
+            await StopInternalAsync();
+        }
+        finally
+        {
+            startStopLock.Release();
+        }
+    }
+
+
+    /// <summary>
+    /// The body of <see cref="StopAsync"/>, called with <see cref="startStopLock"/> already held.
+    /// <see cref="StartInternalAsync"/> uses this one, because taking the lock a second time on the
+    /// same call chain would deadlock.
+    /// </summary>
+    private static async Task StopInternalAsync()
     {
         ThreadTelegramBotInstance? instance = bot;
         if (instance == null)

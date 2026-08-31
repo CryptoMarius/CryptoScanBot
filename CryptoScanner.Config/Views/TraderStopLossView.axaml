@@ -45,7 +45,7 @@
                 <TextBlock Grid.Column="0" Text="Profit lock trigger %:"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"
-                           ToolTip.Tip="How far above break-even (below for a short) the price has to reach before the profit lock arms itself. E.g. 2% arms the lock once the position has been 2% in profit."/>
+                           ToolTip.Tip="How far above break-even (below for a short) the price has to reach before the profit lock arms itself. The whole candle has to be past that level (the low for a long, the high for a short), so a wick through the trigger does not arm the lock. E.g. 2% arms the lock once a whole candle sits 2% in profit."/>
                 <TextBox Grid.Column="2"
                          Text="{Binding MoveSlToBreakEvenPercentage, Mode=TwoWay, StringFormat=N2}"
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"
@@ -53,14 +53,41 @@
                 <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
             </Grid>
 
-            <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
+            <Grid ColumnDefinitions="Auto,*,190,Auto" RowDefinitions="Auto"
                   IsVisible="{Binding MoveSlToBreakEven}">
+                <TextBlock Grid.Column="0" Text="Profit lock method:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"
+                           ToolTip.Tip="What happens once the trigger is reached. A fixed stop is placed once and stays there; a trailing stop follows the price at a fixed distance and only ever moves towards the take profit."/>
+                <ComboBox Grid.Column="2"
+                          ItemsSource="{Binding ProfitLockMethodList}"
+                          SelectedValue="{Binding MoveSlToBreakEvenMethod, Mode=TwoWay}"
+                          DisplayMemberBinding="{Binding Key}"
+                          SelectedValueBinding="{Binding Value}"
+                          FontSize="12"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
+                  IsVisible="{Binding IsFixedProfitLock}">
                 <TextBlock Grid.Column="0" Text="Profit lock stop loss %:"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"
-                           ToolTip.Tip="Where the SL is placed once the trigger is reached, measured from break-even. Keep it below the trigger to leave room between the price and the stop; e.g. trigger 2% with stop loss 1% locks in 1% profit and gives the position 1% of room. A value above the trigger is capped to the trigger."/>
+                           ToolTip.Tip="Where the SL is placed once the trigger is reached, measured from break-even. Keep it below the trigger to leave room between the price and the stop; e.g. trigger 3% with stop loss 1.5% locks in 1.5% profit and gives the position 1.5% of room. A value above the trigger is capped to the trigger."/>
                 <TextBox Grid.Column="2"
                          Text="{Binding MoveSlToBreakEvenSlPercentage, Mode=TwoWay, StringFormat=N2}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"
+                         IsEnabled="{Binding MoveSlToBreakEven}" />
+                <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
+                  IsVisible="{Binding IsTrailingProfitLock}">
+                <TextBlock Grid.Column="0" Text="Profit lock trailing %:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"
+                           ToolTip.Tip="How far behind the price the SL follows once the trigger is reached: below the highest price for a long, above the lowest for a short. It only moves towards the take profit, so a pullback leaves it where it was."/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding MoveSlToBreakEvenTrailPercentage, Mode=TwoWay, StringFormat=N2}"
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"
                          IsEnabled="{Binding MoveSlToBreakEven}" />
                 <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>

@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="360" d:DesignHeight="200"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:CandlePatternShapeViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Config.Views.CandlePatternShapeView">
+
+    <!-- The thresholds the shapes are measured against. Every one is a percentage of the candle's
+         OWN high-low range, which is what makes them mean the same thing on a coin at 65 000 and on
+         one at 0.01 - see the remark at the top of CandlePatternHelper. -->
+    <StackPanel Spacing="4">
+
+        <Grid ColumnDefinitions="150,60,*" RowDefinitions="Auto"
+              ToolTip.Tip="A body at or under this counts as small: the hammer's body, and the hesitant middle candle of a morning star.">
+            <TextBlock Grid.Column="0" Text="Small body max %:" VerticalAlignment="Center" FontSize="12"/>
+            <TextBox Grid.Column="1"
+                     Text="{Binding MaxBodyPercentage, Mode=TwoWay}"
+                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+        </Grid>
+
+        <Grid ColumnDefinitions="150,60,*" RowDefinitions="Auto"
+              ToolTip.Tip="A body at or over this counts as decisive: both candles of an engulfing or a harami, and the two outer candles of a morning star. Keeps two nearly flat candles from engulfing each other.">
+            <TextBlock Grid.Column="0" Text="Decisive body min %:" VerticalAlignment="Center" FontSize="12"/>
+            <TextBox Grid.Column="1"
+                     Text="{Binding MinBodyPercentage, Mode=TwoWay}"
+                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+        </Grid>
+
+        <Grid ColumnDefinitions="150,60,*" RowDefinitions="Auto"
+              ToolTip.Tip="How long the long wick has to be for a hammer (below the body) or an inverted hammer (above it).">
+            <TextBlock Grid.Column="0" Text="Dominant wick min %:" VerticalAlignment="Center" FontSize="12"/>
+            <TextBox Grid.Column="1"
+                     Text="{Binding MinWickPercentage, Mode=TwoWay}"
+                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+        </Grid>
+
+        <Grid ColumnDefinitions="150,60,*" RowDefinitions="Auto"
+              ToolTip.Tip="And how short the wick at the other end has to stay for that same hammer.">
+            <TextBlock Grid.Column="0" Text="Opposite wick max %:" VerticalAlignment="Center" FontSize="12"/>
+            <TextBox Grid.Column="1"
+                     Text="{Binding MaxOppositeWickPercentage, Mode=TwoWay}"
+                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+        </Grid>
+
+        <Grid ColumnDefinitions="150,60,*" RowDefinitions="Auto"
+              ToolTip.Tip="How far apart the two lows (or highs) of a tweezer may be and still count as equal. An exact match between two decimal prices essentially never happens.">
+            <TextBlock Grid.Column="0" Text="Tweezer tolerance %:" VerticalAlignment="Center" FontSize="12"/>
+            <TextBox Grid.Column="1"
+                     Text="{Binding TweezerTolerancePercentage, Mode=TwoWay}"
+                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+        </Grid>
+
+        <TextBlock Text="All as a percentage of the candle's own range" FontSize="11"
+                   Foreground="{DynamicResource SystemBaseMediumColor}" Margin="0,2,0,0"/>
+
+    </StackPanel>
+
+</UserControl>

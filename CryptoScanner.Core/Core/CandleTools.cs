@@ -163,6 +163,100 @@ public static class CandleTools
     }
 
 
+    /// <summary>
+    /// The higher timeframe candles that have NOT closed yet, rebuilt on the fly from the 1m candles.
+    /// <para>
+    /// A candle in a higher timeframe is only ever created once that timeframe is complete - see the
+    /// modulo test in <see cref="Process1mCandleAsync"/> and the candleCount check in
+    /// <see cref="CalculateCandleForInterval"/>. While a 30m candle is still running there is nothing
+    /// in its CandleList at all, so anything drawing that interval trails reality by up to 29 minutes:
+    /// an order filling on a spike halfway through the candle has no bar to show it on, and neither
+    /// has the fill marker that belongs to it.
+    /// </para>
+    /// <para>
+    /// Strictly for drawing. The result is deliberately NOT added to the CandleList: an unfinished
+    /// candle would feed the indicators, the trend calculation and the zone code a bar that is still
+    /// moving, and the real one overwrites it the moment the interval closes anyway.
+    /// </para>
+    /// </summary>
+    /// <param name="lastClosedOpenTime">Open time of the last COMPLETE candle already drawn. The
+    /// rebuild starts at the interval right after it, so pass the last candle of the series shown.</param>
+    /// <param name="minDate">Left edge of the drawn range; candles opening before it are skipped.</param>
+    /// <param name="maxDate">Right edge of the drawn range; candles opening after it are skipped.</param>
+    public static List<CryptoCandle> BuildRunningCandles(CryptoSymbol symbol, CryptoInterval interval,
+        CandleTime lastClosedOpenTime, CandleTime minDate, CandleTime maxDate)
+    {
+        List<CryptoCandle> result = [];
+
+        // The 1m interval has nothing above it to synthesize, and in the emulator the replay decides
+        // what "now" is - a running candle built from whatever happens to sit in the 1m list would
+        // show data the replay has not reached yet.
+        if (interval.Duration <= 1 || GlobalData.IsEmulatorMode || lastClosedOpenTime == 0)
+            return result;
+
+        CryptoSymbolInterval symbolInterval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+        CryptoCandleList candles1m = symbolInterval1m.CandleList;
+
+        // Keep walking while a 1m candle exists on the opening minute of the next higher candle. More
+        // than one can be missing: a restart or a skipped boundary leaves a gap, and each of those is
+        // rebuilt the same way as the running one at the right edge.
+        CandleTime loopHigherInterval = lastClosedOpenTime + interval.Duration;
+        while (candles1m.TryGetValue(loopHigherInterval, out CryptoCandle _))
+        {
+            CandleTime loop1m = loopHigherInterval;
+            CandleTime loop1mMax = loopHigherInterval + interval.Duration;
+
+            CandleTime openTime = new(0);
+            decimal open = 0, high = 0, low = 0, close = 0, volume = 0;
+
+            // Stops at the first missing minute, which is exactly what makes this the RUNNING candle:
+            // everything traded so far in this interval, nothing beyond it.
+            while (loop1m < loop1mMax && candles1m.TryGetValue(loop1m, out CryptoCandle candle1m))
+            {
+                if (openTime == 0)
+                {
+                    openTime = candle1m.OpenTime;
+                    open = candle1m.Open;
+                    low = candle1m.Open;
+                    high = candle1m.Open;
+                }
+                if (candle1m.Low < low)
+                    low = candle1m.Low;
+                if (candle1m.High > high)
+                    high = candle1m.High;
+                close = candle1m.Close;
+                volume += candle1m.Volume;
+
+                loop1m += symbolInterval1m.Interval.Duration;
+            }
+
+            if (openTime > 0 && openTime >= minDate && openTime <= maxDate)
+            {
+                result.Add(new CryptoCandle
+                {
+                    // Decimals first: the price setters round against the tick size this byte picks,
+                    // so assigning them the other way around stores the values against the old one.
+                    // FitTickDecimals and not PriceDecimals straight, for the same reason CreateCandle
+                    // uses it - a price the symbol's tick size cannot express in an int.
+                    TickDecimals = CryptoCandle.FitTickDecimals(symbol.PriceDecimals, open, high, low, close),
+                    OpenTime = openTime,
+                    Open = open,
+                    High = high,
+                    Low = low,
+                    Close = close,
+                    // Summed, unlike the Avalonia chart which left this at 0: the volume panel is fed
+                    // from the same list as the candles, and a zero bar there reads as "no trades".
+                    Volume = volume,
+                });
+            }
+
+            loopHigherInterval += interval.Duration;
+        }
+
+        return result;
+    }
+
+
 
     public static async Task<CryptoCandle> Process1mCandleAsync(CryptoSymbol symbol, DateTime openTime,
         decimal open, decimal high, decimal low, decimal close, decimal quoteVolume, bool isFilled = false)

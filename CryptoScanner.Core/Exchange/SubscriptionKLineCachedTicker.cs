@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
@@ -21,6 +21,46 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
 {
     private readonly SemaphoreSlim _cacheSemaphore = new(1, 1);
     private System.Timers.Timer? _flushTimer;
+
+    // Counters behind Subscription.ActivityDiagnostics, reset in InitializeCache so every number
+    // describes the period since the last (re)subscribe. Interlocked because the socket callback, the
+    // minute timer and the health check each touch them from their own thread.
+    //
+    // What they separate. A subscription that reports no activity has exactly three possible causes,
+    // and until now all three produced the same "inactive for N minutes" line:
+    //   flush == 0 or far below the number of minutes  -> the minute timer did not run (a dead timer,
+    //       or a machine too busy to serve it), so the fault is in the timer, not in the exchange.
+    //   flush runs but ws == 0 and noprice > 0         -> the socket delivers nothing AND there is no
+    //       price to repeat, the one path that marks no activity at all.
+    //   flush runs and flat > 0                        -> activity WAS marked every minute, so the
+    //       subscription cannot be inactive - the fault would then be in the bookkeeping itself.
+    // wsbad and wsdrop name the two ways an incoming update is thrown away before it reaches the cache.
+    private int _flushTicks;           // times the minute timer actually ran
+    private int _flushRealCandles;     // candles flushed out of the cache
+    private int _flushFlatCandles;     // minutes synthesized because nothing was traded
+    private int _flushNoPrice;         // minutes that could not even be synthesized (no price to repeat)
+    private int _flushErrors;          // per-symbol failures inside the flush
+    private int _socketUpdates;        // kline/trade updates merged into the cache
+    private int _socketRejected;       // updates dropped by the zero/invalid OHLC guard
+    private int _socketUnknownSymbol;  // updates dropped, the name was not in the cache
+    private long _lastFlushTicks;      // moment the minute timer last ran, UTC ticks
+
+
+    public override string ActivityDiagnostics
+    {
+        get
+        {
+            long lastFlush = Interlocked.Read(ref _lastFlushTicks);
+            string flushAge = lastFlush == 0
+                ? "never"
+                : $"{(GlobalData.Clock.UtcNow - new DateTime(lastFlush, DateTimeKind.Utc)).TotalMinutes:N0}m";
+            return $"flush={Volatile.Read(ref _flushTicks)} last={flushAge} " +
+                $"real={Volatile.Read(ref _flushRealCandles)} flat={Volatile.Read(ref _flushFlatCandles)} " +
+                $"noprice={Volatile.Read(ref _flushNoPrice)} err={Volatile.Read(ref _flushErrors)} " +
+                $"ws={Volatile.Read(ref _socketUpdates)} wsbad={Volatile.Read(ref _socketRejected)} " +
+                $"wsdrop={Volatile.Read(ref _socketUnknownSymbol)}";
+        }
+    }
 
     // Combined per-symbol entry: symbol metadata + its running candle cache, keyed by exchange name.
     private Dictionary<string, (CryptoSymbol Symbol, CryptoCandleList Candles)> _cache = [];
@@ -45,6 +85,18 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
     /// </summary>
     protected void InitializeCache(IEnumerable<CryptoSymbol> symbols)
     {
+        // A new round starts here: the counters have to describe the period since THIS subscribe,
+        // otherwise the numbers in the restart line still carry the previous round's totals.
+        Interlocked.Exchange(ref _flushTicks, 0);
+        Interlocked.Exchange(ref _flushRealCandles, 0);
+        Interlocked.Exchange(ref _flushFlatCandles, 0);
+        Interlocked.Exchange(ref _flushNoPrice, 0);
+        Interlocked.Exchange(ref _flushErrors, 0);
+        Interlocked.Exchange(ref _socketUpdates, 0);
+        Interlocked.Exchange(ref _socketRejected, 0);
+        Interlocked.Exchange(ref _socketUnknownSymbol, 0);
+        Interlocked.Exchange(ref _lastFlushTicks, 0);
+
         _cache = [];
         foreach (var symbol in symbols)
             _cache.TryAdd(symbol.ExchangeName, (symbol, []));
@@ -60,15 +112,22 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
         decimal open, decimal high, decimal low, decimal close, decimal volume)
     {
         if (!_cache.TryGetValue(exchangeName, out var entry))
+        {
+            Interlocked.Increment(ref _socketUnknownSymbol);
             return;
+        }
 
         // Guard against empty/invalid kline updates. A minute without trades (or an incomplete
         // update) can arrive with OHLC = 0; caching+flushing that produces the reported all-zero
         // OHLC candles (and corrupts the higher timeframes). Skip it — a genuinely missing minute
         // is back-filled as a flat candle (previous close) by CandleTools.BulkAddMissingCandles.
         if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
+        {
+            Interlocked.Increment(ref _socketRejected);
             return;
+        }
 
+        Interlocked.Increment(ref _socketUpdates);
         _cacheSemaphore.Wait();
         try
         {
@@ -119,8 +178,12 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
         DateTime tradeTime, decimal price, decimal quoteVolume)
     {
         if (!_cache.TryGetValue(exchangeName, out var entry))
+        {
+            Interlocked.Increment(ref _socketUnknownSymbol);
             return;
+        }
 
+        Interlocked.Increment(ref _socketUpdates);
         _cacheSemaphore.Wait();
         try
         {
@@ -220,6 +283,11 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
         };
         _flushTimer.Elapsed += async (sender, _) =>
         {
+            // Counted before any work: this is the number that says whether the minute timer is being
+            // served at all. A machine that cannot keep up shows fewer ticks than elapsed minutes.
+            Interlocked.Increment(ref _flushTicks);
+            Interlocked.Exchange(ref _lastFlushTicks, GlobalData.Clock.UtcNow.Ticks);
+
             foreach (var (symbol, candles) in _cache.Values)
             {
                 try
@@ -241,6 +309,7 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                                 if (candle.Close <= 0)
                                     continue;
 
+                                Interlocked.Increment(ref _flushRealCandles);
                                 IncrementTickerCount();
 
                                 await CandleTools.Process1mCandleAsync(symbol, candle.Date,
@@ -255,6 +324,7 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                         // CandleList stays contiguous and CollectCandles keeps finding >= 260 candles.
                         if (candleLast.OpenTime != expectedUpto && TryGetPriceToRepeat(symbol, out decimal lastPrice))
                         {
+                            Interlocked.Increment(ref _flushFlatCandles);
                             IncrementTickerCount();
 
                             await CandleTools.Process1mCandleAsync(symbol, expectedUpto.ToDateTime(),
@@ -271,6 +341,13 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                                 IsFilled = true,
                             };
                         }
+                        else if (candleLast.OpenTime != expectedUpto)
+                        {
+                            // Nothing flushed and no price to repeat. This is the ONLY path through the
+                            // flush that calls no IncrementTickerCount at all, so it is the only one that
+                            // can leave a subscription looking dead to the health check.
+                            Interlocked.Increment(ref _flushNoPrice);
+                        }
 
                         if (candleLast.OpenTime == expectedUpto)
                         {
@@ -285,6 +362,7 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                 }
                 catch (Exception error)
                 {
+                    Interlocked.Increment(ref _flushErrors);
                     ScannerLog.Logger.Error(error, symbol.Name);
 #if DEBUG
                     GlobalData.AddErrorToLogTab($"KLine Ticker {symbol.Name} ERROR {error.Message}");

@@ -3,9 +3,8 @@
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Messages;
+using CryptoScanner.Core.Trader;
 using CryptoScanner.Views;
-
-using Dapper;
 
 namespace CryptoScanner.Commands;
 
@@ -23,7 +22,8 @@ public class CommandPositionDeleteAll : CommandBase
         if (!GetObjectInformation(parameter, out ParameterObjects dto) || dto.parentWindow == null)
             return;
 
-        var dialog = new ConfirmDialog("Delete all positions from the database?", "Delete positions")
+        var dialog = new ConfirmDialog(
+            "Delete all positions from the database, and hand out the start capital again?", "Delete positions")
         {
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
         };
@@ -36,11 +36,8 @@ public class CommandPositionDeleteAll : CommandBase
             using CryptoDatabase databaseThread = new();
             databaseThread.Connection.Open();
 
-            using var transaction = databaseThread.BeginTransaction();
-            databaseThread.Connection.Execute($"delete from positionstep", transaction);
-            databaseThread.Connection.Execute($"delete from positionpart", transaction);
-            databaseThread.Connection.Execute($"delete from position", transaction);
-            transaction.Commit();
+            // Steps, parts, the positions themselves AND the orders and trades that hang off them
+            PositionTools.DeleteAllFromDatabase(databaseThread);
 
             GlobalData.ActiveExchange!.Data.PositionList.Clear();
 
@@ -54,6 +51,10 @@ public class CommandPositionDeleteAll : CommandBase
             // Remove the position from open or closed positions
             GlobalData.SendMvvmMessage(new PositionDeleteAllMessage());
             GlobalData.AddTextToLogTab($"Manually deleted all positions from the database");
+
+            // The balances carry the result of the positions that were just deleted, so they have to
+            // go back to the start as well - see PaperAssetsEditor.ResetAfterDeletingAllPositions.
+            PaperAssetsEditor.ResetAfterDeletingAllPositions(GlobalData.ActiveExchange);
         }
         catch (Exception error)
         {

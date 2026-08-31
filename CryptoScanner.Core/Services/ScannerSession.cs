@@ -47,6 +47,11 @@ public class ScannerSession : IScannerSession
     // so an overlapping call from the dashboard simply returns instead of doing double work.
     private readonly System.Timers.Timer TimerBarometer = new() { Enabled = false };
 
+    // Writes the daily capital history the growth chart on the dashboard is drawn from. The work
+    // itself happens once a day; this only checks whether the day already has a snapshot, which is
+    // a comparison of two dates. See AssetSnapshotTools.
+    private readonly System.Timers.Timer TimerAssetSnapshot = new() { Enabled = false };
+
     // Periodiek de strategy performance herberekenen (adaptieve feedback)
     //private readonly System.Timers.Timer TimerCheckStrategyPerformance = new() { Enabled = false };
 
@@ -71,6 +76,7 @@ public class ScannerSession : IScannerSession
     {
         TimerCheckPositions.Elapsed += TimerCheckPositions_Tick;
         TimerBarometer.Elapsed += TimerBarometer_Tick;
+        TimerAssetSnapshot.Elapsed += TimerAssetSnapshot_Tick;
         TimerCheckDataStream.Elapsed += TimerCheckDataStream_Tick;
         TimerRestartStreams.Elapsed += TimerRestartStreams_Tick;
         TimerSoundHeartBeat.Elapsed += TimerHeartBeath_Tick;
@@ -222,10 +228,23 @@ public class ScannerSession : IScannerSession
 
 
 
-    public void Start(int delay)
+    public bool Start(int delay)
     {
         //GlobalData.AddTextToLogTab("Debug: ScannerSession.Start");
         ScannerLog.Logger.Trace($"ScannerSession.Starting");
+
+        // StopAsync clears IsStarted only in its finally block, so a stop that is still running leaves
+        // the flag set. Falling through the guard below without saying anything made the caller report
+        // a successful start while the stop tore the session down a moment later, which left the
+        // scanner silent until the application was restarted (seen after a sleep: the candle save of
+        // the suspend was frozen by the system and finished after the resume had already run).
+        if (IsStopInProgress)
+        {
+            ScannerLog.Logger.Trace($"ScannerSession.Start refused, a stop is still in progress");
+            GlobalData.AddTextToLogTab("Scanner not started: the previous shutdown is still running");
+            return false;
+        }
+
         if (!IsStarted)
         {
             try
@@ -258,6 +277,7 @@ public class ScannerSession : IScannerSession
             }
         }
         ScannerLog.Logger.Trace($"ScannerSession.Started");
+        return true;
     }
 
 
@@ -272,6 +292,7 @@ public class ScannerSession : IScannerSession
             {
                 TimerCheckPositions.Enabled = false;
                 TimerBarometer.Enabled = false;
+                TimerAssetSnapshot.Enabled = false;
                 TimerCheckDataStream.Enabled = false;
                 TimerRestartStreams.Enabled = false;
                 TimerSoundHeartBeat.Enabled = false;
@@ -342,6 +363,7 @@ public class ScannerSession : IScannerSession
                 {
                     TimerCheckPositions.Dispose();
                     TimerBarometer.Dispose();
+                    TimerAssetSnapshot.Dispose();
                     TimerCheckDataStream.Dispose();
                     TimerRestartStreams.Dispose();
                     TimerSoundHeartBeat.Dispose();
@@ -435,6 +457,10 @@ public class ScannerSession : IScannerSession
         // bookkeeping only iterates the candles that were not calculated yet).
         TimerBarometer.InitTimerInterval(30);
 
+        // A snapshot per calendar day, so checking every minute puts the first one of a day at most
+        // a minute past midnight.
+        TimerAssetSnapshot.InitTimerInterval(60);
+
         // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
 
@@ -454,6 +480,30 @@ public class ScannerSession : IScannerSession
     private async void TimerHeartBeath_Tick(object? sender, EventArgs? e)
     {
         GlobalData.PlaySomeMusic(GlobalData.Settings.General.SoundHeartBeat);
+    }
+
+
+    private void TimerAssetSnapshot_Tick(object? sender, EventArgs? e)
+    {
+        if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Running)
+            return;
+        if (GlobalData.ActiveExchange == null)
+            return;
+
+        // The emulator takes its own snapshots, on emulator time and tagged with the run (see
+        // ReplayRunner). Letting this timer join in would write a second snapshot for the same day
+        // from a background thread, halfway through a replay.
+        if (GlobalData.IsEmulatorMode)
+            return;
+
+        try
+        {
+            AssetSnapshotTools.CaptureIfDue(GlobalData.ActiveExchange);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "TimerAssetSnapshot");
+        }
     }
 
 

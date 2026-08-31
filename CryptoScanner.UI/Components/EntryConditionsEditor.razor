@@ -105,6 +105,71 @@
                        @bind="Data.Ma200ConfirmationCandles" disabled="@(!Data.CheckPriceAboveMa200)" />
             </span>
         </div>
+        @* Watch the signal for a while before acting on it — the same row the Avalonia view puts
+           under the MA200 block. *@
+        <div class="field space-before"
+             title="Candles of the signal's own interval to watch before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below EntryRemoveTime, otherwise the signal expires before the wait is over and nothing is ever entered.">
+            <label>Wait after signal (candles)</label>
+            <span class="field-control">
+                <input type="number" class="input-number" min="0" style="width: 60px;"
+                       @bind="Data.EntryWaitCandles" />
+                <span class="field-unit" title="How far price may run against the signal during that wait, as a positive percentage of the signal price. Above this the signal is dropped. Zero means no limit: the wait then only delays the entry.">Max against %</span>
+                <input type="number" class="input-number" step="0.1" min="0" style="width: 60px;"
+                       @bind="Data.EntryMaxAdversePercentage" />
+            </span>
+        </div>
+
+        @* Reversal shapes to wait for inside that window. With one or more ticked the wait above
+           stops being a delay and becomes a SEARCH WINDOW: the entry is taken on the first candle
+           within it that forms one of these. Same nested groupbox as the Avalonia view. *@
+        <div class="settings-group settings-group-nested">
+            <div class="settings-group-header">Wait for a reversal shape</div>
+            <div class="settings-group-body">
+                <div class="settings-note">Nothing ticked leaves the wait a plain delay</div>
+                <div class="field"
+                     title="The reversal shapes an entry waits for. Ticking several is an OR: any one of them is enough. Which ones are worth using was measured on runs 525-531; how OFTEN a shape occurs decides whether it is usable as a filter at all.">
+                    <label>Shapes</label>
+                    <span class="field-control">
+                        <span class="enum-list">
+                            @foreach (var option in EntryConditionsData.PatternNames)
+                            {
+                                var name = option;
+                                <label class="enum-list-item">
+                                    <input type="checkbox" class="input-checkbox"
+                                           checked="@Data.HasPattern(name)"
+                                           @onchange="@(e => Data.TogglePattern(name, e.Value is bool on && on))" />
+                                    <span>@name</span>
+                                </label>
+                            }
+                        </span>
+                    </span>
+                </div>
+
+                <hr class="settings-separator" />
+
+                <div class="field" title="A body at or under this counts as small: the hammer's body, and the hesitant middle candle of a morning star.">
+                    <label>Small body max %</label>
+                    <input type="number" class="input-number" step="0.1" min="0" @bind="Data.EntryPatternShape.MaxBodyPercentage" />
+                </div>
+                <div class="field" title="A body at or over this counts as decisive: both candles of an engulfing or a harami, and the two outer candles of a morning star. Keeps two nearly flat candles from engulfing each other.">
+                    <label>Decisive body min %</label>
+                    <input type="number" class="input-number" step="0.1" min="0" @bind="Data.EntryPatternShape.MinBodyPercentage" />
+                </div>
+                <div class="field" title="How long the long wick has to be for a hammer (below the body) or an inverted hammer (above it).">
+                    <label>Dominant wick min %</label>
+                    <input type="number" class="input-number" step="0.1" min="0" @bind="Data.EntryPatternShape.MinWickPercentage" />
+                </div>
+                <div class="field" title="And how short the wick at the other end has to stay for that same hammer.">
+                    <label>Opposite wick max %</label>
+                    <input type="number" class="input-number" step="0.1" min="0" @bind="Data.EntryPatternShape.MaxOppositeWickPercentage" />
+                </div>
+                <div class="field" title="How far apart the two lows (or highs) of a tweezer may be and still count as equal. An exact match between two decimal prices essentially never happens.">
+                    <label>Tweezer tolerance %</label>
+                    <input type="number" class="input-number" step="0.1" min="0" @bind="Data.EntryPatternShape.TweezerTolerancePercentage" />
+                </div>
+                <div class="settings-note">All as a percentage of the candle's own range</div>
+            </div>
+        </div>
         @* The band break confirmation used to sit here as "Timeframe consensus count". Only the
            three band strategies could act on it, so it now lives in their own settings as
            "Band break confirmation on higher timeframes". *@

@@ -13,7 +13,7 @@
 
 	<!-- Border around entire content -->
 	<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
-	<Grid RowDefinitions="Auto,*,Auto,Auto" Margin="10" RowSpacing="8">
+	<Grid RowDefinitions="Auto,*,Auto,Auto,Auto" Margin="10" RowSpacing="8">
 
 		<TextBlock Grid.Row="0" Text="{Binding Summary}" Foreground="Gray" FontSize="11"
 				   VerticalAlignment="Center"/>
@@ -30,26 +30,72 @@
 					  HeadersVisibility="Column">
 				<DataGrid.Columns>
 					<DataGridTextColumn Header="Asset" Binding="{Binding Name}" IsReadOnly="True" Width="120"/>
-					<DataGridTextColumn Header="Total" Binding="{Binding Total, Mode=TwoWay}" Width="130"/>
-					<DataGridTextColumn Header="Locked" Binding="{Binding LockedText}" IsReadOnly="True" Width="120"/>
-					<DataGridTextColumn Header="Free" Binding="{Binding FreeText}" IsReadOnly="True" Width="*"/>
+
+					<!-- Template columns because amounts belong on the right, and a DataGridTextColumn
+						 cannot align its contents. Total shows the rounded text and is edited as text,
+						 so what is typed is what the cell showed. -->
+					<DataGridTemplateColumn Header="Total" Width="130">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate x:DataType="vm:AssetRowViewModel">
+								<TextBlock Text="{Binding TotalText}" VerticalAlignment="Center"
+										   HorizontalAlignment="Right" Margin="0,0,4,0"/>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+						<DataGridTemplateColumn.CellEditingTemplate>
+							<DataTemplate x:DataType="vm:AssetRowViewModel">
+								<TextBox Text="{Binding TotalText, Mode=TwoWay}" VerticalAlignment="Center"
+										 HorizontalContentAlignment="Right"/>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellEditingTemplate>
+					</DataGridTemplateColumn>
+
+					<DataGridTemplateColumn Header="Locked" Width="120" IsReadOnly="True">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate x:DataType="vm:AssetRowViewModel">
+								<TextBlock Text="{Binding LockedText}" VerticalAlignment="Center"
+										   HorizontalAlignment="Right" Margin="0,0,4,0"/>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+
+					<DataGridTemplateColumn Header="Free" Width="*" IsReadOnly="True">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate x:DataType="vm:AssetRowViewModel">
+								<TextBlock Text="{Binding FreeText}" VerticalAlignment="Center"
+										   HorizontalAlignment="Right" Margin="0,0,4,0"/>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
 				</DataGrid.Columns>
 			</DataGrid>
 		</Border>
 
+		<!-- Book a balance by hand. The only way to get a coin into the list that is not in it: a
+			 balance that reaches zero is dropped, so it cannot be corrected in the grid either. -->
+		<Grid Grid.Row="2" ColumnDefinitions="Auto,90,Auto,120,*">
+			<TextBlock Grid.Column="0" Text="Add asset:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+			<TextBox Grid.Column="1" Text="{Binding NewAssetName}" Watermark="BTC"
+					 ToolTip.Tip="The coin to book a balance for. A coin that is already in the list is set to this amount."/>
+			<TextBlock Grid.Column="2" Text="Amount:" VerticalAlignment="Center" Margin="12,0,8,0"/>
+			<TextBox Grid.Column="3" Text="{Binding NewAssetAmount}" HorizontalContentAlignment="Right"
+					 ToolTip.Tip="The balance in the coin itself, above zero."/>
+			<Button Grid.Column="4" Content="Add" Margin="8,0,0,0" HorizontalAlignment="Left" Click="OnAddClick"
+					ToolTip.Tip="Book this balance. It is recorded as a manual correction, so the capital line does not read it as profit."/>
+		</Grid>
+
 		<!-- Start over -->
-		<Grid Grid.Row="2" ColumnDefinitions="Auto,140,*">
+		<Grid Grid.Row="3" ColumnDefinitions="Auto,140,*">
 			<TextBlock Grid.Column="0" Text="Start capital:" VerticalAlignment="Center" Margin="0,0,8,0"/>
 			<NumericUpDown Grid.Column="1" Value="{Binding StartCapital}"
-						   Minimum="0" Increment="1000" FormatString="N2"
-						   ToolTip.Tip="Amount handed out per traded quote coin when you press Reset"/>
+						   Minimum="0" Increment="1000" FormatString="N2" ShowButtonSpinner="False"
+						   ToolTip.Tip="Amount handed out per traded quote coin when you press Reset, except the coins with a start capital of their own. Not used at all when the default asset list in the settings holds anything - that list is handed out instead."/>
 			<Button Grid.Column="2" Content="Reset to start capital" Margin="8,0,0,0"
 					HorizontalAlignment="Left" Click="OnResetClick"
-					ToolTip.Tip="Throw every paper balance away and hand out the start capital again for each traded quote coin"/>
+					ToolTip.Tip="Throw every paper balance away and hand out the starting balances again: the default asset list from the settings when there is one, and otherwise the start capital for each traded quote coin."/>
 		</Grid>
 
 		<!-- Action buttons -->
-		<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+		<StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
 			<Button Content="Refresh" HorizontalContentAlignment="Center" Click="OnRefreshClick" Width="90"/>
 			<Button Content="Apply" HorizontalContentAlignment="Center" Click="OnApplyClick" Width="90"/>
 			<Button Content="Close" HorizontalContentAlignment="Center" Click="OnCloseClick" Width="90"/>

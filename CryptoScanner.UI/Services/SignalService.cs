@@ -17,7 +17,7 @@ namespace CryptoScanner.UI.Services;
 
 public class SignalService : IDisposable
 {
-    private const string GridName = "Signal";
+    private const string GridName = GridNames.Signal;
     private readonly object _lock = new();
     private readonly ApplicationStateService _stateService;
     private List<SignalViewModel> _signals = [];

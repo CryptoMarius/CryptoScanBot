@@ -23,6 +23,8 @@ public partial class AssetWindow : Window
 
     private void OnApplyClick(object? sender, RoutedEventArgs e) => ViewModel?.Apply();
 
+    private void OnAddClick(object? sender, RoutedEventArgs e) => ViewModel?.Add();
+
     private async void OnResetClick(object? sender, RoutedEventArgs e)
     {
         // Deliberately behind a confirmation: this wipes the balances of a running paper session.

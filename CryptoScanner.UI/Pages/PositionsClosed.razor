@@ -125,7 +125,7 @@
 
 <CryptoScanner.UI.Components.ConfirmDialog @bind-Visible="_confirmDeleteAllVisible"
     Title="Delete all positions"
-    Message="Are you sure you want to delete all positions from the database?"
+    Message="Are you sure you want to delete all positions from the database, and hand out the start capital again?"
     OnConfirmed="OnConfirmDeleteAll" />
 
 @code {
@@ -243,7 +243,7 @@
         });
 
         _columnState = new GridColumnState<PositionColumnEnum>(
-            "PositionClosed", StateService, PositionClosedColumnDefs,
+            GridNames.PositionClosed, StateService, PositionClosedColumnDefs,
             PositionColumnEnum.CloseTime, System.ComponentModel.ListSortDirection.Descending);
 
         PositionService.ClosedPositionsChanged += OnPositionsChanged;

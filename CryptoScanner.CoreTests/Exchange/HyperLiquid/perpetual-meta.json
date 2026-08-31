@@ -1,0 +1,60 @@
+{
+  "universe": [
+    {
+      "name": "BTC",
+      "szDecimals": 5,
+      "maxLeverage": 40,
+      "isDelisted": false,
+      "markPx": 78319.0
+    },
+    {
+      "name": "ETH",
+      "szDecimals": 4,
+      "maxLeverage": 25,
+      "isDelisted": false,
+      "markPx": 2446.0
+    },
+    {
+      "name": "SOL",
+      "szDecimals": 2,
+      "maxLeverage": 20,
+      "isDelisted": false,
+      "markPx": 103.39
+    },
+    {
+      "name": "HYPE",
+      "szDecimals": 2,
+      "maxLeverage": 10,
+      "isDelisted": false,
+      "markPx": 81.669
+    },
+    {
+      "name": "XRP",
+      "szDecimals": 0,
+      "maxLeverage": 20,
+      "isDelisted": false,
+      "markPx": 1.3714
+    },
+    {
+      "name": "ATOM",
+      "szDecimals": 2,
+      "maxLeverage": 5,
+      "isDelisted": false,
+      "markPx": 1.4641
+    },
+    {
+      "name": "DOT",
+      "szDecimals": 1,
+      "maxLeverage": 10,
+      "isDelisted": false,
+      "markPx": 0.82572
+    },
+    {
+      "name": "MATIC",
+      "szDecimals": 1,
+      "maxLeverage": 20,
+      "isDelisted": true,
+      "markPx": 0.37621
+    }
+  ]
+}

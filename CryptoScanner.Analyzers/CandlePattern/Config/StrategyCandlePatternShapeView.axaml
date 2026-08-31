@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="380" d:DesignHeight="220"
+             xmlns:vm="using:CryptoScanner.Analyzers.CandlePattern.Config"
+             xmlns:configviews="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyCandlePatternSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.CandlePattern.Config.StrategyCandlePatternShapeView">
+
+    <!-- A groupbox of its own in the tab's WrapPanel, the way DLZ spreads its settings over several
+         boxes. Bound to the same view model as the Settings box next to it. -->
+    <HeaderedContentControl Classes="groupbox" Header="Pattern shape">
+        <StackPanel Margin="4">
+            <configviews:CandlePatternShapeView DataContext="{Binding ShapeViewModel}" />
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

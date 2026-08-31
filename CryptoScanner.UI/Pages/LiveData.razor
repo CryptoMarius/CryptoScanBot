@@ -189,7 +189,7 @@
         });
 
         _columnState = new GridColumnState<LiveDataColumnEnum>(
-            "LiveData", StateService, LiveDataColumnDefs,
+            GridNames.LiveData, StateService, LiveDataColumnDefs,
             LiveDataColumnEnum.Date, System.ComponentModel.ListSortDirection.Descending);
 
         LiveDataService.LiveDataChanged += OnLiveDataChanged;

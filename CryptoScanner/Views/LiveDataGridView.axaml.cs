@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 
@@ -14,7 +15,7 @@ public partial class LiveDataGridView : UserControlWithGrid<LiveDataViewModel>
     public LiveDataGridView()
     {
         _targetMenu = TargetMenu.LiveData;
-        _gridName = "LiveDataGrid";
+        _gridName = GridNames.LiveData;
         InitializeComponent();
 
         if (Design.IsDesignMode)

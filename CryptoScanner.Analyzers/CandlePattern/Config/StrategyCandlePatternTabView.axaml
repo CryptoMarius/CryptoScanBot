@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
+             xmlns:vm="using:CryptoScanner.Analyzers.CandlePattern.Config"
+             xmlns:configviews="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyCandlePatternTabViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.CandlePattern.Config.StrategyCandlePatternTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
+                <TextBlock FontSize="13">
+                    <Run Text="CANDLEPATTERN – Classic candlestick reversal patterns" FontWeight="SemiBold"/>
+                    <Run Text=" — Fires on any of the ticked shapes; the trade side decides whether a shape is read bullish or bearish" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                </TextBlock>
+            </StackPanel>
+            <WrapPanel>
+                <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyCandlePatternSettingsView DataContext="{Binding StrategyCandlePatternSettingsViewModel}" />
+                <vm:StrategyCandlePatternShapeView DataContext="{Binding StrategyCandlePatternSettingsViewModel}" />
+                <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

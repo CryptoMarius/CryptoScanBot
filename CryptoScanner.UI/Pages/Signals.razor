@@ -220,7 +220,7 @@
         });
 
         _columnState = new GridColumnState<SignalColumnEnum>(
-            "Signal", StateService, SignalColumnDefs,
+            GridNames.Signal, StateService, SignalColumnDefs,
             SignalColumnEnum.Date, System.ComponentModel.ListSortDirection.Descending);
 
         SignalService.SignalsChanged += OnSignalsChanged;

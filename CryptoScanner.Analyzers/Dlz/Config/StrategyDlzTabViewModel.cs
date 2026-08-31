@@ -48,7 +48,7 @@ public partial class StrategyDlzTabViewModel : ObservableObject
 
     internal void LoadConfig(SettingsSignalStrategyDlz settings)
     {
-        SoundAndColorsViewModel.LoadConfig("DLZ", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyDlzSettingsViewModel.LoadConfig(settings);
         StrategyDlzSettingsZoomedBoxViewModel.LoadConfig(settings);
         StrategyDlzSettingsUnzoomedBoxViewModel.LoadConfig(settings);

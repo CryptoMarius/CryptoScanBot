@@ -132,7 +132,7 @@
         });
 
         _columnState = new GridColumnState<LogColumnEnum>(
-            "Log", StateService, LogColumnDefs,
+            GridNames.Log, StateService, LogColumnDefs,
             LogColumnEnum.Date, System.ComponentModel.ListSortDirection.Ascending);
 
         LogService.LogsChanged += OnLogsChanged;

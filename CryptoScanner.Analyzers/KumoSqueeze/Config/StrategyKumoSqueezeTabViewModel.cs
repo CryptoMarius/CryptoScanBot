@@ -25,7 +25,7 @@ public partial class StrategyKumoSqueezeTabViewModel : ObservableObject
 
     internal void LoadConfig(KumoSqueezeSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig("KUMOSQUEEZE", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyKumoSqueezeSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }

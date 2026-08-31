@@ -176,7 +176,9 @@ public partial class App : Application
             };
 #endif
 
-            _powerMonitor.PowerModeChanged += DoWhenPowerModeChanged;
+            // Shared with the Photino and Web front ends: suspend and resume have to be handled
+            // one at a time, see PowerModeHandler
+            _powerMonitor.PowerModeChanged += PowerModeHandler.Handle;
 
             Analyzers.AnalyzerRegistration.RegisterAll();
 
@@ -308,51 +310,6 @@ public partial class App : Application
         System.Diagnostics.Debug.WriteLine($"OnApplicationExit(all operations completed)");
     }
 
-
-    private static void DoWhenPowerModeChanged(object? sender, PowerModeEventArgs e)
-    {
-        // Fire-and-forget with error handling
-        _ = HandlePowerModeChangeAsync(e.Mode);
-    }
-
-    private static async Task HandlePowerModeChangeAsync(PowerMode mode)
-    {
-        try
-        {
-            switch (mode)
-            {
-                case PowerMode.Suspend:
-                    ScannerLog.Logger.Trace("System going to sleep - disconnecting...");
-                    GlobalData.AddTextToLogTab("System going to sleep - disconnecting...");
-                    if (GlobalData.SignalRService != null)
-                        await GlobalData.SignalRService.StopAsync();
-                    var scannersession1 = GlobalData.GetService<IScannerSession>()
-                        ?? throw new InvalidOperationException("ScannerSession not registered");
-                    await scannersession1.StopAsync();
-                    ThreadSoundPlayer.StopSoundThread();
-                    //await DataStore.SaveCandlesAsync(); included in scannersession1.StopAsync()
-                    GlobalData.AddTextToLogTab("Disconnected successfully");
-                    break;
-
-                case PowerMode.Resume:
-                    ScannerLog.Logger.Trace("System resumed - reconnecting...");
-                    GlobalData.AddTextToLogTab("System resumed - reconnecting...");
-                    await Task.Delay(2000); // wait for network
-                    if (GlobalData.SignalRService != null)
-                        await GlobalData.SignalRService.StartAsync();
-                    var scannersession2 = GlobalData.GetService<IScannerSession>()
-                        ?? throw new InvalidOperationException("ScannerSession not registered");
-                    scannersession2.Start(5000);
-                    GlobalData.AddTextToLogTab("Reconnected successfully");
-                    break;
-            }
-        }
-        catch (Exception ex)
-        {
-            ScannerLog.Logger.Error(ex, $"Error handling power mode change: {mode}");
-            GlobalData.AddTextToLogTab($"Power mode {mode} error: {ex.Message}");
-        }
-    }
 
     public static IBrush GetBrushResource(string resourceKey)
     {

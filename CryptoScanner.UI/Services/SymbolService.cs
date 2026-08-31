@@ -11,7 +11,7 @@ namespace CryptoScanner.UI.Services;
 
 public class SymbolService : IDisposable
 {
-    private const string GridName = "Symbol";
+    private const string GridName = GridNames.Symbol;
     private readonly object _lock = new();
     private readonly ApplicationStateService _stateService;
     private List<SymbolViewModel> _symbols = [];

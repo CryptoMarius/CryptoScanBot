@@ -10,7 +10,7 @@ namespace CryptoScanner.UI.Services;
 
 public class LogService : IDisposable
 {
-    private const string GridName = "Log";
+    private const string GridName = GridNames.Log;
     private const int MaxLogLines = 5000;
     private readonly object _lock = new();
     private readonly ApplicationStateService _stateService;

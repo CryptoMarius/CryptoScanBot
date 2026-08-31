@@ -561,18 +561,61 @@ public class PositionMonitor : IDisposable
                                     return;
                                 }
 
-                                // Below the minimum allowed quantity
-                                if (entryBase == Symbol.QuantityMinimum)
+                                // Below the minimum allowed value. Weighed on the quantity that is
+                                // actually going to be ordered and not on the amount that was meant to be
+                                // staked: the clamp above puts the quantity on the size grid, so a stake of
+                                // 12 on a symbol whose tick is a whole coin at a price of 9 leaves an order
+                                // worth 9 - which the exchange refuses while the stake itself was over the
+                                // minimum.
+                                //
+                                // This replaces a comparison against QuantityMinimum that stood here until
+                                // 31-08-2026. It caught the same case on most symbols by accident, because a
+                                // quantity that lands on the very first step of the grid is nearly always
+                                // worth less than the minimum order value anyway. Nearly: on a symbol where
+                                // one tick is already worth more than that minimum it refused a perfectly
+                                // legitimate order of exactly one tick. On HyperLiquid that is XAUT0, whose
+                                // tick of 0.01 is worth 44.62 against a minimum order value of 10, and TSLA
+                                // at 15.80.
+                                decimal entryValue = entryBase * entryPrice;
+                                if (Symbol.QuoteValueMinimum > 0 && entryValue < Symbol.QuoteValueMinimum)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" because of minimum quantity {entryBase} < {Symbol.QuantityMinimum} the buy is not possible (too little)");
+                                    GlobalData.AddTextToLogTab(text + $" because of minimum value {entryValue} < {Symbol.QuoteValueMinimum} the buy is not possible (too little)");
                                     Symbol.ClearSignals();
                                     return;
                                 }
 
-                                // Below the minimum allowed value
-                                if (Symbol.QuoteValueMinimum > 0 && entryQuote < Symbol.QuoteValueMinimum)
+                                // And the same question for every other order this position is going
+                                // to place: the DCA levels behind the entry and the exit orders that
+                                // have to get us back out again. All of it is decided here, because
+                                // the entry is the only moment at which refusing costs nothing.
+                                //
+                                // Before 31-08-2026 this was half answered afterwards, by the closing
+                                // check in TradeTools.CalculatePositionResultsViaOrders: it weighed
+                                // the remaining quantity against the minimum order value and closed
+                                // the position when it fell short. That reading cannot tell an entry
+                                // that was too small to begin with from a genuine unsellable
+                                // remainder, and on ZECUSDC.PERP it wrote off a whole position - 0.01
+                                // ZEC bought for 8.16 against a minimum order value of 10 - as a
+                                // total loss while every coin was still held. Straightening things
+                                // out afterwards is not the place to decide whether we should have
+                                // entered at all.
+                                if (!TradeTools.CheckOrderSetAgainstSymbolLimits(Symbol, signal.Side,
+                                    entryPrice, entryBase, signal.SlPercentage, out string limitReason))
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" because of minimum value {entryQuote} < {Symbol.QuoteValueMinimum} the buy is not possible (too little)");
+                                    GlobalData.AddTextToLogTab(text + $" because {limitReason} the position is not opened");
+                                    Symbol.ClearSignals();
+                                    return;
+                                }
+
+                                // Enough money for the entry AND all of its DCA levels, weighed on
+                                // the entry value that is really going to be ordered. The check up in
+                                // CheckAvailableAssets asked this on the amount that was MEANT to be
+                                // staked, and putting the quantity onto the size grid has moved that
+                                // number since - in both directions.
+                                if (!AssetTools.CheckAssetsCoverEntryAndDca(GlobalData.ActiveExchange, Symbol,
+                                    entryValue, out string assetReason))
+                                {
+                                    GlobalData.AddTextToLogTab(text + $" not enough cash available {assetReason}");
                                     Symbol.ClearSignals();
                                     return;
                                 }
@@ -677,31 +720,35 @@ public class PositionMonitor : IDisposable
     {
         if (position.Side == CryptoTradeSide.Long)
         {
-            // Gecorrigeerd op de laagste open of close van de candle
-            decimal x = Math.Min(LastCandle1m.Close, LastCandle1m.Open);
-            if (x < price)
+            // Corrected on the close of the candle. The open is deliberately not used: on a green
+            // candle it sits far below the market, which pushes the order much further away than
+            // the one tick needed to keep a limit order from filling straight away.
+            // Equal counts as too high: the signal price is usually the close of the signal candle,
+            // so leaving it alone on equality puts the order right ON the market and it fills at once.
+            decimal x = LastCandle1m.Close;
+            if (x <= price)
                 price = x - position.Symbol.PriceTickSize;
 
             // Gecorrigeerd op de laatst bekende prijs
             if (position.Symbol.LastPrice.HasValue)
             {
                 x = (decimal)position.Symbol.LastPrice;
-                if (x < price)
+                if (x <= price)
                     price = x - position.Symbol.PriceTickSize;
             }
         }
         else
         {
-            // Gecorrigeerd op de hoogste open of close van de candle
-            decimal x = Math.Max(LastCandle1m.Close, LastCandle1m.Open);
-            if (x > price)
+            // Corrected on the close of the candle, see the long side above.
+            decimal x = LastCandle1m.Close;
+            if (x >= price)
                 price = x + position.Symbol.PriceTickSize;
 
             // Gecorrigeerd op de laatst bekende prijs
             if (position.Symbol.LastPrice.HasValue)
             {
                 x = (decimal)position.Symbol.LastPrice;
-                if (x > price)
+                if (x >= price)
                     price = x + position.Symbol.PriceTickSize;
             }
         }
@@ -764,6 +811,27 @@ public class PositionMonitor : IDisposable
     private bool IsPastMaxDuration(CryptoPosition position)
         => IsPastMaxDuration(position, LastCandle1mCloseTimeDate);
 
+    /// <summary>
+    /// Has the position moved far enough into profit to arm the profit lock? The whole candle has to
+    /// be past the trigger, not just the wick that reached it: for a long the lowest point of the
+    /// OHLC (the low) has to sit above the trigger price, for a short the highest point (the high)
+    /// has to sit below it. A candle that only spikes through the trigger and pulls back leaves the
+    /// stop loss where it was.
+    /// </summary>
+    internal static bool ProfitLockArmed(CryptoTradeSide side, decimal breakEvenPrice,
+        decimal triggerPercentage, decimal candleLow, decimal candleHigh, out decimal profitPercentage)
+    {
+        profitPercentage = 0;
+        if (breakEvenPrice <= 0)
+            return false;
+
+        int multiplier = side == CryptoTradeSide.Long ? +1 : -1;
+        decimal favorable = side == CryptoTradeSide.Long ? candleLow : candleHigh;
+        profitPercentage = multiplier * (favorable - breakEvenPrice) / breakEvenPrice * 100m;
+        return profitPercentage >= triggerPercentage;
+    }
+
+
     private (decimal? stop, decimal? limit) CalculateSlPrices(CryptoPosition position)
     {
         // Only paper-trade mode supports SL orders (real trading would need OCO, not yet implemented).
@@ -795,10 +863,14 @@ public class PositionMonitor : IDisposable
         decimal? limit = result.Limit?.ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
         // Profit lock: once the position has reached MoveSlToBreakEvenPercentage in profit (the
-        // trigger), move the SL to BE + MoveSlToBreakEvenSlPercentage to protect the profit (sticky
-        // — the flag never resets, so a later pullback cannot loosen it). Keeping the SL percentage
-        // below the trigger leaves room between the price and the stop; equal percentages put the
-        // stop right where the trigger fired, which is what the setting did when it was one value.
+        // trigger) with a whole candle, move the SL up to protect the profit (sticky — the flag
+        // never resets, so a later pullback cannot loosen it). Where the stop lands depends on
+        // MoveSlToBreakEvenMethod: Fixed puts it at BE + MoveSlToBreakEvenSlPercentage and leaves
+        // it there, TrailingPercentage keeps it MoveSlToBreakEvenTrailPercentage behind the best
+        // price the position has seen.
+        // Keeping the SL percentage below the trigger leaves room between the price and the stop;
+        // equal percentages put the stop right where the trigger fired, which is what the setting
+        // did when it was one value.
         // Open DCA orders are cancelled separately in CancelOrdersIfClosedOrTimeoutOrReposition
         // once the flag is set.
         if (GlobalData.Settings.Trading.MoveSlToBreakEven
@@ -806,24 +878,39 @@ public class PositionMonitor : IDisposable
         {
             int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
             decimal triggerPct = GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage;
+            decimal trailPct = GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage;
+            bool trailing = GlobalData.Settings.Trading.MoveSlToBreakEvenMethod == CryptoProfitLockMethod.TrailingPercentage;
             // Never place the stop beyond the trigger level: that is at or through the price that
             // just armed the lock, so it would fill on the spot.
             decimal lockPct = Math.Min(GlobalData.Settings.Trading.MoveSlToBreakEvenSlPercentage, triggerPct);
 
-            if (!position.SlMovedToBreakEven)
+            if (!position.SlMovedToBreakEven
+                && ProfitLockArmed(position.Side, position.BreakEvenPrice, triggerPct,
+                    LastCandle1m.Low, LastCandle1m.High, out decimal profitPct))
             {
-                decimal favorable = position.Side == CryptoTradeSide.Long ? LastCandle1m.High : LastCandle1m.Low;
-                decimal profitPct = multiplier * (favorable - position.BreakEvenPrice) / position.BreakEvenPrice * 100m;
-                if (profitPct >= triggerPct)
-                {
-                    position.SlMovedToBreakEven = true;
-                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} profit lock: SL moved to BE+{lockPct:N2}% (trigger {triggerPct:N2}%, profit reached {profitPct:N2}%)");
-                }
+                position.SlMovedToBreakEven = true;
+                string where = trailing ? $"trailing {trailPct:N2}% behind the price" : $"BE+{lockPct:N2}%";
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} profit lock: SL moved to {where} (trigger {triggerPct:N2}%, profit reached {profitPct:N2}%)");
             }
 
             if (position.SlMovedToBreakEven)
             {
-                decimal lockStop = (position.BreakEvenPrice + multiplier * position.BreakEvenPrice * lockPct / 100m)
+                decimal lockLevel;
+                if (trailing)
+                {
+                    // Follow the best price the position has seen - for the trail that IS the high
+                    // (the low for a short), even though arming needs the whole candle. The ratchet
+                    // sits in the calculator and the level in TrailingStopPrice, so neither a
+                    // pullback nor a restart can hand back ground the position already gained.
+                    decimal best = position.Side == CryptoTradeSide.Long ? LastCandle1m.High : LastCandle1m.Low;
+                    position.TrailingStopPrice = ProfitLockCalculator.TrailingStop(
+                        position.Side, best, trailPct, position.TrailingStopPrice);
+                    lockLevel = position.TrailingStopPrice;
+                }
+                else
+                    lockLevel = position.BreakEvenPrice + multiplier * position.BreakEvenPrice * lockPct / 100m;
+
+                decimal lockStop = lockLevel
                     .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
                 decimal lockGap = Math.Abs(lockStop * 0.01m);
                 decimal lockLimit = (lockStop - multiplier * lockGap)
@@ -1024,6 +1111,20 @@ public class PositionMonitor : IDisposable
                     //quantity = quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
                     throw new Exception($"{entryOrderType} niet ondersteund");
                     //break;
+            }
+
+            // The entry order as it is really going to be placed. The whole set was already weighed
+            // when the position was created, but two of its inputs are read again here: a market
+            // entry takes the price of this moment, and an entry expressed as a percentage takes a
+            // balance that has moved since. So the answer can have changed, and no order goes out
+            // that the exchange would refuse. The position then stays Waiting and is timed out by
+            // the usual Entry Remove Time rule.
+            if (part.Purpose == CryptoPartPurpose.Entry && position.Invested == 0 &&
+                !TradeTools.CheckOrderSetAgainstSymbolLimits(Symbol, position.Side, price, entryQuantity,
+                    position.SlPercentage, out string entryLimitReason))
+            {
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} entry order not placed because {entryLimitReason}");
+                return;
             }
 
             if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)
@@ -1797,18 +1898,34 @@ public class PositionMonitor : IDisposable
 
         // Favorable side: nearest TP, capped by profit-lock threshold if applicable
         decimal favorablePrice = nearestTpPrice;
-        if (GlobalData.Settings.Trading.MoveSlToBreakEven
-            && !position.SlMovedToBreakEven
-            && position.BreakEvenPrice > 0)
+        if (GlobalData.Settings.Trading.MoveSlToBreakEven && position.BreakEvenPrice > 0)
         {
             int multiplier = isLong ? +1 : -1;
-            decimal lockPct = GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage;
-            decimal lockThreshold = position.BreakEvenPrice + multiplier * position.BreakEvenPrice * lockPct / 100m;
+            decimal boundary = 0;
 
-            if (isLong)
-                favorablePrice = Math.Min(favorablePrice, lockThreshold);
-            else
-                favorablePrice = Math.Max(favorablePrice, lockThreshold);
+            if (!position.SlMovedToBreakEven)
+            {
+                // Not armed yet: wake up on the candle that reaches the trigger.
+                decimal lockPct = GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage;
+                boundary = position.BreakEvenPrice + multiplier * position.BreakEvenPrice * lockPct / 100m;
+            }
+            else if (GlobalData.Settings.Trading.MoveSlToBreakEvenMethod == CryptoProfitLockMethod.TrailingPercentage
+                     && position.TrailingStopPrice > 0)
+            {
+                // Armed and trailing: the stop has to move on every new extreme, so the boundary is
+                // the price that would move it - anything short of that leaves the stop untouched
+                // and HandlePosition can be skipped exactly as before.
+                boundary = ProfitLockCalculator.PriceThatMovesTrailingStop(position.Side,
+                    position.TrailingStopPrice, GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage);
+            }
+
+            if (boundary > 0)
+            {
+                if (isLong)
+                    favorablePrice = Math.Min(favorablePrice, boundary);
+                else
+                    favorablePrice = Math.Max(favorablePrice, boundary);
+            }
         }
 
         // Unfavorable side: the nearest of SL and unfilled DCA (closer to current price)

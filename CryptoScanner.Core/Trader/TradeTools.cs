@@ -634,9 +634,20 @@ public class TradeTools
             if (position.Status == CryptoPositionStatus.Waiting && position.PartList.Count == 0 && position.CreateTime.AddHours(1) < lastDateTime)
             {
                 // Close if q=0 or less than the minimum amount we can sell
+                //
+                // Deliberately NOT weighed against QuoteValueMinimum any more (removed 31-08-2026).
+                // A remainder worth less than the minimum ORDER value is not the same thing as dust.
+                // An entry that was too small to begin with reads exactly like that while the whole
+                // position is still sitting there untouched, and closing it here writes the position
+                // off as a total loss while the coins are still held and the exit order is still on
+                // the book. ZECUSDC.PERP on HyperLiquid did this on 31-08-2026: 0.01 ZEC bought for
+                // 8.16 against a minimum order value of 10.
+                //
+                // Whether an entry can be entered AND exited at all is a question for the entry, and
+                // it is asked there now - see CheckOrderSetAgainstSymbolLimits, called from
+                // PositionMonitor before the position is created.
                 decimal remaining = position.Quantity - position.RemainingDust;
-                if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum ||
-                    remaining * position.Symbol.LastPrice < position.Symbol.QuoteValueMinimum)
+                if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum)
                 {
                     markedAsReady = true;
                     orderStatusChanged = true;
@@ -675,9 +686,9 @@ public class TradeTools
             if (position.Status == CryptoPositionStatus.Trading) // && position.Quantity != 0
             {
                 // Close if q=0 or less than the minimum amount we can sell
+                // (not weighed against QuoteValueMinimum - see the note on the Timeout branch above)
                 decimal remaining = position.Quantity - position.RemainingDust;
-                if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum ||
-                    remaining * position.Symbol.LastPrice < position.Symbol.QuoteValueMinimum)
+                if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum)
                 {
                     markedAsReady = true;
                     orderStatusChanged = true;
@@ -1028,5 +1039,175 @@ public class TradeTools
         }
 
         return entryQuantity;
+    }
+
+
+    /// <summary>
+    /// Whether EVERY order this position is going to produce fits inside the symbol's own limits:
+    /// the entry, each DCA level behind it, and the exit orders that have to get us back out again.
+    /// When one of them does not fit, no position is opened at all.
+    /// <para>
+    /// The point of asking all of this here is that the entry is the only moment at which refusing
+    /// is free. Once the entry has filled, an exit order the exchange will not accept leaves a
+    /// position that cannot be closed, and a DCA order it will not accept leaves a position that
+    /// cannot be defended. Both used to be found out afterwards, one order at a time, from an
+    /// exchange error - or worse, not found out at all: the paper trader accepts everything, so on
+    /// 31-08-2026 ZECUSDC.PERP entered with 0.01 ZEC for 8.16 USDC against a minimum order value of
+    /// 10, and the position was later written off as an unsellable remainder by the closing check in
+    /// CalculatePositionResultsViaOrders while all of it was still sitting there.
+    /// </para>
+    /// <para>
+    /// Prices are the ones known at entry time. The DCA levels and the profit targets are computed
+    /// from TpGridBreakEvenPrice once the position is running, which is the entry price plus twice
+    /// the commission - a fraction of a percent away from the entry price used here, and nowhere
+    /// near the distances this method weighs.
+    /// </para>
+    /// </summary>
+    /// <param name="signalSlPercentage">The SL distance the strategy asked for, when it supplied
+    /// one. Decides both the SL price and which DCA levels are placed at all - levels at or beyond
+    /// the SL never fill, so they are not weighed here either (same rule as
+    /// PositionMonitor.GetMissingFixedPercentageDcaPrices).</param>
+    /// <param name="reason">Filled with the first limit that is broken, empty when everything fits.</param>
+    public static bool CheckOrderSetAgainstSymbolLimits(CryptoSymbol symbol, CryptoTradeSide side,
+        decimal entryPrice, decimal entryQuantity, decimal? signalSlPercentage, out string reason)
+    {
+        reason = "";
+        if (entryPrice <= 0 || entryQuantity <= 0)
+        {
+            reason = $"entry price {entryPrice} or quantity {entryQuantity} is zero";
+            return false;
+        }
+
+        // One order against the symbol's quantity and value limits. A maximum of zero means the
+        // exchange publishes none (the ordinary case on Alpaca, Bitvavo, BitMart, Mexc and
+        // HyperLiquid), the same reading CandleHelpers.ClampCore uses.
+        bool CheckOrder(string what, decimal quantity, decimal price, out string why)
+        {
+            why = "";
+            if (quantity < symbol.QuantityMinimum)
+            {
+                why = $"{what} quantity {quantity} < minimum {symbol.QuantityMinimum}";
+                return false;
+            }
+            if (symbol.QuantityMaximum > 0 && quantity > symbol.QuantityMaximum)
+            {
+                why = $"{what} quantity {quantity} > maximum {symbol.QuantityMaximum}";
+                return false;
+            }
+
+            decimal value = quantity * price;
+            if (symbol.QuoteValueMinimum > 0 && value < symbol.QuoteValueMinimum)
+            {
+                why = $"{what} value {value} {symbol.Quote} < minimum {symbol.QuoteValueMinimum}";
+                return false;
+            }
+            if (symbol.QuoteValueMaximum > 0 && value > symbol.QuoteValueMaximum)
+            {
+                why = $"{what} value {value} {symbol.Quote} > maximum {symbol.QuoteValueMaximum}";
+                return false;
+            }
+            return true;
+        }
+
+
+        // 1. The entry itself
+        if (!CheckOrder("entry", entryQuantity, entryPrice, out reason))
+            return false;
+        decimal entryValue = entryQuantity * entryPrice;
+
+        int multiplier = side == CryptoTradeSide.Long ? +1 : -1;
+
+
+        // 2. Every DCA level behind it. Sized the way HandleDcaPart sizes them: the factor is a
+        // percentage of the entry amount, and the entry amount is what the entry order really cost.
+        decimal? extremeDcaPrice = null;
+        for (int i = 0; i < GlobalData.Settings.Trading.DcaList.Count; i++)
+        {
+            var dcaEntry = GlobalData.Settings.Trading.DcaList[i];
+
+            // A level at or beyond the signal SL is never placed, so it is not weighed either
+            if (signalSlPercentage.HasValue && dcaEntry.Percentage >= signalSlPercentage.Value)
+                continue;
+
+            decimal dcaPrice = entryPrice - (multiplier * entryPrice * Math.Abs(dcaEntry.Percentage) / 100m);
+            dcaPrice = dcaPrice.ClampPrice(side, symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize);
+            if (dcaPrice <= 0)
+            {
+                reason = $"dca {i + 1} price {dcaPrice} is zero";
+                return false;
+            }
+
+            decimal dcaValue = entryValue * dcaEntry.Factor / 100m;
+            decimal dcaQuantity = (dcaValue / dcaPrice).Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
+            if (!CheckOrder($"dca {i + 1} ({dcaEntry.Percentage}%)", dcaQuantity, dcaPrice, out reason))
+                return false;
+
+            // The list runs from near to far, so the last one placed is the extreme
+            extremeDcaPrice = dcaPrice;
+        }
+
+
+        // 3. The exit. Worst case is the entry filling on its own and the exit having to carry only
+        // that quantity - a DCA that fills only ever makes the exit order bigger. Every take profit
+        // level is placed as its own order (its share of the quantity) carrying the stop loss prices,
+        // so the profit price and the stop limit price both have to hold up against the limits.
+        //
+        // Only paper trading places stop loss orders at all (real trading would need OCO, which is
+        // not implemented) - the same condition PositionMonitor.CalculateSlPrices applies. Weighing
+        // a stop price that is never going to be sent would refuse entries for an order that does
+        // not exist.
+        StopLossCalculator.SlResult slResult = new() { Stop = null, Limit = null, Source = StopLossCalculator.SlSource.None };
+        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade ||
+            GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady)
+        {
+            var slInput = new StopLossCalculator.SlInput
+            {
+                Side = side,
+                SlPercentage = signalSlPercentage,
+                EntryPrice = entryPrice,
+                ExtremeDcaPrice = extremeDcaPrice,
+                GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
+                GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
+            };
+            slResult = StopLossCalculator.Calculate(slInput);
+        }
+
+        var tpList = GlobalData.Settings.Trading.TpList;
+        decimal factorSum = 0;
+        foreach (var tpEntry in tpList)
+            factorSum += tpEntry.Factor;
+
+        decimal allocated = 0;
+        for (int i = 0; i < tpList.Count; i++)
+        {
+            // The same split PositionMonitor.ComputeTargets makes: every level but the last takes its
+            // weighted share, the last one absorbs whatever is left over.
+            decimal tpQuantity;
+            if (i == tpList.Count - 1)
+                tpQuantity = entryQuantity - allocated;
+            else
+            {
+                decimal fraction = factorSum > 0 ? tpList[i].Factor / factorSum : 0;
+                tpQuantity = (entryQuantity * fraction).Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
+                allocated += tpQuantity;
+            }
+
+            decimal tpPrice = entryPrice + (multiplier * entryPrice * tpList[i].Percentage / 100m);
+            tpPrice = tpPrice.ClampPrice(side, symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize);
+            if (!CheckOrder($"take profit {i + 1} ({tpList[i].Percentage}%)", tpQuantity, tpPrice, out reason))
+                return false;
+
+            // The stop prices ride along on this same order, and for a long they sit BELOW the entry
+            // - which is where an exit the exchange refuses comes from on a position that was only
+            // just large enough to enter.
+            if (slResult.Limit.HasValue)
+            {
+                decimal slLimit = slResult.Limit.Value.ClampPrice(side, symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize);
+                if (slLimit > 0 && !CheckOrder($"stop loss {i + 1}", tpQuantity, slLimit, out reason))
+                    return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -25,7 +25,7 @@ public partial class StrategyJumpTabViewModel : ObservableObject
 
     internal void LoadConfig(JumpSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig("Jump", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyJumpSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }

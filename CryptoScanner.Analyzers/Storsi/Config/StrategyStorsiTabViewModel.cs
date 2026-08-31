@@ -26,7 +26,7 @@ public partial class StrategyStorsiTabViewModel : ObservableObject
 
     public void LoadConfig(StoRsiSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig("StoRsi", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyStorsiSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }

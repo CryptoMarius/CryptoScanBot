@@ -26,7 +26,7 @@ public partial class StrategyStobbTabViewModel : ObservableObject
 
     internal void LoadConfig(StobbSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig("STOBB", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyStobbSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }

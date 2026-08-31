@@ -215,11 +215,8 @@ public class GridCommandService
                 db.Connection.Open();
                 PositionTools.LoadPosition(db, position);
 
-                using var transaction = db.BeginTransaction();
-                db.Connection.Execute($"delete from positionstep where positionid={position.Id}", transaction);
-                db.Connection.Execute($"delete from positionpart where positionid={position.Id}", transaction);
-                db.Connection.Execute($"delete from position where id={position.Id}", transaction);
-                transaction.Commit();
+                // Steps, parts, the position itself AND the orders and trades that hang off it
+                PositionTools.DeleteFromDatabase(db, position);
 
                 position.Symbol.LastTradeDate = null;
                 position.Symbol.LastLossDate = null;
@@ -231,6 +228,12 @@ public class GridCommandService
                 GlobalData.PositionDeleted?.Invoke(position);
 
                 PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, false);
+
+                // The position is gone, so what it did to the balances has to go with it. After
+                // RemovePosition on purpose: the reservation of its open orders is then already
+                // released, so the free balance comes out right in one go.
+                PaperAssets.ReversePosition(GlobalData.ActiveExchange!, position);
+
                 GlobalData.AddTextToLogTab($"{position.Symbol.Name} manually deleted position {position.Id} from the database");
             }
             catch (Exception ex)
@@ -370,11 +373,8 @@ public class GridCommandService
 
                 using CryptoDatabase db = new();
                 db.Connection.Open();
-                using var transaction = db.BeginTransaction();
-                db.Connection.Execute("delete from positionstep", transaction);
-                db.Connection.Execute("delete from positionpart", transaction);
-                db.Connection.Execute("delete from position", transaction);
-                transaction.Commit();
+                // Steps, parts, the positions themselves AND the orders and trades that hang off them
+                PositionTools.DeleteAllFromDatabase(db);
 
                 exchange.Data.PositionList.Clear();
                 foreach (var symbol in exchange.SymbolListId.Values)
@@ -389,6 +389,10 @@ public class GridCommandService
                 GlobalData.PositionDeletedAll?.Invoke();
 
                 GlobalData.AddTextToLogTab("Manually deleted all positions from the database");
+
+                // The balances carry the result of the positions that were just deleted, so they have
+                // to go back to the start as well - see PaperAssetsEditor.ResetAfterDeletingAllPositions.
+                PaperAssetsEditor.ResetAfterDeletingAllPositions(exchange);
             }
             catch (Exception ex)
             {

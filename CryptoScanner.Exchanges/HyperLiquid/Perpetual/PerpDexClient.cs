@@ -12,12 +12,14 @@ namespace CryptoScanner.Core.Exchange.HyperLiquid.Perpetual;
 /// </summary>
 /// <param name="Name">The full market name as HyperLiquid writes it, "xyz:GOLD".</param>
 /// <param name="QuantityDecimals">szDecimals, a NUMBER of decimals and not a tick size.</param>
+/// <param name="MaxLeverage">Decides the maximum order value, see HyperLiquidOrderLimits.</param>
 /// <param name="MarkPrice">Used to derive the price tick, the same way the own market does it.</param>
 /// <param name="DayVolume">Notional volume over 24 hours, so already in the settlement currency.</param>
 /// <param name="IsDelisted">Delisted markets are deactivated rather than stored.</param>
 internal sealed record PerpDexMarket(
     string Name,
     int QuantityDecimals,
+    int MaxLeverage,
     decimal MarkPrice,
     decimal DayVolume,
     bool IsDelisted);
@@ -135,9 +137,14 @@ internal static class PerpDexClient
             bool delisted = market.TryGetProperty("isDelisted", out var d) && d.ValueKind == JsonValueKind.True;
             int decimals = market.TryGetProperty("szDecimals", out var sz) && sz.TryGetInt32(out int value) ? value : 0;
 
+            // A plain number here, unlike the prices - those HyperLiquid writes as strings. Zero
+            // when it is missing, which lands in the lowest bracket of the maximum order value.
+            int leverage = market.TryGetProperty("maxLeverage", out var lev) && lev.TryGetInt32(out int levValue) ? levValue : 0;
+
             result.Add(new PerpDexMarket(
                 marketName,
                 decimals,
+                leverage,
                 ReadDecimal(state, "markPx"),
                 ReadDecimal(state, "dayNtlVlm"),
                 delisted));

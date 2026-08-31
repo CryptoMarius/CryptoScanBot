@@ -16,8 +16,14 @@ public static class ThreadSoundPlayer
     // here corrupted its internal state under concurrent access ("non-concurrent collections must have
     // exclusive access").
     private static readonly ConcurrentDictionary<string, DateTime> FilesPlayed = new();
-    private static readonly BlockingCollection<string> soundQueue = [];
-    private static readonly CancellationTokenSource soundCancelToken = new();
+    // Not readonly: CompleteAdding and Cancel are both one-shot. StopSoundThread (on suspend and on
+    // exit) used to leave them in that state forever, so after the first sleep every AddToQueue threw
+    // "the collection has been marked as complete with regards to additions" and no sound was ever
+    // played again. They are replaced when the player is started after a stop.
+    private static BlockingCollection<string> soundQueue = [];
+    private static CancellationTokenSource soundCancelToken = new();
+    // Guards the queue/token swap against the threads that are queueing sounds at that moment.
+    private static readonly object soundThreadLock = new();
 
 
     public static void AddToQueue(string soundFile, bool test)
@@ -33,8 +39,7 @@ public static class ThreadSoundPlayer
         if (test)
         {
             // Alway's play test sounds
-            soundQueue.Add(fileName);
-            StartSoundThread();
+            AddFileToQueue(fileName);
         }
         else
         {
@@ -53,35 +58,72 @@ public static class ThreadSoundPlayer
 
             if (!isPlayedRecently)
             {
-                soundQueue.Add(fileName);
-                StartSoundThread();
+                AddFileToQueue(fileName);
             }
+        }
+    }
+
+
+    /// <summary>
+    /// Queue a file and make sure there is a player running for it. Both happen under the same lock:
+    /// starting the player can replace the queue, and an add to the old queue would be lost.
+    /// </summary>
+    private static void AddFileToQueue(string fileName)
+    {
+        lock (soundThreadLock)
+        {
+            StartSoundThread();
+            soundQueue.Add(fileName);
         }
     }
 
 
     private static void StartSoundThread()
     {
-        // Sound Player Loop Thread
-        if (soundThread == null || !soundThread.IsAlive)
+        lock (soundThreadLock)
         {
-            soundThread = new Thread(() => SoundThreadExecuteAsync().GetAwaiter().GetResult())
+            // A previous StopSoundThread cancelled the token and completed the queue, and neither can
+            // be undone, so both are replaced before anything is queued again. The old token source is
+            // deliberately not disposed: a player that is still running down the old queue holds its
+            // token, and reading a disposed token throws.
+            if (soundCancelToken.IsCancellationRequested || soundQueue.IsAddingCompleted)
             {
-                Name = "SoundPlayer",
-                IsBackground = true
-            };
-            soundThread.Start();
-        }
+                soundCancelToken = new CancellationTokenSource();
+                soundQueue = [];
+            }
 
+            // Sound Player Loop Thread
+            if (soundThread == null || !soundThread.IsAlive)
+            {
+                // Hand the thread the queue and token it has to consume: the fields can be replaced by
+                // a next stop/start while this thread is still running down its own queue.
+                BlockingCollection<string> queue = soundQueue;
+                CancellationToken cancelToken = soundCancelToken.Token;
+                soundThread = new Thread(() => SoundThreadExecuteAsync(queue, cancelToken).GetAwaiter().GetResult())
+                {
+                    Name = "SoundPlayer",
+                    IsBackground = true
+                };
+                soundThread.Start();
+            }
+        }
     }
 
     public static void StopSoundThread()
     {
         try
         {
-            soundCancelToken.Cancel();
-            soundQueue.CompleteAdding();
-            soundThread?.Join(2000); // Wait for the thread to finish
+            Thread? threadToJoin;
+            lock (soundThreadLock)
+            {
+                soundCancelToken.Cancel();
+                soundQueue.CompleteAdding();
+                // Forget the thread: it is running down a queue that has just been cancelled. A sound
+                // that arrives after this (after a resume, for instance) needs a player of its own.
+                threadToJoin = soundThread;
+                soundThread = null;
+            }
+            threadToJoin?.Join(2000); // Wait for the thread to finish
         }
         catch (Exception error)
         {
@@ -95,11 +137,11 @@ public static class ThreadSoundPlayer
     /// <summary>
     /// Method that the outside thread will use outside the thread of this class
     /// </summary>
-    private static async Task SoundThreadExecuteAsync()
+    private static async Task SoundThreadExecuteAsync(BlockingCollection<string> queue, CancellationToken cancelToken)
     {
         try
         {
-            foreach (string fileName in soundQueue.GetConsumingEnumerable(soundCancelToken.Token))
+            foreach (string fileName in queue.GetConsumingEnumerable(cancelToken))
             {
 
                 if (!File.Exists(fileName))
@@ -122,7 +164,7 @@ public static class ThreadSoundPlayer
                         output.Play();
 
                         // Wait for playback to finish
-                        while (output.PlaybackState == PlaybackState.Playing && !soundCancelToken.IsCancellationRequested)
+                        while (output.PlaybackState == PlaybackState.Playing && !cancelToken.IsCancellationRequested)
                         {
                             await Task.Delay(100);
                         }

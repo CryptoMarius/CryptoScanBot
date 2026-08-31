@@ -342,4 +342,93 @@ public class CandlePatternHelperTests
         Assert.AreEqual(CandlePatternHelper.LowerWickPercentage(candle), CandlePatternHelper.UpperWickPercentage(flipped));
         Assert.AreEqual(CandlePatternHelper.IsBullish(candle), CandlePatternHelper.IsBearish(flipped));
     }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  Several shapes at once
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// A candle that is both an engulfing and a tweezer, which is what makes the order in the list
+    /// visible: the first shape that fits is the one reported, and that name ends up in the signal.
+    /// </summary>
+    [TestMethod]
+    public void MatchesAny_ReportsTheFirstShapeInTheListThatFits()
+    {
+        CryptoCandle previous = Candle(open: 105m, high: 106m, low: 100m, close: 102m);   // red, body 50%
+        CryptoCandle last = Candle(open: 101m, high: 108m, low: 100.1m, close: 107m);     // green, covers it, same low
+
+        Assert.IsTrue(CandlePatternHelper.MatchesAny(["Engulfing", "Tweezer"], CryptoTradeSide.Long,
+            last, previous, null, Settings, "Patterns", out CryptoCandlePattern first));
+        Assert.AreEqual(CryptoCandlePattern.Engulfing, first);
+
+        Assert.IsTrue(CandlePatternHelper.MatchesAny(["Tweezer", "Engulfing"], CryptoTradeSide.Long,
+            last, previous, null, Settings, "Patterns", out CryptoCandlePattern second));
+        Assert.AreEqual(CryptoCandlePattern.Tweezer, second);
+    }
+
+
+    /// <summary>
+    /// The point of the list: a shape that does not fit does not stop the ones behind it. Without
+    /// this the strategy would be no better off than with the single choice it replaces.
+    /// </summary>
+    [TestMethod]
+    public void MatchesAny_KeepsLookingAfterAShapeThatDoesNotFit()
+    {
+        CryptoCandle previous = Candle(open: 110m, high: 111m, low: 99m, close: 100m);    // red, big body
+        CryptoCandle last = Candle(open: 103m, high: 108m, low: 102m, close: 106m);       // green, inside it
+
+        // Harami and engulfing exclude each other, so the first name in this list cannot match.
+        Assert.IsTrue(CandlePatternHelper.MatchesAny(["Engulfing", "Harami"], CryptoTradeSide.Long,
+            last, previous, null, Settings, "Patterns", out CryptoCandlePattern matched));
+        Assert.AreEqual(CryptoCandlePattern.Harami, matched);
+    }
+
+
+    /// <summary>
+    /// A three-candle shape in the list while only two candles exist must not take the other shapes
+    /// down with it - that is every run's opening candles.
+    /// </summary>
+    [TestMethod]
+    public void MatchesAny_WithAThreeCandleShapeAndNoThirdCandle_StillMatchesTheOthers()
+    {
+        CryptoCandle previous = Candle(open: 110m, high: 111m, low: 99m, close: 100m);
+        CryptoCandle last = Candle(open: 103m, high: 108m, low: 102m, close: 106m);
+
+        Assert.IsTrue(CandlePatternHelper.MatchesAny(["MorningStar", "Harami"], CryptoTradeSide.Long,
+            last, previous, null, Settings, "Patterns", out CryptoCandlePattern matched));
+        Assert.AreEqual(CryptoCandlePattern.Harami, matched);
+
+        Assert.IsFalse(CandlePatternHelper.MatchesAny(["MorningStar"], CryptoTradeSide.Long,
+            last, previous, null, Settings, "Patterns", out _));
+    }
+
+
+    [TestMethod]
+    public void MatchesAny_WithNothingSelected_DoesNotMatch()
+    {
+        CryptoCandle previous = Candle(open: 110m, high: 111m, low: 99m, close: 100m);
+        CryptoCandle last = Candle(open: 103m, high: 108m, low: 102m, close: 106m);
+
+        Assert.IsFalse(CandlePatternHelper.MatchesAny([], CryptoTradeSide.Long,
+            last, previous, null, Settings, "Patterns", out _));
+    }
+
+
+    /// <summary>
+    /// A typo has to be loud. Silently skipping the name would reject every signal and read exactly
+    /// like "the strategy produced nothing", and the message has to name the setting to correct.
+    /// </summary>
+    [TestMethod]
+    public void MatchesAny_OnAnUnknownName_Throws()
+    {
+        CryptoCandle previous = Candle(open: 110m, high: 111m, low: 99m, close: 100m);
+        CryptoCandle last = Candle(open: 103m, high: 108m, low: 102m, close: 106m);
+
+        var thrown = Assert.ThrowsExactly<InvalidOperationException>(() =>
+            CandlePatternHelper.MatchesAny(["Hamer", "Harami"], CryptoTradeSide.Long,
+                last, previous, null, Settings, "Patterns", out _));
+
+        StringAssert.Contains(thrown.Message, "Hamer");
+        StringAssert.Contains(thrown.Message, "Patterns");
+    }
 }

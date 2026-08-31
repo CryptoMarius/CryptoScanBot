@@ -24,7 +24,7 @@ public partial class StrategyVbsTabViewModel : ObservableObject
 
     public void LoadConfig(VbsSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig("Vbs", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyVbsSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }

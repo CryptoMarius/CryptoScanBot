@@ -10,9 +10,6 @@ public static class AnalyzerRegistration
 {
     public static void RegisterAll()
     {
-        // ATR based bands, but it does not perform well enough
-        // tijdelijk terug..
-        PluginManager.Register(new AtrRb.AtrRbPlugin());
         // tijdelijk terug..
         PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
 
@@ -49,6 +46,9 @@ public static class AnalyzerRegistration
 
         // Experimental strategies (not yet fully tested or documented)
 #if DEBUG
+        // ATR based bands, but it does not perform well enough
+        PluginManager.Register(new AtrRb.AtrRbPlugin());
+
         // These look interesting (specially the squeeze ones)
         PluginManager.Register(new BbSqueeze.BbSqueezePlugin());
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());

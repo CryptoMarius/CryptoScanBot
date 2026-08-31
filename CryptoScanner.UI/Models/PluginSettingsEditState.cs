@@ -93,6 +93,22 @@ public class PluginSettingsEditState
                 continue;
             if (BaseProperties.Contains(property.Name))
                 continue;
+
+            var caption = property.GetCustomAttribute<SettingCaptionAttribute>();
+            if (caption?.Expand == true)
+            {
+                // A block of settings that lives in an object of its own. Its children are drawn
+                // here, in the group the object names, and the object itself never appears.
+                foreach (var child in property.PropertyType
+                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .OrderBy(p => p.MetadataToken))
+                {
+                    if (child.CanRead && child.CanWrite && PluginSettingField.IsSupported(child))
+                        Fields.Add(new PluginSettingField(child, property));
+                }
+                continue;
+            }
+
             if (!PluginSettingField.IsSupported(property))
                 continue;
 
@@ -243,7 +259,18 @@ public class PluginSettingField
 {
     private readonly PropertyInfo _property;
 
-    public string Name => _property.Name;
+    /// <summary>
+    /// The property holding the object this setting lives in, for a setting that came from an
+    /// expanded block (SettingCaption.Expand); null for a setting on the settings class itself.
+    /// </summary>
+    private readonly PropertyInfo? _owner;
+
+    /// <summary>
+    /// Dotted for a setting inside an expanded block ("Shape.MinWickPercentage"), which is also the
+    /// path the emulator queue addresses it by. Names have to stay unique: SameRowAs, VisibleWhen
+    /// and EnabledWhen look each other up by this.
+    /// </summary>
+    public string Name => _owner == null ? _property.Name : $"{_owner.Name}.{_property.Name}";
     public string Label { get; }
     /// <summary>Hover text, taken from the ToolTip.Tip of the matching Avalonia control.</summary>
     public string? Tooltip { get; }
@@ -273,12 +300,16 @@ public class PluginSettingField
     public string TextValue { get; set; } = "";
     public bool BoolValue { get; set; }
     public List<string> EnumOptions { get; } = [];
-    /// <summary>The selected interval names of an <see cref="PluginFieldKind.IntervalList"/>.</summary>
+    /// <summary>
+    /// The selected names of an <see cref="PluginFieldKind.IntervalList"/> or an
+    /// <see cref="PluginFieldKind.EnumList"/>.
+    /// </summary>
     public List<string> ListValue { get; } = [];
 
-    public PluginSettingField(PropertyInfo property)
+    public PluginSettingField(PropertyInfo property, PropertyInfo? owner = null)
     {
         _property = property;
+        _owner = owner;
 
         // A caption declared on the property wins; it is the same text the Avalonia view shows.
         // Splitting the property name on capitals is the fallback for a plugin that has none yet,
@@ -290,7 +321,10 @@ public class PluginSettingField
         SubHeader = caption?.SubHeader;
         Indented = caption?.Indented ?? false;
         VisibleWhen = caption?.VisibleWhen;
-        Group = string.IsNullOrEmpty(caption?.Group) ? "Settings" : caption.Group;
+        string? ownerGroup = owner?.GetCustomAttribute<SettingCaptionAttribute>()?.Group;
+        Group = string.IsNullOrEmpty(caption?.Group)
+            ? (string.IsNullOrEmpty(ownerGroup) ? "Settings" : ownerGroup)
+            : caption.Group;
         Unit = caption?.Unit;
         SameRowAs = caption?.SameRowAs;
         SpaceBefore = caption?.SpaceBefore ?? false;
@@ -300,6 +334,11 @@ public class PluginSettingField
         Type type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
         if (IsIntervalList(property))
             Kind = PluginFieldKind.IntervalList;
+        else if (EnumListType(property) is Type members)
+        {
+            Kind = PluginFieldKind.EnumList;
+            EnumOptions.AddRange(Enum.GetNames(members));
+        }
         else if (type == typeof(bool))
             Kind = PluginFieldKind.Bool;
         else if (type.IsEnum)
@@ -323,9 +362,26 @@ public class PluginSettingField
         return property.Name == "IntervalList" && property.PropertyType == typeof(List<string>);
     }
 
+    /// <summary>
+    /// The enum a List&lt;string&gt; setting holds the member names of, or null when it is not one.
+    /// A plugin says so with SettingCaption.EnumType; there is no way to tell from the type alone,
+    /// and guessing by name is what made the interval list above the exception it is.
+    /// </summary>
+    private static Type? EnumListType(PropertyInfo property)
+    {
+        if (property.PropertyType != typeof(List<string>))
+            return null;
+
+        Type? type = property.GetCustomAttribute<SettingCaptionAttribute>()?.EnumType;
+        return type != null && type.IsEnum ? type : null;
+    }
+
+    /// <summary>A setting whose value lives in <see cref="ListValue"/> rather than in the text.</summary>
+    private bool IsList => Kind is PluginFieldKind.IntervalList or PluginFieldKind.EnumList;
+
     public static bool IsSupported(PropertyInfo property)
     {
-        if (IsIntervalList(property))
+        if (IsIntervalList(property) || EnumListType(property) != null)
             return true;
 
         Type type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
@@ -351,10 +407,17 @@ public class PluginSettingField
             ListValue.Remove(name);
     }
 
+    /// <summary>The object this setting's value lives in - the settings themselves, or the block it came from.</summary>
+    private object? Owner(object settings) => _owner == null ? settings : _owner.GetValue(settings);
+
     public void Load(object settings)
     {
-        object? value = _property.GetValue(settings);
-        if (Kind == PluginFieldKind.IntervalList)
+        object? target = Owner(settings);
+        if (target == null)
+            return;
+
+        object? value = _property.GetValue(target);
+        if (IsList)
         {
             ListValue.Clear();
             if (value is List<string> list)
@@ -368,34 +431,49 @@ public class PluginSettingField
 
     public void Save(object settings)
     {
+        object? target = Owner(settings);
+        if (target == null)
+            return;
+
         Type type = Nullable.GetUnderlyingType(_property.PropertyType) ?? _property.PropertyType;
         try
         {
-            if (Kind == PluginFieldKind.IntervalList)
+            if (Kind == PluginFieldKind.EnumList)
             {
-                _property.SetValue(settings, new List<string>(ListValue));
+                // In the order the enum declares its members, not in the order they were ticked.
+                // The Avalonia tab builds its list from the enum and therefore cannot do anything
+                // else, and the order is not cosmetic: the strategy reports the FIRST shape in the
+                // list that a candle forms, so a click order would make the two hosts name a
+                // different pattern for the same candle.
+                _property.SetValue(target, EnumOptions.FindAll(ListValue.Contains));
+                return;
+            }
+
+            if (IsList)
+            {
+                _property.SetValue(target, new List<string>(ListValue));
                 return;
             }
 
             if (Kind == PluginFieldKind.Bool)
             {
-                _property.SetValue(settings, BoolValue);
+                _property.SetValue(target, BoolValue);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(TextValue))
             {
                 if (type == typeof(string))
-                    _property.SetValue(settings, "");
+                    _property.SetValue(target, "");
                 else if (Nullable.GetUnderlyingType(_property.PropertyType) != null)
-                    _property.SetValue(settings, null);
+                    _property.SetValue(target, null);
                 return;
             }
 
             object converted = type.IsEnum
                 ? Enum.Parse(type, TextValue)
                 : Convert.ChangeType(TextValue, type, System.Globalization.CultureInfo.InvariantCulture);
-            _property.SetValue(settings, converted);
+            _property.SetValue(target, converted);
         }
         catch (Exception)
         {
@@ -422,5 +500,7 @@ public enum PluginFieldKind
     Number,
     Bool,
     Enum,
+    /// <summary>One checkbox per member of an enum, the selected names stored as a list of strings.</summary>
+    EnumList,
     IntervalList,
 }

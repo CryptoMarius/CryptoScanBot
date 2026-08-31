@@ -480,7 +480,14 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                     reason = "error during startup";
                 else
                     reason = $"inactive for {(now - subscription.LastActivity).TotalMinutes:N0} minutes";
-                reasons.Add($"{subscription.Name} {subscription.SymbolOverview} ({reason})");
+                // The counters of the ticker itself, when it keeps any. They say whether the minute
+                // timer ran at all, whether the socket delivered anything, and which flush branch
+                // fired - see Subscription.ActivityDiagnostics.
+                string diagnostics = subscription.ActivityDiagnostics;
+                if (diagnostics != "")
+                    reasons.Add($"{subscription.Name} {subscription.SymbolOverview} ({reason}; {diagnostics})");
+                else
+                    reasons.Add($"{subscription.Name} {subscription.SymbolOverview} ({reason})");
             }
 
             // Stop de getrande subscriptions

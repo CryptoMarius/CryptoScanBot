@@ -129,6 +129,46 @@ public class AssetTools
 
 
     /// <summary>
+    /// Whether the free balance covers the entry AND every DCA level behind it, weighed on the
+    /// entry value that is really going to be ordered.
+    /// <para>
+    /// CheckAvailableAssets asks the same question one step earlier, on the amount that was MEANT to
+    /// be staked. Between the two the quantity is put onto the symbol's size grid, and that moves
+    /// the number: down when it is rounded off, and up when the grid step is coarser than the stake
+    /// (one tick of XAUT0 on HyperLiquid is worth 44.62 against an entry amount of 15). Since every
+    /// DCA level is a percentage OF that entry value, a shifted entry shifts the whole commitment
+    /// with it - which is the number that has to fit.
+    /// </para>
+    /// </summary>
+    public static bool CheckAssetsCoverEntryAndDca(Model.CryptoExchange activeExchange, CryptoSymbol symbol,
+        decimal entryValue, out string reason)
+    {
+        reason = "";
+
+        // Without asset management nothing is refused for lack of money (the balance is allowed to
+        // run negative), same reading as CheckAvailableAssets uses.
+        if (!GlobalData.Settings.Trading.UseAssetManagement)
+            return true;
+
+        var info = GetAsset(activeExchange, symbol);
+
+        // Reserved for every configured level, including ones a signal SL would skip - erring
+        // towards refusing an entry we could have taken rather than taking one we cannot defend.
+        decimal dcaReservation = GetDcaReservation(entryValue);
+        decimal required = entryValue + dcaReservation;
+        if (required > info.QuoteFree)
+        {
+            string what = dcaReservation > 0
+                ? $"entryamount {entryValue} + dca's {dcaReservation}"
+                : $"entryamount {entryValue}";
+            reason = $"{what} > free assets {symbol.Quote}={info.QuoteFree}";
+            return false;
+        }
+        return true;
+    }
+
+
+    /// <summary>
     /// Whether there is room for an entry, and how big that entry may be.
     /// </summary>
     /// <param name="reserveForDca">

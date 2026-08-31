@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 
@@ -13,7 +14,7 @@ public partial class SignalGridView : UserControlWithGrid<SignalViewModel>
 {
     public SignalGridView()
     {
-        _gridName = "SignalGrid";
+        _gridName = GridNames.Signal;
         _targetMenu = TargetMenu.Signal;
 
         InitializeComponent();

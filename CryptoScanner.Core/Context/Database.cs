@@ -632,6 +632,7 @@ public class CryptoDatabase : IDisposable
                 "SlPercentage TEXT NULL," +
                 "TpPercentage TEXT NULL," +
                 "SlMovedToBreakEven INTEGER NOT NULL DEFAULT 0," +
+                "TrailingStopPrice TEXT NULL," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
@@ -826,6 +827,95 @@ public class CryptoDatabase : IDisposable
     }
 
 
+    private static void CreateTableAssetSnapshot(CryptoDatabase connection)
+    {
+        if (MissingTable(connection, "AssetSnapshot"))
+        {
+            connection.Connection.Execute("CREATE TABLE [AssetSnapshot] (" +
+                "Id INTEGER primary key autoincrement not null," +
+
+                "EmulatorRunId INTEGER NULL," +
+                "SnapshotDate TEXT NOT NULL," +
+
+                "Name TEXT NOT NULL," +
+                "Total TEXT NOT NULL," +
+                "Free TEXT NOT NULL," +
+                "Locked TEXT NOT NULL," +
+                "ShortQuantity TEXT NOT NULL," +
+                "ReferenceCoin TEXT NOT NULL," +
+                "Price TEXT NOT NULL," +
+                "Value TEXT NOT NULL," +
+                "FOREIGN KEY(EmulatorRunId) REFERENCES EmulatorRun(Id)" +
+            ")");
+            connection.Connection.Execute("CREATE INDEX IdxAssetSnapshotId ON AssetSnapshot(Id)");
+            // The two lookups the readers do: everything of one run (or of the live scanner, where
+            // EmulatorRunId is null) in date order, and the check whether a day already has a snapshot.
+            connection.Connection.Execute("CREATE INDEX IdxAssetSnapshotEmulatorRunId ON AssetSnapshot(EmulatorRunId)");
+            connection.Connection.Execute("CREATE INDEX IdxAssetSnapshotDate ON AssetSnapshot(SnapshotDate)");
+        }
+    }
+
+
+    private static void CreateTableAssetAdjustment(CryptoDatabase connection)
+    {
+        if (MissingTable(connection, "AssetAdjustment"))
+        {
+            connection.Connection.Execute("CREATE TABLE [AssetAdjustment] (" +
+                "Id INTEGER primary key autoincrement not null," +
+
+                "EmulatorRunId INTEGER NULL," +
+                "EventTime TEXT NOT NULL," +
+
+                "Name TEXT NOT NULL," +
+                "Reason INTEGER NOT NULL," +
+                "OldTotal TEXT NOT NULL," +
+                "NewTotal TEXT NOT NULL," +
+                "Quantity TEXT NOT NULL," +
+                "ReferenceCoin TEXT NOT NULL," +
+                "Price TEXT NOT NULL," +
+                "Value TEXT NOT NULL," +
+                "FOREIGN KEY(EmulatorRunId) REFERENCES EmulatorRun(Id)" +
+            ")");
+            connection.Connection.Execute("CREATE INDEX IdxAssetAdjustmentId ON AssetAdjustment(Id)");
+            connection.Connection.Execute("CREATE INDEX IdxAssetAdjustmentEmulatorRunId ON AssetAdjustment(EmulatorRunId)");
+            connection.Connection.Execute("CREATE INDEX IdxAssetAdjustmentEventTime ON AssetAdjustment(EventTime)");
+        }
+    }
+
+
+    private static void CreateTableBarometerSnapshot(CryptoDatabase connection)
+    {
+        if (MissingTable(connection, "BarometerSnapshot"))
+        {
+            connection.Connection.Execute("CREATE TABLE [BarometerSnapshot] (" +
+                "Id INTEGER primary key autoincrement not null," +
+
+                "EmulatorRunId INTEGER NULL," +
+                "PositionId INTEGER NULL," +
+                "MeasureDate TEXT NOT NULL," +
+
+                "Quote TEXT NOT NULL," +
+                "Interval TEXT NOT NULL," +
+
+                "Average TEXT NOT NULL," +
+                "Median TEXT NOT NULL," +
+                "PercentageRising TEXT NOT NULL," +
+                "Spread TEXT NOT NULL," +
+                "Movement TEXT NOT NULL," +
+                "BitcoinVersusMarket TEXT NULL," +
+                "SymbolCount INTEGER NOT NULL," +
+                "OutlierCount INTEGER NOT NULL," +
+                "FOREIGN KEY(EmulatorRunId) REFERENCES EmulatorRun(Id)" +
+            ")");
+            connection.Connection.Execute("CREATE INDEX IdxBarometerSnapshotId ON BarometerSnapshot(Id)");
+            // The two ways these rows are read: everything of one run, and the measurement that
+            // belongs to one position (the join an analysis makes against Position.Id).
+            connection.Connection.Execute("CREATE INDEX IdxBarometerSnapshotEmulatorRunId ON BarometerSnapshot(EmulatorRunId)");
+            connection.Connection.Execute("CREATE INDEX IdxBarometerSnapshotPositionId ON BarometerSnapshot(PositionId)");
+        }
+    }
+
+
     private static void CreateTableZone(CryptoDatabase connection)
     {
         if (MissingTable(connection, "Zone"))
@@ -1000,6 +1090,9 @@ public class CryptoDatabase : IDisposable
         CreateTableOrder(connection);
         CreateTableTrade(connection);
         CreateTableAsset(connection);
+        CreateTableAssetSnapshot(connection); // after EmulatorRun/Asset (FK target)
+        CreateTableAssetAdjustment(connection); // idem
+        CreateTableBarometerSnapshot(connection); // idem
 
         CreateTableZone(connection);
 

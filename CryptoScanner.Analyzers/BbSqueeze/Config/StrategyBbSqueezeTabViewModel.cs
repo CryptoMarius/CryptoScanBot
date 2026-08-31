@@ -25,7 +25,7 @@ public partial class StrategyBbSqueezeTabViewModel : ObservableObject
 
     internal void LoadConfig(BbSqueezeSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig("BBSQUEEZE", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyBbSqueezeSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }

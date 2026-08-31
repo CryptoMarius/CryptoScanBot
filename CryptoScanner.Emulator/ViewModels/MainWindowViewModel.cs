@@ -901,6 +901,7 @@ public partial class MainWindowViewModel : ObservableObject
                             ToDate = baseConfig.ToDate,
                             BaseInterval = baseInterval,
                             StartCapital = startCapital,
+                            CalculateBarometer = entry.CalculateBarometer ?? true,
                             Label = runLabel,
                         };
 

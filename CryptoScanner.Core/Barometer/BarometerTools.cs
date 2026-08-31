@@ -242,15 +242,7 @@ public class BarometerTools
                 // Administratie bijwerken
                 if (priceBarometer)
                 {
-                    barometerData.PriceDateTime = periodStart;
-                    barometerData.PriceBarometer = result.Average;
-                    barometerData.PriceMedian = result.Median;
-                    barometerData.PricePercentageRising = result.PercentageRising;
-                    barometerData.PriceSpread = result.Spread;
-                    barometerData.PriceSymbolCount = result.SymbolCount;
-                    barometerData.PriceOutlierCount = result.OutlierCount;
-                    barometerData.PriceMovement = result.AverageAbsolute;
-                    barometerData.PriceBitcoinVersusMarket = result.BitcoinVersusMarket;
+                    StorePriceResult(barometerData, result, periodStart);
                 }
                 else
                 {
@@ -339,6 +331,59 @@ public class BarometerTools
             }
         }
     }
+
+    /// <summary>
+    /// Copy one measurement into the last known values of a quote coin. Shared by the calculation
+    /// above and the emulator path below, so the two cannot drift apart: PriceBarometer stays the
+    /// average (everything that reads it keeps its meaning) and the rest of BarometerResult follows
+    /// along.
+    /// </summary>
+    private static void StorePriceResult(CryptoBarometerData barometerData, BarometerResult result, CandleTime at)
+    {
+        barometerData.PriceDateTime = at;
+        barometerData.PriceBarometer = result.Average;
+        barometerData.PriceMedian = result.Median;
+        barometerData.PricePercentageRising = result.PercentageRising;
+        barometerData.PriceSpread = result.Spread;
+        barometerData.PriceSymbolCount = result.SymbolCount;
+        barometerData.PriceOutlierCount = result.OutlierCount;
+        barometerData.PriceMovement = result.AverageAbsolute;
+        barometerData.PriceBitcoinVersusMarket = result.BitcoinVersusMarket;
+    }
+
+
+    /// <summary>
+    /// The price barometer of one quote coin over an explicit symbol list, WITHOUT writing barometer
+    /// candles. This is the emulator path.
+    /// <para>
+    /// A replay draws no barometer graph, so the candles of the barometer symbols - which the live
+    /// calculation writes, ages out on wall-clock time and reads back for that graph - are pure cost
+    /// there. What a replay does need is the value the signal checks read, and that is
+    /// <see cref="CryptoBarometerData"/>. This method fills exactly that.
+    /// </para>
+    /// <para>
+    /// A measurement that fails, or one carried by fewer than <paramref name="minimumSymbolCount"/>
+    /// coins, leaves the previous value untouched instead of writing a number that describes no
+    /// market. That is also what the live scanner does with a failed measurement, and
+    /// <see cref="CryptoBarometerData.PriceDateTime"/> tells the reader how old the value is.
+    /// </para>
+    /// </summary>
+    /// <returns>True when a new value was stored.</returns>
+    public static bool CalculateForSymbols(Model.CryptoExchange exchange, CryptoQuoteData quoteData,
+        IReadOnlyList<CryptoSymbol> symbolList, CryptoInterval interval, CandleTime unixCandleLast,
+        int minimumSymbolCount, BarometerResult result)
+    {
+        if (!CryptoBarometerPrice.CalculatePriceBarometer(quoteData, symbolList, interval, unixCandleLast, result))
+            return false;
+
+        if (result.SymbolCount < minimumSymbolCount)
+            return false;
+
+        CryptoBarometerData barometerData = exchange.Data.GetBarometer(quoteData.Name, interval.IntervalPeriod);
+        StorePriceResult(barometerData, result, unixCandleLast);
+        return true;
+    }
+
 
     // Separate call because of emulator (calculate only 1 quote)
     public static void CalculatePriceBarometerForQuote(CryptoQuoteData quoteData)

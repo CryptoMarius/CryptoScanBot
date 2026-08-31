@@ -108,7 +108,11 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //    symbol.QuantityTickSize = symbolData.LotSize.Value;
                                 // QuantityDecimals is szDecimals, a NUMBER of decimals and not a tick
                                 // size, so it has to be converted (see SymbolBase.TickSizeFromDecimals).
-                                symbol!.QuantityTickSize = TickSizeFromDecimals(symbolData.BaseAsset.QuantityDecimals);
+                                // The size grid, the minimum quantity and the minimum order value in one
+                                // place, shared with the perpetual market - see HyperLiquidOrderLimits, which
+                                // is also where the reasoning behind each of them sits. Spot passes no
+                                // leverage: HyperLiquid states no maximum order value for it.
+                                HyperLiquidOrderLimits.ApplyLimits(symbol!, symbolData.BaseAsset.QuantityDecimals, maxLeverage: null);
                                 //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
 

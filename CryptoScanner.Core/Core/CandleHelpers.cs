@@ -270,7 +270,13 @@ public static class Helper
             throw new ArgumentOutOfRangeException(nameof(maxValue));
         else if (value < 0)
             throw new ArgumentOutOfRangeException(nameof(value));
-        else ArgumentOutOfRangeException.ThrowIfGreaterThan(minValue, maxValue, nameof(minValue));
+        // Only a maximum that is actually set can be held against the minimum. Zero means "no
+        // maximum" further down in this method, and an exchange that publishes a minimum quantity
+        // but no maximum is the ordinary case rather than the exception: Alpaca, Bitvavo, BitMart
+        // and Mexc all end up that way, and HyperLiquid now joins them. Comparing the two whatever
+        // the maximum was made every one of those throw on the first order it sized.
+        else if (maxValue > 0)
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(minValue, maxValue, nameof(minValue));
 
         if (stepSize.HasValue)
         {

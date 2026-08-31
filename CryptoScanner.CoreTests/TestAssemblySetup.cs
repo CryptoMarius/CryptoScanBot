@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 
 using System.Reflection;
 
@@ -33,9 +33,29 @@ public class TestAssemblySetup
         GlobalData.AppDataFolder = Path.Combine(GlobalData.AppPath, "TestData");
         Directory.CreateDirectory(GlobalData.AppDataFolder);
 
+        // Before anything opens that database: wait for our turn. Several sessions work in this
+        // repository at the same time and every one of them runs the suite, and two runs on the
+        // one test database delete each other's rows halfway through an arrange. See TestRunLock.
+        double waited = TestRunLock.Acquire(GlobalData.AppDataFolder);
+        if (waited > 0)
+            Console.WriteLine($"Waited {waited:N0} seconds for the other test run to finish.");
+
         // Wire up log output to the test console (same as TestBase.AddTextToLogTab)
         GlobalData.LogToLogTabEvent += text => Console.WriteLine(text.Trim());
 
         ScannerLog.InitializeLogging(false);
+    }
+
+
+    /// <summary>
+    /// Hands the test database back to whoever is waiting for it. Runs once, after the last test
+    /// of the assembly. Not the only thing that releases the lock - the operating system closes
+    /// the handle when the process ends however it ends - but it is the one that frees it while
+    /// the test host is still shutting down.
+    /// </summary>
+    [AssemblyCleanup]
+    public static void AssemblyCleanup()
+    {
+        TestRunLock.Release();
     }
 }

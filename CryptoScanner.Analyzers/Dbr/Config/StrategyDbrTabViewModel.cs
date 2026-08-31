@@ -24,7 +24,7 @@ public partial class StrategyDbrTabViewModel : ObservableObject
 
     public void LoadConfig(DbrSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig("Dbr", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyDbrSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }

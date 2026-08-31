@@ -2,6 +2,7 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trader;
 
 using Dapper;
 
@@ -28,6 +29,30 @@ public class DashboardPositionService
     public string TotalProfitClass { get; private set; } = "";
 
     public List<DailyPositionData> DailyData { get; private set; } = [];
+
+    /// <summary>
+    /// The capital per day, from the AssetSnapshot table. Unlike everything else on this dashboard
+    /// this is not derived from the positions but read from the balances as they were on that day,
+    /// so it also contains what is still sitting in open positions.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately filled on first use instead of by a field initialiser. An initialiser runs in
+    /// the constructor, and the jit resolves every type a method mentions before it executes a line
+    /// of it - so a CryptoScanner.Core without AssetSnapshotDay makes the CONSTRUCTOR throw a
+    /// TypeLoadException. Dependency injection then never builds this service, the Dashboard
+    /// component never comes into being, and the renderer is left with a half-built subtree: every
+    /// StateHasChanged() after that throws in RenderTreeDiffBuilder. On HyperLiquid Perpetual in the
+    /// night of 30/31-08-2026 that was 2811 exceptions in nine hours, roughly one every twelve
+    /// seconds, while the scanner itself kept running and the ErrorBoundary in MainLayout never saw
+    /// any of it - it catches what a child component throws, not a renderer that is already broken.
+    /// Keeping the type out of the constructor moves that failure into <see cref="LoadGrowthData"/>,
+    /// where the caller can catch it.
+    /// </remarks>
+    public List<AssetSnapshotTools.AssetSnapshotDay> GrowthData => growthData ??= [];
+    private List<AssetSnapshotTools.AssetSnapshotDay>? growthData;
+
+    /// <summary>Set once the snapshots could not be read, so the log gets one line and not one per refresh.</summary>
+    private bool growthDataFailed;
     public List<string> QuoteOptions { get; private set; } = ["USDT"];
 
     public event Action? DataChanged;
@@ -60,6 +85,30 @@ public class DashboardPositionService
         OpenData = openData;
         ClosedData = closedData;
         DailyData = dailyData;
+
+        // Live snapshots, so without a run id. The value is in AssetSnapshotTools.ReferenceCoin and
+        // therefore does not follow the quote selector above.
+        //
+        // The try/catch sits HERE and not inside LoadGrowthData on purpose: a type the jit cannot
+        // resolve throws at the CALL, before the body of that method runs, so a catch inside it
+        // would never fire. Everything else on this dashboard comes from the positions and is
+        // unaffected, so a snapshot table that cannot be read costs the growth chart and nothing
+        // more.
+        try
+        {
+            LoadGrowthData();
+        }
+        catch (Exception error)
+        {
+            if (!growthDataFailed)
+            {
+                growthDataFailed = true;
+                ScannerLog.Logger.Error(error, "DashboardPositionService.LoadGrowthData");
+                // Not "stays empty": a load that fails after an earlier one succeeded leaves the
+                // previous day list standing, and only the very first failure gives an empty chart.
+                GlobalData.AddTextToLogTab("Dashboard: the capital per day could not be read, the growth chart is not updated");
+            }
+        }
 
         decimal investedInTrades = openData.Invested - openData.Returned;
         NettoPnl = investedInTrades.ToString(displayFormat);
@@ -121,6 +170,19 @@ public class DashboardPositionService
         }
 
         DataChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Read the capital per day into <see cref="GrowthData"/>.
+    /// </summary>
+    /// <remarks>
+    /// A method of its own so that AssetSnapshotDay is mentioned nowhere in <see cref="Refresh"/>.
+    /// The jit resolves the type when this method is first called, which makes the failure land at
+    /// the call site - inside the try/catch there - instead of taking Refresh down with it.
+    /// </remarks>
+    private void LoadGrowthData()
+    {
+        growthData = AssetSnapshotTools.LoadDailyTotals(null);
     }
 
     private static void QueryPositionData(string quote, out PositionStats openData, out PositionStats closedData, out List<DailyPositionData> dailyData)

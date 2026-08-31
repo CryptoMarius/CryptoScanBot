@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="320"
+             xmlns:vm="using:CryptoScanner.Analyzers.CandlePattern.Config"
+             xmlns:configviews="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyCandlePatternSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.CandlePattern.Config.StrategyCandlePatternSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- Which shapes to fire on. Several at once is an OR, hence checkboxes and not a
+                 dropdown; the order is the order of the enum, which decides which one a candle
+                 forming two shapes is reported as. -->
+            <TextBlock Text="Patterns" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <configviews:CandlePatternListView DataContext="{Binding PatternListViewModel}"
+                          ToolTip.Tip="The reversal shapes this strategy fires on. Ticking several is an OR: any one of them is enough. With nothing ticked the strategy produces no signals."/>
+
+            <Separator Margin="0,4"/>
+
+            <!-- How much the price has to have run the other way before the shape counts -->
+            <TextBlock Text="Preceding move" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How many candles of movement AGAINST the trade have to precede the pattern. A reversal needs something to reverse; zero switches the requirement off.">
+                <TextBlock Grid.Column="0" Text="Preceding candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding PrecedingCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How far price has to have moved over those candles. Zero means any move in the right direction counts.">
+                <TextBlock Grid.Column="0" Text="Preceding move %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding PrecedingPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

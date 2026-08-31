@@ -24,7 +24,7 @@ public partial class StrategyAtrRbTabViewModel : ObservableObject
 
     public void LoadConfig(AtrRbSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig("AtrRb", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyAtrRbSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }

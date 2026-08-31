@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 
 namespace CryptoScanner.CoreTests.Core;
@@ -176,5 +176,27 @@ public class ClampTests
     {
         Assert.AreEqual(1.23456m, 1.23456m.ClampPrice(CryptoTradeSide.Long, NoMinimum, NoMaximum, null));
         Assert.AreEqual(1.23456m, 1.23456m.Clamp(NoMinimum, NoMaximum, null));
+    }
+
+
+    /// <summary>
+    /// A minimum without a maximum. Alpaca, Bitvavo, BitMart and Mexc all publish a minimum
+    /// quantity and no maximum, and HyperLiquid now does the same, so this is the ordinary case
+    /// rather than the exception. Zero means "no maximum", so it may not be held against the
+    /// minimum - doing that threw on the first order those exchanges sized.
+    /// </summary>
+    [TestMethod]
+    public void AMinimumWithoutAMaximumIsAllowed()
+    {
+        Assert.AreEqual(0.5m, 0.24m.Clamp(0.5m, NoMaximum, Tick), "raised to the minimum");
+        Assert.AreEqual(1.2m, 1.26m.Clamp(0.5m, NoMaximum, Tick), "left alone above it");
+    }
+
+
+    /// <summary>A maximum that IS set still has to be the larger of the two.</summary>
+    [TestMethod]
+    public void AMinimumAboveARealMaximumIsStillRefused()
+    {
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => 1m.Clamp(2m, 1m, Tick));
     }
 }

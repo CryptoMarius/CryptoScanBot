@@ -51,9 +51,51 @@
                 <input type="checkbox" class="input-checkbox" @bind="_useAssetManagement" />
                 <label>Asset management</label>
             </div>
-            <div class="field" title="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets.">
+            <div class="field" title="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Not used at all when the default asset list below holds anything.">
                 <label>Paper start capital</label>
                 <input type="number" class="input-number" min="0" step="1000" @bind="_paperAssetStartCapital" />
+            </div>
+
+            @* The list that replaces the single amount above - see SettingsTrading.PaperAssetDefaults. *@
+            <div class="settings-group settings-group-nested"
+                 title="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. Filled in, this list replaces the start capital above, the start capital on the quote coins and the one of an emulator run; empty leaves all of those as they were.">
+                <div class="settings-group-header">Default paper assets</div>
+                <div class="settings-group-body">
+                    <div class="field settings-table-buttons">
+                        <button class="btn btn-secondary" @onclick="AddPaperAssetDefault">Add asset</button>
+                        <button class="btn btn-secondary" @onclick="RemovePaperAssetDefault">Remove asset</button>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 100px;">Asset</th>
+                                <th style="width: 120px;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < _paperAssetDefaults.Count; i++)
+                            {
+                                int index = i;
+                                <tr>
+                                    <td>
+                                        <input type="text" class="input-number" placeholder="BTC"
+                                               @bind="_paperAssetDefaults[index].Name" />
+                                    </td>
+                                    <td>
+                                        <input type="number" class="input-number" step="any" min="0"
+                                               value="@_paperAssetDefaults[index].Total"
+                                               @onchange="e => _paperAssetDefaults[index].Total = ParseDecimal(e.Value)" />
+                                    </td>
+                                </tr>
+                            }
+                            @if (_paperAssetDefaults.Count == 0)
+                            {
+                                <tr><td colspan="2" class="empty-state">No default assets</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div class="field">
                 <input type="checkbox" class="input-checkbox" @bind="_soundTradeNotification" />
@@ -283,20 +325,40 @@
             </div>
             @if (_moveSlBe)
             {
-                <div class="field" title="How far above break-even (below for a short) the price has to reach before the profit lock arms itself. E.g. 2% arms the lock once the position has been 2% in profit.">
+                <div class="field" title="How far above break-even (below for a short) the price has to reach before the profit lock arms itself. The whole candle has to be past that level (the low for a long, the high for a short), so a wick through the trigger does not arm the lock. E.g. 2% arms the lock once a whole candle sits 2% in profit.">
                     <label>Profit lock trigger %</label>
                     <span class="field-control">
                         <input type="number" class="input-number" step="0.1" min="0" @bind="_moveSlBePct" />
                         <span class="field-unit">%</span>
                     </span>
                 </div>
-                <div class="field" title="Where the SL is placed once the trigger is reached, measured from break-even. Keep it below the trigger to leave room between the price and the stop; e.g. trigger 2% with stop loss 1% locks in 1% profit and gives the position 1% of room. A value above the trigger is capped to the trigger.">
-                    <label>Profit lock stop loss %</label>
-                    <span class="field-control">
-                        <input type="number" class="input-number" step="0.1" min="0" @bind="_moveSlBeSlPct" />
-                        <span class="field-unit">%</span>
-                    </span>
+                <div class="field" title="What happens once the trigger is reached. A fixed stop is placed once and stays there; a trailing stop follows the price at a fixed distance and only ever moves towards the take profit.">
+                    <label>Profit lock method</label>
+                    <select class="input-select" @bind="_moveSlBeMethod">
+                        <option value="@CryptoProfitLockMethod.Fixed">Fixed stop above break even</option>
+                        <option value="@CryptoProfitLockMethod.TrailingPercentage">Trailing behind the price</option>
+                    </select>
                 </div>
+                @if (_moveSlBeMethod == CryptoProfitLockMethod.Fixed)
+                {
+                    <div class="field" title="Where the SL is placed once the trigger is reached, measured from break-even. Keep it below the trigger to leave room between the price and the stop; e.g. trigger 3% with stop loss 1.5% locks in 1.5% profit and gives the position 1.5% of room. A value above the trigger is capped to the trigger.">
+                        <label>Profit lock stop loss %</label>
+                        <span class="field-control">
+                            <input type="number" class="input-number" step="0.1" min="0" @bind="_moveSlBeSlPct" />
+                            <span class="field-unit">%</span>
+                        </span>
+                    </div>
+                }
+                else
+                {
+                    <div class="field" title="How far behind the price the SL follows once the trigger is reached: below the highest price for a long, above the lowest for a short. It only moves towards the take profit, so a pullback leaves it where it was.">
+                        <label>Profit lock trailing %</label>
+                        <span class="field-control">
+                            <input type="number" class="input-number" step="0.1" min="0" @bind="_moveSlBeTrailPct" />
+                            <span class="field-unit">%</span>
+                        </span>
+                    </div>
+                }
             }
         </div>
     </div>
@@ -378,6 +440,8 @@
     private bool _moveSlBe;
     private decimal _moveSlBePct;
     private decimal _moveSlBeSlPct;
+    private CryptoProfitLockMethod _moveSlBeMethod;
+    private decimal _moveSlBeTrailPct;
 
     /// <summary>
     /// The choices of the Trading dropdown, identical to TraderMiscSettingsViewModel.TradeViaList:
@@ -391,6 +455,9 @@
     ];
 
     private readonly List<CryptoDcaEntry> _dcaList = [];
+
+    // The balances a paper account starts with. Filled in, this list replaces the start capital.
+    private readonly List<CryptoPaperAssetDefault> _paperAssetDefaults = [];
     private readonly List<CryptoTpEntry> _tpList = [];
 
     private readonly EntryConditionsData _entryConditions = new();
@@ -415,6 +482,17 @@
             Percentage = previous != null ? previous.Percentage * 2m : FirstDcaPercentage,
             Factor = previous != null ? previous.Factor * 2m : FirstDcaFactor,
         });
+    }
+
+    private void AddPaperAssetDefault()
+    {
+        _paperAssetDefaults.Add(new CryptoPaperAssetDefault());
+    }
+
+    private void RemovePaperAssetDefault()
+    {
+        if (_paperAssetDefaults.Count > 0)
+            _paperAssetDefaults.RemoveAt(_paperAssetDefaults.Count - 1);
     }
 
     private void RemoveDca()
@@ -502,11 +580,17 @@
         _moveSlBe = t.MoveSlToBreakEven;
         _moveSlBePct = t.MoveSlToBreakEvenPercentage;
         _moveSlBeSlPct = t.MoveSlToBreakEvenSlPercentage;
+        _moveSlBeMethod = t.MoveSlToBreakEvenMethod;
+        _moveSlBeTrailPct = t.MoveSlToBreakEvenTrailPercentage;
 
         // Work on copies so Cancel does not leave edited entries behind
         _dcaList.Clear();
         foreach (var dca in t.DcaList)
             _dcaList.Add(new CryptoDcaEntry { Percentage = dca.Percentage, Factor = dca.Factor });
+
+        _paperAssetDefaults.Clear();
+        foreach (var entry in t.PaperAssetDefaults)
+            _paperAssetDefaults.Add(new CryptoPaperAssetDefault { Name = entry.Name, Total = entry.Total });
 
         _tpList.Clear();
         foreach (var tp in t.TpList)
@@ -551,10 +635,21 @@
         t.MoveSlToBreakEven = _moveSlBe;
         t.MoveSlToBreakEvenPercentage = _moveSlBePct;
         t.MoveSlToBreakEvenSlPercentage = _moveSlBeSlPct;
+        t.MoveSlToBreakEvenMethod = _moveSlBeMethod;
+        t.MoveSlToBreakEvenTrailPercentage = _moveSlBeTrailPct;
 
         t.DcaList.Clear();
         foreach (var dca in _dcaList)
             t.DcaList.Add(new CryptoDcaEntry { Percentage = dca.Percentage, Factor = dca.Factor });
+
+        // A row without a coin is an empty row somebody added and left alone, not a setting.
+        t.PaperAssetDefaults.Clear();
+        foreach (var entry in _paperAssetDefaults)
+        {
+            string name = entry.Name.Trim().ToUpperInvariant();
+            if (name.Length > 0)
+                t.PaperAssetDefaults.Add(new CryptoPaperAssetDefault { Name = name, Total = entry.Total });
+        }
 
         t.TpList.Clear();
         foreach (var tp in _tpList)

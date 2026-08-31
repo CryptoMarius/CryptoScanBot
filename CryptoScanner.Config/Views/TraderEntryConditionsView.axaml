@@ -4,7 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="320"
              xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:views="using:CryptoScanner.Config.Views"
              x:DataType="vm:TraderEntryConditionsViewModel"
+             x:CompileBindings="True"
              x:Class="CryptoScanner.Config.Views.TraderEntryConditionsView">
 
     <HeaderedContentControl Classes="groupbox" Header="Entry condities">
@@ -150,6 +152,27 @@
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
                              ToolTip.Tip="How far price may run against the signal during that wait, as a positive percentage of the signal price. Above this the signal is dropped. Zero means no limit: the wait then only delays the entry."/>
                 </Grid>
+
+                <!-- Reversal shapes to wait for inside that window. With one or more ticked the wait
+                     above stops being a delay and becomes a SEARCH WINDOW: the entry is taken on the
+                     first candle within it that forms one of these, and the signal is dropped when
+                     the window closes without one. -->
+                <HeaderedContentControl Classes="groupbox" Header="Wait for a reversal shape" Margin="0,6,0,0">
+                    <StackPanel Margin="6" Spacing="4">
+
+                        <TextBlock Text="Nothing ticked leaves the wait a plain delay"
+                                   FontSize="11" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource SystemBaseMediumColor}"/>
+
+                        <views:CandlePatternListView DataContext="{Binding EntryPatternListViewModel}"
+                                   ToolTip.Tip="The reversal shapes an entry waits for. Ticking several is an OR: any one of them is enough. Which ones are worth using was measured on runs 525-531; how OFTEN a shape occurs decides whether it is usable as a filter at all."/>
+
+                        <Separator Margin="0,4"/>
+
+                        <views:CandlePatternShapeView DataContext="{Binding EntryPatternShapeViewModel}" />
+
+                    </StackPanel>
+                </HeaderedContentControl>
 
                 <!-- The band break confirmation used to sit here as "Timeframe consensus count".
                      Only the three band strategies could act on it, so it now lives in their own

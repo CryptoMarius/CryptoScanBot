@@ -726,6 +726,20 @@
             .Append(last.High).Append('|')
             .Append(last.Low).Append('|');
 
+        // And the same four for the 1m candle, because the running candle at the right edge is built
+        // from that list (CandleTools.BuildRunningCandles). Nothing above moves while a 30m interval
+        // is halfway through - the closed 30m candle those counters read stays exactly as it was - so
+        // without this the chart would only pick the running candle up once the interval closed,
+        // which is the very lag it exists to remove.
+        if (period != CryptoIntervalPeriod.interval1m && !GlobalData.IsEmulatorMode)
+        {
+            var last1m = _currentSymbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m).CandleList.LastCandle;
+            text.Append(last1m.OpenTime).Append('|')
+                .Append(last1m.Close).Append('|')
+                .Append(last1m.High).Append('|')
+                .Append(last1m.Low).Append('|');
+        }
+
         // Positions are drawn from the database, but the open list in memory is what changes
         // first: a fill updates UpdateTime, and a close moves the position out of this list.
         if (_showPositions)
@@ -1032,11 +1046,18 @@
             // overlays, the zone/signal/position bounds — works off candleSource and rawCandles, so
             // the two cases differ in exactly one place: here.
             CryptoCandleList candleSource = symbolInterval.CandleList;
+
+            // Bounds for the still-running candle(s) below. The live chart has no edges, a position
+            // window does - and one built past DrawTo would stick out beyond the range it draws.
+            CandleTime runningFrom = CandleTime.MinValue;
+            CandleTime runningTo = CandleTime.MaxValue;
             if (_windowStart != null)
             {
                 var range = WindowRange(symbolInterval.Interval);
                 candleSource = LoadWindowCandles(_currentSymbol, symbolInterval.Interval, range.Load, range.DrawTo)
                     ?? symbolInterval.CandleList;
+                runningFrom = range.DrawFrom;
+                runningTo = range.DrawTo;
             }
 
             var snapshot = candleSource.GetSnapshot();
@@ -1046,7 +1067,7 @@
 
             UpdateEmptyReason(_currentSymbol, symbolInterval.Interval, rawCandles.Count);
 
-            var candles = new List<object>(rawCandles.Count);
+            var candles = new List<object>(rawCandles.Count + 1);
             foreach (var candle in rawCandles)
             {
                 candles.Add(new
@@ -1058,6 +1079,29 @@
                     close = (double)candle.Close,
                     volume = (double)candle.Volume,
                 });
+            }
+
+            // The interval that is STILL RUNNING has no candle of its own yet - one is only written
+            // when the interval closes - so without this the chart stops at the last completed candle
+            // and trails the market by up to a full interval. On 30m that hid a dca filling on a spike
+            // halfway through the candle, marker and all, while the position grid already showed it.
+            // Appended to the drawn series only, not to rawCandles: the indicators keep running on
+            // finished candles, exactly as the Avalonia chart does.
+            if (rawCandles.Count > 0)
+            {
+                foreach (CryptoCandle candle in CandleTools.BuildRunningCandles(_currentSymbol,
+                    symbolInterval.Interval, rawCandles[^1].OpenTime, runningFrom, runningTo))
+                {
+                    candles.Add(new
+                    {
+                        time = candle.OpenTime.ToUnixSeconds(),
+                        open = (double)candle.Open,
+                        high = (double)candle.High,
+                        low = (double)candle.Low,
+                        close = (double)candle.Close,
+                        volume = (double)candle.Volume,
+                    });
+                }
             }
 
             // Overlays on main chart

@@ -20,6 +20,23 @@ else if (Field.Kind == PluginFieldKind.Enum)
         }
     </select>
 }
+else if (Field.Kind == PluginFieldKind.EnumList)
+{
+    @* One checkbox per member of the enum, so several can be on at the same time. The order is the
+       order the members are declared in, which is what the dropdown showed as well. *@
+    <span class="enum-list">
+        @foreach (var option in Field.EnumOptions)
+        {
+            var name = option;
+            <label class="enum-list-item">
+                <input type="checkbox" class="input-checkbox" disabled="@Disabled"
+                       checked="@Field.ListValue.Contains(name)"
+                       @onchange="@(e => OnListChanged(name, e))" />
+                <span>@name</span>
+            </label>
+        }
+    </span>
+}
 else if (Field.Kind == PluginFieldKind.Number)
 {
     <input type="number" class="input-number" step="any" style="width: 120px;"
@@ -43,6 +60,12 @@ else
     private async Task OnBoolChanged(ChangeEventArgs e)
     {
         Field.BoolValue = e.Value is bool on && on;
+        await Changed.InvokeAsync();
+    }
+
+    private async Task OnListChanged(string name, ChangeEventArgs e)
+    {
+        Field.ToggleListValue(name, e.Value is bool on && on);
         await Changed.InvokeAsync();
     }
 

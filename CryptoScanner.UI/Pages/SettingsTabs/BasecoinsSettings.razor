@@ -19,6 +19,7 @@
                         <th style="width: 100px;">Min. price</th>
                         <th style="width: 100px;">Amount</th>
                         <th style="width: 80px;">Percentage</th>
+                        <th style="width: 100px;">Start capital</th>
                         <th style="width: 120px;">Color</th>
                         <th style="width: 70px;">Symbols</th>
                     </tr>
@@ -33,6 +34,9 @@
                             <td><input type="number" class="input-number" step="0.00000001" min="0" @bind="item.MinPrice" style="width:90px;" /></td>
                             <td><input type="number" class="input-number" step="0.01" min="0" @bind="item.Amount" style="width:90px;" /></td>
                             <td><input type="number" class="input-number" step="0.1" min="0" max="100" @bind="item.Percentage" style="width:70px;" /></td>
+                            @* 0 = not filled in, then the start capital from the trader settings is used *@
+                            <td><input type="number" class="input-number" step="0.01" min="0" @bind="item.StartCapital" style="width:90px;"
+                                       title="Start capital for this quote coin in paper trading and the emulator. 0 = use the amount from the trader settings" /></td>
                             @* One field in the exact #AARRGGBB the settings file stores, so the
                                transparency is simply the first two characters — 00 is invisible, FF
                                is solid. The swatch next to it shows the real colour on a
@@ -73,6 +77,7 @@
                 MinPrice = qd.MinimalPrice,
                 Amount = qd.EntryAmount,
                 Percentage = qd.EntryPercentage,
+                StartCapital = qd.StartCapital,
                 ColorArgb = qd.DisplayColor.ToString(),
                 SymbolCount = qd.SymbolList.Count,
                 Source = qd,
@@ -89,6 +94,7 @@
             item.Source.MinimalPrice = item.MinPrice;
             item.Source.EntryAmount = item.Amount;
             item.Source.EntryPercentage = item.Percentage;
+            item.Source.StartCapital = item.StartCapital;
             // Keep the original alpha: it decides whether the grids tint the row at all
             item.Source.DisplayColor = item.ParsedColor;
         }
@@ -107,6 +113,7 @@
         public decimal MinPrice { get; set; }
         public decimal Amount { get; set; }
         public float Percentage { get; set; }
+        public decimal StartCapital { get; set; }
         /// <summary>
         /// The colour in the same #AARRGGBB notation the settings file uses, so what you type here
         /// is what ends up on disk. The leading pair is the transparency.

@@ -35,13 +35,16 @@
                             int index = i;
                             <tr>
                                 <td>@_rows[index].Name</td>
+                                @* Text and not a number field: the cell shows the rounded amount the
+                                   Avalonia grid shows, and "9,954.12" is not a number a browser field
+                                   accepts. *@
                                 <td>
-                                    <input type="number" class="input-number assets-total-input" step="any"
-                                           value="@_rows[index].Total"
-                                           @onchange="e => _rows[index].Total = ParseDecimal(e.Value)" />
+                                    <input type="text" class="input-number assets-total-input"
+                                           value="@_rows[index].TotalText"
+                                           @onchange="e => SetTotal(index, e.Value)" />
                                 </td>
-                                <td>@_rows[index].LockedText</td>
-                                <td>@_rows[index].FreeText</td>
+                                <td class="text-right">@_rows[index].LockedText</td>
+                                <td class="text-right">@_rows[index].FreeText</td>
                             </tr>
                         }
                         @if (_rows.Count == 0)
@@ -52,15 +55,32 @@
                 </table>
             </div>
 
+            @* Book a balance by hand. The only way to get a coin into the list that is not in it: a
+               balance that reaches zero is dropped, so it cannot be corrected in the grid either. *@
+            <div class="assets-add">
+                <span>Add asset:</span>
+                <input type="text" class="input-number assets-add-name" placeholder="BTC"
+                       @bind="_newAssetName"
+                       title="The coin to book a balance for. A coin that is already in the list is set to this amount." />
+                <span>Amount:</span>
+                <input type="text" class="input-number assets-add-amount"
+                       @bind="_newAssetAmount"
+                       title="The balance in the coin itself, above zero." />
+                <button class="btn" @onclick="OnAddClick"
+                        title="Book this balance. It is recorded as a manual correction, so the capital line does not read it as profit.">
+                    Add
+                </button>
+            </div>
+
             <!-- Start over -->
             <div class="assets-reset">
                 <span>Start capital:</span>
                 <input type="number" class="input-number assets-start-capital" min="0" step="1000"
                        value="@_startCapital"
                        @onchange="e => _startCapital = ParseDecimal(e.Value)"
-                       title="Amount handed out per traded quote coin when you press Reset" />
+                       title="Amount handed out per traded quote coin when you press Reset, except the coins with a start capital of their own. Not used at all when the default asset list in the settings holds anything - that list is handed out instead." />
                 <button class="btn" @onclick="OnResetClick"
-                        title="Throw every paper balance away and hand out the start capital again for each traded quote coin">
+                        title="Throw every paper balance away and hand out the starting balances again: the default asset list from the settings when there is one, and otherwise the start capital for each traded quote coin.">
                     Reset to start capital
                 </button>
             </div>
@@ -87,6 +107,10 @@
     {
         public string Name { get; init; } = "";
         public decimal Total { get; set; }
+
+        /// <summary>Rounded the way PaperAssetsEditor.FormatAmount rounds it, so both screens agree.</summary>
+        public string TotalText => PaperAssetsEditor.FormatAmount(Name, Total);
+
         public string LockedText { get; init; } = "";
         public string FreeText { get; init; } = "";
 
@@ -98,6 +122,11 @@
     [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
 
     private List<AssetRow> _rows = [];
+
+    /// <summary>The coin and the amount of the add row, as typed - both are read as text.</summary>
+    private string _newAssetName = "";
+    private string _newAssetAmount = "";
+
     private decimal _startCapital;
     private string _summary = "";
     private bool _confirmResetVisible;
@@ -124,8 +153,8 @@
         {
             Name = row.Name,
             Total = row.Total,
-            LockedText = row.Locked.ToString0(),
-            FreeText = row.Free.ToString0(),
+            LockedText = row.LockedText,
+            FreeText = row.FreeText,
             OriginalTotal = row.Total,
         })];
         _summary = PaperAssetsEditor.Describe(exchange, _rows.Count);
@@ -140,6 +169,21 @@
             OriginalTotal = row.OriginalTotal,
             NewTotal = row.Total,
         }));
+        Reload();
+    }
+
+    /// <summary>
+    /// Book the balance of the add row. Nothing happens when the coin or the amount cannot be used;
+    /// the log tab says why, and what was typed stays where it is so it can be corrected.
+    /// </summary>
+    private void OnAddClick()
+    {
+        PaperAssetsEditor.TryParseAmount(_newAssetAmount, out decimal amount);
+        if (!PaperAssetsEditor.Add(GlobalData.ActiveExchange, _newAssetName, amount))
+            return;
+
+        _newAssetName = "";
+        _newAssetAmount = "";
         Reload();
     }
 
@@ -158,6 +202,18 @@
     {
         Visible = false;
         await VisibleChanged.InvokeAsync(false);
+    }
+
+    /// <summary>
+    /// Take over an edited amount, and ignore anything that cannot be read as one: the balance keeps
+    /// what it had, and Apply therefore writes nothing for this row. The field itself keeps showing
+    /// what was typed until the list is loaded again - the rendered value did not change, so there is
+    /// nothing for the renderer to put back.
+    /// </summary>
+    private void SetTotal(int index, object? value)
+    {
+        if (PaperAssetsEditor.TryParseAmount(value?.ToString(), out decimal amount))
+            _rows[index].Total = amount;
     }
 
     private static decimal ParseDecimal(object? value) =>

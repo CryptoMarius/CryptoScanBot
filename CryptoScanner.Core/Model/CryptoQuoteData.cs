@@ -22,6 +22,20 @@ public class CryptoQuoteData
     public decimal EntryAmount { get; set; }
     // Trading: The initial entry percentage of PF
     public float EntryPercentage { get; set; }
+
+    /// <summary>
+    /// Trading: The start capital handed out to this quote coin in paper trading and the emulator,
+    /// expressed in the quote coin itself. Zero means "not filled in", and then the general
+    /// <see cref="Settings.SettingsTrading.PaperAssetStartCapital"/> is used - or the amount typed in
+    /// the paper-assets screen or in an emulator run.
+    /// <para>
+    /// One amount for every quote coin cannot work: 10.000 is a sensible amount of USDT and an absurd
+    /// amount of BTC, while the capital line adds every coin up in USDT (see
+    /// <see cref="Trader.AssetSnapshotTools.ReferenceCoin"/>).
+    /// </para>
+    /// </summary>
+    public decimal StartCapital { get; set; }
+
     // Color of the base coin in signal grid
     public CoreColor DisplayColor { get; set; } = CoreColor.FromArgb(0x00, 0xFF, 0x95, 0xA5);
 

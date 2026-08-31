@@ -1,0 +1,290 @@
+# Avalonia ↔ Photino — werklijst
+
+Bijgehouden tijdens het gelijktrekken van beide applicaties.
+Laatst bijgewerkt: 2026-08-08.
+
+---
+
+## A. Vragen — allemaal beantwoord op 8 augustus
+
+| # | Vraag | Antwoord |
+|---|---|---|
+| A1 | Vijf instellingen op het Exchange-tabblad die niet in Avalonia bestaan | **Weglaten.** Avalonia wint. Zie B6. |
+| A2 | Titelbalk Photino gelijk maken? | **Nee**, blijft zoals het is. Te veel moeite. |
+| A3 | Gemaximaliseerd venster | **Ja**, en ook geminimaliseerd bijhouden en herstellen. Zie B11. |
+| A4 | Barometerwaarden op `-` bij OKX | Zag er goed uit, geen actie. |
+
+**Leidend principe (afgesproken):** bij elk verschil wint de Avalonia-weergave. Zeker waar iets
+daar met `IsVisible="false"` is uitgezet.
+
+---
+
+## B. Gevonden, nog niet opgelost
+
+### B0. GRONDOORZAAK: elke Avalonia-rij met meerdere controls is bij mij meerdere rijen geworden
+
+Dit is één fout, overal herhaald, en verklaart waarom **elk** instellingen-tabblad er anders uitziet.
+
+Avalonia plaatst controls in een Grid met meerdere kolommen per rij:
+
+```xml
+<Grid ColumnDefinitions="Auto,80,80,*">     <!-- label + twee velden naast elkaar -->
+<Grid ColumnDefinitions="Auto,*,80,40">     <!-- label + veld + veld + eenheid -->
+```
+
+Eén rij = label plus twee of drie controls **naast** elkaar. Ik heb van elke control een eigen
+`.field` gemaakt, dus elke Avalonia-rij werd bij mij twee of drie regels onder elkaar. De CSS is
+niet het probleem — `.field` is al een flex-rij die label en control naast elkaar zet — het is de
+opmaak: ik heb ze gesplitst waar ze bij elkaar horen.
+
+**Werkwijze (afgesproken 8 augustus):** per tabblad het axaml openen, de `ColumnDefinitions` en
+`Grid.Column`/`Grid.Row` letterlijk aflezen, en de controls die op één rij staan in **één** `.field`
+zetten. Niet interpreteren, aflezen. Dat geldt voor alle tabbladen en alle groepkopjes.
+
+Betreft in elk geval: Analyzer, Signal, Trader, Rulez, API Keys, Debug — plus opnieuw nakijken van
+Exchange, Indicators en Basecoins, die ik op labels en groepen wel heb gelijkgetrokken maar niet op
+rij-indeling.
+
+### B1. Strategies-tabblad is gegenereerd, niet geport — grootste post
+De parameters komen uit een reflectie-editor (`PluginSettingsEditState`) die door de settings-klasse
+loopt. Daardoor staan er eigenschapsnamen op het scherm (`BBMin Percentage`, `Require Rsi Os Ob`)
+in plaats van labels (`BB width min %`, `Require RSI oversold/overbought`), op alfabetische volgorde
+in plaats van de bedoelde groepering. Er staan **35 per-strategie schermen** in de Analyzers-projecten
+die stuk voor stuk overgenomen moeten worden.
+
+**Stand 8 augustus (later):** de volgorde klopt inmiddels (declaratievolgorde in plaats van
+alfabetisch), en er is een mechanisme voor de captions: `[SettingCaption("...", Tooltip = "...")]`
+op de property in de settings-klasse, uitgelezen door `PluginSettingField`. Het attribuut kent:
+`Tooltip`, `Group` (eigen groupbox), `SubHeader`, `SeparatorBefore`, `SpaceBefore`, `Indented`,
+`Unit`, `VisibleWhen` (IsVisible-binding), `EnabledWhen` (IsEnabled-binding), `SameRowAs` (control
+achter een andere caption, bijv. min/max achter "Filter on BB%" of de lookback achter een lange
+checkbox-tekst) en `Hidden`. Ook `IntervalList` heeft nu een editor: drie kolommen checkboxen zoals
+`IntervalView` (die ontbrak volledig bij DLZ, FVG en SMC).
+
+Geannoteerd en nagemeten: **atrrb, bbsqueeze, dbr, dlz, fvg, jump, kumosqueeze, sbm, smc, stobb,
+storsi, vbs**. Bij bbsqueeze, dlz, fvg, jump, sbm, smc, stobb en storsi zijn properties verplaatst
+in de klasse, want de declaratievolgorde is de schermvolgorde (serialisatie gaat op naam).
+Nog niet gedaan: bbma.omni, bbrsiengulfing, choch, ichimoku.kumo.breakout, nwe, supertrendbreakout,
+trend — die vallen terug op de property-naam gesplitst op hoofdletters.
+
+Verder in deze ronde:
+- Kader "Sound and colors": alleen nog "Long" en "Short" als caption. De algoritmenaam staat al in het
+  tabblad, en een lange naam (ichimoku.kumo.breakout) trok de hele regel scheef.
+- Tabblad "Signal" verwijderd; die twee vinkjes horen daar niet (staan in het menu).
+- Analyzer/Trader: de rij All/None/Copy-knoppen is een "▼"-menu geworden (`MenuButton`), zoals de
+  MenuFlyout in `IntervalView`/`StrategyView`. Scheelt een halve kaderhoogte per groep.
+- Barometer filter: consensus op één regel ("Min consensus" is de checkbox-tekst, waarde 1..5
+  ernaast en uitgegrijsd als de checkbox uit staat), en de extra regelruimte eruit.
+- Market trend filter primary was te hoog: de flexrij stond op `align-items: stretch`, waardoor elk
+  kader de hoogte van de langste buur kreeg.
+- Trader common gelijkgetrokken met `TraderMiscSettingsView`: kopje "Common", volgorde
+  Trading / Sound trade notification / Disable new positions / Log cancelled orders /
+  Cool down time (m), en de slotlimieten als genest kader "Slot limits" binnen Common in plaats van
+  een eigen groupbox. "Trading active" niet meer getoond (staat niet op de Avalonia-view; wel
+  geladen en bewaard).
+- Entry: "Entry pullback %" weg (bestaat niet in Avalonia), "Remove time" met eenheid "candles".
+- DCA: "DCA pullback %" en "Buy cooldown" weg; volgorde Order Type → knoppen → DCA-regels.
+- Stop loss: kopje "Stop loss", captions "Stop loss trigger %" / "Stop loss worst fill %" /
+  "Profit lock" (dat is de oude "Move SL to break-even") en "Profit lock %" alleen zichtbaar als
+  Profit lock aan staat, met de tooltips uit het axaml.
+- Entry conditions in twee kolommen, zoals `ColumnDefinitions="*,12,*"` in het axaml, met het
+  geneste kader "Stoch OS/OB strength" en de eenheden bars / ∑ / σ.
+- Trading rules: kolomkopjes één keer boven de regels, regelnummer #1/#2 ervoor, en de losse kop
+  "Trading rule 1" per blok eruit (bewuste afwijking van Avalonia, in overleg zo gehouden).
+- API keys: kader "Exchange API Keys" verborgen (bestaat niet in Avalonia; waarden blijven bewaard).
+  Telegram met de captions van `ApiTelegramView` (Token / ChatId / "Stuur meldingen naar telegram" /
+  "Gebruik Emoji's in de trend") plus de knoppen Stop/Start en Test. Achter elke sleutel de
+  verklikker "eerste drie .. laatste drie", zoals `GetDisplayApiKey`. Altrady heet nu
+  "Altrady API key" met captions "API key" / "API secret" en dezelfde verklikker.
+- Black/white list: de vaste regel boven de memo weg, de tekst zit nu als watermerk in de memo
+  ("COINUSDT Put your comments behind it if needed"), zoals de Watermark in het axaml.
+- Debug: geen kader meer (Avalonia heeft daar een kale StackPanel), volgorde en captions van
+  `DebugTabView` overgenomen, symboolveld met watermerk "SYMBOL" en de uitleg ernaast.
+- "Follow system" deed niets: `ThemeHelper.ToCssTheme` gaf voor `Default` altijd "dark". Nu vraagt
+  de layout de browser (`prefers-color-scheme`) via `theme-interop.js` en zet het antwoord in
+  `ThemeHelper.SystemPrefersDark`; een wisseling van het OS-thema wordt teruggemeld en herschildert.
+- Entry conditions: de rij onder "Price above MA200" grijst nu mee met dat vinkje (caption én
+  velden), en "Timeframe consensus count" plus het kader "Stoch OS/OB strength" staan uitgelijnd op
+  de captions van de checkboxen erboven in plaats van op hun vakjes.
+- Symbol grid volgde de basismuntkleur niet: `SymbolViewModel.BackgroundStyle` cachete de stijl
+  eenmalig. Nu met een versienummer (`ColorHelper.QuoteColorVersion`) dat bij het bewaren van de
+  basismunten wordt opgehoogd. De signal- en livedata-grids berekenen hem per render en hadden het
+  probleem niet.
+- "Remove signals after" begrensd op 15..120 candles. Die instelling bepaalt de ExpirationDate van
+  elk signaal en dus hoeveel er in het geheugen blijven staan. De grens zit in de setter van
+  `SettingsGeneral.RemoveSignalAfterxCandles` (dus ook voor het instellingenbestand en de
+  Avalonia-kant) plus als min/max op het veld in het Analyzer-tabblad.
+- Contextmenu's liepen onder de taakbalk als je op de onderste rij klikte. `popup-interop.js`
+  schuift het menu na het renderen terug in beeld (onder- en rechterrand), zoals Avalonia zijn menu
+  omhoog verplaatst. Toegepast op alle zes de contextmenu's.
+- Crypto Prices: een munt die de exchange niet kent (PAXG op Bybit Spot) gaf een lege regel
+  "PAXG - -". Avalonia laat de regel dan helemaal weg; nu hier ook, waardoor de vijfde munt (ADA)
+  wel in beeld komt.
+- Het vierde statuslampje toonde de klok (net als Avalonia), maar de klok staat nu in de
+  barometergrafiek. De regel zegt nu "Sounds"; is de applicatie niet aan het draaien, dan blijft de
+  status ("Initializing", "Stopping") daar staan.
+- Het tijdstip in de barometergrafiek was in `--text-muted` nauwelijks leesbaar: nu 11px, halfvet,
+  in de gewone tekstkleur en met een half doorzichtig plaatje eronder.
+- Checkboxen zelf getekend (`appearance: none`): uit = `--bg-input` met een grijze rand, aan =
+  accentblauw met een wit vinkje. De browser houdt een uitgevinkt vakje altijd wit, ongeacht
+  `accent-color`, en een kolom ervan (de intervallen) las als één wit blok. Daarnaast `color-scheme`
+  per thema, zodat scrollbars en dropdownlijsten ook meekleuren.
+
+### B2. Blok "Entry conditions" ontbreekt bij ELKE strategie — OPGELOST 8 augustus
+Gedeeld component `EntryConditionsEditor` (twee kolommen, zoals `TraderEntryConditionsView`), gevoed
+door `EntryConditionsData`. Het Trader-tabblad gebruikt het voor de globale condities, en elk
+strategie-tabblad heeft nu het kader "Entry conditions" met de schakelaar "Use custom entry
+conditions for this strategy", de knop "Reset to global" en dezelfde editor eronder — uit betekent
+dat `SettingsSignalStrategyBase.EntryConditions` op null blijft en de globale condities gelden,
+precies zoals `StrategyEntryConditionsViewModel`.
+
+Oorspronkelijke beschrijving:
+Avalonia heeft dit als eigen scherm, `StrategyEntryConditionsView.axaml`, en gebruikt het in **elk**
+strategie-tabblad: AtrRb, Bbma, BbSqueeze, Dbr, Dlz, Fvg, Jump, en de rest. Daarnaast bestaat
+`TraderEntryConditionsView.axaml` voor het Trader-tabblad.
+
+In Blazor bestaat het alleen in `TraderSettings.razor`. Bij de strategieen ontbreekt het volledig —
+de reflectie-editor komt er niet bij, want het zit in `SettingsEntryConditions` en niet in de
+settings-klasse van de strategie zelf. Dit blok bepaalt mede welke signalen er ontstaan.
+
+Aanpak: `StrategyEntryConditionsView.axaml` één keer als Blazor-component nabouwen (met de
+rij-indeling uit B0) en in elk strategie-tabblad plaatsen.
+
+### B3. Groep "Registered strategies" bestaat niet in Avalonia
+Staat onderaan het Strategies-tabblad. Weghalen.
+
+### B4. Sound & colors per strategie
+Avalonia gebruikt `ColorAndSoundView`: één regel per kant met bijschrift, kleurkiezer, `Sound file:`,
+tekstvak, `...` en `▶`. Blazor zet alles onder elkaar. Ook staat er **Play speech** bij, en dat hoort
+op dat tabblad niet — dat komt uit `SoundAndColorsView`, een ánder scherm.
+
+### B5. Kleurvlakjes met alpha (herhaling van een bekend gebrek)
+Dezelfde fout als bij Basecoins: `input[type=color]` kent geen alpha, dus een transparante kleur
+wordt massief roze. Bij Basecoins gerepareerd, bij de strategiekleuren nog niet.
+
+### B6. Exchange-tabblad herindelen
+Avalonia heeft twee groepen — **Exchange parameters** (Extra application caption, Active exchange,
+Activate exchange, Refresh symbols every x minutes) en **Common parameters** (Trading app, Double
+click action, Play heart beat sound every, Theme). Het tabblad heet daar `Exchange`, hier `General`.
+Groepen Appearance en SignalR mogen blijven zoals ze zijn.
+
+### B7. Chart: titel en ondertitel
+OxyPlot toonde daar extra informatie. Staat nu niet in de Blazor-versie.
+
+### B8. Chart: crosshair met OHLCV
+Bij het bewegen over de grafiek toonde Avalonia open/hoog/laag/slot/volume plus extra gegevens.
+Ontbreekt.
+
+### B9. Chart wordt volledig leeg na een overlay uit te zetten — NIET opgelost
+Reproductie (8 augustus, bevestigd met schermafdrukken): chart openen (candles zichtbaar) → Bollinger
+Bands aanvinken (banden verschijnen, candles blijven) → Bollinger Bands weer uitvinken → **alles weg**,
+ook de prijsschaal. Alleen het TradingView-logo blijft staan. Meerdere overlays hebben dit.
+
+Wat al uitgesloten is:
+- Twee gelijktijdige laadslagen: daar zit nu een grendel op (`_loadingChart` / `_loadPending`),
+  het verschijnsel bleef.
+- `_showCandles` staat gewoon nog op true.
+- De candle-lijst zelf komt uit `symbolInterval.CandleList.GetSnapshot()` en kan niet ineens leeg zijn.
+
+Waar het waarschijnlijk zit: `ChartWidget.setData` in `chart-widget.js` gooit eerst alle series weg
+en bouwt ze opnieuw op. Dat de **prijsschaal** ook verdwijnt wijst erop dat de chart zelf sneuvelt,
+niet alleen de data — dus vermoedelijk een uitzondering in het overlay- of panels-gedeelte die de
+opbouw halverwege afbreekt. Nog te bevestigen met de console van de WebView.
+
+### B12. Chart: symbool, quote en interval in een balk bovenin
+Staan nu bovenaan de linkerkolom en scrollen daardoor uit beeld zodra je in de optielijst omlaag gaat.
+Gevraagd: een vaste balk bovenin met symbool, quote en interval.
+
+### B10. Tabblad "Signal" bestaat in Blazor maar niet in Avalonia
+Nog uitzoeken waar die instellingen in Avalonia thuishoren (waarschijnlijk onder Analyzer).
+
+### B11. Venster: ook minimaliseren/maximaliseren bewaren en herstellen
+Nu wordt alleen "Maximized"/"Normal" opgeslagen en worden bij maximalisatie de gemaximaliseerde
+afmetingen bewaard. Nodig: de afmeting van het venster in normale stand apart bijhouden (Photino
+heeft geen herstel-rechthoek), plus de geminimaliseerde stand.
+
+---
+
+## B-sweep. Alles met `IsVisible="false"` in de Avalonia-schermen
+
+Volledige inventarisatie gedaan op 8 augustus. Buiten de grid-kolommen (die worden in Blazor al
+afgedekt door `DefaultVisible = false`) zijn er vier:
+
+| Waar | Wat | Status |
+|---|---|---|
+| `IndicatorsTabView.axaml:27,32` | Primary/Secondary trend parameters | **Verborgen** |
+| `TraderFuturesView.axaml:10` | Groep "Futures" | **Verborgen** |
+| `ConfigurationWindow.axaml:73` | Tabblad "Alpaca" onder API keys | Bestaat in Blazor niet — in orde |
+| `StrategyDlzTabView.axaml:25` | Groep "Zone calculation" (DLZ) | Open, valt onder B1 |
+
+---
+
+## C. Opgelost deze sessie
+
+**Dashboard**
+- Voortgangstekst onder de animatie in plaats van bij de tickers, en leesbaar gemaakt
+- Animatie stopte niet: grafiek werd maar één keer per minuut ververst, nu elke tick
+- Barometergrafiek: verticale schaal volgens Avalonia (minimum bereik 5, meeschalend), rasterlijnen
+  op volle sterkte, uurlijnen op tijd geplaatst, tijdstip linksonder, hoogte 124px
+- Symbol grid stond in light theme: themavariabelen ontbraken op `:root`
+- Statuslampjes rood/groen (plus neutraal voor Rulez)
+- Dubbel tijdstip uit de kopjes gehaald
+- Crypto Prices: maximaal 5 regels, en de naam mét quote erachter
+- Klikken op een munt of indicator deed niets: `LoadWebLinkConfiguration()` ontbrak
+
+**Grids**
+- Kolombreedtes: `table-layout: fixed` ontbrak, waardoor de opgegeven breedtes genegeerd werden
+- Sorteren bij het slepen van een kolomrand
+- Neutrale kleur was gedempt grijs in plaats van de gewone tekstkleur
+- Kolomdialoog: aantal kolommen wordt nu berekend uit het aantal items
+
+**Overig**
+- Lettertype: doorgestreepte nul weg, systeemlettertype net als Avalonia
+- Thema wisselen duurde 10-15 seconden, gaat nu direct via een bericht
+- Wachtscherm bij het afsluiten
+- Vensterpositie werd niet hersteld: `SetUseOsDefaultLocation` stond niet uit
+- Memo bij Black/White list vult nu het hele kader
+- Indicators-tabblad: volgorde en labels gelijk, ZigZag verborgen (net als in Avalonia)
+- Basecoins: kleur met alpha, transparant is nu ook zichtbaar transparant
+
+**Instellingenscherm — ronde 2 (8 augustus, later op de dag)**
+- Titel van het scherm was "Settings", nu "Scanner configuration"
+- Groepkopjes leken doorstreept: het kopje maskeert de rand met `--bg-base` (zwart) terwijl het
+  scherm zelf `--bg-elevated` is. Nu via `--bg-groupbox-mask`, die de dialoog zelf zet.
+- Kaders veel te breed: `.settings-group` groeide mee met de dialoog. Nu content-breedte, zoals
+  `HorizontalAlignment="Left"` in Avalonia. Het kopje staat daarvoor in de flow (niet meer
+  absoluut), zodat een lang kopje het kader breed genoeg maakt.
+- Dialoogbreedte 700 → 980px, zoals het Avalonia-configuratiescherm: drie indicatorkaders naast
+  elkaar en de basismunten-tabel past binnen de rand (kolom "Symbols" viel erbuiten)
+- Double click action en Trading app toonden enum-namen (`ActivateTradingApp`, `ExchangeUrl`);
+  nu de captions uit `CommonViewModel`. Thema-lijst in dezelfde volgorde, "Follow system".
+- Min/max op number-velden werd nergens afgedwongen (browser doet dat alleen bij de pijltjes):
+  `js/number-input.js` klemt op de capture-fase, vóór Blazor de waarde leest
+- Colorpicker als los component, overal hetzelfde: staal + `#AARRGGBB`-veld in de cel, en achter het
+  staal een dialoog (`ColorPickerDialog`) met A/R/G/B als losse getallen, hex-veld, systeemkiezer en
+  een grote voorbeeldvlek op ruitjes die bij elke wijziging meeloopt. OK schrijft weg, Cancel niet.
+  De eerste opzet met een alpha-schuifbalk was volgens de gebruiker onhandig mikken; die is weg.
+- Vensterpositie kwam nooit terug op het tweede scherm: posities staan in een tweede,
+  exchange-onafhankelijk bestand (`CryptoScanBot-window.json`) en de merge bij het starten laat dat
+  bestand winnen. Photino schreef alleen het bestand in de datamap, dus bij elke start won de oude
+  Avalonia-positie. Nu `FlushWindowStateToDisk()` erbij, plus een controle na het aanmaken van het
+  venster of de opgeslagen positie nog op een aangesloten monitor valt (anders centreren).
+- Basismunten: tabel werd door de grid-cel uitgerekt (`justify-self: start` toegevoegd), waardoor
+  de kolom "Symbols" ver achter "Color" hing. Tabel is nu precies 700px, zoals de kolombreedtes.
+- Strategie "Sound and colors": alles op één regel zoals `ColorAndSoundView`
+  (caption | kleur | "Sound file:" | veld | "..." | ▶), inclusief bladerknop met bestandslijst
+  uit de Sounds-map. Kopje "Sound and colors", "Play speech" verborgen (in Avalonia uitgecommentarieerd).
+- Kader "Registered strategies" verwijderd — bestaat niet in Avalonia
+- Trading rules: alle controls op één regel inclusief cooldown, plus min/max-grenzen
+
+**Indicatoren (niet-UI)**
+- Lux Multi-RSI: uitlijnbug (laatste afgesloten 5m-candle) en aanloop gelijkgetrokken op 260
+- Indicator-registry, plugin data-vakje, hub-invalidatie bij instellingen
+
+---
+
+## D. Aandachtspunt voor mijzelf
+
+`CryptoScanner.UI` staat **niet onder git**. Een script dat daar tekstblokken knipt heeft geen
+terugvalversie — dat heeft op 8 augustus `IndicatorSettings.razor` beschadigd. Daar met de hand
+werken, of eerst een kopie maken.

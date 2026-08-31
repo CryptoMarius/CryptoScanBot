@@ -69,6 +69,23 @@ public class EmulatorRunConfig
     public bool UseAssetManagement { get; set; } = true;
 
     /// <summary>
+    /// Whether this run measures the market barometer while it replays.
+    /// <para>
+    /// On (the default) every replayed minute measures the barometer over the coins of the run, which
+    /// fills the five barometer columns of every signal and position and makes a barometer condition
+    /// mean something - without it such a condition is tested against a value that was never
+    /// calculated. Off saves that time, and a run that has barometer conditions set then refuses to
+    /// start rather than deciding silently.
+    /// </para>
+    /// <para>
+    /// The run-config window has no checkbox for it: it is a knob for a queue entry
+    /// (<c>"CalculateBarometer": false</c>) on a sweep where the time matters, and every other run
+    /// gets the default.
+    /// </para>
+    /// </summary>
+    public bool CalculateBarometer { get; set; } = true;
+
+    /// <summary>
     /// How far back a queue entry is compared against runs that already exist, in days. An entry
     /// whose configuration checksum matches one of them is recorded as a duplicate instead of being
     /// replayed - see <see cref="EmulatorRunFingerprint"/>.

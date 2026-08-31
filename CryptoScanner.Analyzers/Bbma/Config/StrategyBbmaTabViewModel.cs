@@ -20,7 +20,7 @@ public partial class StrategyBbmaTabViewModel : ObservableObject
 
     public void LoadConfig(BbmaSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig("Bbma", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 

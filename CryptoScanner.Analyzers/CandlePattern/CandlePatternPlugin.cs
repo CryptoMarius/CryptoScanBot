@@ -5,8 +5,8 @@ namespace CryptoScanner.Analyzers.CandlePattern;
 
 /// <summary>
 /// The classic candlestick reversal patterns as one strategy, with the pattern as a setting. A run
-/// varies "Pattern" through SignalOverrides and nothing else changes, so the patterns can be put
-/// side by side.
+/// varies "Patterns" through SignalOverrides and nothing else changes, so the patterns can be put
+/// side by side. Several at once is an OR, so a combination is one run as well.
 /// <para>
 /// The shapes themselves live in CandlePatternHelper in Core, shared with Tools/PatternScan, so the
 /// offline measurement and the scanner cannot drift apart.
@@ -14,7 +14,7 @@ namespace CryptoScanner.Analyzers.CandlePattern;
 /// </summary>
 public class CandlePatternPlugin : IStrategyPlugin
 {
-    private const string StrategyInternal = "CandlePattern";
+    public const string StrategyInternal = "CandlePattern";
     public string StrategyName => StrategyInternal.ToLower();
     public string StrategyNameCamelCase => StrategyInternal;
 
@@ -47,5 +47,5 @@ public class CandlePatternPlugin : IStrategyPlugin
     }
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = null;
+    public IConfigView? ConfigView { get; } = new Config.CandlePatternConfigView();
 }

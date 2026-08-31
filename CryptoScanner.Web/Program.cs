@@ -102,7 +102,9 @@ class Program
 
         // Power monitor for standby/resume handling
         var powerMonitor = new PowerMonitorService();
-        powerMonitor.PowerModeChanged += (_, e) => _ = HandlePowerModeChangeAsync(e.Mode);
+        // Shared with the Avalonia and Photino front ends: suspend and resume have to be handled
+        // one at a time, see PowerModeHandler
+        powerMonitor.PowerModeChanged += PowerModeHandler.Handle;
 
         // Register all signal analyzers
         AnalyzerRegistration.RegisterAll();
@@ -197,41 +199,4 @@ class Program
         app.Run("http://localhost:5000");
     }
 
-    private static async Task HandlePowerModeChangeAsync(PowerMode mode)
-    {
-        try
-        {
-            switch (mode)
-            {
-                case PowerMode.Suspend:
-                    ScannerLog.Logger.Trace("System going to sleep - disconnecting...");
-                    GlobalData.AddTextToLogTab("System going to sleep - disconnecting...");
-                    if (GlobalData.SignalRService != null)
-                        await GlobalData.SignalRService.StopAsync();
-                    var scannerSession = GlobalData.GetService<IScannerSession>()
-                        ?? throw new InvalidOperationException("ScannerSession not registered");
-                    await scannerSession.StopAsync();
-                    ThreadSoundPlayer.StopSoundThread();
-                    GlobalData.AddTextToLogTab("Disconnected successfully");
-                    break;
-
-                case PowerMode.Resume:
-                    ScannerLog.Logger.Trace("System resumed - reconnecting...");
-                    GlobalData.AddTextToLogTab("System resumed - reconnecting...");
-                    await Task.Delay(2000);
-                    if (GlobalData.SignalRService != null)
-                        await GlobalData.SignalRService.StartAsync();
-                    var scannerSession2 = GlobalData.GetService<IScannerSession>()
-                        ?? throw new InvalidOperationException("ScannerSession not registered");
-                    scannerSession2.Start(5000);
-                    GlobalData.AddTextToLogTab("Reconnected successfully");
-                    break;
-            }
-        }
-        catch (Exception ex)
-        {
-            ScannerLog.Logger.Error(ex, $"Error handling power mode change: {mode}");
-            GlobalData.AddTextToLogTab($"Power mode {mode} error: {ex.Message}");
-        }
-    }
 }

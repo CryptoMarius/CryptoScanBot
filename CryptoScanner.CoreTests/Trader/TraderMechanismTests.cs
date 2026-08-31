@@ -6,7 +6,7 @@ using CryptoScanner.Core.Trader;
 
 using static CryptoScanner.Core.Trader.StopLossCalculator;
 
-using Exchange = CryptoScanner.Core.Model.CryptoExchange;
+using ExchangeModel = CryptoScanner.Core.Model.CryptoExchange;
 
 namespace CryptoScanner.CoreTests.Trader;
 
@@ -34,14 +34,14 @@ public class TraderMechanismTests
 
     // ── Helpers ─────────────────────────────────────────────────────────────
 
-    private static Exchange MakeExchange() => new()
+    private static ExchangeModel MakeExchange() => new()
     {
         Id = 1,
         Name = "TestExchange",
         FeeRate = FeeRate,
     };
 
-    private static CryptoSymbol MakeSymbol(Exchange exchange) => new()
+    private static CryptoSymbol MakeSymbol(ExchangeModel exchange) => new()
     {
         Id = 1,
         Name = "TESTUSDT",
@@ -66,7 +66,7 @@ public class TraderMechanismTests
         : new CryptoInterval { Id = 6, Name = "15m", Duration = 900 };
 
     // Why? There is a PositionTools.CreatePosition? Why duplicate this many code?
-    private static CryptoPosition MakePosition(Exchange exchange, CryptoSymbol symbol,
+    private static CryptoPosition MakePosition(ExchangeModel exchange, CryptoSymbol symbol,
         CryptoInterval interval, CryptoTradeSide side, decimal? slPercentage = null)
     {
         var position = new CryptoPosition
@@ -91,7 +91,7 @@ public class TraderMechanismTests
     private static int _stepId = 1;
 
     private static CryptoPositionPart AddPart(CryptoPosition position, CryptoPartPurpose purpose,
-        Exchange exchange, CryptoSymbol symbol)
+        ExchangeModel exchange, CryptoSymbol symbol)
     {
         int partId = position.PartList.Count + 1;
         var part = new CryptoPositionPart

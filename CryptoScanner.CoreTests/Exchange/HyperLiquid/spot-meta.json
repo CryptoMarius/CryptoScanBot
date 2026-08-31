@@ -1,0 +1,108 @@
+{
+  "universe": [
+    {
+      "name": "PURR/USDC",
+      "tokens": [
+        1,
+        0
+      ],
+      "index": 0,
+      "isCanonical": true,
+      "midPx": 0.11944
+    },
+    {
+      "name": "HYPE/USDC",
+      "tokens": [
+        150,
+        0
+      ],
+      "index": 107,
+      "isCanonical": false,
+      "midPx": 82.9075
+    },
+    {
+      "name": "UBTC/USDC",
+      "tokens": [
+        197,
+        0
+      ],
+      "index": 142,
+      "isCanonical": false,
+      "midPx": 78140.5
+    },
+    {
+      "name": "XAUT0/USDC",
+      "tokens": [
+        297,
+        0
+      ],
+      "index": 182,
+      "isCanonical": false,
+      "midPx": 4462.15
+    },
+    {
+      "name": "XAUT0/USDT0",
+      "tokens": [
+        297,
+        268
+      ],
+      "index": 209,
+      "isCanonical": false,
+      "midPx": 4350.0
+    },
+    {
+      "name": "TSLA/USDC",
+      "tokens": [
+        407,
+        0
+      ],
+      "index": 264,
+      "isCanonical": false,
+      "midPx": 1580.0
+    }
+  ],
+  "tokens": [
+    {
+      "name": "USDC",
+      "szDecimals": 8,
+      "weiDecimals": 8,
+      "index": 0
+    },
+    {
+      "name": "PURR",
+      "szDecimals": 0,
+      "weiDecimals": 5,
+      "index": 1
+    },
+    {
+      "name": "HYPE",
+      "szDecimals": 2,
+      "weiDecimals": 8,
+      "index": 150
+    },
+    {
+      "name": "UBTC",
+      "szDecimals": 5,
+      "weiDecimals": 10,
+      "index": 197
+    },
+    {
+      "name": "USDT0",
+      "szDecimals": 2,
+      "weiDecimals": 8,
+      "index": 268
+    },
+    {
+      "name": "XAUT0",
+      "szDecimals": 2,
+      "weiDecimals": 8,
+      "index": 297
+    },
+    {
+      "name": "TSLA",
+      "szDecimals": 2,
+      "weiDecimals": 8,
+      "index": 407
+    }
+  ]
+}

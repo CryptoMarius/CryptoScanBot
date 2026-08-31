@@ -39,9 +39,11 @@ public static class EmulatorBootstrap
 
         // How much 1m history the engine reserves (GetCandleFetchStart). The live scanner starts at
         // a day plus the barometer graph hours and lowers it to this once the barometer has been
-        // calculated (BarometerTools). The emulator draws no barometer graph and never runs that
-        // code, so it would keep fetching those extra hours for nothing — set the lowered value
-        // straight away. A day plus a few candles is what the 24-hour change calculation needs.
+        // calculated (BarometerTools). The emulator draws no barometer GRAPH - the extra hours exist
+        // only to fill that graph after a start - so it would keep fetching them for nothing: set the
+        // lowered value straight away. A day plus a few candles is what the 24-hour change
+        // calculation needs, and also what the 1d barometer of a replay reaches back for
+        // (BarometerReplay, since 31-08-2026; IndicatorWarmup.WarmupDepth keeps the same depth).
         CandleTools.SetInitialCandleCountFetch(24 * 60 + 10);
 
         // Setup dialog override wins over everything (settings.json AND -e argument), because

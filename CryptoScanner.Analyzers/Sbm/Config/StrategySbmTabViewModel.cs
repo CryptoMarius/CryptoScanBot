@@ -29,7 +29,7 @@ public partial class StrategySbmTabViewModel : ObservableObject
 
     internal void LoadConfig(SbmSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig("SBM", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategySbmSettingsViewModel.LoadConfig(settings);
         StrategySbmSettingsMethodsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);

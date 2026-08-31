@@ -4,6 +4,7 @@ using Avalonia.VisualTree;
 
 using CryptoScanner.Commands;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 
@@ -16,7 +17,7 @@ public partial class PositionClosedGridView : UserControlWithGrid<PositionViewMo
 {
     public PositionClosedGridView()
     {
-        _gridName = "PositionClosedGrid";
+        _gridName = GridNames.PositionClosed;
         _targetMenu = TargetMenu.Position;
         InitializeComponent();
 

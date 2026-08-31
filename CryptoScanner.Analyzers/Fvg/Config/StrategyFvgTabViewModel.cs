@@ -31,7 +31,7 @@ public partial class StrategyFvgTabViewModel : ObservableObject
 
     internal void LoadConfig(SettingsSignalStrategyFvg settings)
     {
-        SoundAndColorsViewModel.LoadConfig("FVG", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategyFvgSettingsViewModel.LoadConfig(settings);
         IntervalViewModel.LoadConfig(settings.IntervalList, CryptoIntervalPeriod.interval1h);
         StrategyEntryConditionsViewModel.LoadConfig(settings);

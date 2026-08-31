@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 91;
+    public readonly static int CurrentDatabaseVersion = 92;
 
 
     /// <summary>
@@ -2017,6 +2017,23 @@ public class DatabaseMigration
             try { database.Connection.Execute("alter table EmulatorRun add MinDurationSec REAL NULL", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table EmulatorRun add MaxDurationSec REAL NULL", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table EmulatorRun add DcaBreakdownJson TEXT NULL", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 31-08-2026 Trailing profit lock. The level the stop trails at has to survive a restart:
+        // recomputing it from the current candle would hand back the ground the position already
+        // gained, which is the one thing a trailing stop must never do.
+        if (CurrentVersion > version.Version && version.Version == 91)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Position add TrailingStopPrice TEXT NULL", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

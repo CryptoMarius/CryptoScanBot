@@ -544,6 +544,10 @@ public static class EmulatorDb
                 database.Connection.Execute(
                     "delete from Zone where EmulatorRunId = @id", new { id = runId }, transaction);
                 database.Connection.Execute(
+                    "delete from AssetSnapshot where EmulatorRunId = @id", new { id = runId }, transaction);
+                database.Connection.Execute(
+                    "delete from AssetAdjustment where EmulatorRunId = @id", new { id = runId }, transaction);
+                database.Connection.Execute(
                     "delete from EmulatorRun where Id = @id", new { id = runId }, transaction);
             }
             transaction.Commit();
@@ -589,6 +593,10 @@ public static class EmulatorDb
                 "delete from Signal where EmulatorRunId is not null", transaction: transaction);
             database.Connection.Execute(
                 "delete from Zone where EmulatorRunId is not null", transaction: transaction);
+            database.Connection.Execute(
+                "delete from AssetSnapshot where EmulatorRunId is not null", transaction: transaction);
+            database.Connection.Execute(
+                "delete from AssetAdjustment where EmulatorRunId is not null", transaction: transaction);
             database.Connection.Execute("delete from EmulatorRun", transaction: transaction);
 
             // Reset the auto-increment counters so the next run starts at id 1 again.

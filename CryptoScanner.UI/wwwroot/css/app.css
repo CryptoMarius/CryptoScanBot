@@ -1122,6 +1122,34 @@ label.debug-item {
     cursor: pointer;
 }
 
+/* A dimmed line of explanation inside a groupbox, for the small grey TextBlock the Avalonia views
+   put under a block of settings. It is not a label/control pair, so it spans both grid columns. */
+.settings-note {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding: 2px 5px;
+}
+
+/* A multi-select setting: one checkbox per member of an enum. It sits in the control column next to
+   its caption like any other field, and wraps onto a second line rather than widening that column -
+   seven candle patterns next to each other push the whole groupbox out of shape. */
+.enum-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 14px;
+    max-width: 420px;
+}
+
+.enum-list-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
 /* A control plus its unit text as ONE grid cell. */
 .field-control {
     display: inline-flex;
@@ -2024,6 +2052,10 @@ code {
     background: #4a9eff;
 }
 
+.chart-swatch-orange {
+    background: #ff9f43;
+}
+
 .dashboard-line-chart {
     width: 100%;
     height: auto;
@@ -2352,17 +2384,39 @@ code {
 
 .assets-total-input {
     width: 100%;
+    text-align: right;
 }
 
 /* Grid ColumnDefinitions="Auto,140,*": label, amount, button. */
-.assets-reset {
+.assets-reset,
+.assets-add {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
+/* Grid ColumnDefinitions="Auto,90,Auto,120,*": coin, amount, button. */
+.assets-add-name {
+    width: 90px;
+}
+
+.assets-add-amount {
+    width: 120px;
+    text-align: right;
+}
+
+/* Without the spinner buttons, the same way the Avalonia NumericUpDown has them switched off: the
+   amount is typed, and stepping to it in increments of 1000 is of no use. */
 .assets-start-capital {
     width: 140px;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.assets-start-capital::-webkit-outer-spin-button,
+.assets-start-capital::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 

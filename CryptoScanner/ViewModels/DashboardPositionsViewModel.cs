@@ -8,6 +8,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trader;
 
 using Dapper;
 
@@ -145,6 +146,9 @@ public partial class DashboardPositionsViewModel : ObservableObject
     private string _totalProfitPercentageFraction = "";
 
     [ObservableProperty]
+    private PlotModel? _chartCapitalPerDay;
+
+    [ObservableProperty]
     private PlotModel? _chartPositionsPerDay;
 
     [ObservableProperty]
@@ -160,6 +164,24 @@ public partial class DashboardPositionsViewModel : ObservableObject
     private PlotModel? _chartDoorlooptijden;
 
     private List<QueryPositionData> QueryPositionDataList = [];
+
+    // The capital per day, from the AssetSnapshot table. Unlike everything else on this dashboard
+    // this is not derived from the positions but read from the balances as they were on that day,
+    // so it also contains what is still sitting in open positions.
+    //
+    // Filled on first use instead of by a field initialiser. An initialiser runs in the constructor,
+    // and the jit resolves every type a method mentions before it executes a line of it, so a
+    // CryptoScanner.Core without AssetSnapshotDay would make the CONSTRUCTOR of this view model
+    // throw a TypeLoadException - and a view model that cannot be built takes the whole tab with it.
+    // The Photino side hit exactly that on 30/31-08-2026; see the remarks on
+    // DashboardPositionService.GrowthData. RefreshInformationAsync already catches what the refresh
+    // itself throws, so keeping the type out of the constructor is all that was missing here.
+    private List<AssetSnapshotTools.AssetSnapshotDay>? assetSnapshotDayList;
+    private List<AssetSnapshotTools.AssetSnapshotDay> AssetSnapshotDayList
+    {
+        get => assetSnapshotDayList ??= [];
+        set => assetSnapshotDayList = value;
+    }
 
     public DashboardPositionsViewModel()
     {
@@ -221,6 +243,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
         TotalProfitPercentageFraction = "";
 
         // Clear charts
+        AssetSnapshotDayList.Clear();
+        ChartCapitalPerDay = null;
         ChartPositionsPerDay = null;
         ChartProfitsPerDay = null;
         ChartProfitPercentagePerDay = null;
@@ -269,6 +293,9 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
                 QuoteData = quoteData;
                 GetQueryTradeData();
+                // Live snapshots, so without a run id. The value is in
+                // AssetSnapshotTools.ReferenceCoin and therefore does not follow the quote above.
+                AssetSnapshotDayList = AssetSnapshotTools.LoadDailyTotals(null);
                 DoAllCharts();
                 DoAdditionalData();
             });
@@ -365,11 +392,103 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private void DoAllCharts()
     {
+        ChartCapitalPerDay = CreateChartCapitalPerDay();
         ChartPositionsPerDay = CreateChartPositionsPerDay();
         ChartProfitPercentagePerDay = CreateChartProfitPercentagePerDay();
         ChartProfitsPerDay = CreateChartProfitsPerDay();
         ChartInvestedReturnedPerDay = CreateChartInvestedReturnedPerDay();
         ChartDoorlooptijden = CreateChartDoorlooptijden();
+    }
+
+    private PlotModel CreateChartCapitalPerDay()
+    {
+        var model = new PlotModel
+        {
+            Title = $"Capital per day ({AssetSnapshotTools.ReferenceCoin})",
+            TextColor = Const.ChartTextColor,
+            Background = Const.ChartSurfaceColor
+        };
+
+        model.Axes.Add(new DateTimeAxis
+        {
+            Position = AxisPosition.Bottom,
+            StringFormat = "dd",
+            MajorGridlineStyle = LineStyle.Solid,
+            MajorGridlineColor = OxyColor.FromArgb(80, 255, 255, 255),
+            MinorGridlineStyle = LineStyle.Dot,
+            MinorGridlineColor = OxyColor.FromArgb(40, 255, 255, 255),
+            AxislineColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = Const.ChartTextColor,
+        });
+
+        model.Axes.Add(new LinearAxis
+        {
+            Position = AxisPosition.Left,
+            // Not starting at zero: the interesting part is the movement on top of the start
+            // capital, and a scale from zero flattens that into a straight line.
+            MajorGridlineStyle = LineStyle.Solid,
+            MajorGridlineColor = OxyColor.FromArgb(80, 255, 255, 255),
+            AxislineColor = OxyColors.White,
+            TextColor = Const.ChartTextColor,
+            AxislineStyle = LineStyle.Solid,
+            StringFormat = "N2",
+        });
+
+        var series = new LineSeries
+        {
+            Title = "Capital",
+            Color = OxyColors.DodgerBlue,
+            StrokeThickness = 2,
+            MarkerType = MarkerType.Circle,
+            MarkerSize = 3,
+            MarkerFill = OxyColors.DodgerBlue,
+            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{4:N2}",
+        };
+
+        foreach (AssetSnapshotTools.AssetSnapshotDay day in AssetSnapshotDayList)
+            series.Points.Add(new DataPoint(DateTimeAxis.ToDouble(day.Date), (double)day.Value));
+
+        model.Series.Add(series);
+
+        // The same line with everything the user booked in or out by hand taken out of it, so a
+        // deposit does not read as a very good day. Only drawn when there is something to correct -
+        // otherwise it lies exactly on top of the line above and only adds a legend entry.
+        if (AssetSnapshotDayList.Any(d => d.Adjustment != 0))
+        {
+            var withoutAdjustments = new LineSeries
+            {
+                Title = "Without corrections",
+                Color = OxyColors.Orange,
+                StrokeThickness = 2,
+                LineStyle = LineStyle.Dash,
+                TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{4:N2}",
+            };
+
+            foreach (AssetSnapshotTools.AssetSnapshotDay day in AssetSnapshotDayList)
+                withoutAdjustments.Points.Add(new DataPoint(DateTimeAxis.ToDouble(day.Date), (double)day.ValueWithoutAdjustments));
+
+            model.Series.Add(withoutAdjustments);
+            model.Legends.Add(new Legend
+            {
+                LegendPosition = LegendPosition.RightTop
+            });
+        }
+
+        // The line the run started on, so a glance says whether the capital is above or below it
+        if (AssetSnapshotDayList.Count > 0)
+        {
+            model.Annotations.Add(new LineAnnotation
+            {
+                Type = LineAnnotationType.Horizontal,
+                Y = (double)AssetSnapshotDayList[0].Value,
+                Color = OxyColors.White,
+                StrokeThickness = 1,
+                LineStyle = LineStyle.Dash,
+            });
+        }
+
+        return model;
     }
 
     private PlotModel CreateChartPositionsPerDay()

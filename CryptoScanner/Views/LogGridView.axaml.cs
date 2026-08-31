@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 
@@ -13,7 +14,7 @@ public partial class LogGridView : UserControlWithGrid<LogViewModel>
 {
     public LogGridView()
     {
-        _gridName = "LogGrid";
+        _gridName = GridNames.Log;
         _targetMenu = TargetMenu.Log;
         InitializeComponent();
 

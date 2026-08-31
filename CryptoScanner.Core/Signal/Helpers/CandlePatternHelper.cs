@@ -1,5 +1,6 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Core.Signal.Helpers;
 
@@ -74,6 +75,43 @@ public static class CandlePatternHelper
             CryptoCandlePattern.Tweezer => previous is not null && IsTweezer(last, previous.Value, side, settings),
             _ => false,
         };
+
+
+    /// <summary>
+    /// Whether the candles form ANY of the named patterns, and which one did. The names are members
+    /// of <see cref="CryptoCandlePattern"/>; the first one in the list that matches wins, so the
+    /// declaration order of the setting decides what a candle forming two shapes is reported as.
+    /// <para>
+    /// An unknown name is a hard error rather than a silent miss. A typo would otherwise reject every
+    /// signal and read exactly like "the strategy produced nothing", which is the most expensive
+    /// thing to diagnose in this codebase. <paramref name="setting"/> names the setting the list came
+    /// from, so the message points at the place that has to be corrected. Because the first match
+    /// wins, a name behind one that already matched is not reached on that candle - the throw then
+    /// comes on the first candle where none of the names before it fit.
+    /// </para>
+    /// </summary>
+    public static bool MatchesAny(List<string> names, CryptoTradeSide side,
+        in CryptoCandle last, CryptoCandle? previous, CryptoCandle? before, CandlePatternSettings settings,
+        string setting, out CryptoCandlePattern matched)
+    {
+        matched = default;
+        foreach (string name in names)
+        {
+            if (!Enum.TryParse(name, ignoreCase: true, out CryptoCandlePattern pattern))
+            {
+                throw new InvalidOperationException(
+                    $"{setting} contains '{name}', which is not a CryptoCandlePattern");
+            }
+
+            if (Matches(pattern, side, last, previous, before, settings))
+            {
+                matched = pattern;
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 
     /// <summary>
@@ -195,17 +233,32 @@ public static class CandlePatternHelper
 public class CandlePatternSettings
 {
     /// <summary>A body at or under this counts as small (hammer, and the middle of a morning star).</summary>
+    [SettingCaption("Small body max %", Unit = "of the candle range",
+        Tooltip = "A body at or under this counts as small: the hammer's body, and the hesitant "
+            + "middle candle of a morning star.")]
     public decimal MaxBodyPercentage { get; set; } = 30m;
 
     /// <summary>A body at or over this counts as decisive (engulfing, the outer morning-star candles).</summary>
+    [SettingCaption("Decisive body min %", Unit = "of the candle range",
+        Tooltip = "A body at or over this counts as decisive: both candles of an engulfing or a "
+            + "harami, and the two outer candles of a morning star. Keeps two nearly flat candles "
+            + "from engulfing each other.")]
     public decimal MinBodyPercentage { get; set; } = 40m;
 
     /// <summary>How long the dominant wick has to be for a hammer or an inverted hammer.</summary>
+    [SettingCaption("Dominant wick min %", Unit = "of the candle range",
+        Tooltip = "How long the long wick has to be for a hammer (below the body) or an inverted "
+            + "hammer (above it).")]
     public decimal MinWickPercentage { get; set; } = 60m;
 
     /// <summary>And how short the wick at the other end has to stay.</summary>
+    [SettingCaption("Opposite wick max %", Unit = "of the candle range",
+        Tooltip = "And how short the wick at the other end has to stay for that same hammer.")]
     public decimal MaxOppositeWickPercentage { get; set; } = 10m;
 
     /// <summary>How far apart two lows or highs may be and still count as equal.</summary>
+    [SettingCaption("Tweezer tolerance %", Unit = "of the candle range",
+        Tooltip = "How far apart the two lows (or highs) of a tweezer may be and still count as "
+            + "equal. An exact match between two decimal prices essentially never happens.")]
     public decimal TweezerTolerancePercentage { get; set; } = 5m;
 }

@@ -60,52 +60,12 @@ public class Candles
 
 
             // Build the last candle(s) from scratch using the 1m candles
-            if (!GlobalData.IsEmulatorMode && last.OpenTime != 0)
+            // Shared with the Photino chart, see CandleTools.BuildRunningCandles for the reasoning.
+            foreach (CryptoCandle c in CandleTools.BuildRunningCandles(symbol, symbolInterval.Interval,
+                last.OpenTime, minDate, maxDate))
             {
-                CandleTime loopHighInterval = last.OpenTime + symbolInterval.Interval.Duration;
-                CryptoSymbolInterval symbolInterval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-                while (symbolInterval1m.CandleList.TryGetValue(loopHighInterval, out CryptoCandle _))
-                {
-                    CandleTime loop1m = loopHighInterval;
-                    CandleTime loop1mMax = loopHighInterval + symbolInterval.Interval.Duration;
-
-                    CandleTime openTime = new(0);
-                    decimal open = 0, high = 0, low = 0, close = 0;
-                    while (loop1m < loop1mMax && symbolInterval1m.CandleList.TryGetValue(loop1m, out CryptoCandle c))
-                    {
-                        if (openTime == 0)
-                        {
-                            openTime = c!.OpenTime;
-                            open = c.Open;
-                            low = c.Open;
-                            high = c.Open;
-                        }
-                        if (c.Low < low)
-                            low = c.Low;
-                        if (c.High > high)
-                            high = c.High;
-                        close = c.Close;
-                        loop1m += symbolInterval1m.Interval.Duration;
-                    }
-                    if (openTime > 0 && openTime >= minDate && openTime <= maxDate)
-                    {
-                        CryptoCandle newCandle = new()
-                        {
-                            TickDecimals = symbol.PriceDecimals,
-                            OpenTime = openTime,
-                            Open = open,
-                            High = high,
-                            Low = low,
-                            Close = close,
-                            Volume = 0,
-                        };
-
-                        var c = newCandle;
-                        var curHighLow = new HighLowItem(newCandle.OpenTime.Minutes, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close);
-                        candleSerie.Items.Add(curHighLow);
-                    }
-                    loopHighInterval += symbolInterval.Interval.Duration;
-                }
+                var curHighLow = new HighLowItem(c.OpenTime.Minutes, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close);
+                candleSerie.Items.Add(curHighLow);
             }
         }
         chart.Series.Add(candleSerie);

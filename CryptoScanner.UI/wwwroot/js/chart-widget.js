@@ -994,6 +994,9 @@ window.ChartWidget = {
 
             // Off the chart the last candle is shown again, so the bar is never empty
             self._renderOhlcv(candle || self._lastCandle());
+
+            // The panes below are charts of their own and would keep no crosshair at all
+            self._broadcastCrosshair('main', param && param.time !== undefined ? param.time : null);
         });
     },
 
@@ -1103,7 +1106,30 @@ window.ChartWidget = {
         // Keep the handler: the sub-charts are destroyed and rebuilt on every setData, and the
         // subscription this puts on the MAIN chart outlives them unless it is cancelled.
         var mainHandler = this._syncTimeScale(chart);
-        return { chart: chart, container: container, series: {}, mainRangeHandler: mainHandler };
+        var entry = { chart: chart, container: container, series: {}, mainRangeHandler: mainHandler };
+
+        // One bar per candle, without a value: whitespace, which draws nothing and scales nothing.
+        //
+        // The panes follow each other by LOGICAL range - bar numbers, not times - and a chart
+        // numbers the bars of its own series. An indicator hands over no value for the bars it
+        // needs to warm up (RSI 14, MACD 25), so bar 0 of the MACD pane was candle 25 and the whole
+        // pane sat a warmup to the left of the candles: the position marker, the crosshair and the
+        // time axis under the bottom pane all pointed at the wrong candle. With this the pane holds
+        // exactly the bars the candles do, whatever its indicators leave out.
+        //
+        // Kept out of entry.series on purpose: that is where _attachVerticals and the crosshair
+        // pick an anchor series, and a series without a single value answers neither
+        // priceToCoordinate nor coordinateToPrice.
+        try {
+            var spacer = chart.addLineSeries({
+                lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false,
+            });
+            spacer.setData((this._lastCandles || []).map(function (c) { return { time: c.time }; }));
+            entry.spacer = spacer;
+        }
+        catch (e) { }
+
+        return entry;
     },
 
     /// Two-way link between the main chart and one sub-panel. Returns the handler installed on the
@@ -1173,6 +1199,181 @@ window.ChartWidget = {
             try { entry.chart.applyOptions({ timeScale: { visible: order[j] === bottom } }); }
             catch (e) { }
         }
+    },
+
+    /// Give every pane the same price-axis width, so the four charts line up.
+    ///
+    /// Each pane is a chart of its own and sizes its price axis to its own labels: "1.1400" on the
+    /// candles, "40K" on the volume, "Signal -0.01" on the MACD. A wider axis leaves a narrower
+    /// plot, so the SAME logical range was drawn over a different number of pixels in every pane -
+    /// the panes drifted apart towards the right, and the time axis under the bottom one no longer
+    /// stood under the candles it belongs to. Widening them all to the widest one puts every pane
+    /// on the same plot width, and the axis back under its own bars.
+    _alignPriceScales: function () {
+        var order = ['main', 'volume', 'oscillator', 'macd'];
+        var widest = 0;
+
+        for (var i = 0; i < order.length; i++) {
+            var entry = this._charts[order[i]];
+            if (!entry) continue;
+            try {
+                var width = entry.chart.priceScale('right').width();
+                if (isFinite(width) && width > widest) widest = width;
+            }
+            catch (e) { }
+        }
+
+        // Nothing painted yet - a price scale reports 0 until its first frame. The pass scheduled
+        // after the layout has settled does the work then.
+        if (widest <= 0) return;
+
+        var narrowed = false;
+        for (var j = 0; j < order.length; j++) {
+            var pane = this._charts[order[j]];
+            if (!pane) continue;
+
+            var own = 0;
+            try { own = pane.chart.priceScale('right').width(); } catch (e) { continue; }
+
+            // minimumWidth, not a fixed width: a pane that needs more keeps what it needs, and the
+            // next pass measures that as the new widest. It settles after one round.
+            var current = 0;
+            try { current = pane.chart.options().rightPriceScale.minimumWidth || 0; } catch (e) { }
+            if (current !== widest) {
+                try { pane.chart.applyOptions({ rightPriceScale: { minimumWidth: widest } }); }
+                catch (e) { }
+            }
+
+            if (own >= widest) continue;
+
+            // The option alone changes nothing: lightweight-charts only recomputes the axis width
+            // while it lays the chart out, and it skips laying out when the size did not change -
+            // which applyOptions on anything but width/height never does. One pixel taller and
+            // back forces the pass. Measured on 4.2.0: without this the MACD pane kept its own
+            // narrower axis and the panes stayed out of line.
+            try {
+                var w = pane.container.clientWidth;
+                var h = pane.container.clientHeight;
+                pane.chart.resize(w, h + 1, true);
+                pane.chart.resize(w, h, true);
+                narrowed = true;
+            }
+            catch (e) { }
+        }
+
+        if (!narrowed) return;
+
+        // A resize keeps the bar spacing and moves the visible range instead, so a pane whose plot
+        // just got narrower now shows a slightly different stretch of history than the rest. Put
+        // them all back on the main chart's range - the same thing _syncTimeScale does on a scroll.
+        var range = null;
+        try { range = this._charts.main.chart.timeScale().getVisibleLogicalRange(); } catch (e) { }
+        if (!range) return;
+
+        var self = this;
+        this._syncing = true;
+        try {
+            order.forEach(function (key) {
+                if (key === 'main') return;
+                var entry = self._charts[key];
+                if (!entry) return;
+                try { entry.chart.timeScale().setVisibleLogicalRange(range); } catch (e) { }
+            });
+        }
+        finally {
+            this._syncing = false;
+        }
+    },
+
+    /// Align once the panes have painted. A price scale reports a width of zero until its first
+    /// frame, and a freshly built sub-panel paints in the frame after this is scheduled - so one
+    /// callback is not enough to be sure of catching them. A handful of frames is, and a pass over
+    /// panes that already line up costs a measurement and nothing else.
+    _scheduleAlign: function (frames) {
+        var self = this;
+        var left = frames || 3;
+
+        var step = function () {
+            self._alignPriceScales();
+            if (--left <= 0) return;
+            if (window.requestAnimationFrame) window.requestAnimationFrame(step);
+            else setTimeout(step, 16);
+        };
+
+        if (window.requestAnimationFrame) window.requestAnimationFrame(step);
+        else setTimeout(step, 16);
+    },
+
+    /// Draw the crosshair of whichever pane the mouse is over in the other three as well.
+    ///
+    /// The panes are separate charts, so the vertical line stopped at the bottom of the candles and
+    /// the volume, RSI/stochastic and MACD below it gave no clue which bar was being read. Every
+    /// pane broadcasts the time under the cursor and the others place their crosshair on it.
+    ///
+    /// The price handed over sits ABOVE the top of the receiving pane on purpose: setCrosshairPosition
+    /// always draws both lines, and a price off the pane leaves the horizontal one - and its axis
+    /// label - outside the visible area. What stays is the vertical line, which is the point.
+    _broadcastCrosshair: function (sourceKey, time) {
+        if (this._crosshairSyncing) return;
+
+        // Same time as the last round: nothing to redraw, and it stops a chart that answers its own
+        // setCrosshairPosition with another crosshair event from bouncing the four panes forever.
+        if (time === this._crosshairTime) return;
+        this._crosshairTime = time;
+
+        var self = this;
+        this._crosshairSyncing = true;
+        try {
+            Object.keys(this._charts).forEach(function (key) {
+                if (key === sourceKey) return;
+
+                var entry = self._charts[key];
+                if (!entry) return;
+
+                try {
+                    if (time === null || time === undefined) {
+                        entry.chart.clearCrosshairPosition();
+                        return;
+                    }
+
+                    var seriesKeys = Object.keys(entry.series || {});
+                    if (seriesKeys.length === 0) return;
+
+                    var series = entry.series[seriesKeys[0]];
+                    var price = series.coordinateToPrice(-20);
+                    if (price === null || !isFinite(price)) return;
+
+                    entry.chart.setCrosshairPosition(price, time, series);
+                }
+                catch (e) { }
+            });
+        }
+        finally {
+            this._crosshairSyncing = false;
+        }
+    },
+
+    _crosshairTime: null,
+    _crosshairSyncing: false,
+
+    /// Let the sub-panels broadcast their crosshair too, so hovering the MACD marks the candle
+    /// above it. They are destroyed and rebuilt on every setData and their subscriptions go with
+    /// them, so this is called again each time; the main chart subscribes once, in _createMainChart.
+    _syncCrosshairs: function () {
+        var order = ['volume', 'oscillator', 'macd'];
+        var self = this;
+
+        order.forEach(function (key) {
+            var entry = self._charts[key];
+            if (!entry) return;
+
+            try {
+                entry.chart.subscribeCrosshairMove(function (param) {
+                    self._broadcastCrosshair(key, param && param.time !== undefined ? param.time : null);
+                });
+            }
+            catch (e) { }
+        });
     },
 
     /// Drop every sub-panel, subscription included.
@@ -1483,6 +1684,12 @@ window.ChartWidget = {
         // Which pane carries the time axis depends on which of them exist, so this comes last
         this._applyBottomTimeScale();
 
+        // Fresh panels: they carry no crosshair subscription yet, and their price axes are as wide
+        // as their own labels until they are pulled into line. Aligned once more after the layout
+        // has settled, at the end of the deferred block below.
+        this._syncCrosshairs();
+        this._alignPriceScales();
+
         // Only reset the view when the chart shows something else than before. Fitting on every
         // call threw away the zoom and scroll position on each overlay toggle.
         if (this._pendingFit) {
@@ -1530,6 +1737,10 @@ window.ChartWidget = {
             // window with no bars in it makes the price question meaningless.
             self._ensureCandlesInView(candles);
             self._ensureCandlesVisible(candles);
+
+            // Price axis widths are only final once the panes have painted, and _ensureCandlesVisible
+            // may have just changed the range - and with it the number of digits on the axis.
+            self._scheduleAlign(3);
         }, 0);
     },
 

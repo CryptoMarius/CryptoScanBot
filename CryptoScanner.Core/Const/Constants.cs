@@ -14,4 +14,13 @@ public static class Constants
     // same measurement; see BarometerCandleFields for which figure lives where.
     public const string SymbolNameBarometerExtra = "$BMX"; // Second page of the price barometer
 
+    /// <summary>
+    /// How often a replay writes a barometer measurement that belongs to no position, so a run keeps
+    /// its own market context (see CryptoBarometerSnapshot). Once an hour over seven months is about
+    /// 5.000 measurements per quote coin per interval, which is nothing next to a database that
+    /// counts in gigabytes - and one per minute would be sixty times that for a figure that moves
+    /// slowly on the intervals it is measured over.
+    /// </summary>
+    public const int BarometerHeartbeatMinutes = 60;
+
 }

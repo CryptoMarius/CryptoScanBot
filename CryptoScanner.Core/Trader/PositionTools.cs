@@ -297,6 +297,61 @@ public static class PositionTools
     }
 
 
+    /// <summary>
+    /// Remove one position and everything that hangs off it from the database.
+    ///
+    /// <para>
+    /// The orders and the trades go FIRST. They are only reachable through PositionStep.OrderId and
+    /// Order2Id, so once the steps are gone there is no way left to find them - which is exactly what
+    /// used to happen: deleting a position left its orders and trades behind for good and those two
+    /// tables only ever grew. The emulator has cleaned up after itself this way per run for a while
+    /// (EmulatorDb.DeleteRuns); this is the same recipe for one position.
+    /// </para>
+    /// </summary>
+    public static void DeleteFromDatabase(CryptoDatabase database, CryptoPosition position)
+    {
+        using var transaction = database.BeginTransaction();
+
+        // Order2Id is the second order of a step (a stop order and the limit order behind it), and it
+        // is null on most steps - hence the union rather than one list.
+        const string orderIds =
+            "select OrderId from PositionStep where PositionId = @id " +
+            "union select Order2Id from PositionStep where Order2Id is not null and PositionId = @id";
+
+        database.Connection.Execute($"delete from [Trade] where OrderId in ({orderIds})", new { id = position.Id }, transaction);
+        database.Connection.Execute($"delete from [Order] where OrderId in ({orderIds})", new { id = position.Id }, transaction);
+        database.Connection.Execute("delete from PositionStep where PositionId = @id", new { id = position.Id }, transaction);
+        database.Connection.Execute("delete from PositionPart where PositionId = @id", new { id = position.Id }, transaction);
+        database.Connection.Execute("delete from Position where Id = @id", new { id = position.Id }, transaction);
+
+        transaction.Commit();
+    }
+
+
+    /// <summary>
+    /// Remove every position and everything that hangs off it from the database.
+    ///
+    /// <para>
+    /// The orders and trades are emptied outright instead of being looked up per position: paper
+    /// trading is the only thing that writes them (see <see cref="PaperTrading"/>), so with every
+    /// position gone there is nothing left that could still belong to one. That also clears whatever
+    /// earlier deletes orphaned, back when the two tables were not cleaned up at all.
+    /// </para>
+    /// </summary>
+    public static void DeleteAllFromDatabase(CryptoDatabase database)
+    {
+        using var transaction = database.BeginTransaction();
+
+        database.Connection.Execute("delete from [Trade]", transaction);
+        database.Connection.Execute("delete from [Order]", transaction);
+        database.Connection.Execute("delete from PositionStep", transaction);
+        database.Connection.Execute("delete from PositionPart", transaction);
+        database.Connection.Execute("delete from Position", transaction);
+
+        transaction.Commit();
+    }
+
+
     public static CryptoPosition? HasPosition(Model.CryptoExchange activeExchange, CryptoSymbol symbol)
     {
         if (activeExchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))

@@ -523,7 +523,7 @@
         _sidebarVisible = !StateService.GetSymbolPanelCollapsed();
 
         _symbolColumns = new GridColumnState<SymbolColumnEnum>(
-            "Symbol", StateService, SymbolColumnDefs,
+            GridNames.Symbol, StateService, SymbolColumnDefs,
             SymbolColumnEnum.Symbol);
 
         // SymbolService keeps itself up to date through the scanner messages; just take the

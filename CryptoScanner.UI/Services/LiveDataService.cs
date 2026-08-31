@@ -16,7 +16,7 @@ namespace CryptoScanner.UI.Services;
 
 public class LiveDataService : IDisposable
 {
-    private const string GridName = "LiveData";
+    private const string GridName = GridNames.LiveData;
 
     // The Avalonia grid is bounded by the lifetime of the window; here the list would grow
     // forever, so cap it the same way the log grid is capped.

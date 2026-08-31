@@ -6,9 +6,9 @@ using CryptoScanner.Core.Signal.Helpers;
 namespace CryptoScanner.Analyzers.CandlePattern.Signal;
 
 /// <summary>
-/// Fires on the candlestick reversal shape named in the settings. Long and short share everything;
-/// the side only decides how the shape is read, which is the point - a hammer and a hanging man are
-/// the same candle.
+/// Fires on any of the candlestick reversal shapes named in the settings. Long and short share
+/// everything; the side only decides how the shape is read, which is the point - a hammer and a
+/// hanging man are the same candle.
 /// <para>
 /// No indicators. This exists to answer one question: does reacting to these shapes work as well as
 /// any other reasonable strategy? Adding a filter first would leave that unanswered, so anything
@@ -26,26 +26,35 @@ public class CandlePatternBase : SignalCreateBase
         ExtraText = "";
         CandlePatternStrategySettings settings = CandlePatternPlugin.Settings;
 
+        // Nothing ticked in the settings. Said out loud, because a strategy that produces nothing is
+        // the most expensive thing to diagnose in this codebase.
+        if (settings.Patterns.Count == 0)
+        {
+            ExtraText = "no pattern selected";
+            return false;
+        }
+
         if (!GetPrevCandle(CandleLast!, out MyData? previous))
             return false;
 
         // Only the three-candle shapes read this far back, and asking for a candle that is not there
-        // would drop every signal at the start of a run.
-        MyData? before = null;
-        if (settings.Pattern == CryptoCandlePattern.MorningStar && !GetPrevCandle(previous, out before))
-            return false;
+        // would drop every signal at the start of a run. Missing simply means those shapes cannot
+        // match, which CandlePatternHelper already handles - a two-candle shape in the same list
+        // still fires.
+        GetPrevCandle(previous, out MyData? before);
 
-        if (!CandlePatternHelper.Matches(settings.Pattern, SignalSide, CandleLast!.Candle,
-                previous!.Candle, before?.Candle, settings.Shape))
+        if (!CandlePatternHelper.MatchesAny(settings.Patterns, SignalSide, CandleLast!.Candle,
+                previous!.Candle, before?.Candle, settings.Shape,
+                nameof(settings.Patterns), out CryptoCandlePattern matched))
         {
-            ExtraText = $"no {settings.Pattern}";
+            ExtraText = $"no {string.Join("/", settings.Patterns)}";
             return false;
         }
 
         if (!PrecededByAMoveTheOtherWay(settings, previous))
             return false;
 
-        ExtraText = $"{settings.Pattern}";
+        ExtraText = $"{matched}";
         return true;
     }
 

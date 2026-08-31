@@ -82,4 +82,24 @@ public sealed class SettingCaptionAttribute(string caption) : Attribute
     /// saving, the same as an <c>IsVisible="false"</c> control over there.
     /// </summary>
     public bool Hidden { get; init; }
+
+    /// <summary>
+    /// The enum a <c>List&lt;string&gt;</c> setting holds the member names of, which turns it into a
+    /// row of checkboxes - one per member - instead of a text box. Names are stored rather than the
+    /// enum values themselves because the settings file has no string converter for enums: a
+    /// <c>List&lt;CryptoCandlePattern&gt;</c> would end up in the settings and in the emulator queue
+    /// as <c>[0,3]</c>, which is unreadable by hand and silently changes meaning the moment a member
+    /// is inserted in the enum.
+    /// </summary>
+    public Type? EnumType { get; init; }
+
+    /// <summary>
+    /// Draw the properties of this setting's own object here instead of the object itself, for a
+    /// settings class that groups a block of values together (CandlePatternSettings behind the Shape
+    /// of the candle-pattern strategy). The children keep their own captions and land in this
+    /// setting's <see cref="Group"/>, so they get a groupbox of their own; the object itself is never
+    /// drawn. One level deep - a child that is an object again is skipped, the way an unsupported
+    /// property always was.
+    /// </summary>
+    public bool Expand { get; init; }
 }

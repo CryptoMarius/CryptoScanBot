@@ -17,7 +17,7 @@ public class StorsiConfigView : IConfigView
 
     public void LoadConfig(SettingsSignalStrategyBase settings)
     {
-        _viewModel.LoadConfig("NWE", ToConcrete(settings));
+        _viewModel.LoadConfig(ToConcrete(settings));
     }
 
     public void SaveConfig(SettingsSignalStrategyBase settings)

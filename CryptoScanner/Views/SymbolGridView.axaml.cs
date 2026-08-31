@@ -2,6 +2,7 @@
 using Avalonia.Input;
 
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 
@@ -15,7 +16,7 @@ public partial class SymbolGridView : UserControlWithGrid<SymbolViewModel>
 {
     public SymbolGridView()
     {
-        _gridName = "SymbolGrid";
+        _gridName = GridNames.Symbol;
         _targetMenu = TargetMenu.Symbol;
         InitializeComponent();
 

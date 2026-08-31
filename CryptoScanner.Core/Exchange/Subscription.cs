@@ -130,6 +130,20 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     /// </summary>
     public virtual bool IsExpectingData => true;
 
+    /// <summary>
+    /// Numbers about WHY this subscription is or is not reporting activity, appended to the restart
+    /// line in <see cref="SubscriptionManager.CheckSubscriptions"/>. Empty for subscription types that
+    /// have nothing to add.
+    /// <para>
+    /// Added because the restart line could only say that a subscription was inactive, never why - and
+    /// on HyperLiquid Perpetual, 31-08-2026, the same 38 subscriptions were rebuilt every ten minutes
+    /// for hours while the rebuild demonstrably repaired nothing: the age reported at the next check
+    /// was exactly the time since the previous rebuild, so those subscriptions delivered nothing at
+    /// all in between. Three causes produce that same line and these numbers tell them apart.
+    /// </para>
+    /// </summary>
+    public virtual string ActivityDiagnostics => "";
+
     public abstract Task<WebSocketResult<UpdateSubscription>?> Subscribe();
 
 

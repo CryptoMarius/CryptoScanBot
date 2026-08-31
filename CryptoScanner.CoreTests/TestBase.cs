@@ -217,6 +217,11 @@ public class TestBase
         database.Connection.Execute($"delete from [Position]");
         database.Connection.Execute($"delete from [Order]");
         database.Connection.Execute($"delete from [Trade]");
+        // The daily capital history and the ledger of manual bookings hang off the balances above, so
+        // they go with them. Without this every test that corrects a balance through PaperAssetsEditor
+        // leaves rows behind for the rest of the suite (and for the next run) to trip over.
+        database.Connection.Execute($"delete from [AssetSnapshot]");
+        database.Connection.Execute($"delete from [AssetAdjustment]");
 
         GlobalData.ActiveExchange!.Data.Clear();
     }

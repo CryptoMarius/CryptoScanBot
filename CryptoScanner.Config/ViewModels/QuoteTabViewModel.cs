@@ -25,6 +25,9 @@ public partial class QuoteItem : ObservableObject
     private decimal amount;
     [ObservableProperty]
     private decimal percentage;
+    // Zero means "not filled in": the start capital from the trader settings is used instead
+    [ObservableProperty]
+    private decimal startCapital;
     [ObservableProperty]
     private Color backgroundColor;
     [ObservableProperty]
@@ -39,6 +42,7 @@ public partial class QuoteItem : ObservableObject
         MinPrice = quoteData.MinimalPrice;
         Amount = quoteData.EntryAmount;
         Percentage = (decimal)quoteData.EntryPercentage;
+        StartCapital = quoteData.StartCapital;
         BackgroundColor = quoteData.DisplayColor.ToAvaloniaColor();
         SymbolCount = quoteData.SymbolList.Count;
     }
@@ -67,6 +71,7 @@ public partial class QuoteTabViewModel : ObservableObject
             quoteData.MinimalPrice = quote.MinPrice;
             quoteData.EntryAmount = quote.Amount;
             quoteData.EntryPercentage = (float)quote.Percentage;
+            quoteData.StartCapital = quote.StartCapital;
             quoteData.DisplayColor = quote.BackgroundColor.ToCoreColor();
         }
     }

@@ -46,6 +46,15 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     [ObservableProperty]
     private decimal _entryMaxAdversePercentage = 0m; // %; 0 = no limit
 
+    // The reversal shapes an entry waits for, and the thresholds they are measured against. With
+    // shapes ticked the wait above stops being a delay and becomes a SEARCH WINDOW: the entry is
+    // taken on the first candle within it that forms one of them.
+    [ObservableProperty]
+    private CandlePatternListViewModel _entryPatternListViewModel = new();
+
+    [ObservableProperty]
+    private CandlePatternShapeViewModel _entryPatternShapeViewModel = new();
+
     [ObservableProperty]
     private bool _waitForStochRecovery = false;
 
@@ -85,6 +94,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         Ma200ConfirmationCandles = ec.Ma200ConfirmationCandles;
         EntryWaitCandles = ec.EntryWaitCandles;
         EntryMaxAdversePercentage = ec.EntryMaxAdversePercentage;
+        EntryPatternListViewModel.LoadConfig(ec.EntryWaitForPatterns);
+        EntryPatternShapeViewModel.LoadConfig(ec.EntryPatternShape);
         WaitForStochRecovery = ec.WaitForStochRecovery;
         WaitForRsiRecovery = ec.WaitForRsiRecovery;
 
@@ -114,6 +125,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         ec.Ma200ConfirmationCandles = Ma200ConfirmationCandles;
         ec.EntryWaitCandles = EntryWaitCandles;
         ec.EntryMaxAdversePercentage = EntryMaxAdversePercentage;
+        ec.EntryWaitForPatterns = EntryPatternListViewModel.SaveConfig();
+        EntryPatternShapeViewModel.SaveConfig(ec.EntryPatternShape);
         ec.WaitForStochRecovery = WaitForStochRecovery;
         ec.WaitForRsiRecovery = WaitForRsiRecovery;
 

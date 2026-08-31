@@ -106,6 +106,12 @@ public partial class CryptoPosition : CryptoData2
     // the stop was pulled to break-even, so CalculateSlPrices keeps it at BE and never loosens it again.
     public bool SlMovedToBreakEven { get; set; }
 
+    // The level a trailing profit lock currently sits at, 0 when it has not started (or when the
+    // profit lock is not trailing). Persisted for the same reason as SlMovedToBreakEven: without it
+    // a restart would recompute the stop from the current candle and hand back the ground the
+    // position had already gained.
+    public decimal TrailingStopPrice { get; set; }
+
     [Computed]
     public decimal MinEntry
     {

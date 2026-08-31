@@ -61,6 +61,7 @@ public sealed class ReplayRunner
     private long elapsedPipeline;
     private long elapsedZoneDrain;
     private long elapsedFlush;
+    private long elapsedBarometer;
 
     // Wall-clock of the whole RunAsync, and the up-front warmup (PrepareSymbol per symbol). These let
     // the Timing line reconcile against the real run time: the four per-tick buckets above only cover
@@ -96,6 +97,10 @@ public sealed class ReplayRunner
     // The 1m interval, resolved once. Only used when the base interval is coarser than 1m, to keep
     // the 1m CandleList filled for the engine parts that read it directly.
     private CryptoInterval oneMinuteInterval = null!;
+
+    // The market barometer of this run, or null when it is switched off (or when the run replays too
+    // few coins to measure one). See BarometerReplay.
+    private BarometerReplay? barometer;
 
 
     /// <summary>
@@ -233,7 +238,20 @@ public sealed class ReplayRunner
             // money, so two runs over the same period stay comparable.
             decimal startCapital = config.StartCapital > 0 ? config.StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital;
             PaperAssets.ResetAssets(exchange, startCapital);
-            GlobalData.AddTextToLogTab($"Start capital: {startCapital:N2} per quote coin");
+            // A filled default asset list is the starting point of the run, and then this amount is
+            // not used at all - worth saying, because the run label still carries it.
+            int assetDefaults = GlobalData.Settings.Trading.PaperAssetDefaults.Count;
+            if (assetDefaults > 0)
+                GlobalData.AddTextToLogTab($"Start capital: the {assetDefaults} default asset(s) of the settings");
+            else
+                GlobalData.AddTextToLogTab($"Start capital: {startCapital:N2} per quote coin, " +
+                    "except the ones with a start capital of their own");
+
+            // The first point of the capital line: the start capital, stamped with the first day of
+            // the run. The date is handed in because the clock is parked on the END of the replay
+            // window at this moment (see the preClock above), and a snapshot stamped there would put
+            // the start capital behind the result of the run.
+            AssetSnapshotTools.Capture(exchange, replayFrom.ToDateTime());
 
             // ───── Warmup all symbols up-front ──────────────────────────────────────
             long warmupStart = Stopwatch.GetTimestamp();
@@ -256,6 +274,49 @@ public sealed class ReplayRunner
                     ? $" ({EmulatorVolume.SymbolsWithoutDailyVolume} symbol(s) start at zero, no daily candle in the warmup)"
                     : ""));
 
+
+            // ───── Market barometer ─────────────────────────────────────────────────
+            // A replay used to run without one: the live calculation walks the full symbol pool on a
+            // timer and that timer does not run here. The result was not that barometer conditions
+            // were skipped but that they passed against a value that was never calculated, and that
+            // every position of every run carried a barometer of zero. Both are fixed here, and a
+            // condition that cannot be measured now stops the run instead of quietly deciding it.
+            List<string> barometerConditions = BarometerReplay.ActiveConditions();
+            if (config.CalculateBarometer)
+            {
+                barometer = new BarometerReplay(exchange, symbols);
+                if (!barometer.HasEnoughSymbols)
+                {
+                    if (barometerConditions.Count > 0)
+                        throw new InvalidOperationException(
+                            $"This run replays too few coins for a barometer ({barometer.SymbolCountText}) while " +
+                            $"{barometerConditions.Count} barometer condition(s) are set: {string.Join(", ", barometerConditions)}. " +
+                            $"A barometer needs at least {BarometerReplay.MinimumSymbols} coins per quote coin.");
+
+                    GlobalData.AddTextToLogTab($"Barometer: too few coins to measure one ({barometer.SymbolCountText}), " +
+                        "so it stays empty for this run");
+                    barometer = null;
+                }
+                else
+                {
+                    GlobalData.AddTextToLogTab($"Barometer: {barometer.SymbolCountText} coin(s), intervals {barometer.IntervalText}" +
+                        (barometerConditions.Count > 0 ? $", conditions: {string.Join(", ", barometerConditions)}" : ", no conditions"));
+                }
+            }
+            else if (barometerConditions.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    $"The barometer is switched off for this run while {barometerConditions.Count} barometer condition(s) are set: " +
+                    $"{string.Join(", ", barometerConditions)}. Those would be tested against a value that is never calculated, " +
+                    "which lets everything through or refuses everything without saying so.");
+            }
+            else
+            {
+                GlobalData.AddTextToLogTab("Barometer: switched off for this run");
+            }
+
+            if (barometer != null)
+                GlobalData.PositionCreated += barometer.PositionCreated;
 
             // ───── Determine chunks ─────────────────────────────────────────────────
             uint chunkMinutes = ChunkDays > 0 ? (uint)ChunkDays * 24 * 60 : 0;
@@ -365,6 +426,22 @@ public sealed class ReplayRunner
                     // ── Phase B: persist + zones (serial, deterministic order) ────────────────
                     await PersistAndCalculateZonesAsync();
 
+                    // The capital of this replayed day, once per day. Deliberately here in the
+                    // serial part: it walks the position list, and in phase A every symbol thread is
+                    // busy changing its own position. Costs a comparison of two dates per minute.
+                    AssetSnapshotTools.CaptureIfDue(exchange);
+
+                    // The barometer over the minute that has just closed, plus the rows the positions
+                    // of this minute queued. Also in the serial part on purpose: it reads the candle
+                    // lists of every symbol of the run, which phase A was busy filling.
+                    if (barometer != null)
+                    {
+                        long barometerStart = Stopwatch.GetTimestamp();
+                        barometer.Execute(closeTime - 1u);
+                        barometer.Flush();
+                        elapsedBarometer += Stopwatch.GetTimestamp() - barometerStart;
+                    }
+
                     processedBars += ticksThisMinute.Count;
                     int percent = totalBars > 0 ? Math.Min(100, 100 * processedBars / totalBars) : 0;
                     if (percent != lastReportedPercent)
@@ -428,6 +505,11 @@ public sealed class ReplayRunner
                 windowFrom = useChunks ? chunk.NextFrom : replayTo;
             }
 
+            // The last point of the capital line: the balances as the run leaves them. The clock is
+            // still on the last replayed minute here - FinishRun puts it back on real time - so this
+            // overwrites the snapshot of that day with the end result of the run.
+            AssetSnapshotTools.Capture(exchange, GlobalData.Clock.UtcNow);
+
             Progress?.Report(new ReplayProgress(100));
 
             if (lastDecile >= 0)
@@ -436,6 +518,12 @@ public sealed class ReplayRunner
         finally
         {
             GlobalData.AnalyzeSignalCreated = null;
+            if (barometer != null)
+            {
+                GlobalData.PositionCreated -= barometer.PositionCreated;
+                barometer.Flush(); // the rows of the last minute, and of a run that ended early
+                barometer = null;
+            }
             LogPhaseTimings();
             PipelineProfiler.Enabled = false;
         }
@@ -582,7 +670,8 @@ public sealed class ReplayRunner
         double pipeline = Seconds(elapsedPipeline);
         double zoneDrain = Seconds(elapsedZoneDrain);
         double flush = Seconds(elapsedFlush);
-        double total = process1m + pipeline + zoneDrain + flush;
+        double barometerTime = Seconds(elapsedBarometer);
+        double total = process1m + pipeline + zoneDrain + flush + barometerTime;
         if (total <= 0)
             return;
 
@@ -610,7 +699,8 @@ public sealed class ReplayRunner
             $"candles {process1m:F1}s ({process1m / total:P0}), " +
             $"pipeline {pipeline:F1}s ({pipeline / total:P0}), " +
             $"zones {zoneDrain:F1}s ({zoneDrain / total:P0}), " +
-            $"flush {flush:F1}s ({flush / total:P0})");
+            $"flush {flush:F1}s ({flush / total:P0}), " +
+            $"barometer {barometerTime:F1}s ({barometerTime / total:P0})");
 
         // Sub-breakdown of the "pipeline" phase from the PipelineProfiler (NewCandleArrivedAsync).
         // Percentages are of the pipeline total so they line up with the line above. Only emitted
@@ -1029,6 +1119,9 @@ public sealed class ReplayRunner
 
         // Paper-trading asset balances
         exchange.Data.AssetList.Clear();
+
+        // Which day the capital line last recorded (the previous run, or an earlier period)
+        AssetSnapshotTools.Reset();
 
         // Pause rule (price-drop circuit breaker)
         exchange.Data.PauseTrading.Clear();

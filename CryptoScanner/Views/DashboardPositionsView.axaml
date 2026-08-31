@@ -153,10 +153,15 @@
 
         <!-- Charts in scrollable area -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-            <Grid Margin="10" Grid.ColumnSpacing="5" Grid.RowSpacing="5" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
+            <Grid Margin="10" Grid.ColumnSpacing="5" Grid.RowSpacing="5" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
                 
-                <!-- Chart 1: Posities per dag -->
+                <!-- Chart 0: Kapitaal per dag (asset snapshots) -->
                 <Border Grid.Row="0" Grid.Column="0" Width="600" Height="300">
+                    <oxy:PlotView Model="{Binding ChartCapitalPerDay}" Background="Transparent"/>
+                </Border>
+
+                <!-- Chart 1: Posities per dag -->
+                <Border Grid.Row="1" Grid.Column="0" Width="600" Height="300">
                     <oxy:PlotView x:Name="PlotViewControl1" Model="{Binding ChartPositionsPerDay}" Background="Transparent"/>
                 </Border>
 
@@ -167,7 +172,7 @@
 				 -->
 
                 <!-- Chart 3: Profits per dag  -->
-                <Border Grid.Row="1" Grid.Column="0" Width="600" Height="300">
+                <Border Grid.Row="2" Grid.Column="0" Width="600" Height="300">
                     <oxy:PlotView Model="{Binding ChartProfitsPerDay}" Background="Transparent"/>
                 </Border>
 

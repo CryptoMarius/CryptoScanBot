@@ -114,7 +114,12 @@ public class Symbol() : SymbolBase(), ISymbol
                                 // ones with szDecimals 0 - and gave the rest a tick of 1, 2 or 3 base
                                 // units. The price tick below is derived from the mark price and was
                                 // never affected, so only order sizing suffered from this.
-                                symbol!.QuantityTickSize = TickSizeFromDecimals(symbolData.QuantityDecimals);
+                                // The size grid, the minimum quantity and the order value limits in one
+                                // place, shared with the spot market - see HyperLiquidOrderLimits, which is
+                                // also where the reasoning behind each of them sits. maxLeverage is the one
+                                // number of the three that the meta does carry per symbol, and it decides the
+                                // maximum order value.
+                                HyperLiquidOrderLimits.ApplyLimits(symbol!, symbolData.QuantityDecimals, symbolData.MaxLeverage);
 
                                 //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
@@ -368,8 +373,10 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (!IsSymbolAccepted(exchange, info, client.FuturesApi, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                     continue;
 
-                // QuantityDecimals is szDecimals, a NUMBER of decimals and not a tick size
-                symbol.QuantityTickSize = TickSizeFromDecimals(market.QuantityDecimals);
+                // The same limits as HyperLiquid's own market - these markets run on the same
+                // infrastructure, the same account and the same USDC as margin, and their meta carries
+                // szDecimals and maxLeverage and no quantity limits either.
+                HyperLiquidOrderLimits.ApplyLimits(symbol, market.QuantityDecimals, market.MaxLeverage);
                 if (market.MarkPrice > 0)
                     symbol.PriceTickSize = PriceTickFromMarkPrice(market.MarkPrice, market.QuantityDecimals);
 

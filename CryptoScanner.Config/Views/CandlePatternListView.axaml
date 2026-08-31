@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="200"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:CandlePatternListViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Config.Views.CandlePatternListView">
+
+    <!-- Just the checkboxes, without a groupbox of its own: the CandlePattern strategy puts them in
+         its Settings box and the entry conditions in theirs. Several at once is an OR, and the order
+         is the order of the enum, which decides which shape a candle forming two is reported as. -->
+    <ItemsControl ItemsSource="{Binding Patterns}">
+        <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:CandlePatternItem">
+                <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                          Content="{Binding Name}" Margin="0,2" FontSize="12"/>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+</UserControl>

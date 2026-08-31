@@ -24,13 +24,14 @@ public partial class SoundAndColorsViewModel : ObservableObject
         _shortSettings = new ColorAndSoundViewModel();
     }
 
-    public void LoadConfig(string caption, SettingsSignalStrategyBase settings)
+    public void LoadConfig(SettingsSignalStrategyBase settings)
     {
         PlaySound = settings.PlaySound;
         PlaySpeech = settings.PlaySpeech;
 
-        LongSettings.LoadConfig($"{caption} long", settings.ColorLong.ToAvaloniaColor(), settings.SoundFileLong);
-        ShortSettings.LoadConfig($"{caption} short", settings.ColorShort.ToAvaloniaColor(), settings.SoundFileShort);
+        // No strategy prefix: the strategy name is already the caption of the tab.
+        LongSettings.LoadConfig("Long", settings.ColorLong.ToAvaloniaColor(), settings.SoundFileLong);
+        ShortSettings.LoadConfig("Short", settings.ColorShort.ToAvaloniaColor(), settings.SoundFileShort);
     }
 
     public void SaveConfig(SettingsSignalStrategyBase settings)

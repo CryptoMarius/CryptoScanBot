@@ -17,8 +17,8 @@ namespace CryptoScanner.UI.Services;
 
 public class PositionService : IDisposable
 {
-    private const string OpenGridName = "PositionOpen";
-    private const string ClosedGridName = "PositionClosed";
+    private const string OpenGridName = GridNames.PositionOpen;
+    private const string ClosedGridName = GridNames.PositionClosed;
     private readonly object _lock = new();
     private readonly ApplicationStateService _stateService;
     private List<PositionViewModel> _openPositions = [];

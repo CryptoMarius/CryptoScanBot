@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Settings;
+﻿using CryptoScanner.Core.Settings;
 
 using System.Text.Json;
 
@@ -169,6 +169,12 @@ public class EmulatorQueueEntry
     /// Empty or omitted = use the scanner's default intervals.
     /// </summary>
     public List<string>? Intervals { get; set; }
+
+    /// <summary>
+    /// Switches the barometer measurement off for this run (see EmulatorRunConfig.CalculateBarometer).
+    /// Null or omitted keeps it on. A run with barometer conditions refuses to start when it is off.
+    /// </summary>
+    public bool? CalculateBarometer { get; set; }
 
     /// <summary>
     /// Restricts this run to a single trade side: "Long" or "Short".

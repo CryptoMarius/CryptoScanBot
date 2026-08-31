@@ -3,8 +3,6 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Trader;
 
-using Dapper;
-
 namespace CryptoScanner.Commands;
 
 public class CommandPositionDelete : CommandBase
@@ -29,11 +27,8 @@ public class CommandPositionDelete : CommandBase
                 databaseThread.Connection.Open();
                 PositionTools.LoadPosition(databaseThread, dto.position);
 
-                using var transaction = databaseThread.BeginTransaction();
-                databaseThread.Connection.Execute($"delete from positionstep where positionid={dto.position.Id}", transaction);
-                databaseThread.Connection.Execute($"delete from positionpart where positionid={dto.position.Id}", transaction);
-                databaseThread.Connection.Execute($"delete from position where id={dto.position.Id}", transaction);
-                transaction.Commit();
+                // Steps, parts, the position itself AND the orders and trades that hang off it
+                PositionTools.DeleteFromDatabase(databaseThread, dto.position);
 
                 dto.position.Symbol.LastTradeDate = null;
                 dto.position.Symbol.LastLossDate = null;
@@ -42,6 +37,11 @@ public class CommandPositionDelete : CommandBase
                 // Remove the position from open or closed positions
                 GlobalData.SendMvvmMessage(new PositionIsDeletedMessage(dto.position));
                 PositionTools.RemovePosition(GlobalData.ActiveExchange!, dto.position, false);
+
+                // The position is gone, so what it did to the balances has to go with it. After
+                // RemovePosition on purpose: the reservation of its open orders is then already
+                // released, so the free balance comes out right in one go.
+                PaperAssets.ReversePosition(GlobalData.ActiveExchange!, dto.position);
                 GlobalData.AddTextToLogTab($"{dto.position.Symbol.Name} manually deleted position {dto.position.Id} from the database");
             }
             catch (Exception error)

@@ -31,7 +31,7 @@ public partial class StrategySmcTabViewModel : ObservableObject
 
     internal void LoadConfig(SettingsSignalStrategySmc settings)
     {
-        SoundAndColorsViewModel.LoadConfig("SMC", settings);
+        SoundAndColorsViewModel.LoadConfig(settings);
         StrategySmcSettingsViewModel.LoadConfig(settings);
         IntervalViewModel.LoadConfig(settings.IntervalList, CryptoIntervalPeriod.interval10m);
         StrategyEntryConditionsViewModel.LoadConfig(settings);

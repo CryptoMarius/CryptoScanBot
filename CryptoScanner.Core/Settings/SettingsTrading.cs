@@ -57,6 +57,24 @@ public class SettingsTradingShort : SettingsTradingBase
     }
 }
 
+/// <summary>
+/// One balance a paper account starts with: a coin and the amount of it.
+/// <para>
+/// Any coin, not just a quote coin - a starting position of 0.1 BTC next to 10.000 USDT is exactly
+/// what this list is for. See <see cref="SettingsTrading.PaperAssetDefaults"/>.
+/// </para>
+/// </summary>
+[Serializable]
+public class CryptoPaperAssetDefault
+{
+    // The coin (BTC, ETH, USDT and so on)
+    public string Name { get; set; } = "";
+
+    // The balance it starts with, in the coin itself
+    public decimal Total { get; set; }
+}
+
+
 [Serializable]
 public class CryptoDcaEntry
 {
@@ -99,8 +117,30 @@ public class SettingsTrading
     /// Start capital per traded quote coin for paper trading and the emulator. It is handed out once
     /// per quote coin that has no balance yet - an existing balance is the result of earlier trading
     /// and is never topped up. Use the emulator's reset or PaperAssets.ResetAssets to start over.
+    /// <para>
+    /// Only for quote coins that have no start capital of their own: an amount filled in on the quote
+    /// coin (CryptoQuoteData.StartCapital) wins, because this one amount cannot be right for USDT and
+    /// BTC at the same time. See PaperAssets.ResolveStartCapital.
+    /// </para>
     /// </summary>
     public decimal PaperAssetStartCapital { get; set; } = 10000m;
+
+    /// <summary>
+    /// The balances a paper account starts with, one entry per coin. Filled in, this list IS the
+    /// starting point: it is handed out on an empty database and on every reset, and neither
+    /// <see cref="PaperAssetStartCapital"/> nor the start capital on a quote coin is looked at any
+    /// more - the emulator's per-run start capital included.
+    /// <para>
+    /// Empty (the default) leaves everything as it was: every traded quote coin gets its own start
+    /// capital, or the general amount above. Keep it empty in a data folder used for emulator runs
+    /// that vary their start capital.
+    /// </para>
+    /// <para>
+    /// Any coin may be in here, also one that is never traded as a quote coin - which is the point:
+    /// 10.000 USDT next to 0.1 BTC cannot be said with one number. See PaperAssets.SeedStartBalances.
+    /// </para>
+    /// </summary>
+    public List<CryptoPaperAssetDefault> PaperAssetDefaults { get; set; } = [];
 
     /// <summary>
     /// Whether the balances actually constrain the trader (paper trading and the emulator only).
@@ -238,13 +278,20 @@ public class SettingsTrading
     // Paper-trade only, same as the rest of the stop-loss handling.
     public bool MoveSlToBreakEven { get; set; } = false;
     // The trigger: how far above (long) or below (short) break-even the price has to reach before
-    // the profit lock arms itself.
+    // the profit lock arms itself. The whole candle has to be past that level - the low for a long,
+    // the high for a short - so a wick through the trigger does not arm the lock on its own.
     public decimal MoveSlToBreakEvenPercentage { get; set; } = 0.5m;
     // Where the stop-loss is placed once the trigger is reached, again measured from break-even.
     // Keeping this below the trigger leaves room between the price and the stop, so the position is
     // not stopped out by the very move that armed the lock. Values above the trigger are capped to
     // the trigger, which reproduces the original behaviour (stop exactly at the trigger level).
+    // Only used by CryptoProfitLockMethod.Fixed.
     public decimal MoveSlToBreakEvenSlPercentage { get; set; } = 0.5m;
+    // What happens after the trigger: one fixed stop, or a stop that follows the price.
+    public CryptoProfitLockMethod MoveSlToBreakEvenMethod { get; set; } = CryptoProfitLockMethod.Fixed;
+    // How far below the highest price (above the lowest, for a short) the stop follows along, once
+    // the trigger has armed the lock. Only used by CryptoProfitLockMethod.TrailingPercentage.
+    public decimal MoveSlToBreakEvenTrailPercentage { get; set; } = 1.5m;
 
 
     //***************************
