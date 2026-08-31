@@ -7,8 +7,13 @@ TODO:
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
 xx-09-2025 2.6.2
+- Trader: Trailing profit/sl
+- Trader: Voor het openen wordt de hele orderset (entry, dca's en de uitstap) tegen de limieten van de munt gehouden
+- Papertrading: Asset management, startsaldo (per quote munt) en een hele tits met wijzigingen daar omheen
+- Papertrading: Het verwijderen van een positie draait de saldi terug en ruimt de bijbehorende orders en trades op
+- Websockets: Meer debugging toegevoegd in de vorm van wat er gebeurd (tellertjes)
 - Hyperliquid: Snelheidswinst bij het opstarten (het was echt te traag bij het opstarten)
-- Telegram werd 2x gestart waardoor de een luidkeels klaagde over de aanwezigheid van de andere
+- Telegram: Werd 2x gestart waardoor de een luidkeels klaagde over de aanwezigheid van de andere
 - Telegram: Wat onderverdeling voor een ietwat meer fijnmazige aansturing
 - Photino: Gebruikt nu dezelfde gridnamen zodat we kolommen kunnen delen tussen de twee applicaties
 - Photino: Het asset management opgenomen zoals dat ook in Avalonia zit
@@ -16,8 +21,11 @@ xx-09-2025 2.6.2
 - Photino: Fix voor de chart display voor een oude positie waarvan er geen candles meer zijn
 - Photino: De barometer vervangt de voortgang van het ophalen van de candles (met verouderde data)
 - Photino: Diverse fixes en aanpassingen in het chart venster vanwege het compleet wegvallen van de chart
+- Photino: De panelen van de chart lopen weer gelijk (prijs-as even breed, crosshair over alle panelen)
+- Emulator: Een run meet nu zelf de barometer over zijn eigen munten (die stond altijd op 0, blijft beperkt)
 - Emulator: Diverse wijzigingen voor het runnen van een queue (met veel ingewikkelde instellingen)
-
+- Strategie CandlePattern: Meerdere patronen tegelijk (of-of) en een eigen instellingen scherm in beide applicaties
+- Strategie AtrRb definitief verwijderd, het is/was een van slechts presterende strategien (was blijven staan om te vergelijken)
 
 29-08-2025 2.6.1
 - Nieuwe strategie voor candle patronen die een omkeer kunnen signaleren (Harami, Tweezer, Hammer en PiercingLine)

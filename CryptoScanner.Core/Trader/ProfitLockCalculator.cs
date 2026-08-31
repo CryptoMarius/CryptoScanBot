@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 
 namespace CryptoScanner.Core.Trader;
 
@@ -69,6 +69,31 @@ public static class ProfitLockCalculator
         return multiplier == 1
             ? Math.Max(candidate, currentTrailingStop)
             : Math.Min(candidate, currentTrailingStop);
+    }
+
+    /// <summary>
+    /// Whether the profit-lock level actually replaces the stop that is already there. Tighten only:
+    /// it wins when there was no stop at all, or when it sits closer to the price than the current
+    /// one (long: higher is tighter; short: lower is tighter). A trailing stop that could ever
+    /// LOOSEN the existing stop-loss would widen the risk on a position that just went into profit,
+    /// which is the opposite of what the lock is for.
+    /// </summary>
+    public static bool Tightens(CryptoTradeSide side, decimal lockStop, decimal? currentStop)
+    {
+        if (currentStop == null)
+            return true;
+        return Multiplier(side) == 1 ? lockStop > currentStop.Value : lockStop < currentStop.Value;
+    }
+
+    /// <summary>
+    /// The worst acceptable fill for the profit-lock stop: one percent of the price further away
+    /// than the trigger. In paper trading the fill happens at the stop price so this never bites,
+    /// but a real exchange can fill anywhere between the two.
+    /// </summary>
+    public static decimal StopLimit(CryptoTradeSide side, decimal lockStop)
+    {
+        decimal gap = Math.Abs(lockStop * 0.01m);
+        return lockStop - Multiplier(side) * gap;
     }
 
     /// <summary>

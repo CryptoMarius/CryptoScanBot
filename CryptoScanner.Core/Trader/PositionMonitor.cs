@@ -912,15 +912,12 @@ public class PositionMonitor : IDisposable
 
                 decimal lockStop = lockLevel
                     .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-                decimal lockGap = Math.Abs(lockStop * 0.01m);
-                decimal lockLimit = (lockStop - multiplier * lockGap)
+                decimal lockLimit = ProfitLockCalculator.StopLimit(position.Side, lockStop)
                     .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
                 // Tighten only: move the stop when there was none, or when the lock level is
                 // tighter than the current stop (long: higher is tighter; short: lower is tighter).
-                if (stop == null
-                    || (multiplier == 1 && lockStop > stop.Value)
-                    || (multiplier == -1 && lockStop < stop.Value))
+                if (ProfitLockCalculator.Tightens(position.Side, lockStop, stop))
                 {
                     stop = lockStop;
                     limit = lockLimit;
