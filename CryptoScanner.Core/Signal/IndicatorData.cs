@@ -221,9 +221,14 @@ public static class IndicatorEngine
                 // Generate a dummy for the calculation
                 if (candleLast.OpenTime != 0)
                 {
+                    // Through FitTickDecimals: the previous close can be a price the symbol's own tick
+                    // size cannot express in the int a candle keeps its prices in, and then the setter
+                    // throws instead of producing a dummy. Same synthesized flat candle as in
+                    // SubscriptionKLineCachedTicker's flush timer, so it needs the same guard.
                     candle = new()
                     {
-                        TickDecimals = symbol.PriceDecimals,
+                        TickDecimals = CryptoCandle.FitTickDecimals(symbol.PriceDecimals,
+                            candleLast.Close, candleLast.Close, candleLast.Close, candleLast.Close),
                         OpenTime = candleLoop,
                         Open = candleLast.Close,
                         Low = candleLast.Close,

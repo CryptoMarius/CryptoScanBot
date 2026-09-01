@@ -59,7 +59,9 @@ public partial class TraderDcaViewModel : ObservableObject
 
     public void LoadConfig(SettingsTrading settings)
     {
-        SelectedOrderType = settings.DcaOrderType;
+        // An order type that is not in the list - a StopLimit or an Oco written by an older
+        // build - leaves the combobox empty and would be written back untouched on OK.
+        SelectedOrderType = _orderTypeList.ContainsValue(settings.DcaOrderType) ? settings.DcaOrderType : CryptoOrderType.Limit;
 
         DcaItems.Clear();
         int index = 1;

@@ -47,56 +47,6 @@
                     }
                 </select>
             </div>
-            <div class="field" title="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode.">
-                <input type="checkbox" class="input-checkbox" @bind="_useAssetManagement" />
-                <label>Asset management</label>
-            </div>
-            <div class="field" title="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Not used at all when the default asset list below holds anything.">
-                <label>Paper start capital</label>
-                <input type="number" class="input-number" min="0" step="1000" @bind="_paperAssetStartCapital" />
-            </div>
-
-            @* The list that replaces the single amount above - see SettingsTrading.PaperAssetDefaults. *@
-            <div class="settings-group settings-group-nested"
-                 title="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. Filled in, this list replaces the start capital above, the start capital on the quote coins and the one of an emulator run; empty leaves all of those as they were.">
-                <div class="settings-group-header">Default paper assets</div>
-                <div class="settings-group-body">
-                    <div class="field settings-table-buttons">
-                        <button class="btn btn-secondary" @onclick="AddPaperAssetDefault">Add asset</button>
-                        <button class="btn btn-secondary" @onclick="RemovePaperAssetDefault">Remove asset</button>
-                    </div>
-
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 100px;">Asset</th>
-                                <th style="width: 120px;">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (int i = 0; i < _paperAssetDefaults.Count; i++)
-                            {
-                                int index = i;
-                                <tr>
-                                    <td>
-                                        <input type="text" class="input-number" placeholder="BTC"
-                                               @bind="_paperAssetDefaults[index].Name" />
-                                    </td>
-                                    <td>
-                                        <input type="number" class="input-number" step="any" min="0"
-                                               value="@_paperAssetDefaults[index].Total"
-                                               @onchange="e => _paperAssetDefaults[index].Total = ParseDecimal(e.Value)" />
-                                    </td>
-                                </tr>
-                            }
-                            @if (_paperAssetDefaults.Count == 0)
-                            {
-                                <tr><td colspan="2" class="empty-state">No default assets</td></tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
             <div class="field">
                 <input type="checkbox" class="input-checkbox" @bind="_soundTradeNotification" />
                 <label>Sound trade notification</label>
@@ -150,16 +100,78 @@
         </div>
     </div>
 
+    @* Asset management and the balances it works with sit in a groupbox of their own instead of
+       halfway down Common: they belong together and Common was long enough without them. *@
+    <!-- Asset management -->
+    <div class="settings-group">
+        <div class="settings-group-header">Asset management</div>
+        <div class="settings-group-body">
+            <div class="field" title="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode.">
+                <input type="checkbox" class="input-checkbox" @bind="_useAssetManagement" />
+                <label>Asset management</label>
+            </div>
+            <div class="field" title="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Not used at all when the default asset list below holds anything.">
+                <label>Paper start capital</label>
+                <input type="number" class="input-number" min="0" step="1000" @bind="_paperAssetStartCapital" />
+            </div>
+
+            @* The list that replaces the single amount above - see SettingsTrading.PaperAssetDefaults. *@
+            <div class="settings-group settings-group-nested"
+                 title="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. Filled in, this list replaces the start capital above, the start capital on the quote coins and the one of an emulator run; empty leaves all of those as they were.">
+                <div class="settings-group-header">Default paper assets</div>
+                <div class="settings-group-body">
+                    <div class="field settings-table-buttons">
+                        <button class="btn btn-secondary" @onclick="AddPaperAssetDefault">Add asset</button>
+                        <button class="btn btn-secondary" @onclick="RemovePaperAssetDefault">Remove asset</button>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 100px;">Asset</th>
+                                <th style="width: 120px;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < _paperAssetDefaults.Count; i++)
+                            {
+                                int index = i;
+                                <tr>
+                                    <td>
+                                        <input type="text" class="input-number" placeholder="BTC"
+                                               @bind="_paperAssetDefaults[index].Name" />
+                                    </td>
+                                    <td>
+                                        <input type="number" class="input-number" step="any" min="0"
+                                               value="@_paperAssetDefaults[index].Total"
+                                               @onchange="e => _paperAssetDefaults[index].Total = ParseDecimal(e.Value)" />
+                                    </td>
+                                </tr>
+                            }
+                            @if (_paperAssetDefaults.Count == 0)
+                            {
+                                <tr><td colspan="2" class="empty-state">No default assets</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Entry -->
     <div class="settings-group">
         <div class="settings-group-header">Entry</div>
         <div class="settings-group-body">
+            @* The captions and the choices come from TraderEntryViewModel.OrderTypeList: market and
+               limit, nothing else. Looping over the raw enum added StopLimit and Oco with their code
+               names, and PositionMonitor.HandleEntryPart throws on both of those. *@
             <div class="field">
                 <label>Order Type</label>
                 <select class="input-select" @bind="_entryOrderType">
-                    @foreach (var val in Enum.GetValues<CryptoOrderType>())
+                    @foreach (var (caption, value) in EntryOrderTypeList)
                     {
-                        <option value="@val">@val</option>
+                        <option value="@value">@caption</option>
                     }
                 </select>
             </div>
@@ -180,12 +192,15 @@
         <div class="settings-group-body">
             @* Avalonia has the order type, then the two buttons, then the DCA entries. No pullback
                and no buy cooldown — that last one lives in Common as "Cool down time (m)". *@
+            @* The captions and the choices come from TraderDcaViewModel.OrderTypeList, which holds
+               the limit order alone: a DCA is always a limit order (the trailing variant switches to
+               a stoplimit in code, not through this setting). *@
             <div class="field">
                 <label>Order Type</label>
                 <select class="input-select" @bind="_dcaOrderType">
-                    @foreach (var val in Enum.GetValues<CryptoOrderType>())
+                    @foreach (var (caption, value) in DcaOrderTypeList)
                     {
-                        <option value="@val">@val</option>
+                        <option value="@value">@caption</option>
                     }
                 </select>
             </div>
@@ -235,15 +250,6 @@
     <div class="settings-group">
         <div class="settings-group-header">Take Profit</div>
         <div class="settings-group-body">
-            <div class="field">
-                <label>TP order type</label>
-                <select class="input-select" @bind="_tpOrderType">
-                    @foreach (var val in Enum.GetValues<CryptoOrderType>())
-                    {
-                        <option value="@val">@val</option>
-                    }
-                </select>
-            </div>
             <div class="field">
                 <label>TP strategy</label>
                 <select class="input-select" @bind="_tpStrategy">
@@ -432,7 +438,6 @@
     private decimal _maxPositionDurationDays;
     private int _entryWaitCandles;
     private decimal _entryMaxAdverse;
-    private CryptoOrderType _tpOrderType;
     private CryptoTakeProfitStrategy _tpStrategy;
     private bool _addDustToTp;
     private decimal _stopLoss;
@@ -453,6 +458,35 @@
         ("Altrady webhook", CryptoTradeVia.Altrady),
         ("Papertrading + Altrady", CryptoTradeVia.PaperTradingAndAltrady),
     ];
+
+    /// <summary>
+    /// The choices of the entry order type dropdown, identical to TraderEntryViewModel.OrderTypeList.
+    /// StopLimit and Oco are deliberately missing: PositionMonitor.HandleEntryPart throws on both,
+    /// and an OCO only exists on Binance in the first place.
+    /// </summary>
+    private static readonly (string Caption, CryptoOrderType Value)[] EntryOrderTypeList =
+    [
+        ("Market order", CryptoOrderType.Market),
+        ("Limit order", CryptoOrderType.Limit),
+    ];
+
+    /// <summary>
+    /// The choices of the DCA order type dropdown, identical to TraderDcaViewModel.OrderTypeList.
+    /// A DCA is always a limit order; a trailing DCA becomes a stoplimit in code, not through this
+    /// setting, so the limit order is the only choice there is.
+    /// </summary>
+    private static readonly (string Caption, CryptoOrderType Value)[] DcaOrderTypeList =
+    [
+        ("Limit order", CryptoOrderType.Limit),
+    ];
+
+    /// <summary>
+    /// Falls back to the first choice of the list when the saved order type is not in it - a
+    /// StopLimit or an Oco written by an older build. Without this the dropdown shows the first
+    /// option while the field still holds the old value, and OK writes that value straight back.
+    /// </summary>
+    private static CryptoOrderType Supported(CryptoOrderType value, (string Caption, CryptoOrderType Value)[] list)
+        => Array.Exists(list, x => x.Value == value) ? value : list[0].Value;
 
     private readonly List<CryptoDcaEntry> _dcaList = [];
 
@@ -563,16 +597,15 @@
         _soundTradeNotification = settings.General.SoundTradeNotification;
         _slotsLong = t.SlotsMaximalLong;
         _slotsShort = t.SlotsMaximalShort;
-        _entryOrderType = t.EntryOrderType;
+        _entryOrderType = Supported(t.EntryOrderType, EntryOrderTypeList);
         _entryRemoveTime = t.EntryRemoveTime;
-        _dcaOrderType = t.DcaOrderType;
+        _dcaOrderType = Supported(t.DcaOrderType, DcaOrderTypeList);
         _buyCooldown = t.GlobalBuyCooldownTime;
         _signalCooldownAfterTrade = t.SignalCooldownAfterTradeTime;
         _lossCooldown = t.LossCooldownTime;
         _maxPositionDurationDays = t.MaxPositionDurationDays;
         _entryWaitCandles = t.EntryConditions.EntryWaitCandles;
         _entryMaxAdverse = t.EntryConditions.EntryMaxAdversePercentage;
-        _tpOrderType = t.TakeProfitOrderType;
         _tpStrategy = t.TakeProfitStrategy;
         _addDustToTp = t.AddDustToTp;
         _stopLoss = t.StopLossPercentage;
@@ -627,7 +660,6 @@
         t.MaxPositionDurationDays = _maxPositionDurationDays;
         t.EntryConditions.EntryWaitCandles = _entryWaitCandles;
         t.EntryConditions.EntryMaxAdversePercentage = _entryMaxAdverse;
-        t.TakeProfitOrderType = _tpOrderType;
         t.TakeProfitStrategy = _tpStrategy;
         t.AddDustToTp = _addDustToTp;
         t.StopLossPercentage = _stopLoss;

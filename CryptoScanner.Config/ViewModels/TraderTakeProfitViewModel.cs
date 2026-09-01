@@ -42,20 +42,11 @@ public partial class TpItemViewModel : ObservableObject
 
 public partial class TraderTakeProfitViewModel : ObservableObject
 {
-    private readonly Dictionary<string, CryptoOrderType> _orderTypeList = new()
-    {
-        { "Market order", CryptoOrderType.Market },
-        { "Limit order", CryptoOrderType.Limit }
-    };
-
     private readonly Dictionary<string, CryptoTakeProfitStrategy> _strategyList = new()
     {
         //{ "Direct na het kopen", CryptoTakeProfitStrategy.Immediately },
         { "Op het opgegeven percentage", CryptoTakeProfitStrategy.FixedPercentage },
     };
-
-    [ObservableProperty]
-    private CryptoOrderType _takeProfitOrderType = CryptoOrderType.Limit; // enum (EXACT match)
 
     [ObservableProperty]
     private CryptoTakeProfitStrategy _takeProfitStrategy = CryptoTakeProfitStrategy.FixedPercentage; // enum (EXACT match)
@@ -66,12 +57,10 @@ public partial class TraderTakeProfitViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<TpItemViewModel> _tpItems = [];
 
-    public Dictionary<string, CryptoOrderType> OrderTypeList => _orderTypeList;
     public Dictionary<string, CryptoTakeProfitStrategy> StrategyList => _strategyList;
 
     public void LoadConfig(SettingsTrading settings)
     {
-        TakeProfitOrderType = settings.TakeProfitOrderType;
         TakeProfitStrategy = settings.TakeProfitStrategy;
         AddDustToTp = settings.AddDustToTp;
 
@@ -87,7 +76,6 @@ public partial class TraderTakeProfitViewModel : ObservableObject
 
     public void SaveConfig(SettingsTrading settings)
     {
-        settings.TakeProfitOrderType = TakeProfitOrderType;
         settings.TakeProfitStrategy = TakeProfitStrategy;
         settings.AddDustToTp = AddDustToTp;
 

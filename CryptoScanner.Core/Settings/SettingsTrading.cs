@@ -260,7 +260,9 @@ public class SettingsTrading
 
     //***************************
     // Take profit
-    public CryptoOrderType TakeProfitOrderType { get; set; } = CryptoOrderType.Limit;
+    // TakeProfitOrderType sat here until 01-09-2026. Both settings screens loaded and saved it,
+    // but nothing in the trader ever read it: a take profit order is always placed the same way.
+    // Old settings files keep the key until they are next saved - it is skipped on load.
     public CryptoTakeProfitStrategy TakeProfitStrategy { get; set; } = CryptoTakeProfitStrategy.FixedPercentage;
 
     // Allow previous (small) dust to be added to the TP

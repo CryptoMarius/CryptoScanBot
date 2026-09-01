@@ -23,7 +23,9 @@ public partial class TraderEntryViewModel : ObservableObject
 
     public void LoadConfig(SettingsTrading settings)
     {
-        EntryOrderType = settings.EntryOrderType;
+        // An order type that is not in the list - a StopLimit or an Oco written by an older
+        // build - leaves the combobox empty and would be written back untouched on OK.
+        EntryOrderType = _orderTypeList.ContainsValue(settings.EntryOrderType) ? settings.EntryOrderType : CryptoOrderType.Market;
         EntryRemoveTime = settings.EntryRemoveTime;
     }
 

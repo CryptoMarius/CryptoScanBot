@@ -329,9 +329,19 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
 
                             await CandleTools.Process1mCandleAsync(symbol, expectedUpto.ToDateTime(),
                                 lastPrice, lastPrice, lastPrice, lastPrice, 0, isFilled: true);
+
+                            // Through FitTickDecimals, exactly like CandleTools.CreateCandle does for the
+                            // candle it just stored. Without it this copy takes the decimals of the SYMBOL
+                            // and the price setter throws on a price the symbol's tick size cannot express
+                            // in an int - and because the throw lands after Process1mCandleAsync, the candle
+                            // was already stored correctly while symbol.LastPrice and ThreadMonitorCandle
+                            // were left behind. Then the analysis stops running for that symbol on every
+                            // minute without trades, which is what happened to XAUT0/USDC on HyperLiquid
+                            // Spot (see CryptoCandle.FitTickDecimals for the mechanism).
                             candleLast = new CryptoCandle
                             {
-                                TickDecimals = symbol.PriceDecimals,
+                                TickDecimals = CryptoCandle.FitTickDecimals(symbol.PriceDecimals,
+                                    lastPrice, lastPrice, lastPrice, lastPrice),
                                 OpenTime = expectedUpto,
                                 Open = lastPrice,
                                 High = lastPrice,

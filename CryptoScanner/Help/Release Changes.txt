@@ -7,12 +7,15 @@ TODO:
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
 xx-09-2025 2.6.2
+- Hyperliquid: Dure munten zoals XAUT0/USDC kregen een te fijne tickgrootte, waardoor de analyse elke stille minuut stopte
+- Instellingen: Asset management en de paper-saldi staan nu in een eigen kader
 - Trader: Trailing profit/sl
 - Trader: Voor het openen wordt de hele orderset (entry, dca's en de uitstap) tegen de limieten van de munt gehouden
 - Papertrading: Asset management, startsaldo (per quote munt) en een hele tits met wijzigingen daar omheen
 - Papertrading: Het verwijderen van een positie draait de saldi terug en ruimt de bijbehorende orders en trades op
 - Websockets: Meer debugging toegevoegd in de vorm van wat er gebeurd (tellertjes)
 - Hyperliquid: Snelheidswinst bij het opstarten (het was echt te traag bij het opstarten)
+- Telegram: Werd tijdens het opstarten gestart, gestopt en daarna nog een keer gestart
 - Telegram: Werd 2x gestart waardoor de een luidkeels klaagde over de aanwezigheid van de andere
 - Telegram: Wat onderverdeling voor een ietwat meer fijnmazige aansturing
 - Photino: Gebruikt nu dezelfde gridnamen zodat we kolommen kunnen delen tussen de twee applicaties

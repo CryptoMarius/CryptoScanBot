@@ -145,7 +145,17 @@ public class Symbol() : SymbolBase(), ISymbol
                                 // A tick that fine on a four digit price does not fit in the int a candle
                                 // stores its price in (TSLA/USDC at 14162 would need 14.2 billion ticks),
                                 // so the price of the moment decides how far the precision can go.
-                                priceTicker.TryGetValue(symbol.Name, out decimal referencePrice);
+                                //
+                                // On the PAIR, for the same reason as the volume lookup below: the ticker
+                                // list is keyed on the exchange's own spelling, without the product behind
+                                // the dot. On the scanner name it matched nothing at all, so referencePrice
+                                // stayed zero for every symbol and LimitDecimalsToCandleRange handed the
+                                // decimals straight back - the cap was in place but never capped anything.
+                                // XAUT0/USDC (gold, 4422.10) kept a tick size of 0.000001, which is 4.42
+                                // billion ticks against an int that holds 2.15 billion, and the flat candle
+                                // the flush timer synthesizes threw an OverflowException every minute of the
+                                // night of 31-08/01-09-2026.
+                                priceTicker.TryGetValue(CryptoProduct.PairOf(symbol.Name), out decimal referencePrice);
                                 symbol.PriceTickSize = TickSizeFromDecimals(
                                     LimitDecimalsToCandleRange(priceDecimals, referencePrice));
 

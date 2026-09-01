@@ -10,19 +10,6 @@
     <HeaderedContentControl Classes="groupbox" Header="Take profit">
         <StackPanel Margin="8" Spacing="12">
 
-            <!-- Order Type -->
-            <Grid ColumnDefinitions="Auto,*,250" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="Order Type:"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0" FontSize="12"/>
-                <ComboBox Grid.Column="2"
-                          ItemsSource="{Binding OrderTypeList}"
-                          SelectedValue="{Binding TakeProfitOrderType, Mode=TwoWay}"
-                          DisplayMemberBinding="{Binding Key}"
-                          SelectedValueBinding="{Binding Value}"
-                          FontSize="12"/>
-            </Grid>
-
             <!-- Strategy -->
             <Grid ColumnDefinitions="Auto,*,250" RowDefinitions="Auto">
                 <TextBlock Grid.Column="0" Text="Strategy:"

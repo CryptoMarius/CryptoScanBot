@@ -7,163 +7,174 @@
              x:DataType="vm:TraderMiscSettingsViewModel"
              x:Class="CryptoScanner.Config.Views.TraderMiscSettingsView">
 
-    <HeaderedContentControl Classes="groupbox" Header="Common">
-        <StackPanel Spacing="4" Margin="6">
+    <StackPanel Orientation="Vertical" VerticalAlignment="Top">
 
-            <!-- Trade Via -->
-            <Grid ColumnDefinitions="Auto,*,170" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="Trading:"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0" FontSize="12"/>
-                <ComboBox Grid.Column="2"
-                          ItemsSource="{Binding TradeViaList}"
-                          SelectedValue="{Binding TradeVia, Mode=TwoWay}"
-                          DisplayMemberBinding="{Binding Key}"
-                          SelectedValueBinding="{Binding Value}"
+        <HeaderedContentControl Classes="groupbox" Header="Common">
+            <StackPanel Spacing="4" Margin="6">
+
+                <!-- Trade Via -->
+                <Grid ColumnDefinitions="Auto,*,170" RowDefinitions="Auto">
+                    <TextBlock Grid.Column="0" Text="Trading:"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"/>
+                    <ComboBox Grid.Column="2"
+                              ItemsSource="{Binding TradeViaList}"
+                              SelectedValue="{Binding TradeVia, Mode=TwoWay}"
+                              DisplayMemberBinding="{Binding Key}"
+                              SelectedValueBinding="{Binding Value}"
+                              FontSize="12"/>
+                </Grid>
+
+                <!-- Sound Trade Notification -->
+                <CheckBox IsChecked="{Binding SoundTradeNotification, Mode=TwoWay}"
+                          Content="Sound trade notification"
                           FontSize="12"/>
-            </Grid>
 
-            <!-- Asset management -->
-            <CheckBox IsChecked="{Binding UseAssetManagement, Mode=TwoWay}"
-                      Content="Asset management"
-                      FontSize="12"
-                      ToolTip.Tip="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode."/>
+                <!-- Disable New Positions -->
+                <CheckBox IsChecked="{Binding DisableNewPositions, Mode=TwoWay}"
+                          Content="Disable new positions"
+                          FontSize="12"/>
 
-            <!-- Paper Start Capital -->
-            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
-                  ToolTip.Tip="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Not used at all when the default asset list below holds anything.">
-                <TextBlock Grid.Column="0" Text="Paper start capital:"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding PaperAssetStartCapital, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                <!-- Log Canceled Orders -->
+                <CheckBox IsChecked="{Binding LogCanceledOrders, Mode=TwoWay}"
+                          Content="Log cancelled orders"
+                          FontSize="12"/>
 
-            <!-- Default paper assets: the list that replaces the single amount above -->
-            <HeaderedContentControl Classes="groupbox" Header="Default paper assets" Margin="0,2,0,0"
-                  ToolTip.Tip="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. Filled in, this list replaces the start capital above, the start capital on the quote coins and the one of an emulator run; empty leaves all of those as they were.">
-                <StackPanel Margin="6" Spacing="4">
+                <!-- Cool Down Time -->
+                <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                      ToolTip.Tip="Minutes after the last fill on a symbol (entry, DCA, take profit or stop loss) in which no NEW position may be opened on it. Stops laddering into the same coin. A position that is still waiting for its entry to fill is exempt, so a newer signal can replace it.">
+                    <TextBlock Grid.Column="0" Text="Cool down time (m):"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding GlobalBuyCooldownTime, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Button Content="Add asset" Command="{Binding AddPaperAssetDefaultCommand}"
-                                Width="130" FontSize="12"/>
-                        <Button Content="Remove asset" Command="{Binding RemovePaperAssetDefaultCommand}"
-                                Width="130" FontSize="12"/>
+                <!-- Signal cool down after a trade -->
+                <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                      ToolTip.Tip="Minutes after the last fill on a symbol in which no SIGNAL is created for it at all. Cool down time above holds off opening a position; this one stops the signal from being produced in the first place. Keep it at or above the coarsest base interval you run.">
+                    <TextBlock Grid.Column="0" Text="Signal cool down after trade (m):"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding SignalCooldownAfterTradeTime, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <!-- Cool down after a losing trade -->
+                <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                      ToolTip.Tip="Minutes to stay out of a symbol after a position on it closed at a LOSS, counted from that close. Replaces the cool down time above while it lasts, so it only ever makes the wait longer. Zero switches it off. A position that timed out without buying anything does not count as a loss.">
+                    <TextBlock Grid.Column="0" Text="Cool down after loss (m):"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding LossCooldownTime, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <!-- Close a position that has been open too long -->
+                <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                      ToolTip.Tip="Days a position may stay open before it is closed at whatever the market offers, counted from the moment it was created. Zero switches it off. Decimals are allowed, so 0.5 is twelve hours. Meant for the rare position that walks away and never comes back: it holds capital that cannot be put to work anywhere else.">
+                    <TextBlock Grid.Column="0" Text="Close position after (days):"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding MaxPositionDurationDays, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <!-- Slot Limits -->
+                <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,2,0,0">
+                    <StackPanel Margin="6" Spacing="4">
+
+                        <!-- Long Slots -->
+                        <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+                            <TextBlock Grid.Column="0" Text="Long:"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,12,0" FontSize="12"/>
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding SlotsMaximalLong, Mode=TwoWay}"
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                        </Grid>
+
+                        <!-- Short Slots -->
+                        <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+                            <TextBlock Grid.Column="0" Text="Short:"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,12,0" FontSize="12"/>
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding SlotsMaximalShort, Mode=TwoWay}"
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                        </Grid>
+
                     </StackPanel>
+                </HeaderedContentControl>
 
-                    <ItemsControl ItemsSource="{Binding PaperAssetDefaults}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Spacing="4"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:PaperAssetDefaultItemViewModel">
-                                <Grid ColumnDefinitions="Auto,90,Auto,*" RowDefinitions="Auto">
-                                    <TextBlock Grid.Column="0" Text="Asset:"
-                                               VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Name, Mode=TwoWay}" Watermark="BTC"
-                                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                                    <TextBlock Grid.Column="2" Text="Amount:"
-                                               VerticalAlignment="Center" Margin="12,0,8,0" FontSize="12"/>
-                                    <TextBox Grid.Column="3" Text="{Binding Total, Mode=TwoWay}"
-                                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+            </StackPanel>
+        </HeaderedContentControl>
 
-                </StackPanel>
-            </HeaderedContentControl>
+        <!-- Asset management: the switch and the balances it works with, in a groupbox of their own -->
+        <HeaderedContentControl Classes="groupbox" Header="Asset management" Margin="0,8,0,0">
+            <StackPanel Spacing="4" Margin="6">
 
-            <!-- Sound Trade Notification -->
-            <CheckBox IsChecked="{Binding SoundTradeNotification, Mode=TwoWay}"
-                      Content="Sound trade notification"
-                      FontSize="12"/>
+                <!-- Asset management -->
+                <CheckBox IsChecked="{Binding UseAssetManagement, Mode=TwoWay}"
+                          Content="Asset management"
+                          FontSize="12"
+                          ToolTip.Tip="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode."/>
 
-            <!-- Disable New Positions -->
-            <CheckBox IsChecked="{Binding DisableNewPositions, Mode=TwoWay}"
-                      Content="Disable new positions"
-                      FontSize="12"/>
+                <!-- Paper Start Capital -->
+                <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                      ToolTip.Tip="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Not used at all when the default asset list below holds anything.">
+                    <TextBlock Grid.Column="0" Text="Paper start capital:"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding PaperAssetStartCapital, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
-            <!-- Log Canceled Orders -->
-            <CheckBox IsChecked="{Binding LogCanceledOrders, Mode=TwoWay}"
-                      Content="Log cancelled orders"
-                      FontSize="12"/>
+                <!-- Default paper assets: the list that replaces the single amount above -->
+                <HeaderedContentControl Classes="groupbox" Header="Default paper assets" Margin="0,2,0,0"
+                      ToolTip.Tip="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. Filled in, this list replaces the start capital above, the start capital on the quote coins and the one of an emulator run; empty leaves all of those as they were.">
+                    <StackPanel Margin="6" Spacing="4">
 
-            <!-- Cool Down Time -->
-            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
-                  ToolTip.Tip="Minutes after the last fill on a symbol (entry, DCA, take profit or stop loss) in which no NEW position may be opened on it. Stops laddering into the same coin. A position that is still waiting for its entry to fill is exempt, so a newer signal can replace it.">
-                <TextBlock Grid.Column="0" Text="Cool down time (m):"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding GlobalBuyCooldownTime, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button Content="Add asset" Command="{Binding AddPaperAssetDefaultCommand}"
+                                    Width="130" FontSize="12"/>
+                            <Button Content="Remove asset" Command="{Binding RemovePaperAssetDefaultCommand}"
+                                    Width="130" FontSize="12"/>
+                        </StackPanel>
 
-            <!-- Signal cool down after a trade -->
-            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
-                  ToolTip.Tip="Minutes after the last fill on a symbol in which no SIGNAL is created for it at all. Cool down time above holds off opening a position; this one stops the signal from being produced in the first place. Keep it at or above the coarsest base interval you run.">
-                <TextBlock Grid.Column="0" Text="Signal cool down after trade (m):"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding SignalCooldownAfterTradeTime, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                        <ItemsControl ItemsSource="{Binding PaperAssetDefaults}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="4"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PaperAssetDefaultItemViewModel">
+                                    <Grid ColumnDefinitions="Auto,90,Auto,*" RowDefinitions="Auto">
+                                        <TextBlock Grid.Column="0" Text="Asset:"
+                                                   VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"/>
+                                        <TextBox Grid.Column="1" Text="{Binding Name, Mode=TwoWay}" Watermark="BTC"
+                                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                                        <TextBlock Grid.Column="2" Text="Amount:"
+                                                   VerticalAlignment="Center" Margin="12,0,8,0" FontSize="12"/>
+                                        <TextBox Grid.Column="3" Text="{Binding Total, Mode=TwoWay}"
+                                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
-            <!-- Cool down after a losing trade -->
-            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
-                  ToolTip.Tip="Minutes to stay out of a symbol after a position on it closed at a LOSS, counted from that close. Replaces the cool down time above while it lasts, so it only ever makes the wait longer. Zero switches it off. A position that timed out without buying anything does not count as a loss.">
-                <TextBlock Grid.Column="0" Text="Cool down after loss (m):"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding LossCooldownTime, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                    </StackPanel>
+                </HeaderedContentControl>
 
-            <!-- Close a position that has been open too long -->
-            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
-                  ToolTip.Tip="Days a position may stay open before it is closed at whatever the market offers, counted from the moment it was created. Zero switches it off. Decimals are allowed, so 0.5 is twelve hours. Meant for the rare position that walks away and never comes back: it holds capital that cannot be put to work anywhere else.">
-                <TextBlock Grid.Column="0" Text="Close position after (days):"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding MaxPositionDurationDays, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+            </StackPanel>
+        </HeaderedContentControl>
 
-            <!-- Slot Limits -->
-            <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,2,0,0">
-                <StackPanel Margin="6" Spacing="4">
-
-                    <!-- Long Slots -->
-                    <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-                        <TextBlock Grid.Column="0" Text="Long:"
-                                   VerticalAlignment="Center"
-                                   Margin="0,0,12,0" FontSize="12"/>
-                        <TextBox Grid.Column="2"
-                                 Text="{Binding SlotsMaximalLong, Mode=TwoWay}"
-                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                    </Grid>
-
-                    <!-- Short Slots -->
-                    <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-                        <TextBlock Grid.Column="0" Text="Short:"
-                                   VerticalAlignment="Center"
-                                   Margin="0,0,12,0" FontSize="12"/>
-                        <TextBox Grid.Column="2"
-                                 Text="{Binding SlotsMaximalShort, Mode=TwoWay}"
-                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                    </Grid>
-
-                </StackPanel>
-            </HeaderedContentControl>
-
-        </StackPanel>
-    </HeaderedContentControl>
+    </StackPanel>
 
 </UserControl>
