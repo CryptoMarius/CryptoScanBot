@@ -143,6 +143,27 @@ public class ChartStyleSettings
 
         new("volume", "Volume", "volumeUp",   "Rising candle",  new() { Color = "#8022c55e" }),
         new("volume", "Volume", "volumeDown", "Falling candle", new() { Color = "#80f0616d" }),
+
+        // The lines a position draws. Buy orders green and sell orders red: that covers long and
+        // short in one rule, and the entry, the DCA levels and the take profit all follow the side
+        // of the order behind them - so one colour each, not one per level.
+        // The two stop legs, the break-even line and the two open markers do have a colour of
+        // their own. They are what you look for on a busy chart, and under a short they would
+        // otherwise be the same green as everything else there.
+        // Dots = true on the fills: only their colour is used, so width and line style are greyed
+        // out in the editor.
+        new("positions", "Positions", "positionBuy",       "Buy order (entry / DCA / take profit)",  new() { Color = "#FF006400", LineWidth = 2, LineStyle = 2 }),
+        new("positions", "Positions", "positionSell",      "Sell order (entry / DCA / take profit)", new() { Color = "#FF8B0000", LineWidth = 2, LineStyle = 2 }),
+        new("positions", "Positions", "positionStopPrice", "Stop trigger",      new() { Color = "#FFef5350", LineWidth = 2, LineStyle = 2 }),
+        new("positions", "Positions", "positionStopLimit", "Stop limit",        new() { Color = "#FFff8a65", LineWidth = 2, LineStyle = 2 }),
+        new("positions", "Positions", "positionBreakEven", "Break-even",        new() { Color = "#FF4da3ff", LineWidth = 2, LineStyle = 2 }),
+        new("positions", "Positions", "positionOpenLong",  "Open marker long",  new() { Color = "#FF006400", LineWidth = 2, LineStyle = 1 }),
+        new("positions", "Positions", "positionOpenShort", "Open marker short", new() { Color = "#FF8B0000", LineWidth = 2, LineStyle = 1 }),
+        new("positions", "Positions", "positionFillBuy",   "Buy filled",        new() { Color = "#FFffeb3b", Dots = true }),
+        new("positions", "Positions", "positionFillSell",  "Sell filled",       new() { Color = "#FFffffff", Dots = true }),
+
+        new("signals", "Signals", "signalLong",  "Long signal",  new() { Color = "#FFffeb3b", Dots = true }),
+        new("signals", "Signals", "signalShort", "Short signal", new() { Color = "#FFe53935", Dots = true }),
     ];
 
     /// <summary>

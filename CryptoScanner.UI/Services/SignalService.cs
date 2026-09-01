@@ -31,6 +31,11 @@ public class SignalService : IDisposable
 
     public GridSortState<SignalColumnEnum> SortState { get; }
 
+    // The selection is kept here instead of in the page: a tab switch disposes the page and takes
+    // every field on it with it. Rows are matched on the signal id, because a reload builds new
+    // view models for the same signals.
+    public GridSelectionState<SignalViewModel> Selection { get; } = new(vm => vm.Object.Id);
+
     public event Action? SignalsChanged;
 
     public SignalService(ApplicationStateService stateService)
@@ -90,6 +95,7 @@ public class SignalService : IDisposable
                 _signals.AddRange(signals.Select(s => new SignalViewModel(s)));
             }
             ApplySort();
+            Selection.Rebind(Signals);
             SignalsChanged?.Invoke();
         }
         catch
@@ -106,6 +112,17 @@ public class SignalService : IDisposable
     {
         _currentFilter = filter ?? string.Empty;
         LoadFromDatabase(_currentFilter);
+    }
+
+    /// <summary>
+    /// Sort the rows again with the values they have at this moment. The page calls this when its
+    /// tab is opened: price change and minimum entry follow the last price, so a row that was
+    /// sorted into place drifts out of order while the tab is away. Sorting while the tab is on
+    /// screen would make the rows jump around under the mouse, hence only on entry.
+    /// </summary>
+    public void Resort()
+    {
+        ApplySort();
     }
 
     public void Sort(SignalColumnEnum column)
@@ -170,7 +187,10 @@ public class SignalService : IDisposable
             changed = removed > 0;
         }
         if (changed)
+        {
+            Selection.Rebind(Signals);
             SignalsChanged?.Invoke();
+        }
     }
 
     /// <summary>
@@ -219,6 +239,7 @@ public class SignalService : IDisposable
 
         lock (_lock)
             _signals.Clear();
+        Selection.Clear();
         SignalsChanged?.Invoke();
     }
 

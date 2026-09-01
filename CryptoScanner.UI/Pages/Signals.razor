@@ -41,7 +41,7 @@
                 @foreach (var vm in _signals)
                 {
                     var row = _rowCallbacks.Get(vm);
-                    <tr class="@(vm.IsInvalid ? "row-invalid" : "") @(_selectedSignals.Contains(vm) ? "selected" : "")"
+                    <tr class="@(vm.IsInvalid ? "row-invalid" : "") @(SelectedSignals.Contains(vm) ? "selected" : "")"
                         @key="vm"
                         @onclick="row.Click"
                         @ondblclick="row.DoubleClick"
@@ -144,8 +144,14 @@
     private SignalColumnEnum? _dragSourceColumn;
     private SignalColumnEnum? _dragOverColumn;
 
-    private SignalViewModel? _selectedSignal;
-    private readonly HashSet<SignalViewModel> _selectedSignals = [];
+    // Selection of this grid, held by SignalService: leaving the tab disposes this page,
+    // so a selection kept here would be gone the moment the user looks at another tab.
+    private SignalViewModel? SelectedSignal
+    {
+        get => SignalService.Selection.Current;
+        set => SignalService.Selection.Current = value;
+    }
+    private HashSet<SignalViewModel> SelectedSignals => SignalService.Selection.Selected;
     private bool _contextMenuVisible;
     private ElementReference _contextMenuRef;
     private bool _contextMenuPositioned;
@@ -224,6 +230,10 @@
             SignalColumnEnum.Date, System.ComponentModel.ListSortDirection.Descending);
 
         SignalService.SignalsChanged += OnSignalsChanged;
+
+        // The price change moved on while this tab was away, so put the rows back in the order the
+        // user sorted them in before reading them.
+        SignalService.Resort();
         _signals = SignalService.Signals.ToList();
         // The queue pump and the expiration cleanup run in SignalService itself so they keep
         // going while this tab is closed (same as the Avalonia DispatcherTimers).
@@ -302,43 +312,43 @@
     {
         if (e.CtrlKey)
         {
-            if (_selectedSignals.Contains(vm))
-                _selectedSignals.Remove(vm);
+            if (SelectedSignals.Contains(vm))
+                SelectedSignals.Remove(vm);
             else
-                _selectedSignals.Add(vm);
-            _selectedSignal = vm;
+                SelectedSignals.Add(vm);
+            SelectedSignal = vm;
         }
-        else if (e.ShiftKey && _selectedSignal != null)
+        else if (e.ShiftKey && SelectedSignal != null)
         {
-            int startIdx = _signals.IndexOf(_selectedSignal);
+            int startIdx = _signals.IndexOf(SelectedSignal);
             int endIdx = _signals.IndexOf(vm);
             if (startIdx >= 0 && endIdx >= 0)
             {
                 int from = Math.Min(startIdx, endIdx);
                 int to = Math.Max(startIdx, endIdx);
-                _selectedSignals.Clear();
+                SelectedSignals.Clear();
                 for (int i = from; i <= to; i++)
-                    _selectedSignals.Add(_signals[i]);
+                    SelectedSignals.Add(_signals[i]);
             }
         }
         else
         {
-            _selectedSignals.Clear();
-            _selectedSignals.Add(vm);
-            _selectedSignal = vm;
+            SelectedSignals.Clear();
+            SelectedSignals.Add(vm);
+            SelectedSignal = vm;
         }
     }
 
     private void OnDoubleClick(SignalViewModel vm)
     {
-        _selectedSignal = vm;
+        SelectedSignal = vm;
         if (vm.Object.Symbol != null)
             GridCommandService.HandleDoubleClick(vm.Object.Symbol, vm.Object.Interval);
     }
 
     private void OnRowContextMenu(MouseEventArgs e, SignalViewModel vm)
     {
-        _selectedSignal = vm;
+        SelectedSignal = vm;
         _contextMenuSignal = vm;
         _contextMenuType = ContextMenuType.Row;
         _contextMenuX = e.ClientX;
@@ -510,8 +520,8 @@
 
     private void OnMenuHideSelection()
     {
-        _selectedSignal = null;
-        _selectedSignals.Clear();
+        SelectedSignal = null;
+        SelectedSignals.Clear();
         CloseContextMenu();
     }
 

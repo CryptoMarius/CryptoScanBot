@@ -3,6 +3,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
+using CryptoScanner.UI.Models;
 
 using Dapper;
 
@@ -121,15 +122,33 @@ public static class ChartDataService
     }
 
     /// <summary>Horizontal level between two moments, captioned just right of its start.</summary>
-    private static ChartSegment Horizontal(long time1, long time2, decimal price, string color, string caption) => new()
+    private static ChartSegment Horizontal(long time1, long time2, decimal price, ChartLineStyle style, string caption) => new()
     {
         time1 = time1,
         time2 = time2,
         price1 = (double)price,
         price2 = (double)price,
-        color = color,
-        dash = 2, // Dotted with a wide gap; the Avalonia dash-dash-dot was too loud here
+        color = style.ToCssColor(),
+        width = style.LineWidth,
+        // Dotted with a wide gap by default; the Avalonia dash-dash-dot was too loud here
+        dash = style.LineStyle,
         text = caption,
+    };
+
+    /// <summary>
+    /// The vertical piece that joins two heights of the SAME level, so a stop that trails along
+    /// reads as one staircase instead of a row of loose lines. Solid: it is the moment the level
+    /// moved, not a level of its own.
+    /// </summary>
+    private static ChartSegment Connector(long time, decimal priceFrom, decimal priceTo, ChartLineStyle style) => new()
+    {
+        time1 = time,
+        time2 = time,
+        price1 = (double)priceFrom,
+        price2 = (double)priceTo,
+        color = style.ToCssColor(),
+        width = style.LineWidth,
+        dash = 0,
     };
 
     /// <summary>
@@ -137,18 +156,73 @@ public static class ChartDataService
     /// <paramref name="priceFrom"/>, so pass the far end of the line to keep the text clear of the
     /// candles.
     /// </summary>
-    private static ChartSegment Vertical(long time, decimal priceFrom, decimal priceTo, string color,
+    private static ChartSegment Vertical(long time, decimal priceFrom, decimal priceTo, ChartLineStyle style,
         string caption = "", decimal? captionPrice = null) => new()
         {
             time1 = time,
             time2 = time,
             price1 = (double)priceFrom,
             price2 = (double)priceTo,
-            color = color,
-            dash = 1, // Dot, as in Positions.DrawVerticalLine
+            color = style.ToCssColor(),
+            width = style.LineWidth,
+            dash = style.LineStyle, // Dot by default, as in Positions.DrawVerticalLine
             text = caption,
             textPrice = captionPrice == null ? null : (double)captionPrice.Value,
         };
+
+    /// <summary>
+    /// One level of a position followed through time: the entry, a DCA step, a take profit or one
+    /// of its stop legs. Every time the order behind it is cancelled and placed again the level
+    /// arrives as another piece, and the pieces together are drawn as a single staircase.
+    /// </summary>
+    private sealed class LevelChain
+    {
+        public string Caption = "";
+        public ChartLineStyle Style = new();
+        public List<(long Start, long End, decimal Price)> Pieces = [];
+    }
+
+    /// <summary>
+    /// Draws one level as a staircase: a horizontal piece for every stretch it stood still and a
+    /// vertical connector wherever it moved. Only the first piece carries the caption, so a stop
+    /// that trails along no longer writes "stop price" over the chart at every step it takes.
+    /// </summary>
+    private static void EmitChain(List<ChartSegment> segments, LevelChain chain)
+    {
+        // Merge what describes the same price back to back. Every take profit level carries the
+        // same stop, so with a multi level take profit the same stop piece arrives once per level.
+        List<(long Start, long End, decimal Price)> pieces = [];
+        foreach (var piece in chain.Pieces.OrderBy(p => p.Start).ThenBy(p => p.End))
+        {
+            if (pieces.Count > 0)
+            {
+                var last = pieces[^1];
+                if (last.Price == piece.Price && piece.Start <= last.End)
+                {
+                    if (piece.End > last.End)
+                        pieces[^1] = (last.Start, piece.End, last.Price);
+                    continue;
+                }
+            }
+            pieces.Add(piece);
+        }
+
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            var piece = pieces[i];
+            long end = piece.End;
+
+            // Runs on to where the next piece starts: the order is cancelled and placed again a
+            // moment later, and the hole that leaves reads as a level that was not there.
+            if (i + 1 < pieces.Count && pieces[i + 1].Start > end)
+                end = pieces[i + 1].Start;
+
+            segments.Add(Horizontal(piece.Start, end, piece.Price, chain.Style, i == 0 ? chain.Caption : ""));
+
+            if (i + 1 < pieces.Count && pieces[i + 1].Price != piece.Price)
+                segments.Add(Connector(pieces[i + 1].Start, piece.Price, pieces[i + 1].Price, chain.Style));
+        }
+    }
 
     public static List<ChartRect> BuildZones(CryptoSymbol symbol, bool showDlz, bool showFvg, bool showSmc,
         CandleTime from, CandleTime to)
@@ -255,6 +329,11 @@ public static class ChartDataService
     {
         var dots = new List<ChartDot>();
 
+        // Personal colours from Settings / Chart styles, group "Signals"
+        var styles = ChartStyleSettings.Current;
+        ChartLineStyle longStyle = styles.Get("signalLong");
+        ChartLineStyle shortStyle = styles.Get("signalShort");
+
         string sql = "select * from signal where SymbolId = @SymbolId " +
             "and CloseDate > @From and CloseDate <= @To and EmulatorRunId is null";
 
@@ -275,7 +354,7 @@ public static class ChartDataService
                     // Off the candle rather than on it, the same 1% either way as Avalonia: a dot
                     // exactly on the signal price disappears into the body it belongs to.
                     price = (double)(isLong ? 0.99m * signal.SignalPrice : 1.01m * signal.SignalPrice),
-                    color = isLong ? "#ffeb3b" : "#e53935",
+                    color = (isLong ? longStyle : shortStyle).ToCssColor(),
                     radius = 2,
                 });
             }
@@ -301,6 +380,19 @@ public static class ChartDataService
         string sql = "select * from position where SymbolId = @SymbolId " +
             "and CreateTime <= @To and (CloseTime is null or CloseTime >= @From) " +
             "and EmulatorRunId is null order by CreateTime";
+
+        // Personal colours, widths and line styles from Settings / Chart styles, group "Positions".
+        // Read once per redraw; the whole chart is rebuilt whenever one of them is changed.
+        var styles = ChartStyleSettings.Current;
+        ChartLineStyle buyStyle = styles.Get("positionBuy");
+        ChartLineStyle sellStyle = styles.Get("positionSell");
+        ChartLineStyle stopPriceStyle = styles.Get("positionStopPrice");
+        ChartLineStyle stopLimitStyle = styles.Get("positionStopLimit");
+        ChartLineStyle breakEvenStyle = styles.Get("positionBreakEven");
+        ChartLineStyle openLongStyle = styles.Get("positionOpenLong");
+        ChartLineStyle openShortStyle = styles.Get("positionOpenShort");
+        ChartLineStyle fillBuyStyle = styles.Get("positionFillBuy");
+        ChartLineStyle fillSellStyle = styles.Get("positionFillSell");
 
         using var database = new CryptoDatabase();
         try
@@ -355,18 +447,34 @@ public static class ChartDataService
                 // Caption once per level. An order that is cancelled and placed again produces a
                 // new segment every time, and with the take profit being repositioned on every
                 // break-even change that put the same "stop price" and "stop limit" text across
-                // the chart four or five times over. The line still gets drawn - only the repeated
-                // caption is dropped, and a level that really moves is labelled again.
-                var captioned = new HashSet<string>();
-                string CaptionOnce(string caption, decimal price)
-                    => captioned.Add($"{caption}|{price}") ? caption : "";
+                // the chart four or five times over. A trailing stop made that worse still: every
+                // step it takes is a level of its own, so it was labelled again on each one.
+                //
+                // So the pieces of one level are collected here and drawn as a single staircase
+                // (EmitChain): horizontal where the level stood still, a vertical connector where
+                // it moved, and the caption only on the very first piece.
+                var chains = new Dictionary<string, LevelChain>();
+                void AddPiece(string key, string caption, ChartLineStyle style, long start, long end, decimal price)
+                {
+                    if (!chains.TryGetValue(key, out LevelChain? chain))
+                    {
+                        chain = new LevelChain { Caption = caption, Style = style };
+                        chains[key] = chain;
+                    }
+                    chain.Pieces.Add((start, end, price));
+                }
 
                 foreach (CryptoPositionPart part in position.PartList.Values)
                 {
                     foreach (var step in part.StepList.Values)
                     {
                         // Buy orders green, sell orders red — covers long and short in one rule
-                        string color = step.Side == CryptoOrderSide.Buy ? "#006400" : "#8B0000";
+                        // ...and the entry, the DCA levels and the take profit still follow it.
+                        // What changed is only where the two colours come from: Settings / Chart
+                        // styles instead of the two constants that used to sit here. The stop legs
+                        // below have a colour of their own, so they can be told apart from the
+                        // orders they hang under.
+                        ChartLineStyle sideStyle = step.Side == CryptoOrderSide.Buy ? buyStyle : sellStyle;
 
                         // CloseTime alone is not enough: it is also set when an order is cancelled
                         // or replaced. Only the status says whether anything was actually bought
@@ -385,8 +493,7 @@ public static class ChartDataService
                         switch (part.Purpose)
                         {
                             case CryptoPartPurpose.Entry:
-                                segments.Add(Horizontal(xStart, xEnd, step.Price, color,
-                                    CaptionOnce("entry", step.Price)));
+                                AddPiece("entry", "entry", sideStyle, xStart, xEnd, step.Price);
                                 if (firstEntry == xStart && step.CloseTime.HasValue)
                                     firstEntry = stepEnd;
                                 break;
@@ -397,8 +504,8 @@ public static class ChartDataService
                                     levelDrawn = false;
                                     break;
                                 }
-                                segments.Add(Horizontal(stepStart, stepEnd, step.Price, color,
-                                    CaptionOnce($"dca-{part.PartNumber}", step.Price)));
+                                AddPiece($"dca-{part.PartNumber}", $"dca-{part.PartNumber}", sideStyle,
+                                    stepStart, stepEnd, step.Price);
                                 break;
 
                             case CryptoPartPurpose.TakeProfit:
@@ -411,14 +518,18 @@ public static class ChartDataService
                                     break;
                                 }
 
-                                segments.Add(Horizontal(stepStart, stepEnd, step.Price, color,
-                                    CaptionOnce($"take profit-{part.PartNumber}", step.Price)));
+                                AddPiece($"tp-{part.PartNumber}", $"take profit-{part.PartNumber}", sideStyle,
+                                    stepStart, stepEnd, step.Price);
+
+                                // Both stop legs are shared by every take profit level, so they are
+                                // chained per position and not per part - a two level take profit
+                                // would otherwise draw the very same staircase twice.
                                 if (step.StopPrice.HasValue)
-                                    segments.Add(Horizontal(stepStart, stepEnd, step.StopPrice.Value, color,
-                                        CaptionOnce("stop price", step.StopPrice.Value)));
+                                    AddPiece("stop price", "stop price", stopPriceStyle,
+                                        stepStart, stepEnd, step.StopPrice.Value);
                                 if (step.StopLimitPrice.HasValue)
-                                    segments.Add(Horizontal(stepStart, stepEnd, step.StopLimitPrice.Value, color,
-                                        CaptionOnce("stop limit", step.StopLimitPrice.Value)));
+                                    AddPiece("stop limit", "stop limit", stopLimitStyle,
+                                        stepStart, stepEnd, step.StopLimitPrice.Value);
                                 break;
                         }
 
@@ -433,7 +544,7 @@ public static class ChartDataService
                             {
                                 time = CandleContaining(step.CloseTime.Value, interval.Duration).ToUnixSeconds(),
                                 price = (double)filledPrice,
-                                color = step.Side == CryptoOrderSide.Buy ? "#ffeb3b" : "#ffffff",
+                                color = (step.Side == CryptoOrderSide.Buy ? fillBuyStyle : fillSellStyle).ToCssColor(),
                             });
                         }
 
@@ -450,11 +561,16 @@ public static class ChartDataService
                     }
                 }
 
+                // Every level as one staircase, in the order the levels were first seen
+                foreach (LevelChain chain in chains.Values)
+                    EmitChain(segments, chain);
+
                 // Two vertical dotted markers at the open time, one reaching up and one down, with
                 // a gap around the candle so its wicks stay readable
                 if (entry > 0)
                 {
-                    string positionColor = position.Side == CryptoTradeSide.Long ? "#006400" : "#8B0000";
+                    ChartLineStyle markerStyle = position.Side == CryptoTradeSide.Long ? openLongStyle : openShortStyle;
+                    string positionColor = markerStyle.ToCssColor();
 
                     decimal candleAbove = entry;
                     decimal candleBelow = entry;
@@ -483,8 +599,8 @@ public static class ChartDataService
                         ? entry * 1.03m
                         : entry * 0.97m;
 
-                    segments.Add(Vertical(xStart, boxAbove, candleAbove, positionColor, caption, captionPrice));
-                    segments.Add(Vertical(xStart, boxBelow, candleBelow, positionColor));
+                    segments.Add(Vertical(xStart, boxAbove, candleAbove, markerStyle, caption, captionPrice));
+                    segments.Add(Vertical(xStart, boxBelow, candleBelow, markerStyle));
 
                     // The same moment for the sub-panels, where it runs the full height: volume,
                     // RSI/stochastic and MACD at the open are exactly what you compare afterwards.
@@ -494,7 +610,7 @@ public static class ChartDataService
                 // Break-even only while the position is open. Blue and without a caption: it sits
                 // very close to the entry line, and two labels on top of each other read as noise.
                 if (position.CloseTime == null && position.BreakEvenPrice > 0)
-                    segments.Add(Horizontal(firstEntry, xEnd, position.BreakEvenPrice, "#4da3ff", ""));
+                    segments.Add(Horizontal(firstEntry, xEnd, position.BreakEvenPrice, breakEvenStyle, ""));
             }
         }
         catch (Exception ex)

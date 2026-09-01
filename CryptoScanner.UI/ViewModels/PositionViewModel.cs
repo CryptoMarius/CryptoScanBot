@@ -38,7 +38,7 @@ public class PositionViewModel
             PositionColumnEnum.Quantity => Object.Status == CryptoPositionStatus.Timeout ? "-" : Object.Quantity.ToString0(),
             PositionColumnEnum.Open => IsInactiveStatus() ? "-" : (Object.Invested - Object.Returned - Object.Commission).ToString(Object.Symbol.QuoteData.DisplayFormat),
             PositionColumnEnum.CurrentProfit => IsInactiveStatus() ? "-" : Object.CurrentProfit().ToString(Object.Symbol.QuoteData.DisplayFormat),
-            PositionColumnEnum.CurrentProfitPercentage => IsInactiveStatus() ? "-" : Object.CurrentProfitPercentage().ToString("N2"),
+            PositionColumnEnum.CurrentProfitPercentage => IsInactiveStatus() ? "-" : Object.CurrentProfitPercentage().ToString("N2") + "%",
             PositionColumnEnum.Parts => Object.PartCountText(),
             PositionColumnEnum.EntryPrice => Object.EntryPrice?.ToString0(Object.Symbol.PriceDisplayFormat) ?? "",
             PositionColumnEnum.ProfitPrice => Object.ProfitPrice?.ToString0(Object.Symbol.PriceDisplayFormat) ?? "",

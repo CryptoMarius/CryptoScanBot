@@ -908,6 +908,24 @@ public partial class MainWindowViewModel : ObservableObject
                         Status = $"Queue {runIndex}/{totalRuns}: {algoName} — {entryLabel}";
                         _queueProgress = $"{runIndex}/{totalRuns}";
                         OnPropertyChanged(nameof(ProgressLabel));
+
+                        // Clear the bulk data BEFORE the next run starts, so the database holds one
+                        // run instead of growing 3,5 MB per entry over a ten-day queue. What the
+                        // report and the analyses need is on the EmulatorRun row by then: the
+                        // counters, the summary and the position digest.
+                        try
+                        {
+                            var purge = EmulatorDb.PurgeBeforeRun();
+                            if (!purge.Purged)
+                                GlobalData.AddTextToLogTab(
+                                    $"Queue: NOTHING cleared — {purge.Unprotected} run(s) still hold positions "
+                                    + "without a position digest, and deleting those would lose them for good");
+                        }
+                        catch (Exception px)
+                        {
+                            GlobalData.AddTextToLogTab($"Queue: purge before run failed — {px.Message}");
+                        }
+
                         bool completed = await RunOnceAsync(runConfig, entry.Force);
                         if (!completed)
                             return;
@@ -1167,20 +1185,6 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _cts?.Cancel();
         Status = "Cancelling…";
-    }
-
-
-    [RelayCommand]
-    private async Task PurgeSignalsAsync()
-    {
-        Status = "Purging signals, orders and trades…";
-        await Task.Run(() =>
-        {
-            EmulatorDb.PurgeTransientData();
-            EmulatorDb.Vacuum();
-        });
-        GlobalData.AddTextToLogTab("Purge completed — signals, orders and trades removed, database compacted");
-        Status = "Purge completed.";
     }
 
 

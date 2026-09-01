@@ -338,6 +338,63 @@ public class TradeTools
     }
 
 
+    /// <summary>
+    /// The result a single take profit fill actually booked, in the quote currency and as a
+    /// percentage, for instance " profit=+0.42 USDC (+2.86%)".
+    /// It is measured against the break-even price the position had while it was still open, by the
+    /// same CryptoPositionHelper.ProfitFor the position grid runs on. That price already carries the
+    /// entry cost plus every commission (the ones paid and the predicted exit fee), so everything
+    /// above it is profit and no cost has to be subtracted again here.
+    /// A partial fill reports its own share, not the result of the whole position: with more than
+    /// one take profit level every level reports what it closed itself.
+    /// Returns an empty string when there is nothing to say: an entry or dca fill, or a position
+    /// without a usable break-even price.
+    /// </summary>
+    internal static string FormatRealizedResult(CryptoPosition position, CryptoPositionStep step, decimal breakEvenPrice)
+    {
+        if (breakEvenPrice <= 0 || step.QuantityFilled <= 0 || step.AveragePrice <= 0)
+            return "";
+        if (step.Side != position.GetTakeProfitOrderSide())
+            return "";
+
+        // Same rule as the running position uses against the last price, only measured against the
+        // price this order actually filled at
+        decimal profit = position.ProfitFor(breakEvenPrice, step.AveragePrice, step.QuantityFilled);
+        // Profit over what this quantity cost, which is the netpnl% CurrentProfitPercentage reports
+        decimal invested = breakEvenPrice * step.QuantityFilled;
+        decimal percentage = 100m * profit / invested;
+
+        // A negative number brings its own minus sign, only a positive one needs a plus
+        string sign = profit >= 0 ? "+" : "";
+        return $" profit={sign}{profit.ToString0(position.Symbol.QuoteData.DisplayFormat)} {position.Symbol.Quote}" +
+            $" ({sign}{percentage.ToString("N2")}%)";
+    }
+
+
+    /// <summary>
+    /// The final result of a position that just closed, in the quote currency and as a percentage,
+    /// for instance " position closed in profit=+0.43 USDC (+2.94%)".
+    /// Nothing is recalculated here: both figures come straight out of the position's own
+    /// administration, which CalculateProfitAndBreakEvenPrice has just brought up to date - which is
+    /// exactly why this line can only be written after the order loop, not inside it. The helpers
+    /// are used rather than the fields because the stored percentage is 100 based (102.94 = 2.94%).
+    /// </summary>
+    internal static string FormatClosedPosition(CryptoPosition position)
+    {
+        decimal profit = position.CurrentProfit();
+        // A position that closed without ever investing anything has no percentage; reading the
+        // stored 0 as a percentage would report -100%
+        decimal percentage = position.Invested != 0 ? position.CurrentProfitPercentage() : 0m;
+
+        // A negative number brings its own minus sign, only a positive one needs a plus
+        string sign = profit >= 0 ? "+" : "";
+        // Same wording as the exchange app the user compares against: in profit, or in loss
+        string outcome = profit >= 0 ? "profit" : "loss";
+        return $" position closed in {outcome}={sign}{profit.ToString0(position.Symbol.QuoteData.DisplayFormat)} {position.Symbol.Quote}" +
+            $" ({sign}{percentage.ToString("N2")}%)";
+    }
+
+
     private static void CalculateOrderFeeFromTrades(CryptoPosition position, CryptoPositionStep step)
     {
         //ScannerLog.Logger.Trace($"CalculateOrderFeeFromTrades: Positie {position.Symbol.Name} check step={step.OrderId}");
@@ -414,6 +471,16 @@ public class TradeTools
 
         // Build the filled quantity via the present orders & calculate fees
         long profOrderLoopStart = Stopwatch.GetTimestamp();
+        // The break-even price as it stood while the position was still open, kept as the reference
+        // for the realized result of a take profit fill in the loop below. It is read here because
+        // CalculateProfitAndBreakEvenPrice only runs after the loop, which would overwrite it. A dca
+        // filling in this same pass is not corrected for, and should not be: the take profit price
+        // that just filled was placed against this very break-even price, not against the new one.
+        decimal breakEvenPriceBeforeFills = position.BreakEvenPrice;
+        // Filled-order messages are collected here and sent after the recalculation below. Whether a
+        // fill closes the position is only known by then, and that decides what the message can
+        // report: the result of that one order, or the final result of the whole position.
+        List<(string Text, string Realized)> filledMessages = [];
         DateTime? lastDateTime = null;
         foreach (CryptoOrder order in position.OrderList.Values.ToList())
         {
@@ -590,10 +657,7 @@ public class TradeTools
 
                         // Geen melding geven bij afgesloten orders
                         if (!isOrderClosed)
-                        {
-                            GlobalData.AddTextToLogTab(msgInfo);
-                            GlobalData.AddTextToTelegram(msgInfo, position, CryptoTelegramCategory.OrderFilled);
-                        }
+                            filledMessages.Add((msgInfo, FormatRealizedResult(position, step, breakEvenPriceBeforeFills)));
 
                         if (!step.IsCalculated)
                         {
@@ -767,6 +831,26 @@ public class TradeTools
                 await GlobalData.ThreadCheckPosition!.AddToQueue(position);
             }
 
+        }
+
+
+        // The filled-order messages waited for this point on purpose (see where they are collected).
+        // The fill that closed the position reports the position's own final figures instead of what
+        // that single order booked; a fill that leaves the position open reports its own share. Only
+        // a take profit fill can be the closing one, so a message without a result of its own (an
+        // entry or a dca) is never picked.
+        int closingIndex = -1;
+        if (markedAsReady && position.Status == CryptoPositionStatus.Ready)
+            closingIndex = filledMessages.FindLastIndex(message => message.Realized != "");
+        for (int i = 0; i < filledMessages.Count; i++)
+        {
+            string text = filledMessages[i].Text;
+            if (i == closingIndex)
+                text += FormatClosedPosition(position);
+            else
+                text += filledMessages[i].Realized;
+            GlobalData.AddTextToLogTab(text);
+            GlobalData.AddTextToTelegram(text, position, CryptoTelegramCategory.OrderFilled);
         }
 
         PipelineProfiler.RecordPositionResultPhases(

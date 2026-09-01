@@ -88,6 +88,10 @@ public sealed class HiddenBrowserWindow
         {
             if (_window != null)
             {
+                // The window only announces itself when it is created, so without this line every
+                // click after the first one left no trace at all - and this window is invisible, so
+                // the log is the only place the navigation can be seen.
+                GlobalData.AddTextToLogTab($"Hidden browser navigates to: {url}");
                 _window.Load(new Uri(url));
                 return;
             }

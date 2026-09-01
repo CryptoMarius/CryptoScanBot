@@ -32,6 +32,12 @@ public class PositionService : IDisposable
     public GridSortState<PositionColumnEnum> OpenSortState { get; }
     public GridSortState<PositionColumnEnum> ClosedSortState { get; }
 
+    // The selection is kept here instead of in the page: a tab switch disposes the page and takes
+    // every field on it with it. Rows are matched on the position id, because a reload builds new
+    // view models for the same positions.
+    public GridSelectionState<PositionViewModel> OpenSelection { get; } = new(vm => vm.Object.Id);
+    public GridSelectionState<PositionViewModel> ClosedSelection { get; } = new(vm => vm.Object.Id);
+
     public event Action? OpenPositionsChanged;
     public event Action? ClosedPositionsChanged;
 
@@ -135,6 +141,17 @@ public class PositionService : IDisposable
             OpenPositionsChanged?.Invoke();
     }
 
+    /// <summary>
+    /// Sort the rows again with the values they have at this moment. The page calls this when its
+    /// tab is opened: profit, profit percentage and duration follow the price, so a row that was
+    /// sorted into place drifts out of order while the tab is away. Sorting while the tab is on
+    /// screen would make the rows jump around under the mouse, hence only on entry.
+    /// </summary>
+    public void ResortOpen()
+    {
+        ApplySortOpen();
+    }
+
     public void SortOpen(PositionColumnEnum column)
     {
         OpenSortState.ToggleSort(column);
@@ -177,6 +194,7 @@ public class PositionService : IDisposable
             if (vm != null)
             {
                 _openPositions.Remove(vm);
+                OpenSelection.Remove(vm);
                 openChanged = true;
             }
             // Closing is announced twice as well (MVVM message plus delegate), so guard the insert
@@ -199,12 +217,14 @@ public class PositionService : IDisposable
             if (openVm != null)
             {
                 _openPositions.Remove(openVm);
+                OpenSelection.Remove(openVm);
                 openChanged = true;
             }
             var closedVm = _closedPositions.FirstOrDefault(p => p.Object.Id == position.Id);
             if (closedVm != null)
             {
                 _closedPositions.Remove(closedVm);
+                ClosedSelection.Remove(closedVm);
                 closedChanged = true;
             }
         }
@@ -220,6 +240,8 @@ public class PositionService : IDisposable
         {
             _openPositions.Clear();
             _closedPositions.Clear();
+            OpenSelection.Clear();
+            ClosedSelection.Clear();
         }
         OpenPositionsChanged?.Invoke();
         ClosedPositionsChanged?.Invoke();
@@ -254,6 +276,7 @@ public class PositionService : IDisposable
                 _openPositions = viewModels;
             }
             ApplySortOpen();
+            OpenSelection.Rebind(OpenPositions);
             OpenPositionsChanged?.Invoke();
         }
         catch
@@ -294,6 +317,7 @@ public class PositionService : IDisposable
                 _closedPositions = viewModels;
             }
             ApplySortClosed();
+            ClosedSelection.Rebind(ClosedPositions);
             ClosedPositionsChanged?.Invoke();
         }
         catch

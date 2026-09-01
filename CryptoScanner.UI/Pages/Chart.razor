@@ -162,9 +162,11 @@
             </div>
             <div class="chart-indicator-row">
                 <label class="chart-toggle"><input type="checkbox" @bind="_showSignals" @bind:after="LoadChart" /> Signals</label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("signals", "Signals"))">&#9881;</button>
             </div>
             <div class="chart-indicator-row">
                 <label class="chart-toggle"><input type="checkbox" @bind="_showPositions" @bind:after="LoadChart" /> Positions</label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("positions", "Positions"))">&#9881;</button>
             </div>
         </div>
     }

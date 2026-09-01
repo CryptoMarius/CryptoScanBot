@@ -94,22 +94,40 @@ public static class ExternalLinkHelper
             // BUGFIX: silent return previously hid mis-configured weblinks. Surface it so
             // the user can tell whether the symbol open failed because of a missing URL or
             // because of the browser launch itself (e.g. WebView2 init in Release).
-            GlobalData.AddTextToLogTab($"Linktools: no URL configured for tradingApp={tradingApp} exchange={GlobalData.Settings.General.ActivateExchangeName} symbol={symbol.Name}");
+            // At error level, so a click that cannot go anywhere also lands in the error log
+            // instead of only scrolling past in the log tab.
+            GlobalData.AddErrorToLogTab($"Linktools: no URL configured for tradingApp={tradingApp} exchange={GlobalData.Settings.General.ActivateExchangeName} symbol={symbol.Name}");
         }
         if (Url != "")
         {
-            GlobalData.AddTextToLogTab($"Linktools activate {Url}");
+            // Which of the three routes below is taken, decided here so the log line can name it.
+            // From the outside they are indistinguishable: the hidden browser sits off-screen on
+            // purpose and the system browser hands the address to another application, so a click
+            // that ends up somewhere unexpected looks exactly like a click that did nothing at all.
+            bool useInternalBrowser = viaTradingBrowser == CryptoExternalUrlType.Internal;
+            bool useHiddenBrowser = !useInternalBrowser && Execute == CryptoExternalUrlType.Internal;
+            string route = useInternalBrowser ? "internal browser"
+                : useHiddenBrowser ? "hidden browser"
+                : "system browser";
+            GlobalData.AddTextToLogTab($"Linktools activate {tradingApp} {symbol.Name} {interval.Name} via the {route}: {Url}");
 
             // Open the url via our own hidden browser (to avoid the Altrady jump-step)
-            if (viaTradingBrowser == CryptoExternalUrlType.Internal)
+            if (useInternalBrowser)
             {
-                OpenInternalBrowser?.Invoke(Url, activateTab);
+                // A host that wired no browser at all used to swallow the request without a word
+                if (OpenInternalBrowser == null)
+                    GlobalData.AddErrorToLogTab($"Linktools: this application has no internal browser, {Url} was not opened");
+                else
+                    OpenInternalBrowser.Invoke(Url, activateTab);
             }
             else
             {
-                if (Execute == CryptoExternalUrlType.Internal)
+                if (useHiddenBrowser)
                 {
-                    OpenHiddenBrowser?.Invoke(Url);
+                    if (OpenHiddenBrowser == null)
+                        GlobalData.AddErrorToLogTab($"Linktools: this application has no hidden browser, {Url} was not opened");
+                    else
+                        OpenHiddenBrowser.Invoke(Url);
                 }
                 else
                 {

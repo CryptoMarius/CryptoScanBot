@@ -1068,7 +1068,8 @@ public class CryptoDatabase : IDisposable
                 "AvgDurationSec REAL NULL," +
                 "MinDurationSec REAL NULL," +
                 "MaxDurationSec REAL NULL," +
-                "DcaBreakdownJson TEXT NULL" +
+                "DcaBreakdownJson TEXT NULL," +
+                "PositionDigestJson TEXT NULL" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxEmulatorRunId ON EmulatorRun(Id)");
         }

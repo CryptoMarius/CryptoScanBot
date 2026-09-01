@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 92;
+    public readonly static int CurrentDatabaseVersion = 94;
 
 
     /// <summary>
@@ -2035,6 +2035,55 @@ public class DatabaseMigration
 
             try { database.Connection.Execute("alter table Position add TrailingStopPrice TEXT NULL", transaction); } catch { } // ignore
 
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        if (CurrentVersion > version.Version && version.Version == 92)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // One line per position, so a run stays answerable after its positions are deleted.
+            // This step only adds the room; step 93 fills it.
+            try { database.Connection.Execute("alter table EmulatorRun add PositionDigestJson TEXT NULL", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        if (CurrentVersion > version.Version && version.Version == 93)
+        {
+            // Fill the digest of every run that still has its positions, so the emulator can start
+            // clearing them without anything being lost. A live scanner database has no emulator
+            // runs and is through this in a millisecond; the emulator's own session pays once.
+            //
+            // Deliberately NOT one big transaction: a session with hundreds of runs writes hundreds
+            // of megabytes here, and an interrupted migration would have to roll all of it back and
+            // do it again. Per run instead, and the version is only raised once every run has one -
+            // so an interrupted run leaves the version at 93 and the next start picks up where it
+            // stopped, skipping what is already filled.
+            List<int> todo = database.Connection.Query<int>(
+                "select r.Id from EmulatorRun r " +
+                "where (r.PositionDigestJson is null or r.PositionDigestJson = '') " +
+                "  and exists (select 1 from Position p where p.EmulatorRunId = r.Id)").AsList();
+
+            foreach (int runId in todo)
+            {
+                string? digest = PositionDigest.Build(database, runId);
+                if (digest == null)
+                    continue;
+                database.Connection.Execute(
+                    "update EmulatorRun set PositionDigestJson = @digest where Id = @id",
+                    new { digest, id = runId });
+            }
+
+            using var transaction = database.BeginTransaction();
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);

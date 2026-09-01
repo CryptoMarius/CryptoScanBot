@@ -502,7 +502,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
                     _CurrentProfitPercentage = "-";
                 else
-                    _CurrentProfitPercentage = Object.CurrentProfitPercentage().ToString("N2");
+                    _CurrentProfitPercentage = Object.CurrentProfitPercentage().ToString("N2") + "%";
             }
             return _CurrentProfitPercentage!;
         }

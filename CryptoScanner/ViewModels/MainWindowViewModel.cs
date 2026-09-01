@@ -143,6 +143,10 @@ public partial class MainWindowViewModel : ObservableObject
         {
             System.Diagnostics.Debug.WriteLine($"OpenInBrowser: {url}");
 
+            // Debug.WriteLine is compiled away in Release, so the line above proved nothing about
+            // the build that is actually used. The log tab carries it in both.
+            GlobalData.AddTextToLogTab($"Tradingview tab navigates to: {url}");
+
             // switch to the Tradingview tab with the browser
             if (switchTab)
                 SelectedTabIndex = 1;
@@ -150,6 +154,8 @@ public partial class MainWindowViewModel : ObservableObject
             // Navigate triggers initialization + tab switch automatically
             BrowserViewModel.NavigateCommand.Execute(url);
         }
+        else
+            GlobalData.AddErrorToLogTab($"Tradingview tab: it does not exist, {url} was not shown");
     }
 
 

@@ -41,7 +41,7 @@
                 @foreach (var vm in _liveData)
                 {
                     var row = _rowCallbacks.Get(vm);
-                    <tr class="@(_selectedItems.Contains(vm) ? "selected" : "")"
+                    <tr class="@(SelectedItems.Contains(vm) ? "selected" : "")"
                         @key="vm"
                         @onclick="row.Click"
                         @ondblclick="row.DoubleClick"
@@ -135,8 +135,14 @@
     private LiveDataColumnEnum? _dragSourceColumn;
     private LiveDataColumnEnum? _dragOverColumn;
 
-    private LiveDataViewModel? _selectedItem;
-    private readonly HashSet<LiveDataViewModel> _selectedItems = [];
+    // Selection of this grid, held by LiveDataService: leaving the tab disposes this page,
+    // so a selection kept here would be gone the moment the user looks at another tab.
+    private LiveDataViewModel? SelectedItem
+    {
+        get => LiveDataService.Selection.Current;
+        set => LiveDataService.Selection.Current = value;
+    }
+    private HashSet<LiveDataViewModel> SelectedItems => LiveDataService.Selection.Selected;
     private bool _contextMenuVisible;
     private ElementReference _contextMenuRef;
     private bool _contextMenuPositioned;
@@ -193,6 +199,10 @@
             LiveDataColumnEnum.Date, System.ComponentModel.ListSortDirection.Descending);
 
         LiveDataService.LiveDataChanged += OnLiveDataChanged;
+
+        // Volume and funding rate moved on while this tab was away, so put the rows back in the
+        // order the user sorted them in before reading them.
+        LiveDataService.Resort();
         _liveData = LiveDataService.LiveData.ToList();
         // The queue pump runs in LiveDataService itself so it keeps going while this tab is closed.
     }
@@ -270,42 +280,42 @@
     {
         if (e.CtrlKey)
         {
-            if (_selectedItems.Contains(vm))
-                _selectedItems.Remove(vm);
+            if (SelectedItems.Contains(vm))
+                SelectedItems.Remove(vm);
             else
-                _selectedItems.Add(vm);
-            _selectedItem = vm;
+                SelectedItems.Add(vm);
+            SelectedItem = vm;
         }
-        else if (e.ShiftKey && _selectedItem != null)
+        else if (e.ShiftKey && SelectedItem != null)
         {
-            int startIdx = _liveData.IndexOf(_selectedItem);
+            int startIdx = _liveData.IndexOf(SelectedItem);
             int endIdx = _liveData.IndexOf(vm);
             if (startIdx >= 0 && endIdx >= 0)
             {
                 int from = Math.Min(startIdx, endIdx);
                 int to = Math.Max(startIdx, endIdx);
-                _selectedItems.Clear();
+                SelectedItems.Clear();
                 for (int i = from; i <= to; i++)
-                    _selectedItems.Add(_liveData[i]);
+                    SelectedItems.Add(_liveData[i]);
             }
         }
         else
         {
-            _selectedItems.Clear();
-            _selectedItems.Add(vm);
-            _selectedItem = vm;
+            SelectedItems.Clear();
+            SelectedItems.Add(vm);
+            SelectedItem = vm;
         }
     }
 
     private void OnDoubleClick(LiveDataViewModel vm)
     {
-        _selectedItem = vm;
+        SelectedItem = vm;
         GridCommandService.HandleDoubleClick(vm.Object.Symbol, vm.Object.Interval);
     }
 
     private void OnRowContextMenu(MouseEventArgs e, LiveDataViewModel vm)
     {
-        _selectedItem = vm;
+        SelectedItem = vm;
         _contextMenuItem = vm;
         _contextMenuType = ContextMenuType.Row;
         _contextMenuX = e.ClientX;
@@ -410,8 +420,8 @@
 
     private void OnMenuHideSelection()
     {
-        _selectedItem = null;
-        _selectedItems.Clear();
+        SelectedItem = null;
+        SelectedItems.Clear();
         CloseContextMenu();
     }
 

@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia.Collections;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
@@ -60,6 +61,76 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         _dataGrid.Sorting += OnDataGridSorting; // to early, sorting gets messed up.. --> introduced _onDataGridSortingSkipFirst
         _dataGrid.DoubleTapped += OnDataGridDoubleTapped;
         _dataGrid.AddHandler(PointerPressedEvent, OnDataGridPointerPressed, RoutingStrategies.Tunnel);
+    }
+
+    /// <summary>
+    /// Sort the rows that are already in the grid again, with the values they have at this moment,
+    /// and put the selection back afterwards. The grid sorts a row once, when it is added or when a
+    /// column header is clicked, so a column whose value keeps moving (profit, profit percentage,
+    /// duration) drifts out of order while the rows stay where they are.
+    /// <para>
+    /// Re-sorting under the eyes of the user would make the rows jump around, so this is called
+    /// when a tab comes back into view - see the resortWhenShown parameter of InitializeGrid.
+    /// </para>
+    /// </summary>
+    internal void ReapplySort()
+    {
+        if (_dataGrid?.CollectionView is not { } collectionView || collectionView.SortDescriptions.Count == 0)
+            return;
+
+        // Refreshing is not free: it throws every row away and builds it again, which puts the grid
+        // back at the top of the list. So first look whether the rows are still in the order the
+        // sort asks for - which they are for a column that does not move, the date of a signal for
+        // instance, and then there is nothing to do.
+        List<object> items = collectionView.Cast<object>().ToList();
+        bool inOrder = true;
+        for (int i = 1; i < items.Count && inOrder; i++)
+            inOrder = CompareBySortDescriptions(collectionView, items[i - 1], items[i]) <= 0;
+        if (inOrder)
+            return;
+
+        // Refreshing throws the rows away and builds them again, and the selection goes with them.
+        List<object> selectedItems = _dataGrid.SelectedItems.Cast<object>().ToList();
+        object? selectedItem = _dataGrid.SelectedItem;
+
+        try
+        {
+            collectionView.Refresh();
+        }
+        catch (Exception error)
+        {
+            // The DataGrid can trip over its own index bookkeeping while it rebuilds (the log grid
+            // has the same story). The rows themselves are fine, so it is not worth an exception.
+            ScannerLog.Logger.Error(error, "");
+            return;
+        }
+
+        // SelectedItem first: assigning it makes that row the whole selection, so the rest of the
+        // selected rows have to be added after it.
+        if (selectedItem != null && collectionView.Contains(selectedItem))
+            _dataGrid.SelectedItem = selectedItem;
+        foreach (object item in selectedItems)
+        {
+            if (collectionView.Contains(item) && !_dataGrid.SelectedItems.Contains(item))
+                _dataGrid.SelectedItems.Add(item);
+        }
+    }
+
+    /// <summary>
+    /// Compare two rows the way the grid is sorted at this moment: the first sort description that
+    /// sees a difference decides. The direction is part of the comparer of a description, so a
+    /// negative result means the rows are in the right order as the grid shows them.
+    /// </summary>
+    private static int CompareBySortDescriptions(IDataGridCollectionView collectionView,
+        object first, object second)
+    {
+        foreach (var sortDescription in collectionView.SortDescriptions)
+        {
+            int result = sortDescription.Comparer.Compare(first, second);
+            if (result != 0)
+                return result;
+        }
+        return 0;
     }
 
     internal void SaveGridState()
@@ -335,8 +406,13 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
     }
 
 
+    /// <param name="resortWhenShown">
+    /// For grids with columns whose value keeps moving (profit, price change, volume): sort the rows
+    /// again every time the tab comes back into view. See <see cref="ReapplySort"/>.
+    /// </param>
     internal void InitializeGrid<TEnum, TComparer>(string defaultSortColumn = "",
-        ListSortDirection defaultsortDirection = ListSortDirection.Ascending) where TEnum : struct, Enum where TComparer : IComparer
+        ListSortDirection defaultsortDirection = ListSortDirection.Ascending,
+        bool resortWhenShown = false) where TEnum : struct, Enum where TComparer : IComparer
     {
         // Runtime - get service from App
         _applicationStateService = GlobalData.GetService<ApplicationStateService>()
@@ -367,6 +443,13 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
             _currentSortColumn = defaultSortColumn;
             _currentSortDirection = defaultsortDirection;
         }
+
+        // A row is sorted into place when it is added and never again, so a column whose value
+        // keeps moving leaves the grid out of order. Sort again when the tab is opened, which
+        // happens before it is drawn - the rows are never seen jumping into place, and the user
+        // does not get them moving under the mouse while looking at the grid.
+        if (resortWhenShown)
+            _dataGrid.AttachedToVisualTree += (_, _) => ReapplySort();
 
         // There is no event for registering the changed widths of the columns.
         // Lets not overcomplicate things, save the columns when shutting down.

@@ -111,6 +111,28 @@ public class CryptoEmulatorRun
     /// </para>
     /// </summary>
     public string? DcaBreakdownJson { get; set; }
+
+    /// <summary>
+    /// One line per position of this run, so the analyses that need INDIVIDUAL positions survive
+    /// the deletion of the Position table. The columns above answer the report; this answers
+    /// everything the report is not: profit per month (the halving test that separates a real
+    /// setting from period noise), profit per symbol, the distribution of exit percentages, which
+    /// indicator separates winners from losers, and matching two runs on symbol and entry time -
+    /// the measurement that showed the one-position-per-symbol rule is worth 668 USDT.
+    /// <para>
+    /// Self-describing so the field set can grow without breaking a reader:
+    /// <c>{"v":1,"cols":["sym","side",...],"rows":[[96,1,8411070,...],...]}</c>. Times are minutes
+    /// since <see cref="CandleTime.Epoch"/>, the same unit the candle database uses. Measured on
+    /// run 625 (2.193 positions): 240 KB against the 3,5 MB its positions, parts and steps occupy.
+    /// </para>
+    /// <para>
+    /// What it deliberately does NOT hold: the order and step detail (which price each DCA rung
+    /// stood at, when an order was placed or cancelled) and the forty-odd indicator columns on
+    /// Position that are not listed in <see cref="CryptoPositionDigest.Columns"/>. Those are gone
+    /// once the positions are.
+    /// </para>
+    /// </summary>
+    public string? PositionDigestJson { get; set; }
 }
 
 
@@ -135,4 +157,30 @@ public class CryptoDcaBucket
 
     /// <summary>Their summed invested amount, which is what makes the last rung the expensive one.</summary>
     public decimal Invested { get; set; }
+}
+
+
+/// <summary>
+/// The column layout of <see cref="CryptoEmulatorRun.PositionDigestJson"/>. Kept here rather than
+/// inline in the writer so a reader can check the version and the names instead of trusting a
+/// hard-coded order - a digest written by an older build stays readable, and a new column can be
+/// appended without touching anything that already exists.
+/// </summary>
+public static class CryptoPositionDigest
+{
+    /// <summary>Bumped only when the MEANING of an existing column changes. Appending does not.</summary>
+    public const int CurrentVersion = 1;
+
+    /// <summary>
+    /// Column names, in the order the values appear per row. The first ten identify and settle the
+    /// position, the rest are the indicator values captured at signal time - the set the win/loss
+    /// analysis actually reads. Times ("open"/"close") are minutes since CandleTime.Epoch;
+    /// "status" is CryptoPositionStatus, "side" is CryptoTradeSide.
+    /// </summary>
+    public static readonly string[] Columns =
+    [
+        "sym", "side", "open", "close", "profit", "invested", "dca", "status", "strat", "iv",
+        "trendP", "trendS", "stochK", "stochD", "rsi", "bbPct", "macdH", "bri", "baro1h", "trend1h",
+        "event",
+    ];
 }

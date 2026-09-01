@@ -33,6 +33,10 @@ public class LiveDataService : IDisposable
 
     public GridSortState<LiveDataColumnEnum> SortState { get; }
 
+    // The selection is kept here instead of in the page: a tab switch disposes the page and takes
+    // every field on it with it. These rows are never rebuilt, so the view model is its own key.
+    public GridSelectionState<LiveDataViewModel> Selection { get; } = new(vm => vm);
+
     public event Action? LiveDataChanged;
 
     public LiveDataService(ApplicationStateService stateService)
@@ -74,6 +78,18 @@ public class LiveDataService : IDisposable
         }, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
     }
 
+    /// <summary>
+    /// Sort the rows again with the values they have at this moment. The page calls this when its
+    /// tab is opened: volume and funding rate follow the symbol, so a row that was sorted into
+    /// place drifts out of order while the tab is away. Sorting while the tab is on screen would
+    /// make the rows jump around under the mouse, hence only on entry. See also
+    /// UserControlWithGrid.ReapplySort, which does the same for the Avalonia grids.
+    /// </summary>
+    public void Resort()
+    {
+        ApplySort();
+    }
+
     public void Sort(LiveDataColumnEnum column)
     {
         SortState.ToggleSort(column);
@@ -85,6 +101,7 @@ public class LiveDataService : IDisposable
     public void ProcessPendingLiveData()
     {
         bool changed = false;
+        bool trimmed = false;
 
         if (GlobalData.LiveDataQueue.Count > 0)
         {
@@ -109,7 +126,10 @@ public class LiveDataService : IDisposable
                         }
 
                         if (_liveData.Count > MaxLiveDataRows)
+                        {
                             _liveData.RemoveRange(MaxLiveDataRows, _liveData.Count - MaxLiveDataRows);
+                            trimmed = true;
+                        }
                     }
                 }
                 finally
@@ -122,6 +142,10 @@ public class LiveDataService : IDisposable
         if (changed)
         {
             ApplySort();
+            // Rows that fell off the bottom must not stay behind in the selection, they would keep
+            // the view model (and its candle) alive for as long as the session runs.
+            if (trimmed)
+                Selection.Rebind(LiveData);
             LiveDataChanged?.Invoke();
         }
     }
@@ -130,6 +154,7 @@ public class LiveDataService : IDisposable
     {
         lock (_lock)
             _liveData.Clear();
+        Selection.Clear();
         LiveDataChanged?.Invoke();
     }
 

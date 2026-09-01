@@ -61,11 +61,20 @@ public class InternalBrowserService : IDisposable
             // only opens when the request came from the user.
             if (switchTab)
                 OpenBrowserWindow(url);
+            else
+                GlobalData.AddTextToLogTab($"Internal browser: remembered without opening a window: {url}");
             return;
         }
 
         url = ToEmbeddableUrl(url);
         CurrentUrl = url;
+
+        // A host without a browser window falls back to the in-page frame, and that frame only
+        // exists while its page is on screen. Saying so beats the silent nothing that happened
+        // before, which was indistinguishable from a click that never arrived.
+        if (NavigateRequested == null)
+            GlobalData.AddErrorToLogTab($"Internal browser: no browser is listening, {url} was not shown");
+
         NavigateRequested?.Invoke(url, switchTab);
     }
 

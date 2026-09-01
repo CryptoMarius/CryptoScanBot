@@ -69,6 +69,78 @@ public class Positions
     }
 
 
+    // Draws the vertical piece that joins two heights of the SAME level, so a stop that trails
+    // along reads as one staircase instead of a row of loose lines. Solid, because it is the
+    // moment the level moved and not a level of its own.
+    private static void DrawConnectorLine(PlotModel chart, double x,
+        decimal priceFrom, decimal priceTo, OxyColor color, string group)
+    {
+        var series = new LineSeries
+        {
+            Color = color,
+            LineStyle = LineStyle.Solid,
+            StrokeThickness = 2.0,
+            Font = Const.OxyFontName,
+            YAxisKey = "price",
+            Tag = group
+        };
+        series.Points.Add(new DataPoint(x, (double)priceFrom));
+        series.Points.Add(new DataPoint(x, (double)priceTo));
+        chart.Series.Add(series);
+    }
+
+    // One level of a position followed through time: the entry, a DCA step, a take profit or one
+    // of its stop legs. Every time the order behind it is cancelled and placed again the level
+    // arrives as another piece, and the pieces together are drawn as a single staircase.
+    private sealed class LevelChain
+    {
+        public string Caption = "";
+        public OxyColor Color;
+        public List<(double Start, double End, decimal Price)> Pieces = [];
+    }
+
+    // Draws one level as a staircase: a horizontal piece for every stretch it stood still and a
+    // vertical connector wherever it moved. Only the first piece carries the caption, so a stop
+    // that trails along no longer writes "stop price" over the chart at every step it takes.
+    private static void DrawChain(PlotModel chart, LevelChain chain, double xLabelOffset, string group)
+    {
+        // Merge what describes the same price back to back. Every take profit level carries the
+        // same stop, so with a multi level take profit the same stop piece arrives once per level.
+        List<(double Start, double End, decimal Price)> pieces = [];
+        foreach (var piece in chain.Pieces.OrderBy(p => p.Start).ThenBy(p => p.End))
+        {
+            if (pieces.Count > 0)
+            {
+                var last = pieces[^1];
+                if (last.Price == piece.Price && piece.Start <= last.End)
+                {
+                    if (piece.End > last.End)
+                        pieces[^1] = (last.Start, piece.End, last.Price);
+                    continue;
+                }
+            }
+            pieces.Add(piece);
+        }
+
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            var piece = pieces[i];
+            double end = piece.End;
+
+            // Runs on to where the next piece starts: the order is cancelled and placed again a
+            // moment later, and the hole that leaves reads as a level that was not there.
+            if (i + 1 < pieces.Count && pieces[i + 1].Start > end)
+                end = pieces[i + 1].Start;
+
+            DrawHorizontalLine(chart, piece.Start, end, piece.Price, chain.Color,
+                i == 0 ? chain.Caption : "", xLabelOffset, group);
+
+            if (i + 1 < pieces.Count && pieces[i + 1].Price != piece.Price)
+                DrawConnectorLine(chart, pieces[i + 1].Start, piece.Price, pieces[i + 1].Price, chain.Color, group);
+        }
+    }
+
+
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, List<CryptoPosition> positionList, CryptoInterval interval,
         CandleTime minDate, CandleTime maxDate, string group)
     {
@@ -106,11 +178,22 @@ public class Positions
             // Caption once per level. An order that is cancelled and placed again produces a new
             // line every time, and with the take profit being repositioned on every break-even
             // change that put the same "stop price" and "stop limit" text across the chart four or
-            // five times over. The line is still drawn - only the repeated caption is dropped, so
-            // a level that really moves is labelled again.
-            HashSet<string> captioned = [];
-            string CaptionOnce(string caption, decimal atPrice)
-                => captioned.Add($"{caption}|{atPrice}") ? caption : "";
+            // five times over. A trailing stop made that worse still: every step it takes is a
+            // level of its own, so it was labelled again on each one.
+            //
+            // So the pieces of one level are collected here and drawn as a single staircase
+            // (DrawChain): horizontal where the level stood still, a vertical connector where it
+            // moved, and the caption only on the very first piece.
+            Dictionary<string, LevelChain> chains = [];
+            void AddPiece(string key, string caption, OxyColor color, double start, double end, decimal atPrice)
+            {
+                if (!chains.TryGetValue(key, out LevelChain? chain))
+                {
+                    chain = new LevelChain { Caption = caption, Color = color };
+                    chains[key] = chain;
+                }
+                chain.Pieces.Add((start, end, atPrice));
+            }
 
             // Steps: first entry-side step = "entry", subsequent = "dca#1", "dca#2", ...
             foreach (CryptoPositionPart positionPart in position.PartList.Values)
@@ -135,27 +218,31 @@ public class Positions
                     switch (positionPart.Purpose)
                     {
                         case CryptoPartPurpose.Entry:
-                            DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, CaptionOnce("entry", step.Price), xLabelOffset, group);
+                            AddPiece("entry", "entry", stepColor, xStart, xEnd, step.Price);
                             if (firstEntry == xStart && step.CloseTime.HasValue)
                                 firstEntry = CandleTime.FromDateTime(step.CloseTime.Value).Minutes;
                             break;
                         case CryptoPartPurpose.Dca:
                             double x2 = CandleTime.FromDateTime(step.CreateTime).Minutes;
                             double xEndDca = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
-                            DrawHorizontalLine(chart, x2, xEndDca, step.Price, stepColor, CaptionOnce($"dca-{positionPart.PartNumber}", step.Price), xLabelOffset, group);
+                            AddPiece($"dca-{positionPart.PartNumber}", $"dca-{positionPart.PartNumber}", stepColor, x2, xEndDca, step.Price);
                             break;
                         case CryptoPartPurpose.TakeProfit:
                             double x1 = CandleTime.FromDateTime(step.CreateTime).Minutes;
                             double xEndTp = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
-                            DrawHorizontalLine(chart, x1, xEndTp, step.Price, stepColor, CaptionOnce($"take profit-{positionPart.PartNumber}", step.Price), xLabelOffset, group);
+                            AddPiece($"tp-{positionPart.PartNumber}", $"take profit-{positionPart.PartNumber}", stepColor, x1, xEndTp, step.Price);
 
                             //if (step.CloseTime.HasValue && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice)
                             //    stepColor = OxyColors.Yellow; // just to see for now (orange ain't much different then red)
+
+                            // Both stop legs are shared by every take profit level, so they are
+                            // chained per position and not per part - a two level take profit would
+                            // otherwise draw the very same staircase twice.
                             if (step.StopPrice.HasValue)
-                                DrawHorizontalLine(chart, x1, xEndTp, step.StopPrice.Value, stepColor, CaptionOnce("stop price", step.StopPrice.Value), xLabelOffset, group);
+                                AddPiece("stop price", "stop price", stepColor, x1, xEndTp, step.StopPrice.Value);
 
                             if (step.StopLimitPrice.HasValue)
-                                DrawHorizontalLine(chart, x1, xEndTp, step.StopLimitPrice.Value, stepColor, CaptionOnce("stop limit", step.StopLimitPrice.Value), xLabelOffset, group);
+                                AddPiece("stop limit", "stop limit", stepColor, x1, xEndTp, step.StopLimitPrice.Value);
                             break;
                     }
 
@@ -183,6 +270,10 @@ public class Positions
                     }
                 }
             }
+
+            // Every level as one staircase, in the order the levels were first seen
+            foreach (LevelChain chain in chains.Values)
+                DrawChain(chart, chain, xLabelOffset, group);
 
             // Vertical marker at position open time.
             // Long grows up from y=0; short hangs down from 2× entry price.

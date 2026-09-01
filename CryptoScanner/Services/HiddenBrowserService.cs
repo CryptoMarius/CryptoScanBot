@@ -184,6 +184,11 @@ public class HiddenBrowserService : IDisposable
             {
                 Log($"Navigating to {url}");
 
+                // Log() above only reaches the debugger (see the note at the top of this class), and
+                // this window is invisible by design, so without a line in the log tab there is no
+                // way at all to tell what was handed to the trading application.
+                GlobalData.AddTextToLogTab($"Hidden browser navigates to: {url}");
+
                 if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
                 {
                     // Update UI op UI thread (in Avalonia gebruik Dispatcher)

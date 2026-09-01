@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
@@ -63,6 +63,7 @@ public static class GlobalData
     // Set by the TickRunner at run-start, cleared at run-end. Signals and positions created
     // while non-null are tagged with this id so the same DB can hold multiple runs.
     public static int? CurrentEmulatorRunId { get; set; }
+
 
 
     private static CryptoApplicationStatus _applicationStatus = CryptoApplicationStatus.Initializing;

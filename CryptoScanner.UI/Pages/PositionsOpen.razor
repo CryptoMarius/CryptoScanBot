@@ -41,7 +41,7 @@
                 @foreach (var vm in _positions)
                 {
                     var row = _rowCallbacks.Get(vm);
-                    <tr class="@(_selectedPositions.Contains(vm) ? "selected" : "")"
+                    <tr class="@(SelectedPositions.Contains(vm) ? "selected" : "")"
                         @key="vm"
                         @onclick="row.Click"
                         @ondblclick="row.DoubleClick"
@@ -150,8 +150,14 @@
     private PositionColumnEnum? _dragSourceColumn;
     private PositionColumnEnum? _dragOverColumn;
 
-    private PositionViewModel? _selectedPosition;
-    private readonly HashSet<PositionViewModel> _selectedPositions = [];
+    // Selection of this grid, held by PositionService: leaving the tab disposes this page,
+    // so a selection kept here would be gone the moment the user looks at another tab.
+    private PositionViewModel? SelectedPosition
+    {
+        get => PositionService.OpenSelection.Current;
+        set => PositionService.OpenSelection.Current = value;
+    }
+    private HashSet<PositionViewModel> SelectedPositions => PositionService.OpenSelection.Selected;
     private bool _contextMenuVisible;
     private ElementReference _contextMenuRef;
     private bool _contextMenuPositioned;
@@ -251,6 +257,10 @@
             PositionColumnEnum.UpdateTime, System.ComponentModel.ListSortDirection.Descending);
 
         PositionService.OpenPositionsChanged += OnPositionsChanged;
+
+        // Profit and profit percentage moved on while this tab was away, so put the rows back in
+        // the order the user sorted them in before reading them.
+        PositionService.ResortOpen();
         _positions = PositionService.OpenPositions.ToList();
     }
 
@@ -327,43 +337,43 @@
     {
         if (e.CtrlKey)
         {
-            if (_selectedPositions.Contains(vm))
-                _selectedPositions.Remove(vm);
+            if (SelectedPositions.Contains(vm))
+                SelectedPositions.Remove(vm);
             else
-                _selectedPositions.Add(vm);
-            _selectedPosition = vm;
+                SelectedPositions.Add(vm);
+            SelectedPosition = vm;
         }
-        else if (e.ShiftKey && _selectedPosition != null)
+        else if (e.ShiftKey && SelectedPosition != null)
         {
-            int startIdx = _positions.IndexOf(_selectedPosition);
+            int startIdx = _positions.IndexOf(SelectedPosition);
             int endIdx = _positions.IndexOf(vm);
             if (startIdx >= 0 && endIdx >= 0)
             {
                 int from = Math.Min(startIdx, endIdx);
                 int to = Math.Max(startIdx, endIdx);
-                _selectedPositions.Clear();
+                SelectedPositions.Clear();
                 for (int i = from; i <= to; i++)
-                    _selectedPositions.Add(_positions[i]);
+                    SelectedPositions.Add(_positions[i]);
             }
         }
         else
         {
-            _selectedPositions.Clear();
-            _selectedPositions.Add(vm);
-            _selectedPosition = vm;
+            SelectedPositions.Clear();
+            SelectedPositions.Add(vm);
+            SelectedPosition = vm;
         }
     }
 
     private void OnDoubleClick(PositionViewModel vm)
     {
-        _selectedPosition = vm;
+        SelectedPosition = vm;
         if (vm.Object.Symbol != null)
             GridCommandService.HandleDoubleClick(vm.Object.Symbol, vm.Object.Interval);
     }
 
     private void OnRowContextMenu(MouseEventArgs e, PositionViewModel vm)
     {
-        _selectedPosition = vm;
+        SelectedPosition = vm;
         _contextMenuPosition = vm;
         _contextMenuType = ContextMenuType.Row;
         _contextMenuX = e.ClientX;
@@ -526,8 +536,8 @@
 
     private void OnMenuHideSelection()
     {
-        _selectedPosition = null;
-        _selectedPositions.Clear();
+        SelectedPosition = null;
+        SelectedPositions.Clear();
         CloseContextMenu();
     }
 

@@ -327,7 +327,12 @@ public static class EmulatorDb
             "from position where " + TradedPositions + " group by PartCount order by PartCount", new { id }).AsList();
 
         run.DcaBreakdownJson = breakdown.Count > 0 ? JsonSerializer.Serialize(breakdown) : null;
+
+        // One line per position, built in Core so the migration backfills with the same code.
+        run.PositionDigestJson = PositionDigest.Build(database, id);
     }
+
+
 
 
     /// <summary>
@@ -400,49 +405,112 @@ public static class EmulatorDb
     /// so rather than reporting a smaller number without explanation.
     /// </para>
     /// </summary>
-    public static (int Updated, int Skipped) RecalculateRuns(IEnumerable<int> runIds)
+    public static (int Updated, int Skipped) RecalculateRuns(IEnumerable<int> runIds,
+        IProgress<(int Done, int Total)>? progress = null)
     {
         using var database = new CryptoDatabase();
         database.Open();
 
+        // Materialised so the total is known up front: backfilling a whole session reads every
+        // position of every run and writes a digest per run, which takes long enough that a caller
+        // without a count has nothing to show but a frozen window.
+        List<int> ids = runIds.ToList();
+
         int updated = 0;
         int skipped = 0;
-        foreach (int id in runIds)
+        int done = 0;
+        foreach (int id in ids)
         {
             var run = database.Connection.Get<CryptoEmulatorRun>(id);
-            if (run == null)
-                continue;
-            if (!ComputeRunStats(database, run))
+            if (run != null)
             {
-                skipped++;
-                continue;
+                if (ComputeRunStats(database, run))
+                {
+                    database.Connection.Update(run);
+                    updated++;
+                }
+                else
+                {
+                    skipped++;
+                }
             }
-            database.Connection.Update(run);
-            updated++;
+            progress?.Report((++done, ids.Count));
         }
         return (updated, skipped);
     }
 
 
     /// <summary>
-    /// Drops and recreates the transient bulk-data tables (Signal, Order, Trade, Asset).
-    /// DROP TABLE is O(1) — SQLite deallocates the B-tree pages without scanning rows or indexes.
-    /// Position and EmulatorRun rows are preserved (they hold the aggregated results).
-    /// CreateTables only recreates the missing (dropped) tables thanks to the MissingTable guard.
-    /// Call VACUUM separately (e.g. at end of a queue batch) to reclaim disk space.
+    /// What <see cref="PurgeBeforeRun"/> did, so the caller can log it instead of guessing.
     /// </summary>
-    public static void PurgeTransientData()
+    /// <param name="Purged">True when the tables were cleared, false when the check below refused.</param>
+    /// <param name="Unprotected">
+    /// Runs that still hold positions but have no digest. As long as there is one, NOTHING is
+    /// cleared: deleting those positions would throw away what no column can give back. The
+    /// database migration fills the digests, so this only ever fires after a run that never
+    /// reached FinishRun.
+    /// </param>
+    public readonly record struct PurgeResult(bool Purged, int Unprotected);
+
+
+    /// <summary>
+    /// Clears the emulator's bulk data at the START of a run: positions, their parts and steps,
+    /// signals, zones, orders, trades and the paper assets. Everything, so the database stays the
+    /// size of one run instead of growing with every entry of a ten-day queue - and so what is in
+    /// it is always the run you are looking at.
+    /// <para>
+    /// Whole tables rather than a delete per run: DROP TABLE deallocates the B-tree pages in one
+    /// step where a filtered delete walks millions of rows, and CreateTables puts the empty tables
+    /// back. Nothing of value is in them by then - the counters, the summary and the position
+    /// digest are on the EmulatorRun row, which is not touched. Asset is rebuilt at the start of
+    /// every replay anyway (ReplayRunner calls PaperAssets.ResetAssets).
+    /// </para>
+    /// </summary>
+    public static PurgeResult PurgeBeforeRun()
     {
         using var database = new CryptoDatabase();
         database.Open();
 
-        database.Connection.Execute("update position set signalid = null where signalid is not null");
-        database.Connection.Execute("DROP TABLE IF EXISTS [Asset]");
-        database.Connection.Execute("DROP TABLE IF EXISTS [Trade]");
-        database.Connection.Execute("DROP TABLE IF EXISTS [Order]");
-        database.Connection.Execute("DROP TABLE IF EXISTS [Signal]");
-        CryptoDatabase.CreateTables(database);
+        // The rail the archive of 30-08-2026 did not have: it was copied while a run was still
+        // going, and that run lost its numbers with no way back. One run without a digest is
+        // enough to leave everything alone - the point of the check is not to lose data, and
+        // clearing "all but that one" would only hide the problem.
+        int unprotected = database.Connection.ExecuteScalar<int>(
+            "select count(*) from EmulatorRun r " +
+            "where (r.PositionDigestJson is null or r.PositionDigestJson = '') " +
+            "  and exists (select 1 from Position p where p.EmulatorRunId = r.Id)");
+        if (unprotected > 0)
+            return new PurgeResult(false, unprotected);
+
+        // Foreign keys are ENFORCED on these connections, and with them on a DROP TABLE is not the
+        // cheap page-free it looks like: SQLite turns it into a DELETE of every row plus a
+        // constraint check per row. Measured on a 292 MB parent table with 1,2 million children:
+        // seconds with them off, still running after ten minutes with them on.
+        //
+        // Restored in the finally, and to what it WAS rather than blindly to ON: Microsoft.Data.Sqlite
+        // pools the native handle per connection string (see the note in CryptoDatabase.Open), so a
+        // pragma left behind here travels to whoever leases that handle next.
+        int previous = database.Connection.ExecuteScalar<int>("PRAGMA foreign_keys");
+        try
+        {
+            database.Connection.Execute("PRAGMA foreign_keys = OFF");
+
+            foreach (string table in new[]
+                     { "[Asset]", "[Trade]", "[Order]", "PositionStep", "PositionPart", "Position", "Signal", "Zone" })
+            {
+                database.Connection.Execute($"DROP TABLE IF EXISTS {table}");
+            }
+            CryptoDatabase.CreateTables(database);
+        }
+        finally
+        {
+            database.Connection.Execute($"PRAGMA foreign_keys = {previous}");
+        }
+
+        return new PurgeResult(true, 0);
     }
+
+
 
 
     /// <summary>
@@ -547,6 +615,11 @@ public static class EmulatorDb
                     "delete from AssetSnapshot where EmulatorRunId = @id", new { id = runId }, transaction);
                 database.Connection.Execute(
                     "delete from AssetAdjustment where EmulatorRunId = @id", new { id = runId }, transaction);
+                // BarometerSnapshot arrived with the barometer-in-the-emulator change and also
+                // references EmulatorRun; without this the delete fails on "FOREIGN KEY constraint
+                // failed" and rolls the whole thing back.
+                database.Connection.Execute(
+                    "delete from BarometerSnapshot where EmulatorRunId = @id", new { id = runId }, transaction);
                 database.Connection.Execute(
                     "delete from EmulatorRun where Id = @id", new { id = runId }, transaction);
             }
@@ -597,6 +670,8 @@ public static class EmulatorDb
                 "delete from AssetSnapshot where EmulatorRunId is not null", transaction: transaction);
             database.Connection.Execute(
                 "delete from AssetAdjustment where EmulatorRunId is not null", transaction: transaction);
+            database.Connection.Execute(
+                "delete from BarometerSnapshot where EmulatorRunId is not null", transaction: transaction);
             database.Connection.Execute("delete from EmulatorRun", transaction: transaction);
 
             // Reset the auto-increment counters so the next run starts at id 1 again.

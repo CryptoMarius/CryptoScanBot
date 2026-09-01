@@ -30,7 +30,9 @@ public partial class LiveDataGridView : UserControlWithGrid<LiveDataViewModel>
         if (_dataGrid == null)
             throw new InvalidOperationException("LiveDataDataGrid not found");
 
-        InitializeGrid<LiveDataColumnEnum, LiveDataColumnComparer>("Date", ListSortDirection.Descending);
+        // Volume and funding rate follow the symbol, hence resortWhenShown.
+        InitializeGrid<LiveDataColumnEnum, LiveDataColumnComparer>("Date", ListSortDirection.Descending,
+            resortWhenShown: true);
     }
 
 }

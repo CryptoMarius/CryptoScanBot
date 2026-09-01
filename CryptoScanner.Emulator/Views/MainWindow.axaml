@@ -63,10 +63,6 @@
                             <MenuItem Header="Stop"
                                       Command="{Binding StopCommand}"
                                       IsEnabled="{Binding IsRunning}"/>
-                            <Separator/>
-                            <MenuItem Header="Purge signals"
-                                      Command="{Binding PurgeSignalsCommand}"
-                                      IsEnabled="{Binding !IsRunning}"/>
                         </MenuItem>
                     </Menu>
 

@@ -30,7 +30,9 @@ public partial class PositionOpenGridView : UserControlWithGrid<PositionViewMode
         if (_dataGrid == null)
             throw new InvalidOperationException("PositionOpenGrid not found");
 
-        // Register a custom comparer for each column based on its SortMemberPath
-        InitializeGrid<PositionColumnEnum, PositionColumnComparer>("UpdateTime", ListSortDirection.Descending);
+        // Register a custom comparer for each column based on its SortMemberPath.
+        // Profit, profit percentage and duration change with every price tick, hence resortWhenShown.
+        InitializeGrid<PositionColumnEnum, PositionColumnComparer>("UpdateTime", ListSortDirection.Descending,
+            resortWhenShown: true);
     }
 }

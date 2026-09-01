@@ -80,6 +80,9 @@ public sealed class TradingViewWindow
         {
             if (_window != null)
             {
+                // Same reason as the hidden browser: only the creation used to be logged, so every
+                // later address change was invisible in the log.
+                GlobalData.AddTextToLogTab($"TradingView window navigates to: {url}");
                 _window.SetMinimized(false);
                 _window.Load(new Uri(url));
                 return;

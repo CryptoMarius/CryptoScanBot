@@ -26,11 +26,31 @@ public partial class App : Application
 
     // Forward url to our visible browser tabsheet
     public static event Action<string, bool>? EventOpenInInternalBrowser;
-    public static void OpenInInternalBrowser(string url, bool switchTab) => EventOpenInInternalBrowser?.Invoke(url, switchTab);
+    public static void OpenInInternalBrowser(string url, bool switchTab)
+    {
+        // The browser tab subscribes when the main window builds it, so a url that arrives before
+        // that (or after the window is gone) reached nobody and said nothing about it.
+        if (EventOpenInInternalBrowser == null)
+        {
+            GlobalData.AddErrorToLogTab($"Internal browser: no browser tab is listening, {url} was not shown");
+            return;
+        }
+        EventOpenInInternalBrowser.Invoke(url, switchTab);
+    }
 
     // Forward url to our not visible browser tabsheet (to avoid an extra dialog)
     internal static HiddenBrowserService EventOpenHiddenBrowser { get; private set; } = null!;
-    internal static void OpenInHiddenBrowser(string url) => EventOpenHiddenBrowser?.Navigate(url);
+    internal static void OpenInHiddenBrowser(string url)
+    {
+        // Assigned in OnFrameworkInitializationCompleted; until then the null conditional below
+        // swallowed the request, which is exactly the invisible failure this logging is about.
+        if (EventOpenHiddenBrowser == null)
+        {
+            GlobalData.AddErrorToLogTab($"Hidden browser: it is not initialized yet, {url} was not opened");
+            return;
+        }
+        EventOpenHiddenBrowser.Navigate(url);
+    }
 
 
     public override void Initialize()

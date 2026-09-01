@@ -30,8 +30,10 @@ public partial class SignalGridView : UserControlWithGrid<SignalViewModel>
         _dataGrid = this.FindControl<DataGrid>("SignalDataGrid")
             ?? throw new InvalidOperationException("SignalDataGrid not found");
 
-        // Register a custom comparer for each column based on its SortMemberPath
-        InitializeGrid<SignalColumnEnum, SignalColumnComparer>("Date", ListSortDirection.Descending);
+        // Register a custom comparer for each column based on its SortMemberPath.
+        // Price change and minimum entry follow the last price, hence resortWhenShown.
+        InitializeGrid<SignalColumnEnum, SignalColumnComparer>("Date", ListSortDirection.Descending,
+            resortWhenShown: true);
 
         // Note: hover suppression is handled via App.axaml styles (DataGridRow:pointerover),
         // so no PointerMovedEvent handler is needed here. Adding one would block the

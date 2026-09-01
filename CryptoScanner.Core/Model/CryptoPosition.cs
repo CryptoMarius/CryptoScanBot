@@ -173,6 +173,26 @@ public partial class CryptoPosition : CryptoData2
 public static class CryptoPositionHelper
 {
     /// <summary>
+    /// What a quantity is worth above its break-even price, in quote. Long earns the distance above
+    /// that price, short the distance below it - the one spot where the sign is easy to get
+    /// backwards, so everyone who needs this number comes through here: the running position
+    /// against the last price (CurrentProfit), and a single filled order against its fill price
+    /// (TradeTools.FormatRealizedResult).
+    /// The break-even price is a parameter rather than read from the position, because the trader
+    /// needs the price from before the fill it is reporting on.
+    /// </summary>
+    public static decimal ProfitFor(this CryptoPosition position, decimal breakEvenPrice, decimal price, decimal quantity)
+    {
+        decimal plannedValue = quantity * breakEvenPrice; // + position.RemainingDust ????
+        decimal currentValue = quantity * price;
+
+        if (position.Side == CryptoTradeSide.Long)
+            return currentValue - plannedValue;
+        else
+            return plannedValue - currentValue;
+    }
+
+    /// <summary>
     /// Netto winst (als je nu zou verkopen)
     /// </summary>
     public static decimal CurrentProfit(this CryptoPosition position)
@@ -183,15 +203,7 @@ public static class CryptoPositionHelper
         if (!position.Symbol.LastPrice.HasValue)
             return 0m;
         else
-        {
-            decimal plannedValue = position.Quantity * position.BreakEvenPrice; // + position.RemainingDust ????
-            decimal currentValue = position.Quantity * position.Symbol.LastPrice.Value;
-
-            if (position.Side == CryptoTradeSide.Long)
-                return currentValue - plannedValue;
-            else
-                return plannedValue - currentValue;
-        }
+            return position.ProfitFor(position.BreakEvenPrice, position.Symbol.LastPrice.Value, position.Quantity);
     }
 
     public static string PartCountText(this CryptoPosition position)
@@ -223,8 +235,9 @@ public static class CryptoPositionHelper
     /// </summary>
     public static decimal CurrentProfitPercentage(this CryptoPosition position)
     {
+        // The stored percentage is 100 based (104 = 4% profit), the grids show the profit itself
         if (position.Status == CryptoPositionStatus.Ready)
-            return position.Percentage;
+            return position.Percentage - 100m;
 
         decimal total = position.Invested - position.Returned;
         if (total == 0)
