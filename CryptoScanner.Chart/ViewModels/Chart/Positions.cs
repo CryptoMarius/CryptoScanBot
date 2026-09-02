@@ -70,15 +70,16 @@ public class Positions
 
 
     // Draws the vertical piece that joins two heights of the SAME level, so a stop that trails
-    // along reads as one staircase instead of a row of loose lines. Solid, because it is the
-    // moment the level moved and not a level of its own.
+    // along reads as one staircase instead of a row of loose lines. Same colour, thickness and
+    // pattern as DrawHorizontalLine: solid, it sat on the chart as a heavy bar next to the thin
+    // levels it was only meant to tie together.
     private static void DrawConnectorLine(PlotModel chart, double x,
         decimal priceFrom, decimal priceTo, OxyColor color, string group)
     {
         var series = new LineSeries
         {
             Color = color,
-            LineStyle = LineStyle.Solid,
+            LineStyle = LineStyle.DashDashDot,
             StrokeThickness = 2.0,
             Font = Const.OxyFontName,
             YAxisKey = "price",

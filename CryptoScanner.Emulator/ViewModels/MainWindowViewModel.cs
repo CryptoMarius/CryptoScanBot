@@ -700,6 +700,12 @@ public partial class MainWindowViewModel : ObservableObject
 
         GlobalData.AddTextToLogTab($"Queue: loaded {queue.Count} entries from {EmulatorQueueFile.FilePath}");
 
+        // One backup per batch, made here rather than by hand, so there is a copy of the queue as it
+        // was when this batch started - and only one per batch.
+        string? archived = EmulatorQueueFile.ArchiveBeforeRun();
+        if (archived != null)
+            GlobalData.AddTextToLogTab($"Queue: archived as {archived}");
+
         // Collect the distinct algorithm names present in the queue so we can skip the
         // selection dialog when every entry already specifies its algorithm.
         var queueAlgorithmNames = queue
@@ -1085,26 +1091,27 @@ public partial class MainWindowViewModel : ObservableObject
                 duplicateOf = EmulatorRunFingerprint.FindRecentMatch(fingerprint, notBefore);
             }
 
-            string? gitSha = GetGitShortSha();
-            run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label, settingsJson, gitSha);
-            GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
-
-            // A recognised repeat still gets its row, so the Results grid shows that the experiment
-            // was asked for and what it pointed at. Nothing is replayed, so the counters stay zero
-            // and the row is finished straight away.
+            // A recognised repeat gets NO row at all. It used to get one with result "duplicate of
+            // run N" so the Results grid showed that the experiment had been asked for, but on a
+            // queue that is restarted a few times those rows are the majority of the grid and they
+            // carry no numbers - the run they point at already says everything. The log line below
+            // is what remains, and that is the right place for "asked for, not replayed".
             if (duplicateOf != null)
             {
                 string result = $"duplicate of run {duplicateOf.Id}";
                 GlobalData.AddTextToLogTab(
-                    $"Run #{run.Id} \"{config.Label}\" not replayed — identical configuration to run "
+                    $"\"{config.Label}\" not replayed — identical configuration to run "
                     + $"#{duplicateOf.Id} \"{duplicateOf.Label}\" ({duplicateOf.Profit:N2} over "
                     + $"{duplicateOf.PositionCount} position(s), finished {duplicateOf.FinishedAt:yyyy-MM-dd HH:mm}). "
                     + "Add \"Force\": true to the queue entry to replay it anyway.");
-                EmulatorDb.FinishRun(result);
                 Status = $"\"{config.Label}\" — {result}";
                 completed = true;
                 return true;
             }
+
+            string? gitSha = GetGitShortSha();
+            run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label, settingsJson, gitSha);
+            GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
 
             // RunParallel deliberately not set here: TickRunner owns the default, so it can be changed
             // in one place. Setting it here as well meant the default was silently overruled.

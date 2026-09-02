@@ -137,8 +137,9 @@ public static class ChartDataService
 
     /// <summary>
     /// The vertical piece that joins two heights of the SAME level, so a stop that trails along
-    /// reads as one staircase instead of a row of loose lines. Solid: it is the moment the level
-    /// moved, not a level of its own.
+    /// reads as one staircase instead of a row of loose lines. Drawn in the same colour, width and
+    /// pattern as the level itself: solid, it sat on the chart as a heavy bar next to the thin
+    /// dotted levels it was only meant to tie together.
     /// </summary>
     private static ChartSegment Connector(long time, decimal priceFrom, decimal priceTo, ChartLineStyle style) => new()
     {
@@ -148,7 +149,7 @@ public static class ChartDataService
         price2 = (double)priceTo,
         color = style.ToCssColor(),
         width = style.LineWidth,
-        dash = 0,
+        dash = style.LineStyle,
     };
 
     /// <summary>
@@ -439,10 +440,14 @@ public static class ChartDataService
 
                 // Once a position is finished, every order that never filled - DCA, take profit,
                 // stop price, stop limit - describes an intention rather than what happened, and
-                // only makes the picture harder to read. They are dropped. While the position runs
-                // they are exactly what you want to see, so nothing changes there. The entry is
-                // always kept: it shows where you meant to get in even when it never filled.
-                bool positionClosed = position.CloseTime != null;
+                // only makes the picture harder to read. They were dropped for that reason, and
+                // including the stop legs of a take profit that never triggered.
+                //
+                // That is undone again. What was left of a finished position was three or four
+                // stubs a couple of candles wide, while the trail its stop and its take profit
+                // walked is exactly what you open a closed position for. The staircase is what
+                // makes that readable now: one line with one caption, instead of the wall of
+                // separate levels the rule was written against.
 
                 // Caption once per level. An order that is cancelled and placed again produces a
                 // new segment every time, and with the take profit being repositioned on every
@@ -488,8 +493,6 @@ public static class ChartDataService
                             ? rightEdge
                             : CandleContaining(step.CloseTime.Value, interval.Duration).ToUnixSeconds();
 
-                        bool levelDrawn = true;
-
                         switch (part.Purpose)
                         {
                             case CryptoPartPurpose.Entry:
@@ -499,25 +502,11 @@ public static class ChartDataService
                                 break;
 
                             case CryptoPartPurpose.Dca:
-                                if (positionClosed && !stepFilled)
-                                {
-                                    levelDrawn = false;
-                                    break;
-                                }
                                 AddPiece($"dca-{part.PartNumber}", $"dca-{part.PartNumber}", sideStyle,
                                     stepStart, stepEnd, step.Price);
                                 break;
 
                             case CryptoPartPurpose.TakeProfit:
-                                // Including its stop legs: a take profit that never triggered on a
-                                // finished trade says nothing, and neither does the stop that sat
-                                // underneath it.
-                                if (positionClosed && !stepFilled)
-                                {
-                                    levelDrawn = false;
-                                    break;
-                                }
-
                                 AddPiece($"tp-{part.PartNumber}", $"take profit-{part.PartNumber}", sideStyle,
                                     stepStart, stepEnd, step.Price);
 
@@ -549,11 +538,6 @@ public static class ChartDataService
                         }
 
                         // Keeps the vertical marker long enough to span every level of the position.
-                        // Only for levels that are actually drawn, otherwise it reaches towards a
-                        // line that is no longer there.
-                        if (!levelDrawn)
-                            continue;
-
                         if (step.Price > yTop)
                             yTop = step.Price;
                         if (step.Price < yBottom)

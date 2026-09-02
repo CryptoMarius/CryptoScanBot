@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="320"
+             xmlns:vm="using:CryptoScanner.Analyzers.FailedBreakout.Config"
+             x:DataType="vm:StrategyFailedBreakoutSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.FailedBreakout.Config.StrategyFailedBreakoutSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- The level and the break that failed on it. The level is built from the candles
+                 BEFORE the break window, so the break never sets the level it broke. -->
+            <TextBlock Text="Break" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How many candles the level is taken from: the highest high (or lowest low) over this many candles before the break window. Longer means a level fewer people would argue with, and fewer signals.">
+                <TextBlock Grid.Column="0" Text="Lookback candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding LookbackCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How recently the break must have happened, counted back from the candle being evaluated and including it. One means the break and the close back inside are the same candle.">
+                <TextBlock Grid.Column="0" Text="Break within candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding BreakWithinCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How far beyond the level the break has to have gone, as a percentage of the level. Zero accepts a break by a single tick.">
+                <TextBlock Grid.Column="0" Text="Minimum break %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding MinimumBreakPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- Only fire when the breaking candle touches a zone. Ticking several is an OR, so the
+                 boxes sit on one row: three of them do not need a column of their own. -->
+            <TextBlock Text="Zone" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <StackPanel Orientation="Horizontal" Spacing="12"
+                        ToolTip.Tip="Only fire when the breaking candle touches a zone of the same side - the failed break then happens AT a zone. Tick nothing to switch the requirement off. The zone intervals under Signal.Zones* must be filled, otherwise there are no zones and nothing fires.">
+                <TextBlock Text="Require zone:" VerticalAlignment="Center" FontSize="12" Width="168"/>
+                <CheckBox IsChecked="{Binding RequireDlz, Mode=TwoWay}" Content="Dlz" FontSize="12"/>
+                <CheckBox IsChecked="{Binding RequireFvg, Mode=TwoWay}" Content="Fvg" FontSize="12"/>
+                <CheckBox IsChecked="{Binding RequireSmc, Mode=TwoWay}" Content="Smc" FontSize="12"/>
+            </StackPanel>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Room around the zone, as a percentage. Zero means strictly between Bottom and Top.">
+                <TextBlock Grid.Column="0" Text="Zone tolerance %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ZoneTolerancePercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

@@ -1,4 +1,4 @@
-#if DEBUG
+﻿#if DEBUG
 using CryptoScanner.Analyzers.Choch.Signal;
 #endif
 using CryptoScanner.Core.Const;
@@ -172,8 +172,60 @@ public static class EmulatorDb
         // (a Reset deletes it, which fails on Windows while a handle is open). Reopened next run.
         GlobalData.ThreadCheckPosition?.CloseEmulatorConnection();
 
+        // Fold the write-ahead log back into the database, now that this run's connections are
+        // closed. WAL keeps every change in a side file until a checkpoint moves it into the
+        // database itself, and the automatic one only runs when nothing is reading at that moment -
+        // during a batch there almost always is, so it kept being skipped and the side file grew
+        // for the whole batch. Measured on 02-09-2026: 721 MB after four runs, all of it folded
+        // back in one go when the window was closed, which is the minutes-long wait that looked
+        // like the emulator ignoring the Stop button. Per run it is the same work spread out.
+        CheckpointWal(database);
+
         // Close the per-run log file opened in StartRun; subsequent lines go only to the shared logs.
         ScannerLog.StopRunLog();
+    }
+
+
+    /// <summary>
+    /// Moves the write-ahead log into the database file and empties it, and says in the log what
+    /// that cost and how much was folded back.
+    /// <para>
+    /// TRUNCATE rather than PASSIVE: passive leaves the file at whatever size it reached, and the
+    /// size is the whole point. It waits for readers, so it belongs after the run's own connections
+    /// have been released - a checkpoint that cannot get the file to itself quietly does nothing.
+    /// </para>
+    /// <para>
+    /// Never throws. A checkpoint that fails costs disk space and a slower shutdown; it is not a
+    /// reason to fail a run that has already been written away.
+    /// </para>
+    /// </summary>
+    private static void CheckpointWal(CryptoDatabase database)
+    {
+        try
+        {
+            // On the connection this method was handed rather than one of its own. A second
+            // connection would be a second reader, and TRUNCATE waits for readers - so it would be
+            // waiting for us.
+            //
+            // The path the connection actually resolved to, rather than one rebuilt from
+            // AppDataFolder here - the two can drift, and then the sizes below describe another file.
+            string wal = database.Connection.DataSource + "-wal";
+            long before = File.Exists(wal) ? new FileInfo(wal).Length : 0;
+            if (before == 0)
+                return;
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            database.Connection.Execute("PRAGMA wal_checkpoint(TRUNCATE);");
+            stopwatch.Stop();
+
+            long after = File.Exists(wal) ? new FileInfo(wal).Length : 0;
+            GlobalData.AddTextToLogTab($"WAL checkpoint: {before / (1024 * 1024)} MB folded back in "
+                + $"{stopwatch.Elapsed.TotalSeconds:F1}s, {after / (1024 * 1024)} MB left");
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddTextToLogTab($"WAL checkpoint FAILED: {ex.Message}");
+        }
     }
 
 

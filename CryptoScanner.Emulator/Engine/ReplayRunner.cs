@@ -464,7 +464,11 @@ public sealed class ReplayRunner
                 }
 
                 // ───── Between chunks: prune old candles to keep memory bounded ──────
-                if (useChunks && windowTo < replayTo)
+                // Not after a Stop: this exists to let the NEXT chunk start with bounded memory, and
+                // after a Stop there is no next chunk. It was the one piece of work between pressing
+                // Stop and the run being written away that had no cancellation check - 618.775
+                // candles plus their indicator data and pivots on the run it was measured on.
+                if (useChunks && windowTo < replayTo && !ct.IsCancellationRequested)
                 {
                     // The boundary, per interval. Count back from chunk.End, NOT from windowTo
                     // (= chunk.LastBaseOpen). LastBaseOpen is the OPEN time of the last base candle,

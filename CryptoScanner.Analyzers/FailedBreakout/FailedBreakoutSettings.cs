@@ -1,3 +1,4 @@
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.FailedBreakout;
@@ -20,6 +21,10 @@ public class FailedBreakoutSettings : SettingsSignalStrategyBase
     /// candles before the break window. Longer means a level fewer people would argue with, and
     /// fewer signals.
     /// </summary>
+    [SettingCaption("Lookback candles",
+        Tooltip = "How many candles the level is taken from: the highest high (or lowest low) over "
+            + "this many candles before the break window. Longer means a level fewer people would "
+            + "argue with, and fewer signals.")]
     public int LookbackCandles { get; set; } = 20;
 
     /// <summary>
@@ -27,6 +32,10 @@ public class FailedBreakoutSettings : SettingsSignalStrategyBase
     /// including it. One means the break and the close back inside are the same candle, which is the
     /// classic single-candle upthrust.
     /// </summary>
+    [SettingCaption("Break within candles",
+        Tooltip = "How recently the break must have happened, counted back from the candle being "
+            + "evaluated and including it. One means the break and the close back inside are the "
+            + "same candle.")]
     public int BreakWithinCandles { get; set; } = 3;
 
     /// <summary>
@@ -35,7 +44,47 @@ public class FailedBreakoutSettings : SettingsSignalStrategyBase
     /// candle patterns use one: an absolute threshold measures the price of the coin instead of the
     /// move (see CandlePatternHelper and Tools/PatternScan/README.md).
     /// </summary>
+    [SettingCaption("Minimum break %",
+        Tooltip = "How far beyond the level the break has to have gone, as a percentage of the "
+            + "level. Zero accepts a break by a single tick.")]
     public decimal MinimumBreakPercentage { get; set; } = 0m;
+
+    /// <summary>
+    /// Only fire when the breaking candle sits in a zone of the same side: "dlz", "fvg" and/or
+    /// "smc". An empty list switches the requirement off, which is the default.
+    /// <para>
+    /// Not the same thing as the level this strategy builds itself. That level is the highest high
+    /// or lowest low of the lookback window - what the candles did - while a zone is a level one of
+    /// the three zone strategies found and holds on to. Ticking a zone asks for both at once: the
+    /// break has to have failed AT a zone, which is the failed zone this was built to measure.
+    /// </para>
+    /// <para>
+    /// Held as names for the same reason as the candle-pattern list: the settings file has no string
+    /// converter for enums, so a list of them would be stored as unreadable numbers. The names are
+    /// the members of <see cref="CryptoZoneSource"/>, read case-insensitively.
+    /// </para>
+    /// <para>
+    /// The zones have to exist: a kind whose IntervalList under Signal.ZonesDlz/ZonesFvg/ZonesSmc is
+    /// empty produces no zones at all, and every signal is then rejected. Only DLZ falls back to 1h
+    /// on its own.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Require zone", SeparatorBefore = true, SubHeader = "Zone",
+        EnumType = typeof(CryptoZoneSource),
+        Tooltip = "Only fire when the breaking candle touches a zone of the same side - the failed "
+            + "break then happens AT a zone. Tick nothing to switch the requirement off. The zone "
+            + "intervals under Signal.Zones* must be filled, otherwise there are no zones and "
+            + "nothing fires.")]
+    public List<string> RequireZone { get; set; } = [];
+
+    /// <summary>
+    /// How much room to allow around the zone, as a percentage of the zone's own price. Zero is
+    /// strictly between Bottom and Top; a small value lets a candle that stops just short of the
+    /// edge still count.
+    /// </summary>
+    [SettingCaption("Zone tolerance %",
+        Tooltip = "Room around the zone, as a percentage. Zero means strictly between Bottom and Top.")]
+    public decimal ZoneTolerancePercentage { get; set; } = 0m;
 
     public FailedBreakoutSettings() : base()
     {

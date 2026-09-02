@@ -21,6 +21,8 @@ public static class ThreadSoundPlayer
     // "the collection has been marked as complete with regards to additions" and no sound was ever
     // played again. They are replaced when the player is started after a stop.
     private static BlockingCollection<string> soundQueue = [];
+    // The sound files that were reported as missing, so the report happens once per file name.
+    private static readonly ConcurrentDictionary<string, bool> MissingFilesReported = new();
     private static CancellationTokenSource soundCancelToken = new();
     // Guards the queue/token swap against the threads that are queueing sounds at that moment.
     private static readonly object soundThreadLock = new();
@@ -147,6 +149,12 @@ public static class ThreadSoundPlayer
                 if (!File.Exists(fileName))
                 {
                     System.Diagnostics.Debug.WriteLine($"Sound file not found: {fileName}");
+                    // A missing file used to be that Debug line and nothing else, so a sound file that
+                    // was renamed or misspelled in the settings was completely invisible: no sound and
+                    // no message. Reported once per file name, otherwise a heartbeat of one minute
+                    // writes the same line into the log all day long.
+                    if (MissingFilesReported.TryAdd(fileName, true))
+                        GlobalData.AddErrorToLogTab($"Sound file not found: {fileName}");
                 }
                 else
                 {

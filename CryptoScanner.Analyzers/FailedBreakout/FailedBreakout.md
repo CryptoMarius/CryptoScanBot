@@ -65,6 +65,29 @@ The candle being evaluated must close back on the original side of the level. A 
 the level means the break is holding and no signal fires. `ExtraText` reports the level and how far
 price closed back inside it, as a percentage.
 
+### Optional: the failed break has to happen at a zone
+
+`RequireZone` adds a second requirement on top of the level the strategy builds itself: the breaking
+candle must also touch an open zone of the same side, produced by one or more of the three zone
+strategies (`dlz`, `fvg`, `smc`). Ticking nothing switches it off, which is the default and what
+every run made before this setting existed did.
+
+The two are not the same thing. The level is the highest high or lowest low of the lookback window —
+what the candles did — while a zone is a level one of the zone strategies found and holds on to.
+Asking for both is asking for the failed break to have happened **at** a zone, which is the failed
+zone this setting was built to measure.
+
+Checked before the candles are collected: most candles are nowhere near a zone, and the level window
+costs `BreakWithinCandles + LookbackCandles` lookups. "Touching" is the same test the zone strategies
+use (`ZoneTools.Touches`), so a candle that only pokes into the zone with its wick counts, and the
+zone must already have existed at that candle — without that check a replay would read a zone that
+was only detected later, which is look-ahead. `ZoneTolerancePercentage` widens the band on both sides.
+
+The zones have to exist: a kind whose `IntervalList` under `Signal.ZonesDlz` / `ZonesFvg` / `ZonesSmc`
+is empty produces no zones at all, and then every signal is rejected. Only DLZ falls back to 1h on
+its own. The shared implementation lives in `ZoneRequirementHelper`, next to the candle-pattern
+strategy that asks the same question.
+
 ## Signal conditions summary
 
 ### Long entry
@@ -92,6 +115,8 @@ price closed back inside it, as a percentage.
 | `LookbackCandles` | 20 | How many candles the level is taken from. Longer means a level fewer people would argue with, and fewer signals. Must be at least 2. |
 | `BreakWithinCandles` | 3 | How recently the break must have happened, counted back from the evaluated candle and including it. One means the break and the close back inside are the same candle: the classic single-candle upthrust. Must be at least 1. |
 | `MinimumBreakPercentage` | 0 | How far beyond the level the break has to have gone, as a percentage of the level. Zero accepts a break by a single tick. |
+| `RequireZone` | *(empty)* | Only fire when the breaking candle touches a zone of the same side: `dlz`, `fvg` and/or `smc`. Several at once is an OR. Empty switches the requirement off. |
+| `ZoneTolerancePercentage` | 0 | Room around the zone, as a percentage of the zone's own price. Zero is strictly between `Bottom` and `Top`. |
 
 Plus the settings shared by every strategy through `SettingsSignalStrategyBase`.
 
@@ -110,13 +135,21 @@ the same order of work as helpers already in production (`HadStorsiInThelastXCan
 ```
 CryptoScanner.Analyzers/FailedBreakout/
 ├── FailedBreakoutPlugin.cs                # Plugin registration
-├── FailedBreakoutSettings.cs              # Lookback, break window, minimum break percentage
+├── FailedBreakoutSettings.cs              # Lookback, break window, minimum break percentage, zone
 ├── FailedBreakout.md                      # This document
+├── Config/                                # The Avalonia settings tab
+│   ├── FailedBreakoutConfigView.cs
+│   ├── StrategyFailedBreakoutTabView.axaml(.cs) + ViewModel
+│   └── StrategyFailedBreakoutSettingsView.axaml(.cs) + ViewModel
 └── Signal/
     └── FailedBreakoutBase.cs              # Shared logic + FailedBreakoutLong / FailedBreakoutShort
 ```
 
-Tests: `CryptoScanner.CoreTests/Signal/FailedBreakoutTests.cs`
+The Photino host has no per-plugin control; it builds its editor from the settings class by
+reflection, so both hosts show the same fields.
+
+Tests: `CryptoScanner.CoreTests/Signal/FailedBreakoutTests.cs` and
+`CryptoScanner.CoreTests/Analyzer/FailedBreakout/FailedBreakoutConfigViewModelTests.cs`
 
 ## Registration
 

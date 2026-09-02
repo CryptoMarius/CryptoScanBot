@@ -143,7 +143,18 @@ rem
 rem  The paragraph above keeps the names of the night it was measured. Every "<name> Futures" in
 rem  it is called "<name> Perpetual" since the rename of 27-08-2026 (commit d695b574), which is
 rem  the name the setting below has to use - the scanner matches it against the exchange name.
-set "HEAP_EXCHANGE=Kucoin Perpetual"
+rem
+rem  CHECK THIS AGAINST TONIGHT'S SELECTION. Not every scanner is started every night any more -
+rem  some nights are the spot markets, some nights the perpetual ones - and the snapshot simply
+rem  finds no process when the name below is not among them. It throws in its own window, which
+rem  then closes, so nothing tells you afterwards that the comparison never happened. That is how
+rem  it stood on Kucoin Perpetual until 02-09-2026 while the spot markets were the ones running.
+rem
+rem  Binance Perpetual since 02-09-2026, the candidate the night of 01/02-09-2026 pointed at:
+rem  +233 MB over 8,7 hours, ending on the highest reading of the night and giving none of it
+rem  back, and with 449 signals so little actual work that whatever stays behind stands out
+rem  cleanly.
+set "HEAP_EXCHANGE=Binance Perpetual"
 if not "%HEAP_EXCHANGE%"=="" (
     start "Heap snapshot" powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0heap-diff.ps1" -Mode Snapshot -Exchange "%HEAP_EXCHANGE%"
 )

@@ -1,4 +1,4 @@
-using CryptoScanner.Analyzers.FailedBreakout;
+﻿using CryptoScanner.Analyzers.FailedBreakout;
 using CryptoScanner.Analyzers.FailedBreakout.Signal;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -36,6 +36,9 @@ public class FailedBreakoutTests : TestBase
         FailedBreakoutPlugin.Settings.LookbackCandles = Lookback;
         FailedBreakoutPlugin.Settings.BreakWithinCandles = BreakWindow;
         FailedBreakoutPlugin.Settings.MinimumBreakPercentage = 0m;
+        FailedBreakoutPlugin.Settings.RequireZone = [];
+        FailedBreakoutPlugin.Settings.ZoneTolerancePercentage = 0m;
+        _dlzIntervals = [.. GlobalData.Settings.Signal.ZonesDlz.IntervalList];
     }
 
     [TestCleanup]
@@ -45,7 +48,16 @@ public class FailedBreakoutTests : TestBase
         FailedBreakoutPlugin.Settings.LookbackCandles = fresh.LookbackCandles;
         FailedBreakoutPlugin.Settings.BreakWithinCandles = fresh.BreakWithinCandles;
         FailedBreakoutPlugin.Settings.MinimumBreakPercentage = fresh.MinimumBreakPercentage;
+        FailedBreakoutPlugin.Settings.RequireZone = fresh.RequireZone;
+        FailedBreakoutPlugin.Settings.ZoneTolerancePercentage = fresh.ZoneTolerancePercentage;
+
+        // The zone intervals are read from the global settings, which every test in the process
+        // shares - so put back what was there rather than what the defaults say.
+        GlobalData.Settings.Signal.ZonesDlz.IntervalList = _dlzIntervals;
     }
+
+    /// <summary>The zone intervals as they were before the test changed them.</summary>
+    private List<string> _dlzIntervals = [];
 
 
     private static CryptoSymbol MakeSymbol()
@@ -239,5 +251,119 @@ public class FailedBreakoutTests : TestBase
         });
 
         Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+    }
+
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  The optional zone requirement
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Ticking a zone asks for the break to have failed AT a zone. It is a second requirement on top
+    /// of the level the strategy builds itself, so the very same series that fires without it has to
+    /// stop firing when there is no zone to be found.
+    /// </summary>
+    [TestMethod]
+    public void WithARequiredZoneThatIsNotThere_ItIsNoSignal()
+    {
+        FailedBreakoutPlugin.Settings.RequireZone = ["dlz"];
+        GlobalData.Settings.Signal.ZonesDlz.IntervalList = ["5m"];
+
+        var (algorithm, _) = MakeSeries(CryptoTradeSide.Short, Enough, candles =>
+        {
+            candles[1].High = 105m;
+            candles[0].Close = 100m;
+        });
+
+        Assert.IsFalse(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "not in a");
+    }
+
+
+    [TestMethod]
+    public void WithARequiredZoneTheCandleTouches_ItIsASignal()
+    {
+        FailedBreakoutPlugin.Settings.RequireZone = ["dlz"];
+        GlobalData.Settings.Signal.ZonesDlz.IntervalList = ["5m"];
+
+        var (algorithm, _) = MakeSeries(CryptoTradeSide.Short, Enough, candles =>
+        {
+            candles[1].High = 105m;
+            candles[0].Close = 100m;
+        });
+        // A short reads the short zones. The newest candle runs 99..101, so a band of 100..102
+        // overlaps it; the zone opened long before that candle, or it would be look-ahead.
+        AddDlzZone(algorithm, CryptoTradeSide.Short, bottom: 100m, top: 102m);
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "in dlz");
+    }
+
+
+    /// <summary>
+    /// A zone on the other side is not the zone this trade is looking for - a short fails at
+    /// resistance, and a support band underneath it says nothing about that.
+    /// </summary>
+    [TestMethod]
+    public void AZoneOnTheOtherSide_DoesNotCount()
+    {
+        FailedBreakoutPlugin.Settings.RequireZone = ["dlz"];
+        GlobalData.Settings.Signal.ZonesDlz.IntervalList = ["5m"];
+
+        var (algorithm, _) = MakeSeries(CryptoTradeSide.Short, Enough, candles =>
+        {
+            candles[1].High = 105m;
+            candles[0].Close = 100m;
+        });
+        AddDlzZone(algorithm, CryptoTradeSide.Long, bottom: 100m, top: 102m);
+
+        Assert.IsFalse(algorithm.IsSignal(), algorithm.ExtraText);
+    }
+
+
+    /// <summary>
+    /// With nothing ticked the requirement is off, which is the default and what every run made
+    /// before this setting existed did.
+    /// </summary>
+    [TestMethod]
+    public void WithoutARequiredZone_TheZonesAreNeverLookedAt()
+    {
+        FailedBreakoutPlugin.Settings.RequireZone = [];
+        GlobalData.Settings.Signal.ZonesDlz.IntervalList = [];
+
+        var (algorithm, _) = MakeSeries(CryptoTradeSide.Short, Enough, candles =>
+        {
+            candles[1].High = 105m;
+            candles[0].Close = 100m;
+        });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+    }
+
+
+    /// <summary>
+    /// Adds an open DLZ zone on the interval the series was built on. Only the side, the band and
+    /// the open time are read; the rest is what the model demands.
+    /// </summary>
+    private static void AddDlzZone(SignalCreateBase algorithm, CryptoTradeSide side,
+        decimal bottom, decimal top)
+    {
+        algorithm.SymbolInterval.Dlz.Zones.Add(new CryptoZone
+        {
+            Kind = CryptoZoneKind.DominantLevel,
+            Strength = CryptoZoneStrength.Strong,
+            ExchangeId = algorithm.Symbol.ExchangeId,
+            Exchange = null!,
+            SymbolId = algorithm.Symbol.Id,
+            Symbol = null!,
+            IntervalId = algorithm.Interval.Id,
+            Interval = null!,
+            Side = side,
+            Bottom = bottom,
+            Top = top,
+            OpenTime = new CandleTime(1),
+            CloseTime = null,
+            IsValid = true,
+        });
     }
 }

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Helpers;
@@ -28,9 +28,9 @@ public partial class CandlePatternItem : ObservableObject
 
 
 /// <summary>
-/// The list of reversal shapes, as checkboxes. Used twice: by the CandlePattern strategy for the
-/// shapes it fires on, and by the entry conditions for the shapes an entry waits for. Both are a
-/// List&lt;string&gt; of <see cref="CryptoCandlePattern"/> names, so one view model serves both.
+/// The list of reversal shapes, as checkboxes, for the shapes the CandlePattern strategy fires on -
+/// a List&lt;string&gt; of <see cref="CryptoCandlePattern"/> names. The entry conditions had a second
+/// copy of this list until 02-09-2026, for the shape an entry waits for; that setting is gone.
 /// </summary>
 public partial class CandlePatternListViewModel : ObservableObject
 {
@@ -67,8 +67,8 @@ public partial class CandlePatternListViewModel : ObservableObject
 
 /// <summary>
 /// The thresholds the shapes are measured against, every one a percentage of the candle's own range.
-/// The same <see cref="CandlePatternSettings"/> sits behind the CandlePattern strategy and behind the
-/// entry conditions, so this view model serves both of those as well.
+/// The <see cref="CandlePatternSettings"/> behind the CandlePattern strategy, which is the only place
+/// left that holds one.
 /// </summary>
 public partial class CandlePatternShapeViewModel : ObservableObject
 {

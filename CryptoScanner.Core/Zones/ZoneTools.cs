@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
@@ -141,6 +141,35 @@ public class ZoneTools
         if (zone.OpenTime >= windowStart)
             return false; // inside the window: the calculation had its say and did not produce it
         return zone.CloseTime == null || zone.CloseTime.Value >= windowStart;
+    }
+
+
+    /// <summary>
+    /// Whether a candle touches a zone: the candle's range overlaps the zone band, the zone is on
+    /// the side asked for, it is still open, and it already existed at that candle.
+    /// <para>
+    /// The same test the three zone strategies use, so a candle that only pokes in with its wick
+    /// counts - which is the case worth catching. <paramref name="tolerancePercentage"/> widens the
+    /// band by that percentage of the zone's own price on both sides; zero is strictly between
+    /// Bottom and Top.
+    /// </para>
+    /// <para>
+    /// The open-time check is what keeps a replay honest: without it a run would read a zone that
+    /// was only detected later, which is look-ahead and makes the result unreproducible.
+    /// </para>
+    /// </summary>
+    public static bool Touches(CryptoZone zone, CryptoCandle candle, CryptoTradeSide side,
+        decimal tolerancePercentage = 0m)
+    {
+        if (zone.Side != side || zone.CloseTime != null)
+            return false;
+        if (candle.OpenTime < zone.OpenTime)
+            return false;
+
+        decimal tolerance = tolerancePercentage / 100m;
+        decimal top = zone.Top * (1m + tolerance);
+        decimal bottom = zone.Bottom * (1m - tolerance);
+        return candle.Low <= top && candle.High >= bottom;
     }
 
 

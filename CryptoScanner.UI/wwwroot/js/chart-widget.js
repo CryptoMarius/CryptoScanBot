@@ -1910,7 +1910,7 @@ window.ChartWidget = {
             var rsiStyle = this._styleFor('rsi');
             var rsiSeries = entry.chart.addLineSeries({
                 color: rsiStyle.color, lineWidth: rsiStyle.lineWidth, lineStyle: rsiStyle.lineStyle,
-                lastValueVisible: true, priceLineVisible: false, title: 'RSI',
+                lastValueVisible: true, priceLineVisible: false, crosshairMarkerVisible: false, title: 'RSI',
             });
             rsiSeries.setData(rsiData.data);
             entry.series.rsi = rsiSeries;
@@ -1926,14 +1926,14 @@ window.ChartWidget = {
             var kStyle = this._styleFor('stochK');
             var kSeries = entry.chart.addLineSeries({
                 color: kStyle.color, lineWidth: kStyle.lineWidth, lineStyle: kStyle.lineStyle,
-                lastValueVisible: true, priceLineVisible: false, title: '%K',
+                lastValueVisible: true, priceLineVisible: false, crosshairMarkerVisible: false, title: '%K',
             });
             kSeries.setData(stochData.k);
 
             var dStyle = this._styleFor('stochD');
             var dSeries = entry.chart.addLineSeries({
                 color: dStyle.color, lineWidth: dStyle.lineWidth, lineStyle: dStyle.lineStyle,
-                lastValueVisible: true, priceLineVisible: false, title: '%D',
+                lastValueVisible: true, priceLineVisible: false, crosshairMarkerVisible: false, title: '%D',
             });
             dSeries.setData(stochData.d);
 
@@ -2041,14 +2041,14 @@ window.ChartWidget = {
         var macdStyle = this._styleFor('macdLine');
         var macdSeries = entry.chart.addLineSeries({
             color: macdStyle.color, lineWidth: macdStyle.lineWidth, lineStyle: macdStyle.lineStyle,
-            lastValueVisible: true, priceLineVisible: false, title: 'MACD',
+            lastValueVisible: true, priceLineVisible: false, crosshairMarkerVisible: false, title: 'MACD',
         });
         macdSeries.setData(macdData.macdLine);
 
         var signalStyle = this._styleFor('macdSignal');
         var signalSeries = entry.chart.addLineSeries({
             color: signalStyle.color, lineWidth: signalStyle.lineWidth, lineStyle: signalStyle.lineStyle,
-            lastValueVisible: true, priceLineVisible: false, title: 'Signal',
+            lastValueVisible: true, priceLineVisible: false, crosshairMarkerVisible: false, title: 'Signal',
         });
         signalSeries.setData(macdData.signal);
 

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Settings;
 
 using System.Text.Json;
@@ -46,6 +46,66 @@ public static class EmulatorQueueFile
         string path = FilePath;
         string json = JsonSerializer.Serialize(entries, WriteOptions);
         File.WriteAllText(path, json);
+    }
+
+
+    /// <summary>
+    /// The folder the queue backups live in, next to the queue file itself. They used to pile up in
+    /// the data folder beside the file the emulator reads - 62 of them in five weeks, in thirteen
+    /// different naming shapes, because every session invented its own name by hand.
+    /// </summary>
+    public static string ArchiveFolder => Path.Combine(GlobalData.AppDataFolder, "Queue-archive");
+
+
+    /// <summary>
+    /// Copies the queue into the archive folder before a batch starts, and returns the file it
+    /// wrote - or the existing copy it matched, or null when there was nothing to copy.
+    /// <para>
+    /// One copy per batch, named after the moment the batch started, so a backup corresponds to
+    /// exactly what ran. A batch that is restarted on an unchanged queue matches the previous copy
+    /// and no second file is written: three restarts in a day would otherwise leave three identical
+    /// files, which is how the pile got there in the first place.
+    /// </para>
+    /// <para>
+    /// Never throws. A backup that cannot be written is worth a line in the log, but it is not a
+    /// reason to refuse to run the batch.
+    /// </para>
+    /// </summary>
+    public static string? ArchiveBeforeRun()
+    {
+        try
+        {
+            string path = FilePath;
+            if (!File.Exists(path))
+                return null;
+
+            Directory.CreateDirectory(ArchiveFolder);
+            string current = File.ReadAllText(path);
+
+            // Only the copies made here, by name: the hand-made backups moved into this folder carry
+            // the full file name and must not be compared against or overwritten.
+            FileInfo? newest = new DirectoryInfo(ArchiveFolder)
+                .GetFiles("Queue-*.json")
+                .OrderByDescending(f => f.LastWriteTimeUtc)
+                .FirstOrDefault();
+            if (newest != null && File.ReadAllText(newest.FullName) == current)
+                return newest.FullName;
+
+            // To the minute, plus a counter for the second batch inside the same minute - which only
+            // happens on a queue that changed, or the copy above would have matched.
+            string stamp = DateTime.Now.ToString("yyyyMMdd-HHmm");
+            string target = Path.Combine(ArchiveFolder, $"Queue-{stamp}.json");
+            for (int i = 2; File.Exists(target); i++)
+                target = Path.Combine(ArchiveFolder, $"Queue-{stamp}-{i}.json");
+
+            File.WriteAllText(target, current);
+            return target;
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddTextToLogTab($"EmulatorQueueFile.ArchiveBeforeRun FAILED: {ex.Message}");
+            return null;
+        }
     }
 
 

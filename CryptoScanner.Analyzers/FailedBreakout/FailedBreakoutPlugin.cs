@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.FailedBreakout;
@@ -9,7 +9,7 @@ namespace CryptoScanner.Analyzers.FailedBreakout;
 /// </summary>
 public class FailedBreakoutPlugin : IStrategyPlugin
 {
-    private const string StrategyInternal = "FailedBreakout";
+    public const string StrategyInternal = "FailedBreakout";
     public string StrategyName => StrategyInternal.ToLower();
     public string StrategyNameCamelCase => StrategyInternal;
 
@@ -42,5 +42,5 @@ public class FailedBreakoutPlugin : IStrategyPlugin
     }
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = null;
+    public IConfigView? ConfigView { get; } = new Config.FailedBreakoutConfigView();
 }

@@ -73,6 +73,8 @@ public static class SignalGridExpander
     /// </summary>
     private static void ApplyDottedProperty(object root, string propPath, JsonElement jsonVal, List<Override> saved)
     {
+        RejectRetiredProperty(propPath, jsonVal);
+
         string[] parts = propPath.Split('.');
         object current = root;
 
@@ -100,6 +102,52 @@ public static class SignalGridExpander
         saved.Add(new Override(current, leaf, leaf.GetValue(current)));
         leaf.SetValue(current, ConvertJsonElement(jsonVal, leaf.PropertyType));
     }
+
+    /// <summary>
+    /// Settings that have been removed from the code but are still spelled out in older queue
+    /// entries. A path that is simply gone is skipped without a word by the loop below - and a rule
+    /// that asks for a filter which then never runs reads exactly like a strategy that produced
+    /// nothing. Switching one OFF is harmless and stays silent, so the many entries that carry
+    /// "EntryConditions.EntryWaitForPatterns": [] keep working; asking for it is a hard stop.
+    /// </summary>
+    private static readonly Dictionary<string, string> RetiredProperties = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["EntryConditions.EntryWaitForPatterns"] =
+            "waiting for a reversal shape was removed on 02-09-2026 (measured on runs 532-568, "
+            + "616-618 and 690-705: it lost money on every strategy). Use the CandlePattern strategy "
+            + "instead, which trades the shape itself",
+        ["EntryConditions.EntryPatternShape"] = "the shape thresholds went with EntryWaitForPatterns",
+    };
+
+    /// <summary>
+    /// Stops the run when a queue entry sets a retired setting to anything but "off". Off is an
+    /// empty list, false, or zero - the value the entry would have had with the setting still in
+    /// place, so nothing is lost by ignoring it.
+    /// </summary>
+    private static void RejectRetiredProperty(string propPath, JsonElement jsonVal)
+    {
+        string path = propPath;
+        foreach (var (retired, reason) in RetiredProperties)
+        {
+            // Also catches a child of a retired object, e.g. EntryPatternShape.MinWickPercentage.
+            if (!path.Equals(retired, StringComparison.OrdinalIgnoreCase)
+                && !path.StartsWith(retired + ".", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            bool isOff = jsonVal.ValueKind switch
+            {
+                JsonValueKind.Array => jsonVal.GetArrayLength() == 0,
+                JsonValueKind.False or JsonValueKind.Null or JsonValueKind.Undefined => true,
+                JsonValueKind.Number => jsonVal.TryGetDecimal(out decimal d) && d == 0m,
+                _ => false,
+            };
+            if (isOff)
+                return;
+
+            throw new NotSupportedException($"Queue entry sets \"{propPath}\", but {reason}.");
+        }
+    }
+
 
     /// <summary>Revert overrides to their saved values.</summary>
     public static void Revert(List<Override> overrides)

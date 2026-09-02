@@ -1,8 +1,7 @@
-using CryptoScanner.Analyzers.CandlePattern;
+﻿using CryptoScanner.Analyzers.CandlePattern;
 using CryptoScanner.Analyzers.CandlePattern.Config;
 using CryptoScanner.Config.ViewModels;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Settings;
 
 namespace CryptoScanner.CoreTests.Analyzer.CandlePattern;
 
@@ -11,9 +10,9 @@ namespace CryptoScanner.CoreTests.Analyzer.CandlePattern;
 /// opening it here, so the mapping between the checkboxes and the stored list of names is tested
 /// directly instead.
 /// <para>
-/// The order matters and is not cosmetic: both the strategy and the entry conditions act on the
-/// FIRST shape in the list that a candle forms, so a list that came out in the order the boxes were
-/// ticked would make the two hosts name a different pattern for the same candle.
+/// The order matters and is not cosmetic: the strategy acts on the FIRST shape in the list that a
+/// candle forms, so a list that came out in the order the boxes were ticked would make the two
+/// hosts name a different pattern for the same candle.
 /// </para>
 /// </summary>
 [TestClass]
@@ -102,6 +101,8 @@ public class CandlePatternConfigViewModelTests
             PrecedingCandles = 5,
             PrecedingPercentage = 1.25m,
             Shape = { MinWickPercentage = 55m, TweezerTolerancePercentage = 3m },
+            RequireZone = ["Smc", "Dlz"],
+            ZoneTolerancePercentage = 0.25m,
         });
 
         var settings = new CandlePatternStrategySettings();
@@ -112,31 +113,31 @@ public class CandlePatternConfigViewModelTests
         Assert.AreEqual(1.25m, settings.PrecedingPercentage);
         Assert.AreEqual(55m, settings.Shape.MinWickPercentage);
         Assert.AreEqual(3m, settings.Shape.TweezerTolerancePercentage);
+
+        // Back in the order the enum declares them, not in the order they went in - the same rule
+        // the pattern list follows, so both hosts hand the strategy an identically ordered list.
+        CollectionAssert.AreEqual(new[] { "Dlz", "Smc" }, settings.RequireZone.ToArray());
+        Assert.AreEqual(0.25m, settings.ZoneTolerancePercentage);
     }
 
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  The entry conditions, which pick from the same list
-    // ═══════════════════════════════════════════════════════════════════════
-
+    /// <summary>
+    /// The zone names are written in lower case by hand in the settings file and in the emulator
+    /// queue ("dlz"), and the strategy reads them case-insensitively. The editor has to do the same,
+    /// or opening the configuration screen would silently clear a requirement that was set.
+    /// </summary>
     [TestMethod]
-    public void TheEntryConditions_SurviveALoadAndSaveRoundTrip()
+    public void ZoneNamesTypedInLowerCase_AreStillTicked()
     {
-        var model = new TraderEntryConditionsViewModel();
-        model.LoadConfig(new SettingsEntryConditions
-        {
-            EntryWaitCandles = 3,
-            EntryMaxAdversePercentage = 2.5m,
-            EntryWaitForPatterns = ["Tweezer", "Hammer"],
-            EntryPatternShape = { MaxBodyPercentage = 25m },
-        });
+        var model = new StrategyCandlePatternSettingsViewModel();
+        model.LoadConfig(new CandlePatternStrategySettings { RequireZone = ["dlz", "fvg"] });
 
-        var conditions = new SettingsEntryConditions();
-        model.SaveConfig(conditions);
+        Assert.IsTrue(model.RequireDlz);
+        Assert.IsTrue(model.RequireFvg);
+        Assert.IsFalse(model.RequireSmc);
 
-        Assert.AreEqual(3, conditions.EntryWaitCandles);
-        Assert.AreEqual(2.5m, conditions.EntryMaxAdversePercentage);
-        CollectionAssert.AreEqual(new[] { "Hammer", "Tweezer" }, conditions.EntryWaitForPatterns.ToArray());
-        Assert.AreEqual(25m, conditions.EntryPatternShape.MaxBodyPercentage);
+        var settings = new CandlePatternStrategySettings();
+        model.SaveConfig(settings);
+        CollectionAssert.AreEqual(new[] { "Dlz", "Fvg" }, settings.RequireZone.ToArray());
     }
 }

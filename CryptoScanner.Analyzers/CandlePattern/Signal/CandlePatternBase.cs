@@ -1,5 +1,4 @@
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
 
@@ -34,6 +33,15 @@ public class CandlePatternBase : SignalCreateBase
             return false;
         }
 
+        // Before the shape, because it is by far the most selective of the two: most candles are
+        // nowhere near a zone, and the shape test needs two extra candle lookups.
+        if (!this.InsideARequiredZone(settings.RequireZone, settings.ZoneTolerancePercentage,
+                out string zoneText))
+        {
+            ExtraText = zoneText;
+            return false;
+        }
+
         if (!GetPrevCandle(CandleLast!, out MyData? previous))
             return false;
 
@@ -54,7 +62,7 @@ public class CandlePatternBase : SignalCreateBase
         if (!PrecededByAMoveTheOtherWay(settings, previous))
             return false;
 
-        ExtraText = $"{matched}";
+        ExtraText = zoneText.Length > 0 ? $"{matched} {zoneText}" : $"{matched}";
         return true;
     }
 

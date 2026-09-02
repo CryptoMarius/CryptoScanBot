@@ -152,16 +152,6 @@ public class SignalCreateBase
         if (TrackAndRejectOnAdverseMove(signal))
             return true;
 
-        // The window closed and no reversal pattern turned up. Note the order: this asks whether the
-        // pattern is here on THIS candle too, because GiveUp runs before AllowStepIn - dropping the
-        // signal without asking would throw away the pattern that arrives exactly on the last candle
-        // of the window.
-        if (PatternWindowExpired(signal))
-        {
-            ExtraText = "no reversal pattern within the watch window";
-            return true;
-        }
-
         // Avoid duplicate signals — but allow a newer signal to replace a Waiting (unfilled) position
         var position = PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol);
         if (position != null && position.Status >= CryptoPositionStatus.Trading)
@@ -215,44 +205,6 @@ public class SignalCreateBase
         ExtraText = $"price ran {signal.WorstAdversePercentage:N2}% against the signal, "
             + $"more than the {settings.EntryMaxAdversePercentage}% allowed";
         return true;
-    }
-
-
-    /// <summary>
-    /// Whether the candle being evaluated forms one of the reversal shapes the settings ask for,
-    /// read for this signal's side.
-    /// </summary>
-    protected bool FormsOneOfTheRequestedPatterns(SettingsEntryConditions settings)
-    {
-        if (settings.EntryWaitForPatterns.Count == 0)
-            return false;
-
-        // Two candles back at most - only the three-candle shapes reach that far, and asking for a
-        // candle that is not there would reject every signal at the start of a run.
-        GetPrevCandle(CandleLast, out MyData? previous);
-        MyData? before = null;
-        if (previous != null)
-            GetPrevCandle(previous, out before);
-
-        // Loud on a name that is not a pattern - see CandlePatternHelper.MatchesAny.
-        return CandlePatternHelper.MatchesAny(settings.EntryWaitForPatterns, SignalSide, CandleLast.Candle,
-            previous?.Candle, before?.Candle, settings.EntryPatternShape,
-            nameof(settings.EntryWaitForPatterns), out _);
-    }
-
-
-    /// <summary>
-    /// Whether a signal that was waiting for a reversal pattern has run out of window without one
-    /// appearing - including on the candle being evaluated right now.
-    /// </summary>
-    protected bool PatternWindowExpired(CryptoSignal signal)
-    {
-        SettingsEntryConditions settings = ResolveEntryConditions();
-        if (settings.EntryWaitForPatterns.Count == 0)
-            return false;
-        if (!WatchWindowHasPassed(signal, settings))
-            return false;
-        return !FormsOneOfTheRequestedPatterns(settings);
     }
 
 
@@ -560,17 +512,7 @@ public class SignalCreateBase
         // Watch first, act later. Returning false keeps the signal in SignalList so the next candle
         // examines it again; GiveUp above is what removes it, either because it ran too far against
         // us or because EntryRemoveTime expired.
-        // Waiting for a shape and waiting for the clock are two different rules; a list of patterns
-        // turns the window into a search rather than a delay.
-        if (settings.EntryWaitForPatterns.Count > 0)
-        {
-            if (!FormsOneOfTheRequestedPatterns(settings))
-            {
-                ExtraText = "waiting for a reversal pattern";
-                return false;
-            }
-        }
-        else if (!WatchWindowHasPassed(signal, settings))
+        if (!WatchWindowHasPassed(signal, settings))
         {
             ExtraText = $"watching for {settings.EntryWaitCandles} candle(s) after the signal";
             return false;

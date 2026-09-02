@@ -47,7 +47,10 @@ internal static class PositionHelper
             if (positionList.Count != 0)
             {
                 int positionCount = 0;
-                foreach (var position in positionList.Values)
+                // The position list is a ConcurrentDictionary, so its own enumeration order is hash
+                // order and tells the reader nothing. Sort on the very percentage ShowPosition prints,
+                // best first, so the winners are at the top and the losers at the bottom.
+                foreach (var position in positionList.Values.OrderByDescending(position => position.CurrentBreakEvenPercentage()))
                 {
                     //De muntparen toevoegen aan de userinterface
                     position.ShowPosition(stringBuilder);

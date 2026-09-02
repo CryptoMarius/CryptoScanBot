@@ -1,6 +1,7 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Analyzers.FailedBreakout.Signal;
 
@@ -27,6 +28,16 @@ public class FailedBreakoutBase : SignalCreateBase
         if (settings.LookbackCandles < 2 || settings.BreakWithinCandles < 1)
         {
             ExtraText = "lookback or break window not configured";
+            return false;
+        }
+
+        // Before the candles, because it is by far the most selective of the two: most candles are
+        // nowhere near a zone, and the level window below costs BreakWithinCandles + LookbackCandles
+        // lookups. The zone is not the level this strategy builds itself - see RequireZone.
+        if (!this.InsideARequiredZone(settings.RequireZone, settings.ZoneTolerancePercentage,
+                out string zoneText))
+        {
+            ExtraText = zoneText;
             return false;
         }
 
@@ -60,9 +71,15 @@ public class FailedBreakoutBase : SignalCreateBase
                 levelLow = candles[i].Low;
         }
 
-        return SignalSide == CryptoTradeSide.Short
+        bool signal = SignalSide == CryptoTradeSide.Short
             ? BrokeAndCameBack(candles, settings, level, above: true)
             : BrokeAndCameBack(candles, settings, levelLow, above: false);
+
+        // The zone only gets named on a signal. On a rejection ExtraText already says which of the
+        // two tests said no, and that is the more useful half.
+        if (signal && zoneText.Length > 0)
+            ExtraText = $"{ExtraText}, {zoneText}";
+        return signal;
     }
 
 

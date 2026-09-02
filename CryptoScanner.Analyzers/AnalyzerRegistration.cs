@@ -10,16 +10,9 @@ public static class AnalyzerRegistration
 {
     public static void RegisterAll()
     {
-        // tijdelijk terug..
-        PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
-
         // The classic reversal shapes, one strategy with the pattern as a setting so a run can vary
         // it and nothing else. Measuring whether reacting to them works at all.
         PluginManager.Register(new CandlePattern.CandlePatternPlugin());
-
-        // Very disapointing, expected more of this strategy
-        // tijdelijk terug..
-        PluginManager.Register(new Choch.ChochPlugin());
 
         // A band strategy which does rather well
         PluginManager.Register(new Dbr.DbrPlugin());
@@ -49,8 +42,14 @@ public static class AnalyzerRegistration
         // ATR based bands, but it does not perform well enough
         PluginManager.Register(new AtrRb.AtrRbPlugin());
 
+        PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
+
         // These look interesting (specially the squeeze ones)
         PluginManager.Register(new BbSqueeze.BbSqueezePlugin());
+
+        // Very disapointing, expected more of this strategy
+        PluginManager.Register(new Choch.ChochPlugin());
+
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
         PluginManager.Register(new KumoSqueeze.KumoSqueezePlugin());
 

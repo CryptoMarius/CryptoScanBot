@@ -1,6 +1,4 @@
-﻿using CryptoScanner.Core.Signal.Helpers;
-
-namespace CryptoScanner.Core.Settings;
+﻿namespace CryptoScanner.Core.Settings;
 
 [Serializable]
 public class SettingsEntryConditions
@@ -54,29 +52,17 @@ public class SettingsEntryConditions
     // it shifts with the wait, so it is worth re-measuring whenever the wait changes.
     public decimal EntryMaxAdversePercentage { get; set; } = 0m;
 
-    // Reversal patterns to wait for after a signal, by name (see CryptoCandlePattern). An empty list
-    // switches the rule off, which is the default.
+    // EntryWaitForPatterns and EntryPatternShape sat here until 02-09-2026: a list of reversal
+    // shapes turned the wait above into a SEARCH WINDOW - the entry was taken on the first candle
+    // within it that formed one of those shapes. Measured on 37 runs (532-568, 616-618, 690-705)
+    // and removed because it lost money on every strategy that makes any: dbr +682.25 -> +327.85,
+    // failedbreakout +551.68 -> +193.35, and all five zone strategies worse. The cause was measured
+    // too: the entry price goes from 0.38% against the signal to 0.69% against it, so the wait buys
+    // away the very moment the strategy fired on. Only vbs improved (-123.53 -> +65.48), and it
+    // halved the number of trades doing so.
     //
-    // With a list set, EntryWaitCandles stops being a delay and becomes a SEARCH WINDOW: the entry
-    // is taken on the first candle within it that forms one of these shapes, and the signal is
-    // dropped when the window closes without one. The band strategies fire on a PLACE - price
-    // touched a band - and say nothing about the MOMENT; this is meant to supply that.
-    //
-    // Which names are worth using was measured on runs 525-531, each of which traded one shape on
-    // its own over seven months: Hammer +396.55, Harami +384.83, Tweezer +292.88 and PiercingLine
-    // +157.38 made money, while MorningStar (-34.47), Engulfing (-149.21) and InvertedHammer
-    // (-174.55) lost it. How OFTEN they occur decides whether they are usable as a filter at all:
-    // within three candles Harami turns up 22% of the time and Hammer only 7%, so a single rare
-    // shape would cut nine entries out of ten - which is not a filter, it is stopping trading.
-    //
-    // An unknown name is a hard error rather than a silent miss: a typo would otherwise reject every
-    // signal and read exactly like "the strategy produced nothing".
-    public List<string> EntryWaitForPatterns { get; set; } = [];
-
-    // The thresholds those shapes are measured against, every one a percentage of the candle's own
-    // range. Reachable per run through "EntryConditions.EntryPatternShape.MinWickPercentage" and so
-    // on, so a pattern that turns out to be too rare or too common can be loosened without code.
-    public CandlePatternSettings EntryPatternShape { get; set; } = new();
+    // The shapes themselves live on as the CandlePattern STRATEGY, where they decide whether there
+    // is a signal at all instead of delaying one (run 706: +449.73 over 2609 trades).
 
     public int StochExtremeLookback { get; set; } = 20;
     public int StochMinExtremeBars { get; set; } = 0;

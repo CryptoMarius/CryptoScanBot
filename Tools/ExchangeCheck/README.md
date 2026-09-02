@@ -20,11 +20,10 @@ switched off by putting `rem` in front of it:
 | `3 Start all scanners.cmd` | Every exchange, then calls `1` |
 | `3a Start all Perpetual scanners.cmd` | The nine perpetual markets of `3` |
 | `3b Start all Spot scanners.cmd` | The ten spot markets of `3` |
-| `4 Stop all scanners.cmd` | Asks them all to close, then calls `2` |
+| `4 Stop all scanners.cmd` | Asks every scanner of BOTH builds to close, then calls `2` |
 | `5 Start all scanners (Photino).cmd` | Same as `3` for the Photino build |
 | `5a Start all Perpetual scanners (Photino).cmd` | Same as `3a` for the Photino build |
 | `5b Start all Spot scanners (Photino).cmd` | Same as `3b` for the Photino build |
-| `6 Stop all scanners (Photino).cmd` | Same as `4` for the Photino build |
 | `7 Clear all logs.cmd` | Empties every Log folder, for a clean slate before a run |
 | `8 Clear all candle databases.cmd` | Deletes the candle database of every exchange, asks first |
 | `9 Clear all scanner databases.cmd` | Deletes `CryptoScanBot.db` of every exchange, wants the word DELETE typed |
@@ -88,10 +87,13 @@ when it sees one running and lists afterwards what could not be deleted.
 
 ## The morning: stop the run
 
-**`4 Stop all scanners.cmd`** (or `6` for Photino) runs `taskkill` **without** `/F`. That is a
-request, not a kill: it posts a close message to the window, the same thing as clicking the cross,
-and the scanner then runs its own shutdown. Measured on a test run the difference is visible from
-the outside - after a clean stop the `-wal` and `-shm` files next to the database are gone and a
+**`4 Stop all scanners.cmd`** is the only stop file and it closes both builds, Avalonia and
+Photino, named one by one so a running `CryptoScanBot.Emulator.exe` is left alone. A build that was
+not started says "none running" instead of an error, so a mixed night stops with one double click.
+
+It runs `taskkill` **without** `/F`. That is a request, not a kill: it posts a close message to the
+window, the same thing as clicking the cross, and the scanner then runs its own shutdown. Measured
+on a test run the difference is visible from the outside - after a clean stop the `-wal` and `-shm` files next to the database are gone and a
 data folder that never had a settings file has one. Adding `/F` throws exactly that away, so do not.
 
 After the wait the file lists whatever is still running. Close those from their own window; their

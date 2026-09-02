@@ -7,6 +7,11 @@ TODO:
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
 xx-09-2025 2.6.2
+- Trader: De melding van een gevulde takeprofit vertelt nu ook wat die opleverde, en de laatste het eindresultaat van de positie
+- Chart: Een niveau dat meebeweegt wordt als een trap getekend in plaats van losse lijnen, en de tekst staat er nog maar een keer bij
+- Chart: Kleuren en lijnen van posities en signalen zijn instelbaar
+- Grids: De selectie blijft staan bij het wisselen van tab en de sortering wordt bijgewerkt bij het openen
+- Linktools: Elke klik naar de trading-app komt in het log, inclusief welke browser hem kreeg
 - Hyperliquid: Dure munten zoals XAUT0/USDC kregen een te fijne tickgrootte, waardoor de analyse elke stille minuut stopte
 - Instellingen: Asset management en de paper-saldi staan nu in een eigen kader
 - Trader: Trailing profit/sl
@@ -29,6 +34,9 @@ xx-09-2025 2.6.2
 - Emulator: Diverse wijzigingen voor het runnen van een queue (met veel ingewikkelde instellingen)
 - Strategie CandlePattern: Meerdere patronen tegelijk (of-of) en een eigen instellingen scherm in beide applicaties
 - Strategie AtrRb definitief verwijderd, het is/was een van slechts presterende strategien (was blijven staan om te vergelijken)
+- Emulator: Elke run bewaart een samenvatting per positie, zodat de posities opgeruimd kunnen worden zonder dat de analyses verloren gaan
+- Emulator: De bulkdata wordt voor elke run uit de wachtrij opgeruimd, de database blijft daardoor de grootte van een enkele run
+- Emulator: Het verwijderen van een run liep stuk op de barometer-snapshots
 
 29-08-2025 2.6.1
 - Nieuwe strategie voor candle patronen die een omkeer kunnen signaleren (Harami, Tweezer, Hammer en PiercingLine)

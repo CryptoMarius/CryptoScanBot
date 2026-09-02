@@ -25,6 +25,7 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from pathlib import Path
 
 # The report writer doubles as a library here: same stylesheet, same coloured marks, same wording
@@ -75,6 +76,23 @@ def last_activity(folder):
         return None
     stamps = [path.stat().st_mtime for path in log_folder.glob("*.log")]
     return max(stamps) if stamps else None
+
+
+# Hoeveel een run achter mag lopen op de nieuwste van dezelfde set voor hij als "van een eerdere
+# nacht" gemarkeerd wordt. De vensters van een nacht lopen onderling hooguit een paar uur uiteen
+# (de spot-scanners startten op 01-09 om 22:53 en de perpetuals om 20:10), maar de vorige nacht ligt
+# er altijd ruim een etmaal vandaan.
+SAME_NIGHT_HOURS = 12.0
+
+
+def parse_moment(text):
+    """Een lokale tijdstempel uit een facts-bestand, of None als hij er niet in staat."""
+    if not text:
+        return None
+    try:
+        return datetime.strptime(text, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
 
 
 def sample_name(folder):
@@ -260,7 +278,7 @@ def drift_cell(now, before, digits=0, lower_is_better=True):
         number_cell(difference, digits, signed=True))
 
 
-def write_overview(output, rows, base, skipped, max_age_days):
+def write_overview(output, rows, base, skipped, max_age_hours):
     """
     One page above the nineteen: verdict per exchange, subject grid, measurements side by side and
     the drift against the previous night. Written with check_exchange's own style sheet and its
@@ -287,6 +305,20 @@ def write_overview(output, rows, base, skipped, max_age_days):
     starts = [row["windowStart"] for row in rows if row["windowStart"]]
     ends = [row["windowEnd"] for row in rows if row["windowEnd"]]
     hours = [row["hours"] for row in rows if row["hours"]]
+
+    # Hoe ver elke run achterloopt op de nieuwste van deze set. Niet elke scanner gaat elke nacht
+    # aan, en een map die gisternacht niet draaide levert nog steeds een rapport op - opgebouwd uit
+    # de run van de nacht daarvoor. Zonder dit stond dat rapport hier tussen de verse regels zonder
+    # dat er iets aan te zien was. De vergelijking gaat tegen de NIEUWSTE run van deze set en niet
+    # tegen de klok: zo blijft een set die achteraf over een oudere nacht gedraaid wordt kloppen.
+    moments = [parse_moment(row["windowEnd"]) for row in rows]
+    newest_moment = max((moment for moment in moments if moment), default=None)
+    for row, moment in zip(rows, moments):
+        if newest_moment and moment:
+            row["behindHours"] = (newest_moment - moment).total_seconds() / 3600.0
+        else:
+            row["behindHours"] = None
+    stale = [row for row in rows if (row["behindHours"] or 0.0) > SAME_NIGHT_HOURS]
     mark = check_exchange.VERDICT_MARK
     text = check_exchange.VERDICT_TEXT
     escape = check_exchange.html_inline
@@ -335,8 +367,17 @@ def write_overview(output, rows, base, skipped, max_age_days):
     out.append("<tr><th>Rapport gemaakt op</th><td>{}</td></tr>".format(
         time.strftime("%Y-%m-%d %H:%M:%S")))
     if skipped:
-        out.append("<tr><th>Overgeslagen</th><td>{} zonder log van de laatste {:.0f} dag(en): {}"
-                   "</td></tr>".format(len(skipped), max_age_days, escape(", ".join(skipped))))
+        out.append("<tr><th>Overgeslagen</th><td>{} zonder log van de laatste {:.0f} uur, die "
+                   "hebben dus niet gedraaid: {}</td></tr>".format(
+                       len(skipped), max_age_hours, escape(", ".join(skipped))))
+    if stale:
+        out.append('<tr><th>Niet van dezelfde nacht</th><td>'
+                   '<span class="badge attention">{} van {}</span> {}. Die regels gaan over een '
+                   "eerdere run - vergelijk ze niet met de rest.</td></tr>".format(
+                       len(stale), len(rows),
+                       escape(", ".join("{} ({:.0f} uur eerder)".format(row["label"],
+                                                                       row["behindHours"])
+                                        for row in stale))))
     out.append("</tbody></table></div>")
     out.append("<p>Elke exchange draait in een eigen proces met een eigen datamap, dus de vensters "
                "lopen een paar minuten uiteen. Klik een exchange aan voor het hele rapport.</p>")
@@ -371,12 +412,21 @@ def write_overview(output, rows, base, skipped, max_age_days):
                '<a class="top" href="#top">terug naar boven</a></h2>'.format(mark[worst]))
     out.append('<div class="scroll"><table>')
     out.append("<thead><tr><th></th><th>Exchange</th><th>Oordeel</th><th>Uren</th>"
-               "<th>Onderwerpen die aandacht vragen</th></tr></thead><tbody>")
+               "<th>Run geeindigd</th><th>Onderwerpen die aandacht vragen</th></tr></thead><tbody>")
     for row in rows:
+        # Wanneer deze run ophield, en of dat dezelfde nacht was als de rest. Een regel die over een
+        # eerdere nacht gaat leest anders precies als de verse regels ernaast.
+        behind = row.get("behindHours")
+        if behind is not None and behind > SAME_NIGHT_HOURS:
+            when = '{} <span class="badge attention">{:.0f} uur eerder</span>'.format(
+                escape(row["windowEnd"]), behind)
+        else:
+            when = escape(row["windowEnd"]) or "-"
         out.append('<tr><td class="mark {0}">{1}</td><td><a href="{2}">{3}</a></td>'
-                   '<td><span class="badge {0}">{4}</span></td><td>{5:.1f}</td><td>{6}</td></tr>'
+                   '<td><span class="badge {0}">{4}</span></td><td>{5:.1f}</td><td>{6}</td>'
+                   "<td>{7}</td></tr>"
                    .format(row["verdict"], mark[row["verdict"]], escape(row["report"]),
-                           escape(row["label"]), text[row["verdict"]], row["hours"],
+                           escape(row["label"]), text[row["verdict"]], row["hours"], when,
                            escape(", ".join(row["attention"])) or "-"))
     out.append("</tbody></table></div>")
     out.append("</section>")
@@ -497,9 +547,17 @@ def main():
     parser.add_argument("--format", choices=("html", "md"), default="html",
                         help="html (default) opens with a double click and carries the colours and "
                              "the table of contents; md is the plain text version.")
-    parser.add_argument("--max-age-days", type=float, default=3.0,
-                        help="Skip folders whose newest log is older than this (default 3). Use 0 "
-                             "to check every folder found.")
+    # Twaalf uur, niet drie dagen. Niet elke scanner gaat elke nacht aan - de ene nacht draaien de
+    # spot-markten, de andere nacht de perpetuals - en met een grens van drie dagen kreeg een map die
+    # gisternacht NIET draaide gewoon een rapport, opgebouwd uit de run van de nacht daarvoor. Dat
+    # stond dan naast de verse rapporten in dezelfde overzichtstabel en was er niet van te
+    # onderscheiden. Het nieuwste logbestand draagt het EINDE van de run: een scanner die vanochtend
+    # om 07:36 stopte is een half uur oud, een die de nacht ervoor stopte ruim vierentwintig uur.
+    # Twaalf uur ligt daar ruim tussenin en heeft aan geen van beide kanten last van de grens.
+    parser.add_argument("--max-age-hours", type=float, default=12.0,
+                        help="Skip folders whose newest log is older than this (default 12). A "
+                             "folder without a log from that window simply did not run. Use 0 to "
+                             "check every folder found.")
     parser.add_argument("--deep", action="store_true",
                         help="Pass --deep to every check (whole candle history instead of the run).")
     # Normaal bepaalt elke controle zijn eigen venster uit de laatste scannerstart in zijn log, en
@@ -527,8 +585,8 @@ def main():
     # A folder whose log has not been touched for days did not run last night, and checking it only
     # buries the folders that did.
     skipped = []
-    if arguments.max_age_days > 0:
-        cutoff = time.time() - arguments.max_age_days * 86400
+    if arguments.max_age_hours > 0:
+        cutoff = time.time() - arguments.max_age_hours * 3600
         fresh = []
         for folder in folders:
             stamp = last_activity(folder)
@@ -546,11 +604,11 @@ def main():
 
     print("Found {} data folder(s) under {}".format(len(folders) + len(skipped), base))
     if skipped:
-        print("Skipping {} without a log from the last {:.0f} day(s): {}".format(
-            len(skipped), arguments.max_age_days,
-            ", ".join(sample_name(folder) for folder in skipped)))
+        print("Skipping {} without a log from the last {:.0f} hour(s), so they did not run: {}"
+              .format(len(skipped), arguments.max_age_hours,
+                      ", ".join(sample_name(folder) for folder in skipped)))
     if not folders:
-        print("Nothing recent to check. Use --max-age-days 0 to check everything anyway.")
+        print("Nothing recent to check. Use --max-age-hours 0 to check everything anyway.")
         return 1
     print()
 
@@ -633,7 +691,7 @@ def main():
             print("   overview skipped {}: {}".format(label, error))
     overview_path = write_overview(output, overview_rows, base,
                                    [sample_name(folder) for folder in skipped],
-                                   arguments.max_age_days)
+                                   arguments.max_age_hours)
 
     print("Reports written to: {}".format(output))
     if overview_path:

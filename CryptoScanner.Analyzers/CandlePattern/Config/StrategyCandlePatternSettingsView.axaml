@@ -41,6 +41,28 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
+            <Separator Margin="0,4"/>
+
+            <!-- Only fire when the pattern candle touches a zone. Ticking several is an OR, so the
+                 boxes sit on one row: three of them do not need a column of their own. -->
+            <TextBlock Text="Zone" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <StackPanel Orientation="Horizontal" Spacing="12"
+                        ToolTip.Tip="Only fire when the pattern candle touches a zone of the same side. Tick nothing to switch the requirement off. The zone intervals under Signal.Zones* must be filled, otherwise there are no zones and nothing fires.">
+                <TextBlock Text="Require zone:" VerticalAlignment="Center" FontSize="12" Width="168"/>
+                <CheckBox IsChecked="{Binding RequireDlz, Mode=TwoWay}" Content="Dlz" FontSize="12"/>
+                <CheckBox IsChecked="{Binding RequireFvg, Mode=TwoWay}" Content="Fvg" FontSize="12"/>
+                <CheckBox IsChecked="{Binding RequireSmc, Mode=TwoWay}" Content="Smc" FontSize="12"/>
+            </StackPanel>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Room around the zone, as a percentage. Zero means strictly between Bottom and Top.">
+                <TextBlock Grid.Column="0" Text="Zone tolerance %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ZoneTolerancePercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
         </StackPanel>
     </HeaderedContentControl>
 

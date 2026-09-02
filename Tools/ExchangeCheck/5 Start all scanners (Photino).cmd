@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal
 
 rem ==========================================================================
@@ -109,6 +109,36 @@ timeout /t %WAIT% /nobreak >nul
 echo.
 echo All scanners have been started.
 echo.
+
+rem  First heap snapshot of the exchange under investigation, in its OWN window
+rem  so the memory sampling below does not have to wait for the warm-up. The
+rem  stop script takes the second one and prints what grew in between. Set
+rem  HEAP_EXCHANGE to empty to switch this off, and keep it equal to the one in
+rem  "4 Stop all scanners.cmd" - that one stops both builds, so there is no
+rem  Photino stop file of its own any more.
+rem
+rem  One exchange, not all of them: a heap dump is about the working set of the
+rem  process and these run to 1.6 GB, so twenty exchanges times two snapshots
+rem  would be sixty gigabyte of disk for a question about one of them.
+rem
+rem  The sampling next to this says HOW FAST a scanner grows; only this says
+rem  WHAT grows. Added here on 02-09-2026 - the Photino scripts never called it,
+rem  so on a Photino night there was no heap comparison at all.
+rem
+rem  CHECK THIS AGAINST TONIGHT'S SELECTION. Not every scanner is started every
+rem  night any more - some nights are the spot markets, some nights the perpetual
+rem  ones - and the snapshot simply finds no process when the name below is not
+rem  among them. It throws in its own window, which then closes, so nothing tells
+rem  you afterwards that the comparison never happened.
+rem
+rem  Binance Perpetual since 02-09-2026, the candidate the night of 01/02-09-2026
+rem  pointed at: +233 MB over 8,7 hours, ending on the highest reading of the
+rem  night and giving none of it back, and with 449 signals so little actual work
+rem  that whatever stays behind stands out cleanly.
+set "HEAP_EXCHANGE=Binance Perpetual"
+if not "%HEAP_EXCHANGE%"=="" (
+    start "Heap snapshot" powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0heap-diff.ps1" -Mode Snapshot -Exchange "%HEAP_EXCHANGE%"
+)
 
 rem  The memory sampling runs in THIS window from here on and picks up both
 rem  builds by itself. Leave it open for the whole run.

@@ -149,7 +149,12 @@ ERRORS_DELIBERATE = (
 
 # Het oordeel bij een uitzondering uit onze code staat bij de oordeelconstanten zelf
 # (ERRORS_OURS_VERDICT, vlak onder GOOD/ATTENTION/BAD): die zijn hier nog niet gedefinieerd.
-MEMORY_ATTENTION_MB_PER_HOUR = 50.0
+# 25 sinds 02-09-2026, was 50. Met de staart op eind min start blijken de scanners die echt niets
+# teruggeven rond de 30 MB per uur te zitten - Binance Perpetual op +32,1 en HyperLiquid Perpetual op
+# +30,4 in de nacht van 01/02-09, allebei eindigend op hun hoogste meting van de nacht - en die
+# kregen op 50 nog gewoon groen. De scanners die wel terugzakken in hun band zitten allemaal onder de
+# 13, dus tussen die twee groepen is ruimte zat.
+MEMORY_ATTENTION_MB_PER_HOUR = 25.0
 MEMORY_BAD_MB_PER_HOUR = 200.0
 MEMORY_MINIMAL_HOURS = 1.0         # hieronder zegt de helling niets, dus wordt er niet geoordeeld
 
@@ -160,8 +165,16 @@ MEMORY_MINIMAL_HOURS = 1.0         # hieronder zegt de helling niets, dus wordt 
 # maar twee boven de +5 zaten en acht juist DAALDEN. Okx Futures was met +30,5 de ergste van de lijst
 # en zat op de vlakke staart op -2,7.
 #
-# Vandaar twee getallen: de helling over de hele run (wat er gebeurde) en de helling over de staart
+# Vandaar twee getallen: de helling over de hele run (wat er gebeurde) en de groei over de staart
 # (of er iets weglekt). Het oordeel hangt aan de staart.
+#
+# De staart wordt als EIND MIN START gemeten en niet als helling. Een kleinste-kwadratenlijn door een
+# scanner die binnen een band op en neer gaat rapporteert de fase die toevallig in het venster valt:
+# Okx Perpetual stond in de nacht van 01/02-09-2026 op +65,8 MB per uur terwijl hij aan het eind van
+# de run 4 MB LAGER stond dan aan het begin, puur omdat die laatste zes uur de stijgende flank van de
+# golf waren. Eind min start maakte daar +12,8 van. Wie terugzakt in zijn band telt niet mee, wie op
+# zijn hoogste meting eindigt wel: Binance Perpetual ging diezelfde nacht van +30,6 naar +32,1 en
+# HyperLiquid Perpetual van +22,7 naar +30,4.
 MEMORY_PLATEAU_HOURS = 6.0         # staart waarover het oordeel gaat
 MEMORY_PLATEAU_MINIMAL_HOURS = 3.0  # korter dan dit is er geen staart om apart te meten
 # Houden de metingen langer dan dit voor het einde van het venster op, dan is het proces uit beeld
@@ -3006,17 +3019,29 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
         host_growth = host_slope if host_slope is not None else (
             (last["workingSetMb"] - first["workingSetMb"]) / hours if hours else 0.0)
 
-        # De helling over de staart: dit is het getal dat over een lek gaat. Zie de toelichting bij
+        # De groei over de staart: dit is het getal dat over een lek gaat. Zie de toelichting bij
         # MEMORY_PLATEAU_HOURS - de opwarming van de caches zit in het begin van de run en zou een
         # vlakke nacht anders als een klim laten lezen.
+        #
+        # EIND MIN START, niet de helling door alle metingen. Een scanner die op en neer gaat binnen
+        # een band ligt met een kleinste-kwadratenlijn volledig aan welke fase van die golf toevallig
+        # in het venster valt. Okx Perpetual, nacht van 01/02-09-2026: schommelend tussen 1799 en
+        # 2280 MB, aan het eind van de run 4 MB LAGER dan aan het begin, en toch +65,8 MB per uur
+        # omdat de laatste zes uur net de stijgende flank waren. Eind min start kent die fase niet:
+        # wie terugzakt in zijn band telt niet mee, wie niet terugzakt wel. Diezelfde nacht ging het
+        # getal daardoor juist OMHOOG bij de twee die op hun hoogste meting eindigden - Binance
+        # Perpetual van +30,6 naar +32,1 en HyperLiquid Perpetual van +22,7 naar +30,4 - al bleven
+        # die met MEMORY_ATTENTION_MB_PER_HOUR op 50 nog onder de grens.
         plateau_growth = None
         if hours >= MEMORY_PLATEAU_MINIMAL_HOURS:
             plateau_start = last["moment"] - timedelta(hours=MEMORY_PLATEAU_HOURS)
             plateau_samples = [sample for sample in samples if sample["moment"] >= plateau_start]
             if len(plateau_samples) >= 5:
-                plateau_growth = linear_slope(
-                    [((sample["moment"] - plateau_samples[0]["moment"]).total_seconds() / 3600.0,
-                      basis(sample)) for sample in plateau_samples])
+                plateau_hours = (plateau_samples[-1]["moment"]
+                                 - plateau_samples[0]["moment"]).total_seconds() / 3600.0
+                if plateau_hours > 0:
+                    plateau_growth = (basis(plateau_samples[-1])
+                                      - basis(plateau_samples[0])) / plateau_hours
 
         # Waarop geoordeeld wordt: de staart als die er is, anders de hele run.
         judged_growth = plateau_growth if plateau_growth is not None else growth
@@ -3053,8 +3078,9 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
             "| Groei over de hele run | {:+.1f} MB per uur |".format(growth),
         ])
         if plateau_growth is not None:
-            lines.append("| **Groei over de laatste {:.0f} uur** | **{:+.1f} MB per uur** |".format(
-                MEMORY_PLATEAU_HOURS, plateau_growth))
+            lines.append("| **Groei over de laatste {:.0f} uur (eind min start)** | "
+                         "**{:+.1f} MB per uur** |".format(
+                             MEMORY_PLATEAU_HOURS, plateau_growth))
         lines.extend([
             "| Threads begin / eind | {} / {} |".format(first["threads"], last["threads"]),
             "| Handles begin / eind | {} / {} |".format(first["handles"], last["handles"]),
@@ -3075,6 +3101,16 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
                 "",
                 "Een vlak of negatief getal op de staart is hoe een gezonde run eruitziet; blijft de "
                 "staart klimmen, dan is dat het handschrift van een lek.",
+                "",
+                "Dat staartgetal is **eind min start**, niet de helling door alle metingen van de "
+                "staart. Een scanner die binnen een band op en neer gaat krijgt met een rechte lijn "
+                "het oordeel van de fase die toevallig in het venster valt. Okx Perpetual schommelde "
+                "in de nacht van 01/02-09-2026 tussen 1799 en 2280 MB en eindigde 4 MB onder zijn "
+                "beginwaarde, maar omdat de laatste zes uur net de stijgende flank waren stond er "
+                "+65,8 MB per uur. Eind min start maakte daar +12,8 van. Andersom gaat het getal "
+                "omhoog bij wie niets teruggeeft: Binance Perpetual van +30,6 naar +32,1 en "
+                "HyperLiquid Perpetual van +22,7 naar +30,4, de twee die diezelfde nacht op hun "
+                "hoogste meting eindigden.",
                 "",
             ])
         else:
@@ -3102,8 +3138,8 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
                 "",
             ])
         if plateau_growth is not None:
-            key_points.append("{:+.1f} MB per uur over de laatste {:.0f} uur ({:+.1f} over de hele "
-                              "run, opwarming inbegrepen){}".format(
+            key_points.append("{:+.1f} MB per uur over de laatste {:.0f} uur, eind min start "
+                              "({:+.1f} over de hele run, opwarming inbegrepen){}".format(
                                   plateau_growth, MEMORY_PLATEAU_HOURS, growth,
                                   " (scanner + WebView2)" if has_webview else ""))
         else:
@@ -3158,8 +3194,11 @@ def check_memory(report, folder, memory_csv, window_start=None, window_end=None)
             "endMb": round(last["workingSetMb"], 1),
             "peakMb": round(peak, 1),
             "growthMbPerHour": round(growth, 2),
-            # De helling over de staart van de run - dit is het getal waar het oordeel aan hangt,
-            # en het enige dat over een lek gaat. None als de run te kort was voor een staart.
+            # De groei over de staart van de run, gemeten als eind min start - dit is het getal waar
+            # het oordeel aan hangt, en het enige dat over een lek gaat. Let op bij het vergelijken
+            # met json-bestanden van voor 02-09-2026: daar staat de HELLING over diezelfde staart, en
+            # die twee lopen op een schommelende nacht ver uiteen.
+            # None als de run te kort was voor een staart.
             "plateauGrowthMbPerHour": round(plateau_growth, 2) if plateau_growth is not None else None,
             "plateauHours": MEMORY_PLATEAU_HOURS if plateau_growth is not None else None,
             # Waar de groei hierboven over gaat, en het scannerproces apart. Zonder dat onderscheid

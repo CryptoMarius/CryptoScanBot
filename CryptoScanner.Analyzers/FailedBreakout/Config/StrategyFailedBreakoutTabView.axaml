@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
+             xmlns:vm="using:CryptoScanner.Analyzers.FailedBreakout.Config"
+             xmlns:configviews="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyFailedBreakoutTabViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.FailedBreakout.Config.StrategyFailedBreakoutTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
+                <TextBlock FontSize="13">
+                    <Run Text="FAILEDBREAKOUT – The break that did not hold" FontWeight="SemiBold"/>
+                    <Run Text=" — Price sets a new high or low over the lookback window and then closes back inside it" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                </TextBlock>
+            </StackPanel>
+            <WrapPanel>
+                <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyFailedBreakoutSettingsView DataContext="{Binding StrategyFailedBreakoutSettingsViewModel}" />
+                <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

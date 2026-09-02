@@ -73,7 +73,7 @@
     <None Remove="Sounds\sound-domnearby-oversold.wav" />
     <None Remove="Sounds\sound-fvg-overbought.wav" />
     <None Remove="Sounds\sound-fvg-oversold.wav" />
-    <None Remove="Sounds\sound-heartbeat.wav" />
+    <None Remove="Sounds\sound-heart-beat.wav" />
     <None Remove="Sounds\sound-jump-down.wav" />
     <None Remove="Sounds\sound-jump-up.wav" />
     <None Remove="Sounds\sound-nwe-overbought.wav" />
@@ -204,7 +204,7 @@
     <Content Include="Sounds\sound-fvg-oversold.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Sounds\sound-heartbeat.wav">
+    <Content Include="Sounds\sound-heart-beat.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Sounds\sound-jump-down.wav">

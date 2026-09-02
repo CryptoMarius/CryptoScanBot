@@ -1,5 +1,6 @@
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Settings;
 
 using Dapper;
 
@@ -18,8 +19,14 @@ namespace CryptoScanner.Emulator.Engine;
 /// <para>
 /// The checksum is taken over the two JSON blobs that are stored WITH the run - the run
 /// configuration and the full scanner settings - so it covers exactly what was replayed rather
-/// than a hand-picked selection of fields. Anything that changes the outcome changes the
-/// checksum, because anything that changes the outcome is in one of those two blobs.
+/// than a hand-picked selection of fields. Such a list is one someone forgets to extend, and a
+/// forgotten field would make two different runs quietly count as the same measurement.
+/// </para>
+/// <para>
+/// The settings blob is not hashed as stored but read back into a <see cref="SettingsBasic"/> and
+/// written out again first, so what is compared is what the CURRENT code makes of that snapshot.
+/// Without that, one added or removed setting invalidates every earlier checksum and a restarted
+/// queue replays hours of runs it already has the numbers for. See <see cref="Canonicalise"/>.
 /// </para>
 /// </summary>
 public static class EmulatorRunFingerprint
@@ -52,8 +59,91 @@ public static class EmulatorRunFingerprint
     public static string Compute(string configJson, string? settingsJson)
     {
         string canonicalConfig = StripFieldsOutsideTheReplay(configJson);
-        byte[] bytes = Encoding.UTF8.GetBytes(canonicalConfig + "\n" + (settingsJson ?? ""));
+        string canonicalSettings = Canonicalise(settingsJson ?? "");
+        byte[] bytes = Encoding.UTF8.GetBytes(canonicalConfig + "\n" + canonicalSettings);
         return Convert.ToHexString(SHA256.HashData(bytes));
+    }
+
+
+    /// <summary>
+    /// The stored settings snapshot read back into a <see cref="SettingsBasic"/> and written out
+    /// again, so the checksum is taken over what the CURRENT code makes of that snapshot rather than
+    /// over the text it happened to be stored as.
+    /// <para>
+    /// This is what makes the checksum survive a build. Hashing the raw text means a single added or
+    /// removed setting invalidates EVERY earlier checksum, and a restarted queue then replays hours
+    /// of runs whose numbers are already in the database - which is what happened on 02-09-2026,
+    /// when two candlepattern settings arrived and six pattern settings left. The round trip fixes
+    /// all three ways the text can drift while the run does not:
+    /// </para>
+    /// <para>
+    /// A setting that was ADDED is missing from an older snapshot and gets its default on the way
+    /// in, which is exactly what the new snapshot holds. One that was REMOVED is silently dropped by
+    /// the deserializer, because the class no longer has a property for it. And a property that was
+    /// MOVED within its class comes out in the new order on both sides, where hashing the raw text
+    /// would have seen two different documents.
+    /// </para>
+    /// <para>
+    /// The price, accepted deliberately: a setting that left the code while an older run had it at a
+    /// non-default value now counts as the same measurement. That run WAS measured differently - but
+    /// so is every run from before any code change that did not touch a setting, and the check has
+    /// never protected against those either (see <see cref="GetRecentSince"/>: the build-time floor
+    /// is widened by DuplicateCheckDays for exactly that reason). Guarding one of the two and not
+    /// the other bought nothing.
+    /// </para>
+    /// </summary>
+    internal static string Canonicalise(string settingsJson)
+    {
+        try
+        {
+            var settings = JsonSerializer.Deserialize<SettingsBasic>(
+                settingsJson, Core.Json.JsonTools.DeSerializerOptions);
+            if (settings == null)
+                return settingsJson;
+
+            // The analyzer blocks need the same treatment, separately: SettingsSignal keeps them as
+            // Dictionary<string, JsonElement> on purpose - only the plugin knows its concrete type,
+            // and a Dictionary of the base type would silently drop every derived property. That
+            // means a plain round trip hands those blocks back VERBATIM, so a setting added to a
+            // plugin still changed the checksum. Which is precisely what happened: two settings
+            // arrived on failedbreakout on 02-09-2026 and the anchor was replayed anyway.
+            settings.Signal.AnalyzerSettings = CanonicaliseAnalyzers(settings.Signal.AnalyzerSettings);
+
+            return JsonSerializer.Serialize(settings, Core.Json.JsonTools.JsonSerializerIndented);
+        }
+        catch (JsonException)
+        {
+            // A blob that cannot be read makes the run look unique rather than throwing: measuring
+            // one run twice is cheap, skipping one that was never measured is not.
+            return settingsJson;
+        }
+        catch (NotSupportedException)
+        {
+            // Same reasoning - a converter that cannot handle an old value must not stop a run.
+            return settingsJson;
+        }
+    }
+
+
+    /// <summary>
+    /// Every analyzer block read into the plugin's own settings type and written out again, so a
+    /// property added to or removed from a plugin lands on both sides the same way. A block whose
+    /// plugin is not loaded is kept as it is: there is no type to read it into, and dropping it
+    /// would make two runs with different settings for that analyzer look identical.
+    /// </summary>
+    private static Dictionary<string, JsonElement> CanonicaliseAnalyzers(
+        Dictionary<string, JsonElement> stored)
+    {
+        Dictionary<string, JsonElement> result = [];
+        foreach ((string name, JsonElement block) in stored)
+        {
+            var settings = Core.Contracts.PluginManager.MaterializeSettings(name, stored);
+            result[name] = settings == null
+                ? block
+                : JsonSerializer.SerializeToElement(settings, settings.GetType(),
+                    Core.Json.JsonTools.JsonSerializerIndented);
+        }
+        return result;
     }
 
 
