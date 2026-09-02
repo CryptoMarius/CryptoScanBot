@@ -24,6 +24,7 @@ public partial class ChartWindow : Window
 
         // Restore window position, size, state and splitter
         _applicationStateService.RestoreWindowState("ChartWindow", this);
+        _applicationStateService.TrackWindowState("ChartWindow", this);
 
         Closing += OnWindowClosing; // - save state
 

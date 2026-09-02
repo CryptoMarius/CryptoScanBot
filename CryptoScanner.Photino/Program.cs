@@ -329,6 +329,11 @@ class Program
             app.MainWindow.SetSize(1400, 900).Center();
         }
 
+        // Keep the last normal rectangle up to date while the window is open, so the size and
+        // position from before a maximize survive a restart. See CaptureNormalWindowBounds.
+        app.MainWindow.RegisterLocationChangedHandler((_, _) => CaptureNormalWindowBounds());
+        app.MainWindow.RegisterSizeChangedHandler((_, _) => CaptureNormalWindowBounds());
+
         // Intercept window close to run async cleanup before exit (mirrors Avalonia ShutdownRequested pattern)
         app.MainWindow.RegisterWindowClosingHandler((sender, window) =>
         {
@@ -384,6 +389,36 @@ class Program
     private static bool _windowGeometrySaved;
 
     /// <summary>
+    /// Remember the position and size while the window is in its normal state. Windows reports the
+    /// maximized rectangle for a maximized window and Photino exposes no restore rectangle, so this
+    /// is the only way to get the normal rectangle back after a restart. Runs on the window thread,
+    /// the only thread on which Photino reports its geometry.
+    /// </summary>
+    private static void CaptureNormalWindowBounds()
+    {
+        if (_app == null || _stateService == null || _windowGeometrySaved)
+            return;
+
+        try
+        {
+            var window = _app.MainWindow;
+            if (window.Maximized || window.Minimized)
+                return;
+
+            int width = window.Width;
+            int height = window.Height;
+            if (width <= 0 || height <= 0)
+                return;
+
+            _stateService.SaveWindowNormalBounds("MainWindow", window.Left, window.Top, width, height);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "CaptureNormalWindowBounds");
+        }
+    }
+
+    /// <summary>
     /// Put the window back on a monitor that actually exists. The restored position is kept as long
     /// as it falls inside one of the attached monitors — that is what brings the window back on the
     /// second screen — and the window is centered on the main monitor when that screen is gone.
@@ -413,13 +448,31 @@ class Program
             if (index < 0)
                 window.Center();
 
-            if (windowState.State == "Maximized")
+            // Either the screen is gone or this is an entry written by the old code, which stored
+            // the maximized rectangle (-8,-8 and larger than the screen). Capping that at the monitor
+            // gave a normal window that filled the screen, so restoring from maximized changed
+            // nothing visible. Leave some margin instead.
+            double factor = index < 0 ? 0.9 : 1.0;
+            int width = Math.Min((int)windowState.Width, (int)(factor * target.MonitorArea.Width));
+            int height = Math.Min((int)windowState.Height, (int)(factor * target.MonitorArea.Height));
+            if (width == (int)windowState.Width && height == (int)windowState.Height)
                 return;
 
-            int width = Math.Min((int)windowState.Width, target.MonitorArea.Width);
-            int height = Math.Min((int)windowState.Height, target.MonitorArea.Height);
-            if (width != (int)windowState.Width || height != (int)windowState.Height)
+            if (windowState.State == "Maximized")
+            {
+                // Only the stale-entry case gets here. Resizing a maximized window would change
+                // its maximized rectangle rather than its normal one, so drop out of maximized,
+                // fix the normal rectangle and maximize again.
+                if (index >= 0)
+                    return;
+                window.SetMaximized(false);
                 window.SetSize(width, height);
+                window.Center();
+                window.SetMaximized(true);
+                return;
+            }
+
+            window.SetSize(width, height);
         }
         catch (Exception error)
         {
@@ -439,22 +492,17 @@ class Program
         try
         {
             bool isMaximized = _app.MainWindow.Maximized;
-            int width = _app.MainWindow.Width;
-            int height = _app.MainWindow.Height;
 
             // Guard against a window that reports nothing usable (already destroyed, or minimized);
             // writing zeros would make the next start fall back to the 1400x900 default.
             // NOTE: while maximized these are the maximized bounds, not the restore bounds, so
             // un-maximizing after a restart gives the full-screen size back. Photino exposes no
             // restore rectangle, so tracking that would mean remembering the size ourselves on
-            // every resize.
-            if (width <= 0 || height <= 0)
-                return;
+            // every resize. That is what CaptureNormalWindowBounds does since 2026-09-02: the
+            // bounds stored here are the last normal rectangle, only the state is taken now.
+            CaptureNormalWindowBounds();
 
-            _stateService.SaveWindowStateValues("MainWindow",
-                _app.MainWindow.Left, _app.MainWindow.Top,
-                width, height,
-                isMaximized ? "Maximized" : "Normal");
+            _stateService.SaveWindowStateName("MainWindow", isMaximized ? "Maximized" : "Normal");
 
             // Window positions live in a SECOND, exchange-independent file, and the startup merge
             // lets that file win over the one in the data folder. Only writing the data folder file

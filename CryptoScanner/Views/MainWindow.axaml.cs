@@ -82,6 +82,7 @@ public partial class MainWindow : Window
 
         // Restore window position, size, state and splitter
         _applicationStateService.RestoreWindowState("MainWindow", this);
+        _applicationStateService.TrackWindowState("MainWindow", this);
 
         // Restore splitter position
         _symbolPanelStoredWidth = _applicationStateService.GetSplitterPosition("MainWindow", 300);

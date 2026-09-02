@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 
 using System.ComponentModel;
 using System.Text.Json;
@@ -372,6 +372,41 @@ public class ApplicationStateService
                 ws.Height = height;
                 ws.State = state;
             }
+        }
+    }
+
+    /// <summary>
+    /// Remember where a window sits and how big it is while it is in its normal state, meaning not
+    /// maximized and not minimized. Windows only reports the maximized rectangle for a maximized
+    /// window, so this is the only way to get the normal rectangle back after a restart. In-memory
+    /// only; the file is written when the window closes.
+    /// </summary>
+    public void SaveWindowNormalBounds(string windowName, double x, double y, double width, double height)
+    {
+        lock (_lock)
+        {
+            var ws = GetWindowStateProperty(_states, windowName);
+            if (ws != null)
+            {
+                ws.X = x;
+                ws.Y = y;
+                ws.Width = width;
+                ws.Height = height;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Store the state (Normal/Maximized) the window closed in. The bounds stay untouched: those are
+    /// the last normal rectangle, see SaveWindowNormalBounds.
+    /// </summary>
+    public void SaveWindowStateName(string windowName, string state)
+    {
+        lock (_lock)
+        {
+            var ws = GetWindowStateProperty(_states, windowName);
+            if (ws != null)
+                ws.State = state;
         }
     }
 
