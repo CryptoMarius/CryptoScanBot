@@ -22,7 +22,7 @@
 
   <!--
     Stamps the build with the commit it was made from. A version number alone does not identify a
-    build: 2.6.0 covers weeks of commits, so a report about an overnight run cannot say which code
+    build: 2.6.2 covers weeks of commits, so a report about an overnight run cannot say which code
     produced it. The commit can.
 
     It lands in InformationalVersion (2.6.0+e69536b1) and in two metadata attributes that the About

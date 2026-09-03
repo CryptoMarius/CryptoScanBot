@@ -8,7 +8,7 @@ TODO:
 -Screenshots van de wiki bijwerken
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
-xx-09-2025 2.6.2
+03-09-2025 2.6.2
 - Geluid: Een ontbrekend geluidsbestand komt nu in het foutenlog in plaats van nergens
 - Trader: De melding van een gevulde takeprofit vertelt nu ook wat die opleverde, en de laatste het eindresultaat van de positie
 - Chart: Een afgesloten positie toont zijn niveaus weer, en de verbindingslijn heeft dezelfde stijl als de lijn eronder
