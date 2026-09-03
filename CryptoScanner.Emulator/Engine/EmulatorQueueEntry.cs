@@ -227,6 +227,25 @@ public class EmulatorQueueEntry
     public decimal? StartCapital { get; set; }
 
     /// <summary>
+    /// Whether the paper balances constrain this run: with it off nothing is refused for lack of
+    /// money and the balance may run negative, so entries and DCA levels are taken that the account
+    /// could not actually pay for. Null or omitted keeps whatever the run configuration says.
+    /// <para>
+    /// It has to live here rather than in <see cref="TradingOverrides"/>, even though it IS a
+    /// property of SettingsTrading: the queue applies its overrides first and RunOnceAsync then
+    /// calls ApplyRunOverrides, which assigns Settings.Trading.UseAssetManagement from the run
+    /// configuration and overwrites whatever the entry asked for. An override there is silently
+    /// ignored, which is worse than not being able to set it at all - the run looks like a
+    /// measurement and is a copy of its own reference.
+    /// </para>
+    /// <para>
+    /// The reason to measure it: the live HyperLiquid scanner runs with it OFF while every emulator
+    /// run so far ran with it ON, and nobody knows what that difference is worth.
+    /// </para>
+    /// </summary>
+    public bool? UseAssetManagement { get; set; }
+
+    /// <summary>
     /// Trading/risk config (SL, TP, DCA). Takes precedence over the entry-level
     /// StopLossPercentage/TpList/DcaList properties.
     /// </summary>

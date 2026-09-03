@@ -681,6 +681,13 @@ public class ScannerSession : IScannerSession
 
                 await api.Symbol.GetSymbolsAsync();
 
+                // Rebuild the per-quote index from the refreshed symbol table. The subscription
+                // synchronisation and the barometer read that index, the candle fetch reads the
+                // table itself; without this a coin listed after startup was fetched every hour
+                // but never subscribed (Okx Perpetual, night of 02/03-09-2026). The message that
+                // tells the grids to rebuild is sent once, below, after the volume decisions.
+                ThreadLoadData.IndexQuoteDataSymbols(GlobalData.ActiveExchange!, notifyUserInterface: false);
+
                 // The volume decision for this whole cycle is taken here, right after the volumes were
                 // refreshed, so the synchronisation and the candle fetch below agree on who qualifies.
                 CandleBase.UpdateVolumeDecisions();

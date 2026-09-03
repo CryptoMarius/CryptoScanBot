@@ -157,27 +157,45 @@ public class ThreadLoadData
     //}
 
 
-    public static void IndexQuoteDataSymbols(Model.CryptoExchange exchange)
+    /// <summary>
+    /// Build the per-quote symbol index (CryptoQuoteData.SymbolList) from the symbol table of the
+    /// exchange. Called at startup and by the hourly refresh in ScannerSession, right after
+    /// GetSymbolsAsync. It used to run at startup only, so a coin listed while the scanner was
+    /// running had its candles fetched every hour (that path reads the exchange's symbol table) but
+    /// never got a kline subscription and never counted in the barometer (both read this index).
+    /// Okx Perpetual, night of 02/03-09-2026: two new listings, 49 missing minutes each.
+    /// </summary>
+    /// <param name="notifyUserInterface">
+    /// False when the caller sends its own SymbolsHaveChangedMessage afterwards; the grids rebuild
+    /// completely on that message, so one per refresh is enough.
+    /// </param>
+    public static void IndexQuoteDataSymbols(Model.CryptoExchange exchange, bool notifyUserInterface = true)
     {
         // De index lijsten opbouwen (een gedeelte van de ~2100 munten)
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
+            // Build the new list aside and swap it in as a whole. The barometer walks the list by
+            // index without taking a lock, so clearing and refilling it in place would let a
+            // measurement that runs at that moment read past the end or skip half the coins.
+            List<CryptoSymbol> symbols = [];
+            foreach (var symbol in exchange.SymbolListName.Values)
+            {
+                if (symbol.Quote.Equals(quoteData.Name) && symbol.Status == 1 && !symbol.IsBarometerSymbol())
+                {
+                    symbols.Add(symbol);
+                }
+            }
+
             // Lock (zie onder andere de BarometerTools)
-            Monitor.Enter(quoteData.SymbolList);
+            List<CryptoSymbol> previous = quoteData.SymbolList;
+            Monitor.Enter(previous);
             try
             {
-                quoteData.SymbolList.Clear();
-                foreach (var symbol in exchange.SymbolListName.Values)
-                {
-                    if (symbol.Quote.Equals(quoteData.Name) && symbol.Status == 1 && !symbol.IsBarometerSymbol())
-                    {
-                        quoteData.SymbolList.Add(symbol);
-                    }
-                }
+                quoteData.SymbolList = symbols;
             }
             finally
             {
-                Monitor.Exit(quoteData.SymbolList);
+                Monitor.Exit(previous);
             }
         }
 
@@ -190,7 +208,8 @@ public class ThreadLoadData
         }
 
         // Add the symbols to the userinterface
-        GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
+        if (notifyUserInterface)
+            GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
     }
 
 

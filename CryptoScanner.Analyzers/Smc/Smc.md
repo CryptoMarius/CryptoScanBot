@@ -9,6 +9,8 @@ The **SMC** strategy identifies supply and demand zones using the Smart Money Co
 
 This is a **production** strategy.
 
+The signals do not close zones themselves: when a zone closes is decided by the shared closing rules in `ZoneInvalidation` (see [Zone lifetime](#zone-lifetime)). For SMC a visit only counts once the wick reaches the **middle** of the zone (`TouchLevel = Midpoint`); for DLZ and FVG the edge is enough.
+
 ## How it works
 
 ### Zone detection (ZoneSmc)
@@ -21,12 +23,16 @@ Order Block zones are identified using a base + expansion pattern:
 4. Zone strength: expansion ≥ `StrongExpansionFactor` (default 2.5×) = Strong; below = Weak.
 5. Optional `RequireOppositeBaseColor`: requires the last base candle to be opposite colour to the expansion (classical ICT definition).
 
+The base candles and the expansion candle's own wick do not count as a visit: counting starts after the expansion (`TouchCountingFrom`).
+
 ### Signal: SMC touch (smc)
 
 Iterates over `IntervalList` (default: `["1h"]`):
 
-- **Long (demand zone)**: candle wick intersects zone (Low ≤ zone.Top AND High ≥ zone.Bottom). Zone must not be closed, TouchCount must be ≤ MaxTouches. If `OnlyStrong`: zone must be Strong.
+- **Long (demand zone)**: candle wick intersects zone (Low ≤ zone.Top AND High ≥ zone.Bottom). Zone must not be closed. If `OnlyStrong`: zone must be Strong.
 - **Short (supply zone)**: mirror logic.
+
+The signal also skips zones whose `TouchCount` is above `MaxTouches`. With the defaults that cannot happen, because the closing rules already close the zone at `MaxTouches` visits. With `MaxTouches = 0` (never used up) this check means only zones without any visit still produce a signal.
 
 Alarm rate-limited to once per zone per hour.
 
@@ -47,6 +53,7 @@ Confirmed bounce with lookback:
 | 2 | Zone not exhausted | TouchCount ≤ MaxTouches |
 | 3 | Wick intersects zone | Low ≤ zone.Top AND High ≥ zone.Bottom |
 | 4 | Zone is Strong (optional) | When OnlyStrong is enabled |
+| 5 | Not already alarmed this hour | Rate-limited to once per zone per hour |
 
 ### Long entry (smc.rejection — bounce)
 
@@ -70,8 +77,28 @@ Confirmed bounce with lookback:
 | `MaxBlocksPerInterval` | 50 | Max zones tracked per interval |
 | `RequireOppositeBaseColor` | false | Classical ICT: last base candle opposite colour |
 | `OnlyStrong` | false | Only fire on Strong zones |
-| `MaxTouches` | 1 | Max touches before zone exhaustion |
+| `MaxTouches` | 2 | Visits a zone survives; it closes after that. 0 = never used up, only a break closes it (see [Zone lifetime](#zone-lifetime)) |
+| `TouchLevel` | Midpoint | How far price must come in before a visit counts: Edge (wick reaches the near edge) or Midpoint (wick reaches the middle) |
+| `CloseZonesPastMidpoint` | false | Close the zone as soon as price has ever reached its middle. With `TouchLevel = Midpoint` this equals `MaxTouches = 1` |
 | `RejectionLookback` | 3 | Candles to look back for zone test (rejection variant) |
+
+The `MaxTouches` default was 1 while the signal counted by itself (0 and 1 touches allowed, zone stayed open). Under the shared closing rules 2 means the same thing: the zone closes on its second visit.
+
+## Zone lifetime
+
+Zones of all three kinds (DLZ, FVG, SMC order blocks) are closed by one implementation: `CryptoScanner.Core/Zones/ZoneInvalidation.cs`. The signal classes only read the open zones and throttle their alarm (`AlarmDate`); they never set `CloseTime`.
+
+Every closed candle of the zone interval is applied to every open zone, in this order:
+
+1. **Broken** — the candle body closes through the far side (Long: Close < Bottom, Short: Close > Top). The zone closes. A wick through the zone does not count, only the close.
+2. **Entered** — the candle reaches the touch level (`TouchLevel`) while price was outside. That is one visit: `TouchCount` + 1. Reaching the middle also sets `ReachedMidpoint`.
+3. **Left** — price was inside and this candle no longer reaches the near edge. The zone is open for a next visit.
+4. **Used up** — `TouchCount` reaches `MaxTouches`. The zone closes. `MaxTouches = 0` disables this rule.
+5. **Past the midpoint** — optional (`CloseZonesPastMidpoint`, default off): the zone closes once price has ever reached its middle, whatever the visit count. With `TouchLevel = Midpoint` this equals `MaxTouches = 1`.
+
+`MaxTouches` counts **visits**, not candles: a visit is one continuous stay inside the zone, so three consecutive candles inside count as one touch. Whether price is inside is measured against the edge, even when the touch level is the midpoint. For order blocks counting starts after the expansion candle (`TouchCountingFrom`), so the base candles and the impulse's own wick never count.
+
+The rules run realtime after every closed zone-interval candle, again on a zone recalculation, and over the candle history at startup (`ZoneBroken.CheckAndMarkBrokenZones`). `TouchCount` and `ReachedMidpoint` are persisted; the visit bookkeeping (`LastInsideCandle`) is not, so after a restart the first candle inside a zone counts as a new visit (over-counts by at most one per zone).
 
 ## Indicators used
 
@@ -101,6 +128,7 @@ CryptoScanner.Analyzers/Smc/
     └── SignalOrderBlockRejectionShort.cs          # Short rejection: confirmed bounce below zone
 ```
 
+Zone closing rules: `CryptoScanner.Core/Zones/ZoneInvalidation.cs`
 Settings class: `CryptoScanner.Core/Settings/Strategy/SettingsSignalStrategySmc.cs`
 Enum values: `CryptoSignalStrategy.OrderBlock = 1004`, `CryptoSignalStrategy.OrderBlockRejection = 1006`
 

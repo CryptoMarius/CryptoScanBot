@@ -23,7 +23,24 @@ public static class SignalGridExpander
     public static List<Override> Apply(EmulatorQueueEntry entry)
     {
         var saved = new List<Override>();
+        try
+        {
+            ApplyCore(entry, saved);
+            return saved;
+        }
+        catch
+        {
+            // Half-applied overrides would leak into every later run of the batch, silently
+            // measuring something nobody asked for. Put back what was already set before handing
+            // the problem to the caller.
+            Revert(saved);
+            throw;
+        }
+    }
 
+
+    private static void ApplyCore(EmulatorQueueEntry entry, List<Override> saved)
+    {
         foreach (var (sectionName, props) in entry.SignalOverrides)
         {
             // "Signal" addresses SettingsSignal itself, for properties that do not live in one of
@@ -57,8 +74,6 @@ public static class SignalGridExpander
         object tradingObj = GlobalData.Settings.Trading;
         foreach (var (propPath, jsonVal) in entry.TradingOverrides)
             ApplyDottedProperty(tradingObj, propPath, jsonVal, saved);
-
-        return saved;
     }
 
     private static void ApplyProps(object target, Dictionary<string, JsonElement> props, List<Override> saved)
@@ -126,6 +141,19 @@ public static class SignalGridExpander
     /// </summary>
     private static void RejectRetiredProperty(string propPath, JsonElement jsonVal)
     {
+        string? reason = DescribeRetiredProperty(propPath, jsonVal);
+        if (reason != null)
+            throw new NotSupportedException(reason);
+    }
+
+
+    /// <summary>
+    /// Why this one override cannot be applied, or null when it can. Split out of
+    /// <see cref="RejectRetiredProperty"/> so <see cref="Validate"/> can ask the same question
+    /// without throwing and without touching a setting.
+    /// </summary>
+    private static string? DescribeRetiredProperty(string propPath, JsonElement jsonVal)
+    {
         string path = propPath;
         foreach (var (retired, reason) in RetiredProperties)
         {
@@ -142,10 +170,46 @@ public static class SignalGridExpander
                 _ => false,
             };
             if (isOff)
-                return;
+                return null;
 
-            throw new NotSupportedException($"Queue entry sets \"{propPath}\", but {reason}.");
+            return $"Queue entry sets \"{propPath}\", but {reason}.";
         }
+
+        return null;
+    }
+
+
+    /// <summary>
+    /// Why this entry cannot run, or null when it can. Runs the same checks <see cref="Apply"/>
+    /// performs, but without setting anything, so a whole queue can be inspected BEFORE the first
+    /// run instead of dying halfway through.
+    /// <para>
+    /// That is not a theoretical worry: on 03-09-2026 entry 26 of 54 asked for the retired
+    /// EntryWaitForPatterns, the exception left <see cref="Apply"/> unhandled and took the process
+    /// with it at 03:45, and the 28 entries behind it never ran. A batch meant to run unattended has
+    /// to say what it cannot do at the start, when someone is still watching.
+    /// </para>
+    /// </summary>
+    public static string? Validate(EmulatorQueueEntry entry)
+    {
+        foreach (var (_, props) in entry.SignalOverrides)
+        {
+            foreach (var (propPath, jsonVal) in props)
+            {
+                string? reason = DescribeRetiredProperty(propPath, jsonVal);
+                if (reason != null)
+                    return reason;
+            }
+        }
+
+        foreach (var (propPath, jsonVal) in entry.TradingOverrides)
+        {
+            string? reason = DescribeRetiredProperty(propPath, jsonVal);
+            if (reason != null)
+                return reason;
+        }
+
+        return null;
     }
 
 

@@ -1,0 +1,68 @@
+diff --git a/Photino.Native/Photino.Windows.cpp b/Photino.Native/Photino.Windows.cpp
+index 8e51e6f..20d2cd8 100644
+--- a/Photino.Native/Photino.Windows.cpp
++++ b/Photino.Native/Photino.Windows.cpp
+@@ -676,16 +676,34 @@ void Photino::GetZoom(int* zoom)
+ 
+ 
+ 
++// UTF-8 to UTF-16 conversion that lives on the stack of the caller. ToUTF16String below allocates
++// a std::wstring with new and never deletes it, so every call leaked the converted text. For the
++// one-off conversions at window creation that is a few kilobytes; for SendWebMessage, which
++// Blazor calls for every render batch, it was the whole working set of a long running window
++// (tryphotino/photino.Native issue 165). The hot paths use this helper instead.
++static std::wstring ToUTF16(AutoString source)
++{
++	std::wstring wide;
++	int inLen = (int)strlen((char*)source);
++	int result = MultiByteToWideChar(CP_UTF8, 0, (char*)source, inLen, NULL, 0);
++	if (result > 0)
++	{
++		wide.resize(result, 0);
++		MultiByteToWideChar(CP_UTF8, 0, (char*)source, inLen, &wide[0], result);
++	}
++	return wide;
++}
++
+ void Photino::NavigateToString(AutoString content)
+ {
+-	content = ToUTF16String(content);
+-	_webviewWindow->NavigateToString(content);
++	std::wstring wide = ToUTF16(content);
++	_webviewWindow->NavigateToString(wide.c_str());
+ }
+ 
+ void Photino::NavigateToUrl(AutoString url)
+ {
+-	url = ToUTF16String(url);
+-	_webviewWindow->Navigate(url);
++	std::wstring wide = ToUTF16(url);
++	_webviewWindow->Navigate(wide.c_str());
+ }
+ 
+ void Photino::Restore()
+@@ -695,8 +713,10 @@ void Photino::Restore()
+ 
+ void Photino::SendWebMessage(AutoString message)
+ {
+-	message = ToUTF16String(message);
+-	_webviewWindow->PostWebMessageAsString(message);
++	// Converted on the stack and released when this call returns; PostWebMessageAsString copies
++	// what it needs. The previous ToUTF16String call here leaked one UTF-16 copy per message.
++	std::wstring wide = ToUTF16(message);
++	_webviewWindow->PostWebMessageAsString(wide.c_str());
+ }
+ 
+ 
+@@ -821,7 +841,10 @@ void Photino::SetSize(int width, int height)
+ 
+ void Photino::SetTitle(AutoString title)
+ {
+-	title = ToUTF16String(title);
++	// Same leak as SendWebMessage; the title is copied into _windowTitle and into the window, so
++	// the converted text does not have to outlive this call.
++	std::wstring wideTitle = ToUTF16(title);
++	title = (AutoString)wideTitle.c_str();
+ 	if (wcslen(title) > 255)
+ 	{
+ 		for (int i = 0; i < 256; i++)

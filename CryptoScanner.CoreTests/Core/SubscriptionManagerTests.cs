@@ -59,9 +59,9 @@ public class SubscriptionManagerTests
         return quoteData;
     }
 
-    private static CryptoSymbol AddSymbol(CryptoQuoteData quoteData, string baseAsset, double volume = 1000)
+    private static CryptoSymbol CreateSymbol(CryptoQuoteData quoteData, string baseAsset, double volume = 1000)
     {
-        CryptoSymbol symbol = new()
+        return new()
         {
             Exchange = GlobalData.ActiveExchange!,
             Name = baseAsset + Quote,
@@ -72,6 +72,11 @@ public class SubscriptionManagerTests
             Status = 1,
             Volume = volume,
         };
+    }
+
+    private static CryptoSymbol AddSymbol(CryptoQuoteData quoteData, string baseAsset, double volume = 1000)
+    {
+        CryptoSymbol symbol = CreateSymbol(quoteData, baseAsset, volume);
         quoteData.SymbolList.Add(symbol);
         return symbol;
     }
@@ -106,6 +111,11 @@ public class SubscriptionManagerTests
         return result;
     }
 
+    private static List<string> TestQuoteSymbolNames(SubscriptionManager manager)
+    {
+        return AllSymbolNames(manager).Where(x => x.EndsWith(Quote)).ToList();
+    }
+
     [TestInitialize]
     public void Init() => TestBase.InitTestSession();
 
@@ -136,6 +146,59 @@ public class SubscriptionManagerTests
             "the symbol that was added later should be part of a subscription");
         Assert.AreEqual(1, manager.SubscriptionBundleList.Count, "it fits in the existing subscription");
         Assert.AreEqual(2, AllSubscriptions(manager)[0].StartCount, "the subscription is resubscribed once");
+    }
+
+
+    /// <summary>
+    /// Okx Perpetual, night of 02/03-09-2026: two coins listed during the night had their history
+    /// fetched at every hourly refresh but never got a kline subscription. The fetch reads the symbol
+    /// table of the exchange, the synchronisation reads the per-quote index, and that index was only
+    /// built at startup. The hourly refresh now rebuilds it; this test covers that rebuild.
+    /// </summary>
+    [TestMethod]
+    public async Task SymbolListedAfterStartupGetsASubscription()
+    {
+        CryptoQuoteData quoteData = PrepareQuote();
+        var exchange = GlobalData.ActiveExchange!;
+        CryptoSymbol aaa = AddSymbol(quoteData, "AAA");
+        exchange.SymbolListName[aaa.Name] = aaa;
+        CryptoSymbol bbb = CreateSymbol(quoteData, "BBB");
+
+        // The rebuild below re-indexes every quote in the settings from the symbol table of the test
+        // exchange, and drops quotes that end up empty. The other tests in this class expect the
+        // quotes exactly as they found them, so keep the quotes and their lists and put them back.
+        var savedQuotes = GlobalData.Settings.QuoteCoins.Values.Select(q => (Quote: q, q.SymbolList)).ToList();
+        try
+        {
+            SubscriptionManager manager = CreateManager(symbolsPerSubscription: 10);
+            await manager.StartAsync();
+            CollectionAssert.AreEqual(new List<string> { "AAATSTQ" }, TestQuoteSymbolNames(manager));
+
+            // A new listing arrives with the hourly symbol refresh: it lands in the symbol table of
+            // the exchange, not in the per-quote index the synchronisation reads
+            exchange.SymbolListName[bbb.Name] = bbb;
+            await manager.SynchronizeSymbolsAsync();
+            CollectionAssert.AreEqual(new List<string> { "AAATSTQ" }, TestQuoteSymbolNames(manager),
+                "without rebuilding the index the new listing is invisible to the synchronisation");
+
+            // This is what the hourly refresh does right after GetSymbolsAsync. The rebuild also
+            // indexes the other quotes of the test session (their symbols come along in the
+            // subscriptions), hence the assertions look at the test quote only.
+            ThreadLoadData.IndexQuoteDataSymbols(exchange, notifyUserInterface: false);
+            await manager.SynchronizeSymbolsAsync();
+            CollectionAssert.AreEqual(new List<string> { "AAATSTQ", "BBBTSTQ" }, TestQuoteSymbolNames(manager),
+                "after the rebuild the new listing gets its subscription");
+        }
+        finally
+        {
+            exchange.SymbolListName.Remove(aaa.Name);
+            exchange.SymbolListName.Remove(bbb.Name);
+            foreach (var (savedQuote, savedList) in savedQuotes)
+            {
+                savedQuote.SymbolList = savedList;
+                GlobalData.Settings.QuoteCoins[savedQuote.Name] = savedQuote;
+            }
+        }
     }
 
 

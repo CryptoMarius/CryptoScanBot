@@ -33,4 +33,28 @@
     <ProjectReference Include="..\CryptoScanner.Analyzers\CryptoScanner.Analyzers.csproj" />
   </ItemGroup>
 
+  <!-- Photino.Native 4.0.22 (the version Photino.NET 4.0.16 ships) leaks one UTF-16 copy of every
+       web message on Windows, which is every Blazor render batch: 30 to 50 MB per hour per scanner
+       window. Tools\PhotinoNative holds the patch and a build script; when the patched dll is there,
+       it replaces the package's copy in the output and in the publish folder. Without it the build
+       is unchanged, so a clone without the C++ toolchain still builds. -->
+  <PropertyGroup>
+    <PatchedPhotinoNative>$(MSBuildThisFileDirectory)..\Tools\PhotinoNative\Photino.Native.dll</PatchedPhotinoNative>
+    <!-- The dll is a Windows x64 build and the leak is in the Windows code path only (Linux and
+         macOS run the message through their own web view APIs). So: win-x64 publishes and builds
+         without a runtime identifier; a linux-x64 or osx-arm64 publish keeps the package files. -->
+    <UsePatchedPhotinoNative Condition="Exists('$(PatchedPhotinoNative)') And ('$(RuntimeIdentifier)' == '' Or '$(RuntimeIdentifier)' == 'win-x64')">true</UsePatchedPhotinoNative>
+  </PropertyGroup>
+  <!-- A build without a runtime identifier keeps the native dll under runtimes\win-x64\native and
+       the runtime loads it from there, so that copy is replaced as well when the folder exists. A
+       win-x64 publish (the Release folder) has the flat layout and only the root copy. -->
+  <Target Name="OverridePhotinoNative" AfterTargets="Build" Condition="'$(UsePatchedPhotinoNative)' == 'true'">
+    <Copy SourceFiles="$(PatchedPhotinoNative)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(PatchedPhotinoNative)" DestinationFolder="$(OutDir)runtimes\win-x64\native" SkipUnchangedFiles="true" Condition="Exists('$(OutDir)runtimes\win-x64\native')" />
+  </Target>
+  <Target Name="OverridePhotinoNativeOnPublish" AfterTargets="Publish" Condition="'$(UsePatchedPhotinoNative)' == 'true'">
+    <Copy SourceFiles="$(PatchedPhotinoNative)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(PatchedPhotinoNative)" DestinationFolder="$(PublishDir)runtimes\win-x64\native" SkipUnchangedFiles="true" Condition="Exists('$(PublishDir)runtimes\win-x64\native')" />
+  </Target>
+
 </Project>

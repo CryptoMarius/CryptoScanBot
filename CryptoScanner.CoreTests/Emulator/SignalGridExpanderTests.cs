@@ -72,4 +72,100 @@ public class SignalGridExpanderTests : TestBase
 
         Assert.AreEqual(original, GlobalData.Settings.Signal.AnalysisMinBandRangeIndex);
     }
+
+
+    private static EmulatorQueueEntry EntryWithTradingOverride(string property, string json)
+    {
+        return new EmulatorQueueEntry
+        {
+            TradingOverrides = new()
+            {
+                [property] = JsonDocument.Parse(json).RootElement,
+            },
+        };
+    }
+
+
+    /// <summary>
+    /// An entry that asks for a setting the code no longer has must be recognisable BEFORE the batch
+    /// starts. On 03-09-2026 it was not: entry 26 of 54 asked for the retired EntryWaitForPatterns,
+    /// the exception left Apply unhandled and took the whole process down at 03:45, and the 28
+    /// entries behind it never ran.
+    /// </summary>
+    [TestMethod]
+    public void ValidateNamesTheRetiredSetting()
+    {
+        InitTestSession();
+
+        var entry = EntryWithTradingOverride(
+            "EntryConditions.EntryWaitForPatterns", """["Hammer","Harami"]""");
+
+        string? reason = SignalGridExpander.Validate(entry);
+
+        Assert.IsNotNull(reason);
+        StringAssert.Contains(reason, "EntryWaitForPatterns");
+    }
+
+
+    /// <summary>
+    /// Switching a retired setting OFF stays silent: an empty list is what the entry would have had
+    /// with the setting still in place, so nothing is lost by ignoring it. All 54 entries of the
+    /// batch carried the key; only the 12 that asked for shapes were unusable.
+    /// </summary>
+    [TestMethod]
+    public void ValidateAcceptsARetiredSettingThatIsOff()
+    {
+        InitTestSession();
+
+        Assert.IsNull(SignalGridExpander.Validate(
+            EntryWithTradingOverride("EntryConditions.EntryWaitForPatterns", "[]")));
+        Assert.IsNull(SignalGridExpander.Validate(
+            EntryWithTradingOverride("EntryConditions.EntryMaxAdversePercentage", "2.5")));
+    }
+
+
+    /// <summary>
+    /// A signal-section override is checked too, not just the trading ones - the loop that reads
+    /// them is a different one.
+    /// </summary>
+    [TestMethod]
+    public void ValidateAlsoChecksTheSignalOverrides()
+    {
+        InitTestSession();
+
+        var entry = EntryWithOverride("Signal", "EntryConditions.EntryPatternShape", """{"MinWickPercentage":50}""");
+
+        Assert.IsNotNull(SignalGridExpander.Validate(entry));
+    }
+
+
+    /// <summary>
+    /// When Apply does throw, the overrides it had already set must be put back. Otherwise a
+    /// half-applied entry leaks into every later run of the batch and silently measures something
+    /// nobody asked for.
+    /// </summary>
+    [TestMethod]
+    public void AFailingApplyLeavesNoSettingsBehind()
+    {
+        InitTestSession();
+
+        double original = GlobalData.Settings.Signal.AnalysisMinBandRangeIndex;
+
+        // The dictionary preserves insertion order, so the good override is applied first and the
+        // retired one throws after it.
+        var entry = new EmulatorQueueEntry
+        {
+            SignalOverrides = new()
+            {
+                ["Signal"] = new()
+                {
+                    ["AnalysisMinBandRangeIndex"] = JsonDocument.Parse("3.5").RootElement,
+                    ["EntryConditions.EntryWaitForPatterns"] = JsonDocument.Parse("""["Hammer"]""").RootElement,
+                },
+            },
+        };
+
+        Assert.ThrowsExactly<NotSupportedException>(() => SignalGridExpander.Apply(entry));
+        Assert.AreEqual(original, GlobalData.Settings.Signal.AnalysisMinBandRangeIndex);
+    }
 }

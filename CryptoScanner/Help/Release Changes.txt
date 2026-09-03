@@ -1,17 +1,17 @@
 CryptoScanBot release historie:
 
 TODO:
+-Linux versie maken 2.6.1 versie
+-Testen Sleep/Hibernate + wakeup
 -Testje op Mac vm.
 -Testje op de Linux vm.
--Screenshots van de wikie bijwerken
+-Screenshots van de wiki bijwerken
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
 xx-09-2025 2.6.2
-- Strategie: FailedBreakout heeft een eigen instellingenscherm gekregen
-- Strategie: CandlePattern en FailedBreakout kunnen eisen dat de candle een zone raakt (dlz, fvg en/of smc)
-- Chart: Een afgesloten positie toont zijn niveaus weer, en de verbindingslijn heeft dezelfde stijl als de lijn eronder
 - Geluid: Een ontbrekend geluidsbestand komt nu in het foutenlog in plaats van nergens
 - Trader: De melding van een gevulde takeprofit vertelt nu ook wat die opleverde, en de laatste het eindresultaat van de positie
+- Chart: Een afgesloten positie toont zijn niveaus weer, en de verbindingslijn heeft dezelfde stijl als de lijn eronder
 - Chart: Een niveau dat meebeweegt wordt als een trap getekend in plaats van losse lijnen, en de tekst staat er nog maar een keer bij
 - Chart: Kleuren en lijnen van posities en signalen zijn instelbaar
 - Grids: De selectie blijft staan bij het wisselen van tab en de sortering wordt bijgewerkt bij het openen
@@ -34,6 +34,8 @@ xx-09-2025 2.6.2
 - Photino: De barometer vervangt de voortgang van het ophalen van de candles (met verouderde data)
 - Photino: Diverse fixes en aanpassingen in het chart venster vanwege het compleet wegvallen van de chart
 - Photino: De panelen van de chart lopen weer gelijk (prijs-as even breed, crosshair over alle panelen)
+- Strategie: FailedBreakout heeft een eigen instellingenscherm gekregen
+- Strategie: CandlePattern en FailedBreakout kunnen eisen dat de candle een zone raakt (dlz, fvg en/of smc)
 - Strategie CandlePattern: Meerdere patronen tegelijk (of-of) en een eigen instellingen scherm in beide applicaties
 - Strategie AtrRb definitief verwijderd, het is/was een van slechts presterende strategien (was blijven staan om te vergelijken)
 - Emulator: Het write-ahead logbestand wordt na elke run opgeruimd, dat scheelde honderden megabytes en een lange wachttijd bij het stoppen

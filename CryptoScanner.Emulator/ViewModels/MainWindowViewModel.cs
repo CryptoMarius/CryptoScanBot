@@ -84,6 +84,12 @@ public partial class MainWindowViewModel : ObservableObject
 
     private CancellationTokenSource? _cts;
 
+    // Set by Stop, cleared when a batch starts. The token itself cannot answer "did the user stop
+    // this?" once a run is over - RunOnceAsync disposes and nulls _cts in its finally - and the
+    // queue has to tell a cancelled batch (stop, so drop the rest) from a failed run (log it and
+    // carry on with the next entry).
+    private bool _stopRequested;
+
 
     /// <summary>
     /// Re-opens the SetupWindow so the user can pick a different data folder or exchange.
@@ -706,6 +712,36 @@ public partial class MainWindowViewModel : ObservableObject
         if (archived != null)
             GlobalData.AddTextToLogTab($"Queue: archived as {archived}");
 
+        // Check EVERY entry before the first run instead of discovering a bad one hours later. An
+        // entry that asks for a setting the code no longer has cannot run, and until 03-09-2026 that
+        // took the whole process down: entry 26 of 54 asked for the retired EntryWaitForPatterns,
+        // the exception left SignalGridExpander.Apply unhandled at 03:45 and the 28 entries behind it
+        // never ran. Now the batch says so at the start - when someone is still watching - and runs
+        // everything that CAN run.
+        HashSet<int> blockedEntries = [];
+        for (int i = 0; i < queue.Count; i++)
+        {
+            string? reason = SignalGridExpander.Validate(queue[i]);
+            if (reason == null)
+                continue;
+
+            blockedEntries.Add(i);
+            string label = !string.IsNullOrWhiteSpace(queue[i].Label) ? queue[i].Label! : $"queue-{i + 1}";
+            GlobalData.AddErrorToLogTab($"Queue: entry {i + 1} \"{label}\" cannot run — {reason}");
+        }
+
+        if (blockedEntries.Count == queue.Count)
+        {
+            Status = $"None of the {queue.Count} queue entries can run — see the log.";
+            GlobalData.AddErrorToLogTab($"Queue: all {queue.Count} entries are unusable, nothing started");
+            return;
+        }
+
+        if (blockedEntries.Count > 0)
+            GlobalData.AddTextToLogTab(
+                $"Queue: skipping {blockedEntries.Count} unusable entry(s), running the other "
+                + $"{queue.Count - blockedEntries.Count}");
+
         // Collect the distinct algorithm names present in the queue so we can skip the
         // selection dialog when every entry already specifies its algorithm.
         var queueAlgorithmNames = queue
@@ -789,11 +825,14 @@ public partial class MainWindowViewModel : ObservableObject
         List<(decimal, decimal)> savedSignalShortMarketTrendSecondary = GlobalData.Settings.Signal.Short.MarketTrendSecondary.List;
 
         int totalRuns = selectedAlgorithms.Sum(a =>
-            queue.Count(e => string.IsNullOrEmpty(e.Algorithm) || e.Algorithm.Equals(a!.Name, StringComparison.OrdinalIgnoreCase)));
+            queue.Where((e, i) => !blockedEntries.Contains(i))
+                 .Count(e => string.IsNullOrEmpty(e.Algorithm) || e.Algorithm.Equals(a!.Name, StringComparison.OrdinalIgnoreCase)));
         int runIndex = 0;
+        int failedRuns = 0;
 
         GlobalData.AddTextToLogTab($"Queue: starting {totalRuns} runs across {selectedAlgorithms.Count} algorithm(s)");
 
+        _stopRequested = false;
         IsRunning = true;
         try
         {
@@ -807,6 +846,15 @@ public partial class MainWindowViewModel : ObservableObject
                 for (int i = 0; i < queue.Count; i++)
                 {
                     EmulatorQueueEntry entry = queue[i];
+
+                    // A Stop during the last run no longer reaches the return below, now that a run
+                    // which did not complete only ends the batch when it was actually stopped.
+                    if (_stopRequested)
+                        return;
+
+                    // Reported by name before the batch started; nothing to add here.
+                    if (blockedEntries.Contains(i))
+                        continue;
 
                     if (!string.IsNullOrEmpty(entry.Algorithm)
                         && !entry.Algorithm.Equals(algorithm.Name, StringComparison.OrdinalIgnoreCase))
@@ -881,7 +929,23 @@ public partial class MainWindowViewModel : ObservableObject
                         }
                     }
 
-                    List<SignalGridExpander.Override> overrides = SignalGridExpander.Apply(entry);
+                    // Applying the overrides must never end the batch. Validate() above catches the
+                    // retired settings, but reflection over a hand-edited queue can fail in ways
+                    // nobody listed yet - a type that will not convert, a path into a null section.
+                    // One unusable entry costs one run, not the twenty behind it.
+                    List<SignalGridExpander.Override> overrides;
+                    try
+                    {
+                        overrides = SignalGridExpander.Apply(entry);
+                    }
+                    catch (Exception ax)
+                    {
+                        failedRuns++;
+                        GlobalData.AddErrorToLogTab(
+                            $"Queue: entry {i + 1} \"{entry.Label}\" skipped — {ax.GetType().Name}: {ax.Message}");
+                        continue;
+                    }
+
                     try
                     {
                         string entryLabel = !string.IsNullOrWhiteSpace(entry.Label) ? entry.Label : $"queue-{i + 1}";
@@ -895,6 +959,12 @@ public partial class MainWindowViewModel : ObservableObject
                         var (startCapital, startCapitalOverridden) =
                             ResolveStartCapital(entry.StartCapital, baseConfig.StartCapital);
 
+                        // And for the paper balances. Note this also repairs the run configuration's
+                        // own checkbox: until 03-09-2026 the queue never set this field, so every
+                        // queue run silently used the class default (true) no matter what the
+                        // run-config window said. Only single runs honoured it.
+                        bool useAssetManagement = entry.UseAssetManagement ?? baseConfig.UseAssetManagement;
+
                         string runLabel = BuildRunLabel(algoName, entryLabel,
                             !string.IsNullOrWhiteSpace(entry.BaseInterval) ? baseInterval : null,
                             startCapitalOverridden ? startCapital : null);
@@ -907,6 +977,7 @@ public partial class MainWindowViewModel : ObservableObject
                             ToDate = baseConfig.ToDate,
                             BaseInterval = baseInterval,
                             StartCapital = startCapital,
+                            UseAssetManagement = useAssetManagement,
                             CalculateBarometer = entry.CalculateBarometer ?? true,
                             Label = runLabel,
                         };
@@ -934,7 +1005,24 @@ public partial class MainWindowViewModel : ObservableObject
 
                         bool completed = await RunOnceAsync(runConfig, entry.Force);
                         if (!completed)
-                            return;
+                        {
+                            // Stop means stop - the rest of the queue is not wanted either. A run
+                            // that FAILED is a different matter, and until 03-09-2026 both ended the
+                            // batch here, so one bad run threw away every entry behind it.
+                            // RunOnceAsync has already written the failure onto the run row.
+                            if (_stopRequested)
+                                return;
+
+                            failedRuns++;
+                            GlobalData.AddErrorToLogTab(
+                                $"Queue: run \"{runConfig.Label}\" did not complete — continuing with the next entry");
+                        }
+                    }
+                    catch (Exception rx)
+                    {
+                        failedRuns++;
+                        GlobalData.AddErrorToLogTab(
+                            $"Queue: entry {i + 1} \"{entry.Label}\" failed — {rx.GetType().Name}: {rx.Message}");
                     }
                     finally
                     {
@@ -967,6 +1055,13 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Signal.Short.MarketTrend.List = savedSignalShortMarketTrend;
             GlobalData.Settings.Signal.Long.MarketTrendSecondary.List = savedSignalLongMarketTrendSecondary;
             GlobalData.Settings.Signal.Short.MarketTrendSecondary.List = savedSignalShortMarketTrendSecondary;
+            // One closing line naming what did not run, so a batch that ran overnight can be judged
+            // from the log without counting rows in the results grid.
+            if (blockedEntries.Count > 0 || failedRuns > 0)
+                GlobalData.AddErrorToLogTab(
+                    $"Queue: finished with {blockedEntries.Count} unusable entry(s) and "
+                    + $"{failedRuns} failed run(s) — see the lines above");
+
             try
             {
                 EmulatorDb.Vacuum();
@@ -1190,6 +1285,7 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void Stop()
     {
+        _stopRequested = true;
         _cts?.Cancel();
         Status = "Cancelling…";
     }

@@ -40,9 +40,12 @@ public class CryptoQuoteData
     public CoreColor DisplayColor { get; set; } = CoreColor.FromArgb(0x00, 0xFF, 0x95, 0xA5);
 
     // List of symbols (for this quote)
+    // Rebuilt by ThreadLoadData.IndexQuoteDataSymbols, at startup and on every hourly symbol refresh.
+    // It is replaced as a whole instead of cleared and refilled: the barometer walks it by index
+    // without a lock, and a reader that started on the old list simply finishes on the old list.
     [Computed]
     [JsonIgnore]
-    public List<CryptoSymbol> SymbolList { get; } = [];
+    public List<CryptoSymbol> SymbolList { get; set; } = [];
 
     // The pausing values for each side
     [Computed]

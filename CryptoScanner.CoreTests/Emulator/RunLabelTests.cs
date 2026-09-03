@@ -1,3 +1,4 @@
+using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Emulator.ViewModels;
 
 namespace CryptoScanner.CoreTests.Emulator;
@@ -122,5 +123,35 @@ public class RunLabelTests
         Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(null, 10000m));
         Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(0m, 10000m));
         Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(-5000m, 10000m));
+    }
+
+
+    /// <summary>
+    /// A queue entry can switch the paper balances off for its own run. It reads as a plain nullable
+    /// bool, so what is worth a test is that the JSON actually reaches the property: the file is
+    /// edited by hand, and a field that silently does not bind produces a run that looks like a
+    /// measurement while being a copy of its own reference. That is exactly what putting it in
+    /// TradingOverrides did - ApplyRunOverrides assigned the value back from the run configuration.
+    /// </summary>
+    [TestMethod]
+    public void UseAssetManagement_BindsFromTheQueueFile()
+    {
+        var opties = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        var uit = System.Text.Json.JsonSerializer.Deserialize<EmulatorQueueEntry>(
+            """{"Label":"KA2","UseAssetManagement":false}""", opties);
+        var aan = System.Text.Json.JsonSerializer.Deserialize<EmulatorQueueEntry>(
+            """{"Label":"KA3","UseAssetManagement":true}""", opties);
+        var weggelaten = System.Text.Json.JsonSerializer.Deserialize<EmulatorQueueEntry>(
+            """{"Label":"CA0"}""", opties);
+
+        Assert.AreEqual(false, uit!.UseAssetManagement);
+        Assert.AreEqual(true, aan!.UseAssetManagement);
+        Assert.IsNull(weggelaten!.UseAssetManagement, "omitted has to fall back to the run configuration");
+
+        // The fallback the queue loop applies, spelled out: only an entry that says something wins.
+        Assert.IsFalse(uit.UseAssetManagement ?? true);
+        Assert.IsTrue(weggelaten.UseAssetManagement ?? true);
+        Assert.IsFalse(weggelaten.UseAssetManagement ?? false);
     }
 }

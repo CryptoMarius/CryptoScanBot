@@ -153,15 +153,17 @@
 
         <!-- Charts in scrollable area -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <!-- Grid.Row decides what is shown where, not the order of the blocks below: positions
+                 on top, then the profits, and the capital underneath them. -->
             <Grid Margin="10" Grid.ColumnSpacing="5" Grid.RowSpacing="5" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
                 
                 <!-- Chart 0: Kapitaal per dag (asset snapshots) -->
-                <Border Grid.Row="0" Grid.Column="0" Width="600" Height="300">
+                <Border Grid.Row="2" Grid.Column="0" Width="600" Height="300">
                     <oxy:PlotView Model="{Binding ChartCapitalPerDay}" Background="Transparent"/>
                 </Border>
 
                 <!-- Chart 1: Posities per dag -->
-                <Border Grid.Row="1" Grid.Column="0" Width="600" Height="300">
+                <Border Grid.Row="0" Grid.Column="0" Width="600" Height="300">
                     <oxy:PlotView x:Name="PlotViewControl1" Model="{Binding ChartPositionsPerDay}" Background="Transparent"/>
                 </Border>
 
@@ -172,7 +174,7 @@
 				 -->
 
                 <!-- Chart 3: Profits per dag  -->
-                <Border Grid.Row="2" Grid.Column="0" Width="600" Height="300">
+                <Border Grid.Row="1" Grid.Column="0" Width="600" Height="300">
                     <oxy:PlotView Model="{Binding ChartProfitsPerDay}" Background="Transparent"/>
                 </Border>
 

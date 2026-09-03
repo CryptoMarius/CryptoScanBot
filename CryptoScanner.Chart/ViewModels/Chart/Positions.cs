@@ -242,8 +242,12 @@ public class Positions
                             if (step.StopPrice.HasValue)
                                 AddPiece("stop price", "stop price", stepColor, x1, xEndTp, step.StopPrice.Value);
 
-                            if (step.StopLimitPrice.HasValue)
-                                AddPiece("stop limit", "stop limit", stepColor, x1, xEndTp, step.StopLimitPrice.Value);
+                            // Only the stop trigger. The stop limit is off the chart since
+                            // 03-09-2026: the market never reaches it by itself, it is only the
+                            // price the order may still sell at once the trigger has gone off -
+                            // how much loss you are willing to take, not what happened.
+                            //if (step.StopLimitPrice.HasValue)
+                            //    AddPiece("stop limit", "stop limit", stepColor, x1, xEndTp, step.StopLimitPrice.Value);
                             break;
                     }
 

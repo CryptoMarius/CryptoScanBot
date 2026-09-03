@@ -537,6 +537,16 @@
                 return;
             try
             {
+                // Resetting the distance of every row repaints the whole symbol table, and with
+                // 800+ symbols that is a render batch of around 100 KB every 15 seconds - the
+                // largest steady stream of web messages this window sends (measured 03-09-2026 on
+                // Binance Perpetual, see Tools\PhotinoNative\README.md). Nobody can see the result
+                // while the sidebar is collapsed or the Distance column is hidden, so skip it then;
+                // the next tick after the panel comes back refreshes every row at once.
+                if (!_sidebarVisible)
+                    return;
+                if (_symbolColumns == null || !_symbolColumns.VisibleColumns.Any(c => c.Column == SymbolColumnEnum.Distance))
+                    return;
                 SymbolService.InvalidateDistances();
             }
             catch

@@ -67,53 +67,6 @@
 <!-- Charts -->
 <div class="dashboard-charts">
 
-    @* Not derived from the positions like the charts below, but read from the AssetSnapshot table:
-       the balances as they were on that day, so including what is still sitting in open positions. *@
-    <div class="dashboard-chart-box">
-        <div class="chart-title">Capital per day (@AssetSnapshotTools.ReferenceCoin)</div>
-        @if (PositionService.GrowthData.Count >= 2)
-        {
-            var growth = PositionService.GrowthData;
-            decimal firstValue = growth[0].Value;
-            decimal lastValue = growth[^1].Value;
-            decimal difference = lastValue - firstValue;
-            // Everything the user booked in or out by hand since the first day. A deposit raises the
-            // capital without anything having been earned, so the second line has it taken out again.
-            decimal adjustment = growth[^1].Adjustment;
-            bool hasAdjustments = growth.Any(d => d.Adjustment != 0);
-            <div class="chart-legend">
-                <span class="chart-legend-item">Start @firstValue.ToString("N2")</span>
-                <span class="chart-legend-item">Last @lastValue.ToString("N2")</span>
-                <span class="chart-legend-item @ColorClassForValue(difference)">@(difference >= 0 ? "+" : "")@difference.ToString("N2")</span>
-                @if (hasAdjustments)
-                {
-                    <span class="chart-legend-item"><span class="chart-swatch chart-swatch-blue"></span>Capital</span>
-                    <span class="chart-legend-item"><span class="chart-swatch chart-swatch-orange"></span>Without corrections @(lastValue - adjustment).ToString("N2")</span>
-                    <span class="chart-legend-item">Booked by hand @(adjustment >= 0 ? "+" : "")@adjustment.ToString("N2")</span>
-                }
-            </div>
-            @if (hasAdjustments)
-            {
-                @((MarkupString)RenderLineChart(growth, d => d.Date,
-                    [
-                        ("var(--blue, #4a9eff)", d => (double)d.Value),
-                        ("var(--orange, #ff9f43)", d => (double)d.ValueWithoutAdjustments),
-                    ]))
-            }
-            else
-            {
-                @((MarkupString)RenderLineChart(growth, d => d.Date,
-                    [
-                        ("var(--blue, #4a9eff)", d => (double)d.Value),
-                    ]))
-            }
-        }
-        else
-        {
-            <span class="text-muted">Not enough days recorded yet - the capital is written away once a day.</span>
-        }
-    </div>
-
     @if (PositionService.DailyData.Count > 0)
     {
         var chartDays = PositionService.DailyData.TakeLast(30).ToList();
@@ -288,6 +241,53 @@
             <span class="text-muted">No position data available. Click Refresh to load.</span>
         </div>
     }
+
+    @* Not derived from the positions like the charts above, but read from the AssetSnapshot table:
+       the balances as they were on that day, so including what is still sitting in open positions. *@
+    <div class="dashboard-chart-box">
+        <div class="chart-title">Capital per day (@AssetSnapshotTools.ReferenceCoin)</div>
+        @if (PositionService.GrowthData.Count >= 2)
+        {
+            var growth = PositionService.GrowthData;
+            decimal firstValue = growth[0].Value;
+            decimal lastValue = growth[^1].Value;
+            decimal difference = lastValue - firstValue;
+            // Everything the user booked in or out by hand since the first day. A deposit raises the
+            // capital without anything having been earned, so the second line has it taken out again.
+            decimal adjustment = growth[^1].Adjustment;
+            bool hasAdjustments = growth.Any(d => d.Adjustment != 0);
+            <div class="chart-legend">
+                <span class="chart-legend-item">Start @firstValue.ToString("N2")</span>
+                <span class="chart-legend-item">Last @lastValue.ToString("N2")</span>
+                <span class="chart-legend-item @ColorClassForValue(difference)">@(difference >= 0 ? "+" : "")@difference.ToString("N2")</span>
+                @if (hasAdjustments)
+                {
+                    <span class="chart-legend-item"><span class="chart-swatch chart-swatch-blue"></span>Capital</span>
+                    <span class="chart-legend-item"><span class="chart-swatch chart-swatch-orange"></span>Without corrections @(lastValue - adjustment).ToString("N2")</span>
+                    <span class="chart-legend-item">Booked by hand @(adjustment >= 0 ? "+" : "")@adjustment.ToString("N2")</span>
+                }
+            </div>
+            @if (hasAdjustments)
+            {
+                @((MarkupString)RenderLineChart(growth, d => d.Date,
+                    [
+                        ("var(--blue, #4a9eff)", d => (double)d.Value),
+                        ("var(--orange, #ff9f43)", d => (double)d.ValueWithoutAdjustments),
+                    ]))
+            }
+            else
+            {
+                @((MarkupString)RenderLineChart(growth, d => d.Date,
+                    [
+                        ("var(--blue, #4a9eff)", d => (double)d.Value),
+                    ]))
+            }
+        }
+        else
+        {
+            <span class="text-muted">Not enough days recorded yet - the capital is written away once a day.</span>
+        }
+    </div>
 </div>
 
 @code {
