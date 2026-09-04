@@ -8,6 +8,11 @@ TODO:
 -Screenshots van de wiki bijwerken
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
+04-09-2025 2.6.3
+- Hyperliquid: Op een Windows met een decimale komma kreeg elke munt van Perpetual een tickgrootte van 1; munten onder de 0,50 werden daardoor elke tien minuten als inactief herstart en alle prijzen werden als hele getallen opgeslagen
+- Hyperliquid: Spot kende tot 17-08 het aantal decimalen toe als tickgrootte, met hetzelfde gevolg voor de opgeslagen candles
+- Database: Candle-database versie 5 en database versie 95 ruimen de candles en zones van Hyperliquid op die met een verkeerde tickgrootte zijn opgeslagen; die geschiedenis wordt daarna opnieuw opgehaald
+
 03-09-2025 2.6.2
 - Geluid: Een ontbrekend geluidsbestand komt nu in het foutenlog in plaats van nergens
 - Trader: De melding van een gevulde takeprofit vertelt nu ook wat die opleverde, en de laatste het eindresultaat van de positie
