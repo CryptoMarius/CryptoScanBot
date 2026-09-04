@@ -36,4 +36,15 @@ public class CryptoExternalUrls
     /// </para>
     /// </summary>
     public Dictionary<string, CryptoExternalUrls> PerProduct { get; set; } = [];
+
+    /// <summary>
+    /// The addresses of every market an outside party deployed on this exchange - a product that is
+    /// not one of ours (<see cref="Model.CryptoProduct.IsReserved"/>) and has no entry of its own in
+    /// <see cref="PerProduct"/>. HyperLiquid is the reason: it carries ten such markets and the
+    /// outside world names all of them the same way, with the deployer as a suffix or a prefix.
+    /// Altrady writes HYPERLIQUIDF_USDC_TSLA_XYZ, TradingView HIP3XYZ:TSLAUSDC.P - so one template
+    /// with {PRODUCT} covers them all, where a PerProduct entry per deployer would have to be kept
+    /// up with every market that appears. Falls back to the addresses above it like PerProduct does.
+    /// </summary>
+    public CryptoExternalUrls? Deployed { get; set; }
 }

@@ -315,6 +315,17 @@ public class Symbol() : SymbolBase(), ISymbol
     /// BTC of HyperLiquid's own market would be called BTCUSDC.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Deployed markets the scanner leaves out, by the name HyperLiquid gives the deployer. Paragon
+    /// ("para") is not carried by Altrady, so every signal on one of its 25 instruments was a signal
+    /// nobody could act on - reported by the testers on 04-09-2026. TradingView does chart them
+    /// (HIP3PARA), so this is a choice for the trading app the scanner is built around, not a
+    /// statement about the market. An instrument of an excluded deployer that is already in the
+    /// database is deactivated by the caller like a delisted one, and its candles go with the
+    /// next cleanup.
+    /// </summary>
+    private static readonly HashSet<string> ExcludedDeployers = new(StringComparer.OrdinalIgnoreCase) { "para" };
+
     private async Task<int> AddDeployedMarketsAsync(
         Model.CryptoExchange exchange,
         HyperLiquidRestClient client,
@@ -343,6 +354,11 @@ public class Symbol() : SymbolBase(), ISymbol
             // The first entry of the list is HyperLiquid's own market and has no name. That one was
             // already handled by the caller, over the package call that does carry ticker data.
             if (dex == null || string.IsNullOrEmpty(dex.Name))
+                continue;
+
+            // Not carried by the trading app, so not worth a signal (see ExcludedDeployers). Skipped
+            // before the request, so it costs no weight on the address either.
+            if (ExcludedDeployers.Contains(dex.Name))
                 continue;
 
             var (success, markets, rawJson) = await PerpDexClient.GetMarketsAsync(dex.Name);

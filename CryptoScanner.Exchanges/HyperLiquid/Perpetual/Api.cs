@@ -280,7 +280,29 @@ public class Api : ExchangeBase
             {
                 Execute = CryptoExternalUrlType.External,
                 Url = "https://app.hyperliquid.xyz/trade/{exchangename}",
-            }
+            },
+            // The remark above about {BASE} turned out to be half true: both apps do call the market
+            // TSLA, but neither files it under the exchange's own list. Altrady puts the deployer
+            // behind the pair (HYPERLIQUIDF_USDC_TSLA_XYZ, reported by a tester on 04-09-2026) and
+            // TradingView keeps a source per deployer, HIP3 plus its name: HIP3XYZ:TSLAUSDC.P and
+            // HIP3PARA:AVGOUSDC.P, verified in TradingView's own symbol search on 04-09-2026. Not
+            // every deployer is there (io and mkts were not), and those open an empty chart, exactly
+            // as before. The exchange's own trade page is addressed by ExchangeName already and needs
+            // no entry here.
+            Deployed = new()
+            {
+                Altrady = new()
+                {
+                    Code = "HYPERLIQUIDF",
+                    Execute = CryptoExternalUrlType.Internal,
+                    Url = "https://app.altrady.com/d/HYPERLIQUIDF_{QUOTE}_{BASE}_{PRODUCT}:{interval}",
+                },
+                TradingView = new()
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://www.tradingview.com/chart/?symbol=HIP3{PRODUCT}:{BASE}{QUOTE}.P&interval={interval}",
+                },
+            },
         };
     }
 }

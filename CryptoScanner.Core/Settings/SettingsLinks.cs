@@ -95,6 +95,12 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             CryptoExternalUrl? externalUrl = null;
             if (symbol.Product.Length > 0 && externalUrls.PerProduct.TryGetValue(symbol.Product, out CryptoExternalUrls? perProduct))
                 externalUrl = Pick(perProduct, externalApp);
+            // A market an outside party deployed, without an entry of its own: the one template for
+            // all of them (see CryptoExternalUrls.Deployed). Never for a product of ours, so a
+            // perpetual keeps the address of the market itself.
+            if (externalUrl == null && externalUrls.Deployed != null
+                && symbol.Product.Length > 0 && !CryptoProduct.IsReserved(symbol.Product))
+                externalUrl = Pick(externalUrls.Deployed, externalApp);
             externalUrl ??= Pick(externalUrls, externalApp);
 
             if (externalUrl == null)
