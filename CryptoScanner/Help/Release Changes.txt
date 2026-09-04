@@ -1,8 +1,6 @@
 CryptoScanBot release historie:
 
 TODO:
--Linux versie maken 2.6.1 versie
--Testen Sleep/Hibernate + wakeup
 -Testje op Mac vm.
 -Testje op de Linux vm.
 -Screenshots van de wiki bijwerken
