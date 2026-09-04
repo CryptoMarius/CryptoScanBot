@@ -71,9 +71,10 @@ public class FailedBreakoutBase : SignalCreateBase
                 levelLow = candles[i].Low;
         }
 
+        decimal range = level - levelLow;
         bool signal = SignalSide == CryptoTradeSide.Short
-            ? BrokeAndCameBack(candles, settings, level, above: true)
-            : BrokeAndCameBack(candles, settings, levelLow, above: false);
+            ? BrokeAndCameBack(candles, settings, level, range, above: true)
+            : BrokeAndCameBack(candles, settings, levelLow, range, above: false);
 
         // The zone only gets named on a signal. On a rejection ExtraText already says which of the
         // two tests said no, and that is the more useful half.
@@ -85,10 +86,11 @@ public class FailedBreakoutBase : SignalCreateBase
 
     /// <summary>
     /// Whether any candle in the break window pushed past the level far enough, and the candle being
-    /// evaluated closed back on the original side of it.
+    /// evaluated closed back on the original side of it - and close enough to it, measured as a
+    /// share of <paramref name="range"/> (lookback high minus lookback low).
     /// </summary>
     private bool BrokeAndCameBack(List<CryptoCandle> candles, FailedBreakoutSettings settings,
-        decimal level, bool above)
+        decimal level, decimal range, bool above)
     {
         if (level <= 0)
             return false;
@@ -118,8 +120,19 @@ public class FailedBreakoutBase : SignalCreateBase
             return false;
         }
 
+        // Where the close sits between the two levels, as seen from the one that was broken: 0 is
+        // right on it, 100 is all the way at the other level. A break that is followed by a close
+        // at the far side of the range is not a failed break any more, it is the move that came
+        // after it - and the other side of this strategy is the one looking at that.
+        decimal position = range > 0 ? 100m * Math.Abs(close - level) / range : 0m;
+        if (settings.CloseWithinRangePercentage < 100m && position >= settings.CloseWithinRangePercentage)
+        {
+            ExtraText = $"close too far from the broken level ({position:N0}% of the range)";
+            return false;
+        }
+
         decimal beyond = 100m * Math.Abs(close - level) / level;
-        ExtraText = $"failed break of {level}, back inside by {beyond:N2}%";
+        ExtraText = $"failed break of {level}, back inside by {beyond:N2}% ({position:N0}% of the range)";
         return true;
     }
 }

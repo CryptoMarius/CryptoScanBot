@@ -22,6 +22,7 @@ public class FailedBreakoutConfigViewModelTests
             LookbackCandles = 30,
             BreakWithinCandles = 2,
             MinimumBreakPercentage = 0.75m,
+            CloseWithinRangePercentage = 25m,
             RequireZone = ["Smc", "Dlz"],
             ZoneTolerancePercentage = 0.25m,
         });
@@ -32,6 +33,7 @@ public class FailedBreakoutConfigViewModelTests
         Assert.AreEqual(30, settings.LookbackCandles);
         Assert.AreEqual(2, settings.BreakWithinCandles);
         Assert.AreEqual(0.75m, settings.MinimumBreakPercentage);
+        Assert.AreEqual(25m, settings.CloseWithinRangePercentage);
 
         // Back in the order the enum declares them, not in the order they went in, so both hosts
         // hand the strategy an identically ordered list.

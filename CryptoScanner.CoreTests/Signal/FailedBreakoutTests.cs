@@ -36,6 +36,10 @@ public class FailedBreakoutTests : TestBase
         FailedBreakoutPlugin.Settings.LookbackCandles = Lookback;
         FailedBreakoutPlugin.Settings.BreakWithinCandles = BreakWindow;
         FailedBreakoutPlugin.Settings.MinimumBreakPercentage = 0m;
+        // Off for the tests above the range-position section: their quiet candles close at 100,
+        // which is exactly the middle of the 99..101 range, and that is the one place the default
+        // of 50 says no to both sides.
+        FailedBreakoutPlugin.Settings.CloseWithinRangePercentage = 100m;
         FailedBreakoutPlugin.Settings.RequireZone = [];
         FailedBreakoutPlugin.Settings.ZoneTolerancePercentage = 0m;
         _dlzIntervals = [.. GlobalData.Settings.Signal.ZonesDlz.IntervalList];
@@ -48,6 +52,7 @@ public class FailedBreakoutTests : TestBase
         FailedBreakoutPlugin.Settings.LookbackCandles = fresh.LookbackCandles;
         FailedBreakoutPlugin.Settings.BreakWithinCandles = fresh.BreakWithinCandles;
         FailedBreakoutPlugin.Settings.MinimumBreakPercentage = fresh.MinimumBreakPercentage;
+        FailedBreakoutPlugin.Settings.CloseWithinRangePercentage = fresh.CloseWithinRangePercentage;
         FailedBreakoutPlugin.Settings.RequireZone = fresh.RequireZone;
         FailedBreakoutPlugin.Settings.ZoneTolerancePercentage = fresh.ZoneTolerancePercentage;
 
@@ -251,6 +256,128 @@ public class FailedBreakoutTests : TestBase
         });
 
         Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+    }
+
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  Where the close sits in the range
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// One wide candle breaks the ceiling AND the floor and closes low in the range. Before the
+    /// range-position check that was a long and a short on the same candle (SUSHIUSDC, 04-09-2026).
+    /// The close near the floor is a spring, so the long stays; the short is the move that already
+    /// happened, so it goes.
+    /// </summary>
+    [TestMethod]
+    public void ABreakOfBothLevelsThatClosesLow_IsOnlyALong()
+    {
+        FailedBreakoutPlugin.Settings.CloseWithinRangePercentage = 50m;
+
+        static void Whipsaw(CryptoCandle[] candles)
+        {
+            candles[0].High = 105m;
+            candles[0].Low = 95m;
+            candles[0].Close = 99.3m;    // 15% of the 99..101 range up from the floor
+        }
+
+        var (longSide, _) = MakeSeries(CryptoTradeSide.Long, Enough, Whipsaw);
+        Assert.IsTrue(longSide.IsSignal(), longSide.ExtraText);
+
+        var (shortSide, _) = MakeSeries(CryptoTradeSide.Short, Enough, Whipsaw);
+        Assert.IsFalse(shortSide.IsSignal(), shortSide.ExtraText);
+        StringAssert.Contains(shortSide.ExtraText, "too far from the broken level");
+    }
+
+
+    [TestMethod]
+    public void ABreakOfBothLevelsThatClosesHigh_IsOnlyAShort()
+    {
+        FailedBreakoutPlugin.Settings.CloseWithinRangePercentage = 50m;
+
+        static void Whipsaw(CryptoCandle[] candles)
+        {
+            candles[0].High = 105m;
+            candles[0].Low = 95m;
+            candles[0].Close = 100.7m;   // 15% of the range down from the ceiling
+        }
+
+        var (shortSide, _) = MakeSeries(CryptoTradeSide.Short, Enough, Whipsaw);
+        Assert.IsTrue(shortSide.IsSignal(), shortSide.ExtraText);
+
+        var (longSide, _) = MakeSeries(CryptoTradeSide.Long, Enough, Whipsaw);
+        Assert.IsFalse(longSide.IsSignal(), longSide.ExtraText);
+    }
+
+
+    /// <summary>
+    /// The exact middle belongs to neither side at the default of 50: a close halfway is as far
+    /// from the ceiling as from the floor, and saying yes to both is the very thing this fixes.
+    /// </summary>
+    [TestMethod]
+    public void ACloseExactlyInTheMiddle_IsNeitherSide()
+    {
+        FailedBreakoutPlugin.Settings.CloseWithinRangePercentage = 50m;
+
+        static void Whipsaw(CryptoCandle[] candles)
+        {
+            candles[0].High = 105m;
+            candles[0].Low = 95m;
+            candles[0].Close = 100m;
+        }
+
+        var (shortSide, _) = MakeSeries(CryptoTradeSide.Short, Enough, Whipsaw);
+        Assert.IsFalse(shortSide.IsSignal(), shortSide.ExtraText);
+
+        var (longSide, _) = MakeSeries(CryptoTradeSide.Long, Enough, Whipsaw);
+        Assert.IsFalse(longSide.IsSignal(), longSide.ExtraText);
+    }
+
+
+    /// <summary>
+    /// A stricter percentage asks for a close right next to the broken level. The same close that
+    /// passes at 50 is refused at 10.
+    /// </summary>
+    [TestMethod]
+    public void AStricterPercentage_WantsTheCloseNextToTheLevel()
+    {
+        static void Upthrust(CryptoCandle[] candles)
+        {
+            candles[1].High = 105m;
+            candles[0].Close = 100.7m;   // 15% of the range under the ceiling
+        }
+
+        FailedBreakoutPlugin.Settings.CloseWithinRangePercentage = 50m;
+        var (loose, _) = MakeSeries(CryptoTradeSide.Short, Enough, Upthrust);
+        Assert.IsTrue(loose.IsSignal(), loose.ExtraText);
+
+        FailedBreakoutPlugin.Settings.CloseWithinRangePercentage = 10m;
+        var (strict, _) = MakeSeries(CryptoTradeSide.Short, Enough, Upthrust);
+        Assert.IsFalse(strict.IsSignal(), strict.ExtraText);
+    }
+
+
+    /// <summary>
+    /// At 100 the check is off, and a whipsaw fires both sides again - the behaviour every run
+    /// made before this setting existed had, kept reachable so those runs can be repeated.
+    /// </summary>
+    [TestMethod]
+    public void AtOneHundredPercent_TheCheckIsOff()
+    {
+        FailedBreakoutPlugin.Settings.CloseWithinRangePercentage = 100m;
+
+        static void Whipsaw(CryptoCandle[] candles)
+        {
+            candles[0].High = 105m;
+            candles[0].Low = 95m;
+            candles[0].Close = 99.3m;
+        }
+
+        var (longSide, _) = MakeSeries(CryptoTradeSide.Long, Enough, Whipsaw);
+        Assert.IsTrue(longSide.IsSignal(), longSide.ExtraText);
+
+        var (shortSide, _) = MakeSeries(CryptoTradeSide.Short, Enough, Whipsaw);
+        Assert.IsTrue(shortSide.IsSignal(), shortSide.ExtraText);
     }
 
 

@@ -15,6 +15,9 @@ public partial class StrategyFailedBreakoutSettingsViewModel : ObservableObject
     [ObservableProperty]
     private decimal _minimumBreakPercentage = 0m;
 
+    [ObservableProperty]
+    private decimal _closeWithinRangePercentage = 50m;
+
     // The zone sources the breaking candle has to sit in, as one checkbox each. Three fixed boxes
     // rather than a list view: there are exactly three members and they are addressed through
     // nameof, so renaming one in CryptoZoneSource breaks the build instead of drifting apart from
@@ -37,6 +40,7 @@ public partial class StrategyFailedBreakoutSettingsViewModel : ObservableObject
         LookbackCandles = settings.LookbackCandles;
         BreakWithinCandles = settings.BreakWithinCandles;
         MinimumBreakPercentage = settings.MinimumBreakPercentage;
+        CloseWithinRangePercentage = settings.CloseWithinRangePercentage;
 
         // Case-insensitive, because the list can also be typed by hand in the settings file or in
         // the emulator queue - where it is written "dlz" rather than "Dlz".
@@ -54,6 +58,7 @@ public partial class StrategyFailedBreakoutSettingsViewModel : ObservableObject
         settings.LookbackCandles = LookbackCandles;
         settings.BreakWithinCandles = BreakWithinCandles;
         settings.MinimumBreakPercentage = MinimumBreakPercentage;
+        settings.CloseWithinRangePercentage = CloseWithinRangePercentage;
 
         // In the order the enum declares its members, the same order both hosts show them in.
         List<string> zones = [];

@@ -50,6 +50,27 @@ public class FailedBreakoutSettings : SettingsSignalStrategyBase
     public decimal MinimumBreakPercentage { get; set; } = 0m;
 
     /// <summary>
+    /// How far from the broken level the close may sit, as a percentage OF THE RANGE between the
+    /// lookback high and the lookback low. A short wants the close in the top part of that range
+    /// (an upthrust closes just under the ceiling), a long wants it in the bottom part (a spring
+    /// closes just over the floor).
+    /// <para>
+    /// Added because one wide candle can break both levels within the same window and close in the
+    /// middle, which used to fire a long AND a short on the same candle (SUSHIUSDC, 04-09-2026).
+    /// At 50 or lower the two sides can never fire together; 100 switches the check off, which
+    /// is what every run made before this setting existed did. A percentage of the range rather
+    /// than of the price, because 0.3% back inside is most of a narrow range and nothing of a
+    /// wide one.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Close within range %",
+        Tooltip = "How far from the broken level the close may sit, as a percentage of the range "
+            + "between the lookback high and low. A short needs the close in the top part of the "
+            + "range, a long in the bottom part. At 50 or lower the two sides never fire together; "
+            + "100 switches the check off.")]
+    public decimal CloseWithinRangePercentage { get; set; } = 50m;
+
+    /// <summary>
     /// Only fire when the breaking candle sits in a zone of the same side: "dlz", "fvg" and/or
     /// "smc". An empty list switches the requirement off, which is the default.
     /// <para>

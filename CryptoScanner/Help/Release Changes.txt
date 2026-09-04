@@ -7,6 +7,9 @@ TODO:
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
 
+04-09-2025 2.6.5
+- Strategie FailedBreakout: Een brede candle die binnen het venster zowel de top als de bodem van de lookback brak en in het midden sloot gaf een long en een short tegelijk (SUSHIUSDC 04-09). Nieuwe instelling "Close within range %" (standaard 50): een short wil de close in het bovenste deel van de range, een long in het onderste deel; op 100 staat de controle uit en gedraagt de strategie zich als voorheen
+
 04-09-2025 2.6.4
 - Hyperliquid: Altrady ondersteund geen para markten dus die onderdrukken we.
 - Hyperliquid: De links van de uitgerolde markten (XYZ, PARA, ...) openen nu de juiste chart: Altrady zet de deployer achter het paar (HYPERLIQUIDF_USDC_TSLA_XYZ), TradingView heeft een eigen bron per deployer (HIP3XYZ:TSLAUSDC.P)

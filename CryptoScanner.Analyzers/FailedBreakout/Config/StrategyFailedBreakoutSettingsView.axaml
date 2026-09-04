@@ -39,6 +39,14 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How far from the broken level the close may sit, as a percentage of the range between the lookback high and low. A short needs the close in the top part of the range, a long in the bottom part. At 50 or lower the two sides never fire together; 100 switches the check off.">
+                <TextBlock Grid.Column="0" Text="Close within range %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding CloseWithinRangePercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
             <Separator Margin="0,4"/>
 
             <!-- Only fire when the breaking candle touches a zone. Ticking several is an OR, so the
