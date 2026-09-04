@@ -8,6 +8,12 @@ TODO:
 -Screenshots van de wiki bijwerken
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
+
+04-09-2025 2.6.4
+- Hyperliquid: Altrady ondersteund geen para markten dus die onderdrukken we.
+- Hyperliquid: De links van de uitgerolde markten (XYZ, PARA, ...) openen nu de juiste chart: Altrady zet de deployer achter het paar (HYPERLIQUIDF_USDC_TSLA_XYZ), TradingView heeft een eigen bron per deployer (HIP3XYZ:TSLAUSDC.P)
+- Okx: De links van de X-Perps openen nu het juiste contract; TradingView wil de maandcode en het jaar van de vervaldatum erbij (OKX:ACTUSD.UMN2031 in plaats van OKX:ACTUSD.UM), en een TradFi-aandeel als X-Perp kreeg de adressen van de swap
+
 04-09-2025 2.6.3
 - Hyperliquid: Op een Windows met een decimale komma kreeg elke munt van Perpetual een tickgrootte van 1; munten onder de 0,50 werden daardoor elke tien minuten als inactief herstart en alle prijzen werden als hele getallen opgeslagen
 - Hyperliquid: Spot kende tot 17-08 het aantal decimalen toe als tickgrootte, met hetzelfde gevolg voor de opgeslagen candles

@@ -300,6 +300,14 @@ public class Api : ExchangeBase
 
             // The X-Perps live in this market too, and the outside world does not name them the way
             // it names the swaps. Only what differs is stated here.
+            //
+            // Which symbols count as an X-Perp for the links is read from the instrument name, not
+            // from the product: the TradFi product covers a share in both contract forms, and
+            // AAPL-USD_UM_XPERP-310613 is as much an X-Perp as AAVE-USD_UM_XPERP-310704. Until
+            // 04-09-2026 the 49 TradFi X-Perps were sent down the swap templates and opened nothing.
+            LinkProductOf = symbol => symbol.ExchangeName.Contains("_UM_XPERP", StringComparison.OrdinalIgnoreCase)
+                ? CryptoProduct.XPerp
+                : null,
             PerProduct =
             {
                 [CryptoProduct.XPerp] = new()
@@ -319,8 +327,14 @@ public class Api : ExchangeBase
                         // TradingView follows the USD_UM family of Okx: AAPLUSD.UM, XAUUSD.UM,
                         // BTCUSD.UM. Not USDC and not .P, checked on 28-08-2026 through their symbol
                         // search.
+                        //
+                        // The search was not the whole story: BTCUSD.UM is the family, and a family
+                        // opens an empty chart. The chart wants the contract, which is the family
+                        // plus the futures month code and the year of the expiry - ACTUSD.UMN2031 for
+                        // ACT-USD_UM_XPERP-310704 - verified on the chart on 04-09-2026 after every
+                        // X-Perp link had come up empty (see SettingsLinks.ExpiryCodeOf).
                         Execute = CryptoExternalUrlType.External,
-                        Url = "https://www.tradingview.com/chart/?symbol=OKX:{BASE}USD.UM&interval={interval}",
+                        Url = "https://www.tradingview.com/chart/?symbol=OKX:{BASE}USD.UM{EXPIRYCODE}&interval={interval}",
                     },
                     ExchangeUrl = new()
                     {

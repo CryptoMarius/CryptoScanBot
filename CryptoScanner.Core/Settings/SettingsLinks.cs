@@ -3,6 +3,8 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 
+using System.Globalization;
+
 namespace CryptoScanner.Core.Settings;
 
 
@@ -72,6 +74,37 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         return tail.All(char.IsDigit) ? tail : "";
     }
 
+    /// <summary>
+    /// The futures month codes, January to December: the letter a futures chart puts behind the
+    /// root of a contract. The same alphabet everywhere, so TradingView uses it for Okx as well.
+    /// </summary>
+    private const string FuturesMonthCodes = "FGHJKMNQUVXZ";
+
+    /// <summary>
+    /// An expiry (yyMMdd, the tail of an Okx instrument name: 310704) as a futures chart spells a
+    /// contract: the month letter followed by the four-digit year, N2031.
+    /// <para>
+    /// TradingView needs this for an Okx X-Perp. Its symbol search lists BTCUSD.UM and ACTUSD.UM,
+    /// but those are the FAMILY of a contract and open an empty chart ("This symbol doesn't
+    /// exist"); the contract itself is ACTUSD.UMN2031, checked on the chart on 04-09-2026, after
+    /// every X-Perp link had opened nothing since 28-08-2026. The continuous spelling with "1!"
+    /// that other futures roots take does not exist for these either.
+    /// </para>
+    /// An expiry that is not six digits, or whose month is not 1 to 12, answers with an empty
+    /// string rather than a guess.
+    /// </summary>
+    internal static string ExpiryCodeOf(string expiry)
+    {
+        if (expiry.Length != 6 || !expiry.All(char.IsDigit))
+            return "";
+
+        int month = int.Parse(expiry.Substring(2, 2), CultureInfo.InvariantCulture);
+        if (month < 1 || month > 12)
+            return "";
+
+        return $"{FuturesMonthCodes[month - 1]}20{expiry[..2]}";
+    }
+
 
     public (string Url, CryptoExternalUrlType Execute) GetExternalRef(Model.CryptoExchange exchange, CryptoTradingApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)
     {
@@ -93,7 +126,10 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             // BTCUSDT.P and an X-Perp BTCUSD.UM. Anything the override leaves out falls back to the
             // address of the market itself.
             CryptoExternalUrl? externalUrl = null;
-            if (symbol.Product.Length > 0 && externalUrls.PerProduct.TryGetValue(symbol.Product, out CryptoExternalUrls? perProduct))
+            // The product decides which addresses apply, unless the market reads a different one
+            // out of the instrument itself (see CryptoExternalUrls.LinkProductOf).
+            string linkProduct = externalUrls.LinkProductOf?.Invoke(symbol) ?? symbol.Product;
+            if (linkProduct.Length > 0 && externalUrls.PerProduct.TryGetValue(linkProduct, out CryptoExternalUrls? perProduct))
                 externalUrl = Pick(perProduct, externalApp);
             // A market an outside party deployed, without an entry of its own: the one template for
             // all of them (see CryptoExternalUrls.Deployed). Never for a product of ours, so a
@@ -122,6 +158,11 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             string expiry = ExpiryOf(symbol.ExchangeName);
             urlTemplate = urlTemplate.Replace("{expiry}", expiry);
             urlTemplate = urlTemplate.Replace("{EXPIRY}", expiry);
+
+            // The same expiry the way a futures chart spells it: month letter plus year (N2031).
+            string expiryCode = ExpiryCodeOf(expiry);
+            urlTemplate = urlTemplate.Replace("{expirycode}", expiryCode.ToLower());
+            urlTemplate = urlTemplate.Replace("{EXPIRYCODE}", expiryCode);
 
             // Which instrument this is - the part of the name behind the dot. PERP, SPOT, XPERP, or
             // the market an outside party deployed (HYNA). Empty for a barometer symbol.

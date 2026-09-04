@@ -38,6 +38,20 @@ public class CryptoExternalUrls
     public Dictionary<string, CryptoExternalUrls> PerProduct { get; set; } = [];
 
     /// <summary>
+    /// Which <see cref="PerProduct"/> entry a symbol falls under, when that is not simply its
+    /// product. Null (the default) means: the product itself.
+    /// <para>
+    /// Okx is the reason. Its TradFi product says what a contract runs ON - a share, an index - and
+    /// not what contract it is, and Okx lists the shares in both forms: 176 swaps and 49 X-Perps on
+    /// 04-09-2026. The outside world names those by their form, not by their underlying, so
+    /// PLTR-USD_UM_XPERP-310801 needs the X-Perp addresses (OKX:PLTRUSD.UMQ2031) while
+    /// ASTS-USDT-SWAP needs the swap ones (OKX:ASTSUSDT.P). Only the instrument name can tell them
+    /// apart, and only the market knows how to read its own instrument names.
+    /// </para>
+    /// </summary>
+    public Func<Model.CryptoSymbol, string?>? LinkProductOf { get; set; }
+
+    /// <summary>
     /// The addresses of every market an outside party deployed on this exchange - a product that is
     /// not one of ours (<see cref="Model.CryptoProduct.IsReserved"/>) and has no entry of its own in
     /// <see cref="PerProduct"/>. HyperLiquid is the reason: it carries ten such markets and the
