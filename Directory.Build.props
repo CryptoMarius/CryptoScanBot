@@ -10,9 +10,9 @@
     A project may still override any value below if it ever needs its own.
   -->
   <PropertyGroup>
-    <Version>2.6.3</Version>
-    <AssemblyVersion>2.6.3.0</AssemblyVersion>
-    <FileVersion>2.6.3.0</FileVersion>
+    <Version>2.6.4</Version>
+    <AssemblyVersion>2.6.4.0</AssemblyVersion>
+    <FileVersion>2.6.4.0</FileVersion>
 
     <Company>Marius</Company>
     <Authors>Marius</Authors>
