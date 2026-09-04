@@ -16,6 +16,11 @@ public class TrendPlugin : IStrategyPlugin
             typeof(Signal.SignalTrendShort)
         ),
 
+        // Same logic, but driven by the secondary (fine) trend slot instead of the primary (rough) one
+        new("trend.secondary",
+            typeof(Signal.SignalTrendSecondaryLong),
+            typeof(Signal.SignalTrendSecondaryShort)
+        ),
     ];
 
     public static TrendSettings Settings { get; internal set; } = new();

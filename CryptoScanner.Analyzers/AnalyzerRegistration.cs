@@ -21,10 +21,6 @@ public static class AnalyzerRegistration
         // a filter this month cost money; the shapes measured as strategies did make money.
         PluginManager.Register(new FailedBreakout.FailedBreakoutPlugin());
 
-        // The MACD crossover with an exit rule of its own: in on the cross, out on the cross back.
-        // Being measured. The first strategy to use SignalCreateBase.IsExitSignal.
-        PluginManager.Register(new MacdCross.MacdCrossPlugin());
-
         PluginManager.Register(new Dlz.DlzPlugin());
         PluginManager.Register(new Fvg.FvgPlugin());
         PluginManager.Register(new Jump.JumpPlugin());
@@ -46,6 +42,9 @@ public static class AnalyzerRegistration
         // ATR based bands, but it does not perform well enough
         PluginManager.Register(new AtrRb.AtrRbPlugin());
 
+        // From the Malysian trader Oma Ally, not much signals but performs well (no profits yet)
+        PluginManager.Register(new Bbma.BbmaPlugin());
+
         PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
 
         // These look interesting (specially the squeeze ones)
@@ -54,13 +53,16 @@ public static class AnalyzerRegistration
         // Very disapointing, expected more of this strategy
         PluginManager.Register(new Choch.ChochPlugin());
 
+        // Lots of noise, there is alway's some sort of dtd to be found
+        PluginManager.Register(new DoubleTopBottom.DoubleTopBottomPlugin());
+
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
         PluginManager.Register(new KumoSqueeze.KumoSqueezePlugin());
 
-        // From the Malysian trader Oma Ally, not much signals but performs well (no profits yet)
-        PluginManager.Register(new Bbma.BbmaPlugin());
-        // Lots of noise, there is alway's some sort of dtd to be found
-        PluginManager.Register(new DoubleTopBottom.DoubleTopBottomPlugin());
+        // The MACD crossover with an exit rule of its own: in on the cross, out on the cross back.
+        // Being measured. The first strategy to use SignalCreateBase.IsExitSignal.
+        PluginManager.Register(new MacdCross.MacdCrossPlugin());
+
         PluginManager.Register(new SuperTrendBreakout.SuperTrendBreakoutPlugin());
         // Very disapointing, expected more of this strategy
         PluginManager.Register(new Trend.TrendPlugin());
