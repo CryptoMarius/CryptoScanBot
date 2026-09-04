@@ -21,6 +21,10 @@ public static class AnalyzerRegistration
         // a filter this month cost money; the shapes measured as strategies did make money.
         PluginManager.Register(new FailedBreakout.FailedBreakoutPlugin());
 
+        // The MACD crossover with an exit rule of its own: in on the cross, out on the cross back.
+        // Being measured. The first strategy to use SignalCreateBase.IsExitSignal.
+        PluginManager.Register(new MacdCross.MacdCrossPlugin());
+
         PluginManager.Register(new Dlz.DlzPlugin());
         PluginManager.Register(new Fvg.FvgPlugin());
         PluginManager.Register(new Jump.JumpPlugin());
@@ -38,7 +42,7 @@ public static class AnalyzerRegistration
         PluginManager.Register(new Vbs.VbsPlugin());
 
         // Experimental strategies (not yet fully tested or documented)
-#if DEBUG
+//#if DEBUG
         // ATR based bands, but it does not perform well enough
         PluginManager.Register(new AtrRb.AtrRbPlugin());
 
@@ -60,6 +64,6 @@ public static class AnalyzerRegistration
         PluginManager.Register(new SuperTrendBreakout.SuperTrendBreakoutPlugin());
         // Very disapointing, expected more of this strategy
         PluginManager.Register(new Trend.TrendPlugin());
-#endif
+//#endif
     }
 }

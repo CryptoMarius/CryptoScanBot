@@ -1,0 +1,117 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="520"
+             xmlns:vm="using:CryptoScanner.Analyzers.MacdCross.Config"
+             x:DataType="vm:StrategyMacdCrossSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.MacdCross.Config.StrategyMacdCrossSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- The entry: the MACD line crossing its signal line. Every setting here makes the bare
+                 cross stricter and is off by default, so a run can switch them on one at a time. -->
+            <TextBlock Text="Entry" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How many closed candles the lines have to stay on the new side after the cross before the signal fires. Zero fires on the cross candle itself. A few candles sit out the crosses of a flat market, at the price of a later entry.">
+                <TextBlock Grid.Column="0" Text="Confirmation candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ConfirmationCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How far apart the lines have to be at the signal candle, as a percentage of the price. Zero accepts any separation.">
+                <TextBlock Grid.Column="0" Text="Minimum distance %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding MinimumDistancePercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <CheckBox IsChecked="{Binding RequireCrossBeyondZeroLine, Mode=TwoWay}"
+                      Content="Cross beyond zero line only" FontSize="12"
+                      ToolTip.Tip="Only take a cross on the far side of the zero line: a long when the MACD line is still under zero at the cross, a short when it is still above."/>
+
+            <Separator Margin="0,4"/>
+
+            <!-- Is the coin moving, and is the move young? ADX(14), 0..100, direction-free. -->
+            <TextBlock Text="Trend strength" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The ADX(14) at the signal candle has to be at least this. Under 20 the market is ranging, above 25 a trend is running. Zero switches the check off.">
+                <TextBlock Grid.Column="0" Text="Minimum ADX:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding AdxMinimum, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Somewhere in the last N candles the ADX has to have been under this value, so the cross is the start of a move and not its tail. Zero switches the check off.">
+                <TextBlock Grid.Column="0" Text="ADX recently below:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding AdxRecentlyBelow, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                  ToolTip.Tip="How many candles back the 'recently below' test looks, the signal candle included.">
+                <TextBlock Grid.Column="0" Text="Within candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding AdxRecentlyWithinCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- Is the coin trading at more than its usual pace? Recent average against the baseline. -->
+            <TextBlock Text="Volume" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The average volume of the recent candles has to be at least this many times the average of the candles before them. Two means twice the usual pace. Zero switches the check off.">
+                <TextBlock Grid.Column="0" Text="Minimum relative volume:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding RelativeVolumeMinimum, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                  ToolTip.Tip="The recent window, counted back from and including the signal candle.">
+                <TextBlock Grid.Column="0" Text="Recent candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding RelativeVolumeCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                  ToolTip.Tip="How many candles before the recent window the usual volume is averaged over. The recent candles are left out of it.">
+                <TextBlock Grid.Column="0" Text="Average over candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding RelativeVolumeAverageCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- The exit the idea comes with. Stop loss and take profit keep working next to it. -->
+            <TextBlock Text="Exit" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <CheckBox IsChecked="{Binding ExitOnCrossBack, Mode=TwoWay}"
+                      Content="Exit on cross back" FontSize="12"
+                      ToolTip.Tip="Leave when the lines cross back against the position. Stop loss and take profit keep working next to it; set those wide to measure the pure crossover exit."/>
+
+            <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                  IsEnabled="{Binding ExitOnCrossBack}"
+                  ToolTip.Tip="How many closed candles the lines have to be against the position before it leaves. Zero leaves on the first candle they cross back.">
+                <TextBlock Grid.Column="0" Text="Exit confirmation candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ExitConfirmationCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

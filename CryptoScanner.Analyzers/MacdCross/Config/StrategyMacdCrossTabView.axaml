@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
+             xmlns:vm="using:CryptoScanner.Analyzers.MacdCross.Config"
+             xmlns:configviews="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyMacdCrossTabViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.MacdCross.Config.StrategyMacdCrossTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
+                <TextBlock FontSize="13">
+                    <Run Text="MACDCROSS – In on the cross, out on the cross back" FontWeight="SemiBold"/>
+                    <Run Text=" — The MACD line crossing its signal line opens the position, the lines crossing back closes it" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                </TextBlock>
+            </StackPanel>
+            <WrapPanel>
+                <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyMacdCrossSettingsView DataContext="{Binding StrategyMacdCrossSettingsViewModel}" />
+                <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>
