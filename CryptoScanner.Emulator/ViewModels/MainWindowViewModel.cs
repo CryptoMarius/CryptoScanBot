@@ -784,6 +784,18 @@ public partial class MainWindowViewModel : ObservableObject
             .Where(a => a != null)
             .ToList()!;
 
+        // Say which names fell away. An algorithm the build does not register is dropped here, and
+        // until 04-09-2026 without a word: the batch of 03-09 asked for twelve, started nine, and the
+        // three bbsqueeze/kumosqueeze/supertrendbreakout entries simply never ran. Nothing in the
+        // log said so, and the results grid cannot show a run that was never started.
+        List<string> unregistered = selectedNames
+            .Where(name => !selectedAlgorithms.Any(a => a!.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+        if (unregistered.Count > 0)
+            GlobalData.AddErrorToLogTab(
+                $"Queue: {unregistered.Count} algorithm(s) are not registered in this build and their "
+                + $"entries will NOT run — {string.Join(", ", unregistered)}");
+
         if (selectedAlgorithms.Count == 0)
         {
             Status = $"No matching registered algorithms found for: {string.Join(", ", selectedNames)}";

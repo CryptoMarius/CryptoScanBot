@@ -107,7 +107,10 @@ public static class EmulatorRunFingerprint
             // means a plain round trip hands those blocks back VERBATIM, so a setting added to a
             // plugin still changed the checksum. Which is precisely what happened: two settings
             // arrived on failedbreakout on 02-09-2026 and the anchor was replayed anyway.
-            settings.Signal.AnalyzerSettings = CanonicaliseAnalyzers(settings.Signal.AnalyzerSettings);
+            settings.Signal.AnalyzerSettings = CanonicaliseAnalyzers(
+                settings.Signal.AnalyzerSettings, ActiveStrategies(settings));
+
+            StripThingsThatCannotChangeAReplay(settings);
 
             return JsonSerializer.Serialize(settings, Core.Json.JsonTools.JsonSerializerIndented);
         }
@@ -126,24 +129,106 @@ public static class EmulatorRunFingerprint
 
 
     /// <summary>
-    /// Every analyzer block read into the plugin's own settings type and written out again, so a
-    /// property added to or removed from a plugin lands on both sides the same way. A block whose
-    /// plugin is not loaded is kept as it is: there is no type to read it into, and dropping it
-    /// would make two runs with different settings for that analyzer look identical.
+    /// The strategies this run actually evaluates, taken from the per-side strategy lists that the
+    /// queue loop narrows to the entry's own algorithm.
+    /// </summary>
+    private static HashSet<string> ActiveStrategies(SettingsBasic settings)
+    {
+        HashSet<string> active = new(StringComparer.OrdinalIgnoreCase);
+        foreach (string name in settings.Signal.Long.Strategy)
+            active.Add(name);
+        foreach (string name in settings.Signal.Short.Strategy)
+            active.Add(name);
+        return active;
+    }
+
+
+    /// <summary>
+    /// The analyzer blocks that can influence THIS run, each read into the plugin's own settings type
+    /// and written out again so a property added to or removed from a plugin lands on both sides the
+    /// same way.
+    /// <para>
+    /// Blocks of strategies the run does not evaluate are dropped. A dbr run is not a different
+    /// measurement because vbs got a different band width or because a plugin left the build - and
+    /// on 03-09-2026 exactly that replayed sixteen runs whose numbers were already in the database,
+    /// twice over. The proof it changes nothing: those replays came out identical to the cent
+    /// (CA1 +550.85, CB4 +547.59, CB9 +607.04), while the snapshots differed in 34 places, twenty of
+    /// them analyzer blocks of strategies that were not running.
+    /// </para>
+    /// <para>
+    /// Zone settings are NOT in here - they live under Signal.ZonesDlz/ZonesFvg/ZonesSmc and stay
+    /// part of the checksum, because a candlepattern or failedbreakout run with a zone requirement
+    /// really does depend on them.
+    /// </para>
+    /// <para>
+    /// An empty strategy list keeps everything, so a run whose sides are configured some other way
+    /// is never silently reduced to a copy of another.
+    /// </para>
     /// </summary>
     private static Dictionary<string, JsonElement> CanonicaliseAnalyzers(
-        Dictionary<string, JsonElement> stored)
+        Dictionary<string, JsonElement> stored, HashSet<string> active)
     {
         Dictionary<string, JsonElement> result = [];
         foreach ((string name, JsonElement block) in stored)
         {
+            if (active.Count > 0 && !active.Contains(name))
+                continue;
+
             var settings = Core.Contracts.PluginManager.MaterializeSettings(name, stored);
-            result[name] = settings == null
+            JsonElement value = settings == null
                 ? block
                 : JsonSerializer.SerializeToElement(settings, settings.GetType(),
                     Core.Json.JsonTools.JsonSerializerIndented);
+
+            result[name] = WithoutPresentationFields(value);
         }
         return result;
+    }
+
+
+    /// <summary>
+    /// The sound and colour fields every strategy settings class inherits, removed. They decide what
+    /// the scanner plays and paints, never what a replay does, and a renamed .wav file is not a new
+    /// measurement.
+    /// </summary>
+    private static readonly HashSet<string> PresentationFields = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "PlaySound", "PlaySpeech", "ColorLong", "ColorShort", "SoundFileLong", "SoundFileShort",
+    };
+
+    private static JsonElement WithoutPresentationFields(JsonElement block)
+    {
+        if (block.ValueKind != JsonValueKind.Object)
+            return block;
+
+        JsonObject? obj = JsonNode.Parse(block.GetRawText()) as JsonObject;
+        if (obj == null)
+            return block;
+
+        foreach (string field in PresentationFields)
+            obj.Remove(field);
+
+        return JsonSerializer.SerializeToElement(obj);
+    }
+
+
+    /// <summary>
+    /// Flattens the settings that steer logging and the interface rather than the replay: the debug
+    /// symbol, the heartbeat sound, and every Log* switch on SettingsSignal. Two runs that differ
+    /// only in what they wrote to the log file produced the same trades.
+    /// </summary>
+    private static void StripThingsThatCannotChangeAReplay(SettingsBasic settings)
+    {
+        settings.General.DebugSymbol = "";
+        settings.General.SoundHeartBeatMinutes = 0;
+        settings.Signal.SoundsActive = false;
+
+        foreach (PropertyInfo property in typeof(SettingsSignal).GetProperties())
+        {
+            if (property.PropertyType == typeof(bool) && property.CanWrite
+                && property.Name.StartsWith("Log", StringComparison.Ordinal))
+                property.SetValue(settings.Signal, false);
+        }
     }
 
 

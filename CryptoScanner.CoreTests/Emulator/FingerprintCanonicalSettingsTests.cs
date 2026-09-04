@@ -20,6 +20,17 @@ public class FingerprintCanonicalSettingsTests
     private const string Config = """{"Label":"x","FromDate":"2026-01-01","ToDate":"2026-07-30"}""";
 
 
+    /// <summary>Makes <paramref name="strategy"/> the strategy this run evaluates, the way the queue
+    /// loop narrows both side lists to the entry's own algorithm. Without it the snapshot keeps the
+    /// SettingsBasic defaults (sbm1, sbm2, sbm3, stobb, storsi) and the analyzer being varied is not
+    /// part of the run at all.</summary>
+    private static void Runs(JsonObject settings, string strategy)
+    {
+        foreach (string side in new[] { "Long", "Short" })
+            ((JsonObject)settings["Signal"]![side]!)["Strategy"] = new JsonArray(strategy);
+    }
+
+
     /// <summary>The settings snapshot with one branch replaced, so a test can vary one value.</summary>
     private static string Settings(Action<JsonObject> change)
     {
@@ -136,8 +147,8 @@ public class FingerprintCanonicalSettingsTests
         var withoutProperty = withProperty.DeepClone().AsObject();
         withoutProperty.Remove(nameof(CandlePatternStrategySettings.RequireZone));
 
-        string newBuild = Settings(s => ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = withProperty);
-        string oldBuild = Settings(s => ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = withoutProperty);
+        string newBuild = Settings(s => { Runs(s, "candlepattern"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = withProperty; });
+        string oldBuild = Settings(s => { Runs(s, "candlepattern"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = withoutProperty; });
 
         Assert.AreEqual(EmulatorRunFingerprint.Compute(Config, oldBuild),
                         EmulatorRunFingerprint.Compute(Config, newBuild));
@@ -154,11 +165,59 @@ public class FingerprintCanonicalSettingsTests
         var changed = reference.DeepClone().AsObject();
         changed[nameof(CandlePatternStrategySettings.RequireZone)] = new JsonArray("fvg");
 
-        string a = Settings(s => ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = reference);
-        string b = Settings(s => ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = changed);
+        string a = Settings(s => { Runs(s, "candlepattern"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = reference; });
+        string b = Settings(s => { Runs(s, "candlepattern"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = changed; });
 
         Assert.AreNotEqual(EmulatorRunFingerprint.Compute(Config, a),
                            EmulatorRunFingerprint.Compute(Config, b));
+    }
+
+
+    /// <summary>
+    /// The other half of the same rule: a setting of a strategy this run does NOT evaluate leaves the
+    /// checksum alone. A dbr run is not a different measurement because candlepattern got a zone
+    /// requirement - and on 03-09-2026 that class of difference replayed sixteen runs whose numbers
+    /// were already in the database, twice over. Twenty of the 34 differences between run 661 and its
+    /// replay 767 were analyzer blocks of strategies that were not running.
+    /// </summary>
+    [TestMethod]
+    public void ChangedSettingOfAStrategyTheRunDoesNotUse_KeepsTheChecksum()
+    {
+        TestBase.RegisterPlugin(new CandlePatternPlugin());
+
+        var reference = JsonNode.Parse(JsonSerializer.Serialize(
+            new CandlePatternStrategySettings(), JsonTools.JsonSerializerIndented))!.AsObject();
+        var changed = reference.DeepClone().AsObject();
+        changed[nameof(CandlePatternStrategySettings.RequireZone)] = new JsonArray("fvg");
+
+        string a = Settings(s => { Runs(s, "dbr"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = reference; });
+        string b = Settings(s => { Runs(s, "dbr"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = changed; });
+
+        Assert.AreEqual(EmulatorRunFingerprint.Compute(Config, a),
+                        EmulatorRunFingerprint.Compute(Config, b));
+    }
+
+
+    /// <summary>
+    /// The sound file a strategy plays is not a measurement either. Same story: it sat in the
+    /// snapshot of every run and made two identical replays look different.
+    /// </summary>
+    [TestMethod]
+    public void ARenamedSoundFile_KeepsTheChecksum()
+    {
+        TestBase.RegisterPlugin(new CandlePatternPlugin());
+
+        var stil = JsonNode.Parse(JsonSerializer.Serialize(
+            new CandlePatternStrategySettings(), JsonTools.JsonSerializerIndented))!.AsObject();
+        var luid = stil.DeepClone().AsObject();
+        luid["SoundFileLong"] = "sound-candlepattern-oversold.wav";
+        luid["PlaySound"] = true;
+
+        string a = Settings(s => { Runs(s, "candlepattern"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = stil; });
+        string b = Settings(s => { Runs(s, "candlepattern"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["candlepattern"] = luid; });
+
+        Assert.AreEqual(EmulatorRunFingerprint.Compute(Config, a),
+                        EmulatorRunFingerprint.Compute(Config, b));
     }
 
 
