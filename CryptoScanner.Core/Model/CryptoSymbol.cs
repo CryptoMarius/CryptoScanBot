@@ -110,6 +110,48 @@ public partial class CryptoSymbol
     [Computed]
     public string PriceDisplayFormat { get; set; } = "N8";
 
+    /// <summary>
+    /// Derive PriceDecimals and the two display formats from the tick sizes. Call this whenever
+    /// PriceTickSize or QuantityTickSize is assigned, not only when the symbol is loaded.
+    /// <para>
+    /// Until 04-09-2026 this only ran in GlobalData.AddSymbol, so a symbol that was loaded from the
+    /// database kept the decimals of the tick size stored THERE for the rest of the session, no matter
+    /// what the exchange refresh assigned afterwards. That is how a tester's first session on 2.6.2
+    /// kept running on zero decimals: the previous build had stored a tick size of 1 for every
+    /// HyperLiquid Perpetual symbol (see the culture note in PriceTickFromMarkPrice), the refresh
+    /// corrected the tick size in memory and in the database, but PriceDecimals stayed 0. Every price
+    /// under 0.50 then rounded to a candle close of zero and the flush skipped it, so the coins below
+    /// that price never reported activity and were restarted every ten minutes.
+    /// </para>
+    /// </summary>
+    public void DeriveDecimalsFromTickSizes()
+    {
+        PriceDecimals = DecimalsOf(PriceTickSize);
+        PriceDisplayFormat = "N" + PriceDecimals.ToString();
+        QuantityDisplayFormat = "N" + DecimalsOf(QuantityTickSize).ToString();
+    }
+
+    /// <summary>
+    /// The number of decimals a tick size has: 0.001 -> 3, 1 -> 0, 100 -> 0. Purely arithmetic.
+    /// <para>
+    /// This used to format the tick size as text and count the characters behind the decimal
+    /// separator of the current culture. That worked only because both sides of it happened to use
+    /// the same culture, and it turned a number into text and back to answer a question about the
+    /// number. A tick size never needs more than 15 decimals (SymbolBase.TickSizeFromDecimals caps
+    /// it there, and a candle keeps its tick decimals in a nibble), so the loop is bounded the same.
+    /// </para>
+    /// </summary>
+    public static byte DecimalsOf(decimal tickSize)
+    {
+        byte decimals = 0;
+        while (tickSize != decimal.Truncate(tickSize) && decimals < 15)
+        {
+            tickSize *= 10m;
+            decimals++;
+        }
+        return decimals;
+    }
+
     // TODO: never used in this scanner sofar
     //public bool IsSpotTradingAllowed { get; set; }
     //public bool IsMarginTradingAllowed { get; set; }

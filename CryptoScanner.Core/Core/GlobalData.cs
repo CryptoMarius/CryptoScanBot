@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.Messaging;
+﻿using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
@@ -503,31 +503,9 @@ public static class GlobalData
 
             symbol.QuoteData = AddQuoteData(symbol.Quote);
 
-            string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-
-
-            int numberOfDecimalPlaces;
-            string s = symbol.PriceTickSize.ToString0();
-            int x = s.IndexOf(seperator);
-            if (x > 0)
-            {
-                s = s[(x + 1)..];
-                numberOfDecimalPlaces = s.Length;
-            }
-            else numberOfDecimalPlaces = 0;
-            symbol.PriceDecimals = (byte)numberOfDecimalPlaces;
-            symbol.PriceDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
-
-
-            s = symbol.QuantityTickSize.ToString0();
-            x = s.IndexOf(seperator);
-            if (x > 0)
-            {
-                s = s[(x + 1)..];
-                numberOfDecimalPlaces = s.Length;
-            }
-            else numberOfDecimalPlaces = 0;
-            symbol.QuantityDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
+            // Shared with the exchange refresh, which assigns new tick sizes to symbols that were
+            // loaded long before (see CryptoSymbol.DeriveDecimalsFromTickSizes).
+            symbol.DeriveDecimalsFromTickSizes();
 
             // reset last price
             symbol.LastPrice = null;

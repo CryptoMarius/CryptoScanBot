@@ -158,6 +158,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 priceTicker.TryGetValue(CryptoProduct.PairOf(symbol.Name), out decimal referencePrice);
                                 symbol.PriceTickSize = TickSizeFromDecimals(
                                     LimitDecimalsToCandleRange(priceDecimals, referencePrice));
+                                // An existing symbol keeps the decimals it was loaded with unless we
+                                // derive them again here (see CryptoSymbol.DeriveDecimalsFromTickSizes).
+                                symbol.DeriveDecimalsFromTickSizes();
 
                                 //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???

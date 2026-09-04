@@ -135,6 +135,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.PriceMaximum = symbolInfo.LotSizeFilter.MaxOrderValue;
 
                                 symbol.PriceTickSize = PriceTickFromMarkPrice(tickerData.MarkPrice, symbolData.QuantityDecimals);
+                                // An existing symbol keeps the decimals it was loaded with unless we
+                                // derive them again here (see CryptoSymbol.DeriveDecimalsFromTickSizes).
+                                symbol.DeriveDecimalsFromTickSizes();
 
                                 //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
@@ -247,6 +250,14 @@ public class Symbol() : SymbolBase(), ISymbol
     /// the tick for 92 of the 232 markets. It also landed on ticks the exchange does not accept:
     /// BTC ended up at 0.1 while HyperLiquid rejects 78270.1 (six significant figures and not an
     /// integer), and AVAX at 0.001 where 0.0001 is allowed.
+    /// </para>
+    /// <para>
+    /// That old version also went through markPrice.ToString() and looked for a '.', which only
+    /// exists on a machine whose decimal separator IS a point. A tester on a Dutch Windows (decimal
+    /// comma) got "0,41234", every character became a zero, and the tick came out as 1 for every
+    /// single market: prices under 0.50 rounded to a candle close of 0, the flush skipped them, and
+    /// those coins were restarted every ten minutes as 'inactive' from 29-08 to 03-09-2026. The
+    /// arithmetic below has no such dependency.
     /// </para>
     /// <para>
     /// A price is still needed, but only for its ORDER OF MAGNITUDE - the digit position the first
@@ -379,6 +390,8 @@ public class Symbol() : SymbolBase(), ISymbol
                 HyperLiquidOrderLimits.ApplyLimits(symbol, market.QuantityDecimals, market.MaxLeverage);
                 if (market.MarkPrice > 0)
                     symbol.PriceTickSize = PriceTickFromMarkPrice(market.MarkPrice, market.QuantityDecimals);
+                // See the same call for HyperLiquid's own market above.
+                symbol.DeriveDecimalsFromTickSizes();
 
                 if (market.DayVolume > 0)
                     symbol.Volume = (double)market.DayVolume;
