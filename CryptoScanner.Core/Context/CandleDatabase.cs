@@ -163,7 +163,16 @@ public class CandleDatabase : IDisposable
     /// to this database's own Symbol table, keyed by symbol NAME. Version 1 databases
     /// (no Meta table) carry foreign ids and need an explicit migration.
     /// </summary>
-    public const int CurrentSchemaVersion = 4;
+    public const int CurrentSchemaVersion = 5;
+
+    /// <summary>
+    /// The markets that stored candles with a wrong tick size, repaired by version 5. Perpetual
+    /// derived its price tick from a text conversion until 30-08-2026 (see HyperLiquid/Perpetual/
+    /// Symbol.cs, PriceTickFromMarkPrice), which gave every market a tick of 1 on a Windows with a
+    /// decimal comma. Spot assigned the NUMBER of decimals straight into the tick size until
+    /// 17-08-2026 (ac91d5f1), so a tick of 8 on every machine - same symptom, zero decimals stored.
+    /// </summary>
+    private static readonly string[] WrongTickExchangeNames = ["HyperLiquid Perpetual", "HyperLiquid Spot"];
 
 
     /// <summary>
@@ -390,6 +399,12 @@ public class CandleDatabase : IDisposable
         if (version == "3")
         {
             MigrateToVersion4(connection, exchange);
+            version = "4";
+        }
+
+        if (version == "4")
+        {
+            MigrateToVersion5(connection, exchange);
             version = CurrentSchemaVersion.ToString();
         }
 
@@ -557,13 +572,115 @@ public class CandleDatabase : IDisposable
             renamed++;
         }
 
+        // The literal 4, not CurrentSchemaVersion: version 5 follows, and VerifySchemaVersion has to
+        // see a version-4 file to take it there (the same reason MigrateToVersion3 stamps a 3).
+        connection.Execute(
+            "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', '4')", transaction: tx);
+        tx.Commit();
+
+        GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: converted to version 4 — " +
+            $"{renamed} name(s) updated, {unchanged} already current, {unknown} instrument(s) the exchange no longer lists");
+    }
+
+
+    /// <summary>
+    /// Version 5 changes no layout either - it removes candles that were stored with the wrong tick
+    /// size, on the two markets that could produce them (see WrongTickExchangeNames).
+    /// <para>
+    /// Until 30-08-2026 HyperLiquid Perpetual derived its price tick from the mark price through a
+    /// text conversion that looked for a '.', and on a Windows whose decimal separator is a comma
+    /// that text has none: every market got a tick size of 1. A candle stores its prices as a whole
+    /// number of ticks, so every price was stored without decimals, and every price under 0.50 was
+    /// stored as 0. The candles themselves say so: each one carries the decimals it was written
+    /// with (the low nibble of Ticks), so a candle with zero decimals under a symbol that has any
+    /// is one of these. The tick size of the symbol was corrected by the refresh long ago; its
+    /// candles were not, because a candle keeps its own decimals and nothing rereads them.
+    /// </para>
+    /// <para>
+    /// Removing them is enough: the sync bookkeeping of the symbol is cleared along with them, so the
+    /// exchange fetcher asks for that history again on the next pass, and the dlz marker with it, so
+    /// the zone engine redoes the settled part of the history that the main database's version 95
+    /// step has just emptied. A symbol whose tick size really is 1 (BTC on this market) keeps its
+    /// candles: zero decimals is the right answer there.
+    /// </para>
+    /// <para>
+    /// Any other market is stamped and left alone. A Perpetual file on a machine with a decimal point
+    /// never held these candles either, so the repair finds nothing there and costs one query per
+    /// instrument.
+    /// </para>
+    /// </summary>
+    private static void MigrateToVersion5(SqliteConnection connection, Model.CryptoExchange exchange)
+    {
+        bool affected = WrongTickExchangeNames.Contains(exchange.Name, StringComparer.OrdinalIgnoreCase);
+
+        // Same reason as version 3 and 4, but only where there is something to judge: the decision
+        // compares against the decimals the symbol has NOW, and those come from the exchange refresh
+        // that runs before the candle store is opened. Any other market needs no symbols to be
+        // stamped.
+        if (affected && exchange.SymbolListExchangeName.Count == 0)
+        {
+            throw new CandleDatabaseSchemaException(
+                $"the symbol list of '{exchange.Name}' is not loaded yet, conversion to version " +
+                $"{CurrentSchemaVersion} needs it to know the current decimals");
+        }
+
+        using var tx = connection.BeginTransaction();
+
+        (int candles, int symbols) = (0, 0);
+        if (affected)
+            (candles, symbols) = RepairZeroDecimalCandles(connection, exchange, tx);
+
         connection.Execute(
             "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', $Version)",
             new { Version = CurrentSchemaVersion.ToString() }, transaction: tx);
         tx.Commit();
 
-        GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: converted to version {CurrentSchemaVersion} — " +
-            $"{renamed} name(s) updated, {unchanged} already current, {unknown} instrument(s) the exchange no longer lists");
+        if (candles > 0)
+        {
+            GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: converted to version {CurrentSchemaVersion} — " +
+                $"{candles} candle(s) stored without decimals removed for {symbols} symbol(s), their history will be fetched again");
+        }
+        else
+            GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: converted to version {CurrentSchemaVersion} — nothing to repair");
+    }
+
+    /// <summary>
+    /// The repair behind version 5, separate from the exchange check so a test can run it on any
+    /// market: for every instrument in the file whose symbol has decimals, delete the candles that
+    /// were stored with none, and clear the sync bookkeeping and the dlz marker of that instrument
+    /// so both the candles and the zones are rebuilt. Returns how many candles went, and for how
+    /// many symbols.
+    /// </summary>
+    internal static (int Candles, int Symbols) RepairZeroDecimalCandles(SqliteConnection connection,
+        Model.CryptoExchange exchange, SqliteTransaction tx)
+    {
+        List<LocalInstrumentNameRow> rows = [.. connection.Query<LocalInstrumentNameRow>(
+            "SELECT SymbolId, ExchangeName, Name FROM Symbol", transaction: tx)];
+
+        int candles = 0;
+        int symbols = 0;
+        foreach (LocalInstrumentNameRow row in rows)
+        {
+            if (!exchange.SymbolListExchangeName.TryGetValue(row.ExchangeName, out CryptoSymbol? symbol))
+                continue;
+            // Zero decimals is correct for this symbol, so its candles are what they should be.
+            if (symbol.PriceDecimals == 0)
+                continue;
+
+            // Low nibble only - the high bit carries the IsFilled flag (CryptoCandle.TickDecimalsRaw).
+            int deleted = connection.Execute(
+                "DELETE FROM Candle WHERE SymbolId = $SymbolId AND (Ticks & 15) = 0",
+                new { row.SymbolId }, transaction: tx);
+            if (deleted == 0)
+                continue;
+
+            candles += deleted;
+            symbols++;
+            connection.Execute(
+                "UPDATE SymbolInterval SET LastSync = NULL, DlzMarker = NULL WHERE SymbolId = $SymbolId",
+                new { row.SymbolId }, transaction: tx);
+        }
+        return (candles, symbols);
     }
 
 

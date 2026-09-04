@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 94;
+    public readonly static int CurrentDatabaseVersion = 95;
 
 
     /// <summary>
@@ -2084,6 +2084,31 @@ public class DatabaseMigration
             }
 
             using var transaction = database.BeginTransaction();
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        if (CurrentVersion > version.Version && version.Version == 94)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // The zones of the two HyperLiquid markets were computed on candles stored with a wrong
+            // tick size: Perpetual on a Windows with a decimal comma (tick 1), Spot on every machine
+            // until 17-08-2026 (the number of decimals assigned as the tick). CandleDatabase
+            // .MigrateToVersion5 removes those candles and clears the dlz marker so the zone engine
+            // redoes the history. Zones built on prices rounded to whole numbers, and on zeros for
+            // every coin under 0.50, are not worth keeping. Only the live zones: a zone of an emulator
+            // run belongs to that run's result, wrong or not.
+            int zones = database.Connection.Execute(
+                "delete from Zone where EmulatorRunId is null " +
+                "and ExchangeId in (select Id from Exchange where Name in ('HyperLiquid Perpetual', 'HyperLiquid Spot'))",
+                transaction: transaction);
+            if (zones > 0)
+                GlobalData.AddTextToLogTab($"Database version 95: {zones} zone(s) of HyperLiquid removed, they are rebuilt from the refetched candles");
+
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
