@@ -149,6 +149,14 @@ public partial class CryptoPosition : CryptoData2
     [Computed]
     public bool ForceCheckPosition { get; set; } = false;
 
+    // The strategy that opened this position asked for it to be closed (SignalCreateBase.IsExitSignal).
+    // From then on the take profit is aimed one tick through the last price instead of at the target,
+    // the same exit a position past its maximum duration gets; a waiting entry is cancelled instead.
+    // In memory only, on purpose: the rule is asked again on every close of the position's interval,
+    // so a restart finds the answer again rather than needing it stored.
+    [Computed]
+    public bool ExitRequested { get; set; } = false;
+
     [Computed]
     public decimal? TriggerPriceTop { get; set; }
     [Computed]

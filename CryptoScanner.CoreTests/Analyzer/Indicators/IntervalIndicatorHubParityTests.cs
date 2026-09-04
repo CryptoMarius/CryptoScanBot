@@ -1,4 +1,5 @@
 using CryptoScanner.Analyzers.Bbma;
+using CryptoScanner.Analyzers.MacdCross;
 using CryptoScanner.Analyzers.Vbs;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
@@ -44,6 +45,8 @@ public class IntervalIndicatorHubParityTests
         TestBase.RegisterAndEnablePlugin(new VbsPlugin());
         // Declares Ema50 / Wma05 / Wma10 / Atr14 — without it the hub has no reason to build them.
         TestBase.RegisterPlugin(new BbmaPlugin());
+        // Declares Adx14 for its trend-strength filters.
+        TestBase.RegisterPlugin(new MacdCrossPlugin());
     }
 
     private static void EnableStrategy(string name)
@@ -122,6 +125,7 @@ public class IntervalIndicatorHubParityTests
         var psar = quotes.ToParabolicSar(0.02, 0.2).ToList();
         var ema50 = quotes.ToEma(50).ToList();
         var atr14 = quotes.ToAtr(14).ToList();
+        var adx14 = quotes.ToAdx(14).ToList();
         var wma05Low = quotes.Use(CandlePart.Low).ToWma(5).ToList();
         var wma05High = quotes.Use(CandlePart.High).ToWma(5).ToList();
         var wma10Low = quotes.Use(CandlePart.Low).ToWma(10).ToList();
@@ -149,6 +153,7 @@ public class IntervalIndicatorHubParityTests
             PSar = psar[i].Sar,
             Ema50 = ema50[i].Ema,
             Atr14 = atr14[i].Atr,
+            Adx14 = adx14[i].Adx,
             Wma05Low = wma05Low[i].Wma,
             Wma05High = wma05High[i].Wma,
             Wma10Low = wma10Low[i].Wma,
@@ -191,6 +196,7 @@ public class IntervalIndicatorHubParityTests
         Eq("VbsVwStdev", hubVbs?.VwStdev, batchVbs?.VwStdev, maxRel);
         Eq("Ema50", hub.Ema50, batch.Ema50, maxRel);
         Eq("Atr14", hub.Atr14, batch.Atr14, maxRel);
+        Eq("Adx14", hub.Adx14, batch.Adx14, maxRel);
         Eq("Wma05Low", hub.Wma05Low, batch.Wma05Low, maxRel);
         Eq("Wma05High", hub.Wma05High, batch.Wma05High, maxRel);
         Eq("Wma10Low", hub.Wma10Low, batch.Wma10Low, maxRel);

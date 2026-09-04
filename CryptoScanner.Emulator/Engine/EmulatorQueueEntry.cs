@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Settings;
 
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Emulator.Engine;
 
@@ -212,6 +213,33 @@ public class EmulatorQueueEntry
     /// </para>
     /// </summary>
     public string? BaseInterval { get; set; }
+
+    /// <summary>
+    /// The first day of the replay window for this run, inclusive, UTC. Null or omitted keeps the
+    /// date from the run configuration. Written and read as "yyyy-MM-dd", like the run configuration.
+    /// <para>
+    /// It is here so one queue can measure the same settings over different periods in a single
+    /// pass - the first half of the year against the second half, say. Whether a variant beats the
+    /// run it is compared with can only be trusted when it does so in BOTH halves; a difference
+    /// that changes sign between them is chance. Before this field that comparison needed a new
+    /// batch per period, started by hand, which is exactly what cannot happen on a ten-day queue
+    /// with nobody at the machine.
+    /// </para>
+    /// <para>
+    /// The candles come from the local database, and the "Fetch candles" step fills it for the
+    /// window of the run configuration only. A period that reaches outside that window is replayed
+    /// with whatever candles happen to be there, so the queue loop warns about it in the log.
+    /// </para>
+    /// </summary>
+    [JsonConverter(typeof(DateOnlyJsonConverter))]
+    public DateTime? FromDate { get; set; }
+
+    /// <summary>
+    /// The last day of the replay window for this run, inclusive, UTC. Null or omitted keeps the
+    /// date from the run configuration. See <see cref="FromDate"/>.
+    /// </summary>
+    [JsonConverter(typeof(DateOnlyJsonConverter))]
+    public DateTime? ToDate { get; set; }
 
     /// <summary>
     /// The paper-trading start capital this run gets, per traded quote coin. Null or omitted keeps

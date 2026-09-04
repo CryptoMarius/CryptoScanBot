@@ -11,6 +11,7 @@ public enum IndicatorKind
     Stoch,
     ParabolicSar,
     Atr,
+    Adx,
     WmaLow,
     WmaHigh,
     SuperTrend,
@@ -35,6 +36,7 @@ public readonly record struct IndicatorKey(IndicatorKind Kind, double P1, double
     public static IndicatorKey Stoch(int length, int smoothD, int smoothK) => new(IndicatorKind.Stoch, length, smoothD, smoothK);
     public static IndicatorKey ParabolicSar(double step, double max) => new(IndicatorKind.ParabolicSar, step, max, 0);
     public static IndicatorKey Atr(int length) => new(IndicatorKind.Atr, length, 0, 0);
+    public static IndicatorKey Adx(int length) => new(IndicatorKind.Adx, length, 0, 0);
     public static IndicatorKey WmaLow(int length) => new(IndicatorKind.WmaLow, length, 0, 0);
     public static IndicatorKey WmaHigh(int length) => new(IndicatorKind.WmaHigh, length, 0, 0);
     public static IndicatorKey SuperTrend(int lookback, double multiplier) => new(IndicatorKind.SuperTrend, lookback, multiplier, 0);

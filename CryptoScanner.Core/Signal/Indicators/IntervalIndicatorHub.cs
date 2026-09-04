@@ -39,6 +39,7 @@ public sealed class IntervalIndicatorHub
     // Optional: present only when a registered plugin declared them.
     private readonly EmaHub? _ema50;
     private readonly AtrHub? _atr14;
+    private readonly AdxHub? _adx14;
     private readonly WmaHub? _wma05Low;
     private readonly WmaHub? _wma05High;
     private readonly WmaHub? _wma10Low;
@@ -91,6 +92,7 @@ public sealed class IntervalIndicatorHub
     // no dedicated CryptoData field — the plugin reads it through its own IIndicatorExtension.
     private static readonly IndicatorKey KeyEma50 = IndicatorKey.Ema(50);
     private static readonly IndicatorKey KeyAtr14 = IndicatorKey.Atr(14);
+    private static readonly IndicatorKey KeyAdx14 = IndicatorKey.Adx(14);
     private static readonly IndicatorKey KeyWma05Low = IndicatorKey.WmaLow(5);
     private static readonly IndicatorKey KeyWma05High = IndicatorKey.WmaHigh(5);
     private static readonly IndicatorKey KeyWma10Low = IndicatorKey.WmaLow(10);
@@ -136,6 +138,7 @@ public sealed class IntervalIndicatorHub
 
         _ema50 = _registry.Find<EmaHub>(KeyEma50);
         _atr14 = _registry.Find<AtrHub>(KeyAtr14);
+        _adx14 = _registry.Find<AdxHub>(KeyAdx14);
         _wma05Low = _registry.Find<WmaHub>(KeyWma05Low);
         _wma05High = _registry.Find<WmaHub>(KeyWma05High);
         _wma10Low = _registry.Find<WmaHub>(KeyWma10Low);
@@ -250,6 +253,8 @@ public sealed class IntervalIndicatorHub
             data.Ema50 = _ema50.Results[^1].Ema;
         if (_atr14 != null && _atr14.Results.Count > 0)
             data.Atr14 = _atr14.Results[^1].Atr;
+        if (_adx14 != null && _adx14.Results.Count > 0)
+            data.Adx14 = _adx14.Results[^1].Adx;
         if (_wma05Low != null && _wma05Low.Results.Count > 0)
             data.Wma05Low = _wma05Low.Results[^1].Wma;
         if (_wma05High != null && _wma05High.Results.Count > 0)

@@ -98,6 +98,12 @@ public class CryptoData
     [Computed]
     public double? Atr14 { get; set; }
 
+    // ADX(14) - the strength of the trend on a 0..100 scale, regardless of its direction (Wilder).
+    // Under 20 the market is ranging, above 25 a trend is running. Declared by MacdCross for its
+    // trend-strength filters; null when no registered plugin asked for it. Not persisted to DB.
+    [Computed]
+    public double? Adx14 { get; set; }
+
     // SuperTrend indicator (ATR-based trailing stop, flips between support and resistance)
     [Computed]
     public double? SuperTrend { get; set; }
@@ -211,6 +217,7 @@ public class CryptoData
         Wma10Low = source.Wma10Low;
         Wma10High = source.Wma10High;
         Atr14 = source.Atr14;
+        Adx14 = source.Adx14;
 
         // Parabolic SAR indicator value
         PSar = source.PSar;

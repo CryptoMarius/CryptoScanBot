@@ -83,6 +83,8 @@ public sealed class IndicatorRegistry
                 return QuoteHub.ToParabolicSarHub(key.P1, key.P2);
             case IndicatorKind.Atr:
                 return QuoteHub.ToAtrHub(p1);
+            case IndicatorKind.Adx:
+                return QuoteHub.ToAdxHub(p1);
             case IndicatorKind.WmaLow:
                 _lowPart ??= QuoteHub.ToQuotePartHub(CandlePart.Low);
                 return _lowPart.ToWmaHub(p1);
@@ -119,6 +121,8 @@ public sealed class IndicatorRegistry
         => (ParabolicSarHub)GetOrAdd(IndicatorKey.ParabolicSar(step, max));
 
     public AtrHub Atr(int length) => (AtrHub)GetOrAdd(IndicatorKey.Atr(length));
+
+    public AdxHub Adx(int length) => (AdxHub)GetOrAdd(IndicatorKey.Adx(length));
 
     public WmaHub WmaLow(int length) => (WmaHub)GetOrAdd(IndicatorKey.WmaLow(length));
 

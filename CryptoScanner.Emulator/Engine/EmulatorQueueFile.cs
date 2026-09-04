@@ -41,6 +41,19 @@ public static class EmulatorQueueFile
     }
 
 
+    /// <summary>
+    /// Reads a queue file wherever it is - the files in the Queue folder have the same shape as the
+    /// one next to the data. Unlike <see cref="Load"/> this throws on a file that cannot be read,
+    /// because the folder queue has to know the difference between "empty" and "broken": the first
+    /// is done, the second goes to the Failed folder.
+    /// </summary>
+    public static List<EmulatorQueueEntry> LoadFrom(string path)
+    {
+        using FileStream stream = File.OpenRead(path);
+        return JsonSerializer.Deserialize<List<EmulatorQueueEntry>>(stream, ReadOptions) ?? [];
+    }
+
+
     public static void Save(List<EmulatorQueueEntry> entries)
     {
         string path = FilePath;

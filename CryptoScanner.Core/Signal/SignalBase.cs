@@ -107,6 +107,27 @@ public class SignalCreateBase
 
     public virtual int MacdRecoveryBarCount => 1;
 
+    /// <summary>
+    /// Whether this strategy also decides when to LEAVE. PositionMonitor.CheckStrategyExit asks
+    /// <see cref="IsExitSignal"/> on every close of the position's own interval, but only for
+    /// strategies that say yes here - so a strategy without an exit rule costs the monitor nothing.
+    /// </summary>
+    public virtual bool HasExitSignal => false;
+
+    /// <summary>
+    /// The strategy's own exit rule, evaluated on the last closed candle of the position's interval:
+    /// SignalSide is the side of the POSITION and CandleLast that candle. Returning true puts the
+    /// position on its way out at whatever the market offers - the same exit a position past
+    /// Trading.MaxPositionDurationDays gets. Stop loss and take profit keep working next to it; this
+    /// is an extra way out, not a replacement.
+    /// <para>
+    /// Best written as a STATE ("the lines are against us") rather than an EVENT ("they crossed on
+    /// this candle"): the flag it sets lives in memory only, and a state is found again after a
+    /// restart where an event is gone.
+    /// </para>
+    /// </summary>
+    public virtual bool IsExitSignal() => false;
+
 
     public virtual bool AdditionalChecks(MyData candle, out string response)
     {

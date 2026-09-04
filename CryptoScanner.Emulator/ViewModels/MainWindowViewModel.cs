@@ -84,6 +84,9 @@ public partial class MainWindowViewModel : ObservableObject
 
     private CancellationTokenSource? _cts;
 
+    // The pause of the folder queue between two looks into the Queue folder; cancelled by Stop.
+    private CancellationTokenSource? _waitCts;
+
     // Set by Stop, cleared when a batch starts. The token itself cannot answer "did the user stop
     // this?" once a run is over - RunOnceAsync disposes and nulls _cts in its finally - and the
     // queue has to tell a cancelled batch (stop, so drop the rest) from a failed run (log it and
@@ -669,22 +672,9 @@ public partial class MainWindowViewModel : ObservableObject
         if (IsRunning)
             return;
 
-        EmulatorRunConfig baseConfig;
-        try
-        {
-            baseConfig = RunConfigFile.Load();
-        }
-        catch (Exception ex)
-        {
-            Status = $"Failed to read run config: {ex.Message}";
+        EmulatorRunConfig? baseConfig = LoadRunConfigForQueue();
+        if (baseConfig == null)
             return;
-        }
-
-        if (baseConfig.Symbols.Count == 0)
-        {
-            Status = "Run config has no symbols — edit CryptoScanBot-Emulator.json first.";
-            return;
-        }
 
         List<EmulatorQueueEntry> queue;
         try
@@ -712,6 +702,184 @@ public partial class MainWindowViewModel : ObservableObject
         if (archived != null)
             GlobalData.AddTextToLogTab($"Queue: archived as {archived}");
 
+        _stopRequested = false;
+        IsRunning = true;
+        try
+        {
+            await RunQueueEntriesAsync(queue, baseConfig, owner, EmulatorQueueFile.FileName);
+        }
+        finally
+        {
+            IsRunning = false;
+        }
+    }
+
+
+    /// <summary>
+    /// Runs queue files from the Queue folder one after the other, and keeps watching the folder
+    /// for new ones until Stop is pressed. Each file has the same shape as the queue file. The
+    /// alphabetically first file goes first, and a finished file moves to Queue\Done with the time
+    /// in front of its name; one that cannot be read moves to Queue\Failed.
+    /// <para>
+    /// This exists because the single-file batch reads its file ONCE, when it starts: whatever was
+    /// added to the file during the batch never ran, and the only way to get it in was to stop the
+    /// batch and start it again. On a ten-day queue with nobody at the machine that is not an
+    /// option. A file dropped into the folder is read the moment it is its turn, so nothing has to
+    /// be stopped for it.
+    /// </para>
+    /// <para>
+    /// A file is left alone until its last write is a few seconds old, so one that is still being
+    /// saved is not read half-way. A Stop during a file leaves that file in place: started again,
+    /// the runs already measured are recognised as duplicates and only the rest is replayed.
+    /// </para>
+    /// </summary>
+    [RelayCommand]
+    private async Task RunQueueFolderAsync()
+    {
+        if (IsRunning)
+            return;
+
+        string folder = EmulatorQueueFolder.Folder;
+        Directory.CreateDirectory(folder);
+        Directory.CreateDirectory(EmulatorQueueFolder.DoneFolder);
+        Directory.CreateDirectory(EmulatorQueueFolder.FailedFolder);
+        GlobalData.AddTextToLogTab($"Queue folder: watching {folder}");
+
+        _stopRequested = false;
+        IsRunning = true;
+        try
+        {
+            while (!_stopRequested)
+            {
+                string? file = EmulatorQueueFolder.PickNext(folder, DateTime.UtcNow, EmulatorQueueFolder.SettleTime);
+                if (file == null)
+                {
+                    Status = $"Waiting for a queue file in {folder} — last check {DateTime.Now:HH:mm:ss}";
+                    if (!await WaitBeforeNextCheckAsync(EmulatorQueueFolder.PollInterval))
+                        break;
+                    continue;
+                }
+
+                string name = Path.GetFileName(file);
+
+                // Read per file, not once per batch, so a run configuration changed between two
+                // files (another period, other coins) applies to the next file.
+                EmulatorRunConfig? baseConfig = LoadRunConfigForQueue();
+                if (baseConfig == null)
+                {
+                    GlobalData.AddErrorToLogTab($"Queue folder: cannot start {name} — {Status}");
+                    break;
+                }
+
+                List<EmulatorQueueEntry> queue;
+                try
+                {
+                    queue = EmulatorQueueFile.LoadFrom(file);
+                }
+                catch (Exception ex)
+                {
+                    string failed = EmulatorQueueFolder.MoveTo(file, EmulatorQueueFolder.FailedFolder, DateTime.Now);
+                    GlobalData.AddErrorToLogTab(
+                        $"Queue folder: {name} cannot be read — {ex.GetType().Name}: {ex.Message}; moved to {failed}");
+                    continue;
+                }
+
+                if (queue.Count == 0)
+                {
+                    string done = EmulatorQueueFolder.MoveTo(file, EmulatorQueueFolder.DoneFolder, DateTime.Now);
+                    GlobalData.AddTextToLogTab($"Queue folder: {name} holds no entries; moved to {done}");
+                    continue;
+                }
+
+                GlobalData.AddTextToLogTab($"Queue folder: starting {name} with {queue.Count} entries");
+                bool finished = await RunQueueEntriesAsync(queue, baseConfig, null, name);
+
+                if (_stopRequested)
+                {
+                    GlobalData.AddTextToLogTab(
+                        $"Queue folder: stopped during {name} — the file stays in the folder; started again, "
+                        + "the runs already measured are skipped as duplicates");
+                    break;
+                }
+
+                string target = EmulatorQueueFolder.MoveTo(file,
+                    finished ? EmulatorQueueFolder.DoneFolder : EmulatorQueueFolder.FailedFolder, DateTime.Now);
+                GlobalData.AddTextToLogTab(
+                    $"Queue folder: {name} {(finished ? "finished" : "could not run, see the lines above")}; moved to {target}");
+            }
+        }
+        finally
+        {
+            IsRunning = false;
+            Status = "Queue folder stopped.";
+            GlobalData.AddTextToLogTab("Queue folder: stopped watching");
+        }
+    }
+
+
+    /// <summary>
+    /// The pause between two looks into the Queue folder. Returns false when Stop cut it short.
+    /// </summary>
+    private async Task<bool> WaitBeforeNextCheckAsync(TimeSpan delay)
+    {
+        _waitCts = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(delay, _waitCts.Token);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        finally
+        {
+            _waitCts.Dispose();
+            _waitCts = null;
+        }
+    }
+
+
+    /// <summary>
+    /// The run configuration a queue batch starts from, or null with the reason in
+    /// <see cref="Status"/> when there is none to start from.
+    /// </summary>
+    private EmulatorRunConfig? LoadRunConfigForQueue()
+    {
+        EmulatorRunConfig baseConfig;
+        try
+        {
+            baseConfig = RunConfigFile.Load();
+        }
+        catch (Exception ex)
+        {
+            Status = $"Failed to read run config: {ex.Message}";
+            return null;
+        }
+
+        if (baseConfig.Symbols.Count == 0)
+        {
+            Status = "Run config has no symbols — edit CryptoScanBot-Emulator.json first.";
+            return null;
+        }
+
+        return baseConfig;
+    }
+
+
+    /// <summary>
+    /// Runs one list of queue entries as a batch: validates them, settles which algorithms they are
+    /// for, and replays each entry per algorithm. Shared by the single-file batch and the folder
+    /// queue. Does not touch <see cref="IsRunning"/>; the callers keep it true across files.
+    /// </summary>
+    /// <param name="owner">The window to show the algorithm selection dialog in; null when there is
+    /// nobody to ask, in which case every entry has to name its algorithm.</param>
+    /// <param name="source">What the entries came from, for the log and the status line.</param>
+    /// <returns>True when the batch ran to its end (failed runs included); false when it could not
+    /// start or was stopped.</returns>
+    private async Task<bool> RunQueueEntriesAsync(List<EmulatorQueueEntry> queue, EmulatorRunConfig baseConfig,
+        Window? owner, string source)
+    {
         // Check EVERY entry before the first run instead of discovering a bad one hours later. An
         // entry that asks for a setting the code no longer has cannot run, and until 03-09-2026 that
         // took the whole process down: entry 26 of 54 asked for the retired EntryWaitForPatterns,
@@ -734,7 +902,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             Status = $"None of the {queue.Count} queue entries can run — see the log.";
             GlobalData.AddErrorToLogTab($"Queue: all {queue.Count} entries are unusable, nothing started");
-            return;
+            return false;
         }
 
         if (blockedEntries.Count > 0)
@@ -760,13 +928,23 @@ public partial class MainWindowViewModel : ObservableObject
         }
         else
         {
+            // The folder queue runs with nobody at the machine, so it cannot ask. An entry there
+            // has to say which algorithm it is for.
+            if (owner == null)
+            {
+                Status = $"{source}: entries without an Algorithm need the selection dialog";
+                GlobalData.AddErrorToLogTab(
+                    $"Queue: {source} has entries without \"Algorithm\" and no window to ask in — give every entry an Algorithm");
+                return false;
+            }
+
             var selectionWindow = new AlgorithmSelectionWindow(baseConfig.SelectedAlgorithms);
             bool confirmed = owner != null
                 ? await selectionWindow.ShowDialog<bool>(owner)
                 : false;
 
             if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out selectedNames))
-                return;
+                return false;
         }
 
         baseConfig.SelectedAlgorithms = selectedNames;
@@ -800,13 +978,13 @@ public partial class MainWindowViewModel : ObservableObject
         {
             Status = $"No matching registered algorithms found for: {string.Join(", ", selectedNames)}";
             GlobalData.AddTextToLogTab($"Queue: none of the selected algorithms ({string.Join(", ", selectedNames)}) are registered");
-            return;
+            return false;
         }
 
         if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out var exchange))
         {
             Status = "Run needs an exchange";
-            return;
+            return false;
         }
 
         GlobalData.ActiveExchange = exchange;
@@ -844,8 +1022,6 @@ public partial class MainWindowViewModel : ObservableObject
 
         GlobalData.AddTextToLogTab($"Queue: starting {totalRuns} runs across {selectedAlgorithms.Count} algorithm(s)");
 
-        _stopRequested = false;
-        IsRunning = true;
         try
         {
             foreach (AlgorithmDefinition algorithm in selectedAlgorithms!)
@@ -862,7 +1038,7 @@ public partial class MainWindowViewModel : ObservableObject
                     // A Stop during the last run no longer reaches the return below, now that a run
                     // which did not complete only ends the batch when it was actually stopped.
                     if (_stopRequested)
-                        return;
+                        return false;
 
                     // Reported by name before the batch started; nothing to add here.
                     if (blockedEntries.Contains(i))
@@ -977,16 +1153,40 @@ public partial class MainWindowViewModel : ObservableObject
                         // run-config window said. Only single runs honoured it.
                         bool useAssetManagement = entry.UseAssetManagement ?? baseConfig.UseAssetManagement;
 
+                        // And for the replay window; without one the run config decides. A window
+                        // that is empty or backwards costs this entry only, like an override that
+                        // will not apply. One that reaches outside the run configuration's window
+                        // is allowed but flagged: the candle fetch only filled the database for
+                        // that window, and beyond it the replay runs on whatever is there.
+                        var (fromDate, toDate, periodOverridden) =
+                            ResolvePeriod(entry.FromDate, entry.ToDate, baseConfig.FromDate, baseConfig.ToDate);
+                        if (fromDate >= toDate)
+                        {
+                            failedRuns++;
+                            GlobalData.AddErrorToLogTab(
+                                $"Queue: entry {i + 1} \"{entry.Label}\" skipped — period "
+                                + $"{fromDate:yyyy-MM-dd}..{toDate:yyyy-MM-dd} is empty or backwards");
+                            continue;
+                        }
+                        if (fromDate < baseConfig.FromDate || toDate > baseConfig.ToDate)
+                        {
+                            GlobalData.AddTextToLogTab(
+                                $"Queue: entry {i + 1} \"{entry.Label}\" replays {fromDate:yyyy-MM-dd}..{toDate:yyyy-MM-dd}, "
+                                + $"outside the run configuration's {baseConfig.FromDate:yyyy-MM-dd}..{baseConfig.ToDate:yyyy-MM-dd} "
+                                + "— candles beyond that window were never fetched and may be missing");
+                        }
+
                         string runLabel = BuildRunLabel(algoName, entryLabel,
                             !string.IsNullOrWhiteSpace(entry.BaseInterval) ? baseInterval : null,
-                            startCapitalOverridden ? startCapital : null);
+                            startCapitalOverridden ? startCapital : null,
+                            periodOverridden ? FormatPeriod(fromDate, toDate) : null);
 
                         EmulatorRunConfig runConfig = new()
                         {
                             ExchangeName = baseConfig.ExchangeName,
                             Symbols = baseConfig.Symbols,
-                            FromDate = baseConfig.FromDate,
-                            ToDate = baseConfig.ToDate,
+                            FromDate = fromDate,
+                            ToDate = toDate,
                             BaseInterval = baseInterval,
                             StartCapital = startCapital,
                             UseAssetManagement = useAssetManagement,
@@ -1023,7 +1223,7 @@ public partial class MainWindowViewModel : ObservableObject
                             // batch here, so one bad run threw away every entry behind it.
                             // RunOnceAsync has already written the failure onto the run row.
                             if (_stopRequested)
-                                return;
+                                return false;
 
                             failedRuns++;
                             GlobalData.AddErrorToLogTab(
@@ -1085,8 +1285,9 @@ public partial class MainWindowViewModel : ObservableObject
 
             _queueProgress = "";
             OnPropertyChanged(nameof(ProgressLabel));
-            IsRunning = false;
         }
+
+        return !_stopRequested;
     }
 
 
@@ -1140,8 +1341,28 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
 
+    /// <summary>
+    /// The replay window of a queue entry: its own dates where it gives them, the run configuration's
+    /// where it does not, and whether it gave any at all - that decides whether the period goes into
+    /// the run label. Either date may be given on its own; the other then comes from the
+    /// configuration, so "the same window but ending in April" is one field, not two.
+    /// </summary>
+    internal static (DateTime fromDate, DateTime toDate, bool overridden) ResolvePeriod(
+        DateTime? entryFromDate, DateTime? entryToDate, DateTime configFromDate, DateTime configToDate)
+    {
+        DateTime fromDate = entryFromDate ?? configFromDate;
+        DateTime toDate = entryToDate ?? configToDate;
+        return (fromDate, toDate, entryFromDate.HasValue || entryToDate.HasValue);
+    }
+
+
+    /// <summary>The period as it appears in a run label: "2026-01-01..2026-04-30".</summary>
+    internal static string FormatPeriod(DateTime fromDate, DateTime toDate)
+        => $"{fromDate:yyyy-MM-dd}..{toDate:yyyy-MM-dd}";
+
+
     internal static string BuildRunLabel(string algoName, string entryLabel, string? baseInterval,
-        decimal? startCapital = null)
+        decimal? startCapital = null, string? period = null)
     {
         bool labelAlreadyNamesTheAlgorithm =
             !string.IsNullOrEmpty(algoName)
@@ -1154,6 +1375,8 @@ public partial class MainWindowViewModel : ObservableObject
             label = $"{label} [{baseInterval}]";
         if (startCapital.HasValue)
             label = $"{label} [start {startCapital.Value.ToString("0.##", CultureInfo.InvariantCulture)}]";
+        if (!string.IsNullOrWhiteSpace(period))
+            label = $"{label} [{period}]";
         return label;
     }
 
@@ -1299,6 +1522,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _stopRequested = true;
         _cts?.Cancel();
+        _waitCts?.Cancel();
         Status = "Cancelling…";
     }
 

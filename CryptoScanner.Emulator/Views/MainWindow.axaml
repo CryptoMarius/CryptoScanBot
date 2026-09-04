@@ -60,6 +60,10 @@
                                       Command="{Binding RunQueueCommand}"
                                       CommandParameter="{Binding $parent[Window]}"
                                       IsEnabled="{Binding !IsRunning}"/>
+                            <MenuItem Header="Run queue folder"
+                                      Command="{Binding RunQueueFolderCommand}"
+                                      IsEnabled="{Binding !IsRunning}"
+                                      ToolTip.Tip="Runs the queue files in the Queue folder one after the other and keeps watching the folder for new ones until Stop. A finished file moves to Queue\Done, an unreadable one to Queue\Failed."/>
                             <MenuItem Header="Stop"
                                       Command="{Binding StopCommand}"
                                       IsEnabled="{Binding IsRunning}"/>

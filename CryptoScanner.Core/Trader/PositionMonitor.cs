@@ -776,7 +776,8 @@ public class PositionMonitor : IDisposable
         // this an exit instead of another target: an order sitting exactly at the last close only
         // fills if price comes back to it, which for the positions this rule is meant to catch -
         // the ones that walked away and did not return - is precisely what will not happen.
-        if (IsPastMaxDuration(position))
+        // A strategy that asked for the exit (ExitRequested) takes the very same door.
+        if (IsPastMaxDuration(position) || position.ExitRequested)
         {
             decimal tick = Symbol.PriceTickSize;
             decimal exit = LastCandle1m.Close - (multiplier * tick);
@@ -810,6 +811,57 @@ public class PositionMonitor : IDisposable
 
     private bool IsPastMaxDuration(CryptoPosition position)
         => IsPastMaxDuration(position, LastCandle1mCloseTimeDate);
+
+
+    /// <summary>
+    /// Asks the strategy that opened the position whether it wants out (SignalCreateBase.IsExitSignal),
+    /// on the close of a candle of the position's own interval. A yes sets ExitRequested, after which
+    /// CalculateTpPrice aims the take profit through the last price and both candle gates let the
+    /// position through; a waiting entry is cancelled instead.
+    /// <para>
+    /// Only strategies that declare HasExitSignal are asked, and the flag is never cleared here: a
+    /// position on its way out stays on its way out. Runs BEFORE the trigger-price skip in
+    /// NewCandleArrivedAsync, because that skip is exactly what would otherwise hide the exit - the
+    /// cross back happens on candles that reach no trigger price.
+    /// </para>
+    /// </summary>
+    private void CheckStrategyExit(CryptoPosition position)
+    {
+        if (position.ExitRequested || position.CloseTime.HasValue)
+            return;
+        if (position.Status != CryptoPositionStatus.Waiting && position.Status != CryptoPositionStatus.Trading)
+            return;
+
+        CryptoInterval? interval = position.Interval;
+        if (interval == null || position.Strategy == null)
+            return;
+
+        // Only on the close of a candle of the position's interval, the rhythm the entry was made in.
+        if (LastCandle1mCloseTime % interval.Duration != 0)
+            return;
+
+        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(position.Side, position.Strategy);
+        if (algorithm == null || !algorithm.HasExitSignal)
+            return;
+
+        // The candle that just closed on that interval, with its indicators.
+        CandleTime openTime = LastCandle1mCloseTime - interval.Duration;
+        var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, interval, openTime, interval.IntervalPeriod);
+        if (!result.success || result.candle == null)
+            return;
+
+        algorithm.Symbol = Symbol;
+        algorithm.Interval = interval;
+        algorithm.SymbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
+        algorithm.CandleLast = result.candle;
+
+        if (!algorithm.IndicatorsOkay(result.candle) || !algorithm.IsExitSignal())
+            return;
+
+        position.ExitRequested = true;
+        position.ForceCheckPosition = true;
+        GlobalData.AddTextToLogTab($"{Symbol.Name} {position.SideText} position {position.Id} exit requested by {position.Strategy}: {algorithm.ExtraText}");
+    }
 
     /// <summary>
     /// Has the position moved far enough into profit to arm the profit lock? The whole candle has to
@@ -1440,6 +1492,16 @@ public class PositionMonitor : IDisposable
                         }
 
 
+                        // The strategy withdrew the signal before the entry filled: its exit rule fired
+                        // while the position was still waiting. Treated as a timeout, so the order goes
+                        // and, being the only part, the position with it.
+                        else if (position.ExitRequested && part.Purpose == CryptoPartPurpose.Entry && step.Trailing == CryptoTrailing.None)
+                        {
+                            timeOut = true;
+                            newStatus = CryptoOrderStatus.Timeout;
+                            cancelReason = "cancelling because the strategy withdrew the entry";
+                        }
+
                         // Een eventuele aan- of bijkoop kan worden geannuleerd indien de instap te lang duurt ("Remove Time")
                         // (een toekomstige gereserveerde DCA buy orders of actieve trailing orders moeten we niet annuleren)
                         // Verwijder openstaande buy orders die niet gevuld worden binnen zoveel X minuten/candles?
@@ -1885,6 +1947,8 @@ public class PositionMonitor : IDisposable
     {
         if (IsPastMaxDuration(position, now))
             return true;
+        if (position.ExitRequested)
+            return true;
         return ShouldRunHandlePosition(position, candleHigh, candleLow);
     }
 
@@ -2039,6 +2103,11 @@ public class PositionMonitor : IDisposable
         if (IsPastMaxDuration(position, candleCloseTime.ToDateTime()))
             return true;
 
+        // Same reasoning for a strategy that asked for the exit: the candle that follows the cross
+        // back is as likely as not a quiet one.
+        if (position.ExitRequested)
+            return true;
+
         return false;
     }
 
@@ -2141,6 +2210,11 @@ public class PositionMonitor : IDisposable
             // Alway's calculate the indicators, queue the fvg and dlz zones etc
             await SignalPrepare.ExecuteAsync(Symbol, LastCandle1m, LastCandle1mCloseTime);
             long profExecuteStart = Stopwatch.GetTimestamp();
+
+            // The strategy's own way out, asked on every close of the position's interval. Before the
+            // skip decision below, because a requested exit has to force the position through it.
+            if (hasPosition)
+                CheckStrategyExit(existingPosition!);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
 
