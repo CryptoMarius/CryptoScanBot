@@ -68,9 +68,44 @@ public static class BarometerCandleFields
     public static void StoreExtra(ref CryptoCandle candle, BarometerResult result)
     {
         candle.Open = result.BitcoinVersusMarket ?? 0m;
-        candle.High = 0m;                       // free
+        candle.High = result.OutlierCount;      // see the overload below - both paths must agree
         candle.Low = 0m;                        // free
         candle.Close = result.AverageAbsolute;
+        candle.Volume = 0;                      // free
+    }
+
+
+    /// <summary>
+    /// The same two writes, but from a stored measurement instead of a fresh <see cref="BarometerResult"/>.
+    /// <para>
+    /// The emulator needs this: it measures per quote coin and per interval and then writes the
+    /// heartbeat from what was stored, so the shared result object it calculated with has moved on
+    /// to another interval by then. Kept here next to <see cref="Store"/> for the reason this whole
+    /// class exists - a second copy of the field layout somewhere else would drift at the first
+    /// change, and the failure would be a graph quietly plotting the wrong figure.
+    /// </para>
+    /// </summary>
+    public static void Store(ref CryptoCandle candle, CryptoBarometerData data)
+    {
+        candle.Open = data.PriceMedian ?? 0m;
+        candle.High = data.PricePercentageRising ?? 0m;
+        candle.Low = data.PriceSpread ?? 0m;
+        candle.Close = data.PriceBarometer ?? 0m;
+        candle.Volume = data.PriceSymbolCount ?? 0;
+    }
+
+
+    /// <summary>
+    /// The second page from a stored measurement. Outliers land in the High field, which was free:
+    /// they say "this reading rests on fewer coins than it looks", and that is exactly the sort of
+    /// thing you want to be able to see back afterwards rather than only in a live tooltip.
+    /// </summary>
+    public static void StoreExtra(ref CryptoCandle candle, CryptoBarometerData data)
+    {
+        candle.Open = data.PriceBitcoinVersusMarket ?? 0m;
+        candle.High = data.PriceOutlierCount ?? 0m;
+        candle.Low = 0m;                        // free
+        candle.Close = data.PriceMovement ?? 0m;
         candle.Volume = 0;                      // free
     }
 

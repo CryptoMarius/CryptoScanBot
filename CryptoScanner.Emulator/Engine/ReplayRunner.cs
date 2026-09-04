@@ -315,9 +315,6 @@ public sealed class ReplayRunner
                 GlobalData.AddTextToLogTab("Barometer: switched off for this run");
             }
 
-            if (barometer != null)
-                GlobalData.PositionCreated += barometer.PositionCreated;
-
             // ───── Determine chunks ─────────────────────────────────────────────────
             uint chunkMinutes = ChunkDays > 0 ? (uint)ChunkDays * 24 * 60 : 0;
             bool useChunks = chunkMinutes > 0 && (replayTo.Minutes - replayFrom.Minutes) > chunkMinutes;
@@ -438,7 +435,6 @@ public sealed class ReplayRunner
                     {
                         long barometerStart = Stopwatch.GetTimestamp();
                         barometer.Execute(closeTime - 1u);
-                        barometer.Flush();
                         elapsedBarometer += Stopwatch.GetTimestamp() - barometerStart;
                     }
 
@@ -522,12 +518,7 @@ public sealed class ReplayRunner
         finally
         {
             GlobalData.AnalyzeSignalCreated = null;
-            if (barometer != null)
-            {
-                GlobalData.PositionCreated -= barometer.PositionCreated;
-                barometer.Flush(); // the rows of the last minute, and of a run that ended early
-                barometer = null;
-            }
+            barometer = null;
             LogPhaseTimings();
             PipelineProfiler.Enabled = false;
         }

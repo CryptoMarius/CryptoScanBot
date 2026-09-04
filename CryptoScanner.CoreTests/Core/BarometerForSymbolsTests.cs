@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Barometer;
+﻿using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -176,90 +176,75 @@ public class BarometerForSymbolsTests : TestBase
 
 
     /// <summary>
-    /// The figures have to survive the trip to the database. They are stored in TEXT columns, like
-    /// every other decimal in this schema, and a measurement that reads back as something else is
-    /// worse than one that was never written - it is wrong without saying so.
+    /// The figures have to survive the trip to storage. Since 04-09-2026 that storage is the candle
+    /// of the barometer symbol, not a table of its own: BarometerSnapshot held a second copy of a
+    /// measurement the candle format already carries, was never cleared by the purge before a run,
+    /// and grew to 5.566.145 rows over 151 runs.
+    /// <para>
+    /// A candle keeps its prices as integer ticks, so this also catches the failure that matters:
+    /// writing a value before TickDecimals is set rounds it to whole numbers, and a barometer of
+    /// -1,25 would read back as -1 without a word.
+    /// </para>
+    /// <para>
+    /// Two decimals, because that is what the barometer symbols are created with (PriceTickSize
+    /// 0.01, see BarometerTools.CheckBarometerSymbolPrecence) and what both dashboards show. The
+    /// table this replaced kept full precision in TEXT columns, so a figure is rounded now where it
+    /// was not before - on a percentage that moves in single percents and is read to two decimals,
+    /// that is the format's own precision rather than a loss. Anything beyond ~21 ticks of headroom
+    /// overflows the Int32 the candle stores, which is why eight decimals is not an option here.
+    /// </para>
     /// </summary>
     [TestMethod]
-    public void ASnapshotSurvivesTheRoundTripToTheDatabase()
+    public void EveryFigureSurvivesTheTripThroughTheCandleFields()
     {
-        InitTestSession();
-        using CryptoDatabase database = new();
-        database.Open();
-        // Only our own rows: other tests share this database.
-        database.Connection.Execute("delete from BarometerSnapshot where Quote = 'TESTBM'");
-
-        CryptoBarometerSnapshot row = new()
+        CryptoBarometerData data = new()
         {
-            EmulatorRunId = null,
-            PositionId = 4242,
-            MeasureDate = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc),
-            Quote = "TESTBM",
-            Interval = "1h",
-            Average = -1.25m,
-            Median = -0.75m,
-            PercentageRising = 42.5m,
-            Spread = 3.125m,
-            Movement = 1.875m,
-            BitcoinVersusMarket = -0.5m,
-            SymbolCount = 47,
-            OutlierCount = 2,
+            PriceBarometer = -1.25m,
+            PriceMedian = -0.75m,
+            PricePercentageRising = 42.5m,
+            PriceSpread = 3.12m,
+            PriceMovement = 1.88m,
+            PriceBitcoinVersusMarket = -0.5m,
+            PriceSymbolCount = 47,
+            PriceOutlierCount = 2,
         };
 
-        database.Connection.Insert(row);
-        try
-        {
-            CryptoBarometerSnapshot back = database.Connection.QuerySingle<CryptoBarometerSnapshot>(
-                "select * from BarometerSnapshot where Quote = 'TESTBM'");
+        CryptoCandle primary = new() { TickDecimals = 2 };
+        CryptoCandle extra = new() { TickDecimals = 2 };
+        BarometerCandleFields.Store(ref primary, data);
+        BarometerCandleFields.StoreExtra(ref extra, data);
 
-            Assert.AreEqual(4242, back.PositionId);
-            Assert.AreEqual(row.MeasureDate, back.MeasureDate);
-            Assert.AreEqual("1h", back.Interval);
-            Assert.AreEqual(-1.25m, back.Average);
-            Assert.AreEqual(-0.75m, back.Median);
-            Assert.AreEqual(42.5m, back.PercentageRising);
-            Assert.AreEqual(3.125m, back.Spread);
-            Assert.AreEqual(1.875m, back.Movement);
-            Assert.AreEqual(-0.5m, back.BitcoinVersusMarket);
-            Assert.AreEqual(47, back.SymbolCount);
-            Assert.AreEqual(2, back.OutlierCount);
-        }
-        finally
-        {
-            database.Connection.Execute("delete from BarometerSnapshot where Quote = 'TESTBM'");
-        }
+        Assert.AreEqual(-1.25m, BarometerCandleFields.Read(primary, BarometerGraphValue.Average));
+        Assert.AreEqual(-0.75m, BarometerCandleFields.Read(primary, BarometerGraphValue.Median));
+        Assert.AreEqual(42.5m, BarometerCandleFields.Read(primary, BarometerGraphValue.Rising));
+        Assert.AreEqual(3.12m, BarometerCandleFields.Read(primary, BarometerGraphValue.Spread));
+        Assert.AreEqual(47m, BarometerCandleFields.Read(primary, BarometerGraphValue.SymbolCount));
+        Assert.AreEqual(1.88m, BarometerCandleFields.Read(extra, BarometerGraphValue.Movement));
+        Assert.AreEqual(-0.5m, BarometerCandleFields.Read(extra, BarometerGraphValue.BitcoinVersusMarket));
+        Assert.AreEqual(2m, extra.High, "the outlier count sits in the free High field of $BMX");
     }
 
 
-    /// <summary>A heartbeat row belongs to no position, so that column has to stay empty.</summary>
+    /// <summary>
+    /// A quote coin without a bitcoin pair has no bitcoin-against-the-market figure. A candle cannot
+    /// hold "absent", so it stores a zero and the tooltip leaves the line out rather than showing
+    /// one. What must NOT happen is that zero landing in another field.
+    /// </summary>
     [TestMethod]
-    public void AHeartbeatRowHasNoPosition()
+    public void AMeasurementWithoutBitcoinStoresAZeroAndNothingElseMoves()
     {
-        InitTestSession();
-        using CryptoDatabase database = new();
-        database.Open();
-        database.Connection.Execute("delete from BarometerSnapshot where Quote = 'TESTBM'");
-
-        CryptoBarometerSnapshot row = new()
+        CryptoBarometerData data = new()
         {
-            PositionId = null,
-            MeasureDate = new DateTime(2026, 1, 15, 13, 0, 0, DateTimeKind.Utc),
-            Quote = "TESTBM",
-            Interval = "1d",
-            BitcoinVersusMarket = null,
+            PriceBarometer = 0.5m,
+            PriceMovement = 1.5m,
+            PriceBitcoinVersusMarket = null,
         };
 
-        database.Connection.Insert(row);
-        try
-        {
-            CryptoBarometerSnapshot back = database.Connection.QuerySingle<CryptoBarometerSnapshot>(
-                "select * from BarometerSnapshot where Quote = 'TESTBM'");
-            Assert.IsNull(back.PositionId, "a heartbeat belongs to no position");
-            Assert.IsNull(back.BitcoinVersusMarket, "a quote without a bitcoin pair leaves this empty");
-        }
-        finally
-        {
-            database.Connection.Execute("delete from BarometerSnapshot where Quote = 'TESTBM'");
-        }
+        CryptoCandle extra = new() { TickDecimals = 2 };
+        BarometerCandleFields.StoreExtra(ref extra, data);
+
+        Assert.AreEqual(0m, BarometerCandleFields.Read(extra, BarometerGraphValue.BitcoinVersusMarket));
+        Assert.AreEqual(1.5m, BarometerCandleFields.Read(extra, BarometerGraphValue.Movement),
+            "movement keeps its own field");
     }
 }

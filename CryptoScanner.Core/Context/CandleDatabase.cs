@@ -84,6 +84,53 @@ public class CandleDatabase : IDisposable
 
 
     /// <summary>
+    /// Read one value from the Meta table of this exchange's candle store, or null when the key is
+    /// not there. Meta already carried the exchange stamp and the schema version; this makes it
+    /// usable for anything else that has to travel WITH the candles rather than next to them.
+    /// <para>
+    /// What it is used for: the barometer of a replay is stored as $BMP/$BMX candles, and those
+    /// candles are only valid for the coin list and volume threshold they were measured over. The
+    /// marker says which - without it a run over other coins would read a series that looks right
+    /// and describes a different market.
+    /// </para>
+    /// </summary>
+    public static string? ReadMeta(Model.CryptoExchange exchange, string key)
+    {
+        try
+        {
+            using CandleDatabase database = new(exchange);
+            database.Open();
+            return database.Connection.QueryFirstOrDefault<string>(
+                "SELECT Value FROM Meta WHERE Key = $Key", new { Key = key });
+        }
+        catch (Exception error)
+        {
+            // A marker that cannot be read means "recalculate", which is always safe.
+            ScannerLog.Logger.Error(error, $"CandleDatabase.ReadMeta({key})");
+            return null;
+        }
+    }
+
+
+    /// <summary>Write (or replace) one value in the Meta table. See <see cref="ReadMeta"/>.</summary>
+    public static void WriteMeta(Model.CryptoExchange exchange, string key, string value)
+    {
+        try
+        {
+            using CandleDatabase database = new(exchange);
+            database.Open();
+            database.Connection.Execute(
+                "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ($Key, $Value)",
+                new { Key = key, Value = value });
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, $"CandleDatabase.WriteMeta({key})");
+        }
+    }
+
+
+    /// <summary>
     /// Open (or create) the candle DB for the given exchange. The DB file lives at
     /// {CandleDataFolder}/{exchange.Name}.db (or {AppDataFolder} when no separate candle folder
     /// is configured). The folder is created if missing so the SQLite file can be written.

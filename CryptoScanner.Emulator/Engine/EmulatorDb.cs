@@ -547,8 +547,13 @@ public static class EmulatorDb
         {
             database.Connection.Execute("PRAGMA foreign_keys = OFF");
 
+            // AssetSnapshot was missing from this list until 04-09-2026: a run writes a row per coin
+            // per day, so it never shrank while everything else was being cleared. It had reached
+            // 922.673 rows over 175 runs. (BarometerSnapshot was the other one and is gone entirely -
+            // the barometer now lives in the $BMP/$BMX candles, see BarometerReplay.)
             foreach (string table in new[]
-                     { "[Asset]", "[Trade]", "[Order]", "PositionStep", "PositionPart", "Position", "Signal", "Zone" })
+                     { "[Asset]", "[Trade]", "[Order]", "PositionStep", "PositionPart", "Position", "Signal", "Zone",
+                       "AssetSnapshot" })
             {
                 database.Connection.Execute($"DROP TABLE IF EXISTS {table}");
             }
@@ -667,11 +672,6 @@ public static class EmulatorDb
                     "delete from AssetSnapshot where EmulatorRunId = @id", new { id = runId }, transaction);
                 database.Connection.Execute(
                     "delete from AssetAdjustment where EmulatorRunId = @id", new { id = runId }, transaction);
-                // BarometerSnapshot arrived with the barometer-in-the-emulator change and also
-                // references EmulatorRun; without this the delete fails on "FOREIGN KEY constraint
-                // failed" and rolls the whole thing back.
-                database.Connection.Execute(
-                    "delete from BarometerSnapshot where EmulatorRunId = @id", new { id = runId }, transaction);
                 database.Connection.Execute(
                     "delete from EmulatorRun where Id = @id", new { id = runId }, transaction);
             }
@@ -722,8 +722,6 @@ public static class EmulatorDb
                 "delete from AssetSnapshot where EmulatorRunId is not null", transaction: transaction);
             database.Connection.Execute(
                 "delete from AssetAdjustment where EmulatorRunId is not null", transaction: transaction);
-            database.Connection.Execute(
-                "delete from BarometerSnapshot where EmulatorRunId is not null", transaction: transaction);
             database.Connection.Execute("delete from EmulatorRun", transaction: transaction);
 
             // Reset the auto-increment counters so the next run starts at id 1 again.

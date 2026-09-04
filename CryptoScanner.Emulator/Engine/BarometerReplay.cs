@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Barometer;
+﻿using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -35,6 +35,19 @@ namespace CryptoScanner.Emulator.Engine;
 /// is the one from the previous minute - the same small lag the live scanner has, where the timer
 /// also runs behind the candle that just closed.
 /// </para>
+/// <para>
+/// Measured ONCE per coin list. Every measurement is written into the candles of the $BMP/$BMX
+/// symbols, where the live scanner has always put it, and a later run over the same coins reads them
+/// back instead of computing them again - which takes the barometer out of the replay loop entirely.
+/// That it is the same answer is not an assumption: runs 802 and 803 had the same period and the same
+/// 66 coins, and on all 39.365 shared moments the values were identical to the cent.
+/// </para>
+/// <para>
+/// This replaced the BarometerSnapshot table on 04-09-2026. That table stored the same measurement a
+/// second time, per run, and was not covered by the purge before a run - 5.566.145 rows over 151
+/// runs, most of the 1,27 GB the database had grown to, and the write-ahead log that came with it
+/// made a run fail on "database is locked".
+/// </para>
 /// </summary>
 internal sealed class BarometerReplay
 {
@@ -70,9 +83,28 @@ internal sealed class BarometerReplay
     // per minute per interval and a fresh object per measurement would be pure garbage.
     private readonly BarometerResult result = new();
 
-    // Rows waiting to be written. Positions are created in the PARALLEL phase of the replay loop, so
-    // this is filled from several threads and drained in the serial phase.
-    private readonly ConcurrentQueue<CryptoBarometerSnapshot> pending = new();
+    /// <summary>
+    /// Whether the stored series may be read back instead of measured again. True when the marker in
+    /// the candle store says the $BMP/$BMX candles were measured over exactly this coin list and this
+    /// volume threshold; false the first time, and after coins are added or removed.
+    /// </summary>
+    private readonly bool reuse;
+
+    /// <summary>The Meta key that says which coin list a quote coin's barometer series belongs to.</summary>
+    internal static string MarkerKey(string quoteName) => "Barometer:" + Constants.SymbolNameBarometerPrice + quoteName;
+
+    /// <summary>
+    /// What the stored series has to match: the coins it was measured over and the volume threshold
+    /// that decided which of them took part at each moment. Both change the outcome, so both are in
+    /// the marker - a run with the threshold at 0 instead of 15 million measures a different market
+    /// over the same coins, which is exactly what happened on 02-09-2026 without anyone noticing.
+    /// </summary>
+    internal static string MarkerFor(CryptoQuoteData quoteData, List<CryptoSymbol> symbols)
+    {
+        List<string> names = [.. symbols.Select(s => s.Name)];
+        names.Sort(StringComparer.Ordinal);
+        return $"volume={quoteData.MinimalVolume};coins={string.Join(",", names)}";
+    }
 
     public BarometerReplay(Core.Model.CryptoExchange exchange, IEnumerable<CryptoSymbol> symbols)
     {
@@ -98,6 +130,22 @@ internal sealed class BarometerReplay
                 intervals.Add(interval);
         }
         intervals.Sort((a, b) => a.Duration.CompareTo(b.Duration));
+
+        // One decision for the whole run, taken here rather than per minute: every quote coin has to
+        // match, otherwise this run measures again and writes a fresh series. Deliberately blunt -
+        // half a series from one coin list and half from another is the kind of mixture that reads
+        // as a real measurement and is not one.
+        reuse = perQuote.Count > 0 && perQuote.TrueForAll(q =>
+            CandleDatabase.ReadMeta(exchange, MarkerKey(q.QuoteData.Name)) == MarkerFor(q.QuoteData, q.Symbols));
+
+        if (reuse)
+            GlobalData.AddTextToLogTab("Barometer: reading the series measured by an earlier run over the same coins");
+        else
+        {
+            foreach ((CryptoQuoteData quoteData, List<CryptoSymbol> quoteSymbols) in perQuote)
+                CandleDatabase.WriteMeta(exchange, MarkerKey(quoteData.Name), MarkerFor(quoteData, quoteSymbols));
+            GlobalData.AddTextToLogTab("Barometer: measuring it for this coin list, later runs read it back");
+        }
     }
 
 
@@ -155,90 +203,133 @@ internal sealed class BarometerReplay
         foreach ((CryptoQuoteData quoteData, List<CryptoSymbol> symbols) in perQuote)
         {
             foreach (CryptoInterval interval in intervals)
-                BarometerTools.CalculateForSymbols(exchange, quoteData, symbols, interval, lastClosedMinute, MinimumSymbols, result);
-        }
-
-        // The market context of the run itself, so a finding like "this strategy earns in a falling
-        // market" has a denominator: how often a falling market occurred at all.
-        if (lastClosedMinute.Minutes % Constants.BarometerHeartbeatMinutes == 0)
-        {
-            foreach ((CryptoQuoteData quoteData, _) in perQuote)
             {
-                foreach (CryptoInterval interval in intervals)
-                {
-                    CryptoBarometerSnapshot? row = BuildRow(quoteData.Name, interval, null);
-                    if (row != null)
-                        pending.Enqueue(row);
-                }
+                // Already measured by an earlier run over the same coins? Then read it back instead
+                // of computing it again. The barometer is a function of the candles, the coin list
+                // and the volume threshold, and none of those changed - runs 802 and 803 proved it
+                // on their own numbers: same period, same 66 coins, and on all 39.365 shared moments
+                // the values were identical to the cent.
+                if (reuse && ReadCandles(quoteData.Name, interval, lastClosedMinute))
+                    continue;
+
+                BarometerTools.CalculateForSymbols(exchange, quoteData, symbols, interval, lastClosedMinute, MinimumSymbols, result);
+                StoreCandles(quoteData.Name, interval);
             }
         }
     }
 
 
     /// <summary>
-    /// Remember what the market looked like when this position was opened. Called from the parallel
-    /// phase: GlobalData.PositionCreated fires right after the position is inserted, so it has an Id.
+    /// Put the stored measurement of this minute back into the exchange data, so everything that
+    /// reads the barometer - the trading conditions, and the five columns a signal records - sees
+    /// exactly what the run that measured it saw. False when there is no candle for this minute,
+    /// which puts the caller back on calculating.
     /// </summary>
-    public void PositionCreated(CryptoPosition position)
+    private bool ReadCandles(string quoteName, CryptoInterval interval, CandleTime at)
     {
-        foreach (CryptoInterval interval in intervals)
+        if (!exchange.TryGetSymbolByPair(Constants.SymbolNameBarometerPrice + quoteName, out CryptoSymbol? primary)
+            || primary == null)
+            return false;
+
+        CryptoCandleList candles = primary.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+        CryptoCandle candle;
+        lock (candles)
         {
-            CryptoBarometerSnapshot? row = BuildRow(position.Symbol.Quote, interval, position.Id);
-            if (row != null)
-                pending.Enqueue(row);
+            if (!candles.TryGetValue(at, out candle))
+                return false;
         }
-    }
 
-
-    private CryptoBarometerSnapshot? BuildRow(string quoteName, CryptoInterval interval, int? positionId)
-    {
-        CryptoBarometerData data = exchange.Data.GetBarometer(quoteName, interval.IntervalPeriod);
-        if (!data.PriceBarometer.HasValue || !data.PriceDateTime.HasValue)
-            return null; // nothing measured (yet) - a row of zeroes would read as a flat market
-
-        return new CryptoBarometerSnapshot
+        CryptoCandle extra = default;
+        bool hasExtra = false;
+        if (exchange.TryGetSymbolByPair(Constants.SymbolNameBarometerExtra + quoteName, out CryptoSymbol? second) && second != null)
         {
-            EmulatorRunId = GlobalData.CurrentEmulatorRunId,
-            PositionId = positionId,
-            MeasureDate = data.PriceDateTime.Value.ToDateTime(),
-            Quote = quoteName,
-            Interval = interval.Name,
-            Average = data.PriceBarometer.Value,
-            Median = data.PriceMedian ?? 0,
-            PercentageRising = data.PricePercentageRising ?? 0,
-            Spread = data.PriceSpread ?? 0,
-            Movement = data.PriceMovement ?? 0,
-            BitcoinVersusMarket = data.PriceBitcoinVersusMarket,
-            SymbolCount = data.PriceSymbolCount ?? 0,
-            OutlierCount = data.PriceOutlierCount ?? 0,
-        };
+            CryptoCandleList extraCandles = second.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+            lock (extraCandles)
+                hasExtra = extraCandles.TryGetValue(at, out extra);
+        }
+
+        CryptoBarometerData data = exchange.Data.GetBarometer(quoteName, interval.IntervalPeriod);
+        data.PriceDateTime = at;
+        data.PriceBarometer = BarometerCandleFields.Read(candle, BarometerGraphValue.Average);
+        data.PriceMedian = BarometerCandleFields.Read(candle, BarometerGraphValue.Median);
+        data.PricePercentageRising = BarometerCandleFields.Read(candle, BarometerGraphValue.Rising);
+        data.PriceSpread = BarometerCandleFields.Read(candle, BarometerGraphValue.Spread);
+        data.PriceSymbolCount = (int)BarometerCandleFields.Read(candle, BarometerGraphValue.SymbolCount);
+        if (hasExtra)
+        {
+            data.PriceMovement = BarometerCandleFields.Read(extra, BarometerGraphValue.Movement);
+            data.PriceBitcoinVersusMarket = BarometerCandleFields.Read(extra, BarometerGraphValue.BitcoinVersusMarket);
+            data.PriceOutlierCount = (int)extra.High;
+        }
+        return true;
     }
 
 
     /// <summary>
-    /// Write what is waiting. Called from the serial phase, so no position is being created while
-    /// the queue is drained.
+    /// Write one measurement into the candles of the two barometer symbols, exactly where the live
+    /// scanner puts it - $BMP&lt;quote&gt; for the average, median, breadth, spread and coin count,
+    /// $BMX&lt;quote&gt; for movement, bitcoin-against-the-market and the outlier count.
+    /// <para>
+    /// This replaced the BarometerSnapshot table on 04-09-2026. That table existed for one reason,
+    /// spelled out in its own summary: "used to live only in the candles of the barometer symbols -
+    /// WHICH THE EMULATOR DOES NOT WRITE". It does now, so the table was storing a second copy of
+    /// something the candle format already holds - and it never shrank, because the purge before a
+    /// run did not cover it. It reached 5.566.145 rows over 151 runs, most of the 1,27 GB the
+    /// database had grown to, and the 1443 MB write-ahead log that made run 807 fail with
+    /// "database is locked".
+    /// </para>
+    /// <para>
+    /// Written at the heartbeat rather than per minute, which is what the snapshot did too. The live
+    /// scanner writes a candle per minute because it draws a seven-hour graph; a seven-month replay
+    /// on that rate would be 1,5 million candles for a figure that moves slowly on the intervals it
+    /// is measured over. The series therefore has hourly spacing - it is read as points, not as
+    /// candlesticks, the same way the graph already treats these symbols.
+    /// </para>
+    /// <para>
+    /// There are no rows per position any more either. A position already carries the average per
+    /// interval in Barometer15m..Barometer1d, filled by SignalCreate, and the rest of the
+    /// measurement is a lookup in this series at the position's open time.
+    /// </para>
     /// </summary>
-    public void Flush()
+    private void StoreCandles(string quoteName, CryptoInterval interval)
     {
-        if (pending.IsEmpty)
+        CryptoBarometerData data = exchange.Data.GetBarometer(quoteName, interval.IntervalPeriod);
+        if (!data.PriceBarometer.HasValue || !data.PriceDateTime.HasValue)
+            return; // nothing measured (yet) - a candle of zeroes would read as a flat market
+
+        CandleTime at = data.PriceDateTime.Value;
+        StoreOne(Constants.SymbolNameBarometerPrice + quoteName, interval, at, data, extra: false);
+        StoreOne(Constants.SymbolNameBarometerExtra + quoteName, interval, at, data, extra: true);
+    }
+
+
+    private void StoreOne(string symbolName, CryptoInterval interval, CandleTime at, CryptoBarometerData data, bool extra)
+    {
+        if (!exchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol) || symbol == null)
             return;
 
-        try
-        {
-            using CryptoDatabase database = new();
-            database.Open();
-            using var transaction = database.BeginTransaction();
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        CryptoCandleList candles = symbolInterval.CandleList;
 
-            while (pending.TryDequeue(out CryptoBarometerSnapshot? row))
-                database.Connection.Insert(row, transaction);
-
-            transaction.Commit();
-        }
-        catch (Exception error)
+        lock (candles)
         {
-            // A missing measurement costs a row in an analysis, it may never cost a trade
-            ScannerLog.Logger.Error(error, "BarometerReplay.Flush");
+            if (!candles.TryGetValue(at, out CryptoCandle candle))
+                candle = new CryptoCandle { OpenTime = at };
+
+            // TickDecimals FIRST: CryptoCandle keeps its prices as integer ticks, so a value written
+            // before the scale is set is rounded to whole numbers - a barometer of 0,89 would come
+            // back as 1. Same reason Store() takes the candle by ref: it is a struct, and assigning
+            // to a copy would store an all-zero candle.
+            candle.TickDecimals = symbol.PriceDecimals;
+            if (extra)
+                BarometerCandleFields.StoreExtra(ref candle, data);
+            else
+                BarometerCandleFields.Store(ref candle, data);
+
+            candles[at] = candle;
+
+            if (at > symbolInterval.LastCandleSynchronized)
+                symbolInterval.LastCandleSynchronized = at;
         }
     }
 

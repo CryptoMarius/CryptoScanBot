@@ -883,39 +883,6 @@ public class CryptoDatabase : IDisposable
     }
 
 
-    private static void CreateTableBarometerSnapshot(CryptoDatabase connection)
-    {
-        if (MissingTable(connection, "BarometerSnapshot"))
-        {
-            connection.Connection.Execute("CREATE TABLE [BarometerSnapshot] (" +
-                "Id INTEGER primary key autoincrement not null," +
-
-                "EmulatorRunId INTEGER NULL," +
-                "PositionId INTEGER NULL," +
-                "MeasureDate TEXT NOT NULL," +
-
-                "Quote TEXT NOT NULL," +
-                "Interval TEXT NOT NULL," +
-
-                "Average TEXT NOT NULL," +
-                "Median TEXT NOT NULL," +
-                "PercentageRising TEXT NOT NULL," +
-                "Spread TEXT NOT NULL," +
-                "Movement TEXT NOT NULL," +
-                "BitcoinVersusMarket TEXT NULL," +
-                "SymbolCount INTEGER NOT NULL," +
-                "OutlierCount INTEGER NOT NULL," +
-                "FOREIGN KEY(EmulatorRunId) REFERENCES EmulatorRun(Id)" +
-            ")");
-            connection.Connection.Execute("CREATE INDEX IdxBarometerSnapshotId ON BarometerSnapshot(Id)");
-            // The two ways these rows are read: everything of one run, and the measurement that
-            // belongs to one position (the join an analysis makes against Position.Id).
-            connection.Connection.Execute("CREATE INDEX IdxBarometerSnapshotEmulatorRunId ON BarometerSnapshot(EmulatorRunId)");
-            connection.Connection.Execute("CREATE INDEX IdxBarometerSnapshotPositionId ON BarometerSnapshot(PositionId)");
-        }
-    }
-
-
     private static void CreateTableZone(CryptoDatabase connection)
     {
         if (MissingTable(connection, "Zone"))
@@ -1093,7 +1060,6 @@ public class CryptoDatabase : IDisposable
         CreateTableAsset(connection);
         CreateTableAssetSnapshot(connection); // after EmulatorRun/Asset (FK target)
         CreateTableAssetAdjustment(connection); // idem
-        CreateTableBarometerSnapshot(connection); // idem
 
         CreateTableZone(connection);
 

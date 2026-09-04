@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 95;
+    public readonly static int CurrentDatabaseVersion = 96;
 
 
     /// <summary>
@@ -2108,6 +2108,49 @@ public class DatabaseMigration
                 transaction: transaction);
             if (zones > 0)
                 GlobalData.AddTextToLogTab($"Database version 95: {zones} zone(s) of HyperLiquid removed, they are rebuilt from the refetched candles");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        if (CurrentVersion > version.Version && version.Version == 95)
+        {
+            // Foreign keys OFF for the drop, and OUTSIDE the transaction because the pragma is a
+            // no-op inside one. BarometerSnapshot references EmulatorRun, and with enforcement on
+            // SQLite turns a DROP TABLE into a delete plus a constraint check PER ROW - on the
+            // 5.566.145 rows this table reached that is the hours-long drop we already ran into
+            // once (see EmulatorDb.PurgeBeforeRun). Restored to what it was, not blindly to on:
+            // Microsoft.Data.Sqlite pools the native handle per connection string.
+            int previousForeignKeys = database.Connection.ExecuteScalar<int>("PRAGMA foreign_keys");
+            database.Connection.Execute("PRAGMA foreign_keys = OFF");
+            try
+            {
+                database.Connection.Execute("DROP TABLE IF EXISTS BarometerSnapshot");
+            }
+            finally
+            {
+                database.Connection.Execute($"PRAGMA foreign_keys = {previousForeignKeys}");
+            }
+
+            using var transaction = database.BeginTransaction();
+
+            // BarometerSnapshot is gone: the emulator now writes its barometer into the candles of
+            // the $BMP/$BMX symbols, the same place the live scanner has always put it, so the table
+            // held a second copy of a measurement the candle format already carries. Its own summary
+            // named the reason it existed - "which the emulator does not write" - and that reason no
+            // longer holds.
+            //
+            // It was never cleared either: the purge before a run did not cover it, so it grew with
+            // every run instead of with one. On this machine it reached 5.566.145 rows over 151 runs,
+            // most of the 1,27 GB the database had grown to, and the write-ahead log that came with
+            // it made a run fail with "database is locked" on 04-09-2026.
+            //
+            // Nothing reads it: only the emulator wrote it, and what a finished run needs sits on the
+            // run row and on the position (Barometer15m..Barometer1d).
+            GlobalData.AddTextToLogTab("Database version 96: BarometerSnapshot removed, the barometer lives in the $BMP/$BMX candles");
 
             // update version
             version.Version += 1;

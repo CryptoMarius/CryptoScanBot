@@ -22,7 +22,7 @@ public static class Helper
     {
 #if DEBUG
         // Keep these longer
-        if (signal.Strategy == "trend")
+        if (signal.Strategy == "trend" || signal.Strategy == "trend.secondary")
             return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 5);
 #endif
         // Keep these longer (fvg, dlz. dlz.near)
