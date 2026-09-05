@@ -1,4 +1,4 @@
-@using CryptoScanner.Core.Core
+﻿@using CryptoScanner.Core.Core
 @using CryptoScanner.Core.Model
 @using CryptoScanner.Core.Settings
 
@@ -54,10 +54,40 @@
         </div>
     </div>
 
+    @* Products: the code behind the dot in a symbol name. A product that is switched off is not
+       fetched at all, so its symbols disappear from the grid on the next refresh (see
+       CryptoProductData). Same table style as the quote coins above. *@
+    <div class="settings-group" style="max-width: none; width: 100%; margin-top: 16px;">
+        <div class="settings-group-header">Products</div>
+        <div class="settings-group-body">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Active</th>
+                        <th style="width: 100px;">Product</th>
+                        <th style="width: 70px;">Symbols</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _productItems)
+                    {
+                        <tr>
+                            <td><input type="checkbox" class="input-checkbox" @bind="item.IsEnabled"
+                                       title="Fetch the symbols of this product. Switched off: the symbols go inactive on the next symbol refresh" /></td>
+                            <td>@item.Name</td>
+                            <td class="text-right">@item.SymbolCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
 @code {
     private List<QuoteItem> _quoteItems = [];
+    private List<ProductItem> _productItems = [];
 
     protected override void OnInitialized()
     {
@@ -83,6 +113,24 @@
                 Source = qd,
             });
         }
+
+        // The number of active symbols per product on the active exchange: a product that is
+        // switched off shows zero after the next refresh, which is the confirmation the user wants.
+        _productItems.Clear();
+        var exchange = GlobalData.ActiveExchange;
+        foreach (var pd in settings.Products.Values)
+        {
+            int count = 0;
+            if (exchange != null)
+                count = exchange.SymbolListName.Values.Count(s => s.Status == 1 && s.Product == pd.Name);
+            _productItems.Add(new ProductItem
+            {
+                Name = pd.Name,
+                IsEnabled = pd.Active,
+                SymbolCount = count,
+                Source = pd,
+            });
+        }
     }
 
     public void SaveTo(SettingsBasic settings)
@@ -99,8 +147,22 @@
             item.Source.DisplayColor = item.ParsedColor;
         }
 
+        foreach (var item in _productItems)
+        {
+            item.Source.Active = item.IsEnabled;
+        }
+
         // The symbol grid caches its background style per row; tell it the colours moved.
         CryptoScanner.UI.ViewModels.ColorHelper.InvalidateQuoteColors();
+    }
+
+
+    private class ProductItem
+    {
+        public string Name { get; set; } = "";
+        public bool IsEnabled { get; set; }
+        public int SymbolCount { get; set; }
+        public CryptoProductData Source { get; set; } = null!;
     }
 
 

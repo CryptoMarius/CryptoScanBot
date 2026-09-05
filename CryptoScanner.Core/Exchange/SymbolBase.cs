@@ -215,6 +215,16 @@ public class SymbolBase()
             return false;
         }
 
+        // A product the user switched off in the settings (GOLDUSDC.XYZ with XYZ off) is not
+        // accepted, so the instrument does not land in the caller's active list and its
+        // deactivation loop puts an existing symbol on status 0 - the same route a delisted
+        // instrument takes. That is what hides it: no candles, no subscription, not in the grid.
+        if (!GlobalData.IsProductActive(info.Product))
+        {
+            symbol = null;
+            return false;
+        }
+
         // Recognised by the name the EXCHANGE gave the instrument, not by the scanner name. Those two
         // are not the same question: an exchange can offer one pair as several instruments, and every
         // one of them parses to the same pair. Looking up by the scanner name handed back the symbol

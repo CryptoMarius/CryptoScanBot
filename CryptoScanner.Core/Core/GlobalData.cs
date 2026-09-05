@@ -464,6 +464,46 @@ public static class GlobalData
         return quoteData;
     }
 
+    /// <summary>
+    /// Products that start switched off when the settings meet them for the first time. Paragon
+    /// ("para") is not carried by Altrady, so every signal on one of its instruments was a signal
+    /// nobody could act on - reported by the testers on 04-09-2026. TradingView does chart them
+    /// (HIP3PARA), so this is a choice for the trading app the scanner is built around, not a
+    /// statement about the market. A default only: the user can switch it on in the settings.
+    /// </summary>
+    private static readonly string[] DefaultDisabledProducts = ["PARA"];
+
+    /// <summary>
+    /// The settings of a product, added the first time it comes by - the same way
+    /// <see cref="AddQuoteData"/> handles a quote. A new product is active unless it is one of
+    /// <see cref="DefaultDisabledProducts"/>; what the user set afterwards is never overwritten.
+    /// </summary>
+    public static CryptoProductData AddProductData(string product)
+    {
+        product = product.ToUpper();
+        if (!Settings.Products.TryGetValue(product, out CryptoProductData? productData))
+        {
+            productData = new CryptoProductData
+            {
+                Name = product,
+                Active = !DefaultDisabledProducts.Contains(product),
+            };
+            Settings.Products.Add(product, productData);
+        }
+        return productData;
+    }
+
+    /// <summary>
+    /// Whether the symbols of this product are fetched. An empty product (a barometer symbol, or an
+    /// exchange that names none) is always accepted - there is nothing to switch off.
+    /// </summary>
+    public static bool IsProductActive(string product)
+    {
+        if (product.Length == 0)
+            return true;
+        return AddProductData(product).Active;
+    }
+
     public static void AddSymbol(CryptoSymbol symbol)
     {
         if (ApplicationParams.Options != null && !string.IsNullOrEmpty(ApplicationParams.Options.AppLimitSymbols))

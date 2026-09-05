@@ -150,6 +150,7 @@ public partial class ConfigurationViewModel : ObservableObject
 
         // Base coins
         QuoteTabViewModel.LoadConfig(settings.QuoteCoins);
+        QuoteTabViewModel.LoadConfig(settings.Products, GlobalData.ActiveExchange);
 
         // Strategies
         // Read-only means we are inspecting a stored settings set, so the plugin tabs must come from

@@ -45,6 +45,15 @@ public static class ConfigurationApplier
             if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
                 activeQuoteData += "," + quoteData.Name;
         }
+
+        // The products count as well: switching one off (or on) has to deactivate or bring back
+        // its symbols, and that is done by the symbol refresh the reload below performs. Without
+        // this the change waited for the hourly refresh, and the user saw nothing happen.
+        foreach (CryptoProductData productData in GlobalData.Settings.Products.Values)
+        {
+            if (productData.Active)
+                activeQuoteData += ";" + productData.Name;
+        }
         return activeQuoteData;
     }
 

@@ -35,6 +35,12 @@ public class SettingsBasic
     /// </summary>
     public SortedList<string, CryptoQuoteData> QuoteCoins { get; set; } = [];
 
+    /// <summary>
+    /// Products (the code behind the dot in a symbol name), each of which can be switched off as a
+    /// whole. Filled as products come by, like the quote coins - see <see cref="CryptoProductData"/>.
+    /// </summary>
+    public SortedList<string, CryptoProductData> Products { get; set; } = [];
+
     // White and blacklist settings
     public List<string> WhiteListOversold { get; set; } = [];
     public List<string> BlackListOversold { get; set; } = [];

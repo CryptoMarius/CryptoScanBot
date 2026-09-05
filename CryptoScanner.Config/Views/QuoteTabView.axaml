@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -95,7 +95,51 @@
                 </ItemsControl.ItemTemplate>
                 
             </ItemsControl>
-            
+
+            <!-- Products: the code behind the dot in a symbol name. A product that is switched off
+                 is not fetched at all, so its symbols disappear from the grid on the next refresh
+                 (see CryptoProductData). -->
+            <TextBlock Text="Products" FontWeight="SemiBold" FontSize="13" Margin="0,16,0,8"/>
+
+            <!-- Header Row -->
+            <Grid ColumnDefinitions="30,100,100" Margin="0,0,0,8"
+                  Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+                <TextBlock Grid.Column="0" Text="" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Product" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="Symbols" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
+            </Grid>
+
+            <!-- Items -->
+            <ItemsControl ItemsSource="{Binding Products}">
+
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical" Spacing="4"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="30,100,100" RowDefinitions="Auto" Margin="0,0,0,8">
+
+                            <!-- Checkbox -->
+                            <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" Margin="0,0,8,0"
+                                      ToolTip.Tip="Fetch the symbols of this product. Switched off: the symbols go inactive on the next symbol refresh"/>
+
+                            <!-- Product name -->
+                            <TextBlock Grid.Column="1" Text="{Binding Product}" FontSize="12"
+                                       HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
+
+                            <!-- Symbol count -->
+                            <TextBlock Grid.Column="2" Text="{Binding SymbolCount, StringFormat='{}{0} symbols'}"
+                                       FontWeight="SemiBold" FontSize="12"
+                                       HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+
+            </ItemsControl>
+
         </StackPanel>
     </ScrollViewer>
 
