@@ -63,6 +63,137 @@ public static class EmulatorQueueFile
 
 
     /// <summary>
+    /// Turns <c>"Force": true</c> off for one entry in a queue file, after that entry has run.
+    /// <para>
+    /// Force exists to replay a run the duplicate check would skip. Once that replay is in the
+    /// database the flag has done its work, and left in the file it makes the entry run AGAIN on
+    /// every restart of the batch - which is what happened on 05-09-2026: 45 entries were skipped
+    /// as duplicates and the one with Force spent forty minutes reproducing run 838. Taking the
+    /// flag out of the file, rather than the entry out of the file, keeps the entry where it is
+    /// documented and where the archive copy expects it.
+    /// </para>
+    /// <para>
+    /// The file is edited in place, byte for byte: only the word <c>true</c> behind that one Force
+    /// becomes <c>false</c>. Everything else - the one-line-per-entry layout, comments, the order of
+    /// the properties - stays exactly as someone wrote it, which a round trip through the serializer
+    /// would not do. The entry is found by its label, so a queue that another session extended in
+    /// the meantime (the file is shared) still gets the right line; an entry without a label is
+    /// found by its position instead.
+    /// </para>
+    /// </summary>
+    /// <returns>True when the file was changed; false when the entry has no Force to turn off,
+    /// when it is not in the file, or when the file cannot be read.</returns>
+    public static bool ResetForce(string path, string? label, int index)
+    {
+        byte[] bytes;
+        try
+        {
+            bytes = File.ReadAllBytes(path);
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddTextToLogTab($"EmulatorQueueFile.ResetForce FAILED reading {path}: {ex.Message}");
+            return false;
+        }
+
+        long position = FindForceTrue(bytes, label, index);
+        if (position < 0)
+            return false;
+
+        // "true" is four bytes, "false" is five: splice rather than overwrite.
+        byte[] replacement = "false"u8.ToArray();
+        byte[] result = new byte[bytes.Length + 1];
+        Buffer.BlockCopy(bytes, 0, result, 0, (int)position);
+        Buffer.BlockCopy(replacement, 0, result, (int)position, replacement.Length);
+        Buffer.BlockCopy(bytes, (int)position + 4, result, (int)position + replacement.Length, bytes.Length - (int)position - 4);
+
+        try
+        {
+            File.WriteAllBytes(path, result);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddTextToLogTab($"EmulatorQueueFile.ResetForce FAILED writing {path}: {ex.Message}");
+            return false;
+        }
+    }
+
+
+    /// <summary>
+    /// The byte offset of the <c>true</c> behind the Force property of the entry that matches
+    /// <paramref name="label"/> (or, without a label, sits at <paramref name="index"/>), or -1.
+    /// Walks the tokens with <see cref="Utf8JsonReader"/> so the offset is exact whatever the
+    /// layout of the file is.
+    /// </summary>
+    private static long FindForceTrue(byte[] bytes, string? label, int index)
+    {
+        // Utf8JsonReader does not skip a byte order mark; the offsets it reports are relative to
+        // the span it is given, so remember what was cut off in front.
+        int bom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF ? 3 : 0;
+        bool matchByLabel = !string.IsNullOrWhiteSpace(label);
+
+        try
+        {
+            var reader = new Utf8JsonReader(bytes.AsSpan(bom), new JsonReaderOptions
+            {
+                CommentHandling = JsonCommentHandling.Skip,
+                AllowTrailingCommas = true,
+            });
+
+            int entryIndex = -1;
+            string? entryLabel = null;
+            long forceTrueAt = -1;
+
+            while (reader.Read())
+            {
+                // The entries are the objects directly inside the outer array (depth 1); their own
+                // properties sit at depth 2. Nested blocks such as Trading are deeper and are skipped.
+                if (reader.TokenType == JsonTokenType.StartObject && reader.CurrentDepth == 1)
+                {
+                    entryIndex++;
+                    entryLabel = null;
+                    forceTrueAt = -1;
+                    continue;
+                }
+
+                if (reader.TokenType == JsonTokenType.EndObject && reader.CurrentDepth == 1)
+                {
+                    bool matches = matchByLabel
+                        ? string.Equals(entryLabel, label, StringComparison.Ordinal)
+                        : entryIndex == index;
+                    if (matches)
+                        return forceTrueAt < 0 ? -1 : forceTrueAt + bom;
+                    continue;
+                }
+
+                if (reader.TokenType != JsonTokenType.PropertyName || reader.CurrentDepth != 2)
+                    continue;
+
+                string? name = reader.GetString();
+                if (!reader.Read())
+                    break;
+
+                if (string.Equals(name, "Label", StringComparison.OrdinalIgnoreCase)
+                    && reader.TokenType == JsonTokenType.String)
+                    entryLabel = reader.GetString();
+                else if (string.Equals(name, "Force", StringComparison.OrdinalIgnoreCase)
+                    && reader.TokenType == JsonTokenType.True)
+                    forceTrueAt = reader.TokenStartIndex;
+                else if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
+                    reader.Skip();
+            }
+        }
+        catch (JsonException ex)
+        {
+            GlobalData.AddTextToLogTab($"EmulatorQueueFile.ResetForce: file cannot be parsed - {ex.Message}");
+        }
+
+        return -1;
+    }
+
+
+    /// <summary>
     /// The folder the queue backups live in, next to the queue file itself. They used to pile up in
     /// the data folder beside the file the emulator reads - 62 of them in five weeks, in thirteen
     /// different naming shapes, because every session invented its own name by hand.

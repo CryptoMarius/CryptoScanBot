@@ -706,7 +706,7 @@ public partial class MainWindowViewModel : ObservableObject
         IsRunning = true;
         try
         {
-            await RunQueueEntriesAsync(queue, baseConfig, owner, EmulatorQueueFile.FileName);
+            await RunQueueEntriesAsync(queue, baseConfig, owner, EmulatorQueueFile.FileName, EmulatorQueueFile.FilePath);
         }
         finally
         {
@@ -792,7 +792,7 @@ public partial class MainWindowViewModel : ObservableObject
                 }
 
                 GlobalData.AddTextToLogTab($"Queue folder: starting {name} with {queue.Count} entries");
-                bool finished = await RunQueueEntriesAsync(queue, baseConfig, null, name);
+                bool finished = await RunQueueEntriesAsync(queue, baseConfig, null, name, file);
 
                 if (_stopRequested)
                 {
@@ -875,10 +875,12 @@ public partial class MainWindowViewModel : ObservableObject
     /// <param name="owner">The window to show the algorithm selection dialog in; null when there is
     /// nobody to ask, in which case every entry has to name its algorithm.</param>
     /// <param name="source">What the entries came from, for the log and the status line.</param>
+    /// <param name="queueFilePath">The file the entries were read from, so an entry that ran with
+    /// Force can have that flag turned off in it afterwards; null when there is no file to edit.</param>
     /// <returns>True when the batch ran to its end (failed runs included); false when it could not
     /// start or was stopped.</returns>
     private async Task<bool> RunQueueEntriesAsync(List<EmulatorQueueEntry> queue, EmulatorRunConfig baseConfig,
-        Window? owner, string source)
+        Window? owner, string source, string? queueFilePath = null)
     {
         // Check EVERY entry before the first run instead of discovering a bad one hours later. An
         // entry that asks for a setting the code no longer has cannot run, and until 03-09-2026 that
@@ -1229,6 +1231,17 @@ public partial class MainWindowViewModel : ObservableObject
                         }
 
                         bool completed = await RunOnceAsync(runConfig, entry.Force);
+
+                        // Force has done its work once the replay is in the database. Left in the
+                        // file it would replay the entry on every restart of the batch, so the flag
+                        // is turned off in the file - the entry itself stays. Only the file changes:
+                        // the entry in memory keeps Force for the other algorithms of this batch.
+                        if (completed && entry.Force && queueFilePath != null
+                            && EmulatorQueueFile.ResetForce(queueFilePath, entry.Label, i))
+                            GlobalData.AddTextToLogTab(
+                                $"Queue: entry {i + 1} \"{entry.Label}\" ran with Force - the flag is turned off in "
+                                + $"{Path.GetFileName(queueFilePath)}, so a restart skips it as a duplicate");
+
                         if (!completed)
                         {
                             // Stop means stop - the rest of the queue is not wanted either. A run
