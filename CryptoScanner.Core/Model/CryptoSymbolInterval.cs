@@ -99,11 +99,6 @@ public class CryptoSymbolInterval
     public int IndicatorHubAddCount = 0;
     public SortedDictionary<CandleTime, CryptoData> Data = [];
 
-    // Band width and excursion statistics — how much room there is between the Bollinger bands and
-    // what the price does after touching one (see BandRangeTracker). Rebuilt together with the
-    // indicator hub, but from a longer window than the hub's warm-up uses.
-    public BandRangeTracker? BandRange = null;
-
 
     public bool TryGetCandle(CandleTime time, out MyData? myData)
     {

@@ -204,8 +204,6 @@ internal class LiveDataViewModelComparer(LiveDataColumnEnum sortColumn) : ICompa
             LiveDataColumnEnum.BB => (a.CandleData?.BollingerBandsPercentage ?? 0).CompareTo(b.CandleData?.BollingerBandsPercentage ?? 0),
             LiveDataColumnEnum.BbLower => (a.CandleData?.BollingerBandsLowerBand ?? 0).CompareTo(b.CandleData?.BollingerBandsLowerBand ?? 0),
             LiveDataColumnEnum.BbUpper => (a.CandleData?.BollingerBandsUpperBand ?? 0).CompareTo(b.CandleData?.BollingerBandsUpperBand ?? 0),
-            LiveDataColumnEnum.RangeIndex => (BandRangeOf(a)?.Index ?? 0).CompareTo(BandRangeOf(b)?.Index ?? 0),
-            LiveDataColumnEnum.RangeCount => (BandRangeOf(a)?.MeasurementCount ?? 0).CompareTo(BandRangeOf(b)?.MeasurementCount ?? 0),
             LiveDataColumnEnum.Rsi => (a.CandleData?.Rsi ?? 0).CompareTo(b.CandleData?.Rsi ?? 0),
             LiveDataColumnEnum.LuxIndicator5m => (a.CandleData?.Lux5mValue ?? 0).CompareTo(b.CandleData?.Lux5mValue ?? 0),
             LiveDataColumnEnum.MacdValue => (a.CandleData?.MacdValue ?? 0).CompareTo(b.CandleData?.MacdValue ?? 0),
@@ -228,7 +226,4 @@ internal class LiveDataViewModelComparer(LiveDataColumnEnum sortColumn) : ICompa
 
         return result;
     }
-
-    private static BandRangeTracker? BandRangeOf(CryptoLiveData liveData)
-        => liveData.Symbol.GetSymbolInterval(liveData.Interval.IntervalPeriod).BandRange;
 }

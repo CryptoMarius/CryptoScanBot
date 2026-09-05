@@ -631,90 +631,51 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     ///   (high ≥ mahi5 OR high ≥ mahi10)
     /// AND (close ≤ mahi5 OR close ≤ mahi10)
     /// AND close ≤ mid (MiddleBuffer)
+    ///
+    /// Since 2026-09-05 the strict reading of the rules is available next to this loose OmniView
+    /// form (BbmaSettings.ReentryStrict, on by default) — see SignalBbmaOmniBase.IsReentrySell.
     /// </summary>
-    private bool IsReentry(MyData data)
-    {
-        decimal close = data.Candle.Close;
-        decimal high = data.Candle.High;
-        decimal mid = (decimal)data.CandleData!.Sma20!.Value;
-        decimal mahi5 = (decimal)data.CandleData!.Wma05High!.Value;
-        decimal mahi10 = (decimal)data.CandleData!.Wma10High!.Value;
+    private bool IsReentry(MyData data) => IsReentrySell(data, BbmaPlugin.Settings.ReentryStrict);
 
-        bool touchedMa = high >= mahi5 || high >= mahi10;
-        bool closedBack = close <= mahi5 || close <= mahi10;
-        return touchedMa && closedBack && close <= mid;
-    }
 
+    // The HTF setup check used to live here (a private CheckHtf per side). Since 2026-09-05 it
+    // is SignalBbmaOmniBase.CheckHtf, written once over ClassifyBar / IsMhv, and it runs on the
+    // classifier of the HTF made by CreateForInterval — see the base class for why.
+
+    public override OmniBar ClassifyBar(MyData data) => GetOmniBar(data);
+
+    public override bool IsMhv(MyData cursor, MyData next) => IsMhvSell(cursor, next);
 
     /// <summary>
-    /// HTF validation — mirror of <see cref="SignalBbmaOmniLong.CheckHtf"/>.
-    /// MHV Sell requires knowledge of the next bar — we track nextCursor inside the loop.
+    /// A short-side classifier for <paramref name="interval"/> with its opposite-side checkers wired
+    /// up for that interval — see <see cref="SignalBbmaOmniBase.CreateForInterval"/>.
     /// </summary>
-    private bool CheckHtf(CryptoInterval interval, MyData current, out string htfSetup)
+    public override SignalBbmaOmniBase CreateForInterval(CryptoInterval interval)
     {
-        htfSetup = "";
-
-        const int CsmLookback = 20;
-        const int CsdLookback = 20;
-        const int TpwLookback = 10;
-        const int MhvLookback = 10;
-        const int MinGap = 3;
-
-        int csmIndex = -1;
-        int csdIndex = -1;
-        int tpwIndex = -1;
-        int mhvIndex = -1;
-
-        MyData? cursor = current;
-        MyData? nextCursor = null;
-        int max = Math.Max(CsmLookback, Math.Max(CsdLookback, Math.Max(TpwLookback, MhvLookback)));
-        for (int i = 0; i < max; i++)
+        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
+        var opposite = new SignalBbmaOmniLong
         {
-            nextCursor = cursor;
-            if (!GetPrevCandle(interval, cursor, out cursor) || cursor == null)
-                break;
-
-            // Independent buffer check — mirrors reading csak_sell[i]/csak2_sell[i]/csaa_sell[i]/
-            // CrossEMA50mBB_sell[i]/mmt_sell[i]/tpw_sell[i] directly, not a single derived state.
-            OmniBar bar = GetOmniBar(cursor);
-            if (csmIndex < 0 && i < CsmLookback && bar.Csm) csmIndex = i;
-            // CSD, CSAK2, CSAA, and Cross are all treated as "CSD-class" setup signals for HTF validation
-            if (csdIndex < 0 && i < CsdLookback && bar.CsdClass) csdIndex = i;
-            if (tpwIndex < 0 && i < TpwLookback && bar.Tpw) tpwIndex = i;
-
-            if (mhvIndex < 0 && i < MhvLookback && nextCursor != null && IsMhvSell(cursor, nextCursor))
-                mhvIndex = i;
-        }
-
-        // Priority 1 — MHV
-        if (mhvIndex >= 0 && csmIndex > mhvIndex && csmIndex - mhvIndex >= MinGap)
+            Symbol = Symbol,
+            Interval = interval,
+            SymbolInterval = symbolInterval,
+            SignalSide = CryptoTradeSide.Long,
+            SignalStrategy = SignalStrategy,
+            CandleLast = CandleLast,
+        };
+        var classifier = new SignalBbmaOmniShort
         {
-            htfSetup = "MHV";
-            return true;
-        }
-
-        // Priority 2 — TPW
-        if (tpwIndex >= 0 && csmIndex > tpwIndex && csmIndex - tpwIndex >= MinGap)
-        {
-            htfSetup = "TPW";
-            return true;
-        }
-
-        // Priority 3 — CSM/Reentry
-        if (csmIndex >= 0)
-        {
-            htfSetup = "CSM";
-            return true;
-        }
-
-        // Priority 4 — CSD-class
-        if (csdIndex >= 0)
-        {
-            htfSetup = "CSD";
-            return true;
-        }
-
-        return false;
+            Symbol = Symbol,
+            Interval = interval,
+            SymbolInterval = symbolInterval,
+            SignalSide = CryptoTradeSide.Short,
+            SignalStrategy = SignalStrategy,
+            CandleLast = CandleLast,
+        };
+        classifier.OppositeExtremeChecker = opposite.IsExtremeBuyBar;
+        classifier.OppositeCsmChecker = opposite.IsCsmBuyBar;
+        opposite.OppositeExtremeChecker = classifier.IsExtremeSellBar;
+        opposite.OppositeCsmChecker = classifier.IsCsmSellBar;
+        return classifier;
     }
 
 
@@ -744,6 +705,7 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     public override bool IsSignal()
     {
         ExtraText = "";
+        SlPercentage = null;
         string logPrefix = $"{Symbol.Name} {Interval.Name} bbma.omni {SignalSide} ";
 
         // Ephemeral opposite-side (Long) classifier, used purely to evaluate its Extreme
@@ -793,8 +755,10 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
 
         OmniState stateLtfBack = OmniState.None;
         MyData? candleLtfNext = null;
+        int ltfLookback = 0;
         for (int i = 0; i < 30; i++)
         {
+            ltfLookback = i;
             candleLtfNext = candleLtf;
             if (!GetPrevCandle(candleLtf, out candleLtf) || candleLtf == null)
             {
@@ -826,6 +790,13 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
             //GlobalData.AddTextToLogTab($"{logPrefix} LTF walkback: no setup found (last={stateLtfBack})");
             return false;
         }
+
+        // The pullback has to take its time — see SignalBbmaOmniLong.IsSignal.
+        if (TriggerTooRecent(ltfLookback + 1, BbmaPlugin.Settings.ReentryMinCandlesAfterTrigger))
+        {
+            ExtraText = $"LTF trigger {stateLtfBack} only {ltfLookback + 1} candle(s) back (min {BbmaPlugin.Settings.ReentryMinCandlesAfterTrigger})";
+            return false;
+        }
         //GlobalData.AddTextToLogTab($"{logPrefix} LTF walkback: found {stateLtfBack}");
 
         var resultMtf = IndicatorEngine.CalculateIndicatorsForInterval(
@@ -836,7 +807,8 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
             //GlobalData.AddTextToLogTab($"{logPrefix} MTF ({resultMtf.higherInterval.Interval.Name}): no data (success={resultMtf.success})");
             return false;
         }
-        OmniState stateMtf = GetOmniState(resultMtf.candle);
+        // Classified by an MTF instance: the two-bar conditions read MTF candles, not LTF ones.
+        OmniState stateMtf = CreateForInterval(resultMtf.higherInterval.Interval).ClassifyState(resultMtf.candle);
         //GlobalData.AddTextToLogTab($"{logPrefix} MTF ({resultMtf.higherInterval.Interval.Name})={stateMtf}");
 
         var resultHtf = IndicatorEngine.CalculateIndicatorsForInterval(
@@ -848,19 +820,24 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
             return false;
         }
         // HTF trend filter: EMA50 above mid-BB AND Wma05High above mid-BB → bearish bias
-        double ema50Htf = resultHtf.candle.CandleData!.Ema50!.Value;
-        double midBbHtf = resultHtf.candle.CandleData!.Sma20!.Value;
-        double wma05HighHtf = resultHtf.candle.CandleData!.Wma05High!.Value;
-        if (ema50Htf <= midBbHtf || wma05HighHtf <= midBbHtf)
+        // (that was the condition until 2026-09-05; it demanded the WMA zone ABOVE the mid, the
+        // opposite of OmniView's own Red Zone, and let only a deep HTF correction through).
+        // Now: the OmniView Red Zone — EMA50 at or above the mid-BB, the MA5/10 zone at or
+        // below it (see SignalBbmaOmniBase.IsHtfTrendBearish).
+        if (!IsHtfTrendBearish(resultHtf.candle))
         {
-            ExtraText = $"HTF ema50 not above mid-BB — bullish bias";
+            double ema50Htf = resultHtf.candle.CandleData!.Ema50!.Value;
+            double midBbHtf = resultHtf.candle.CandleData!.Sma20!.Value;
+            double wma05HighHtf = resultHtf.candle.CandleData!.Wma05High!.Value;
+            ExtraText = $"HTF not in the bearish zone (ema50 {ema50Htf:F4}, wma05High {wma05HighHtf:F4}, mid {midBbHtf:F4})";
             //GlobalData.AddTextToLogTab($"{logPrefix} HTF trend filter failed: ema50={ema50Htf:F4} wma05High={wma05HighHtf:F4} mid={midBbHtf:F4}");
             return false;
         }
 
         // HTF must currently be in Reentry as well — checked on the buffer directly (see
         // SignalBbmaOmniLong.IsSignal for the rationale).
-        OmniBar htfBar = GetOmniBar(resultHtf.candle);
+        SignalBbmaOmniBase htfClassifier = CreateForInterval(resultHtf.higherInterval.Interval);
+        OmniBar htfBar = htfClassifier.ClassifyBar(resultHtf.candle);
         if (!htfBar.Reentry)
         {
             ExtraText = $"HTF not in Reentry ({DeriveLabel(htfBar)})";
@@ -870,9 +847,9 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         OmniState stateHtf = DeriveLabel(htfBar);
         //GlobalData.AddTextToLogTab($"{logPrefix} HTF ({resultHtf.higherInterval.Interval.Name})={stateHtf}");
 
-        if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle, out string htfSetup))
+        if (!htfClassifier.CheckHtf(resultHtf.candle, out string htfSetup))
         {
-            ExtraText = $"HTF no CSM/CSD/TPW/MHV setup";
+            ExtraText = $"HTF setup: {htfSetup}";
             //GlobalData.AddTextToLogTab($"{logPrefix} HTF CheckHtf: no setup found");
             return false;
         }
@@ -881,9 +858,17 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         // Code match — order: HTF + MTF + LTF (highest TF first).
         string code = OmniStateCode(stateHtf) + OmniStateCode(stateMtf) + OmniStateCode(stateLtfBack);
         string ltfCode = OmniStateCode(stateLtfBack);
-        if (code[0] == 'R' && ltfCode != "-" && ltfCode != "R")
+        if (IsCodeMatch(code))
         {
+            // The strategy's own stop: just above the high of the reentry candle (plus margin),
+            // handed to the trader via OverrideSlPercentage. Null leaves the global stop loss.
+            BbmaSettings settings = BbmaPlugin.Settings;
+            if (settings.StopBeyondReentryCandle)
+                SlPercentage = StopPercentageBeyondCandle(CandleLast, CryptoTradeSide.Short, settings.StopMarginPercentage);
+
             ExtraText = $"{code} [{htfSetup}] {resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name}";
+            if (SlPercentage != null)
+                ExtraText += $" sl {SlPercentage.Value:N2}%";
             //GlobalData.AddTextToLogTab($"{logPrefix} SIGNAL code={code} [{htfSetup}]");
             return true;
         }

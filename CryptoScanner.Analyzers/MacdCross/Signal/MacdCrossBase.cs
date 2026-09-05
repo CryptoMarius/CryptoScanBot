@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Analyzers.MacdCross.Signal;
@@ -23,7 +23,15 @@ public class MacdCrossBase : SignalCreateBase
         && data.CandleData?.MacdValue != null
         && data.CandleData.MacdSignal != null;
 
-    public override bool HasExitSignal => MacdCrossPlugin.Settings.ExitOnCrossBack;
+    public override bool HasExitSignal => Settings.ExitOnCrossBack;
+
+
+    /// <summary>
+    /// The settings this instance reads. Virtual so a variant that derives from this strategy can
+    /// hand back its OWN settings object (a MacdCrossSettings subclass), which keeps the two
+    /// strategies tunable apart from each other instead of sharing one set of values.
+    /// </summary>
+    protected virtual MacdCrossSettings Settings => MacdCrossPlugin.Settings;
 
 
     /// <summary>
@@ -45,7 +53,7 @@ public class MacdCrossBase : SignalCreateBase
     /// history is not there yet, which at the start of a run it is not - GetPrevCandle also checks
     /// that the older candle has its MACD, so a warming-up hub says no here too.
     /// </summary>
-    private bool CollectCandles(int count, List<MyData> candles)
+    protected bool CollectCandles(int count, List<MyData> candles)
     {
         if (candles.Count == 0)
             candles.Add(CandleLast);
@@ -66,7 +74,7 @@ public class MacdCrossBase : SignalCreateBase
     public override bool IsSignal()
     {
         ExtraText = "";
-        MacdCrossSettings settings = MacdCrossPlugin.Settings;
+        MacdCrossSettings settings = Settings;
         int confirm = Math.Max(0, settings.ConfirmationCandles);
 
         // The candle being evaluated, the confirmation candles behind it, and one more: the candle
@@ -126,11 +134,34 @@ public class MacdCrossBase : SignalCreateBase
         if (!VolumeOkay(settings, candles, out string volumeText))
             return false;
 
+        // The last word goes to the variant, if there is one: it walks the furthest back, so it runs
+        // once everything above has already said yes.
+        if (!ExtraFiltersOkay(candles, out string variantText))
+            return false;
+
         string direction = SignalSide == CryptoTradeSide.Long ? "above" : "under";
         ExtraText = confirm == 0
             ? $"macd crossed {direction} the signal line, {distance:N3}% apart"
             : $"macd crossed {direction} the signal line {confirm} candle(s) ago, {distance:N3}% apart";
-        ExtraText += trendText + volumeText;
+        ExtraText += trendText + volumeText + variantText;
+        return true;
+    }
+
+
+    /// <summary>
+    /// A hook for a strategy that derives from this one: an extra test, run last because every
+    /// filter above it is cheaper. Returning false means no signal, and the override writes its own
+    /// reason into <see cref="SignalCreateBase.ExtraText"/>; returning true may add a phrase to
+    /// <paramref name="text"/>, which is appended to the signal's text.
+    /// <para>
+    /// <paramref name="candles"/> is the list the checks above already walked, newest first, and can
+    /// be extended further back with <see cref="CollectCandles"/> - so the walk is never done twice
+    /// for the same candle.
+    /// </para>
+    /// </summary>
+    protected virtual bool ExtraFiltersOkay(List<MyData> candles, out string text)
+    {
+        text = "";
         return true;
     }
 
@@ -236,7 +267,7 @@ public class MacdCrossBase : SignalCreateBase
     public override bool IsExitSignal()
     {
         ExtraText = "";
-        MacdCrossSettings settings = MacdCrossPlugin.Settings;
+        MacdCrossSettings settings = Settings;
         if (!settings.ExitOnCrossBack)
             return false;
 

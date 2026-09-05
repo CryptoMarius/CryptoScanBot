@@ -172,6 +172,25 @@ public class EmulatorQueueEntry
     public List<string>? Intervals { get; set; }
 
     /// <summary>
+    /// Symbols left out of this run, by name (e.g. ["BTCUSDT.PERP", "ETHUSDT.PERP"]). Null or empty
+    /// replays every symbol of the run configuration. Names are matched case-insensitively; a name
+    /// that is not in the run configuration is ignored.
+    /// <para>
+    /// It is here because "does this strategy earn on this kind of coin" cannot be answered with a
+    /// setting - there is no filter for it, and inventing one for a single strategy is the wrong
+    /// order: first measure whether the difference is real, then decide whether it deserves a knob.
+    /// Removing the coins from the run configuration by hand would work once, but it changes the
+    /// baseline of every other entry in the same queue, so the comparison it was supposed to make
+    /// disappears.
+    /// </para>
+    /// <para>
+    /// The symbol list is part of the run configuration that is hashed for the duplicate check, so a
+    /// run with symbols left out never counts as a repeat of the same entry with all of them.
+    /// </para>
+    /// </summary>
+    public List<string>? ExcludeSymbols { get; set; }
+
+    /// <summary>
     /// Switches the barometer measurement off for this run (see EmulatorRunConfig.CalculateBarometer).
     /// Null or omitted keeps it on. A run with barometer conditions refuses to start when it is off.
     /// </summary>

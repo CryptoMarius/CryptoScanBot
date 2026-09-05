@@ -7,6 +7,10 @@ TODO:
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
 
+05-09-2025 2.6.6
+- Instellingen: Op het tabblad Basecoins staat onder de basiscoins een lijst producten (PERP, XPERP, TRADFI en de uitgerolde markten van Hyperliquid zoals XYZ en HYNA) die elk apart uitgezet kunnen worden; een uitgezet product verdwijnt direct bij het opslaan uit het symbolen-grid, wordt niet meer opgehaald en komt bij het weer aanzetten terug met de herlaad. De vaste uitsluiting van PARA is daarmee een instelling geworden die standaard uit staat.
+- Analyzer: De band range index is verwijderd - de instelling, de twee kolommen op signaal en positie en de kolommen in de grids. Op de dbr-opzet die geld verdient (sl 3% / tp 7,5%) maakte de filter van +547,86 USDT over 2.294 posities een verlies van 239,04 over 1.404 posities, en op drempel 3,5 een verlies van 103,56 over 528: niet alleen minder trades maar ook slechtere, want de winst per positie ging van +0,24 naar -0,17. Database versie 97 haalt de twee kolommen weg, en een wachtrij-regel die de filter nog aanzet stopt de run met die uitleg in plaats van stilzwijgend zonder filter te draaien
+
 04-09-2025 2.6.5
 - Emulator: Nieuwe menukeuze "Run queue folder": de emulator werkt de wachtrij-bestanden in de map Queue een voor een af (alfabetisch), verplaatst een afgewerkt bestand naar Queue\Done met de tijd voor de naam en een onleesbaar bestand naar Queue\Failed, en blijft daarna op nieuwe bestanden wachten tot Stop; een bestand dat tijdens het draaien in de map wordt gezet draait vanzelf mee, de emulator hoeft er niet meer voor gestopt te worden
 - Emulator: Een regel in de wachtrij kan nu zijn eigen periode opgeven (FromDate en ToDate, als "2026-01-01"), zodat een batch dezelfde instellingen over verschillende periodes kan meten zonder tussentijds de run-configuratie te wijzigen; de periode komt dan achter het label te staan, en een periode buiten het opgehaalde venster geeft een waarschuwing in het log

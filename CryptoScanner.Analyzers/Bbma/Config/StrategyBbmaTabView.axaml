@@ -13,7 +13,7 @@
             <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
                 <TextBlock FontSize="13">
                     <Run Text="BBMA – Bollinger Band + Moving Average" FontWeight="SemiBold"/>
-                    <Run Text=" — Signals based on the BBMA Oa-Ka method" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                    <Run Text=" — Reentry signals based on the BBMA method of Oma Ally" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
                 <TextBlock Text="Wiki ↗" FontSize="12" Cursor="Hand"
                            Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
@@ -21,6 +21,7 @@
             </StackPanel>
             <WrapPanel>
                 <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyBbmaSettingsView DataContext="{Binding StrategyBbmaSettingsViewModel}" />
                 <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
             </WrapPanel>
         </StackPanel>

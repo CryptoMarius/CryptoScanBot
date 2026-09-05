@@ -418,8 +418,6 @@ internal class PositionViewModelComparer(PositionColumnEnum sortColumn) : ICompa
             PositionColumnEnum.Last24HoursChange => a.Last24HoursChange.CompareTo(b.Last24HoursChange),
 
             PositionColumnEnum.BB => (a.BollingerBandsPercentage ?? 0).CompareTo(b.BollingerBandsPercentage ?? 0),
-            PositionColumnEnum.RangeIndex => (a.BandRangeIndex ?? 0).CompareTo(b.BandRangeIndex ?? 0),
-            PositionColumnEnum.RangeCount => (a.BandRangeCount ?? 0).CompareTo(b.BandRangeCount ?? 0),
             PositionColumnEnum.Rsi => (a.Rsi ?? 0).CompareTo(b.Rsi ?? 0),
             PositionColumnEnum.MinimumEntry => a.MinEntry.CompareTo(b.MinEntry),
 

@@ -162,29 +162,6 @@
                     </div>
                 </div>
 
-                @* Grid ColumnDefinitions="Auto,*,80,40" *@
-                <div class="settings-group">
-                    <div class="settings-group-header">Check the band range index</div>
-                    <div class="settings-group-body rows" style="--label-w: 175px;">
-                        <div class="row span">
-                            <input type="checkbox" class="input-checkbox" @bind="_bandRangeIndexCheck" />
-                            <label>Only signal above the range index</label>
-                        </div>
-                        <div class="row">
-                            <span class="lbl">Minimum range index:</span>
-                            <span class="spacer"></span>
-                            <input type="number" step="0.1" class="input-number w80" @bind="_minBandRangeIndex" />
-                        </div>
-                        <div class="row span">
-                            <input type="checkbox" class="input-checkbox" @bind="_logBandRangeIndex" />
-                            <label>Log if below the minimum</label>
-                        </div>
-                        <div class="row span">
-                            <span class="hint">(a symbol without a range index yet is let through)</span>
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
         </div>
@@ -212,9 +189,6 @@
     private float _effectivePercentage;
     private int _effectiveDays;
     private bool _logEffective;
-    private bool _bandRangeIndexCheck;
-    private double _minBandRangeIndex;
-    private bool _logBandRangeIndex;
     private bool _checkVolume;
     private int _volumeDays;
     private int _symbolExistDays;
@@ -252,9 +226,6 @@
         _effectivePercentage = s.AnalysisEffectivePercentage;
         _effectiveDays = s.AnalysisEffectiveDays;
         _logEffective = s.AnalysisMaxEffectiveLog;
-        _bandRangeIndexCheck = s.AnalysisBandRangeIndexCheck;
-        _minBandRangeIndex = s.AnalysisMinBandRangeIndex;
-        _logBandRangeIndex = s.LogAnalysisBandRangeIndex;
         _checkVolume = s.CheckVolumeOverPeriod;
         _volumeDays = s.CheckVolumeOverDays;
         _symbolExistDays = s.SymbolMustExistsDays;
@@ -285,9 +256,6 @@
         s.AnalysisEffectivePercentage = _effectivePercentage;
         s.AnalysisEffectiveDays = _effectiveDays;
         s.AnalysisMaxEffectiveLog = _logEffective;
-        s.AnalysisBandRangeIndexCheck = _bandRangeIndexCheck;
-        s.AnalysisMinBandRangeIndex = _minBandRangeIndex;
-        s.LogAnalysisBandRangeIndex = _logBandRangeIndex;
         s.CheckVolumeOverPeriod = _checkVolume;
         s.CheckVolumeOverDays = _volumeDays;
         s.SymbolMustExistsDays = _symbolExistDays;

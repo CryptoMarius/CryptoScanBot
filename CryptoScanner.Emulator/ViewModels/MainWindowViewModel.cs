@@ -1181,10 +1181,23 @@ public partial class MainWindowViewModel : ObservableObject
                             startCapitalOverridden ? startCapital : null,
                             periodOverridden ? FormatPeriod(fromDate, toDate) : null);
 
+                        // Symbols the entry leaves out. The filtered list goes into the run
+                        // configuration, so it also reaches the checksum of the duplicate check and
+                        // a run without those coins is never mistaken for the run with them.
+                        List<string> runSymbols = baseConfig.Symbols;
+                        if (entry.ExcludeSymbols is { Count: > 0 })
+                        {
+                            HashSet<string> excluded = new(entry.ExcludeSymbols, StringComparer.OrdinalIgnoreCase);
+                            runSymbols = [.. baseConfig.Symbols.Where(s => !excluded.Contains(s))];
+                            GlobalData.AddTextToLogTab(
+                                $"Queue: entry {i + 1} \"{entry.Label}\" replays {runSymbols.Count} of "
+                                + $"{baseConfig.Symbols.Count} symbols, {baseConfig.Symbols.Count - runSymbols.Count} left out");
+                        }
+
                         EmulatorRunConfig runConfig = new()
                         {
                             ExchangeName = baseConfig.ExchangeName,
-                            Symbols = baseConfig.Symbols,
+                            Symbols = runSymbols,
                             FromDate = fromDate,
                             ToDate = toDate,
                             BaseInterval = baseInterval,

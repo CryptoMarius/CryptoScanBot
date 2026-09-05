@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;
@@ -153,6 +153,50 @@ public static class DbrBandsHelper
             ? IsLongBreak(candles, bands, idx, out bandWidthPct, out bandPrice, out reason)
             : IsShortBreak(candles, bands, idx, out bandWidthPct, out bandPrice, out reason);
     }
+
+    /// <summary>
+    /// The most recent band break at or before <paramref name="openTime"/>, looking back at most
+    /// <paramref name="withinCandles"/> candles (the candle at that time included). The bands are
+    /// computed once for the whole snapshot, so the window costs a walk and not a recompute per
+    /// candle. <paramref name="candlesAgo"/> is 0 when the break is on the candle itself.
+    /// <para>
+    /// The band break and the stacking rule only - the RSI, stochastic and Bollinger-width filters
+    /// of the DBR strategy are NOT replayed here. Those describe the moment of entry; what a
+    /// lookback asks is whether the price has been at the band at all.
+    /// </para>
+    /// </summary>
+    public static bool TryFindRecentBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime,
+        bool isLong, int withinCandles, out int candlesAgo)
+    {
+        candlesAgo = 0;
+
+        var settings = DbrPlugin.Settings;
+
+        // Thread-safe ascending snapshot of the most recent candles.
+        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles, symbolInterval.Interval.Duration);
+        if (candles.Count < settings.BandLength + 1)
+            return false;
+
+        // Locate the requested (just-closed) candle; fall back to the most recent one.
+        int idx = candles.FindIndex(c => c.OpenTime == openTime);
+        if (idx < 0)
+            idx = candles.Count - 1;
+
+        DbrBandValue[] bands = ComputeBands(candles);
+        for (int i = 0; i < withinCandles && idx - i >= 0; i++)
+        {
+            bool broke = isLong
+                ? IsLongBreak(candles, bands, idx - i, out _, out _, out _)
+                : IsShortBreak(candles, bands, idx - i, out _, out _, out _);
+            if (broke)
+            {
+                candlesAgo = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /// <summary>
     /// Full long-signal check on index <paramref name="idx"/>: lower-band break + stacking rule.

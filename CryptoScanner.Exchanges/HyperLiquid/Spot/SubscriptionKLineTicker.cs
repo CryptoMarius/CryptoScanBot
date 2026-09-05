@@ -29,9 +29,15 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
             // Handled synchronously (Wait, not WaitAsync/Task.Run), in the exact order the
             // socket delivers messages, so a burst of pushes for the same still-open candle
             // can never have an older message overwrite a newer one's OHLC.
+            //
+            // HyperLiquid reports kline.Volume as BASE volume, while every other exchange (and the
+            // REST path in Candle.cs) stores QUOTE/notional volume. Mixing both in one series wrecks
+            // any volume weighted indicator: a single REST back-filled minute then carries ~price
+            // times the weight of the socket delivered minutes around it, which pins the VWAP bands
+            // (VbsBandsHelper) to that one candle. Convert here exactly like Candle.cs does.
             UpdateCacheFromKline(data.Symbol!, kline.OpenTime,
                 open: kline.OpenPrice, high: kline.HighPrice, low: kline.LowPrice,
-                close: kline.ClosePrice, volume: kline.Volume);
+                close: kline.ClosePrice, volume: kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
             //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(ScannerSymbol, interval, ScannerSymbol.PriceDisplayFormat, true, true)}");
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 

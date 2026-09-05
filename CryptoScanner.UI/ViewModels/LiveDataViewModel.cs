@@ -27,8 +27,6 @@ public class LiveDataViewModel
             LiveDataColumnEnum.BB => Object.CandleData?.BollingerBandsPercentage?.ToString("N2") ?? "",
             LiveDataColumnEnum.BbLower => Object.CandleData?.BollingerBandsLowerBand?.ToString0(Object.Symbol.PriceDisplayFormat) ?? "",
             LiveDataColumnEnum.BbUpper => Object.CandleData?.BollingerBandsUpperBand.ToString0(Object.Symbol.PriceDisplayFormat) ?? "",
-            LiveDataColumnEnum.RangeIndex => BandRange?.Index?.ToString("N2") ?? "",
-            LiveDataColumnEnum.RangeCount => BandRange?.MeasurementCount.ToString() ?? "",
             LiveDataColumnEnum.Rsi => Object.CandleData?.Rsi.ToString0("N2") ?? "",
             LiveDataColumnEnum.LuxIndicator5m => Object.CandleData?.Lux5mValue?.ToString("N0") ?? "",
             LiveDataColumnEnum.MacdValue => Object.CandleData?.MacdValue?.ToString("N5") ?? "",
@@ -50,7 +48,6 @@ public class LiveDataViewModel
         return column switch
         {
             LiveDataColumnEnum.Volume => ColorHelper.GetVolumeColorClass(Object.Symbol, (double)Object.Symbol.Volume),
-            LiveDataColumnEnum.RangeIndex => ColorHelper.GetColorClassBandRangeIndex(BandRange?.Index),
             LiveDataColumnEnum.Rsi => ColorHelper.GetColorClassRsi(Object.CandleData?.Rsi),
             LiveDataColumnEnum.LuxIndicator5m => ColorHelper.GetColorClassViaSign((double)(Object.CandleData?.Lux5mValue ?? 0)),
             LiveDataColumnEnum.MacdValue => ColorHelper.GetColorClassViaSign(Object.CandleData?.MacdValue),
@@ -73,11 +70,6 @@ public class LiveDataViewModel
             _ => "",
         };
     }
-
-    // Band-range statistics, kept per symbol+interval next to the indicator hub. Not part of
-    // CandleData: it describes the last few hundred candles, not this single one.
-    private BandRangeTracker? BandRange
-        => Object.Symbol.GetSymbolInterval(Object.Interval.IntervalPeriod).BandRange;
 
     private string FormatDate()
     {

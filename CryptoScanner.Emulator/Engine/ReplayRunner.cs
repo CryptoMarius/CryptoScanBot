@@ -736,7 +736,6 @@ public sealed class ReplayRunner
         // whether that is a startup effect or something structural.
         double warmupTotal = Seconds(PipelineProfiler.PrepWarmupTicks);
         double hubFeed = Seconds(PipelineProfiler.PrepHubFeedTicks);
-        double bandRange = Seconds(PipelineProfiler.PrepBandRangeTicks);
         long prepCalls = PipelineProfiler.PrepCalls;
         long warmupCalls = PipelineProfiler.PrepWarmupCalls;
         if (prepCalls > 0)
@@ -751,7 +750,7 @@ public sealed class ReplayRunner
             GlobalData.AddTextToLogTab(
                 $"Warmup — {warmupTotal:F1}s over {warmupCalls} call(s) ({perWarmup:F1} ms each, " +
                 $"{candlesPerWarmup:F0} candles each) | " +
-                $"collect {collect:F1}s, hubFeed {hubFeed:F1}s, bandRange {bandRange:F1}s");
+                $"collect {collect:F1}s, hubFeed {hubFeed:F1}s");
             GlobalData.AddTextToLogTab(
                 $"Warmup reason — hubNull {PipelineProfiler.PrepWarmupHubNull}, " +
                 $"gap {PipelineProfiler.PrepWarmupGap}, " +
@@ -1164,7 +1163,6 @@ public sealed class ReplayRunner
                 symbolInterval.IndicatorHub = null;
                 symbolInterval.IndicatorHubLastAdded = null;
                 symbolInterval.IndicatorHubAddCount = 0;
-                symbolInterval.BandRange = null;
 
                 // Indicator data cache (CryptoData per candle)
                 symbolInterval.Data.Clear();

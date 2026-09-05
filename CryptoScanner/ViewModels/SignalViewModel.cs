@@ -317,39 +317,6 @@ public partial class SignalViewModel : BaseConvertersViewModel
         }
     }
 
-    // Band-range statistics recorded at the moment of the signal (see BandRangeTracker):
-    // median band width x favourable/adverse excursion ratio, plus the number of excursions behind
-    // it. Empty when the tracker had too little history to say anything.
-    private string? _RangeIndexText;
-    public string RangeIndex
-    {
-        get
-        {
-            _RangeIndexText ??= Object.BandRangeIndex?.ToString("N2") ?? "";
-            return _RangeIndexText!;
-        }
-    }
-
-    private IBrush? _RangeIndexForeground;
-    public IBrush RangeIndexForeground
-    {
-        get
-        {
-            _RangeIndexForeground ??= GetBrushColorBandRangeIndex(Object.BandRangeIndex);
-            return _RangeIndexForeground!;
-        }
-    }
-
-    private string? _RangeCountText;
-    public string RangeCount
-    {
-        get
-        {
-            _RangeCountText ??= Object.BandRangeCount?.ToString() ?? "";
-            return _RangeCountText!;
-        }
-    }
-
     //public double? BB => Object.BollingerBandsPercentage;
     private string? _BbText;
     public string Bb

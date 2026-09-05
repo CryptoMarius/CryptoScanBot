@@ -22,7 +22,7 @@ public static class PositionDigest
         "select SymbolId, Side, CreateTime, CloseTime, Profit, Invested, PartCount, Status, " +
         "       Strategy, IntervalId, TrendPercentagePrimary, TrendPercentageSecondary, " +
         "       StochOscillator, StochSignal, Rsi, BollingerBandsPercentage, MacdHistogram, " +
-        "       BandRangeIndex, Barometer1h, Trend1h, EventText " +
+        "       Barometer1h, Trend1h, EventText " +
         "from position where EmulatorRunId = @id order by Id";
 
 
@@ -54,7 +54,7 @@ public static class PositionDigest
                 Number(r.TrendPercentagePrimary, 3), Number(r.TrendPercentageSecondary, 3),
                 Number(r.StochOscillator, 3), Number(r.StochSignal, 3), Number(r.Rsi, 3),
                 Number(r.BollingerBandsPercentage, 3), Number(r.MacdHistogram, 6),
-                Number(r.BandRangeIndex, 3), Number(r.Barometer1h, 3), Number(r.Trend1h, 3),
+                Number(r.Barometer1h, 3), Number(r.Trend1h, 3),
                 string.IsNullOrEmpty(r.EventText) ? null : r.EventText,
             ]);
         }
@@ -107,7 +107,6 @@ public static class PositionDigest
         public string? Rsi { get; set; }
         public string? BollingerBandsPercentage { get; set; }
         public string? MacdHistogram { get; set; }
-        public string? BandRangeIndex { get; set; }
         public string? Barometer1h { get; set; }
         public string? Trend1h { get; set; }
         public string? EventText { get; set; }

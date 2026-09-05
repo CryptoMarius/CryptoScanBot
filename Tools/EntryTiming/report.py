@@ -20,17 +20,15 @@ import account
 import candledb
 import measure_entry_timing as met
 
-# label, entry order, minimum band range index, minimum bollinger width
+# label, entry order, minimum bollinger width
 SCENARIOS = [
-    ("1  limietorder, geen extra filter",              "limit",  0.0, None),
-    ("2  limietorder, bollinger breedte boven 3,0%",   "limit",  0.0, 3.0),
-    ("3  marktorder, geen extra filter",               "market", 0.0, None),
-    ("4  marktorder, band range index 3,5 en hoger",   "market", 3.5, None),
-    ("5  limietorder, band range index 3,5 en hoger",  "limit",  3.5, None),
+    ("1  limietorder, geen extra filter",              "limit",  None),
+    ("2  limietorder, bollinger breedte boven 3,0%",   "limit",  3.0),
+    ("3  marktorder, geen extra filter",               "market", None),
 ]
 
 
-def header(label, args, entry_order, minimum_index, bb_width, ladder, deepest):
+def header(label, args, entry_order, bb_width, ladder, deepest):
     line = "=" * 104
     print(f"\n{line}\nSCENARIO {label}\n{'-' * 104}")
     print(f"  interval                   : {args.interval}")
@@ -40,8 +38,6 @@ def header(label, args, entry_order, minimum_index, bb_width, ladder, deepest):
           f"{'nee (uitgezet)' if args.no_bb_inside else 'ja (VbsSignalShort regel 77/82)'}")
     print(f"  bollinger breedte minimaal : "
           f"{met.BB_WIDTH_MINIMUM if bb_width is None else bb_width}%")
-    print(f"  band range index minimaal  : "
-          f"{minimum_index if minimum_index > 0 else 'geen filter'}")
     print(f"  order bij instap           : " + (
         "limietorder op de vbs-band (EntryOrderType = Limit), vervalt na het wachtvenster"
         if entry_order == "limit" else
@@ -97,7 +93,7 @@ def main():
         prepared.append((name, met.compute(frame), candledb.gap_mask(frame, interval_minutes)))
     print(f"indicatoren voor {len(prepared)} munten klaar in {time.time()-started:.0f}s")
 
-    for label, entry_order, minimum_index, bb_width in SCENARIOS:
+    for label, entry_order, bb_width in SCENARIOS:
         rows = []
         for rule in account.ENTRY_RULES:
             positions = []
@@ -105,7 +101,7 @@ def main():
                 for side in ("short", "long"):
                     positions.extend(account.find_positions(
                         name, data, contiguous, side, rule, args.window, dca_levels, args.stop,
-                        args.target, args.fee, 5, interval_minutes, minimum_index, 1.0,
+                        args.target, args.fee, 5, interval_minutes, 1.0,
                         not args.no_bb_inside, bb_width, entry_order))
             frame = pd.DataFrame(positions)
             if not len(frame):
@@ -129,7 +125,7 @@ def main():
                 "terugval": drop,
             })
 
-        header(label, args, entry_order, minimum_index, bb_width, ladder, deepest)
+        header(label, args, entry_order, bb_width, ladder, deepest)
         table = pd.DataFrame(rows).sort_values("eind", ascending=False)
         shown = table.copy()
         width = max(len(v) for v in shown["instapregel"])

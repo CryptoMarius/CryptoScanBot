@@ -13,7 +13,6 @@ Usage:
 
 import argparse
 import io
-import re
 import sqlite3
 import sys
 
@@ -34,19 +33,13 @@ COLUMNS = """
     CAST(p.Rsi AS REAL) AS Rsi,
     CAST(p.BollingerBandsPercentage AS REAL) AS BbWidth,
     CAST(p.MacdHistogram AS REAL) AS MacdHist,
-    CAST(p.BandRangeIndex AS REAL) AS BandIndex,
-    CAST(p.BandRangeCount AS REAL) AS BandCount,
     p.PartCount, p.EventText
 """
 
 
 def load(database, runs):
     connection = sqlite3.connect("file:" + database.replace("\\", "/") + "?mode=ro", uri=True)
-    have = {c[1] for c in connection.execute("pragma table_info(Position)")}
     columns = COLUMNS
-    for optional in ("BandRangeIndex", "BandRangeCount"):
-        if optional not in have:
-            columns = re.sub(rf"\s*CAST\(p\.{optional} AS REAL\) AS \w+,", "", columns)
     placeholders = ",".join("?" for _ in runs)
     frame = pd.read_sql_query(
         # Status 2 = Ready: the position actually traded and was closed. Status 3 (Timeout) and
@@ -116,8 +109,6 @@ def analyse(frame, title):
         found += splits(part, "BbWidth", [2, 3, 4, 5, 7, 10], "bollinger breedte")
         found += splits(part, "band_pct", [2, 2.5, 3, 3.5, 4, 5], "vbs bandmarge")
         found += splits(part, "MacdHist", [0], "macd histogram")
-        if "BandIndex" in part:
-            found += splits(part, "BandIndex", [2, 3, 3.5, 4, 5, 6, 8], "band range index")
         if not found:
             continue
         table = pd.DataFrame(found)

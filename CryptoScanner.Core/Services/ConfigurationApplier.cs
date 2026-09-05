@@ -58,6 +58,53 @@ public static class ConfigurationApplier
     }
 
     /// <summary>
+    /// Switches the symbols of a product the user just switched off to inactive, right away. The
+    /// symbol refresh would do the same on its next cycle, but that cycle is up to an hour away and
+    /// even the reload after the save takes a good ten seconds - long enough for a user to conclude
+    /// that the checkbox does nothing (reported on 05-09-2026, the day the products arrived). The
+    /// symbol goes the same way a delisted one goes: status 0, candles gone, out of the per quote
+    /// index and out of the grids.
+    /// <para>
+    /// Switching a product back ON is left to the reload: whether an instrument still exists is
+    /// something only the exchange can say, and the symbol refresh at startup asks it.
+    /// </para>
+    /// </summary>
+    internal static void DeactivateSwitchedOffProducts()
+    {
+        Model.CryptoExchange? exchange = GlobalData.ActiveExchange;
+        if (exchange == null)
+            return;
+
+        Dictionary<string, int> deactivated = [];
+        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+        {
+            if (symbol.Status != 1 || symbol.IsBarometerSymbol() || symbol.Product.Length == 0)
+                continue;
+            if (GlobalData.IsProductActive(symbol.Product))
+                continue;
+
+            symbol.Status = 0;
+            symbol.ClearCandles();
+            // Persisted the way the refresh persists it, so a restart before the next refresh does
+            // not bring the symbol back. Null when the session is not running; then the refresh at
+            // the next start decides again, from the settings, and reaches the same answer.
+            GlobalData.ThreadSaveObjects?.AddToQueue(symbol);
+            deactivated[symbol.Product] = deactivated.GetValueOrDefault(symbol.Product) + 1;
+        }
+
+        if (deactivated.Count == 0)
+            return;
+
+        foreach ((string product, int count) in deactivated)
+            GlobalData.AddTextToLogTab($"Product {product} switched off: {count} symbols deactivated");
+
+        // The per quote index and both symbol grids only carry status 1; rebuilding the index sends
+        // the message that makes the grids rebuild as well.
+        ThreadLoadData.IndexQuoteDataSymbols(exchange);
+    }
+
+
+    /// <summary>
     /// Persist the settings and re-apply them to the running scanner. Call this after the user
     /// confirmed the configuration screen, passing the snapshot taken before it was opened.
     /// </summary>
@@ -76,6 +123,9 @@ public static class ConfigurationApplier
             Signal.Indicators.IndicatorConfiguration.Bump();
             // No StrategyDiagnostics.Report() here: ApplyConfigurationAsync below runs it on every
             // path, and calling it twice logged every finding in duplicate.
+
+            // A product the user just switched off disappears right away, before the reload below
+            DeactivateSwitchedOffProducts();
 
             // Apply the theme right away, before the (potentially slow) exchange/quote reload
             // below. Waiting until after it made a theme switch appear to take ten seconds or more.

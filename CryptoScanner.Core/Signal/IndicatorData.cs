@@ -131,14 +131,8 @@ public static class IndicatorEngine
             symbolInterval.IndicatorHubLastAdded = candleOpenTime;
             symbolInterval.IndicatorHubAddCount = history.Count;
 
-            // The band-range tracker is rebuilt alongside the hub, but from the candle list instead
-            // of from this 260-candle warm-up window — its statistics need a few hundred more.
-            long profBandStart = Stopwatch.GetTimestamp();
-            symbolInterval.BandRange = BandRangeTracker.Build(symbolInterval, candleOpenTime);
-            long profBandTicks = Stopwatch.GetTimestamp() - profBandStart;
-
             PipelineProfiler.RecordPrepWarmup(Stopwatch.GetTimestamp() - profWarmupStart,
-                profFeedTicks, history.Count, profBandTicks);
+                profFeedTicks, history.Count);
         }
         else
         {
@@ -155,14 +149,6 @@ public static class IndicatorEngine
             long t3 = Stopwatch.GetTimestamp();
             symbolInterval.IndicatorHubLastAdded = candleOpenTime;
             symbolInterval.IndicatorHubAddCount++;
-
-            if (symbolInterval.BandRange != null && built.Sma20 != null
-                && built.BollingerBandsUpperBand != null && built.BollingerBandsLowerBand != null)
-            {
-                symbolInterval.BandRange.Add(candle, built.Sma20.Value,
-                    built.BollingerBandsUpperBand.Value, built.BollingerBandsLowerBand.Value);
-            }
-
             ApplyLux(symbol, symbolInterval, candleOpenTime);
             long t4 = Stopwatch.GetTimestamp();
 

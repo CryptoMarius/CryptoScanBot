@@ -112,30 +112,6 @@
 
 
 
-                <!-- Check the band range index -->
-                <HeaderedContentControl Grid.Row="2" Grid.Column="1" Classes="groupbox" Header="Check the band range index">
-                    <StackPanel Margin="4" Spacing="2">
-                        <Grid ColumnDefinitions="Auto,*,80,40" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="2">
-                            <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4"
-                                      Content="Only signal above the range index"
-                                      IsChecked="{Binding AnalysisBandRangeIndexCheck, Mode=TwoWay}" FontSize="12"/>
-
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Minimum range index:" VerticalAlignment="Center"
-                                       Margin="0,0,12,0" FontSize="12"/>
-                            <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding AnalysisMinBandRangeIndex, Mode=TwoWay}"
-                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
-
-                            <CheckBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4"
-                                      IsChecked="{Binding LogAnalysisBandRangeIndex, Mode=TwoWay}"
-                                      Content="Log if below the minimum" FontSize="12"/>
-
-                            <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4"
-                                       Text="(a symbol without a range index yet is let through)" FontSize="11"/>
-                        </Grid>
-                    </StackPanel>
-                </HeaderedContentControl>
-
-
                 <!-- Other settings -->
                 <HeaderedContentControl Grid.Row="3" Grid.Column="0" Grid.RowSpan="2" Classes="groupbox" Header="Check the last 60 candles">
                     <StackPanel Margin="4" Spacing="2">

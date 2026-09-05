@@ -313,8 +313,6 @@ internal class SignalViewModelComparer(SignalColumnEnum sortColumn) : IComparer<
             SignalColumnEnum.BbLower => (a.BollingerBandsLowerBand ?? 0).CompareTo(b.BollingerBandsLowerBand ?? 0),
             SignalColumnEnum.BbUpper => (a.BollingerBandsUpperBand ?? 0).CompareTo(b.BollingerBandsUpperBand ?? 0),
             SignalColumnEnum.AvgBB => a.AvgBB.CompareTo(b.AvgBB),
-            SignalColumnEnum.RangeIndex => (a.BandRangeIndex ?? 0).CompareTo(b.BandRangeIndex ?? 0),
-            SignalColumnEnum.RangeCount => (a.BandRangeCount ?? 0).CompareTo(b.BandRangeCount ?? 0),
             SignalColumnEnum.Rsi => (a.Rsi ?? 0).CompareTo(b.Rsi ?? 0),
             SignalColumnEnum.LuxIndicator5m => (a.LuxIndicator5m ?? 0).CompareTo(b.LuxIndicator5m ?? 0),
             SignalColumnEnum.MacdValue => (a.MacdValue ?? 0).CompareTo(b.MacdValue ?? 0),

@@ -2,6 +2,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Settings;
 
 using CryptoExchange.Net.SharedApis;
@@ -22,12 +23,14 @@ namespace CryptoScanner.CoreTests.Core;
 public class ProductSettingsTests
 {
     private SettingsBasic _savedSettings = null!;
+    private TestExchange? _savedExchange;
 
     [TestInitialize]
     public void Setup()
     {
         // Every test starts with settings that have never seen a product
         _savedSettings = GlobalData.Settings;
+        _savedExchange = GlobalData.ActiveExchange;
         GlobalData.Settings = new SettingsBasic();
     }
 
@@ -35,6 +38,7 @@ public class ProductSettingsTests
     public void Cleanup()
     {
         GlobalData.Settings = _savedSettings;
+        GlobalData.ActiveExchange = _savedExchange;
     }
 
 
@@ -119,5 +123,81 @@ public class ProductSettingsTests
         Assert.IsFalse(SymbolBase.IsSymbolAccepted(exchange, gold, null!, TradingMode.PerpetualLinear, out CryptoSymbol? refused));
         Assert.IsNull(refused);
         Assert.IsTrue(SymbolBase.IsSymbolAccepted(exchange, btc, null!, TradingMode.PerpetualLinear, out _));
+    }
+
+
+    /// <summary>
+    /// Registers a symbol the way the refresh does: in the exchange indexes, on the quote of the
+    /// settings, active.
+    /// </summary>
+    private static CryptoSymbol AddSymbol(TestExchange exchange, int id, string baseAsset, string product)
+    {
+        CryptoSymbol symbol = new()
+        {
+            Id = id,
+            Exchange = exchange,
+            ExchangeId = exchange.Id,
+            Name = baseAsset + "USDC" + CryptoProduct.Separator + product,
+            Base = baseAsset,
+            Quote = "USDC",
+            Product = product,
+            ExchangeName = "instrument-" + id,
+            QuoteData = GlobalData.AddQuoteData("USDC"),
+            Status = 1,
+        };
+        exchange.SymbolListId.Add(symbol.Id, symbol);
+        exchange.SymbolListName.Add(symbol.Name, symbol);
+        exchange.SymbolListExchangeName.Add(symbol.ExchangeName, symbol);
+        return symbol;
+    }
+
+
+    /// <summary>
+    /// Saving the settings with a product switched off deactivates its symbols on the spot: status
+    /// 0 and out of the per quote index, which is what the grids and the barometer read. Waiting
+    /// for the next symbol refresh made the checkbox look broken. The exchange's own market and a
+    /// product that is still on are untouched.
+    /// </summary>
+    [TestMethod]
+    public void SavingWithAProductSwitchedOffDeactivatesItsSymbolsRightAway()
+    {
+        TestExchange exchange = CreateExchange();
+        GlobalData.ActiveExchange = exchange;
+        GlobalData.AddQuoteData("USDC").FetchCandles = true;
+        CryptoSymbol gold = AddSymbol(exchange, 1, "GOLD", "XYZ");
+        CryptoSymbol tesla = AddSymbol(exchange, 2, "TSLA", "XYZ");
+        CryptoSymbol hynaBtc = AddSymbol(exchange, 3, "BTC", "HYNA");
+        CryptoSymbol btc = AddSymbol(exchange, 4, "BTC", CryptoProduct.Perpetual);
+
+        GlobalData.AddProductData("XYZ").Active = false;
+        ConfigurationApplier.DeactivateSwitchedOffProducts();
+
+        Assert.AreEqual(0, gold.Status);
+        Assert.AreEqual(0, tesla.Status);
+        Assert.AreEqual(1, hynaBtc.Status);
+        Assert.AreEqual(1, btc.Status);
+
+        List<CryptoSymbol> indexed = GlobalData.Settings.QuoteCoins["USDC"].SymbolList;
+        CollectionAssert.AreEquivalent(new[] { hynaBtc, btc }, indexed);
+    }
+
+
+    /// <summary>
+    /// Nothing switched off, nothing touched - and no exchange at all (the settings screen before
+    /// the scanner started) is not an error either.
+    /// </summary>
+    [TestMethod]
+    public void SavingWithEveryProductOnChangesNothing()
+    {
+        GlobalData.ActiveExchange = null;
+        ConfigurationApplier.DeactivateSwitchedOffProducts();
+
+        TestExchange exchange = CreateExchange();
+        GlobalData.ActiveExchange = exchange;
+        CryptoSymbol gold = AddSymbol(exchange, 1, "GOLD", "XYZ");
+        ConfigurationApplier.DeactivateSwitchedOffProducts();
+
+        Assert.AreEqual(1, gold.Status);
+        Assert.IsTrue(GlobalData.Settings.Products["XYZ"].Active);
     }
 }

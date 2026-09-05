@@ -42,12 +42,12 @@ public static class PipelineProfiler
 
     // The rest of the warm-up branch in PrepareViaHub, which PrepCollectTicks above only covered the
     // first step of. Everything after CollectCandles - a fresh IntervalIndicatorHub fed the whole
-    // history one candle at a time, a BuildCurrent per candle, and the BandRangeTracker rebuild - was
+    // history one candle at a time and a BuildCurrent per candle - was
     // measured by nothing at all, which is why the emulator report showed "indicators 36,638s" with
     // 159s attributed underneath it (run 229, 23-08-2026).
     //
-    // PrepWarmupTicks contains PrepCollectTicks, PrepHubFeedTicks and PrepBandRangeTicks; the
-    // remainder is bookkeeping between them.
+    // PrepWarmupTicks contains PrepCollectTicks and PrepHubFeedTicks; the remainder is bookkeeping
+    // between them.
     public static long PrepCalls;              // PrepareIndicators calls
     public static long PrepAlreadyPresent;     // returned immediately: Data already held this candle
     public static long PrepNotEnoughHistory;   // CollectCandles said no
@@ -55,7 +55,6 @@ public static class PipelineProfiler
     public static long PrepWarmupTicks;
     public static long PrepHubFeedTicks;       // the per-candle hub.Add + BuildCurrent + Data insert loop
     public static long PrepHubFeedCandles;     // how many candles that loop processed
-    public static long PrepBandRangeTicks;     // BandRangeTracker.Build
 
     // WHY a warm-up was needed, which is the number that decides whether this is worth fixing: an
     // incremental hub that never gets to be incremental costs a full 260-candle rebuild per candle.
@@ -303,7 +302,6 @@ public static class PipelineProfiler
         PrepWarmupTicks = 0;
         PrepHubFeedTicks = 0;
         PrepHubFeedCandles = 0;
-        PrepBandRangeTicks = 0;
         PrepWarmupHubNull = 0;
         PrepWarmupGap = 0;
         PrepWarmupExplicit = 0;
@@ -440,8 +438,8 @@ public static class PipelineProfiler
     }
 
 
-    /// <summary>One completed warm-up: the whole branch, the feed loop inside it and the band-range rebuild.</summary>
-    public static void RecordPrepWarmup(long total, long hubFeed, long candles, long bandRange)
+    /// <summary>One completed warm-up: the whole branch and the feed loop inside it.</summary>
+    public static void RecordPrepWarmup(long total, long hubFeed, long candles)
     {
         if (!Enabled)
             return;
@@ -449,7 +447,6 @@ public static class PipelineProfiler
         Interlocked.Add(ref PrepWarmupTicks, total);
         Interlocked.Add(ref PrepHubFeedTicks, hubFeed);
         Interlocked.Add(ref PrepHubFeedCandles, candles);
-        Interlocked.Add(ref PrepBandRangeTicks, bandRange);
     }
 
 

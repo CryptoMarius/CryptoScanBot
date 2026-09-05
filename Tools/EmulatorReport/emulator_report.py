@@ -134,8 +134,6 @@ def run_settings(row):
     order_type = trading.get("EntryOrderType")
     variables["order_type"] = (None if order_type is None
                                else ("limiet" if order_type == 1 else "markt"))
-    variables["band_range_index"] = (signal.get("AnalysisMinBandRangeIndex")
-                                     if signal.get("AnalysisBandRangeIndexCheck") else None)
 
     long_strategies = signal.get("Long", {}).get("Strategy") or []
     short_strategies = signal.get("Short", {}).get("Strategy") or []
@@ -272,7 +270,7 @@ def open_position_range(connection, run_id, profit):
     two least-bad strategies.
 
     Deliberately NOT called a range, band or margin: this codebase already has Bollinger bands, VBS
-    bands, BABA bands and a band range index, and one word for two things is how a report starts
+    bands and BABA bands, and one word for two things is how a report starts
     being misread.
     """
     closed = [number(r["Profit"]) for r in connection.execute(
@@ -450,49 +448,6 @@ def measure_run(connection, row):
     return measured
 
 
-def build_ladder(runs):
-    """Aggregate per band range index threshold, within one entry order type.
-
-    Runs with a wait rule or a single side are a different experiment, not a rung, so they stay
-    out. When a strategy shows up twice under the same threshold the aggregate would be mixing
-    runs that were not the same experiment, so that is flagged rather than quietly summed.
-    """
-    ladders = {}
-    for run in runs:
-        if run["closed"] == 0:
-            continue
-        if run["variables"]["wait_rules"] or run["variables"]["sides"] != "beide":
-            continue
-        order_type = run["variables"]["order_type"] or "?"
-        threshold = run["variables"]["band_range_index"]
-        ladders.setdefault(order_type, {}).setdefault(threshold, []).append(run)
-
-    result = {}
-    for order_type, rungs in ladders.items():
-        rows = []
-        for threshold in sorted(rungs, key=lambda t: (t is not None, t)):
-            group = rungs[threshold]
-            strategies = [r["variables"]["strategy"] for r in group]
-            rows.append({
-                "threshold": threshold,
-                "runs": len(group),
-                "run_ids": [r["id"] for r in group],
-                "strategies": sorted(set(strategies)),
-                "duplicates": sorted({s for s in strategies if strategies.count(s) > 1}),
-                "positions": sum(r["positions"] for r in group),
-                "closed": sum(r["closed"] for r in group),
-                "won": sum(r["won"] for r in group),
-                "lost": sum(r["lost"] for r in group),
-                "open": sum(r["open"] for r in group),
-                "staked": sum(r["staked"] for r in group),
-                "profit": sum(r["profit"] for r in group),
-                "per_day": sum(r["per_day"] for r in group) / len(group),
-                "peak_capital": sum(r["peak_capital"] for r in group),
-            })
-        result[order_type] = rows
-    return result
-
-
 # --------------------------------------------------------------------------------------------
 # Shared text
 # --------------------------------------------------------------------------------------------
@@ -567,15 +522,11 @@ def comparability(runs):
     return list(groups.values())
 
 
-def threshold_text(threshold):
-    return "geen" if threshold is None else "index >= %g" % threshold
-
-
 # --------------------------------------------------------------------------------------------
 # Markdown
 # --------------------------------------------------------------------------------------------
 
-def write_markdown(runs, ladders, groups):
+def write_markdown(runs, groups):
     lines = ["# Emulatorrapport", ""]
 
     lines.append("## Instellingen en vergelijkbaarheid")
@@ -608,43 +559,27 @@ def write_markdown(runs, ladders, groups):
             lines.append("- #{} {}".format(run["id"], run["label"]))
         lines.append("")
 
-    for order_type, rows in sorted(ladders.items()):
-        lines.append("## De ladder - {}order".format(order_type))
-        lines.append("")
-        lines.append("| filter | runs | strategieen | run-ids | posities | gesloten | gewonnen "
-                     "| verloren | per dag | omzet | winst |")
-        lines.append("|---|---:|---|---|---:|---:|---:|---:|---:|---:|---:|")
-        for row in rows:
-            lines.append("| {} | {} | {} | {} | {} | {} | {} | {} | {:.2f} | {:.0f} | {:+.2f} |"
-                         .format(threshold_text(row["threshold"]), row["runs"],
-                                 ", ".join(row["strategies"]),
-                                 ", ".join(str(i) for i in row["run_ids"]),
-                                 row["positions"], row["closed"], row["won"], row["lost"],
-                                 row["per_day"], row["staked"], row["profit"]))
-        lines.append("")
-
     produced = [r for r in runs if r["closed"] > 0]
     if produced:
         lines.append("## Wat je moest inleggen en wat je overhield")
         lines.append("")
         lines.append(PEAK_EXPLANATION)
         lines.append("")
-        lines.append("| id | run | tp | sl | dca | wacht op | filter | start | eind | winst | winst% "
+        lines.append("| id | run | tp | sl | dca | wacht op | start | eind | winst | winst% "
                      "| trades | per dag | gem. inzet | open | eind beste geval | eind slechtste geval "
                      "| signalen | max tegelijk | order | zijde |")
-        lines.append("|---:|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|")
+        lines.append("|---:|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|")
         for run in produced:
             variables = run["variables"]
             known = run["source"] != "onbekend"
             pct = 100 * run["profit"] / run["peak_capital"] if run["peak_capital"] else 0
-            lines.append("| {} | {} | {} | {} | {} | {} | {} | {} | {} | {:+.2f} | {} "
+            lines.append("| {} | {} | {} | {} | {} | {} | {} | {} | {:+.2f} | {} "
                          "| {} | {:.2f} | {:.2f} | {} | {} | {} | {} | {} | {} | {} |".format(
                              run["id"], label_with_result(run),
                              format_percentages(variables["take_profit"]),
                              "-" if variables["stop_loss"] is None else "%g%%" % variables["stop_loss"],
                              format_percentages(variables["dca"]),
                              wait_rules_text(variables["wait_rules"]),
-                             threshold_text(variables["band_range_index"]),
                              money(run["peak_capital"], known), money(run["end_capital"], known),
                              run["profit"], "%+.1f%%" % pct if known else "-",
                              run["closed"], run["per_day"], run["avg_stake"],
@@ -724,7 +659,7 @@ def frame_block(frame):
     return "".join(parts)
 
 
-def write_html(runs, ladders, groups, database_path):
+def write_html(runs, groups, database_path):
     out = ["<!doctype html><html lang='nl'><head><meta charset='utf-8'>",
            "<title>Emulatorrapport</title><style>{}</style></head><body>".format(STYLE),
            "<h1>Emulatorrapport</h1>",
@@ -755,32 +690,6 @@ def write_html(runs, ladders, groups, database_path):
                    "instelling die niet aan stond &mdash; controleer de intervallijst. Runs: "
                    "{}.</div>".format(len(empty), esc(", ".join(str(r["id"]) for r in empty))))
 
-    for order_type, rows in sorted(ladders.items()):
-        out.append("<h2>De ladder &mdash; {}order</h2>".format(esc(order_type)))
-        out.append("<p class='note'>Per drempelwaarde van de band range index, alle strategieen "
-                   "bij elkaar opgeteld. Alleen runs met beide zijden aan en zonder wachtregel; "
-                   "die laatste zijn een ander experiment.</p>")
-        if any(row["duplicates"] for row in rows):
-            out.append("<div class='warn'>Een strategie komt binnen dezelfde drempelwaarde meer "
-                       "dan eens voor. Die optelling mengt runs die niet hetzelfde experiment "
-                       "waren; lees hem niet als een ladder.</div>")
-        out.append("<div class='scroll'><table><thead><tr>"
-                   "<th class='left'>filter</th><th>runs</th><th class='left'>strategieen</th>"
-                   "<th class='left'>run-ids</th><th>posities</th><th>gesloten</th>"
-                   "<th>gewonnen</th><th>verloren</th><th>open</th><th>per dag</th>"
-                   "<th>omzet</th><th>piekinleg</th><th>winst</th></tr></thead><tbody>")
-        for row in rows:
-            out.append("<tr><td class='left'>{}</td><td>{}</td><td class='left'>{}</td>"
-                       "<td class='left'>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>"
-                       "<td>{}</td><td>{:.2f}</td><td>{:.0f}</td><td>{:.2f}</td>{}</tr>".format(
-                           esc(threshold_text(row["threshold"])), row["runs"],
-                           esc(", ".join(row["strategies"])),
-                           esc(", ".join(str(i) for i in row["run_ids"])),
-                           row["positions"], row["closed"], row["won"], row["lost"], row["open"],
-                           row["per_day"], row["staked"], row["peak_capital"],
-                           money_cell(row["profit"])))
-        out.append("</tbody></table></div>")
-
     produced = [r for r in runs if r["closed"] > 0]
     if produced:
         out.append("<h2>Wat je moest inleggen en wat je overhield</h2>")
@@ -788,7 +697,7 @@ def write_html(runs, ladders, groups, database_path):
         out.append("<div class='scroll'><table><thead><tr>"
                    "<th>id</th><th class='left'>run</th>"
                    "<th class='left'>tp</th><th class='left'>sl</th><th class='left'>dca</th>"
-                   "<th class='left'>wacht op</th><th class='left'>filter</th>"
+                   "<th class='left'>wacht op</th>"
                    "<th class='left'>order</th><th class='left'>zijde</th>"
                    "<th>start</th><th>eind</th><th>winst</th><th>winst%</th>"
                    "<th>trades</th><th>per dag</th><th>gem. inzet</th>"
@@ -802,7 +711,7 @@ def write_html(runs, ladders, groups, database_path):
             out.append("<tr><td>{}</td><td class='left'>{}</td>"
                        "<td class='left'>{}</td><td class='left'>{}</td><td class='left'>{}</td>"
                        "<td class='left'>{}</td><td class='left'>{}</td>"
-                       "<td class='left'>{}</td><td class='left'>{}</td>"
+                       "<td class='left'>{}</td>"
                        "<td>{}</td><td>{}</td>{}{}<td>{}</td><td>{:.2f}</td><td>{:.2f}</td>"
                        "<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>"
                        "</tr>".format(
@@ -811,7 +720,6 @@ def write_html(runs, ladders, groups, database_path):
                            esc("-" if variables["stop_loss"] is None else "%g%%" % variables["stop_loss"]),
                            esc(format_percentages(variables["dca"])),
                            esc(wait_rules_text(variables["wait_rules"])),
-                           esc(threshold_text(variables["band_range_index"])),
                            esc(variables["order_type"] or "-"), esc(variables["sides"]),
                            money(run["peak_capital"], known), money(run["end_capital"], known),
                            money_cell(run["profit"]),
@@ -836,7 +744,6 @@ def write_html(runs, ladders, groups, database_path):
             "zijde": variables["sides"],
             "signaalinterval": variables["intervals"],
             "ordertype": variables["order_type"],
-            "band_range_index": variables["band_range_index"],
             "wachtregels": variables["wait_rules"],
             "kader": {label: frame_value(run["frame"], key) for key, label in FRAME_LABELS},
         }
@@ -853,7 +760,7 @@ def write_html(runs, ladders, groups, database_path):
         for run in metDca:
             for row in run["dca_breakdown"]:
                 out.append("<tr><td>{}</td><td class='left'>{}</td><td class='left'>{}</td>"
-                           "<td>{}</td><td>{:.1f}%</td><td>{}</td><td>{}</td><td>{:.0f}%</td>"
+                           "<td>{}</td><td>{:.1f}%</td>{}{}<td>{:.0f}%</td>"
                            "<td>{:.2f}</td></tr>".format(
                                run["id"], esc(run["label"]), esc(dca_label(row["fills"])),
                                row["count"], row["share"], money_cell(row["profit"]),
@@ -899,13 +806,12 @@ def main():
         "select * from EmulatorRun where Id in ({}) order by Id".format(placeholders),
         run_ids).fetchall()
     runs = [measure_run(connection, row) for row in rows]
-    ladders = build_ladder(runs)
     groups = comparability(runs)
 
     if arguments.out and arguments.out.lower().endswith(".html"):
-        report = write_html(runs, ladders, groups, arguments.db)
+        report = write_html(runs, groups, arguments.db)
     else:
-        report = write_markdown(runs, ladders, groups)
+        report = write_markdown(runs, groups)
 
     if arguments.out:
         with io.open(arguments.out, "w", encoding="utf-8") as handle:

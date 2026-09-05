@@ -44,8 +44,6 @@ public class SignalColumnComparer : IComparer
                     SignalColumnEnum.BbLower => ObjectCompare.Compare(a.Object.BollingerBandsLowerBand, b.Object.BollingerBandsLowerBand),
                     SignalColumnEnum.BbUpper => ObjectCompare.Compare(a.Object.BollingerBandsUpperBand, b.Object.BollingerBandsUpperBand),
                     SignalColumnEnum.AvgBB => ObjectCompare.Compare(a.Object.AvgBB, b.Object.AvgBB),
-                    SignalColumnEnum.RangeIndex => ObjectCompare.Compare(a.Object.BandRangeIndex, b.Object.BandRangeIndex),
-                    SignalColumnEnum.RangeCount => ObjectCompare.Compare(a.Object.BandRangeCount, b.Object.BandRangeCount),
                     SignalColumnEnum.Rsi => ObjectCompare.Compare(a.Object.Rsi, b.Object.Rsi),
                     SignalColumnEnum.LuxIndicator5m => ObjectCompare.Compare(a.Object.LuxIndicator5m, b.Object.LuxIndicator5m),
                     SignalColumnEnum.MacdValue => ObjectCompare.Compare(a.Object.MacdValue, b.Object.MacdValue),

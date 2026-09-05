@@ -32,7 +32,6 @@ import time
 import numpy as np
 import pandas as pd
 
-import band_index
 import candledb
 import indicators
 import measure_entry_timing as met
@@ -158,7 +157,7 @@ def arm_offset(data, index, side, rule, window):
 
 def find_positions(symbol, data, contiguous, side, rule, window, dca_levels, stop_pct,
                    target_pct, fee_rate, cluster_gap, interval_minutes,
-                   minimum_band_index=0.0, tick_size=1.0, use_bb_inside=True,
+                   tick_size=1.0, use_bb_inside=True,
                    bb_width_minimum=None, entry_order="limit"):
     """Every position this symbol would have produced, each followed until it really closes."""
     high = data["high"].to_numpy()
@@ -175,17 +174,11 @@ def find_positions(symbol, data, contiguous, side, rule, window, dca_levels, sto
     deepest = max((p for p, _ in dca_levels), default=0.0)
     ladder = 1.0 + sum(f / 100.0 for _, f in dca_levels)
 
-    band_idx = data["band_index"].to_numpy()
     bb_width = data["bb_width"].to_numpy()
 
     out = []
     for index in met.cluster_starts(
             met.signal_mask(data, side, use_bb_inside, bb_width_minimum), cluster_gap):
-        if minimum_band_index > 0:
-            value = band_idx[index]
-            if not np.isfinite(value) or value < minimum_band_index:
-                continue
-
         arm = arm_offset(data, index, side, rule, window)
         if arm < 0:
             continue
@@ -271,7 +264,6 @@ def find_positions(symbol, data, contiguous, side, rule, window, dca_levels, sto
             "stop_price": stop_price * tick_size,
             "avg_price": average * tick_size,
             "exit_price": exit_price * tick_size,
-            "band_index": band_idx[index],
             "bb_width": bb_width[index],
             "units": biggest, "ladder": ladder,
             "outcome": outcome, "gross_pct": gross, "net_pct": net,
@@ -355,8 +347,6 @@ def main():
                         help="drop the 'bollinger bands inside the vbs bands' condition")
     parser.add_argument("--bb-width", type=float, default=None,
                         help="minimum bollinger width; default is VbsSettings.BBMinPercentage")
-    parser.add_argument("--min-band-index", type=float, default=0.0,
-                        help="only take signals whose band range index is at or above this")
     parser.add_argument("--sides", default="both", choices=["both", "long", "short"])
     parser.add_argument("--out", default="", help="csv with every position, for checking by hand")
     parser.add_argument("--settings", default="",
@@ -396,7 +386,7 @@ def main():
                 continue
             rows.extend(find_positions(name, data, contiguous, side, args.rule, args.window,
                                        dca_levels, args.stop, args.target, args.fee, 5,
-                                       interval_minutes, args.min_band_index,
+                                       interval_minutes,
                                        tick_sizes.get(name, 1.0), not args.no_bb_inside,
                                        args.bb_width, args.entry_order))
         print(f"  [{number}/{len(symbols)}] {name:<16} posities tot nu toe: {len(rows)}", flush=True)
@@ -426,8 +416,6 @@ def main():
           f"{met.BB_WIDTH_MINIMUM if args.bb_width is None else args.bb_width}%")
     print(f"  bollinger binnen vbs-band  : "
           f"{'nee (uitgezet)' if args.no_bb_inside else 'ja (zoals VbsSignalShort regel 77/82)'}")
-    print(f"  band range index minimaal  : "
-          f"{args.min_band_index if args.min_band_index > 0 else 'geen filter'}")
     print(f"  dca                        : {args.dca}")
     print(f"  stop-loss                  : {args.stop}% voorbij de verste dca")
     print(f"  doel                       : {args.target}% vanaf het anker (de fee zit erin)")

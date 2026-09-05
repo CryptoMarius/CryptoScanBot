@@ -76,22 +76,6 @@ public partial class BaseConvertersViewModel : ObservableObject
     private static readonly Dictionary<Type, FieldInfo[]> BrushFieldsPerType = [];
 
     /// <summary>
-    /// Colours the band-range index (see BandRangeTracker). Three buckets, no finer: the difference
-    /// between 2.6 and 2.9 is inside the measurement noise. Above 3 was the level where a plain
-    /// mean-reversion entry turned profitable in the measurement, under 2 it never did.
-    /// </summary>
-    internal IBrush GetBrushColorBandRangeIndex(double? index)
-    {
-        if (index == null)
-            return BrushNeutral;
-        if (index >= 3.0)
-            return BrushGreen;
-        if (index < 2.0)
-            return BrushRed;
-        return BrushNeutral;
-    }
-
-    /// <summary>
     /// The colour of the market label beside a symbol (see CryptoSymbol.MarketLabel). The hex
     /// values live in CryptoProduct.ColorOf, one table shared with the Photino side, so the two
     /// UIs can never show the same product in different colours.

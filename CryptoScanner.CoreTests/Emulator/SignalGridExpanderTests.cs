@@ -58,19 +58,19 @@ public class SignalGridExpanderTests : TestBase
     {
         InitTestSession();
 
-        double original = GlobalData.Settings.Signal.AnalysisMinBandRangeIndex;
+        float original = GlobalData.Settings.Signal.AnalysisEffectivePercentage;
 
-        var overrides = SignalGridExpander.Apply(EntryWithOverride("Signal", "AnalysisMinBandRangeIndex", "3.5"));
+        var overrides = SignalGridExpander.Apply(EntryWithOverride("Signal", "AnalysisEffectivePercentage", "3.5"));
         try
         {
-            Assert.AreEqual(3.5, GlobalData.Settings.Signal.AnalysisMinBandRangeIndex);
+            Assert.AreEqual(3.5f, GlobalData.Settings.Signal.AnalysisEffectivePercentage);
         }
         finally
         {
             SignalGridExpander.Revert(overrides);
         }
 
-        Assert.AreEqual(original, GlobalData.Settings.Signal.AnalysisMinBandRangeIndex);
+        Assert.AreEqual(original, GlobalData.Settings.Signal.AnalysisEffectivePercentage);
     }
 
 
@@ -149,7 +149,7 @@ public class SignalGridExpanderTests : TestBase
     {
         InitTestSession();
 
-        double original = GlobalData.Settings.Signal.AnalysisMinBandRangeIndex;
+        float original = GlobalData.Settings.Signal.AnalysisEffectivePercentage;
 
         // The dictionary preserves insertion order, so the good override is applied first and the
         // retired one throws after it.
@@ -159,13 +159,13 @@ public class SignalGridExpanderTests : TestBase
             {
                 ["Signal"] = new()
                 {
-                    ["AnalysisMinBandRangeIndex"] = JsonDocument.Parse("3.5").RootElement,
+                    ["AnalysisEffectivePercentage"] = JsonDocument.Parse("3.5").RootElement,
                     ["EntryConditions.EntryWaitForPatterns"] = JsonDocument.Parse("""["Hammer"]""").RootElement,
                 },
             },
         };
 
         Assert.ThrowsExactly<NotSupportedException>(() => SignalGridExpander.Apply(entry));
-        Assert.AreEqual(original, GlobalData.Settings.Signal.AnalysisMinBandRangeIndex);
+        Assert.AreEqual(original, GlobalData.Settings.Signal.AnalysisEffectivePercentage);
     }
 }

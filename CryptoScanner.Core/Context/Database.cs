@@ -423,8 +423,6 @@ public class CryptoDatabase : IDisposable
                 "AvgBb TEXT NULL," +
                 "BollingerBandsDeviation TEXT NULL," +
                 "BollingerBandsPercentage TEXT NULL," +
-                "BandRangeIndex TEXT NULL," +
-                "BandRangeCount INTEGER NULL," +
 
                 "KeltnerLowerBand TEXT NULL," +
                 "KeltnerUpperBand TEXT NULL," +
@@ -569,8 +567,6 @@ public class CryptoDatabase : IDisposable
                 "AvgBb TEXT NULL," +
                 "BollingerBandsDeviation TEXT NULL," +
                 "BollingerBandsPercentage TEXT NULL," +
-                "BandRangeIndex TEXT NULL," +
-                "BandRangeCount INTEGER NULL," +
 
                 "KeltnerLowerBand TEXT NULL," +
                 "KeltnerUpperBand TEXT NULL," +

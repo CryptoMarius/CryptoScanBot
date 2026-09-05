@@ -1,0 +1,85 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="420"
+             xmlns:vm="using:CryptoScanner.Analyzers.Bbma.Config"
+             x:DataType="vm:StrategyBbmaSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.Bbma.Config.StrategyBbmaSettingsView">
+
+    <StackPanel Spacing="5">
+
+        <!-- How strictly the reentry candle is read. On = the rules as documented, off = the loose
+             OmniView form. -->
+        <HeaderedContentControl Classes="groupbox" Header="Reentry">
+            <StackPanel Margin="4" Spacing="4">
+
+                <CheckBox IsChecked="{Binding ReentryStrict, Mode=TwoWay}"
+                          Content="Strict reentry" FontSize="12"
+                          ToolTip.Tip="The reentry candle must close back beyond BOTH MA5 and MA10 (not inside the zone) and the MA5/10 zone must sit on the trend side of the mid-band. Off is the loose OmniView form: back beyond MA5 or MA10, zone anywhere."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="The trigger (CSD, CSM, Extreme, ...) has to be at least this many candles behind the reentry candle. Zero switches the check off.">
+                    <TextBlock Grid.Column="0" Text="Min candles after trigger:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding ReentryMinCandlesAfterTrigger, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+        <!-- The setup behind the HTF reentry: a CSD or CSM on the trade's side, not voided since. -->
+        <HeaderedContentControl Classes="groupbox" Header="HTF setup">
+            <StackPanel Margin="4" Spacing="4">
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="How many HTF candles back the CSD or CSM behind the HTF reentry may lie. An opposite-side CSM since then voids it. Zero switches the check off.">
+                    <TextBlock Grid.Column="0" Text="Setup lookback (HTF candles):" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding HtfSetupLookback, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <CheckBox IsChecked="{Binding HtfSetupExtremeInvalidates, Mode=TwoWay}" Margin="20,0,0,0"
+                          Content="Opposite Extreme voids the setup" FontSize="12"
+                          ToolTip.Tip="An opposite-side Extreme on the HTF after the setup (exhaustion at the far band) voids it as well. Off lets only an opposite CSM void it."/>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+        <!-- The exit the BBMA rules give a reentry trade: take profit at the outer band, the
+             stop just beyond the reentry candle. Stop loss and take profit of the trader keep
+             working next to it. -->
+        <HeaderedContentControl Classes="groupbox" Header="Exit">
+            <StackPanel Margin="4" Spacing="4">
+
+                <CheckBox IsChecked="{Binding TakeProfitAtOuterBand, Mode=TwoWay}"
+                          Content="Take profit at the outer band" FontSize="12"
+                          ToolTip.Tip="Leave once a closed candle has reached the outer Bollinger band (upper for a long, lower for a short). The trader's stop loss and take profit keep working next to it; set the global take profit wide to measure the pure band exit."/>
+
+                <CheckBox IsChecked="{Binding TakeProfitOnHtfBand, Mode=TwoWay}" Margin="20,0,0,0"
+                          IsEnabled="{Binding TakeProfitAtOuterBand}"
+                          Content="Use the HTF band" FontSize="12"
+                          ToolTip.Tip="Aim at the outer band of the higher timeframe of the 3-TF triplet (the 1d band for a 1h entry) instead of the band of the position's own interval."/>
+
+                <CheckBox IsChecked="{Binding StopBeyondReentryCandle, Mode=TwoWay}"
+                          Content="Stop beyond the reentry candle" FontSize="12"
+                          ToolTip.Tip="The stop loss sits just beyond the far side of the reentry candle: under its low for a long, above its high for a short. Off uses the global stop loss percentage."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      IsEnabled="{Binding StopBeyondReentryCandle}"
+                      ToolTip.Tip="Extra room beyond the reentry candle's extreme, as a percentage of the price.">
+                    <TextBlock Grid.Column="0" Text="Stop margin %:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding StopMarginPercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+    </StackPanel>
+
+</UserControl>

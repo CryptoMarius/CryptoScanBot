@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;
 
@@ -50,28 +50,8 @@ public static class AtrRbBandsHelper
         IReadOnlyList<IQuote> quotes = candles.AsQuotes();
         IReadOnlyList<EmaResult> emaList = quotes.ToEma(settings.Length);
         IReadOnlyList<AtrResult> atrList = quotes.ToAtr(settings.Length);
-        double? basis = emaList[idx].Ema;
-        double? atr = atrList[idx].Atr;
-        if (!basis.HasValue || !atr.HasValue || basis.Value == 0)
-            return false;
 
-        lowerBand = basis.Value - atr.Value * settings.OuterMult;
-
-        double low = (double)candles[idx].Low;
-        if (low >= lowerBand)
-            return false;
-
-        // Only fire on the lowest Low within the trailing window (matches ta.lowest filter).
-        for (int j = idx - settings.BreakLookback + 1; j < idx; j++)
-        {
-            if ((double)candles[j].Low < low)
-                return false;
-        }
-
-        //pctDeviation = (basis.Value - low) / basis.Value * 100;
-        //pctDeviation = atr.Value / (double)candles[idx].Close * 100;
-        pctDeviation = settings.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
-        return true;
+        return IsBreakAt(candles, emaList, atrList, idx, isLong: true, out pctDeviation, out lowerBand);
     }
 
     /// <summary>
@@ -105,26 +85,111 @@ public static class AtrRbBandsHelper
         IReadOnlyList<IQuote> quotes = candles.AsQuotes();
         IReadOnlyList<EmaResult> emaList = quotes.ToEma(settings.Length);
         IReadOnlyList<AtrResult> atrList = quotes.ToAtr(settings.Length);
+
+        return IsBreakAt(candles, emaList, atrList, idx, isLong: false, out pctDeviation, out upperBand);
+    }
+
+
+    /// <summary>
+    /// The band break on ONE index of an already computed EMA/ATR pair: the Low under the macro
+    /// lower band (a long) or the High above the macro upper band (a short), and the most extreme
+    /// value within the trailing BreakLookback window - the ta.lowest/ta.highest filter of the Pine
+    /// script. Split out of the two methods above so a caller that wants to test several indices
+    /// pays for the EMA and the ATR once instead of once per candle.
+    /// </summary>
+    public static bool IsBreakAt(List<CryptoCandle> candles, IReadOnlyList<EmaResult> emaList,
+        IReadOnlyList<AtrResult> atrList, int idx, bool isLong, out double pctDeviation, out double bandPrice)
+    {
+        pctDeviation = 0;
+        bandPrice = 0;
+
+        var settings = AtrRbPlugin.Settings;
+        if (idx < settings.BreakLookback - 1 || idx >= candles.Count)
+            return false;
+
         double? basis = emaList[idx].Ema;
         double? atr = atrList[idx].Atr;
         if (!basis.HasValue || !atr.HasValue || basis.Value == 0)
             return false;
 
-        upperBand = basis.Value + atr.Value * settings.OuterMult;
-
-        double high = (double)candles[idx].High;
-        if (high <= upperBand)
-            return false;
-
-        // Only fire on the highest High within the trailing window (matches ta.highest filter).
-        for (int j = idx - settings.BreakLookback + 1; j < idx; j++)
+        if (isLong)
         {
-            if ((double)candles[j].High > high)
+            bandPrice = basis.Value - atr.Value * settings.OuterMult;
+
+            double low = (double)candles[idx].Low;
+            if (low >= bandPrice)
                 return false;
+
+            // Only fire on the lowest Low within the trailing window (matches ta.lowest filter).
+            for (int j = idx - settings.BreakLookback + 1; j < idx; j++)
+            {
+                if ((double)candles[j].Low < low)
+                    return false;
+            }
+        }
+        else
+        {
+            bandPrice = basis.Value + atr.Value * settings.OuterMult;
+
+            double high = (double)candles[idx].High;
+            if (high <= bandPrice)
+                return false;
+
+            // Only fire on the highest High within the trailing window (matches ta.highest filter).
+            for (int j = idx - settings.BreakLookback + 1; j < idx; j++)
+            {
+                if ((double)candles[j].High > high)
+                    return false;
+            }
         }
 
-        //pctDeviation = (high - basis.Value) / basis.Value * 100;
+        //pctDeviation = (basis.Value - low) / basis.Value * 100;
+        //pctDeviation = atr.Value / (double)candles[idx].Close * 100;
         pctDeviation = settings.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
         return true;
+    }
+
+
+    /// <summary>
+    /// The most recent band break at or before <paramref name="openTime"/>, looking back at most
+    /// <paramref name="withinCandles"/> candles (the candle at that time included). The EMA and the
+    /// ATR are computed once for the whole snapshot, so the window costs a walk and not a recompute
+    /// per candle. <paramref name="candlesAgo"/> is 0 when the break is on the candle itself.
+    /// <para>
+    /// This is the band break only - the RSI, stochastic and Bollinger-width filters of the AtrRb
+    /// strategy are NOT replayed here. Those describe the moment of entry; what a lookback asks is
+    /// whether the price has been at the band at all.
+    /// </para>
+    /// </summary>
+    public static bool TryFindRecentBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime,
+        bool isLong, int withinCandles, out int candlesAgo)
+    {
+        candlesAgo = 0;
+
+        var settings = AtrRbPlugin.Settings;
+
+        // Thread-safe ascending snapshot of the most recent candles.
+        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles, symbolInterval.Interval.Duration);
+        if (candles.Count < settings.Length + settings.BreakLookback)
+            return false;
+
+        // Locate the requested (just-closed) candle; fall back to the most recent one.
+        int idx = candles.FindIndex(c => c.OpenTime == openTime);
+        if (idx < 0)
+            idx = candles.Count - 1;
+
+        IReadOnlyList<IQuote> quotes = candles.AsQuotes();
+        IReadOnlyList<EmaResult> emaList = quotes.ToEma(settings.Length);
+        IReadOnlyList<AtrResult> atrList = quotes.ToAtr(settings.Length);
+
+        for (int i = 0; i < withinCandles && idx - i >= 0; i++)
+        {
+            if (IsBreakAt(candles, emaList, atrList, idx - i, isLong, out _, out _))
+            {
+                candlesAgo = i;
+                return true;
+            }
+        }
+        return false;
     }
 }

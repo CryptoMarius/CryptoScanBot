@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 96;
+    public readonly static int CurrentDatabaseVersion = 97;
 
 
     /// <summary>
@@ -2151,6 +2151,33 @@ public class DatabaseMigration
             // Nothing reads it: only the emulator wrote it, and what a finished run needs sits on the
             // run row and on the position (Barometer15m..Barometer1d).
             GlobalData.AddTextToLogTab("Database version 96: BarometerSnapshot removed, the barometer lives in the $BMP/$BMX candles");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        if (CurrentVersion > version.Version && version.Version == 96)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // The band range index is gone. It was recorded with every signal and position from
+            // 16-08-2026 (version 78) to see whether a symbol with room between its Bollinger bands
+            // and well-behaved excursions traded better. Measured on the dbr setup that earns money
+            // (stop-loss 3%, take-profit 7.5%): without the filter 2.294 positions and +547,86 USDT,
+            // with it at 2.0 only 1.404 positions and -239,04 USDT, at 3.5 just 528 positions and
+            // -103,56 USDT. Not only fewer trades but WORSE ones - the profit per position turned
+            // from +0,24 to -0,17 - so the index selected against us. The tracker behind it also
+            // cost about a quarter of the indicator warm-up time.
+            //
+            // The columns go with it: their only reader was the grid that no longer exists.
+            database.Connection.Execute("alter table Signal drop column BandRangeIndex", transaction);
+            database.Connection.Execute("alter table Signal drop column BandRangeCount", transaction);
+            database.Connection.Execute("alter table Position drop column BandRangeIndex", transaction);
+            database.Connection.Execute("alter table Position drop column BandRangeCount", transaction);
+            GlobalData.AddTextToLogTab("Database version 97: band range index removed from Signal and Position");
 
             // update version
             version.Version += 1;

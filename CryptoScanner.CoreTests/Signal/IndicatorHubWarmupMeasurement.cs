@@ -18,8 +18,8 @@ namespace CryptoScanner.CoreTests.Signal;
 /// <para>
 /// The hub is incremental: one candle in, one CryptoData out. It only gets to be incremental when
 /// the candle it is asked for directly follows the one it last saw - see the gap test in
-/// IndicatorEngine.PrepareViaHub. Anything else is a warm-up: a fresh hub fed 260 candles, a
-/// BuildCurrent per candle, and a BandRangeTracker rebuilt over 750 more.
+/// IndicatorEngine.PrepareViaHub. Anything else is a warm-up: a fresh hub fed 260 candles and a
+/// BuildCurrent per candle.
 /// </para>
 ///
 /// <para>
@@ -81,7 +81,7 @@ public class IndicatorHubWarmupMeasurement : TestBase
         report.AppendLine($"ticks measured  : {TicksToMeasure} per base interval");
         report.AppendLine();
         report.AppendLine("base   ticks  warmups  incremental  total ms   ms/tick   hub candles fed" +
-            "   | per warmup: collect  hubFeed  bandRange");
+            "   | per warmup: collect  hubFeed");
 
         // A coarser base means fewer ticks over the same stretch of time, which is the whole point of
         // the setting. Measured per tick so the two columns are comparable, and the caller can
@@ -94,8 +94,7 @@ public class IndicatorHubWarmupMeasurement : TestBase
                 $"{baseDuration,4}m {result.Ticks,7} {result.Warmups,8} {result.Incremental,12} " +
                 $"{result.Milliseconds,9:F1} {result.Milliseconds / Math.Max(1, result.Ticks),9:F2} " +
                 $"{result.CandlesFed,17:N0}   | " +
-                $"{result.CollectMs / warmups,16:F2} {result.HubFeedMs / warmups,8:F2} " +
-                $"{result.BandRangeMs / warmups,10:F2}");
+                $"{result.CollectMs / warmups,16:F2} {result.HubFeedMs / warmups,8:F2}");
         }
 
         Console.WriteLine(report.ToString());
@@ -103,19 +102,18 @@ public class IndicatorHubWarmupMeasurement : TestBase
 
 
     private readonly record struct Result(int Ticks, long Warmups, long Incremental, double Milliseconds,
-        long CandlesFed, double CollectMs, double HubFeedMs, double BandRangeMs);
+        long CandlesFed, double CollectMs, double HubFeedMs);
 
 
     /// <summary>
     /// What a big in-memory CandleList costs the warm-up.
     ///
     /// <para>
-    /// A warm-up looks at 260 candles for the hub and 750 for the band tracker, both fixed - so its
-    /// cost should not depend on how many candles happen to be in memory. It does.
-    /// BandRangeTracker.CollectBuildCandles asks CryptoCandleList.GetLastValuesUpTo for the last 750,
-    /// and that method enumerates the WHOLE dictionary from the oldest key, copies every candle it
-    /// passes into a list, and only then trims to 750. CryptoCandle is a struct, so that is a real
-    /// copy per candle, once per pipeline tick.
+    /// A warm-up looks at a fixed 260 candles for the hub - so its cost should not depend on how
+    /// many candles happen to be in memory. It does. CollectCandles asks CryptoCandleList for the
+    /// last window, and that method enumerates the WHOLE dictionary from the oldest key, copies
+    /// every candle it passes into a list, and only then trims. CryptoCandle is a struct, so that
+    /// is a real copy per candle, once per pipeline tick.
     /// </para>
     ///
     /// <para>
@@ -147,7 +145,7 @@ public class IndicatorHubWarmupMeasurement : TestBase
         report.AppendLine($"1m candles read : {candles.Count:N0}");
         report.AppendLine($"base interval   : 15m, 50 ticks per row");
         report.AppendLine();
-        report.AppendLine("candles in memory   ms/tick   | per warmup: collect  hubFeed  bandRange");
+        report.AppendLine("candles in memory   ms/tick   | per warmup: collect  hubFeed");
 
         foreach (int inMemory in new[] { 4_000, 20_000, 100_000, candles.Count })
         {
@@ -160,8 +158,7 @@ public class IndicatorHubWarmupMeasurement : TestBase
             long warmups = Math.Max(1, result.Warmups);
             report.AppendLine(
                 $"{inMemory,17:N0} {result.Milliseconds / Math.Max(1, result.Ticks),9:F2}   | " +
-                $"{result.CollectMs / warmups,16:F2} {result.HubFeedMs / warmups,8:F2} " +
-                $"{result.BandRangeMs / warmups,10:F2}");
+                $"{result.CollectMs / warmups,16:F2} {result.HubFeedMs / warmups,8:F2}");
         }
 
         Console.WriteLine(report.ToString());
@@ -193,7 +190,6 @@ public class IndicatorHubWarmupMeasurement : TestBase
         symbolInterval.IndicatorHub = null;
         symbolInterval.IndicatorHubLastAdded = null;
         symbolInterval.IndicatorHubAddCount = 0;
-        symbolInterval.BandRange = null;
 
         foreach (CryptoCandle candle in candles)
             symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
@@ -232,8 +228,7 @@ public class IndicatorHubWarmupMeasurement : TestBase
             static double Ms(long ticksRaw) => 1000.0 * ticksRaw / Stopwatch.Frequency;
             return new Result(ticks, PipelineProfiler.PrepWarmupCalls, PipelineProfiler.HubIncrementalCalls,
                 milliseconds, PipelineProfiler.PrepHubFeedCandles,
-                Ms(PipelineProfiler.PrepCollectTicks), Ms(PipelineProfiler.PrepHubFeedTicks),
-                Ms(PipelineProfiler.PrepBandRangeTicks));
+                Ms(PipelineProfiler.PrepCollectTicks), Ms(PipelineProfiler.PrepHubFeedTicks));
         }
         finally
         {

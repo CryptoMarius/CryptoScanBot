@@ -41,8 +41,6 @@ public class SignalViewModel
             SignalColumnEnum.BbLower => Object.BollingerBandsLowerBand?.ToString(Object.Symbol?.PriceDisplayFormat ?? "N8") ?? "-",
             SignalColumnEnum.BbUpper => Object.BollingerBandsUpperBand?.ToString(Object.Symbol?.PriceDisplayFormat ?? "N8") ?? "-",
             SignalColumnEnum.AvgBB => Object.AvgBB.ToString("N2"),
-            SignalColumnEnum.RangeIndex => Object.BandRangeIndex?.ToString("N2") ?? "",
-            SignalColumnEnum.RangeCount => Object.BandRangeCount?.ToString() ?? "",
 
             SignalColumnEnum.Rsi => Object.Rsi?.ToString("N2") ?? "-",
             SignalColumnEnum.LuxIndicator5m => Object.LuxIndicator5m?.ToString("N0") ?? "-",
@@ -78,7 +76,6 @@ public class SignalViewModel
         return column switch
         {
             SignalColumnEnum.Side => ColorHelper.GetColorClassSide(Object.Side),
-            SignalColumnEnum.RangeIndex => ColorHelper.GetColorClassBandRangeIndex(Object.BandRangeIndex),
             SignalColumnEnum.PriceChange => ColorHelper.GetColorClassViaSign(PriceDiffInSignalDirection),
             SignalColumnEnum.Last24HoursChange => ColorHelper.GetColorClassViaSign(Object.Last24HoursChange),
 

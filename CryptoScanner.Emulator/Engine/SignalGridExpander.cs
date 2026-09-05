@@ -44,8 +44,8 @@ public static class SignalGridExpander
         foreach (var (sectionName, props) in entry.SignalOverrides)
         {
             // "Signal" addresses SettingsSignal itself, for properties that do not live in one of
-            // its sections - AnalysisBandRangeIndexCheck / AnalysisMinBandRangeIndex for instance.
-            // Without this there is no way to switch the band range index filter per queue entry.
+            // its sections - AnalysisEffectivePercentage or SymbolMustExistsDays for instance.
+            // Without this those can only be changed in the settings file, not per queue entry.
             if (sectionName.Equals("Signal", StringComparison.OrdinalIgnoreCase))
             {
                 ApplyProps(GlobalData.Settings.Signal, props, saved);
@@ -132,6 +132,11 @@ public static class SignalGridExpander
             + "616-618 and 690-705: it lost money on every strategy). Use the CandlePattern strategy "
             + "instead, which trades the shape itself",
         ["EntryConditions.EntryPatternShape"] = "the shape thresholds went with EntryWaitForPatterns",
+        ["AnalysisBandRangeIndexCheck"] =
+            "the band range index was removed on 05-09-2026. On the dbr setup that earns money it "
+            + "turned +547,86 USDT over 2.294 positions into -239,04 over 1.404 (threshold 2.0) and "
+            + "-103,56 over 528 (threshold 3.5): fewer trades AND worse ones, the profit per position "
+            + "going from +0,24 to -0,17",
     };
 
     /// <summary>

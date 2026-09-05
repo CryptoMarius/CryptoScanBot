@@ -38,7 +38,6 @@ import io
 import numpy as np
 import pandas as pd
 
-import band_index
 import candledb
 import indicators
 
@@ -108,9 +107,6 @@ def compute(frame):
     basis, vbs_upper, vbs_lower, vw_stdev = indicators.vbs_bands(high, low, close, volume, VBS_LENGTH, VBS_MULTIPLIER)
     out["vbs_basis"], out["vbs_upper"], out["vbs_lower"] = basis, vbs_upper, vbs_lower
     out["acs"] = indicators.acs_percentage(high, low, close, ACS_LENGTH, ACS_FACTOR)
-
-    out["band_index"], out["band_median_width"], out["band_ratio"], out["band_count"] = band_index.band_range_index(
-        high, low, close, bb_basis, bb_upper, bb_lower)
 
     keltner_centre, keltner_upper, keltner_lower = indicators.keltner(high, low, close, 20, 10, 2.0)
     out["kc_upper"], out["kc_lower"], out["kc_centre"] = keltner_upper, keltner_lower, keltner_centre
@@ -232,9 +228,6 @@ def measure_symbol(symbol_name, data, contiguous, side, horizon, cluster_gap, co
             "stoch_d": row["stoch_d"],
             "bb_width": row["bb_width"],
             "bb_pct": row["bb_pct"],
-            "band_index": row["band_index"],
-            "band_median_width": row["band_median_width"],
-            "band_ratio": row["band_ratio"],
             "macd_hist_pct": row["macd_hist"] / entry * 100.0,
             "psar_rising": bool(row["psar_rising"]),
             "close_in_range": row["close_in_range"],

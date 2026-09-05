@@ -5,11 +5,9 @@ Same signals, same DCA ladder, same stop-loss, same fee; only the moment the ord
 differs. The candles and indicators are computed once and reused, so twelve rules cost about as
 much as one account.py run.
 
-Optionally adds a band range index filter, so the effect of "only trade symbols with room" can be
-seen separately from the entry rule.
 
 Usage:
-    python rules_compare.py --candles "<db>" --capital 500 [--min-band-index 3.5]
+    python rules_compare.py --candles "<db>" --capital 500
 """
 
 import argparse
@@ -66,9 +64,7 @@ def main():
           f"doel {args.target}% | fee {args.fee}% per transactie | wachtvenster {args.window} candles")
     print(f"              bollinger breedte minimaal "
           f"{met.BB_WIDTH_MINIMUM if args.bb_width is None else args.bb_width}% | "
-          f"bollinger binnen vbs-band: {'NEE' if args.no_bb_inside else 'ja'} | "
-          f"band range index minimaal "
-          f"{args.min_band_index if args.min_band_index > 0 else 'geen filter'}")
+          f"bollinger binnen vbs-band: {'NEE' if args.no_bb_inside else 'ja'}")
     print(f"              {args.slots_long} long / {args.slots_short} short slots | "
           f"startkapitaal {args.capital:.0f}")
     print(f"              instap: " + ("limietorder op de vbs-band (EntryOrderType = Limit)"
@@ -82,7 +78,7 @@ def main():
             for side in ("short", "long"):
                 positions.extend(account.find_positions(
                     name, data, contiguous, side, rule, args.window, dca_levels, args.stop,
-                    args.target, args.fee, 5, interval_minutes, args.min_band_index,
+                    args.target, args.fee, 5, interval_minutes,
                     1.0, not args.no_bb_inside, args.bb_width, args.entry_order))
         frame = pd.DataFrame(positions)
         if not len(frame):

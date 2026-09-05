@@ -39,16 +39,6 @@ public class SettingsSignal
     public float AnalysisEffectivePercentage { get; set; } = 35;
     public bool AnalysisMaxEffectiveLog { get; set; } = false;
 
-    // The symbol must have enough room between its Bollinger bands, and the price must behave well
-    // enough after touching one (see BandRangeTracker.Index: median band width times the
-    // favourable/adverse excursion ratio). Above 3 is where a mean-reversion entry starts to pay off.
-    // A symbol whose index is not known yet - the tracker needs a few hundred candles and at least
-    // BandRangeTracker.MinimumMeasurements completed excursions - is let through, because an unknown
-    // index means "still warming up", not "bad symbol".
-    public bool AnalysisBandRangeIndexCheck { get; set; } = false;
-    public double AnalysisMinBandRangeIndex { get; set; } = 3;
-    public bool LogAnalysisBandRangeIndex { get; set; } = false;
-
     // Dominant zones
     public SettingsSignalStrategyDlz ZonesDlz = new();
 

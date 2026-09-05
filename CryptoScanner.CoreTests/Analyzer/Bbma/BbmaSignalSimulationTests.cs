@@ -131,9 +131,15 @@ public class BbmaSignalSimulationTests : TestBase
     /// MTF/HTF indicators are calculated on demand inside IsSignal() via
     /// CalculateIndicatorsForInterval — same as production.
     /// </summary>
+    /// <param name="omni">
+    ///     Run the registered Omni variant (SignalBbmaOmniLong/Short) instead of the original
+    ///     Pine-aligned SignalBbmaLong/Short. The Omni variant rebuilds its TPW cache over every
+    ///     candle with indicator data on each call, so combine it with <paramref name="lastCandles"/>.
+    /// </param>
+    /// <param name="lastCandles">Only simulate the newest N candles (after the warm-up).</param>
     private static List<SignalHit> RunSimulation(
         CryptoSymbol symbol, CryptoInterval ltf, CryptoTradeSide side,
-        int warmupCandles = 260)
+        int warmupCandles = 260, bool omni = false, int? lastCandles = null)
     {
         var hits = new List<SignalHit>();
         CryptoSymbolInterval ltfSymbolInterval = symbol.GetSymbolInterval(ltf.IntervalPeriod);
@@ -142,6 +148,8 @@ public class BbmaSignalSimulationTests : TestBase
         List<CryptoCandle> candles = ltfSymbolInterval.CandleList.Values
             .Skip(warmupCandles)
             .ToList();
+        if (lastCandles is int take && take < candles.Count)
+            candles = candles.Skip(candles.Count - take).ToList();
 
         int processed = 0;
         foreach (CryptoCandle candle in candles)
@@ -157,7 +165,31 @@ public class BbmaSignalSimulationTests : TestBase
                 continue;
 
             // Build algorithm instance — mirrors what SignalCreate.ExecuteAlgorithmAsync does.
-            SignalCreateBase algorithm = side == CryptoTradeSide.Long
+            SignalCreateBase algorithm;
+            if (omni)
+            {
+                algorithm = side == CryptoTradeSide.Long
+                    ? new SignalBbmaOmniLong
+                    {
+                        Symbol = symbol,
+                        Interval = ltf,
+                        SymbolInterval = ltfSymbolInterval,
+                        SignalSide = CryptoTradeSide.Long,
+                        SignalStrategy = "bbma.omni",
+                        CandleLast = candleLast,
+                    }
+                    : new SignalBbmaOmniShort
+                    {
+                        Symbol = symbol,
+                        Interval = ltf,
+                        SymbolInterval = ltfSymbolInterval,
+                        SignalSide = CryptoTradeSide.Short,
+                        SignalStrategy = "bbma.omni",
+                        CandleLast = candleLast,
+                    };
+            }
+            else
+            algorithm = side == CryptoTradeSide.Long
                 ? new SignalBbmaLong
                 {
                     Symbol = symbol,
@@ -281,6 +313,41 @@ public class BbmaSignalSimulationTests : TestBase
 
         Console.WriteLine($"=== BBMA SHORT signals — {symbol} {ltf.Name} ===");
         List<SignalHit> hits = RunSimulation(sym, ltf, CryptoTradeSide.Short);
+
+        Console.WriteLine();
+        Console.WriteLine("Summary:");
+        foreach (var hit in hits)
+            Console.WriteLine($"  {hit.CandleTimeLocal:yyyy-MM-dd HH:mm:ss}  {hit.ExtraText}");
+    }
+
+    /// <summary>
+    /// The registered Omni variant, long side, over the newest 4000 5m candles (about two weeks):
+    /// prints every hit with its 3-TF code and the reason text. No assertions.
+    /// </summary>
+    [TestMethod]
+    public void DiscoverSignals_OmniLong_ADAUSDT()
+    {
+        const string symbol = "ADAUSDT";
+        var (sym, ltf, _, _) = LoadTestData(symbol);
+
+        Console.WriteLine($"=== BBMA OMNI LONG signals — {symbol} {ltf.Name} ===");
+        List<SignalHit> hits = RunSimulation(sym, ltf, CryptoTradeSide.Long, omni: true, lastCandles: 4000);
+
+        Console.WriteLine();
+        Console.WriteLine("Summary:");
+        foreach (var hit in hits)
+            Console.WriteLine($"  {hit.CandleTimeLocal:yyyy-MM-dd HH:mm:ss}  {hit.ExtraText}");
+    }
+
+    /// <summary>The registered Omni variant, short side — see DiscoverSignals_OmniLong_ADAUSDT.</summary>
+    [TestMethod]
+    public void DiscoverSignals_OmniShort_ADAUSDT()
+    {
+        const string symbol = "ADAUSDT";
+        var (sym, ltf, _, _) = LoadTestData(symbol);
+
+        Console.WriteLine($"=== BBMA OMNI SHORT signals — {symbol} {ltf.Name} ===");
+        List<SignalHit> hits = RunSimulation(sym, ltf, CryptoTradeSide.Short, omni: true, lastCandles: 4000);
 
         Console.WriteLine();
         Console.WriteLine("Summary:");

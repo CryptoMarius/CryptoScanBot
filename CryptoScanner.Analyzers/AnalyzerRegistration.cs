@@ -63,6 +63,11 @@ public static class AnalyzerRegistration
         // Being measured. The first strategy to use SignalCreateBase.IsExitSignal.
         PluginManager.Register(new MacdCross.MacdCrossPlugin());
 
+        // The same crossover, but only when the price was at a band of Vbs, AtrRb or Dbr in the
+        // last few candles. Meant as an attention filter: a cross on its own fires often, a cross
+        // right after a band break is the rarer situation that is worth opening the chart for.
+        PluginManager.Register(new MacdCrossBand.MacdCrossBandPlugin());
+
         PluginManager.Register(new SuperTrendBreakout.SuperTrendBreakoutPlugin());
         // Very disapointing, expected more of this strategy
         PluginManager.Register(new Trend.TrendPlugin());
