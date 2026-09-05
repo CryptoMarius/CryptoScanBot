@@ -9,8 +9,10 @@ using Avalonia.VisualTree;
 
 using CryptoScanner.Config.Views;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Emulator.Engine;
+using CryptoScanner.Emulator.Services;
 using CryptoScanner.Emulator.ViewModels;
 
 using System.ComponentModel;
@@ -44,6 +46,11 @@ public partial class RunResultsView : UserControl
 
         InitializeComponent();
 
+        // Which columns are shown, how wide and in what order, as the user left them last time. Read
+        // from CryptoScanBot-user.json in the data folder, the same way the scanner does for its
+        // grids. Saved again when the column dialog closes and when the window closes.
+        RestoreGridLayout();
+
         // Wire the double-click drill-down. Done in code-behind because the handler needs the
         // owner Window (to root the modal positions dialog) and the selected row — both easier
         // here than via an MVVM binding. The owner is resolved at click-time from the visual
@@ -55,6 +62,16 @@ public partial class RunResultsView : UserControl
 
         // Restore the column sort indicator from the saved preference once the grid is shown.
         AttachedToVisualTree += (_, _) => RestoreSortIndicator();
+
+        // There is no event for a changed column width or a dragged column, so - like the scanner -
+        // the layout is written once more when the window goes.
+        AttachedToVisualTree += (_, _) =>
+        {
+            if (_closingHooked || TopLevel.GetTopLevel(this) is not Window owner)
+                return;
+            _closingHooked = true;
+            owner.Closing += (_, _) => SaveGridLayout();
+        };
 
         // Select the row under the cursor on right-click BEFORE the context menu opens. The
         // DataGrid only updates its selection on a LEFT click, so without this a right-click on a
@@ -99,6 +116,60 @@ public partial class RunResultsView : UserControl
 
     private string? _currentSortColumn;
     private ListSortDirection _currentSortDirection = ListSortDirection.Ascending;
+
+    /// <summary>The key the runs grid is stored under in CryptoScanBot-user.json.</summary>
+    private const string GridName = "EmulatorRuns";
+    private bool _closingHooked;
+
+
+    private static ApplicationStateService? StateService => GlobalData.GetService<ApplicationStateService>();
+
+
+    private void RestoreGridLayout()
+    {
+        try
+        {
+            StateService?.RestoreGridLayout(GridName, RunsGrid);
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal: the grid then shows its default layout.
+            GlobalData.AddTextToLogTab($"Results grid: restoring the column layout failed — {ex.Message}");
+        }
+    }
+
+
+    private void SaveGridLayout()
+    {
+        try
+        {
+            StateService?.SaveGridLayout(GridName, RunsGrid);
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddTextToLogTab($"Results grid: saving the column layout failed — {ex.Message}");
+        }
+    }
+
+
+    /// <summary>
+    /// The column dialog the scanner has as well: a check box per column. The extra columns on the
+    /// right (peak capital, return on the start capital, best and worst case) can be brought in
+    /// and the ones not needed put away, which is also the way to make the grid fit the window.
+    /// </summary>
+    private async void OnAdjustColumnsClick(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+
+        var window = new ColumnWindow
+        {
+            DataContext = new ColumnWindowViewModel(RunsGrid.Columns),
+        };
+        await window.ShowDialog(owner);
+
+        SaveGridLayout();
+    }
 
 
     /// <summary>
@@ -348,7 +419,7 @@ public partial class RunResultsView : UserControl
 
         // Header row — same order and names as the grid columns.
         sb.AppendLine("Id\tLabel\tPeriod\tStarted\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tWin%\tProfit\tProfit%\tInvested\t" +
-            "Peak cap.\tPeak pos\tPeak %\tLong\tProfit long\tShort\tProfit short\tBest case\tWorst case\tAvg dur.\tMin dur.\tMax dur.");
+            "Peak cap.\tPeak pos\tPeak %\tStart cap.\tEnd cap.\tReturn %\tLong\tProfit long\tShort\tProfit short\tBest case\tWorst case\tAvg dur.\tMin dur.\tMax dur.");
 
         foreach (RunRow r in rows)
         {
@@ -372,6 +443,9 @@ public partial class RunResultsView : UserControl
             sb.Append(r.PeakInvested).Append('\t');
             sb.Append(r.PeakPositions).Append('\t');
             sb.Append(r.PeakProfitPercentage).Append('\t');
+            sb.Append(r.StartCapitalText).Append('\t');
+            sb.Append(r.EndCapitalText).Append('\t');
+            sb.Append(r.CapitalReturnPercentageText).Append('\t');
             sb.Append(r.PositionsLong).Append('\t');
             sb.Append(r.ProfitLong).Append('\t');
             sb.Append(r.PositionsShort).Append('\t');

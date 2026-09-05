@@ -70,6 +70,30 @@ public class RunRow
     public decimal AverageWin { get; set; }
     public decimal AverageLoss { get; set; }
 
+    // Two fields of the run configuration, pulled out of ConfigJson by the query (json_extract) so
+    // the grid does not parse the blob per row. Null for runs written before the fields existed.
+    public decimal? StartCapital { get; set; }
+    public bool? UseAssetManagement { get; set; }
+
+    /// <summary>
+    /// Whether the return on the start capital means anything for this run. It only does when the
+    /// paper balances constrained the run: with asset management off nothing is ever refused for lack
+    /// of money, so the start capital never bounded what was traded and a percentage of it says
+    /// nothing. Legacy runs without the two fields fall out here as well.
+    /// </summary>
+    public bool HasCapitalReturn => UseAssetManagement == true && StartCapital > 0;
+
+    /// <summary>What the run ends on: the start capital plus the realised profit.</summary>
+    public decimal EndCapital => (StartCapital ?? 0m) + Profit;
+
+    /// <summary>
+    /// The profit against the money the run started with: 100 * Profit / StartCapital, or as a
+    /// difference between end and start capital. Not divided by the number of days - the runs that
+    /// are compared cover the same period, so the plain figure is what is wanted. Zero when
+    /// <see cref="HasCapitalReturn"/> is false.
+    /// </summary>
+    public decimal CapitalReturnPercentage => HasCapitalReturn ? 100m * Profit / StartCapital!.Value : 0m;
+
     /// <summary>
     /// Return over the capital that was actually tied up: 100 * Profit / PeakInvested. This is the
     /// percentage that means something — <see cref="ProfitPercentage"/> divides by the summed stake,
@@ -123,6 +147,9 @@ public class RunRow
     public string WorstCaseText => WorstCase.ToString("N2");
     public string ProfitLongText => ProfitLong.ToString("N2");
     public string ProfitShortText => ProfitShort.ToString("N2");
+    public string StartCapitalText => StartCapital.HasValue ? StartCapital.Value.ToString("N2") : "—";
+    public string EndCapitalText => HasCapitalReturn ? EndCapital.ToString("N2") : "—";
+    public string CapitalReturnPercentageText => HasCapitalReturn ? CapitalReturnPercentage.ToString("N2") + "%" : "—";
 
     public string AvgDurationText => FormatDuration(AvgDurationSec);
     public string MinDurationText => FormatDuration(MinDurationSec);
@@ -280,7 +307,12 @@ public partial class RunResultsViewModel : ObservableObject
         "SELECT r.Id, r.StartedAt, r.FinishedAt, r.Label, r.FromDate, r.ToDate, r.Result, " +
         "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.Profit, r.Invested, " +
         "       r.PeakInvested, r.PeakPositions, r.PositionsLong, r.PositionsShort, r.ProfitLong, r.ProfitShort, " +
-        "       r.AverageWin, r.AverageLoss, r.AvgDurationSec, r.MinDurationSec, r.MaxDurationSec " +
+        "       r.AverageWin, r.AverageLoss, r.AvgDurationSec, r.MinDurationSec, r.MaxDurationSec, " +
+        // Start capital and the asset-management switch live in the run configuration blob. SQLite's
+        // json_extract reads them in the query, which keeps the grid fast (parsing ConfigJson per row
+        // in C# is what once made this tab take ten seconds to open) and needs no new column.
+        "       json_extract(r.ConfigJson, '$.StartCapital') AS StartCapital, " +
+        "       json_extract(r.ConfigJson, '$.UseAssetManagement') AS UseAssetManagement " +
         "FROM EmulatorRun r ";
 
 
@@ -477,6 +509,9 @@ public partial class RunResultsViewModel : ObservableObject
             "PeakInvested" => r => r.PeakInvested,
             "PeakPositions" => r => r.PeakPositions,
             "PeakProfitPercentage" => r => r.PeakProfitPercentage,
+            "StartCapital" => r => r.StartCapital,
+            "EndCapital" => r => r.HasCapitalReturn ? r.EndCapital : null,
+            "CapitalReturnPercentage" => r => r.HasCapitalReturn ? r.CapitalReturnPercentage : null,
             "ProfitLong" => r => r.ProfitLong,
             "ProfitShort" => r => r.ProfitShort,
             "BestCase" => r => r.BestCase,

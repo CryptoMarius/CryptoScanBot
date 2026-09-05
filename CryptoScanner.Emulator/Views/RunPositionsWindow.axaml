@@ -25,7 +25,8 @@
                   CanUserResizeColumns="True"
                   CanUserSortColumns="True"
                   AutoGenerateColumns="False"
-                  GridLinesVisibility="Horizontal">
+                  GridLinesVisibility="Horizontal"
+                  HorizontalScrollBarVisibility="Visible">
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Open Symbol Chart" Click="OnOpenChartClick"/>

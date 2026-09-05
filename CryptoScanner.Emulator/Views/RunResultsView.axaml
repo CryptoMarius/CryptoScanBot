@@ -16,6 +16,9 @@
             <Button Content="Delete all runs…" Click="OnDeleteAllRunsClick"/>
         </StackPanel>
 
+        <!-- HorizontalScrollBarVisibility is forced to Visible: on Auto the grid never showed its
+             horizontal scrollbar, so the columns on the right could not be reached (05-09-2026).
+             Forced, the scrollbar is always there and scrolls whenever the columns overflow. -->
         <DataGrid Grid.Row="1"
                   Name="RunsGrid"
                   ItemsSource="{Binding Runs}"
@@ -25,9 +28,12 @@
                   CanUserSortColumns="True"
                   AutoGenerateColumns="False"
                   SelectionMode="Extended"
-                  GridLinesVisibility="Horizontal">
+                  GridLinesVisibility="Horizontal"
+                  HorizontalScrollBarVisibility="Visible">
             <DataGrid.ContextMenu>
                 <ContextMenu>
+                    <MenuItem Header="Adjust columns…" Click="OnAdjustColumnsClick"/>
+                    <Separator/>
                     <MenuItem Header="Edit label…" Click="OnEditLabelClick"/>
                     <MenuItem Header="Show positions…" Click="OnShowPositionsClick"/>
                     <MenuItem Header="Show signals…" Click="OnShowSignalsClick"/>
@@ -151,6 +157,30 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PeakProfitPercentageText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- The run against the money it started with. Only filled when asset management was
+                     on: with it off the start capital never bounded what was traded, and a percentage
+                     of it would say nothing. Not per day - compared runs cover the same period. -->
+                <DataGridTemplateColumn Header="Start cap." Width="90" SortMemberPath="StartCapital" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding StartCapitalText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="End cap." Width="90" SortMemberPath="EndCapital" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding EndCapitalText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Return %" Width="80" SortMemberPath="CapitalReturnPercentage">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding CapitalReturnPercentageText}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
