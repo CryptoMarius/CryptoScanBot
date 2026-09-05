@@ -1763,6 +1763,29 @@ public class PositionMonitor : IDisposable
                     openLevelIndexes.Add(i);
             }
 
+            // Every level is closed but there are still coins: one candle filled a DCA and the exit
+            // order at the same time. The exit order only covered the quantity before that DCA, so
+            // its part was closed while the DCA quantity has no exit order at all. Without this the
+            // position stays Trading forever without a take profit or stop loss (CAKEUSDC.PERP on
+            // HyperLiquid, position 73, 01-09-2026: a wick to -7.9% filled DCA 2 at 1.7906 and the
+            // stop at 1.719 in the same minute, the 33.6 CAKE of that DCA sat unprotected for days).
+            // Reopen the last level - a new part would get the next part number and no longer map
+            // to a TP level - so the loop below places a fresh exit order for what is left.
+            if (openLevelIndexes.Count == 0)
+            {
+                decimal remaining = position.Quantity - position.RemainingDust;
+                int reopenLevel = TakeProfitLevelToReopen(takeProfitPartsByLevel, levels.Count, remaining, Symbol.QuantityMinimum);
+                if (reopenLevel >= 0)
+                {
+                    CryptoPositionPart reopenPart = takeProfitPartsByLevel[reopenLevel];
+                    reopenPart.CloseTime = null;
+                    Database.Connection.Update(reopenPart);
+                    openLevelIndexes.Add(reopenLevel);
+                    GlobalData.AddTextToLogTab($"{Symbol.Name} reopening TP{reopenLevel + 1}: {remaining.ToString0()} {Symbol.Base} left without an exit order " +
+                        "(a DCA and the exit order filled in the same candle)");
+                }
+            }
+
             if (openLevelIndexes.Count > 0)
             {
                 // Always create a separate take profit part per level (if it didn't exist yet)
@@ -1913,6 +1936,32 @@ public class PositionMonitor : IDisposable
                 position.TriggerPriceTop = entryStep.Price;
             }
         }
+    }
+
+
+    /// <summary>
+    /// Which take profit level has to be reopened because the position still holds coins while every
+    /// level has been filled, or -1 when nothing has to happen. That situation only arises when a DCA
+    /// and the exit order fill in the same candle (see HandlePosition). The last level is the one to
+    /// reopen: it is the level that absorbs the remainder anyway. A level without a part is already
+    /// open (HandlePosition creates the part), so nothing is reopened as long as one of those exists,
+    /// and a remainder below the minimum order quantity cannot be sold, so it is left to the position
+    /// close in TradeTools.
+    /// </summary>
+    internal static int TakeProfitLevelToReopen(IReadOnlyDictionary<int, CryptoPositionPart> takeProfitPartsByLevel,
+        int levelCount, decimal remainingQuantity, decimal quantityMinimum)
+    {
+        if (levelCount <= 0)
+            return -1;
+        if (remainingQuantity <= 0 || remainingQuantity < quantityMinimum)
+            return -1;
+
+        for (int i = 0; i < levelCount; i++)
+        {
+            if (!takeProfitPartsByLevel.TryGetValue(i, out CryptoPositionPart? part) || !part.CloseTime.HasValue)
+                return -1; // this level is still open, HandlePosition takes care of it
+        }
+        return levelCount - 1;
     }
 
 
