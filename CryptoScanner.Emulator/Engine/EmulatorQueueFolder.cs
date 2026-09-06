@@ -31,13 +31,15 @@ public static class EmulatorQueueFolder
     /// The next file to run: the alphabetically first .json in the folder whose last write is at
     /// least <paramref name="settleTime"/> before <paramref name="utcNow"/>, or null when there is
     /// none. Ordinal order, so "01-..." runs before "02-..." on every machine and a number in front
-    /// of the name is enough to decide the order.
+    /// of the name is enough to decide the order. Files in <paramref name="skip"/> (full paths) are
+    /// left out: the loop puts a file there that it is done with but could not move away.
     /// </summary>
-    public static string? PickNext(string folder, DateTime utcNow, TimeSpan settleTime)
+    public static string? PickNext(string folder, DateTime utcNow, TimeSpan settleTime, IReadOnlySet<string>? skip = null)
     {
         Directory.CreateDirectory(folder);
         return Directory.GetFiles(folder, "*.json", SearchOption.TopDirectoryOnly)
             .Where(f => Path.GetExtension(f).Equals(".json", StringComparison.OrdinalIgnoreCase))
+            .Where(f => skip == null || !skip.Contains(f))
             .Where(f => File.GetLastWriteTimeUtc(f) <= utcNow - settleTime)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .FirstOrDefault();

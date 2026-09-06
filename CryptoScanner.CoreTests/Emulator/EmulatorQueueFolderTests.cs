@@ -73,6 +73,21 @@ public class EmulatorQueueFolderTests
 
 
     [TestMethod]
+    public void PickNext_LeavesOutTheFilesItIsToldToSkip()
+    {
+        DateTime old = new(2026, 9, 7, 8, 0, 0, DateTimeKind.Utc);
+        string first = Put("01-current.json", old);
+        string second = Put("02-halves.json", old);
+        HashSet<string> skip = new(StringComparer.OrdinalIgnoreCase) { first };
+
+        Assert.AreEqual(second, EmulatorQueueFolder.PickNext(_folder, old.AddMinutes(1), TimeSpan.Zero, skip),
+            "a file the loop is done with but could not move must not be picked up again");
+        skip.Add(second);
+        Assert.IsNull(EmulatorQueueFolder.PickNext(_folder, old.AddMinutes(1), TimeSpan.Zero, skip));
+    }
+
+
+    [TestMethod]
     public void MoveTo_PutsTheTimeInFrontAndKeepsTheName()
     {
         string file = Put("01-current.json", DateTime.UtcNow);

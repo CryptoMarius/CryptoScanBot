@@ -660,64 +660,8 @@ public partial class MainWindowViewModel : ObservableObject
 
 
     /// <summary>
-    /// Runs every entry in the queue file (<c>CryptoScanBot-Emulator-Queue.json</c>) as a separate
-    /// emulator run, per selected algorithm. Each entry supplies its own SL%, TP list and DCA ladder
-    /// — no matrix explosion. Symbols, period and exchange come from the regular
-    /// <c>CryptoScanBot-Emulator.json</c>. The algorithm selection dialog is shown up front so
-    /// the user picks once and the full (algorithm × queue) batch runs unattended.
-    /// </summary>
-    [RelayCommand]
-    private async Task RunQueueAsync(Window? owner)
-    {
-        if (IsRunning)
-            return;
-
-        EmulatorRunConfig? baseConfig = LoadRunConfigForQueue();
-        if (baseConfig == null)
-            return;
-
-        List<EmulatorQueueEntry> queue;
-        try
-        {
-            queue = EmulatorQueueFile.Load();
-        }
-        catch (Exception ex)
-        {
-            Status = $"Failed to read queue file: {ex.Message}";
-            return;
-        }
-
-        if (queue.Count == 0)
-        {
-            Status = $"Queue is empty — add entries to {EmulatorQueueFile.FileName}.";
-            GlobalData.AddTextToLogTab($"Queue: file loaded from {EmulatorQueueFile.FilePath} but contains 0 entries");
-            return;
-        }
-
-        GlobalData.AddTextToLogTab($"Queue: loaded {queue.Count} entries from {EmulatorQueueFile.FilePath}");
-
-        // One backup per batch, made here rather than by hand, so there is a copy of the queue as it
-        // was when this batch started - and only one per batch.
-        string? archived = EmulatorQueueFile.ArchiveBeforeRun();
-        if (archived != null)
-            GlobalData.AddTextToLogTab($"Queue: archived as {archived}");
-
-        _stopRequested = false;
-        IsRunning = true;
-        try
-        {
-            await RunQueueEntriesAsync(queue, baseConfig, owner, EmulatorQueueFile.FileName, EmulatorQueueFile.FilePath);
-        }
-        finally
-        {
-            IsRunning = false;
-        }
-    }
-
-
-    /// <summary>
     /// Runs queue files from the Queue folder one after the other, and keeps watching the folder
-    /// for new ones until Stop is pressed. Each file has the same shape as the queue file. The
+    /// for new ones until Stop is pressed. Each file holds one list of queue entries. The
     /// alphabetically first file goes first, and a finished file moves to Queue\Done with the time
     /// in front of its name; one that cannot be read moves to Queue\Failed.
     /// <para>
@@ -732,6 +676,18 @@ public partial class MainWindowViewModel : ObservableObject
     /// saved is not read half-way. A Stop during a file leaves that file in place: started again,
     /// the runs already measured are recognised as duplicates and only the rest is replayed.
     /// </para>
+    /// <para>
+    /// Since 06-09-2026 this is the only queue there is. The button "Run queue folder" starts it and
+    /// the single file CryptoScanBot-Emulator-Queue.json is not read anywhere any more: a queue that
+    /// used to live in that file is a file in this folder now. That also makes the Done folder the
+    /// record of what ran - every file that was worked through, with the time in front of its name -
+    /// so the separate queue archive it used to write is gone with it.
+    /// </para>
+    /// <para>
+    /// A finished file that cannot be moved (something else holds it open) is reported and left out
+    /// of this batch, instead of being picked up again and again: the next look into the folder
+    /// would otherwise find the same file, replay it as a batch of duplicates and fail the same way.
+    /// </para>
     /// </summary>
     [RelayCommand]
     private async Task RunQueueFolderAsync()
@@ -745,13 +701,16 @@ public partial class MainWindowViewModel : ObservableObject
         Directory.CreateDirectory(EmulatorQueueFolder.FailedFolder);
         GlobalData.AddTextToLogTab($"Queue folder: watching {folder}");
 
+        // Files this batch is done with but could not move away.
+        HashSet<string> stuck = new(StringComparer.OrdinalIgnoreCase);
+
         _stopRequested = false;
         IsRunning = true;
         try
         {
             while (!_stopRequested)
             {
-                string? file = EmulatorQueueFolder.PickNext(folder, DateTime.UtcNow, EmulatorQueueFolder.SettleTime);
+                string? file = EmulatorQueueFolder.PickNext(folder, DateTime.UtcNow, EmulatorQueueFolder.SettleTime, stuck);
                 if (file == null)
                 {
                     Status = $"Waiting for a queue file in {folder} — last check {DateTime.Now:HH:mm:ss}";
@@ -778,21 +737,23 @@ public partial class MainWindowViewModel : ObservableObject
                 }
                 catch (Exception ex)
                 {
-                    string failed = EmulatorQueueFolder.MoveTo(file, EmulatorQueueFolder.FailedFolder, DateTime.Now);
+                    string? failed = TryMoveQueueFile(file, EmulatorQueueFolder.FailedFolder, stuck);
                     GlobalData.AddErrorToLogTab(
-                        $"Queue folder: {name} cannot be read — {ex.GetType().Name}: {ex.Message}; moved to {failed}");
+                        $"Queue folder: {name} cannot be read — {ex.GetType().Name}: {ex.Message}"
+                        + (failed != null ? $"; moved to {failed}" : ""));
                     continue;
                 }
 
                 if (queue.Count == 0)
                 {
-                    string done = EmulatorQueueFolder.MoveTo(file, EmulatorQueueFolder.DoneFolder, DateTime.Now);
-                    GlobalData.AddTextToLogTab($"Queue folder: {name} holds no entries; moved to {done}");
+                    string? done = TryMoveQueueFile(file, EmulatorQueueFolder.DoneFolder, stuck);
+                    GlobalData.AddTextToLogTab(
+                        $"Queue folder: {name} holds no entries" + (done != null ? $"; moved to {done}" : ""));
                     continue;
                 }
 
                 GlobalData.AddTextToLogTab($"Queue folder: starting {name} with {queue.Count} entries");
-                bool finished = await RunQueueEntriesAsync(queue, baseConfig, null, name, file);
+                bool finished = await RunQueueEntriesAsync(queue, baseConfig, name, file);
 
                 if (_stopRequested)
                 {
@@ -802,10 +763,11 @@ public partial class MainWindowViewModel : ObservableObject
                     break;
                 }
 
-                string target = EmulatorQueueFolder.MoveTo(file,
-                    finished ? EmulatorQueueFolder.DoneFolder : EmulatorQueueFolder.FailedFolder, DateTime.Now);
+                string? target = TryMoveQueueFile(file,
+                    finished ? EmulatorQueueFolder.DoneFolder : EmulatorQueueFolder.FailedFolder, stuck);
                 GlobalData.AddTextToLogTab(
-                    $"Queue folder: {name} {(finished ? "finished" : "could not run, see the lines above")}; moved to {target}");
+                    $"Queue folder: {name} {(finished ? "finished" : "could not run, see the lines above")}"
+                    + (target != null ? $"; moved to {target}" : ""));
             }
         }
         finally
@@ -813,6 +775,28 @@ public partial class MainWindowViewModel : ObservableObject
             IsRunning = false;
             Status = "Queue folder stopped.";
             GlobalData.AddTextToLogTab("Queue folder: stopped watching");
+        }
+    }
+
+
+    /// <summary>
+    /// Moves a dealt-with queue file into <paramref name="targetFolder"/> and returns the new path -
+    /// or null when the move failed, in which case the file is added to <paramref name="stuck"/> so
+    /// the loop leaves it alone from here on, and the failure is in the error log with its cause.
+    /// </summary>
+    private static string? TryMoveQueueFile(string file, string targetFolder, HashSet<string> stuck)
+    {
+        try
+        {
+            return EmulatorQueueFolder.MoveTo(file, targetFolder, DateTime.Now);
+        }
+        catch (Exception ex)
+        {
+            stuck.Add(file);
+            GlobalData.AddErrorToLogTab(
+                $"Queue folder: {Path.GetFileName(file)} could not be moved to {targetFolder} — "
+                + $"{ex.GetType().Name}: {ex.Message}; the file is left where it is and skipped for the rest of this batch");
+            return null;
         }
     }
 
@@ -869,18 +853,16 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary>
     /// Runs one list of queue entries as a batch: validates them, settles which algorithms they are
-    /// for, and replays each entry per algorithm. Shared by the single-file batch and the folder
-    /// queue. Does not touch <see cref="IsRunning"/>; the callers keep it true across files.
+    /// for, and replays each entry per algorithm. One file of the folder queue at a time. Does not
+    /// touch <see cref="IsRunning"/>; the caller keeps it true across files.
     /// </summary>
-    /// <param name="owner">The window to show the algorithm selection dialog in; null when there is
-    /// nobody to ask, in which case every entry has to name its algorithm.</param>
     /// <param name="source">What the entries came from, for the log and the status line.</param>
     /// <param name="queueFilePath">The file the entries were read from, so an entry that ran with
     /// Force can have that flag turned off in it afterwards; null when there is no file to edit.</param>
     /// <returns>True when the batch ran to its end (failed runs included); false when it could not
     /// start or was stopped.</returns>
     private async Task<bool> RunQueueEntriesAsync(List<EmulatorQueueEntry> queue, EmulatorRunConfig baseConfig,
-        Window? owner, string source, string? queueFilePath = null)
+        string source, string? queueFilePath = null)
     {
         // Check EVERY entry before the first run instead of discovering a bad one hours later. An
         // entry that asks for a setting the code no longer has cannot run, and until 03-09-2026 that
@@ -931,22 +913,13 @@ public partial class MainWindowViewModel : ObservableObject
         else
         {
             // The folder queue runs with nobody at the machine, so it cannot ask. An entry there
-            // has to say which algorithm it is for.
-            if (owner == null)
-            {
-                Status = $"{source}: entries without an Algorithm need the selection dialog";
-                GlobalData.AddErrorToLogTab(
-                    $"Queue: {source} has entries without \"Algorithm\" and no window to ask in — give every entry an Algorithm");
-                return false;
-            }
-
-            var selectionWindow = new AlgorithmSelectionWindow(baseConfig.SelectedAlgorithms);
-            bool confirmed = owner != null
-                ? await selectionWindow.ShowDialog<bool>(owner)
-                : false;
-
-            if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out selectedNames))
-                return false;
+            // has to say which algorithm it is for. There was a selection dialog here for the batch
+            // that read the single queue file; that batch is gone (06-09-2026) and it was the only
+            // caller that had a window to show a dialog in.
+            Status = $"{source}: every entry needs an \"Algorithm\"";
+            GlobalData.AddErrorToLogTab(
+                $"Queue: {source} has entries without \"Algorithm\" — give every entry an Algorithm");
+            return false;
         }
 
         baseConfig.SelectedAlgorithms = selectedNames;

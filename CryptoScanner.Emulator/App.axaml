@@ -222,8 +222,17 @@
         </Style>
 
         <!-- Reserve space below the last row so the horizontal scrollbar does not overlap it -->
-        <Style Selector="DataGrid /template/ DataGridRowsPresenter">
-            <Setter Property="Margin" Value="0,0,0,18"/>
+        <!-- The Fluent theme lets the rows presenter span the scrollbar row and column (RowSpan 2,
+             ColumnSpan 3), so both scrollbars are drawn over the cells. The earlier answer to that,
+             an 18px bottom margin on the presenter, was what made the horizontal scrollbar go
+             missing: the margin is added on top of the presenter's desired height, the star row
+             of the template grid grows by that amount and the scrollbar row ends up below the
+             clipped bounds, by up to one row height depending on the scroll position. Giving the
+             presenter its own row and leaving the scrollbar column alone puts both scrollbars
+             next to the cells instead, where nothing overlaps and nothing is clipped. -->
+        <Style Selector="DataGrid /template/ DataGridRowsPresenter#PART_RowsPresenter">
+            <Setter Property="Grid.RowSpan" Value="1"/>
+            <Setter Property="Grid.ColumnSpan" Value="2"/>
         </Style>
 
         <Style Selector="DataGridColumnHeader">

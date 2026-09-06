@@ -18,7 +18,10 @@
 
         <!-- HorizontalScrollBarVisibility is forced to Visible: on Auto the grid never showed its
              horizontal scrollbar, so the columns on the right could not be reached (05-09-2026).
-             Forced, the scrollbar is always there and scrolls whenever the columns overflow. -->
+             Forced, the scrollbar is always there and scrolls whenever the columns overflow.
+             The disappearing act turned out to be the 18px rows presenter margin in App.axaml,
+             fixed there by giving the presenter its own row; Visible stays so the bar is always
+             present, also when the columns happen to fit. -->
         <DataGrid Grid.Row="1"
                   Name="RunsGrid"
                   ItemsSource="{Binding Runs}"
