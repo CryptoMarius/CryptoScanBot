@@ -104,6 +104,36 @@ public class AltradyWebhook
     }
 
 
+    /// <summary>
+    /// The base quantity that a quote entry amount buys at the entry price, put on the symbol's
+    /// quantity tick grid. Rounded UP: the plain Clamp rounds a quantity down (safe for our own
+    /// orders, the balance is the limit there), but here the amount in quote is what was decided
+    /// on and a tick less would leave the order below it - and, for a small entry, possibly under
+    /// the symbol's minimum. Returns null when the inputs cannot produce a quantity, so the caller
+    /// can fall back to quote_amount.
+    /// </summary>
+    public static decimal? CalculateBaseAmount(CryptoSymbol symbol, decimal quoteAmount, decimal price)
+    {
+        if (quoteAmount <= 0 || price <= 0)
+            return null;
+
+        decimal baseAmount = quoteAmount / price;
+        decimal onGrid = baseAmount.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
+
+        // Clamp rounds down; step up one tick when it did (a maximum, if there is one, still wins)
+        if (onGrid < baseAmount && symbol.QuantityTickSize > 0)
+        {
+            decimal oneTickUp = onGrid + symbol.QuantityTickSize;
+            if (symbol.QuantityMaximum <= 0 || oneTickUp <= symbol.QuantityMaximum)
+                onGrid = oneTickUp;
+        }
+
+        if (onGrid <= 0)
+            return null;
+        return onGrid;
+    }
+
+
     public static async Task DelegateControlToAltradyAsync(CryptoPosition position, string url = "", string command = "open")
     {
         if (GlobalData.AltradyApi.Key == "" || GlobalData.AltradyApi.Secret == "")
@@ -176,7 +206,22 @@ public class AltradyWebhook
             //quote_amount(number, optional): Specifies quote amount of the entry order, if left blank, the signal bot setting will be used. ,
             //base_amount(number, optional): Specifies base amount of the entry order, if left blank, the signal bot setting will be used. ,
 
-            request.quote_amount = position.EntryAmount;
+            // A market entry is sized in BASE. On HyperLiquid Perpetual (05-09-2026) every long sent
+            // with quote_amount was refused with "Market order doesn't support quote currency", while
+            // the shorts of the same day went through. Altrady's own help page on webhook errors says
+            // the exchange then accepts only one of the two size fields and the other one has to be
+            // used. A limit entry keeps quote_amount, which has never been refused.
+            decimal? baseAmount = null;
+            if (GlobalData.Settings.Trading.EntryOrderType == Enums.CryptoOrderType.Market &&
+                position.EntryAmount.HasValue && position.EntryPrice.HasValue)
+            {
+                baseAmount = CalculateBaseAmount(position.Symbol, position.EntryAmount.Value, position.EntryPrice.Value);
+            }
+
+            if (baseAmount.HasValue)
+                request.base_amount = baseAmount.Value;
+            else
+                request.quote_amount = position.EntryAmount;
 
             // TP body (multiple). A per-signal TP override collapses this to a single TP; see EffectiveTpList.
             var tpList = Trader.TradeTools.EffectiveTpList(position);

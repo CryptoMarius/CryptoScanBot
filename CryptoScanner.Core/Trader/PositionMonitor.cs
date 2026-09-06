@@ -1183,7 +1183,11 @@ public class PositionMonitor : IDisposable
 
                 position.Reposition = false;
                 position.EntryPrice = price;
-                position.EntryAmount = entryQuantity;
+                // EntryAmount is the entry in QUOTE everywhere else (the DCA sizing takes a percentage
+                // of it, the PaperTradingAndAltrady branch below stores tradeParams.QuoteQuantity, and
+                // the Altrady webhook sends it as quote_amount or converts it to base_amount). The
+                // base quantity that was stored here went out as a quote amount.
+                position.EntryAmount = entryQuantity * price;
                 position.UpdateTime = LastCandle1mCloseTimeDate;
                 position.CloseTime = LastCandle1mCloseTimeDate;
                 position.Status = CryptoPositionStatus.Altrady;
