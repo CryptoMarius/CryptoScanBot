@@ -174,6 +174,8 @@ def collect_paths(frame, indices, side, horizon):
     entries = np.array([open_price[i + 1] for i in usable], dtype=float)
     favourable = np.zeros((len(usable), horizon))
     adverse = np.zeros((len(usable), horizon))
+    step_up = np.zeros((len(usable), horizon))
+    step_down = np.zeros((len(usable), horizon))
     final = np.zeros(len(usable))
     length = np.zeros(len(usable), dtype=int)
 
@@ -198,9 +200,13 @@ def collect_paths(frame, indices, side, horizon):
             last = 100.0 * (entry - close[stop - 1]) / entry
         favourable[row, :span] = np.maximum.accumulate(up)
         adverse[row, :span] = np.maximum.accumulate(down)
+        step_up[row, :span] = up
+        step_down[row, :span] = down
         if span < horizon:
             favourable[row, span:] = favourable[row, span - 1]
             adverse[row, span:] = adverse[row, span - 1]
+            step_up[row, span:] = np.nan
+            step_down[row, span:] = np.nan
         final[row] = last
         length[row] = span
 
@@ -208,6 +214,8 @@ def collect_paths(frame, indices, side, horizon):
         "entries": entries,
         "favourable": favourable,
         "adverse": adverse,
+        "step_up": step_up,
+        "step_down": step_down,
         "final": final,
         "length": length,
     }
@@ -253,6 +261,86 @@ def score(paths, stops, targets, cost):
     return rows
 
 
+
+# The trailing variants that are scored: the hard stop the position starts with, how far in profit
+# the lock arms itself, and how far behind the best price the stop then follows. They are the
+# scanner's own MoveSlToBreakEven settings with the method on TrailingPercentage.
+TRAIL_STOPS = [3.0, 4.0, 6.0]
+TRAIL_TRIGGERS = [3.0, 4.0, 6.0, 8.0, 12.0, 16.0, 20.0]
+TRAIL_DISTANCES = [2.0, 3.0, 4.0, 6.0, 8.0]
+
+
+def trailing_level(best, trail, side):
+    """Where the trailing stop sits, as a profit percentage, given the best profit reached so far.
+
+    The scanner keeps the stop `trail` percent of the PRICE behind the best price, so the level is
+    computed in price space and handed back as a profit percentage - which for a short is not the
+    mirror image of the long.
+    """
+    if side == "long":
+        return 100.0 * ((1.0 + best / 100.0) * (1.0 - trail / 100.0) - 1.0)
+    return 100.0 * (1.0 - (1.0 - best / 100.0) * (1.0 + trail / 100.0))
+
+
+def score_trailing(paths, side, stops, triggers, distances, target, cost):
+    """The same grid, but with the profit lock on: a hard stop until the trigger is reached, a stop
+    that follows the price after it.
+
+    The order inside a candle is the pessimistic one, like everywhere else in this tool: the stop is
+    tested before the target, and the lock only arms AFTER the candle that reached the trigger, so a
+    candle can never both arm the lock and be saved by it.
+    """
+    step_up = paths["step_up"]
+    step_down = paths["step_down"]
+    final = paths["final"]
+    count, horizon = step_up.shape
+
+    rows = []
+    for stop in stops:
+        for trigger in triggers:
+            for trail in distances:
+                open_position = np.ones(count, dtype=bool)
+                armed = np.zeros(count, dtype=bool)
+                best = np.zeros(count)
+                level = np.full(count, -stop)
+                result = np.zeros(count)
+                exit_reason = np.zeros(count, dtype=int)   # 0 = still open, 1 = stop, 2 = target
+
+                for k in range(horizon):
+                    up = step_up[:, k]
+                    down = step_down[:, k]
+                    worst = -down
+
+                    effective = np.where(armed, np.maximum(-stop, level), -stop)
+                    hit_stop = open_position & (worst <= effective)
+                    result = np.where(hit_stop, effective, result)
+                    exit_reason = np.where(hit_stop, 1, exit_reason)
+                    open_position = open_position & ~hit_stop
+
+                    hit_target = open_position & (up >= target)
+                    result = np.where(hit_target, target, result)
+                    exit_reason = np.where(hit_target, 2, exit_reason)
+                    open_position = open_position & ~hit_target
+
+                    best = np.where(open_position, np.maximum(best, np.nan_to_num(up, nan=-1e9)), best)
+                    armed = armed | (open_position & (worst >= trigger))
+                    level = trailing_level(best, trail, side)
+
+                result = np.where(open_position, final, result) - cost
+                rows.append({
+                    "stop": stop, "arm": trigger, "trail": trail, "target": target,
+                    "trades": count,
+                    "won": int((result > 0).sum()),
+                    "stopped": int((exit_reason == 1).sum()),
+                    "target_hit": int((exit_reason == 2).sum()),
+                    "openend": int(open_position.sum()),
+                    "winrate": 100.0 * (result > 0).sum() / max(1, count),
+                    "average": float(result.mean()),
+                    "total": float(result.sum()),
+                })
+    return rows
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", default=str(DEFAULT_DB))
@@ -264,6 +352,8 @@ def main():
     parser.add_argument("--cost", type=float, default=ROUND_TRIP_COST)
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--tag", default="tbo")
+    parser.add_argument("--mode", choices=["grid", "trailing"], default="grid")
+    parser.add_argument("--trailing-target", type=float, default=30.0)
     arguments = parser.parse_args()
 
     start = datetime.datetime.strptime(arguments.date_from, "%Y-%m-%d")
@@ -320,6 +410,8 @@ def main():
                 merged = {
                     "favourable": np.vstack([p["favourable"] for p in collected[side]]),
                     "adverse": np.vstack([p["adverse"] for p in collected[side]]),
+                    "step_up": np.vstack([p["step_up"] for p in collected[side]]),
+                    "step_down": np.vstack([p["step_down"] for p in collected[side]]),
                     "final": np.concatenate([p["final"] for p in collected[side]]),
                 }
                 count = len(merged["final"])
@@ -337,7 +429,12 @@ def main():
                 print(f"{interval} {trigger} {side}: {count} signals, "
                       f"median best {np.median(best_favourable):.2f}% / worst {np.median(worst_adverse):.2f}%")
 
-                for row in score(merged, STOPS, TARGETS, arguments.cost):
+                if arguments.mode == "grid":
+                    scored = score(merged, STOPS, TARGETS, arguments.cost)
+                else:
+                    scored = score_trailing(merged, side, TRAIL_STOPS, TRAIL_TRIGGERS,
+                                            TRAIL_DISTANCES, arguments.trailing_target, arguments.cost)
+                for row in scored:
                     row.update({"interval": interval, "trigger": trigger, "side": side})
                     grid_rows.append(row)
 
@@ -349,7 +446,7 @@ def main():
     excursions.to_csv(excursion_file, index=False)
     print(f"\nWritten: {grid_file}\n         {excursion_file}")
 
-    if not grid.empty:
+    if not grid.empty and arguments.mode == "grid":
         both = grid.groupby(["interval", "trigger", "stop", "target"], as_index=False).agg(
             trades=("trades", "sum"), won=("won", "sum"), total=("total", "sum"))
         both["average"] = both["total"] / both["trades"]
