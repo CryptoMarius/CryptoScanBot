@@ -21,6 +21,7 @@
                 <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
                 <vm:StrategyCandlePatternSettingsView DataContext="{Binding StrategyCandlePatternSettingsViewModel}" />
                 <vm:StrategyCandlePatternShapeView DataContext="{Binding StrategyCandlePatternSettingsViewModel}" />
+                <configviews:IntervalView DataContext="{Binding IntervalViewModel}" />
                 <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
             </WrapPanel>
         </StackPanel>

@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 
 namespace CryptoScanner.Core.Settings.Strategy;
@@ -12,7 +12,6 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
     private const string GroupFilter = "Filter";
     private const string GroupUnzoomedBox = "Settings unzoomed box";
     private const string GroupZoomedBox = "Settings zoomed box";
-    private const string GroupIntervals = "Intervals";
 
     // Defaults for zigzag calculation
     public SettingsZigZag ZigZag { get; set; } = new(false, TrendType.Primary);
@@ -121,9 +120,7 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
 
     // --- Intervals ---
 
-    // Show signals from. Avalonia renders this with IntervalView.
-    [SettingCaption("Intervals", Group = GroupIntervals)]
-    public List<string> IntervalList { get; set; } = [];
+    // The interval list itself lives on the base class now, so every strategy has one.
 
 
     public SettingsSignalStrategyDlz() : base()

@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Settings.Strategy;
 
@@ -10,6 +10,21 @@ public class SettingsSignalStrategyBase
     // Per-strategy entry condition overrides. When null the global entry
     // conditions from SettingsTrading apply; when set these take precedence.
     public SettingsEntryConditions? EntryConditions { get; set; } = null;
+
+    /// <summary>A box of its own, like the Avalonia IntervalView it mirrors.</summary>
+    private const string GroupIntervals = "Intervals";
+
+    /// <summary>
+    /// The intervals this strategy runs on. EMPTY means "whatever is ticked for the side", which is
+    /// how every strategy behaved before this existed, so an untouched settings file keeps working.
+    /// <para>
+    /// A filled list can only NARROW that: candles are fetched and kept for the intervals ticked on
+    /// the Signals tab, so a strategy that asks for one that is not ticked would be looking at
+    /// candles that never arrive. The effective list is therefore the intersection of the two.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Intervals", Group = GroupIntervals)]
+    public List<string> IntervalList { get; set; } = [];
 
     public bool PlaySound { get; set; } = false;
     public bool PlaySpeech { get; set; } = false;

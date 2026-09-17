@@ -17,8 +17,20 @@ namespace CryptoScanner.Analyzers.FailedBreakout.Signal;
 /// </summary>
 public class FailedBreakoutBase : SignalCreateBase
 {
+    // The candles are enough for the break itself, so the base requirement of a filled CandleData
+    // is dropped - except when the BB% range is switched on, because that one does read an
+    // indicator and would otherwise dereference a CandleData that was never computed.
     public override bool IndicatorsOkay(MyData data)
-        => data != null && data.Candle.OpenTime != 0;
+    {
+        if (data == null || data.Candle.OpenTime == 0)
+            return false;
+
+        FailedBreakoutSettings settings = FailedBreakoutPlugin.Settings;
+        if ((settings.BBMinPercentage > 0 || settings.BBMaxPercentage > 0) && data.CandleData == null)
+            return false;
+
+        return true;
+    }
 
 
     public override bool IsSignal()
@@ -28,6 +40,15 @@ public class FailedBreakoutBase : SignalCreateBase
         if (settings.LookbackCandles < 2 || settings.BreakWithinCandles < 1)
         {
             ExtraText = "lookback or break window not configured";
+            return false;
+        }
+
+        // First, because it is a single indicator lookup on the candle we already have, where the
+        // zone below asks the zone thread and the level window after it walks dozens of candles.
+        if ((settings.BBMinPercentage > 0 || settings.BBMaxPercentage > 0)
+            && !CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
+        {
+            ExtraText = $"bb.width out of range {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
 

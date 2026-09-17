@@ -38,6 +38,8 @@ public class BbmaOmniTests : TestBase
         // The exit tests read the band of the position's own interval unless they say otherwise;
         // the HTF band (the default) needs HTF data, which only the HTF tests set up.
         BbmaPlugin.Settings.TakeProfitOnHtfBand = false;
+        // Likewise the exit-signal form: the order form (the default) has no exit signal at all.
+        BbmaPlugin.Settings.TakeProfitBandOrder = false;
     }
 
     [TestCleanup]
@@ -52,6 +54,8 @@ public class BbmaOmniTests : TestBase
         settings.HtfSetupExtremeInvalidates = fresh.HtfSetupExtremeInvalidates;
         settings.TakeProfitAtOuterBand = fresh.TakeProfitAtOuterBand;
         settings.TakeProfitOnHtfBand = fresh.TakeProfitOnHtfBand;
+        settings.TakeProfitBandOrder = fresh.TakeProfitBandOrder;
+        settings.StopLookbackCandles = fresh.StopLookbackCandles;
         settings.StopBeyondReentryCandle = fresh.StopBeyondReentryCandle;
         settings.StopMarginPercentage = fresh.StopMarginPercentage;
     }
@@ -771,5 +775,128 @@ public class BbmaOmniTests : TestBase
         });
         Assert.IsTrue(htf.CheckHtf(current, out string setup), setup);
         Assert.AreEqual("CSD", setup);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The take profit as an order at the band, the stop beyond the swing (2026-09-16)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>Long: close 100, upper band 105 → a take profit 5% away. Short: lower band 95 → 5% as well.</summary>
+    [TestMethod]
+    public void TakeProfitOrder_DistanceToTheBand()
+    {
+        Assert.AreEqual(5.0m, SignalBbmaOmniBase.TakeProfitPercentageToBand(100, 105, 95, CryptoTradeSide.Long));
+        Assert.AreEqual(5.0m, SignalBbmaOmniBase.TakeProfitPercentageToBand(100, 105, 95, CryptoTradeSide.Short));
+    }
+
+
+    /// <summary>A close already at or beyond the band leaves no target: the trader keeps its global take profit.</summary>
+    [TestMethod]
+    public void TakeProfitOrder_Null_WhenTheCloseIsBeyondTheBand()
+    {
+        Assert.IsNull(SignalBbmaOmniBase.TakeProfitPercentageToBand(105, 105, 95, CryptoTradeSide.Long));
+        Assert.IsNull(SignalBbmaOmniBase.TakeProfitPercentageToBand(106, 105, 95, CryptoTradeSide.Long));
+        Assert.IsNull(SignalBbmaOmniBase.TakeProfitPercentageToBand(94, 105, 95, CryptoTradeSide.Short));
+    }
+
+
+    /// <summary>
+    /// With the order form on there is no exit signal: the order does the leaving, and the exit
+    /// that sold at the close must stay out of the way even on a candle that touches the band.
+    /// </summary>
+    [TestMethod]
+    public void TakeProfitOrder_On_ThereIsNoExitSignal()
+    {
+        BbmaPlugin.Settings.TakeProfitBandOrder = true;
+        var algorithm = MakeAlgorithm(CryptoTradeSide.Long, MakeData(103, 105.5m, 102.5m, 104));
+        Assert.IsFalse(algorithm.HasExitSignal);
+        Assert.IsFalse(algorithm.IsExitSignal());
+    }
+
+
+    /// <summary>Before IsSignal ran there is no take profit to hand to the trader.</summary>
+    [TestMethod]
+    public void TakeProfitOrder_NotSet_BeforeASignalFired()
+    {
+        var algorithm = MakeAlgorithm(CryptoTradeSide.Long, MakeData(99.5m, 100.5m, 99, 100));
+        Assert.IsNull(algorithm.OverrideProfitPercentage);
+    }
+
+
+    /// <summary>
+    /// A 5m series, index 0 = newest (the reentry candle), with the given lows and highs, and a
+    /// classifier of the side whose CandleLast is that newest candle.
+    /// </summary>
+    private static SignalBbmaOmniBase MakeLtfSeries(CryptoTradeSide side, decimal[] lows, decimal[] highs)
+    {
+        CryptoInterval ltf = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
+        MyData? newest = null;
+        CryptoSymbolInterval? symbolInterval = null;
+        SignalBbmaOmniBase? algorithm = null;
+        for (int i = 0; i < lows.Length; i++)
+        {
+            MyData bar = MakeData(100, highs[i], lows[i], 100);
+            CryptoCandle candle = bar.Candle;
+            candle.OpenTime = new CandleTime((uint)((500 - i) * ltf.Duration));
+            bar.Candle = candle;
+            if (i == 0)
+            {
+                newest = bar;
+                algorithm = MakeAlgorithm(side, bar);
+                symbolInterval = algorithm.SymbolInterval;
+            }
+            symbolInterval!.CandleList.TryAdd(candle.OpenTime, candle);
+            symbolInterval.Data[candle.OpenTime] = bar.CandleData!;
+        }
+        return algorithm!;
+    }
+
+    /// <summary>The exposed test hook: the stop the signal would hand over for this series.</summary>
+    private static decimal? StopOf(SignalBbmaOmniBase algorithm, CryptoTradeSide side, int lookback, decimal margin)
+        => algorithm is SignalBbmaOmniLong l
+            ? l.StopForTest(lookback, margin)
+            : ((SignalBbmaOmniShort)algorithm).StopForTest(lookback, margin);
+
+
+    /// <summary>
+    /// Lows 99.5 (reentry candle), 98 and 99 before it, close 100: three candles back the swing low
+    /// is 98 → 2% plus the 0.1% margin. One candle back it is the reentry candle alone → 0.6%.
+    /// </summary>
+    [TestMethod]
+    public void StopSwing_Long_LowestLowOfTheLastCandles()
+    {
+        var algorithm = MakeLtfSeries(CryptoTradeSide.Long, lows: [99.5m, 98, 99, 97], highs: [101, 101, 101, 101]);
+        Assert.AreEqual(2.1m, StopOf(algorithm, CryptoTradeSide.Long, 3, 0.1m));
+        Assert.AreEqual(0.6m, StopOf(algorithm, CryptoTradeSide.Long, 1, 0.1m));
+        // Four candles back reaches the 97: 3.1%.
+        Assert.AreEqual(3.1m, StopOf(algorithm, CryptoTradeSide.Long, 4, 0.1m));
+    }
+
+
+    [TestMethod]
+    public void StopSwing_Short_HighestHighOfTheLastCandles()
+    {
+        var algorithm = MakeLtfSeries(CryptoTradeSide.Short, lows: [99, 99, 99], highs: [100.5m, 102, 101]);
+        Assert.AreEqual(2.1m, StopOf(algorithm, CryptoTradeSide.Short, 3, 0.1m));
+        Assert.AreEqual(0.6m, StopOf(algorithm, CryptoTradeSide.Short, 1, 0.1m));
+    }
+
+
+    /// <summary>Fewer candles than asked for: the stop uses what is there instead of failing.</summary>
+    [TestMethod]
+    public void StopSwing_ShortSeries_UsesWhatIsThere()
+    {
+        var algorithm = MakeLtfSeries(CryptoTradeSide.Long, lows: [99.5m, 98], highs: [101, 101]);
+        Assert.AreEqual(2.1m, StopOf(algorithm, CryptoTradeSide.Long, 10, 0.1m));
+    }
+
+
+    /// <summary>A reentry candle that closed on its own low, the 5m case: with one candle the stop is the margin, with three it is the swing.</summary>
+    [TestMethod]
+    public void StopSwing_ACandleClosedOnItsExtreme_IsNoLongerJustTheMargin()
+    {
+        var algorithm = MakeLtfSeries(CryptoTradeSide.Long, lows: [100, 99, 99.2m], highs: [101, 101, 101]);
+        Assert.AreEqual(0.1m, StopOf(algorithm, CryptoTradeSide.Long, 1, 0.1m));
+        Assert.AreEqual(1.1m, StopOf(algorithm, CryptoTradeSide.Long, 3, 0.1m));
     }
 }

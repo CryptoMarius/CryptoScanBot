@@ -12,6 +12,10 @@ public partial class StrategyMacdCrossTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyMacdCrossSettingsViewModel _strategyMacdCrossSettingsViewModel;
 
+    // Which intervals this strategy runs on. Empty means "the same as the side".
+    [ObservableProperty]
+    IntervalViewModel _intervalViewModel;
+
     [ObservableProperty]
     StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
 
@@ -19,6 +23,7 @@ public partial class StrategyMacdCrossTabViewModel : ObservableObject
     {
         _soundAndColorsViewModel = new();
         _strategyMacdCrossSettingsViewModel = new();
+        _intervalViewModel = new();
         _strategyEntryConditionsViewModel = new();
     }
 
@@ -27,6 +32,7 @@ public partial class StrategyMacdCrossTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyMacdCrossSettingsViewModel.LoadConfig(settings);
+        IntervalViewModel.LoadConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -34,6 +40,7 @@ public partial class StrategyMacdCrossTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyMacdCrossSettingsViewModel.SaveConfig(settings);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

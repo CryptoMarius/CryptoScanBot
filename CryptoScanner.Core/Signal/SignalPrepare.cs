@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Contracts;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Zones;
@@ -99,11 +99,14 @@ public class SignalPrepare
             {
                 if (!strategyDef.IsZoneStrategy)
                 {
-                    foreach (string intervalName in GlobalData.Settings.Signal.Long.Interval)
+                    // The same list SignalExecute runs on, or this strategy would ask for candles
+                    // whose indicators were never prepared. A strategy with a list of its own gets
+                    // exactly that list, whether or not the side happens to tick those intervals.
+                    foreach (string intervalName in SignalExecute.IntervalsFor(strategyDef, GlobalData.Settings.Signal.Long.Interval))
                     {
                         Add(SignalPrepareKind.Indicator, intervalName);
                     }
-                    foreach (string intervalName in GlobalData.Settings.Signal.Short.Interval)
+                    foreach (string intervalName in SignalExecute.IntervalsFor(strategyDef, GlobalData.Settings.Signal.Short.Interval))
                     {
                         Add(SignalPrepareKind.Indicator, intervalName);
                     }

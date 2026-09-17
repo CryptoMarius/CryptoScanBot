@@ -122,8 +122,9 @@ are settings, on by default:
 | Setting | Mechanism |
 |---------|-----------|
 | **Take profit at the outer band** | `IsExitSignal` (asked by the position monitor on every close of the position's interval): a long leaves once a closed candle has reached the upper band, a short once one has reached the lower band. The trader's stop loss and take profit keep working next to it — set the global take profit wide to measure the pure band exit. |
+| **Take profit as an order at the band** | The signal hands the trader ONE take-profit order at the band price of the signal candle (`OverrideProfitPercentage`) and the exit signal stays out of the way. Added 2026-09-16 after runs 962-965 showed the exit-signal form sells at the close of the touching candle: average winner 0.5%, a wick to the band and back a loss. Off keeps the exit-signal form. |
 | **Use the HTF band** | The band aimed at is the outer band of the HTF of the fixed triplet (the 1d band for a 1h entry), read from the last closed HTF candle — the rules give the take profit on the band of the higher timeframe. Off aims at the band of the position's own interval, the nearer target. |
-| **Stop beyond the reentry candle** | The signal hands `OverrideSlPercentage` to the trader: the distance from the close to the low (long) or high (short) of the reentry candle, plus the **stop margin %** (default 0.1). Off leaves the global stop loss percentage. |
+| **Stop beyond the reentry candle** | The signal hands `OverrideSlPercentage` to the trader: the distance from the close to the swing extreme — the lowest low (long) or highest high (short) of the last **stop lookback candles** (default 3, the reentry candle included) — plus the **stop margin %** (default 0.1). One candle is the reentry candle alone, which on 5m often closes on its extreme and left the stop at nothing but the margin (average loser 0.48% in run 946). Off leaves the global stop loss percentage. |
 
 ### Give-up condition
 
@@ -162,7 +163,9 @@ Extreme kills a waiting long signal).
 | HtfSetupExtremeInvalidates | true | An opposite-side Extreme on the HTF after the setup voids it (an opposite CSM always does) |
 | TakeProfitAtOuterBand | true | Leave once a closed candle reached the outer band (IsExitSignal) |
 | TakeProfitOnHtfBand | true | Aim at the band of the HTF of the triplet instead of the own interval |
-| StopBeyondReentryCandle | true | Stop just beyond the far side of the reentry candle (OverrideSlPercentage) |
+| TakeProfitBandOrder | true | One take-profit order at the band price at signal time instead of the exit signal on the touching candle |
+| StopBeyondReentryCandle | true | Stop beyond the swing extreme of the last candles (OverrideSlPercentage) |
+| StopLookbackCandles | 3 | How many candles the stop looks back for the swing extreme, the reentry candle included |
 | StopMarginPercentage | 0.1 | Extra room beyond the reentry candle, as a percentage of the price |
 
 Sound files: `sound-bbma-long.wav` / `sound-bbma-short.wav`. Emulator queue key: `"bbma.omni"`.
@@ -175,7 +178,7 @@ Sound files: `sound-bbma-long.wav` / `sound-bbma-short.wav`. Emulator queue key:
   not direction candles in the rules).
 - Extreme type B and Magic Extreme from the PDF are not separate states; MHV as "fractal after
   TPW" is the indicator author's approximation.
-- The stop uses the reentry candle's own extreme, the tightest reading of "beyond the swing".
+- The stop reads "beyond the swing" as the extreme of the last three candles; the MHV of the rules is not located.
 - "A reentry occurs for a minimum of three candles" is read as "the trigger is at least three
   candles back"; the source does not say whether it means the length of the pullback or the
   number of reentry candles.
@@ -225,7 +228,8 @@ CryptoScanner.Analyzers/Bbma/
 ```
 
 Tests: `CryptoScanner.CoreTests/Analyzer/Bbma/BbmaOmniTests.cs` (code match, HTF zone, HTF
-setup on a 1h series, strict and loose reentry, exit on the own and the HTF band, stop), `BbmaStateTests.cs` (the original classifier), `BbmaSignalSimulationTests.cs` (candle by
+setup on a 1h series, strict and loose reentry, exit on the own and the HTF band, the take profit
+as an order, the stop beyond the swing), `BbmaStateTests.cs` (the original classifier), `BbmaSignalSimulationTests.cs` (candle by
 candle on the ADAUSDT data set).
 
 ## Registration

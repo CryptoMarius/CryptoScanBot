@@ -676,6 +676,10 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
 
     public override OmniBar ClassifyBar(MyData data) => GetOmniBar(data);
 
+    /// <summary>Test hook: the stop IsSignal would hand over for CandleLast with these settings.</summary>
+    public decimal? StopForTest(int lookback, decimal marginPercentage)
+        => StopPercentageBeyondSwing(CandleLast, CryptoTradeSide.Long, lookback, marginPercentage);
+
     public override bool IsMhv(MyData cursor, MyData next) => IsMhvBuy(cursor, next);
 
     /// <summary>
@@ -741,6 +745,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
     {
         ExtraText = "";
         SlPercentage = null;
+        TpPercentage = null;
         string logPrefix = $"{Symbol.Name} {Interval.Name} bbma.omni {SignalSide} ";
 
         // Ephemeral opposite-side (Short) classifier, used purely to evaluate its Extreme
@@ -915,13 +920,24 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         {
             // The strategy's own stop: just under the low of the reentry candle (plus margin),
             // handed to the trader via OverrideSlPercentage. Null leaves the global stop loss.
+            // Since 2026-09-16 the stop sits beyond the swing of the last StopLookbackCandles
+            // candles, not just the reentry candle (see SignalBbmaOmniBase.SwingExtreme).
             BbmaSettings settings = BbmaPlugin.Settings;
             if (settings.StopBeyondReentryCandle)
-                SlPercentage = StopPercentageBeyondCandle(CandleLast, CryptoTradeSide.Long, settings.StopMarginPercentage);
+                SlPercentage = StopPercentageBeyondSwing(CandleLast, CryptoTradeSide.Long, settings.StopLookbackCandles, settings.StopMarginPercentage);
+
+            // The take profit as an ORDER at the band price (own interval or HTF), handed to the
+            // trader via OverrideProfitPercentage — the fill is at the band, not at the close of
+            // the candle that touches it (see SignalBbmaOmniBase.IsExitSignal for the measurement).
+            if (settings.TakeProfitAtOuterBand && settings.TakeProfitBandOrder
+                && TryGetExitBand(out decimal bandUpper, out decimal bandLower, out _))
+                TpPercentage = TakeProfitPercentageToBand(CandleLast.Candle.Close, bandUpper, bandLower, CryptoTradeSide.Long);
 
             ExtraText = $"{code} [{htfSetup}] {resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name}";
             if (SlPercentage != null)
                 ExtraText += $" sl {SlPercentage.Value:N2}%";
+            if (TpPercentage != null)
+                ExtraText += $" tp {TpPercentage.Value:N2}%";
             //GlobalData.AddTextToLogTab($"{logPrefix} SIGNAL code={code} [{htfSetup}]");
             return true;
         }

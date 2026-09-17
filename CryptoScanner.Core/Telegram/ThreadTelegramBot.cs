@@ -575,8 +575,27 @@ public class ThreadTelegramBotInstance
                 {
                     // Stupid Telegram is not playing nice
                     //ScannerLog.Logger.Error(error, "");
+                    // The same growing pause as the Telegram rejection above, and for the same reason:
+                    // a network failure is not over in 500 ms either. Measured on 04-09-2026 during the
+                    // unplug test - HyperLiquid Perpetual, the only market with Telegram switched on,
+                    // wrote 221 lines of "No such host is known" in four minutes, because only
+                    // TelegramApiException was being paused and a network error fell through to here.
+                    // Now the same episode costs a handful of lines.
+                    backOffSeconds = backOffSeconds == 0
+                        ? backOffSecondsFirst
+                        : Math.Min(backOffSeconds * 2, backOffSecondsMaximum);
+
                     // One call, not two - see the remark above. Simplified to one line on purpose.
-                    GlobalData.AddErrorToLogTab($"ERROR telegram thread {error.Message}");
+                    GlobalData.AddErrorToLogTab($"ERROR telegram thread {error.Message} (waiting {backOffSeconds}s)");
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(backOffSeconds), cancellationToken.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Stopping, the while condition takes care of the rest
+                    }
+                    continue;
                 }
                 await Task.Delay(500);
             }

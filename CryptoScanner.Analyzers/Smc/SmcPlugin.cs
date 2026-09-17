@@ -19,11 +19,11 @@ public class SmcPlugin : IStrategyPlugin
             IsZoneStrategy: true
         ),
 
-        new("smc.rejection",
-            typeof(Signal.SignalOrderBlockRejectionLong),
-            typeof(Signal.SignalOrderBlockRejectionShort),
-            IsZoneStrategy: true
-        ),
+        //new("smc.rejection",
+        //    typeof(Signal.SignalOrderBlockRejectionLong),
+        //    typeof(Signal.SignalOrderBlockRejectionShort),
+        //    IsZoneStrategy: true
+        //),
     ];
 
 

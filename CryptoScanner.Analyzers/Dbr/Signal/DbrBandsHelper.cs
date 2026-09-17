@@ -199,6 +199,108 @@ public static class DbrBandsHelper
 
 
     /// <summary>
+    /// What the candle limits say about one band break: whether the signal is dropped, and - when
+    /// <see cref="DbrSettings.LargeCandleRetracementPart"/> is set - at which price it should be
+    /// entered instead of at the market.
+    /// </summary>
+    public readonly record struct DbrCandleLimit(bool Blocked, string Reason, decimal? EntryPrice)
+    {
+        public static readonly DbrCandleLimit Allowed = new(false, "", null);
+    }
+
+    /// <summary>
+    /// Judges the candle at <paramref name="openTime"/> against the strategy's candle limits: too
+    /// tall compared with the previous <see cref="DbrSettings.CandleAverageLength"/> candles, or
+    /// carrying too much volume compared with the same window. Both limits are off at 0, and then
+    /// this costs nothing: it returns before touching the candle list.
+    /// <para>
+    /// A candle over the SIZE limit is dropped, unless <see cref="DbrSettings.LargeCandleRetracementPart"/>
+    /// is above 0 - then the signal is kept and handed an entry price that far into the candle
+    /// beyond its close, so a long buys lower and a short sells higher. That price only reaches the
+    /// exchange when the entry is placed as a limit order; a market order ignores it. A candle over
+    /// the VOLUME limit is always dropped: no retracement was measured for that one.
+    /// </para>
+    /// <para>
+    /// Size is measured the way the analysis measured it: (high - low) as a percentage of the close
+    /// per candle, so a cheap coin and an expensive one are on the same scale, and the average is
+    /// taken over those percentages. Too few candles to judge means no judgement - the caller keeps
+    /// the signal, exactly as it would without these settings.
+    /// </para>
+    /// </summary>
+    public static DbrCandleLimit CheckCandleLimits(CryptoSymbolInterval symbolInterval, CandleTime openTime, bool isLong)
+    {
+        var settings = DbrPlugin.Settings;
+        bool checkSize = settings.MaxCandleSizeRatio > 0;
+        bool checkVolume = settings.MaxCandleVolumeRatio > 0;
+        if (!checkSize && !checkVolume)
+            return DbrCandleLimit.Allowed;
+
+        int window = settings.CandleAverageLength;
+        if (window <= 0)
+            return DbrCandleLimit.Allowed;
+
+        // Thread-safe ascending snapshot; one more than the window, for the breaking candle itself.
+        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(window + 1, symbolInterval.Interval.Duration);
+        int idx = candles.FindIndex(c => c.OpenTime == openTime);
+        if (idx < 0)
+            idx = candles.Count - 1;
+        if (idx < window)
+            return DbrCandleLimit.Allowed;
+
+        CryptoCandle candle = candles[idx];
+
+        if (checkSize)
+        {
+            double sizeSum = 0;
+            for (int i = idx - window; i < idx; i++)
+                sizeSum += CandleSizePercentage(candles[i]);
+            double average = sizeSum / window;
+            if (average > 0)
+            {
+                double ratio = CandleSizePercentage(candle) / average;
+                if (ratio > settings.MaxCandleSizeRatio)
+                {
+                    if (settings.LargeCandleRetracementPart > 0)
+                    {
+                        // A part of the candle's own height beyond the close, in the direction the
+                        // candle was already going: further down for a long, further up for a short.
+                        decimal height = candle.High - candle.Low;
+                        decimal offset = height * (decimal)settings.LargeCandleRetracementPart;
+                        decimal price = isLong ? candle.Close - offset : candle.Close + offset;
+                        if (price > 0)
+                            return new DbrCandleLimit(false, "", price);
+                    }
+                    return new DbrCandleLimit(true, $"candle {ratio:N1}x the average size (max {settings.MaxCandleSizeRatio:N1})", null);
+                }
+            }
+        }
+
+        if (checkVolume)
+        {
+            double volumeSum = 0;
+            for (int i = idx - window; i < idx; i++)
+                volumeSum += (double)candles[i].Volume;
+            double average = volumeSum / window;
+            if (average > 0)
+            {
+                double ratio = (double)candle.Volume / average;
+                if (ratio > settings.MaxCandleVolumeRatio)
+                    return new DbrCandleLimit(true, $"candle {ratio:N1}x the average volume (max {settings.MaxCandleVolumeRatio:N1})", null);
+            }
+        }
+
+        return DbrCandleLimit.Allowed;
+    }
+
+    /// <summary>High minus low as a percentage of the close, 0 when the close is missing.</summary>
+    private static double CandleSizePercentage(CryptoCandle candle)
+    {
+        if (candle.Close == 0)
+            return 0;
+        return (double)(100m * (candle.High - candle.Low) / candle.Close);
+    }
+
+    /// <summary>
     /// Full long-signal check on index <paramref name="idx"/>: lower-band break + stacking rule.
     /// Also used by the chart drawer for the break labels.
     /// </summary>

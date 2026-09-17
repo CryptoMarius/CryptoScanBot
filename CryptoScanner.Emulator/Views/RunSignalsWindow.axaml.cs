@@ -26,6 +26,7 @@ public partial class RunSignalsWindow : Window
     {
         InitializeComponent();
         DataContext = new RunSignalsViewModel(run);
+        Helpers.ColumnHints.Apply(SignalsGrid, Helpers.ColumnHints.Signals);
 
         // Select the row under the cursor on right-click BEFORE the context menu opens, so
         // "Open chart" always acts on the row the user actually clicked.

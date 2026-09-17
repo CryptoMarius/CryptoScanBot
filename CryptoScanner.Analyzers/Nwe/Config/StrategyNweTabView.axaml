@@ -23,6 +23,7 @@
                 <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
                 <vm:StrategyNweSettingsNweView DataContext="{Binding StrategyNweSettingsNweViewModel}" />
                 <vm:StrategyNweSettingsView DataContext="{Binding StrategyNweSettingsViewModel}" />
+                <configviews:IntervalView DataContext="{Binding IntervalViewModel}" />
                 <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
             </WrapPanel>
         </StackPanel>

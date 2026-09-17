@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -45,6 +45,9 @@ public partial class RunResultsView : UserControl
         };
 
         InitializeComponent();
+
+        // A hover hint per column header, so a percentage says what it divides by.
+        Helpers.ColumnHints.Apply(RunsGrid, Helpers.ColumnHints.Results);
 
         // Which columns are shown, how wide and in what order, as the user left them last time. Read
         // from CryptoScanBot-user.json in the data folder, the same way the scanner does for its

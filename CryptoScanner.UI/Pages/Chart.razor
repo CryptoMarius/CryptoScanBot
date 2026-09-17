@@ -1,4 +1,4 @@
-﻿@page "/chart"
+@page "/chart"
 @using CryptoScanner.Analyzers.Nwe
 @using CryptoScanner.Analyzers.Nwe.Signal
 @using CryptoScanner.Core.Context
@@ -12,6 +12,7 @@
 @using CryptoScanner.UI.Models
 @using CryptoScanner.UI.Services
 @using Skender.Stock.Indicators
+@using CryptoScanner.Core.Settings
 @inject SymbolService SymbolService
 @inject PositionService PositionService
 @inject IJSRuntime JS
@@ -1160,7 +1161,11 @@
             }
 
             // Plugin bands (BBMA, ATR reversal bands, VBS, DBR) expose their lines
-            // through the renderer-agnostic GetSeries so this chart can draw them too
+            // through the renderer-agnostic GetSeries so this chart can draw them too. Their style
+            // travels separately, keyed the same way as the points.
+            var pluginStyles = new Dictionary<string, object>();
+            var pluginBands = new List<object>();
+
             foreach (var overlay in PluginManager.ChartOverlays)
             {
                 if (!_pluginOverlayStates.TryGetValue(overlay.GroupKey, out bool enabled) || !enabled)
@@ -1171,9 +1176,70 @@
                     if (series.Points.Count == 0)
                         continue;
 
-                    overlays[series.Key] = series.Points
-                        .Select(p => (object)new { time = p.Time, value = p.Value })
-                        .ToList();
+                    // The look: what the user configured for this key wins, and the plugin's own
+                    // colour is the fallback. Without this the renderer falls back on its built-in
+                    // table, which has no entry for a plugin series - every band came out grey.
+                    var configured = ChartStyleSettings.Current.Get(series.Key);
+                    object seriesStyle = new
+                    {
+                        color = configured != null ? configured.ToCssColor() : series.Color,
+                        lineWidth = configured != null && configured.LineWidth > 0
+                            ? configured.LineWidth
+                            : (series.LineWidth <= 0 ? 1 : series.LineWidth),
+                        lineStyle = configured != null ? configured.LineStyle : series.LineStyle,
+                    };
+
+                    // A NaN marks the end of a stretch - a level that holds until a new pivot
+                    // replaces it. Those become SEPARATE series: one line with a hole in it is not
+                    // possible here, because the break would need a point at the same timestamp as
+                    // the value that follows it and a series cannot hold a time twice. Separate
+                    // series also keep the levels horizontal instead of joined by a slanted stroke.
+                    var segment = new List<object>();
+                    int segmentIndex = 0;
+                    void FlushSegment()
+                    {
+                        if (segment.Count == 0)
+                            return;
+                        string segmentKey = segmentIndex == 0 ? series.Key : series.Key + "~" + segmentIndex;
+                        overlays[segmentKey] = segment;
+                        pluginStyles[segmentKey] = seriesStyle;
+                        segmentIndex++;
+                        segment = new List<object>();
+                    }
+
+                    foreach (var point in series.Points)
+                    {
+                        if (double.IsNaN(point.Value))
+                        {
+                            FlushSegment();
+                            continue;
+                        }
+                        segment.Add(new { time = point.Time, value = point.Value });
+                    }
+                    FlushSegment();
+                }
+
+                // Filled areas between two lines (a cloud). Lines cannot express those, so they
+                // travel as their own list and the widget paints them under the candles.
+                foreach (var band in overlay.GetBands(_currentSymbol, symbolInterval.Interval, rawCandles))
+                {
+                    if (band.Points.Count == 0)
+                        continue;
+
+                    // What the user configured wins over the default the plugin supplies, exactly
+                    // as it does for the lines. A band carries two colours and says per point which
+                    // of the two it wants.
+                    var upStyle = ChartStyleSettings.Current.Get(band.StyleKeyUp);
+                    var downStyle = ChartStyleSettings.Current.Get(band.StyleKeyDown);
+                    pluginBands.Add(new
+                    {
+                        key = band.Key,
+                        fillUp = upStyle != null ? upStyle.ToCssColor(band.AlphaFactor) : band.FillColorUp,
+                        fillDown = downStyle != null ? downStyle.ToCssColor(band.AlphaFactor) : band.FillColorDown,
+                        points = band.Points
+                            .Select(p => (object)new { time = p.Time, high = p.High, low = p.Low, up = p.Up ? 1 : 0 })
+                            .ToList(),
+                    });
                 }
 
                 // Stop-loss / take-profit texts at the band breaks. Not markers: those are placed
@@ -1182,12 +1248,22 @@
                 // again and lets zooming in reveal more.
                 foreach (var label in overlay.GetLabels(_currentSymbol, symbolInterval.Interval, rawCandles))
                 {
+                    // A label that names a style entry follows the colour screen, like a line does;
+                    // one without a key keeps the colour the overlay handed over.
+                    string labelColor = label.Color;
+                    if (!string.IsNullOrEmpty(label.StyleKey))
+                    {
+                        var labelStyle = ChartStyleSettings.Current.Get(label.StyleKey);
+                        if (labelStyle != null)
+                            labelColor = labelStyle.ToCssColor();
+                    }
+
                     overlayLabels.Add(new
                     {
                         time = label.Time,
                         price = label.Price,
                         above = label.Above,
-                        color = label.Color,
+                        color = labelColor,
                         text = label.Text,
                     });
                 }
@@ -1320,6 +1396,8 @@
             // The Avalonia chart can hide the candles and only show the overlays
             var mainCandles = _showCandles ? candles : new List<object>();
 
+            await JS.InvokeVoidAsync("ChartWidget.setPluginStyles", pluginStyles);
+            await JS.InvokeVoidAsync("ChartWidget.setBands", pluginBands);
             await JS.InvokeVoidAsync("ChartWidget.setData", mainCandles, overlays, panels, extras);
         }
         catch (Exception ex)

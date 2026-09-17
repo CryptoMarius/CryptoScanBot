@@ -20,6 +20,7 @@
             <WrapPanel>
                 <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
                 <vm:StrategyMacdCrossBandSettingsView DataContext="{Binding StrategyMacdCrossBandSettingsViewModel}" />
+                <configviews:IntervalView DataContext="{Binding IntervalViewModel}" />
                 <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
             </WrapPanel>
         </StackPanel>

@@ -21,6 +21,7 @@ public partial class RunPositionsWindow : Window
     {
         InitializeComponent();
         DataContext = new RunPositionsViewModel(run);
+        Helpers.ColumnHints.Apply(PositionsGrid, Helpers.ColumnHints.Positions);
 
         // Select the row under the cursor on right-click BEFORE the context menu opens, so
         // "Open Symbol Chart" always acts on the row the user actually clicked.

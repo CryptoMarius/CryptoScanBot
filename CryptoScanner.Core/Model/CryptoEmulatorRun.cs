@@ -180,7 +180,11 @@ public static class CryptoPositionDigest
     public static readonly string[] Columns =
     [
         "sym", "side", "open", "close", "profit", "invested", "dca", "status", "strat", "iv",
-        "trendP", "trendS", "stochK", "stochD", "rsi", "bbPct", "macdH", "bri", "baro1h", "trend1h",
+        // "bri" (the band range index) stood between "macdH" and "baro1h" until the index itself
+        // was removed on 05-09-2026. PositionDigest.Build never wrote a value for it after that,
+        // so every name from "baro1h" on was one place ahead of its value - "event" fell off the
+        // end of the row entirely. Dropping the name here realigns the digests already stored.
+        "trendP", "trendS", "stochK", "stochD", "rsi", "bbPct", "macdH", "baro1h", "trend1h",
         "event",
     ];
 }

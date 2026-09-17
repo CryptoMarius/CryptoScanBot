@@ -24,6 +24,7 @@
                 <vm:StrategyVbsSettingsView DataContext="{Binding StrategyVbsSettingsViewModel}" />
                 <vm:StrategyVbsSettingsStopLossView DataContext="{Binding StrategyVbsSettingsViewModel}" />
                 <vm:StrategyVbsSettingsTakeProfitView DataContext="{Binding StrategyVbsSettingsViewModel}" />
+                <settings:IntervalView DataContext="{Binding IntervalViewModel}" />
                 <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
             </WrapPanel>
         </StackPanel>

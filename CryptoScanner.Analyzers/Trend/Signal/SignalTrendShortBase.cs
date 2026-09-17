@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -32,6 +32,49 @@ public abstract class SignalTrendShortBase : SignalCreateBase
 
     private string TrendLabel => TrendType == TrendType.Primary ? "primary" : "secondary";
 
+    /// <summary>
+    /// The trend state the signal is armed on: bearish normally, bullish when
+    /// <see cref="TrendSettings.InvertDirection"/> is on.
+    /// </summary>
+    private static CryptoTrendIndicator ArmedOn => TrendPlugin.Settings.InvertDirection
+        ? CryptoTrendIndicator.Bullish
+        : CryptoTrendIndicator.Bearish;
+
+    /// <summary>The opposite of <paramref name="trend"/> - the state that invalidates the setup and,
+    /// once the position is open, ends it.</summary>
+    private static CryptoTrendIndicator ArmedAgainst(CryptoTrendIndicator trend) =>
+        trend == CryptoTrendIndicator.Bullish ? CryptoTrendIndicator.Bearish : CryptoTrendIndicator.Bullish;
+
+
+    /// <summary>
+    /// The strategy leaves on its own only when the setting asks for it; off, the position lives
+    /// entirely on the global stop loss and take profit, the behaviour up to and including run 1036.
+    /// </summary>
+    public override bool HasExitSignal => TrendPlugin.Settings.ExitOnTrendRevert;
+
+
+    /// <summary>
+    /// Out once the trend this signal entered on stands bullish again. Deliberately "stands
+    /// bullish" and not "flipped on this candle": after a flip it stays bullish until the next one,
+    /// so a candle the monitor did not get to see is not a lost exit.
+    /// </summary>
+    public override bool IsExitSignal()
+    {
+        ExtraText = "";
+        if (!TrendPlugin.Settings.ExitOnTrendRevert)
+            return false;
+
+        CryptoTrendIndicator against = ArmedAgainst(ArmedOn);
+        if (GetTrend().Trend != against)
+        {
+            ExtraText = $"{TrendLabel} trend not against the position";
+            return false;
+        }
+
+        ExtraText = $"{TrendLabel} trend stands {against.ToString().ToLowerInvariant()}";
+        return true;
+    }
+
 
     public override bool IsSignal()
     {
@@ -40,17 +83,22 @@ public abstract class SignalTrendShortBase : SignalCreateBase
 
         _ = MarketTrend.CalculateMarketTrendAsync(Symbol, TrendSettings).Result;
 
+        // Which flip arms the short. Normally the flip TO bearish (enter with the new trend); with
+        // TrendSettings.InvertDirection the flip TO bullish, so the short sells the pullback instead.
+        CryptoTrendIndicator armOn = ArmedOn;
+        CryptoTrendIndicator armFrom = ArmedAgainst(armOn);
+
         CryptoTrendData data = GetTrend();
         if (data.PrevTime != null && data.PrevTime > 0 &&
             data.PrevTime + Interval.Duration == data.Time &&
-            data.PrevTrend == CryptoTrendIndicator.Bullish && data.Trend == CryptoTrendIndicator.Bearish)
+            data.PrevTrend == armFrom && data.Trend == armOn)
         {
             // Prevent duplicate signals: only fire once per trend change.
             // LastTrend is reset to a different value when the opposite signal fires (SignalTrendLongBase).
-            if (data.LastTrend != CryptoTrendIndicator.Bearish)
+            if (data.LastTrend != armOn)
             {
-                // Note: data.Trend == Unknown is unreachable here (outer check already requires Bearish).
-                ExtraText = "Going bearish";
+                // Note: data.Trend == Unknown is unreachable here (outer check already requires armOn).
+                ExtraText = armOn == CryptoTrendIndicator.Bearish ? "Going bearish" : "Going bullish (inverted)";
                 data.LastTrend = data.Trend;
                 return true;
             }
@@ -112,9 +160,10 @@ public abstract class SignalTrendShortBase : SignalCreateBase
     public override bool GiveUp(CryptoSignal signal)
     {
         // Trend has already flipped back — setup is invalidated
-        if (GetTrend().Trend == CryptoTrendIndicator.Bullish)
+        CryptoTrendIndicator against = ArmedAgainst(ArmedOn);
+        if (GetTrend().Trend == against)
         {
-            ExtraText = $"{TrendLabel} trend reverted to bullish";
+            ExtraText = $"{TrendLabel} trend reverted to {against.ToString().ToLowerInvariant()}";
             return true;
         }
 

@@ -9,6 +9,7 @@ using OxyPlot;
 using OxyPlot.Series;
 
 using Skender.Stock.Indicators;
+using CryptoScanner.Analyzers.Chart;
 
 namespace CryptoScanner.Analyzers.Bbma.Chart;
 
@@ -23,6 +24,28 @@ public class BbmaChartOverlay : IChartOverlay
     public event Action? RequestRedraw;
 #pragma warning restore CS0067
 
+    public const string KeyWma5High = "bbmaWma5High";
+    public const string KeyWma10High = "bbmaWma10High";
+    public const string KeyWma5Low = "bbmaWma5Low";
+    public const string KeyWma10Low = "bbmaWma10Low";
+    public const string KeyEma50 = "bbmaEma50";
+
+    /// <summary>
+    /// What this overlay draws and how it looks by default. The colour screen builds its section from
+    /// this, so the entries exist exactly as long as the plugin is registered: a strategy that is not
+    /// in the build takes its colours with it instead of leaving them behind on screen, and a new one
+    /// arrives with its own instead of in the fallback grey. GetSeries reads the same list, so the
+    /// chart and the screen cannot drift apart.
+    /// </summary>
+    public IReadOnlyList<ChartOverlayStyleDefinition> StyleDefinitions { get; } =
+    [
+        new() { Key = KeyWma5High, Label = "WMA 5 high", Color = "#c62828" },
+        new() { Key = KeyWma10High, Label = "WMA 10 high", Color = "#c62828", LineStyle = 2 },
+        new() { Key = KeyWma5Low, Label = "WMA 5 low", Color = "#2e7d32" },
+        new() { Key = KeyWma10Low, Label = "WMA 10 low", Color = "#2e7d32", LineStyle = 2 },
+        new() { Key = KeyEma50, Label = "EMA 50", Color = "#ef6c00", LineWidth = 2 },
+    ];
+
     public IReadOnlyList<ChartOverlaySeries> GetSeries(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
     {
         if (candles.Count == 0)
@@ -35,11 +58,11 @@ public class BbmaChartOverlay : IChartOverlay
         var wma10High = quotes.Use(CandlePart.High).ToWma(10).ToList();
         var ema50 = quotes.ToEma(50).ToList();
 
-        var s5High = new ChartOverlaySeries { Key = "bbmaWma5High", Label = "WMA5 high", Color = "#c62828" };
-        var s10High = new ChartOverlaySeries { Key = "bbmaWma10High", Label = "WMA10 high", Color = "#c62828", LineStyle = 2 };
-        var s5Low = new ChartOverlaySeries { Key = "bbmaWma5Low", Label = "WMA5 low", Color = "#2e7d32" };
-        var s10Low = new ChartOverlaySeries { Key = "bbmaWma10Low", Label = "WMA10 low", Color = "#2e7d32", LineStyle = 2 };
-        var sEma = new ChartOverlaySeries { Key = "bbmaEma50", Label = "EMA50", Color = "#ef6c00", LineWidth = 2 };
+        var s5High = ((IChartOverlay)this).SeriesFor(KeyWma5High);
+        var s10High = ((IChartOverlay)this).SeriesFor(KeyWma10High);
+        var s5Low = ((IChartOverlay)this).SeriesFor(KeyWma5Low);
+        var s10Low = ((IChartOverlay)this).SeriesFor(KeyWma10Low);
+        var sEma = ((IChartOverlay)this).SeriesFor(KeyEma50);
 
         for (int i = 0; i < candles.Count; i++)
         {
@@ -69,12 +92,17 @@ public class BbmaChartOverlay : IChartOverlay
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
         List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
     {
+        // The user's colours, with the ones this overlay has always used as the fallback - so a
+        // scanner where nobody opened the colour screen draws exactly what it drew before.
+        // See ChartStyleOxy.
         var seriesWma5High = new LineSeries
         {
             Title = "wma5high",
             MarkerSize = 1,
-            MarkerFill = OxyColors.DarkRed,
-            Color = OxyColors.DarkRed,
+            MarkerFill = ChartStyleOxy.ColorFor(KeyWma5High, OxyColors.DarkRed),
+            Color = ChartStyleOxy.ColorFor(KeyWma5High, OxyColors.DarkRed),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(KeyWma5High, 1),
+            LineStyle = ChartStyleOxy.LineStyleFor(KeyWma5High, LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };
@@ -82,8 +110,10 @@ public class BbmaChartOverlay : IChartOverlay
         {
             Title = "wma10high",
             MarkerSize = 1,
-            MarkerFill = OxyColors.DarkRed,
-            Color = OxyColors.DarkRed,
+            MarkerFill = ChartStyleOxy.ColorFor(KeyWma10High, OxyColors.DarkRed),
+            Color = ChartStyleOxy.ColorFor(KeyWma10High, OxyColors.DarkRed),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(KeyWma10High, 1),
+            LineStyle = ChartStyleOxy.LineStyleFor(KeyWma10High, LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };
@@ -92,8 +122,10 @@ public class BbmaChartOverlay : IChartOverlay
         {
             Title = "wma5low",
             MarkerSize = 1,
-            MarkerFill = OxyColors.DarkGreen,
-            Color = OxyColors.DarkGreen,
+            MarkerFill = ChartStyleOxy.ColorFor(KeyWma5Low, OxyColors.DarkGreen),
+            Color = ChartStyleOxy.ColorFor(KeyWma5Low, OxyColors.DarkGreen),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(KeyWma5Low, 1),
+            LineStyle = ChartStyleOxy.LineStyleFor(KeyWma5Low, LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };
@@ -101,8 +133,10 @@ public class BbmaChartOverlay : IChartOverlay
         {
             Title = "wma10low",
             MarkerSize = 1,
-            MarkerFill = OxyColors.DarkGreen,
-            Color = OxyColors.DarkGreen,
+            MarkerFill = ChartStyleOxy.ColorFor(KeyWma10Low, OxyColors.DarkGreen),
+            Color = ChartStyleOxy.ColorFor(KeyWma10Low, OxyColors.DarkGreen),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(KeyWma10Low, 1),
+            LineStyle = ChartStyleOxy.LineStyleFor(KeyWma10Low, LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };
@@ -539,8 +573,10 @@ public class BbmaChartOverlay : IChartOverlay
         {
             Title = "ema50",
             MarkerSize = 1,
-            MarkerFill = OxyColors.DarkOrange,
-            Color = OxyColors.DarkOrange,
+            MarkerFill = ChartStyleOxy.ColorFor(KeyEma50, OxyColors.DarkOrange),
+            Color = ChartStyleOxy.ColorFor(KeyEma50, OxyColors.DarkOrange),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(KeyEma50, 2),
+            LineStyle = ChartStyleOxy.LineStyleFor(KeyEma50, LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };

@@ -525,7 +525,29 @@ public static class GlobalData
 
         if (ExchangeListId.TryGetValue(symbol.ExchangeId, out Model.CryptoExchange? exchange))
         {
+            // A row that cannot be keyed is skipped instead of being allowed to abort the whole
+            // load. Both SymbolListName and SymbolListExchangeName are SortedList<string, ...>,
+            // which throws ArgumentNullException on a null key - and LoadSymbols has no try/catch,
+            // so one such row left every remaining symbol unloaded. Reported from the field on
+            // 13-09-2026: databases carrying an ExchangeName of NULL, the column was only added in
+            // database version 53 and an older build writing to the same data folder does not fill
+            // it. The name is the identity of a symbol here; without one there is nothing to show,
+            // to subscribe to or to trade, so dropping the row loses nothing that worked before.
+            if (string.IsNullOrEmpty(symbol.Name) || string.IsNullOrEmpty(symbol.ExchangeName))
+            {
+                AddErrorToLogTab($"Symbol id={symbol.Id} of {exchange.Name} skipped: " +
+                    $"name=\"{symbol.Name}\" exchangeName=\"{symbol.ExchangeName}\" (empty name in the database)");
+                return;
+            }
+
             symbol.Exchange = exchange;
+
+            // Before the symbol enters any of the lists: everything that reads those lists assumes
+            // a fully built symbol, and QuoteData in particular is dereferenced without a check in
+            // the grids and in the candle loader. Setting it afterwards meant that a symbol which
+            // tripped over one of the Add calls below was already visible to the rest of the
+            // application with QuoteData still null, which then crashed the startup elsewhere.
+            symbol.QuoteData = AddQuoteData(symbol.Quote);
 
             if (!exchange.SymbolListId.ContainsKey(symbol.Id))
                 exchange.SymbolListId.Add(symbol.Id, symbol);
@@ -538,10 +560,8 @@ public static class GlobalData
 
             // Which products this market turns out to hold, so the grids know whether the badge
             // beside a symbol tells the reader anything
-            if (symbol.Product.Length > 0)
+            if (!string.IsNullOrEmpty(symbol.Product))
                 exchange.Products.Add(symbol.Product);
-
-            symbol.QuoteData = AddQuoteData(symbol.Quote);
 
             // Shared with the exchange refresh, which assigns new tick sizes to symbols that were
             // loaded long before (see CryptoSymbol.DeriveDecimalsFromTickSizes).

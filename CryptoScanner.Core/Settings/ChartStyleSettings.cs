@@ -1,9 +1,10 @@
-﻿using CryptoScanner.Core.Const;
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Helpers;
 
 using System.Text.Json;
 
-namespace CryptoScanner.UI.Models;
+namespace CryptoScanner.Core.Settings;
 
 /// <summary>
 /// Colour, thickness and dash pattern of one chart series.
@@ -18,10 +19,17 @@ public class ChartLineStyle
     public string Color { get; set; } = "#FF888888";
 
     /// <summary>The colour as a CSS value the chart can draw with.</summary>
-    public string ToCssColor()
+    public string ToCssColor() => ToCssColor(1.0);
+
+    /// <summary>
+    /// The same colour at a fraction of its opacity, for a caller that paints one colour at several
+    /// depths. A factor of 1 is the colour as configured.
+    /// </summary>
+    public string ToCssColor(double alphaFactor)
     {
-        var color = ColorTextHelper.Parse(Color, Core.Model.CoreColor.FromArgb(0xFF, 0x88, 0x88, 0x88));
-        string alpha = (color.A / 255.0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture);
+        var color = ColorTextHelper.Parse(Color, Model.CoreColor.FromArgb(0xFF, 0x88, 0x88, 0x88));
+        double value = Math.Clamp(color.A / 255.0 * alphaFactor, 0.0, 1.0);
+        string alpha = value.ToString("F3", System.Globalization.CultureInfo.InvariantCulture);
         return $"rgba({color.R},{color.G},{color.B},{alpha})";
     }
 
@@ -46,6 +54,11 @@ public class ChartLineStyle
 /// <summary>
 /// Per-series chart styling, kept in its own file so a user's personal colours survive a restart
 /// and stay separate from the scanner configuration.
+/// <para>
+/// In Core since 17-09-2026, and not in the Photino project where it started: both charts have to
+/// read the same colours. The Avalonia overlays drew with their own hard-coded OxyPlot values, so a
+/// colour picked in one window meant nothing in the other.
+/// </para>
 /// </summary>
 public class ChartStyleSettings
 {
@@ -73,8 +86,48 @@ public class ChartStyleSettings
     public sealed record ChartSeriesDefinition(
         string OverlayKey, string Group, string Key, string Label, ChartLineStyle Default);
 
-    /// <summary>Every stylable series, in the order the settings screen shows them.</summary>
-    public static readonly ChartSeriesDefinition[] Definitions =
+    /// <summary>
+    /// Every stylable series, in the order the settings screen shows them: the built-in ones below
+    /// plus whatever the loaded plugin overlays declare.
+    /// <para>
+    /// The plugin half is not a second hand-kept list on purpose. A strategy that is not registered
+    /// in this build has no overlay and therefore no entries, so it disappears from the screen by
+    /// itself - which is what used to go wrong: colours of a plugin that had been moved under
+    /// #if DEBUG stayed behind, and a new strategy had none at all and came out in the fallback grey.
+    /// </para>
+    /// </summary>
+    public static ChartSeriesDefinition[] Definitions => _allDefinitions ??= BuildDefinitions();
+
+    private static ChartSeriesDefinition[]? _allDefinitions;
+
+    /// <summary>Forget the combined list, for when the set of loaded plugins changes.</summary>
+    public static void InvalidateDefinitions() => _allDefinitions = null;
+
+    private static ChartSeriesDefinition[] BuildDefinitions()
+    {
+        var all = new List<ChartSeriesDefinition>(BuiltInDefinitions);
+        foreach (var overlay in Contracts.PluginManager.ChartOverlays)
+        {
+            foreach (var definition in overlay.StyleDefinitions)
+            {
+                all.Add(new ChartSeriesDefinition(
+                    overlay.GroupKey,
+                    overlay.Label,
+                    definition.Key,
+                    definition.IsFill ? definition.Label + " (fill)" : definition.Label,
+                    new ChartLineStyle
+                    {
+                        Color = definition.Color,
+                        LineWidth = definition.LineWidth,
+                        LineStyle = definition.LineStyle,
+                    }));
+            }
+        }
+        return [.. all];
+    }
+
+    /// <summary>The series this host draws itself, which no plugin can declare.</summary>
+    private static readonly ChartSeriesDefinition[] BuiltInDefinitions =
     [
         new("bb", "Bollinger Bands", "bbUpper",  "Upper band",  new() { Color = "#FF2196F3" }),
         new("bb", "Bollinger Bands", "bbMiddle", "Middle band", new() { Color = "#FF2196F3", LineStyle = 2 }),
@@ -98,22 +151,10 @@ public class ChartStyleSettings
         new("nwe.r", "NWE (repainting)", "nweRepaintMiddle", "Middle band", new() { Color = "#FF6d4c41", LineStyle = 2 }),
         new("nwe.r", "NWE (repainting)", "nweRepaintLower",  "Lower band",  new() { Color = "#FF8d6e63", LineStyle = 2 }),
 
-        new("atrrb", "ATR Reversal Bands", "atrRbUpper", "Upper band", new() { Color = "#FF90a4ae" }),
-        new("atrrb", "ATR Reversal Bands", "atrRbLower", "Lower band", new() { Color = "#FF90a4ae" }),
-        new("atrrb", "ATR Reversal Bands", "atrRbBasis", "Basis",      new() { Color = "#FF42a5f5", LineStyle = 2 }),
-
-        new("vbs", "VBS Bands", "vbsUpper", "Upper band", new() { Color = "#FF26a69a" }),
-        new("vbs", "VBS Bands", "vbsLower", "Lower band", new() { Color = "#FF26a69a" }),
-        new("vbs", "VBS Bands", "vbsBasis", "Basis",      new() { Color = "#FF9e9e9e", LineStyle = 2 }),
-
-        new("dbr", "DBR Bands", "dbrUpper", "Upper band", new() { Color = "#FFbdbdbd" }),
-        new("dbr", "DBR Bands", "dbrLower", "Lower band", new() { Color = "#FFbdbdbd" }),
-
-        new("bbma", "BBMA", "bbmaWma5High",  "WMA 5 high",  new() { Color = "#FFc62828" }),
-        new("bbma", "BBMA", "bbmaWma10High", "WMA 10 high", new() { Color = "#FFc62828", LineStyle = 2 }),
-        new("bbma", "BBMA", "bbmaWma5Low",   "WMA 5 low",   new() { Color = "#FF2e7d32" }),
-        new("bbma", "BBMA", "bbmaWma10Low",  "WMA 10 low",  new() { Color = "#FF2e7d32", LineStyle = 2 }),
-        new("bbma", "BBMA", "bbmaEma50",     "EMA 50",      new() { Color = "#FFef6c00", LineWidth = 2 }),
+        // The bands of atrrb, vbs, dbr and bbma used to stand here by hand. They come from their own
+        // plugin since 17-09-2026 (IChartOverlay.StyleDefinitions), so they are on this screen exactly
+        // as long as the plugin is in the build - which is what went wrong before: atrrb colours stayed
+        // behind in the settings of a release build that has no atrrb.
 
         new("zigzag",    "Trend", "zigzag",    "ZigZag",     new() { Color = "#FFffffff" }),
         new("fibZigzag", "Trend", "fibZigzag", "FIB ZigZag", new() { Color = "#FFffeb3b", LineStyle = 2 }),

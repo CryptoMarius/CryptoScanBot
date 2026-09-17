@@ -13,6 +13,10 @@ public partial class StrategyStorsiTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyStorsiSettingsViewModel _strategyStorsiSettingsViewModel;
 
+    // Which intervals this strategy runs on. Empty means "the same as the side".
+    [ObservableProperty]
+    IntervalViewModel _intervalViewModel;
+
     [ObservableProperty]
     StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
 
@@ -20,6 +24,7 @@ public partial class StrategyStorsiTabViewModel : ObservableObject
     {
         _soundAndColorsViewModel = new();
         _strategyStorsiSettingsViewModel = new();
+        _intervalViewModel = new();
         _strategyEntryConditionsViewModel = new();
     }
 
@@ -28,6 +33,7 @@ public partial class StrategyStorsiTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyStorsiSettingsViewModel.LoadConfig(settings);
+        IntervalViewModel.LoadConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -35,6 +41,7 @@ public partial class StrategyStorsiTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyStorsiSettingsViewModel.SaveConfig(settings);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

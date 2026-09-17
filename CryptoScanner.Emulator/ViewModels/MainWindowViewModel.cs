@@ -1178,7 +1178,12 @@ public partial class MainWindowViewModel : ObservableObject
                             BaseInterval = baseInterval,
                             StartCapital = startCapital,
                             UseAssetManagement = useAssetManagement,
-                            CalculateBarometer = entry.CalculateBarometer ?? true,
+                            // Same rule as the three above: the entry decides, and without an
+                            // opinion the run configuration does - not the class default. On the
+                            // barometer that difference is a measurement, and the duplicate window
+                            // decides whether this entry is replayed at all.
+                            CalculateBarometer = entry.CalculateBarometer ?? baseConfig.CalculateBarometer,
+                            DuplicateCheckDays = baseConfig.DuplicateCheckDays,
                             Label = runLabel,
                         };
 

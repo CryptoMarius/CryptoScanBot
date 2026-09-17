@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Enums;
 
@@ -17,6 +17,14 @@ public partial class StrategyFailedBreakoutSettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private decimal _closeWithinRangePercentage = 50m;
+
+    // The Bollinger-band width range the breaking candle has to sit in. Both default to 0, which
+    // switches that side of the range off - the behaviour of every run made before this existed.
+    [ObservableProperty]
+    private double _bbMinPercentage = 0.0;
+
+    [ObservableProperty]
+    private double _bbMaxPercentage = 0.0;
 
     // The zone sources the breaking candle has to sit in, as one checkbox each. Three fixed boxes
     // rather than a list view: there are exactly three members and they are addressed through
@@ -41,6 +49,8 @@ public partial class StrategyFailedBreakoutSettingsViewModel : ObservableObject
         BreakWithinCandles = settings.BreakWithinCandles;
         MinimumBreakPercentage = settings.MinimumBreakPercentage;
         CloseWithinRangePercentage = settings.CloseWithinRangePercentage;
+        BbMinPercentage = settings.BBMinPercentage;
+        BbMaxPercentage = settings.BBMaxPercentage;
 
         // Case-insensitive, because the list can also be typed by hand in the settings file or in
         // the emulator queue - where it is written "dlz" rather than "Dlz".
@@ -59,6 +69,8 @@ public partial class StrategyFailedBreakoutSettingsViewModel : ObservableObject
         settings.BreakWithinCandles = BreakWithinCandles;
         settings.MinimumBreakPercentage = MinimumBreakPercentage;
         settings.CloseWithinRangePercentage = CloseWithinRangePercentage;
+        settings.BBMinPercentage = BbMinPercentage;
+        settings.BBMaxPercentage = BbMaxPercentage;
 
         // In the order the enum declares its members, the same order both hosts show them in.
         List<string> zones = [];

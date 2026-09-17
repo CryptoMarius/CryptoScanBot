@@ -22,6 +22,7 @@
             <WrapPanel>
                 <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
                 <vm:StrategyDbrSettingsView DataContext="{Binding StrategyDbrSettingsViewModel}" />
+                <settings:IntervalView DataContext="{Binding IntervalViewModel}" />
                 <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
             </WrapPanel>
         </StackPanel>

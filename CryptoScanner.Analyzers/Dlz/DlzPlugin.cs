@@ -19,12 +19,12 @@ public class DlzPlugin : IStrategyPlugin
             IsZoneStrategy: true
         ),
 
-        // Level approaching
-        new("dlz.near",
-            typeof(Signal.SignalDominantLevelNearLong),
-            typeof(Signal.SignalDominantLevelNearShort),
-            IsZoneStrategy: true
-        ),
+        //// Level approaching
+        //new("dlz.near",
+        //    typeof(Signal.SignalDominantLevelNearLong),
+        //    typeof(Signal.SignalDominantLevelNearShort),
+        //    IsZoneStrategy: true
+        //),
     ];
 
 

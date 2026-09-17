@@ -217,22 +217,31 @@ public partial class RunConfigViewModel : ObservableObject
         }
 
         ValidationMessage = "";
-        config = new EmulatorRunConfig
-        {
-            // Always pin the config to the active exchange — the engine looks the exchange up by
-            // this name, and the emulator only ever drives the one bootstrapped exchange.
-            ExchangeName = GlobalData.ActiveExchange?.Name ?? "",
-            Symbols = symbols,
-            // The date picker hands out a DateTime of kind Unspecified. Pin it to UTC: the replay
-            // window is aligned in UTC and CandleTime.AlignFromDateTime calls ToUniversalTime(),
-            // which would otherwise shift the window by the local time zone offset.
-            FromDate = DateTime.SpecifyKind(FromDate.Value.Date, DateTimeKind.Utc),
-            ToDate = DateTime.SpecifyKind(ToDate.Value.Date, DateTimeKind.Utc),
-            Label = Label ?? "",
-            BaseInterval = SelectedBaseInterval ?? "1m",
-            StartCapital = StartCapital > 0 ? StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital,
-            UseAssetManagement = UseAssetManagement,
-        };
+
+        // Start from what is on disk instead of from a fresh object. This window edits the symbols,
+        // the period, the label, the base interval, the start capital and the paper balances, while
+        // the file holds more than that: the algorithm selection of the sweep dialog, the barometer
+        // switch, the window of the duplicate check and the sort of the results grid. Those four are
+        // written by other places, and a fresh object silently put all of them back on their default
+        // the moment somebody pressed OK here.
+        //
+        // Reloaded rather than kept from the constructor: this dialog can stay open while the results
+        // grid saves a new sort, and the last one to press a button should not undo the other.
+        config = RunConfigFile.Load();
+
+        // Always pin the config to the active exchange — the engine looks the exchange up by
+        // this name, and the emulator only ever drives the one bootstrapped exchange.
+        config.ExchangeName = GlobalData.ActiveExchange?.Name ?? "";
+        config.Symbols = symbols;
+        // The date picker hands out a DateTime of kind Unspecified. Pin it to UTC: the replay
+        // window is aligned in UTC and CandleTime.AlignFromDateTime calls ToUniversalTime(),
+        // which would otherwise shift the window by the local time zone offset.
+        config.FromDate = DateTime.SpecifyKind(FromDate.Value.Date, DateTimeKind.Utc);
+        config.ToDate = DateTime.SpecifyKind(ToDate.Value.Date, DateTimeKind.Utc);
+        config.Label = Label ?? "";
+        config.BaseInterval = SelectedBaseInterval ?? "1m";
+        config.StartCapital = StartCapital > 0 ? StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital;
+        config.UseAssetManagement = UseAssetManagement;
         return true;
     }
 }

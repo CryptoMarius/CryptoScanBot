@@ -12,6 +12,10 @@ public partial class StrategyJumpTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyJumpSettingsViewModel _strategyJumpSettingsViewModel;
 
+    // Which intervals this strategy runs on. Empty means "the same as the side".
+    [ObservableProperty]
+    IntervalViewModel _intervalViewModel;
+
     [ObservableProperty]
     StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
 
@@ -19,6 +23,7 @@ public partial class StrategyJumpTabViewModel : ObservableObject
     {
         _soundAndColorsViewModel = new();
         _strategyJumpSettingsViewModel = new();
+        _intervalViewModel = new();
         _strategyEntryConditionsViewModel = new();
     }
 
@@ -27,6 +32,7 @@ public partial class StrategyJumpTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyJumpSettingsViewModel.LoadConfig(settings);
+        IntervalViewModel.LoadConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -34,6 +40,7 @@ public partial class StrategyJumpTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyJumpSettingsViewModel.SaveConfig(settings);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

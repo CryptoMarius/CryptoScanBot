@@ -1,3 +1,4 @@
+﻿using CryptoScanner.Analyzers.Dbr;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Emulator.Engine;
 
@@ -167,5 +168,46 @@ public class SignalGridExpanderTests : TestBase
 
         Assert.ThrowsExactly<NotSupportedException>(() => SignalGridExpander.Apply(entry));
         Assert.AreEqual(original, GlobalData.Settings.Signal.AnalysisEffectivePercentage);
+    }
+
+    /// <summary>
+    /// The two candle limits of dbr have to be reachable from a queue entry, because a path that
+    /// does not resolve is skipped without a word - a run then quietly measures the strategy
+    /// WITHOUT the limit while its label says it has one.
+    /// </summary>
+    [TestMethod]
+    public void DbrCandleLimitsAreReachableFromAQueueEntry()
+    {
+        InitTestSession();
+        RegisterAndEnablePlugin(new DbrPlugin());
+
+        double originalSize = DbrPlugin.Settings.MaxCandleSizeRatio;
+        double originalVolume = DbrPlugin.Settings.MaxCandleVolumeRatio;
+
+        var entry = new EmulatorQueueEntry
+        {
+            SignalOverrides = new()
+            {
+                ["dbr"] = new()
+                {
+                    ["MaxCandleSizeRatio"] = JsonDocument.Parse("5.0").RootElement,
+                    ["MaxCandleVolumeRatio"] = JsonDocument.Parse("4.0").RootElement,
+                },
+            },
+        };
+
+        var overrides = SignalGridExpander.Apply(entry);
+        try
+        {
+            Assert.AreEqual(5.0, DbrPlugin.Settings.MaxCandleSizeRatio);
+            Assert.AreEqual(4.0, DbrPlugin.Settings.MaxCandleVolumeRatio);
+        }
+        finally
+        {
+            SignalGridExpander.Revert(overrides);
+        }
+
+        Assert.AreEqual(originalSize, DbrPlugin.Settings.MaxCandleSizeRatio);
+        Assert.AreEqual(originalVolume, DbrPlugin.Settings.MaxCandleVolumeRatio);
     }
 }

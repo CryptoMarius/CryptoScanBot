@@ -192,6 +192,19 @@ public class SettingsTrading
     /// </summary>
     public CryptoPriceRounding PriceRounding { get; set; } = CryptoPriceRounding.AgainstPosition;
 
+    /// <summary>
+    /// Which signal wins when several are ready on the same coin in the same minute. Only one
+    /// position can be open per coin, so the first signal through opens it and the rest of that
+    /// minute is never judged - see <see cref="CryptoSignalPriority"/> for what used to decide that,
+    /// and why it was an accident rather than a choice.
+    /// <para>
+    /// The default reproduces the old order exactly, so moving to this build changes no run. Per
+    /// emulator run it goes in a queue entry as "TradingOverrides": {"SignalPriority": 1}, and it
+    /// lands in the settings snapshot of the run, so a finished run says which order produced it.
+    /// </para>
+    /// </summary>
+    public CryptoSignalPriority SignalPriority { get; set; } = CryptoSignalPriority.ShortestIntervalFirst;
+
     //***************************
     // Slots
     //Maximaal aantal slots voor long en short

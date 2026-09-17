@@ -12,6 +12,10 @@ public partial class StrategyBbSqueezeTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyBbSqueezeSettingsViewModel _strategyBbSqueezeSettingsViewModel;
 
+    // Which intervals this strategy runs on. Empty means "the same as the side".
+    [ObservableProperty]
+    IntervalViewModel _intervalViewModel;
+
     [ObservableProperty]
     StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
 
@@ -19,6 +23,7 @@ public partial class StrategyBbSqueezeTabViewModel : ObservableObject
     {
         _soundAndColorsViewModel = new();
         _strategyBbSqueezeSettingsViewModel = new();
+        _intervalViewModel = new();
         _strategyEntryConditionsViewModel = new();
     }
 
@@ -27,6 +32,7 @@ public partial class StrategyBbSqueezeTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyBbSqueezeSettingsViewModel.LoadConfig(settings);
+        IntervalViewModel.LoadConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -34,6 +40,7 @@ public partial class StrategyBbSqueezeTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyBbSqueezeSettingsViewModel.SaveConfig(settings);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

@@ -1,0 +1,80 @@
+namespace CryptoScanner.Analyzers.Tbo;
+
+/// <summary>
+/// The TBO values for one candle, computed once by <see cref="Indicators.TboIndicatorExtension"/>
+/// and shared by the long and the short signal - so a candle with both sides active pays for the
+/// four moving averages and the pivot scan once, not twice.
+/// <para>
+/// The four lengths belong together and are fixed on purpose; see TboSettings.
+/// </para>
+/// <para>
+/// Lives in the plugin, not in CryptoData: the engine attaches it through
+/// <c>CryptoData.SetPluginData</c> without knowing what TBO is.
+/// </para>
+/// </summary>
+public sealed class TboCandleData
+{
+    /// <summary>The fast line, EMA(20) by default - the one a pullback bounces off.</summary>
+    public double? EmaFast { get; set; }
+
+    /// <summary>The second line, EMA(40) by default. Its crossing with the fast one is the entry.</summary>
+    public double? EmaSecond { get; set; }
+
+    /// <summary>The third line, SMA(50) by default.</summary>
+    public double? SmaMedium { get; set; }
+
+    /// <summary>
+    /// The slow line, SMA(150) by default: the far edge of the cloud, and the one whose slope says
+    /// whether there is a trend at all.
+    /// </summary>
+    public double? SmaSlow { get; set; }
+
+    /// <summary>
+    /// How much the slow line has moved over the last N candles, as a percentage of its own value.
+    /// Positive is rising.
+    /// <para>
+    /// Its DIRECTION says how much weight the other signals deserve: a trade in the direction of a
+    /// slow line that is going nowhere is a trade in a range. Null while there is not enough
+    /// history for the comparison.
+    /// </para>
+    /// </summary>
+    public double? SlowSlopePercentage { get; set; }
+
+    /// <summary>
+    /// The price of the last CONFIRMED pivot high, the resistance a long breaks through. Null until
+    /// one has been seen. Confirmed means the pivot already has its right-hand candles, so the
+    /// price sits at least PivotRightCandles candles back and can never be the candle in hand.
+    /// </summary>
+    public double? PivotHigh { get; set; }
+
+    /// <summary>How many candles ago that pivot high sits, so a strategy can ignore a stale level.</summary>
+    public int PivotHighAge { get; set; }
+
+    /// <summary>The price of the last confirmed pivot low, the support a short breaks through.</summary>
+    public double? PivotLow { get; set; }
+
+    /// <summary>How many candles ago that pivot low sits.</summary>
+    public int PivotLowAge { get; set; }
+
+    /// <summary>The highest of the four lines at this candle, or null while they are warming up.</summary>
+    public double? CloudTop
+    {
+        get
+        {
+            if (EmaFast == null || EmaSecond == null || SmaMedium == null || SmaSlow == null)
+                return null;
+            return Math.Max(Math.Max(EmaFast.Value, EmaSecond.Value), Math.Max(SmaMedium.Value, SmaSlow.Value));
+        }
+    }
+
+    /// <summary>The lowest of the four lines at this candle, or null while they are warming up.</summary>
+    public double? CloudBottom
+    {
+        get
+        {
+            if (EmaFast == null || EmaSecond == null || SmaMedium == null || SmaSlow == null)
+                return null;
+            return Math.Min(Math.Min(EmaFast.Value, EmaSecond.Value), Math.Min(SmaMedium.Value, SmaSlow.Value));
+        }
+    }
+}

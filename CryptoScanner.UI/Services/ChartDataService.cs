@@ -6,6 +6,7 @@ using CryptoScanner.Core.Trader;
 using CryptoScanner.UI.Models;
 
 using Dapper;
+using CryptoScanner.Core.Settings;
 
 namespace CryptoScanner.UI.Services;
 

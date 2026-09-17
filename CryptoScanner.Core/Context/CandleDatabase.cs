@@ -594,6 +594,38 @@ public class CandleDatabase : IDisposable
 
         using var tx = connection.BeginTransaction();
 
+        (int renamed, int unchanged, int unknown) = UpdateSymbolNames(connection, exchange, tx);
+
+        // The literal 4, not CurrentSchemaVersion: version 5 follows, and VerifySchemaVersion has to
+        // see a version-4 file to take it there (the same reason MigrateToVersion3 stamps a 3).
+        connection.Execute(
+            "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', '4')", transaction: tx);
+        tx.Commit();
+
+        GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: converted to version 4 — " +
+            $"{renamed} name(s) updated, {unchanged} already current, {unknown} instrument(s) the exchange no longer lists");
+    }
+
+
+    /// <summary>
+    /// Brings the Name column in line with what the scanner calls the symbol right now, for every
+    /// registration whose instrument the exchange still lists. Returns how many rows were updated,
+    /// how many already agreed, and how many belong to an instrument this exchange no longer offers.
+    /// <para>
+    /// Shared by the conversion to version 4 and by the hourly cleanup, because the conversion can
+    /// only repair the column once while the scanner keeps renaming symbols afterwards. The TradFi
+    /// split landed after that version step and left 217 of the 627 rows on Okx Perpetual reading
+    /// AAPLUSDT.PERP where the scanner says AAPLUSDT.TRADFI (measured 16-09-2026), all of them with
+    /// their candles intact - the row is addressed by ExchangeName, which no rename touches.
+    /// </para>
+    /// <para>
+    /// A row whose instrument the exchange no longer lists is left untouched, for the same reason as
+    /// in the migration: deciding what is an orphan belongs to <see cref="CleanOrphanSymbols"/>.
+    /// </para>
+    /// </summary>
+    private static (int Renamed, int Unchanged, int Unknown) UpdateSymbolNames(SqliteConnection connection,
+        Model.CryptoExchange exchange, SqliteTransaction? tx)
+    {
         List<LocalInstrumentNameRow> rows = [.. connection.Query<LocalInstrumentNameRow>(
             "SELECT SymbolId, ExchangeName, Name FROM Symbol", transaction: tx)];
 
@@ -619,14 +651,7 @@ public class CandleDatabase : IDisposable
             renamed++;
         }
 
-        // The literal 4, not CurrentSchemaVersion: version 5 follows, and VerifySchemaVersion has to
-        // see a version-4 file to take it there (the same reason MigrateToVersion3 stamps a 3).
-        connection.Execute(
-            "INSERT OR REPLACE INTO Meta (Key, Value) VALUES ('SchemaVersion', '4')", transaction: tx);
-        tx.Commit();
-
-        GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: converted to version 4 — " +
-            $"{renamed} name(s) updated, {unchanged} already current, {unknown} instrument(s) the exchange no longer lists");
+        return (renamed, unchanged, unknown);
     }
 
 
@@ -2040,6 +2065,26 @@ public class CandleDatabase : IDisposable
             GlobalData.AddErrorToLogTab($"candles.db orphan cleanup failed: {err.Message}");
         }
 
+        // And the names the conversion to version 4 could only repair once: the scanner keeps
+        // renaming symbols after that version step (the product behind the dot, and the TradFi split
+        // after that), while nothing rereads the column. Running it here keeps it at most one
+        // cleanup behind instead of drifting further apart with every rename.
+        int renamed = 0;
+        try
+        {
+            if (exchange.SymbolListExchangeName.Count > 0)
+            {
+                using var tx = db.Connection.BeginTransaction();
+                (renamed, _, _) = UpdateSymbolNames(db.Connection, exchange, tx);
+                tx.Commit();
+            }
+        }
+        catch (Exception err)
+        {
+            ScannerLog.Logger.Error(err, "candles.db name refresh failed");
+            GlobalData.AddErrorToLogTab($"candles.db name refresh failed: {err.Message}");
+        }
+
         // Reclaim pages freed by the DELETEs above. INCREMENTAL keeps it cheap;
         // pass a generous page-budget so a large cleanup completes in one call.
         db.Connection.Execute("PRAGMA incremental_vacuum(10000);");
@@ -2047,7 +2092,7 @@ public class CandleDatabase : IDisposable
         sw.Stop();
         GlobalData.AddTextToLogTab(
             $"candles.db cleanup {exchange.Name}: done processed={processed} failed={failed} " +
-            $"orphans={orphans} in {sw.ElapsedMilliseconds} ms");
+            $"orphans={orphans} renamed={renamed} in {sw.ElapsedMilliseconds} ms");
     }
 
 

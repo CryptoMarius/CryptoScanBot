@@ -1,10 +1,12 @@
-﻿using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
 
 using System.Diagnostics;
+using CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Core.Contracts;
 
 namespace CryptoScanner.Core.Signal;
 
@@ -32,6 +34,26 @@ public class SignalExecute
     }
 
 
+    /// <summary>
+    /// The intervals this strategy runs on. An empty list on the strategy means "the same as the
+    /// side", which is how it worked before the list existed, so a settings file that was never
+    /// touched behaves exactly as it did. A filled list REPLACES the side's list for this one
+    /// strategy - it does not have to be a subset of it.
+    /// <para>
+    /// That is possible because the candles are there either way: CandleTools builds every interval
+    /// from the one-minute candles, whatever is ticked. What follows the ticks is the indicator
+    /// preparation, and SignalPrepare reads the same list as this one.
+    /// </para>
+    /// </summary>
+    internal static List<string> IntervalsFor(AlgorithmDefinition strategyDef, List<string> sideList)
+    {
+        SettingsSignalStrategyBase? settings = PluginManager.LiveSettings(strategyDef.Name);
+        if (settings != null && settings.IntervalList.Count > 0)
+            return settings.IntervalList;
+        return sideList;
+    }
+
+
     public static void Prepare()
     {
         // New setup
@@ -43,14 +65,14 @@ public class SignalExecute
             {
                 if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name))
                 {
-                    foreach (string intervalName in GlobalData.Settings.Signal.Long.Interval)
+                    foreach (string intervalName in IntervalsFor(strategyDef, GlobalData.Settings.Signal.Long.Interval))
                     {
                         Add(strategyDef, CryptoTradeSide.Long, true, intervalName);
                     }
                 }
                 if (GlobalData.Settings.Signal.Short.Strategy.Contains(strategyDef.Name))
                 {
-                    foreach (string intervalName in GlobalData.Settings.Signal.Short.Interval)
+                    foreach (string intervalName in IntervalsFor(strategyDef, GlobalData.Settings.Signal.Short.Interval))
                     {
                         Add(strategyDef, CryptoTradeSide.Short, true, intervalName);
                     }

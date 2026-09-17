@@ -12,6 +12,10 @@ public partial class StrategyAtrRbTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyAtrRbSettingsViewModel _strategyAtrRbSettingsViewModel;
 
+    // Which intervals this strategy runs on. Empty means "the same as the side".
+    [ObservableProperty]
+    IntervalViewModel _intervalViewModel;
+
     [ObservableProperty]
     StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
 
@@ -19,6 +23,7 @@ public partial class StrategyAtrRbTabViewModel : ObservableObject
     {
         _soundAndColorsViewModel = new();
         _strategyAtrRbSettingsViewModel = new();
+        _intervalViewModel = new();
         _strategyEntryConditionsViewModel = new();
     }
 
@@ -26,6 +31,7 @@ public partial class StrategyAtrRbTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyAtrRbSettingsViewModel.LoadConfig(settings);
+        IntervalViewModel.LoadConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -33,6 +39,7 @@ public partial class StrategyAtrRbTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyAtrRbSettingsViewModel.SaveConfig(settings);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

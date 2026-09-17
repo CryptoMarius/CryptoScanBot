@@ -12,6 +12,10 @@ public partial class StrategyFailedBreakoutTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyFailedBreakoutSettingsViewModel _strategyFailedBreakoutSettingsViewModel;
 
+    // Which intervals this strategy runs on. Empty means "the same as the side".
+    [ObservableProperty]
+    IntervalViewModel _intervalViewModel;
+
     [ObservableProperty]
     StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
 
@@ -19,6 +23,7 @@ public partial class StrategyFailedBreakoutTabViewModel : ObservableObject
     {
         _soundAndColorsViewModel = new();
         _strategyFailedBreakoutSettingsViewModel = new();
+        _intervalViewModel = new();
         _strategyEntryConditionsViewModel = new();
     }
 
@@ -27,6 +32,7 @@ public partial class StrategyFailedBreakoutTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyFailedBreakoutSettingsViewModel.LoadConfig(settings);
+        IntervalViewModel.LoadConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -34,6 +40,7 @@ public partial class StrategyFailedBreakoutTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyFailedBreakoutSettingsViewModel.SaveConfig(settings);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

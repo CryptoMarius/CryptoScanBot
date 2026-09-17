@@ -699,9 +699,15 @@ window.ChartWidget = {
         catch (e) { }
     },
 
+    /// Hands the price axis back to autoScale AND puts the margins back to their default, so the
+    /// reload button and the double click on the axis both undo a scale that was dragged out of
+    /// range while keeping the stretch of time you were looking at.
+    /// Both halves are needed: autoScale on its own leaves the dragged scaleMargins in place.
     resetPriceScale: function () {
         this._priceMargins = { top: 0.2, bottom: 0.1 };
         this._applyPriceMargins();
+        if (!this._charts.main) return;
+        try { this._charts.main.chart.priceScale('right').applyOptions({ autoScale: true }); } catch (e) { }
     },
 
     _attachVerticalControl: function () {
@@ -1434,22 +1440,9 @@ window.ChartWidget = {
         nweRepaintMiddle: { color: '#6d4c41', lineWidth: 1, lineStyle: 2 },
         nweRepaintLower:  { color: '#8d6e63', lineWidth: 1, lineStyle: 2 },
 
-        atrRbUpper:     { color: '#90a4ae', lineWidth: 1, lineStyle: 0 },
-        atrRbLower:     { color: '#90a4ae', lineWidth: 1, lineStyle: 0 },
-        atrRbBasis:     { color: '#42a5f5', lineWidth: 1, lineStyle: 2 },
-
-        vbsUpper:       { color: '#26a69a', lineWidth: 1, lineStyle: 0 },
-        vbsLower:       { color: '#26a69a', lineWidth: 1, lineStyle: 0 },
-        vbsBasis:       { color: '#9e9e9e', lineWidth: 1, lineStyle: 2 },
-
-        dbrUpper:       { color: '#bdbdbd', lineWidth: 1, lineStyle: 0 },
-        dbrLower:       { color: '#bdbdbd', lineWidth: 1, lineStyle: 0 },
-
-        bbmaWma5High:   { color: '#c62828', lineWidth: 1, lineStyle: 0 },
-        bbmaWma10High:  { color: '#c62828', lineWidth: 1, lineStyle: 2 },
-        bbmaWma5Low:    { color: '#2e7d32', lineWidth: 1, lineStyle: 0 },
-        bbmaWma10Low:   { color: '#2e7d32', lineWidth: 1, lineStyle: 2 },
-        bbmaEma50:      { color: '#ef6c00', lineWidth: 2, lineStyle: 0 },
+        // atrrb, vbs, dbr and bbma used to be listed here. Their lines arrive with a style of their
+        // own through setPluginStyles since 17-09-2026 (the plugin declares it, the user's own setting
+        // still wins), so a copy here would only be a second place to forget.
 
         zigzag:         { color: '#ffffff', lineWidth: 1, lineStyle: 0 },
         fibZigzag:      { color: '#ffeb3b', lineWidth: 1, lineStyle: 2 },
@@ -1463,10 +1456,126 @@ window.ChartWidget = {
         this._userStyles = styles || {};
     },
 
+    // Styles a plugin overlay asked for, keyed by series key. They sit between the user's own
+    // settings and the built-in table: the user still wins, but a plugin line is no longer drawn
+    // in the fallback grey just because this file has no entry for it.
+    _pluginStyles: {},
+
+    setPluginStyles: function (styles) {
+        this._pluginStyles = styles || {};
+    },
+
+    // Filled areas between two lines, as supplied by a plugin overlay. Kept until the next setData,
+    // which is what paints them.
+    _bands: [],
+    _bandSeries: [],
+
+    setBands: function (bands) {
+        // Shifted to local time HERE, because bands do not travel through setData and so miss the
+        // conversion its four arguments get. Without this the band sits on UTC while the candles
+        // sit on local time: two grids next to each other, which doubles the number of positions on
+        // the time axis and leaves the cloud half a candle beside the candles it belongs to.
+        this._bands = this._localizeTimes(bands) || [];
+    },
+
+    // A custom series that fills between a high and a low per bar, in two colours: one series
+    // covers the whole chart and switches colour where the direction changes. Verified against
+    // lightweight-charts 4.2 in a standalone page, including zooming and panning.
+    //
+    // Two things that cost a while to find, so they are written down here:
+    //  - a field called "color" on a data point is swallowed by the library; an own name such as
+    //    "up" survives into originalData;
+    //  - the renderer must honour data.visibleRange. Drawing every bar it is handed puts shapes
+    //    across the screen that have nothing to do with what is in view.
+    _makeBandSeries: function () {
+        var data = null;
+        var options = null;
+
+        var renderer = {
+            draw: function (target, priceConverter) {
+                if (!data || !data.bars || data.bars.length === 0) return;
+                target.useBitmapCoordinateSpace(function (scope) {
+                    var ctx = scope.context;
+                    var hr = scope.horizontalPixelRatio;
+                    var vr = scope.verticalPixelRatio;
+                    ctx.save();
+
+                    var from = 0, to = data.bars.length;
+                    if (data.visibleRange) {
+                        from = Math.max(0, data.visibleRange.from - 1);
+                        to = Math.min(data.bars.length, data.visibleRange.to + 1);
+                    }
+
+                    var run = [];
+                    var runColor = null;
+                    var flush = function () {
+                        if (run.length >= 2 && runColor) {
+                            ctx.beginPath();
+                            var k;
+                            for (k = 0; k < run.length; k++) {
+                                if (k === 0) ctx.moveTo(run[k].x, run[k].high);
+                                else ctx.lineTo(run[k].x, run[k].high);
+                            }
+                            for (k = run.length - 1; k >= 0; k--) ctx.lineTo(run[k].x, run[k].low);
+                            ctx.closePath();
+                            ctx.fillStyle = runColor;
+                            ctx.fill();
+                        }
+                        run = [];
+                    };
+
+                    for (var i = from; i < to; i++) {
+                        var bar = data.bars[i];
+                        var d = bar.originalData;
+                        if (d.high === null || d.high === undefined || d.low === null || d.low === undefined) {
+                            flush();
+                            runColor = null;
+                            continue;
+                        }
+                        var point = {
+                            x: bar.x * hr,
+                            high: priceConverter(d.high) * vr,
+                            low: priceConverter(d.low) * vr,
+                        };
+                        var wanted = d.up ? options.fillUp : options.fillDown;
+                        if (wanted !== runColor) {
+                            // The turning candle belongs to both runs, or a seam opens up.
+                            if (run.length) {
+                                run.push(point);
+                                flush();
+                            }
+                            runColor = wanted;
+                        }
+                        run.push(point);
+                    }
+                    flush();
+                    ctx.restore();
+                });
+            },
+        };
+
+        return {
+            priceValueBuilder: function (d) { return [d.low, d.high]; },
+            isWhitespace: function (d) { return d.high === undefined || d.high === null; },
+            defaultOptions: function () {
+                return {
+                    fillUp: 'rgba(128,128,128,0.15)',
+                    fillDown: 'rgba(128,128,128,0.15)',
+                    lastValueVisible: false,
+                    priceLineVisible: false,
+                };
+            },
+            update: function (d, o) { data = d; options = o; },
+            renderer: function () { return renderer; },
+        };
+    },
     _styleFor: function (key) {
         var user = this._userStyles[key];
         if (user)
             return user;
+        var plugin = this._pluginStyles[key];
+        if (plugin && plugin.color)
+            return plugin;
         return this._overlayStyles[key] || { color: '#888', lineWidth: 1, lineStyle: 0 };
     },
 
@@ -1596,6 +1705,37 @@ window.ChartWidget = {
         Object.keys(mainEntry.overlays).forEach(function (key) {
             try { mainEntry.chart.removeSeries(mainEntry.overlays[key]); } catch (e) { }
         });
+
+        // The filled bands of a plugin overlay. Added FIRST so they end up under the candles, and
+        // torn down the same way the line overlays are.
+        this._bandSeries.forEach(function (s) {
+            try { mainEntry.chart.removeSeries(s); } catch (e) { }
+        });
+        this._bandSeries = [];
+        if (this._bands && this._bands.length > 0 && mainEntry.chart.addCustomSeries) {
+            var bandSelf = this;
+            this._bands.forEach(function (band) {
+                if (!band || !band.points || band.points.length === 0) return;
+                try {
+                    var series = mainEntry.chart.addCustomSeries(bandSelf._makeBandSeries(), {
+                        fillUp: band.fillUp,
+                        fillDown: band.fillDown,
+                        priceLineVisible: false,
+                        lastValueVisible: false,
+                        crosshairMarkerVisible: false,
+                        // Kept out of the autoscale: the cloud lies between lines that already
+                        // count, so letting it vote only risks pulling the price scale around on
+                        // every redraw.
+                        autoscaleInfoProvider: function () { return null; },
+                    });
+                    series.setData(band.points.filter(function (p) { return inRange(p.time); }));
+                    bandSelf._bandSeries.push(series);
+                } catch (e) {
+                    // A band that cannot be drawn must never take the whole chart down with it.
+                    console.warn('band ' + band.key + ' failed: ' + e);
+                }
+            });
+        }
         mainEntry.overlays = {};
 
         // Remove old price lines (positions)
@@ -1757,13 +1897,23 @@ window.ChartWidget = {
         if (!mainEntry || !candles || candles.length === 0) return;
 
         try {
-            var range = mainEntry.chart.timeScale().getVisibleLogicalRange();
-            if (!range) return;
+            // In TIME, not in bar positions. A position on the axis is only the same thing as an
+            // index into the candles while every position IS a candle - and a series whose points
+            // sit on times of their own (a band that was not put on the same clock) inserts
+            // positions between them. The count then no longer matches, every view of the recent
+            // candles reads as "past the end", and this net snaps the chart back on every refresh:
+            // the very jump it exists to prevent. Times cannot drift apart that way.
+            var visible = mainEntry.chart.timeScale().getVisibleRange();
+            if (visible) {
+                var first = candles[0].time;
+                var last = candles[candles.length - 1].time;
+                if (visible.to >= first && visible.from <= last)
+                    return;
+            }
 
-            // Logical indices run 0..length-1 over the bars themselves; anything outside that on
-            // both sides means the window sits entirely before or entirely after the series.
-            if (range.to < 0 || range.from > candles.length - 1)
-                this._zoomLast(candles.length);
+            // No range at all means the window holds no bars whatsoever, which is exactly the case
+            // this is here for.
+            this._zoomLast(candles.length);
         } catch (e) { }
     },
 
@@ -1846,14 +1996,6 @@ window.ChartWidget = {
     /// Ask the next setData to zoom to the most recent candles again (symbol or interval changed).
     resetView: function () {
         this._pendingFit = true;
-    },
-
-    /// Hand the price axis back to autoScale without touching the time axis, so the reload button
-    /// fixes a scale that was dragged out of range while keeping the stretch you were looking at.
-    /// The double click on the axis does the same thing, but nothing on screen says it exists.
-    resetPriceScale: function () {
-        if (!this._charts.main) return;
-        try { this._charts.main.chart.priceScale('right').applyOptions({ autoScale: true }); } catch (e) { }
     },
 
     _applySegments: function (segments) {

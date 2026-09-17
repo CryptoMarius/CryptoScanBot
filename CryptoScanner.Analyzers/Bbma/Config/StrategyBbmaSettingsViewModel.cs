@@ -23,6 +23,12 @@ public partial class StrategyBbmaSettingsViewModel : ObservableObject
     private bool _takeProfitOnHtfBand = true;
 
     [ObservableProperty]
+    private bool _takeProfitBandOrder = true;
+
+    [ObservableProperty]
+    private int _stopLookbackCandles = 3;
+
+    [ObservableProperty]
     private bool _stopBeyondReentryCandle = true;
 
     [ObservableProperty]
@@ -37,6 +43,8 @@ public partial class StrategyBbmaSettingsViewModel : ObservableObject
         HtfSetupExtremeInvalidates = settings.HtfSetupExtremeInvalidates;
         TakeProfitAtOuterBand = settings.TakeProfitAtOuterBand;
         TakeProfitOnHtfBand = settings.TakeProfitOnHtfBand;
+        TakeProfitBandOrder = settings.TakeProfitBandOrder;
+        StopLookbackCandles = settings.StopLookbackCandles;
         StopBeyondReentryCandle = settings.StopBeyondReentryCandle;
         StopMarginPercentage = settings.StopMarginPercentage;
     }
@@ -49,6 +57,8 @@ public partial class StrategyBbmaSettingsViewModel : ObservableObject
         settings.HtfSetupExtremeInvalidates = HtfSetupExtremeInvalidates;
         settings.TakeProfitAtOuterBand = TakeProfitAtOuterBand;
         settings.TakeProfitOnHtfBand = TakeProfitOnHtfBand;
+        settings.TakeProfitBandOrder = TakeProfitBandOrder;
+        settings.StopLookbackCandles = StopLookbackCandles;
         settings.StopBeyondReentryCandle = StopBeyondReentryCandle;
         settings.StopMarginPercentage = StopMarginPercentage;
     }

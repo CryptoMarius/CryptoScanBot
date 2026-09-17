@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 97;
+    public readonly static int CurrentDatabaseVersion = 98;
 
 
     /// <summary>
@@ -1834,7 +1834,16 @@ public class DatabaseMigration
             List<string> columns = [.. database.Connection.Query<string>(
                 "select name from pragma_table_info('Zone')", transaction: transaction)];
 
-            if (columns.Contains("ReachedMidpoint"))
+            if (columns.Count == 0)
+            {
+                // There is a fourth case: no Zone table at all. Versions 46 and 54 drop it and it is
+                // only recreated by CreateTables *after* the migration has finished, so every
+                // database coming from below version 55 passes through here without one. The empty
+                // column list then fell into the else below and the alter table ended the
+                // application with "no such table: Zone" - seen in the field on 13-09-2026. Nothing
+                // to migrate: CreateTables builds the table with ReachedMidpoint already in it.
+            }
+            else if (columns.Contains("ReachedMidpoint"))
             {
                 // Already there - a database created after the rename, nothing to do.
             }
@@ -2102,10 +2111,17 @@ public class DatabaseMigration
             // redoes the history. Zones built on prices rounded to whole numbers, and on zeros for
             // every coin under 0.50, are not worth keeping. Only the live zones: a zone of an emulator
             // run belongs to that run's result, wrong or not.
-            int zones = database.Connection.Execute(
-                "delete from Zone where EmulatorRunId is null " +
-                "and ExchangeId in (select Id from Exchange where Name in ('HyperLiquid Perpetual', 'HyperLiquid Spot'))",
-                transaction: transaction);
+            // Only when the table is there. A database coming from below version 55 had its Zone
+            // table dropped by version 46/54 and does not get it back until CreateTables runs after
+            // the migration, and this delete used to end the application with "no such table: Zone".
+            // Such a database has no zones to clean up either, so skipping is the whole answer.
+            int zones = 0;
+            if (database.Connection.Query<string>(
+                "select name from pragma_table_info('Zone')", transaction: transaction).Any())
+                zones = database.Connection.Execute(
+                    "delete from Zone where EmulatorRunId is null " +
+                    "and ExchangeId in (select Id from Exchange where Name in ('HyperLiquid Perpetual', 'HyperLiquid Spot'))",
+                    transaction: transaction);
             if (zones > 0)
                 GlobalData.AddTextToLogTab($"Database version 95: {zones} zone(s) of HyperLiquid removed, they are rebuilt from the refetched candles");
 
@@ -2178,6 +2194,47 @@ public class DatabaseMigration
             database.Connection.Execute("alter table Position drop column BandRangeIndex", transaction);
             database.Connection.Execute("alter table Position drop column BandRangeCount", transaction);
             GlobalData.AddTextToLogTab("Database version 97: band range index removed from Signal and Position");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 17-09-2026 Repair Symbol.ExchangeName where it was never filled.
+        //
+        // The column arrived in version 53, which adds it as TEXT NULL and then fills it from Name.
+        // CreateTables declares it NOT NULL, so a database built from scratch cannot carry an empty
+        // one - but a migrated table keeps the nullable declaration for good, and any build that
+        // does not know the column writes rows without it. That is what happened in the field: a
+        // data folder shared with an older scanner collected symbols with ExchangeName NULL.
+        //
+        // One such row was enough to stop the scanner. SymbolListName and SymbolListExchangeName are
+        // SortedList<string, ...>, GlobalData.AddSymbol keys into them, and a null key throws -
+        // leaving every later symbol unloaded. AddSymbol now skips and reports those rows instead,
+        // but skipping means the symbol stays invisible, so the data itself is put right here.
+        //
+        // Name is the same value version 53 would have used. A row without a Name cannot be repaired
+        // from within the database; it is only counted, so the number shows up in the log rather
+        // than the symbol quietly staying away.
+        if (CurrentVersion > version.Version && version.Version == 97)
+        {
+            using var transaction = database.BeginTransaction();
+
+            int repaired = database.Connection.Execute(
+                "update Symbol set ExchangeName = Name " +
+                "where (ExchangeName is null or ExchangeName = '') and Name is not null and Name <> ''",
+                transaction: transaction);
+            if (repaired > 0)
+                GlobalData.AddTextToLogTab($"Database version 98: {repaired} symbol(s) had no ExchangeName, filled from the symbol name");
+
+            int unrepairable = database.Connection.ExecuteScalar<int>(
+                "select count(*) from Symbol where Name is null or Name = ''",
+                transaction: transaction);
+            if (unrepairable > 0)
+                GlobalData.AddErrorToLogTab($"Database version 98: {unrepairable} symbol(s) have no name at all and are skipped while loading");
 
             // update version
             version.Version += 1;

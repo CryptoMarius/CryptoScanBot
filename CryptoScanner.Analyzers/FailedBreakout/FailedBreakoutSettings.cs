@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.FailedBreakout;
@@ -69,6 +69,28 @@ public class FailedBreakoutSettings : SettingsSignalStrategyBase
             + "range, a long in the bottom part. At 50 or lower the two sides never fire together; "
             + "100 switches the check off.")]
     public decimal CloseWithinRangePercentage { get; set; } = 50m;
+
+    /// <summary>
+    /// Bollinger-band width range the breaking candle has to sit in, applied to
+    /// BollingerBandsPercentage = 100 * (upper/lower - 1). A bound of 0 switches that side off, so
+    /// the defaults of 0 and 0 leave the strategy exactly as it was before this setting existed.
+    /// <para>
+    /// Added because the alerts kept coming in on coins whose bands were practically closed: a
+    /// break of a level that nobody was trading, in a market that was not moving at all. The same
+    /// pair of bounds the dbr, atrrb and sbm strategies already use, read by the same
+    /// CheckBollingerBandsWidth helper, so the number in the settings means the same thing
+    /// everywhere.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Filter on BB%", SeparatorBefore = true, SubHeader = "Band width",
+        Tooltip = "Minimum Bollinger-band width (BB% = 100 x (upper/lower - 1)) the breaking candle "
+            + "must have, followed by the maximum. A bound of 0 switches that side off.")]
+    public double BBMinPercentage { get; set; } = 0.0;
+
+    [SettingCaption("", SameRowAs = nameof(BBMinPercentage),
+        Tooltip = "Maximum Bollinger-band width (BB% = 100 x (upper/lower - 1)) the breaking candle "
+            + "may have. 0 switches the upper bound off.")]
+    public double BBMaxPercentage { get; set; } = 0.0;
 
     /// <summary>
     /// Only fire when the breaking candle sits in a zone of the same side: "dlz", "fvg" and/or

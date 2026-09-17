@@ -238,7 +238,13 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     {
         if (code.Length != 3)
             return false;
-        return code[0] == 'R' && code[2] != '-' && code[2] != 'R';
+        if (code[0] != 'R' || code[2] == '-' || code[2] == 'R')
+            return false;
+
+        // Triggers the settings reject outright (BbmaSettings.RejectedLtfTriggers). Empty by
+        // default, so this changes nothing unless a run asks for it.
+        string rejected = BbmaPlugin.Settings.RejectedLtfTriggers;
+        return string.IsNullOrEmpty(rejected) || !rejected.Contains(code[2]);
     }
 
 
@@ -489,6 +495,83 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     public override decimal? OverrideSlPercentage => SlPercentage;
 
     /// <summary>
+    /// The take-profit distance the signal hands to the trader (OverrideProfitPercentage), set by
+    /// IsSignal when <see cref="BbmaSettings.TakeProfitBandOrder"/> is on: the distance from the
+    /// close to the outer band at signal time. The trader then places ONE take-profit order at the
+    /// band price instead of the global grid — the fill is at the band, not at the close of the
+    /// candle that happened to touch it (see the note on <see cref="IsExitSignal"/>).
+    /// </summary>
+    protected decimal? TpPercentage;
+
+    public override decimal? OverrideProfitPercentage => TpPercentage;
+
+    /// <summary>
+    /// Take-profit distance as a percentage of the close: up to the upper band for a long, down
+    /// to the lower band for a short. Null when the close is already at or beyond that band (no
+    /// target left) or the close is not usable, so the trader keeps its global take profit.
+    /// </summary>
+    public static decimal? TakeProfitPercentageToBand(decimal close, decimal upper, decimal lower, CryptoTradeSide side)
+    {
+        if (close <= 0)
+            return null;
+
+        decimal distance = side == CryptoTradeSide.Long
+            ? upper - close
+            : close - lower;
+
+        if (distance <= 0)
+            return null;
+        return 100m * distance / close;
+    }
+
+    /// <summary>
+    /// The far side of the swing the reentry came from: the lowest low (long) or highest high
+    /// (short) of the reentry candle and the <paramref name="lookback"/> - 1 candles before it on
+    /// the signal interval. A lookback of one is the reentry candle alone — on a 5m chart that
+    /// candle often closes on its own extreme, which left the stop at nothing but the margin (8 of
+    /// 15 simulated signals, and an average loser of 0.48% in emulator run 946). Fewer candles than
+    /// asked for (start of the series) use what is there.
+    /// </summary>
+    protected decimal SwingExtreme(MyData last, CryptoTradeSide side, int lookback)
+    {
+        decimal extreme = side == CryptoTradeSide.Long ? last.Candle.Low : last.Candle.High;
+        MyData? cursor = last;
+        for (int i = 1; i < lookback; i++)
+        {
+            if (!GetPrevCandle(cursor, out cursor) || cursor == null)
+                break;
+            extreme = side == CryptoTradeSide.Long
+                ? Math.Min(extreme, cursor.Candle.Low)
+                : Math.Max(extreme, cursor.Candle.High);
+        }
+        return extreme;
+    }
+
+    /// <summary>
+    /// Stop distance as a percentage of the close, from the close to <paramref name="level"/> (the
+    /// swing extreme) plus <paramref name="marginPercentage"/> of extra room. Null when there is no
+    /// distance and no margin, or the close is not usable.
+    /// </summary>
+    public static decimal? StopPercentageBeyondLevel(decimal close, decimal level, CryptoTradeSide side, decimal marginPercentage)
+    {
+        if (close <= 0)
+            return null;
+
+        decimal distance = side == CryptoTradeSide.Long ? close - level : level - close;
+        decimal percentage = 100m * distance / close + marginPercentage;
+        if (percentage <= 0)
+            return null;
+        return percentage;
+    }
+
+    /// <summary>
+    /// The stop the signal hands to the trader: beyond the swing extreme of the last
+    /// <paramref name="lookback"/> candles (see <see cref="SwingExtreme"/>) plus the margin.
+    /// </summary>
+    protected decimal? StopPercentageBeyondSwing(MyData last, CryptoTradeSide side, int lookback, decimal marginPercentage)
+        => StopPercentageBeyondLevel(last.Candle.Close, SwingExtreme(last, side, Math.Max(1, lookback)), side, marginPercentage);
+
+    /// <summary>
     /// Stop distance as a percentage of the close: for a long the distance from the close down to
     /// the low of the reentry candle, for a short from the close up to its high, plus
     /// <paramref name="marginPercentage"/> of extra room. The BBMA rules put the stop beyond the
@@ -517,7 +600,8 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     /// is on. The trader's stop loss and take profit keep working next to it (set the global take
     /// profit wide to measure the pure band exit).
     /// </summary>
-    public override bool HasExitSignal => BbmaPlugin.Settings.TakeProfitAtOuterBand;
+    public override bool HasExitSignal
+        => BbmaPlugin.Settings.TakeProfitAtOuterBand && !BbmaPlugin.Settings.TakeProfitBandOrder;
 
     /// <summary>
     /// The band the take profit aims at: the outer band of the position's own interval, or — with
@@ -526,7 +610,7 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     /// D1 band for an H1 entry). The HTF band comes from the last CLOSED HTF candle at the time of
     /// CandleLast. Returns false when there is no band to compare against.
     /// </summary>
-    private bool TryGetExitBand(out decimal upper, out decimal lower, out string source)
+    protected bool TryGetExitBand(out decimal upper, out decimal lower, out string source)
     {
         upper = 0;
         lower = 0;
@@ -561,11 +645,19 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     /// the lower band. Evaluated on the candle that just closed on the position's interval, so the
     /// band is the band of that moment, not the one at signal time. Which band — the position's
     /// own interval or the HTF — is decided by <see cref="TryGetExitBand"/>.
+    /// <para>
+    /// Measured on emulator runs 962-965 (band exit, global stop 2 to 6%): the average loser stayed
+    /// at 0.85% whatever the stop, and the average winner was 0.5%. This exit fires on the touch
+    /// but SELLS AT THE CLOSE of that candle, so a wick to the band and back is a loss and a real
+    /// touch gives back most of the move. That is why <see cref="BbmaSettings.TakeProfitBandOrder"/>
+    /// exists: with it on, IsSignal hands the trader a take-profit order at the band price instead
+    /// and this exit stays out of the way.
+    /// </para>
     /// </summary>
     public override bool IsExitSignal()
     {
         ExtraText = "";
-        if (!BbmaPlugin.Settings.TakeProfitAtOuterBand)
+        if (!BbmaPlugin.Settings.TakeProfitAtOuterBand || BbmaPlugin.Settings.TakeProfitBandOrder)
             return false;
 
         if (!TryGetExitBand(out decimal upper, out decimal lower, out string source))

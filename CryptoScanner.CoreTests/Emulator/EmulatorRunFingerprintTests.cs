@@ -109,6 +109,21 @@ public class EmulatorRunFingerprintTests : TestBase
 
 
     [TestMethod]
+    public void TheAlgorithmSelectionDoesNotChangeTheChecksum()
+    {
+        // The list is what the sweep dialog had selected, not something the replay reads. A single
+        // run carries it and a queue run leaves it empty, so while it counted the two could never
+        // look like the same measurement even when they replayed exactly the same thing.
+        string a = EmulatorRunFingerprint.Compute(
+            "{\"ExchangeName\":\"Binance Perpetual\",\"SelectedAlgorithms\":[\"dbr\",\"vbs\"]}", Settings);
+        string b = EmulatorRunFingerprint.Compute(
+            "{\"ExchangeName\":\"Binance Perpetual\",\"SelectedAlgorithms\":[]}", Settings);
+
+        Assert.AreEqual(a, b);
+    }
+
+
+    [TestMethod]
     public void WithoutAWindowTheCheckReachesBackNoFurtherThanTheBuild()
     {
         // A run from before the current build may have been produced by different code, so it does

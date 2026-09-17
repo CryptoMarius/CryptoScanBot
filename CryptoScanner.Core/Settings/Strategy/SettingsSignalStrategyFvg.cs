@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Enums;
 
 namespace CryptoScanner.Core.Settings.Strategy;
 
@@ -8,7 +8,6 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
     // Groupbox headers, spelled exactly as the Avalonia views do.
     private const string GroupSettings = "Settings";
     private const string GroupZoneStrength = "Zone strength filter";
-    private const string GroupIntervals = "Intervals";
 
     // NOTE: the declaration order is the order on screen, and it follows the Avalonia FVG tab:
     // Settings, Zone strength filter, Intervals. Serialization is by name, so moving a property
@@ -56,9 +55,7 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
     [SettingCaption("Close zones past the midpoint", Group = GroupZoneStrength)]
     public bool CloseZonesPastMidpoint { get; set; } = false;
 
-    // The intervals this strategy reports signals for. Avalonia renders this with IntervalView.
-    [SettingCaption("Intervals", Group = GroupIntervals)]
-    public List<string> IntervalList { get; set; } = [];
+    // The interval list itself lives on the base class now, so every strategy has one.
 
 
     public SettingsSignalStrategyFvg() : base()

@@ -1,4 +1,4 @@
-using CryptoScanner.Analyzers.FailedBreakout;
+﻿using CryptoScanner.Analyzers.FailedBreakout;
 using CryptoScanner.Analyzers.FailedBreakout.Config;
 
 namespace CryptoScanner.CoreTests.Analyzer.FailedBreakout;
@@ -23,6 +23,8 @@ public class FailedBreakoutConfigViewModelTests
             BreakWithinCandles = 2,
             MinimumBreakPercentage = 0.75m,
             CloseWithinRangePercentage = 25m,
+            BBMinPercentage = 1.5,
+            BBMaxPercentage = 6.0,
             RequireZone = ["Smc", "Dlz"],
             ZoneTolerancePercentage = 0.25m,
         });
@@ -34,6 +36,8 @@ public class FailedBreakoutConfigViewModelTests
         Assert.AreEqual(2, settings.BreakWithinCandles);
         Assert.AreEqual(0.75m, settings.MinimumBreakPercentage);
         Assert.AreEqual(25m, settings.CloseWithinRangePercentage);
+        Assert.AreEqual(1.5, settings.BBMinPercentage);
+        Assert.AreEqual(6.0, settings.BBMaxPercentage);
 
         // Back in the order the enum declares them, not in the order they went in, so both hosts
         // hand the strategy an identically ordered list.

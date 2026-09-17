@@ -40,6 +40,25 @@ public class BbmaSettings : SettingsSignalStrategyBase
     public int ReentryMinCandlesAfterTrigger { get; set; } = 3;
 
     /// <summary>
+    /// LTF trigger letters that do NOT count as a setup, written as one string without separators
+    /// ("D" rejects every reentry after a CSD, "D2" rejects CSD and CSAK2 as well). The letters are
+    /// the ones <see cref="SignalBbmaOmniBase.OmniStateCode"/> produces: E Extreme, T Tpw, H Mhv,
+    /// J RejectedEma50, G GapBbEma50, 2 Csak2, A Csaa, X Cross, D Csd, M Csm. Empty accepts every
+    /// trigger, which is the behaviour up to and including run 1036.
+    /// <para>
+    /// Measured on run 943, the only bbma.omni run in the black: the Csd group made -184.46 USDT
+    /// over 216 positions at 49.1% winners, against 58.1% for the run as a whole. That split was
+    /// made after the fact on one run, so it is a hypothesis this setting exists to test, not a
+    /// result.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Rejected LTF triggers", Group = GroupReentry, Indented = true,
+        Tooltip = "Trigger letters that do not count as a setup, as one string: E Extreme, T Tpw, "
+            + "H Mhv, J RejectedEma50, G GapBbEma50, 2 Csak2, A Csaa, X Cross, D Csd, M Csm. "
+            + "Empty accepts every trigger.")]
+    public string RejectedLtfTriggers { get; set; } = "";
+
+    /// <summary>
     /// How many HTF candles back the setup behind the HTF reentry may lie. The rules give two
     /// reentry setups, after a CSD and after a CSM; the most recent one on the trade's side within
     /// this window is the setup, and an opposite-side CSM since then voids it. Zero switches the
@@ -74,6 +93,19 @@ public class BbmaSettings : SettingsSignalStrategyBase
     public bool TakeProfitAtOuterBand { get; set; } = true;
 
     /// <summary>
+    /// Hand the take profit to the trader as ONE order at the band price of the signal candle
+    /// (OverrideProfitPercentage) instead of leaving on the candle that touches the band. The
+    /// exit-signal form fires on the touch but sells at the close of that candle: on runs 962-965
+    /// the average winner was 0.5% and a wick to the band and back was a loss. An order fills at
+    /// the band. Off keeps the exit-signal form.
+    /// </summary>
+    [SettingCaption("Take profit as an order at the band", Group = GroupExit, Indented = true, EnabledWhen = nameof(TakeProfitAtOuterBand),
+        Tooltip = "One take-profit order at the band price of the signal candle instead of leaving "
+            + "on the candle that touches the band (that sells at the close, which gave back most "
+            + "of the move). Off keeps the exit-signal form.")]
+    public bool TakeProfitBandOrder { get; set; } = true;
+
+    /// <summary>
     /// Aim at the outer band of the HTF of the fixed 3-TF triplet (the 1d band for a 1h entry)
     /// instead of the band of the position's own interval. The rules give the take profit on the
     /// band of the higher timeframe; the own band is the nearer, quicker target.
@@ -92,6 +124,18 @@ public class BbmaSettings : SettingsSignalStrategyBase
         Tooltip = "The stop loss sits just beyond the far side of the reentry candle: under its low "
             + "for a long, above its high for a short. Off uses the global stop loss percentage.")]
     public bool StopBeyondReentryCandle { get; set; } = true;
+
+    /// <summary>
+    /// How many candles of the signal interval the stop looks back for the swing extreme: the
+    /// lowest low (long) or highest high (short) of the reentry candle and the candles before it.
+    /// One is the reentry candle alone, which on 5m often closes on its own extreme and left the
+    /// stop at nothing but the margin (an average loser of 0.48% in run 946). Three is the
+    /// pullback of the rules ("a reentry takes at least three candles").
+    /// </summary>
+    [SettingCaption("Stop lookback candles", Group = GroupExit, Indented = true, EnabledWhen = nameof(StopBeyondReentryCandle),
+        Tooltip = "How many candles the stop looks back for the swing extreme (lowest low or "
+            + "highest high), the reentry candle included. One is the reentry candle alone.")]
+    public int StopLookbackCandles { get; set; } = 3;
 
     /// <summary>
     /// Extra room beyond the reentry candle's extreme, as a percentage of the price, so a wick that

@@ -7,6 +7,7 @@ using OxyPlot.Annotations;
 using OxyPlot.Series;
 
 using Skender.Stock.Indicators;
+using CryptoScanner.Analyzers.Chart;
 
 namespace CryptoScanner.Analyzers.AtrRb.Chart;
 
@@ -21,6 +22,24 @@ public class AtrRbChartOverlay : IChartOverlay
 #pragma warning disable CS0067 // Required by IChartOverlay; raised externally when needed
     public event Action? RequestRedraw;
 #pragma warning restore CS0067
+
+    public const string KeyUpper = "atrRbUpper";
+    public const string KeyLower = "atrRbLower";
+    public const string KeyBasis = "atrRbBasis";
+
+    /// <summary>
+    /// What this overlay draws and how it looks by default. The colour screen builds its section from
+    /// this, so the entries exist exactly as long as the plugin is registered: a strategy that is not
+    /// in the build takes its colours with it instead of leaving them behind on screen, and a new one
+    /// arrives with its own instead of in the fallback grey. GetSeries reads the same list, so the
+    /// chart and the screen cannot drift apart.
+    /// </summary>
+    public IReadOnlyList<ChartOverlayStyleDefinition> StyleDefinitions { get; } =
+    [
+        new() { Key = KeyUpper, Label = "Upper band", Color = "#90a4ae" },
+        new() { Key = KeyLower, Label = "Lower band", Color = "#90a4ae" },
+        new() { Key = KeyBasis, Label = "Basis", Color = "#42a5f5", LineWidth = 2, LineStyle = 2 },
+    ];
 
     private static readonly OxyColor MacroLineColor = OxyColors.Gray;
     private static readonly OxyColor MacroFillColor = OxyColor.FromArgb(15, 0, 128, 0);
@@ -43,9 +62,9 @@ public class AtrRbChartOverlay : IChartOverlay
         IReadOnlyList<EmaResult> emaResults = quotes.ToEma(atrrb.Length);
         IReadOnlyList<AtrResult> atrResults = quotes.ToAtr(atrrb.Length);
 
-        var upper = new ChartOverlaySeries { Key = "atrRbUpper", Label = "ATR RB upper", Color = "#90a4ae" };
-        var lower = new ChartOverlaySeries { Key = "atrRbLower", Label = "ATR RB lower", Color = "#90a4ae" };
-        var basis = new ChartOverlaySeries { Key = "atrRbBasis", Label = "ATR RB basis", Color = "#42a5f5", LineWidth = 2, LineStyle = 2 };
+        var upper = ((IChartOverlay)this).SeriesFor(KeyUpper);
+        var lower = ((IChartOverlay)this).SeriesFor(KeyLower);
+        var basis = ((IChartOverlay)this).SeriesFor(KeyBasis);
 
         for (int i = 0; i < allCandles.Count; i++)
         {
@@ -86,9 +105,35 @@ public class AtrRbChartOverlay : IChartOverlay
             lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
             standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
 
-        var macroUp = new LineSeries { Title = "atrrb.macro.up", Color = MacroLineColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var macroDown = new LineSeries { Title = "atrrb.macro.down", Color = MacroLineColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var basisLine = new LineSeries { Title = "atrrb.basis", Color = BasisColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
+        // The user's colours, with what this overlay declared as the fallback - so a scanner where
+        // nobody opened the colour screen draws exactly what it drew before. See ChartStyleOxy.
+        var macroUp = new LineSeries
+        {
+            Title = "atrrb.macro.up",
+            Color = ChartStyleOxy.ColorFor(KeyUpper, MacroLineColor),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(KeyUpper, 1),
+            LineStyle = ChartStyleOxy.LineStyleFor(KeyUpper, LineStyle.Solid),
+            YAxisKey = "price",
+            Tag = group,
+        };
+        var macroDown = new LineSeries
+        {
+            Title = "atrrb.macro.down",
+            Color = ChartStyleOxy.ColorFor(KeyLower, MacroLineColor),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(KeyLower, 1),
+            LineStyle = ChartStyleOxy.LineStyleFor(KeyLower, LineStyle.Solid),
+            YAxisKey = "price",
+            Tag = group,
+        };
+        var basisLine = new LineSeries
+        {
+            Title = "atrrb.basis",
+            Color = ChartStyleOxy.ColorFor(KeyBasis, BasisColor),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(KeyBasis, 2),
+            LineStyle = ChartStyleOxy.LineStyleFor(KeyBasis, LineStyle.Solid),
+            YAxisKey = "price",
+            Tag = group,
+        };
 
         for (int i = 0; i < allCandles.Count; i++)
         {

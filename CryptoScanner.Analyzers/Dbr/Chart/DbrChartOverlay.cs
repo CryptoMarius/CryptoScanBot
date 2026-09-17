@@ -5,6 +5,7 @@ using CryptoScanner.Core.Model;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Series;
+using CryptoScanner.Analyzers.Chart;
 
 namespace CryptoScanner.Analyzers.Dbr.Chart;
 
@@ -29,6 +30,22 @@ public class DbrChartOverlay : IChartOverlay
     // Pine transparency is "percent transparent", so alpha = 255 * (100 - transparency) / 100.
     private static readonly OxyColor OuterBandColor = OxyColor.FromArgb(178, 0xb2, 0xb5, 0xbe); // #b2b5be, 30% transparent
 
+    public const string KeyUpper = "dbrUpper";
+    public const string KeyLower = "dbrLower";
+
+    /// <summary>
+    /// What this overlay draws and how it looks by default. The colour screen builds its section from
+    /// this, so the entries exist exactly as long as the plugin is registered: a strategy that is not
+    /// in the build takes its colours with it instead of leaving them behind on screen, and a new one
+    /// arrives with its own instead of in the fallback grey. GetSeries reads the same list, so the
+    /// chart and the screen cannot drift apart.
+    /// </summary>
+    public IReadOnlyList<ChartOverlayStyleDefinition> StyleDefinitions { get; } =
+    [
+        new() { Key = KeyUpper, Label = "Upper band", Color = "#b2b5be", LineWidth = 2 },
+        new() { Key = KeyLower, Label = "Lower band", Color = "#b2b5be", LineWidth = 2 },
+    ];
+
     public IReadOnlyList<ChartOverlaySeries> GetSeries(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -38,8 +55,8 @@ public class DbrChartOverlay : IChartOverlay
         var allCandles = symbolInterval.CandleList.Values.ToList();
         DbrBandValue[] bands = DbrBandsHelper.ComputeBands(allCandles);
 
-        var upper = new ChartOverlaySeries { Key = "dbrUpper", Label = "DBR upper", Color = "#b2b5be", LineWidth = 2 };
-        var lower = new ChartOverlaySeries { Key = "dbrLower", Label = "DBR lower", Color = "#b2b5be", LineWidth = 2 };
+        var upper = ((IChartOverlay)this).SeriesFor(KeyUpper);
+        var lower = ((IChartOverlay)this).SeriesFor(KeyLower);
 
         for (int i = 0; i < allCandles.Count; i++)
         {
@@ -69,8 +86,26 @@ public class DbrChartOverlay : IChartOverlay
         DbrBandValue[] bands = DbrBandsHelper.ComputeBands(allCandles);
 
         // Outer Donchian bands (the gray plateaus from the dashboard).
-        var outerUp = new LineSeries { Title = "dbr.upper", Color = OuterBandColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
-        var outerDown = new LineSeries { Title = "dbr.lower", Color = OuterBandColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
+        // The user's colours, with what this overlay declared as the fallback - so a scanner where
+        // nobody opened the colour screen draws exactly what it drew before. See ChartStyleOxy.
+        var outerUp = new LineSeries
+        {
+            Title = "dbr.upper",
+            Color = ChartStyleOxy.ColorFor(KeyUpper, OuterBandColor),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(KeyUpper, 2),
+            LineStyle = ChartStyleOxy.LineStyleFor(KeyUpper, LineStyle.Solid),
+            YAxisKey = "price",
+            Tag = group,
+        };
+        var outerDown = new LineSeries
+        {
+            Title = "dbr.lower",
+            Color = ChartStyleOxy.ColorFor(KeyLower, OuterBandColor),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(KeyLower, 2),
+            LineStyle = ChartStyleOxy.LineStyleFor(KeyLower, LineStyle.Solid),
+            YAxisKey = "price",
+            Tag = group,
+        };
 
         for (int i = 0; i < allCandles.Count; i++)
         {

@@ -7,6 +7,17 @@ TODO:
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
 
+xx-10-2025 2.6.7
+- Strategieen: Elke strategie heeft nu een eigen intervallijst, leeg betekent hetzelfde als de zijde
+- Nieuwe strategie Tbo: een wolk van vier voortschrijdende gemiddelden met drie instapmomenten
+- Chart: De kleuren uit het kleurenscherm gelden nu ook voor de Avalonia charts, en elke strategie levert zijn eigen instelbare lijnen aan
+- Trader: Instelbaar welk signaal voorgaat als er meerdere tegelijk klaarstaan op dezelfde munt
+- Fix: Een long signaal kon bijkopen in een positie die short stond
+- Fix: Een enkele munt zonder exchangenaam zorgde ervoor dat alle munten daarna niet meer geladen werden
+- Fix: Een oude database zonder Zone-tabel liep vast tijdens het bijwerken
+- Fix: Een gecorrigeerde tickgrootte komt nu meteen in de candles terecht, herstarten is niet meer nodig
+- Telegram: Bij een netwerkfout wordt er net als bij een afwijzing gewacht in plaats van doorgeramd
+
 05-09-2025 2.6.6
 - Instellingen: Op het tabblad Basecoins staat onder de basiscoins een lijst producten (PERP, XPERP, TRADFI en de uitgerolde markten van Hyperliquid zoals XYZ en HYNA) die elk apart uitgezet kunnen worden; een uitgezet product verdwijnt direct bij het opslaan uit het symbolen-grid, wordt niet meer opgehaald en komt bij het weer aanzetten terug met de herlaad. De vaste uitsluiting van PARA is daarmee een instelling geworden die standaard uit staat.
 - Analyzer: De band range index is verwijderd - de instelling, de twee kolommen op signaal en positie en de kolommen in de grids. Op de dbr-opzet die geld verdient (sl 3% / tp 7,5%) maakte de filter van +547,86 USDT over 2.294 posities een verlies van 239,04 over 1.404 posities, en op drempel 3,5 een verlies van 103,56 over 528: niet alleen minder trades maar ook slechtere, want de winst per positie ging van +0,24 naar -0,17. Database versie 97 haalt de twee kolommen weg, en een wachtrij-regel die de filter nog aanzet stopt de run met die uitleg in plaats van stilzwijgend zonder filter te draaien

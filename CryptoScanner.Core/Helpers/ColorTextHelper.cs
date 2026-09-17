@@ -1,6 +1,6 @@
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.UI.Models;
+namespace CryptoScanner.Core.Helpers;
 
 /// <summary>
 /// Forgiving wrapper around <see cref="CoreColor.Parse"/>. That method throws on anything that is

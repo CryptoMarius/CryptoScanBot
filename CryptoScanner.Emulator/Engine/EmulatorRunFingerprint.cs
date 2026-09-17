@@ -165,10 +165,13 @@ public static class EmulatorRunFingerprint
     /// is never silently reduced to a copy of another.
     /// </para>
     /// </summary>
-    private static Dictionary<string, JsonElement> CanonicaliseAnalyzers(
-        Dictionary<string, JsonElement> stored, HashSet<string> active)
+    private static SortedDictionary<string, JsonElement> CanonicaliseAnalyzers(
+        IDictionary<string, JsonElement> stored, HashSet<string> active)
     {
-        Dictionary<string, JsonElement> result = [];
+        // Sorted, like SettingsSignal.AnalyzerSettings itself: the checksum is taken over the
+        // serialized text, so the ORDER of the blocks used to be part of it. Two settings files
+        // holding the same values in a different order are the same run, and should replay as one.
+        SortedDictionary<string, JsonElement> result = [];
         foreach ((string name, JsonElement block) in stored)
         {
             if (active.Count > 0 && !active.Contains(name))
@@ -343,6 +346,10 @@ public static class EmulatorRunFingerprint
             obj.Remove("SortColumn");
             obj.Remove("SortDescending");
             obj.Remove("DuplicateCheckDays");
+            // Which algorithms the sweep dialog had selected when the run started. A single run
+            // carries the list and a queue run leaves it empty, so keeping it in meant the two could
+            // never look like the same measurement even when they replayed exactly the same thing.
+            obj.Remove("SelectedAlgorithms");
             return obj.ToJsonString();
         }
         catch (JsonException)

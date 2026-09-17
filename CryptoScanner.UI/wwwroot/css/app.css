@@ -1,4 +1,4 @@
-﻿/* ── Reset ── */
+/* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ══════════════════════════════════════
@@ -1204,6 +1204,15 @@ label.debug-item {
 .field.space-before > input,
 .field.space-before > .input-checkbox {
     margin-top: 14px;
+}
+
+/* A group with a long list of settings is laid out as two grids side by side. Not a CSS column
+   count: the body is a grid that lines every caption up with its control, and a multi-column
+   layout has no effect on a grid container. */
+.settings-group-columns {
+    display: flex;
+    align-items: flex-start;
+    gap: 28px;
 }
 
 .settings-subgroup-header.space-before {

@@ -247,7 +247,12 @@ public class DataStore
 
                 Parallel.ForEach(symbols, ParallelOptions, symbol =>
                 {
-                    if (!symbol.QuoteData.FetchCandles || symbol.Status != 1)
+                    // QuoteData decides whether this symbol is followed at all, so no QuoteData
+                    // means no candles. It used to be dereferenced straight away, which turned a
+                    // symbol that GlobalData.AddSymbol had only half registered into a
+                    // NullReferenceException inside a Parallel.ForEach - an unobserved task fault
+                    // during startup rather than one skipped symbol.
+                    if (symbol.QuoteData is null || !symbol.QuoteData.FetchCandles || symbol.Status != 1)
                         return;
 
                     // Don't load candles for symbols below the minimal volume threshold
@@ -585,7 +590,7 @@ public class DataStore
                             count += cryptoSymbolInterval.CandleList.Count;
 
                         // Delete the file if there is no data
-                        if (!symbol.QuoteData.FetchCandles || symbol.Status == 0 || count == 0)
+                        if (symbol.QuoteData is null || !symbol.QuoteData.FetchCandles || symbol.Status == 0 || count == 0)
                         {
                             if (File.Exists(fileName))
                                 File.Delete(fileName);

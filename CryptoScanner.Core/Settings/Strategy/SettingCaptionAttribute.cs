@@ -72,6 +72,13 @@ public sealed class SettingCaptionAttribute(string caption) : Attribute
     public bool SpaceBefore { get; init; }
 
     /// <summary>
+    /// Starts a second column at this setting. A strategy with a long list of settings makes a box
+    /// taller than the window; this says where the list may be cut in two, so the reader decides
+    /// the split rather than the renderer guessing at a halfway point.
+    /// </summary>
+    public bool ColumnBreak { get; init; }
+
+    /// <summary>
     /// Name of a bool property that has to be on for this setting to be editable — it stays on
     /// screen but greys out, mirroring an IsEnabled binding in the Avalonia view.
     /// </summary>

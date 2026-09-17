@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
@@ -54,6 +54,16 @@ public class DbrSignalLong : SignalCreateBase
             return false;
         }
 
+        // Before the band break itself: this reads 21 candles where the break reads 260 and
+        // computes the bands over them, so the cheaper check goes first.
+        DbrBandsHelper.DbrCandleLimit candleLimit = DbrBandsHelper.CheckCandleLimits(
+            SymbolInterval, CandleLast.Candle.OpenTime, isLong: true);
+        if (candleLimit.Blocked)
+        {
+            ExtraText = candleLimit.Reason;
+            return false;
+        }
+
         if (!DbrBandsHelper.IsLowerBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double bandWidthPct, out double lowerBand, out string reason))
         {
             ExtraText = reason;
@@ -100,6 +110,15 @@ public class DbrSignalLong : SignalCreateBase
         // falls back to its default percentage stop-loss.
         if (settings.UseStopLoss)
             _slPercentage = (decimal)bandWidthPct;
+
+        // A signal on an oversized candle that was kept instead of dropped enters at the
+        // retracement price, so it only fills when price runs that much further.
+        if (candleLimit.EntryPrice is decimal retracementPrice)
+        {
+            _entryPrice = retracementPrice;
+            ExtraText = $"hit lower band {bandWidthPct:N2}% (large candle, entry at {retracementPrice})";
+            return true;
+        }
 
         ExtraText = $"hit lower band {bandWidthPct:N2}%";
         return true;

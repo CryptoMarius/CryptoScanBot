@@ -252,6 +252,26 @@ public class PluginFieldGroup(string header)
 {
     public string Header { get; } = header;
     public List<PluginSettingField> Fields { get; } = [];
+
+    /// <summary>
+    /// The fields in one or two columns. A group that names a column break is cut there, so a long
+    /// list of settings becomes a box that is wider rather than taller than the window. Two grids
+    /// side by side, not a CSS column: the body is a grid that lines the captions up with their
+    /// controls, and a multi-column layout has no effect on one of those.
+    /// </summary>
+    public List<List<PluginSettingField>> Columns(Func<PluginSettingField, bool> visible)
+    {
+        var first = new List<PluginSettingField>();
+        var second = new List<PluginSettingField>();
+        var current = first;
+        foreach (PluginSettingField field in Fields)
+        {
+            if (field.ColumnBreak && visible(field) && current == first && first.Any(visible))
+                current = second;
+            current.Add(field);
+        }
+        return second.Count > 0 ? [first, second] : [first];
+    }
 }
 
 /// <summary>One reflected plugin setting, held as text/bool so Blazor can bind to it.</summary>
@@ -290,6 +310,9 @@ public class PluginSettingField
     public string? SameRowAs { get; }
     /// <summary>Extra white space above this setting.</summary>
     public bool SpaceBefore { get; }
+
+    /// <summary>Starts a second column at this setting; see SettingCaptionAttribute.</summary>
+    public bool ColumnBreak { get; }
     /// <summary>Name of the bool setting that has to be on for this one to be editable.</summary>
     public string? EnabledWhen { get; }
     /// <summary>Not drawn at all; the value still loads and saves.</summary>
@@ -328,6 +351,7 @@ public class PluginSettingField
         Unit = caption?.Unit;
         SameRowAs = caption?.SameRowAs;
         SpaceBefore = caption?.SpaceBefore ?? false;
+        ColumnBreak = caption?.ColumnBreak ?? false;
         EnabledWhen = caption?.EnabledWhen;
         Hidden = caption?.Hidden ?? false;
 

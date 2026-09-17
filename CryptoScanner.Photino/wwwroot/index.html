@@ -16,12 +16,19 @@
     <app>Loading...</app>
 
     <script src="_framework/blazor.webview.js"></script>
-    <script src="_content/CryptoScanner.UI/js/theme-interop.js"></script>
-    <script src="_content/CryptoScanner.UI/js/popup-interop.js"></script>
-    <script src="_content/CryptoScanner.UI/js/dialog-window.js"></script>
-    <script src="_content/CryptoScanner.UI/js/number-input.js"></script>
-    <script src="_content/CryptoScanner.UI/js/grid-interop.js"></script>
-    <script src="_content/CryptoScanner.UI/js/tradingview-widget.js"></script>
-    <script src="_content/CryptoScanner.UI/js/chart-widget.js"></script>
+    <!-- Loaded with the start time behind them, so the webview cannot serve a script from an
+         earlier run. Without that a rebuilt .js file silently keeps its old behaviour while the
+         C# half is new: on 16-09-2026 that cost an afternoon of chasing a chart bug that had
+         already been fixed on disk. document.write keeps them in this exact order, which matters -
+         they register themselves before Blazor starts talking to them. -->
+    <script>
+        (function () {
+            var v = Date.now();
+            var files = ['theme-interop', 'popup-interop', 'dialog-window', 'number-input',
+                         'grid-interop', 'tradingview-widget', 'chart-widget'];
+            for (var i = 0; i < files.length; i++)
+                document.write('<scr' + 'ipt src="_content/CryptoScanner.UI/js/' + files[i] + '.js?v=' + v + '"></scr' + 'ipt>');
+        })();
+    </script>
 </body>
 </html>

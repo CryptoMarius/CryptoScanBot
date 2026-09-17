@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Contracts;
+using CryptoScanner.Core.Contracts;
 
 namespace CryptoScanner.Analyzers;
 
@@ -10,40 +10,34 @@ public static class AnalyzerRegistration
 {
     public static void RegisterAll()
     {
-        // The classic reversal shapes, one strategy with the pattern as a setting so a run can vary
-        // it and nothing else. Measuring whether reacting to them works at all.
+        // The classic reversal shapes
         PluginManager.Register(new CandlePattern.CandlePatternPlugin());
 
         // A band strategy which does rather well
         PluginManager.Register(new Dbr.DbrPlugin());
 
-        // The break that did not hold - a strategy of its own, not a filter. Everything we added as
-        // a filter this month cost money; the shapes measured as strategies did make money.
+        // The break that did not hold
         PluginManager.Register(new FailedBreakout.FailedBreakoutPlugin());
 
         PluginManager.Register(new Dlz.DlzPlugin());
         PluginManager.Register(new Fvg.FvgPlugin());
         PluginManager.Register(new Jump.JumpPlugin());
 
-        // Large breakous with large profits and large losses
-        // tijdelijk terug..
-        PluginManager.Register(new Nwe.NwePlugin());
-
         PluginManager.Register(new Sbm.SbmPlugin());
         PluginManager.Register(new Smc.SmcPlugin());
         PluginManager.Register(new Stobb.StobbPlugin());
         PluginManager.Register(new Storsi.StorsiPlugin());
 
-        // A new band stratgy which is still being tested, but looks promising
+        // A band strategy that looked promising, but emulator was negative
         PluginManager.Register(new Vbs.VbsPlugin());
 
         // Experimental strategies (not yet fully tested or documented)
-//#if DEBUG
-        // ATR based bands, but it does not perform well enough
+#if DEBUG
+        // ATR based bands, it does not perform well
         PluginManager.Register(new AtrRb.AtrRbPlugin());
 
         // From the Malysian trader Oma Ally, not much signals but performs well (no profits yet)
-        PluginManager.Register(new Bbma.BbmaPlugin());
+        //PluginManager.Register(new Bbma.BbmaPlugin());
 
         PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
 
@@ -68,9 +62,19 @@ public static class AnalyzerRegistration
         // right after a band break is the rarer situation that is worth opening the chart for.
         PluginManager.Register(new MacdCrossBand.MacdCrossBandPlugin());
 
+        // Large breakous with large profits and large losses
+        PluginManager.Register(new Nwe.NwePlugin());
+
         PluginManager.Register(new SuperTrendBreakout.SuperTrendBreakoutPlugin());
+
+
         // Very disapointing, expected more of this strategy
         PluginManager.Register(new Trend.TrendPlugin());
-//#endif
+#endif
+
+        // A trending breakout: a cloud of four moving averages for the trend, with three entries
+        // inside it - the break of a pivot level, the crossing of the two EMAs, or a pullback to
+        // the fast line. Not measured yet.
+        PluginManager.Register(new Tbo.TboPlugin());
     }
 }

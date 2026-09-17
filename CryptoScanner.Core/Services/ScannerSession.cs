@@ -473,6 +473,9 @@ public class ScannerSession : IScannerSession
 
     public void ScheduleRefresh()
     {
+        // Asked for from outside (a settings change, or the user), so it must not be called off by
+        // the check in TimerRestartStreams_Tick.
+        _restartRequestedByDataStreamCheck = false;
         TimerRestartStreams.InitTimerInterval(1 * 5);
     }
 
@@ -534,6 +537,30 @@ public class ScannerSession : IScannerSession
 
     private async void TimerRestartStreams_Tick(object? sender, EventArgs? e)
     {
+        // A restart that the data-stream check scheduled is worth asking about again: the library
+        // reconnects on its own, so by now the subscriptions can be delivering while the timer is
+        // still on its way. On 04-09-2026 all six Okx connections were back at 12:56:04 and the
+        // restart fired at 12:56:14, costing a save, a reload, a resubscribe and half a minute
+        // without data for nothing. A refresh asked for through ScheduleRefresh is never cancelled
+        // here - that one is not about a stalled ticker.
+        if (_restartRequestedByDataStreamCheck)
+        {
+            _restartRequestedByDataStreamCheck = false;
+            if (ExchangeBase.KLineTicker != null && !ExchangeBase.KLineTicker.NeedsRestart())
+            {
+                _dataStreamProblemCount = 0;
+                TimerRestartStreams.InitTimerInterval(24 * 60 * 60);
+                GlobalData.AddTextToLogTab("ScannerSession.Restart cancelled — every subscription is delivering again");
+                return;
+            }
+        }
+
+        // The counter counts CONSECUTIVE failing checks, and a restart is the answer to them - so it
+        // starts at zero afterwards. Without this it kept its old value, and the first check during
+        // the next outage was already "check 3": a full restart straight away instead of the cheap
+        // attempt to restart the affected subscriptions first.
+        _dataStreamProblemCount = 0;
+
         GlobalData.AddTextToLogTab("ScannerSession.Restart");
         GlobalData.AddTextToTelegram("ScannerSession.Restart", CryptoTelegramCategory.System);
 
@@ -575,6 +602,11 @@ public class ScannerSession : IScannerSession
     // subscriptions and the session restart is kept as the fallback.
     private int _dataStreamProblemCount = 0;
 
+    // True when the restart was scheduled by the check above rather than asked for through
+    // ScheduleRefresh (a settings change, or the user). Only that kind may be called off when the
+    // subscriptions turn out to be delivering again by the time the timer fires.
+    private bool _restartRequestedByDataStreamCheck = false;
+
     private void TimerCheckDataStream_Tick(object? sender, EventArgs? e)
     {
         if (ExchangeBase.KLineTicker != null)
@@ -587,16 +619,38 @@ public class ScannerSession : IScannerSession
                 // First try to restart only the subscriptions that reported a problem
                 if (_dataStreamProblemCount < 2)
                 {
-                    Task.Run(async () => await ExchangeBase.KLineTicker.CheckSubscriptions());
+                    Task.Run(async () =>
+                    {
+                        await ExchangeBase.KLineTicker.CheckSubscriptions();
+
+                        // A round can land in the middle of the outage: CheckSubscriptions then stops
+                        // the subscriptions and cannot start them again, and nothing happens until the
+                        // next check five minutes later. That is what made the Okx outage of 04-09-2026
+                        // last 8 minutes 47 seconds - the round hit at 12:43:30, fifteen seconds before
+                        // the network was back, and the next check was at 12:48:30. Binance and
+                        // HyperLiquid needed no round at all and were back in 2,5 minutes on their own.
+                        // Asking again after 30 seconds costs one extra check and catches exactly this.
+                        if (ExchangeBase.KLineTicker != null && ExchangeBase.KLineTicker.NeedsRestart())
+                            TimerCheckDataStream.InitTimerInterval(30);
+                    });
                     return;
                 }
 
                 // That did not help, schedule a restart of the streams in 1m max
                 if (!TimerRestartStreams.Enabled || TimerRestartStreams.Interval > 60 * 1000)
+                {
+                    _restartRequestedByDataStreamCheck = true;
                     TimerRestartStreams.InitTimerInterval(1 * 60);
+                }
             }
             else
+            {
                 _dataStreamProblemCount = 0;
+
+                // Back to the normal rhythm after a shortened check (see above)
+                if (TimerCheckDataStream.Interval < 5 * 60 * 1000)
+                    TimerCheckDataStream.InitTimerInterval(5 * 60);
+            }
         }
     }
 
@@ -687,6 +741,10 @@ public class ScannerSession : IScannerSession
                 // but never subscribed (Okx Perpetual, night of 02/03-09-2026). The message that
                 // tells the grids to rebuild is sent once, below, after the volume decisions.
                 ThreadLoadData.IndexQuoteDataSymbols(GlobalData.ActiveExchange!, notifyUserInterface: false);
+
+                // The tick sizes were just refreshed too, and the decimals a candle is stored with
+                // follow from them - so this goes before anything that can write one.
+                CandleBase.UpdateSymbolPrecision();
 
                 // The volume decision for this whole cycle is taken here, right after the volumes were
                 // refreshed, so the synchronisation and the candle fetch below agree on who qualifies.

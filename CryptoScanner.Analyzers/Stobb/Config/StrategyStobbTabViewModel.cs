@@ -13,6 +13,10 @@ public partial class StrategyStobbTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyStobbSettingsViewModel _strategyStobbSettingsViewModel;
 
+    // Which intervals this strategy runs on. Empty means "the same as the side".
+    [ObservableProperty]
+    IntervalViewModel _intervalViewModel;
+
     [ObservableProperty]
     StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
 
@@ -20,6 +24,7 @@ public partial class StrategyStobbTabViewModel : ObservableObject
     {
         _soundAndColorsViewModel = new();
         _strategyStobbSettingsViewModel = new();
+        _intervalViewModel = new();
         _strategyEntryConditionsViewModel = new();
     }
 
@@ -28,6 +33,7 @@ public partial class StrategyStobbTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyStobbSettingsViewModel.LoadConfig(settings);
+        IntervalViewModel.LoadConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -35,6 +41,7 @@ public partial class StrategyStobbTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyStobbSettingsViewModel.SaveConfig(settings);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

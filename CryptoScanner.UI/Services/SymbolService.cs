@@ -196,7 +196,12 @@ public class SymbolService : IDisposable
 
         foreach (var symbol in exchange.SymbolListName.Values)
         {
-            if (!symbol.QuoteData!.FetchCandles || symbol.Status != 1 || symbol.IsBarometerSymbol())
+            // The null-forgiving operator was wrong here, not merely noisy: a symbol that tripped
+            // over a null key in GlobalData.AddSymbol reached this list with QuoteData still unset,
+            // and Reload runs during startup - so the NullReferenceException ended the application.
+            // AddSymbol now fills QuoteData before the symbol is published, and this check keeps one
+            // unusable row from costing the whole grid.
+            if (symbol.QuoteData is null || !symbol.QuoteData.FetchCandles || symbol.Status != 1 || symbol.IsBarometerSymbol())
                 continue;
 
             if (!string.IsNullOrEmpty(_filter) &&

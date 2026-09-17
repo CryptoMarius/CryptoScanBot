@@ -79,10 +79,18 @@
                 continue;
             }
 
+            @* A group that names a column break is laid out as two grids side by side. The fields
+               themselves are rendered by the same block either way - only the list they come from
+               differs. *@
+            var columns = group.Columns(state.IsFieldVisible);
+
             <div class="settings-group">
                 <div class="settings-group-header">@group.Header</div>
+                <div class="settings-group-columns">
+                @foreach (var columnFields in columns)
+                {
                 <div class="settings-group-body">
-                    @foreach (var field in group.Fields)
+                    @foreach (var field in columnFields)
                     {
                         if (!state.IsFieldVisible(field))
                         {
@@ -98,7 +106,7 @@
                         {
                             @* The extra space belongs above the sub-heading, not between the heading
                                and its first setting. *@
-                            <div class="settings-subgroup-header @(field.SpaceBefore ? "space-before" : "")">@field.SubHeader</div>
+                            <div class="settings-subgroup-header @(field.SpaceBefore ? "space-before" : "") @(field.ColumnBreak ? "column-break" : "")">@field.SubHeader</div>
                         }
 
                         if (field.Kind == PluginFieldKind.IntervalList)
@@ -156,6 +164,8 @@
                             }
                         </div>
                     }
+                </div>
+                }
                 </div>
             </div>
         }

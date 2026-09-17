@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -7,69 +7,114 @@
              x:DataType="vm:StrategyDbrSettingsViewModel"
              x:Class="CryptoScanner.Analyzers.Dbr.Config.StrategyDbrSettingsView">
 
-    <HeaderedContentControl Classes="groupbox" Header="Settings">
-        <StackPanel Margin="4" Spacing="4">
+    <StackPanel Spacing="8">
 
-            <!-- Donchian band lookback -->
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Donchian lookback for the outer bands, computed over the PREVIOUS N candles (Pine default 20).">
-                <TextBlock Grid.Column="0" Text="Band length:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding BandLength, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+        <HeaderedContentControl Classes="groupbox" Header="Settings">
+            <StackPanel Margin="4" Spacing="4">
 
-            <!-- Outer band multiplier -->
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Outer band multiplier: middle ± halfRange × (mult / 2.5) (Pine default 3.2). Higher = wider bands = fewer signals.">
-                <TextBlock Grid.Column="0" Text="Band multiplier:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding OuterMult, Mode=TwoWay, StringFormat=N1}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                <!-- Donchian band lookback -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Donchian lookback for the outer bands, computed over the PREVIOUS N candles (Pine default 20).">
+                    <TextBlock Grid.Column="0" Text="Band length:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding BandLength, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
-            <!-- Filter on BB% (minimum and maximum band width, 0 disables that side) -->
-            <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Minimum and maximum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a break to be flagged. A bound of 0 disables that side.">
-                <TextBlock Grid.Column="0" Text="Filter on BB%:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding BbMinPercentage, Mode=TwoWay, StringFormat=N2}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding BbMaxPercentage, Mode=TwoWay, StringFormat=N2}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                <!-- Outer band multiplier -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Outer band multiplier: middle ± halfRange × (mult / 2.5) (Pine default 3.2). Higher = wider bands = fewer signals.">
+                    <TextBlock Grid.Column="0" Text="Band multiplier:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding OuterMult, Mode=TwoWay, StringFormat=N1}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
-            <!-- RSI confluence (overbought/oversold LEVELS come from the Indicators tab → RSI) -->
-            <CheckBox IsChecked="{Binding UseRsiFilter, Mode=TwoWay}"
-                      Content="Require RSI overbought/oversold" FontSize="12"
-                      ToolTip.Tip="Only fire a short on an upper-band break when RSI ≥ overbought, and a long on a lower-band break when RSI ≤ oversold. The overbought/oversold levels are taken from the Indicators tab (RSI settings)."/>
+                <!-- Filter on BB% (minimum and maximum band width, 0 disables that side) -->
+                <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Minimum and maximum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a break to be flagged. A bound of 0 disables that side.">
+                    <TextBlock Grid.Column="0" Text="Filter on BB%:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding BbMinPercentage, Mode=TwoWay, StringFormat=N2}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding BbMaxPercentage, Mode=TwoWay, StringFormat=N2}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
-            <!-- Stochastic OS/OB gate -->
-            <CheckBox IsChecked="{Binding RequireStochOsOb, Mode=TwoWay}"
-                      Content="Require Stochastic oversold/overbought" FontSize="12"
-                      ToolTip.Tip="When on, a long signal also requires Stochastic to be oversold and a short signal requires Stochastic to be overbought (uses the global Stoch thresholds)."/>
+                <!-- RSI confluence (overbought/oversold LEVELS come from the Indicators tab → RSI) -->
+                <CheckBox IsChecked="{Binding UseRsiFilter, Mode=TwoWay}"
+                          Content="Require RSI overbought/oversold" FontSize="12"
+                          ToolTip.Tip="Only fire a short on an upper-band break when RSI ≥ overbought, and a long on a lower-band break when RSI ≤ oversold. The overbought/oversold levels are taken from the Indicators tab (RSI settings)."/>
 
-            <!-- Stacking rule -->
-            <CheckBox IsChecked="{Binding AllowStack, Mode=TwoWay}"
-                      Content="Allow stacked signals on a stronger break (HYPE style)" FontSize="12"
-                      ToolTip.Tip="When on, a new signal fires on every higher High / lower Low while price keeps stretching beyond the band. When off only the first candle of a break run fires."/>
+                <!-- Stochastic OS/OB gate -->
+                <CheckBox IsChecked="{Binding RequireStochOsOb, Mode=TwoWay}"
+                          Content="Require Stochastic oversold/overbought" FontSize="12"
+                          ToolTip.Tip="When on, a long signal also requires Stochastic to be oversold and a short signal requires Stochastic to be overbought (uses the global Stoch thresholds)."/>
 
-            <!-- Hand the signal's own (percentage based) stop-loss to the trader -->
-            <CheckBox IsChecked="{Binding UseStopLoss, Mode=TwoWay}"
-                      Content="Use stop-loss" FontSize="12"
-                      ToolTip.Tip="When on, the signal passes the band-width percentage (the chart label) as stop-loss to the trader. When off, no stop-loss is handed over (null) and the trader uses its default percentage stop-loss."/>
+                <!-- Stacking rule -->
+                <CheckBox IsChecked="{Binding AllowStack, Mode=TwoWay}"
+                          Content="Allow stacked signals on a stronger break (HYPE style)" FontSize="12"
+                          ToolTip.Tip="When on, a new signal fires on every higher High / lower Low while price keeps stretching beyond the band. When off only the first candle of a break run fires."/>
 
-            <!-- Band break confirmation on higher timeframes -->
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Number of consecutive higher timeframes that must show the same band break. 0 = this timeframe only. Example: 1 means the next higher timeframe has to break its band as well. Missing indicator data on a higher timeframe counts as no confirmation.">
-                <TextBlock Grid.Column="0" Text="Band break confirmation on higher timeframes:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding BandBreakConfirmationCount, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                <!-- Hand the signal's own (percentage based) stop-loss to the trader -->
+                <CheckBox IsChecked="{Binding UseStopLoss, Mode=TwoWay}"
+                          Content="Use stop-loss" FontSize="12"
+                          ToolTip.Tip="When on, the signal passes the band-width percentage (the chart label) as stop-loss to the trader. When off, no stop-loss is handed over (null) and the trader uses its default percentage stop-loss."/>
 
-        </StackPanel>
-    </HeaderedContentControl>
+                <!-- Band break confirmation on higher timeframes -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Number of consecutive higher timeframes that must show the same band break. 0 = this timeframe only. Example: 1 means the next higher timeframe has to break its band as well. Missing indicator data on a higher timeframe counts as no confirmation.">
+                    <TextBlock Grid.Column="0" Text="Band break confirmation on higher timeframes:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding BandBreakConfirmationCount, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+        <!-- The candle that breaks the band: how big and how busy it may be, and what
+             happens to a signal on a candle that is over the limit. -->
+        <HeaderedContentControl Classes="groupbox" Header="Candle limits">
+            <StackPanel Margin="4" Spacing="4">
+
+                <!-- Skip the signal when the breaking candle is far bigger or busier than normal -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Skip the signal when the candle that breaks the band is more than N times as tall (high minus low) as the average of the previous 20 candles. 0 = no limit.">
+                    <TextBlock Grid.Column="0" Text="Maximum candle size (times the average):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding MaxCandleSizeRatio, Mode=TwoWay, StringFormat=N1}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Skip the signal when the candle that breaks the band has more than N times the average volume of the previous 20 candles. 0 = no limit.">
+                    <TextBlock Grid.Column="0" Text="Maximum candle volume (times the average):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding MaxCandleVolumeRatio, Mode=TwoWay, StringFormat=N1}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="The number of candles before the breaking one that the maximum size and volume are measured against. 20 is the measured default.">
+                    <TextBlock Grid.Column="0" Text="Average over N candles:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding CandleAverageLength, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="What to do when the candle is over the maximum size: 0 skips the signal, 1.0 keeps it and places the entry one whole candle height beyond the close (a long buys lower, a short sells higher). Needs the entry order type to be Limit.">
+                    <TextBlock Grid.Column="0" Text="Entry retracement on a large candle:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding LargeCandleRetracementPart, Mode=TwoWay, StringFormat=N2}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+    </StackPanel>
 
 </UserControl>

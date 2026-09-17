@@ -15,6 +15,10 @@ public partial class StrategyNweTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyNweSettingsNweViewModel _strategyNweSettingsNweViewModel;
 
+    // Which intervals this strategy runs on. Empty means "the same as the side".
+    [ObservableProperty]
+    IntervalViewModel _intervalViewModel;
+
     [ObservableProperty]
     StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
 
@@ -23,6 +27,7 @@ public partial class StrategyNweTabViewModel : ObservableObject
         _soundAndColorsViewModel = new();
         _strategyNweSettingsViewModel = new();
         _strategyNweSettingsNweViewModel = new();
+        _intervalViewModel = new();
         _strategyEntryConditionsViewModel = new();
     }
 
@@ -32,6 +37,7 @@ public partial class StrategyNweTabViewModel : ObservableObject
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyNweSettingsViewModel.LoadConfig(settings);
         StrategyNweSettingsNweViewModel.LoadConfig(settings);
+        IntervalViewModel.LoadConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -40,6 +46,7 @@ public partial class StrategyNweTabViewModel : ObservableObject
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyNweSettingsViewModel.SaveConfig(settings);
         StrategyNweSettingsNweViewModel.SaveConfig(settings);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

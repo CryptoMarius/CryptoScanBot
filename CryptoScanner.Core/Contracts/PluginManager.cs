@@ -76,7 +76,7 @@ public static class PluginManager
     /// Each entry is a raw JSON block; only the plugin knows its concrete settings
     /// type, so we deserialize the block directly into that type here.
     /// </summary>
-    public static void RestoreSettings(Dictionary<string, JsonElement> stored)
+    public static void RestoreSettings(IDictionary<string, JsonElement> stored)
     {
         foreach (var plugin in _plugins.Values.Distinct())
         {
@@ -106,7 +106,7 @@ public static class PluginManager
     /// host without the Analyzers project) are left untouched so their stored
     /// settings are never wiped by a save.
     /// </summary>
-    public static void CollectSettings(Dictionary<string, JsonElement> target)
+    public static void CollectSettings(IDictionary<string, JsonElement> target)
     {
         foreach (var plugin in _plugins.Values.Distinct())
         {
@@ -134,7 +134,7 @@ public static class PluginManager
     /// stored set can be shown alongside the running one. Returns null when the block is missing or
     /// cannot be read — the caller then falls back to the live settings.
     /// </summary>
-    public static SettingsSignalStrategyBase? MaterializeSettings(string strategyName, Dictionary<string, JsonElement> stored)
+    public static SettingsSignalStrategyBase? MaterializeSettings(string strategyName, IDictionary<string, JsonElement> stored)
     {
         foreach (var plugin in _plugins.Values.Distinct())
         {

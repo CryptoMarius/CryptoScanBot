@@ -178,6 +178,95 @@ public class CandleBase(ExchangeBase api)
 
 
     /// <summary>
+    /// Derive the price decimals and the display formats of every symbol from the tick sizes the
+    /// refresh just assigned. Call it once per refresh cycle, right after GetSymbolsAsync and before
+    /// anything writes a candle.
+    /// <para>
+    /// A candle keeps the number of decimals it was written with, taken from symbol.PriceDecimals,
+    /// and that field was computed in GlobalData.AddSymbol only - when a symbol is loaded or first
+    /// inserted. The refresh assigns a new PriceTickSize straight to the symbol that is already in
+    /// memory (every exchange does that in its own Symbol.cs), so a corrected tick size did not reach
+    /// the decimals until the next start of the scanner. It cost the Bitvavo history once and a night
+    /// of HyperLiquid Spot on 18/19-08-2026: 23.027 impossible candles, 16 of the 39 coins stored as
+    /// nothing but zeros, because the decimals stayed 0 while the tick size was already right. The
+    /// rule that came with it - after a tick repair, start twice before emptying the candle database -
+    /// is what this method replaces.
+    /// </para>
+    /// <para>
+    /// It repairs what is written from here on, not what is already there, and nothing needs
+    /// recalculating: a candle carries its own decimals and reads back as what it was stored as. A
+    /// candle that was rounded to whole units at the time stays that way, so only a refetch brings
+    /// those digits back - which is worth doing where the rounding step is large next to the price
+    /// (HYPEUSDC at 59 loses 1,7% per unit, UBTCUSDC at 64258 loses 0,0016%) and not elsewhere.
+    /// </para>
+    /// <para>
+    /// Every symbol, and not the subset UpdateVolumeDecisions walks: a coin below the volume threshold
+    /// still gets candles written for it elsewhere, and wrong decimals there are just as permanent.
+    /// Two are skipped for a reason. A barometer symbol holds a percentage and its decimals are set by
+    /// hand (BarometerTools), it has no tick size to derive them from. And a tick size of zero means
+    /// the exchange told us nothing, not that this coin trades in whole units - deriving from it would
+    /// round every price to a whole number, which is the damage this method exists to prevent.
+    /// </para>
+    /// </summary>
+    public static void UpdateSymbolPrecision()
+    {
+        if (!GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+            return;
+
+        _ = UpdateSymbolPrecision(exchange);
+    }
+
+
+    /// <summary>
+    /// The work behind <see cref="UpdateSymbolPrecision()"/>, on the exchange it is handed rather
+    /// than on the active one, so a test can run it without an exchange api behind it. Returns the
+    /// symbols whose decimals actually changed, as "name old->new".
+    /// </summary>
+    internal static (List<string> Changed, int Coarser) UpdateSymbolPrecision(Model.CryptoExchange exchange)
+    {
+        List<string> changed = [];
+        int coarser = 0;
+        foreach (var symbol in exchange.SymbolListName.Values)
+        {
+            if (symbol.IsBarometerSymbol() || symbol.PriceTickSize <= 0)
+                continue;
+
+            byte before = symbol.PriceDecimals;
+            symbol.DeriveDecimalsFromTickSizes();
+            if (symbol.PriceDecimals == before)
+                continue;
+
+            changed.Add($"{symbol.Name} {before}->{symbol.PriceDecimals}");
+            if (before < symbol.PriceDecimals)
+                coarser++;
+        }
+
+        if (changed.Count > 0)
+        {
+            GlobalData.AddTextToLogTab($"{exchange.Name}: price decimals changed for {changed.Count} symbol(s) — " +
+                string.Join(", ", changed.Take(20)) + (changed.Count > 20 ? ", ..." : ""));
+
+            // Only this half is a problem, and only for the candles that are already stored. Nothing
+            // has to be recalculated: a candle keeps the decimals it was written with (TickDecimals,
+            // per candle) and its getters divide by its OWN tick size, so every candle still reads
+            // back as what it was. What it cannot do is read back finer than it was stored. A symbol
+            // that stood on 0 decimals kept UBTCUSDC as 64258 and PURRUSDC (0,16) as 0, and that
+            // rounding happened at the moment of writing - refetching is the only way to get those
+            // digits, and only worth it where the step is large next to the price. The other
+            // direction (a coarser tick size now) costs nothing: those candles are simply more
+            // precise than they need to be.
+            if (coarser > 0)
+            {
+                GlobalData.AddTextToLogTab($"{exchange.Name}: {coarser} of them now hold MORE decimals than before — " +
+                    "candles already in the database keep the precision they were stored with, only new ones are finer");
+            }
+        }
+
+        return (changed, coarser);
+    }
+
+
+    /// <summary>
     /// Re-evaluate the "enough volume" decision for every symbol of the active exchange. Call it once
     /// per refresh cycle, right after GetSymbolsAsync refreshed the 24 hour volumes and before anything
     /// that reads EnoughVolume() - the subscription synchronisation and the candle fetch below have to
@@ -230,7 +319,9 @@ public class CandleBase(ExchangeBase api)
 
 
                     // Safety net for callers that did not do this themselves (startup). Harmless when it
-                    // already ran: the same volume gives the same answer a second time.
+                    // already ran: the same volume gives the same answer a second time, and the same
+                    // tick size the same decimals.
+                    UpdateSymbolPrecision();
                     UpdateVolumeDecisions();
 
                     Queue<CryptoSymbol> queue = new();

@@ -52,7 +52,13 @@ public partial class SymbolGridViewModel : ObservableObject
         List<SymbolViewModel> viewModels = [];
         foreach (var symbol in GlobalData.ActiveExchange?.SymbolListName.Values ?? [])
         {
-            if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
+            // QuoteData is set by GlobalData.AddSymbol and should never be null by the time a symbol
+            // is in this list. It has been: a symbol that tripped over a null key was added to the
+            // list before QuoteData was assigned, and this constructor runs from the DI container at
+            // startup - so the NullReferenceException took the whole application down instead of
+            // leaving out one row. AddSymbol no longer publishes a half built symbol; this check
+            // makes sure the grid can never be the one that kills the startup again.
+            if (symbol.QuoteData is not null && symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
             {
                 if (string.IsNullOrWhiteSpace(_currentFilter) || symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase))
                 {

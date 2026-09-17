@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Settings.Strategy;
+﻿using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Dbr;
 
@@ -10,6 +10,9 @@ namespace CryptoScanner.Analyzers.Dbr;
 [Serializable]
 public class DbrSettings : SettingsSignalStrategyBase
 {
+    // Groupbox header, spelled exactly as the Avalonia view does.
+    private const string GroupCandleLimits = "Candle limits";
+
     // Donchian lookback for the outer bands, computed over the PREVIOUS BandLength candles
     // (Pine: ta.highest(high[1], len) / ta.lowest(low[1], len); default 20).
     [SettingCaption("Band length",
@@ -65,6 +68,48 @@ public class DbrSettings : SettingsSignalStrategyBase
     [SettingCaption("Band break confirmation on higher timeframes",
         Tooltip = "Number of consecutive higher timeframes that must show the same band break. 0 = this timeframe only. Example: 1 means the next higher timeframe has to break its band as well. Missing indicator data on a higher timeframe counts as no confirmation.")]
     public int BandBreakConfirmationCount { get; set; } = 0;
+
+
+    // --- Candle limits ---
+
+    // Upper limit on the size of the candle that breaks the band, as a multiple of the average
+    // candle size over the previous DbrBandsHelper.CandleAverageLength candles. 0 = no limit.
+    // Measured on ten dbr runs over january-august 2026: entries on a candle five times the average
+    // won 44,9% against 59,7% for the rest, walked the whole DCA ladder in 73,8% of the cases and
+    // cost 138 USDT per run - 23,3% of those losers sat on the stop within two hours, against 1,3%
+    // on a normal candle. The ladder runs to 4% and the stop sits beyond that, so a candle that is
+    // itself 8 or 12% tall covers the entire ladder in one move.
+    [SettingCaption("Maximum candle size (times the average)", Group = GroupCandleLimits,
+        Tooltip = "Skip the signal when the candle that breaks the band is more than N times as tall (high minus low) as the average of the previous 20 candles. 0 = no limit.")]
+    public double MaxCandleSizeRatio { get; set; } = 0.0;
+
+    // Upper limit on the volume of the candle that breaks the band, as a multiple of the average
+    // volume over the same window. 0 = no limit. Four times the average cost 160 USDT per run in
+    // the same measurement: such a candle is an outside blow (news, liquidations) rather than a
+    // band break that springs back.
+    [SettingCaption("Maximum candle volume (times the average)", Group = GroupCandleLimits,
+        Tooltip = "Skip the signal when the candle that breaks the band has more than N times the average volume of the previous 20 candles. 0 = no limit.")]
+    public double MaxCandleVolumeRatio { get; set; } = 0.0;
+
+    // Window the two limits above measure "normal" over: the candles BEFORE the breaking one.
+    // 20 is what the measurement of 15-09-2026 used.
+    [SettingCaption("Average over N candles", Group = GroupCandleLimits,
+        Tooltip = "The number of candles before the breaking one that the maximum size and volume are measured against. 20 is the measured default.")]
+    public int CandleAverageLength { get; set; } = 20;
+
+    // What to do with a signal on a candle that is over MaxCandleSizeRatio: 0 drops it, a value
+    // above 0 keeps it but moves the entry that fraction of the candle's own height beyond its
+    // close - a long buys lower, a short sells higher. Only does something when the entry is placed
+    // as a LIMIT order (Settings.Trading.EntryOrderType), because a market order ignores the price
+    // the signal hands over.
+    // Measured on runs 808 and 917 (5.729 positions, the entry replayed on 1m candles): on the
+    // signals above five times the average, entering at market is -199,9 USDT and dropping them
+    // outright is 0, while a limit one whole candle height further out fills 9% of them and makes
+    // +113,1. Over the whole run that is 1.790,0 against 1.477,0 for market and 1.676,9 for
+    // dropping them, better in both period halves.
+    [SettingCaption("Entry retracement on a large candle", Group = GroupCandleLimits,
+        Tooltip = "What to do when the candle is over the maximum size: 0 skips the signal, 1.0 keeps it and places the entry one whole candle height beyond the close (a long buys lower, a short sells higher). Needs the entry order type to be Limit.")]
+    public double LargeCandleRetracementPart { get; set; } = 0.0;
 
     public DbrSettings() : base()
     {

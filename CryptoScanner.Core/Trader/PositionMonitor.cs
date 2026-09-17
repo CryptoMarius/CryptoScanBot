@@ -211,6 +211,59 @@ public class PositionMonitor : IDisposable
 
 
 
+    /// <summary>
+    /// The intervals in the order their signals are judged this minute, following
+    /// <see cref="SettingsTrading.SignalPriority"/>. Only ONE position can be open per coin, so the
+    /// first signal that gets through opens it and the rest of the minute is never looked at - which
+    /// makes this order the decision about which signal wins. See <see cref="CryptoSignalPriority"/>
+    /// for why it used to be an accident.
+    /// <para>
+    /// The list is handed back untouched for the default, so nothing about an existing run changes.
+    /// Intervals whose candle has not closed are left in: the caller skips them anyway, and leaving
+    /// them out here would only mean doing that test twice.
+    /// </para>
+    /// </summary>
+    internal static List<CryptoSymbolInterval> OrderIntervalsForSignals(
+        List<CryptoSymbolInterval> symbolIntervals, decimal lastPrice)
+    {
+        switch (GlobalData.Settings.Trading.SignalPriority)
+        {
+            case CryptoSignalPriority.LongestIntervalFirst:
+                return [.. symbolIntervals.OrderByDescending(x => x.Interval!.Duration)];
+
+            case CryptoSignalPriority.NearestEntryPrice:
+                // By the signal that sits closest, so the interval holding the nearest entry is
+                // judged first. An interval without signals has nothing to offer and goes last.
+                return [.. symbolIntervals.OrderBy(x => x.SignalList.Count == 0
+                    ? decimal.MaxValue
+                    : x.SignalList.Min(s => Math.Abs(s.SignalPrice - lastPrice)))];
+
+            default:
+                return symbolIntervals;
+        }
+    }
+
+
+    /// <summary>
+    /// The signals of ONE interval in the order they are judged. Only
+    /// <see cref="CryptoSignalPriority.NearestEntryPrice"/> has an opinion here; the other two decide
+    /// between intervals and leave the list as it is.
+    /// <para>
+    /// In practice an interval holds at most ONE signal: SignalCreate calls ClearSignalsUpTo before
+    /// adding, so a new signal empties its own interval and every lower one and only the newest
+    /// survives. This method therefore does nothing today - it is here so the rule sits in one place
+    /// for the day an interval can hold more than one, and so a test can state that.
+    /// </para>
+    /// </summary>
+    internal static List<CryptoSignal> OrderSignals(List<CryptoSignal> signals, decimal lastPrice)
+    {
+        if (GlobalData.Settings.Trading.SignalPriority == CryptoSignalPriority.NearestEntryPrice)
+            return [.. signals.OrderBy(s => Math.Abs(s.SignalPrice - lastPrice))];
+
+        return signals;
+    }
+
+
     private async Task CreateOrExtendPositionAsync()
     {
         string? lastPrice = Symbol.LastPrice?.ToString(Symbol.PriceDisplayFormat);
@@ -283,14 +336,15 @@ public class PositionMonitor : IDisposable
         // ***************************************************************************
         // Per interval kan een signaal aanwezig zijn, regel de aankoop of de bijkoop
         // ***************************************************************************
-        foreach (CryptoSymbolInterval symbolInterval in Symbol.Data.SymbolIntervalList)
+        foreach (CryptoSymbolInterval symbolInterval in
+            OrderIntervalsForSignals(Symbol.Data.SymbolIntervalList, Symbol.LastPrice!.Value))
         {
             CryptoInterval interval = symbolInterval.Interval!;
             // alleen voor de intervallen waar de candle net gesloten is
             // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
             if (LastCandle1mCloseTime % interval.Duration == 0)
             {
-                foreach (CryptoSignal signal in symbolInterval.SignalList.ToList())
+                foreach (CryptoSignal signal in OrderSignals(symbolInterval.SignalList.ToList(), Symbol.LastPrice!.Value))
                 {
                     text = "Monitor " + signal.DisplayText + " price=" + lastPrice;
 
@@ -674,6 +728,28 @@ public class PositionMonitor : IDisposable
                             if ((position.Side == CryptoTradeSide.Long && signal.SignalPrice < position.BreakEvenPrice) ||
                                 (position.Side == CryptoTradeSide.Short && signal.SignalPrice > position.BreakEvenPrice))
                             {
+                                // A signal only ever adds to a position on its OWN side. Until 16-09-2026
+                                // nothing here asked that question: the side checks before it are about
+                                // whether this interval and strategy may trade at all
+                                // (TradingConfig.Trading[signal.Side]), and the price check above reads
+                                // position.Side. So a LONG signal on a coin holding a SHORT passed
+                                // straight through, and it did so exactly when that short was deep under
+                                // water - low enough for the band touch that fired the long, and at the
+                                // same time above the break-even price of the short. The position then
+                                // grew on the strength of a signal that says the other way.
+                                //
+                                // The line is also the measurement. How often this happened could not be
+                                // read back afterwards: PendingDcaSignal carries the interval, the
+                                // strategy, the price and the time, not the side, so nothing of it
+                                // reached the DCA part in the database.
+                                if (signal.Side != position.Side)
+                                {
+                                    GlobalData.AddTextToLogTab($"{text} {symbolInterval.Interval.Name} " +
+                                        $"{signal.Side} signal does not belong to the open {position.Side} position (removed)");
+                                    Symbol.ClearSignals();
+                                    return;
+                                }
+
                                 // En een paar aanvullende condities...
                                 if (!CanOpenAdditionalDca(position, out CryptoPositionStep? step, out decimal percentage, out decimal dcaPrice, out reaction))
                                 {

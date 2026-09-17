@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -44,6 +44,23 @@
                 <TextBlock Grid.Column="0" Text="Close within range %:" VerticalAlignment="Center" FontSize="12"/>
                 <TextBox Grid.Column="1"
                          Text="{Binding CloseWithinRangePercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- The band width the breaking candle has to sit in. Two boxes on one row, the same
+                 shape the dbr tab uses for the same pair of bounds. -->
+            <TextBlock Text="Band width" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,4,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Minimum Bollinger-band width (BB% = 100 x (upper/lower - 1)) the breaking candle must have, followed by the maximum. A bound of 0 switches that side off.">
+                <TextBlock Grid.Column="0" Text="Filter on BB%:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding BbMinPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                <TextBox Grid.Column="3"
+                         Text="{Binding BbMaxPercentage, Mode=TwoWay}"
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 

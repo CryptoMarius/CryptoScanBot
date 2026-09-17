@@ -71,6 +71,14 @@ public class Api : ExchangeBase
         // 1m plus 500 of each of the eleven higher intervals is 29 requests per symbol, and at the 25
         // requests a minute LimitRate hands out that is 3 hours 21 minutes for 173 symbols. On 5000
         // every interval fits in one request, so the same start is 12 requests per symbol.
+        //
+        // The 1 behind the "false" is the symbols per subscription, and it is not a choice: the candle
+        // channel of HyperLiquid takes ONE coin. Measured against wss://api.hyperliquid.xyz/ws on
+        // 16-09-2026 - a subscription with coin "BTC" is answered with a subscriptionResponse and
+        // delivers candles, while a JSON array is refused with a parse error and a comma separated
+        // list behaves exactly like a coin that does not exist: the server closes the whole connection
+        // without answering. Raising this number would therefore not merge subscriptions, it would
+        // take down every subscription in that bundle, thirty of them here.
         ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 5000, false, 1,
             subscriptionsPerBundle: 30,
             klineDelivery: KlineDelivery.TimerFlush, minimalVolume: 21_000, pauseSymbol: "UBTCUSDC",

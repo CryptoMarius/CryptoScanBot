@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Enums;
 
 namespace CryptoScanner.Core.Settings.Strategy;
 
@@ -28,7 +28,6 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
     // Groupbox headers, spelled exactly as the Avalonia views do.
     private const string GroupDetector = "Detector (base + expansion)";
     private const string GroupSignal = "Signal (entry)";
-    private const string GroupIntervals = "Intervals";
 
     // NOTE: the declaration order and the groups follow StrategySmcTabView.axaml, because that
     // order is what the Blazor hosts render. Serialization is by name, so moving a property does
@@ -123,10 +122,7 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
 
     // ---- Intervals ----
 
-    // Intervals on which SMC zones are calculated (and on which the strategy reacts).
-    // Avalonia renders this with IntervalView.
-    [SettingCaption("Intervals", Group = GroupIntervals)]
-    public List<string> IntervalList { get; set; } = [];
+    // The interval list itself lives on the base class now, so every strategy has one.
 
     public SettingsSignalStrategySmc() : base()
     {

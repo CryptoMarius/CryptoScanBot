@@ -1,0 +1,959 @@
+using CryptoScanner.Analyzers.Tbo;
+using CryptoScanner.Analyzers.Tbo.Chart;
+using CryptoScanner.Analyzers.Tbo.Indicators;
+using CryptoScanner.Analyzers.Tbo.Signal;
+using CryptoScanner.Core.Contracts;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Signal.Indicators;
+
+using Skender.Stock.Indicators;
+
+using Exchange = CryptoScanner.Core.Model.CryptoExchange;
+
+namespace CryptoScanner.CoreTests.Signal;
+
+/// <summary>
+/// TBO - the four-line cloud plus the break of a pivot level. These tests fix what the strategy
+/// does, one rule at a time.
+/// <para>
+/// The cloud and the levels are written by hand per candle, so what the strategy is looking at is
+/// readable from the test. The thing that is easy to get wrong by one candle is the break itself:
+/// the candle BEFORE it has to be on the other side of the level, or a market that has been above
+/// its resistance for a week would fire on every candle.
+/// </para>
+/// </summary>
+[DoNotParallelize]
+[TestClass]
+public class TboTests : TestBase
+{
+    [TestInitialize]
+    public void Setup()
+    {
+        InitTestSession();
+        // Settings has an internal setter, so the shared instance is adjusted in place rather than
+        // replaced - and put back in cleanup, because every test in the process reads that one object.
+        ApplyDefaults(TboPlugin.Settings);
+
+        // MakeSeries puts the level at 101 and the tests close just through it, which the measured
+        // buffer of 2% would swallow. The buffer is a separate rule with tests of its own, so it is
+        // out of the way here; a test that is about the buffer sets the value it wants.
+        TboPlugin.Settings.BreakoutBufferPercentage = 0m;
+    }
+
+    [TestCleanup]
+    public void Restore() => ApplyDefaults(TboPlugin.Settings);
+
+    private static void ApplyDefaults(TboSettings settings)
+    {
+        TboSettings fresh = new();
+        settings.EntryOnBreakout = fresh.EntryOnBreakout;
+        settings.EntryOnCloudCross = fresh.EntryOnCloudCross;
+        settings.EntryOnSpringboard = fresh.EntryOnSpringboard;
+        settings.FastEmaLength = fresh.FastEmaLength;
+        settings.SecondEmaLength = fresh.SecondEmaLength;
+        settings.MediumSmaLength = fresh.MediumSmaLength;
+        settings.SlowSmaLength = fresh.SlowSmaLength;
+        settings.RequirePriceOutsideCloud = fresh.RequirePriceOutsideCloud;
+        settings.MinimumCloudWidthPercentage = fresh.MinimumCloudWidthPercentage;
+        settings.RequireCloudWidening = fresh.RequireCloudWidening;
+        settings.MinimumSlowLineSlopePercentage = fresh.MinimumSlowLineSlopePercentage;
+        settings.SlowLineLookbackCandles = fresh.SlowLineLookbackCandles;
+        settings.PivotLeftCandles = fresh.PivotLeftCandles;
+        settings.PivotRightCandles = fresh.PivotRightCandles;
+        settings.PivotMaximumAgeCandles = fresh.PivotMaximumAgeCandles;
+        settings.BreakoutBufferPercentage = fresh.BreakoutBufferPercentage;
+        settings.UseRsiFilter = fresh.UseRsiFilter;
+        settings.RsiLongMinimum = fresh.RsiLongMinimum;
+        settings.RsiShortMaximum = fresh.RsiShortMaximum;
+        settings.UseVolumeFilter = fresh.UseVolumeFilter;
+        settings.VolumeMultiplier = fresh.VolumeMultiplier;
+        settings.VolumeAverageCandles = fresh.VolumeAverageCandles;
+        settings.ExitOnCloudFlip = fresh.ExitOnCloudFlip;
+        settings.ExitConfirmationCandles = fresh.ExitConfirmationCandles;
+    }
+
+
+    private static CryptoSymbol MakeSymbol()
+    {
+        Exchange exchange = new() { Id = 1, Name = "TestExchange", FeeRate = 0.1m };
+        return new CryptoSymbol
+        {
+            Id = 1,
+            Name = "TESTUSDT",
+            Base = "TEST",
+            Quote = "USDT",
+            Exchange = exchange,
+            ExchangeId = exchange.Id,
+            ExchangeName = exchange.Name,
+            QuoteData = GlobalData.AddQuoteData("USDT"),
+            PriceTickSize = 0.01m,
+        };
+    }
+
+    private static CryptoInterval MakeInterval()
+        => GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
+
+
+    /// <summary>
+    /// Builds <paramref name="count"/> candles ending at index 0 (the newest). Every candle closes
+    /// at 100 with the cloud pointing the way of the trade and the price outside it, and carries a
+    /// level the price has NOT broken: a resistance at 101 for a long, a support at 99 for a short.
+    /// The caller then breaks it on the candles it wants a signal on.
+    /// </summary>
+    private static (TboBase Algorithm, TboCandleData[] Tbo, CryptoCandle[] Candles) MakeSeries(
+        CryptoTradeSide side, int count,
+        Action<TboCandleData[]>? shape = null,
+        Action<CryptoCandle[]>? shapeCandles = null,
+        Action<CryptoData[]>? shapeData = null)
+    {
+        CryptoSymbol symbol = MakeSymbol();
+        CryptoInterval interval = MakeInterval();
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+
+        CryptoCandle[] candles = new CryptoCandle[count];
+        CryptoData[] data = new CryptoData[count];
+        TboCandleData[] tbo = new TboCandleData[count];
+        for (int i = 0; i < count; i++)
+        {
+            candles[i] = new CryptoCandle
+            {
+                TickDecimals = 2,
+                OpenTime = new CandleTime((uint)((count - i) * interval.Duration)),
+                Open = 100m,
+                High = 100.5m,
+                Low = 99.5m,
+                Close = 100m,
+                // A flat volume, so the volume filter has an average to compare against and a test
+                // that wants a spike only has to raise the volume of the candle in hand.
+                Volume = 100m,
+            };
+            // A long gets a cloud under the price and pointing up, a short one above it pointing
+            // down, so every test starts from a candle that only lacks the break.
+            tbo[i] = side == CryptoTradeSide.Long
+                ? new TboCandleData { EmaFast = 99, EmaSecond = 98.5, SmaMedium = 98, SmaSlow = 97,
+                    PivotHigh = 101, PivotHighAge = 5 }
+                : new TboCandleData { EmaFast = 101, EmaSecond = 101.5, SmaMedium = 102, SmaSlow = 103,
+                    PivotLow = 99, PivotLowAge = 5 };
+            data[i] = new CryptoData { Rsi = side == CryptoTradeSide.Long ? 60.0 : 40.0 };
+        }
+        shape?.Invoke(tbo);
+        shapeCandles?.Invoke(candles);
+        shapeData?.Invoke(data);
+
+        for (int i = 0; i < count; i++)
+        {
+            data[i].SetPluginData(tbo[i]);
+            symbolInterval.CandleList.TryAdd(candles[i].OpenTime, candles[i]);
+            symbolInterval.Data[candles[i].OpenTime] = data[i];
+        }
+
+        return (new TboBase
+        {
+            Symbol = symbol,
+            Interval = interval,
+            SymbolInterval = symbolInterval,
+            SignalSide = side,
+            SignalStrategy = "tbo",
+            CandleLast = new MyData { Candle = candles[0], CandleData = data[0] },
+        }, tbo, candles);
+    }
+
+    private const int Enough = 10;
+
+
+    /// <summary>
+    /// The overlay marks the crossing of the two EMAs as "open long" / "open short". Every marker
+    /// has to sit on a candle where the fast line really changed sides, and no such candle may be
+    /// left unmarked.
+    /// </summary>
+    [TestMethod]
+    public void EveryOpenLongMarkerSitsOnARealCrossing()
+    {
+        var candles = new List<CryptoCandle>();
+        for (int i = 0; i < 400; i++)
+        {
+            double wave = Math.Sin(i / 11.0) * 900;
+            decimal close = (decimal)(30000 + wave);
+            candles.Add(new CryptoCandle
+            {
+                TickDecimals = 2,
+                OpenTime = new CandleTime((uint)((i + 1) * 1440)),
+                Open = close,
+                High = close + 80m,
+                Low = close - 80m,
+                Close = close,
+                Volume = 100m,
+            });
+        }
+
+        CryptoSymbol symbol = MakeSymbol();
+        CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d];
+        // Only the crossing markers: the same call also returns the confirmation dots, and those
+        // have a crossing of their own to answer to.
+        var labels = new TboChartOverlay().GetLabels(symbol, interval, candles)
+            .Where(l => l.Text is "▲" or "▼").ToList();
+        TboLineValues[] values = TboLinesHelper.Compute(candles);
+
+        // Count the crossings the lines themselves show, and check every marker against them. The
+        // crossing only needs the two EMAs, not the whole cloud: the slow SMA takes 150 candles to
+        // start and their signal does not wait for it. The STRATEGY does - it wants all four lines
+        // before it evaluates anything - so during that warm-up the chart can show a cross that no
+        // signal was ever produced for.
+        int crossings = 0;
+        var marked = new HashSet<long>(labels.Select(l => l.Time));
+        for (int i = 1; i < candles.Count; i++)
+        {
+            if (values[i].EmaFast == null || values[i].EmaSecond == null
+                || values[i - 1].EmaFast == null || values[i - 1].EmaSecond == null)
+                continue;
+            bool above = values[i].EmaFast!.Value > values[i].EmaSecond!.Value;
+            bool wasAbove = values[i - 1].EmaFast!.Value > values[i - 1].EmaSecond!.Value;
+            if (above == wasAbove)
+                continue;
+
+            crossings++;
+            long time = CandleTime.AlignFromDateTime(candles[i].Date, interval.Duration).ToUnixSeconds();
+            Assert.IsTrue(marked.Contains(time), "crossing at candle " + i + " carries no marker");
+            var label = labels.First(l => l.Time == time);
+            Assert.AreEqual(above ? "▲" : "▼", label.Text, "wrong side at candle " + i);
+        }
+
+        Assert.IsTrue(crossings > 2, "the series should cross a few times, found " + crossings);
+        Assert.AreEqual(crossings, labels.Count, "a marker was drawn without a crossing");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The break
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void ACloseThroughTheResistance_IsALong()
+    {
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "broke the resistance");
+    }
+
+
+    [TestMethod]
+    public void ACloseThroughTheSupport_IsAShort()
+    {
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough,
+            shapeCandles: candles => candles[0].Close = 98m);
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "broke the support");
+    }
+
+
+    [TestMethod]
+    public void ACloseThatStaysUnderTheResistance_IsNoSignal()
+    {
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "did not clear the resistance");
+    }
+
+
+    /// <summary>
+    /// A level that was already broken on the previous candle is not a break. Without this check a
+    /// market trading above its resistance would signal on every candle.
+    /// </summary>
+    [TestMethod]
+    public void ALevelThatWasAlreadyBroken_IsNoSignal()
+    {
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
+        {
+            candles[0].Close = 103m;
+            candles[1].Close = 102m;
+        });
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "already broken");
+    }
+
+
+    [TestMethod]
+    public void NoLevelYet_IsNoSignal()
+    {
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: tbo =>
+            {
+                foreach (var t in tbo)
+                    t.PivotHigh = null;
+            },
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "no pivot high");
+    }
+
+
+    [TestMethod]
+    public void ALevelPastItsMaximumAge_IsNoSignal()
+    {
+        TboPlugin.Settings.PivotMaximumAgeCandles = 20;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: tbo =>
+            {
+                foreach (var t in tbo)
+                    t.PivotHighAge = 21;
+            },
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "candles old");
+    }
+
+
+    /// <summary>
+    /// An old level is accepted by default: a level that has held for a long time is the one the
+    /// market watches, so age is not a reason to ignore it unless a run says otherwise.
+    /// </summary>
+    [TestMethod]
+    public void AnOldLevel_IsAcceptedByDefault()
+    {
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: tbo =>
+            {
+                foreach (var t in tbo)
+                    t.PivotHighAge = 5000;
+            },
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.AreEqual(0, TboPlugin.Settings.PivotMaximumAgeCandles);
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+    }
+
+
+    /// <summary>The buffer lifts the trigger above the level, so a break of one tick is not enough.</summary>
+    [TestMethod]
+    public void ABreakSmallerThanTheBuffer_IsNoSignal()
+    {
+        TboPlugin.Settings.BreakoutBufferPercentage = 1m;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shapeCandles: candles => candles[0].Close = 101.5m);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "did not clear the resistance");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The cloud
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void ACloudPointingTheOtherWay_IsNoSignal()
+    {
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: tbo =>
+            {
+                foreach (var t in tbo)
+                {
+                    t.EmaFast = 98;
+                    t.EmaSecond = 99;
+                }
+            },
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "cloud points down");
+    }
+
+
+    [TestMethod]
+    public void APriceInsideTheCloud_IsNoSignal()
+    {
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: tbo =>
+            {
+                // The cloud still points up, but it sits AROUND the breaking candle.
+                foreach (var t in tbo)
+                {
+                    t.EmaFast = 103;
+                    t.EmaSecond = 101.5;
+                    t.SmaMedium = 101;
+                    t.SmaSlow = 100.5;
+                }
+            },
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "not above the cloud");
+    }
+
+
+    [TestMethod]
+    public void ACloudNarrowerThanTheMinimum_IsNoSignal()
+    {
+        TboPlugin.Settings.MinimumCloudWidthPercentage = 2m;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        // The default cloud is 99 against 98, which on a price of 102 is under 1%.
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "cloud only");
+    }
+
+
+    [TestMethod]
+    public void ANarrowingCloud_IsNoSignalWhenWideningIsAsked()
+    {
+        TboPlugin.Settings.RequireCloudWidening = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: tbo =>
+            {
+                // Wider on the previous candle than on the one in hand: the cloud of the series is
+                // 99 down to 97, this one runs 99 down to 96.
+                tbo[1].EmaFast = 99;
+                tbo[1].SmaSlow = 96;
+            },
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "cloud narrowing");
+    }
+
+
+    [TestMethod]
+    public void AWideningCloud_IsALong()
+    {
+        TboPlugin.Settings.RequireCloudWidening = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: tbo =>
+            {
+                // Narrower on the previous candle: 99 down to 98 against the 99 down to 97 of the
+                // series, so the cloud is opening up on the candle in hand.
+                tbo[1].EmaFast = 99;
+                tbo[1].SmaSlow = 98;
+            },
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "widening");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The cloud cross - the second trigger, "Open Long"/"Open Short"
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// The cross fires on its own, without a level being broken: the price stays at 100 and there is
+    /// a resistance at 101 that nobody touches.
+    /// </summary>
+    [TestMethod]
+    public void TheCloudCrossingUp_IsALongOfItsOwn()
+    {
+        TboPlugin.Settings.EntryOnBreakout = false;
+        TboPlugin.Settings.EntryOnCloudCross = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: tbo =>
+        {
+            // The cloud pointed DOWN on the candle before, so the candle in hand is the cross.
+            tbo[1].EmaFast = 98;
+            tbo[1].EmaSecond = 99;
+        });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "cloud crossed up");
+    }
+
+
+    [TestMethod]
+    public void TheCloudCrossingDown_IsAShortOfItsOwn()
+    {
+        TboPlugin.Settings.EntryOnBreakout = false;
+        TboPlugin.Settings.EntryOnCloudCross = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough, shape: tbo =>
+        {
+            tbo[1].EmaFast = 102;
+            tbo[1].EmaSecond = 101;
+        });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "cloud crossed down");
+    }
+
+
+    /// <summary>
+    /// A cloud that already pointed our way has not crossed. Without this the cross trigger would
+    /// fire on every candle of a trend instead of at its start.
+    /// </summary>
+    [TestMethod]
+    public void ACloudThatAlreadyPointedThisWay_IsNoCross()
+    {
+        TboPlugin.Settings.EntryOnBreakout = false;
+        TboPlugin.Settings.EntryOnCloudCross = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "no cross");
+    }
+
+
+    /// <summary>
+    /// The price sits ON the cloud at a cross, so "price outside the cloud" - which is on by
+    /// default - must not apply to that trigger, or it would never fire.
+    /// </summary>
+    [TestMethod]
+    public void ACrossFiresEvenWithPriceOutsideTheCloudSwitchedOn()
+    {
+        TboPlugin.Settings.EntryOnBreakout = false;
+        TboPlugin.Settings.EntryOnCloudCross = true;
+        TboPlugin.Settings.RequirePriceOutsideCloud = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: tbo =>
+        {
+            // A cloud AROUND the price: the cross is there, the price is not above it.
+            tbo[0].EmaFast = 101;
+            tbo[0].EmaSecond = 99.5;
+            tbo[1].EmaFast = 99;
+            tbo[1].EmaSecond = 101;
+        });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+    }
+
+
+    [TestMethod]
+    public void WithBothTriggersOff_NothingFires()
+    {
+        TboPlugin.Settings.EntryOnBreakout = false;
+        TboPlugin.Settings.EntryOnCloudCross = false;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "no entry trigger");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The springboard bounce - the pullback entry
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// The price dips to the fast line and closes back above it, with the previous candle already
+    /// above it. That is the bounce; no level has to be broken for it.
+    /// </summary>
+    [TestMethod]
+    public void ADipToTheFastLineThatClosesBackAbove_IsALong()
+    {
+        TboPlugin.Settings.EntryOnBreakout = false;
+        TboPlugin.Settings.EntryOnSpringboard = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shapeCandles: candles =>
+            {
+                // The candle reaches down to 99 (the fast EMA) and closes at 100 again.
+                candles[0].Low = 98.5m;
+                candles[0].Close = 100m;
+            });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "bounced off the fast line");
+    }
+
+
+    /// <summary>A candle that never comes near the fast line is not a bounce.</summary>
+    [TestMethod]
+    public void ACandleThatNeverReachesTheFastLine_IsNoBounce()
+    {
+        TboPlugin.Settings.EntryOnBreakout = false;
+        TboPlugin.Settings.EntryOnSpringboard = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
+
+        // The default series has its low at 99.5, just above the fast EMA of 99.
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "did not reach the fast line");
+    }
+
+
+    /// <summary>A candle that dips AND closes under the line is a break, not a bounce.</summary>
+    [TestMethod]
+    public void ACandleThatClosesUnderTheFastLine_IsNoBounce()
+    {
+        TboPlugin.Settings.EntryOnBreakout = false;
+        TboPlugin.Settings.EntryOnSpringboard = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shapeCandles: candles =>
+            {
+                candles[0].Low = 98m;
+                candles[0].Close = 98.5m;
+            });
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "closed under the fast line");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The slow line - the trend filter
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void ASlowLineThatIsNotRisingEnough_IsNoLong()
+    {
+        TboPlugin.Settings.MinimumSlowLineSlopePercentage = 1m;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: tbo =>
+            {
+                foreach (var t in tbo)
+                    t.SlowSlopePercentage = 0.2;
+            },
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "slow line only 0.20%");
+    }
+
+
+    [TestMethod]
+    public void ARisingSlowLine_LetsTheLongThrough()
+    {
+        TboPlugin.Settings.MinimumSlowLineSlopePercentage = 1m;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: tbo =>
+            {
+                foreach (var t in tbo)
+                    t.SlowSlopePercentage = 2.5;
+            },
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "slow line 2.50%");
+    }
+
+
+    /// <summary>A short wants the slow line pointing DOWN by that same amount.</summary>
+    [TestMethod]
+    public void ARisingSlowLine_IsNoShort()
+    {
+        TboPlugin.Settings.MinimumSlowLineSlopePercentage = 1m;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough,
+            shape: tbo =>
+            {
+                foreach (var t in tbo)
+                    t.SlowSlopePercentage = 2.5;
+            },
+            shapeCandles: candles => candles[0].Close = 98m);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "slow line 2.50%");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The volume filter - "volume MA x factor"
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void ACandleWithoutTheVolumeSpike_IsNoSignal()
+    {
+        TboPlugin.Settings.UseVolumeFilter = true;
+        TboPlugin.Settings.VolumeMultiplier = 3m;
+        TboPlugin.Settings.VolumeAverageCandles = 5;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        // Every candle trades 100, so the ratio is 1.00x against the 3x asked.
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "volume 1.00x the average");
+    }
+
+
+    [TestMethod]
+    public void ACandleWithTheVolumeSpike_IsALong()
+    {
+        TboPlugin.Settings.UseVolumeFilter = true;
+        TboPlugin.Settings.VolumeMultiplier = 3m;
+        TboPlugin.Settings.VolumeAverageCandles = 5;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
+        {
+            candles[0].Close = 102m;
+            candles[0].Volume = 400m;
+        });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "volume 4.00x");
+    }
+
+
+    /// <summary>
+    /// The signal candle is left out of its own average: with it included, a spike of four times the
+    /// volume over five candles would read as less than four.
+    /// </summary>
+    [TestMethod]
+    public void TheSignalCandleIsNotPartOfItsOwnAverage()
+    {
+        TboPlugin.Settings.UseVolumeFilter = true;
+        TboPlugin.Settings.VolumeMultiplier = 4m;
+        TboPlugin.Settings.VolumeAverageCandles = 5;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
+        {
+            candles[0].Close = 102m;
+            candles[0].Volume = 400m;
+        });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "volume 4.00x");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The RSI filter
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void AnRsiUnderTheMinimum_IsNoLong()
+    {
+        TboPlugin.Settings.UseRsiFilter = true;
+        TboPlugin.Settings.RsiLongMinimum = 55m;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shapeCandles: candles => candles[0].Close = 102m,
+            shapeData: data => data[0].Rsi = 45.0);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "under the minimum");
+    }
+
+
+    [TestMethod]
+    public void AnRsiAboveTheMaximum_IsNoShort()
+    {
+        TboPlugin.Settings.UseRsiFilter = true;
+        TboPlugin.Settings.RsiShortMaximum = 45m;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough,
+            shapeCandles: candles => candles[0].Close = 98m,
+            shapeData: data => data[0].Rsi = 55.0);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "above the maximum");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The exit
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void TheCloudFlippingAgainstTheposition_IsAnExit()
+    {
+        TboPlugin.Settings.ExitOnCloudFlip = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: tbo =>
+        {
+            tbo[0].EmaFast = 98;
+            tbo[0].EmaSecond = 99;
+        });
+
+        Assert.IsTrue(algorithm.IsExitSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "flipped down");
+    }
+
+
+    [TestMethod]
+    public void ACloudStillOnOurSide_IsNoExit()
+    {
+        TboPlugin.Settings.ExitOnCloudFlip = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
+
+        Assert.IsFalse(algorithm.IsExitSignal());
+        StringAssert.Contains(algorithm.ExtraText, "still points our way");
+    }
+
+
+    [TestMethod]
+    public void AFlipThatDoesNotHold_IsNoExitWhenConfirmationIsAsked()
+    {
+        TboPlugin.Settings.ExitOnCloudFlip = true;
+        TboPlugin.Settings.ExitConfirmationCandles = 2;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: tbo =>
+        {
+            // Against us on the candle in hand, still our way on the one before it.
+            tbo[0].EmaFast = 98;
+            tbo[0].EmaSecond = 99;
+        });
+
+        Assert.IsFalse(algorithm.IsExitSignal());
+        StringAssert.Contains(algorithm.ExtraText, "not held");
+    }
+
+
+    /// <summary>The exit costs the monitor nothing while it is switched off.</summary>
+    [TestMethod]
+    public void TheExitIsOffByDefault()
+    {
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
+
+        Assert.IsFalse(algorithm.HasExitSignal);
+        Assert.IsFalse(algorithm.IsExitSignal());
+    }
+}
+
+
+/// <summary>
+/// The pivot levels TBO breaks through, as the indicator extension produces them. The EMAs come
+/// from the shared registry and are Skender's; the pivots are ours, so they are what these tests
+/// pin down: WHEN a level is confirmed, which price it carries, and how old it says it is.
+/// </summary>
+[DoNotParallelize]
+[TestClass]
+public class TboIndicatorExtensionTests : TestBase
+{
+    [TestInitialize]
+    public void Setup() => InitTestSession();
+
+    [TestCleanup]
+    public void Restore()
+    {
+        TboSettings fresh = new();
+        TboPlugin.Settings.PivotLeftCandles = fresh.PivotLeftCandles;
+        TboPlugin.Settings.PivotRightCandles = fresh.PivotRightCandles;
+    }
+
+
+    /// <summary>
+    /// Feeds the highs given (the lows are kept flat under them) and returns what the extension
+    /// wrote into the candle data of the LAST candle.
+    /// </summary>
+    private static TboCandleData? Feed(decimal[] highs, int left, int right)
+    {
+        TboPlugin.Settings.PivotLeftCandles = left;
+        TboPlugin.Settings.PivotRightCandles = right;
+
+        TboIndicatorExtension extension = new();
+        extension.Init(new IndicatorRegistry(500));
+
+        DateTime start = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        for (int i = 0; i < highs.Length; i++)
+        {
+            decimal high = highs[i];
+            extension.OnCandleAdded(new Quote(start.AddMinutes(5 * i), high - 1m, high, 1m, high - 1m, 10m));
+        }
+
+        CryptoData data = new();
+        extension.FillData(data);
+        return data.GetPluginData<TboCandleData>();
+    }
+
+
+    /// <summary>
+    /// A pivot high is the candle that is higher than the candles on both sides of it, and it is
+    /// only known once the right-hand candles are in - which is why its age can never be under
+    /// PivotRightCandles.
+    /// </summary>
+    [TestMethod]
+    public void ThePeakBecomesTheLevel_OnceItsRightHandCandlesAreIn()
+    {
+        // Index 2 is the peak; with left = right = 2 it is confirmed at index 4.
+        decimal[] highs = [100, 101, 110, 102, 100, 99, 98];
+        TboCandleData? tbo = Feed(highs, left: 2, right: 2);
+
+        Assert.IsNotNull(tbo);
+        Assert.AreEqual(110.0, tbo!.PivotHigh);
+        // The newest candle is index 6, the peak index 2.
+        Assert.AreEqual(4, tbo.PivotHighAge);
+    }
+
+
+    /// <summary>A peak without its right-hand candles yet is not a level.</summary>
+    [TestMethod]
+    public void APeakWithoutItsRightHandCandles_IsNotALevelYet()
+    {
+        decimal[] highs = [100, 101, 110, 102];
+        TboCandleData? tbo = Feed(highs, left: 2, right: 2);
+
+        Assert.IsNull(tbo?.PivotHigh);
+    }
+
+
+    /// <summary>
+    /// The four lengths are a set: EMA(20), EMA(40), SMA(50) and SMA(150) on the close together are
+    /// what this strategy is, and a run that wants a faster or slower cloud scales all four in
+    /// proportion. Changing one default on its own makes it a different strategy, so this test is
+    /// here to make that a deliberate act.
+    /// </summary>
+    [TestMethod]
+    public void TheFourLineLengthsAreTheDefaults()
+    {
+        TboSettings fresh = new();
+
+        Assert.AreEqual(20, fresh.FastEmaLength, "fast line is EMA(20)");
+        Assert.AreEqual(40, fresh.SecondEmaLength, "second line is EMA(40)");
+        Assert.AreEqual(50, fresh.MediumSmaLength, "third line is SMA(50)");
+        Assert.AreEqual(150, fresh.SlowSmaLength, "slow line is SMA(150)");
+    }
+
+
+    /// <summary>
+    /// The chart overlay computes the same lines a second time, over a whole candle list instead of
+    /// one candle at a time. Two paths to the same numbers drift apart sooner or later, so this
+    /// holds them together: feed one series through both and compare every candle.
+    /// <para>
+    /// The pivots have to match exactly - it is the same rule written twice. The moving averages are
+    /// allowed a hair of difference, because one side is Skender's incremental hub and the other its
+    /// batch calculation.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void TheOverlayAndTheStrategySeeTheSameLines()
+    {
+        // A wave with a rising floor, so there are pivots of both kinds and the averages move.
+        var candles = new List<CryptoCandle>();
+        for (int i = 0; i < 400; i++)
+        {
+            double wave = Math.Sin(i / 7.0) * 400 + Math.Sin(i / 3.0) * 120;
+            decimal close = (decimal)(30000 + i * 25 + wave);
+            candles.Add(new CryptoCandle
+            {
+                TickDecimals = 2,
+                OpenTime = new CandleTime((uint)((i + 1) * 1440)),
+                Open = close,
+                High = close + 80m,
+                Low = close - 80m,
+                Close = close,
+                Volume = 100m,
+            });
+        }
+
+        TboLineValues[] overlay = TboLinesHelper.Compute(candles);
+
+        TboIndicatorExtension extension = new();
+        extension.Init(new IndicatorRegistry(500));
+        for (int i = 0; i < candles.Count; i++)
+        {
+            extension.OnCandleAdded(candles[i]);
+            CryptoData data = new();
+            extension.FillData(data);
+            TboCandleData? live = data.GetPluginData<TboCandleData>();
+
+            Assert.AreEqual(overlay[i].PivotHigh, live?.PivotHigh, "pivot high at candle " + i);
+            Assert.AreEqual(overlay[i].PivotLow, live?.PivotLow, "pivot low at candle " + i);
+
+            if (overlay[i].HasCloud && live?.EmaFast != null)
+            {
+                Assert.AreEqual(overlay[i].EmaFast!.Value, live.EmaFast!.Value, 0.01, "fast ema at candle " + i);
+                Assert.AreEqual(overlay[i].EmaSecond!.Value, live.EmaSecond!.Value, 0.01, "second ema at candle " + i);
+                Assert.AreEqual(overlay[i].SmaMedium!.Value, live.SmaMedium!.Value, 0.01, "medium sma at candle " + i);
+                Assert.AreEqual(overlay[i].SmaSlow!.Value, live.SmaSlow!.Value, 0.01, "slow sma at candle " + i);
+            }
+        }
+    }
+
+
+    /// <summary>A later, higher peak replaces the level; the older one is no longer the one to break.</summary>
+    [TestMethod]
+    public void ALaterPeakReplacesTheLevel()
+    {
+        decimal[] highs = [100, 101, 110, 102, 100, 105, 120, 106, 104];
+        TboCandleData? tbo = Feed(highs, left: 2, right: 2);
+
+        Assert.AreEqual(120.0, tbo?.PivotHigh);
+    }
+}

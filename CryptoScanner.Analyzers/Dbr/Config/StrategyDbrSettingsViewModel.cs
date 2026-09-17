@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CryptoScanner.Analyzers.Dbr.Config;
 
@@ -29,6 +29,18 @@ public partial class StrategyDbrSettingsViewModel : ObservableObject
     private bool _useStopLoss = true;
 
     [ObservableProperty]
+    private double _maxCandleSizeRatio = 0.0;
+
+    [ObservableProperty]
+    private double _maxCandleVolumeRatio = 0.0;
+
+    [ObservableProperty]
+    private int _candleAverageLength = 20;
+
+    [ObservableProperty]
+    private double _largeCandleRetracementPart = 0.0;
+
+    [ObservableProperty]
     private int _bandBreakConfirmationCount = 0;
 
     public void LoadConfig(DbrSettings settings)
@@ -41,6 +53,10 @@ public partial class StrategyDbrSettingsViewModel : ObservableObject
         RequireStochOsOb = settings.RequireStochOsOb;
         AllowStack = settings.AllowStack;
         UseStopLoss = settings.UseStopLoss;
+        MaxCandleSizeRatio = settings.MaxCandleSizeRatio;
+        MaxCandleVolumeRatio = settings.MaxCandleVolumeRatio;
+        CandleAverageLength = settings.CandleAverageLength;
+        LargeCandleRetracementPart = settings.LargeCandleRetracementPart;
         BandBreakConfirmationCount = settings.BandBreakConfirmationCount;
     }
 
@@ -54,6 +70,10 @@ public partial class StrategyDbrSettingsViewModel : ObservableObject
         settings.RequireStochOsOb = RequireStochOsOb;
         settings.AllowStack = AllowStack;
         settings.UseStopLoss = UseStopLoss;
+        settings.MaxCandleSizeRatio = MaxCandleSizeRatio;
+        settings.MaxCandleVolumeRatio = MaxCandleVolumeRatio;
+        settings.CandleAverageLength = CandleAverageLength;
+        settings.LargeCandleRetracementPart = LargeCandleRetracementPart;
         settings.BandBreakConfirmationCount = BandBreakConfirmationCount;
     }
 }

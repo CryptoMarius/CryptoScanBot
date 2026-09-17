@@ -1,0 +1,227 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="620"
+             xmlns:vm="using:CryptoScanner.Analyzers.Tbo.Config"
+             x:DataType="vm:StrategyTboSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.Tbo.Config.StrategyTboSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <!-- Two columns: seventeen settings under each other made the box taller than the window.
+             The split sits where the subject changes - the cloud on the left, everything that
+             filters or ends a trade on the right. -->
+        <Grid ColumnDefinitions="Auto,16,Auto" RowDefinitions="Auto">
+            <StackPanel Grid.Column="0" Margin="4" Spacing="4" VerticalAlignment="Top">
+
+                <!-- The three entries, each a different idea: a level that gives way, the turn of the
+                     cloud itself, and a pullback to the fast line. -->
+                <TextBlock Text="Entry trigger" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+                <CheckBox IsChecked="{Binding EntryOnBreakout, Mode=TwoWay}"
+                          Content="Entry on breakout" FontSize="12"
+                          ToolTip.Tip="Fire when the candle closes through the last pivot level, with the cloud pointing the way of the trade."/>
+
+                <CheckBox IsChecked="{Binding EntryOnCloudCross, Mode=TwoWay}"
+                          Content="Entry on cloud cross" FontSize="12"
+                          ToolTip.Tip="Fire when the fast EMA crosses the second one: above it for a long, under it for a short. A separate trigger from the breakout; both may be on at the same time."/>
+
+                <CheckBox IsChecked="{Binding EntryOnSpringboard, Mode=TwoWay}"
+                          Content="Entry on springboard bounce" FontSize="12"
+                          ToolTip.Tip="Fire when the price dips to the fast EMA inside a running trend and closes back above it (below for a short)."/>
+
+                <Separator Margin="0,4"/>
+
+                <!-- The cloud: four moving averages give the direction (fast above second is up) and
+                     the strength (how far the outer two are apart). -->
+                <TextBlock Text="Cloud" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="The fast line, EMA(20) on the close. The four lengths belong together.">
+                    <TextBlock Grid.Column="0" Text="Fast EMA:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding FastEmaLength, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="The second line, EMA(40) on the close. The fast line crossing this one is the cross trigger.">
+                    <TextBlock Grid.Column="0" Text="Second EMA:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding SecondEmaLength, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="The third line, SMA(50) on the close.">
+                    <TextBlock Grid.Column="0" Text="Medium SMA:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding MediumSmaLength, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="The slow line, SMA(150) on the close, whose slope drives the trend filter.">
+                    <TextBlock Grid.Column="0" Text="Slow SMA:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding SlowSmaLength, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <CheckBox IsChecked="{Binding RequirePriceOutsideCloud, Mode=TwoWay}"
+                          Content="Price outside the cloud" FontSize="12"
+                          ToolTip.Tip="The candle has to close above all four lines for a long, under all four for a short. Applies to the breakout trigger only - at a cross the price is on the cloud."/>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="How far the top and bottom of the cloud have to be apart at the signal candle, as a percentage of the price. Zero accepts any width, including a flat market.">
+                    <TextBlock Grid.Column="0" Text="Minimum cloud width %:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding MinimumCloudWidthPercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <CheckBox IsChecked="{Binding RequireCloudWidening, Mode=TwoWay}"
+                          Content="Cloud must be widening" FontSize="12"
+                          ToolTip.Tip="The cloud has to be wider than on the candle before, so the trend is gaining strength rather than running out of it."/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Margin="4" Spacing="4" VerticalAlignment="Top">
+
+                <!-- The slow line says how much weight the other signals deserve, so it is a filter
+                     and not a trigger of its own. -->
+                <TextBlock Text="Slow line" FontWeight="SemiBold" FontSize="12" Margin="0,6,0,2"/>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="How far the slow line has to have moved over the lookback, as a percentage of its own value, in the direction of the trade. Zero switches the check off.">
+                    <TextBlock Grid.Column="0" Text="Minimum slope %:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding MinimumSlowLineSlopePercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="Over how many candles the movement of the slow line is measured. Changing this rebuilds the indicator, like the line lengths do.">
+                    <TextBlock Grid.Column="0" Text="Lookback candles:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding SlowLineLookbackCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Separator Margin="0,4"/>
+
+                <!-- Support and resistance: the pivots the break is measured against. A pivot is only
+                     confirmed once its right-hand candles are in, so the level always predates the break. -->
+                <TextBlock Text="Support and resistance" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="How many candles to the left have to be lower than the pivot candle.">
+                    <TextBlock Grid.Column="0" Text="Pivot candles left:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding PivotLeftCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="How many candles to the right have to be lower. Also the delay before the level is confirmed, so a break is always against a level that was already there.">
+                    <TextBlock Grid.Column="0" Text="Pivot candles right:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding PivotRightCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="How many candles ago the level may sit. Zero - the default - accepts a level of any age, however long it has been there.">
+                    <TextBlock Grid.Column="0" Text="Maximum level age:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding PivotMaximumAgeCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="How far beyond the level the candle has to close, as a percentage of the level. Zero takes any close beyond it.">
+                    <TextBlock Grid.Column="0" Text="Breakout buffer %:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding BreakoutBufferPercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Separator Margin="0,4"/>
+
+                <!-- The RSI filter the Pro version of the indicator adds. -->
+                <TextBlock Text="RSI filter" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+                <CheckBox IsChecked="{Binding UseRsiFilter, Mode=TwoWay}"
+                          Content="Use RSI filter" FontSize="12"
+                          ToolTip.Tip="Ask the RSI to agree with the entry: at or above the minimum for a long, at or below the maximum for a short."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      IsVisible="{Binding UseRsiFilter}"
+                      ToolTip.Tip="The RSI a long needs at least, on the 0..100 scale.">
+                    <TextBlock Grid.Column="0" Text="RSI minimum (long):" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding RsiLongMinimum, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      IsVisible="{Binding UseRsiFilter}"
+                      ToolTip.Tip="The RSI a short may have at most, on the 0..100 scale.">
+                    <TextBlock Grid.Column="0" Text="RSI maximum (short):" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding RsiShortMaximum, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Separator Margin="0,4"/>
+
+                <!-- Volume against the average before the signal candle: a break nobody trades is a
+                     break that does not hold. -->
+                <TextBlock Text="Volume" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+                <CheckBox IsChecked="{Binding UseVolumeFilter, Mode=TwoWay}"
+                          Content="Use volume filter" FontSize="12"
+                          ToolTip.Tip="The signal candle has to trade at a multiple of the average volume before it."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      IsVisible="{Binding UseVolumeFilter}"
+                      ToolTip.Tip="How many times the average volume the signal candle has to trade.">
+                    <TextBlock Grid.Column="0" Text="Volume multiplier:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding VolumeMultiplier, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      IsVisible="{Binding UseVolumeFilter}"
+                      ToolTip.Tip="How many candles before the signal candle the average volume is taken over. The signal candle is left out of it.">
+                    <TextBlock Grid.Column="0" Text="Average candles:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding VolumeAverageCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Separator Margin="0,4"/>
+
+                <!-- The exit of the idea itself, off by default: the position is left to the stop loss
+                     and the take profit first. -->
+                <TextBlock Text="Exit" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+                <CheckBox IsChecked="{Binding ExitOnCloudFlip, Mode=TwoWay}"
+                          Content="Exit on cloud flip" FontSize="12"
+                          ToolTip.Tip="Leave when the cloud turns against the position. Stop loss and take profit keep working next to it."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      IsEnabled="{Binding ExitOnCloudFlip}"
+                      ToolTip.Tip="How many closed candles the cloud has to be against the position before it leaves. Zero leaves on the first candle the EMAs cross back.">
+                    <TextBlock Grid.Column="0" Text="Exit confirmation candles:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding ExitConfirmationCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </Grid>
+    </HeaderedContentControl>
+
+</UserControl>

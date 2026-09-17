@@ -53,7 +53,13 @@ public class SettingsSignal
     // (they live in the Analyzers project), so serializing them here as the base type
     // would silently drop all derived properties. Only the plugin itself knows its
     // concrete type; PluginManager converts to/from these JSON blocks on save/load.
-    public Dictionary<string, JsonElement> AnalyzerSettings { get; set; } = [];
+    //
+    // A SortedDictionary, so the blocks land in the settings file in alphabetical order whatever
+    // order they were added in. A plain Dictionary wrote them in insertion order: first whatever the
+    // file already held, then newly registered plugins in the order of AnalyzerRegistration - which
+    // is grouped by topic, not by name - so the file grew a new block in an arbitrary place every
+    // time a strategy was added. Sorting also makes a diff between two settings files readable.
+    public SortedDictionary<string, JsonElement> AnalyzerSettings { get; set; } = [];
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

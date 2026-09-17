@@ -1,8 +1,11 @@
-using CryptoScanner.Analyzers.Dbr;
+﻿using CryptoScanner.Analyzers.Dbr;
 using CryptoScanner.Analyzers.Dbr.Signal;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
+
+using Exchange = CryptoScanner.Core.Model.CryptoExchange;
 
 namespace CryptoScanner.CoreTests.Analyzer.Dbr;
 
@@ -21,6 +24,27 @@ public class DbrBandsTests
     public static void ClassInit(TestContext _)
     {
         GlobalData.Settings ??= new SettingsBasic();
+        SetupIntervalList();
+    }
+
+    /// <summary>
+    /// The candle-limit tests ask the symbol for one of its intervals, which needs the standard
+    /// interval list in place. Idempotent, because another test class may have filled it already.
+    /// </summary>
+    private static void SetupIntervalList()
+    {
+        if (GlobalData.IntervalList.Count > 0)
+            return;
+
+        int id = 0;
+        foreach (CryptoInterval interval in CryptoInterval.CreateStandardIntervalList())
+        {
+            interval.Id = id++;
+            GlobalData.IntervalList.Add(interval);
+            GlobalData.IntervalListId.Add(interval.Id, interval);
+            GlobalData.IntervalListPeriodName.Add(interval.Name, interval);
+            GlobalData.IntervalListPeriod.Add(interval.IntervalPeriod, interval);
+        }
     }
 
     private static List<CryptoCandle> MakeCandles(int count, double basePrice = 100.0, double amplitude = 10.0)
@@ -315,5 +339,200 @@ public class DbrBandsTests
             Assert.AreEqual(expectedMiddle, bands[i].Middle, 1e-10,
                 $"Middle at index {i} does not match Donchian midpoint");
         }
+    }
+
+    // -- Candle limits: skip a break candle that is far bigger or busier than normal ------
+
+    /// <summary>
+    /// A symbol with its 15m candle list filled, which is what CheckCandleLimits reads.
+    /// </summary>
+    private static CryptoSymbolInterval LoadSymbolInterval(List<CryptoCandle> candles)
+    {
+        Exchange exchange = new() { Id = 1, Name = "TestExchange", FeeRate = 0.1m };
+        CryptoSymbol symbol = new()
+        {
+            Id = 1,
+            Name = "TESTUSDT",
+            Base = "TEST",
+            Quote = "USDT",
+            Exchange = exchange,
+            ExchangeId = exchange.Id,
+            ExchangeName = exchange.Name,
+            QuoteData = GlobalData.AddQuoteData("USDT"),
+            PriceTickSize = 0.0001m,
+        };
+
+        CryptoSymbolInterval si = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval15m);
+        si.CandleList.Clear();
+        foreach (var candle in candles)
+            si.CandleList.TryAdd(candle.OpenTime, candle);
+        return si;
+    }
+
+    /// <summary>Candles of a fixed size and volume, so a multiple is exact and not approximate.</summary>
+    private static List<CryptoCandle> MakeFlatCandles(int count, decimal size = 1.0m, decimal volume = 1000m)
+    {
+        var list = new List<CryptoCandle>(count);
+        for (int i = 0; i < count; i++)
+        {
+            list.Add(new CryptoCandle
+            {
+                TickDecimals = TickDec,
+                OpenTime = new CandleTime((uint)(i * 15)),
+                Open = 100m,
+                High = 100m + size / 2,
+                Low = 100m - size / 2,
+                Close = 100m,
+                Volume = volume,
+            });
+        }
+        return list;
+    }
+
+    [TestMethod]
+    public void CheckCandleLimits_BothSettingsOff_NeverBlocks()
+    {
+        DbrPlugin.Settings.MaxCandleSizeRatio = 0;
+        DbrPlugin.Settings.MaxCandleVolumeRatio = 0;
+
+        var candles = MakeFlatCandles(DbrPlugin.Settings.CandleAverageLength + 1);
+        // A candle fifty times the normal size still passes while the limits are off
+        candles[^1] = candles[^1] with { High = 150m, Low = 50m, Volume = 100000m };
+        var si = LoadSymbolInterval(candles);
+
+        var limit = DbrBandsHelper.CheckCandleLimits(si, candles[^1].OpenTime, isLong: true);
+        Assert.IsFalse(limit.Blocked);
+        Assert.AreEqual("", limit.Reason);
+        Assert.IsNull(limit.EntryPrice);
+    }
+
+    [TestMethod]
+    public void CheckCandleLimits_CandleTallerThanTheLimit_Blocks()
+    {
+        DbrPlugin.Settings.MaxCandleSizeRatio = 5;
+        DbrPlugin.Settings.MaxCandleVolumeRatio = 0;
+
+        var candles = MakeFlatCandles(DbrPlugin.Settings.CandleAverageLength + 1);
+        // Six times the average of 1.0
+        candles[^1] = candles[^1] with { High = 103m, Low = 97m };
+        var si = LoadSymbolInterval(candles);
+
+        var limit = DbrBandsHelper.CheckCandleLimits(si, candles[^1].OpenTime, isLong: true);
+        Assert.IsTrue(limit.Blocked);
+        StringAssert.Contains(limit.Reason, "average size");
+
+        DbrPlugin.Settings.MaxCandleSizeRatio = 0;
+    }
+
+    [TestMethod]
+    public void CheckCandleLimits_CandleWithinTheLimit_Passes()
+    {
+        DbrPlugin.Settings.MaxCandleSizeRatio = 5;
+        DbrPlugin.Settings.MaxCandleVolumeRatio = 0;
+
+        var candles = MakeFlatCandles(DbrPlugin.Settings.CandleAverageLength + 1);
+        // Four times the average of 1.0 - under the limit of five
+        candles[^1] = candles[^1] with { High = 102m, Low = 98m };
+        var si = LoadSymbolInterval(candles);
+
+        Assert.IsFalse(DbrBandsHelper.CheckCandleLimits(si, candles[^1].OpenTime, isLong: true).Blocked);
+
+        DbrPlugin.Settings.MaxCandleSizeRatio = 0;
+    }
+
+    [TestMethod]
+    public void CheckCandleLimits_VolumeAboveTheLimit_Blocks()
+    {
+        DbrPlugin.Settings.MaxCandleSizeRatio = 0;
+        DbrPlugin.Settings.MaxCandleVolumeRatio = 4;
+
+        var candles = MakeFlatCandles(DbrPlugin.Settings.CandleAverageLength + 1);
+        // Five times the average volume of 1000, with an ordinary size
+        candles[^1] = candles[^1] with { Volume = 5000m };
+        var si = LoadSymbolInterval(candles);
+
+        var limit = DbrBandsHelper.CheckCandleLimits(si, candles[^1].OpenTime, isLong: true);
+        Assert.IsTrue(limit.Blocked);
+        StringAssert.Contains(limit.Reason, "average volume");
+
+        DbrPlugin.Settings.MaxCandleVolumeRatio = 0;
+    }
+
+    [TestMethod]
+    public void CheckCandleLimits_NotEnoughCandlesToJudge_Passes()
+    {
+        DbrPlugin.Settings.MaxCandleSizeRatio = 2;
+
+        var candles = MakeFlatCandles(5);
+        candles[^1] = candles[^1] with { High = 150m, Low = 50m };
+        var si = LoadSymbolInterval(candles);
+
+        Assert.IsFalse(DbrBandsHelper.CheckCandleLimits(si, candles[^1].OpenTime, isLong: true).Blocked);
+
+        DbrPlugin.Settings.MaxCandleSizeRatio = 0;
+    }
+
+    [TestMethod]
+    public void CheckCandleLimits_RetracementSet_KeepsTheSignalWithAnEntryPrice()
+    {
+        DbrPlugin.Settings.MaxCandleSizeRatio = 5;
+        DbrPlugin.Settings.LargeCandleRetracementPart = 1.0;
+
+        var candles = MakeFlatCandles(DbrPlugin.Settings.CandleAverageLength + 1);
+        // Six times the average size: high 103, low 97, close 100, so the height is 6
+        candles[^1] = candles[^1] with { High = 103m, Low = 97m, Close = 100m };
+        var si = LoadSymbolInterval(candles);
+
+        var longLimit = DbrBandsHelper.CheckCandleLimits(si, candles[^1].OpenTime, isLong: true);
+        Assert.IsFalse(longLimit.Blocked, "an oversized candle with a retracement is kept, not dropped");
+        Assert.AreEqual(94m, longLimit.EntryPrice, "a long buys one whole candle height below the close");
+
+        var shortLimit = DbrBandsHelper.CheckCandleLimits(si, candles[^1].OpenTime, isLong: false);
+        Assert.IsFalse(shortLimit.Blocked);
+        Assert.AreEqual(106m, shortLimit.EntryPrice, "a short sells one whole candle height above the close");
+
+        DbrPlugin.Settings.MaxCandleSizeRatio = 0;
+        DbrPlugin.Settings.LargeCandleRetracementPart = 0;
+    }
+
+    [TestMethod]
+    public void CheckCandleLimits_RetracementDoesNotApplyToTheVolumeLimit()
+    {
+        DbrPlugin.Settings.MaxCandleVolumeRatio = 4;
+        DbrPlugin.Settings.LargeCandleRetracementPart = 1.0;
+
+        var candles = MakeFlatCandles(DbrPlugin.Settings.CandleAverageLength + 1);
+        candles[^1] = candles[^1] with { Volume = 5000m };
+        var si = LoadSymbolInterval(candles);
+
+        var limit = DbrBandsHelper.CheckCandleLimits(si, candles[^1].OpenTime, isLong: true);
+        Assert.IsTrue(limit.Blocked, "no retracement was measured for a volume spike, so it is dropped");
+        Assert.IsNull(limit.EntryPrice);
+
+        DbrPlugin.Settings.MaxCandleVolumeRatio = 0;
+        DbrPlugin.Settings.LargeCandleRetracementPart = 0;
+    }
+
+    [TestMethod]
+    public void CheckCandleLimits_ShorterWindow_JudgesAgainstThatWindow()
+    {
+        DbrPlugin.Settings.MaxCandleSizeRatio = 5;
+
+        // Twenty candles of size 1.0, then four of size 2.0, then the break candle of size 7.0.
+        // Against the last five (average 1.8) it is 3.9x and passes; against twenty (average 1.2)
+        // it is 5.8x and fails.
+        var candles = MakeFlatCandles(25);
+        for (int i = 20; i < 24; i++)
+            candles[i] = candles[i] with { High = 101m, Low = 99m };
+        candles[^1] = candles[^1] with { High = 103.5m, Low = 96.5m };
+        var si = LoadSymbolInterval(candles);
+
+        DbrPlugin.Settings.CandleAverageLength = 5;
+        Assert.IsFalse(DbrBandsHelper.CheckCandleLimits(si, candles[^1].OpenTime, isLong: true).Blocked);
+
+        DbrPlugin.Settings.CandleAverageLength = 20;
+        Assert.IsTrue(DbrBandsHelper.CheckCandleLimits(si, candles[^1].OpenTime, isLong: true).Blocked);
+
+        DbrPlugin.Settings.MaxCandleSizeRatio = 0;
     }
 }
