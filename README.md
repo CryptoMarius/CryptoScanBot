@@ -51,10 +51,9 @@ original Pine scripts. The comments name the source so the origin of the idea st
 
 ## Code signing policy
 
-> Status: nothing is signed yet. The application for free code signing by the SignPath Foundation
-> has not been submitted; the policy below describes how signing will work once it is granted,
-> which is what the Foundation asks to see before it accepts an application. Remove this line
-> once the certificate is in use.
+> Status: the application for free code signing by the SignPath Foundation was submitted on
+> 18-09-2026 and is waiting to be reviewed. Nothing is signed yet: releases up to and including
+> 2.6.7 carry no signature. Remove this line once the certificate is in use.
 
 Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
 [SignPath Foundation](https://signpath.org).

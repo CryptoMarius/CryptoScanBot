@@ -137,16 +137,6 @@
 
 
 	<ItemGroup>
-	  <Content Include="Help\CryptoScanBot.pdf">
-	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-	  </Content>
-	  <Content Include="Help\Release Changes.txt">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-	</ItemGroup>
-
-
-	<ItemGroup>
 	  <ProjectReference Include="..\CryptoScanner.Analyzers\CryptoScanner.Analyzers.csproj" />
 	  <ProjectReference Include="..\CryptoScanner.Config\CryptoScanner.Config.csproj" />
 	  <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
