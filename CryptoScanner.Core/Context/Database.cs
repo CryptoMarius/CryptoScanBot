@@ -214,7 +214,7 @@ public class CryptoDatabase : IDisposable
         return
         [
             // You must have an account and register the api key, otherwise "error unauthorized"
-            new() { Name = "Alpaca", IsSupported = true, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Alpaca", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Spot },
             new() { Name = "Alpaca Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Perpetual},
 
             new() { Name = "Binance Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
