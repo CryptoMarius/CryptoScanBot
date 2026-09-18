@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
@@ -62,7 +62,6 @@ public partial class CommonViewModel : ObservableObject
     {
         TradingAppList.Clear();
         TradingAppList.Add(new(CryptoTradingApp.Altrady, "Altrady"));
-        TradingAppList.Add(new(CryptoTradingApp.Hypertrader, "Hypertrader"));
         TradingAppList.Add(new(CryptoTradingApp.TradingView, "TradingView"));
         TradingAppList.Add(new(CryptoTradingApp.ExchangeUrl, "Exchange"));
     }

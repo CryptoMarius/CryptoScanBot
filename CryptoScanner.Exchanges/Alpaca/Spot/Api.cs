@@ -172,7 +172,6 @@ public class Api : ExchangeBase
         return new()
         {
             Altrady = null,
-            HyperTrader = null,
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,

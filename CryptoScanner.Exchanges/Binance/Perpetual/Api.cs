@@ -265,12 +265,6 @@ public class Api : ExchangeBase
                 Execute = CryptoExternalUrlType.Internal,
                 Url = "https://app.altrady.com/d/BIFU_{QUOTE}_{BASE}:{interval}",
             },
-            HyperTrader = new()
-            {
-                Execute = CryptoExternalUrlType.External,
-                Url = "hypertrader://binance/{BASE}-{QUOTE}/{interval}",
-                Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={BASE}&b={QUOTE}&i={interval}",
-            },
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,

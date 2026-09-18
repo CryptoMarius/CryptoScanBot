@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
 
 using Photino.NET;
@@ -7,7 +7,7 @@ namespace CryptoScanner.Photino.Services;
 
 /// <summary>
 /// An invisible window with a browser of its own, used for the deep links that hand a symbol to a
-/// trading application (Altrady, Hypertrader).
+/// trading application (Altrady).
 /// <para>
 /// Those links are ordinary https addresses (https://app.altrady.com/d/BINA_USDT_BTC:60) that only
 /// redirect to the altrady:// protocol, which is what actually brings the desktop application to

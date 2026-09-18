@@ -26,7 +26,6 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         string text = tradingApp switch
         {
             CryptoTradingApp.Altrady => $"Altrady {exchangeName}",
-            CryptoTradingApp.Hypertrader => $"Hypertrader {exchangeName}",
             CryptoTradingApp.TradingView => $"TradingView {exchangeName}",
             CryptoTradingApp.ExchangeUrl => $"Exchange {exchangeName}",
             _ => "",
@@ -35,8 +34,6 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     }
 
     //altrady://market/BINA_ETH_LOKA:2
-    //http://www.ccscanner.nl/hypertrader/?e=binance&a=lto&b=usdt&i=60
-    ///hypertrader://binance/BETA-BTC/5
     ///https://app.altrady.com/d/BINA_BTC_BETA:1
     ///https://app.altrady.com/d/BINA_BTC_USDT:2
     ///https://app.muunship.com/chart/BN-BETABTC?l=5&resolution=1
@@ -115,7 +112,6 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             static CryptoExternalUrl? Pick(CryptoExternalUrls urls, CryptoTradingApp app) => app switch
             {
                 CryptoTradingApp.Altrady => urls.Altrady,
-                CryptoTradingApp.Hypertrader => urls.HyperTrader,
                 CryptoTradingApp.TradingView => urls.TradingView,
                 CryptoTradingApp.ExchangeUrl => urls.ExchangeUrl,
                 _ => null

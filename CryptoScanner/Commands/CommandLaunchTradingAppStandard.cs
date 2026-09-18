@@ -15,7 +15,7 @@ public class CommandLaunchTradingAppStandard : CommandBase
             System.Diagnostics.Debug.WriteLine($"CommandLaunchTradingAppStandard {dto.symbol.Name}");
             System.Diagnostics.Debug.WriteLine($"Opening {dto.symbol.Name} in trading program via standard browser");
 
-            // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
+            // Voor Altrady werkt dit kunstje natuurlijk niet
             CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
             if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
                 tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;

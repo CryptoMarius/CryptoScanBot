@@ -189,7 +189,6 @@ public class Api : ExchangeBase
                 Execute = CryptoExternalUrlType.Internal,
                 Url = "https://app.altrady.com/d/GDAX_{QUOTE}_{BASE}:{interval}",
             },
-            HyperTrader = null,
             TradingView = new()
             {
                 // TradingView moved on from the GDAX name, the market is COINBASE:BTCUSD there

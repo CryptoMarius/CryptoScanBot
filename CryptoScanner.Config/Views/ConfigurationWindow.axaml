@@ -19,13 +19,25 @@
                     <!-- Exchange -->
 				    <TabItem Header="Exchange" FontSize="15" FontWeight="Bold" Margin="0,0,0,2" >
                         <ScrollViewer VerticalScrollBarVisibility="Auto" >
-                            <Grid RowDefinitions="Auto,Auto">
+                            <Grid RowDefinitions="Auto,Auto,Auto">
                                 <HeaderedContentControl Grid.Row="0" Classes="groupbox" Header="Exchange parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:ExchangeView DataContext="{Binding ExchangeViewModel}" />
                                 </HeaderedContentControl>
 
                                 <HeaderedContentControl Grid.Row="1" Classes="groupbox" Header="Common parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:CommonView DataContext="{Binding CommonViewModel}" />
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Grid.Row="2" Classes="groupbox" Header="SignalR" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" Margin="5" RowSpacing="5">
+                                        <CheckBox Grid.Row="0" Grid.Column="0" Content="Enabled"
+                                                  IsChecked="{Binding ExchangeViewModel.SignalREnabled, Mode=TwoWay}"
+                                                  FontSize="12"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Port:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ExchangeViewModel.SignalRPort, TargetNullValue='5200', FallbackValue='5200'}"
+                                                 Width="80" Height="22" MinHeight="26"
+                                                 FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
+                                    </Grid>
                                 </HeaderedContentControl>
                             </Grid>
                         </ScrollViewer>

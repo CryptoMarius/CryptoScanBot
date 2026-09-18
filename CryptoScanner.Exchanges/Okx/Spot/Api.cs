@@ -150,7 +150,6 @@ public class Api : ExchangeBase
                 Execute = CryptoExternalUrlType.Internal,
                 Url = "https://app.altrady.com/d/OKEX_{QUOTE}_{BASE}:{interval}",
             },
-            HyperTrader = null,
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,

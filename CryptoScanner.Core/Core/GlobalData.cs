@@ -697,6 +697,13 @@ public static class GlobalData
             if (Settings.General.HyperLiquidWeightPerMinute > SettingsGeneral.HyperLiquidWeightPerMinuteMaximum)
                 Settings.General.HyperLiquidWeightPerMinute = SettingsGeneral.HyperLiquidWeightPerMinuteMaximum;
 
+            // A settings file written before 18-09-2026 can name Hypertrader (the 1 that is gone
+            // from CryptoTradingApp), an application that has been taken offline. Anything that is
+            // not one of the remaining applications falls back on Altrady, because an undefined
+            // value simply produces no link at all.
+            if (!Enum.IsDefined(Settings.General.TradingApp))
+                Settings.General.TradingApp = CryptoTradingApp.Altrady;
+
             // A settings file written before 27-08-2026 names a market that no longer exists
             Settings.General.ExchangeName = FixLegacyExchangeName(Settings.General.ExchangeName);
             Settings.General.ActivateExchangeName = FixLegacyExchangeName(Settings.General.ActivateExchangeName);

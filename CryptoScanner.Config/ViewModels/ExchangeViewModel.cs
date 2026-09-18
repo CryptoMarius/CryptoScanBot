@@ -29,6 +29,12 @@ public partial class ExchangeViewModel : ObservableObject
     private int _hyperLiquidWeightPerMinute = SettingsGeneral.HyperLiquidWeightPerMinuteDefault;
 
     [ObservableProperty]
+    private bool _signalREnabled;
+
+    [ObservableProperty]
+    private int _signalRPort = 5200;
+
+    [ObservableProperty]
     private List<KeyValuePair<int, string>> _exchangeList = [];
 
     /// <summary>
@@ -84,6 +90,8 @@ public partial class ExchangeViewModel : ObservableObject
 
             RefreshSymbols = general.GetCandleInterval;
             HyperLiquidWeightPerMinute = general.HyperLiquidWeightPerMinute;
+            SignalREnabled = general.SignalREnabled;
+            SignalRPort = general.SignalRPort;
         }
         finally
         {
@@ -101,5 +109,7 @@ public partial class ExchangeViewModel : ObservableObject
         general.GetCandleInterval = RefreshSymbols;
         general.HyperLiquidWeightPerMinute = Math.Clamp(HyperLiquidWeightPerMinute,
             SettingsGeneral.HyperLiquidWeightPerMinuteMinimum, SettingsGeneral.HyperLiquidWeightPerMinuteMaximum);
+        general.SignalREnabled = SignalREnabled;
+        general.SignalRPort = SignalRPort;
     }
 }

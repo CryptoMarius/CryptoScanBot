@@ -148,7 +148,6 @@ public class Api : ExchangeBase
             // Altrady does not offer Mexc futures, and cannot: the order endpoints of the exchange
             // are closed, so there is nothing for a trading platform to connect to.
             Altrady = null,
-            HyperTrader = null,
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,

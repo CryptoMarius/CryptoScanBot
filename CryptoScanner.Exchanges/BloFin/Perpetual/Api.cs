@@ -148,7 +148,6 @@ public class Api : ExchangeBase
             // No Altrady: BloFin is not on their list of valid exchange codes at all
             // https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
             Altrady = null,
-            HyperTrader = null,
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,

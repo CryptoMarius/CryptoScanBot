@@ -228,7 +228,7 @@ class Program
         _tradingViewWindow = new TradingViewWindow(app.MainWindow);
         _internalBrowser.OpenBrowserWindow = url => _tradingViewWindow.Show(url);
 
-        // The Altrady/Hypertrader deep links get an invisible window with a browser of its own, so
+        // The Altrady deep links get an invisible window with a browser of its own, so
         // the trading application comes up without the user first landing on the Altrady website.
         _hiddenBrowserWindow = new HiddenBrowserWindow(app.MainWindow);
         _internalBrowser.OpenHiddenBrowserWindow = url => _hiddenBrowserWindow.Navigate(url);

@@ -156,7 +156,6 @@ public class Api : ExchangeBase
             // No Altrady: their list of valid exchange codes has BitMart futures (BITMF) but no spot
             // entity. https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
             Altrady = null,
-            HyperTrader = null,
             // No TradingView either: it does not carry this exchange at all. Their symbol search
             // answers an empty list for exchange=BITMART where the same call on BINANCE returns the
             // pairs (checked 14-08-2026), so a BITMART:BTCUSDT link opens an empty chart.

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.Messaging;
+﻿using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Helpers;
@@ -38,7 +38,7 @@ public class InternalBrowserService : IDisposable
 
     /// <summary>
     /// Set by the host when it has an invisible browser of its own for the deep links that hand a
-    /// symbol to a trading application (Altrady, Hypertrader). Those links are https addresses that
+    /// symbol to a trading application (Altrady). Those links are https addresses that
     /// only redirect to the altrady:// protocol, so loading them in a browser the user never sees
     /// takes them straight to the desktop application instead of by way of the Altrady website.
     /// </summary>

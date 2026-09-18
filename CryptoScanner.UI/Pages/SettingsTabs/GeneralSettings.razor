@@ -95,7 +95,7 @@
         </div>
     </div>
 
-    @* No Avalonia counterpart: SignalR only exists in the Blazor hosts. *@
+    @* Avalonia counterpart: SignalR group in ConfigurationWindow.axaml, bound to ExchangeViewModel *@
     <div class="settings-group">
         <div class="settings-group-header">SignalR</div>
         <div class="settings-group-body">
@@ -120,7 +120,6 @@
     private static readonly List<KeyValuePair<CryptoTradingApp, string>> TradingAppList =
     [
         new(CryptoTradingApp.Altrady, "Altrady"),
-        new(CryptoTradingApp.Hypertrader, "Hypertrader"),
         new(CryptoTradingApp.TradingView, "TradingView"),
         new(CryptoTradingApp.ExchangeUrl, "Exchange"),
     ];
