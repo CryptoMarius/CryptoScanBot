@@ -9,6 +9,7 @@ public class FailedBreakoutConfigView : IConfigView
 
     public string TabHeader => FailedBreakoutPlugin.StrategyInternal.ToUpper();
     public string StrategyName => FailedBreakoutPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Failed-Breakout-(FailedBreakout)";
 
     public object CreateSettingsView()
     {

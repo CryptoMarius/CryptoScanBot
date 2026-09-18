@@ -9,6 +9,7 @@ public class JumpConfigView : IConfigView
 
     public string TabHeader => JumpPlugin.StrategyInternal.ToUpper();
     public string StrategyName => JumpPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Candle-Jump-(Jump)";
 
     public object CreateSettingsView()
     {

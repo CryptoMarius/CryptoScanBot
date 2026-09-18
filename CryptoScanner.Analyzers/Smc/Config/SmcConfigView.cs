@@ -9,6 +9,7 @@ public class SmcConfigView : IConfigView
 
     public string TabHeader => SmcPlugin.StrategyInternal.ToUpper();
     public string StrategyName => SmcPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Smart-Money-Concepts-(SMC)";
 
     public object CreateSettingsView()
     {

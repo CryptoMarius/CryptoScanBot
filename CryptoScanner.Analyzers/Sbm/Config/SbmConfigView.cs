@@ -9,6 +9,7 @@ public class SbmConfigView : IConfigView
 
     public string TabHeader => SbmPlugin.StrategyInternal.ToUpper();
     public string StrategyName => SbmPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/SMA-Based-Method-(SBM)";
 
     public object CreateSettingsView()
     {

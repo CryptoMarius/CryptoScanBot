@@ -15,9 +15,6 @@
                     <Run Text="BBMA – Bollinger Band + Moving Average" FontWeight="SemiBold"/>
                     <Run Text=" — Reentry signals based on the BBMA method of Oma Ally" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
-                <TextBlock Text="Wiki ↗" FontSize="12" Cursor="Hand"
-                           Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
-                           TextDecorations="Underline" Tapped="OnWikiTapped"/>
             </StackPanel>
             <WrapPanel>
                 <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />

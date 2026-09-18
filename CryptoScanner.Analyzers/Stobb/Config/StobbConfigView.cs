@@ -9,6 +9,7 @@ public class StobbConfigView : IConfigView
 
     public string TabHeader => StobbPlugin.StrategyInternal.ToUpper();
     public string StrategyName => StobbPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Stochastic-+-Bollinger-Bands-(STOBB)";
 
     public object CreateSettingsView()
     {

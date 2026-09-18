@@ -15,9 +15,6 @@
                     <Run Text="JUMP – Jump" FontWeight="SemiBold"/>
                     <Run Text=" — Detects sudden large price movements" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
-                <TextBlock Text="Wiki ↗" FontSize="12" Cursor="Hand"
-                           Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
-                           TextDecorations="Underline" Tapped="OnWikiTapped"/>
             </StackPanel>
             <WrapPanel>
                 <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />

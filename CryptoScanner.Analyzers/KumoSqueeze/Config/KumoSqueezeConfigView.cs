@@ -9,6 +9,7 @@ public class KumoSqueezeConfigView : IConfigView
 
     public string TabHeader => "KUMOSQUEEZE";
     public string StrategyName => "kumosqueeze";
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Ichimoku-Kumo-Bollinger-Squeeze-(KumoSqueeze)";
 
     public object CreateSettingsView()
     {

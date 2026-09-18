@@ -9,6 +9,7 @@ public class MacdCrossBandConfigView : IConfigView
 
     public string TabHeader => MacdCrossBandPlugin.StrategyInternal.ToUpper();
     public string StrategyName => MacdCrossBandPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/MACD-Crossover-Band-(MacdCrossBand)";
 
     public object CreateSettingsView()
     {

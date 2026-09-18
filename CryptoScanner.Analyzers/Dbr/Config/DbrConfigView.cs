@@ -9,6 +9,7 @@ public class DbrConfigView : IConfigView
 
     public string TabHeader => DbrPlugin.StrategyInternal.ToUpper();
     public string StrategyName => DbrPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Donchian-Breakout-Reversion-(DBR)";
 
     public object CreateSettingsView()
     {

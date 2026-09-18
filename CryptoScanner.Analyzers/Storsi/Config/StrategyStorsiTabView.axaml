@@ -15,9 +15,6 @@
                     <Run Text="STORSI – Stochastic + RSI" FontWeight="SemiBold"/>
                     <Run Text=" — Mean reversion signals combining Stochastic with RSI levels" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
-                <TextBlock Text="Wiki ↗" FontSize="12" Cursor="Hand"
-                           Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
-                           TextDecorations="Underline" Tapped="OnWikiTapped"/>
             </StackPanel>
             <WrapPanel>
                 <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />

@@ -15,9 +15,6 @@
                     <Run Text="FVG – Fair Value Gap" FontWeight="SemiBold"/>
                     <Run Text=" — Entry signals at unfilled price gaps (ICT concept)" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
-                <TextBlock Text="Wiki ↗" FontSize="12" Cursor="Hand"
-                           Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
-                           TextDecorations="Underline" Tapped="OnWikiTapped"/>
             </StackPanel>
             <WrapPanel>
                 <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />

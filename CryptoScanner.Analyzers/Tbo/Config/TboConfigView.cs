@@ -9,6 +9,7 @@ public class TboConfigView : IConfigView
 
     public string TabHeader => TboPlugin.StrategyInternal.ToUpper();
     public string StrategyName => TboPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Trending-Breakout-(TBO)";
 
     public object CreateSettingsView()
     {

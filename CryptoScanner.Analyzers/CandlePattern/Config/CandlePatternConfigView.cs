@@ -9,6 +9,7 @@ public class CandlePatternConfigView : IConfigView
 
     public string TabHeader => CandlePatternPlugin.StrategyInternal.ToUpper();
     public string StrategyName => CandlePatternPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Candle-Patterns-(CandlePatterns)";
 
     public object CreateSettingsView()
     {

@@ -9,6 +9,7 @@ public class StorsiConfigView : IConfigView
 
     public string TabHeader => StorsiPlugin.StrategyInternal.ToUpper();
     public string StrategyName => StorsiPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Stochastic-+-RSI-(StoRsi)";
 
     public object CreateSettingsView()
     {

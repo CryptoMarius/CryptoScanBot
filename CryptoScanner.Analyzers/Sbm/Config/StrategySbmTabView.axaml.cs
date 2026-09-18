@@ -1,8 +1,5 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-
-using System.Diagnostics;
 
 namespace CryptoScanner.Analyzers.Sbm.Config;
 
@@ -22,10 +19,5 @@ public partial class StrategySbmTabView : UserControl
     private void InitializeComponent()
     {
         AvaloniaXamlLoader.Load(this);
-    }
-
-    private void OnWikiTapped(object? sender, RoutedEventArgs e)
-    {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/SMA-Based-Method-(SBM)") { UseShellExecute = true });
     }
 }

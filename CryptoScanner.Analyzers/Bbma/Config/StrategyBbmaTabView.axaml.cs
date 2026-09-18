@@ -1,8 +1,5 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-
-using System.Diagnostics;
 
 
 namespace CryptoScanner.Analyzers.Bbma.Config;
@@ -23,10 +20,5 @@ public partial class StrategyBbmaTabView : UserControl
     private void InitializeComponent()
     {
         AvaloniaXamlLoader.Load(this);
-    }
-
-    private void OnWikiTapped(object? sender, RoutedEventArgs e)
-    {
-        Process.Start(new ProcessStartInfo("https://github.com/CryptoMarius/CryptoScanBot/wiki/BBMA-Omni-(Bbma)") { UseShellExecute = true });
     }
 }

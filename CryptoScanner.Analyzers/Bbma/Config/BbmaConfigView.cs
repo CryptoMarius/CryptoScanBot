@@ -10,6 +10,7 @@ public class BbmaConfigView : IConfigView
 
     public string TabHeader => "BBMA";
     public string StrategyName => BbmaPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/BBMA-Omni-(Bbma)";
 
     public object CreateSettingsView()
     {

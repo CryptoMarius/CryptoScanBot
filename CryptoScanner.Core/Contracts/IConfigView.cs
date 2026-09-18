@@ -20,6 +20,8 @@ public interface IConfigView
     string TabHeader { get; }
     string StrategyName { get; }
     object CreateSettingsView();
+    /// <summary>Full URL to the wiki page for this strategy, or null when none exists.</summary>
+    string? WikiUrl => null;
     void LoadConfig(SettingsSignalStrategyBase settings);
     void SaveConfig(SettingsSignalStrategyBase settings);
 }

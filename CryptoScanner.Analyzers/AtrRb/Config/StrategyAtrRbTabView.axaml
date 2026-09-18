@@ -15,9 +15,6 @@
                     <Run Text="ATR-RB – ATR Range Breakout" FontWeight="SemiBold"/>
                     <Run Text=" — Breakout signals when price pierces ATR-based bands" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
-                <TextBlock Text="Wiki ↗" FontSize="12" Cursor="Hand"
-                           Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
-                           TextDecorations="Underline" Tapped="OnWikiTapped"/>
             </StackPanel>
             <WrapPanel>
                 <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />

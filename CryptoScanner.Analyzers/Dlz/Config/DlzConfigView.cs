@@ -9,6 +9,7 @@ public class DlzConfigView : IConfigView
 
     public string TabHeader => DlzPlugin.StrategyInternal.ToUpper();
     public string StrategyName => DlzPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Dominant-Liquidity-Zones-(DLZ)";
 
     public object CreateSettingsView()
     {

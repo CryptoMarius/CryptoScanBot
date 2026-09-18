@@ -9,6 +9,7 @@ public class AtrRbConfigView : IConfigView
 
     public string TabHeader => AtrRbPlugin.StrategyInternal.ToUpper();
     public string StrategyName => AtrRbPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/ATR-Range-Breakout-(AtrRb)";
 
     public object CreateSettingsView()
     {

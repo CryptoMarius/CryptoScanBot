@@ -9,6 +9,7 @@ public class VbsConfigView : IConfigView
 
     public string TabHeader => VbsPlugin.StrategyInternal.ToUpper();
     public string StrategyName => VbsPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/VWAP-Band-Strategy-(VBS)";
 
     public object CreateSettingsView()
     {

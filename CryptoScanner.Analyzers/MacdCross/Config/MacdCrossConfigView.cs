@@ -9,6 +9,7 @@ public class MacdCrossConfigView : IConfigView
 
     public string TabHeader => MacdCrossPlugin.StrategyInternal.ToUpper();
     public string StrategyName => MacdCrossPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/MACD-Crossover-(MacdCross)";
 
     public object CreateSettingsView()
     {

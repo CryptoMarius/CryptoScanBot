@@ -28,6 +28,14 @@
            each other instead of underneath. *@
         <div class="settings-wrap" style="width: 100%;">
 
+        @if (!string.IsNullOrEmpty(state.WikiUrl))
+        {
+            <div style="margin: 2px 0 4px 6px;">
+                <a href="@state.WikiUrl" target="_blank" rel="noopener"
+                   style="font-size: 12px; color: dodgerblue;">Wiki ↗</a>
+            </div>
+        }
+
         @* One row per direction, laid out like the Avalonia ColorAndSoundView:
            caption | colour | "Sound file:" | file | browse | play.
            Avalonia has the "Play speech" checkbox commented out in SoundAndColorsView, so it is not

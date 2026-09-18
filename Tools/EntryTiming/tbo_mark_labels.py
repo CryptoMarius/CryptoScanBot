@@ -59,10 +59,13 @@ def read_windows(path=TEST_FILE):
     return windows
 
 
-def read_labels(path=LABEL_FILE):
+def read_labels(path=LABEL_FILE, symbol="BTCUSDT"):
+    """The verdicts for one symbol. The file is keyed by symbol, because a rule that only fits
+    bitcoin is a rule fitted to one chart."""
     if not path.exists():
         return {}
-    return json.loads(path.read_text(encoding="utf-8"))
+    stored = json.loads(path.read_text(encoding="utf-8"))
+    return {date: value for date, value in stored.get(symbol, {}).items() if not date.startswith("_")}
 
 
 def describe(frame, labels):

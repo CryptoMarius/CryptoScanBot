@@ -9,6 +9,7 @@ public class StorsiConfigView : IConfigView
 
     public string TabHeader => NwePlugin.StrategyInternal.ToUpper();
     public string StrategyName => NwePlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Nadaraya-Watson-Envelope-(NWE)";
 
     public object CreateSettingsView()
     {

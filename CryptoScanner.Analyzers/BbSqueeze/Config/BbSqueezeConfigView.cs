@@ -9,6 +9,7 @@ public class BbSqueezeConfigView : IConfigView
 
     public string TabHeader => BbSqueezePlugin.StrategyInternal.ToUpper();
     public string StrategyName => BbSqueezePlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Bollinger-Bands-Squeeze---MACD-Breakout-(BbSqueeze)";
 
     public object CreateSettingsView()
     {

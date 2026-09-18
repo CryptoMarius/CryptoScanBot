@@ -34,6 +34,7 @@ public class PluginSettingsEditState
 
     public IStrategyPlugin Plugin { get; }
     public string Name => Plugin.StrategyName;
+    public string? WikiUrl => Plugin.ConfigView?.WikiUrl;
 
     public bool PlaySound { get; set; }
     public bool PlaySpeech { get; set; }

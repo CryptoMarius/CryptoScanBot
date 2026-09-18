@@ -15,9 +15,6 @@
                     <Run Text="VBS – VWAP Band Signal" FontWeight="SemiBold"/>
                     <Run Text=" — Mean reversion signals at volume-weighted VWAP bands" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
-                <TextBlock Text="Wiki ↗" FontSize="12" Cursor="Hand"
-                           Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
-                           TextDecorations="Underline" Tapped="OnWikiTapped"/>
             </StackPanel>
             <WrapPanel>
                 <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />

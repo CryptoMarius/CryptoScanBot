@@ -9,6 +9,7 @@ public class FvgConfigView : IConfigView
 
     public string TabHeader => FvgPlugin.StrategyInternal.ToUpper();
     public string StrategyName => FvgPlugin.StrategyInternal.ToLower();
+    public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Fair-Value-Gap-(FVG)";
 
     public object CreateSettingsView()
     {

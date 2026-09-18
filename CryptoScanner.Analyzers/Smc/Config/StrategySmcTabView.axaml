@@ -15,9 +15,6 @@
                     <Run Text="SMC – Smart Money Concepts" FontWeight="SemiBold"/>
                     <Run Text=" — Supply/demand zone entry signals based on base + expansion detection" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
-                <TextBlock Text="Wiki ↗" FontSize="12" Cursor="Hand"
-                           Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
-                           TextDecorations="Underline" Tapped="OnWikiTapped"/>
             </StackPanel>
             <WrapPanel>
                 <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />

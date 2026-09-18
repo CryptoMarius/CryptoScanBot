@@ -15,9 +15,6 @@
                     <Run Text="SBM – Signal Bollinger/MA" FontWeight="SemiBold"/>
                     <Run Text=" — Signals based on Bollinger Band and Moving Average alignment" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
-                <TextBlock Text="Wiki ↗" FontSize="12" Cursor="Hand"
-                           Foreground="{DynamicResource SystemAccentColor}" VerticalAlignment="Center"
-                           TextDecorations="Underline" Tapped="OnWikiTapped"/>
             </StackPanel>
             <WrapPanel>
                 <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
