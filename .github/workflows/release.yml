@@ -163,9 +163,15 @@ jobs:
 
           # The release is usually created by hand, with the release notes in it. Only create one
           # when it is not there yet, so notes that are already written are never overwritten.
+          # A release page is one of the two pages that has to carry the code signing policy; the
+          # other is the repository home page, where the README shows it. The terms allow a link
+          # instead of the whole section, which is what this is. A release written by hand needs
+          # the same line pasted into its notes.
+          $policy = 'Code signing policy: see the [code signing policy](https://github.com/CryptoMarius/CryptoScanBot#code-signing-policy) in the README.'
+
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --title $tag --notes "CryptoScanBot $env:VERSION"
+            gh release create $tag --title $tag --notes "CryptoScanBot $env:VERSION`n`n$policy"
             if ($LASTEXITCODE -ne 0) { throw "could not create the release for $tag" }
           }
 

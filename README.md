@@ -48,3 +48,46 @@ The indicators that name a published source in their comments (the Nadaraya-Wats
 LuxAlgo RSI Multi Length areas and the StoRsi TradingView script) are re-implementations in C#,
 written from the published formula and the described behaviour. They are not translations of the
 original Pine scripts. The comments name the source so the origin of the idea stays visible.
+
+## Code signing policy
+
+> Status: code signing by the SignPath Foundation has been applied for. Releases up to and including
+> 2.6.7 are not signed. Remove this line once the certificate is in use.
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
+[SignPath Foundation](https://signpath.org).
+
+### Team roles
+
+- Committers and reviewers: Marius ([CryptoMarius](https://github.com/CryptoMarius))
+- Approvers (who approves a signing request): Marius ([CryptoMarius](https://github.com/CryptoMarius))
+
+The project is maintained by one person. Every release is built by the GitHub Actions workflow in
+`.github/workflows/release.yml` from a tagged commit of this repository, and every signing request
+is approved by hand.
+
+### Privacy policy
+
+The application runs on your own machine and stores everything it produces there: its settings, its
+candle databases and its log files. It has no account system, it sends nothing to the author, and it
+does not check for updates, collect statistics or report errors anywhere.
+
+It does connect to the outside world, because that is what it is for. Everything below is traffic
+you switch on yourself by enabling an exchange or filling in a key:
+
+- The exchanges you enable, for market data and - only when you supply API keys and switch trading
+  on - for placing orders. Your API keys stay in your own data folder and are sent to that exchange
+  and to nowhere else.
+- `api.telegram.org`, when you configure a Telegram bot, to send you the signals you asked for.
+- `app.altrady.com`, when you configure the Altrady webhook, to pass a signal to your Altrady
+  account.
+- `www.tradingview.com` and `api.alternative.me`, for the market indicators and the Fear and Greed
+  index on the dashboard.
+
+The SignalR hub is a server inside the application that another program on your own network can read
+from. It listens, it does not send anything out by itself.
+
+These external services have their own privacy policies, and what you send them is governed by those
+rather than by this one: your exchange, [Telegram](https://telegram.org/privacy),
+[Altrady](https://app.altrady.com/privacy-policy), [TradingView](https://www.tradingview.com/privacy-policy/)
+and [alternative.me](https://alternative.me/privacy/).
