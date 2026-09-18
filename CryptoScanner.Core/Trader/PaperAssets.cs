@@ -28,32 +28,25 @@ namespace CryptoScanner.Core.Trader;
 public class PaperAssets
 {
     /// <summary>
-    /// The start capital of one quote coin: the amount configured on the coin itself, and otherwise
-    /// <paramref name="fallback"/> - the general setting, or the amount typed in the paper-assets
-    /// screen or in an emulator run.
-    /// <para>
-    /// A single amount for every quote coin cannot work: 10.000 is a sensible amount of USDT and an
-    /// absurd amount of BTC, while the capital line adds every coin up in USDT (see
-    /// <see cref="AssetSnapshotTools.ReferenceCoin"/>). Zero on the coin means "not filled in", so a
-    /// configuration that only trades USDT behaves exactly as it did before.
-    /// </para>
+    /// The amount the paper-assets screen offers as a reset amount, and the amount an emulator run
+    /// starts with when its configuration does not say otherwise. It is a starting point for a screen
+    /// and for a run, deliberately not a setting: the starting balances of a paper account are said
+    /// in <see cref="Settings.SettingsTrading.PaperAssetDefaults"/>, coin by coin.
     /// </summary>
-    public static decimal ResolveStartCapital(CryptoQuoteData quoteData, decimal fallback)
-    {
-        if (quoteData.StartCapital > 0)
-            return quoteData.StartCapital;
-        return fallback;
-    }
+    public const decimal DefaultStartCapital = 10000m;
 
 
     /// <summary>
     /// Hand out the balances a paper account starts with - on an empty database and on every reset.
     /// <para>
-    /// Two ways of saying it, and the list wins. A filled
-    /// <see cref="Settings.SettingsTrading.PaperAssetDefaults"/> IS the starting point, coin by coin,
-    /// and may hold coins that are never traded as a quote coin. Only when that list is empty does
-    /// the older road apply: every traded quote coin gets its own start capital, or
-    /// <paramref name="fallback"/> when it has none.
+    /// A filled <see cref="Settings.SettingsTrading.PaperAssetDefaults"/> IS the starting point, coin
+    /// by coin, and may hold coins that are never traded as a quote coin. It always wins.
+    /// </para>
+    /// <para>
+    /// Only when that list is empty does <paramref name="fallback"/> apply: the amount typed in the
+    /// paper-assets screen, or the start capital of an emulator run, handed out to every traded quote
+    /// coin. Zero says there is no such amount - the scanner passes zero, so a paper account whose
+    /// default asset list is empty starts at nothing and says so instead of inventing money.
     /// </para>
     /// </summary>
     private static void SeedStartBalances(Model.CryptoExchange activeExchange, decimal fallback, bool logToTab)
@@ -78,14 +71,21 @@ public class PaperAssets
             return;
         }
 
+        if (fallback <= 0)
+        {
+            if (logToTab)
+                GlobalData.AddTextToLogTab("No default paper assets configured, the paper account starts empty " +
+                    "(settings, trader, Default paper assets)");
+            return;
+        }
+
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
             if (quoteData.FetchCandles)
             {
-                decimal amount = ResolveStartCapital(quoteData, fallback);
-                CreateAsset(activeExchange, quoteData.Name, amount);
+                CreateAsset(activeExchange, quoteData.Name, fallback);
                 if (logToTab)
-                    GlobalData.AddTextToLogTab($"Paper asset {quoteData.Name} started at {amount.ToString0()}");
+                    GlobalData.AddTextToLogTab($"Paper asset {quoteData.Name} started at {fallback.ToString0()}");
             }
         }
     }
@@ -108,14 +108,15 @@ public class PaperAssets
                 activeExchange.Data.AssetList.TryAdd(asset.Name, asset);
             }
 
-            // Hand out the start capital only when there is nothing at all - a fresh database. Seeding
-            // per missing quote coin instead would top the balance up again on every restart, which
+            // Hand out the starting balances only when there is nothing at all - a fresh database.
+            // Seeding per missing coin instead would top the balance up again on every restart, which
             // silently hands free money to a paper session that had traded itself down to zero.
             // Starting over on purpose goes through ResetAssets (Tools -> Paper assets, or the
-            // emulator at the start of a run).
+            // emulator at the start of a run). No fallback amount here: the scanner reads its starting
+            // balances from the default asset list and nowhere else.
             if (activeExchange.Data.AssetList.IsEmpty)
             {
-                SeedStartBalances(activeExchange, GlobalData.Settings.Trading.PaperAssetStartCapital, logToTab: true);
+                SeedStartBalances(activeExchange, 0m, logToTab: true);
             }
 
             RecalculateLocked(activeExchange);

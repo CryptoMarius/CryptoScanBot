@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Trader;
 using CryptoScanner.Emulator.Engine;
 
 using System.Collections.ObjectModel;
@@ -104,7 +105,7 @@ public partial class RunConfigViewModel : ObservableObject
         FromDate = config.FromDate == default ? DateTime.UtcNow.Date.AddDays(-7) : config.FromDate;
         ToDate = config.ToDate == default ? DateTime.UtcNow.Date : config.ToDate;
         SelectedBaseInterval = BaseIntervals.Contains(config.BaseInterval) ? config.BaseInterval : "1m";
-        StartCapital = config.StartCapital > 0 ? config.StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital;
+        StartCapital = config.StartCapital > 0 ? config.StartCapital : PaperAssets.DefaultStartCapital;
         UseAssetManagement = config.UseAssetManagement;
 
         // Pre-check the symbols already in the run config. Build the full list from the active
@@ -240,7 +241,7 @@ public partial class RunConfigViewModel : ObservableObject
         config.ToDate = DateTime.SpecifyKind(ToDate.Value.Date, DateTimeKind.Utc);
         config.Label = Label ?? "";
         config.BaseInterval = SelectedBaseInterval ?? "1m";
-        config.StartCapital = StartCapital > 0 ? StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital;
+        config.StartCapital = StartCapital > 0 ? StartCapital : PaperAssets.DefaultStartCapital;
         config.UseAssetManagement = UseAssetManagement;
         return true;
     }

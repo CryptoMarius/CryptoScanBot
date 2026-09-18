@@ -44,6 +44,14 @@ SLOW_SMA = 150
 PIVOT_LEFT = 5
 PIVOT_RIGHT = 5
 
+# The chart marker ("mark") is a rule of its own, taken from TboChartOverlay.FindConfirmations: the
+# white dots are drawn where the WICK trades through the level, in a window after the cloud turned,
+# on a candle that makes a new extreme. The strategy's breakout entry asks something else - a CLOSE
+# through the level with the price outside the whole cloud - so the two do not have to agree.
+MARK_EARLIEST = 8
+MARK_LATEST = 60
+MARK_EXTREME_CANDLES = 5
+
 # The grid that is scored. Percentages of the entry price, like the scanner's own settings.
 STOPS = [1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 9.0, 12.0, 15.0, 20.0]
 TARGETS = [1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 18.0, 24.0, 30.0]
@@ -142,6 +150,10 @@ def find_signals(frame, trigger):
         return np.flatnonzero(longs), np.flatnonzero(shorts)
 
     pivot_high, pivot_low = pivot_levels(high, low, PIVOT_LEFT, PIVOT_RIGHT)
+
+    if trigger == "mark":
+        return chart_marks(high, low, cloud_up, cloud_down, ready, pivot_high, pivot_low)
+
     close_previous = np.full(len(close), np.nan)
     close_previous[1:] = close[:-1]
 
@@ -153,6 +165,44 @@ def find_signals(frame, trigger):
     shorts = (cloud_down & outside_bottom & ~np.isnan(pivot_low)
               & (close < pivot_low) & (close_previous >= pivot_low))
     return np.flatnonzero(longs), np.flatnonzero(shorts)
+
+
+def chart_marks(high, low, cloud_up, cloud_down, ready, pivot_high, pivot_low):
+    """The white dots of the chart overlay, rebuilt from TboChartOverlay.FindConfirmations."""
+    count = len(high)
+    longs, shorts = [], []
+    side_up = None
+    turned_at = -1
+
+    for i in range(count):
+        if not ready[i]:
+            continue
+        up = bool(cloud_up[i])
+        if side_up is None:
+            side_up = up
+        elif up != side_up:
+            turned_at = i
+            side_up = up
+
+        if turned_at < 0 or i - turned_at < MARK_EARLIEST or i - turned_at > MARK_LATEST:
+            continue
+        if i < MARK_EXTREME_CANDLES:
+            continue
+
+        if up:
+            if np.isnan(pivot_high[i]) or high[i] <= pivot_high[i]:
+                continue
+            if any(high[i - back] >= high[i] for back in range(1, MARK_EXTREME_CANDLES + 1)):
+                continue
+            longs.append(i)
+        else:
+            if np.isnan(pivot_low[i]) or low[i] >= pivot_low[i]:
+                continue
+            if any(low[i - back] <= low[i] for back in range(1, MARK_EXTREME_CANDLES + 1)):
+                continue
+            shorts.append(i)
+
+    return np.array(longs, dtype=int), np.array(shorts, dtype=int)
 
 
 def collect_paths(frame, indices, side, horizon):
@@ -346,7 +396,8 @@ def main():
     parser.add_argument("--db", default=str(DEFAULT_DB))
     parser.add_argument("--run-config", default=str(DEFAULT_RUN_CONFIG))
     parser.add_argument("--intervals", nargs="+", default=["1h", "2h", "4h", "1d"])
-    parser.add_argument("--triggers", nargs="+", default=["cross", "breakout"])
+    parser.add_argument("--triggers", nargs="+", default=["cross", "breakout"],
+                        choices=["cross", "breakout", "mark"])
     parser.add_argument("--from", dest="date_from", default="2026-01-01")
     parser.add_argument("--to", dest="date_to", default="2026-09-01")
     parser.add_argument("--cost", type=float, default=ROUND_TRIP_COST)

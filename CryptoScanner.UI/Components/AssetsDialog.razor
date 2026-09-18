@@ -78,7 +78,7 @@
                 <input type="number" class="input-number assets-start-capital" min="0" step="1000"
                        value="@_startCapital"
                        @onchange="e => _startCapital = ParseDecimal(e.Value)"
-                       title="Amount handed out per traded quote coin when you press Reset, except the coins with a start capital of their own. Not used at all when the default asset list in the settings holds anything - that list is handed out instead." />
+                       title="Amount handed out per traded quote coin when you press Reset. Not used at all when the default asset list in the settings holds anything - that list is handed out instead." />
                 <button class="btn" @onclick="OnResetClick"
                         title="Throw every paper balance away and hand out the starting balances again: the default asset list from the settings when there is one, and otherwise the start capital for each traded quote coin.">
                     Reset to start capital
@@ -138,7 +138,7 @@
     {
         if (Visible && !_loaded)
         {
-            _startCapital = GlobalData.Settings.Trading.PaperAssetStartCapital;
+            _startCapital = PaperAssets.DefaultStartCapital;
             Reload();
             _loaded = true;
         }

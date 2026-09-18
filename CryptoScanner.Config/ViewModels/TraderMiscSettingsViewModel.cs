@@ -37,10 +37,8 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _useAssetManagement = true; // bool (EXACT match)
 
-    [ObservableProperty]
-    private decimal _paperAssetStartCapital = 10000m; // decimal (EXACT match)
-
-    // The balances a paper account starts with. Filled in, this list replaces the amount above.
+    // The balances a paper account starts with, coin by coin - the only place a paper account reads
+    // its starting balances from.
     [ObservableProperty]
     private ObservableCollection<PaperAssetDefaultItemViewModel> _paperAssetDefaults = [];
 
@@ -89,7 +87,6 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         TradeVia = settings.TradeVia;
         DisableNewPositions = settings.DisableNewPositions;
         UseAssetManagement = settings.UseAssetManagement;
-        PaperAssetStartCapital = settings.PaperAssetStartCapital;
         LogCanceledOrders = settings.LogCanceledOrders;
 
         PaperAssetDefaults.Clear();
@@ -110,7 +107,6 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         settings.TradeVia = TradeVia;
         settings.DisableNewPositions = DisableNewPositions;
         settings.UseAssetManagement = UseAssetManagement;
-        settings.PaperAssetStartCapital = PaperAssetStartCapital;
         settings.LogCanceledOrders = LogCanceledOrders;
 
         // A row without a coin is an empty row somebody added and left alone, not a setting.

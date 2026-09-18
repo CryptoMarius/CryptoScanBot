@@ -1,4 +1,4 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -88,7 +88,7 @@
 			<TextBlock Grid.Column="0" Text="Start capital:" VerticalAlignment="Center" Margin="0,0,8,0"/>
 			<NumericUpDown Grid.Column="1" Value="{Binding StartCapital}"
 						   Minimum="0" Increment="1000" FormatString="N2" ShowButtonSpinner="False"
-						   ToolTip.Tip="Amount handed out per traded quote coin when you press Reset, except the coins with a start capital of their own. Not used at all when the default asset list in the settings holds anything - that list is handed out instead."/>
+						   ToolTip.Tip="Amount handed out per traded quote coin when you press Reset. Not used at all when the default asset list in the settings holds anything - that list is handed out instead."/>
 			<Button Grid.Column="2" Content="Reset to start capital" Margin="8,0,0,0"
 					HorizontalAlignment="Left" Click="OnResetClick"
 					ToolTip.Tip="Throw every paper balance away and hand out the starting balances again: the default asset list from the settings when there is one, and otherwise the start capital for each traded quote coin."/>

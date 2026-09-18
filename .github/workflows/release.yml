@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Drop the local tags
         shell: pwsh
@@ -57,7 +57,7 @@ jobs:
           git tag -l | ForEach-Object { git tag -d $_ } | Out-Null
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           # The development machine builds these net8.0 projects with the .NET 10 SDK, so the
           # runner uses the same one. Pin this to an exact version (10.0.401) if a build has to be
@@ -147,33 +147,37 @@ jobs:
       # One artifact per package, not one artifact holding all three. upload-artifact packs
       # everything it is given into a single archive, so a step per package is what keeps the three
       # zips separately downloadable instead of one bundle of a quarter of a gigabyte that has to be
-      # unpacked before you can get at the one you need. compression-level 0 because the content is
-      # already a zip: compressing it again costs time and gains nothing.
+      # unpacked before you can get at the one you need.
+      #
+      # archive: false uploads the zip as it is, instead of packing it into a second zip. That
+      # double wrapper is why a downloaded artifact first unpacked into another
+      # CryptoScanBot-<version>-<rid>.zip before the package itself came into view. It only works
+      # for a single file per step, which is exactly what these steps upload, and the artifact is
+      # then named after the file - the name input is ignored in that mode, so it is left out
+      # here. compression-level is gone for the same reason: without an archive there is nothing
+      # left to compress.
       #
       # This only matters for a manual run. On a tag run the three zips are attached to the release
       # itself, and there they are separate files regardless.
       - name: Keep the Windows package as an artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: CryptoScanBot-${{ steps.version.outputs.version }}-win-x64
           path: build/CryptoScanBot-${{ steps.version.outputs.version }}-win-x64.zip
-          compression-level: 0
+          archive: false
           retention-days: 14
 
       - name: Keep the macOS package as an artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: CryptoScanBot-${{ steps.version.outputs.version }}-osx-arm64
           path: build/CryptoScanBot-${{ steps.version.outputs.version }}-osx-arm64.zip
-          compression-level: 0
+          archive: false
           retention-days: 14
 
       - name: Keep the Linux package as an artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: CryptoScanBot-${{ steps.version.outputs.version }}-linux-x64
           path: build/CryptoScanBot-${{ steps.version.outputs.version }}-linux-x64.zip
-          compression-level: 0
+          archive: false
           retention-days: 14
 
       - name: Attach the packages to the release

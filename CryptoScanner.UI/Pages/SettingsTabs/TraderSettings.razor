@@ -110,14 +110,9 @@
                 <input type="checkbox" class="input-checkbox" @bind="_useAssetManagement" />
                 <label>Asset management</label>
             </div>
-            <div class="field" title="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Not used at all when the default asset list below holds anything.">
-                <label>Paper start capital</label>
-                <input type="number" class="input-number" min="0" step="1000" @bind="_paperAssetStartCapital" />
-            </div>
-
-            @* The list that replaces the single amount above - see SettingsTrading.PaperAssetDefaults. *@
+            @* The balances a paper account starts with - see SettingsTrading.PaperAssetDefaults. *@
             <div class="settings-group settings-group-nested"
-                 title="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. Filled in, this list replaces the start capital above, the start capital on the quote coins and the one of an emulator run; empty leaves all of those as they were.">
+                 title="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Empty means nothing is handed out, and a filled list also overrules the start capital of an emulator run.">
                 <div class="settings-group-header">Default paper assets</div>
                 <div class="settings-group-body">
                     <div class="field settings-table-buttons">
@@ -420,7 +415,6 @@
     private CryptoTradeVia _tradeVia;
     private bool _disableNewPositions;
     private bool _useAssetManagement;
-    private decimal _paperAssetStartCapital;
     private bool _logCanceledOrders;
     /// <summary>
     /// Lives in Settings.General, but the Avalonia TraderMiscSettingsView edits it here. This tab is
@@ -592,7 +586,6 @@
         _tradeVia = t.TradeVia;
         _disableNewPositions = t.DisableNewPositions;
         _useAssetManagement = t.UseAssetManagement;
-        _paperAssetStartCapital = t.PaperAssetStartCapital;
         _logCanceledOrders = t.LogCanceledOrders;
         _soundTradeNotification = settings.General.SoundTradeNotification;
         _slotsLong = t.SlotsMaximalLong;
@@ -646,7 +639,6 @@
         t.TradeVia = _tradeVia;
         t.DisableNewPositions = _disableNewPositions;
         t.UseAssetManagement = _useAssetManagement;
-        t.PaperAssetStartCapital = _paperAssetStartCapital;
         t.LogCanceledOrders = _logCanceledOrders;
         settings.General.SoundTradeNotification = _soundTradeNotification;
         t.SlotsMaximalLong = _slotsLong;

@@ -74,14 +74,12 @@ public class AssetManagementSwitchTests : TestBase
 
 
     private bool _savedUseAssetManagement;
-    private decimal _savedStartCapital;
     private List<CryptoDcaEntry> _savedDcaList = [];
 
     [TestInitialize]
     public void SaveSettings()
     {
         _savedUseAssetManagement = GlobalData.Settings.Trading.UseAssetManagement;
-        _savedStartCapital = GlobalData.Settings.Trading.PaperAssetStartCapital;
         _savedDcaList = GlobalData.Settings.Trading.DcaList;
 
         // No DCA levels unless a test asks for them - the reservation is what most of these tests
@@ -94,7 +92,6 @@ public class AssetManagementSwitchTests : TestBase
     public void RestoreSettings()
     {
         GlobalData.Settings.Trading.UseAssetManagement = _savedUseAssetManagement;
-        GlobalData.Settings.Trading.PaperAssetStartCapital = _savedStartCapital;
         GlobalData.Settings.Trading.DcaList = _savedDcaList;
     }
 
@@ -247,7 +244,6 @@ public class AssetManagementSwitchTests : TestBase
     {
         var (database, symbol, _) = Arrange(total: 0m);
         GlobalData.Settings.Trading.UseAssetManagement = false;
-        GlobalData.Settings.Trading.PaperAssetStartCapital = 10000m;
         symbol.QuoteData!.EntryAmount = 100m;
         symbol.QuoteData.EntryPercentage = 0;
 

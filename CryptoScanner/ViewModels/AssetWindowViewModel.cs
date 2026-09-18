@@ -59,7 +59,7 @@ public partial class AssetWindowViewModel : ObservableObject
     private ObservableCollection<AssetRowViewModel> _assets = [];
 
     [ObservableProperty]
-    private decimal _startCapital = GlobalData.Settings.Trading.PaperAssetStartCapital;
+    private decimal _startCapital = PaperAssets.DefaultStartCapital;
 
     [ObservableProperty]
     private string _summary = "";

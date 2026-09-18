@@ -54,8 +54,8 @@ public class EmulatorRunConfig
     /// <summary>
     /// Paper-trading start capital for this run, per traded quote coin. The balances are wiped and
     /// handed out again at the start of every run, so two runs of the same period start with exactly
-    /// the same amount of money and stay comparable. 0 falls back to
-    /// Settings.Trading.PaperAssetStartCapital.
+    /// the same amount of money and stay comparable. 0 falls back to PaperAssets.DefaultStartCapital.
+    /// A filled Settings.Trading.PaperAssetDefaults overrules this amount altogether.
     /// </summary>
     public decimal StartCapital { get; set; } = 10000m;
 

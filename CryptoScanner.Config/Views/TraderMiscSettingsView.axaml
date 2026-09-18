@@ -124,20 +124,9 @@
                           FontSize="12"
                           ToolTip.Tip="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode."/>
 
-                <!-- Paper Start Capital -->
-                <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
-                      ToolTip.Tip="Amount handed out per traded quote coin when the balances are handed out for the first time, and what the emulator starts every run with. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Not used at all when the default asset list below holds anything.">
-                    <TextBlock Grid.Column="0" Text="Paper start capital:"
-                               VerticalAlignment="Center"
-                               Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="2"
-                             Text="{Binding PaperAssetStartCapital, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-                <!-- Default paper assets: the list that replaces the single amount above -->
+                <!-- Default paper assets: the balances a paper account starts with -->
                 <HeaderedContentControl Classes="groupbox" Header="Default paper assets" Margin="0,2,0,0"
-                      ToolTip.Tip="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. Filled in, this list replaces the start capital above, the start capital on the quote coins and the one of an emulator run; empty leaves all of those as they were.">
+                      ToolTip.Tip="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Empty means nothing is handed out, and a filled list also overrules the start capital of an emulator run.">
                     <StackPanel Margin="6" Spacing="4">
 
                         <StackPanel Orientation="Horizontal" Spacing="12">

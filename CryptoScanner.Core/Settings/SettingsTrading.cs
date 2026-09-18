@@ -114,26 +114,13 @@ public class SettingsTrading
     public CryptoTradeVia TradeVia { get; set; } = CryptoTradeVia.PaperTrade;
 
     /// <summary>
-    /// Start capital per traded quote coin for paper trading and the emulator. It is handed out once
-    /// per quote coin that has no balance yet - an existing balance is the result of earlier trading
-    /// and is never topped up. Use the emulator's reset or PaperAssets.ResetAssets to start over.
+    /// The balances a paper account starts with, one entry per coin. This list IS the starting point
+    /// of a paper account: it is handed out on an empty database and on every reset, and it is the
+    /// only place the scanner reads a starting balance from.
     /// <para>
-    /// Only for quote coins that have no start capital of their own: an amount filled in on the quote
-    /// coin (CryptoQuoteData.StartCapital) wins, because this one amount cannot be right for USDT and
-    /// BTC at the same time. See PaperAssets.ResolveStartCapital.
-    /// </para>
-    /// </summary>
-    public decimal PaperAssetStartCapital { get; set; } = 10000m;
-
-    /// <summary>
-    /// The balances a paper account starts with, one entry per coin. Filled in, this list IS the
-    /// starting point: it is handed out on an empty database and on every reset, and neither
-    /// <see cref="PaperAssetStartCapital"/> nor the start capital on a quote coin is looked at any
-    /// more - the emulator's per-run start capital included.
-    /// <para>
-    /// Empty (the default) leaves everything as it was: every traded quote coin gets its own start
-    /// capital, or the general amount above. Keep it empty in a data folder used for emulator runs
-    /// that vary their start capital.
+    /// Empty means the scanner hands out nothing at all - a paper account then starts at zero and
+    /// says so in the log tab. Keep it empty in a data folder used for emulator runs, because a run
+    /// carries its own start capital and a filled list overrules that one as well.
     /// </para>
     /// <para>
     /// Any coin may be in here, also one that is never traded as a quote coin - which is the point:

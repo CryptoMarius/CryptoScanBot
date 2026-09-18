@@ -236,7 +236,7 @@ public sealed class ReplayRunner
             // After the clean-state assert on purpose: the assert wants an empty asset list, and the
             // seeding is what fills it. Every run therefore starts with exactly the same amount of
             // money, so two runs over the same period stay comparable.
-            decimal startCapital = config.StartCapital > 0 ? config.StartCapital : GlobalData.Settings.Trading.PaperAssetStartCapital;
+            decimal startCapital = config.StartCapital > 0 ? config.StartCapital : PaperAssets.DefaultStartCapital;
             PaperAssets.ResetAssets(exchange, startCapital);
             // A filled default asset list is the starting point of the run, and then this amount is
             // not used at all - worth saying, because the run label still carries it.
@@ -244,8 +244,7 @@ public sealed class ReplayRunner
             if (assetDefaults > 0)
                 GlobalData.AddTextToLogTab($"Start capital: the {assetDefaults} default asset(s) of the settings");
             else
-                GlobalData.AddTextToLogTab($"Start capital: {startCapital:N2} per quote coin, " +
-                    "except the ones with a start capital of their own");
+                GlobalData.AddTextToLogTab($"Start capital: {startCapital:N2} per quote coin");
 
             // The first point of the capital line: the start capital, stamped with the first day of
             // the run. The date is handed in because the clock is parked on the END of the replay

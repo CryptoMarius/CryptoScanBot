@@ -1589,13 +1589,11 @@ public partial class MainWindowViewModel : ObservableObject
         GlobalData.Settings.Trading.Active = true;
         GlobalData.Settings.Trading.TradeVia = CryptoTradeVia.PaperTrade;
 
-        // The run's own asset choices win over settings.json for the duration of the run. Both land
-        // in the settings snapshot that is written just after this call, so a finished run says which
-        // amount it started from and whether the balances constrained it - reading that back from the
-        // label alone has burned us before.
+        // The run's own asset choice wins over settings.json for the duration of the run. It lands
+        // in the settings snapshot that is written just after this call, so a finished run says
+        // whether the balances constrained it - reading that back from the label alone has burned us
+        // before. The start capital itself is in the run config, which is stored with the run.
         GlobalData.Settings.Trading.UseAssetManagement = config.UseAssetManagement;
-        if (config.StartCapital > 0)
-            GlobalData.Settings.Trading.PaperAssetStartCapital = config.StartCapital;
 
         // Start from a clean IN-MEMORY zone slate. Stored zones are now tagged per run (EmulatorRunId)
         // and loaded per run, so a fresh run already starts with no zones of its own — no DB wipe and no

@@ -198,8 +198,7 @@ public static class PaperAssetsEditor
         if (defaults > 0)
             GlobalData.AddTextToLogTab($"Paper assets reset to the {defaults} default asset(s)");
         else
-            GlobalData.AddTextToLogTab($"Paper assets reset to {startCapital.ToString0()} per traded quote coin, " +
-                "except the ones with a start capital of their own");
+            GlobalData.AddTextToLogTab($"Paper assets reset to {startCapital.ToString0()} per traded quote coin");
         CaptureToday(activeExchange);
     }
 
@@ -211,8 +210,8 @@ public static class PaperAssetsEditor
     /// The two belong together: the balances carry the result of those positions, so deleting them
     /// while the money stays behind leaves a balance that no trade explains any more - a session that
     /// lost 2.000 and then cleared its positions would keep trading with 8.000 and call it the start.
-    /// The amount is the configured start capital; the paper-assets screen is the place to hand out a
-    /// different one.
+    /// The amount is the default asset list from the settings; the paper-assets screen is the place
+    /// to hand out a different one.
     /// </para>
     /// <para>
     /// Does nothing when the balances are not ours to hand out: with real trading or Altrady the money
@@ -228,7 +227,7 @@ public static class PaperAssetsEditor
             GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)
             return false;
 
-        Reset(activeExchange, GlobalData.Settings.Trading.PaperAssetStartCapital);
+        Reset(activeExchange, PaperAssets.DefaultStartCapital);
         return true;
     }
 
