@@ -1,0 +1,20 @@
+{
+  "_comment": "What the reference indicator DOES on a given day: dot = a white breakout dot is there, none = the chart was seen without one. A date that is absent is unknown, never a negative. Source per date is a screenshot or a video frame of the reference TBO on BTCUSDT daily.",
+  "2020-10-21": "dot",
+  "2023-10-24": "dot",
+  "2024-02-12": "dot",
+  "2024-10-28": "dot",
+  "2024-10-29": "dot",
+  "2024-10-30": "none",
+  "2024-11-06": "dot",
+  "2024-11-07": "none",
+  "2024-11-13": "none",
+  "2025-04-29": "none",
+  "2025-05-12": "dot",
+  "2025-05-17": "none",
+  "2025-05-18": "dot",
+  "2025-05-19": "dot",
+  "2025-05-20": "none",
+  "2026-08-19": "none",
+  "2026-09-03": "none"
+}

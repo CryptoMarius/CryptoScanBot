@@ -152,7 +152,11 @@ def find_signals(frame, trigger):
     pivot_high, pivot_low = pivot_levels(high, low, PIVOT_LEFT, PIVOT_RIGHT)
 
     if trigger == "mark":
-        return chart_marks(high, low, cloud_up, cloud_down, ready, pivot_high, pivot_low)
+        # The chart marker asks for the two EMAs only - TboChartOverlay.FindConfirmations never
+        # looks at the two SMAs. Handing it the readiness of the whole cloud would silently drop
+        # every mark in the first 150 candles of a stretch, which is most of a reference window.
+        ema_ready = ~(np.isnan(fast) | np.isnan(second))
+        return chart_marks(high, low, ema_ready & (fast > second), ema_ready, pivot_high, pivot_low)
 
     close_previous = np.full(len(close), np.nan)
     close_previous[1:] = close[:-1]
@@ -167,7 +171,7 @@ def find_signals(frame, trigger):
     return np.flatnonzero(longs), np.flatnonzero(shorts)
 
 
-def chart_marks(high, low, cloud_up, cloud_down, ready, pivot_high, pivot_low):
+def chart_marks(high, low, cloud_up, ready, pivot_high, pivot_low):
     """The white dots of the chart overlay, rebuilt from TboChartOverlay.FindConfirmations."""
     count = len(high)
     longs, shorts = [], []
