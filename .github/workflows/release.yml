@@ -144,11 +144,36 @@ jobs:
             Write-Host "$zip is ready ($([math]::Round((Get-Item $zip).Length / 1MB, 1)) MB)"
           }
 
-      - name: Keep the packages as workflow artifacts
+      # One artifact per package, not one artifact holding all three. upload-artifact packs
+      # everything it is given into a single archive, so a step per package is what keeps the three
+      # zips separately downloadable instead of one bundle of a quarter of a gigabyte that has to be
+      # unpacked before you can get at the one you need. compression-level 0 because the content is
+      # already a zip: compressing it again costs time and gains nothing.
+      #
+      # This only matters for a manual run. On a tag run the three zips are attached to the release
+      # itself, and there they are separate files regardless.
+      - name: Keep the Windows package as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CryptoScanBot-${{ steps.version.outputs.version }}
-          path: build/*.zip
+          name: CryptoScanBot-${{ steps.version.outputs.version }}-win-x64
+          path: build/CryptoScanBot-${{ steps.version.outputs.version }}-win-x64.zip
+          compression-level: 0
+          retention-days: 14
+
+      - name: Keep the macOS package as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CryptoScanBot-${{ steps.version.outputs.version }}-osx-arm64
+          path: build/CryptoScanBot-${{ steps.version.outputs.version }}-osx-arm64.zip
+          compression-level: 0
+          retention-days: 14
+
+      - name: Keep the Linux package as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CryptoScanBot-${{ steps.version.outputs.version }}-linux-x64
+          path: build/CryptoScanBot-${{ steps.version.outputs.version }}-linux-x64.zip
+          compression-level: 0
           retention-days: 14
 
       - name: Attach the packages to the release
