@@ -261,7 +261,6 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
         run: |
           $ErrorActionPreference = 'Stop'
           $tag = $env:GITHUB_REF_NAME
@@ -276,7 +275,7 @@ jobs:
 
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --title $tag --notes "CryptoScanBot $env:VERSION`n`n$policy"
+            gh release create $tag --title $tag --notes $policy
             if ($LASTEXITCODE -ne 0) { throw "could not create the release for $tag" }
           }
 
