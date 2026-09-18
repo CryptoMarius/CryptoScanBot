@@ -1,3 +1,4 @@
+using CryptoScanner.Analyzers.Dbr;
 using CryptoScanner.Analyzers.Tbo;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Emulator.Engine;
@@ -28,6 +29,22 @@ public class StrategyOwnEntryConditionsTests : TestBase
         // The signal overrides find a plugin section by strategy name through PluginManager, so the
         // plugin has to be registered before "tbo" resolves to anything at all.
         RegisterAndEnablePlugin(new TboPlugin());
+
+        // A strategy WITHOUT its own set, to prove the refusal below does not catch everything.
+        RegisterAndEnablePlugin(new DbrPlugin());
+    }
+
+
+    private static EmulatorQueueEntry TradingOverrideEntry(string algorithm, string json)
+    {
+        return new EmulatorQueueEntry
+        {
+            Algorithm = algorithm,
+            TradingOverrides = new()
+            {
+                ["EntryConditions.CheckPriceAboveMa200"] = JsonDocument.Parse(json).RootElement,
+            },
+        };
     }
 
 
@@ -99,5 +116,49 @@ public class StrategyOwnEntryConditionsTests : TestBase
         Assert.IsFalse(TboPlugin.Settings.EntryConditions!.CheckPriceAboveMa200,
             "and it has to go back afterwards, or every later run in the batch measures it too");
         Assert.AreEqual(0, TboPlugin.Settings.EntryConditions.Ma200ConfirmationCandles);
+    }
+
+
+    /// <summary>
+    /// The refusal itself: an entry that switches a condition ON for a strategy that brings its own
+    /// set is stopped before it runs, with the working spelling in the message.
+    /// </summary>
+    [TestMethod]
+    public void SwitchingAConditionOnForSuchAStrategyIsRefused()
+    {
+        InitTestSession();
+
+        string? reason = SignalGridExpander.Validate(TradingOverrideEntry("tbo", "true"));
+
+        Assert.IsNotNull(reason, "this entry measures nothing and has to say so before the batch starts");
+        StringAssert.Contains(reason, "SignalOverrides");
+        StringAssert.Contains(reason, "tbo");
+
+        // And the same question is asked again before anything is set.
+        Assert.ThrowsExactly<NotSupportedException>(
+            () => SignalGridExpander.Apply(TradingOverrideEntry("tbo", "true")));
+    }
+
+
+    /// <summary>
+    /// Switching one OFF is what most entries do to pin the setup, and it is exactly what the
+    /// strategy's own set already says - so it stays silent.
+    /// </summary>
+    [TestMethod]
+    public void SwitchingItOffIsLeftAlone()
+    {
+        InitTestSession();
+
+        Assert.IsNull(SignalGridExpander.Validate(TradingOverrideEntry("tbo", "false")));
+    }
+
+
+    [TestMethod]
+    public void AStrategyWithoutItsOwnSetIsNotAffected()
+    {
+        InitTestSession();
+
+        Assert.IsNull(SignalGridExpander.Validate(TradingOverrideEntry("dbr", "true")),
+            "dbr reads the global set, so the override does reach it");
     }
 }

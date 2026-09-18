@@ -41,6 +41,13 @@ public static class SignalGridExpander
 
     private static void ApplyCore(EmulatorQueueEntry entry, List<Override> saved)
     {
+        // Before anything is set: an entry condition that cannot reach its strategy is a measurement
+        // that silently is not one. Validate() asks the same question before the batch starts; this
+        // is here for the callers that do not.
+        string? unreachable = DescribeUnreachableEntryCondition(entry);
+        if (unreachable != null)
+            throw new NotSupportedException(unreachable);
+
         foreach (var (sectionName, props) in entry.SignalOverrides)
         {
             // "Signal" addresses SettingsSignal itself, for properties that do not live in one of
@@ -167,17 +174,73 @@ public static class SignalGridExpander
                 && !path.StartsWith(retired + ".", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            bool isOff = jsonVal.ValueKind switch
-            {
-                JsonValueKind.Array => jsonVal.GetArrayLength() == 0,
-                JsonValueKind.False or JsonValueKind.Null or JsonValueKind.Undefined => true,
-                JsonValueKind.Number => jsonVal.TryGetDecimal(out decimal d) && d == 0m,
-                _ => false,
-            };
-            if (isOff)
+            if (IsSwitchedOff(jsonVal))
                 return null;
 
             return $"Queue entry sets \"{propPath}\", but {reason}.";
+        }
+
+        return null;
+    }
+
+
+    /// <summary>
+    /// Whether this value is the setting in its "off" position - an empty list, false, or zero.
+    /// Asking for a setting that cannot be applied is a hard stop; switching one off is harmless and
+    /// stays silent, because the entry would have measured the same thing either way.
+    /// </summary>
+    private static bool IsSwitchedOff(JsonElement jsonVal)
+    {
+        return jsonVal.ValueKind switch
+        {
+            JsonValueKind.Array => jsonVal.GetArrayLength() == 0,
+            JsonValueKind.False or JsonValueKind.Null or JsonValueKind.Undefined => true,
+            JsonValueKind.Number => jsonVal.TryGetDecimal(out decimal d) && d == 0m,
+            _ => false,
+        };
+    }
+
+
+    /// <summary>
+    /// Why an entry condition in this entry's TRADING overrides will never be seen by the strategy
+    /// it is meant for, or null when there is nothing wrong.
+    /// <para>
+    /// A strategy may bring its own <c>EntryConditions</c> - tbo, bbsqueeze and kumosqueeze do - and
+    /// SignalBase.ResolveEntryConditions then prefers that set over
+    /// <c>GlobalData.Settings.Trading.EntryConditions</c>. An entry that switches a condition on in
+    /// the trading overrides therefore changes nothing for such a strategy, and nothing says so: the
+    /// run completes, the stored settings show the condition as ON, and the result is bit-identical
+    /// to the run without it. Four runs of 17-09-2026 were spent that way before the identical
+    /// numbers gave it away.
+    /// </para>
+    /// <para>
+    /// Only an entry that names its <see cref="EmulatorQueueEntry.Algorithm"/> can be judged, which
+    /// is every entry the folder queue accepts. Switching a condition OFF is left alone: that is
+    /// what the strategy's own set already says.
+    /// </para>
+    /// </summary>
+    private static string? DescribeUnreachableEntryCondition(EmulatorQueueEntry entry)
+    {
+        if (string.IsNullOrEmpty(entry.Algorithm))
+            return null;
+
+        IStrategyPlugin? plugin = PluginManager.LoadedPlugins.Values.FirstOrDefault(p =>
+            p.StrategyName.Equals(entry.Algorithm, StringComparison.OrdinalIgnoreCase)
+            || p.Strategies.Any(s => s.Name.Equals(entry.Algorithm, StringComparison.OrdinalIgnoreCase)));
+        if (plugin?.SettingsBase.EntryConditions == null)
+            return null;
+
+        foreach (var (propPath, jsonVal) in entry.TradingOverrides)
+        {
+            if (!propPath.StartsWith("EntryConditions.", StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (IsSwitchedOff(jsonVal))
+                continue;
+
+            return $"Queue entry switches \"{propPath}\" on through the trading overrides, but "
+                + $"{plugin.StrategyName} has entry conditions of its own and never reads those. "
+                + $"Move it to the signal overrides: \"SignalOverrides\": {{ \"{plugin.StrategyName}\": "
+                + $"{{ \"{propPath}\": ... }} }}";
         }
 
         return null;
@@ -214,7 +277,7 @@ public static class SignalGridExpander
                 return reason;
         }
 
-        return null;
+        return DescribeUnreachableEntryCondition(entry);
     }
 
 
