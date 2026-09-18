@@ -118,6 +118,14 @@ jobs:
           $src = Join-Path $env:RUNNER_TEMP 'photino.Native'
           $tools = Join-Path $env:GITHUB_WORKSPACE 'Tools\PhotinoNative'
 
+          # The dll is a tracked file, so replacing it makes the working tree dirty, and the build
+          # stamp in Directory.Build.props runs "git describe --always --dirty". Without this the
+          # About box of an official release would read "2.6.7+a1b2c3d4-dirty", which claims the
+          # build came from edited sources. --assume-unchanged hides this one file from git; it
+          # changes nothing in the repository and lives only on the runner.
+          git update-index --assume-unchanged Tools/PhotinoNative/Photino.Native.dll
+          if ($LASTEXITCODE -ne 0) { throw 'could not hide the committed dll from git' }
+
           # The committed dll goes first, so no later step can pick it up by accident.
           Remove-Item (Join-Path $tools 'Photino.Native.dll') -Force
 
