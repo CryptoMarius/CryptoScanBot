@@ -7,8 +7,9 @@ TODO:
 -Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
 
 
-xx-10-2025 2.6.7
+19-09-2025 2.6.7
 - Documentatie bijgewerkt
+- Overbodige instellingen van de asset management verwijderd (zie trader/assets)
 - Hypertrader verwijderd, die app lijkt ondertussen verouderd en wordt zo te zien niet meer onderhouden
 - Strategieen: Elke strategie heeft nu een eigen intervallijst, leeg betekent hetzelfde als de zijde
 - Nieuwe strategie Tbo: een wolk van vier voortschrijdende gemiddelden met drie instapmomenten

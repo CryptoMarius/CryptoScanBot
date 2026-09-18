@@ -12,10 +12,12 @@
 #  scanner folder, because two files exist in both publishes with different versions and the
 #  Photino ones are the ones all three .deps.json files ask for.
 #
-#  Two deviations from the local script, both on purpose:
+#  Three deviations from the local script, all on purpose:
 #    - The package folder is deleted after it has been zipped. A runner has far less disk than a
 #      development machine and three unpacked packages plus their zips do not fit comfortably.
 #    - The local tags are dropped after checkout (see the step itself for why).
+#    - The patched Photino.Native.dll is built here from the upstream source instead of taken from
+#      Tools\PhotinoNative, so every file in the package comes out of this build.
 #
 #  Started by pushing a version tag (2.6.8), or by hand from the Actions tab. A tag run also
 #  attaches the three zips to the GitHub release of that tag; a manual run only leaves them as
@@ -90,6 +92,72 @@ jobs:
             Write-Error "Tag $env:GITHUB_REF_NAME does not match <Version> $version in Directory.Build.props"
             exit 1
           }
+
+      # The Photino window leaks one UTF-16 copy of every render batch in Photino.Native 4.0.22, so
+      # the Windows package carries a patched build of that dll. Tools\PhotinoNative holds the patch,
+      # the upstream commit it applies to and a script that builds it on a development machine, and a
+      # copy of the built dll is committed there as well so that a developer without the C++ workload
+      # can still build the scanner. That committed copy is the one file in the package the build
+      # system cannot account for, which is exactly what a package signed by SignPath Foundation
+      # should not contain, so the runner throws it away and builds the dll from source itself.
+      #
+      # A failure here fails the workflow instead of quietly falling back to the dll from the NuGet
+      # package. That one still has the leak, and a release that grows 30 to 50 MB per hour is worse
+      # than a release that is a day late.
+      #
+      # Only the Windows package uses it: CryptoScanner.Photino.csproj copies the file for an empty
+      # or win-x64 RuntimeIdentifier, so the macOS and Linux publishes below are untouched.
+      - name: Build the patched Photino.Native.dll
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # The commit the patch was written against (see Tools\PhotinoNative\README.md). Pinned on
+          # purpose: the patch is a diff against these exact lines and upstream master moves.
+          $upstream = '3986d60'
+          $src = Join-Path $env:RUNNER_TEMP 'photino.Native'
+          $tools = Join-Path $env:GITHUB_WORKSPACE 'Tools\PhotinoNative'
+
+          # The committed dll goes first, so no later step can pick it up by accident.
+          Remove-Item (Join-Path $tools 'Photino.Native.dll') -Force
+
+          git clone --quiet https://github.com/tryphotino/photino.Native.git $src
+          if ($LASTEXITCODE -ne 0) { throw 'could not clone photino.Native' }
+          git -C $src checkout --quiet $upstream
+          if ($LASTEXITCODE -ne 0) { throw "could not check out $upstream" }
+          git -C $src apply --whitespace=nowarn (Join-Path $tools 'photino-native-webmessage-leak.patch')
+          if ($LASTEXITCODE -ne 0) { throw 'the patch did not apply - did upstream change?' }
+
+          # vswhere instead of a hard coded path: the runner image decides which Visual Studio it
+          # carries, and it is not the one the local build script points at.
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $vs) { throw 'this runner has no Visual Studio with the C++ tools' }
+          $msbuild = Join-Path $vs 'MSBuild\Current\Bin\MSBuild.exe'
+          if (-not (Test-Path $msbuild)) { throw "no MSBuild at $msbuild" }
+
+          # packages.config, not PackageReference: the vcxproj imports the WebView2 and WIL targets
+          # from ..\packages\<Id>.<Version>\build. nuget.exe restore -PackagesDirectory writes
+          # exactly that layout; an msbuild restore drops them in the global packages folder, where
+          # the project does not look - the same trap the local build script works around.
+          if (-not (Get-Command nuget -ErrorAction SilentlyContinue)) { throw 'nuget.exe is not on the path of this runner' }
+          & nuget restore (Join-Path $src 'Photino.Native\packages.config') -PackagesDirectory (Join-Path $src 'packages') -NonInteractive
+          if ($LASTEXITCODE -ne 0) { throw 'restore of the native packages failed' }
+
+          # The project asks for toolset v143 (Visual Studio 2022). Try that first and fall back to
+          # v145, the same order the local script uses, so a newer image still builds.
+          $vcxproj = Join-Path $src 'Photino.Native\Photino.Native.vcxproj'
+          & $msbuild $vcxproj -p:Configuration=Release -p:Platform=x64 -v:m
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host 'Toolset v143 not available, retrying with v145 ...'
+            & $msbuild $vcxproj -p:Configuration=Release -p:Platform=x64 -p:PlatformToolset=v145 -v:m
+            if ($LASTEXITCODE -ne 0) { throw 'the native build of Photino.Native failed' }
+          }
+
+          $built = Join-Path $src 'Photino.Native\x64\Release\Photino.Native.dll'
+          if (-not (Test-Path $built)) { throw 'the native build produced no dll' }
+          Copy-Item $built (Join-Path $tools 'Photino.Native.dll') -Force
+          Write-Host "Photino.Native.dll built from $upstream ($([math]::Round((Get-Item $built).Length / 1KB)) KB)"
 
       - name: Build the packages
         shell: pwsh
