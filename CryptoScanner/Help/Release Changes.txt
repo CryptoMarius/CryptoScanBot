@@ -8,6 +8,7 @@ TODO:
 
 
 xx-10-2025 2.6.7
+- Documentatie bijgewerkt
 - Strategieen: Elke strategie heeft nu een eigen intervallijst, leeg betekent hetzelfde als de zijde
 - Nieuwe strategie Tbo: een wolk van vier voortschrijdende gemiddelden met drie instapmomenten
 - Chart: De kleuren uit het kleurenscherm gelden nu ook voor de Avalonia charts, en elke strategie levert zijn eigen instelbare lijnen aan

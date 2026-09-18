@@ -1,4 +1,4 @@
-@using CryptoScanner.Core.Core
+﻿@using CryptoScanner.Core.Core
 
 @if (Visible)
 {
@@ -20,6 +20,10 @@
             }
             <div class="about-copyright">@_copyright</div>
             <div class="about-author">Author: Marius</div>
+            @* The licence and where to read its full text. Both come from Constants so this dialog
+               and the Avalonia About window always show the same wording. *@
+            <div class="about-copyright">@CryptoScanner.Core.Const.Constants.License</div>
+            <div class="about-copyright">@CryptoScanner.Core.Const.Constants.LicenseUrl</div>
 
             <div class="about-section-title">Application Info</div>
             <div class="about-info-list">

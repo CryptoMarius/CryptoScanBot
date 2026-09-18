@@ -1,0 +1,175 @@
+# =================================================================================================
+#  Builds the three release packages on GitHub, the same way publish-release.cmd builds them on the
+#  development machine:
+#
+#    CryptoScanBot-<version>-win-x64.zip    scanner + emulator + Photino, Windows
+#    CryptoScanBot-<version>-osx-arm64.zip  scanner + emulator + Photino, Apple Silicon
+#    CryptoScanBot-<version>-linux-x64.zip  scanner + emulator + Photino, Linux (glibc, x64)
+#
+#  It runs on a Windows runner and uses the same commands as the local script, including the
+#  tar.exe that ships with Windows, so the packages are built the way they have always been built.
+#  The ordering trap is the same one the local script documents: Photino has to land ON TOP of the
+#  scanner folder, because two files exist in both publishes with different versions and the
+#  Photino ones are the ones all three .deps.json files ask for.
+#
+#  Two deviations from the local script, both on purpose:
+#    - The package folder is deleted after it has been zipped. A runner has far less disk than a
+#      development machine and three unpacked packages plus their zips do not fit comfortably.
+#    - The local tags are dropped after checkout (see the step itself for why).
+#
+#  Started by pushing a version tag (2.6.8), or by hand from the Actions tab. A tag run also
+#  attaches the three zips to the GitHub release of that tag; a manual run only leaves them as
+#  workflow artifacts.
+#
+#  This workflow is what makes the build verifiable for a third party: anyone can see which commit
+#  produced which zip. That is also what SignPath Foundation asks for, and the signing step would
+#  be added right after the packages are zipped.
+# =================================================================================================
+
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Drop the local tags
+        shell: pwsh
+        run: |
+          # The build stamp in Directory.Build.props runs "git describe --always --dirty". With a
+          # tag in reach that returns the tag instead of a commit hash, so the About box would read
+          # "2.6.8+2.6.8" - a version number twice instead of the commit that produced the build.
+          # Without local tags describe falls back to the hash, exactly like a build on the
+          # development machine. The release step below uses the tag from GITHUB_REF_NAME, so
+          # nothing else depends on the tags being here.
+          git tag -l | ForEach-Object { git tag -d $_ } | Out-Null
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # The development machine builds these net8.0 projects with the .NET 10 SDK, so the
+          # runner uses the same one. Pin this to an exact version (10.0.401) if a build has to be
+          # reproducible down to the SDK patch level.
+          dotnet-version: '10.0.x'
+
+      - name: Read the version from Directory.Build.props
+        id: version
+        shell: pwsh
+        run: |
+          # The version lives in exactly one place. A second copy here would drift the moment one of
+          # the two is bumped and the other is not, and the zip would name a version that the
+          # binaries inside it do not carry.
+          $props = Get-Content Directory.Build.props -Raw
+          if ($props -notmatch '<Version>([^<]+)</Version>') {
+            Write-Error 'Could not read <Version> from Directory.Build.props'
+            exit 1
+          }
+          $version = $Matches[1].Trim()
+          Write-Host "Version $version"
+          # -Encoding utf8 on purpose: without it Out-File writes UTF-16 on Windows PowerShell and
+          # the runner reads the output as "v e r s i o n = ...". pwsh defaults to UTF-8, but a
+          # value that only works because of a default is a value waiting to break.
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+          # A tag run must name the version that is actually in the sources. Without this check a
+          # tag 2.6.8 on a tree that still says 2.6.7 would quietly produce 2.6.7 packages under a
+          # 2.6.8 release.
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne $version) {
+            Write-Error "Tag $env:GITHUB_REF_NAME does not match <Version> $version in Directory.Build.props"
+            exit 1
+          }
+
+      - name: Build the packages
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $publishDir = Join-Path $env:GITHUB_WORKSPACE 'build'
+          New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
+          $tar = Join-Path $env:SystemRoot 'System32\tar.exe'
+
+          foreach ($rid in 'win-x64', 'osx-arm64', 'linux-x64') {
+            Write-Host "=== CryptoScanBot $env:VERSION $rid (scanner + emulator + Photino) ==="
+
+            $package = Join-Path $publishDir "CryptoScanBot-$env:VERSION-$rid"
+            $photino = Join-Path $publishDir "photino-tmp-$rid"
+            $zip     = "$package.zip"
+
+            # The scanner csproj has a BundleEmulatorIntoPublish target, so CryptoScanBot.Emulator
+            # lands in the same folder - it does not need its own publish command here.
+            dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r $rid --self-contained true -o $package --nologo -v minimal
+            if ($LASTEXITCODE -ne 0) { throw "publish of the scanner failed for $rid" }
+
+            dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r $rid --self-contained true -o $photino --nologo -v minimal
+            if ($LASTEXITCODE -ne 0) { throw "publish of Photino failed for $rid" }
+
+            # Photino ON TOP of the scanner, overwriting unconditionally. Publishing it straight
+            # into the scanner folder does NOT do that: publish keeps whatever file has the newest
+            # timestamp, so the newer assembly was silently skipped. xcopy /y does not care about
+            # timestamps, which is the whole point. It is also the reason this is not Copy-Item:
+            # Copy-Item -Recurse puts a subfolder that exists on both sides (wwwroot) INSIDE the
+            # existing one instead of merging it, xcopy merges.
+            & xcopy "$photino\*" "$package\" /e /y /r /q | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "merging Photino into the package failed for $rid" }
+            Remove-Item -Path $photino -Recurse -Force
+
+            # 80 MB of native Skia symbols that never help with our own exceptions. The debug
+            # symbols of our own assemblies are kept, so a stack trace from a user's log still
+            # carries file names and line numbers.
+            $skiaPdb = Join-Path $package 'libSkiaSharp.pdb'
+            if (Test-Path $skiaPdb) { Remove-Item $skiaPdb -Force }
+
+            # The tar.exe that ships with Windows (bsdtar) writes forward slashes in the zip, which
+            # matters for the macOS package: a zip made by Explorer or PowerShell 5.1 stores
+            # backslashes and unpacks into a mess on a Mac.
+            & $tar -a -c -f $zip -C $publishDir "CryptoScanBot-$env:VERSION-$rid"
+            if ($LASTEXITCODE -ne 0) { throw "zipping failed for $rid" }
+
+            # Disk on a runner is limited, and the zip is the only thing that still has to travel.
+            Remove-Item -Path $package -Recurse -Force
+
+            Write-Host "$zip is ready ($([math]::Round((Get-Item $zip).Length / 1MB, 1)) MB)"
+          }
+
+      - name: Keep the packages as workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CryptoScanBot-${{ steps.version.outputs.version }}
+          path: build/*.zip
+          retention-days: 14
+
+      - name: Attach the packages to the release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = $env:GITHUB_REF_NAME
+
+          # The release is usually created by hand, with the release notes in it. Only create one
+          # when it is not there yet, so notes that are already written are never overwritten.
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --title $tag --notes "CryptoScanBot $env:VERSION"
+            if ($LASTEXITCODE -ne 0) { throw "could not create the release for $tag" }
+          }
+
+          # --clobber so a rerun of the workflow replaces the assets instead of failing on them.
+          $zips = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'build') -Filter *.zip | ForEach-Object { $_.FullName }
+          gh release upload $tag @zips --clobber
+          if ($LASTEXITCODE -ne 0) { throw "could not upload the packages to $tag" }

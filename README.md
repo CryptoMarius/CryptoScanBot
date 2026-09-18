@@ -26,3 +26,25 @@ The list at the top is the current state, all of those are switched on and scann
 Furthermore: Very nice that you try this application, in the wiki you can find an explanation of what the application does, the installation, necessary settings etc.. I hope you enjoy trading, the communities and have some luck in this special world!
 
 <img width="1920" height="1200" alt="Main screen + signals" src="https://github.com/user-attachments/assets/7f50955d-66bd-416c-b9cf-b7cd1eee4b29" />
+
+## License
+
+Copyright (C) 2026 Marius
+
+CryptoScanBot is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. It is in
+the LICENSE file in the root of this repository. If not, see <https://www.gnu.org/licenses/>.
+
+### Third party code
+
+The indicators that name a published source in their comments (the Nadaraya-Watson Envelope, the
+LuxAlgo RSI Multi Length areas and the StoRsi TradingView script) are re-implementations in C#,
+written from the published formula and the described behaviour. They are not translations of the
+original Pine scripts. The comments name the source so the origin of the idea stays visible.

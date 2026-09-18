@@ -1,10 +1,10 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:CryptoScanner.ViewModels"
         x:Class="CryptoScanner.Views.AboutWindow"
         x:DataType="vm:AboutWindowViewModel"
         Title="{Binding Title}"
-        Width="400" Height="600"
+        Width="400" Height="640"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         SystemDecorations="BorderOnly">
@@ -59,7 +59,11 @@
             <TextBlock Text="{Binding Copyright}" Classes="copyright"/>
             
             <!-- Author -->
-            <TextBlock Text="{Binding Author}" Classes="copyright" Margin="0,0,0,16"/>
+            <TextBlock Text="{Binding Author}" Classes="copyright"/>
+
+            <!-- Licence -->
+            <TextBlock Text="{Binding License}" Classes="copyright"/>
+            <TextBlock Text="{Binding LicenseUrl}" Classes="copyright" Margin="0,0,0,16"/>
             
             <!-- Supported Exchanges Label -->
             <TextBlock Text="Supported Exchanges:" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,4"/>

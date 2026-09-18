@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
@@ -29,6 +29,14 @@ public partial class AboutWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private string _author = "Marius";
+
+    // The licence and the address where its full text can be read. Both come from Constants so the
+    // Avalonia and the Photino About screen always show the same wording.
+    [ObservableProperty]
+    private string _license = CryptoScanner.Core.Const.Constants.License;
+
+    [ObservableProperty]
+    private string _licenseUrl = CryptoScanner.Core.Const.Constants.LicenseUrl;
 
     [ObservableProperty]
     private ObservableCollection<string> _exchanges = [];
