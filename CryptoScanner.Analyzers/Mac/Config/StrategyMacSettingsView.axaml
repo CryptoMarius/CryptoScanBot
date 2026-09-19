@@ -3,10 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="620"
-             xmlns:vm="using:CryptoScanner.Analyzers.Tbo.Config"
-             x:DataType="vm:StrategyTboSettingsViewModel"
+             xmlns:vm="using:CryptoScanner.Analyzers.Mac.Config"
+             x:DataType="vm:StrategyMacSettingsViewModel"
              x:CompileBindings="True"
-             x:Class="CryptoScanner.Analyzers.Tbo.Config.StrategyTboSettingsView">
+             x:Class="CryptoScanner.Analyzers.Mac.Config.StrategyMacSettingsView">
 
     <HeaderedContentControl Classes="groupbox" Header="Settings">
         <!-- Two columns: seventeen settings under each other made the box taller than the window.

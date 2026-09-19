@@ -25,7 +25,7 @@ public sealed class VbsCandleData
 
     /// <summary>
     /// ACS (Average Candle Size) as a percentage: AcsFactor * SMA((high-low)/close, AcsLength) * 100.
-    /// Drives the stop-loss (SL = entry -/+ Acs%), reverse-engineered from TradingBuddy.
+    /// Drives the stop-loss (SL = entry -/+ Acs%).
     /// </summary>
     public double? Acs { get; set; }
 

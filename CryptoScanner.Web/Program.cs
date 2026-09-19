@@ -7,6 +7,8 @@ using CryptoScanner.Core.Sounds;
 using CryptoScanner.UI.Services;
 using CryptoScanner.Web.Components;
 
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Reflection;
 
 namespace CryptoScanner.Web;
@@ -30,6 +32,24 @@ class Program
 
         var builder = WebApplication.CreateBuilder(args);
         builder.WebHost.UseStaticWebAssets();
+
+        // The port comes from the -p option, next to the -f option that picks the data folder: one
+        // instance is one data folder plus one port, and several scanners run side by side.
+        ApplicationParams.InitApplicationOptions();
+        int webPort = ApplicationParams.Options?.WebPort ?? DefaultWebPort;
+
+        // ListenAnyIP instead of the loopback address the host started with. Loopback answers only
+        // to the machine itself, so a phone on the same wifi never gets a reply; binding every
+        // interface is what makes the front end reachable from the local network.
+        //
+        // Configuring Kestrel in code also settles the question of who wins: an endpoint defined
+        // here overrules ASPNETCORE_URLS and the applicationUrl of a launch profile, so the port
+        // stays the one that was asked for no matter how the host was started.
+        //
+        // THERE IS NO LOGIN IN FRONT OF THIS. Anyone on the same network can open the scanner and
+        // press its buttons, including the ones that trade. Only run it on a network you trust and
+        // do not forward the port on a router.
+        builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webPort));
 
         // Platform services
         if (OperatingSystem.IsWindows())
@@ -194,9 +214,65 @@ class Program
         });
 
         Console.WriteLine($"CryptoScanBot Web v{GlobalData.AppVersion}");
-        Console.WriteLine($"Open http://localhost:5000 in your browser");
+        foreach (string address in GetReachableAddresses())
+            Console.WriteLine($"Open http://{address}:{webPort} in your browser");
+        Console.WriteLine("Anyone on this network can open it, there is no login yet");
 
-        app.Run("http://localhost:5000");
+        // The endpoint is configured on the host above, so no url here: passing one would add a
+        // second endpoint instead of replacing the first.
+        app.Run();
+    }
+
+
+    /// <summary>
+    /// Default port of the web front end, used when -p is not given.
+    /// </summary>
+    private const int DefaultWebPort = 5000;
+
+
+    /// <summary>
+    /// The addresses this machine answers on, so the console prints what to type on a phone instead
+    /// of leaving that to ipconfig. Loopback comes first because it always works; after it comes
+    /// every network adapter that is up and carries an ordinary IPv4 address.
+    /// </summary>
+    private static List<string> GetReachableAddresses()
+    {
+        List<string> result = ["localhost"];
+
+        try
+        {
+            foreach (var network in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                // An adapter that is down has no address to hand out, loopback is already in the
+                // list, and a tunnel is not what a phone on the same wifi reaches the machine on.
+                if (network.OperationalStatus != OperationalStatus.Up)
+                    continue;
+                if (network.NetworkInterfaceType == NetworkInterfaceType.Loopback || network.NetworkInterfaceType == NetworkInterfaceType.Tunnel)
+                    continue;
+
+                foreach (var unicast in network.GetIPProperties().UnicastAddresses)
+                {
+                    // IPv6 addresses are skipped: correct, but nothing anyone types on a phone
+                    if (unicast.Address.AddressFamily != AddressFamily.InterNetwork)
+                        continue;
+
+                    // 169.254.x.x means the adapter never got an address from the router, so it
+                    // cannot be reached from the network either
+                    string address = unicast.Address.ToString();
+                    if (address.StartsWith("169.254."))
+                        continue;
+
+                    result.Add(address);
+                }
+            }
+        }
+        catch (Exception error)
+        {
+            // A missing address list is a worse console message, not a reason to refuse to start
+            ScannerLog.Logger.Error(error, "GetReachableAddresses");
+        }
+
+        return result;
     }
 
 }

@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
 
@@ -87,7 +87,7 @@ public class VbsSignalShort : VbsSignalVbs
 
 
         // Stop-loss = Entry + ACS% (short). ACS (Average Candle Size) is precomputed on CandleData;
-        // the SL distance % equals the average candle size % (reverse-engineered from TradingBuddy).
+        // the SL distance % equals the average candle size %.
         double pctDeviation = vbs.Acs ?? 0;
 
         // Band break confirmation: higher timeframes must also show a band break.

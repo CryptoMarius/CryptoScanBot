@@ -1,10 +1,10 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal;
 
-namespace CryptoScanner.Analyzers.Tbo.Signal;
+namespace CryptoScanner.Analyzers.Mac.Signal;
 
 /// <summary>
-/// TBO - the trend cloud, with three entries, each of which is a different idea:
+/// MAC - the trend cloud, with three entries, each of which is a different idea:
 /// <list type="bullet">
 /// <item>the BREAKOUT: the candle closes through the last confirmed pivot level, with the cloud
 /// pointing the way of the trade;</item>
@@ -15,7 +15,7 @@ namespace CryptoScanner.Analyzers.Tbo.Signal;
 /// Each has its own switch, so a run measures them apart or together.
 /// <para>
 /// Every filter on top of those triggers is off by default, so the bare rule is measured first and
-/// each filter after it on its own. See <see cref="TboSettings"/>.
+/// each filter after it on its own. See <see cref="MacSettings"/>.
 /// </para>
 /// <para>
 /// The checks run cheapest first. Everything that reads the candle in hand comes before the single
@@ -23,15 +23,15 @@ namespace CryptoScanner.Analyzers.Tbo.Signal;
 /// most candles never get past the cloud.
 /// </para>
 /// </summary>
-public class TboBase : SignalCreateBase
+public class MacBase : SignalCreateBase
 {
     public override bool IndicatorsOkay(MyData data)
     {
         if (data == null || data.Candle.OpenTime == 0 || data.CandleData == null)
             return false;
-        TboCandleData? tbo = data.CandleData.GetPluginData<TboCandleData>();
-        return tbo?.EmaFast != null && tbo.EmaSecond != null
-            && tbo.SmaMedium != null && tbo.SmaSlow != null;
+        MacCandleData? mac = data.CandleData.GetPluginData<MacCandleData>();
+        return mac?.EmaFast != null && mac.EmaSecond != null
+            && mac.SmaMedium != null && mac.SmaSlow != null;
     }
 
     public override bool HasExitSignal => Settings.ExitOnCloudFlip;
@@ -41,28 +41,28 @@ public class TboBase : SignalCreateBase
     /// The settings this instance reads. Virtual so a variant that derives from this strategy can
     /// hand back its OWN settings object, which keeps the two tunable apart from each other.
     /// </summary>
-    protected virtual TboSettings Settings => TboPlugin.Settings;
+    protected virtual MacSettings Settings => MacPlugin.Settings;
 
 
     /// <summary>
     /// Whether the cloud points the way this trade wants: the fast ema above the second one for a
     /// long, under it for a short. Exactly on it counts as neither.
     /// </summary>
-    private bool IsCloudOnOurSide(TboCandleData tbo)
+    private bool IsCloudOnOurSide(MacCandleData mac)
     {
-        double fast = tbo.EmaFast!.Value;
-        double second = tbo.EmaSecond!.Value;
+        double fast = mac.EmaFast!.Value;
+        double second = mac.EmaSecond!.Value;
         return SignalSide == CryptoTradeSide.Long ? fast > second : fast < second;
     }
 
 
     /// <summary>The height of the whole cloud - top line to bottom line - as a percentage of the price.</summary>
-    private static decimal CloudWidthPercentage(TboCandleData tbo, decimal close)
+    private static decimal CloudWidthPercentage(MacCandleData mac, decimal close)
     {
         if (close <= 0)
             return 0m;
-        double? top = tbo.CloudTop;
-        double? bottom = tbo.CloudBottom;
+        double? top = mac.CloudTop;
+        double? bottom = mac.CloudBottom;
         if (top == null || bottom == null)
             return 0m;
         return 100m * (decimal)(top.Value - bottom.Value) / close;
@@ -72,15 +72,15 @@ public class TboBase : SignalCreateBase
     public override bool IsSignal()
     {
         ExtraText = "";
-        TboSettings settings = Settings;
+        MacSettings settings = Settings;
         if (!settings.EntryOnBreakout && !settings.EntryOnCloudCross && !settings.EntryOnSpringboard)
         {
             ExtraText = "no entry trigger is switched on";
             return false;
         }
 
-        TboCandleData? tbo = CandleLast.CandleData!.GetPluginData<TboCandleData>();
-        if (tbo?.EmaFast == null || tbo.EmaSecond == null || tbo.SmaSlow == null)
+        MacCandleData? mac = CandleLast.CandleData!.GetPluginData<MacCandleData>();
+        if (mac?.EmaFast == null || mac.EmaSecond == null || mac.SmaSlow == null)
         {
             ExtraText = "the cloud is not there yet";
             return false;
@@ -88,7 +88,7 @@ public class TboBase : SignalCreateBase
 
         // Cheapest test first: on most candles the cloud simply points the other way. It holds for
         // both triggers - a cross ends with the cloud on our side, a breakout wants it there too.
-        if (!IsCloudOnOurSide(tbo))
+        if (!IsCloudOnOurSide(mac))
         {
             ExtraText = SignalSide == CryptoTradeSide.Long
                 ? "cloud points down, a long wants the fast ema above the second one"
@@ -97,7 +97,7 @@ public class TboBase : SignalCreateBase
         }
 
         decimal close = CandleLast.Candle.Close;
-        decimal cloudWidth = CloudWidthPercentage(tbo, close);
+        decimal cloudWidth = CloudWidthPercentage(mac, close);
         if (settings.MinimumCloudWidthPercentage > 0 && cloudWidth < settings.MinimumCloudWidthPercentage)
         {
             ExtraText = $"cloud only {cloudWidth:N2}% wide, {settings.MinimumCloudWidthPercentage}% wanted";
@@ -108,12 +108,12 @@ public class TboBase : SignalCreateBase
         string slopeText = "";
         if (settings.MinimumSlowLineSlopePercentage > 0)
         {
-            if (tbo.SlowSlopePercentage == null)
+            if (mac.SlowSlopePercentage == null)
             {
                 ExtraText = "the slow line has no slope yet";
                 return false;
             }
-            decimal slope = (decimal)tbo.SlowSlopePercentage.Value;
+            decimal slope = (decimal)mac.SlowSlopePercentage.Value;
             decimal wanted = settings.MinimumSlowLineSlopePercentage;
             bool okay = SignalSide == CryptoTradeSide.Long ? slope >= wanted : slope <= -wanted;
             if (!okay)
@@ -134,7 +134,7 @@ public class TboBase : SignalCreateBase
         // candle, the breakout its close, and the widening test both.
         if (!GetPrevCandle(CandleLast, out MyData? candlePrev) || candlePrev == null)
             return false;
-        TboCandleData? tboPrev = candlePrev.CandleData!.GetPluginData<TboCandleData>();
+        MacCandleData? macPrev = candlePrev.CandleData!.GetPluginData<MacCandleData>();
         decimal closePrev = candlePrev.Candle.Close;
 
         // The triggers. Either one is enough; the reason of the one that did not fire is kept for
@@ -143,7 +143,7 @@ public class TboBase : SignalCreateBase
         string missed = "";
         if (settings.EntryOnCloudCross)
         {
-            if (CloudCrossed(tbo, tboPrev, out string crossReason))
+            if (CloudCrossed(mac, macPrev, out string crossReason))
             {
                 trigger = SignalSide == CryptoTradeSide.Long
                     ? "cloud crossed up"
@@ -156,14 +156,14 @@ public class TboBase : SignalCreateBase
         }
         if (trigger.Length == 0 && settings.EntryOnSpringboard)
         {
-            if (BouncedOffTheFastLine(tbo, candlePrev, out string bounceReason))
+            if (BouncedOffTheFastLine(mac, candlePrev, out string bounceReason))
                 trigger = "bounced off the fast line";
             else
                 missed = missed.Length > 0 ? $"{missed}; {bounceReason}" : bounceReason;
         }
         if (trigger.Length == 0 && settings.EntryOnBreakout)
         {
-            if (BrokeTheLevel(settings, tbo, close, closePrev, out string levelText, out string breakReason))
+            if (BrokeTheLevel(settings, mac, close, closePrev, out string levelText, out string breakReason))
                 trigger = levelText;
             else
                 missed = missed.Length > 0 ? $"{missed}; {breakReason}" : breakReason;
@@ -177,12 +177,12 @@ public class TboBase : SignalCreateBase
         string cloudText = "";
         if (settings.RequireCloudWidening)
         {
-            if (tboPrev?.EmaFast == null || tboPrev.EmaSecond == null || tboPrev.SmaSlow == null)
+            if (macPrev?.EmaFast == null || macPrev.EmaSecond == null || macPrev.SmaSlow == null)
             {
                 ExtraText = "no cloud on the previous candle to compare against";
                 return false;
             }
-            decimal widthPrev = CloudWidthPercentage(tboPrev, closePrev);
+            decimal widthPrev = CloudWidthPercentage(macPrev, closePrev);
             if (cloudWidth <= widthPrev)
             {
                 ExtraText = $"cloud narrowing, {widthPrev:N2}% to {cloudWidth:N2}%";
@@ -205,14 +205,14 @@ public class TboBase : SignalCreateBase
     /// The cloud cross. The cloud is already known to be on our side at the candle in hand, so the
     /// cross is there when it was NOT on our side at the candle before.
     /// </summary>
-    private bool CloudCrossed(TboCandleData tbo, TboCandleData? tboPrev, out string reason)
+    private bool CloudCrossed(MacCandleData mac, MacCandleData? macPrev, out string reason)
     {
-        if (tboPrev?.EmaFast == null || tboPrev.EmaSecond == null || tboPrev.SmaSlow == null)
+        if (macPrev?.EmaFast == null || macPrev.EmaSecond == null || macPrev.SmaSlow == null)
         {
             reason = "no cloud on the previous candle to cross from";
             return false;
         }
-        if (IsCloudOnOurSide(tboPrev))
+        if (IsCloudOnOurSide(macPrev))
         {
             reason = "no cross, the cloud already pointed this way";
             return false;
@@ -227,9 +227,9 @@ public class TboBase : SignalCreateBase
     /// EMA and closes back on our side of it. The previous candle has to be on that side too, which
     /// is what separates a dip into the line from a first crossing of it.
     /// </summary>
-    private bool BouncedOffTheFastLine(TboCandleData tbo, MyData candlePrev, out string reason)
+    private bool BouncedOffTheFastLine(MacCandleData mac, MyData candlePrev, out string reason)
     {
-        double fast = tbo.EmaFast!.Value;
+        double fast = mac.EmaFast!.Value;
         decimal close = CandleLast.Candle.Close;
         bool reached = SignalSide == CryptoTradeSide.Long
             ? (double)CandleLast.Candle.Low <= fast
@@ -251,16 +251,16 @@ public class TboBase : SignalCreateBase
 
         // The trend has to have been there before this candle, or this is a crossing dressed up as
         // a bounce. The fast line of the PREVIOUS candle is the one to measure that against.
-        TboCandleData? tboPrev = candlePrev.CandleData!.GetPluginData<TboCandleData>();
-        if (tboPrev?.EmaFast == null)
+        MacCandleData? macPrev = candlePrev.CandleData!.GetPluginData<MacCandleData>();
+        if (macPrev?.EmaFast == null)
         {
             reason = "no fast line on the previous candle";
             return false;
         }
         decimal closePrev = candlePrev.Candle.Close;
         bool wasOnOurSide = SignalSide == CryptoTradeSide.Long
-            ? (double)closePrev > tboPrev.EmaFast.Value
-            : (double)closePrev < tboPrev.EmaFast.Value;
+            ? (double)closePrev > macPrev.EmaFast.Value
+            : (double)closePrev < macPrev.EmaFast.Value;
         if (!wasOnOurSide)
         {
             reason = "the price was not above the fast line before the dip";
@@ -277,7 +277,7 @@ public class TboBase : SignalCreateBase
     /// candles back, so it can never be the candle in hand, and the previous close has to be on the
     /// other side of it - otherwise a market trading above its resistance signals on every candle.
     /// </summary>
-    private bool BrokeTheLevel(TboSettings settings, TboCandleData tbo, decimal close, decimal closePrev,
+    private bool BrokeTheLevel(MacSettings settings, MacCandleData mac, decimal close, decimal closePrev,
         out string text, out string reason)
     {
         text = "";
@@ -285,7 +285,7 @@ public class TboBase : SignalCreateBase
         // Applies to the breakout only: at a cloud cross the price sits on the cloud by definition.
         if (settings.RequirePriceOutsideCloud)
         {
-            double edge = SignalSide == CryptoTradeSide.Long ? tbo.CloudTop!.Value : tbo.CloudBottom!.Value;
+            double edge = SignalSide == CryptoTradeSide.Long ? mac.CloudTop!.Value : mac.CloudBottom!.Value;
             bool outside = SignalSide == CryptoTradeSide.Long ? (double)close > edge : (double)close < edge;
             if (!outside)
             {
@@ -296,8 +296,8 @@ public class TboBase : SignalCreateBase
             }
         }
 
-        double? level = SignalSide == CryptoTradeSide.Long ? tbo.PivotHigh : tbo.PivotLow;
-        int age = SignalSide == CryptoTradeSide.Long ? tbo.PivotHighAge : tbo.PivotLowAge;
+        double? level = SignalSide == CryptoTradeSide.Long ? mac.PivotHigh : mac.PivotLow;
+        int age = SignalSide == CryptoTradeSide.Long ? mac.PivotHighAge : mac.PivotLowAge;
         if (level == null)
         {
             reason = SignalSide == CryptoTradeSide.Long
@@ -343,7 +343,7 @@ public class TboBase : SignalCreateBase
     /// volume of the VolumeAverageCandles candles BEFORE it. The signal candle is left out of that
     /// average on purpose - a spike that is part of its own average is a smaller spike.
     /// </summary>
-    private bool VolumeOkay(TboSettings settings, out string text)
+    private bool VolumeOkay(MacSettings settings, out string text)
     {
         text = "";
         int length = Math.Max(1, settings.VolumeAverageCandles);
@@ -382,7 +382,7 @@ public class TboBase : SignalCreateBase
     /// The RSI has to agree with the break: at or above the minimum for a long, at or below the
     /// maximum for a short. An RSI that is not there yet is a no, said out loud.
     /// </summary>
-    private bool RsiOkay(TboSettings settings, out string text)
+    private bool RsiOkay(MacSettings settings, out string text)
     {
         text = "";
         double? rsi = CandleLast.CandleData!.Rsi;
@@ -416,7 +416,7 @@ public class TboBase : SignalCreateBase
     public override bool IsExitSignal()
     {
         ExtraText = "";
-        TboSettings settings = Settings;
+        MacSettings settings = Settings;
         if (!settings.ExitOnCloudFlip)
             return false;
 
@@ -427,13 +427,13 @@ public class TboBase : SignalCreateBase
             if (i > 0 && (!GetPrevCandle(walk, out walk) || walk == null))
                 return false;
 
-            TboCandleData? tbo = walk!.CandleData!.GetPluginData<TboCandleData>();
-            if (tbo?.EmaFast == null || tbo.EmaSecond == null || tbo.SmaSlow == null)
+            MacCandleData? mac = walk!.CandleData!.GetPluginData<MacCandleData>();
+            if (mac?.EmaFast == null || mac.EmaSecond == null || mac.SmaSlow == null)
             {
                 ExtraText = "the cloud is not there";
                 return false;
             }
-            if (IsCloudOnOurSide(tbo))
+            if (IsCloudOnOurSide(mac))
             {
                 ExtraText = i == 0
                     ? "cloud still points our way"
@@ -450,11 +450,11 @@ public class TboBase : SignalCreateBase
 }
 
 
-public class TboLong : TboBase
+public class MacLong : MacBase
 {
 }
 
 
-public class TboShort : TboBase
+public class MacShort : MacBase
 {
 }

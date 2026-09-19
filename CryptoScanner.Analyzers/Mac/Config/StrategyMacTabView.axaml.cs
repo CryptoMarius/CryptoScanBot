@@ -1,18 +1,18 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace CryptoScanner.Analyzers.Tbo.Config;
+namespace CryptoScanner.Analyzers.Mac.Config;
 
-public partial class StrategyTboTabView : UserControl
+public partial class StrategyMacTabView : UserControl
 {
-    public StrategyTboTabView()
+    public StrategyMacTabView()
     {
         InitializeComponent();
 
         // Set DataContext if not already set by parent
         if (DataContext == null)
         {
-            DataContext = new StrategyTboTabViewModel();
+            DataContext = new StrategyMacTabViewModel();
         }
     }
 

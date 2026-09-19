@@ -6,9 +6,6 @@ using OxyPlot.Annotations;
 
 namespace CryptoScanner.Chart.ViewModels.Chart;
 
-// How to Find Institutional Supply & Demand Zones (with ZERO experience)
-// https://www.youtube.com/watch?v=0YNWLzBEX2E
-
 /// <summary>
 /// Renders the SMC Order Blocks (from <see cref="CryptoSymbolIntervalSmc.Zones"/>) as
 /// rectangle annotations on the chart, using the same visual idiom as DLZ / FVG zones.

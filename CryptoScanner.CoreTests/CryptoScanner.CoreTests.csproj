@@ -51,7 +51,6 @@
     <None Update="Exchange\HyperLiquid\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <!-- TradingBuddy test + fixtures live in Analyzers\TradingBuddy\Tests but compile here -->
   </ItemGroup>
 
 </Project>

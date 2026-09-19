@@ -4,14 +4,14 @@ using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.Analyzers.Tbo.Indicators;
+namespace CryptoScanner.Analyzers.Mac.Indicators;
 
 /// <summary>
-/// The four moving averages that make up the TBO cloud, plus the pivot highs and lows that stand in
+/// The four moving averages that make up the MAC cloud, plus the pivot highs and lows that stand in
 /// for its auto-plotted support and resistance.
 /// <para>
 /// The lines are EMA(20), EMA(40), SMA(50) and SMA(150) on the close, and the four lengths belong
-/// together - see TboSettings. They come from the registry, so a length another plugin already
+/// together - see MacSettings. They come from the registry, so a length another plugin already
 /// asked for is the same hub instead of a second one doing identical work on every candle.
 /// </para>
 /// <para>
@@ -20,7 +20,7 @@ namespace CryptoScanner.Analyzers.Tbo.Indicators;
 /// class on every evaluation.
 /// </para>
 /// </summary>
-public class TboIndicatorExtension : IIndicatorExtension
+public class MacIndicatorExtension : IIndicatorExtension
 {
     private EmaHub? _emaFast;
     private EmaHub? _emaSecond;
@@ -49,7 +49,7 @@ public class TboIndicatorExtension : IIndicatorExtension
 
     public void Init(IndicatorRegistry registry)
     {
-        TboSettings settings = TboPlugin.Settings;
+        MacSettings settings = MacPlugin.Settings;
 
         // Clamped rather than trusted: a second line that is not slower than the first would give a
         // crossing without meaning, and a slow line shorter than the medium one the same.
@@ -160,7 +160,7 @@ public class TboIndicatorExtension : IIndicatorExtension
             return;
 
         long newest = _candleCount - 1;
-        data.SetPluginData(new TboCandleData
+        data.SetPluginData(new MacCandleData
         {
             EmaFast = fast,
             EmaSecond = second,

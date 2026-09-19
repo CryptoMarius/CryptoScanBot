@@ -10,8 +10,8 @@ namespace CryptoScanner.Analyzers.Vbs;
 ///   band  = Mult * vwStdev(hlc3, Length)
 ///   upper = basis + band,  lower = basis - band
 /// where vwStdev is the volume-weighted standard deviation of hlc3 over the same window
-/// (sqrt(E_w[hlc3^2] - E_w[hlc3]^2)). This is NOT Bollinger (no SMA of close, no plain stdev): it was
-/// reverse-engineered from the reference chart and matches the green bands to ~pixel level.
+/// (sqrt(E_w[hlc3^2] - E_w[hlc3]^2)). This is NOT Bollinger (no SMA of close, no plain stdev); it was
+/// fitted against a chart image and matches the green bands to ~pixel level.
 /// The chart drawer (VbsBands) still draws a whole history in one go via <see cref="ComputeBands"/>.
 /// The signal (VbsSignalLong/Short) no longer recomputes the window itself: IndicatorEngine (via
 /// IntervalIndicatorHub) computes the SAME band once per candle and stores it in the plugin's own

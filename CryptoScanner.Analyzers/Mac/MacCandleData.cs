@@ -1,18 +1,18 @@
-namespace CryptoScanner.Analyzers.Tbo;
+namespace CryptoScanner.Analyzers.Mac;
 
 /// <summary>
-/// The TBO values for one candle, computed once by <see cref="Indicators.TboIndicatorExtension"/>
+/// The MAC values for one candle, computed once by <see cref="Indicators.MacIndicatorExtension"/>
 /// and shared by the long and the short signal - so a candle with both sides active pays for the
 /// four moving averages and the pivot scan once, not twice.
 /// <para>
-/// The four lengths belong together and are fixed on purpose; see TboSettings.
+/// The four lengths belong together and are fixed on purpose; see MacSettings.
 /// </para>
 /// <para>
 /// Lives in the plugin, not in CryptoData: the engine attaches it through
-/// <c>CryptoData.SetPluginData</c> without knowing what TBO is.
+/// <c>CryptoData.SetPluginData</c> without knowing what MAC is.
 /// </para>
 /// </summary>
-public sealed class TboCandleData
+public sealed class MacCandleData
 {
     /// <summary>The fast line, EMA(20) by default - the one a pullback bounces off.</summary>
     public double? EmaFast { get; set; }

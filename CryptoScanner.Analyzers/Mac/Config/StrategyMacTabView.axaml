@@ -3,23 +3,23 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
-             xmlns:vm="using:CryptoScanner.Analyzers.Tbo.Config"
+             xmlns:vm="using:CryptoScanner.Analyzers.Mac.Config"
              xmlns:configviews="using:CryptoScanner.Config.Views"
-             x:DataType="vm:StrategyTboTabViewModel"
+             x:DataType="vm:StrategyMacTabViewModel"
              x:CompileBindings="True"
-             x:Class="CryptoScanner.Analyzers.Tbo.Config.StrategyTboTabView">
+             x:Class="CryptoScanner.Analyzers.Mac.Config.StrategyMacTabView">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="5">
             <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
                 <TextBlock FontSize="13">
-                    <Run Text="TBO – Trending break out" FontWeight="SemiBold"/>
-                    <Run Text=" — Our reconstruction of the indicator behind the TBT signals: a two-EMA cloud for the trend, a pivot level for the break" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                    <Run Text="MAC – Moving average cloud" FontWeight="SemiBold"/>
+                    <Run Text=" — A four-line moving-average cloud sets the trend; entries on the cloud cross, on a break through the last pivot level, or on a pullback to the fast line" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
             </StackPanel>
             <WrapPanel>
                 <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
-                <vm:StrategyTboSettingsView DataContext="{Binding StrategyTboSettingsViewModel}" />
+                <vm:StrategyMacSettingsView DataContext="{Binding StrategyMacSettingsViewModel}" />
                 <configviews:IntervalView DataContext="{Binding IntervalViewModel}" />
                 <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
             </WrapPanel>

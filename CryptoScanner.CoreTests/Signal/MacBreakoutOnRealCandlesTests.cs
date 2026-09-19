@@ -1,5 +1,5 @@
-using CryptoScanner.Analyzers.Tbo;
-using CryptoScanner.Analyzers.Tbo.Chart;
+using CryptoScanner.Analyzers.Mac;
+using CryptoScanner.Analyzers.Mac.Chart;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -11,10 +11,9 @@ namespace CryptoScanner.CoreTests.Signal;
 /// <summary>
 /// The breakout marker against real daily candles.
 /// <para>
-/// Six marks are known from reference charts: 21 October 2020, 28 and 29 October 2024, 6 November
-/// 2024, and 12, 18 and 19 May 2025. The rule the overlay draws is deliberately wider than the
-/// reference - it also marks days that carry none there - so what these tests fix is that it never
-/// MISSES one. The day it must leave alone is the one where the cloud turns: 19 August 2026 clears
+/// Six marks are catalogued: 21 October 2020, 28 and 29 October 2024, 6 November 2024, and 12,
+/// 18 and 19 May 2025. The rule the overlay draws is deliberately wider than that set - it also
+/// marks days that carry none - so what these tests fix is that it never MISSES one. The day it must leave alone is the one where the cloud turns: 19 August 2026 clears
 /// its level by 5.9% on the crossing candle and carries no mark.
 /// </para>
 /// <para>
@@ -27,7 +26,7 @@ namespace CryptoScanner.CoreTests.Signal;
 /// </summary>
 [DoNotParallelize]
 [TestClass]
-public class TboBreakoutOnRealCandlesTests : TestBase
+public class MacBreakoutOnRealCandlesTests : TestBase
 {
     [TestInitialize]
     public void Setup() => InitTestSession();
@@ -719,8 +718,8 @@ public class TboBreakoutOnRealCandlesTests : TestBase
         };
         CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d];
 
-        return new TboChartOverlay().GetLabels(symbol, interval, Parse(block))
-            .Where(l => l.StyleKey == TboChartOverlay.KeyBreakout)
+        return new MacChartOverlay().GetLabels(symbol, interval, Parse(block))
+            .Where(l => l.StyleKey == MacChartOverlay.KeyBreakout)
             .Select(l => DateTimeOffset.FromUnixTimeSeconds(l.Time).UtcDateTime.ToString("yyyy-MM-dd"))
             .ToHashSet();
     }
@@ -774,7 +773,7 @@ public class TboBreakoutOnRealCandlesTests : TestBase
 
 
     /// <summary>
-    /// The marker sits UNDER the candle, the side the reference draws it on, and it takes its
+    /// The marker sits UNDER the candle, the side a breakout is drawn on, and it takes its
     /// colour from the key the chart style screen knows it by.
     /// </summary>
     [TestMethod]
@@ -796,8 +795,8 @@ public class TboBreakoutOnRealCandlesTests : TestBase
         };
         CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d];
 
-        var marks = new TboChartOverlay().GetLabels(symbol, interval, candles)
-            .Where(l => l.StyleKey == TboChartOverlay.KeyBreakout).ToList();
+        var marks = new MacChartOverlay().GetLabels(symbol, interval, candles)
+            .Where(l => l.StyleKey == MacChartOverlay.KeyBreakout).ToList();
 
         Assert.IsTrue(marks.Count > 0, "the stretch should carry breakouts");
         foreach (var mark in marks)

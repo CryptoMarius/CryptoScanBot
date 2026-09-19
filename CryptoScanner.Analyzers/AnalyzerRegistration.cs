@@ -75,6 +75,6 @@ public static class AnalyzerRegistration
         // A trending breakout: a cloud of four moving averages for the trend, with three entries
         // inside it - the break of a pivot level, the crossing of the two EMAs, or a pullback to
         // the fast line. Not measured yet.
-        PluginManager.Register(new Tbo.TboPlugin());
+        PluginManager.Register(new Mac.MacPlugin());
     }
 }

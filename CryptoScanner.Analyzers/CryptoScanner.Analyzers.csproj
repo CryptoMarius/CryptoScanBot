@@ -25,7 +25,6 @@
     <Folder Include="Trend\Config\" />
   </ItemGroup>
 
-  <!-- Tests live here so the TradingBuddy folder is self-contained, but compile in CoreTests -->
   <ItemGroup>
   </ItemGroup>
 

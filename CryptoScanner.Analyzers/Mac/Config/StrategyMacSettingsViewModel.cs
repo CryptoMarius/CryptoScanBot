@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace CryptoScanner.Analyzers.Tbo.Config;
+namespace CryptoScanner.Analyzers.Mac.Config;
 
-public partial class StrategyTboSettingsViewModel : ObservableObject
+public partial class StrategyMacSettingsViewModel : ObservableObject
 {
     [ObservableProperty]
     private bool _entryOnBreakout = true;
@@ -77,7 +77,7 @@ public partial class StrategyTboSettingsViewModel : ObservableObject
     private int _exitConfirmationCandles = 0;
 
 
-    public void LoadConfig(TboSettings settings)
+    public void LoadConfig(MacSettings settings)
     {
         EntryOnBreakout = settings.EntryOnBreakout;
         EntryOnCloudCross = settings.EntryOnCloudCross;
@@ -105,7 +105,7 @@ public partial class StrategyTboSettingsViewModel : ObservableObject
         ExitConfirmationCandles = settings.ExitConfirmationCandles;
     }
 
-    public void SaveConfig(TboSettings settings)
+    public void SaveConfig(MacSettings settings)
     {
         settings.EntryOnBreakout = EntryOnBreakout;
         settings.EntryOnCloudCross = EntryOnCloudCross;

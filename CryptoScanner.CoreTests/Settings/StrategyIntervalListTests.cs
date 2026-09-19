@@ -1,4 +1,4 @@
-using CryptoScanner.Analyzers.Tbo;
+using CryptoScanner.Analyzers.Mac;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
 
@@ -53,7 +53,7 @@ public class StrategyIntervalListTests
     [TestMethod]
     public void EveryOtherStrategyStartsWithoutOne()
     {
-        Assert.AreEqual(0, new TboSettings().IntervalList.Count,
+        Assert.AreEqual(0, new MacSettings().IntervalList.Count,
             "an empty list is what makes a strategy follow the side it is ticked on");
         Assert.AreEqual(0, new SettingsSignalStrategyBase().IntervalList.Count);
     }

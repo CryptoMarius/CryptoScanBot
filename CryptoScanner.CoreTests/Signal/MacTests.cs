@@ -1,7 +1,7 @@
-using CryptoScanner.Analyzers.Tbo;
-using CryptoScanner.Analyzers.Tbo.Chart;
-using CryptoScanner.Analyzers.Tbo.Indicators;
-using CryptoScanner.Analyzers.Tbo.Signal;
+using CryptoScanner.Analyzers.Mac;
+using CryptoScanner.Analyzers.Mac.Chart;
+using CryptoScanner.Analyzers.Mac.Indicators;
+using CryptoScanner.Analyzers.Mac.Signal;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -16,7 +16,7 @@ using Exchange = CryptoScanner.Core.Model.CryptoExchange;
 namespace CryptoScanner.CoreTests.Signal;
 
 /// <summary>
-/// TBO - the four-line cloud plus the break of a pivot level. These tests fix what the strategy
+/// MAC - the four-line cloud plus the break of a pivot level. These tests fix what the strategy
 /// does, one rule at a time.
 /// <para>
 /// The cloud and the levels are written by hand per candle, so what the strategy is looking at is
@@ -27,7 +27,7 @@ namespace CryptoScanner.CoreTests.Signal;
 /// </summary>
 [DoNotParallelize]
 [TestClass]
-public class TboTests : TestBase
+public class MacTests : TestBase
 {
     [TestInitialize]
     public void Setup()
@@ -35,20 +35,20 @@ public class TboTests : TestBase
         InitTestSession();
         // Settings has an internal setter, so the shared instance is adjusted in place rather than
         // replaced - and put back in cleanup, because every test in the process reads that one object.
-        ApplyDefaults(TboPlugin.Settings);
+        ApplyDefaults(MacPlugin.Settings);
 
         // MakeSeries puts the level at 101 and the tests close just through it, which the measured
         // buffer of 2% would swallow. The buffer is a separate rule with tests of its own, so it is
         // out of the way here; a test that is about the buffer sets the value it wants.
-        TboPlugin.Settings.BreakoutBufferPercentage = 0m;
+        MacPlugin.Settings.BreakoutBufferPercentage = 0m;
     }
 
     [TestCleanup]
-    public void Restore() => ApplyDefaults(TboPlugin.Settings);
+    public void Restore() => ApplyDefaults(MacPlugin.Settings);
 
-    private static void ApplyDefaults(TboSettings settings)
+    private static void ApplyDefaults(MacSettings settings)
     {
-        TboSettings fresh = new();
+        MacSettings fresh = new();
         settings.EntryOnBreakout = fresh.EntryOnBreakout;
         settings.EntryOnCloudCross = fresh.EntryOnCloudCross;
         settings.EntryOnSpringboard = fresh.EntryOnSpringboard;
@@ -103,9 +103,9 @@ public class TboTests : TestBase
     /// level the price has NOT broken: a resistance at 101 for a long, a support at 99 for a short.
     /// The caller then breaks it on the candles it wants a signal on.
     /// </summary>
-    private static (TboBase Algorithm, TboCandleData[] Tbo, CryptoCandle[] Candles) MakeSeries(
+    private static (MacBase Algorithm, MacCandleData[] Mac, CryptoCandle[] Candles) MakeSeries(
         CryptoTradeSide side, int count,
-        Action<TboCandleData[]>? shape = null,
+        Action<MacCandleData[]>? shape = null,
         Action<CryptoCandle[]>? shapeCandles = null,
         Action<CryptoData[]>? shapeData = null)
     {
@@ -115,7 +115,7 @@ public class TboTests : TestBase
 
         CryptoCandle[] candles = new CryptoCandle[count];
         CryptoData[] data = new CryptoData[count];
-        TboCandleData[] tbo = new TboCandleData[count];
+        MacCandleData[] mac = new MacCandleData[count];
         for (int i = 0; i < count; i++)
         {
             candles[i] = new CryptoCandle
@@ -132,33 +132,33 @@ public class TboTests : TestBase
             };
             // A long gets a cloud under the price and pointing up, a short one above it pointing
             // down, so every test starts from a candle that only lacks the break.
-            tbo[i] = side == CryptoTradeSide.Long
-                ? new TboCandleData { EmaFast = 99, EmaSecond = 98.5, SmaMedium = 98, SmaSlow = 97,
+            mac[i] = side == CryptoTradeSide.Long
+                ? new MacCandleData { EmaFast = 99, EmaSecond = 98.5, SmaMedium = 98, SmaSlow = 97,
                     PivotHigh = 101, PivotHighAge = 5 }
-                : new TboCandleData { EmaFast = 101, EmaSecond = 101.5, SmaMedium = 102, SmaSlow = 103,
+                : new MacCandleData { EmaFast = 101, EmaSecond = 101.5, SmaMedium = 102, SmaSlow = 103,
                     PivotLow = 99, PivotLowAge = 5 };
             data[i] = new CryptoData { Rsi = side == CryptoTradeSide.Long ? 60.0 : 40.0 };
         }
-        shape?.Invoke(tbo);
+        shape?.Invoke(mac);
         shapeCandles?.Invoke(candles);
         shapeData?.Invoke(data);
 
         for (int i = 0; i < count; i++)
         {
-            data[i].SetPluginData(tbo[i]);
+            data[i].SetPluginData(mac[i]);
             symbolInterval.CandleList.TryAdd(candles[i].OpenTime, candles[i]);
             symbolInterval.Data[candles[i].OpenTime] = data[i];
         }
 
-        return (new TboBase
+        return (new MacBase
         {
             Symbol = symbol,
             Interval = interval,
             SymbolInterval = symbolInterval,
             SignalSide = side,
-            SignalStrategy = "tbo",
+            SignalStrategy = "mac",
             CandleLast = new MyData { Candle = candles[0], CandleData = data[0] },
-        }, tbo, candles);
+        }, mac, candles);
     }
 
     private const int Enough = 10;
@@ -193,9 +193,9 @@ public class TboTests : TestBase
         CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d];
         // Only the crossing markers: the same call also returns the confirmation dots, and those
         // have a crossing of their own to answer to.
-        var labels = new TboChartOverlay().GetLabels(symbol, interval, candles)
+        var labels = new MacChartOverlay().GetLabels(symbol, interval, candles)
             .Where(l => l.Text is "▲" or "▼").ToList();
-        TboLineValues[] values = TboLinesHelper.Compute(candles);
+        MacLineValues[] values = MacLinesHelper.Compute(candles);
 
         // Count the crossings the lines themselves show, and check every marker against them. The
         // crossing only needs the two EMAs, not the whole cloud: the slow SMA takes 150 candles to
@@ -284,9 +284,9 @@ public class TboTests : TestBase
     public void NoLevelYet_IsNoSignal()
     {
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: tbo =>
+            shape: mac =>
             {
-                foreach (var t in tbo)
+                foreach (var t in mac)
                     t.PivotHigh = null;
             },
             shapeCandles: candles => candles[0].Close = 102m);
@@ -299,11 +299,11 @@ public class TboTests : TestBase
     [TestMethod]
     public void ALevelPastItsMaximumAge_IsNoSignal()
     {
-        TboPlugin.Settings.PivotMaximumAgeCandles = 20;
+        MacPlugin.Settings.PivotMaximumAgeCandles = 20;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: tbo =>
+            shape: mac =>
             {
-                foreach (var t in tbo)
+                foreach (var t in mac)
                     t.PivotHighAge = 21;
             },
             shapeCandles: candles => candles[0].Close = 102m);
@@ -321,14 +321,14 @@ public class TboTests : TestBase
     public void AnOldLevel_IsAcceptedByDefault()
     {
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: tbo =>
+            shape: mac =>
             {
-                foreach (var t in tbo)
+                foreach (var t in mac)
                     t.PivotHighAge = 5000;
             },
             shapeCandles: candles => candles[0].Close = 102m);
 
-        Assert.AreEqual(0, TboPlugin.Settings.PivotMaximumAgeCandles);
+        Assert.AreEqual(0, MacPlugin.Settings.PivotMaximumAgeCandles);
         Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
     }
 
@@ -337,7 +337,7 @@ public class TboTests : TestBase
     [TestMethod]
     public void ABreakSmallerThanTheBuffer_IsNoSignal()
     {
-        TboPlugin.Settings.BreakoutBufferPercentage = 1m;
+        MacPlugin.Settings.BreakoutBufferPercentage = 1m;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shapeCandles: candles => candles[0].Close = 101.5m);
 
@@ -354,9 +354,9 @@ public class TboTests : TestBase
     public void ACloudPointingTheOtherWay_IsNoSignal()
     {
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: tbo =>
+            shape: mac =>
             {
-                foreach (var t in tbo)
+                foreach (var t in mac)
                 {
                     t.EmaFast = 98;
                     t.EmaSecond = 99;
@@ -373,10 +373,10 @@ public class TboTests : TestBase
     public void APriceInsideTheCloud_IsNoSignal()
     {
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: tbo =>
+            shape: mac =>
             {
                 // The cloud still points up, but it sits AROUND the breaking candle.
-                foreach (var t in tbo)
+                foreach (var t in mac)
                 {
                     t.EmaFast = 103;
                     t.EmaSecond = 101.5;
@@ -394,7 +394,7 @@ public class TboTests : TestBase
     [TestMethod]
     public void ACloudNarrowerThanTheMinimum_IsNoSignal()
     {
-        TboPlugin.Settings.MinimumCloudWidthPercentage = 2m;
+        MacPlugin.Settings.MinimumCloudWidthPercentage = 2m;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shapeCandles: candles => candles[0].Close = 102m);
 
@@ -407,14 +407,14 @@ public class TboTests : TestBase
     [TestMethod]
     public void ANarrowingCloud_IsNoSignalWhenWideningIsAsked()
     {
-        TboPlugin.Settings.RequireCloudWidening = true;
+        MacPlugin.Settings.RequireCloudWidening = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: tbo =>
+            shape: mac =>
             {
                 // Wider on the previous candle than on the one in hand: the cloud of the series is
                 // 99 down to 97, this one runs 99 down to 96.
-                tbo[1].EmaFast = 99;
-                tbo[1].SmaSlow = 96;
+                mac[1].EmaFast = 99;
+                mac[1].SmaSlow = 96;
             },
             shapeCandles: candles => candles[0].Close = 102m);
 
@@ -426,14 +426,14 @@ public class TboTests : TestBase
     [TestMethod]
     public void AWideningCloud_IsALong()
     {
-        TboPlugin.Settings.RequireCloudWidening = true;
+        MacPlugin.Settings.RequireCloudWidening = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: tbo =>
+            shape: mac =>
             {
                 // Narrower on the previous candle: 99 down to 98 against the 99 down to 97 of the
                 // series, so the cloud is opening up on the candle in hand.
-                tbo[1].EmaFast = 99;
-                tbo[1].SmaSlow = 98;
+                mac[1].EmaFast = 99;
+                mac[1].SmaSlow = 98;
             },
             shapeCandles: candles => candles[0].Close = 102m);
 
@@ -453,13 +453,13 @@ public class TboTests : TestBase
     [TestMethod]
     public void TheCloudCrossingUp_IsALongOfItsOwn()
     {
-        TboPlugin.Settings.EntryOnBreakout = false;
-        TboPlugin.Settings.EntryOnCloudCross = true;
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: tbo =>
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnCloudCross = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: mac =>
         {
             // The cloud pointed DOWN on the candle before, so the candle in hand is the cross.
-            tbo[1].EmaFast = 98;
-            tbo[1].EmaSecond = 99;
+            mac[1].EmaFast = 98;
+            mac[1].EmaSecond = 99;
         });
 
         Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
@@ -470,12 +470,12 @@ public class TboTests : TestBase
     [TestMethod]
     public void TheCloudCrossingDown_IsAShortOfItsOwn()
     {
-        TboPlugin.Settings.EntryOnBreakout = false;
-        TboPlugin.Settings.EntryOnCloudCross = true;
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough, shape: tbo =>
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnCloudCross = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough, shape: mac =>
         {
-            tbo[1].EmaFast = 102;
-            tbo[1].EmaSecond = 101;
+            mac[1].EmaFast = 102;
+            mac[1].EmaSecond = 101;
         });
 
         Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
@@ -490,8 +490,8 @@ public class TboTests : TestBase
     [TestMethod]
     public void ACloudThatAlreadyPointedThisWay_IsNoCross()
     {
-        TboPlugin.Settings.EntryOnBreakout = false;
-        TboPlugin.Settings.EntryOnCloudCross = true;
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnCloudCross = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
 
         Assert.IsFalse(algorithm.IsSignal());
@@ -506,16 +506,16 @@ public class TboTests : TestBase
     [TestMethod]
     public void ACrossFiresEvenWithPriceOutsideTheCloudSwitchedOn()
     {
-        TboPlugin.Settings.EntryOnBreakout = false;
-        TboPlugin.Settings.EntryOnCloudCross = true;
-        TboPlugin.Settings.RequirePriceOutsideCloud = true;
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: tbo =>
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnCloudCross = true;
+        MacPlugin.Settings.RequirePriceOutsideCloud = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: mac =>
         {
             // A cloud AROUND the price: the cross is there, the price is not above it.
-            tbo[0].EmaFast = 101;
-            tbo[0].EmaSecond = 99.5;
-            tbo[1].EmaFast = 99;
-            tbo[1].EmaSecond = 101;
+            mac[0].EmaFast = 101;
+            mac[0].EmaSecond = 99.5;
+            mac[1].EmaFast = 99;
+            mac[1].EmaSecond = 101;
         });
 
         Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
@@ -525,8 +525,8 @@ public class TboTests : TestBase
     [TestMethod]
     public void WithBothTriggersOff_NothingFires()
     {
-        TboPlugin.Settings.EntryOnBreakout = false;
-        TboPlugin.Settings.EntryOnCloudCross = false;
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnCloudCross = false;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shapeCandles: candles => candles[0].Close = 102m);
 
@@ -546,8 +546,8 @@ public class TboTests : TestBase
     [TestMethod]
     public void ADipToTheFastLineThatClosesBackAbove_IsALong()
     {
-        TboPlugin.Settings.EntryOnBreakout = false;
-        TboPlugin.Settings.EntryOnSpringboard = true;
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnSpringboard = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shapeCandles: candles =>
             {
@@ -565,8 +565,8 @@ public class TboTests : TestBase
     [TestMethod]
     public void ACandleThatNeverReachesTheFastLine_IsNoBounce()
     {
-        TboPlugin.Settings.EntryOnBreakout = false;
-        TboPlugin.Settings.EntryOnSpringboard = true;
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnSpringboard = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
 
         // The default series has its low at 99.5, just above the fast EMA of 99.
@@ -579,8 +579,8 @@ public class TboTests : TestBase
     [TestMethod]
     public void ACandleThatClosesUnderTheFastLine_IsNoBounce()
     {
-        TboPlugin.Settings.EntryOnBreakout = false;
-        TboPlugin.Settings.EntryOnSpringboard = true;
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnSpringboard = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shapeCandles: candles =>
             {
@@ -600,11 +600,11 @@ public class TboTests : TestBase
     [TestMethod]
     public void ASlowLineThatIsNotRisingEnough_IsNoLong()
     {
-        TboPlugin.Settings.MinimumSlowLineSlopePercentage = 1m;
+        MacPlugin.Settings.MinimumSlowLineSlopePercentage = 1m;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: tbo =>
+            shape: mac =>
             {
-                foreach (var t in tbo)
+                foreach (var t in mac)
                     t.SlowSlopePercentage = 0.2;
             },
             shapeCandles: candles => candles[0].Close = 102m);
@@ -617,11 +617,11 @@ public class TboTests : TestBase
     [TestMethod]
     public void ARisingSlowLine_LetsTheLongThrough()
     {
-        TboPlugin.Settings.MinimumSlowLineSlopePercentage = 1m;
+        MacPlugin.Settings.MinimumSlowLineSlopePercentage = 1m;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: tbo =>
+            shape: mac =>
             {
-                foreach (var t in tbo)
+                foreach (var t in mac)
                     t.SlowSlopePercentage = 2.5;
             },
             shapeCandles: candles => candles[0].Close = 102m);
@@ -635,11 +635,11 @@ public class TboTests : TestBase
     [TestMethod]
     public void ARisingSlowLine_IsNoShort()
     {
-        TboPlugin.Settings.MinimumSlowLineSlopePercentage = 1m;
+        MacPlugin.Settings.MinimumSlowLineSlopePercentage = 1m;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough,
-            shape: tbo =>
+            shape: mac =>
             {
-                foreach (var t in tbo)
+                foreach (var t in mac)
                     t.SlowSlopePercentage = 2.5;
             },
             shapeCandles: candles => candles[0].Close = 98m);
@@ -656,9 +656,9 @@ public class TboTests : TestBase
     [TestMethod]
     public void ACandleWithoutTheVolumeSpike_IsNoSignal()
     {
-        TboPlugin.Settings.UseVolumeFilter = true;
-        TboPlugin.Settings.VolumeMultiplier = 3m;
-        TboPlugin.Settings.VolumeAverageCandles = 5;
+        MacPlugin.Settings.UseVolumeFilter = true;
+        MacPlugin.Settings.VolumeMultiplier = 3m;
+        MacPlugin.Settings.VolumeAverageCandles = 5;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shapeCandles: candles => candles[0].Close = 102m);
 
@@ -671,9 +671,9 @@ public class TboTests : TestBase
     [TestMethod]
     public void ACandleWithTheVolumeSpike_IsALong()
     {
-        TboPlugin.Settings.UseVolumeFilter = true;
-        TboPlugin.Settings.VolumeMultiplier = 3m;
-        TboPlugin.Settings.VolumeAverageCandles = 5;
+        MacPlugin.Settings.UseVolumeFilter = true;
+        MacPlugin.Settings.VolumeMultiplier = 3m;
+        MacPlugin.Settings.VolumeAverageCandles = 5;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
         {
             candles[0].Close = 102m;
@@ -692,9 +692,9 @@ public class TboTests : TestBase
     [TestMethod]
     public void TheSignalCandleIsNotPartOfItsOwnAverage()
     {
-        TboPlugin.Settings.UseVolumeFilter = true;
-        TboPlugin.Settings.VolumeMultiplier = 4m;
-        TboPlugin.Settings.VolumeAverageCandles = 5;
+        MacPlugin.Settings.UseVolumeFilter = true;
+        MacPlugin.Settings.VolumeMultiplier = 4m;
+        MacPlugin.Settings.VolumeAverageCandles = 5;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
         {
             candles[0].Close = 102m;
@@ -713,8 +713,8 @@ public class TboTests : TestBase
     [TestMethod]
     public void AnRsiUnderTheMinimum_IsNoLong()
     {
-        TboPlugin.Settings.UseRsiFilter = true;
-        TboPlugin.Settings.RsiLongMinimum = 55m;
+        MacPlugin.Settings.UseRsiFilter = true;
+        MacPlugin.Settings.RsiLongMinimum = 55m;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shapeCandles: candles => candles[0].Close = 102m,
             shapeData: data => data[0].Rsi = 45.0);
@@ -727,8 +727,8 @@ public class TboTests : TestBase
     [TestMethod]
     public void AnRsiAboveTheMaximum_IsNoShort()
     {
-        TboPlugin.Settings.UseRsiFilter = true;
-        TboPlugin.Settings.RsiShortMaximum = 45m;
+        MacPlugin.Settings.UseRsiFilter = true;
+        MacPlugin.Settings.RsiShortMaximum = 45m;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough,
             shapeCandles: candles => candles[0].Close = 98m,
             shapeData: data => data[0].Rsi = 55.0);
@@ -745,11 +745,11 @@ public class TboTests : TestBase
     [TestMethod]
     public void TheCloudFlippingAgainstTheposition_IsAnExit()
     {
-        TboPlugin.Settings.ExitOnCloudFlip = true;
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: tbo =>
+        MacPlugin.Settings.ExitOnCloudFlip = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: mac =>
         {
-            tbo[0].EmaFast = 98;
-            tbo[0].EmaSecond = 99;
+            mac[0].EmaFast = 98;
+            mac[0].EmaSecond = 99;
         });
 
         Assert.IsTrue(algorithm.IsExitSignal(), algorithm.ExtraText);
@@ -760,7 +760,7 @@ public class TboTests : TestBase
     [TestMethod]
     public void ACloudStillOnOurSide_IsNoExit()
     {
-        TboPlugin.Settings.ExitOnCloudFlip = true;
+        MacPlugin.Settings.ExitOnCloudFlip = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
 
         Assert.IsFalse(algorithm.IsExitSignal());
@@ -771,13 +771,13 @@ public class TboTests : TestBase
     [TestMethod]
     public void AFlipThatDoesNotHold_IsNoExitWhenConfirmationIsAsked()
     {
-        TboPlugin.Settings.ExitOnCloudFlip = true;
-        TboPlugin.Settings.ExitConfirmationCandles = 2;
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: tbo =>
+        MacPlugin.Settings.ExitOnCloudFlip = true;
+        MacPlugin.Settings.ExitConfirmationCandles = 2;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: mac =>
         {
             // Against us on the candle in hand, still our way on the one before it.
-            tbo[0].EmaFast = 98;
-            tbo[0].EmaSecond = 99;
+            mac[0].EmaFast = 98;
+            mac[0].EmaSecond = 99;
         });
 
         Assert.IsFalse(algorithm.IsExitSignal());
@@ -798,13 +798,13 @@ public class TboTests : TestBase
 
 
 /// <summary>
-/// The pivot levels TBO breaks through, as the indicator extension produces them. The EMAs come
+/// The pivot levels MAC breaks through, as the indicator extension produces them. The EMAs come
 /// from the shared registry and are Skender's; the pivots are ours, so they are what these tests
 /// pin down: WHEN a level is confirmed, which price it carries, and how old it says it is.
 /// </summary>
 [DoNotParallelize]
 [TestClass]
-public class TboIndicatorExtensionTests : TestBase
+public class MacIndicatorExtensionTests : TestBase
 {
     [TestInitialize]
     public void Setup() => InitTestSession();
@@ -812,9 +812,9 @@ public class TboIndicatorExtensionTests : TestBase
     [TestCleanup]
     public void Restore()
     {
-        TboSettings fresh = new();
-        TboPlugin.Settings.PivotLeftCandles = fresh.PivotLeftCandles;
-        TboPlugin.Settings.PivotRightCandles = fresh.PivotRightCandles;
+        MacSettings fresh = new();
+        MacPlugin.Settings.PivotLeftCandles = fresh.PivotLeftCandles;
+        MacPlugin.Settings.PivotRightCandles = fresh.PivotRightCandles;
     }
 
 
@@ -822,12 +822,12 @@ public class TboIndicatorExtensionTests : TestBase
     /// Feeds the highs given (the lows are kept flat under them) and returns what the extension
     /// wrote into the candle data of the LAST candle.
     /// </summary>
-    private static TboCandleData? Feed(decimal[] highs, int left, int right)
+    private static MacCandleData? Feed(decimal[] highs, int left, int right)
     {
-        TboPlugin.Settings.PivotLeftCandles = left;
-        TboPlugin.Settings.PivotRightCandles = right;
+        MacPlugin.Settings.PivotLeftCandles = left;
+        MacPlugin.Settings.PivotRightCandles = right;
 
-        TboIndicatorExtension extension = new();
+        MacIndicatorExtension extension = new();
         extension.Init(new IndicatorRegistry(500));
 
         DateTime start = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -839,7 +839,7 @@ public class TboIndicatorExtensionTests : TestBase
 
         CryptoData data = new();
         extension.FillData(data);
-        return data.GetPluginData<TboCandleData>();
+        return data.GetPluginData<MacCandleData>();
     }
 
 
@@ -853,12 +853,12 @@ public class TboIndicatorExtensionTests : TestBase
     {
         // Index 2 is the peak; with left = right = 2 it is confirmed at index 4.
         decimal[] highs = [100, 101, 110, 102, 100, 99, 98];
-        TboCandleData? tbo = Feed(highs, left: 2, right: 2);
+        MacCandleData? mac = Feed(highs, left: 2, right: 2);
 
-        Assert.IsNotNull(tbo);
-        Assert.AreEqual(110.0, tbo!.PivotHigh);
+        Assert.IsNotNull(mac);
+        Assert.AreEqual(110.0, mac!.PivotHigh);
         // The newest candle is index 6, the peak index 2.
-        Assert.AreEqual(4, tbo.PivotHighAge);
+        Assert.AreEqual(4, mac.PivotHighAge);
     }
 
 
@@ -867,9 +867,9 @@ public class TboIndicatorExtensionTests : TestBase
     public void APeakWithoutItsRightHandCandles_IsNotALevelYet()
     {
         decimal[] highs = [100, 101, 110, 102];
-        TboCandleData? tbo = Feed(highs, left: 2, right: 2);
+        MacCandleData? mac = Feed(highs, left: 2, right: 2);
 
-        Assert.IsNull(tbo?.PivotHigh);
+        Assert.IsNull(mac?.PivotHigh);
     }
 
 
@@ -882,7 +882,7 @@ public class TboIndicatorExtensionTests : TestBase
     [TestMethod]
     public void TheFourLineLengthsAreTheDefaults()
     {
-        TboSettings fresh = new();
+        MacSettings fresh = new();
 
         Assert.AreEqual(20, fresh.FastEmaLength, "fast line is EMA(20)");
         Assert.AreEqual(40, fresh.SecondEmaLength, "second line is EMA(40)");
@@ -922,16 +922,16 @@ public class TboIndicatorExtensionTests : TestBase
             });
         }
 
-        TboLineValues[] overlay = TboLinesHelper.Compute(candles);
+        MacLineValues[] overlay = MacLinesHelper.Compute(candles);
 
-        TboIndicatorExtension extension = new();
+        MacIndicatorExtension extension = new();
         extension.Init(new IndicatorRegistry(500));
         for (int i = 0; i < candles.Count; i++)
         {
             extension.OnCandleAdded(candles[i]);
             CryptoData data = new();
             extension.FillData(data);
-            TboCandleData? live = data.GetPluginData<TboCandleData>();
+            MacCandleData? live = data.GetPluginData<MacCandleData>();
 
             Assert.AreEqual(overlay[i].PivotHigh, live?.PivotHigh, "pivot high at candle " + i);
             Assert.AreEqual(overlay[i].PivotLow, live?.PivotLow, "pivot low at candle " + i);
@@ -952,8 +952,8 @@ public class TboIndicatorExtensionTests : TestBase
     public void ALaterPeakReplacesTheLevel()
     {
         decimal[] highs = [100, 101, 110, 102, 100, 105, 120, 106, 104];
-        TboCandleData? tbo = Feed(highs, left: 2, right: 2);
+        MacCandleData? mac = Feed(highs, left: 2, right: 2);
 
-        Assert.AreEqual(120.0, tbo?.PivotHigh);
+        Assert.AreEqual(120.0, mac?.PivotHigh);
     }
 }

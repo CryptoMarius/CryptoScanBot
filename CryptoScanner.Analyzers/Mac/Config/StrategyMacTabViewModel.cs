@@ -2,15 +2,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Config.ViewModels;
 
-namespace CryptoScanner.Analyzers.Tbo.Config;
+namespace CryptoScanner.Analyzers.Mac.Config;
 
-public partial class StrategyTboTabViewModel : ObservableObject
+public partial class StrategyMacTabViewModel : ObservableObject
 {
     [ObservableProperty]
     SoundAndColorsViewModel _soundAndColorsViewModel;
 
     [ObservableProperty]
-    StrategyTboSettingsViewModel _strategyTboSettingsViewModel;
+    StrategyMacSettingsViewModel _strategyMacSettingsViewModel;
 
     // Which intervals this strategy runs on. Empty means "the same as the side".
     [ObservableProperty]
@@ -19,27 +19,27 @@ public partial class StrategyTboTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
 
-    public StrategyTboTabViewModel()
+    public StrategyMacTabViewModel()
     {
         _soundAndColorsViewModel = new();
-        _strategyTboSettingsViewModel = new();
+        _strategyMacSettingsViewModel = new();
         _intervalViewModel = new();
         _strategyEntryConditionsViewModel = new();
     }
 
 
-    internal void LoadConfig(TboSettings settings)
+    internal void LoadConfig(MacSettings settings)
     {
         SoundAndColorsViewModel.LoadConfig(settings);
-        StrategyTboSettingsViewModel.LoadConfig(settings);
+        StrategyMacSettingsViewModel.LoadConfig(settings);
         IntervalViewModel.LoadStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
-    internal void SaveConfig(TboSettings settings)
+    internal void SaveConfig(MacSettings settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
-        StrategyTboSettingsViewModel.SaveConfig(settings);
+        StrategyMacSettingsViewModel.SaveConfig(settings);
         IntervalViewModel.SaveStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }

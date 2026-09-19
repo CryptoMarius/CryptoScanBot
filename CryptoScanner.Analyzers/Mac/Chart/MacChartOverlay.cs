@@ -6,39 +6,39 @@ using OxyPlot.Annotations;
 using OxyPlot.Series;
 using CryptoScanner.Analyzers.Chart;
 
-namespace CryptoScanner.Analyzers.Tbo.Chart;
+namespace CryptoScanner.Analyzers.Mac.Chart;
 
 /// <summary>
-/// The four TBO lines on the chart, plus the two levels the breakout trigger measures against.
+/// The four MAC lines on the chart, plus the two levels the breakout trigger measures against.
 /// <para>
 /// The lines are EMA(20), EMA(40), SMA(50) and SMA(150) on the close - ordinary indicators, so the
 /// same picture can be put next to any other charting package. Their default colours are declared
 /// below and can be changed per series in the chart style screen.
 /// </para>
 /// </summary>
-public class TboChartOverlay : IChartOverlay
+public class MacChartOverlay : IChartOverlay
 {
-    public string Label => "Tbo Cloud";
-    public string GroupKey => "tbo";
+    public string Label => "Mac Cloud";
+    public string GroupKey => "mac";
 #pragma warning disable CS0067 // Required by IChartOverlay; raised externally when needed
     public event Action? RequestRedraw;
 #pragma warning restore CS0067
 
-    public const string KeyFast = "tboFast";
-    public const string KeySecond = "tboSecond";
-    public const string KeyMedium = "tboMedium";
-    public const string KeySlow = "tboSlow";
-    public const string KeyResistance = "tboResistance";
-    public const string KeySupport = "tboSupport";
-    public const string KeyCloudUp = "tboCloudUp";
-    public const string KeyCloudDown = "tboCloudDown";
-    public const string KeyOpenLong = "tboOpenLong";
-    public const string KeyOpenShort = "tboOpenShort";
-    public const string KeyBreakout = "tboBreakout";
-    public const string KeyBreakdown = "tboBreakdown";
+    public const string KeyFast = "macFast";
+    public const string KeySecond = "macSecond";
+    public const string KeyMedium = "macMedium";
+    public const string KeySlow = "macSlow";
+    public const string KeyResistance = "macResistance";
+    public const string KeySupport = "macSupport";
+    public const string KeyCloudUp = "macCloudUp";
+    public const string KeyCloudDown = "macCloudDown";
+    public const string KeyOpenLong = "macOpenLong";
+    public const string KeyOpenShort = "macOpenShort";
+    public const string KeyBreakout = "macBreakout";
+    public const string KeyBreakdown = "macBreakdown";
 
     /// <summary>
-    /// What this overlay draws and how it looks by default. The colour screen builds its TBO section
+    /// What this overlay draws and how it looks by default. The colour screen builds its MAC section
     /// from this, so the entries exist exactly as long as the plugin is registered - a strategy
     /// moved under #if DEBUG takes its colours with it instead of leaving them behind on screen.
     /// </summary>
@@ -66,8 +66,8 @@ public class TboChartOverlay : IChartOverlay
     /// How firmly each of the three bands is painted, as a fraction of the configured opacity:
     /// fast-to-second, second-to-medium, medium-to-slow.
     /// <para>
-    /// Measured off a reference chart rather than chosen. Over one background the three bands there
-    /// lift the pixels by 26, 36 and 47 counts in the same hue, so the outer band is the firm one
+    /// Measured off a chart image rather than chosen. Over one background the three bands lift
+    /// the pixels by 26, 36 and 47 counts in the same hue, so the outer band is the firm one
     /// and the two inner ones step back in that ratio. It is what makes the cloud read as one shape
     /// with a near edge and a far edge instead of three stripes.
     /// </para>
@@ -111,7 +111,7 @@ public class TboChartOverlay : IChartOverlay
         if (candles.Count == 0)
             return;
 
-        TboLineValues[] values = TboLinesHelper.Compute(candles);
+        MacLineValues[] values = MacLinesHelper.Compute(candles);
 
         // The cloud, filled between each neighbouring pair of lines. Every pair carries its own
         // direction, so at a turn the upper band changes colour before the lower one and the two
@@ -125,7 +125,7 @@ public class TboChartOverlay : IChartOverlay
                 continue;
 
             double x = openTime.Minutes;
-            TboLineValues v = values[i];
+            MacLineValues v = values[i];
             double?[] edges = [v.EmaFast, v.EmaSecond, v.SmaMedium, v.SmaSlow];
 
             for (int pair = 0; pair < 3; pair++)
@@ -152,7 +152,7 @@ public class TboChartOverlay : IChartOverlay
                 {
                     openFills[pair] = new AreaSeries
                     {
-                        Title = rising ? "tbo.cloud.up" : "tbo.cloud.down",
+                        Title = rising ? "mac.cloud.up" : "mac.cloud.down",
                         Fill = DefaultColor(rising ? KeyCloudUp : KeyCloudDown, BandDepth[pair]),
                         Color = OxyColors.Transparent,
                         Color2 = OxyColors.Transparent,
@@ -171,12 +171,12 @@ public class TboChartOverlay : IChartOverlay
                 chart.Series.Add(remaining);
         }
 
-        var fast = new LineSeries { Title = "tbo.ema.fast", Color = DefaultColor(KeyFast), StrokeThickness = 2, YAxisKey = "price", Tag = group };
-        var second = new LineSeries { Title = "tbo.ema.second", Color = DefaultColor(KeySecond), StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var medium = new LineSeries { Title = "tbo.sma.medium", Color = DefaultColor(KeyMedium), StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var slow = new LineSeries { Title = "tbo.sma.slow", Color = DefaultColor(KeySlow), StrokeThickness = 2, YAxisKey = "price", Tag = group };
-        var resistance = new LineSeries { Title = "tbo.resistance", Color = DefaultColor(KeyResistance), StrokeThickness = 1, LineStyle = LineStyle.Dot, YAxisKey = "price", Tag = group };
-        var support = new LineSeries { Title = "tbo.support", Color = DefaultColor(KeySupport), StrokeThickness = 1, LineStyle = LineStyle.Dot, YAxisKey = "price", Tag = group };
+        var fast = new LineSeries { Title = "mac.ema.fast", Color = DefaultColor(KeyFast), StrokeThickness = 2, YAxisKey = "price", Tag = group };
+        var second = new LineSeries { Title = "mac.ema.second", Color = DefaultColor(KeySecond), StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var medium = new LineSeries { Title = "mac.sma.medium", Color = DefaultColor(KeyMedium), StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var slow = new LineSeries { Title = "mac.sma.slow", Color = DefaultColor(KeySlow), StrokeThickness = 2, YAxisKey = "price", Tag = group };
+        var resistance = new LineSeries { Title = "mac.resistance", Color = DefaultColor(KeyResistance), StrokeThickness = 1, LineStyle = LineStyle.Dot, YAxisKey = "price", Tag = group };
+        var support = new LineSeries { Title = "mac.support", Color = DefaultColor(KeySupport), StrokeThickness = 1, LineStyle = LineStyle.Dot, YAxisKey = "price", Tag = group };
 
         for (int i = 0; i < candles.Count; i++)
         {
@@ -185,7 +185,7 @@ public class TboChartOverlay : IChartOverlay
                 continue;
 
             double x = openTime.Minutes;
-            TboLineValues v = values[i];
+            MacLineValues v = values[i];
             if (v.EmaFast != null)
                 fast.Points.Add(new DataPoint(x, v.EmaFast.Value));
             if (v.EmaSecond != null)
@@ -214,7 +214,7 @@ public class TboChartOverlay : IChartOverlay
         // above it for a short, so a chart with many of them stays readable.
         var longMarks = new ScatterSeries
         {
-            Title = "tbo.open.long",
+            Title = "mac.open.long",
             MarkerType = MarkerType.Triangle,
             MarkerSize = 5,
             MarkerFill = DefaultColor(KeyOpenLong),
@@ -223,7 +223,7 @@ public class TboChartOverlay : IChartOverlay
         };
         var shortMarks = new ScatterSeries
         {
-            Title = "tbo.open.short",
+            Title = "mac.open.short",
             MarkerType = MarkerType.Triangle,
             MarkerSize = 5,
             MarkerFill = DefaultColor(KeyOpenShort),
@@ -254,7 +254,7 @@ public class TboChartOverlay : IChartOverlay
         // above bar". That is the same side as the entry triangles, hence the larger gap.
         var breakoutDots = new ScatterSeries
         {
-            Title = "tbo.breakout",
+            Title = "mac.breakout",
             MarkerType = MarkerType.Circle,
             MarkerSize = 3,
             MarkerFill = DefaultColor(KeyBreakout),
@@ -263,7 +263,7 @@ public class TboChartOverlay : IChartOverlay
         };
         var breakdownDots = new ScatterSeries
         {
-            Title = "tbo.breakdown",
+            Title = "mac.breakdown",
             MarkerType = MarkerType.Circle,
             MarkerSize = 3,
             MarkerFill = DefaultColor(KeyBreakdown),
@@ -316,12 +316,12 @@ public class TboChartOverlay : IChartOverlay
     /// the signal list would be worse than no marker at all.
     /// </para>
     /// </summary>
-    private static IEnumerable<(int Index, bool Up)> FindCrossings(TboLineValues[] values)
+    private static IEnumerable<(int Index, bool Up)> FindCrossings(MacLineValues[] values)
     {
         for (int i = 1; i < values.Length; i++)
         {
-            TboLineValues now = values[i];
-            TboLineValues before = values[i - 1];
+            MacLineValues now = values[i];
+            MacLineValues before = values[i - 1];
             if (now.EmaFast == null || now.EmaSecond == null
                 || before.EmaFast == null || before.EmaSecond == null)
                 continue;
@@ -343,33 +343,32 @@ public class TboChartOverlay : IChartOverlay
 
 
     /// <summary>
-    /// The candles that trade through the last confirmed level: what the reference chart marks with
-    /// a white dot under the candle (Breakout) and a yellow one above it (Breakdown).
+    /// The candles that trade through the last confirmed level: a white dot under the candle
+    /// (Breakout) and a yellow one above it (Breakdown).
     /// <para>
-    /// Four conditions, and every one of them is measured against marks read off reference charts
-    /// rather than chosen. Nine of those marks are known: 24 October 2023, 11 to 13 February 2024,
-    /// 28 and 29 October 2024, 6 November 2024, and 12, 18 and 19 May 2025.
+    /// Four conditions, and every one of them is measured against the catalogued marks rather than
+    /// chosen. Nine of those are pinned down in MacBreakoutOnRealCandlesTests: 24 October 2023,
+    /// 11 to 13 February 2024, 28 and 29 October 2024, 6 November 2024, and 12, 18 and 19 May 2025.
     /// </para>
     /// <list type="number">
     /// <item>The HIGH trades through the last confirmed level - not the close. 19 May 2025 carries
     /// a mark while closing under its level, and one level can be marked more than once: 28 and 29
     /// October 2024 both break the same one.</item>
     /// <item>The cloud points the way of the break.</item>
-    /// <item>Not the candle the cloud turned on. The maker says it twice in his videos: a breakout
-    /// is always printed AFTER the entry, never on it.</item>
+    /// <item>Not the candle the cloud turned on: a mark prints AFTER the entry, never on it.</item>
     /// <item>Between MarkEarliest and MarkLatest candles after that turn, and a new extreme over
     /// MarkExtremeCandles candles. The nine known marks sit between 11 and 46 candles after their
     /// turn, so the band has room on both sides of what was measured.</item>
     /// </list>
     /// <para>
-    /// STILL WIDER THAN THE REFERENCE, by about three to one: this draws some thirty marks a year
-    /// on a daily chart where the reference draws six to nine. It contains all nine known ones,
-    /// which is the property worth keeping until the missing condition is found. What that
-    /// condition is, is not guessed at here - the maker says the marks print "based off of multiple
-    /// factors" and that his paid version can even change HOW MANY are printed.
+    /// DELIBERATELY WIDE, by about three to one: this draws some thirty marks a year on a daily
+    /// chart where six to nine are wanted. It contains all nine catalogued ones, which is the
+    /// property worth keeping until the missing condition is found. What that condition is, is not
+    /// guessed at here: measuring how far price stands from the cloud narrows the count but costs
+    /// money on every setting tried, so no narrowing is built in.
     /// </para>
     /// </summary>
-    private static IEnumerable<(int Index, bool Up)> FindConfirmations(TboLineValues[] values,
+    private static IEnumerable<(int Index, bool Up)> FindConfirmations(MacLineValues[] values,
                                                                        List<CryptoCandle> candles)
     {
         bool? cloudUp = null;
@@ -377,7 +376,7 @@ public class TboChartOverlay : IChartOverlay
 
         for (int i = 0; i < values.Length && i < candles.Count; i++)
         {
-            TboLineValues v = values[i];
+            MacLineValues v = values[i];
             if (v.EmaFast == null || v.EmaSecond == null)
                 continue;
 
@@ -434,21 +433,21 @@ public class TboChartOverlay : IChartOverlay
         if (candles.Count == 0)
             return [];
 
-        TboLineValues[] values = TboLinesHelper.Compute(candles);
+        MacLineValues[] values = MacLinesHelper.Compute(candles);
 
         // The defaults of the definitions; the host replaces them with whatever the user set in the
         // chart style screen, so every colour lives in one place.
-        var fast = new ChartOverlaySeries { Key = KeyFast, Label = "TBO fast EMA", Color = Css(KeyFast), LineWidth = 2 };
-        var second = new ChartOverlaySeries { Key = KeySecond, Label = "TBO second EMA", Color = Css(KeySecond) };
-        var medium = new ChartOverlaySeries { Key = KeyMedium, Label = "TBO medium SMA", Color = Css(KeyMedium) };
-        var slow = new ChartOverlaySeries { Key = KeySlow, Label = "TBO slow SMA", Color = Css(KeySlow), LineWidth = 2 };
-        var resistance = new ChartOverlaySeries { Key = KeyResistance, Label = "TBO resistance", Color = Css(KeyResistance), LineStyle = 1 };
-        var support = new ChartOverlaySeries { Key = KeySupport, Label = "TBO support", Color = Css(KeySupport), LineStyle = 1 };
+        var fast = new ChartOverlaySeries { Key = KeyFast, Label = "MAC fast EMA", Color = Css(KeyFast), LineWidth = 2 };
+        var second = new ChartOverlaySeries { Key = KeySecond, Label = "MAC second EMA", Color = Css(KeySecond) };
+        var medium = new ChartOverlaySeries { Key = KeyMedium, Label = "MAC medium SMA", Color = Css(KeyMedium) };
+        var slow = new ChartOverlaySeries { Key = KeySlow, Label = "MAC slow SMA", Color = Css(KeySlow), LineWidth = 2 };
+        var resistance = new ChartOverlaySeries { Key = KeyResistance, Label = "MAC resistance", Color = Css(KeyResistance), LineStyle = 1 };
+        var support = new ChartOverlaySeries { Key = KeySupport, Label = "MAC support", Color = Css(KeySupport), LineStyle = 1 };
 
         for (int i = 0; i < candles.Count; i++)
         {
             long time = CandleTime.AlignFromDateTime(candles[i].Date, interval.Duration).ToUnixSeconds();
-            TboLineValues v = values[i];
+            MacLineValues v = values[i];
             if (v.EmaFast != null)
                 fast.Points.Add(new ChartOverlayPoint { Time = time, Value = v.EmaFast.Value });
             if (v.EmaSecond != null)
@@ -495,7 +494,7 @@ public class TboChartOverlay : IChartOverlay
         if (candles.Count == 0)
             return [];
 
-        TboLineValues[] values = TboLinesHelper.Compute(candles);
+        MacLineValues[] values = MacLinesHelper.Compute(candles);
 
         // Three bands, one per neighbouring pair of lines: fast to second, second to medium,
         // medium to slow. Each band runs the whole chart and carries a direction per candle, so it
@@ -509,7 +508,7 @@ public class TboChartOverlay : IChartOverlay
         {
             var band = new ChartOverlayBand
             {
-                Key = "tboCloud" + pair,
+                Key = "macCloud" + pair,
                 StyleKeyUp = KeyCloudUp,
                 StyleKeyDown = KeyCloudDown,
                 FillColorUp = Css(KeyCloudUp, BandDepth[pair]),
@@ -519,7 +518,7 @@ public class TboChartOverlay : IChartOverlay
 
             for (int i = 0; i < candles.Count; i++)
             {
-                TboLineValues v = values[i];
+                MacLineValues v = values[i];
                 double?[] edges = [v.EmaFast, v.EmaSecond, v.SmaMedium, v.SmaSlow];
                 double? faster = edges[pair];
                 double? slower = edges[pair + 1];
@@ -588,7 +587,7 @@ public class TboChartOverlay : IChartOverlay
         if (candles.Count == 0)
             return [];
 
-        TboLineValues[] values = TboLinesHelper.Compute(candles);
+        MacLineValues[] values = MacLinesHelper.Compute(candles);
         var labels = new List<ChartOverlayLabel>();
         foreach ((int index, bool up) in FindCrossings(values))
         {

@@ -2,10 +2,10 @@ using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.Analyzers.Tbo;
+namespace CryptoScanner.Analyzers.Mac;
 
 /// <summary>The four cloud lines and the levels in force at one candle.</summary>
-public readonly record struct TboLineValues(
+public readonly record struct MacLineValues(
     double? EmaFast, double? EmaSecond, double? SmaMedium, double? SmaSlow,
     double? PivotHigh, double? PivotLow)
 {
@@ -14,7 +14,7 @@ public readonly record struct TboLineValues(
     /// <summary>
     /// The highest of the lines that EXIST at this candle, null when none of them do.
     /// <para>
-    /// Deliberately looser than the same pair on TboCandleData, which the strategy reads: that one
+    /// Deliberately looser than the same pair on MacCandleData, which the strategy reads: that one
     /// wants all four lines before it calls anything a cloud. Here the cloud is a drawing, and
     /// waiting for the slow SMA would leave the first 150 candles of every chart empty - which is
     /// exactly what "scroll left and the cloud is gone" was.
@@ -51,10 +51,10 @@ public readonly record struct TboLineValues(
 }
 
 /// <summary>
-/// The TBO lines over a WHOLE candle list, for the chart overlay.
+/// The MAC lines over a WHOLE candle list, for the chart overlay.
 /// <para>
 /// The strategy itself does not use this: it reads the values the indicator hub computed one candle
-/// at a time (<see cref="Indicators.TboIndicatorExtension"/>). Two paths to the same numbers is a
+/// at a time (<see cref="Indicators.MacIndicatorExtension"/>). Two paths to the same numbers is a
 /// known way to drift apart, so the pivot rule below is deliberately the same walk as the one in
 /// the extension - candidate at <c>right</c> candles back, strictly higher (lower) than every other
 /// candle in the window - and a test compares the two against each other.
@@ -64,15 +64,15 @@ public readonly record struct TboLineValues(
 /// and from the hub there, both on the close.
 /// </para>
 /// </summary>
-public static class TboLinesHelper
+public static class MacLinesHelper
 {
-    public static TboLineValues[] Compute(List<CryptoCandle> candles)
+    public static MacLineValues[] Compute(List<CryptoCandle> candles)
     {
-        var result = new TboLineValues[candles.Count];
+        var result = new MacLineValues[candles.Count];
         if (candles.Count == 0)
             return result;
 
-        TboSettings settings = TboPlugin.Settings;
+        MacSettings settings = MacPlugin.Settings;
         int fastLength = Math.Max(1, settings.FastEmaLength);
         int secondLength = Math.Max(fastLength + 1, settings.SecondEmaLength);
         int mediumLength = Math.Max(2, settings.MediumSmaLength);
@@ -118,7 +118,7 @@ public static class TboLinesHelper
                     pivotLow = (double)low;
             }
 
-            result[i] = new TboLineValues(
+            result[i] = new MacLineValues(
                 fast[i].Ema, second[i].Ema, medium[i].Sma, slow[i].Sma, pivotHigh, pivotLow);
         }
 

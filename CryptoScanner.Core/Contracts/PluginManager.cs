@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Json;
+using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
 
@@ -81,7 +81,14 @@ public static class PluginManager
         foreach (var plugin in _plugins.Values.Distinct())
         {
             if (!stored.TryGetValue(plugin.StrategyName, out var element))
-                continue;
+            {
+                // A settings file written before this plugin was renamed still has the old key.
+                string? former = plugin.FormerStrategyNames.FirstOrDefault(stored.ContainsKey);
+                if (former == null)
+                    continue;
+                element = stored[former];
+                Logger.Info($"Settings for {plugin.StrategyName} restored from its former name \"{former}\"");
+            }
 
             try
             {
@@ -116,6 +123,37 @@ public static class PluginManager
     }
 
 
+    /// <summary>
+    /// The plugin that answers to this name, either by its current name or by a name it carried
+    /// before a rename. Null when no plugin does.
+    /// </summary>
+    public static IStrategyPlugin? FindByName(string strategyName)
+    {
+        foreach (var plugin in _plugins.Values.Distinct())
+        {
+            if (plugin.StrategyName.Equals(strategyName, StringComparison.OrdinalIgnoreCase))
+                return plugin;
+        }
+        foreach (var plugin in _plugins.Values.Distinct())
+        {
+            foreach (string former in plugin.FormerStrategyNames)
+            {
+                if (former.Equals(strategyName, StringComparison.OrdinalIgnoreCase))
+                    return plugin;
+            }
+        }
+        return null;
+    }
+
+
+    /// <summary>
+    /// The name a strategy goes by today, given a name that may predate a rename. A name nobody
+    /// claims is handed back untouched, so an unknown algorithm still fails where it used to.
+    /// </summary>
+    public static string CurrentName(string strategyName) =>
+        FindByName(strategyName)?.StrategyName ?? strategyName;
+
+
     /// <summary>The live settings instance of a plugin, or null when no plugin uses that name.</summary>
     public static SettingsSignalStrategyBase? LiveSettings(string strategyName)
     {
@@ -136,24 +174,30 @@ public static class PluginManager
     /// </summary>
     public static SettingsSignalStrategyBase? MaterializeSettings(string strategyName, IDictionary<string, JsonElement> stored)
     {
-        foreach (var plugin in _plugins.Values.Distinct())
-        {
-            if (plugin.StrategyName != strategyName)
-                continue;
-            if (!stored.TryGetValue(strategyName, out var element))
-                return null;
+        // By the current name or by one it carried before a rename, so a snapshot written under the
+        // old name still materializes into the concrete settings type of the plugin that owns it.
+        IStrategyPlugin? plugin = FindByName(strategyName);
+        if (plugin == null)
+            return null;
 
-            try
-            {
-                return element.Deserialize(plugin.SettingsBase.GetType(), JsonTools.DeSerializerOptions)
-                    as SettingsSignalStrategyBase;
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn(ex, $"Failed to read stored settings for {strategyName}");
+        if (!stored.TryGetValue(strategyName, out JsonElement element)
+            && !stored.TryGetValue(plugin.StrategyName, out element))
+        {
+            string? former = plugin.FormerStrategyNames.FirstOrDefault(stored.ContainsKey);
+            if (former == null)
                 return null;
-            }
+            element = stored[former];
         }
-        return null;
+
+        try
+        {
+            return element.Deserialize(plugin.SettingsBase.GetType(), JsonTools.DeSerializerOptions)
+                as SettingsSignalStrategyBase;
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, $"Failed to read stored settings for {strategyName}");
+            return null;
+        }
     }
 }

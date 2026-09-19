@@ -1,5 +1,5 @@
 using CryptoScanner.Analyzers.Dbr;
-using CryptoScanner.Analyzers.Tbo;
+using CryptoScanner.Analyzers.Mac;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Emulator.Engine;
 
@@ -15,8 +15,8 @@ namespace CryptoScanner.CoreTests.Emulator;
 /// settings show the condition as ON, and the result is bit-identical to the run without it.
 /// <para>
 /// That is not a thought experiment. Four runs of the batch of 17-09-2026 (TX19 to TX22) were meant
-/// to measure the ma200 condition on TBO and came back identical to TX1 to TX4, down to the cent.
-/// Three strategies have their own set - tbo, bbsqueeze and kumosqueeze - and for those the
+/// to measure the ma200 condition on MAC and came back identical to TX1 to TX4, down to the cent.
+/// Three strategies have their own set - mac, bbsqueeze and kumosqueeze - and for those the
 /// condition has to travel through the SIGNAL overrides, on the strategy's own section.
 /// </para>
 /// </summary>
@@ -27,8 +27,8 @@ public class StrategyOwnEntryConditionsTests : TestBase
     public static void ClassInit(TestContext _)
     {
         // The signal overrides find a plugin section by strategy name through PluginManager, so the
-        // plugin has to be registered before "tbo" resolves to anything at all.
-        RegisterAndEnablePlugin(new TboPlugin());
+        // plugin has to be registered before "mac" resolves to anything at all.
+        RegisterAndEnablePlugin(new MacPlugin());
 
         // A strategy WITHOUT its own set, to prove the refusal below does not catch everything.
         RegisterAndEnablePlugin(new DbrPlugin());
@@ -49,11 +49,11 @@ public class StrategyOwnEntryConditionsTests : TestBase
 
 
     [TestMethod]
-    public void TboBringsItsOwnEntryConditions()
+    public void MacBringsItsOwnEntryConditions()
     {
         // The whole trap rests on this being non-null: that is what makes the resolver prefer it.
-        Assert.IsNotNull(new TboSettings().EntryConditions,
-            "TBO has its own entry conditions on purpose - see the note on its constructor");
+        Assert.IsNotNull(new MacSettings().EntryConditions,
+            "MAC has its own entry conditions on purpose - see the note on its constructor");
     }
 
 
@@ -75,7 +75,7 @@ public class StrategyOwnEntryConditionsTests : TestBase
         {
             Assert.IsTrue(GlobalData.Settings.Trading.EntryConditions.CheckPriceAboveMa200,
                 "the global set is what the override reaches");
-            Assert.IsFalse(TboPlugin.Settings.EntryConditions!.CheckPriceAboveMa200,
+            Assert.IsFalse(MacPlugin.Settings.EntryConditions!.CheckPriceAboveMa200,
                 "and the strategy's own set - the one that is actually read - stays untouched");
         }
         finally
@@ -94,7 +94,7 @@ public class StrategyOwnEntryConditionsTests : TestBase
         {
             SignalOverrides = new()
             {
-                ["tbo"] = new()
+                ["mac"] = new()
                 {
                     ["EntryConditions.CheckPriceAboveMa200"] = JsonDocument.Parse("true").RootElement,
                     ["EntryConditions.Ma200ConfirmationCandles"] = JsonDocument.Parse("3").RootElement,
@@ -105,17 +105,17 @@ public class StrategyOwnEntryConditionsTests : TestBase
         var overrides = SignalGridExpander.Apply(entry);
         try
         {
-            Assert.IsTrue(TboPlugin.Settings.EntryConditions!.CheckPriceAboveMa200);
-            Assert.AreEqual(3, TboPlugin.Settings.EntryConditions.Ma200ConfirmationCandles);
+            Assert.IsTrue(MacPlugin.Settings.EntryConditions!.CheckPriceAboveMa200);
+            Assert.AreEqual(3, MacPlugin.Settings.EntryConditions.Ma200ConfirmationCandles);
         }
         finally
         {
             SignalGridExpander.Revert(overrides);
         }
 
-        Assert.IsFalse(TboPlugin.Settings.EntryConditions!.CheckPriceAboveMa200,
+        Assert.IsFalse(MacPlugin.Settings.EntryConditions!.CheckPriceAboveMa200,
             "and it has to go back afterwards, or every later run in the batch measures it too");
-        Assert.AreEqual(0, TboPlugin.Settings.EntryConditions.Ma200ConfirmationCandles);
+        Assert.AreEqual(0, MacPlugin.Settings.EntryConditions.Ma200ConfirmationCandles);
     }
 
 
@@ -128,15 +128,15 @@ public class StrategyOwnEntryConditionsTests : TestBase
     {
         InitTestSession();
 
-        string? reason = SignalGridExpander.Validate(TradingOverrideEntry("tbo", "true"));
+        string? reason = SignalGridExpander.Validate(TradingOverrideEntry("mac", "true"));
 
         Assert.IsNotNull(reason, "this entry measures nothing and has to say so before the batch starts");
         StringAssert.Contains(reason, "SignalOverrides");
-        StringAssert.Contains(reason, "tbo");
+        StringAssert.Contains(reason, "mac");
 
         // And the same question is asked again before anything is set.
         Assert.ThrowsExactly<NotSupportedException>(
-            () => SignalGridExpander.Apply(TradingOverrideEntry("tbo", "true")));
+            () => SignalGridExpander.Apply(TradingOverrideEntry("mac", "true")));
     }
 
 
@@ -149,7 +149,7 @@ public class StrategyOwnEntryConditionsTests : TestBase
     {
         InitTestSession();
 
-        Assert.IsNull(SignalGridExpander.Validate(TradingOverrideEntry("tbo", "false")));
+        Assert.IsNull(SignalGridExpander.Validate(TradingOverrideEntry("mac", "false")));
     }
 
 

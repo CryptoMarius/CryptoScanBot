@@ -13,6 +13,13 @@ public interface IStrategyPlugin
     string StrategyName { get; }
     string StrategyNameCamelCase { get; }
 
+    /// <summary>
+    /// Names this plugin answered to before it was renamed, lower case. Settings files, queue files
+    /// and emulator runs written under the old name keep working: everything that looks a strategy
+    /// up by name falls back to this list. A plugin that was never renamed leaves it empty.
+    /// </summary>
+    IReadOnlyList<string> FormerStrategyNames => [];
+
     /// <summary>One or more sub-strategies this plugin provides.</summary>
     IReadOnlyList<StrategyRegistration> Strategies { get; }
 

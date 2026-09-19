@@ -1,10 +1,10 @@
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
 
-namespace CryptoScanner.Analyzers.Tbo;
+namespace CryptoScanner.Analyzers.Mac;
 
 /// <summary>
-/// TBO - a trend-following breakout strategy on a cloud of four moving averages. The cloud gives
+/// MAC - a trend-following breakout strategy on a cloud of four moving averages. The cloud gives
 /// the direction and the strength of the trend, and the entry is one of three events inside it: a
 /// break through a pivot level, a crossing of the two EMAs, or a pullback to the fast line.
 /// <para>
@@ -15,10 +15,10 @@ namespace CryptoScanner.Analyzers.Tbo;
 /// </para>
 /// </summary>
 [Serializable]
-public class TboSettings : SettingsSignalStrategyBase
+public class MacSettings : SettingsSignalStrategyBase
 {
     // NOTE: the declaration order below is the order the settings appear on screen, and it follows
-    // StrategyTboSettingsView.axaml.
+    // StrategyMacSettingsView.axaml.
 
     /// <summary>
     /// Fire on the break through the last pivot level: the trade this strategy is named after.
@@ -180,10 +180,10 @@ public class TboSettings : SettingsSignalStrategyBase
     /// How far beyond the level the candle has to close, as a percentage of the level. Zero takes
     /// any close beyond it, which on a coin with a wide spread means a break of one tick counts.
     /// <para>
-    /// It stood at 2% for a day on the strength of a reference chart where a day that cleared its
-    /// level by 0.64% appeared to carry no mark. It does carry one, read off the chart itself later,
-    /// so the margin has no measurement behind it and is back to zero. It is a setting to measure in
-    /// a run, not something to read off a picture.
+    /// It stood at 2% for a day on the strength of a chart image where a day that cleared its
+    /// level by 0.64% appeared to carry no mark. It does carry one, read off that same image more
+    /// carefully later, so the margin had no measurement behind it and is back to zero. It is a
+    /// setting to measure in a run, not something to read off a picture.
     /// </para>
     /// </summary>
     [SettingCaption("Breakout buffer %",
@@ -251,7 +251,7 @@ public class TboSettings : SettingsSignalStrategyBase
             + "leaves. Zero leaves on the first candle the EMAs cross back.")]
     public int ExitConfirmationCandles { get; set; } = 0;
 
-    public TboSettings() : base()
+    public MacSettings() : base()
     {
         SoundFileLong = "sound-signal-oversold.wav";
         SoundFileShort = "sound-signal-overbought.wav";

@@ -1,4 +1,5 @@
 using CryptoScanner.Analyzers.CandlePattern;
+using CryptoScanner.Analyzers.Mac;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Emulator.Engine;
@@ -228,5 +229,50 @@ public class FingerprintCanonicalSettingsTests
         // one run twice is cheap, skipping one that was never measured is not.
         Assert.AreNotEqual(EmulatorRunFingerprint.Compute(Config, "{not json"),
                            EmulatorRunFingerprint.Compute(Config, Settings(_ => { })));
+    }
+
+    /// <summary>
+    /// A strategy that was renamed: the run recorded under the old name and the same run under the
+    /// new one are one measurement, so they have to hash the same.
+    /// <para>
+    /// Without this the rename of 19-09-2026 would have put every run from before it outside the
+    /// duplicate check, and a restarted queue would have replayed 176 runs whose numbers were
+    /// already in the database.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void StrategyRenamed_KeepsTheChecksum()
+    {
+        TestBase.RegisterPlugin(new MacPlugin());
+
+        var block = JsonNode.Parse(JsonSerializer.Serialize(
+            new MacSettings(), JsonTools.JsonSerializerIndented))!.AsObject();
+
+        string before = Settings(s => { Runs(s, "tbo"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["tbo"] = block.DeepClone(); });
+        string after = Settings(s => { Runs(s, "mac"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["mac"] = block.DeepClone(); });
+
+        Assert.AreEqual(EmulatorRunFingerprint.Compute(Config, before),
+                        EmulatorRunFingerprint.Compute(Config, after),
+                        "a run from before the rename has to stay recognisable as the same measurement");
+    }
+
+
+    /// <summary>The rename must not make two DIFFERENT runs look alike: a changed setting still
+    /// counts, whichever name the block is stored under.</summary>
+    [TestMethod]
+    public void StrategyRenamed_ChangedSettingStillChangesTheChecksum()
+    {
+        TestBase.RegisterPlugin(new MacPlugin());
+
+        var reference = JsonNode.Parse(JsonSerializer.Serialize(
+            new MacSettings(), JsonTools.JsonSerializerIndented))!.AsObject();
+        var changed = reference.DeepClone().AsObject();
+        changed[nameof(MacSettings.BreakoutBufferPercentage)] = 2.5m;
+
+        string before = Settings(s => { Runs(s, "tbo"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["tbo"] = reference; });
+        string after = Settings(s => { Runs(s, "mac"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["mac"] = changed; });
+
+        Assert.AreNotEqual(EmulatorRunFingerprint.Compute(Config, before),
+                           EmulatorRunFingerprint.Compute(Config, after));
     }
 }

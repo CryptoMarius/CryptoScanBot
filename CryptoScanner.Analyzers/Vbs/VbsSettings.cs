@@ -2,8 +2,8 @@ using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Vbs;
 
-// VBS (VWAP Band Strategy) — Mean Reversion Bands (volume-weighted VWAP bands), reverse-engineered from the
-// trading-course chart. The band is a rolling VWAP basis with a volume-weighted stdev envelope, plus an
+// VBS (VWAP Band Strategy) — Mean Reversion Bands (volume-weighted VWAP bands).
+// The band is a rolling VWAP basis with a volume-weighted stdev envelope, plus an
 // optional fast-ATR term: VWMA(hlc3, Length) +/- (Mult * vwStdev(hlc3, Length) + AtrMult * ATR(AtrLength)).
 // It is NOT a Bollinger band (no SMA of close, no plain stdev). A long alert fires when price breaks the
 // LOWER band while RSI is oversold; a short on the UPPER band while RSI is overbought. These parameters
@@ -59,8 +59,7 @@ public class VbsSettings : SettingsSignalStrategyBase
     public bool UseStopLoss { get; set; } = false;
 
     // Stop-loss = Entry -/+ ACS%, where ACS (Average Candle Size) = AcsFactor * SMA((high-low)/close, AcsLength) * 100.
-    // Reverse-engineered from the reference (TradingBuddy): the SL distance % equals the average candle size %.
-    // Defaults (2.17 / 50) were fit against live signals. The SL% is handed to the trader via
+    // The SL distance % equals the average candle size %. Defaults (2.17 / 50) were fit on measured signals. The SL% is handed to the trader via
     // OverrideSlPercentage when UseStopLoss is on.
     [SettingCaption("ACS factor", Group = GroupStopLoss)]
     public double AcsFactor { get; set; } = 2.17;

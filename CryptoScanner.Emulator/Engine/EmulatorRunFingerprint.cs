@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Settings;
 
@@ -110,6 +111,7 @@ public static class EmulatorRunFingerprint
             settings.Signal.AnalyzerSettings = CanonicaliseAnalyzers(
                 settings.Signal.AnalyzerSettings, ActiveStrategies(settings));
 
+            RenameStrategiesToTheirCurrentName(settings);
             StripThingsThatCannotChangeAReplay(settings);
 
             return JsonSerializer.Serialize(settings, Core.Json.JsonTools.JsonSerializerIndented);
@@ -139,6 +141,17 @@ public static class EmulatorRunFingerprint
             active.Add(name);
         foreach (string name in settings.Signal.Short.Strategy)
             active.Add(name);
+        // Both spellings, so a block still stored under a former name is not dropped as inactive.
+        foreach (string name in active.ToList())
+        {
+            active.Add(PluginManager.CurrentName(name));
+            IStrategyPlugin? plugin = PluginManager.FindByName(name);
+            if (plugin != null)
+            {
+                foreach (string former in plugin.FormerStrategyNames)
+                    active.Add(former);
+            }
+        }
         return active;
     }
 
@@ -177,13 +190,16 @@ public static class EmulatorRunFingerprint
             if (active.Count > 0 && !active.Contains(name))
                 continue;
 
-            var settings = Core.Contracts.PluginManager.MaterializeSettings(name, stored);
+            var settings = PluginManager.MaterializeSettings(name, stored);
             JsonElement value = settings == null
                 ? block
                 : JsonSerializer.SerializeToElement(settings, settings.GetType(),
                     Core.Json.JsonTools.JsonSerializerIndented);
 
-            result[name] = WithoutPresentationFields(value);
+            // Under the name the strategy goes by TODAY. A snapshot from before a rename holds the
+            // old key, and keeping it would make every run from before the rename look like a
+            // measurement that was never taken - which is the one thing this check exists to stop.
+            result[PluginManager.CurrentName(name)] = WithoutPresentationFields(value);
         }
         return result;
     }
@@ -220,6 +236,24 @@ public static class EmulatorRunFingerprint
     /// symbol, the heartbeat sound, and every Log* switch on SettingsSignal. Two runs that differ
     /// only in what they wrote to the log file produced the same trades.
     /// </summary>
+    /// <summary>
+    /// The strategy lists of both sides, written under the names those strategies go by today.
+    /// <para>
+    /// These lists ARE part of the hashed text, so a run recorded as "tbo" and the same run recorded
+    /// as "mac" would otherwise hash differently and the second would be replayed in full. The
+    /// analyzer blocks get the same treatment in <see cref="CanonicaliseAnalyzers"/>.
+    /// </para>
+    /// </summary>
+    private static void RenameStrategiesToTheirCurrentName(SettingsBasic settings)
+    {
+        foreach (List<string> list in new[] { settings.Signal.Long.Strategy, settings.Signal.Short.Strategy })
+        {
+            for (int i = 0; i < list.Count; i++)
+                list[i] = PluginManager.CurrentName(list[i]);
+        }
+    }
+
+
     private static void StripThingsThatCannotChangeAReplay(SettingsBasic settings)
     {
         settings.General.DebugSymbol = "";

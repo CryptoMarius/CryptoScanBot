@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Contracts;
+using CryptoScanner.Core.Core;
 
 using System.Text.Json;
 
@@ -26,7 +27,32 @@ public static class EmulatorQueueFile
     public static List<EmulatorQueueEntry> LoadFrom(string path)
     {
         using FileStream stream = File.OpenRead(path);
-        return JsonSerializer.Deserialize<List<EmulatorQueueEntry>>(stream, ReadOptions) ?? [];
+        List<EmulatorQueueEntry> entries =
+            JsonSerializer.Deserialize<List<EmulatorQueueEntry>>(stream, ReadOptions) ?? [];
+        foreach (EmulatorQueueEntry entry in entries)
+            RenameLegacyStrategy(entry);
+        return entries;
+    }
+
+
+    /// <summary>
+    /// A queue file written before a strategy was renamed names the old strategy, both as the
+    /// entry's Algorithm and as the section its SignalOverrides sit under. Both are translated on
+    /// the way in, so a file that has been waiting in the folder across a rename still runs.
+    /// </summary>
+    private static void RenameLegacyStrategy(EmulatorQueueEntry entry)
+    {
+        if (!string.IsNullOrEmpty(entry.Algorithm))
+            entry.Algorithm = PluginManager.CurrentName(entry.Algorithm);
+
+        foreach (string section in entry.SignalOverrides.Keys.ToList())
+        {
+            string current = PluginManager.CurrentName(section);
+            if (current == section || entry.SignalOverrides.ContainsKey(current))
+                continue;
+            entry.SignalOverrides[current] = entry.SignalOverrides[section];
+            entry.SignalOverrides.Remove(section);
+        }
     }
 
 

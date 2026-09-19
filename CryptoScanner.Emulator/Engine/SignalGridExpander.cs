@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Contracts;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Settings;
 
@@ -69,8 +69,7 @@ public static class SignalGridExpander
             }
 
             // Fall back to plugin settings in AnalyzerSettings (keyed by plugin name)
-            IStrategyPlugin? plugin = PluginManager.LoadedPlugins.Values
-                .FirstOrDefault(p => p.StrategyName.Equals(sectionName, StringComparison.OrdinalIgnoreCase));
+            IStrategyPlugin? plugin = PluginManager.FindByName(sectionName);
             if (plugin != null)
             {
                 ApplyProps(plugin.SettingsBase, props, saved);
@@ -205,7 +204,7 @@ public static class SignalGridExpander
     /// Why an entry condition in this entry's TRADING overrides will never be seen by the strategy
     /// it is meant for, or null when there is nothing wrong.
     /// <para>
-    /// A strategy may bring its own <c>EntryConditions</c> - tbo, bbsqueeze and kumosqueeze do - and
+    /// A strategy may bring its own <c>EntryConditions</c> - mac, bbsqueeze and kumosqueeze do - and
     /// SignalBase.ResolveEntryConditions then prefers that set over
     /// <c>GlobalData.Settings.Trading.EntryConditions</c>. An entry that switches a condition on in
     /// the trading overrides therefore changes nothing for such a strategy, and nothing says so: the
@@ -224,9 +223,9 @@ public static class SignalGridExpander
         if (string.IsNullOrEmpty(entry.Algorithm))
             return null;
 
-        IStrategyPlugin? plugin = PluginManager.LoadedPlugins.Values.FirstOrDefault(p =>
-            p.StrategyName.Equals(entry.Algorithm, StringComparison.OrdinalIgnoreCase)
-            || p.Strategies.Any(s => s.Name.Equals(entry.Algorithm, StringComparison.OrdinalIgnoreCase)));
+        IStrategyPlugin? plugin = PluginManager.FindByName(entry.Algorithm)
+            ?? PluginManager.LoadedPlugins.Values.FirstOrDefault(p =>
+                p.Strategies.Any(s => s.Name.Equals(entry.Algorithm, StringComparison.OrdinalIgnoreCase)));
         if (plugin?.SettingsBase.EntryConditions == null)
             return null;
 
