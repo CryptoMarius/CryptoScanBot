@@ -13,6 +13,10 @@ using CryptoScanner.Analyzers.Chart;
 
 namespace CryptoScanner.Analyzers.Bbma.Chart;
 
+// DEBUG only: BBMA reads CryptoData.Ema50 / Wma05* / Wma10* / Atr14, and those six fields only
+// exist in a Debug build. See CryptoData.Ema50 and BbmaPlugin.Strategies.
+#if DEBUG
+
 // Moved from CryptoScanner.Chart (ViewModels/Chart/Bbma.cs) into the Bbma plugin as an
 // IChartOverlay, so the chart host no longer references the BBMA signal classes directly
 // and the overlay gets its own checkbox in the chart's overlay list.
@@ -596,3 +600,4 @@ public class BbmaChartOverlay : IChartOverlay
     }
 
 }
+#endif

@@ -4,6 +4,10 @@ using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Analyzers.Bbma.Signal;
 
+// DEBUG only: BBMA reads CryptoData.Ema50 / Wma05* / Wma10* / Atr14, and those six fields only
+// exist in a Debug build. See CryptoData.Ema50 and BbmaPlugin.Strategies.
+#if DEBUG
+
 /// <summary>
 /// Base class for the BBMA Omni strategy. State classification is a direct port of the
 /// "BBMA Oma Ally OmniView.mq5" formulas — kept as close to the MQL5 source as possible
@@ -784,3 +788,4 @@ public class SignalBbmaOmniBase : SignalBbmaBase
         return 9999;
     }
 }
+#endif

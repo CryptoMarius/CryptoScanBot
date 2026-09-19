@@ -78,11 +78,19 @@ public class CryptoData
     //public double? SlopeSma20 { get; set; }
     public double? Sma50 { get; set; }
     //public double? SlopeSma50 { get; set; }
-    public double? Sma100 { get; set; }
+    // Dropped 19-09-2026: computed for every symbol+interval and written to the Signal/Position
+    // table on every signal, but read by nothing - no strategy, no chart, no column, no export.
+    // The Sma100 column stays in the schema, with the values older signals already have in it.
+    //public double? Sma100 { get; set; }
     //public double? SlopeSma100 { get; set; }
     public double? Sma200 { get; set; }
     //public double? SlopeSma200 { get; set; }
 
+    // DEBUG only: BBMA is the only reader of these five and of Atr14 below, and its registration in
+    // AnalyzerRegistration is commented out, so a production build would carry six nullable doubles
+    // - 96 bytes on every candle - that can never be anything but null. The Ema50 column keeps the
+    // values the older signals have in it; new ones leave it empty, as they already do today.
+#if DEBUG
     public double? Ema50 { get; set; }
     [Computed]
     public double? Wma05Low { get; set; }
@@ -92,25 +100,41 @@ public class CryptoData
     public double? Wma10Low { get; set; }
     [Computed]
     public double? Wma10High { get; set; }
+#endif
     // ATR(14) — used by BBMA Omni: RejectedEMA50 big-body filter, MHV gap calculation.
     // Not persisted to DB; computed in IndicatorData.CalculateIndicators.
     // ATR 14 is the standard ATR, nothing special
+#if DEBUG
     [Computed]
     public double? Atr14 { get; set; }
+#endif
 
     // ADX(14) - the strength of the trend on a 0..100 scale, regardless of its direction (Wilder).
     // Under 20 the market is ranging, above 25 a trend is running. Declared by MacdCross for its
     // trend-strength filters; null when no registered plugin asked for it. Not persisted to DB.
+    //
+    // DEBUG only. The only readers (MacdCross, MacdCrossBand) are registered behind #if DEBUG as
+    // well, so in a production build this field would never be anything but null - and a nullable
+    // double still costs 16 bytes on EVERY candle, which is the one thing a scanner cannot spend.
+    // Switching it on means switching MacdCross on: both sides of this are DEBUG only.
+#if DEBUG
     [Computed]
     public double? Adx14 { get; set; }
+#endif
 
     // SuperTrend indicator (ATR-based trailing stop, flips between support and resistance)
+    //
+    // DEBUG only, same reason as Adx14 above: the only reader (SuperTrendBreakout) is registered
+    // behind #if DEBUG, so in a production build these three would never be anything but null -
+    // and three nullable doubles cost 48 bytes on EVERY candle.
+#if DEBUG
     [Computed]
     public double? SuperTrend { get; set; }
     [Computed]
     public double? SuperTrendUpperBand { get; set; }
     [Computed]
     public double? SuperTrendLowerBand { get; set; }
+#endif
 
     // RSI indicator
     public double? Rsi { get; set; }
@@ -204,13 +228,14 @@ public class CryptoData
         //SlopeSma20 = source.SlopeSma20;
         Sma50 = source.Sma50;
         //SlopeSma50 = source.SlopeSma50;
-        Sma100 = source.Sma100;
+        //Sma100 = source.Sma100;
         //SlopeSma100 = source.SlopeSma100;
         Sma200 = source.Sma200;
         //SlopeSma200 = source.SlopeSma200;
 
         // These are only non-null when a registered plugin declared them (see
         // IStrategyPlugin.RequiredIndicators); copying a null costs nothing, so no build-time gate.
+#if DEBUG
         Ema50 = source.Ema50;
         Wma05Low = source.Wma05Low;
         Wma05High = source.Wma05High;
@@ -218,6 +243,7 @@ public class CryptoData
         Wma10High = source.Wma10High;
         Atr14 = source.Atr14;
         Adx14 = source.Adx14;
+#endif
 
         // Parabolic SAR indicator value
         PSar = source.PSar;

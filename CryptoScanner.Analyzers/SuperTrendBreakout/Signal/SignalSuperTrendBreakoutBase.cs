@@ -5,6 +5,11 @@ using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Analyzers.SuperTrendBreakout.Signal;
 
+// DEBUG only: everything below reads CryptoData.SuperTrend / SuperTrendUpperBand /
+// SuperTrendLowerBand, and those three fields only exist in a Debug build. See
+// CryptoData.SuperTrend and SuperTrendBreakoutPlugin.Strategies.
+#if DEBUG
+
 public class SignalSuperTrendBreakoutBase : SignalCreateBase
 {
     public override bool IndicatorsOkay(MyData data)
@@ -166,3 +171,4 @@ public class SignalSuperTrendBreakoutBase : SignalCreateBase
         return false;
     }
 }
+#endif

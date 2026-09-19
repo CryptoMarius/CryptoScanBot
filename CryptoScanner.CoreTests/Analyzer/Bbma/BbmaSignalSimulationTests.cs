@@ -1,3 +1,4 @@
+#if DEBUG   // BBMA is DEBUG only, see CryptoData.Ema50 and BbmaPlugin.Strategies
 using CryptoScanner.Analyzers.Bbma;
 using CryptoScanner.Analyzers.Bbma.Signal;
 using CryptoScanner.Core.Context;
@@ -418,3 +419,4 @@ public class BbmaSignalSimulationTests : TestBase
             $"Found: {string.Join(", ", hitTimes.Select(t => t.ToString("yyyy-MM-dd HH:mm:ss")))}");
     }
 }
+#endif

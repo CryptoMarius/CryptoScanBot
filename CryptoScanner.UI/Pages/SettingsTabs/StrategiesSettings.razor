@@ -142,16 +142,16 @@
 
                             @* Select all / Select none, the two entries of the flyout the Avalonia
                                interval box has. Copy from Long/Short is not offered there either on
-                               a strategy tab: those counterparts only exist on Analyzer and Trader. *@
-                            <div class="field">
-                                <button class="btn btn-secondary" disabled="@(!intervalsEnabled)"
-                                        @onclick="() => state.SelectIntervals(true)">Select all</button>
-                                <button class="btn btn-secondary" disabled="@(!intervalsEnabled)"
-                                        @onclick="() => state.SelectIntervals(false)">Select none</button>
+                               a strategy tab: those counterparts only exist on Analyzer and Trader.
+                               The menu sits on the frame of the groupbox, so it costs no line. *@
+                            <div class="group-menu">
+                                <MenuButton Items="IntervalMenu(state)" Title="Select all or select none."
+                                            Changed="StateHasChanged" />
                             </div>
 
                             @* Three columns of checkboxes, like the Avalonia IntervalView. It is not
                                a label/control pair, so it spans the whole group body. *@
+                            <fieldset class="interval-fieldset" disabled="@(!intervalsEnabled)">
                             <div class="interval-grid">
                                 @foreach (var column in IntervalColumns)
                                 {
@@ -162,7 +162,7 @@
                                             var intervalName = name;
                                             <label class="interval-item">
                                                 <input type="checkbox" class="input-checkbox"
-                                                       disabled="@(!intervalsEnabled || !state.IsIntervalAllowed(intervalName))"
+                                                       disabled="@(!state.IsIntervalAllowed(intervalName))"
                                                        checked="@field.ListValue.Contains(intervalName)"
                                                        @onchange="@(e => field.ToggleListValue(intervalName, e.Value is bool on && on))" />
                                                 <span>@intervalName</span>
@@ -171,6 +171,7 @@
                                     </div>
                                 }
                             </div>
+                            </fieldset>
                             continue;
                         }
 
@@ -244,6 +245,13 @@
         new("Minutes", GlobalData.IntervalList.Where(i => i.Name.EndsWith('m')).Select(i => i.Name).ToList()),
         new("Hours", GlobalData.IntervalList.Where(i => i.Name.EndsWith('h')).Select(i => i.Name).ToList()),
         new("Days/Weeks", GlobalData.IntervalList.Where(i => i.Name.EndsWith('d') || i.Name.EndsWith('w')).Select(i => i.Name).ToList()),
+    ];
+
+    /// <summary>The two entries of the interval menu, for the strategy that is on screen.</summary>
+    private static List<MenuAction> IntervalMenu(PluginSettingsEditState state) =>
+    [
+        new("Select all", () => state.SelectIntervals(true)),
+        new("Select none", () => state.SelectIntervals(false)),
     ];
 
     private List<PluginSettingsEditState> _plugins = [];

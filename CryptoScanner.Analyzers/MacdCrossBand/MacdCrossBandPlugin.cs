@@ -31,10 +31,15 @@ public class MacdCrossBandPlugin : IStrategyPlugin
         ),
     ];
 
-    /// <summary>ADX(14), for the same optional trend-strength filters the plain MacdCross has.</summary>
+    /// <summary>
+    /// ADX(14), for the same optional trend-strength filters the plain MacdCross has. DEBUG only,
+    /// for the same reason: see MacdCrossPlugin.RequiredIndicators and CryptoData.Adx14.
+    /// </summary>
     public IReadOnlyList<IndicatorKey> RequiredIndicators { get; } =
     [
+#if DEBUG
         IndicatorKey.Adx(14),
+#endif
     ];
 
     /// <summary>

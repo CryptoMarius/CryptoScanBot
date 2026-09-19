@@ -18,8 +18,12 @@ public class MacPlugin : IStrategyPlugin
     public string StrategyName => StrategyInternal.ToLower();
     public string StrategyNameCamelCase => StrategyInternal;
 
-    // Was "tbo" until 19-09-2026. Queue files, stored settings and 176 emulator runs still say so.
-    public IReadOnlyList<string> FormerStrategyNames { get; } = ["tbo"];
+    // The strategy was called "tbo" until 19-09-2026 and carried that here as a former name, so
+    // stored settings and emulator runs from before the rename kept working. The old name is out of
+    // the data since 19-09-2026 - settings, chart files, queue files and every run label and stored
+    // setting in the emulator databases were migrated by Tools/RenameTboToMac - so the former name
+    // goes with it and one strategy goes by one name. IStrategyPlugin still offers
+    // FormerStrategyNames for a next rename; no plugin declares one today.
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [

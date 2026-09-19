@@ -9,13 +9,12 @@
 
     <StackPanel >
         <HeaderedContentControl Classes="groupbox" Header="Strategies">
-            <DockPanel LastChildFill="True">
-                <!-- Top toolbar: "Copy from..." popup. Placed inside the content area because
-                     the shared groupbox style renders the Header as a plain TextBlock and would
-                     drop any interactive content put into HeaderedContentControl.Header. -->
-                <Button DockPanel.Dock="Top" Content="&#x25BC;"
-                        HorizontalAlignment="Right" Padding="6,2" FontSize="11"
-                        Margin="0,0,0,4"
+            <HeaderedContentControl.Tag>
+                <!-- On the frame of the groupbox at the right, opposite the caption. It sits in Tag
+                     because the shared groupbox style renders the Header as a plain TextBlock and
+                     would drop any interactive content put into it; see App.axaml. -->
+                <Button Content="&#x25BC;"
+                        Padding="6,0" FontSize="10" Height="16" MinHeight="16"
                         ToolTip.Tip="Select all, select none, or copy from another side.">
                     <Button.Flyout>
                         <MenuFlyout>
@@ -42,7 +41,8 @@
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
-
+            </HeaderedContentControl.Tag>
+            <DockPanel LastChildFill="True">
                 <ScrollViewer>
                     <ItemsControl ItemsSource="{Binding StrategyList}" Margin="8">
                         <ItemsControl.ItemTemplate>

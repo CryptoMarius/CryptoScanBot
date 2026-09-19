@@ -1,3 +1,4 @@
+#if DEBUG   // BBMA is DEBUG only, see CryptoData.Ema50 and BbmaPlugin.Strategies
 using CryptoScanner.Analyzers.Bbma.Signal;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
@@ -375,3 +376,4 @@ public class BbmaStateTests
         Assert.AreEqual(BbmaState.None, SignalBbmaShort.GetBbmaState(data));
     }
 }
+#endif

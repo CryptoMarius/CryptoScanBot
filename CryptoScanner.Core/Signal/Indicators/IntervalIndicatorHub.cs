@@ -29,7 +29,7 @@ public sealed class IntervalIndicatorHub
 
     private readonly BollingerBandsHub _bb;   // also the source of Sma20 (= BB basis)
     private readonly SmaHub _sma50;
-    private readonly SmaHub _sma100;
+    //private readonly SmaHub _sma100;   // dropped 19-09-2026, see CryptoData.Sma100
     private readonly SmaHub _sma200;
     private readonly RsiHub _rsi;
     private readonly MacdHub _macd;
@@ -37,14 +37,20 @@ public sealed class IntervalIndicatorHub
     private readonly ParabolicSarHub _psar;
 
     // Optional: present only when a registered plugin declared them.
-    private readonly EmaHub? _ema50;
-    private readonly AtrHub? _atr14;
-    private readonly AdxHub? _adx14;
+#if DEBUG
+    private readonly EmaHub? _ema50;     // DEBUG only, see CryptoData.Ema50
+    private readonly AtrHub? _atr14;     // DEBUG only, see CryptoData.Atr14
+#endif
+#if DEBUG
+    private readonly AdxHub? _adx14;   // DEBUG only, see CryptoData.Adx14
     private readonly WmaHub? _wma05Low;
     private readonly WmaHub? _wma05High;
     private readonly WmaHub? _wma10Low;
     private readonly WmaHub? _wma10High;
-    private readonly SuperTrendHub? _superTrend;
+#endif
+#if DEBUG
+    private readonly SuperTrendHub? _superTrend;   // DEBUG only, see CryptoData.SuperTrend
+#endif
 
     // Lux Multi-RSI incremental state (mirrors LuxIndicator.CalculateNew)
     private const int LuxMin = 10;
@@ -90,14 +96,22 @@ public sealed class IntervalIndicatorHub
     // The CryptoData fields BuildCurrent knows how to fill from a declared indicator. Anything a
     // plugin declares outside this list is still built and shared through the registry, it just has
     // no dedicated CryptoData field — the plugin reads it through its own IIndicatorExtension.
+#if DEBUG
     private static readonly IndicatorKey KeyEma50 = IndicatorKey.Ema(50);
     private static readonly IndicatorKey KeyAtr14 = IndicatorKey.Atr(14);
+#endif
+#if DEBUG
     private static readonly IndicatorKey KeyAdx14 = IndicatorKey.Adx(14);
+#endif
+#if DEBUG
     private static readonly IndicatorKey KeyWma05Low = IndicatorKey.WmaLow(5);
     private static readonly IndicatorKey KeyWma05High = IndicatorKey.WmaHigh(5);
     private static readonly IndicatorKey KeyWma10Low = IndicatorKey.WmaLow(10);
     private static readonly IndicatorKey KeyWma10High = IndicatorKey.WmaHigh(10);
+#endif
+#if DEBUG
     private static readonly IndicatorKey KeySuperTrend = IndicatorKey.SuperTrend(10, 3.0);
+#endif
 
     /// <summary>
     /// The settings generation this hub was built under. A hub is fed incrementally and never
@@ -115,7 +129,7 @@ public sealed class IntervalIndicatorHub
         // Base set — parameters identical to what the batch path used to compute.
         _bb = _registry.BollingerBands(settings.SettingsBb.Length, settings.SettingsBb.Deviation);
         _sma50 = _registry.Sma(50);
-        _sma100 = _registry.Sma(100);
+        //_sma100 = _registry.Sma(100);
         _sma200 = _registry.Sma(200);
         _rsi = _registry.Rsi(settings.SettingsRsi.Length);
         _macd = _registry.Macd(12, 26, 9);
@@ -136,14 +150,22 @@ public sealed class IntervalIndicatorHub
                 _registry.GetOrAdd(key);
         }
 
+#if DEBUG
         _ema50 = _registry.Find<EmaHub>(KeyEma50);
         _atr14 = _registry.Find<AtrHub>(KeyAtr14);
+#endif
+#if DEBUG
         _adx14 = _registry.Find<AdxHub>(KeyAdx14);
+#endif
+#if DEBUG
         _wma05Low = _registry.Find<WmaHub>(KeyWma05Low);
         _wma05High = _registry.Find<WmaHub>(KeyWma05High);
         _wma10Low = _registry.Find<WmaHub>(KeyWma10Low);
         _wma10High = _registry.Find<WmaHub>(KeyWma10High);
+#endif
+#if DEBUG
         _superTrend = _registry.Find<SuperTrendHub>(KeySuperTrend);
+#endif
 
         // The heavy plugin kernels (NWE ~99k FLOPs per candle, VBS its VWMA pair) stay gated on an
         // enabled strategy — running them for a disabled plugin is pure waste.
@@ -217,8 +239,8 @@ public sealed class IntervalIndicatorHub
 
         if (_sma50.Results.Count > 0)
             data.Sma50 = _sma50.Results[^1].Sma;
-        if (_sma100.Results.Count > 0)
-            data.Sma100 = _sma100.Results[^1].Sma;
+        //if (_sma100.Results.Count > 0)
+        //    data.Sma100 = _sma100.Results[^1].Sma;
         if (_sma200.Results.Count > 0)
             data.Sma200 = _sma200.Results[^1].Sma;
         if (_rsi.Results.Count > 0)
@@ -249,6 +271,7 @@ public sealed class IntervalIndicatorHub
         data.Lux5mValue = (short)luxValue;
 
         // Declared by plugins; stay null when nobody asked for them.
+#if DEBUG
         if (_ema50 != null && _ema50.Results.Count > 0)
             data.Ema50 = _ema50.Results[^1].Ema;
         if (_atr14 != null && _atr14.Results.Count > 0)
@@ -263,6 +286,8 @@ public sealed class IntervalIndicatorHub
             data.Wma10Low = _wma10Low.Results[^1].Wma;
         if (_wma10High != null && _wma10High.Results.Count > 0)
             data.Wma10High = _wma10High.Results[^1].Wma;
+#endif
+#if DEBUG
         if (_superTrend != null && _superTrend.Results.Count > 0)
         {
             var st = _superTrend.Results[^1];
@@ -270,6 +295,7 @@ public sealed class IntervalIndicatorHub
             data.SuperTrendUpperBand = (double?)st.UpperBand;
             data.SuperTrendLowerBand = (double?)st.LowerBand;
         }
+#endif
 
         foreach (var ext in _pluginExtensions)
             ext.FillData(data);

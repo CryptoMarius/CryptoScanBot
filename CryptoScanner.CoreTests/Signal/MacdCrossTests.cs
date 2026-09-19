@@ -377,6 +377,7 @@ public class MacdCrossTests : TestBase
     }
 
 
+#if DEBUG
     // ═══════════════════════════════════════════════════════════════════════
     //  Trend strength (ADX)
     // ═══════════════════════════════════════════════════════════════════════
@@ -495,6 +496,7 @@ public class MacdCrossTests : TestBase
         Assert.IsFalse(notYet.IsSignal());
         StringAssert.Contains(notYet.ExtraText, "under the minimum");
     }
+#endif
 
 
     // ═══════════════════════════════════════════════════════════════════════

@@ -9,19 +9,12 @@
 
     <StackPanel Spacing="10">
         <HeaderedContentControl Classes="groupbox" Header="Intervals" Padding="10">
-            <DockPanel LastChildFill="True">
-                <!-- Only the strategy tabs show this one; off means the strategy follows the
-                     intervals that are ticked for its side, which is what an empty list stands for. -->
-                <CheckBox DockPanel.Dock="Top"
-                          IsChecked="{Binding UseCustom, Mode=TwoWay}"
-                          IsVisible="{Binding ShowUseCustom}"
-                          Content="Use custom intervals for this strategy"
-                          Margin="0,0,0,4"
-                          FontSize="12"
-                          ToolTip.Tip="Off: the strategy runs on the intervals that are ticked for its side on the Signals tab."/>
-                <Button DockPanel.Dock="Top" Content="&#x25BC;"
-                        HorizontalAlignment="Right" Padding="6,2" FontSize="11"
-                        Margin="0,0,0,4"
+            <HeaderedContentControl.Tag>
+                <!-- On the frame of the groupbox at the right, opposite the caption. It sits in Tag
+                     because the shared groupbox style renders the Header as a plain TextBlock and
+                     would drop any interactive content put into it; see App.axaml. -->
+                <Button Content="&#x25BC;"
+                        Padding="6,0" FontSize="10" Height="16" MinHeight="16"
                         IsEnabled="{Binding IntervalsEnabled}"
                         ToolTip.Tip="Select all, select none, or copy from another side.">
                     <Button.Flyout>
@@ -49,6 +42,17 @@
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
+            </HeaderedContentControl.Tag>
+            <DockPanel LastChildFill="True">
+                <!-- Only the strategy tabs show this one; off means the strategy follows the
+                     intervals that are ticked for its side, which is what an empty list stands for. -->
+                <CheckBox DockPanel.Dock="Top"
+                          IsChecked="{Binding UseCustom, Mode=TwoWay}"
+                          IsVisible="{Binding ShowUseCustom}"
+                          Content="Use custom intervals for this strategy"
+                          Margin="0,0,0,4"
+                          FontSize="12"
+                          ToolTip.Tip="Off: the strategy runs on the intervals that are ticked for its side on the Signals tab."/>
             <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,*" IsEnabled="{Binding IntervalsEnabled}">
         
                 <!-- Column Headers -->

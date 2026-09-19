@@ -128,9 +128,13 @@ public class MacdCrossBase : SignalCreateBase
         }
 
         // The pre-selection: is the coin moving, and is the move young? Only asked once the cross is
-        // there, so the walks below run on the few candles that get this far.
-        if (!TrendStrengthOkay(settings, candles, out string trendText))
+        // there, so the walks below run on the few candles that get this far. DEBUG only, because
+        // CryptoData.Adx14 is DEBUG only - a production build has no ADX to read.
+        string trendText = "";
+#if DEBUG
+        if (!TrendStrengthOkay(settings, candles, out trendText))
             return false;
+#endif
         if (!VolumeOkay(settings, candles, out string volumeText))
             return false;
 
@@ -166,6 +170,7 @@ public class MacdCrossBase : SignalCreateBase
     }
 
 
+#if DEBUG
     /// <summary>
     /// The ADX filters: a minimum at the signal candle, and the "young trend" test - somewhere in
     /// the last N candles the ADX has to have been under a threshold, so the cross is the start of
@@ -215,6 +220,7 @@ public class MacdCrossBase : SignalCreateBase
         text = $", adx {adx.Value:N1}";
         return true;
     }
+#endif
 
 
     /// <summary>

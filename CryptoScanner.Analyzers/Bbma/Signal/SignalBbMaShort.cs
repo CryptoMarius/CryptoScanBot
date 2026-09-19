@@ -7,6 +7,10 @@ using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Analyzers.Bbma.Signal;
 
+// DEBUG only: BBMA reads CryptoData.Ema50 / Wma05* / Wma10* / Atr14, and those six fields only
+// exist in a Debug build. See CryptoData.Ema50 and BbmaPlugin.Strategies.
+#if DEBUG
+
 /* https://share.google/aimode/cb5CF0MrCDCKw2JCS
 
 Het Beslissingsschema (De Cyclus)
@@ -400,3 +404,4 @@ public class SignalBbmaShort : SignalBbmaBase
         return false;
     }
 }
+#endif

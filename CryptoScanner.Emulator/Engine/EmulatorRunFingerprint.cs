@@ -239,8 +239,8 @@ public static class EmulatorRunFingerprint
     /// <summary>
     /// The strategy lists of both sides, written under the names those strategies go by today.
     /// <para>
-    /// These lists ARE part of the hashed text, so a run recorded as "tbo" and the same run recorded
-    /// as "mac" would otherwise hash differently and the second would be replayed in full. The
+    /// These lists ARE part of the hashed text, so a run recorded as "abc" and the same run recorded
+    /// as "xyz" would otherwise hash differently and the second would be replayed in full. The
     /// analyzer blocks get the same treatment in <see cref="CanonicaliseAnalyzers"/>.
     /// </para>
     /// </summary>

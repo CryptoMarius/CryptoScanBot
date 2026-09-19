@@ -45,7 +45,7 @@ public class IntervalIndicatorHubParityTests
         TestBase.RegisterAndEnablePlugin(new VbsPlugin());
         // Declares Ema50 / Wma05 / Wma10 / Atr14 — without it the hub has no reason to build them.
         TestBase.RegisterPlugin(new BbmaPlugin());
-        // Declares Adx14 for its trend-strength filters.
+        // Declares Adx14 for its trend-strength filters (DEBUG only, see CryptoData.Adx14).
         TestBase.RegisterPlugin(new MacdCrossPlugin());
     }
 
@@ -117,12 +117,13 @@ public class IntervalIndicatorHubParityTests
         var g = GlobalData.Settings.General;
         var bb = quotes.ToBollingerBands(g.SettingsBb.Length, g.SettingsBb.Deviation).ToList();
         var sma50 = quotes.ToSma(50).ToList();
-        var sma100 = quotes.ToSma(100).ToList();
+        //var sma100 = quotes.ToSma(100).ToList();   // Sma100 dropped 19-09-2026
         var sma200 = quotes.ToSma(200).ToList();
         var rsi = quotes.ToRsi(g.SettingsRsi.Length).ToList();
         var macd = quotes.ToMacd(12, 26, 9).ToList();
         var stoch = quotes.ToStoch(g.SettingsStoch.Length, g.SettingsStoch.SmoothingD, g.SettingsStoch.SmoothingK).ToList();
         var psar = quotes.ToParabolicSar(0.02, 0.2).ToList();
+#if DEBUG
         var ema50 = quotes.ToEma(50).ToList();
         var atr14 = quotes.ToAtr(14).ToList();
         var adx14 = quotes.ToAdx(14).ToList();
@@ -130,6 +131,7 @@ public class IntervalIndicatorHubParityTests
         var wma05High = quotes.Use(CandlePart.High).ToWma(5).ToList();
         var wma10Low = quotes.Use(CandlePart.Low).ToWma(10).ToList();
         var wma10High = quotes.Use(CandlePart.High).ToWma(10).ToList();
+#endif
 
         // VBS VWAP bands — same VbsBandsHelper.ComputeBands the hub path (via VbsIndicatorExtension) uses.
         var vbs = VbsPlugin.Settings;
@@ -142,7 +144,7 @@ public class IntervalIndicatorHubParityTests
             BollingerBandsDeviation = 0.5 * (bb[i].UpperBand - bb[i].LowerBand),
             BollingerBandsPercentage = 100 * (bb[i].UpperBand / bb[i].LowerBand - 1),
             Sma50 = sma50[i].Sma,
-            Sma100 = sma100[i].Sma,
+            //Sma100 = sma100[i].Sma,
             Sma200 = sma200[i].Sma,
             Rsi = rsi[i].Rsi,
             MacdValue = macd[i].Macd,
@@ -151,6 +153,7 @@ public class IntervalIndicatorHubParityTests
             StochOscillator = stoch[i].Oscillator,
             StochSignal = stoch[i].Signal,
             PSar = psar[i].Sar,
+#if DEBUG
             Ema50 = ema50[i].Ema,
             Atr14 = atr14[i].Atr,
             Adx14 = adx14[i].Adx,
@@ -158,6 +161,7 @@ public class IntervalIndicatorHubParityTests
             Wma05High = wma05High[i].Wma,
             Wma10Low = wma10Low[i].Wma,
             Wma10High = wma10High[i].Wma,
+#endif
         };
 
         // The VBS values live in the plugin's own slot, exactly as VbsIndicatorExtension writes them.
@@ -178,7 +182,7 @@ public class IntervalIndicatorHubParityTests
         Eq("BbDeviation", hub.BollingerBandsDeviation, batch.BollingerBandsDeviation, maxRel);
         Eq("BbPercentage", hub.BollingerBandsPercentage, batch.BollingerBandsPercentage, maxRel);
         Eq("Sma50", hub.Sma50, batch.Sma50, maxRel);
-        Eq("Sma100", hub.Sma100, batch.Sma100, maxRel);
+        //Eq("Sma100", hub.Sma100, batch.Sma100, maxRel);
         Eq("Sma200", hub.Sma200, batch.Sma200, maxRel);
         Eq("Rsi", hub.Rsi, batch.Rsi, maxRel);
         Eq("MacdValue", hub.MacdValue, batch.MacdValue, maxRel);
@@ -194,6 +198,7 @@ public class IntervalIndicatorHubParityTests
         Eq("VbsUpper", hubVbs?.Upper, batchVbs?.Upper, maxRel);
         Eq("VbsLower", hubVbs?.Lower, batchVbs?.Lower, maxRel);
         Eq("VbsVwStdev", hubVbs?.VwStdev, batchVbs?.VwStdev, maxRel);
+#if DEBUG
         Eq("Ema50", hub.Ema50, batch.Ema50, maxRel);
         Eq("Atr14", hub.Atr14, batch.Atr14, maxRel);
         Eq("Adx14", hub.Adx14, batch.Adx14, maxRel);
@@ -201,6 +206,7 @@ public class IntervalIndicatorHubParityTests
         Eq("Wma05High", hub.Wma05High, batch.Wma05High, maxRel);
         Eq("Wma10Low", hub.Wma10Low, batch.Wma10Low, maxRel);
         Eq("Wma10High", hub.Wma10High, batch.Wma10High, maxRel);
+#endif
     }
 
     private static void Eq(string field, double? a, double? b, Dictionary<string, double> maxRel)
@@ -361,7 +367,7 @@ public class IntervalIndicatorHubParityTests
         IndicatorKey[] baseSet =
         [
             IndicatorKey.BollingerBands(g.SettingsBb.Length, g.SettingsBb.Deviation),
-            IndicatorKey.Sma(50), IndicatorKey.Sma(100), IndicatorKey.Sma(200),
+            IndicatorKey.Sma(50), IndicatorKey.Sma(200),   // Sma(100) dropped 19-09-2026
             IndicatorKey.Rsi(g.SettingsRsi.Length),
             IndicatorKey.Macd(12, 26, 9),
             IndicatorKey.Stoch(g.SettingsStoch.Length, g.SettingsStoch.SmoothingD, g.SettingsStoch.SmoothingK),

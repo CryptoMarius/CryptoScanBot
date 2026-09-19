@@ -66,7 +66,7 @@ public class SkenderReferenceRegressionTests
         public int Index { get; set; }
         public double? Sma20 { get; set; }
         public double? Sma50 { get; set; }
-        public double? Sma100 { get; set; }
+        //public double? Sma100 { get; set; }   // dropped 19-09-2026, see CryptoData.Sma100
         public double? Sma200 { get; set; }
         public double? Rsi { get; set; }
         public double? MacdValue { get; set; }
@@ -77,12 +77,14 @@ public class SkenderReferenceRegressionTests
         public double? PSar { get; set; }
         public double? BbDeviation { get; set; }
         public double? BbPercentage { get; set; }
+#if DEBUG
         public double? Ema50 { get; set; }
         public double? Wma05Low { get; set; }
         public double? Wma05High { get; set; }
         public double? Wma10Low { get; set; }
         public double? Wma10High { get; set; }
         public double? Atr14 { get; set; }
+#endif
         public short? Lux5mValue { get; set; }
 
         // ── Plugin indicators ────────────────────────────────────────────
@@ -147,19 +149,21 @@ public class SkenderReferenceRegressionTests
         var g = GlobalData.Settings.General;
         var bb = quotes.ToBollingerBands(g.SettingsBb.Length, g.SettingsBb.Deviation).ToList();
         var sma50 = quotes.ToSma(50).ToList();
-        var sma100 = quotes.ToSma(100).ToList();
+        //var sma100 = quotes.ToSma(100).ToList();
         var sma200 = quotes.ToSma(200).ToList();
         var rsi = quotes.ToRsi(g.SettingsRsi.Length).ToList();
         var macd = quotes.ToMacd(12, 26, 9).ToList();
         var stoch = quotes.ToStoch(g.SettingsStoch.Length, g.SettingsStoch.SmoothingD, g.SettingsStoch.SmoothingK).ToList();
         var psar = quotes.ToParabolicSar(0.02, 0.2).ToList();
 
+#if DEBUG
         var ema50 = quotes.ToEma(50).ToList();
         var wma05Low = quotes.Use(CandlePart.Low).ToWma(5).ToList();
         var wma05High = quotes.Use(CandlePart.High).ToWma(5).ToList();
         var wma10Low = quotes.Use(CandlePart.Low).ToWma(10).ToList();
         var wma10High = quotes.Use(CandlePart.High).ToWma(10).ToList();
         var atr14 = quotes.ToAtr(14).ToList();
+#endif
 
         // Lux Multi-RSI: manual RMA computation identical to IntervalIndicatorHub.Add
         var luxValues = ComputeLuxBatch(candles);
@@ -182,7 +186,7 @@ public class SkenderReferenceRegressionTests
                 BbDeviation = 0.5 * (bb[i].UpperBand - bb[i].LowerBand),
                 BbPercentage = 100 * (bb[i].UpperBand / bb[i].LowerBand - 1),
                 Sma50 = sma50[i].Sma,
-                Sma100 = sma100[i].Sma,
+                //Sma100 = sma100[i].Sma,
                 Sma200 = sma200[i].Sma,
                 Rsi = rsi[i].Rsi,
                 MacdValue = macd[i].Macd,
@@ -191,12 +195,14 @@ public class SkenderReferenceRegressionTests
                 StochOscillator = stoch[i].Oscillator,
                 StochSignal = stoch[i].Signal,
                 PSar = psar[i].Sar,
+#if DEBUG
                 Ema50 = ema50[i].Ema,
                 Wma05Low = wma05Low[i].Wma,
                 Wma05High = wma05High[i].Wma,
                 Wma10Low = wma10Low[i].Wma,
                 Wma10High = wma10High[i].Wma,
                 Atr14 = atr14[i].Atr,
+#endif
                 Lux5mValue = luxValues[i],
 
                 VbsBasis = vbsBands[i].HasValue ? vbsBands[i].Basis : null,
@@ -289,7 +295,7 @@ public class SkenderReferenceRegressionTests
             Index = index,
             Sma20 = data.Sma20,
             Sma50 = data.Sma50,
-            Sma100 = data.Sma100,
+            //Sma100 = data.Sma100,
             Sma200 = data.Sma200,
             Rsi = data.Rsi,
             MacdValue = data.MacdValue,
@@ -300,12 +306,14 @@ public class SkenderReferenceRegressionTests
             PSar = data.PSar,
             BbDeviation = data.BollingerBandsDeviation,
             BbPercentage = data.BollingerBandsPercentage,
+#if DEBUG
             Ema50 = data.Ema50,
             Wma05Low = data.Wma05Low,
             Wma05High = data.Wma05High,
             Wma10Low = data.Wma10Low,
             Wma10High = data.Wma10High,
             Atr14 = data.Atr14,
+#endif
             Lux5mValue = data.Lux5mValue,
 
             VbsBasis = vbs?.Basis,
@@ -370,7 +378,7 @@ public class SkenderReferenceRegressionTests
     {
         Cmp("Sma20", expected.Sma20, actual.Sma20, tolerance, maxDiffs);
         Cmp("Sma50", expected.Sma50, actual.Sma50, tolerance, maxDiffs);
-        Cmp("Sma100", expected.Sma100, actual.Sma100, tolerance, maxDiffs);
+        //Cmp("Sma100", expected.Sma100, actual.Sma100, tolerance, maxDiffs);
         Cmp("Sma200", expected.Sma200, actual.Sma200, tolerance, maxDiffs);
         Cmp("Rsi", expected.Rsi, actual.Rsi, tolerance, maxDiffs);
         Cmp("MacdValue", expected.MacdValue, actual.MacdValue, tolerance, maxDiffs);
@@ -381,12 +389,14 @@ public class SkenderReferenceRegressionTests
         Cmp("PSar", expected.PSar, actual.PSar, tolerance, maxDiffs);
         Cmp("BbDeviation", expected.BbDeviation, actual.BbDeviation, tolerance, maxDiffs);
         Cmp("BbPercentage", expected.BbPercentage, actual.BbPercentage, tolerance, maxDiffs);
+#if DEBUG
         Cmp("Ema50", expected.Ema50, actual.Ema50, tolerance, maxDiffs);
         Cmp("Wma05Low", expected.Wma05Low, actual.Wma05Low, tolerance, maxDiffs);
         Cmp("Wma05High", expected.Wma05High, actual.Wma05High, tolerance, maxDiffs);
         Cmp("Wma10Low", expected.Wma10Low, actual.Wma10Low, tolerance, maxDiffs);
         Cmp("Wma10High", expected.Wma10High, actual.Wma10High, tolerance, maxDiffs);
         Cmp("Atr14", expected.Atr14, actual.Atr14, tolerance, maxDiffs);
+#endif
         // Lux was stored in the reference but never compared, so a stale value in the file went
         // unnoticed for a long time. It is a short?, hence the widening to double?.
         Cmp("Lux5mValue", expected.Lux5mValue, actual.Lux5mValue, tolerance, maxDiffs);
@@ -662,6 +672,7 @@ public class SkenderReferenceRegressionTests
         for (int i = 0; i < candles.Count; i++)
             CompareSnapshots(batchRef.Snapshots[i], hubSnapshots[i], Tolerance, maxDiffs, maxDiffs);
 
+#if DEBUG
         // Verify DEBUG-only indicators are populated
         var last = batchRef.Snapshots[^1];
         Assert.IsNotNull(last.Ema50, "Ema50 must have a value for the last candle");
@@ -678,6 +689,7 @@ public class SkenderReferenceRegressionTests
         Assert.IsTrue(worstDebug <= Tolerance,
             $"DEBUG indicators diverged between batch and hub (tolerance={Tolerance:E1}). " +
             $"Max relative diff per field: {Describe(maxDiffs)}");
+#endif
         Console.WriteLine($"DEBUG indicators batch vs hub: max diffs = {Describe(maxDiffs)}");
 
         double worst = maxDiffs.Values.DefaultIfEmpty(0).Max();

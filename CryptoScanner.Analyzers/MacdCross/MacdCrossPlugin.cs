@@ -32,10 +32,17 @@ public class MacdCrossPlugin : IStrategyPlugin
     /// ADX(14) for the trend-strength filters. Declared here rather than switched on with the
     /// filters, because a registered plugin always gets what it declares: the filter can then never
     /// read a null because the indicator was not built. The cost is one Wilder smoothing per candle.
+    /// <para>
+    /// DEBUG only, like this plugin's own registration in AnalyzerRegistration: CryptoData.Adx14
+    /// does not exist in a production build, so there is nothing to fill there. In a production
+    /// build this list is empty and no AdxHub is created.
+    /// </para>
     /// </summary>
     public IReadOnlyList<IndicatorKey> RequiredIndicators { get; } =
     [
+#if DEBUG
         IndicatorKey.Adx(14),
+#endif
     ];
 
     public static MacdCrossSettings Settings { get; internal set; } = new();

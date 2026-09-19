@@ -344,6 +344,19 @@
                             <TextBlock Text="{TemplateBinding Header}" FontSize="12"/>
                             <!-- Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"-->
                         </Border>
+
+                        <!-- Optional control on the frame line at the right, opposite the caption:
+                             the "▼" of a groupbox that has one. It lives in Tag because Header is
+                             rendered as a plain TextBlock here and would drop anything interactive,
+                             and a HeaderedContentControl has no third slot of its own. -->
+                        <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                Padding="3,0"
+                                Margin="0,0,10,0"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                IsVisible="{TemplateBinding Tag, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <ContentPresenter Content="{TemplateBinding Tag}"/>
+                        </Border>
                     </Grid>
                 </ControlTemplate>
             </Setter>

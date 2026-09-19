@@ -1,3 +1,4 @@
+#if DEBUG   // BBMA is DEBUG only, see CryptoData.Ema50 and BbmaPlugin.Strategies
 using CryptoScanner.Analyzers.Bbma;
 using CryptoScanner.Analyzers.Bbma.Signal;
 using CryptoScanner.Core.Core;
@@ -900,3 +901,4 @@ public class BbmaOmniTests : TestBase
         Assert.AreEqual(1.1m, StopOf(algorithm, CryptoTradeSide.Long, 3, 0.1m));
     }
 }
+#endif

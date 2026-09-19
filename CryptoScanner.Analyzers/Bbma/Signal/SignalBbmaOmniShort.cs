@@ -4,6 +4,10 @@ using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Analyzers.Bbma.Signal;
 
+// DEBUG only: BBMA reads CryptoData.Ema50 / Wma05* / Wma10* / Atr14, and those six fields only
+// exist in a Debug build. See CryptoData.Ema50 and BbmaPlugin.Strategies.
+#if DEBUG
+
 /// <summary>
 /// Short variant of the BBMA Omni strategy. Mirror of <see cref="SignalBbmaOmniLong"/> —
 /// state classifiers are 1-on-1 ports of the "sell" code paths from
@@ -894,3 +898,4 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         return false;
     }
 }
+#endif
