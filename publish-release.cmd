@@ -4,9 +4,9 @@ rem  Builds the release packages for CryptoScanBot.
 rem
 rem  Three packages, each a folder plus a zip under %PUBLISHDIR% (see the set below) :
 rem
-rem    CryptoScanBot-<version>-win-x64    scanner + emulator + Photino, Windows
-rem    CryptoScanBot-<version>-osx-arm64  scanner + emulator + Photino, Apple Silicon
-rem    CryptoScanBot-<version>-linux-x64  scanner + emulator + Photino, Linux (glibc, x64)
+rem    CryptoScanBot-<version>-win-x64    scanner + emulator + Photino + web, Windows
+rem    CryptoScanBot-<version>-osx-arm64  scanner + emulator + Photino + web, Apple Silicon
+rem    CryptoScanBot-<version>-linux-x64  scanner + emulator + Photino + web, Linux (glibc, x64)
 rem
 rem  All three applications share one folder. They are built against the same project references, so
 rem  483 of the 505 files are byte for byte identical (the whole .NET runtime, the exchange
@@ -16,6 +16,12 @@ rem  separate per application and there is no clash.
 rem
 rem  The scanner csproj has a BundleEmulatorIntoPublish target, so CryptoScanBot.Emulator lands in
 rem  the same folder as the scanner - it does not need its own publish command here.
+rem
+rem  CryptoScanBot.Web serves the same Blazor screens as Photino, but over http instead of in a
+rem  window: start it and open the address it prints, from this machine or from a phone on the same
+rem  network. It brings the ASP.NET Core assemblies along, which the other three do not have.
+rem  It is published in the same merge-from-a-temp-folder way as Photino and BEFORE it, so Photino
+rem  keeps the last word over the two files described below.
 rem
 rem  ORDER MATTERS on Windows. Exactly two files exist in both packages with different versions, and
 rem  the Photino ones are the ones all three .deps.json files ask for:
@@ -86,11 +92,17 @@ echo ==================================================================
 
 
 echo.
-echo --- 1/3  CryptoScanBot %VERSION% win-x64 (scanner + emulator + Photino) ---
+echo --- 1/3  CryptoScanBot %VERSION% win-x64 (scanner + emulator + Photino + web) ---
 if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64" rmdir /s /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64"
+if exist "%PUBLISHDIR%\web-tmp-win-x64" rmdir /s /q "%PUBLISHDIR%\web-tmp-win-x64"
 if exist "%PUBLISHDIR%\photino-tmp-win-x64" rmdir /s /q "%PUBLISHDIR%\photino-tmp-win-x64"
 dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r win-x64 --self-contained true -o "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64" --nologo -v minimal
 if errorlevel 1 goto failed
+dotnet publish CryptoScanner.Web\CryptoScanner.Web.csproj -c Release -r win-x64 --self-contained true -o "%PUBLISHDIR%\web-tmp-win-x64" --nologo -v minimal
+if errorlevel 1 goto failed
+xcopy "%PUBLISHDIR%\web-tmp-win-x64\*" "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64\" /e /y /r /q >nul
+if errorlevel 1 goto failed
+rmdir /s /q "%PUBLISHDIR%\web-tmp-win-x64"
 dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r win-x64 --self-contained true -o "%PUBLISHDIR%\photino-tmp-win-x64" --nologo -v minimal
 if errorlevel 1 goto failed
 xcopy "%PUBLISHDIR%\photino-tmp-win-x64\*" "%PUBLISHDIR%\CryptoScanBot-%VERSION%-win-x64\" /e /y /r /q >nul
@@ -103,11 +115,17 @@ if errorlevel 1 goto failed
 
 
 echo.
-echo --- 2/3  CryptoScanBot %VERSION% osx-arm64 (scanner + emulator + Photino) ---
+echo --- 2/3  CryptoScanBot %VERSION% osx-arm64 (scanner + emulator + Photino + web) ---
 if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64" rmdir /s /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64"
+if exist "%PUBLISHDIR%\web-tmp-osx-arm64" rmdir /s /q "%PUBLISHDIR%\web-tmp-osx-arm64"
 if exist "%PUBLISHDIR%\photino-tmp-osx-arm64" rmdir /s /q "%PUBLISHDIR%\photino-tmp-osx-arm64"
 dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r osx-arm64 --self-contained true -o "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64" --nologo -v minimal
 if errorlevel 1 goto failed
+dotnet publish CryptoScanner.Web\CryptoScanner.Web.csproj -c Release -r osx-arm64 --self-contained true -o "%PUBLISHDIR%\web-tmp-osx-arm64" --nologo -v minimal
+if errorlevel 1 goto failed
+xcopy "%PUBLISHDIR%\web-tmp-osx-arm64\*" "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64\" /e /y /r /q >nul
+if errorlevel 1 goto failed
+rmdir /s /q "%PUBLISHDIR%\web-tmp-osx-arm64"
 dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r osx-arm64 --self-contained true -o "%PUBLISHDIR%\photino-tmp-osx-arm64" --nologo -v minimal
 if errorlevel 1 goto failed
 xcopy "%PUBLISHDIR%\photino-tmp-osx-arm64\*" "%PUBLISHDIR%\CryptoScanBot-%VERSION%-osx-arm64\" /e /y /r /q >nul
@@ -120,11 +138,17 @@ if errorlevel 1 goto failed
 
 
 echo.
-echo --- 3/3  CryptoScanBot %VERSION% linux-x64 (scanner + emulator + Photino) ---
+echo --- 3/3  CryptoScanBot %VERSION% linux-x64 (scanner + emulator + Photino + web) ---
 if exist "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64" rmdir /s /q "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64"
+if exist "%PUBLISHDIR%\web-tmp-linux-x64" rmdir /s /q "%PUBLISHDIR%\web-tmp-linux-x64"
 if exist "%PUBLISHDIR%\photino-tmp-linux-x64" rmdir /s /q "%PUBLISHDIR%\photino-tmp-linux-x64"
 dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r linux-x64 --self-contained true -o "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64" --nologo -v minimal
 if errorlevel 1 goto failed
+dotnet publish CryptoScanner.Web\CryptoScanner.Web.csproj -c Release -r linux-x64 --self-contained true -o "%PUBLISHDIR%\web-tmp-linux-x64" --nologo -v minimal
+if errorlevel 1 goto failed
+xcopy "%PUBLISHDIR%\web-tmp-linux-x64\*" "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64\" /e /y /r /q >nul
+if errorlevel 1 goto failed
+rmdir /s /q "%PUBLISHDIR%\web-tmp-linux-x64"
 dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r linux-x64 --self-contained true -o "%PUBLISHDIR%\photino-tmp-linux-x64" --nologo -v minimal
 if errorlevel 1 goto failed
 xcopy "%PUBLISHDIR%\photino-tmp-linux-x64\*" "%PUBLISHDIR%\CryptoScanBot-%VERSION%-linux-x64\" /e /y /r /q >nul
@@ -144,12 +168,12 @@ dir /b "%PUBLISHDIR%\*-%VERSION%-*.zip"
 echo.
 echo The macOS package is unsigned and was zipped on Windows, so the
 echo executable bit is gone. After unpacking, on the Mac:
-echo     chmod +x CryptoScanBot CryptoScanBot.Emulator CryptoScanBot.Photino
+echo     chmod +x CryptoScanBot CryptoScanBot.Emulator CryptoScanBot.Photino CryptoScanBot.Web
 echo     xattr -dr com.apple.quarantine .
 echo.
 echo The Linux package loses the executable bit for the same reason, and
 echo GTK/WebKit have to come from the distribution. After unpacking:
-echo     chmod +x CryptoScanBot CryptoScanBot.Emulator CryptoScanBot.Photino
+echo     chmod +x CryptoScanBot CryptoScanBot.Emulator CryptoScanBot.Photino CryptoScanBot.Web
 echo     sudo apt-get install libgtk-3-0 libwebkit2gtk-4.1-0 libnotify4 libx11-6 libfontconfig1
 echo.
 endlocal

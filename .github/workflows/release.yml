@@ -2,15 +2,16 @@
 #  Builds the three release packages on GitHub, the same way publish-release.cmd builds them on the
 #  development machine:
 #
-#    CryptoScanBot-<version>-win-x64.zip    scanner + emulator + Photino, Windows
-#    CryptoScanBot-<version>-osx-arm64.zip  scanner + emulator + Photino, Apple Silicon
-#    CryptoScanBot-<version>-linux-x64.zip  scanner + emulator + Photino, Linux (glibc, x64)
+#    CryptoScanBot-<version>-win-x64.zip    scanner + emulator + Photino + web, Windows
+#    CryptoScanBot-<version>-osx-arm64.zip  scanner + emulator + Photino + web, Apple Silicon
+#    CryptoScanBot-<version>-linux-x64.zip  scanner + emulator + Photino + web, Linux (glibc, x64)
 #
 #  It runs on a Windows runner and uses the same commands as the local script, including the
 #  tar.exe that ships with Windows, so the packages are built the way they have always been built.
 #  The ordering trap is the same one the local script documents: Photino has to land ON TOP of the
 #  scanner folder, because two files exist in both publishes with different versions and the
-#  Photino ones are the ones all three .deps.json files ask for.
+#  Photino ones are the ones all three .deps.json files ask for. The web host is merged in between,
+#  for that same reason: it may not be the last one in.
 #
 #  Three deviations from the local script, all on purpose:
 #    - The package folder is deleted after it has been zipped. A runner has far less disk than a
@@ -178,9 +179,10 @@ jobs:
           $tar = Join-Path $env:SystemRoot 'System32\tar.exe'
 
           foreach ($rid in 'win-x64', 'osx-arm64', 'linux-x64') {
-            Write-Host "=== CryptoScanBot $env:VERSION $rid (scanner + emulator + Photino) ==="
+            Write-Host "=== CryptoScanBot $env:VERSION $rid (scanner + emulator + Photino + web) ==="
 
             $package = Join-Path $publishDir "CryptoScanBot-$env:VERSION-$rid"
+            $web     = Join-Path $publishDir "web-tmp-$rid"
             $photino = Join-Path $publishDir "photino-tmp-$rid"
             $zip     = "$package.zip"
 
@@ -188,6 +190,16 @@ jobs:
             # lands in the same folder - it does not need its own publish command here.
             dotnet publish CryptoScanner\CryptoScanner.csproj -c Release -r $rid --self-contained true -o $package --nologo -v minimal
             if ($LASTEXITCODE -ne 0) { throw "publish of the scanner failed for $rid" }
+
+            # The web host serves the same Blazor screens as Photino, but over http. It is merged in
+            # the same way and BEFORE Photino, so Photino keeps the last word over the two files
+            # described below. It brings the ASP.NET Core assemblies, which nothing else here has.
+            dotnet publish CryptoScanner.Web\CryptoScanner.Web.csproj -c Release -r $rid --self-contained true -o $web --nologo -v minimal
+            if ($LASTEXITCODE -ne 0) { throw "publish of the web host failed for $rid" }
+
+            & xcopy "$web\*" "$package\" /e /y /r /q | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "merging the web host into the package failed for $rid" }
+            Remove-Item -Path $web -Recurse -Force
 
             dotnet publish CryptoScanner.Photino\CryptoScanner.Photino.csproj -c Release -r $rid --self-contained true -o $photino --nologo -v minimal
             if ($LASTEXITCODE -ne 0) { throw "publish of Photino failed for $rid" }
