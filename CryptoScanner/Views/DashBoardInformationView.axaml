@@ -101,9 +101,13 @@
                 <ComboBox Grid.Row="0" Grid.Column="0" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
                             SelectedItem="{Binding SelectedQuote}" VerticalAlignment="Center" HorizontalAlignment="Left"
                             ItemsSource="{Binding Quotes}" IsDropDownOpen="False"/>
-                <!-- ComboBox: Interval -->
+                <!-- ComboBox: Interval. Switched off while a market trend is shown: that figure
+                     belongs to the quote coin and carries the same value in every interval, so the
+                     choice would change nothing - see BarometerCandleFields.UsesInterval. -->
                 <ComboBox Grid.Row="0" Grid.Column="1" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
                             SelectedItem="{Binding SelectedInterval}" VerticalAlignment="Center"  HorizontalAlignment="Left"
+                            IsEnabled="{Binding IntervalSelectionEnabled}"
+                            ToolTip.Tip="Interval of the barometer (the market trend is the same for every interval)"
                             ItemsSource="{Binding Intervals}" IsDropDownOpen="False"/>
 
                 <!-- Barometer: 1h -->

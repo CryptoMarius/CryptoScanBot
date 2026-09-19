@@ -140,11 +140,11 @@
         <div class="settings-group-header">Symbol trend filter secondary (@SideLabel)</div>
         <div class="settings-group-body">
             <div class="field" style="margin: 4px 0;">
-                <input type="checkbox" class="input-checkbox" @bind="Side.MarketTrendSecondaryActive" />
+                <input type="checkbox" class="input-checkbox" @bind="Side.SymbolTrendSecondaryActive" />
                 <label style="margin-left: 4px; width: 50px;">Trend%</label>
-                <input type="number" class="input-number" step="0.1" @bind="Side.MarketTrendSecondaryMin" style="width: 70px;" />
+                <input type="number" class="input-number" step="0.1" @bind="Side.SymbolTrendSecondaryMin" style="width: 70px;" />
                 <span style="margin: 0 4px;">..</span>
-                <input type="number" class="input-number" step="0.1" @bind="Side.MarketTrendSecondaryMax" style="width: 70px;" />
+                <input type="number" class="input-number" step="0.1" @bind="Side.SymbolTrendSecondaryMax" style="width: 70px;" />
             </div>
             <div class="field">
                 <input type="checkbox" class="input-checkbox" @bind="Side.SymbolTrendSecondaryLog" />

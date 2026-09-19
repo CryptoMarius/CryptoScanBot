@@ -23,9 +23,9 @@ public class TextualSideData
     public decimal SymbolTrendMin { get; set; } = -100m;
     public decimal SymbolTrendMax { get; set; } = 100m;
     public bool SymbolTrendLog { get; set; }
-    public bool MarketTrendSecondaryActive { get; set; }
-    public decimal MarketTrendSecondaryMin { get; set; } = -100m;
-    public decimal MarketTrendSecondaryMax { get; set; } = 100m;
+    public bool SymbolTrendSecondaryActive { get; set; }
+    public decimal SymbolTrendSecondaryMin { get; set; } = -100m;
+    public decimal SymbolTrendSecondaryMax { get; set; } = 100m;
     public bool SymbolTrendSecondaryLog { get; set; }
 
     private static readonly string[] BarometerIntervals = ["15m", "30m", "1h", "4h", "1d"];
@@ -91,9 +91,9 @@ public class TextualSideData
 
         if (textual.SymbolTrendSecondary.List.Count > 0)
         {
-            side.MarketTrendSecondaryActive = true;
-            side.MarketTrendSecondaryMin = textual.SymbolTrendSecondary.List[0].minValue;
-            side.MarketTrendSecondaryMax = textual.SymbolTrendSecondary.List[0].maxValue;
+            side.SymbolTrendSecondaryActive = true;
+            side.SymbolTrendSecondaryMin = textual.SymbolTrendSecondary.List[0].minValue;
+            side.SymbolTrendSecondaryMax = textual.SymbolTrendSecondary.List[0].maxValue;
         }
         side.SymbolTrendSecondaryLog = textual.SymbolTrendSecondary.Log;
 
@@ -138,11 +138,11 @@ public class TextualSideData
         textual.SymbolTrend.Log = SymbolTrendLog;
 
         textual.SymbolTrendSecondary.List.Clear();
-        if (MarketTrendSecondaryActive)
+        if (SymbolTrendSecondaryActive)
         {
             textual.SymbolTrendSecondary.List.Add((
-                Math.Min(MarketTrendSecondaryMin, MarketTrendSecondaryMax),
-                Math.Max(MarketTrendSecondaryMin, MarketTrendSecondaryMax)));
+                Math.Min(SymbolTrendSecondaryMin, SymbolTrendSecondaryMax),
+                Math.Max(SymbolTrendSecondaryMin, SymbolTrendSecondaryMax)));
         }
         textual.SymbolTrendSecondary.Log = SymbolTrendSecondaryLog;
     }

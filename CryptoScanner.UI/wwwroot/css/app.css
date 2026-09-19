@@ -304,6 +304,15 @@ html, body {
     flex-shrink: 0;
 }
 
+/* The barometer rows drop the space-between of .dashboard-row. The width of this section is set by
+   the two dropdowns above it, so space-between threw the value against the far right and left a
+   hand's width of nothing between the label and its own number. They belong together, the way the
+   Avalonia panel places them: label, a small gap, value. */
+.dashboard-row.barometer-row {
+    justify-content: flex-start;
+    gap: 4px;
+}
+
 .dashboard-separator {
     width: 1px;
     background: var(--border-low);

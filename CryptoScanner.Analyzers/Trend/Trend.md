@@ -2,13 +2,13 @@
 
 ## Overview
 
-The **Trend** strategy fires on primary market trend changes detected via ZigZag analysis. It signals the moment a downtrend transitions to an uptrend (long) or vice versa (short). The step-in logic then waits for a pullback pivot before confirming entry. This is an experimental strategy (DEBUG-only).
+The **Trend** strategy fires on primary symbol trend changes detected via ZigZag analysis. It signals the moment a downtrend transitions to an uptrend (long) or vice versa (short). The step-in logic then waits for a pullback pivot before confirming entry. This is an experimental strategy (DEBUG-only).
 
 ## How it works
 
 ### Phase 1: Trend change detection
 
-The strategy calculates the primary market trend using `MarketTrend.CalculateMarketTrendAsync`. A signal fires when the trend flips:
+The strategy calculates the primary trend of the coin using `SymbolTrend.CalculateSymbolTrendAsync`. That is the trend of THIS coin - not the market trend on the dashboard, which averages the same figure over every coin of the quote (see `Trend.MarketTrend`). A signal fires when the trend flips:
 - **Long**: previous trend was Bearish → current trend is Bullish.
 - **Short**: previous trend was Bullish → current trend is Bearish.
 
@@ -54,7 +54,7 @@ No strategy-specific settings beyond the base class. Sound files: `sound-trend-o
 | Indicator | Purpose |
 |-----------|---------|
 | ZigZag (Primary) | Trend detection and pivot identification |
-| MarketTrend | Trend state calculation |
+| SymbolTrend | Trend state calculation |
 
 ## Strategy type
 

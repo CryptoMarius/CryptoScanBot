@@ -49,6 +49,9 @@ public class BarometerMarketTrendWriteTests : TestBase
         quote.MinimalVolume = 0;   // EnoughVolume() answers true, so volume plays no part here
         quote.FetchCandles = true; // a quote that is not fetched takes no part in the barometer
         quote.SymbolList = [];     // the coins of this test only, put back in Restore()
+
+        // Independent of whatever test class ran before this one - see ResetBarometerSymbols.
+        ResetBarometerSymbols(QuoteName);
     }
 
     [TestCleanup]
@@ -61,11 +64,7 @@ public class BarometerMarketTrendWriteTests : TestBase
 
         // The barometer symbols keep their candles between calculations; another test class must not
         // meet the ones written here.
-        foreach (string baseName in new[] { Constants.SymbolNameBarometerPrice, Constants.SymbolNameBarometerExtra })
-        {
-            if (GlobalData.ActiveExchange!.TryGetSymbolByPair(baseName + QuoteName, out CryptoSymbol? symbol))
-                symbol.ClearCandles();
-        }
+        ResetBarometerSymbols(QuoteName);
     }
 
 

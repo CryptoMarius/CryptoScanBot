@@ -92,6 +92,15 @@ public partial class DashBoardInformationViewModel : ObservableObject
     [ObservableProperty]
     private string _selectedGraphValue = BarometerCandleFields.GetName(BarometerGraphValue.Average);
 
+    /// <summary>
+    /// Whether the interval selection has anything to choose. A market trend belongs to the quote
+    /// coin and carries the same value in every interval, so while one of those is shown the
+    /// selection is switched off rather than left to suggest a choice that changes nothing. See
+    /// BarometerCandleFields.UsesInterval.
+    /// </summary>
+    [ObservableProperty]
+    private bool _intervalSelectionEnabled = true;
+
     [ObservableProperty]
     private string _barometerTime = string.Empty;
     private string _barometerCalculated = string.Empty;
@@ -364,6 +373,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         // Not forwarded to SignalR: the hub serves the average to an external consumer and switching
         // the desktop graph should not change what that consumer receives.
         _applicationStateService.BarometerGraphValue = value;
+        IntervalSelectionEnabled = BarometerCandleFields.UsesInterval(BarometerCandleFields.Parse(value));
         Task.Run(CalculateBarometer);
     }
 
@@ -714,6 +724,16 @@ public partial class DashBoardInformationViewModel : ObservableObject
             //FilterQuality = SKFilterQuality.High
         };
 
+        // The axis labels: the hours along the bottom and the values along the left edge. One font
+        // and one paint for both, declared here because the grid below is the first to use them.
+        using var axisFont = new SKFont { Size = 9 };
+        using var axisPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Color = fgColor,        // black on the light theme, white on the dark one
+            Style = SKPaintStyle.Fill,
+        };
+
         // horizontal lines (a step that fits the span in view, see GetCenteredGrid), coloured red on
         // the reference line
         if (gridStep > 0)
@@ -746,6 +766,35 @@ public partial class DashBoardInformationViewModel : ObservableObject
                     paint.Style = SKPaintStyle.Stroke;
                     canvas.DrawLine(p1, p2, paint);
                 }
+
+                // What the line is worth. Without it the picture only says that something moved, not
+                // whether that is a tenth of a percent or thirty points - and the figures on offer
+                // differ by exactly that order of magnitude. Every other line carries a label, so
+                // they do not pile up on a fine grid, and the zero line is always one of them
+                // because the grid is built in whole steps around it.
+                // Skipped for a line in the bottom strip: the hours live there, and the two would
+                // sit on top of each other in the right hand corner.
+                if (i % 2 == 0 && screenLineY <= intHeight - 12)
+                {
+                    string valueText = y.ToString("N" + graphScale.Decimals, System.Globalization.CultureInfo.InvariantCulture);
+                    float valueWidth = axisFont.MeasureText(valueText);
+
+                    // Against the RIGHT edge, the way a price chart carries its scale. The left is
+                    // taken: the timestamp sits in the top corner and the hour labels run along the
+                    // bottom, so a value label there would land on one of the two at the extremes of
+                    // the scale - which are exactly the labels that say how far the picture reaches.
+                    // Just above its own line, and below it for the topmost one so it stays inside.
+                    float valueY = screenLineY - 2;
+                    if (valueY < 9)
+                        valueY = screenLineY + 9;
+                    if (valueY > intHeight - 2)
+                        valueY = intHeight - 2;
+
+                    paint.Color = bgColor.WithAlpha(PlateAlpha);
+                    paint.Style = SKPaintStyle.Fill;
+                    canvas.DrawRect(intWidth - 4 - valueWidth, valueY - 9, valueWidth + 4, 11, paint);
+                    canvas.DrawText(valueText, intWidth - 2, valueY, SKTextAlign.Right, axisFont, axisPaint);
+                }
             }
         }
 
@@ -756,14 +805,6 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
         // Every hour line carries its hour as a label at the BOTTOM, where a horizontal axis
         // belongs, in LOCAL time so it matches the timestamp drawn in the top left corner.
-        using var hourFont = new SKFont { Size = 9 };
-        using var hourPaint = new SKPaint
-        {
-            IsAntialias = true,
-            Color = fgColor,        // black on the light theme, white on the dark one
-            Style = SKPaintStyle.Fill,
-        };
-
         while (lastX > loX)
         {
             //DateTime ehh = CandleTools.GetUnixDate(lastX);
@@ -775,20 +816,23 @@ public partial class DashBoardInformationViewModel : ObservableObject
             paint.Style = SKPaintStyle.Stroke;
             canvas.DrawLine(p1, p2, paint);
 
-            // The label always sits to the RIGHT of its line, and is simply left out when it no
-            // longer fits there - the rightmost hour therefore sometimes has no number. The plate
-            // underneath keeps it readable wherever the barometer line happens to run. Bare hour,
-            // no minutes and no leading zero.
+            // The label sits CENTRED under its own line, which is where a reader looks for it - to
+            // the right of the line it read as belonging to the space after the hour rather than to
+            // the hour itself. Shifted back inside the picture at the edges instead of being left
+            // out, so the outermost hour keeps its number. The plate underneath keeps it readable
+            // wherever the barometer line happens to run. Bare hour, no minutes and no leading zero.
             string hourText = lastX.ToLocalTime().Hour.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            float hourWidth = hourFont.MeasureText(hourText);
-            float hourX = p1.X + 3;
-            if (hourX + hourWidth <= intWidth)
-            {
-                paint.Color = bgColor.WithAlpha(PlateAlpha);
-                paint.Style = SKPaintStyle.Fill;
-                canvas.DrawRect(hourX - 2, intHeight - 12, hourWidth + 4, 11, paint);
-                canvas.DrawText(hourText, hourX, intHeight - 3, SKTextAlign.Left, hourFont, hourPaint);
-            }
+            float hourWidth = axisFont.MeasureText(hourText);
+            float hourX = p1.X - hourWidth / 2;
+            if (hourX < 2)
+                hourX = 2;
+            if (hourX + hourWidth > intWidth - 2)
+                hourX = intWidth - 2 - hourWidth;
+
+            paint.Color = bgColor.WithAlpha(PlateAlpha);
+            paint.Style = SKPaintStyle.Fill;
+            canvas.DrawRect(hourX - 2, intHeight - 12, hourWidth + 4, 11, paint);
+            canvas.DrawText(hourText, hourX, intHeight - 3, SKTextAlign.Left, axisFont, axisPaint);
 
             lastX -= intervalTime;
         }

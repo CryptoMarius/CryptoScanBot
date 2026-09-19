@@ -69,7 +69,7 @@ Same logic with reversed conditions — bearish CHoCH, ZigZag High pivot, close 
 |-----------|---------|
 | ZigZag (Primary or Secondary) | Trend structure and pivot detection |
 | BOS (Break of Structure) | Trend confirmation and give-up condition |
-| MarketTrend | Trend state calculation |
+| SymbolTrend | Trend state calculation |
 
 ## Strategy type
 

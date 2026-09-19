@@ -1,4 +1,4 @@
-@using CryptoScanner.Core.Barometer
+﻿@using CryptoScanner.Core.Barometer
 @using CryptoScanner.Core.Core
 @using CryptoScanner.Core.Enums
 @using CryptoScanner.UI.Services
@@ -68,7 +68,14 @@
                     <option value="@q">@q</option>
                 }
             </select>
+            @* Switched off while a market trend is shown: that figure belongs to the quote coin and
+               carries the same value in every interval, so the choice would change nothing. See
+               BarometerCandleFields.UsesInterval. *@
             <select class="input-select dashboard-combo" value="@DashboardService.IntervalName"
+                    disabled="@(!BarometerCandleFields.UsesInterval(DashboardService.GraphValue))"
+                    title="@(BarometerCandleFields.UsesInterval(DashboardService.GraphValue)
+                              ? "Interval of the barometer"
+                              : "The market trend is the same for every interval")"
                     @onchange="OnBarometerIntervalChanged">
                 @foreach (var iv in DashboardService.IntervalOptions)
                 {
@@ -79,9 +86,9 @@
         @* The market breadth (the share of coins that rose) used to stand next to each value. It sat
            right against the chart and read as part of it, so it now only lives in the tooltip of the
            row, together with the other figures of the same measurement. *@
-        <div class="dashboard-row" title="@DashboardService.Barometer1h.Tooltip"><span>Barometer 1h:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer1h.CssClass">@DashboardService.Barometer1h.Value</span></div>
-        <div class="dashboard-row" title="@DashboardService.Barometer4h.Tooltip"><span>Barometer 4h:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer4h.CssClass">@DashboardService.Barometer4h.Value</span></div>
-        <div class="dashboard-row" title="@DashboardService.Barometer1d.Tooltip"><span>Barometer 1d:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer1d.CssClass">@DashboardService.Barometer1d.Value</span></div>
+        <div class="dashboard-row barometer-row" title="@DashboardService.Barometer1h.Tooltip"><span>Barometer 1h:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer1h.CssClass">@DashboardService.Barometer1h.Value</span></div>
+        <div class="dashboard-row barometer-row" title="@DashboardService.Barometer4h.Tooltip"><span>Barometer 4h:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer4h.CssClass">@DashboardService.Barometer4h.Value</span></div>
+        <div class="dashboard-row barometer-row" title="@DashboardService.Barometer1d.Tooltip"><span>Barometer 1d:</span><span class="dashboard-value dashboard-barometer @DashboardService.Barometer1d.CssClass">@DashboardService.Barometer1d.Value</span></div>
     </div>
     <div class="dashboard-separator"></div>
 
@@ -183,6 +190,12 @@
     /// 14px - far below the ~57px between two hour lines.
     /// </summary>
     private const int HourLabelWidth = 14;
+
+    /// <summary>
+    /// Width reserved for one value label on the vertical axis. Wide enough for a negative figure
+    /// with two decimals ("-0.25") at 9px, which is the longest the scales in use produce.
+    /// </summary>
+    private const int ValueLabelWidth = 30;
 
     private bool _disposed;
 
@@ -367,6 +380,28 @@
                     continue;                       // outside the scale, exactly as Skia clips it
                 string stroke = referenceLine.HasValue && line == referenceLine.Value ? "#ff0000" : "#808080";
                 sb.Append($"<line x1=\"0\" y1=\"{y.ToString("F1", ic)}\" x2=\"{w}\" y2=\"{y.ToString("F1", ic)}\" stroke=\"{stroke}\" stroke-width=\"1\"/>");
+
+                // What the line is worth. Without it the picture only says that something moved, not
+                // whether that is a tenth of a percent or thirty points - and the two figures on
+                // offer differ by exactly that order of magnitude. Every other line carries a label,
+                // so they do not pile up on a fine grid, and the zero line is always one of them
+                // because the grid is built in whole steps around it.
+                // Skipped for a line in the bottom strip: the hours live there, and the two would
+                // sit on top of each other in the right hand corner.
+                if (i % 2 == 0 && y <= h - 12)
+                {
+                    // Against the RIGHT edge, the way a price chart carries its scale. The left is
+                    // taken: the timestamp sits in the top corner and the hour labels run along the
+                    // bottom, so a value label there would land on one of the two at the extremes of
+                    // the scale - which are exactly the labels that say how far the picture reaches.
+                    // Just above its own line, and below it for the topmost one so it stays inside.
+                    decimal textY = y - 2;
+                    if (textY < 9) textY = y + 9;
+                    if (textY > h - 2) textY = h - 2;
+                    string label = line.ToString("N" + scale.Decimals, ic);
+                    sb.Append($"<rect x=\"{w - 2 - ValueLabelWidth}\" y=\"{(textY - 8).ToString("F1", ic)}\" width=\"{ValueLabelWidth}\" height=\"10\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
+                    sb.Append($"<text x=\"{w - 4}\" y=\"{textY.ToString("F1", ic)}\" font-size=\"9\" text-anchor=\"end\" fill=\"var(--text-primary)\">{label}</text>");
+                }
             }
         }
 
@@ -384,14 +419,18 @@
                 double x = (hour - first).TotalMinutes / span * w;
                 sb.Append($"<line x1=\"{x.ToString("F1", ic)}\" y1=\"0\" x2=\"{x.ToString("F1", ic)}\" y2=\"{h}\" stroke=\"#808080\" stroke-width=\"1\"/>");
 
-                // The label always sits to the RIGHT of its line, and is simply left out when it no
-                // longer fits there - the rightmost hour therefore sometimes has no number. The
-                // plate underneath keeps it readable wherever the barometer line happens to run.
-                if (x + HourLabelWidth <= w)
+                // The label sits CENTRED under its own line, which is where a reader looks for it -
+                // to the right of the line it read as belonging to the space after the hour rather
+                // than to the hour itself. Shifted back inside the picture at the edges instead of
+                // being left out, so the outermost hour keeps its number. The plate underneath keeps
+                // it readable wherever the barometer line happens to run.
                 {
                     string label = hour.ToLocalTime().Hour.ToString(ic);
-                    sb.Append($"<rect x=\"{(x + 1).ToString("F1", ic)}\" y=\"{h - 12}\" width=\"{HourLabelWidth - 1}\" height=\"11\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
-                    sb.Append($"<text x=\"{(x + 3).ToString("F1", ic)}\" y=\"{h - 3}\" font-size=\"9\" fill=\"var(--text-primary)\">{label}</text>");
+                    double plateX = x - HourLabelWidth / 2.0;
+                    if (plateX < 1) plateX = 1;
+                    if (plateX + HourLabelWidth > w - 1) plateX = w - 1 - HourLabelWidth;
+                    sb.Append($"<rect x=\"{plateX.ToString("F1", ic)}\" y=\"{h - 12}\" width=\"{HourLabelWidth}\" height=\"11\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
+                    sb.Append($"<text x=\"{(plateX + HourLabelWidth / 2.0).ToString("F1", ic)}\" y=\"{h - 3}\" font-size=\"9\" text-anchor=\"middle\" fill=\"var(--text-primary)\">{label}</text>");
                 }
 
                 hour = hour.AddHours(-1);

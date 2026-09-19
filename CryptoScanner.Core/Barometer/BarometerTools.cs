@@ -349,16 +349,7 @@ public class BarometerTools
         // Herbereken de candles in de andere intervallen (voor de 15m, 30m, 1h, 4h en 1d)
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            if (interval.IntervalPeriod == CryptoIntervalPeriod.interval10m ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval15m ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval30m ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval1h ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval2h ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval3h ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval4h ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval8h ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval12h ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
+            if (Array.IndexOf(BarometerIntervals, interval.IntervalPeriod) >= 0)
             {
                 //GlobalData.AddTextToLogTab("Calculating barometer chart " + bmSymbol.Name + " " + interval.Name);
                 CalculateBarometerInternal(symbol, symbolExtra, interval, quoteData, calcBarometerMethod, pricebarometer,
@@ -366,6 +357,26 @@ public class BarometerTools
             }
         }
     }
+
+
+    /// <summary>
+    /// The intervals a barometer is calculated for. In a list of its own because the backlog that
+    /// MarketTrendBackfill fills in has to be written to exactly these ones - an interval that is
+    /// calculated but not filled would show a hole in the graph that no other interval has.
+    /// </summary>
+    private static readonly CryptoIntervalPeriod[] BarometerIntervals =
+    [
+        CryptoIntervalPeriod.interval10m,
+        CryptoIntervalPeriod.interval15m,
+        CryptoIntervalPeriod.interval30m,
+        CryptoIntervalPeriod.interval1h,
+        CryptoIntervalPeriod.interval2h,
+        CryptoIntervalPeriod.interval3h,
+        CryptoIntervalPeriod.interval4h,
+        CryptoIntervalPeriod.interval8h,
+        CryptoIntervalPeriod.interval12h,
+        CryptoIntervalPeriod.interval1d,
+    ];
 
     /// <summary>
     /// Copy one measurement into the last known values of a quote coin. Shared by the calculation
@@ -420,6 +431,97 @@ public class BarometerTools
     }
 
 
+    /// <summary>
+    /// Quote coins whose market trend backlog has been filled in this session. The work is a
+    /// warm-up of the zigzag over every coin and every interval, so it may not run again on the
+    /// timer every thirty seconds - once it has succeeded, the live measurement keeps the series
+    /// complete by itself.
+    /// </summary>
+    private static readonly HashSet<string> MarketTrendBacklogFilled = [];
+
+
+    /// <summary>
+    /// Forget that the backlog was filled, so the next calculation looks again. The scanner never
+    /// needs this - a session fills the hole its own restart left and then keeps the series complete
+    /// by itself - but a test that sets up a fresh world would otherwise inherit the mark of the
+    /// test that ran before it and silently skip the fill it is testing.
+    /// </summary>
+    internal static void ForgetMarketTrendBacklog()
+    {
+        MarketTrendBacklogFilled.Clear();
+    }
+
+
+    /// <summary>
+    /// Fill in the market trend of minutes that nobody measured, for the part of the graph window
+    /// that is missing it. That is what every restart leaves behind: the values from before it come
+    /// back with the candles, the minutes the scanner was down were never measured by anybody.
+    /// <para>
+    /// A minute that already carries a value is never touched. The test for "has no value" is that
+    /// BOTH figures are exactly zero - a measured pair that lands on 0.00 twice over does not occur
+    /// in practice (one isolated case in 381.510 measured minutes of emulator data), and the cost of
+    /// being wrong about it is one recomputed minute.
+    /// </para>
+    /// </summary>
+    private static void FillMarketTrendBacklog(CryptoSymbol symbolExtra, CryptoQuoteData quoteData)
+    {
+        if (MarketTrendBacklogFilled.Contains(quoteData.Name))
+            return;
+
+        // What is missing, over all the intervals the barometer keeps. They hold the same minutes,
+        // but not necessarily the same ones after a restart, so the widest gap decides.
+        CandleTime? from = null, to = null;
+        foreach (CryptoIntervalPeriod period in BarometerIntervals)
+        {
+            CryptoCandleList candles = symbolExtra.GetSymbolInterval(period).CandleList;
+            foreach (CryptoCandle candle in candles.GetLastNValues(Constants.BarometerGraphHours * 60, 1))
+            {
+                if (candle.Low != 0 || candle.Volume != 0)
+                    continue;
+                if (from == null || candle.OpenTime < from.Value)
+                    from = candle.OpenTime;
+                if (to == null || candle.OpenTime > to.Value)
+                    to = candle.OpenTime;
+            }
+        }
+
+        if (from == null || to == null)
+        {
+            // Nothing missing at all - a scanner that has been running for hours. Remember it, so
+            // the scan above is not repeated every thirty seconds either.
+            MarketTrendBacklogFilled.Add(quoteData.Name);
+            return;
+        }
+
+        SortedList<CandleTime, (decimal? Primary, decimal? Secondary)> series =
+            Trend.MarketTrendBackfill.Measure(quoteData.SymbolList, from.Value, to.Value, Trend.MarketTrend.MinimumSymbols);
+        if (series.Count == 0)
+            return; // too few coins, or their candles are not loaded yet - try again next time
+
+        int written = 0;
+        foreach (CryptoIntervalPeriod period in BarometerIntervals)
+        {
+            CryptoCandleList candles = symbolExtra.GetSymbolInterval(period).CandleList;
+            foreach (CryptoCandle candle in candles.GetLastNValues(Constants.BarometerGraphHours * 60, 1))
+            {
+                if (candle.Low != 0 || candle.Volume != 0)
+                    continue;
+                if (!series.TryGetValue(candle.OpenTime, out (decimal? Primary, decimal? Secondary) value))
+                    continue;
+
+                CryptoCandle updated = candle;
+                BarometerCandleFields.StoreMarketTrend(ref updated, value.Primary, value.Secondary);
+                candles[candle.OpenTime] = updated;
+                written++;
+            }
+        }
+
+        MarketTrendBacklogFilled.Add(quoteData.Name);
+        GlobalData.AddTextToLogTab($"Barometer {quoteData.Name}: market trend calculated afterwards for " +
+            $"{written} minutes that were not measured ({from.Value.ToLocalTime():HH:mm} - {to.Value.ToLocalTime():HH:mm})");
+    }
+
+
     // Separate call because of emulator (calculate only 1 quote)
     public static void CalculatePriceBarometerForQuote(CryptoQuoteData quoteData, bool measureMarketTrend = true)
     {
@@ -438,6 +540,11 @@ public class BarometerTools
 
             CalculateBarometerIntervals(symbol, symbolExtra, quoteData, CryptoBarometerPrice.CalculatePriceBarometer, true,
                 marketTrendPrimary, marketTrendSecondary);
+
+            // And the minutes nobody measured, which is what a restart leaves behind. After the
+            // calculation above, so the candles it just created are there to be filled.
+            if (measureMarketTrend && symbolExtra != null)
+                FillMarketTrendBacklog(symbolExtra, quoteData);
         }
     }
 

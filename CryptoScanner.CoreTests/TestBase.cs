@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Const;
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -84,6 +86,32 @@ public class TestBase
         if (!GlobalData.Settings.Signal.Short.Strategy.Contains(name))
             GlobalData.Settings.Signal.Short.Strategy.Add(name);
     }
+
+    /// <summary>
+    /// Put the barometer symbols of a quote coin back to how a fresh start finds them: no candles,
+    /// no record of how far they were calculated, and no memory that the market trend backlog was
+    /// already filled.
+    /// <para>
+    /// All three are process-wide, so without this a test class inherits the state of whichever
+    /// class ran before it. LastCandleSynchronized is the nasty one: the barometer resumes from that
+    /// minute, so a test that needs an hour of barometer candles gets exactly one and fails on
+    /// "the candles are missing" - while passing on its own.
+    /// </para>
+    /// </summary>
+    internal static void ResetBarometerSymbols(string quoteName)
+    {
+        foreach (string baseName in new[] { Constants.SymbolNameBarometerPrice, Constants.SymbolNameBarometerExtra })
+        {
+            if (GlobalData.ActiveExchange!.TryGetSymbolByPair(baseName + quoteName, out CryptoSymbol? symbol))
+            {
+                symbol.ClearCandles();
+                foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+                    symbolInterval.LastCandleSynchronized = null;
+            }
+        }
+        BarometerTools.ForgetMarketTrendBacklog();
+    }
+
 
     internal static void AddTextToLogTab(string text)
     {

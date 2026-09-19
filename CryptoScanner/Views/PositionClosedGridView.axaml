@@ -284,8 +284,8 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
-			<!-- primary market trend -->
-			<DataGridTemplateColumn Header="Marketprimtrend" Width="75" SortMemberPath="TrendPercentagePrimary"  IsVisible="False" >
+			<!-- primary symbol trend (the trend of THIS coin, see SymbolTrend - not the market trend of the dashboard) -->
+			<DataGridTemplateColumn Header="Symbolprimtrend" Width="75" SortMemberPath="TrendPercentagePrimary"  IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate x:DataType="vm:PositionViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -294,8 +294,8 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
-			<!-- secondary market trend -->
-			<DataGridTemplateColumn Header="Marketsectrend" Width="75" SortMemberPath="TrendPercentageSecondary" IsVisible="False" >
+			<!-- secondary symbol trend -->
+			<DataGridTemplateColumn Header="Symbolsectrend" Width="75" SortMemberPath="TrendPercentageSecondary" IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate x:DataType="vm:PositionViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -314,7 +314,7 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
-			<!-- secondary market trend -->
+			<!-- secondary symbol trend -->
 			<DataGridTemplateColumn Header="X day's move" Width="75" SortMemberPath="LastXDaysEffective" IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate x:DataType="vm:PositionViewModel">

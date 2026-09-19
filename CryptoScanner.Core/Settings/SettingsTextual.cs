@@ -29,10 +29,12 @@ public class SettingsTextual
     // Via interval + Value (range needed?)
     public SettingsTextualBarometer Barometer = new();
 
-    // Market trend percentage (primary)
+    // The trend of the coin ITSELF, as a weighted percentage over its intervals (primary zigzag
+    // setting). Not the market trend of the dashboard: that one averages this same figure over
+    // every coin of the quote - see Trend.MarketTrend.
     public SettingsTextualSymbolTrend SymbolTrend = new();
 
-    // Market trend percentage (secondary)
+    // The same for the secondary zigzag setting.
     public SettingsTextualSymbolTrend SymbolTrendSecondary = new();
 }
 

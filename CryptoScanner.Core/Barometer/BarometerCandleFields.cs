@@ -189,6 +189,23 @@ public static class BarometerCandleFields
 
 
     /// <summary>
+    /// Whether the interval a dashboard is set to changes this figure.
+    /// <para>
+    /// It does for everything the barometer measures: that is an average price CHANGE over the
+    /// interval, so an hour and a day are different questions. The market trend is not - it belongs
+    /// to the quote coin. Its value is already a weighting over every interval from one minute to one
+    /// day (see MarketTrend), which is why the same number is stored in the candles of every
+    /// interval. Both dashboards switch their interval selection off while such a figure is shown,
+    /// rather than offer a choice that changes nothing.
+    /// </para>
+    /// </summary>
+    public static bool UsesInterval(BarometerGraphValue value)
+    {
+        return value is not (BarometerGraphValue.MarketTrendPrimary or BarometerGraphValue.MarketTrendSecondary);
+    }
+
+
+    /// <summary>
     /// Which barometer symbol holds this figure. The name still needs the quote appended, the same
     /// way the rest of the code builds it.
     /// </summary>
@@ -373,15 +390,19 @@ public static class BarometerCandleFields
                 GridStep = null,
                 Decimals = 2,
             },
-            // The market trend runs from -100 to +100 and spends most of its time well away from
-            // zero, so it needs a far wider floor than the average - which moves in single percents.
+            // The market trend runs from -100 to +100, so it needs a wider floor than the average -
+            // which moves in single percents. Not as wide as the range itself though: measured live
+            // the primary stays within a point and a half of zero for hours on end, and against a
+            // span of 40 that is a flat line on a tenth of the picture. Ten is enough to see it move
+            // while the scale still grows with the data - a reading beyond half the span doubles it,
+            // so a market trend of -13 draws itself a picture of 26 points wide.
             // No IgnoreBeyond: the scale cannot exceed 100 by construction, so there is nothing to
             // guard against, and clipping would hide a market that really is fully trending.
             BarometerGraphValue.MarketTrendPrimary or BarometerGraphValue.MarketTrendSecondary =>
                 new BarometerGraphScale
                 {
                     CenteredOnZero = true,
-                    MinimumSpan = 40m,
+                    MinimumSpan = 10m,
                     Decimals = 1,
                 },
             // Bitcoin against the median coin: zero means it moves exactly with the market, so this
