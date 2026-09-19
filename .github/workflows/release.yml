@@ -285,9 +285,54 @@ jobs:
           # the same line pasted into its notes.
           $policy = 'Code signing policy: see the [code signing policy](https://github.com/CryptoMarius/CryptoScanBot#code-signing-policy) in the README.'
 
+          # The notes of a release the workflow creates itself come from Release Changes.txt in the
+          # repository root. Its blocks open with a header line "DD-MM-YYYY <version>" and run until
+          # the next header, so the block for this tag is everything in between. The header carries a
+          # date as well, and that date is not always the day of the release, so the version at the
+          # end of the line decides - never the date.
+          #
+          # When no block is found the notes fall back to the policy line alone and the run gets a
+          # warning. A thin release note is a small problem; a release carrying the changelog of
+          # another version is a large one.
+          $notes = $policy
+          $changelog = Join-Path $env:GITHUB_WORKSPACE 'Release Changes.txt'
+          if (Test-Path $changelog) {
+            $lines = Get-Content $changelog -Encoding utf8
+            $headerPattern = '^\d{2}-\d{2}-\d{4}\s+[\d.]+\s*$'
+            $tagPattern = '\s' + [regex]::Escape($tag) + '$'
+            $start = -1
+            $end = $lines.Count
+            for ($i = 0; $i -lt $lines.Count; $i++) {
+              if ($lines[$i] -notmatch $headerPattern) { continue }
+              if ($start -lt 0) {
+                if ($lines[$i].Trim() -match $tagPattern) { $start = $i }
+              }
+              else {
+                $end = $i
+                break
+              }
+            }
+            if ($start -ge 0) {
+              $block = ($lines[$start..($end - 1)] -join "`n").TrimEnd()
+              $notes = $block + "`n`n" + $policy
+              Write-Host "Release notes taken from Release Changes.txt, $($end - $start) lines"
+            }
+            else {
+              Write-Host "::warning::Release Changes.txt has no block for $tag; the release gets the policy line only"
+            }
+          }
+          else {
+            Write-Host "::warning::Release Changes.txt not found; the release gets the policy line only"
+          }
+
+          # --notes-file rather than --notes: the changelog holds quotes and brackets, and a command
+          # line is the wrong place to find out which of them the shell wants to interpret.
+          $notesFile = Join-Path $env:RUNNER_TEMP 'release-notes.md'
+          Set-Content -Path $notesFile -Value $notes -Encoding utf8
+
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --title $tag --notes $policy
+            gh release create $tag --title $tag --notes-file $notesFile
             if ($LASTEXITCODE -ne 0) { throw "could not create the release for $tag" }
           }
 

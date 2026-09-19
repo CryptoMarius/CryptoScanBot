@@ -146,6 +146,42 @@
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
 
+                <CheckBox IsChecked="{Binding UseRsiLevels, Mode=TwoWay}"
+                          Content="Levels from the RSI" FontSize="12"
+                          ToolTip.Tip="Take support and resistance where the RSI turns instead of where the price does. Far fewer levels, and fewer breaks with them."/>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      IsVisible="{Binding UseRsiLevels}"
+                      ToolTip.Tip="Length of the RSI the levels are taken from.">
+                    <TextBlock Grid.Column="0" Text="RSI length for levels:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding RsiLevelLength, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      IsVisible="{Binding UseRsiLevels}"
+                      ToolTip.Tip="How many candles either side of the RSI turn. Also the delay before the level is confirmed.">
+                    <TextBlock Grid.Column="0" Text="RSI pivot candles:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding RsiLevelPivotCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      IsVisible="{Binding UseRsiLevels}"
+                      ToolTip.Tip="The RSI a turn has to reach before its high counts as resistance.">
+                    <TextBlock Grid.Column="0" Text="RSI overbought for levels:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding RsiLevelOverbought, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      IsVisible="{Binding UseRsiLevels}"
+                      ToolTip.Tip="The RSI a turn has to fall to before its low counts as support.">
+                    <TextBlock Grid.Column="0" Text="RSI oversold for levels:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding RsiLevelOversold, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
                 <Separator Margin="0,4"/>
 
                 <!-- The RSI filter the Pro version of the indicator adds. -->

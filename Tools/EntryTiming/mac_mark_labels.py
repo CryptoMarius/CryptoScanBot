@@ -2,14 +2,14 @@
 The white breakout dots: which days the reference indicator marks, and which ones our own rule
 draws on top of that.
 
-Our rule (TboChartOverlay.FindConfirmations) is deliberately wider than the reference - it finds
+Our rule (MacChartOverlay.FindConfirmations) is deliberately wider than the reference - it finds
 every dot we know of and about three times as many besides. Narrowing it is a labelling problem
 before it is a thinking problem: with a handful of confirmed days any condition can be made to fit,
 and none of them can be trusted. This script is the bookkeeping for that.
 
-    candles   the daily stretches embedded in TboBreakoutOnRealCandlesTests, read straight from
+    candles   the daily stretches embedded in MacBreakoutOnRealCandlesTests, read straight from
               that file so the two can never drift apart
-    labels    tbo-mark-labels.json next to this script: per date "dot", "none" or absent
+    labels    mac-mark-labels.json next to this script: per date "dot", "none" or absent
     output    every mark our rule draws, with the properties a missing condition could live in,
               and what is known about that day
 
@@ -17,8 +17,8 @@ A day is only "none" when the reference chart was SEEN not to mark it. An unlabe
 unknown, never a negative - counting it as one is how a rule gets fitted to nothing.
 
 Usage:
-    python tbo_mark_labels.py
-    python tbo_mark_labels.py --window Autumn2024
+    python mac_mark_labels.py
+    python mac_mark_labels.py --window Autumn2024
 """
 
 import argparse
@@ -31,13 +31,24 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-import measure_tbo_exits as tbo
+import measure_mac_exits as mac
 
-TEST_FILE = Path(__file__).resolve().parents[2] / "CryptoScanner.CoreTests" / "Signal" / "TboBreakoutOnRealCandlesTests.cs"
-LABEL_FILE = Path(__file__).resolve().parent / "tbo-mark-labels.json"
+TEST_FILE = Path(__file__).resolve().parents[2] / "CryptoScanner.CoreTests" / "Signal" / "MacBreakoutOnRealCandlesTests.cs"
+LABEL_FILE = Path(__file__).resolve().parent / "mac-mark-labels.json"
 WINDOW_NAMES = ["Autumn2020", "Autumn2024", "Spring2025", "Summer2026"]
 
 CANDLE_DB = r"E:\CryptoScanBot\Data\Binance\Perpetual\Binance Perpetual.db"
+# The live scanner drops the candles of a symbol it no longer follows, so no single database holds
+# every labelled coin for long. These are tried in turn and the one that covers the labelled window
+# best is used - which database a coin came from is printed, because two exchanges are not the same
+# candle.
+CANDLE_DATABASES = [
+    CANDLE_DB,
+    r"E:\CryptoScanBot\Data\Emulator\Binance Perpetual.db",
+    r"E:\CryptoScanBot\Data\Bybit\Perpetual\Bybit Perpetual.db",
+    r"E:\CryptoScanBot\Data\Okx\Perpetual\Okx Perpetual.db",
+    r"E:\CryptoScanBot\Data\Mexc\Perpetual\Mexc Perpetual.db",
+]
 EPOCH = datetime.datetime(2010, 1, 4)
 DAILY_INTERVAL_ID = 15
 
@@ -94,6 +105,45 @@ def read_symbol(symbol, database=CANDLE_DB):
     return frame
 
 
+def first_turn_date(frame):
+    """The first candle on which the cloud is seen to TURN.
+
+    The mark rule asks for a mark to sit 8 to 60 candles after a turn, so nothing can be drawn
+    before the first one - however long the cloud has been pointing one way. A labelled day in that
+    opening stretch is not a day the rule missed; it is a day the rule could not speak about, and
+    counting it as a miss is how a series start gets mistaken for a defect.
+    """
+    close = frame["close"].to_numpy(dtype=float)
+    fast = mac.ema(close, mac.FAST_EMA)
+    second = mac.ema(close, mac.SECOND_EMA)
+    ready = ~(np.isnan(fast) | np.isnan(second))
+    previous = None
+    for i in range(len(close)):
+        if not ready[i]:
+            continue
+        up = bool(fast[i] > second[i])
+        if previous is None:
+            previous = up
+        elif up != previous:
+            return frame["date"][i]
+    return None
+
+
+def best_source(symbol, days):
+    """The database that covers the labelled days of this symbol best, and its frame."""
+    best = (0, None, None)
+    for database in CANDLE_DATABASES:
+        if not Path(database).exists():
+            continue
+        frame = read_symbol(symbol, database)
+        if frame is None:
+            continue
+        covered = len(set(days) & set(frame["date"]))
+        if covered > best[0]:
+            best = (covered, frame, database)
+    return best
+
+
 def labelled_symbols(path=LABEL_FILE):
     """The symbols the label file holds a verdict for, with their labelled days."""
     stored = json.loads(path.read_text(encoding="utf-8"))
@@ -116,18 +166,18 @@ def read_labels(path=LABEL_FILE, symbol="BTCUSDT"):
     return {date: value for date, value in stored.get(symbol, {}).items() if not date.startswith("_")}
 
 
-def describe(frame, labels):
+def describe(frame, labels, levels="pivot"):
     """Every mark our rule draws in this stretch, with the properties to look for a rule in."""
     close = frame["close"].to_numpy(dtype=float)
     high = frame["high"].to_numpy(dtype=float)
     low = frame["low"].to_numpy(dtype=float)
 
-    fast = tbo.ema(close, tbo.FAST_EMA)
-    second = tbo.ema(close, tbo.SECOND_EMA)
-    medium = tbo.sma(close, tbo.MEDIUM_SMA)
-    slow = tbo.sma(close, tbo.SLOW_SMA)
-    pivot_high, pivot_low = tbo.pivot_levels(high, low, tbo.PIVOT_LEFT, tbo.PIVOT_RIGHT)
-    longs, shorts = tbo.find_signals(frame, "mark")
+    fast = mac.ema(close, mac.FAST_EMA)
+    second = mac.ema(close, mac.SECOND_EMA)
+    medium = mac.sma(close, mac.MEDIUM_SMA)
+    slow = mac.sma(close, mac.SLOW_SMA)
+    pivot_high, pivot_low = mac.levels_for(levels, high, low, close)
+    longs, shorts = mac.find_signals(frame, "mark", levels)
     long_set = set(longs)
 
     # Where the cloud last turned, and how many marks it has already carried since then.
@@ -143,6 +193,17 @@ def describe(frame, labels):
         elif up != previous:
             turned_at, previous = i, up
         turn_of[i] = turned_at
+
+    # How long the level that is broken has been standing. The guide says older, longer-running
+    # lines are the significant ones, so this is the first thing to look at.
+    def level_age(levels, i):
+        value = levels[i]
+        if np.isnan(value):
+            return np.nan
+        k = i
+        while k > 0 and levels[k - 1] == value:
+            k -= 1
+        return i - k
 
     ranges = high - low
     counter, rows = {}, []
@@ -172,6 +233,20 @@ def describe(frame, labels):
             "ema_in_candles": (abs(close[i] - fast[i]) / average_range
                                if average_range else np.nan),
             "size_vs_average": (high[i] - low[i]) / average_range if average_range else np.nan,
+            # Early or late. The guide splits breakouts in two: an EARLY one continues, a LATE one
+            # after a big candle is an exhaustion warning wearing a continuation's clothes. Three
+            # ways to say "late", each measured rather than chosen:
+            #   run_before      how far price already travelled since the cloud turned, in percent
+            #   candles_stacked how many of the five candles before this one closed our way
+            #   previous_size   the candle BEFORE the mark, against the average - "after a big candle"
+            "run_before": (abs(100 * (close[i] - close[turn]) / close[turn])
+                           if 0 <= turn < i else np.nan),
+            "candles_stacked": int(sum(
+                1 for k in range(max(0, i - 5), i)
+                if (close[k] > close[k - 1] if up else close[k] < close[k - 1]) and k > 0)),
+            "previous_size": ((high[i - 1] - low[i - 1]) / average_range
+                              if i > 0 and average_range else np.nan),
+            "level_age": level_age(pivot_high if up else pivot_low, i),
             "label": labels.get(date, "?"),
         })
     return pd.DataFrame(rows)
@@ -201,7 +276,8 @@ def separation(table, column):
 def compare(table):
     """Every property side by side: what the dots look like, what the false ones look like."""
     columns = ["wick", "close", "after_turn", "nth_in_leg", "from_ema", "from_second",
-               "from_medium", "from_slow", "cloud_width", "ema_in_candles", "size_vs_average"]
+               "from_medium", "from_slow", "cloud_width", "ema_in_candles", "size_vs_average",
+               "run_before", "candles_stacked", "previous_size", "level_age"]
     dots = table[table["label"] == "dot"]
     none = table[table["label"] == "none"]
     print("")
@@ -221,21 +297,35 @@ def compare(table):
               f"{b.min():11.2f} {b.median():8.2f} {b.max():8.2f} | {verdict}")
 
 
-def from_database():
+def from_database(levels="pivot"):
     """Our marks on every symbol the label file knows, with the verdict beside each one."""
     tables = []
     for symbol, verdicts in labelled_symbols().items():
-        frame = read_symbol(symbol)
-        if frame is None:
-            print(f"{symbol}: geen dagcandles in de database, overgeslagen")
-            continue
         days = sorted(verdicts)
-        table = describe(frame, verdicts)
+        covered, frame, database = best_source(symbol, days)
+        if frame is None or covered == 0:
+            print(f"{symbol}: geen dagcandles in een van de databases, overgeslagen")
+            continue
+        # Only the days the candles actually reach can be judged; the rest is unknown, not negative.
+        verdicts = {d: v for d, v in verdicts.items() if d in set(frame["date"])}
+        turn = first_turn_date(frame)
+        if turn is not None:
+            before = {d for d in verdicts if d < turn}
+            if before:
+                print(f"{symbol}: {len(before)} gelabelde dagen liggen voor de eerste wolkomslag "
+                      f"({turn}) en zijn niet te beoordelen: {', '.join(sorted(before))}")
+                verdicts = {d: v for d, v in verdicts.items() if d not in before}
+        if len(verdicts) < len(days):
+            print(f"{symbol}: {len(days) - len(verdicts)} van de {len(days)} gelabelde dagen vallen "
+                  f"buiten de candles van {Path(database).stem} en tellen niet mee")
+        days = sorted(verdicts)
+        table = describe(frame, verdicts, levels)
         inside = table[(table["date"] >= days[0]) & (table["date"] <= days[-1])].copy()
         inside.insert(0, "symbol", symbol)
         known = {d for d, v in verdicts.items() if v == "dot"}
         missed = sorted(known - set(inside["date"]))
-        print(f"{symbol:10} {days[0]} t/m {days[-1]}: {len(inside):3} markeringen van ons, "
+        print(f"{symbol:10} {days[0]} t/m {days[-1]} ({Path(database).stem}): "
+              f"{len(inside):3} markeringen van ons, "
               f"{len(known)} stippen van hem, {len(known & set(inside['date']))} raak"
               + (f", NIET getekend: {', '.join(missed)}" if missed else ""))
         tables.append(inside)
@@ -251,13 +341,16 @@ def from_database():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--window", choices=WINDOW_NAMES)
+    parser.add_argument("--levels", default="pivot",
+                        choices=["pivot", "rsi", "rsi-blend", "rsi-wide"],
+                        help="how a support/resistance level is defined")
     parser.add_argument("--database", action="store_true",
                         help="score the labelled symbols from the candle database instead of the "
                              "stretches embedded in the test")
     arguments = parser.parse_args()
 
     if arguments.database:
-        from_database()
+        from_database(arguments.levels)
         return
 
     labels = read_labels()

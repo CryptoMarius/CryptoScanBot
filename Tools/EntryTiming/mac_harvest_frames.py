@@ -38,7 +38,7 @@ harvested with it (NEAR, april to september 2026) was verified by hand against t
 before any of it went into the labels.
 
 Usage:
-    python tbo_harvest_frames.py --frame <file> --symbol NEARUSDT.PERP
+    python mac_harvest_frames.py --frame <file> --symbol NEARUSDT.PERP
 """
 
 import argparse

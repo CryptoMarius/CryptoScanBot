@@ -164,6 +164,50 @@ public class MacSettings : SettingsSignalStrategyBase
     public int PivotRightCandles { get; set; } = 5;
 
     /// <summary>
+    /// Take the level where the RSI turns instead of where the price does.
+    /// <para>
+    /// A symmetric price pivot puts a level every few candles, and most of them are noise: the
+    /// breakout marker fires about three times as often as it should. An RSI pivot - the candle
+    /// whose RSI is the highest of its window AND above <see cref="RsiLevelOverbought"/> - puts far
+    /// fewer levels down, and the ones it does put down are the turns the market actually paid for.
+    /// Measured against the catalogued marks it keeps every one of them while cutting the marks
+    /// that carry none by roughly two thirds.
+    /// </para>
+    /// <para>
+    /// Off by default: it changes which levels exist, so it changes every breakout entry, and it has
+    /// to earn that in a run rather than on a measurement of the marker alone.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Levels from the RSI", SeparatorBefore = true,
+        Tooltip = "Take support and resistance where the RSI turns instead of where the price does. "
+            + "Far fewer levels, and fewer breaks with them.")]
+    public bool UseRsiLevels { get; set; } = false;
+
+    /// <summary>The RSI the levels are read from. Wilder's, the same one the RSI filter uses.</summary>
+    [SettingCaption("RSI length for levels", Indented = true, VisibleWhen = nameof(UseRsiLevels),
+        Tooltip = "Length of the RSI the levels are taken from.")]
+    public int RsiLevelLength { get; set; } = 14;
+
+    /// <summary>
+    /// The half-window of the RSI pivot, left and right alike. Ten measured better than five,
+    /// fifteen and twenty: five leaves too many levels, fifteen and up starts dropping real marks.
+    /// </summary>
+    [SettingCaption("RSI pivot candles", Indented = true, VisibleWhen = nameof(UseRsiLevels),
+        Tooltip = "How many candles either side of the RSI turn. Also the delay before the level "
+            + "is confirmed.")]
+    public int RsiLevelPivotCandles { get; set; } = 10;
+
+    /// <summary>The RSI a turn has to reach before its candle becomes a resistance.</summary>
+    [SettingCaption("RSI overbought for levels", Indented = true, VisibleWhen = nameof(UseRsiLevels),
+        Tooltip = "The RSI a turn has to reach before its high counts as resistance.")]
+    public decimal RsiLevelOverbought { get; set; } = 70m;
+
+    /// <summary>The RSI a turn has to reach before its candle becomes a support.</summary>
+    [SettingCaption("RSI oversold for levels", Indented = true, VisibleWhen = nameof(UseRsiLevels),
+        Tooltip = "The RSI a turn has to fall to before its low counts as support.")]
+    public decimal RsiLevelOversold { get; set; } = 30m;
+
+    /// <summary>
     /// How old the level may be, in candles. Zero - the default - accepts a level of any age.
     /// <para>
     /// It started at 200 on the assumption that an old level is a stale one, which is an assumption

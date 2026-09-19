@@ -53,6 +53,21 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
     private decimal _breakoutBufferPercentage = 0m;
 
     [ObservableProperty]
+    private bool _useRsiLevels = false;
+
+    [ObservableProperty]
+    private int _rsiLevelLength = 14;
+
+    [ObservableProperty]
+    private int _rsiLevelPivotCandles = 10;
+
+    [ObservableProperty]
+    private decimal _rsiLevelOverbought = 70m;
+
+    [ObservableProperty]
+    private decimal _rsiLevelOversold = 30m;
+
+    [ObservableProperty]
     private bool _useRsiFilter = false;
 
     [ObservableProperty]
@@ -95,6 +110,11 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
         PivotRightCandles = settings.PivotRightCandles;
         PivotMaximumAgeCandles = settings.PivotMaximumAgeCandles;
         BreakoutBufferPercentage = settings.BreakoutBufferPercentage;
+        UseRsiLevels = settings.UseRsiLevels;
+        RsiLevelLength = settings.RsiLevelLength;
+        RsiLevelPivotCandles = settings.RsiLevelPivotCandles;
+        RsiLevelOverbought = settings.RsiLevelOverbought;
+        RsiLevelOversold = settings.RsiLevelOversold;
         UseRsiFilter = settings.UseRsiFilter;
         RsiLongMinimum = settings.RsiLongMinimum;
         RsiShortMaximum = settings.RsiShortMaximum;
@@ -123,6 +143,11 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
         settings.PivotRightCandles = PivotRightCandles;
         settings.PivotMaximumAgeCandles = PivotMaximumAgeCandles;
         settings.BreakoutBufferPercentage = BreakoutBufferPercentage;
+        settings.UseRsiLevels = UseRsiLevels;
+        settings.RsiLevelLength = RsiLevelLength;
+        settings.RsiLevelPivotCandles = RsiLevelPivotCandles;
+        settings.RsiLevelOverbought = RsiLevelOverbought;
+        settings.RsiLevelOversold = RsiLevelOversold;
         settings.UseRsiFilter = UseRsiFilter;
         settings.RsiLongMinimum = RsiLongMinimum;
         settings.RsiShortMaximum = RsiShortMaximum;

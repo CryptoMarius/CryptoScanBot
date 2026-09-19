@@ -1,9 +1,9 @@
 """
-Scoring the TBO entries against the candle database, to find out which stop loss and take profit
+Scoring the MAC entries against the candle database, to find out which stop loss and take profit
 fit them on the higher intervals.
 
 The strategy itself is rebuilt here in a few lines, exactly as the scanner computes it
-(TboIndicatorExtension + TboBase): four moving averages on the close, a pivot high/low with a fixed
+(MacIndicatorExtension + MacBase): four moving averages on the close, a pivot high/low with a fixed
 number of candles left and right, and two triggers - the cloud cross (the triangles on the chart)
 and the break through the last confirmed level (the dots).
 
@@ -18,7 +18,7 @@ position per symbol. It answers one question only - which stop/target pair a sig
 it answers it in seconds instead of hours.
 
 Usage:
-    python measure_tbo_exits.py --intervals 1h 2h 4h 1d --from 2026-01-01 --to 2026-09-01
+    python measure_mac_exits.py --intervals 1h 2h 4h 1d --from 2026-01-01 --to 2026-09-01
 """
 
 import argparse
@@ -36,7 +36,7 @@ DEFAULT_DB = Path(r"E:\CryptoScanBot\Data\Emulator\Binance Perpetual.db")
 DEFAULT_RUN_CONFIG = Path(r"E:\CryptoScanBot\Data\Emulator\SessionSwing\CryptoScanBot-Emulator.json")
 DEFAULT_OUTPUT = Path(r"E:\CryptoScanBot\Data\Reports\EntryTiming")
 
-# The four lengths of the cloud and the pivot window, straight from TboSettings.
+# The four lengths of the cloud and the pivot window, straight from MacSettings.
 FAST_EMA = 20
 SECOND_EMA = 40
 MEDIUM_SMA = 50
@@ -44,7 +44,7 @@ SLOW_SMA = 150
 PIVOT_LEFT = 5
 PIVOT_RIGHT = 5
 
-# The chart marker ("mark") is a rule of its own, taken from TboChartOverlay.FindConfirmations: the
+# The chart marker ("mark") is a rule of its own, taken from MacChartOverlay.FindConfirmations: the
 # white dots are drawn where the WICK trades through the level, in a window after the cloud turned,
 # on a candle that makes a new extreme. The strategy's breakout entry asks something else - a CLOSE
 # through the level with the price outside the whole cloud - so the two do not have to agree.
@@ -113,10 +113,83 @@ def pivot_levels(highs, lows, left, right):
     return pivot_high, pivot_low
 
 
-def find_signals(frame, trigger):
+def rsi(values, length=14):
+    """Wilder's RSI, the same smoothing the scanner's own indicator uses."""
+    out = np.full(len(values), np.nan)
+    if len(values) <= length:
+        return out
+    change = np.diff(values)
+    gain = np.where(change > 0, change, 0.0)
+    loss = np.where(change < 0, -change, 0.0)
+    average_gain = gain[:length].mean()
+    average_loss = loss[:length].mean()
+    for i in range(length, len(values)):
+        if i > length:
+            average_gain = (average_gain * (length - 1) + gain[i - 1]) / length
+            average_loss = (average_loss * (length - 1) + loss[i - 1]) / length
+        out[i] = 100.0 if average_loss == 0 else 100 - 100 / (1 + average_gain / average_loss)
+    return out
+
+
+def rsi_levels(highs, lows, closes, left, right, length=14,
+               overbought=70.0, oversold=30.0, need_price_pivot=False):
+    """Levels taken where the RSI turns, not where the price does.
+
+    A resistance is the HIGH of the candle whose RSI is the highest of its window and is above
+    `overbought`; a support is the LOW of the candle whose RSI is the lowest and is below
+    `oversold`. With `need_price_pivot` the candle has to be a price pivot as well, which is the
+    blend of price action and RSI rather than the RSI alone.
+
+    Like `pivot_levels` a level is only published once its right-hand candles are in, so the level
+    always predates the candle that breaks it. Far fewer levels come out of this than out of a
+    symmetric price pivot, which is the whole point: fewer levels is fewer breaks.
+    """
+    count = len(highs)
+    resistance = np.full(count, np.nan)
+    support = np.full(count, np.nan)
+    strength = rsi(closes, length)
+    window = left + right + 1
+
+    last_resistance = np.nan
+    last_support = np.nan
+    for i in range(count):
+        if i + 1 >= window:
+            candidate = i - right
+            band = slice(i + 1 - window, i + 1)
+            others = np.arange(i + 1 - window, i + 1) != candidate
+            value = strength[candidate]
+            if not np.isnan(value):
+                window_rsi = strength[band]
+                high_ok = np.all(window_rsi[others] < value) and value >= overbought
+                low_ok = np.all(window_rsi[others] > value) and value <= oversold
+                if high_ok and (not need_price_pivot
+                                or np.all(highs[band][others] < highs[candidate])):
+                    last_resistance = highs[candidate]
+                if low_ok and (not need_price_pivot
+                               or np.all(lows[band][others] > lows[candidate])):
+                    last_support = lows[candidate]
+        resistance[i] = last_resistance
+        support[i] = last_support
+    return resistance, support
+
+
+def levels_for(kind, high, low, close):
+    """The level pair a run asks for: the symmetric price pivot, or one of the RSI variants."""
+    if kind == "pivot":
+        return pivot_levels(high, low, PIVOT_LEFT, PIVOT_RIGHT)
+    if kind == "rsi":
+        return rsi_levels(high, low, close, PIVOT_LEFT, PIVOT_RIGHT)
+    if kind == "rsi-blend":
+        return rsi_levels(high, low, close, PIVOT_LEFT, PIVOT_RIGHT, need_price_pivot=True)
+    if kind == "rsi-wide":
+        return rsi_levels(high, low, close, 10, 10)
+    raise ValueError(f"unknown level kind: {kind}")
+
+
+def find_signals(frame, trigger, levels="pivot"):
     """Indices of the candles that fire, per side.
 
-    Returns two arrays of candle indices: longs and shorts. The rules are TboBase with everything
+    Returns two arrays of candle indices: longs and shorts. The rules are MacBase with everything
     that is off by default left off - no RSI, no volume, no cloud width, no slow line slope, no
     level age and no breakout buffer.
     """
@@ -149,10 +222,10 @@ def find_signals(frame, trigger):
         shorts = cloud_down & previous_ready & ~previous_down
         return np.flatnonzero(longs), np.flatnonzero(shorts)
 
-    pivot_high, pivot_low = pivot_levels(high, low, PIVOT_LEFT, PIVOT_RIGHT)
+    pivot_high, pivot_low = levels_for(levels, high, low, close)
 
     if trigger == "mark":
-        # The chart marker asks for the two EMAs only - TboChartOverlay.FindConfirmations never
+        # The chart marker asks for the two EMAs only - MacChartOverlay.FindConfirmations never
         # looks at the two SMAs. Handing it the readiness of the whole cloud would silently drop
         # every mark in the first 150 candles of a stretch, which is most of a reference window.
         ema_ready = ~(np.isnan(fast) | np.isnan(second))
@@ -172,7 +245,7 @@ def find_signals(frame, trigger):
 
 
 def chart_marks(high, low, cloud_up, ready, pivot_high, pivot_low):
-    """The white dots of the chart overlay, rebuilt from TboChartOverlay.FindConfirmations."""
+    """The white dots of the chart overlay, rebuilt from MacChartOverlay.FindConfirmations."""
     count = len(high)
     longs, shorts = [], []
     side_up = None
@@ -406,7 +479,7 @@ def main():
     parser.add_argument("--to", dest="date_to", default="2026-09-01")
     parser.add_argument("--cost", type=float, default=ROUND_TRIP_COST)
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
-    parser.add_argument("--tag", default="tbo")
+    parser.add_argument("--tag", default="mac")
     parser.add_argument("--mode", choices=["grid", "trailing"], default="grid")
     parser.add_argument("--trailing-target", type=float, default=30.0)
     arguments = parser.parse_args()

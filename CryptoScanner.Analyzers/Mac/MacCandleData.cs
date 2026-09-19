@@ -56,6 +56,21 @@ public sealed class MacCandleData
     /// <summary>How many candles ago that pivot low sits.</summary>
     public int PivotLowAge { get; set; }
 
+    /// <summary>
+    /// The resistance taken where the RSI turned instead of where the price did, filled only when
+    /// MacSettings.UseRsiLevels is on. The price is the HIGH of the candle the RSI turned on.
+    /// </summary>
+    public double? RsiLevelHigh { get; set; }
+
+    /// <summary>How many candles ago that RSI resistance sits.</summary>
+    public int RsiLevelHighAge { get; set; }
+
+    /// <summary>The support taken where the RSI turned: the LOW of that candle.</summary>
+    public double? RsiLevelLow { get; set; }
+
+    /// <summary>How many candles ago that RSI support sits.</summary>
+    public int RsiLevelLowAge { get; set; }
+
     /// <summary>The highest of the four lines at this candle, or null while they are warming up.</summary>
     public double? CloudTop
     {

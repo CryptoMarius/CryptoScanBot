@@ -52,5 +52,5 @@ for kort,sym in MUNT.items():
     uit.append(dict(symbol=sym,frame=beste["frame"],score=round(beste["score"],4),
                     pitch=round(beste["pitch"],2),first=str(eerste),last=str(laatste),
                     accepted=bool(ok),dots=[str(d) for d in stippen]))
-json.dump(uit,open("tbo-oogst-fijn.json","w"),indent=1)
+json.dump(uit,open("mac-oogst-fijn.json","w"),indent=1)
 print(f"\nklaar: {sum(1 for x in uit if x['accepted'])} van {len(uit)} munten geaccepteerd")

@@ -131,6 +131,17 @@
 
 
 	<ItemGroup>
+	  <!-- The GPL asks that every recipient of the program gets a copy of the licence, so the
+	       text travels with the binaries and not only with the repository. It lives in the root,
+	       one level up, and the link puts it next to the executable in the output folder. -->
+	  <Content Include="..\LICENSE" Link="LICENSE">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
+	</ItemGroup>
+
+
+	<ItemGroup>
 	  <None Remove="Help\CryptoScanBot.pdf" />
 	  <None Remove="Help\Release Changes.txt" />
 	</ItemGroup>

@@ -296,13 +296,20 @@ public class MacBase : SignalCreateBase
             }
         }
 
-        double? level = SignalSide == CryptoTradeSide.Long ? mac.PivotHigh : mac.PivotLow;
-        int age = SignalSide == CryptoTradeSide.Long ? mac.PivotHighAge : mac.PivotLowAge;
+        // Where the level comes from: the symmetric price pivot, or the candle the RSI turned on.
+        bool longSide = SignalSide == CryptoTradeSide.Long;
+        double? level = settings.UseRsiLevels
+            ? (longSide ? mac.RsiLevelHigh : mac.RsiLevelLow)
+            : (longSide ? mac.PivotHigh : mac.PivotLow);
+        int age = settings.UseRsiLevels
+            ? (longSide ? mac.RsiLevelHighAge : mac.RsiLevelLowAge)
+            : (longSide ? mac.PivotHighAge : mac.PivotLowAge);
         if (level == null)
         {
-            reason = SignalSide == CryptoTradeSide.Long
-                ? "no pivot high to break through yet"
-                : "no pivot low to break through yet";
+            string source = settings.UseRsiLevels ? "rsi level" : "pivot";
+            reason = longSide
+                ? $"no {source} high to break through yet"
+                : $"no {source} low to break through yet";
             return false;
         }
         if (settings.PivotMaximumAgeCandles > 0 && age > settings.PivotMaximumAgeCandles)

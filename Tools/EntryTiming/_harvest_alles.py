@@ -11,5 +11,5 @@ for frame,sym in paren:
         if r: r["frame"]=frame; uit.append(r)
     except Exception as e:
         print(f"  {sym}: MISLUKT {type(e).__name__}: {e}")
-json.dump(uit,open("tbo-oogst.json","w"),indent=1)
+json.dump(uit,open("mac-oogst.json","w"),indent=1)
 print(f"\n{len(uit)} vensters geoogst")
