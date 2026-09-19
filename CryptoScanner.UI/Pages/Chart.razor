@@ -5,6 +5,8 @@
 @using CryptoScanner.Core.Contracts
 @using CryptoScanner.Core.Core
 @using CryptoScanner.Core.Enums
+@using CryptoScanner.Core.Messages
+@using CommunityToolkit.Mvvm.Messaging
 @using CryptoScanner.Core.Model
 @using CryptoScanner.Core.Signal.Indicators
 @using CryptoScanner.Core.Trend
@@ -335,6 +337,9 @@
         ApplySessionToFields();
         LoadChartStyles();
 
+        // Follow a theme switch while the chart is open, see OnThemeChanged for why that is needed
+        WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, (_, _) => OnThemeChanged());
+
         SymbolService.SelectedSymbolChanged += OnSelectedSymbolChanged;
         if (SymbolService.SelectedSymbol != null)
         {
@@ -645,6 +650,33 @@
             }
             catch (JSException) { }
         }
+    }
+
+    /// <summary>
+    /// The theme changed while this page was open. The widget takes its palette from the value it
+    /// was handed above and never looks at it again, so the only way to repaint it is to build it
+    /// once more - init disposes the previous charts itself.
+    /// <para>
+    /// Without this the chart kept whichever palette it happened to start with. "Follow system" is
+    /// a guess (dark) until the browser has answered prefers-color-scheme, so a chart drawn before
+    /// that answer and a layout drawn after it ended up in different themes - a white chart in a
+    /// dark application, and no way back other than opening the page again.
+    /// </para>
+    /// </summary>
+    private void OnThemeChanged()
+    {
+        if (_disposed || !_initialized)
+            return;
+
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("ChartWidget.init", ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme));
+                await LoadChartAsync();
+            }
+            catch (JSException) { }
+        });
     }
 
     // ------------------------------------------------------------------------------------------
@@ -1852,6 +1884,7 @@
         _autoRefreshTimer = null;
 
         try { SaveSession(); } catch { }
+        WeakReferenceMessenger.Default.UnregisterAll(this);
         SymbolService.SelectedSymbolChanged -= OnSelectedSymbolChanged;
         try
         {

@@ -114,7 +114,14 @@ class Program
                 ScannerLog.Logger.Error(error, "RunOnUiThread");
             }
         };
-        GlobalData.SetTheme = theme => GlobalData.Settings.General.Theme = ThemeHelper.Normalize(theme);
+        // Storing the value is not enough: everything that painted before the switch has to be told,
+        // the chart above all - it reads the theme once and keeps it. The Photino host broadcasts
+        // the same message for the same reason.
+        GlobalData.SetTheme = theme =>
+        {
+            GlobalData.Settings.General.Theme = ThemeHelper.Normalize(theme);
+            GlobalData.SendMvvmMessage(new CryptoScanner.Core.Messages.ThemeChangedMessage());
+        };
         GlobalData.SetTitle = _ => { };
 
         // Sounds are played on the machine hosting the scanner, same as the desktop hosts
