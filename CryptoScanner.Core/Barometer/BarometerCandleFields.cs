@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Barometer;
 
@@ -17,6 +17,11 @@ public enum BarometerGraphValue
     // Stored in the candles of the second symbol ($BMX)
     Movement,
     BitcoinVersusMarket,
+
+    // The market trend: the average trend percentage over the coins that took part, primary and
+    // secondary. Also in $BMX, in the two fields that were still free.
+    MarketTrendPrimary,
+    MarketTrendSecondary,
 }
 
 /// <summary>
@@ -104,9 +109,9 @@ public static class BarometerCandleFields
     {
         candle.Open = data.PriceBitcoinVersusMarket ?? 0m;
         candle.High = data.PriceOutlierCount ?? 0m;
-        candle.Low = 0m;                        // free
+        candle.Low = data.MarketTrendPrimary ?? 0m;
         candle.Close = data.PriceMovement ?? 0m;
-        candle.Volume = 0;                      // free
+        candle.Volume = data.MarketTrendSecondary ?? 0m;
     }
 
 
@@ -148,6 +153,8 @@ public static class BarometerCandleFields
             // Second symbol ($BMX)
             BarometerGraphValue.BitcoinVersusMarket => candle.Open,
             BarometerGraphValue.Movement => candle.Close,
+            BarometerGraphValue.MarketTrendPrimary => candle.Low,
+            BarometerGraphValue.MarketTrendSecondary => candle.Volume,
 
             _ => candle.Close,
         };
@@ -161,6 +168,7 @@ public static class BarometerCandleFields
     public static string GetSymbolName(BarometerGraphValue value)
     {
         return value is BarometerGraphValue.Movement or BarometerGraphValue.BitcoinVersusMarket
+                or BarometerGraphValue.MarketTrendPrimary or BarometerGraphValue.MarketTrendSecondary
             ? Const.Constants.SymbolNameBarometerExtra
             : Const.Constants.SymbolNameBarometerPrice;
     }
@@ -177,6 +185,8 @@ public static class BarometerCandleFields
             BarometerGraphValue.SymbolCount => "Coins",
             BarometerGraphValue.Movement => "Movement",
             BarometerGraphValue.BitcoinVersusMarket => "BTC vs rest",
+            BarometerGraphValue.MarketTrendPrimary => "Market trend",
+            BarometerGraphValue.MarketTrendSecondary => "Market trend (2nd)",
             _ => "Average",
         };
     }
@@ -200,6 +210,8 @@ public static class BarometerCandleFields
         BarometerGraphValue.Spread,
         BarometerGraphValue.Movement,
         BarometerGraphValue.BitcoinVersusMarket,
+        BarometerGraphValue.MarketTrendPrimary,
+        BarometerGraphValue.MarketTrendSecondary,
     ];
 
     /// The labels of the figures the graph can draw, in dropdown order.
@@ -326,6 +338,17 @@ public static class BarometerCandleFields
                 GridStep = null,
                 Decimals = 2,
             },
+            // The market trend runs from -100 to +100 and spends most of its time well away from
+            // zero, so it needs a far wider floor than the average - which moves in single percents.
+            // No IgnoreBeyond: the scale cannot exceed 100 by construction, so there is nothing to
+            // guard against, and clipping would hide a market that really is fully trending.
+            BarometerGraphValue.MarketTrendPrimary or BarometerGraphValue.MarketTrendSecondary =>
+                new BarometerGraphScale
+                {
+                    CenteredOnZero = true,
+                    MinimumSpan = 40m,
+                    Decimals = 1,
+                },
             // Bitcoin against the median coin: zero means it moves exactly with the market, so this
             // belongs on the same zero-centred scale as the average, and it moves in the same order
             // of magnitude. Same floor of 1 therefore - erring high is the dangerous side, see the

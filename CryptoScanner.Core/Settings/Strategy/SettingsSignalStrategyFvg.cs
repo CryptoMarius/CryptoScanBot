@@ -1,10 +1,17 @@
 using CryptoScanner.Core.Enums;
 
+using System.Text.Json.Serialization;
+
 namespace CryptoScanner.Core.Settings.Strategy;
 
 [Serializable]
 public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
 {
+
+    // The zones are built on these intervals; anything shorter is not offered.
+    [JsonIgnore]
+    public override CryptoIntervalPeriod MinimumInterval => CryptoIntervalPeriod.interval1h;
+
     // Groupbox headers, spelled exactly as the Avalonia views do.
     private const string GroupSettings = "Settings";
     private const string GroupZoneStrength = "Zone strength filter";

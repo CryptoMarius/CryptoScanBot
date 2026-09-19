@@ -29,9 +29,9 @@ public partial class TraderTabViewModel : ObservableObject
     [ObservableProperty]
     private BarometerFilterViewModel _traderBarometerFilterLongViewModel;
     [ObservableProperty]
-    private MarketTrendFilterViewModel _traderMarketTrendFilterLongViewModel;
+    private SymbolTrendFilterViewModel _traderSymbolTrendFilterLongViewModel;
     [ObservableProperty]
-    private MarketTrendFilterViewModel _traderMarketTrendFilterSecondaryLongViewModel;
+    private SymbolTrendFilterViewModel _traderSymbolTrendFilterSecondaryLongViewModel;
     [ObservableProperty]
     private TrendIntervalFilterViewModel _traderTrendIntervalFilterLongViewModel;
 
@@ -42,9 +42,9 @@ public partial class TraderTabViewModel : ObservableObject
     [ObservableProperty]
     private BarometerFilterViewModel _traderBarometerFilterShortViewModel;
     [ObservableProperty]
-    private MarketTrendFilterViewModel _traderMarketTrendFilterShortViewModel;
+    private SymbolTrendFilterViewModel _traderSymbolTrendFilterShortViewModel;
     [ObservableProperty]
-    private MarketTrendFilterViewModel _traderMarketTrendFilterSecondaryShortViewModel;
+    private SymbolTrendFilterViewModel _traderSymbolTrendFilterSecondaryShortViewModel;
     [ObservableProperty]
     private TrendIntervalFilterViewModel _traderTrendIntervalFilterShortViewModel;
 
@@ -63,15 +63,15 @@ public partial class TraderTabViewModel : ObservableObject
         _traderIntervalLongViewModel = new();
         _traderStrategyLongViewModel = new();
         _traderBarometerFilterLongViewModel = new();
-        _traderMarketTrendFilterLongViewModel = new() { Header = "Market trend filter (primary)" };
-        _traderMarketTrendFilterSecondaryLongViewModel = new() { Header = "Market trend filter (secondary)" };
+        _traderSymbolTrendFilterLongViewModel = new() { Header = "Symbol trend filter (primary)" };
+        _traderSymbolTrendFilterSecondaryLongViewModel = new() { Header = "Symbol trend filter (secondary)" };
         _traderTrendIntervalFilterLongViewModel = new();
 
         _traderIntervalShortViewModel = new();
         _traderStrategyShortViewModel = new();
         _traderBarometerFilterShortViewModel = new();
-        _traderMarketTrendFilterShortViewModel = new() { Header = "Market trend filter (primary)" };
-        _traderMarketTrendFilterSecondaryShortViewModel = new() { Header = "Market trend filter (secondary)" };
+        _traderSymbolTrendFilterShortViewModel = new() { Header = "Symbol trend filter (primary)" };
+        _traderSymbolTrendFilterSecondaryShortViewModel = new() { Header = "Symbol trend filter (secondary)" };
         _traderTrendIntervalFilterShortViewModel = new();
 
         // Wire up the "Copy from..." popup on the strategy views so each side knows about
@@ -101,15 +101,15 @@ public partial class TraderTabViewModel : ObservableObject
         TraderIntervalLongViewModel.LoadConfig(settings.Long.Interval);
         TraderStrategyLongViewModel.LoadConfig(settings.Long.Strategy);
         TraderBarometerFilterLongViewModel.LoadConfig(settings.Long.Barometer);
-        TraderMarketTrendFilterLongViewModel.LoadConfig(settings.Long.MarketTrend);
-        TraderMarketTrendFilterSecondaryLongViewModel.LoadConfig(settings.Long.MarketTrendSecondary);
+        TraderSymbolTrendFilterLongViewModel.LoadConfig(settings.Long.SymbolTrend);
+        TraderSymbolTrendFilterSecondaryLongViewModel.LoadConfig(settings.Long.SymbolTrendSecondary);
         TraderTrendIntervalFilterLongViewModel.LoadConfig(settings.Long.IntervalTrend, CryptoTradeSide.Long);
 
         TraderIntervalShortViewModel.LoadConfig(settings.Short.Interval);
         TraderStrategyShortViewModel.LoadConfig(settings.Short.Strategy);
         TraderBarometerFilterShortViewModel.LoadConfig(settings.Short.Barometer);
-        TraderMarketTrendFilterShortViewModel.LoadConfig(settings.Short.MarketTrend);
-        TraderMarketTrendFilterSecondaryShortViewModel.LoadConfig(settings.Short.MarketTrendSecondary);
+        TraderSymbolTrendFilterShortViewModel.LoadConfig(settings.Short.SymbolTrend);
+        TraderSymbolTrendFilterSecondaryShortViewModel.LoadConfig(settings.Short.SymbolTrendSecondary);
         TraderTrendIntervalFilterShortViewModel.LoadConfig(settings.Short.IntervalTrend, CryptoTradeSide.Short);
     }
 
@@ -126,15 +126,15 @@ public partial class TraderTabViewModel : ObservableObject
         TraderIntervalLongViewModel.SaveConfig(settings.Long.Interval);
         TraderStrategyLongViewModel.SaveConfig(settings.Long.Strategy);
         TraderBarometerFilterLongViewModel.SaveConfig(settings.Long.Barometer);
-        TraderMarketTrendFilterLongViewModel.SaveConfig(settings.Long.MarketTrend);
-        TraderMarketTrendFilterSecondaryLongViewModel.SaveConfig(settings.Long.MarketTrendSecondary);
+        TraderSymbolTrendFilterLongViewModel.SaveConfig(settings.Long.SymbolTrend);
+        TraderSymbolTrendFilterSecondaryLongViewModel.SaveConfig(settings.Long.SymbolTrendSecondary);
         TraderTrendIntervalFilterLongViewModel.SaveConfig(settings.Long.IntervalTrend);
 
         TraderIntervalShortViewModel.SaveConfig(settings.Short.Interval);
         TraderStrategyShortViewModel.SaveConfig(settings.Short.Strategy);
         TraderBarometerFilterShortViewModel.SaveConfig(settings.Short.Barometer);
-        TraderMarketTrendFilterShortViewModel.SaveConfig(settings.Short.MarketTrend);
-        TraderMarketTrendFilterSecondaryShortViewModel.SaveConfig(settings.Short.MarketTrendSecondary);
+        TraderSymbolTrendFilterShortViewModel.SaveConfig(settings.Short.SymbolTrend);
+        TraderSymbolTrendFilterSecondaryShortViewModel.SaveConfig(settings.Short.SymbolTrendSecondary);
         TraderTrendIntervalFilterShortViewModel.SaveConfig(settings.Short.IntervalTrend);
     }
 }

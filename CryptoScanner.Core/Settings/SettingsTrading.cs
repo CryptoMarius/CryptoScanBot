@@ -327,8 +327,8 @@ public class SettingsTrading
         Long.IntervalTrend.List.Add("1h");
         Short.IntervalTrend.List.Add("1h");
 
-        //Long.MarketTrend.List.Add((0m, 100m));
-        //Short.MarketTrend.List.Add((-100m, 0));
+        //Long.SymbolTrend.List.Add((0m, 100m));
+        //Short.SymbolTrend.List.Add((-100m, 0));
 
         // No symbol on purpose: the exchange fills it in with its own name for bitcoin (see
         // ExchangeOptions.PauseSymbol). "BTCUSDT" was hardcoded here, which does not exist on

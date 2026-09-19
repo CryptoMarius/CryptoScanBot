@@ -532,7 +532,7 @@ public class PositionMonitor : IDisposable
                             }
 
                             // Filter op de markettrend waarvan je wil dat die qua perc bullisch of bearisch zijn
-                            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].MarketTrend, out reaction))
+                            if (!PositionTools.ValidSymbolTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].SymbolTrend, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 symbolInterval.SignalList.Remove(signal);
@@ -542,7 +542,7 @@ public class PositionMonitor : IDisposable
                             // Additional INTERSECT filter on the secondary market trend (lower-timeframe scope).
                             // Allows catching divergences such as Primary +100 / Secondary -63 where the lower
                             // timeframe has already rolled over.
-                            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Trading[signal.Side].MarketTrendSecondary, out reaction))
+                            if (!PositionTools.ValidSymbolTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Trading[signal.Side].SymbolTrendSecondary, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 symbolInterval.SignalList.Remove(signal);

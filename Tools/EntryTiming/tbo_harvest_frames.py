@@ -19,6 +19,19 @@ WHAT WORKS, AND WHAT DOES NOT (measured 18-09-2026)
                 The coin has to be read from the header, which is one look per segment.
     dots        the near-white blob detector finds some of the marks and misses others, depending
                 on whether the mark overlaps a wick. It needs checking by eye per frame.
+    panels      measured 18-09-2026: the crop has to hold the price panel ALONE. Taking the whole
+                chart in drags the indicator status lines, the RSI and OBV panes and the volume bars
+                into the candle mask, and the dating then settles on a pitch that is a factor two off.
+    lines       a column is only a candle when its longest unbroken run of one colour is about five
+                pixels or more. The moving averages are the same green as an up candle and cross
+                every column, so counting lit pixels per column reads a red day as a green one.
+    frames      a frame carries its own symbol, interval and exchange in the header, and they change
+                from segment to segment: a run of frames is not one coin on one timeframe. Reading
+                that header is one look; guessing it from the price curve is not possible.
+    anchoring   the date axis gives the pitch and the anchor directly, and the candle under the
+                crosshair prints its own open, which is the previous day's close in the database.
+                With that anchor the candle colours agree on 95 percent of the days or better, and
+                a window that scores below 90 is a window that is not on the coin you think it is.
 
 So this is a helper for a frame-by-frame read, not an unattended harvester. The one window that was
 harvested with it (NEAR, april to september 2026) was verified by hand against the crosshair date

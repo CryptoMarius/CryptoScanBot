@@ -81,7 +81,7 @@ public abstract class SignalTrendShortBase : SignalCreateBase
         if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval10m)
             return false;
 
-        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, TrendSettings).Result;
+        _ = SymbolTrend.CalculateSymbolTrendAsync(Symbol, TrendSettings).Result;
 
         // Which flip arms the short. Normally the flip TO bearish (enter with the new trend); with
         // TrendSettings.InvertDirection the flip TO bullish, so the short sells the pullback instead.
@@ -120,7 +120,7 @@ public abstract class SignalTrendShortBase : SignalCreateBase
             return false;
 
         // Recalculate so LastPivot reflects the current bar
-        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, TrendSettings).Result;
+        _ = SymbolTrend.CalculateSymbolTrendAsync(Symbol, TrendSettings).Result;
 
         CryptoTrendData trend = GetTrend();
         CandleTime signalTime = CandleTime.FromDateTime(signal.CloseDate);

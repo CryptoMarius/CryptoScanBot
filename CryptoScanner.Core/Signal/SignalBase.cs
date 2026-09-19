@@ -979,7 +979,7 @@ public class SignalCreateBase
     private bool CheckTrend(bool primaryTrend, string captionTrend, int intervalCount)
     {
         var trendType = primaryTrend ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
-        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, trendType).Result;
+        _ = SymbolTrend.CalculateSymbolTrendAsync(Symbol, trendType).Result;
 
         // Guard against the noise on the lower timeframes
         var period = Interval.IntervalPeriod;
@@ -988,7 +988,7 @@ public class SignalCreateBase
 
         while (intervalCount-- > 0)
         {
-            // Stop at the weekly interval. CalculateMarketTrendAsync deliberately skips interval1w,
+            // Stop at the weekly interval. CalculateSymbolTrendAsync deliberately skips interval1w,
             // so its trend slot stays Unknown and every signal reaching it would be refused for the
             // wrong reason. There is nothing above 1w either: GetSymbolInterval indexes straight
             // into SymbolIntervalList, so one step further would read past the end of that list.

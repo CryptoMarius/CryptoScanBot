@@ -32,7 +32,7 @@ public partial class StrategyTboTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyTboSettingsViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList);
+        IntervalViewModel.LoadStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -40,7 +40,7 @@ public partial class StrategyTboTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyTboSettingsViewModel.SaveConfig(settings);
-        IntervalViewModel.SaveConfig(settings.IntervalList);
+        IntervalViewModel.SaveStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

@@ -9,6 +9,10 @@ public class VbsConfigView : IConfigView
 
     public string TabHeader => VbsPlugin.StrategyInternal.ToUpper();
     public string StrategyName => VbsPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategyVbsTabView.axaml shows.
+    public string StrategyTitle => "VBS – VWAP Band Signal";
+    public string StrategyDescription => "Mean reversion signals at volume-weighted VWAP bands";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/VWAP-Band-Strategy-(VBS)";
 
     public object CreateSettingsView()

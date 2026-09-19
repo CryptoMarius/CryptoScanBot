@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
+             xmlns:vm="using:CryptoScanner.Analyzers.IChimokuKumoBreakout.Config"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyIChimokuKumoBreakoutTabViewModel"
+             x:Class="CryptoScanner.Analyzers.IChimokuKumoBreakout.Config.StrategyIChimokuKumoBreakoutTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
+                <TextBlock FontSize="13">
+                    <Run Text="ICHIMOKU.KUMO.BREAKOUT - Ichimoku cloud breakout" FontWeight="SemiBold"/>
+                    <Run Text=" &#8212; Price pushes through the Ichimoku cloud, a shift in the medium to long term sentiment" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                </TextBlock>
+            </StackPanel>
+            <WrapPanel>
+                <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <settings:IntervalView DataContext="{Binding IntervalViewModel}" />
+                <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

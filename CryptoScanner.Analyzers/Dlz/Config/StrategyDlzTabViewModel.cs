@@ -53,7 +53,7 @@ public partial class StrategyDlzTabViewModel : ObservableObject
         StrategyDlzSettingsZoomedBoxViewModel.LoadConfig(settings);
         StrategyDlzSettingsUnzoomedBoxViewModel.LoadConfig(settings);
         StrategyDlzSettingsZoneFilterViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList, CryptoIntervalPeriod.interval1h);
+        IntervalViewModel.LoadConfig(settings.IntervalList, settings.MinimumInterval);
         IndicatorZigZagViewModel.LoadConfig(settings.ZigZag);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }

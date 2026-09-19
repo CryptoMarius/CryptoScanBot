@@ -32,7 +32,7 @@ public partial class StrategyMacdCrossTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyMacdCrossSettingsViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList);
+        IntervalViewModel.LoadStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -40,7 +40,7 @@ public partial class StrategyMacdCrossTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyMacdCrossSettingsViewModel.SaveConfig(settings);
-        IntervalViewModel.SaveConfig(settings.IntervalList);
+        IntervalViewModel.SaveStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

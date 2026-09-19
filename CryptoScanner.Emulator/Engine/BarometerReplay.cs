@@ -202,6 +202,12 @@ internal sealed class BarometerReplay
     {
         foreach ((CryptoQuoteData quoteData, List<CryptoSymbol> symbols) in perQuote)
         {
+            // The market trend of this quote coin, once per minute for the whole quote rather than
+            // once per interval: the trend is a property of the coin, not of the interval it is
+            // asked about, so computing it inside the interval loop below would do the same work
+            // five times.
+            MeasureMarketTrend(quoteData, symbols);
+
             foreach (CryptoInterval interval in intervals)
             {
                 // Already measured by an earlier run over the same coins? Then read it back instead
@@ -215,6 +221,73 @@ internal sealed class BarometerReplay
                 BarometerTools.CalculateForSymbols(exchange, quoteData, symbols, interval, lastClosedMinute, MinimumSymbols, result);
                 StoreCandles(quoteData.Name, interval);
             }
+        }
+    }
+
+
+    /// <summary>
+    /// The market trend: the average trend percentage over the coins of this quote coin, for the
+    /// primary and the secondary zigzag settings. Stored on the barometer data of every interval of
+    /// this quote, so it travels into the $BMX candle next to the barometer itself.
+    /// <para>
+    /// A different thing from the barometer beside it, and that is the point: the barometer averages
+    /// a price CHANGE over an interval, so it is a return, while this averages a TREND, which is
+    /// structural. A market can be structurally up while the last hour is red, and only these two
+    /// numbers together say so.
+    /// </para>
+    /// <para>
+    /// Not to be confused with SettingsTextual.SymbolTrend, which tests the trend of
+    /// ONE coin - that one is really a coin trend. This is the market.
+    /// </para>
+    /// <para>
+    /// The cost is bounded by candle closes, not by how often this is called: CalculateSymbolTrendAsync
+    /// keeps the answer on the symbol and only recomputes the intervals whose candle has advanced.
+    /// Measured on a real run the whole trend calculation was 89,6s over 133.784 calls on a run of
+    /// 1280,7s; doing it for every coin every minute multiplies the RECOMPUTATIONS by about three,
+    /// not the calls.
+    /// </para>
+    /// <para>
+    /// Same two rules as the barometer: only coins that carry enough volume take part, and below
+    /// <see cref="MinimumSymbols"/> of them nothing is stored at all - an average over three coins is
+    /// the trend of three coins with the word "market" written on it.
+    /// </para>
+    /// </summary>
+    private void MeasureMarketTrend(CryptoQuoteData quoteData, List<CryptoSymbol> symbols)
+    {
+        decimal sumPrimary = 0, sumSecondary = 0;
+        int countPrimary = 0, countSecondary = 0;
+
+        foreach (CryptoSymbol symbol in symbols)
+        {
+            if (!symbol.EnoughVolume())
+                continue;
+
+            // Blocking on purpose: this runs in the serial phase of the replay loop, where nothing
+            // else is touching this symbol, and the work is a cache check on all but the minutes
+            // where an interval actually closed.
+            CryptoTrendData primary = Core.Trend.SymbolTrend.CalculateSymbolTrendAsync(symbol, GlobalData.Settings.Trend.Primary).Result;
+            if (primary.Percentage.HasValue)
+            {
+                sumPrimary += (decimal)primary.Percentage.Value;
+                countPrimary++;
+            }
+
+            CryptoTrendData secondary = Core.Trend.SymbolTrend.CalculateSymbolTrendAsync(symbol, GlobalData.Settings.Trend.Secondary).Result;
+            if (secondary.Percentage.HasValue)
+            {
+                sumSecondary += (decimal)secondary.Percentage.Value;
+                countSecondary++;
+            }
+        }
+
+        decimal? averagePrimary = countPrimary >= MinimumSymbols ? sumPrimary / countPrimary : null;
+        decimal? averageSecondary = countSecondary >= MinimumSymbols ? sumSecondary / countSecondary : null;
+
+        foreach (CryptoInterval interval in intervals)
+        {
+            CryptoBarometerData data = exchange.Data.GetBarometer(quoteData.Name, interval.IntervalPeriod);
+            data.MarketTrendPrimary = averagePrimary;
+            data.MarketTrendSecondary = averageSecondary;
         }
     }
 
@@ -260,6 +333,8 @@ internal sealed class BarometerReplay
             data.PriceMovement = BarometerCandleFields.Read(extra, BarometerGraphValue.Movement);
             data.PriceBitcoinVersusMarket = BarometerCandleFields.Read(extra, BarometerGraphValue.BitcoinVersusMarket);
             data.PriceOutlierCount = (int)extra.High;
+            data.MarketTrendPrimary = BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendPrimary);
+            data.MarketTrendSecondary = BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendSecondary);
         }
         return true;
     }

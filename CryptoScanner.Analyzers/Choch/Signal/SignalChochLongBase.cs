@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -55,7 +55,7 @@ public abstract class SignalChochLongBase : SignalCreateBase
         if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval5m)
             return false;
 
-        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, TrendSettings).Result;
+        _ = SymbolTrend.CalculateSymbolTrendAsync(Symbol, TrendSettings).Result;
 
         CryptoTrendData trendData = GetBosTrend();
         bool debugLog = GlobalData.Settings.General.DebugSignalCreate;

@@ -103,7 +103,11 @@ public class BarometerCandleFieldsTests
         // It is stored and shown in the tooltip, but as a graph it is a flat line by definition.
         CollectionAssert.DoesNotContain(BarometerCandleFields.Names.ToList(),
             BarometerCandleFields.GetName(BarometerGraphValue.SymbolCount));
-        Assert.AreEqual(6, BarometerCandleFields.Names.Count);
+
+        // Everything else IS offered. Counted against the enum rather than against a number, so a
+        // figure added later does not fail this test for the wrong reason - it used to assert 6 and
+        // broke when the market trend arrived, which says nothing about the coin count.
+        Assert.AreEqual(Enum.GetValues<BarometerGraphValue>().Length - 1, BarometerCandleFields.Names.Count);
     }
 
 

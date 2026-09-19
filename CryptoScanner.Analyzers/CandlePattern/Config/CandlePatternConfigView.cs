@@ -9,6 +9,10 @@ public class CandlePatternConfigView : IConfigView
 
     public string TabHeader => CandlePatternPlugin.StrategyInternal.ToUpper();
     public string StrategyName => CandlePatternPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategyCandlePatternTabView.axaml shows.
+    public string StrategyTitle => "CANDLEPATTERN – Classic candlestick reversal patterns";
+    public string StrategyDescription => "Fires on any of the ticked shapes; the trade side decides whether a shape is read bullish or bearish";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Candle-Patterns-(CandlePatterns)";
 
     public object CreateSettingsView()

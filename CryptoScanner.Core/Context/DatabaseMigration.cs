@@ -2243,6 +2243,60 @@ public class DatabaseMigration
         }
 
 
+        if (CurrentVersion > version.Version && version.Version == 96)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // Runs from before the run configuration carried a start capital have no StartCapital in
+            // their ConfigJson, so the results grid shows no Return % for them - 403 of the 1290 runs
+            // on this machine, ids 1 to 420.
+            //
+            // Ten thousand is not a guess. EmulatorRunConfig.StartCapital has defaulted to 10000 for
+            // as long as the field has existed, and PaperAssets handed that same fallback out, so
+            // those runs really did start on it; the number simply was not written down yet. Checked
+            // as well: the highest peak capital among them is 3.322, so a balance of 10000 would not
+            // have constrained a single one of them even if it had been enforced (which it was not -
+            // the balances only started limiting the trader on 27-08-2026, after all of these).
+            //
+            // Replaying them instead was the alternative and it is the wrong one: 403 runs of about
+            // twenty minutes is over 130 hours, and the code has moved on so far that it would not
+            // restore those runs, it would replace them with different numbers under the same label.
+            List<(int Id, string Config)> runs = database.Connection.Query<(int, string)>(
+                "select Id, ConfigJson from EmulatorRun where ConfigJson is not null and ConfigJson <> ''",
+                transaction: transaction).AsList();
+
+            int filled = 0;
+            foreach ((int id, string config) in runs)
+            {
+                try
+                {
+                    if (System.Text.Json.Nodes.JsonNode.Parse(config) is not System.Text.Json.Nodes.JsonObject obj)
+                        continue;
+                    if (obj["StartCapital"] != null && obj["StartCapital"]!.GetValue<decimal>() > 0)
+                        continue;
+
+                    obj["StartCapital"] = 10000m;
+                    database.Connection.Execute(
+                        "update EmulatorRun set ConfigJson = @config where Id = @id",
+                        new { config = obj.ToJsonString(), id }, transaction);
+                    filled++;
+                }
+                catch (System.Text.Json.JsonException)
+                {
+                    // A configuration that cannot be read is left exactly as it is: one run without a
+                    // percentage is better than a row rewritten on a guess.
+                }
+            }
+            if (filled > 0)
+                GlobalData.AddTextToLogTab($"Database version 97: start capital of 10.000 recorded on {filled} older run(s), so they show a return percentage again");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
         // Apply the exchange defaults with each update
         if (updateExchanges)
             UpdateExchanges(database);

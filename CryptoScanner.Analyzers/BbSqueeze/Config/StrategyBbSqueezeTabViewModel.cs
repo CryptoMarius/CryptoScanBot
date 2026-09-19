@@ -32,7 +32,7 @@ public partial class StrategyBbSqueezeTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyBbSqueezeSettingsViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList);
+        IntervalViewModel.LoadStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -40,7 +40,7 @@ public partial class StrategyBbSqueezeTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyBbSqueezeSettingsViewModel.SaveConfig(settings);
-        IntervalViewModel.SaveConfig(settings.IntervalList);
+        IntervalViewModel.SaveStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

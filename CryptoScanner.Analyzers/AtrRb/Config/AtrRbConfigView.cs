@@ -9,6 +9,10 @@ public class AtrRbConfigView : IConfigView
 
     public string TabHeader => AtrRbPlugin.StrategyInternal.ToUpper();
     public string StrategyName => AtrRbPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategyAtrRbTabView.axaml shows.
+    public string StrategyTitle => "ATR-RB – ATR Range Breakout";
+    public string StrategyDescription => "Breakout signals when price pierces ATR-based bands";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/ATR-Range-Breakout-(AtrRb)";
 
     public object CreateSettingsView()

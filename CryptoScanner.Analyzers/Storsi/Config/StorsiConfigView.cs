@@ -9,6 +9,10 @@ public class StorsiConfigView : IConfigView
 
     public string TabHeader => StorsiPlugin.StrategyInternal.ToUpper();
     public string StrategyName => StorsiPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategyStorsiTabView.axaml shows.
+    public string StrategyTitle => "STORSI – Stochastic + RSI";
+    public string StrategyDescription => "Mean reversion signals combining Stochastic with RSI levels";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Stochastic-+-RSI-(StoRsi)";
 
     public object CreateSettingsView()

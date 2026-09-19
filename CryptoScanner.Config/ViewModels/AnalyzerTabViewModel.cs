@@ -17,9 +17,9 @@ public partial class AnalyzerTabViewModel : ObservableObject
     [ObservableProperty]
     private BarometerFilterViewModel _analyzerBarometerFilterLongViewModel;
     [ObservableProperty]
-    private MarketTrendFilterViewModel _analyzerMarketTrendFilterLongViewModel;
+    private SymbolTrendFilterViewModel _analyzerSymbolTrendFilterLongViewModel;
     [ObservableProperty]
-    private MarketTrendFilterViewModel _analyzerMarketTrendFilterSecondaryLongViewModel;
+    private SymbolTrendFilterViewModel _analyzerSymbolTrendFilterSecondaryLongViewModel;
     [ObservableProperty]
     private TrendIntervalFilterViewModel _analyzerTrendIntervalFilterLongViewModel;
 
@@ -30,9 +30,9 @@ public partial class AnalyzerTabViewModel : ObservableObject
     [ObservableProperty]
     private BarometerFilterViewModel _analyzerBarometerFilterShortViewModel;
     [ObservableProperty]
-    private MarketTrendFilterViewModel _analyzerMarketTrendFilterShortViewModel;
+    private SymbolTrendFilterViewModel _analyzerSymbolTrendFilterShortViewModel;
     [ObservableProperty]
-    private MarketTrendFilterViewModel _analyzerMarketTrendFilterSecondaryShortViewModel;
+    private SymbolTrendFilterViewModel _analyzerSymbolTrendFilterSecondaryShortViewModel;
     [ObservableProperty]
     private TrendIntervalFilterViewModel _analyzerTrendIntervalFilterShortViewModel;
 
@@ -46,15 +46,15 @@ public partial class AnalyzerTabViewModel : ObservableObject
         _analyzerIntervalLongViewModel = new();
         _analyzerStrategyLongViewModel = new();
         _analyzerBarometerFilterLongViewModel = new();
-        _analyzerMarketTrendFilterLongViewModel = new() { Header = "Market trend filter (primary)" };
-        _analyzerMarketTrendFilterSecondaryLongViewModel = new() { Header = "Market trend filter (secondary)" };
+        _analyzerSymbolTrendFilterLongViewModel = new() { Header = "Symbol trend filter (primary)" };
+        _analyzerSymbolTrendFilterSecondaryLongViewModel = new() { Header = "Symbol trend filter (secondary)" };
         _analyzerTrendIntervalFilterLongViewModel = new();
 
         _analyzerIntervalShortViewModel = new();
         _analyzerStrategyShortViewModel = new();
         _analyzerBarometerFilterShortViewModel = new();
-        _analyzerMarketTrendFilterShortViewModel = new() { Header = "Market trend filter (primary)" };
-        _analyzerMarketTrendFilterSecondaryShortViewModel = new() { Header = "Market trend filter (secondary)" };
+        _analyzerSymbolTrendFilterShortViewModel = new() { Header = "Symbol trend filter (primary)" };
+        _analyzerSymbolTrendFilterSecondaryShortViewModel = new() { Header = "Symbol trend filter (secondary)" };
         _analyzerTrendIntervalFilterShortViewModel = new();
 
         // Wire up the "Copy from..." popup on the strategy views so each side knows about
@@ -79,15 +79,15 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerIntervalLongViewModel.LoadConfig(settings.Long.Interval);
         AnalyzerStrategyLongViewModel.LoadConfig(settings.Long.Strategy);
         AnalyzerBarometerFilterLongViewModel.LoadConfig(settings.Long.Barometer);
-        AnalyzerMarketTrendFilterLongViewModel.LoadConfig(settings.Long.MarketTrend);
-        AnalyzerMarketTrendFilterSecondaryLongViewModel.LoadConfig(settings.Long.MarketTrendSecondary);
+        AnalyzerSymbolTrendFilterLongViewModel.LoadConfig(settings.Long.SymbolTrend);
+        AnalyzerSymbolTrendFilterSecondaryLongViewModel.LoadConfig(settings.Long.SymbolTrendSecondary);
         AnalyzerTrendIntervalFilterLongViewModel.LoadConfig(settings.Long.IntervalTrend, CryptoTradeSide.Long);
 
         AnalyzerIntervalShortViewModel.LoadConfig(settings.Short.Interval);
         AnalyzerStrategyShortViewModel.LoadConfig(settings.Short.Strategy);
         AnalyzerBarometerFilterShortViewModel.LoadConfig(settings.Short.Barometer);
-        AnalyzerMarketTrendFilterShortViewModel.LoadConfig(settings.Short.MarketTrend);
-        AnalyzerMarketTrendFilterSecondaryShortViewModel.LoadConfig(settings.Short.MarketTrendSecondary);
+        AnalyzerSymbolTrendFilterShortViewModel.LoadConfig(settings.Short.SymbolTrend);
+        AnalyzerSymbolTrendFilterSecondaryShortViewModel.LoadConfig(settings.Short.SymbolTrendSecondary);
         AnalyzerTrendIntervalFilterShortViewModel.LoadConfig(settings.Short.IntervalTrend, CryptoTradeSide.Short);
     }
 
@@ -98,15 +98,15 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerIntervalLongViewModel.SaveConfig(settings.Long.Interval);
         AnalyzerStrategyLongViewModel.SaveConfig(settings.Long.Strategy);
         AnalyzerBarometerFilterLongViewModel.SaveConfig(settings.Long.Barometer);
-        AnalyzerMarketTrendFilterLongViewModel.SaveConfig(settings.Long.MarketTrend);
-        AnalyzerMarketTrendFilterSecondaryLongViewModel.SaveConfig(settings.Long.MarketTrendSecondary);
+        AnalyzerSymbolTrendFilterLongViewModel.SaveConfig(settings.Long.SymbolTrend);
+        AnalyzerSymbolTrendFilterSecondaryLongViewModel.SaveConfig(settings.Long.SymbolTrendSecondary);
         AnalyzerTrendIntervalFilterLongViewModel.SaveConfig(settings.Long.IntervalTrend);
 
         AnalyzerIntervalShortViewModel.SaveConfig(settings.Short.Interval);
         AnalyzerStrategyShortViewModel.SaveConfig(settings.Short.Strategy);
         AnalyzerBarometerFilterShortViewModel.SaveConfig(settings.Short.Barometer);
-        AnalyzerMarketTrendFilterShortViewModel.SaveConfig(settings.Short.MarketTrend);
-        AnalyzerMarketTrendFilterSecondaryShortViewModel.SaveConfig(settings.Short.MarketTrendSecondary);
+        AnalyzerSymbolTrendFilterShortViewModel.SaveConfig(settings.Short.SymbolTrend);
+        AnalyzerSymbolTrendFilterSecondaryShortViewModel.SaveConfig(settings.Short.SymbolTrendSecondary);
         AnalyzerTrendIntervalFilterShortViewModel.SaveConfig(settings.Short.IntervalTrend);
     }
 }

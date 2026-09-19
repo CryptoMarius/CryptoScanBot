@@ -3,6 +3,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Core.Signal;
 
 using System.Reflection;
 
@@ -36,6 +37,10 @@ public class PluginSettingsEditState
     public string Name => Plugin.StrategyName;
     public string? WikiUrl => Plugin.ConfigView?.WikiUrl;
 
+    /// <summary>The heading and the sentence behind it, the same two the Avalonia tab shows.</summary>
+    public string? Title => Plugin.ConfigView?.StrategyTitle;
+    public string? SubTitle => Plugin.ConfigView?.StrategyDescription;
+
     public bool PlaySound { get; set; }
     public bool PlaySpeech { get; set; }
     public string SoundFileLong { get; set; } = "";
@@ -53,6 +58,48 @@ public class PluginSettingsEditState
     /// holds null. Same rule as the Avalonia StrategyEntryConditionsViewModel.
     /// </summary>
     public bool UseCustomEntryConditions { get; set; }
+
+    /// <summary>
+    /// Off means the strategy runs on the intervals that are ticked for its side; the settings
+    /// object then holds an empty IntervalList. Same rule as the Avalonia IntervalViewModel.
+    /// </summary>
+    public bool UseCustomIntervals { get; set; }
+
+    /// <summary>
+    /// A zone strategy (DLZ, FVG, SMC) reads its interval list as "the intervals the zones are
+    /// built on" and has no side to fall back on, so it gets no switch - an empty list there means
+    /// no zones at all rather than "follow the side".
+    /// </summary>
+    public bool HasIntervalSwitch => !RegisterAlgorithms.IsZoneStrategy(Plugin.StrategyName);
+
+    /// <summary>
+    /// The shortest interval this strategy accepts; anything below it is greyed out, the way the
+    /// Avalonia IntervalView does with the interval it is loaded with.
+    /// </summary>
+    public bool IsIntervalAllowed(string intervalName)
+    {
+        if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
+            return false;
+        return interval.IntervalPeriod >= Plugin.SettingsBase.MinimumInterval;
+    }
+
+    /// <summary>
+    /// Tick or clear every interval that is allowed, like Select all / Select none in the flyout of
+    /// the Avalonia interval box. Select none clears the disabled ones as well, same as there.
+    /// </summary>
+    public void SelectIntervals(bool selected)
+    {
+        var field = Fields.Find(f => f.Kind == PluginFieldKind.IntervalList);
+        if (field == null)
+            return;
+
+        foreach (var interval in GlobalData.IntervalList)
+        {
+            if (selected && !IsIntervalAllowed(interval.Name))
+                continue;
+            field.ToggleListValue(interval.Name, selected);
+        }
+    }
 
     public EntryConditionsData EntryConditions { get; } = new();
 
@@ -177,6 +224,7 @@ public class PluginSettingsEditState
         ColorLongArgb = settings.ColorLong.ToString();
         ColorShortArgb = settings.ColorShort.ToString();
 
+        UseCustomIntervals = settings.IntervalList.Count > 0;
         UseCustomEntryConditions = settings.EntryConditions != null;
         EntryConditions.LoadFrom(settings.EntryConditions ?? GlobalData.Settings.Trading.EntryConditions);
 
@@ -205,6 +253,12 @@ public class PluginSettingsEditState
 
         foreach (var field in Fields)
             field.Save(settings);
+
+        // The switch is off: the strategy follows the intervals of its side, which the settings
+        // express as an empty list. The ticks themselves stay on screen until the tab is reloaded,
+        // exactly like the entry conditions above.
+        if (HasIntervalSwitch && !UseCustomIntervals)
+            settings.IntervalList.Clear();
     }
 
     public static string ToHex(CoreColor c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";

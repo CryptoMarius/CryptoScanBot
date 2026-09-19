@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
+             xmlns:vm="using:CryptoScanner.Analyzers.Trend.Config"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyTrendTabViewModel"
+             x:Class="CryptoScanner.Analyzers.Trend.Config.StrategyTrendTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
+                <TextBlock FontSize="13">
+                    <Run Text="TREND - Trend flip with a pullback entry" FontWeight="SemiBold"/>
+                    <Run Text=" &#8212; Enters after the ZigZag trend flips, price pulls back to the pivot and closes back through it" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                </TextBlock>
+            </StackPanel>
+            <WrapPanel>
+                <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyTrendSettingsView DataContext="{Binding StrategyTrendSettingsViewModel}" />
+                <settings:IntervalView DataContext="{Binding IntervalViewModel}" />
+                <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

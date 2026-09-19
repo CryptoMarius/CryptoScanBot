@@ -1,6 +1,8 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 
+using System.Text.Json.Serialization;
+
 namespace CryptoScanner.Core.Settings.Strategy;
 
 [Serializable]
@@ -14,7 +16,12 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
     private const string GroupZoomedBox = "Settings zoomed box";
 
     // Defaults for zigzag calculation
+    [SettingCaption("Zone calculation", Group = "Zone calculation", Expand = true)]
     public SettingsZigZag ZigZag { get; set; } = new(false, TrendType.Primary);
+
+    // The zones are built on these intervals; anything shorter is not offered.
+    [JsonIgnore]
+    public override CryptoIntervalPeriod MinimumInterval => CryptoIntervalPeriod.interval1h;
 
 
     // NOTE: the declaration order and the groups below follow the five groupboxes of the Avalonia

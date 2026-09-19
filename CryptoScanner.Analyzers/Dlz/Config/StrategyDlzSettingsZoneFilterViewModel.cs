@@ -25,7 +25,7 @@ public partial class StrategyDlzSettingsZoneFilterViewModel : ObservableObject
     public void SaveConfig(SettingsSignalStrategyDlz settings)
     {
         settings.ZoneStartApply = ZoneStartApply;
-        settings.ZoneStartCandleCount = settings.ZoneStartCandleCount;
+        settings.ZoneStartCandleCount = ZoneStartCandleCount;
         settings.ZoneStartPercentage = ZoneStartPercentage;
     }
 }

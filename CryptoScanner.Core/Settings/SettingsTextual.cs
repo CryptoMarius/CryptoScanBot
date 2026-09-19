@@ -30,10 +30,10 @@ public class SettingsTextual
     public SettingsTextualBarometer Barometer = new();
 
     // Market trend percentage (primary)
-    public SettingsTextualMarketTrend MarketTrend = new();
+    public SettingsTextualSymbolTrend SymbolTrend = new();
 
     // Market trend percentage (secondary)
-    public SettingsTextualMarketTrend MarketTrendSecondary = new();
+    public SettingsTextualSymbolTrend SymbolTrendSecondary = new();
 }
 
 
@@ -50,7 +50,7 @@ public class SettingsTextualBarometer
 
 
 [Serializable]
-public class SettingsTextualMarketTrend
+public class SettingsTextualSymbolTrend
 {
     public List<(decimal minValue, decimal maxValue)> List { get; set; } = [];
     public bool Log = false;

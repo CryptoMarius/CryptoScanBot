@@ -1,18 +1,18 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 
 using CryptoScanner.Config.ViewModels;
 
 namespace CryptoScanner.Config.Views;
 
-public partial class MarketTrendFilterView : UserControl
+public partial class SymbolTrendFilterView : UserControl
 {
-    public MarketTrendFilterView()
+    public SymbolTrendFilterView()
     {
         InitializeComponent();
 
         if (DataContext == null)
         {
-            DataContext = new MarketTrendFilterViewModel();
+            DataContext = new SymbolTrendFilterViewModel();
         }
     }
 }

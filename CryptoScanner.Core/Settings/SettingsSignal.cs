@@ -99,7 +99,7 @@ public class SettingsSignal
         //Long.CryptoTrendData.List.Add("1h");
         //Short.CryptoTrendData.List.Add("1h");
 
-        //Long.MarketTrend.List.Add((0m, 100m));
-        //Short.MarketTrend.List.Add((-100m, 0));
+        //Long.SymbolTrend.List.Add((0m, 100m));
+        //Short.SymbolTrend.List.Add((-100m, 0));
     }
 }

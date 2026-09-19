@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -131,7 +131,7 @@ public class TrendCalculator
         //return;
 
         // Profiling: time the whole call (any exit path) — see PipelineProfiler. This is the
-        // per-stale-interval unit of work inside MarketTrend.CalculateMarketTrendAsync's foreach loop.
+        // per-stale-interval unit of work inside SymbolTrend.CalculateSymbolTrendAsync's foreach loop.
         long profCalcBothStart = Stopwatch.GetTimestamp();
         try
         {
@@ -188,7 +188,7 @@ public class TrendCalculator
             // (TrendType, UseHighLow)). Cold (re)build happens once, on first use for this key or after
             // the cache was cleared (e.g. emulator run start) — identical to today's behaviour. Every
             // call after that feeds only the candles since the last call instead of replaying
-            // [minDate, maxDate] again, which is the dominant cost MarketTrend pays per stale interval.
+            // [minDate, maxDate] again, which is the dominant cost SymbolTrend pays per stale interval.
             CryptoSymbolInterval symbolIntervalForCache = symbol.GetSymbolInterval(interval.IntervalPeriod);
             var zigZagCacheKey = (trendSettings.TrendType, trendSettings.UseHighLow);
             ZigZagIndicator? indicator;

@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
+             xmlns:vm="using:CryptoScanner.Analyzers.SuperTrendBreakout.Config"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategySuperTrendBreakoutTabViewModel"
+             x:Class="CryptoScanner.Analyzers.SuperTrendBreakout.Config.StrategySuperTrendBreakoutTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
+                <TextBlock FontSize="13">
+                    <Run Text="SUPERTRENDBREAKOUT - SuperTrend flip at a zone" FontWeight="SemiBold"/>
+                    <Run Text=" &#8212; The SuperTrend flips direction while price is near a dominant liquidity zone" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                </TextBlock>
+            </StackPanel>
+            <WrapPanel>
+                <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategySuperTrendBreakoutSettingsView DataContext="{Binding StrategySuperTrendBreakoutSettingsViewModel}" />
+                <settings:IntervalView DataContext="{Binding IntervalViewModel}" />
+                <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

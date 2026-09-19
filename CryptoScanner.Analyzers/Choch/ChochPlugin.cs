@@ -57,5 +57,5 @@ public class ChochPlugin : IStrategyPlugin
     }
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = null; // new Config.NweConfigView();
+    public IConfigView? ConfigView { get; } = new Config.ChochConfigView();
 }

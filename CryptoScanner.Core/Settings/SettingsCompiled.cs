@@ -34,13 +34,13 @@ public class SettingsCompiled
     public bool TrendLog = false;
 
     // Primary market trend + Value (percentages)
-    public List<(decimal minValue, decimal maxValue)> MarketTrend { get; set; } = [];
-    public bool MarketTrendLog = false;
+    public List<(decimal minValue, decimal maxValue)> SymbolTrend { get; set; } = [];
+    public bool SymbolTrendLog = false;
 
     // Secondary market trend + Value (percentages). Evaluated as an additional INTERSECT filter
     // (both Primary and Secondary ranges must contain the current trend value).
-    public List<(decimal minValue, decimal maxValue)> MarketTrendSecondary { get; set; } = [];
-    public bool MarketTrendSecondaryLog = false;
+    public List<(decimal minValue, decimal maxValue)> SymbolTrendSecondary { get; set; } = [];
+    public bool SymbolTrendSecondaryLog = false;
 
     // Via interval + Value (ranged)
     // Minimale barometer om de meldingen te genereren
@@ -115,22 +115,22 @@ public class SettingsCompiled
 
 
         // Market trend% (min..max), er is maar 1 aanwezig
-        MarketTrend.Clear();
-        if (settings.MarketTrend.List.Count != 0)
+        SymbolTrend.Clear();
+        if (settings.SymbolTrend.List.Count != 0)
         {
-            foreach (var (minValue, maxValue) in settings.MarketTrend.List)
-                MarketTrend.Add((minValue, maxValue));
+            foreach (var (minValue, maxValue) in settings.SymbolTrend.List)
+                SymbolTrend.Add((minValue, maxValue));
         }
-        MarketTrendLog = settings.MarketTrend.Log;
+        SymbolTrendLog = settings.SymbolTrend.Log;
 
         // Secondary market trend% (min..max) — optional extra INTERSECT filter
-        MarketTrendSecondary.Clear();
-        if (settings.MarketTrendSecondary.List.Count != 0)
+        SymbolTrendSecondary.Clear();
+        if (settings.SymbolTrendSecondary.List.Count != 0)
         {
-            foreach (var (minValue, maxValue) in settings.MarketTrendSecondary.List)
-                MarketTrendSecondary.Add((minValue, maxValue));
+            foreach (var (minValue, maxValue) in settings.SymbolTrendSecondary.List)
+                SymbolTrendSecondary.Add((minValue, maxValue));
         }
-        MarketTrendSecondaryLog = settings.MarketTrendSecondary.Log;
+        SymbolTrendSecondaryLog = settings.SymbolTrendSecondary.Log;
 
 
         Strategy.Clear();

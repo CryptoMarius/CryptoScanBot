@@ -12,7 +12,7 @@ namespace CryptoScanner.Analyzers.BbRsiEngulfing;
 /// </summary>
 public class BbRsiEngulfingPlugin : IStrategyPlugin
 {
-    private const string StrategyInternal = "BbRsiEngulfing";
+    public const string StrategyInternal = "BbRsiEngulfing";
     public string StrategyName => StrategyInternal.ToLower();
     public string StrategyNameCamelCase => StrategyInternal;
 
@@ -44,5 +44,5 @@ public class BbRsiEngulfingPlugin : IStrategyPlugin
     }
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = null;
+    public IConfigView? ConfigView { get; } = new Config.BbRsiEngulfingConfigView();
 }

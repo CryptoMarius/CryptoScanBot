@@ -10,7 +10,7 @@ namespace CryptoScanner.Core.Telegram;
 internal class TelegramGenerateSignalText
 {
 
-    private static string GetEmoiFromMarketTrend(float trend)
+    private static string GetEmoiFromSymbolTrend(float trend)
     {
         // https://beta.emojipedia.org/police-car-light
 
@@ -129,7 +129,7 @@ internal class TelegramGenerateSignalText
             a.TryAdd(CryptoIntervalPeriod.interval12h, ("1d", signal.Trend1d));
 
             builder.Append("Trend: ");
-            builder.Append(GetEmoiFromMarketTrend(signal.TrendPercentagePrimary));
+            builder.Append(GetEmoiFromSymbolTrend(signal.TrendPercentagePrimary));
             builder.Append(' ');
             builder.Append(signal.TrendPercentagePrimary.ToString("N2") + "%");
 

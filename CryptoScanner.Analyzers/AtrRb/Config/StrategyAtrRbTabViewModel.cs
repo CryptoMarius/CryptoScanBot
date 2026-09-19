@@ -31,7 +31,7 @@ public partial class StrategyAtrRbTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyAtrRbSettingsViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList);
+        IntervalViewModel.LoadStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -39,7 +39,7 @@ public partial class StrategyAtrRbTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyAtrRbSettingsViewModel.SaveConfig(settings);
-        IntervalViewModel.SaveConfig(settings.IntervalList);
+        IntervalViewModel.SaveStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

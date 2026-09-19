@@ -52,6 +52,27 @@ public partial class IntervalViewModel : ObservableObject
     [ObservableProperty]
     private string _crossTabLabel = "Trading";
 
+    /// <summary>
+    /// Shows the "Use custom intervals" switch above the list. Only the strategy tabs turn this on;
+    /// the Analyzer and Trader interval boxes have no fallback to follow, so they always apply.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showUseCustom;
+
+    /// <summary>
+    /// Off means the strategy runs on the intervals ticked for its side, which the settings file
+    /// expresses as an empty IntervalList. Same arrangement as UseCustomEntryConditions.
+    /// </summary>
+    [ObservableProperty]
+    private bool _useCustom;
+
+    /// <summary>The list itself is only editable while the switch above it is on.</summary>
+    public bool IntervalsEnabled => !ShowUseCustom || UseCustom;
+
+    partial void OnShowUseCustomChanged(bool value) => OnPropertyChanged(nameof(IntervalsEnabled));
+
+    partial void OnUseCustomChanged(bool value) => OnPropertyChanged(nameof(IntervalsEnabled));
+
     public IntervalViewModel()
     {
     }
@@ -81,6 +102,31 @@ public partial class IntervalViewModel : ObservableObject
         CopyFromShortCommand.NotifyCanExecuteChanged();
         CopyFromCrossTabLongCommand.NotifyCanExecuteChanged();
         CopyFromCrossTabShortCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// The interval list of one strategy: the switch is shown, and it starts out on when the
+    /// strategy names intervals of its own.
+    /// </summary>
+    public void LoadStrategyConfig(List<string> intervalList, CryptoIntervalPeriod showFromInterval = CryptoIntervalPeriod.interval1m)
+    {
+        ShowUseCustom = true;
+        UseCustom = intervalList.Count > 0;
+        LoadConfig(intervalList, showFromInterval);
+    }
+
+    /// <summary>
+    /// Writes the interval list of one strategy. A switch that is off stores an empty list, which is
+    /// what makes the strategy follow the intervals ticked for its side.
+    /// </summary>
+    public void SaveStrategyConfig(List<string> intervalList)
+    {
+        if (!UseCustom)
+        {
+            intervalList.Clear();
+            return;
+        }
+        SaveConfig(intervalList);
     }
 
     public void SaveConfig(List<string> intervalList)

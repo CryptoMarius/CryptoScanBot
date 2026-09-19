@@ -1,0 +1,72 @@
+[
+ {
+  "symbol": "BTCUSDT.PERP",
+  "frame": "btc_083.jpg",
+  "score": 0.6842,
+  "pitch": 11.35,
+  "first": "2026-06-13",
+  "last": "2026-09-16",
+  "accepted": false,
+  "dots": []
+ },
+ {
+  "symbol": "BNBUSDT.PERP",
+  "frame": "bnb_023.jpg",
+  "score": 0.7126,
+  "pitch": 11.45,
+  "first": "2026-06-08",
+  "last": "2026-09-11",
+  "accepted": false,
+  "dots": []
+ },
+ {
+  "symbol": "UNIUSDT.PERP",
+  "frame": "uni_001.jpg",
+  "score": 0.7324,
+  "pitch": 11.7,
+  "first": "2026-06-16",
+  "last": "2026-09-16",
+  "accepted": false,
+  "dots": []
+ },
+ {
+  "symbol": "DASHUSDT.PERP",
+  "frame": "dash_036.jpg",
+  "score": 0.6392,
+  "pitch": 8.75,
+  "first": "2026-05-07",
+  "last": "2026-09-08",
+  "accepted": false,
+  "dots": []
+ },
+ {
+  "symbol": "JUPUSDT.PERP",
+  "frame": "jup_019.jpg",
+  "score": 0.7857,
+  "pitch": 9.35,
+  "first": "2026-05-15",
+  "last": "2026-09-07",
+  "accepted": false,
+  "dots": []
+ },
+ {
+  "symbol": "ZECUSDT.PERP",
+  "frame": "zec_008.jpg",
+  "score": 0.6747,
+  "pitch": 11.0,
+  "first": "2026-06-02",
+  "last": "2026-09-08",
+  "accepted": false,
+  "dots": []
+ },
+ {
+  "symbol": "LINKUSDT.PERP",
+  "frame": "link_006.jpg",
+  "score": 0.7093,
+  "pitch": 6.25,
+  "first": "2026-03-24",
+  "last": "2026-09-13",
+  "accepted": false,
+  "dots": []
+ }
+]

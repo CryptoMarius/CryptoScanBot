@@ -32,7 +32,7 @@ public partial class StrategyKumoSqueezeTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyKumoSqueezeSettingsViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList);
+        IntervalViewModel.LoadStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -40,7 +40,7 @@ public partial class StrategyKumoSqueezeTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyKumoSqueezeSettingsViewModel.SaveConfig(settings);
-        IntervalViewModel.SaveConfig(settings.IntervalList);
+        IntervalViewModel.SaveStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

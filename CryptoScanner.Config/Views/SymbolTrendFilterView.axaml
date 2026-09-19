@@ -1,12 +1,12 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="390" d:DesignHeight="120"
              xmlns:vm="using:CryptoScanner.Config.ViewModels"
              xmlns:settings="using:CryptoScanner.Config.Views"
-             x:DataType="vm:MarketTrendFilterViewModel"
-             x:Class="CryptoScanner.Config.Views.MarketTrendFilterView">
+             x:DataType="vm:SymbolTrendFilterViewModel"
+             x:Class="CryptoScanner.Config.Views.SymbolTrendFilterView">
 
     <HeaderedContentControl Classes="groupbox" Header="{Binding Header}">
         <StackPanel Margin="8" Spacing="8">

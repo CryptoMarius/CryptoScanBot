@@ -402,7 +402,7 @@ public static class PositionTools
     }
 
 
-    public static bool ValidMarketTrendConditions(CryptoSymbol symbol, TrendType trendType,
+    public static bool ValidSymbolTrendConditions(CryptoSymbol symbol, TrendType trendType,
         List<(decimal minValue, decimal maxValue)> marketTrend, out string reaction)
     {
         if (marketTrend.Count != 0)

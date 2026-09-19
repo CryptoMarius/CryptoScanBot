@@ -226,6 +226,50 @@ public class BarometerForSymbolsTests : TestBase
 
 
     /// <summary>
+    /// The market trend rides along in the two fields of $BMX that were still free. It is a different
+    /// figure from the barometer beside it - that one averages a price CHANGE over an interval, this
+    /// one averages a TREND, which is structural - so what this test guards is that neither lands in
+    /// the other's field.
+    /// </summary>
+    [TestMethod]
+    public void TheMarketTrendUsesTheTwoFreeFieldsAndNothingElse()
+    {
+        CryptoBarometerData data = new()
+        {
+            PriceBarometer = 0.5m,
+            PriceMovement = 1.5m,
+            PriceBitcoinVersusMarket = -0.25m,
+            PriceOutlierCount = 3,
+            MarketTrendPrimary = -42.5m,
+            MarketTrendSecondary = 17.25m,
+        };
+
+        CryptoCandle extra = new() { TickDecimals = 2 };
+        BarometerCandleFields.StoreExtra(ref extra, data);
+
+        Assert.AreEqual(-42.5m, BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendPrimary));
+        Assert.AreEqual(17.25m, BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendSecondary));
+
+        // ...and the figures that were already there keep their own field.
+        Assert.AreEqual(1.5m, BarometerCandleFields.Read(extra, BarometerGraphValue.Movement));
+        Assert.AreEqual(-0.25m, BarometerCandleFields.Read(extra, BarometerGraphValue.BitcoinVersusMarket));
+        Assert.AreEqual(3m, extra.High, "the outlier count stays in High");
+    }
+
+
+    /// <summary>Both market-trend figures live in the second symbol, not in the first.</summary>
+    [TestMethod]
+    public void TheMarketTrendLivesInTheSecondSymbol()
+    {
+        Assert.AreEqual(CryptoScanner.Core.Const.Constants.SymbolNameBarometerExtra,
+            BarometerCandleFields.GetSymbolName(BarometerGraphValue.MarketTrendPrimary));
+        Assert.AreEqual(CryptoScanner.Core.Const.Constants.SymbolNameBarometerExtra,
+            BarometerCandleFields.GetSymbolName(BarometerGraphValue.MarketTrendSecondary));
+        StringAssert.Contains(string.Join(",", BarometerCandleFields.Names), "Market trend");
+    }
+
+
+    /// <summary>
     /// A quote coin without a bitcoin pair has no bitcoin-against-the-market figure. A candle cannot
     /// hold "absent", so it stores a zero and the tooltip leaves the line out rather than showing
     /// one. What must NOT happen is that zero landing in another field.

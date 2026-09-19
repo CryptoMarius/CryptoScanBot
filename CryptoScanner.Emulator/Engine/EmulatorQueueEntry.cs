@@ -33,11 +33,11 @@ public class EmulatorSideConfig
     /// <summary>Override Signal.{Side}.Barometer.MinConsensus.</summary>
     public int? BarometerMinConsensus { get; set; }
 
-    /// <summary>Override Signal.{Side}.MarketTrend.List. Each entry is [min, max].</summary>
-    public List<decimal[]>? MarketTrend { get; set; }
+    /// <summary>Override Signal.{Side}.SymbolTrend.List. Each entry is [min, max].</summary>
+    public List<decimal[]>? SymbolTrend { get; set; }
 
-    /// <summary>Override Signal.{Side}.MarketTrendSecondary.List. Each entry is [min, max].</summary>
-    public List<decimal[]>? MarketTrendSecondary { get; set; }
+    /// <summary>Override Signal.{Side}.SymbolTrendSecondary.List. Each entry is [min, max].</summary>
+    public List<decimal[]>? SymbolTrendSecondary { get; set; }
 
     /// <summary>
     /// Creates a resolved config by merging the target with a mirror source.
@@ -54,8 +54,8 @@ public class EmulatorSideConfig
             Barometer = target?.Barometer,
             BarometerConsensusActive = target?.BarometerConsensusActive,
             BarometerMinConsensus = target?.BarometerMinConsensus,
-            MarketTrend = target?.MarketTrend,
-            MarketTrendSecondary = target?.MarketTrendSecondary,
+            SymbolTrend = target?.SymbolTrend,
+            SymbolTrendSecondary = target?.SymbolTrendSecondary,
         };
 
         if (mirrorSource != null)
@@ -66,8 +66,8 @@ public class EmulatorSideConfig
             result.Barometer ??= mirrorSource.Barometer;
             result.BarometerConsensusActive ??= mirrorSource.BarometerConsensusActive;
             result.BarometerMinConsensus ??= mirrorSource.BarometerMinConsensus;
-            result.MarketTrend ??= mirrorSource.MarketTrend;
-            result.MarketTrendSecondary ??= mirrorSource.MarketTrendSecondary;
+            result.SymbolTrend ??= mirrorSource.SymbolTrend;
+            result.SymbolTrendSecondary ??= mirrorSource.SymbolTrendSecondary;
         }
 
         return result;
@@ -105,11 +105,11 @@ public class EmulatorSideConfig
         if (config.BarometerMinConsensus.HasValue)
             signal.Barometer.MinConsensus = config.BarometerMinConsensus.Value;
 
-        if (config.MarketTrend != null)
-            signal.MarketTrend.List = config.MarketTrend.Select(a => (a[0], a[1])).ToList();
+        if (config.SymbolTrend != null)
+            signal.SymbolTrend.List = config.SymbolTrend.Select(a => (a[0], a[1])).ToList();
 
-        if (config.MarketTrendSecondary != null)
-            signal.MarketTrendSecondary.List = config.MarketTrendSecondary.Select(a => (a[0], a[1])).ToList();
+        if (config.SymbolTrendSecondary != null)
+            signal.SymbolTrendSecondary.List = config.SymbolTrendSecondary.Select(a => (a[0], a[1])).ToList();
     }
 }
 

@@ -9,6 +9,10 @@ public class DbrConfigView : IConfigView
 
     public string TabHeader => DbrPlugin.StrategyInternal.ToUpper();
     public string StrategyName => DbrPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategyDbrTabView.axaml shows.
+    public string StrategyTitle => "DBR – Donchian Band Reversion";
+    public string StrategyDescription => "Mean reversion signals at Donchian channel extremes";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Donchian-Breakout-Reversion-(DBR)";
 
     public object CreateSettingsView()

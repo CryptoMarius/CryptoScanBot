@@ -56,5 +56,5 @@ public class NwePlugin : IStrategyPlugin
     public IIndicatorExtension? CreateIndicatorExtension() => new NweIndicatorExtension();
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = null; // new Config.NweConfigView();
+    public IConfigView? ConfigView { get; } = new Config.NweConfigView();
 }

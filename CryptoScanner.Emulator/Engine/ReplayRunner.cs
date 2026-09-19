@@ -789,7 +789,7 @@ public sealed class ReplayRunner
                 $"smcInline {smcInline:F1}s");
         }
 
-        // Sub-breakdown of the trend carve-out: where inside CalculateMarketTrendAsync the time goes —
+        // Sub-breakdown of the trend carve-out: where inside CalculateSymbolTrendAsync the time goes —
         // the per-symbol lock wait, CalculateBothAsync (one call per stale interval), and inside that,
         // the candle-ingest loop (+ how many candles it actually processed, confirming the emulator
         // window clamp) versus the Dow/BOS interpretation passes.

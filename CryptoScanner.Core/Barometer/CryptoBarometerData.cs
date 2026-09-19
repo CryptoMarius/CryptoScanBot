@@ -23,6 +23,21 @@ public class CryptoBarometerData
     public decimal? PriceMovement { get; set; } = null;
     public decimal? PriceBitcoinVersusMarket { get; set; } = null;
 
+    // The market trend: the average of the trend percentage (-100..+100) of every coin that took
+    // part in the measurement, for the primary and the secondary zigzag settings.
+    // <para>
+    // This is a different thing from the barometer above it, and the difference is the point. The
+    // barometer averages a price CHANGE over an interval, so it is a return; this averages a TREND,
+    // which is structural - higher highs and lower lows. A market can be structurally up while the
+    // last hour is red, and only these two numbers say so.
+    // </para>
+    // <para>
+    // Not to be confused with SettingsTextual.SymbolTrend (called MarketTrend until 19-09-2026), which tests the trend of
+    // ONE coin. That one is really a coin trend; this one is the market.
+    // </para>
+    public decimal? MarketTrendPrimary { get; set; } = null;
+    public decimal? MarketTrendSecondary { get; set; } = null;
+
     // Experimental, needs another attemp in the future!
     public CandleTime? VolumeDateTime { get; set; } = null;
     public decimal? VolumeBarometer { get; set; } = null;
@@ -40,6 +55,9 @@ public class CryptoBarometerData
         PriceOutlierCount = null;
         PriceMovement = null;
         PriceBitcoinVersusMarket = null;
+
+        MarketTrendPrimary = null;
+        MarketTrendSecondary = null;
 
         VolumeDateTime = null;
         VolumeBarometer = null;

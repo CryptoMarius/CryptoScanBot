@@ -1,10 +1,10 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Settings;
 
 namespace CryptoScanner.Config.ViewModels;
 
-public partial class MarketTrendFilterViewModel : ObservableObject
+public partial class SymbolTrendFilterViewModel : ObservableObject
 {
     [ObservableProperty]
     private BarometerFilterRangeViewModel _trendRange;
@@ -12,11 +12,11 @@ public partial class MarketTrendFilterViewModel : ObservableObject
     [ObservableProperty]
     private bool _log = true;
 
-    // Header shown in the group box (e.g. "Market trend filter (primary)" vs "(secondary)")
+    // Header shown in the group box (e.g. "Symbol trend filter (primary)" vs "(secondary)")
     [ObservableProperty]
-    private string _header = "Market trend filter";
+    private string _header = "Symbol trend filter";
 
-    public MarketTrendFilterViewModel()
+    public SymbolTrendFilterViewModel()
     {
         _trendRange = new BarometerFilterRangeViewModel
         {
@@ -27,7 +27,7 @@ public partial class MarketTrendFilterViewModel : ObservableObject
         };
     }
 
-    public void LoadConfig(SettingsTextualMarketTrend settings)
+    public void LoadConfig(SettingsTextualSymbolTrend settings)
     {
         Log = settings.Log;
 
@@ -45,7 +45,7 @@ public partial class MarketTrendFilterViewModel : ObservableObject
         }
     }
 
-    public void SaveConfig(SettingsTextualMarketTrend settings)
+    public void SaveConfig(SettingsTextualSymbolTrend settings)
     {
         settings.List.Clear();
 

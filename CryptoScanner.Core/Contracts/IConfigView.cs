@@ -19,6 +19,14 @@ public interface IConfigView
 {
     string TabHeader { get; }
     string StrategyName { get; }
+
+    /// <summary>
+    /// The heading above the settings of this strategy, e.g. "DBR - Donchian Band Reversion", and
+    /// the sentence behind it. The Avalonia tab has both in the header of its own view; the Blazor
+    /// hosts have no plugin supplied view and print these instead, so the two stay the same text.
+    /// </summary>
+    string? StrategyTitle => null;
+    string? StrategyDescription => null;
     object CreateSettingsView();
     /// <summary>Full URL to the wiki page for this strategy, or null when none exists.</summary>
     string? WikiUrl => null;

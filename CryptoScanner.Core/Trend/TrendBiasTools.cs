@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
@@ -28,7 +28,7 @@ public static class TrendBiasTools
     /// Resolve the combined Primary trend bias of the next <paramref name="levels"/> higher
     /// timeframes above <paramref name="currentPeriod"/>.
     ///
-    /// Assumes MarketTrend.CalculateMarketTrendAsync has been invoked recently — it populates
+    /// Assumes SymbolTrend.CalculateSymbolTrendAsync has been invoked recently — it populates
     /// TrendPrimary on every interval. The caller usually runs that calculation themselves.
     /// However, the calculation can short-circuit (missing candles on a higher interval) or
     /// return CryptoTrendIndicator.Unknown (insufficient ZigZag pivots — common on new coins).
@@ -65,7 +65,7 @@ public static class TrendBiasTools
             var trendData = symbolInterval.TrendPrimary;
 
             string state;
-            // Time == null means CalculateAsync was never run for this interval (e.g. MarketTrend
+            // Time == null means CalculateAsync was never run for this interval (e.g. SymbolTrend
             // returned early because an earlier interval was missing its LastCandle).
             // Trend == Unknown means it was run but produced no verdict (< 2 ZigZag pivots).
             if (trendData.Time == null)
@@ -126,7 +126,7 @@ public static class TrendBiasTools
     {
         // Walk the configured interval list (exchange-dependent) for the next intervals
         // whose enum value is strictly greater than currentPeriod. 1w is skipped to match
-        // MarketTrend.CalculateMarketTrendAsync, which excludes it as well.
+        // SymbolTrend.CalculateSymbolTrendAsync, which excludes it as well.
         var result = new List<CryptoIntervalPeriod>();
         foreach (var interval in GlobalData.IntervalList)
         {

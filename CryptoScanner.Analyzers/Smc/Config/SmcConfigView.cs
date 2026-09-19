@@ -9,6 +9,10 @@ public class SmcConfigView : IConfigView
 
     public string TabHeader => SmcPlugin.StrategyInternal.ToUpper();
     public string StrategyName => SmcPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategySmcTabView.axaml shows.
+    public string StrategyTitle => "SMC – Smart Money Concepts";
+    public string StrategyDescription => "Supply/demand zone entry signals based on base + expansion detection";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Smart-Money-Concepts-(SMC)";
 
     public object CreateSettingsView()

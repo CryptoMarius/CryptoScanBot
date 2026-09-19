@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -24,11 +24,11 @@
                     <!-- Col 0: Strategies -->
                     <settings:StrategyView Grid.Column="0"
                         DataContext="{Binding AnalyzerStrategyLongViewModel}" />
-                    <!-- Col 1: Trend interval filter + Market trend filter (primary + secondary) -->
+                    <!-- Col 1: Trend interval filter + Symbol trend filter (primary + secondary) -->
                     <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
                         <settings:TrendIntervalFilterView DataContext="{Binding AnalyzerTrendIntervalFilterLongViewModel}" />
-                        <settings:MarketTrendFilterView DataContext="{Binding AnalyzerMarketTrendFilterLongViewModel}" />
-                        <settings:MarketTrendFilterView DataContext="{Binding AnalyzerMarketTrendFilterSecondaryLongViewModel}" />
+                        <settings:SymbolTrendFilterView DataContext="{Binding AnalyzerSymbolTrendFilterLongViewModel}" />
+                        <settings:SymbolTrendFilterView DataContext="{Binding AnalyzerSymbolTrendFilterSecondaryLongViewModel}" />
                     </StackPanel>
                     <!-- Col 2: Intervals -->
                     <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">
@@ -48,11 +48,11 @@
                     <!-- Col 0: Strategies -->
                     <settings:StrategyView Grid.Column="0"
                         DataContext="{Binding AnalyzerStrategyShortViewModel}" />
-                    <!-- Col 1: Trend interval filter + Market trend filter (primary + secondary) -->
+                    <!-- Col 1: Trend interval filter + Symbol trend filter (primary + secondary) -->
                     <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
                         <settings:TrendIntervalFilterView DataContext="{Binding AnalyzerTrendIntervalFilterShortViewModel}" />
-                        <settings:MarketTrendFilterView DataContext="{Binding AnalyzerMarketTrendFilterShortViewModel}" />
-                        <settings:MarketTrendFilterView DataContext="{Binding AnalyzerMarketTrendFilterSecondaryShortViewModel}" />
+                        <settings:SymbolTrendFilterView DataContext="{Binding AnalyzerSymbolTrendFilterShortViewModel}" />
+                        <settings:SymbolTrendFilterView DataContext="{Binding AnalyzerSymbolTrendFilterSecondaryShortViewModel}" />
                     </StackPanel>
                     <!-- Col 2: Intervals -->
                     <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">

@@ -9,6 +9,10 @@ public class TboConfigView : IConfigView
 
     public string TabHeader => TboPlugin.StrategyInternal.ToUpper();
     public string StrategyName => TboPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategyTboTabView.axaml shows.
+    public string StrategyTitle => "TBO – Trending break out";
+    public string StrategyDescription => "Our reconstruction of the indicator behind the TBT signals: a two-EMA cloud for the trend, a pivot level for the break";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Trending-Breakout-(TBO)";
 
     public object CreateSettingsView()

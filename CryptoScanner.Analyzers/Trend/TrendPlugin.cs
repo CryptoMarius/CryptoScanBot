@@ -42,5 +42,5 @@ public class TrendPlugin : IStrategyPlugin
     }
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = null; // new Config.SignalConfigView();
+    public IConfigView? ConfigView { get; } = new Config.TrendConfigView();
 }

@@ -124,7 +124,7 @@ public class GridCommandService
                 GlobalData.AddTextToLogTab("");
                 GlobalData.AddTextToLogTab($"Markettrend {symbol.Name}");
 
-                var symbolTrend = await MarketTrend.CalculateMarketTrendAsync(symbol, trend, log);
+                var symbolTrend = await SymbolTrend.CalculateSymbolTrendAsync(symbol, trend, log);
 
                 log.AppendLine("");
                 log.AppendLine("");

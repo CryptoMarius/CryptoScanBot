@@ -33,7 +33,7 @@ public partial class StrategySmcTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategySmcSettingsViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList, CryptoIntervalPeriod.interval10m);
+        IntervalViewModel.LoadConfig(settings.IntervalList, settings.MinimumInterval);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 

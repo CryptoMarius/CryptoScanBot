@@ -1,9 +1,9 @@
-@using CryptoScanner.UI.Models
+﻿@using CryptoScanner.UI.Models
 
 @* Editor for one long/short SettingsTextual block. Layout mirrors the Avalonia sub-views. *@
 
 @* align-items: flex-start, otherwise every groupbox on a row is stretched to the height of the
-   tallest one — that is what made "Market trend filter primary" so much taller than its content. *@
+   tallest one — that is what made "Symbol trend filter primary" so much taller than its content. *@
 <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start;">
 
     @* Strategies column *@
@@ -117,27 +117,27 @@
         </div>
     </div>
 
-    @* Market trend filter (primary) *@
+    @* Symbol trend filter (primary) *@
     <div class="settings-group" style="min-width: 200px;">
-        <div class="settings-group-header">Market trend filter primary (@SideLabel)</div>
+        <div class="settings-group-header">Symbol trend filter primary (@SideLabel)</div>
         <div class="settings-group-body">
             <div class="field" style="margin: 4px 0;">
-                <input type="checkbox" class="input-checkbox" @bind="Side.MarketTrendActive" />
+                <input type="checkbox" class="input-checkbox" @bind="Side.SymbolTrendActive" />
                 <label style="margin-left: 4px; width: 50px;">Trend%</label>
-                <input type="number" class="input-number" step="0.1" @bind="Side.MarketTrendMin" style="width: 70px;" />
+                <input type="number" class="input-number" step="0.1" @bind="Side.SymbolTrendMin" style="width: 70px;" />
                 <span style="margin: 0 4px;">..</span>
-                <input type="number" class="input-number" step="0.1" @bind="Side.MarketTrendMax" style="width: 70px;" />
+                <input type="number" class="input-number" step="0.1" @bind="Side.SymbolTrendMax" style="width: 70px;" />
             </div>
             <div class="field">
-                <input type="checkbox" class="input-checkbox" @bind="Side.MarketTrendLog" />
+                <input type="checkbox" class="input-checkbox" @bind="Side.SymbolTrendLog" />
                 <label>Log if outside boundaries</label>
             </div>
         </div>
     </div>
 
-    @* Market trend filter (secondary) *@
+    @* Symbol trend filter (secondary) *@
     <div class="settings-group" style="min-width: 200px;">
-        <div class="settings-group-header">Market trend filter secondary (@SideLabel)</div>
+        <div class="settings-group-header">Symbol trend filter secondary (@SideLabel)</div>
         <div class="settings-group-body">
             <div class="field" style="margin: 4px 0;">
                 <input type="checkbox" class="input-checkbox" @bind="Side.MarketTrendSecondaryActive" />
@@ -147,7 +147,7 @@
                 <input type="number" class="input-number" step="0.1" @bind="Side.MarketTrendSecondaryMax" style="width: 70px;" />
             </div>
             <div class="field">
-                <input type="checkbox" class="input-checkbox" @bind="Side.MarketTrendSecondaryLog" />
+                <input type="checkbox" class="input-checkbox" @bind="Side.SymbolTrendSecondaryLog" />
                 <label>Log if outside boundaries</label>
             </div>
         </div>

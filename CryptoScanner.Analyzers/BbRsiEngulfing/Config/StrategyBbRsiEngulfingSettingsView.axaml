@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="120"
+             xmlns:vm="using:CryptoScanner.Analyzers.BbRsiEngulfing.Config"
+             x:DataType="vm:StrategyBbRsiEngulfingSettingsViewModel"
+             x:Class="CryptoScanner.Analyzers.BbRsiEngulfing.Config.StrategyBbRsiEngulfingSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- Classic engulfing instead of "closes beyond the previous high/low" -->
+            <CheckBox IsChecked="{Binding UseStrictEngulfing, Mode=TwoWay}"
+                      Content="Use a strict engulfing candle" FontSize="12"
+                      ToolTip.Tip="Off is the rule every run so far measured: the candle only has to close above the high of the previous one (below its low for a short). On uses the classic engulfing - body covers body, opposite colours - through the same code the candlepattern strategy uses."/>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

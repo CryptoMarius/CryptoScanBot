@@ -8,7 +8,7 @@ using System.Text;
 
 namespace CryptoScanner.Core.Trend;
 
-public class MarketTrend
+public class SymbolTrend
 {
     /// <summary>
     /// The symbol's finest interval that holds candles, or null when it has none at all.
@@ -25,9 +25,9 @@ public class MarketTrend
     }
 
 
-    public static async Task<CryptoTrendData> CalculateMarketTrendAsync(CryptoSymbol symbol, SettingsZigZag trend, StringBuilder? log = null)
+    public static async Task<CryptoTrendData> CalculateSymbolTrendAsync(CryptoSymbol symbol, SettingsZigZag trend, StringBuilder? log = null)
     {
-        // MarketTrend is summarized in the Symbol.Data.TrendPrimary/Secondary and is calculated from the Interval.TrendPrimary/Secondary
+        // SymbolTrend is summarized in the Symbol.Data.TrendPrimary/Secondary and is calculated from the Interval.TrendPrimary/Secondary
         CryptoTrendData symbolTrend = trend.TrendType == TrendType.Primary ? symbol.Data.TrendPrimary : symbol.Data.TrendSecondary;
 
         // Profiling: time the whole trend calculation (any exit path) — see PipelineProfiler.
@@ -97,7 +97,7 @@ public class MarketTrend
                         if (isCached)
                             text += " (cached)";
                         log?.AppendLine(text);
-                        //ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
+                        //ScannerLog.Logger.Debug("SymbolTrend.Calculate " + text);
                     }
                     symbolTrend.Percentage = 100 * (float)weightSum / weightMax;
 
@@ -132,7 +132,7 @@ public class MarketTrend
                     log?.AppendLine("");
                     text = $"{symbol.Name} sum ={weightSum} / {weightMax} = {symbolTrend.Percentage:N2}";
                     log?.AppendLine(text);
-                    //ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
+                    //ScannerLog.Logger.Debug("SymbolTrend.Calculate " + text);
                 }
             }
             finally

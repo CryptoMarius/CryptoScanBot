@@ -21,6 +21,10 @@ public class BbRsiEngulfingSettings : SettingsSignalStrategyBase
     // Left as it was, because that is what all the runs so far measured. Switching this on uses the
     // classic definition instead - body covers body, opposite colours - through
     // CandlePatternHelper, the same code the candlepattern strategy uses.
+    [SettingCaption("Use a strict engulfing candle",
+        Tooltip = "Off is the rule every run so far measured: the candle only has to close above the "
+            + "high of the previous one (below its low for a short). On uses the classic engulfing - "
+            + "body covers body, opposite colours - through the same code the candlepattern strategy uses.")]
     public bool UseStrictEngulfing { get; set; } = false;
 
     public BbRsiEngulfingSettings() : base()

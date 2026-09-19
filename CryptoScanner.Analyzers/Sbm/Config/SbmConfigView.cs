@@ -9,6 +9,10 @@ public class SbmConfigView : IConfigView
 
     public string TabHeader => SbmPlugin.StrategyInternal.ToUpper();
     public string StrategyName => SbmPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategySbmTabView.axaml shows.
+    public string StrategyTitle => "SBM – Signal Bollinger/MA";
+    public string StrategyDescription => "Signals based on Bollinger Band and Moving Average alignment";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/SMA-Based-Method-(SBM)";
 
     public object CreateSettingsView()

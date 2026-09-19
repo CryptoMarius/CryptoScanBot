@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="120"
+             xmlns:vm="using:CryptoScanner.Analyzers.Choch.Config"
+             x:DataType="vm:StrategyChochSettingsViewModel"
+             x:Class="CryptoScanner.Analyzers.Choch.Config.StrategyChochSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- Break of Structure confirmation after the change of character -->
+            <CheckBox IsChecked="{Binding RequireBosConfirmation, Mode=TwoWay}"
+                      Content="Require a Break of Structure confirmation" FontSize="12"
+                      ToolTip.Tip="Only for the pullback variants: after the change of character the new trend direction first has to be confirmed by a Break of Structure before the signal fires. Flow: CHoCH, pullback pivot, BOS confirms the new trend, candle breaks the pivot, signal."/>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

@@ -56,8 +56,8 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
         WriteCell(sheet, columns++, row, "SignalPrice");
         WriteCell(sheet, columns++, row, "SignalVolume");
         WriteCell(sheet, columns++, row, "TfTrend");
-        WriteCell(sheet, columns++, row, "MarketTrend Pri.");
-        WriteCell(sheet, columns++, row, "MarketTrend Sec.");
+        WriteCell(sheet, columns++, row, "SymbolTrend Pri.");
+        WriteCell(sheet, columns++, row, "SymbolTrend Sec.");
         WriteCell(sheet, columns++, row, "Change24h");
         WriteCell(sheet, columns++, row, "MoveXDays");
         WriteCell(sheet, columns++, row, "BB%");

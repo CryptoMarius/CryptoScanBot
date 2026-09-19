@@ -13,7 +13,7 @@ namespace CryptoScanner.Analyzers.IChimokuKumoBreakout;
 /// </summary>
 public class IChimokuKumoBreakoutPlugin : IStrategyPlugin
 {
-    private const string StrategyInternal = "Ichimoku.Kumo.Breakout";
+    public const string StrategyInternal = "Ichimoku.Kumo.Breakout";
     public string StrategyName => StrategyInternal.ToLower();
     public string StrategyNameCamelCase => StrategyInternal;
 
@@ -45,5 +45,5 @@ public class IChimokuKumoBreakoutPlugin : IStrategyPlugin
     }
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = null;
+    public IConfigView? ConfigView { get; } = new Config.IChimokuKumoBreakoutConfigView();
 }

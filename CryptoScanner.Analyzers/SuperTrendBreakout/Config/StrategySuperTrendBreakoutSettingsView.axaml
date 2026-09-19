@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="220"
+             xmlns:vm="using:CryptoScanner.Analyzers.SuperTrendBreakout.Config"
+             x:DataType="vm:StrategySuperTrendBreakoutSettingsViewModel"
+             x:Class="CryptoScanner.Analyzers.SuperTrendBreakout.Config.StrategySuperTrendBreakoutSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- How far back a zone may lie -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The number of candles to look back for a zone the price was near. 0 means the current candle only.">
+                <TextBlock Grid.Column="0" Text="Zone lookback (candles):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ZoneLookbackCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <CheckBox IsChecked="{Binding IncludeOpenZones, Mode=TwoWay}"
+                      Content="Include open zones" FontSize="12"
+                      ToolTip.Tip="Count a zone that is still open when checking whether the flip happened near a zone."/>
+
+            <CheckBox IsChecked="{Binding IncludeClosedZones, Mode=TwoWay}"
+                      Content="Include recently closed zones" FontSize="12"
+                      ToolTip.Tip="Count a zone that has already been broken, as long as it is not older than the maximum age below."/>
+
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How many candles ago a closed zone may have been broken and still count.">
+                <TextBlock Grid.Column="0" Text="Maximum age of a closed zone (candles):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ClosedZoneMaxAgeCandles, Mode=TwoWay}"
+                         IsEnabled="{Binding IncludeClosedZones}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

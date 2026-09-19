@@ -28,6 +28,15 @@
            each other instead of underneath. *@
         <div class="settings-wrap" style="width: 100%;">
 
+        @* The heading every Avalonia strategy tab starts with, from the plugin's config view. *@
+        @if (!string.IsNullOrEmpty(state.Title))
+        {
+            <div style="margin: 2px 0 4px 6px; font-size: 13px;">
+                <span style="font-weight: 600;">@state.Title</span>
+                <span style="opacity: 0.7;"> — @state.SubTitle</span>
+            </div>
+        }
+
         @if (!string.IsNullOrEmpty(state.WikiUrl))
         {
             <div style="margin: 2px 0 4px 6px;">
@@ -119,6 +128,28 @@
 
                         if (field.Kind == PluginFieldKind.IntervalList)
                         {
+                            @* The same switch the Avalonia IntervalView shows: off means the
+                               strategy runs on the intervals ticked for its side. *@
+                            bool intervalsEnabled = !state.HasIntervalSwitch || state.UseCustomIntervals;
+
+                            if (state.HasIntervalSwitch)
+                            {
+                                <div class="field" title="Off: the strategy runs on the intervals that are ticked for its side on the Signals tab.">
+                                    <input type="checkbox" class="input-checkbox" @bind="state.UseCustomIntervals" />
+                                    <label>Use custom intervals for this strategy</label>
+                                </div>
+                            }
+
+                            @* Select all / Select none, the two entries of the flyout the Avalonia
+                               interval box has. Copy from Long/Short is not offered there either on
+                               a strategy tab: those counterparts only exist on Analyzer and Trader. *@
+                            <div class="field">
+                                <button class="btn btn-secondary" disabled="@(!intervalsEnabled)"
+                                        @onclick="() => state.SelectIntervals(true)">Select all</button>
+                                <button class="btn btn-secondary" disabled="@(!intervalsEnabled)"
+                                        @onclick="() => state.SelectIntervals(false)">Select none</button>
+                            </div>
+
                             @* Three columns of checkboxes, like the Avalonia IntervalView. It is not
                                a label/control pair, so it spans the whole group body. *@
                             <div class="interval-grid">
@@ -131,6 +162,7 @@
                                             var intervalName = name;
                                             <label class="interval-item">
                                                 <input type="checkbox" class="input-checkbox"
+                                                       disabled="@(!intervalsEnabled || !state.IsIntervalAllowed(intervalName))"
                                                        checked="@field.ListValue.Contains(intervalName)"
                                                        @onchange="@(e => field.ToggleListValue(intervalName, e.Value is bool on && on))" />
                                                 <span>@intervalName</span>

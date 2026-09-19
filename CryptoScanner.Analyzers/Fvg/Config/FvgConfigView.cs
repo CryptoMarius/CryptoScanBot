@@ -9,6 +9,10 @@ public class FvgConfigView : IConfigView
 
     public string TabHeader => FvgPlugin.StrategyInternal.ToUpper();
     public string StrategyName => FvgPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategyFvgTabView.axaml shows.
+    public string StrategyTitle => "FVG – Fair Value Gap";
+    public string StrategyDescription => "Entry signals at unfilled price gaps (ICT concept)";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Fair-Value-Gap-(FVG)";
 
     public object CreateSettingsView()

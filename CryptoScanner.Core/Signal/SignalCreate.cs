@@ -396,8 +396,8 @@ public class SignalCreate
 
 
 
-        // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and that is why it is on the end of the routine)
-        _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Primary);
+        // Calculate SymbolTrend and the individual interval trends (reasonably CPU heavy and that is why it is on the end of the routine)
+        _ = await SymbolTrend.CalculateSymbolTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Primary);
         if (signal.Symbol.Data.TrendPrimary.Percentage.HasValue)
         {
             signal.TrendPercentagePrimary = (float)signal.Symbol.Data.TrendPrimary.Percentage!;
@@ -410,7 +410,7 @@ public class SignalCreate
         }
 
         // This is for comparison only
-        _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Secondary);
+        _ = await SymbolTrend.CalculateSymbolTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Secondary);
         if (signal.Symbol.Data.TrendSecondary.Percentage.HasValue)
             signal.TrendPercentageSecondary = (float)signal.Symbol.Data.TrendSecondary.Percentage!;
 
@@ -425,7 +425,7 @@ public class SignalCreate
 
 
         // Filter op de markettrend waarvan je wil dat die qua percentage bullisch of bearisch zijn
-        if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Signals[signal.Side].MarketTrend, out reaction))
+        if (!PositionTools.ValidSymbolTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Signals[signal.Side].SymbolTrend, out reaction))
         {
             eventText.Add(reaction);
             signal.IsInvalid = true;
@@ -434,7 +434,7 @@ public class SignalCreate
         // Additional INTERSECT filter on the secondary market trend (lower-timeframe scope).
         // Allows catching divergences such as Primary +100 / Secondary -63 where the lower
         // timeframe has already rolled over.
-        if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Signals[signal.Side].MarketTrendSecondary, out reaction))
+        if (!PositionTools.ValidSymbolTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Signals[signal.Side].SymbolTrendSecondary, out reaction))
         {
             eventText.Add(reaction);
             signal.IsInvalid = true;

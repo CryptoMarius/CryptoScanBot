@@ -23,6 +23,9 @@
     <ProjectReference Include="..\CryptoScanner.Analyzers\CryptoScanner.Analyzers.csproj" />
     <!-- Needed for the replay chunk-boundary tests (ReplayChunk lives in the emulator). -->
     <ProjectReference Include="..\CryptoScanner.Emulator\CryptoScanner.Emulator.csproj" />
+    <!-- Needed for the strategy tab parity test: the reflection based settings editor of the
+         Blazor hosts (PluginSettingsEditState) is the Photino half of that comparison. -->
+    <ProjectReference Include="..\CryptoScanner.UI\CryptoScanner.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

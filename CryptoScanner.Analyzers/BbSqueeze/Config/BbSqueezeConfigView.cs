@@ -9,6 +9,10 @@ public class BbSqueezeConfigView : IConfigView
 
     public string TabHeader => BbSqueezePlugin.StrategyInternal.ToUpper();
     public string StrategyName => BbSqueezePlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategyBbSqueezeTabView.axaml shows.
+    public string StrategyTitle => "BBSQUEEZE – Bollinger Bands Squeeze Breakout";
+    public string StrategyDescription => "Breakout after a period of low volatility (BB squeeze), confirmed by MACD/volume";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Bollinger-Bands-Squeeze---MACD-Breakout-(BbSqueeze)";
 
     public object CreateSettingsView()

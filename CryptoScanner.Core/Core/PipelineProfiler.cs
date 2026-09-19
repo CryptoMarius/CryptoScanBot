@@ -75,7 +75,7 @@ public static class PipelineProfiler
 
     // Carve-outs: these overlap the buckets above (they are NOT additive to the total). They isolate
     // pieces that would otherwise stay hidden inside a larger bucket:
-    //   • TrendTicks    — MarketTrend.CalculateMarketTrendAsync, called from within the strategy
+    //   • TrendTicks    — SymbolTrend.CalculateSymbolTrendAsync, called from within the strategy
     //                     algorithms, so it is part of SeStrategyTicks/SeZoneTouchTicks.
     //   • FvgInlineTicks — ZoneFvg.ScanForNew, run inside SignalPrepare (part of PrepareTicks).
     //   • SmcInlineTicks — ZoneSmc.Detect, run inside SignalPrepare (part of PrepareTicks).
@@ -160,12 +160,12 @@ public static class PipelineProfiler
     public static long HubApplyLuxTicks;
     public static long HubIncrementalCalls;
 
-    // Sub-breakdown of the TrendTicks carve-out, accumulated inside MarketTrend.CalculateMarketTrendAsync
+    // Sub-breakdown of the TrendTicks carve-out, accumulated inside SymbolTrend.CalculateSymbolTrendAsync
     // / TrendCalculator.CalculateBothAsync / TrendTools.AddCandlesToIndicatorsAsync. Tells us whether the
     // dominant trend cost is the per-symbol lock wait, the candle ingestion into the ZigZag indicator
     // (and how many candles that actually processes per call — confirms whether the emulator-mode window
     // clamp in TrendCalculator is doing its job), or the Dow/BOS interpretation passes.
-    public static long TrendLockWaitTicks;     // CalculateMarketTrendAsync: time blocked on symbol.Data.TrendLock
+    public static long TrendLockWaitTicks;     // CalculateSymbolTrendAsync: time blocked on symbol.Data.TrendLock
     public static long TrendCalcBothTicks;     // TrendCalculator.CalculateBothAsync, total (all exit paths)
     public static long TrendCalcBothCalls;     // number of CalculateBothAsync calls (one per stale interval)
     public static long TrendIngestTicks;       // AddCandlesToIndicatorsAsync: candle-lock wait + ingest loop + FinishBatch
@@ -538,7 +538,7 @@ public static class PipelineProfiler
             Interlocked.Increment(ref SeSignals);
     }
 
-    /// <summary>Records one trend calculation (CalculateMarketTrendAsync).</summary>
+    /// <summary>Records one trend calculation (CalculateSymbolTrendAsync).</summary>
     public static void RecordTrend(long ticks)
     {
         if (!Enabled)
@@ -547,7 +547,7 @@ public static class PipelineProfiler
         Interlocked.Increment(ref TrendCalls);
     }
 
-    /// <summary>Adds the lock-wait time CalculateMarketTrendAsync spends blocked on symbol.Data.TrendLock,
+    /// <summary>Adds the lock-wait time CalculateSymbolTrendAsync spends blocked on symbol.Data.TrendLock,
     /// before it gets to do (or skip, if cached) any actual recompute.</summary>
     public static void RecordTrendLockWait(long ticks)
     {
@@ -557,7 +557,7 @@ public static class PipelineProfiler
     }
 
     /// <summary>Adds one TrendCalculator.CalculateBothAsync call (one per stale interval inside a
-    /// CalculateMarketTrendAsync recompute) — total time regardless of exit path.</summary>
+    /// CalculateSymbolTrendAsync recompute) — total time regardless of exit path.</summary>
     public static void RecordTrendCalcBoth(long ticks)
     {
         if (!Enabled)

@@ -42,5 +42,5 @@ public class SuperTrendBreakoutPlugin : IStrategyPlugin
     public IReadOnlyList<IndicatorKey> RequiredIndicators { get; } = [IndicatorKey.SuperTrend(10, 3.0)];
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = null;
+    public IConfigView? ConfigView { get; } = new Config.SuperTrendBreakoutConfigView();
 }

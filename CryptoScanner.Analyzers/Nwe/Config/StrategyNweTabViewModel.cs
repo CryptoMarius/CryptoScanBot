@@ -37,7 +37,7 @@ public partial class StrategyNweTabViewModel : ObservableObject
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyNweSettingsViewModel.LoadConfig(settings);
         StrategyNweSettingsNweViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList);
+        IntervalViewModel.LoadStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -46,7 +46,7 @@ public partial class StrategyNweTabViewModel : ObservableObject
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyNweSettingsViewModel.SaveConfig(settings);
         StrategyNweSettingsNweViewModel.SaveConfig(settings);
-        IntervalViewModel.SaveConfig(settings.IntervalList);
+        IntervalViewModel.SaveStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

@@ -10,6 +10,10 @@ public class BbmaConfigView : IConfigView
 
     public string TabHeader => "BBMA";
     public string StrategyName => BbmaPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategyBbmaTabView.axaml shows.
+    public string StrategyTitle => "BBMA – Bollinger Band + Moving Average";
+    public string StrategyDescription => "Reentry signals based on the BBMA method of Oma Ally";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/BBMA-Omni-(Bbma)";
 
     public object CreateSettingsView()

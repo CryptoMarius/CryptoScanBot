@@ -9,6 +9,10 @@ public class KumoSqueezeConfigView : IConfigView
 
     public string TabHeader => "KUMOSQUEEZE";
     public string StrategyName => "kumosqueeze";
+
+    // The same two strings the header of StrategyKumoSqueezeTabView.axaml shows.
+    public string StrategyTitle => "KUMOSQUEEZE – Ichimoku Kumo + Bollinger Squeeze Breakout";
+    public string StrategyDescription => "BB squeeze breakout confirmed by Ichimoku cloud position, volume and momentum";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Ichimoku-Kumo-Bollinger-Squeeze-(KumoSqueeze)";
 
     public object CreateSettingsView()

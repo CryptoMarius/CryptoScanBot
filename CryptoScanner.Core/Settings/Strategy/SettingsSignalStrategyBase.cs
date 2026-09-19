@@ -1,4 +1,7 @@
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+
+using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Settings.Strategy;
 
@@ -25,6 +28,14 @@ public class SettingsSignalStrategyBase
     /// </summary>
     [SettingCaption("Intervals", Group = GroupIntervals)]
     public List<string> IntervalList { get; set; } = [];
+
+    /// <summary>
+    /// The shortest interval this strategy accepts. Everything below it is greyed out in the
+    /// interval box of both hosts. Read-only on purpose: it belongs to the strategy, not to the
+    /// user, and a get-only property is skipped by the reflection based settings editor.
+    /// </summary>
+    [JsonIgnore]
+    public virtual CryptoIntervalPeriod MinimumInterval => CryptoIntervalPeriod.interval1m;
 
     public bool PlaySound { get; set; } = false;
     public bool PlaySpeech { get; set; } = false;

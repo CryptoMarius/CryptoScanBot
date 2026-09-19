@@ -9,6 +9,10 @@ public class FailedBreakoutConfigView : IConfigView
 
     public string TabHeader => FailedBreakoutPlugin.StrategyInternal.ToUpper();
     public string StrategyName => FailedBreakoutPlugin.StrategyInternal.ToLower();
+
+    // The same two strings the header of StrategyFailedBreakoutTabView.axaml shows.
+    public string StrategyTitle => "FAILEDBREAKOUT – The break that did not hold";
+    public string StrategyDescription => "Price sets a new high or low over the lookback window and then closes back inside it";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Failed-Breakout-(FailedBreakout)";
 
     public object CreateSettingsView()

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
 
@@ -19,14 +19,14 @@ public class TextualSideData
     public bool BarometerLog { get; set; }
     public List<TextualCheckItem> TrendIntervals { get; set; } = [];
     public bool TrendIntervalLog { get; set; }
-    public bool MarketTrendActive { get; set; }
-    public decimal MarketTrendMin { get; set; } = -100m;
-    public decimal MarketTrendMax { get; set; } = 100m;
-    public bool MarketTrendLog { get; set; }
+    public bool SymbolTrendActive { get; set; }
+    public decimal SymbolTrendMin { get; set; } = -100m;
+    public decimal SymbolTrendMax { get; set; } = 100m;
+    public bool SymbolTrendLog { get; set; }
     public bool MarketTrendSecondaryActive { get; set; }
     public decimal MarketTrendSecondaryMin { get; set; } = -100m;
     public decimal MarketTrendSecondaryMax { get; set; } = 100m;
-    public bool MarketTrendSecondaryLog { get; set; }
+    public bool SymbolTrendSecondaryLog { get; set; }
 
     private static readonly string[] BarometerIntervals = ["15m", "30m", "1h", "4h", "1d"];
 
@@ -81,21 +81,21 @@ public class TextualSideData
         }
         side.TrendIntervalLog = textual.IntervalTrend.Log;
 
-        if (textual.MarketTrend.List.Count > 0)
+        if (textual.SymbolTrend.List.Count > 0)
         {
-            side.MarketTrendActive = true;
-            side.MarketTrendMin = textual.MarketTrend.List[0].minValue;
-            side.MarketTrendMax = textual.MarketTrend.List[0].maxValue;
+            side.SymbolTrendActive = true;
+            side.SymbolTrendMin = textual.SymbolTrend.List[0].minValue;
+            side.SymbolTrendMax = textual.SymbolTrend.List[0].maxValue;
         }
-        side.MarketTrendLog = textual.MarketTrend.Log;
+        side.SymbolTrendLog = textual.SymbolTrend.Log;
 
-        if (textual.MarketTrendSecondary.List.Count > 0)
+        if (textual.SymbolTrendSecondary.List.Count > 0)
         {
             side.MarketTrendSecondaryActive = true;
-            side.MarketTrendSecondaryMin = textual.MarketTrendSecondary.List[0].minValue;
-            side.MarketTrendSecondaryMax = textual.MarketTrendSecondary.List[0].maxValue;
+            side.MarketTrendSecondaryMin = textual.SymbolTrendSecondary.List[0].minValue;
+            side.MarketTrendSecondaryMax = textual.SymbolTrendSecondary.List[0].maxValue;
         }
-        side.MarketTrendSecondaryLog = textual.MarketTrendSecondary.Log;
+        side.SymbolTrendSecondaryLog = textual.SymbolTrendSecondary.Log;
 
         return side;
     }
@@ -128,23 +128,23 @@ public class TextualSideData
             .ToList();
         textual.IntervalTrend.Log = TrendIntervalLog;
 
-        textual.MarketTrend.List.Clear();
-        if (MarketTrendActive)
+        textual.SymbolTrend.List.Clear();
+        if (SymbolTrendActive)
         {
-            textual.MarketTrend.List.Add((
-                Math.Min(MarketTrendMin, MarketTrendMax),
-                Math.Max(MarketTrendMin, MarketTrendMax)));
+            textual.SymbolTrend.List.Add((
+                Math.Min(SymbolTrendMin, SymbolTrendMax),
+                Math.Max(SymbolTrendMin, SymbolTrendMax)));
         }
-        textual.MarketTrend.Log = MarketTrendLog;
+        textual.SymbolTrend.Log = SymbolTrendLog;
 
-        textual.MarketTrendSecondary.List.Clear();
+        textual.SymbolTrendSecondary.List.Clear();
         if (MarketTrendSecondaryActive)
         {
-            textual.MarketTrendSecondary.List.Add((
+            textual.SymbolTrendSecondary.List.Add((
                 Math.Min(MarketTrendSecondaryMin, MarketTrendSecondaryMax),
                 Math.Max(MarketTrendSecondaryMin, MarketTrendSecondaryMax)));
         }
-        textual.MarketTrendSecondary.Log = MarketTrendSecondaryLog;
+        textual.SymbolTrendSecondary.Log = SymbolTrendSecondaryLog;
     }
 
     public static void SelectAll(List<TextualCheckItem> items)

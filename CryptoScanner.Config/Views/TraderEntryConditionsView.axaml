@@ -8,7 +8,7 @@
              x:CompileBindings="True"
              x:Class="CryptoScanner.Config.Views.TraderEntryConditionsView">
 
-    <HeaderedContentControl Classes="groupbox" Header="Entry condities">
+    <HeaderedContentControl Classes="groupbox" Header="Entry conditions">
         <Grid ColumnDefinitions="*,12,*" Margin="6">
 
             <!-- ═══ Left column: Momentum / oscillator conditions ═══ -->

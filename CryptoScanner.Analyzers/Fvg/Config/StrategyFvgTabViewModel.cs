@@ -33,7 +33,7 @@ public partial class StrategyFvgTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyFvgSettingsViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList, CryptoIntervalPeriod.interval1h);
+        IntervalViewModel.LoadConfig(settings.IntervalList, settings.MinimumInterval);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 

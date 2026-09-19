@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -81,7 +81,7 @@ public abstract class SignalTrendLongBase : SignalCreateBase
         if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval10m)
             return false;
 
-        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, TrendSettings).Result;
+        _ = SymbolTrend.CalculateSymbolTrendAsync(Symbol, TrendSettings).Result;
 
         // Which flip arms the long. Normally the flip TO bullish (enter with the new trend); with
         // TrendSettings.InvertDirection the flip TO bearish, so the long buys the bounce instead.
@@ -123,7 +123,7 @@ public abstract class SignalTrendLongBase : SignalCreateBase
             return false;
 
         // Recalculate so LastPivot reflects the current bar
-        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, TrendSettings).Result;
+        _ = SymbolTrend.CalculateSymbolTrendAsync(Symbol, TrendSettings).Result;
 
         CryptoTrendData trend = GetTrend();
         CandleTime signalTime = CandleTime.FromDateTime(signal.CloseDate);

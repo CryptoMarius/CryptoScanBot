@@ -24,7 +24,7 @@ public class TelegramShowTrend
             // The user types a bare pair; the symbol list is keyed on the product-suffixed name
             if (exchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol))
             {
-                CryptoTrendData symbolTrend = await MarketTrend.CalculateMarketTrendAsync(symbol, trend);
+                CryptoTrendData symbolTrend = await SymbolTrend.CalculateSymbolTrendAsync(symbol, trend);
 
                 foreach (CryptoInterval interval in GlobalData.IntervalList)
                 {
