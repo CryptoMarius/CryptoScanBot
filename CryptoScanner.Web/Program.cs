@@ -213,6 +213,14 @@ class Program
             NLog.LogManager.Shutdown();
         });
 
+        // File > Exit in the front end. Without this the menu falls back to Environment.Exit, and
+        // whether the block above still runs then depends on the process exit hook; asking the host
+        // to stop always ends in ApplicationStopping, so the configuration is saved.
+        //
+        // It is also the only handle a phone has on this host: the console it was started from is
+        // usually long gone by then, and a browser cannot press Ctrl-C.
+        GlobalData.RequestShutdown = lifetime.StopApplication;
+
         Console.WriteLine($"CryptoScanBot Web v{GlobalData.AppVersion}");
         foreach (string address in GetReachableAddresses())
             Console.WriteLine($"Open http://{address}:{webPort} in your browser");
