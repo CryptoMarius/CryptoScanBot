@@ -254,34 +254,11 @@ internal sealed class BarometerReplay
     /// </summary>
     private void MeasureMarketTrend(CryptoQuoteData quoteData, List<CryptoSymbol> symbols)
     {
-        decimal sumPrimary = 0, sumSecondary = 0;
-        int countPrimary = 0, countSecondary = 0;
-
-        foreach (CryptoSymbol symbol in symbols)
-        {
-            if (!symbol.EnoughVolume())
-                continue;
-
-            // Blocking on purpose: this runs in the serial phase of the replay loop, where nothing
-            // else is touching this symbol, and the work is a cache check on all but the minutes
-            // where an interval actually closed.
-            CryptoTrendData primary = Core.Trend.SymbolTrend.CalculateSymbolTrendAsync(symbol, GlobalData.Settings.Trend.Primary).Result;
-            if (primary.Percentage.HasValue)
-            {
-                sumPrimary += (decimal)primary.Percentage.Value;
-                countPrimary++;
-            }
-
-            CryptoTrendData secondary = Core.Trend.SymbolTrend.CalculateSymbolTrendAsync(symbol, GlobalData.Settings.Trend.Secondary).Result;
-            if (secondary.Percentage.HasValue)
-            {
-                sumSecondary += (decimal)secondary.Percentage.Value;
-                countSecondary++;
-            }
-        }
-
-        decimal? averagePrimary = countPrimary >= MinimumSymbols ? sumPrimary / countPrimary : null;
-        decimal? averageSecondary = countSecondary >= MinimumSymbols ? sumSecondary / countSecondary : null;
+        // The measurement itself lives in the core, because the live scanner does exactly the same
+        // thing from BarometerTools - see MarketTrend for why it is not written out twice. Blocking
+        // on the trend task is on purpose there: this runs in the serial phase of the replay loop,
+        // where nothing else is touching these symbols.
+        (decimal? averagePrimary, decimal? averageSecondary) = Core.Trend.MarketTrend.Measure(symbols, MinimumSymbols);
 
         foreach (CryptoInterval interval in intervals)
         {

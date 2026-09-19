@@ -755,6 +755,40 @@ public partial class MainWindowViewModel : ObservableObject
                 GlobalData.AddTextToLogTab($"Queue folder: starting {name} with {queue.Count} entries");
                 bool finished = await RunQueueEntriesAsync(queue, baseConfig, name, file);
 
+                // A file can GROW while its entries are running. The queue is read once when the
+                // file is picked up, so entries added after that never ran and travelled to Done
+                // along with the file - silently, because nothing compared the number of entries in
+                // the file with the number of runs. Measured on 18-09-2026: a file of 22 entries got
+                // four more two minutes after the batch had started, the 26 entries reached Done and
+                // only 22 of them had a run. So: read it again and run the tail, until it no longer
+                // grows. The file only moves away when there is nothing left in it to do.
+                int processed = queue.Count;
+                while (finished && !_stopRequested)
+                {
+                    List<EmulatorQueueEntry> reread;
+                    try
+                    {
+                        reread = EmulatorQueueFile.LoadFrom(file);
+                    }
+                    catch (Exception ex)
+                    {
+                        GlobalData.AddErrorToLogTab(
+                            $"Queue folder: {name} could not be read again to check for added entries — "
+                            + $"{ex.GetType().Name}: {ex.Message}; the {processed} entries that ran are in the log");
+                        break;
+                    }
+
+                    if (reread.Count <= processed)
+                        break;
+
+                    List<EmulatorQueueEntry> added = reread.Skip(processed).ToList();
+                    GlobalData.AddTextToLogTab(
+                        $"Queue folder: {name} grew from {processed} to {reread.Count} entries while it was "
+                        + $"running; starting the {added.Count} that were added");
+                    finished = await RunQueueEntriesAsync(added, baseConfig, name, file);
+                    processed = reread.Count;
+                }
+
                 if (_stopRequested)
                 {
                     GlobalData.AddTextToLogTab(

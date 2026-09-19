@@ -81,7 +81,8 @@ public class BarometerTools
 
 
     private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoSymbol? bmSymbolExtra,
-        CryptoInterval interval, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool priceBarometer)
+        CryptoInterval interval, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool priceBarometer,
+        decimal? marketTrendPrimary = null, decimal? marketTrendSecondary = null)
     {
         //if (priceBarometer)
         //    GlobalData.AddTextToLogTab($"Calculating price barometer chart {quoteData.Name} {interval.Name}");
@@ -189,6 +190,13 @@ public class BarometerTools
         // hours of backlog after a restart, so a fresh object per measurement would be pure garbage.
         BarometerResult result = new();
 
+        // The newest minute the loop actually wrote a candle for. Not the same as periodStop: that
+        // is the minute in progress, whose 1m candles are still in the ticker cache (they are
+        // flushed a few seconds AFTER the minute closes, see SubscriptionKLineCachedTicker), so the
+        // measurement for it fails and no candle is created. The market trend is attached to this
+        // minute below - writing it to periodStop meant writing it nowhere at all.
+        CandleTime? lastExtraWritten = null;
+
         // De opgegeven periode per minuut itereren
         while (periodStart <= periodStop)
         {
@@ -234,6 +242,10 @@ public class BarometerTools
                     BarometerCandleFields.StoreExtra(ref candleExtra, result);
                     candlesExtra[periodStart] = candleExtra;
 
+                    // Remember which minute this was, so the market trend can be attached to the
+                    // newest one afterwards - see the write below the loop.
+                    lastExtraWritten = periodStart;
+
                     if (symbolIntervalExtra != null && periodStart > symbolIntervalExtra.LastCandleSynchronized)
                         symbolIntervalExtra.LastCandleSynchronized = periodStart;
                 }
@@ -243,6 +255,15 @@ public class BarometerTools
                 if (priceBarometer)
                 {
                     StorePriceResult(barometerData, result, periodStart);
+
+                    // The market trend belongs to the quote coin and not to this interval, so every
+                    // interval of the quote carries the same value - exactly as the emulator stores
+                    // it. Only written when it was measured this run: a null here would erase a
+                    // value that is still perfectly current.
+                    if (marketTrendPrimary.HasValue)
+                        barometerData.MarketTrendPrimary = marketTrendPrimary;
+                    if (marketTrendSecondary.HasValue)
+                        barometerData.MarketTrendSecondary = marketTrendSecondary;
                 }
                 else
                 {
@@ -265,6 +286,18 @@ public class BarometerTools
 
             // Naar de volgende 1m candle
             periodStart += 1;
+        }
+
+        // The market trend of this run, on the newest minute that got a candle. The trend can only
+        // be read as it stands now, so the backlog minutes of a restart keep whatever they already
+        // held: painting the current value over history would be an invention, and a zero would
+        // claim a market that is exactly neutral.
+        if (candlesExtra != null && lastExtraWritten.HasValue
+            && (marketTrendPrimary.HasValue || marketTrendSecondary.HasValue)
+            && candlesExtra.TryGetValue(lastExtraWritten.Value, out CryptoCandle trendCandle))
+        {
+            BarometerCandleFields.StoreMarketTrend(ref trendCandle, marketTrendPrimary, marketTrendSecondary);
+            candlesExtra[lastExtraWritten.Value] = trendCandle;
         }
     }
 
@@ -306,7 +339,8 @@ public class BarometerTools
     /// Deze routine maakt barometer per 1m (ondanks dat we met de IntervalPeriod suggereren dat we het in een bepaald interval doen)
     /// </summary>
     private static void CalculateBarometerIntervals(CryptoSymbol symbol, CryptoSymbol? symbolExtra,
-        CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool pricebarometer)
+        CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool pricebarometer,
+        decimal? marketTrendPrimary = null, decimal? marketTrendSecondary = null)
     {
 #if debug
         TimerDebugCandles_Tick(quoteData);
@@ -327,7 +361,8 @@ public class BarometerTools
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
             {
                 //GlobalData.AddTextToLogTab("Calculating barometer chart " + bmSymbol.Name + " " + interval.Name);
-                CalculateBarometerInternal(symbol, symbolExtra, interval, quoteData, calcBarometerMethod, pricebarometer);
+                CalculateBarometerInternal(symbol, symbolExtra, interval, quoteData, calcBarometerMethod, pricebarometer,
+                    marketTrendPrimary, marketTrendSecondary);
             }
         }
     }
@@ -386,31 +421,51 @@ public class BarometerTools
 
 
     // Separate call because of emulator (calculate only 1 quote)
-    public static void CalculatePriceBarometerForQuote(CryptoQuoteData quoteData)
+    public static void CalculatePriceBarometerForQuote(CryptoQuoteData quoteData, bool measureMarketTrend = true)
     {
         //GlobalData.AddTextToLogTab($"Barometer {quoteData.Name}");
         CryptoSymbol? symbol = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
         CryptoSymbol? symbolExtra = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerExtra, quoteData);
         if (symbol != null)
         {
-            CalculateBarometerIntervals(symbol, symbolExtra, quoteData, CryptoBarometerPrice.CalculatePriceBarometer, true);
+            // Once per quote coin and not once per interval: the trend is a property of the coin,
+            // not of the interval it is asked about, so measuring it inside the interval loop would
+            // do the same work ten times over. See MarketTrend, and the identical reasoning in
+            // BarometerReplay.Execute.
+            decimal? marketTrendPrimary = null, marketTrendSecondary = null;
+            if (measureMarketTrend)
+                (marketTrendPrimary, marketTrendSecondary) = Trend.MarketTrend.Measure(quoteData.SymbolList, Trend.MarketTrend.MinimumSymbols);
+
+            CalculateBarometerIntervals(symbol, symbolExtra, quoteData, CryptoBarometerPrice.CalculatePriceBarometer, true,
+                marketTrendPrimary, marketTrendSecondary);
         }
     }
 
 
-    public static void CalculatePriceBarometerForAllQuotes()
+    public static void CalculatePriceBarometerForAllQuotes(bool measureMarketTrend = true)
     {
         // Bereken de (prijs en volume) barometers voor de aangevinkte basismunten
         //GlobalData.AddTextToLogTab("Calculating barometer for all quotes");
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
         {
             if (quoteData.FetchCandles)
-                CalculatePriceBarometerForQuote(quoteData);
+                CalculatePriceBarometerForQuote(quoteData, measureMarketTrend);
         }
     }
 
 
-    public void ExecuteAsync()
+    /// <summary>
+    /// Recalculate the barometer of every quote coin.
+    /// <para>
+    /// <paramref name="measureMarketTrend"/> false skips the market trend and leaves the previous
+    /// value in place. It exists for the one caller that runs on a UI thread: measuring the trend
+    /// walks every coin of the quote, and a dashboard timer must not freeze the window for that.
+    /// Nothing is lost by skipping it - the scanner session recalculates the barometer every thirty
+    /// seconds on a background thread, that run does measure the trend, and it rewrites the same
+    /// minute, so the value follows within half a minute.
+    /// </para>
+    /// </summary>
+    public void ExecuteAsync(bool measureMarketTrend = true)
     {
         try
         {
@@ -418,7 +473,7 @@ public class BarometerTools
             {
                 try
                 {
-                    CalculatePriceBarometerForAllQuotes();
+                    CalculatePriceBarometerForAllQuotes(measureMarketTrend);
                 }
                 finally
                 {

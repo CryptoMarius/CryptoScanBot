@@ -175,6 +175,37 @@ public class BarometerCandleFieldsTests
 
 
     [TestMethod]
+    public void MarketTrendRoundTripsThroughTheLiveStore()
+    {
+        // The live scanner used to leave these two fields at zero, so both market trend figures were
+        // a flat line on the graph while the emulator filled them - the reason this overload takes
+        // them at all.
+        BarometerResult result = CreateResult([-2m, -1m, 1m, 4m]);
+
+        CryptoCandle extra = new() { TickDecimals = 2 };
+        BarometerCandleFields.StoreExtra(ref extra, result);
+        BarometerCandleFields.StoreMarketTrend(ref extra, -37.5m, 12.25m);
+
+        Assert.AreEqual(-37.5m, BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendPrimary));
+        Assert.AreEqual(12.25m, BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendSecondary));
+
+        // A barometer recalculation walks the last minutes again, so a candle that already carries a
+        // trend is written a second time. That pass may not wipe it - which is what a zero in these
+        // two fields used to do, one tick after the value was stored.
+        BarometerCandleFields.StoreExtra(ref extra, result);
+
+        Assert.AreEqual(-37.5m, BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendPrimary));
+        Assert.AreEqual(12.25m, BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendSecondary));
+
+        // Nothing measured: keep what is there rather than claim a perfectly neutral market.
+        BarometerCandleFields.StoreMarketTrend(ref extra, null, null);
+
+        Assert.AreEqual(-37.5m, BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendPrimary));
+        Assert.AreEqual(12.25m, BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendSecondary));
+    }
+
+
+    [TestMethod]
     public void EachFigureKnowsWhichSymbolHoldsIt()
     {
         // Reading a figure from the wrong symbol would silently plot another number entirely.

@@ -232,8 +232,8 @@ public class FingerprintCanonicalSettingsTests
     }
 
     // The two tests that stood here checked that a run recorded under a strategy's former name
-    // hashed the same as the same run under its current name. They were written for the rename of
-    // tbo to mac on 19-09-2026. That name is out of the data since then - settings, queue files and
+    // hashed the same as the same run under its current name. They were written for the rename
+    // of 19-09-2026. That former name is out of the data since then - settings, queue files and
     // every run label and stored setting in the emulator databases were migrated - and no plugin
     // declares a former name any more, so there was nothing left for them to measure.
     // IStrategyPlugin.FormerStrategyNames and the canonicalisation that honours it are still there;

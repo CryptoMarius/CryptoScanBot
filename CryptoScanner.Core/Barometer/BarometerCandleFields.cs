@@ -69,14 +69,41 @@ public static class BarometerCandleFields
     /// is stored then, and the tooltip leaves the line out rather than showing a fake zero.
     /// </para>
     /// <para>Takes the candle by ref for the same reason as Store() above.</para>
+    /// <para>
+    /// The two market trend fields are deliberately NOT touched here. They are no part of a
+    /// barometer measurement - measured over the same coins, but from their trend instead of their
+    /// price change - and they are written by <see cref="StoreMarketTrend"/> for the one minute they
+    /// belong to. Overwriting them with a zero on every pass is exactly the bug this split removes:
+    /// a barometer recalculation walks the last minutes again, so the value would be wiped the
+    /// moment after it was written.
+    /// </para>
     /// </summary>
     public static void StoreExtra(ref CryptoCandle candle, BarometerResult result)
     {
         candle.Open = result.BitcoinVersusMarket ?? 0m;
         candle.High = result.OutlierCount;      // see the overload below - both paths must agree
-        candle.Low = 0m;                        // free
         candle.Close = result.AverageAbsolute;
-        candle.Volume = 0;                      // free
+        // Low and Volume hold the market trend - see StoreMarketTrend.
+    }
+
+
+    /// <summary>
+    /// Write the market trend of one moment into the candle of the SECOND barometer symbol ($BMX).
+    /// <para>
+    /// Separate from <see cref="StoreExtra"/> because it answers a different question and, above
+    /// all, because it belongs to a different minute. A barometer figure can be computed for any
+    /// minute that has candles; the trend can only be read as it stands NOW, so the caller attaches
+    /// it to the newest minute it actually wrote - which is never the running minute, because the
+    /// 1m candle of the minute in progress has not been flushed yet and a barometer candle is only
+    /// created for minutes that have one.
+    /// </para>
+    /// <para>Null leaves the field alone, so a measurement that carried too few coins does not erase
+    /// a value that is still perfectly current.</para>
+    /// </summary>
+    public static void StoreMarketTrend(ref CryptoCandle candle, decimal? primary, decimal? secondary)
+    {
+        candle.Low = primary ?? candle.Low;
+        candle.Volume = secondary ?? candle.Volume;
     }
 
 
@@ -258,6 +285,14 @@ public static class BarometerCandleFields
         // read as "bitcoin moves exactly with the market".
         if (barometer.PriceBitcoinVersusMarket.HasValue)
             lines.Add($"BTC vs rest {barometer.PriceBitcoinVersusMarket.Value:N2}%");
+
+        // The structural figure next to all the returns above, so it is worth a line of its own. It
+        // stays absent until it has been measured, which is what a fresh candle store looks like.
+        if (barometer.MarketTrendPrimary.HasValue)
+            lines.Add($"Market trend {barometer.MarketTrendPrimary.Value:N1}% (-100..+100)");
+        if (barometer.MarketTrendSecondary.HasValue)
+            lines.Add($"Market trend (2nd) {barometer.MarketTrendSecondary.Value:N1}%");
+
         if (barometer.PriceSymbolCount.HasValue)
             lines.Add($"Based on {barometer.PriceSymbolCount.Value} coins");
 

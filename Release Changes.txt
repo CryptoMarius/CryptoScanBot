@@ -1,11 +1,8 @@
 CryptoScanBot release historie:
 
-TODO:
--Testje op Mac vm.
--Testje op de Linux vm.
--Screenshots van de wiki bijwerken
--Altrady meldt short terug als we een long positie openen (uitzoeken/melden)
-
+xx-09-2026 2.6.8
+- Markettrend zichtbaar maken in de grafiek (waar ook de barometer in getoond wordt)
+- De markt trend is omgezet naar een symboltrend en we hebben nu ook een globale marktrend per quote
 
 19-09-2026 2.6.7
 - Documentatie bijgewerkt

@@ -896,9 +896,15 @@ public partial class DashBoardInformationViewModel : ObservableObject
             if (string.IsNullOrEmpty(SelectedInterval))
                 return false;
 
-            // Calculate the latest barometer if needed
+            // Calculate the latest barometer if needed.
+            //
+            // Without the market trend: this method is called straight from the dashboard timer,
+            // which is a DispatcherTimer and therefore runs on the UI thread, and measuring the
+            // trend walks every coin of the quote. The scanner session recalculates the same
+            // barometer every thirty seconds on a background thread and does measure it there, so
+            // the graph gets its value regardless - see BarometerTools.ExecuteAsync.
             BarometerTools barometerTools = new();
-            barometerTools.ExecuteAsync();
+            barometerTools.ExecuteAsync(false);
 
 
             // Update the barometer graph

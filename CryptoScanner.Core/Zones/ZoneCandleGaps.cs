@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Zones;
@@ -96,6 +96,27 @@ public static class ZoneCandleGaps
     /// </summary>
     public const int ToleratedGap = 2;
 
+    /// <summary>
+    /// Walks that are EXPECTED to reach outside the loaded window, and whose line therefore goes to
+    /// the log FILE only instead of to the log tab the user reads.
+    /// <para>
+    /// The startup pass over the open zones is the one case: it begins at the oldest OPEN zone, an
+    /// open zone never ages out, so on a database holding zones of a few weeks old it always steps
+    /// over the candles before the 500-candle window (see CandleTools.CandleCountFetch). Those
+    /// candles are in candles.db, they were only not loaded, and the first full zone recalculation
+    /// reads them - <see cref="EnsureHistoryLoadedAsync"/> on the "broken" site - and corrects what
+    /// this pass walked over. Nothing is lost, but "628 of 1127 candle(s) not in memory ... read as
+    /// 'nothing happened'" reads as data loss to somebody who only sees the log tab.
+    /// </para>
+    /// <para>
+    /// The counters in <see cref="PipelineProfiler"/> are fed for these sites as well, and the line
+    /// itself is still written at Info level, so nothing stops being measurable - it just stops
+    /// being an announcement. Every other site keeps its line in the log tab: there the candles are
+    /// genuinely not available and no later pass repairs it.
+    /// </para>
+    /// </summary>
+    private static readonly HashSet<string> expectedSites = ["brokenStartup"];
+
     /// <summary>The worst gap already reported per symbol/interval/site, so a run cannot flood the log.</summary>
     private static readonly Dictionary<string, int> reportedGaps = [];
 
@@ -144,12 +165,21 @@ public static class ZoneCandleGaps
             reportedGaps[key] = walk.LongestGap;
         }
 
-        GlobalData.AddTextToLogTab(
+        string message =
             $"ZONE GAP {symbol?.Name} {interval.Name} {site}: {walk.Missing} of " +
             $"{walk.Missing + walk.Present} candle(s) not in memory over " +
             $"{from.ToLocalTime():yyyy-MM-dd HH:mm} .. {to.ToLocalTime():yyyy-MM-dd HH:mm}, " +
             $"longest run {walk.LongestGap}, first at {walk.FirstMissing.ToLocalTime():yyyy-MM-dd HH:mm}. " +
-            $"Those candles were read as 'nothing happened'.");
+            $"Those candles were read as 'nothing happened'.";
+
+        // Info and not Debug on purpose: a Debug line has nowhere to go in a Release build - the only
+        // target below Info is the trace file and that one is created under #if DEBUG (see
+        // ScannerLog.InitializeLogging). Info keeps the line in the normal log file in every build,
+        // it only leaves the log tab.
+        if (expectedSites.Contains(site))
+            ScannerLog.Logger.Info(message);
+        else
+            GlobalData.AddTextToLogTab(message);
     }
 
 
@@ -188,7 +218,12 @@ public static class ZoneCandleGaps
                 return false;
         }
 
-        GlobalData.AddTextToLogTab(
+        // Log file only, like the expected sites in Report above, and for a stronger reason: this
+        // line announces a repair that is about to happen. The stretch before the window is read
+        // right below, so by the time anybody could read the line the walk already has its candles -
+        // there is nothing for a user to do with it and "candle(s) before the loaded window" reads
+        // as a defect. Info and not Debug so it survives a Release build (see ScannerLog).
+        ScannerLog.Logger.Info(
             $"ZONE GAP {symbol.Name} {interval.Name} {site}: walk starts at " +
             $"{neededFrom.ToLocalTime():yyyy-MM-dd HH:mm}, {missingCandles} candle(s) before the " +
             $"loaded window ({firstInMemory.ToLocalTime():yyyy-MM-dd HH:mm}). Reading that stretch.");

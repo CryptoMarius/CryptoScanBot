@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Mac;
@@ -18,12 +18,11 @@ public class MacPlugin : IStrategyPlugin
     public string StrategyName => StrategyInternal.ToLower();
     public string StrategyNameCamelCase => StrategyInternal;
 
-    // The strategy was called "tbo" until 19-09-2026 and carried that here as a former name, so
-    // stored settings and emulator runs from before the rename kept working. The old name is out of
-    // the data since 19-09-2026 - settings, chart files, queue files and every run label and stored
-    // setting in the emulator databases were migrated by Tools/RenameTboToMac - so the former name
-    // goes with it and one strategy goes by one name. IStrategyPlugin still offers
-    // FormerStrategyNames for a next rename; no plugin declares one today.
+    // This strategy carried a former name until 19-09-2026, so stored settings and emulator runs
+    // from before that rename kept working. The old name is out of the data since then - settings,
+    // chart files, queue files and every run label and stored setting in the emulator databases
+    // were migrated - so the former name went with it and one strategy goes by one name.
+    // IStrategyPlugin still offers FormerStrategyNames for a next rename; no plugin declares one.
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
