@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -1478,7 +1478,8 @@ public partial class MainWindowViewModel : ObservableObject
             }
 
             string? gitSha = GetGitShortSha();
-            run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label, settingsJson, gitSha);
+            run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label,
+                settingsJson, gitSha, GetBuildStamp());
             GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
 
             // RunParallel deliberately not set here: TickRunner owns the default, so it can be changed
@@ -1665,6 +1666,32 @@ public partial class MainWindowViewModel : ObservableObject
         // The Progress<T> callback already marshals to the UI thread when constructed on the
         // UI thread; the explicit Post is defensive in case this VM ever runs in a worker.
         Dispatcher.UIThread.Post(() => ProgressValue = p.Percent);
+    }
+
+
+    /// <summary>
+    /// When the running binary was built, taken from the write time of its own assembly file.
+    /// <para>
+    /// Nothing is compiled in and no tracked file changes, so a build leaves git alone. It answers
+    /// the one question that keeps coming up about an older run: was this made before or after a
+    /// given repair.
+    /// </para>
+    /// </summary>
+    private static DateTime? GetBuildStamp()
+    {
+        try
+        {
+            string path = System.Reflection.Assembly.GetEntryAssembly()?.Location ?? "";
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+                path = Environment.ProcessPath ?? "";
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+                return null;
+            return File.GetLastWriteTime(path);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
 

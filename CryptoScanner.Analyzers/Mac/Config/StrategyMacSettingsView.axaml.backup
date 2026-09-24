@@ -24,25 +24,6 @@
                           Content="Entry on breakout" FontSize="12"
                           ToolTip.Tip="Fire when the candle closes through the last pivot level, with the cloud pointing the way of the trade."/>
 
-                <CheckBox IsChecked="{Binding EntryOnBreakoutRun, Mode=TwoWay}"
-                          Content="Breakout as a run, not a crossing" FontSize="12"
-                          ToolTip.Tip="Enter on the first three candles that make a new extreme within a stretch beyond the level, instead of on the candle that crosses it. Closer to what the reference indicator draws. Needs 'Entry on breakout' to be on."/>
-
-                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="At most this many entries inside one stretch beyond the level. The reference never draws more than three.">
-                    <TextBlock Grid.Column="0" Text="Breakout entries per run:" VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Grid.Column="1"
-                             Text="{Binding BreakoutEntriesPerRun, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-                <!-- The same crossing the exit reads, taken from the other side: the marker the
-                     reference draws to close a long is what opens a short here. Exempt from the
-                     cloud check, because by definition the cloud still points the other way. -->
-                <CheckBox IsChecked="{Binding EntryOnSecondLineCross, Mode=TwoWay}"
-                          Content="Entry on close crossing the second line" FontSize="12"
-                          ToolTip.Tip="Enter when the close crosses the second line this side's way. That is the marker the reference draws to close the opposite position: its Close Long opens a short here, its Close Short opens a long."/>
-
                 <CheckBox IsChecked="{Binding EntryOnCloudCross, Mode=TwoWay}"
                           Content="Entry on cloud cross" FontSize="12"
                           ToolTip.Tip="Fire when the fast EMA crosses the second one: above it for a long, under it for a short. A separate trigger from the breakout; both may be on at the same time."/>
@@ -61,19 +42,8 @@
                      the strength (how far the outer two are apart). -->
                 <TextBlock Text="Cloud" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
 
-                <!-- The reference indicator has exactly one setting and all it does is move three
-                     of the four lengths. The four numbers below count only on Custom; choosing a
-                     speed does not write them. -->
-                <Grid ColumnDefinitions="180,110,*" RowDefinitions="Auto"
-                      ToolTip.Tip="The three speeds of the reference indicator. Standard is 20/40/50/150, Fast is 20/30/40/80, Slow is 20/50/100/200. Choose Custom to use the four numbers below.">
-                    <TextBlock Grid.Column="0" Text="Line speed:" VerticalAlignment="Center" FontSize="12"/>
-                    <ComboBox Grid.Column="1" ItemsSource="{Binding Speeds}"
-                              SelectedItem="{Binding Speed, Mode=TwoWay}"
-                              Height="26" FontSize="12" HorizontalAlignment="Stretch"/>
-                </Grid>
-
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="The fast line, EMA(20) on the close. Counts only when the speed is Custom. The four lengths belong together.">
+                      ToolTip.Tip="The fast line, EMA(20) on the close. The four lengths belong together.">
                     <TextBlock Grid.Column="0" Text="Fast EMA:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding FastEmaLength, Mode=TwoWay}"

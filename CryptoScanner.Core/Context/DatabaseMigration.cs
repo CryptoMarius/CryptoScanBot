@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Core;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 98;
+    public readonly static int CurrentDatabaseVersion = 99;
 
 
     /// <summary>
@@ -2219,6 +2219,26 @@ public class DatabaseMigration
         // Name is the same value version 53 would have used. A row without a Name cannot be repaired
         // from within the database; it is only counted, so the number shows up in the log rather
         // than the symbol quietly staying away.
+        if (CurrentVersion > version.Version && version.Version == 98)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // Which build produced a run could not be answered: GitSha is only filled when the
+            // emulator runs from a working copy and the change was committed, which on this machine
+            // is 65 of 1473 runs and none of the MAC ones. The write time of the emulator's own
+            // assembly changes with every build and costs no tracked file.
+            database.Connection.Execute("alter table EmulatorRun add column BuildStamp text",
+                transaction);
+            GlobalData.AddTextToLogTab("Database version 99: EmulatorRun records the build date of "
+                + "the binary that made the run");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
         if (CurrentVersion > version.Version && version.Version == 97)
         {
             using var transaction = database.BeginTransaction();

@@ -118,7 +118,20 @@ public static class SignalGridExpander
 
         PropertyInfo? leaf = current.GetType().GetProperty(parts[^1]);
         if (leaf == null)
-            return;
+        {
+            // A name that does not exist is not a harmless typo: the run goes ahead with the
+            // DEFAULT in its place and its label claims a setting that was never applied. That is
+            // how a queue written for a newer build gets measured on an older one and the numbers
+            // come back looking like an answer. Switching something OFF stays silent, because the
+            // default is off anyway and old entries spell out settings that have since been removed.
+            if (IsSwitchedOff(jsonVal))
+                return;
+            throw new NotSupportedException(
+                $"Queue entry sets \"{propPath}\", which {root.GetType().Name} does not have. "
+                + "Either the name is misspelled or this queue was written for a newer build than "
+                + "the one running - rebuild first, because the run would otherwise be measured "
+                + "with the default in its place.");
+        }
 
         saved.Add(new Override(current, leaf, leaf.GetValue(current)));
         leaf.SetValue(current, ConvertJsonElement(jsonVal, leaf.PropertyType));

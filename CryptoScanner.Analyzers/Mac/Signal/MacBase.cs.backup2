@@ -80,7 +80,7 @@ public class MacBase : SignalCreateBase
         ExtraText = "";
         MacSettings settings = Settings;
         if (!settings.EntryOnBreakout && !settings.EntryOnCloudCross && !settings.EntryOnSpringboard
-            && !settings.EntryOnLineCross && !settings.EntryOnSecondLineCross)
+            && !settings.EntryOnLineCross)
         {
             ExtraText = "no entry trigger is switched on";
             return false;
@@ -99,25 +99,15 @@ public class MacBase : SignalCreateBase
         MyData? candlePrev = null;
         MacCandleData? macPrev = null;
         bool lineCrossed = false;
-        bool closeCrossedSecond = false;
-        if ((settings.EntryOnLineCross || settings.EntryOnSecondLineCross)
-            && GetPrevCandle(CandleLast, out candlePrev) && candlePrev != null)
+        if (settings.EntryOnLineCross && GetPrevCandle(CandleLast, out candlePrev) && candlePrev != null)
         {
             macPrev = candlePrev.CandleData!.GetPluginData<MacCandleData>();
-            if (settings.EntryOnLineCross)
-                lineCrossed = SecondLineCrossedTheThird(mac, macPrev);
-            if (settings.EntryOnSecondLineCross)
-                closeCrossedSecond = CloseCrossedTheSecondLine(mac, macPrev, candlePrev);
+            lineCrossed = SecondLineCrossedTheThird(mac, macPrev);
         }
 
         // Cheapest test first: on most candles the cloud simply points the other way. It holds for
         // both triggers - a cross ends with the cloud on our side, a breakout wants it there too.
-        //
-        // The two CROSSINGS are exempt, and for the same reason: both fire while the cloud still
-        // points the other way. The line cross runs ahead of the cloud, and the close crossing the
-        // second line is the very marker the reference draws to CLOSE the opposite position - by
-        // definition the cloud is then still pointing that opposite way.
-        if (!lineCrossed && !closeCrossedSecond && !IsCloudOnOurSide(mac))
+        if (!lineCrossed && !IsCloudOnOurSide(mac))
         {
             ExtraText = SignalSide == CryptoTradeSide.Long
                 ? "cloud points down, a long wants the fast ema above the second one"
@@ -181,21 +171,6 @@ public class MacBase : SignalCreateBase
             else
             {
                 missed = "no line cross, the second line stayed on its side of the third";
-            }
-        }
-        if (trigger.Length == 0 && settings.EntryOnSecondLineCross)
-        {
-            if (closeCrossedSecond)
-            {
-                trigger = SignalSide == CryptoTradeSide.Long
-                    ? "close crossed over the second line"
-                    : "close crossed under the second line";
-            }
-            else
-            {
-                missed = missed.Length > 0
-                    ? $"{missed}; the close stayed on its side of the second line"
-                    : "the close stayed on its side of the second line";
             }
         }
         if (trigger.Length == 0 && settings.EntryOnCloudCross)
@@ -275,36 +250,6 @@ public class MacBase : SignalCreateBase
         return SignalSide == CryptoTradeSide.Long
             ? secondPrev <= mediumPrev && second > medium
             : secondPrev >= mediumPrev && second < medium;
-    }
-
-
-    /// <summary>
-    /// The close crossing the second line the way this signal wants to trade.
-    /// <para>
-    /// This is the SAME crossing the exit reads, taken from the other side: the marker the
-    /// reference draws as "Close Long" is the close falling through the second line, and entering
-    /// a SHORT on it is entering on what closes a long. So a long entry wants the close to cross
-    /// UP through that line, which is the reference's Close Short.
-    /// </para>
-    /// <para>
-    /// The three guards the EXIT carries - the cloud pointing the way of the position, the close on
-    /// that side of the slow line, the cloud stacked - are NOT repeated here. They exist to stop an
-    /// exit firing against a trend that is still running, which is the opposite of what an entry on
-    /// this crossing is for. What does apply is everything <see cref="IsSignal"/> asks of every
-    /// trigger: the cloud width, the slope of the slow line, and the rest.
-    /// </para>
-    /// </summary>
-    private bool CloseCrossedTheSecondLine(MacCandleData mac, MacCandleData? macPrev,
-        MyData? candlePrev)
-    {
-        if (macPrev?.EmaSecond == null || mac.EmaSecond == null || candlePrev == null)
-            return false;
-
-        double close = (double)CandleLast.Candle.Close;
-        double closePrev = (double)candlePrev.Candle.Close;
-        return SignalSide == CryptoTradeSide.Long
-            ? closePrev <= macPrev.EmaSecond.Value && close > mac.EmaSecond.Value
-            : closePrev >= macPrev.EmaSecond.Value && close < mac.EmaSecond.Value;
     }
 
 
@@ -401,39 +346,6 @@ public class MacBase : SignalCreateBase
                     : $"close {close:N8} is not under the cloud ({edge:N8})";
                 return false;
             }
-        }
-
-        // The run reading, when it is switched on: the indicator has already worked out where in a
-        // stretch beyond the level this candle sits, so there is nothing to walk here. It replaces
-        // the crossing test below and everything that belongs to it - buffer, age and all - because
-        // a run is not a crossing and those knobs do not apply to it.
-        if (settings.EntryOnBreakoutRun)
-        {
-            int rank = SignalSide == CryptoTradeSide.Long ? mac.BreakoutRank : mac.BreakdownRank;
-            bool worth = SignalSide == CryptoTradeSide.Long
-                ? mac.BreakoutRunAllowed
-                : mac.BreakdownRunAllowed;
-            int allowed = Math.Max(1, settings.BreakoutEntriesPerRun);
-            if (rank == 0)
-            {
-                reason = "the close is not beyond the level, or it does not better the run so far";
-                return false;
-            }
-            if (!worth)
-            {
-                reason = "the run beyond the level started inside the trend";
-                return false;
-            }
-            if (rank > allowed)
-            {
-                reason = $"this is number {rank} of the run, {allowed} is the limit";
-                return false;
-            }
-            reason = "";
-            text = SignalSide == CryptoTradeSide.Long
-                ? $"new high number {rank} of the run beyond the resistance"
-                : $"new low number {rank} of the run beyond the support";
-            return true;
         }
 
         // Where the level comes from: the symmetric price pivot, or the candle the RSI turned on.

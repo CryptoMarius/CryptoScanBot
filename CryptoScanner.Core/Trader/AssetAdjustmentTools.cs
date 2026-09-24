@@ -37,7 +37,9 @@ public static class AssetAdjustmentTools
 
         try
         {
-            decimal price = AssetSnapshotTools.ResolvePrice(activeExchange, name);
+            // Resolved once: the coin the price is expressed in has to be the coin the row says it is
+            string referenceCoin = AssetSnapshotTools.ResolveReferenceCoin();
+            decimal price = AssetSnapshotTools.ResolvePrice(activeExchange, name, referenceCoin);
             CryptoAssetAdjustment adjustment = new()
             {
                 EmulatorRunId = GlobalData.CurrentEmulatorRunId,
@@ -47,7 +49,7 @@ public static class AssetAdjustmentTools
                 OldTotal = oldTotal,
                 NewTotal = newTotal,
                 Quantity = newTotal - oldTotal,
-                ReferenceCoin = AssetSnapshotTools.ReferenceCoin,
+                ReferenceCoin = referenceCoin,
                 Price = price,
                 Value = (newTotal - oldTotal) * price,
             };

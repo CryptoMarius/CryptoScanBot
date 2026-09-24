@@ -12,7 +12,7 @@ public class MacConfigView : IConfigView
 
     // The same two strings the header of StrategyMacTabView.axaml shows.
     public string StrategyTitle => "MAC – Moving average cloud";
-    public string StrategyDescription => "A four-line moving-average cloud sets the trend; entries on the cloud cross, on a break through the last pivot level, or on a pullback to the fast line";
+    public string StrategyDescription => "A four-line moving-average cloud sets the trend; entries on the cloud cross, on a break through the last pivot level, on a pullback to the fast line, or on the second line crossing the third";
     public string WikiUrl => "https://github.com/CryptoMarius/CryptoScanBot/wiki/Moving-Average-Cloud-(MAC)";
 
     public object CreateSettingsView()

@@ -1,4 +1,4 @@
-﻿#if DEBUG
+#if DEBUG
 using CryptoScanner.Analyzers.Choch.Signal;
 #endif
 using CryptoScanner.Core.Const;
@@ -109,7 +109,8 @@ public static class EmulatorDb
     /// tagged with it. Call once at run start.
     /// </summary>
     public static CryptoEmulatorRun StartRun(string configJson, DateTime fromDate, DateTime toDate,
-        string label = "", string? settingsJson = null, string? gitSha = null)
+        string label = "", string? settingsJson = null, string? gitSha = null,
+        DateTime? buildStamp = null)
     {
         using var database = new CryptoDatabase();
         database.Open();
@@ -123,6 +124,7 @@ public static class EmulatorDb
             ConfigJson = configJson,
             SettingsJson = settingsJson,
             GitSha = gitSha,
+            BuildStamp = buildStamp,
         };
         run.Id = (int)database.Connection.Insert(run);
 

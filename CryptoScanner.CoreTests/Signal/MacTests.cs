@@ -50,8 +50,11 @@ public class MacTests : TestBase
     {
         MacSettings fresh = new();
         settings.EntryOnBreakout = fresh.EntryOnBreakout;
+        settings.EntryOnSecondLineCross = fresh.EntryOnSecondLineCross;
         settings.EntryOnCloudCross = fresh.EntryOnCloudCross;
         settings.EntryOnSpringboard = fresh.EntryOnSpringboard;
+        settings.EntryOnLineCross = fresh.EntryOnLineCross;
+        settings.Speed = fresh.Speed;
         settings.FastEmaLength = fresh.FastEmaLength;
         settings.SecondEmaLength = fresh.SecondEmaLength;
         settings.MediumSmaLength = fresh.MediumSmaLength;
@@ -223,6 +226,102 @@ public class MacTests : TestBase
 
         Assert.IsTrue(crossings > 2, "the series should cross a few times, found " + crossings);
         Assert.AreEqual(crossings, labels.Count, "a marker was drawn without a crossing");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  Entering on the close crossing the second line
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>Only this trigger on, so nothing else can account for the signal.</summary>
+    private static void OnlyTheSecondLineCross()
+    {
+        MacSettings settings = MacPlugin.Settings;
+        settings.EntryOnBreakout = false;
+        settings.EntryOnBreakoutRun = false;
+        settings.EntryOnCloudCross = false;
+        settings.EntryOnSpringboard = false;
+        settings.EntryOnLineCross = false;
+        settings.EntryOnSecondLineCross = true;
+    }
+
+
+    /// <summary>
+    /// The reference draws "Close Short" when the close crosses UP through the second line. Read as
+    /// an entry that is a LONG: what closes a short opens a long.
+    /// </summary>
+    [TestMethod]
+    public void ACloseCrossingUpThroughTheSecondLine_IsALong()
+    {
+        OnlyTheSecondLineCross();
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
+        {
+            candles[1].Close = 98m;     // under the second line, which sits at 98.5
+            candles[0].Close = 99m;     // and through it, without reaching the level at 101
+        });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "close crossed over the second line");
+    }
+
+
+    /// <summary>The mirror: the close falling through the second line opens a short.</summary>
+    [TestMethod]
+    public void ACloseCrossingDownThroughTheSecondLine_IsAShort()
+    {
+        OnlyTheSecondLineCross();
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough, shapeCandles: candles =>
+        {
+            candles[1].Close = 102m;    // above the second line, which sits at 101.5
+            candles[0].Close = 101m;
+        });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "close crossed under the second line");
+    }
+
+
+    /// <summary>
+    /// And it fires while the CLOUD still points the other way, which is the whole point: this is
+    /// the marker that closes the opposite position, so the cloud is by definition against us. Every
+    /// other trigger but the line cross is blocked there.
+    /// </summary>
+    [TestMethod]
+    public void ItFiresEvenWhileTheCloudStillPointsTheOtherWay()
+    {
+        OnlyTheSecondLineCross();
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: mac =>
+            {
+                foreach (MacCandleData one in mac)
+                {
+                    // the fast line UNDER the second one: a cloud pointing down, against a long
+                    one.EmaFast = 98.0;
+                    one.EmaSecond = 98.5;
+                }
+            },
+            shapeCandles: candles =>
+            {
+                candles[1].Close = 98m;
+                candles[0].Close = 99m;
+            });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+    }
+
+
+    /// <summary>A close that stays on its own side of the line is nothing.</summary>
+    [TestMethod]
+    public void ACloseThatStaysUnderTheSecondLine_IsNoSignal()
+    {
+        OnlyTheSecondLineCross();
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
+        {
+            candles[1].Close = 98m;
+            candles[0].Close = 98.2m;   // still under the second line at 98.5
+        });
+
+        Assert.IsFalse(algorithm.IsSignal());
     }
 
 
@@ -594,6 +693,85 @@ public class MacTests : TestBase
 
 
     // ═══════════════════════════════════════════════════════════════════════
+    //  The line cross - the second line through the third
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// The second line closing above the third is the cross. It is its own trigger, so no level has
+    /// to give way and the price may sit anywhere.
+    /// </summary>
+    [TestMethod]
+    public void TheSecondLineClosingOverTheThird_IsALong()
+    {
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnLineCross = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: mac =>
+            {
+                // The candle before still had the second line under the third.
+                mac[1].EmaSecond = 97.5;
+            });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "second line crossed over the third");
+    }
+
+
+    /// <summary>
+    /// The whole point of this trigger: it fires while the cloud still points the OTHER way. The
+    /// second line gives way before the fast one does, and a test for the cloud first would make
+    /// the trigger unreachable - which is exactly what happened on 22-09-2026 before this test.
+    /// </summary>
+    [TestMethod]
+    public void TheLineCrossFiresWhileTheCloudStillPointsDown()
+    {
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnLineCross = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: mac =>
+            {
+                mac[1].EmaSecond = 97.5;
+                // The fast line under the second one: the cloud of a short, not of a long.
+                mac[0].EmaFast = 98.2;
+            });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+    }
+
+
+    /// <summary>Two lines that stay on their own side of each other are no cross.</summary>
+    [TestMethod]
+    public void TwoLinesThatDoNotMeet_AreNoLineCross()
+    {
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnLineCross = true;
+        // The default series has the second line above the third on BOTH candles.
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
+
+        Assert.IsFalse(algorithm.IsSignal());
+        StringAssert.Contains(algorithm.ExtraText, "stayed on its side of the third");
+    }
+
+
+    /// <summary>The short side, mirrored: the second line closing under the third.</summary>
+    [TestMethod]
+    public void TheSecondLineClosingUnderTheThird_IsAShort()
+    {
+        MacPlugin.Settings.EntryOnBreakout = false;
+        MacPlugin.Settings.EntryOnLineCross = true;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough,
+            shape: mac =>
+            {
+                // The candle before still had the second line over the third.
+                mac[1].EmaSecond = 102.5;
+            });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "second line crossed under the third");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
     //  The slow line - the trend filter
     // ═══════════════════════════════════════════════════════════════════════
 
@@ -888,6 +1066,50 @@ public class MacIndicatorExtensionTests : TestBase
         Assert.AreEqual(40, fresh.SecondEmaLength, "second line is EMA(40)");
         Assert.AreEqual(50, fresh.MediumSmaLength, "third line is SMA(50)");
         Assert.AreEqual(150, fresh.SlowSmaLength, "slow line is SMA(150)");
+        Assert.AreEqual(MacSpeed.Standard, fresh.Speed, "and the speed they belong to");
+    }
+
+
+    /// <summary>
+    /// The three speeds of the reference indicator, each measured off its status line and fitted
+    /// against our own candles to the cent. The first line does not move.
+    /// </summary>
+    [TestMethod]
+    public void EachSpeedHasTheLengthsMeasuredOffTheReference()
+    {
+        MacSettings settings = new() { Speed = MacSpeed.Standard };
+        Assert.AreEqual((20, 40, 50, 150), settings.Lines(), "Standard");
+
+        settings.Speed = MacSpeed.Fast;
+        Assert.AreEqual((20, 30, 40, 80), settings.Lines(), "Fast");
+
+        settings.Speed = MacSpeed.Slow;
+        Assert.AreEqual((20, 50, 100, 200), settings.Lines(), "Slow");
+    }
+
+
+    /// <summary>
+    /// Choosing a speed may NOT write the four numbers: a setting that quietly changes another one
+    /// is how a strategy ends up with a state nobody set. Only Custom reads them.
+    /// </summary>
+    [TestMethod]
+    public void TheSpeedLeavesTheFourNumbersAlone()
+    {
+        MacSettings settings = new()
+        {
+            Speed = MacSpeed.Slow,
+            FastEmaLength = 9,
+            SecondEmaLength = 21,
+            MediumSmaLength = 34,
+            SlowSmaLength = 55,
+        };
+
+        Assert.AreEqual((20, 50, 100, 200), settings.Lines(), "the preset decides");
+        Assert.AreEqual(9, settings.FastEmaLength, "and the numbers are untouched");
+        Assert.AreEqual(55, settings.SlowSmaLength, "all four of them");
+
+        settings.Speed = MacSpeed.Custom;
+        Assert.AreEqual((9, 21, 34, 55), settings.Lines(), "until the speed hands over to them");
     }
 
 

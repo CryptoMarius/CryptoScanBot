@@ -57,8 +57,7 @@ public class MacIndicatorExtension : IIndicatorExtension
     private const int BreakRangeCandles = 14;       // candles in the average candle size
     private const int BreakVolumeCandles = 20;      // candles in the average volume
     private const double BreakVolumeShare = 1.0;    // the candle needs at least the average
-    private const double BreakLevelNear = 1.4;      // the level at least this far from the slow line
-    private const double BreakLevelFar = 5.35;      // and at most this far, both in candle sizes
+    private const double BreakSlowDistance = 2.0;   // average candle sizes past the slow line
     private readonly decimal[] _breakRanges = new decimal[BreakRangeCandles];
     private readonly decimal[] _breakVolumes = new decimal[BreakVolumeCandles];
     private long _breakSeen;
@@ -95,11 +94,10 @@ public class MacIndicatorExtension : IIndicatorExtension
 
         // Clamped rather than trusted: a second line that is not slower than the first would give a
         // crossing without meaning, and a slow line shorter than the medium one the same.
-        var lengths = settings.Lines();
-        int fast = Math.Max(1, lengths.Fast);
-        int second = Math.Max(fast + 1, lengths.Second);
-        int medium = Math.Max(2, lengths.Medium);
-        int slow = Math.Max(medium + 1, lengths.Slow);
+        int fast = Math.Max(1, settings.FastEmaLength);
+        int second = Math.Max(fast + 1, settings.SecondEmaLength);
+        int medium = Math.Max(2, settings.MediumSmaLength);
+        int slow = Math.Max(medium + 1, settings.SlowSmaLength);
 
         _emaFast = registry.Ema(fast);
         _emaSecond = registry.Ema(second);
@@ -226,10 +224,10 @@ public class MacIndicatorExtension : IIndicatorExtension
     /// <summary>
     /// The runs beyond a level, one per side, and where inside such a run a break marker belongs.
     /// <para>
-    /// Two layers, both settled here. A run EARNS marks when the LEVEL it breaks stands inside a
-    /// band around the trend - between <see cref="BreakLevelNear"/> and <see cref="BreakLevelFar"/>
-    /// average candle sizes from the slow line - and that verdict is then held for the whole run.
-    /// Inside a run the marks go on the candles that make a new extreme of it, counted from one.
+    /// Two layers, both settled here. A run EARNS marks when its very first candle already stands
+    /// clear of the trend - more than <see cref="BreakSlowDistance"/> average candle sizes past
+    /// the slow line - and that verdict is then held for the whole run. Inside a run the marks go
+    /// on the candles that make a new extreme of it, counted from one.
     /// </para>
     /// <para>
     /// Both numbers come from measurement against the reference indicator, not from taste: over
@@ -269,7 +267,7 @@ public class MacIndicatorExtension : IIndicatorExtension
             open = true;
             rank = 0;
             reach = up ? double.MinValue : double.MaxValue;
-            allowed = RunIsWorthMarking(level.Value, up);
+            allowed = RunIsWorthMarking(close, up);
         }
         if (up ? close <= reach : close >= reach)
             return 0;
@@ -287,37 +285,7 @@ public class MacIndicatorExtension : IIndicatorExtension
         // marked or not, so a quiet one does not hand its number to the candle after it.
         if (!EnoughVolume())
             return 0;
-
-        // And the SECOND line has to stand on the break's side of the slow line. A break away from
-        // the trend is one the reference does not mark, and this is the sharpest way it says so: of
-        // every break marker it draws on eleven coins over four timeframes, not one has the second
-        // line on the wrong side - 203 of 203 on fifteen minutes, 140 of 140 on five, and all of
-        // them on four hours and daily. Of the candles it does NOT mark, a fifth do.
-        //
-        // What it buys, against the rule without it: 62 false marks fewer for one marker given up,
-        // and it pulls the same way on all four sets - 195 false becomes 172, 189 becomes 177, 105
-        // becomes 83 and 49 becomes 44.
-        if (!SecondLineWithTheBreak(up))
-            return 0;
         return rank;
-    }
-
-
-    /// <summary>
-    /// Whether the second line stands on the side of the slow line the break is going.
-    /// <para>
-    /// The fast line against the slow one says the same thing and says it more weakly: it is free -
-    /// no marker given up at all - but it removes 26 false marks where this removes 62. Both were
-    /// measured; this one is in.
-    /// </para>
-    /// </summary>
-    private bool SecondLineWithTheBreak(bool up)
-    {
-        double? second = _emaSecond?.Results.Count > 0 ? _emaSecond.Results[^1].Ema : null;
-        double? slow = _smaSlow?.Results.Count > 0 ? _smaSlow.Results[^1].Sma : null;
-        if (second == null || slow == null)
-            return false;
-        return up ? second.Value > slow.Value : second.Value < slow.Value;
     }
 
 
@@ -338,41 +306,30 @@ public class MacIndicatorExtension : IIndicatorExtension
 
 
     /// <summary>
-    /// Whether a run that starts on this candle deserves marks at all: does the level it breaks
-    /// stand a sensible distance from the trend?
+    /// Whether a run that starts on this candle deserves marks at all: is the price already clear
+    /// of the trend when the level gives way?
     /// <para>
-    /// This is a BAND and that is the whole point. Until 23 September 2026 it was a floor on the
-    /// distance from the CLOSE to the slow line, and that number barely separates the runs the
-    /// reference marks from the ones it leaves alone - over eleven coins the median is 3.98 for
-    /// the marked ones against 3.89 for the rest. A floor cannot see the other half of the shape:
-    /// a level that has already been left far behind belongs to a move that has happened, and the
-    /// reference does not draw that one either.
+    /// A second condition used to stand here - one and a half candle sizes past the far edge of
+    /// the cloud - and it is gone. Measured both ways with the same code, it turns out to be a
+    /// WASH rather than a win. Of the 203 break markers the reference draws over eleven coins on
+    /// fifteen minute candles, with the cloud condition we hit 134 and fire 253 that are not
+    /// drawn; without it we hit 139 and fire 264. On the four coin five minute set, of 140 drawn,
+    /// 76 hit against 252 false becomes 79 hit against 274 false - three markers bought with
+    /// twenty-two false ones, which is the worse trade of the two. It is out because one condition
+    /// beats two when they perform the same, not because it measured better.
     /// </para>
     /// <para>
-    /// Two measures were searched over 384 runs on eleven coins at fifteen minutes and judged on
-    /// 322 runs on four coins at five minutes, thresholds always taken from the OTHER set. The
-    /// distance from the LEVEL to the slow line won: it keeps more of the drawn markers and it
-    /// travels better. Against the floor it replaces, counting markers on the exact candle:
-    /// </para>
-    /// <list type="bullet">
-    /// <item>fifteen minutes, 203 drawn: 139 hit and 272 false becomes 126 hit and 179 false;</item>
-    /// <item>five minutes, 140 drawn: 79 hit and 283 false becomes 73 hit and 162 false.</item>
-    /// </list>
-    /// <para>
-    /// The band also takes out the direction skew that the floor had, and it does so by
-    /// construction: the runs that stood absurdly far under the slow line in a falling market are
-    /// exactly what the upper bound removes. False marks per drawn marker were 1.19 up against
-    /// 1.46 down and are now 0.87 against 0.89. The normalised measure that was built for that
-    /// skew - the distance against its own hundred candle average - is no longer needed and is not
-    /// in the code.
-    /// </para>
-    /// <para>
-    /// The thresholds are the MIDDLE of the two searches (1.59 and 5.55 on fifteen minutes, 1.29
-    /// and 5.14 on five), so neither set got its own optimum. Still an approximation, not the
-    /// rule - see Mac.md.
+    /// KNOWN BIAS, and it belongs with this condition. The distance is measured in average candle
+    /// sizes, which is blind to direction while the distance itself is not: over 4 to 14 September
+    /// the median stood 4.50 candle sizes UNDER the slow line against 2.99 over it, because most
+    /// coins fell. A fixed threshold therefore lets a fifth more stretches through on the short
+    /// side, and the scanner fires 1.45 false marks per drawn Breakdown against 1.12 per Breakout.
+    /// Measuring the distance against its own recent average instead takes the bias out - 0.76
+    /// against 0.82 - but costs a third of the agreement on five minute candles, so it was not
+    /// built. See Mac.md.
     /// </para>
     /// </summary>
-    private bool RunIsWorthMarking(double level, bool up)
+    private bool RunIsWorthMarking(double close, bool up)
     {
         if (_breakSeen < BreakRangeCandles)
             return false;
@@ -388,8 +345,7 @@ public class MacIndicatorExtension : IIndicatorExtension
             return false;
 
         double sign = up ? 1.0 : -1.0;
-        double distance = sign * (level - slow.Value) / span;
-        return distance > BreakLevelNear && distance < BreakLevelFar;
+        return sign * (close - slow.Value) / span > BreakSlowDistance;
     }
 
 

@@ -15,31 +15,6 @@ namespace CryptoScanner.Analyzers.Mac;
 /// </para>
 /// </summary>
 [Serializable]
-/// <summary>
-/// The three speeds the reference indicator offers, plus one for our own numbers.
-/// <para>
-/// The reference has exactly ONE setting - "TBO Speed" - and all it does is move three of the four
-/// moving average lengths. Read off its status line on two candles of thirty minute bitcoin and
-/// fitted against our own candles, every number lands on one length to the cent. The FIRST line
-/// does not move: it is EMA(20) on all three.
-/// </para>
-/// </summary>
-public enum MacSpeed
-{
-    /// <summary>EMA(20), EMA(40), SMA(50), SMA(150).</summary>
-    Standard,
-
-    /// <summary>EMA(20), EMA(30), SMA(40), SMA(80).</summary>
-    Fast,
-
-    /// <summary>EMA(20), EMA(50), SMA(100), SMA(200).</summary>
-    Slow,
-
-    /// <summary>The four lengths below, whatever they are set to.</summary>
-    Custom,
-}
-
-
 public class MacSettings : SettingsSignalStrategyBase
 {
     // NOTE: the declaration order below is the order the settings appear on screen, and it follows
@@ -54,76 +29,10 @@ public class MacSettings : SettingsSignalStrategyBase
     public bool EntryOnBreakout { get; set; } = true;
 
     /// <summary>
-    /// Read the breakout the way the reference indicator draws it instead of on the crossing candle.
-    /// <para>
-    /// The crossing candle is the obvious reading and it is the wrong one: measured against the
-    /// reference over four coins it agrees with 17 of its 95 break markers on five minute candles
-    /// and fires 228 times. What the reference actually marks are the candles that make a NEW
-    /// EXTREME within an unbroken stretch beyond the level - the first three of them - and only in
-    /// stretches that began with the price already clear of the trend. That reading agrees with 44
-    /// of the 95, and holds up on daily candles as well.
-    /// </para>
-    /// <para>
-    /// Off by default: it is a better approximation of the reference, not a measured improvement of
-    /// the result. Turn it on to measure it. See Mac.md.
-    /// </para>
-    /// </summary>
-    [SettingCaption("Breakout as a run, not a crossing",
-        Tooltip = "Enter on the first three candles that make a new extreme within a stretch beyond "
-            + "the level, instead of on the candle that crosses it. Closer to what the reference "
-            + "indicator draws. Needs 'Entry on breakout' to be on.")]
-    public bool EntryOnBreakoutRun { get; set; } = false;
-
-    /// <summary>
-    /// How many candles of one stretch beyond the level may carry a break entry, when
-    /// <see cref="EntryOnBreakoutRun"/> is on.
-    /// <para>
-    /// FOUR, not three. Three was read off the five minute charts, where the reference does not
-    /// seem to go beyond it, and four harvests together say otherwise - it is better on every one
-    /// of them, which is as close to proof as this investigation gets:
-    /// </para>
-    /// <list type="bullet">
-    /// <item>fifteen minutes: 126 hit and 179 false becomes 138 and 195;</item>
-    /// <item>five minutes: 73 and 162 becomes 84 and 189;</item>
-    /// <item>four hours: 29 and 90 becomes 35 and 105;</item>
-    /// <item>daily: 30 and 39 becomes 34 and 49.</item>
-    /// </list>
-    /// <para>
-    /// Five is better again on fifteen minutes and flat everywhere else, so it is not taken. How
-    /// far a stretch runs is very much a property of the market: over the four hour set a marked
-    /// stretch holds a median of SEVEN new extremes against two on fifteen minutes, which is why
-    /// this cap costs the most there - see Mac.md.
-    /// </para>
-    /// </summary>
-    [SettingCaption("Breakout entries per run",
-        Tooltip = "At most this many entries inside one stretch beyond the level. Four is the best "
-            + "of it over four different timeframes.")]
-    public int BreakoutEntriesPerRun { get; set; } = 4;
-
-    /// <summary>
     /// Fire on the cloud turning: the fast EMA closing above the second one for a long, under it for
     /// a short. A different idea from the level break - the turn itself instead of a level that
     /// gives way - which is why each trigger has its own switch and they are measured apart.
     /// </summary>
-    /// <summary>
-    /// Enter on the close crossing the SECOND line the way this side trades.
-    /// <para>
-    /// This is the marker the reference draws to CLOSE the opposite position: its "Close Long" is
-    /// the close falling through the second line, so entering a short on it is entering on what
-    /// closes a long. A long entry wants the mirror of that, the reference's "Close Short".
-    /// </para>
-    /// <para>
-    /// It is the only trigger besides the line cross that fires while the cloud still points the
-    /// other way, so it is exempt from that check - see MacBase.IsSignal. Of the eight markers the
-    /// reference draws these two are reconstructed to within a few per cent, which is why they are
-    /// worth trading on at all.
-    /// </para>
-    /// </summary>
-    [SettingCaption("Entry on close crossing the second line",
-        Tooltip = "Enter when the close crosses the second line this side's way. That is the "
-            + "marker the reference draws to close the opposite position.")]
-    public bool EntryOnSecondLineCross { get; set; } = false;
-
     [SettingCaption("Entry on cloud cross",
         Tooltip = "Fire when the fast EMA crosses the second one: above it for a long, under it for "
             + "a short. A separate trigger from the breakout; both may be on at the same time.")]
@@ -160,35 +69,6 @@ public class MacSettings : SettingsSignalStrategyBase
     public bool EntryOnLineCross { get; set; } = false;
 
     /// <summary>
-    /// Which set of lengths the four lines use.
-    /// <para>
-    /// This does NOT write the four numbers below: nothing here quietly changes another setting.
-    /// The speed and the numbers are read together in <see cref="Lines"/>, and the numbers are
-    /// what counts only on <see cref="MacSpeed.Custom"/>.
-    /// </para>
-    /// </summary>
-    [SettingCaption("Line speed", SeparatorBefore = true, SubHeader = "Cloud",
-        Tooltip = "The three speeds of the reference indicator. Standard is 20/40/50/150, Fast is "
-            + "20/30/40/80, Slow is 20/50/100/200. Choose Custom to use the four numbers below.")]
-    public MacSpeed Speed { get; set; } = MacSpeed.Standard;
-
-    /// <summary>
-    /// The four lengths the lines are actually built from: the preset of <see cref="Speed"/>, or
-    /// the four settings below when that is <see cref="MacSpeed.Custom"/>.
-    /// <para>
-    /// One place decides this, so the indicator and the chart overlay cannot drift apart. Clamping
-    /// stays where it was, at the two places that build the lines.
-    /// </para>
-    /// </summary>
-    public (int Fast, int Second, int Medium, int Slow) Lines() => Speed switch
-    {
-        MacSpeed.Fast => (20, 30, 40, 80),
-        MacSpeed.Slow => (20, 50, 100, 200),
-        MacSpeed.Custom => (FastEmaLength, SecondEmaLength, MediumSmaLength, SlowSmaLength),
-        _ => (20, 40, 50, 150),
-    };
-
-    /// <summary>
     /// The fast line: EMA(20) on the close. A pullback bounces off this one, and it is the first
     /// half of the crossing that drives the cross trigger.
     /// <para>
@@ -196,24 +76,21 @@ public class MacSettings : SettingsSignalStrategyBase
     /// changing one of them.
     /// </para>
     /// </summary>
-    [SettingCaption("Fast EMA", Indented = true,
-        Tooltip = "The fast line, EMA(20) on the close. Counts only when the speed is "
-            + "Custom. The four lengths belong together.")]
+    [SettingCaption("Fast EMA", SeparatorBefore = true, SubHeader = "Cloud",
+        Tooltip = "The fast line, EMA(20) on the close. The four lengths belong together.")]
     public int FastEmaLength { get; set; } = 20;
 
     /// <summary>
     /// The second line: EMA(40) on the close. The fast line crossing THIS one is the cross trigger.
     /// </summary>
-    [SettingCaption("Second EMA", Indented = true,
+    [SettingCaption("Second EMA",
         Tooltip = "The second line, EMA(40) on the close. The fast line crossing this one is the "
-            + "cross trigger."
-            + " Counts only when the speed is Custom.")]
+            + "cross trigger.")]
     public int SecondEmaLength { get; set; } = 40;
 
     /// <summary>The third line: SMA(50) on the close.</summary>
-    [SettingCaption("Medium SMA", Indented = true,
-        Tooltip = "The third line, SMA(50) on the close."
-            + " Counts only when the speed is Custom.")]
+    [SettingCaption("Medium SMA",
+        Tooltip = "The third line, SMA(50) on the close.")]
     public int MediumSmaLength { get; set; } = 50;
 
     /// <summary>
@@ -225,9 +102,8 @@ public class MacSettings : SettingsSignalStrategyBase
     /// A test fails when one of the defaults moves, so changing one is always a deliberate act.
     /// </para>
     /// </summary>
-    [SettingCaption("Slow SMA", Indented = true,
-        Tooltip = "The slow line, SMA(150) on the close, whose slope drives the trend filter."
-            + " Counts only when the speed is Custom.")]
+    [SettingCaption("Slow SMA",
+        Tooltip = "The slow line, SMA(150) on the close, whose slope drives the trend filter.")]
     public int SlowSmaLength { get; set; } = 150;
 
     /// <summary>

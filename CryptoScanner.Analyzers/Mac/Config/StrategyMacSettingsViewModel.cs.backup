@@ -1,5 +1,3 @@
-using System;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CryptoScanner.Analyzers.Mac.Config;
@@ -10,15 +8,6 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
     private bool _entryOnBreakout = true;
 
     [ObservableProperty]
-    private bool _entryOnBreakoutRun = false;
-
-    [ObservableProperty]
-    private int _breakoutEntriesPerRun = 3;
-
-    [ObservableProperty]
-    private bool _entryOnSecondLineCross = false;
-
-    [ObservableProperty]
     private bool _entryOnCloudCross = false;
 
     [ObservableProperty]
@@ -26,12 +15,6 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _entryOnLineCross = false;
-
-    /// <summary>The three speeds of the reference indicator, plus Custom for the four numbers.</summary>
-    public static MacSpeed[] Speeds { get; } = Enum.GetValues<MacSpeed>();
-
-    [ObservableProperty]
-    private MacSpeed _speed = MacSpeed.Standard;
 
     [ObservableProperty]
     private int _fastEmaLength = 20;
@@ -115,13 +98,9 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
     public void LoadConfig(MacSettings settings)
     {
         EntryOnBreakout = settings.EntryOnBreakout;
-        EntryOnBreakoutRun = settings.EntryOnBreakoutRun;
-        BreakoutEntriesPerRun = settings.BreakoutEntriesPerRun;
-        EntryOnSecondLineCross = settings.EntryOnSecondLineCross;
         EntryOnCloudCross = settings.EntryOnCloudCross;
         EntryOnSpringboard = settings.EntryOnSpringboard;
         EntryOnLineCross = settings.EntryOnLineCross;
-        Speed = settings.Speed;
         FastEmaLength = settings.FastEmaLength;
         SecondEmaLength = settings.SecondEmaLength;
         MediumSmaLength = settings.MediumSmaLength;
@@ -153,13 +132,9 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
     public void SaveConfig(MacSettings settings)
     {
         settings.EntryOnBreakout = EntryOnBreakout;
-        settings.EntryOnBreakoutRun = EntryOnBreakoutRun;
-        settings.BreakoutEntriesPerRun = BreakoutEntriesPerRun;
-        settings.EntryOnSecondLineCross = EntryOnSecondLineCross;
         settings.EntryOnCloudCross = EntryOnCloudCross;
         settings.EntryOnSpringboard = EntryOnSpringboard;
         settings.EntryOnLineCross = EntryOnLineCross;
-        settings.Speed = Speed;
         settings.FastEmaLength = FastEmaLength;
         settings.SecondEmaLength = SecondEmaLength;
         settings.MediumSmaLength = MediumSmaLength;

@@ -71,31 +71,6 @@ public sealed class MacCandleData
     /// <summary>How many candles ago that RSI support sits.</summary>
     public int RsiLevelLowAge { get; set; }
 
-    /// <summary>
-    /// Which new high this candle is within the current run beyond the resistance, counted from
-    /// one, or zero when the close is not beyond the level or does not better the run's own high.
-    /// <para>
-    /// A run is the unbroken stretch of candles whose close stands beyond the level. Measured
-    /// against the reference indicator over four coins, its break marker lands on a candle that
-    /// makes a new high of such a run in 87 of 98 cases - 35% of those candles carry one against
-    /// 4% of all the others - and never later than the eighth, almost always the first three.
-    /// </para>
-    /// </summary>
-    public int BreakoutRank { get; set; }
-
-    /// <summary>
-    /// Whether the run this candle belongs to was worth marking at all, judged on its FIRST candle
-    /// and then held for the whole run. Of 251 runs the reference marks 54, so this is where the
-    /// selection happens; the rank above only says where inside a run the marks go.
-    /// </summary>
-    public bool BreakoutRunAllowed { get; set; }
-
-    /// <summary>The same count on the other side: new lows within a run beyond the support.</summary>
-    public int BreakdownRank { get; set; }
-
-    /// <summary>The same judgement on the other side.</summary>
-    public bool BreakdownRunAllowed { get; set; }
-
     /// <summary>The highest of the four lines at this candle, or null while they are warming up.</summary>
     public double? CloudTop
     {

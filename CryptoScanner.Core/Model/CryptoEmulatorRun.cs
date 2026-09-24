@@ -1,4 +1,4 @@
-﻿using Dapper.Contrib.Extensions;
+using Dapper.Contrib.Extensions;
 
 namespace CryptoScanner.Core.Model;
 
@@ -37,6 +37,17 @@ public class CryptoEmulatorRun
 
     // Build identification (git short SHA, optional).
     public string? GitSha { get; set; }
+
+    // When the binary that ran this was built, as the write time of its own assembly file.
+    // <para>
+    // The git SHA answers this question only when the emulator runs from a working copy AND the
+    // change was committed - on this machine it is filled for 65 of 1473 runs and for none of the
+    // MAC ones. A stamp compiled into a source file would answer it always, but it would change a
+    // tracked file on every build. The file date of the executable costs nothing, changes by
+    // itself with every build, and is enough to tell "was this run made before or after that
+    // repair" - which is the question that actually gets asked.
+    // </para>
+    public DateTime? BuildStamp { get; set; }
 
     // "completed", "cancelled", "failed: <reason>" — set when the run ends.
     public string? Result { get; set; }

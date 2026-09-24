@@ -36,6 +36,10 @@ public class MacChartOverlay : IChartOverlay
     public const string KeyOpenShort = "macOpenShort";
     public const string KeyBreakout = "macBreakout";
     public const string KeyBreakdown = "macBreakdown";
+    public const string KeyCrossUp = "macCrossUp";
+    public const string KeyCrossDown = "macCrossDown";
+    public const string KeyCloseLong = "macCloseLong";
+    public const string KeyCloseShort = "macCloseShort";
 
     /// <summary>
     /// What this overlay draws and how it looks by default. The colour screen builds its MAC section
@@ -55,10 +59,21 @@ public class MacChartOverlay : IChartOverlay
         new() { Key = KeySupport, Label = "Support", Color = "#FF66BB6A", LineStyle = 1 },
         new() { Key = KeyCloudUp, Label = "Cloud up", Color = "#4D53A092", IsFill = true },
         new() { Key = KeyCloudDown, Label = "Cloud down", Color = "#4DB1648C", IsFill = true },
-        new() { Key = KeyOpenLong, Label = "Open long marker", Color = "#FF4CAF50" },
-        new() { Key = KeyOpenShort, Label = "Open short marker", Color = "#FFEF5350" },
+        // The two entry markers carry the colours of the Pine script, so the same marker has the
+        // same colour on this chart and on TradingView. They used to be a plain green and red,
+        // which read well on their own but made the pair impossible to lay side by side. The short
+        // is therefore MAGENTA rather than red - that is the reference's own colour for it.
+        new() { Key = KeyOpenLong, Label = "Open long marker", Color = "#FF00E676" },
+        new() { Key = KeyOpenShort, Label = "Open short marker", Color = "#FFE040FB" },
         new() { Key = KeyBreakout, Label = "Breakout marker", Color = "#FFFFFFFF" },
         new() { Key = KeyBreakdown, Label = "Breakdown marker", Color = "#FFD4E157" },
+        // The four colours the reference uses for these, read off its own style screen: a
+        // green and a red cross for the line crossing, a blue and an orange diamond for the
+        // exit.
+        new() { Key = KeyCrossUp, Label = "Cross up marker", Color = "#FF00D96F" },
+        new() { Key = KeyCrossDown, Label = "Cross down marker", Color = "#FFFF5252" },
+        new() { Key = KeyCloseLong, Label = "Close long marker", Color = "#FF2962FF" },
+        new() { Key = KeyCloseShort, Label = "Close short marker", Color = "#FFF59200" },
     ];
 
 
@@ -286,6 +301,112 @@ public class MacChartOverlay : IChartOverlay
 
         chart.Series.Add(breakoutDots);
         chart.Series.Add(breakdownDots);
+
+        // The line crossing and the exit, on the side of the candle the reference puts them:
+        // Cross Up and Close Long over the bar, Cross Down and Close Short under it.
+        var crossUp = Marks("mac.cross.up", MarkerType.Cross, KeyCrossUp, group);
+        var crossDown = Marks("mac.cross.down", MarkerType.Cross, KeyCrossDown, group);
+        foreach ((int index, bool up) in FindLineCrossings(values))
+        {
+            CandleTime openTime = CandleTime.AlignFromDateTime(candles[index].Date, interval.Duration);
+            if (openTime < minDate || openTime > maxDate)
+                continue;
+            double x = openTime.Minutes;
+            if (up)
+                crossUp.Points.Add(new ScatterPoint(x, (double)candles[index].High * (1 + MarkerGap)));
+            else
+                crossDown.Points.Add(new ScatterPoint(x, (double)candles[index].Low * (1 - MarkerGap)));
+        }
+        chart.Series.Add(crossUp);
+        chart.Series.Add(crossDown);
+
+        var closeLong = Marks("mac.close.long", MarkerType.Diamond, KeyCloseLong, group);
+        var closeShort = Marks("mac.close.short", MarkerType.Diamond, KeyCloseShort, group);
+        foreach ((int index, bool longSide) in FindExits(values, candles))
+        {
+            CandleTime openTime = CandleTime.AlignFromDateTime(candles[index].Date, interval.Duration);
+            if (openTime < minDate || openTime > maxDate)
+                continue;
+            double x = openTime.Minutes;
+            if (longSide)
+                closeLong.Points.Add(new ScatterPoint(x, (double)candles[index].High * (1 + MarkerGap)));
+            else
+                closeShort.Points.Add(new ScatterPoint(x, (double)candles[index].Low * (1 - MarkerGap)));
+        }
+        chart.Series.Add(closeLong);
+        chart.Series.Add(closeShort);
+    }
+
+
+    /// <summary>One marker series, so the four below read as four lines instead of forty.</summary>
+    private ScatterSeries Marks(string title, MarkerType shape, string key, object? group) => new()
+    {
+        Title = title,
+        MarkerType = shape,
+        MarkerSize = 4,
+        MarkerFill = DefaultColor(key),
+        MarkerStroke = DefaultColor(key),
+        MarkerStrokeThickness = 1.5,
+        YAxisKey = "price",
+        Tag = group,
+    };
+
+
+    /// <summary>
+    /// The second line crossing the third: EMA(40) through SMA(50), which is the reference's Cross
+    /// Up and Cross Down. It runs AHEAD of the cloud cross, so it is drawn even while the cloud
+    /// still points the other way. Counted against the chart over four coins it misses none.
+    /// </summary>
+    private static IEnumerable<(int Index, bool Up)> FindLineCrossings(MacLineValues[] values)
+    {
+        for (int i = 1; i < values.Length; i++)
+        {
+            MacLineValues now = values[i];
+            MacLineValues before = values[i - 1];
+            if (now.EmaSecond == null || now.SmaMedium == null
+                || before.EmaSecond == null || before.SmaMedium == null)
+                continue;
+
+            bool above = now.EmaSecond.Value > now.SmaMedium.Value;
+            bool wasAbove = before.EmaSecond.Value > before.SmaMedium.Value;
+            if (above != wasAbove)
+                yield return (i, above);
+        }
+    }
+
+
+    /// <summary>
+    /// The close crossing back through the second line: Close Long and Close Short. The same four
+    /// conditions the strategy uses in MacBase.CrossedTheSecondLine - the crossing, the cloud still
+    /// pointing the way of the position, the close still on that side of the slow line, and the
+    /// second line still on that side of the third. Drawing it with fewer conditions puts a long
+    /// AND a short exit on one and the same candle.
+    /// </summary>
+    private static IEnumerable<(int Index, bool LongSide)> FindExits(MacLineValues[] values,
+                                                                     List<CryptoCandle> candles)
+    {
+        for (int i = 1; i < values.Length && i < candles.Count; i++)
+        {
+            MacLineValues now = values[i];
+            MacLineValues before = values[i - 1];
+            if (now.EmaFast == null || now.EmaSecond == null || now.SmaSlow == null
+                || now.SmaMedium == null || before.EmaSecond == null)
+                continue;
+
+            double close = (double)candles[i].Close;
+            double closeBefore = (double)candles[i - 1].Close;
+            bool cloudUp = now.EmaFast.Value > now.EmaSecond.Value;
+            bool stacked = cloudUp ? now.EmaSecond.Value > now.SmaMedium.Value
+                                   : now.EmaSecond.Value < now.SmaMedium.Value;
+            if (!stacked)
+                continue;
+            if (cloudUp && closeBefore >= before.EmaSecond.Value && close < now.EmaSecond.Value
+                && close > now.SmaSlow.Value)
+                yield return (i, true);
+            if (!cloudUp && closeBefore <= before.EmaSecond.Value && close > now.EmaSecond.Value
+                && close < now.SmaSlow.Value)
+                yield return (i, false);
+        }
     }
 
 
@@ -615,6 +736,32 @@ public class MacChartOverlay : IChartOverlay
                 Text = "●",
                 StyleKey = up ? KeyBreakout : KeyBreakdown,
                 Color = up ? Css(KeyBreakout) : Css(KeyBreakdown),
+            });
+        }
+
+        foreach ((int index, bool up) in FindLineCrossings(values))
+        {
+            labels.Add(new ChartOverlayLabel
+            {
+                Time = CandleTime.AlignFromDateTime(candles[index].Date, interval.Duration).ToUnixSeconds(),
+                Above = up,
+                Price = up ? (double)candles[index].High : (double)candles[index].Low,
+                Text = "✕",
+                StyleKey = up ? KeyCrossUp : KeyCrossDown,
+                Color = up ? Css(KeyCrossUp) : Css(KeyCrossDown),
+            });
+        }
+
+        foreach ((int index, bool longSide) in FindExits(values, candles))
+        {
+            labels.Add(new ChartOverlayLabel
+            {
+                Time = CandleTime.AlignFromDateTime(candles[index].Date, interval.Duration).ToUnixSeconds(),
+                Above = longSide,
+                Price = longSide ? (double)candles[index].High : (double)candles[index].Low,
+                Text = "◆",
+                StyleKey = longSide ? KeyCloseLong : KeyCloseShort,
+                Color = longSide ? Css(KeyCloseLong) : Css(KeyCloseShort),
             });
         }
 

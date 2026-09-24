@@ -3,7 +3,7 @@
 ## Overview
 
 A trend-following strategy built on a **cloud of four moving averages**. The cloud gives the
-direction and the strength of the trend; the entry is one of three events inside that trend.
+direction and the strength of the trend; the entry is one of four events inside that trend.
 
 Each trigger has its own switch, so a run measures them apart or together:
 
@@ -12,6 +12,9 @@ Each trigger has its own switch, so a run measures them apart or together:
 - **Cloud cross** — EMA(20) closes on the other side of EMA(40). Off by default.
 - **Springboard bounce** — inside a running trend the price dips to the fast line and closes back
   above it. Off by default.
+- **Line cross** — EMA(40) closes on the other side of SMA(50). This one runs AHEAD of the cloud
+  cross, so it is the only trigger that fires while the cloud still points the other way. Off by
+  default.
 
 An optional RSI filter, an optional volume filter and an optional slow-line filter each ask for more
 confirmation, and an optional exit leaves the position once the cloud flips against it.
@@ -50,22 +53,26 @@ for them once:
 
 `MacBase.IsSignal` then tests, cheapest first (most candles never get past the first test):
 
-1. the cloud points the way of the trade (fast EMA above the second EMA for a long) — this holds
-   for every trigger;
-2. the cloud is at least `MinimumCloudWidthPercentage` wide, measured top to bottom as a percentage
+1. the line cross, when `EntryOnLineCross` is on, because it is the one trigger that fires before
+   the cloud turns and step 2 would make it unreachable;
+2. the cloud points the way of the trade (fast EMA above the second EMA for a long) — this holds
+   for every trigger except the line cross;
+3. the cloud is at least `MinimumCloudWidthPercentage` wide, measured top to bottom as a percentage
    of the price;
-3. the slow line has moved at least `MinimumSlowLineSlopePercentage` in the direction of the trade;
-4. the RSI agrees, when `UseRsiFilter` is on;
-5. one step back to the previous candle, shared by everything below it;
-6. **the trigger**, and any one of them is enough:
+4. the slow line has moved at least `MinimumSlowLineSlopePercentage` in the direction of the trade;
+5. the RSI agrees, when `UseRsiFilter` is on;
+6. one step back to the previous candle, shared by everything below it;
+7. **the trigger**, and any one of them is enough:
+   - *line cross*: the second line closed on our side of the third and had not on the candle
+     before;
    - *cloud cross*: the cloud was **not** on our side on the previous candle;
    - *springboard*: the candle reached the fast line and closed back on our side of it, with the
      previous candle already on that side;
    - *breakout*: the close is outside the cloud (when `RequirePriceOutsideCloud` is on), there is a
      level no older than `PivotMaximumAgeCandles`, the close cleared it by
      `BreakoutBufferPercentage`, and the previous close had **not**;
-7. the cloud is wider than on the previous candle, when `RequireCloudWidening` is on;
-8. the volume is at least `VolumeMultiplier` times the average of the `VolumeAverageCandles` candles
+8. the cloud is wider than on the previous candle, when `RequireCloudWidening` is on;
+9. the volume is at least `VolumeMultiplier` times the average of the `VolumeAverageCandles` candles
    before this one, when `UseVolumeFilter` is on. Last, because it is the only test that walks a
    stretch of candles.
 
@@ -95,6 +102,26 @@ them one candle at a time from the indicator hub. Two paths to the same numbers 
 or later, so the pivot rule in `MacLinesHelper` is deliberately the same walk as the one in the
 extension, and `TheOverlayAndTheStrategySeeTheSameLines` feeds one series through both and compares
 every candle.
+
+### Entering on the close crossing the second line
+
+`MacSettings.EntryOnSecondLineCross` is the fifth entry trigger, added 23 September 2026. It fires
+on the crossing the EXIT reads, taken from the other side: what the reference draws as "Close Long"
+is the close falling through the second line, and entering a SHORT on that is entering on what
+closes a long. A long entry wants the mirror, its "Close Short".
+
+Two things about it are deliberate:
+
+- **It is exempt from the cloud check**, like the line cross and for the same reason. This marker
+  exists to close the opposite position, so the cloud is by definition still pointing that opposite
+  way; asking for the cloud first would make the trigger unreachable.
+- **The three guards the EXIT carries are NOT repeated** - the cloud pointing the way of the
+  position, the close on that side of the slow line, the cloud stacked. Those exist to stop an exit
+  firing against a trend that is still running, which is the opposite of what an entry on this
+  crossing is for. Everything `IsSignal` asks of every trigger does still apply: cloud width, the
+  slope of the slow line, and the rest.
+
+It is off by default and has not been measured on money yet.
 
 ### The breakout marker
 
@@ -137,6 +164,424 @@ One difference is expected and harmless: a crossing marker only needs the two EM
 appears after 40 candles, while the strategy waits for all four lines and so needs 150. During that
 warm-up the chart can show a cross that no signal was ever produced for.
 
+## The eight markers
+
+The reference draws eight markers and names them in its own settings screen. Which of the eight a
+candle carries is readable from its status line, and 64 of those readings on four coins pin every
+one of them down:
+
+| Marker | What it is | Built |
+| --- | --- | --- |
+| **Open Long** (green triangle) | the fast line crossing above the second | yes, the cloud cross |
+| **Open Short** (magenta triangle) | the fast line crossing below the second | yes, the cloud cross |
+| **Breakout** (white) | price beyond the resistance | yes, the breakout trigger |
+| **Breakdown** (yellow) | price beyond the support | yes, the same trigger on the short side |
+| **Close Long** (blue diamond) | the close crossing DOWN through the second line | yes, `ExitOnSecondLineCross` |
+| **Close Short** (orange diamond) | the close crossing UP through the second line | yes, the same setting |
+| **Cross Up** (green cross) | the second line crossing above the third | yes, `EntryOnLineCross` |
+| **Cross Down** (red cross) | the second line crossing below the third | yes, the same setting |
+
+**The reference has exactly ONE setting, and it only moves the lengths.** `getInputsInfo()` on the
+study says so: a single input called "TBO Speed" with the values Standard, Fast and Slow, and
+nothing else. Read off its status line on two candles of thirty minute bitcoin and fitted against
+our own candles, every number lands on one length to the cent:
+
+| line | Fast | Standard | Slow |
+| --- | --- | --- | --- |
+| first | EMA 20 | EMA 20 | EMA 20 |
+| second | EMA 30 | EMA 40 | EMA 50 |
+| third | SMA 40 | SMA 50 | SMA 100 |
+| fourth | SMA 80 | SMA 150 | SMA 200 |
+
+The FIRST line does not move: it is EMA(20) on all three speeds, identical to the cent. So the
+speed is three lengths and not four, and everything else about the indicator - the rules, the
+markers, the levels - is the same. Reproducing Fast or Slow is a matter of the four lengths being
+settings, which they already are in `MacSettings`; nothing else has to change.
+
+**Counted both ways.** Hitting every marker is only half of it: a rule that fires four times as
+often as the reference draws the marker is not the same rule. The measurement that carries the most
+weight is on FIVE MINUTE charts of four coins - eleven snapshots per coin, 483 markers drawn -
+compared on the exact candle:
+
+| Marker | it draws | we fire | same candle | missed | too many |
+| --- | --- | --- | --- | --- | --- |
+| Open Long | 68 | 68 | 68 | 0 | 0 |
+| Open Short | 66 | 67 | 66 | 0 | 1 |
+| Cross Up | 83 | 85 | 83 | 0 | 2 |
+| Cross Down | 83 | 84 | 83 | 0 | 1 |
+| Close Long | 131 | 128 | 128 | 3 | 0 |
+| Close Short | 52 | 52 | 50 | 2 | 2 |
+| Breakout | 95 | 229 | 17 | 78 | 212 |
+| Breakdown | 45 | 89 | 11 | 34 | 78 |
+
+**Confirmed on a second interval, over ELEVEN coins.** ada, avax, bitcoin, doge, ethereum, hype,
+link, near, solana, sui and xrp on FIFTEEN minute candles, 4 to 14 September 2026, 1083 markers
+harvested straight off the live chart through its own API - a different timeframe, a different
+stretch of market, and a different way of reading it:
+
+| Marker | it draws | we fire | same candle | missed | too many |
+| --- | --- | --- | --- | --- | --- |
+| Open Long | 132 | 132 | 132 | 0 | 0 |
+| Open Short | 130 | 130 | 130 | 0 | 0 |
+| Cross Up | 149 | 150 | 149 | 0 | 1 |
+| Cross Down | 152 | 152 | 152 | 0 | 0 |
+| Close Long | 122 | 121 | 114 | 8 | 7 |
+| Close Short | 145 | 150 | 140 | 5 | 10 |
+| Breakout, as a run | 91 | 165 | 63 | 28 | 102 |
+| Breakdown, as a run | 112 | 238 | 76 | 36 | 162 |
+
+And on ONE HOUR candles of bitcoin, 7 to 21 September, the six are 26 of 26 with one exit too many.
+
+Three of the six are EXACT on all eleven coins - Open Long, Open Short and Cross Down, on the
+candle, both ways - and the six together are 817 right of 830 with eighteen fired that are not
+drawn. The run reading of the break beats the crossing on both sides again, which is now three
+independent sets saying the same thing.
+
+**Two coins were added on purpose.** On bitcoin alone the run reading fired NOTHING false, which
+would have been a fine result and was not one: with hype and xrp beside it the false count is 44
+and 62. A rule that is clean on one coin has been fitted to that coin.
+
+**What the extra coins bought.** Over six of them the two distances that pick a stretch barely
+separate the marked from the unmarked - medians of 3.40 against 2.47, and 1.88 against 1.75 - while
+the VOLUME of the candle does: 2.4 and 3.1 against 1.6. Asking the marked candle for at least the
+average volume of the last twenty cuts the false marks by a quarter on the fifteen minute set it
+was found on (60 to 44 and 84 to 62) and by a fifth on the five minute set it was not (200 to 158
+and 45 to 36), for two or three markers. It holds on both, so it is a rule and not a curve through
+the noise.
+
+Six of the eight are as good as exact: eleven differences over 483 markers. Three of those eleven
+have been checked by eye and the marker WAS on the chart - the reading missed it and the scanner was
+right. What is genuinely left is small and understood:
+
+- One crossing on near where the second and the third line stand 0.00012% apart. That is a tie, not
+  a crossing, and the reversal one candle later belongs to it. The smallest crossing the reference
+  does draw stands 0.00028% apart, so a floor between the two would remove both - on the evidence of
+  a single case, which is why it has not been built.
+- Three exits the reference draws where the price has just passed the slow line, twice by less than
+  a twentieth of a percent, and one that is a SECOND exit on the candle after the first. A rule
+  built on a crossing cannot give two in a row.
+- Two short exits on near where the price stands well past the slow line.
+
+**Where the exits still differ, and why it is not a threshold (23 September 2026).** Over all five
+harvests the reference draws 543 exits; we get 519 of them with 26 fired that are not drawn. Every
+single miss is blocked by the SLOW LINE guard and every single extra passes it - both by a few
+hundredths of a percent. So the whole disagreement sits ON that line, and four ways of moving it
+were measured:
+
+- **Another line as the guard.** The fast and second lines kill every exit (the crossing IS against
+  the second line), the medium line costs half of them. The slow line is not just best, it is the
+  only one that works.
+- **Slack against the line.** Every step trades about one marker for three to seven false ones -
+  0.02% buys two and costs six, 0.05% buys four and costs fourteen. The boundary is already where
+  it belongs.
+- **The wick instead of the close.** Recovers 23 of the 24 misses and pays 122 extra false ones.
+- **An open position.** "Close Long" closing something is the natural reading and it is WRONG:
+  of the exits the reference draws only 37% (long) and 47% (short) have a matching entry open,
+  while of the ones only we fire 75% and 94% do. The reference keeps no position state; it draws
+  the exit as a plain indicator condition.
+
+So the four conditions in the code are the best of their family, the boundary is right, and the
+residual is a band a few hundredths of a percent around the slow line where our guard and its
+criterion disagree for a reason none of the above explains. 95.6% right is where this stands.
+
+The exit conditions were weighed again over this reading, each switched on and off. The four in the
+code are the best of them: dropping the slow line gains three markers and costs thirty-seven,
+giving that line a tenth of a percent of slack gains two and costs three, and reading the exit as a
+state instead of a crossing costs two hundred and thirty-eight.
+
+The breaks are on the right level - the dotted lines were read off the chart as prices and agree
+with the RSI rule to the cent - but not on the right candle. The reference draws them well AFTER the
+level gives way: every candle beyond the level catches 98 of his 105, and fires 1276 times.
+
+**What the break DOES look like, found on 23 September 2026.** Stop looking at single candles and
+look at STRETCHES: unbroken runs of candles whose close stands beyond the level. Then a shape
+appears that no single-candle search could see.
+
+- Of 251 such stretches the reference marks 54 and leaves 197 alone.
+- Inside a marked stretch the marks sit on candles that make a NEW EXTREME of that stretch: 87 of
+  its 98, which is 35% of such candles against 4% of all the others.
+- And on the first, second or third of them - 63 of the 98 - never more than three in one stretch.
+- Stretches that earn marks carry more than twice the volume of those that do not (a median 3.35
+  times the twenty candle average against 1.67) and bigger candles (2.02 against 1.43).
+
+So the hard question is WHICH STRETCH, not which candle. That is a question about 251 things
+instead of 7339, and a search at that level reaches 37% agreement on Breakout and 49% on Breakdown
+- the highest of the whole investigation, and still not the rule.
+
+`MacSettings.EntryOnBreakoutRun` builds the best of it: a stretch earns marks when its first candle
+stands more than two average candle ranges past the SLOW LINE, and then the first three new extremes
+of that stretch are marked, each of which has to carry at least the average volume of the last
+twenty candles. One rule for both sides, which a rule fitted per side is not.
+
+**The floor became a BAND on 23 September 2026, and that is the real repair.** Searched over 384
+runs on eleven coins at fifteen minutes and judged on 322 runs at five, a condition may also be an
+UPPER bound - and that is what was missing. The distance from the CLOSE to the slow line, which the
+code asked for, barely separates the runs the reference marks from the ones it leaves alone: a
+median of 3.98 against 3.89. What does separate them is the distance from the LEVEL to the slow
+line, and only inside a band: too close and the level sits on the trend, too far and the move has
+already happened and the reference does not mark it either.
+
+| | drawn | hit with the floor | false | hit with the band | false |
+| --- | --- | --- | --- | --- | --- |
+| fifteen minutes, eleven coins | 203 | 139 | 272 | 126 | 179 |
+| five minutes, four coins | 140 | 79 | 283 | 73 | 162 |
+
+Thirteen markers given up for ninety-three fewer false ones, and six for a hundred and twenty-one.
+The thresholds are the MIDDLE of the two searches (1.59 and 5.55 on fifteen minutes, 1.29 and 5.14
+on five), so neither set got its own optimum.
+
+**And the band takes the direction skew with it.** False marks per drawn marker were 1.19 up
+against 1.46 down; they are now 0.87 against 0.89. By construction: the runs that stood absurdly
+far under the slow line in a falling market are exactly what an upper bound removes. The normalised
+measure that was built for that skew is no longer needed.
+
+**Our stretch boundary is not the error - measured, and it defends itself.** The obvious remaining
+explanation for the late starts was that the reference tracks its extreme per LEVEL rather than per
+stretch, so a second visit to the same level has to clear the first visit's peak close. Counted both
+ways over the same harvests, the per-level reading is WORSE on every set: the first marker sits on
+the first extreme 62% against 64% on fifteen minutes, 36 against 41 on five, 39 against 45 on four
+hours, 58 against 60 on daily. The stretch, reset whenever the close dips back inside the level, is
+the better of the two definitions.
+
+**The late start is still unexplained.** Of the stretches whose first marker is not our first new
+extreme, the share where EVERY skipped extreme is blocked:
+
+| candidate | 15m | 5m | 4h | 1d |
+| --- | --- | --- | --- | --- |
+| the second line and the volume floor now in the code | 53% | 41% | 18% | 14% |
+| volume under the highest since the level was set | 60% | 59% | 47% | 57% |
+| the close under the peak close of the run-up | 21% | 39% | 35% | 43% |
+| volume under that of the level candle | 33% | 34% | 0% | 29% |
+| the fast line not past the second | 0% | 0% | 0% | 0% |
+
+The best of them was then tried as a real condition rather than as an explanation, on top of
+everything already in the rule: asking for at least three tenths of the highest volume since the
+level was set buys 27 false marks over the four sets and costs three markers - but it costs TWO of
+those on daily while buying only two there, so it does not pull the same way everywhere. Not taken.
+
+**The second line against the slow one, found 23 September 2026.** Of every break marker the
+reference draws - 203 on fifteen minutes, 140 on five, 76 on four hours, 82 on daily - NOT ONE has
+the second line on the wrong side of the slow line, read in the break direction. Of the candles it
+does not mark, between 9% and 23% do. It is the only condition in this whole investigation that
+reaches a hundred percent on all four sets AND separates.
+
+Against the rule without it: 62 false marks fewer for one marker given up, pulling the same way on
+every set (195 false becomes 172, 189 becomes 177, 105 becomes 83, 49 becomes 44). The FAST line
+against the slow one says the same thing more weakly - free, no marker given up, but 26 false marks
+instead of 62 - and is not in.
+
+This came out of the second round with Fable, whose own top two hypotheses both died in the same
+pass: the labels are not truncated by a Pine label cap (never more than 41 per chart, and only 2 to
+17% of the unmarked candidates are older than the oldest drawn marker), and an RSI re-entry window
+does not separate (at three candles: 71% of drawn against 64% of the rest on fifteen minutes, and
+on four hours no separation at all).
+
+**The reference marks AT MOST THREE per stretch - of ITS stretch, not ours.** Counted over the
+drawn markers that are a new extreme: one, two or three per marked stretch on every timeframe, with
+a single exception of four in 121 marked stretches on fifteen minutes. And they are almost always
+ADJACENT: the next new extreme of the same stretch is the very next candle for 38% of them on
+fifteen minutes, 55% on five, 57% on four hours and 71% on daily.
+
+That kills the whole family of hindsight placements - the "keep only the newest label" idiom, one
+label per stretch, a pivot with a right hand lookback - because every one of them predicts that the
+candle after a marker is never itself a qualifying candle, and here it usually is.
+
+What is left is sharper than what went before: the reference marks the first one to three
+consecutive qualifying candles of a stretch, and **its stretches are not ours**. On four hours its
+three markers land on our fifth, sixth and seventh new extreme, which can only mean its stretch
+starts later than ours - something re-anchors the count inside what we read as one stretch. That,
+and not the band, is now the open question.
+
+**Four marks per stretch, not three.** Three was read off the five minute charts, where the
+reference does not seem to go beyond it. Four harvests together say otherwise, and four is better on
+every one of them - fifteen minutes 126 hit and 179 false becomes 138 and 195, five minutes 73 and
+162 becomes 84 and 189, four hours 29 and 90 becomes 35 and 105, daily 30 and 39 becomes 34 and 49.
+Five is better again on fifteen minutes and flat everywhere else, so it is not taken.
+
+**Seven weeks of FOUR HOUR candles say the cap is what hurts, not the band.** Harvested 23
+September over the eleven coins, 4 August to 23 September 2026: 281 markers, of which 91 breaks -
+and this set leans the other way round from the daily one, 68 Breakouts against 23 Breakdowns. Here
+too the four markers that should be exact ARE exact (Open Long 46 of 46, Open Short 38 of 38).
+
+What it shows is that the run MODEL is sound everywhere and the counting is not. Of the break
+markers the reference draws, the share that sits beyond the level is 100% on fifteen minutes, four
+hours and daily, and 95% on five minutes; the share that also makes a new extreme of its stretch
+runs from 79% to 94%. But WHERE in the stretch they sit differs wildly:
+
+| | first three new extremes | median new extremes in a marked stretch |
+| --- | --- | --- |
+| fifteen minutes | 155 of 184 | 2 |
+| daily | 58 of 72 | 4 |
+| five minutes | 87 of 119 | 3 |
+| four hours | 33 of 68 | 7 |
+
+The level does not go stale any longer on four hours (a median of 15 candles against 14), so this is
+the market and not the rule: over that stretch of 2026 a level that gave way kept making new
+extremes for a long time, and a cap counted from the start of the stretch throws away the tail.
+Raising the cap to four buys six of them back; the rest needs a different idea about where a stretch
+ends.
+
+**The crossings on the coarse intervals were a READER fault, and it is fixed.** They looked like
+a scanner error and they were not: Cross Up 29 drawn against 43 fired and Cross Down 26 against 37
+on four hours, 33 against 41 and 20 against 30 on daily, and never a miss. A rule that only ever
+fires TOO OFTEN and never too seldom is a rule the reference holds and we do not - except here the
+reference held nothing.
+
+Two of the eight markers are an XCROSS: two diagonal strokes that touch only at the corners. The
+reader flood filled FOUR way, which breaks such a shape into fragments of two to four pixels, each
+one under its size floor - so the marker vanished. Only where the anti-aliasing thins the strokes,
+which is over the CLOUD fill, and the cloud covers most of the pane on a coarse chart. Proven on
+bitcoin at four hours, 9 September 04:00: four way returns six markers and not that one, eight way
+returns it at 13 pixels while every other marker in the same view is 26 to 42 pixels. Eight way
+connectivity and a floor of eight pixels, and after re-harvesting both coarse sets:
+
+| | four hours | daily |
+| --- | --- | --- |
+| Cross Up | 29 of 43 becomes **42 of 43** | 33 of 41 becomes **41 of 41** |
+| Cross Down | 26 of 37 becomes **37 of 37** | 20 of 30 becomes **30 of 30** |
+
+The lesson is the one this project keeps relearning: when the scanner looks wrong, distrust the
+reader first. See the tradingview-chart-api skill.
+
+**A YEAR of daily candles says the thresholds do not travel.** Harvested 23 September over the same
+eleven coins, 26 November 2025 to 22 September 2026: 213 markers, of which 91 breaks - almost half
+again what the fifteen minute set holds. On that set the four markers that should be exact ARE
+exact (Open Long 31 of 31, Open Short 20 of 20, Close Short 20 of 20), which is what proves the
+harvest. But the break band as tuned keeps only 30 of its 82 break markers, while the old floor
+kept 56. The daily set's own best band is 1.95 to 12.25 - more than twice as wide.
+
+| band | fifteen minutes | five minutes | daily |
+| --- | --- | --- | --- |
+| 1.4 to 5.35 (in the code) | 126 hit, 179 false | 73 hit, 162 false | 30 hit, 39 false |
+| 1.4 to 12 | 137 hit, 266 false | 80 hit, 275 false | 56 hit, 86 false |
+| no upper bound | 137 hit, 266 false | 80 hit, 285 false | 56 hit, 93 false |
+
+So the measure is not scale free after all, even though it is counted in average candle ranges, and
+no single cap wins on all three. The band stays at 1.4 to 5.35 because that is where the two sets
+the strategy actually trades on agree; the daily disagreement is the next thing to solve, not a
+reason to undo the repair.
+
+**The cloud condition was thrown out the same day, and it is a WASH, not a win.** It asked
+for one and a half candle ranges past the far edge of the cloud on top of the distance to the slow
+line. Measured both ways with the same code and the same harness:
+
+| | drawn | hit with the cloud | false with it | hit without | false without |
+| --- | --- | --- | --- | --- | --- |
+| fifteen minutes, eleven coins | 203 | 134 | 253 | 139 | 264 |
+| five minutes, four coins | 140 | 76 | 252 | 79 | 274 |
+
+Five markers bought with eleven false ones on the one set, three bought with twenty-two on the
+other. It is out because one condition beats two when they perform the same, not because it
+measured better. An earlier note here claimed a gain of one and a half points of agreement; that
+came from a different measure and does not survive counting the markers themselves.
+
+**Known bias of what is left, measured and not repaired.** The reference is direction blind: it
+marks 0.54 of the stretches up and 0.53 of the stretches down. Our filter is an ABSOLUTE distance
+past the slow line, and in the falling market of 4 to 14 September the median stretch stood 4.50
+candle ranges under the line against 2.99 over it. So it lets 65% of the down stretches through
+against 54% of the up ones: 1.26 (more stretches) times 1.20 (more passed) against 1.24 more drawn
+is the 22% excess that shows in the table - 1.45 false per drawn Breakdown against 1.12 per drawn
+Breakout. Dividing the distance by its own hundred candle average removes the bias (0.76 against
+0.82) and costs a third of the five minute agreement, so it was not adopted.
+
+| | crossing: same | crossing: too many | run: same | run: too many |
+| --- | --- | --- | --- | --- |
+| Breakout, five minutes | 17 of 95 | 211 | 52 of 95 | 222 |
+| Breakdown, five minutes | 11 of 45 | 81 | 27 of 45 | 52 |
+| Breakout, fifteen minutes | 28 of 91 | 78 | 63 of 91 | 102 |
+| Breakdown, fifteen minutes | 32 of 112 | 89 | 76 of 112 | 162 |
+
+**A percentile criterion was built and measured too.** Instead of a fixed number of candle ranges
+it asked the distance to stand in the top part of its own last hundred stretches. Measured side by
+side against the fixed distance it is WORSE on both the fifteen and the five minute set, so the
+fixed distance stays.
+
+Searched on the five minute charts the best thresholds ARE the two above, and on the daily charts -
+which that search never saw - they lift agreement from 21.5% to 27.5%. Searched the other way round
+the daily charts ask for 2.5 and 1.5, and those lift the five minute charts from 14.0% to 16.1%. So
+the thresholds are stable across two independent sets. Most of the gain is in the counting layer
+though, not in the thresholds: the first-three-new-extremes reading alone takes the five minute
+agreement from 5.6% to 14.0%.
+
+What Breakout is NOT, each ruled out on this reading:
+
+- Not the whole candle body beyond the level. Thirty of his hundred-and-five stand with their body
+  still astride it, so the stricter reading costs markers instead of gaining them.
+- Not the four lines standing in order. Twenty-eight of his are drawn while they are not.
+- Not the moment of breaking through. Read as a crossing rather than a state it catches twenty of a
+  hundred.
+- Not a level that flips to the other side once broken, though the course material says the colour
+  flips: that catches twenty of a hundred-and-five.
+- Not a channel break. No lookback from five to a hundred candles stands out from the rest.
+- Not a higher timeframe handed back to this chart. His markers fall evenly over all twelve minutes
+  of the hour; a higher timeframe would pile them on a few.
+- Not a level that expires after a while: no lifetime from five to a hundred and fifty candles
+  stands out, and his marks sit at every level age.
+- Not several levels at once. Every dotted line on the snapshots was found and counted: it is one
+  support and one resistance at a time, which is what was modelled all along.
+- Not the strength index breaking its own ceiling, and not the moving averages rather than the price
+  crossing the level. Both under 10%.
+- Not any pair or triple of thresholds over twenty-three measurable properties. An exhaustive search
+  over four hundred and fourteen conditions reaches 38% agreement on Breakdown and 27% on Breakout,
+  against 13% for marking everything beyond the level.
+
+Volume and candle size do come into it - the drawn ones carry 2.3 times the average volume against
+1.07 for the rest, and 30% of candles over three ATR are marked against 2% of those under one - but
+nothing built on them separates his from the others.
+
+A note on how the reading is kept honest, because earlier counts said something else. The snapshot
+reader has been wrong five times in ways that looked like scanner errors:
+
+1. It took the legend at the top of the chart for markers - a letter is seven by eleven pixels in
+   the very colours the markers use. The baseline gives a word away, but asking for two neighbours
+   within three hundred pixels was far too loose and threw out three real exits of one afternoon
+   that happened to line up. It now asks for three neighbours of the SAME marker within sixty.
+2. It took the chart's own furniture for markers: an empty blue square of the toolbar, three hundred
+   pixels under the candles, was read as an exit for days on end. A marker belongs to its candle in
+   the height as well, within a dozen candle widths.
+3. It lost the crosses. A dotted level line five pixels thick rubs out the middle of a cross lying
+   on it and leaves four arms of two to four pixels, under every floor there is. The lines are now
+   wiped out of the mask first and the arms find each other over five pixels.
+4. It lost markers split by a grid line of the chart - the magenta triangle of an Open Short came
+   back as two halves four pixels wide. Pieces may now be glued side by side over a gap of two.
+5. It lost a cross covered by an Open Short triangle drawn on the same candle, where only the four
+   tips stick out: ten pixels in all, against a floor of twenty-four.
+
+Every one of those cost signals the scanner fired and the reading did not have. Together they
+account for 34 of the 45 differences the six working markers showed before they were found.
+
+## The exit on the second line
+
+`ExitOnSecondLineCross` is the reference's Close Long and Close Short. Four things have to hold
+together, and only the first of them was there until 22-09-2026:
+
+1. the close crosses the second line against the position;
+2. the cloud still points the way of the position - the fast line on our side of the second one.
+   Without this the same candle is an exit for a long AND for a short, which is how it fired 314
+   times against the 134 the reference draws;
+3. the close is still on the position's side of the SLOW line. Past that line the trend itself is
+   gone and the reference stops warning;
+4. the cloud is STACKED that way too - the second line on our side of the third. This is the same
+   relation the line crossing marks, so an exit only prints while that crossing stands.
+
+The fourth is the sharpest. Of 629 crossings over four coins the reference marks 178, and **not one
+of those 178** has the second line on the wrong side of the third.
+
+Counted against the chart, on the candle, over four coins on five-minute candles:
+
+| | it draws | the scanner fires | same candle | missed | too many |
+| --- | --- | --- | --- | --- | --- |
+| Close Long | 134 | 128 | 124 | 10 | 4 |
+| Close Short | 52 | 52 | 50 | 2 | 2 |
+
+Before the three conditions that was 314 and 315 fired, 16 missed and 437 too many. Of what is left
+over, three of the misses are a hair's breadth on the slow line - the close sits 0.004%, 0.051% and
+0.066% on the wrong side of it. A tolerance of 0.05 ATR would recover one of them and is left out
+on purpose: one signal is not worth a knob that has to be tuned.
+
+`MacChartOverlay` draws these markers with the SAME four conditions. A chart that draws what the
+strategy would never fire is worse than no chart.
+
 ## Settings
 
 | Setting | Default | What it does |
@@ -144,6 +589,7 @@ warm-up the chart can show a cross that no signal was ever produced for.
 | Entry on breakout | on | Fire on the break through the last pivot level |
 | Entry on cloud cross | off | Fire on EMA(20) crossing EMA(40) |
 | Entry on springboard bounce | off | Fire on the pullback to the fast line inside a trend |
+| Entry on line cross | off | Fire on EMA(40) crossing SMA(50), before the cloud turns |
 | Fast EMA | 20 | The fast line |
 | Second EMA | 40 | The crossing partner |
 | Medium SMA | 50 | Third line |
@@ -158,6 +604,26 @@ warm-up the chart can show a cross that no signal was ever produced for.
 | Use RSI filter | off | RSI ≥ minimum for a long, ≤ maximum for a short |
 | Use volume filter | off | Signal candle at `VolumeMultiplier` × the average before it |
 | Exit on cloud flip | off | The strategy's own exit, next to stop loss and take profit |
+
+## Support and resistance
+
+Two ways to put a level down, and the setting `UseRsiLevels` picks between them.
+
+**The price pivot** (default): a candle higher than the `PivotLeftCandles` before it and the
+`PivotRightCandles` after it. Simple, and it puts a level down every few candles.
+
+**The RSI crossing**: a support is the LOW of the candle on which RSI(14) crosses back up through
+`RsiLevelSupportCross`, a resistance the HIGH of the candle on which it crosses back down through
+`RsiLevelResistanceCross`. One of each is carried forward until the next crossing replaces it.
+
+The second is measured rather than invented. Over 45 level readings on three coins it reproduces
+every one of them to the cent, and the two bounds are not free: at 30/70 it reproduces none of them
+and at 40/60 half. It also puts far fewer levels down - ten to sixteen per five hundred candles
+against one every few candles - which is what a chart actually shows.
+
+A level is only handed to the strategy from the candle AFTER the one that set it. A level set on
+the candle in hand would be broken by that same candle, because the low of a candle always sits
+under its own close.
 
 ## What has been measured
 
@@ -187,5 +653,21 @@ Ruled out, each on a measurement in both halves:
   profit into nothing.
 - **A trailing stop on the daily candle** - it costs money on the bare breakout.
 
-Still open: the pivot lengths, the maximum age of a level, the volume filter, the springboard
-trigger with a slope requirement under it, and the two higher intervals.
+Measured since, on both halves:
+
+- **The pivot lengths and the maximum level age barely matter** - 3, 7 and 10 candles either side,
+  and ages of 10, 20, 40 and 200 candles, all land within noise of the default.
+- **The volume filter empties the strategy**: at three times the average it leaves four trades in a
+  half, which is no measurement at all.
+- **The springboard on its own loses money** whatever slope is asked of it; added to the two other
+  triggers it costs about a third of the result.
+- **8h and 12h both lose in the first half**, like 4h before them. The daily candle stays the one.
+- **Exit on cloud flip is a small plus**, one or three candles alike.
+- **Bijkopen stays bad**: one level costs a third, two levels lose money outright.
+
+Still open: the RSI crossing levels, and Breakout and Breakdown - the only two of the eight markers
+that are not reconstructed. Because `EntryOnBreakout` is on by default and `EntryOnBreakoutRun` is
+off, the strategy currently enters on the WORSE of the two readings: the crossing agrees with the
+reference on 28 of its 140 five minute marks and 60 of its 203 fifteen minute ones, the run on 79
+and 139 of the same. Which of the two earns more MONEY has not been measured yet - that needs emulator runs,
+and until they are done the default stays where it is.

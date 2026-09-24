@@ -161,4 +161,56 @@ public class StrategyOwnEntryConditionsTests : TestBase
         Assert.IsNull(SignalGridExpander.Validate(TradingOverrideEntry("dbr", "true")),
             "dbr reads the global set, so the override does reach it");
     }
+
+
+    /// <summary>
+    /// A queue entry that names a setting this build does not have is refused, not skipped.
+    /// <para>
+    /// Skipping it silently is the worst of both worlds: the run goes ahead with the default in
+    /// place of the setting and its label claims otherwise. That is exactly what would have
+    /// happened on 21-09-2026 to thirty runs written for settings that were an hour old while the
+    /// emulator was still running a build from two days before.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void ASettingThisBuildDoesNotHave_IsRefused()
+    {
+        EmulatorQueueEntry entry = new()
+        {
+            Algorithm = "mac",
+            SignalOverrides = new()
+            {
+                ["mac"] = new()
+                {
+                    ["ThisSettingDoesNotExist"] = JsonDocument.Parse("true").RootElement,
+                },
+            },
+        };
+
+        var error = Assert.ThrowsExactly<NotSupportedException>(
+            () => SignalGridExpander.Apply(entry));
+        StringAssert.Contains(error.Message, "ThisSettingDoesNotExist");
+        StringAssert.Contains(error.Message, "rebuild");
+    }
+
+
+    /// <summary>Switching an unknown setting OFF stays silent: the default is off anyway, and old
+    /// entries spell out settings that have since been removed.</summary>
+    [TestMethod]
+    public void AnUnknownSettingSwitchedOff_StaysSilent()
+    {
+        EmulatorQueueEntry entry = new()
+        {
+            Algorithm = "mac",
+            SignalOverrides = new()
+            {
+                ["mac"] = new()
+                {
+                    ["ThisSettingDoesNotExist"] = JsonDocument.Parse("false").RootElement,
+                },
+            },
+        };
+
+        SignalGridExpander.Apply(entry);
+    }
 }

@@ -1,0 +1,242 @@
+using CryptoScanner.Analyzers.Mac;
+using CryptoScanner.Analyzers.Mac.Indicators;
+using CryptoScanner.Analyzers.Mac.Signal;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Signal.Indicators;
+
+using Microsoft.Data.Sqlite;
+
+using Skender.Stock.Indicators;
+
+using Exchange = CryptoScanner.Core.Model.CryptoExchange;
+
+namespace CryptoScanner.CoreTests.Signal;
+
+/// <summary>
+/// A measuring instrument, not a unit test: it runs the SHIPPED strategy over the scanner's own
+/// candles and writes down, per candle, what it fires.
+/// <para>
+/// The point is that a rule written out in a side language proves nothing about the scanner. What
+/// the chart of the reference has to be held against is this code, with its own conditions - the
+/// cloud that has to point the right way, the level that has to be old enough, the settings as
+/// they really are. The result goes to a file that the counting script reads.
+/// </para>
+/// <para>
+/// It is skipped when the candle database is not there, so it never breaks a run elsewhere.
+/// </para>
+/// </summary>
+[DoNotParallelize]
+[TestClass]
+public class MacAgainstTheReferenceTests : TestBase
+{
+    private const string Database = @"E:\CryptoScanBot\Data\Binance\Perpetual\Binance Perpetual.db";
+    private const string Output = @"E:\Projects\CryptoScanBot\Tools\EntryTiming\mac-scanner-signals.csv";
+
+    // The identifier of an interval in the candle database is the enum value plus one.
+    private const string IntervalName = "5m";
+    private const int IntervalId = 4;
+
+    private static readonly string[] Symbols =
+        ["BTCUSDT.PERP", "ETHUSDT.PERP", "SOLUSDT.PERP", "NEARUSDT.PERP"];
+
+    private static readonly DateTime Epoch = new(2010, 1, 4, 0, 0, 0, DateTimeKind.Utc);
+
+    private MacSettings _before = new();
+
+    [ClassInitialize]
+    public static void Register(TestContext _) => TestBase.RegisterPlugin(new MacPlugin());
+
+    [TestInitialize]
+    public void Remember()
+    {
+        InitTestSession();
+        _before = MacPlugin.Settings;
+    }
+
+    [TestCleanup]
+    public void Restore() => new MacPlugin().SettingsBase = _before;
+
+
+    [TestMethod]
+    public void WriteWhatTheScannerFires()
+    {
+        if (!File.Exists(Database))
+        {
+            Assert.Inconclusive("no candle database at " + Database);
+            return;
+        }
+
+        List<string> lines = ["symbol,interval,time,kind"];
+        foreach (string name in Symbols)
+        {
+            List<CryptoCandle> candles = Load(name);
+            Console.WriteLine(name + ": " + candles.Count + " candles");
+            if (candles.Count < 250)
+                continue;
+            foreach (string kind in new[] { "open", "cross", "breakout", "exit" })
+                lines.AddRange(Run(name, candles, kind));
+        }
+
+        File.WriteAllLines(Output, lines);
+        Console.WriteLine((lines.Count - 1) + " signals written to " + Output);
+        Assert.IsTrue(lines.Count > 1, "the scanner fired nothing at all, which is a fault here");
+    }
+
+
+    /// <summary>The candles of one symbol, straight out of the scanner's own database.</summary>
+    private static List<CryptoCandle> Load(string name)
+    {
+        List<CryptoCandle> candles = [];
+        using SqliteConnection connection = new("Data Source=" + Database + ";Mode=ReadOnly");
+        connection.Open();
+        using SqliteCommand find = connection.CreateCommand();
+        find.CommandText = "select SymbolId from Symbol where Name=@name";
+        find.Parameters.AddWithValue("@name", name);
+        object? found = find.ExecuteScalar();
+        if (found == null)
+            return candles;
+
+        using SqliteCommand read = connection.CreateCommand();
+        read.CommandText = "select OpenTime,Ticks,Open,High,Low,Close from Candle "
+                         + "where SymbolId=@id and IntervalId=@interval order by OpenTime";
+        read.Parameters.AddWithValue("@id", found);
+        read.Parameters.AddWithValue("@interval", IntervalId);
+        using SqliteDataReader rows = read.ExecuteReader();
+        while (rows.Read())
+        {
+            long openTime = rows.GetInt64(0);
+            int ticks = rows.GetInt32(1);
+            int decimals = ticks & 15;
+            decimal scale = (decimal)Math.Pow(10, decimals);
+            candles.Add(new CryptoCandle
+            {
+                TickDecimals = (byte)decimals,
+                OpenTime = new CandleTime((uint)openTime),
+                Open = rows.GetInt64(2) / scale,
+                High = rows.GetInt64(3) / scale,
+                Low = rows.GetInt64(4) / scale,
+                Close = rows.GetInt64(5) / scale,
+                Volume = 100m,
+            });
+        }
+        return candles;
+    }
+
+
+    /// <summary>
+    /// One pass over the candles with one group of settings switched on, so each kind of marker is
+    /// measured on its own instead of through a mixture of triggers.
+    /// </summary>
+    private static List<string> Run(string name, List<CryptoCandle> candles, string kind)
+    {
+        MacSettings settings = new()
+        {
+            EntryOnBreakout = kind == "breakout",
+            EntryOnCloudCross = kind == "open",
+            EntryOnSpringboard = false,
+            EntryOnLineCross = kind == "cross",
+            RequirePriceOutsideCloud = false,
+            BreakoutBufferPercentage = 0m,
+            PivotMaximumAgeCandles = 0,
+            UseRsiLevels = true,
+            ExitOnCloudFlip = false,
+            ExitOnSecondLineCross = kind == "exit",
+        };
+        new MacPlugin().SettingsBase = settings;
+
+        CryptoSymbol symbol = MakeSymbol(name);
+        CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        symbolInterval.CandleList.Clear();
+        symbolInterval.Data.Clear();
+
+        // The moving averages of the cloud live in the registry, not in the extension, and the
+        // scanner feeds BOTH from IntervalIndicatorHub.Add. Feeding only the extension leaves the
+        // cloud empty and every signal answers "the cloud is not there yet".
+        IndicatorRegistry registry = new(500);
+        MacIndicatorExtension extension = new();
+        extension.Init(registry);
+
+        List<string> fired = [];
+        for (int i = 0; i < candles.Count; i++)
+        {
+            CryptoCandle candle = candles[i];
+            DateTime moment = Epoch.AddMinutes(candle.OpenTime.Minutes);
+            Quote quote = new(moment, candle.Open, candle.High, candle.Low, candle.Close,
+                candle.Volume);
+            registry.QuoteHub.Add(quote);
+            extension.OnCandleAdded(quote);
+            CryptoData data = new();
+            extension.FillData(data);
+            symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+            symbolInterval.Data[candle.OpenTime] = data;
+
+            // The slow line is a 150 average; nothing before that means anything.
+            if (i < 200)
+                continue;
+
+            foreach (CryptoTradeSide side in new[] { CryptoTradeSide.Long, CryptoTradeSide.Short })
+            {
+                MyData newest = new() { Candle = candle, CandleData = data };
+                MacBase algorithm = side == CryptoTradeSide.Long
+                    ? new MacLong
+                    {
+                        Symbol = symbol,
+                        Interval = interval,
+                        SymbolInterval = symbolInterval,
+                        SignalSide = side,
+                        SignalStrategy = MacPlugin.StrategyInternal.ToLower(),
+                        CandleLast = newest,
+                    }
+                    : new MacShort
+                    {
+                        Symbol = symbol,
+                        Interval = interval,
+                        SymbolInterval = symbolInterval,
+                        SignalSide = side,
+                        SignalStrategy = MacPlugin.StrategyInternal.ToLower(),
+                        CandleLast = newest,
+                    };
+                bool hit = kind == "exit" ? algorithm.IsExitSignal() : algorithm.IsSignal();
+                if (hit)
+                    fired.Add(name + "," + IntervalName + ","
+                              + moment.ToString("yyyy-MM-dd HH:mm:ss") + "," + Label(kind, side));
+            }
+        }
+        return fired;
+    }
+
+
+    private static string Label(string kind, CryptoTradeSide side)
+    {
+        bool longSide = side == CryptoTradeSide.Long;
+        return kind switch
+        {
+            "open" => longSide ? "Open Long" : "Open Short",
+            "cross" => longSide ? "Cross Up" : "Cross Down",
+            "breakout" => longSide ? "Breakout" : "Breakdown",
+            _ => longSide ? "Close Long" : "Close Short",
+        };
+    }
+
+
+    private static CryptoSymbol MakeSymbol(string name)
+    {
+        Exchange exchange = new() { Id = 1, Name = "TestExchange", FeeRate = 0.1m };
+        return new CryptoSymbol
+        {
+            Id = 1,
+            Name = name,
+            Base = name.Replace("USDT.PERP", ""),
+            Quote = "USDT",
+            Exchange = exchange,
+            ExchangeId = exchange.Id,
+            ExchangeName = exchange.Name,
+            QuoteData = GlobalData.AddQuoteData("USDT"),
+            PriceTickSize = 0.01m,
+        };
+    }
+}

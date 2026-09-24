@@ -73,10 +73,11 @@ public static class MacLinesHelper
             return result;
 
         MacSettings settings = MacPlugin.Settings;
-        int fastLength = Math.Max(1, settings.FastEmaLength);
-        int secondLength = Math.Max(fastLength + 1, settings.SecondEmaLength);
-        int mediumLength = Math.Max(2, settings.MediumSmaLength);
-        int slowLength = Math.Max(mediumLength + 1, settings.SlowSmaLength);
+        var lengths = settings.Lines();
+        int fastLength = Math.Max(1, lengths.Fast);
+        int secondLength = Math.Max(fastLength + 1, lengths.Second);
+        int mediumLength = Math.Max(2, lengths.Medium);
+        int slowLength = Math.Max(mediumLength + 1, lengths.Slow);
 
         var quotes = candles.AsQuotes();
         var fast = quotes.ToEma(fastLength);

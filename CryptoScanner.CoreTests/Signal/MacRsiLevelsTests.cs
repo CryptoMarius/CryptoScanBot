@@ -4,22 +4,19 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Indicators;
 
-using Skender.Stock.Indicators;
-
 namespace CryptoScanner.CoreTests.Signal;
 
 /// <summary>
-/// The levels taken where the RSI turns instead of where the price does.
+/// Support and resistance taken from the RSI instead of from a price pivot.
 /// <para>
-/// A symmetric price pivot puts a level down every few candles, and most of them carry nothing: the
-/// breakout marker fires about three times as often as the catalogued marks. An RSI pivot - the
-/// candle whose RSI is the extreme of its window AND past its threshold - puts far fewer levels
-/// down. Measured over six labelled coins it keeps all twelve marks that carry a dot while cutting
-/// the thirty-nine that carry none to fifteen, which is why the setting exists.
+/// The rule: a support is the LOW of the candle on which the RSI crosses back up through its lower
+/// bound, a resistance the HIGH of the candle on which it crosses back down through the upper one.
+/// One of each is carried forward until the next crossing replaces it.
 /// </para>
 /// <para>
-/// The hub is the real path: the RSI comes from the shared registry, so the extension only sees it
-/// when the candles go through <see cref="IntervalIndicatorHub"/>.
+/// Measured against 45 level readings on three coins, every one of them reproduced to the cent.
+/// Thresholds of 30/70 miss every reading and 40/60 miss half, so the two bounds are not free
+/// parameters to tune - they are measurements.
 /// </para>
 /// </summary>
 [TestClass]
@@ -61,20 +58,26 @@ public class MacRsiLevelsTests
     }
 
 
-    /// <summary>A rise and a fall, so the RSI has one real top and one real bottom in it.</summary>
-    private static List<CryptoCandle> Wave(int count)
+    /// <summary>
+    /// A stretch that falls hard, turns, and rises hard: the fall drives the RSI under the lower
+    /// bound and the turn crosses it back up, which is the support. The rise does the mirror image.
+    /// </summary>
+    private static List<CryptoCandle> FallAndRise(int fall, int rise)
     {
         List<CryptoCandle> candles = [];
         decimal price = 1000m;
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < fall + rise; i++)
         {
-            price += i % 120 < 60 ? 5m : -5m;
+            // The rise is steeper than the fall on purpose: with equal steps the V is symmetric
+            // and a low on the way down repeats on the way up, so a test could not tell which of
+            // the two candles a level came from.
+            price += i < fall ? -8m : 13m;
             candles.Add(new CryptoCandle
             {
                 OpenTime = new CandleTime((uint)(i * 300)),
                 Open = price,
-                High = price + 2m,
-                Low = price - 2m,
+                High = price + 3m,
+                Low = price - 3m,
                 Close = price,
                 Volume = 100m,
             });
@@ -83,17 +86,21 @@ public class MacRsiLevelsTests
     }
 
 
-    /// <summary>What the extension wrote on the last candle, with MAC switched on for the hub.</summary>
-    private static MacCandleData? Feed(List<CryptoCandle> candles)
+    /// <summary>Everything the extension wrote, one entry per candle, through the real hub.</summary>
+    private static List<MacCandleData?> Feed(List<CryptoCandle> candles)
     {
         string name = MacPlugin.StrategyInternal.ToLower();
         if (!GlobalData.Settings.Signal.Long.Strategy.Contains(name))
             GlobalData.Settings.Signal.Long.Strategy.Add(name);
 
         IntervalIndicatorHub hub = new();
+        List<MacCandleData?> seen = [];
         foreach (CryptoCandle candle in candles)
+        {
             hub.Add(candle);
-        return hub.BuildCurrent().GetPluginData<MacCandleData>();
+            seen.Add(hub.BuildCurrent().GetPluginData<MacCandleData>());
+        }
+        return seen;
     }
 
 
@@ -101,48 +108,69 @@ public class MacRsiLevelsTests
     public void Off_LeavesTheRsiLevelsEmptyAndThePricePivotInPlace()
     {
         new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = false };
-        MacCandleData? mac = Feed(Wave(300));
+        MacCandleData? last = Feed(FallAndRise(60, 60)).Last();
 
-        Assert.IsNotNull(mac, "the extension has to fill the slot at all");
-        Assert.IsNull(mac.RsiLevelHigh, "nothing may be computed while the setting is off");
-        Assert.IsNull(mac.RsiLevelLow, "nothing may be computed while the setting is off");
-        Assert.IsNotNull(mac.PivotHigh, "the price pivot is what the strategy falls back on");
+        Assert.IsNotNull(last, "the extension has to fill the slot at all");
+        Assert.IsNull(last.RsiLevelHigh, "nothing may be computed while the setting is off");
+        Assert.IsNull(last.RsiLevelLow, "nothing may be computed while the setting is off");
+        Assert.IsNotNull(last.PivotLow, "the price pivot is what the strategy falls back on");
     }
 
 
     [TestMethod]
-    public void On_TakesTheHighOfACandleThatReallyHappened()
+    public void On_TakesTheLowOfTheCandleTheRsiCrossedUpOn()
     {
-        new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = true, RsiLevelPivotCandles = 10 };
-        List<CryptoCandle> candles = Wave(300);
-        MacCandleData? mac = Feed(candles);
+        new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = true };
+        List<CryptoCandle> candles = FallAndRise(60, 60);
+        List<MacCandleData?> seen = Feed(candles);
 
-        Assert.IsNotNull(mac);
-        Assert.IsNotNull(mac.RsiLevelHigh, "a series that rises and falls has an RSI top in it");
-        Assert.IsTrue(candles.Any(c => (double)c.High == mac.RsiLevelHigh!.Value),
-            "the level has to be the high of a candle, never a number of its own making");
-        Assert.IsTrue(mac.RsiLevelHighAge >= 10,
-            $"a level confirmed {mac.RsiLevelHighAge} candles back cannot be the candle that breaks it");
+        MacCandleData? last = seen[^1];
+        Assert.IsNotNull(last?.RsiLevelLow, "a stretch that falls and turns has a crossing in it");
+
+        // The level is the low of a candle that really happened, never a number of its own making.
+        int owner = candles.FindIndex(c => (double)c.Low == last.RsiLevelLow!.Value);
+        Assert.IsTrue(owner >= 0, "the support has to be the low of one of the candles");
+
+        // And it sits in the rise, a few candles after the turn: the RSI needs those candles to
+        // climb back through its lower bound.
+        Assert.IsTrue(owner >= 60 && owner <= 70,
+            $"the crossing sits on candle {owner}, which is not just after the turn at 60");
     }
 
 
     [TestMethod]
-    public void On_PutsFewerLevelsDownThanThePricePivot()
+    public void On_NeverHandsOutALevelSetByTheCandleInHand()
     {
-        List<CryptoCandle> candles = Wave(300);
+        // A level set on the candle in hand would be broken by that same candle, because the low of
+        // a candle always sits under its own close. The published level therefore has to predate
+        // the candle it is read on - which is what its age of at least one candle says.
+        new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = true };
+        List<CryptoCandle> candles = FallAndRise(60, 60);
+        List<MacCandleData?> seen = Feed(candles);
 
-        new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = false };
-        MacCandleData? pivot = Feed(candles);
+        for (int i = 0; i < candles.Count; i++)
+        {
+            MacCandleData? mac = seen[i];
+            if (mac?.RsiLevelLow == null)
+                continue;
+            Assert.IsTrue(mac.RsiLevelLowAge >= 1,
+                $"candle {i} was handed a support of its own making (age {mac.RsiLevelLowAge})");
+            Assert.AreNotEqual((double)candles[i].Low, mac.RsiLevelLow.Value,
+                $"candle {i} was handed its own low as the support");
+        }
+    }
 
-        new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = true, RsiLevelPivotCandles = 10 };
-        MacCandleData? rsi = Feed(candles);
 
-        Assert.IsNotNull(pivot?.PivotHigh);
-        Assert.IsNotNull(rsi?.RsiLevelHigh);
-        // The whole point: an RSI turn is rarer than a price turn, so by the time the same candle
-        // comes round its level has been standing longer.
-        Assert.IsTrue(rsi.RsiLevelHighAge >= pivot.PivotHighAge,
-            $"the RSI level is {rsi.RsiLevelHighAge} candles old against {pivot.PivotHighAge} for the "
-            + "price pivot - an RSI level cannot be the fresher of the two on one series");
+    [TestMethod]
+    public void On_CarriesTheLevelForwardUntilTheNextCrossing()
+    {
+        new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = true };
+        List<MacCandleData?> seen = Feed(FallAndRise(60, 60));
+
+        List<double> levels = [.. seen.Where(m => m?.RsiLevelLow != null)
+                                      .Select(m => m!.RsiLevelLow!.Value)];
+        Assert.IsTrue(levels.Count > 10, "the level has to stay available after the crossing");
+        Assert.AreEqual(1, levels.Distinct().Count(),
+            "one crossing gives one level, held until the next crossing replaces it");
     }
 }

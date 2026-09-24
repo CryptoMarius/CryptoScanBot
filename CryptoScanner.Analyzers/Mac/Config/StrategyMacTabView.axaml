@@ -14,7 +14,7 @@
             <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
                 <TextBlock FontSize="13">
                     <Run Text="MAC – Moving average cloud" FontWeight="SemiBold"/>
-                    <Run Text=" — A four-line moving-average cloud sets the trend; entries on the cloud cross, on a break through the last pivot level, or on a pullback to the fast line" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                    <Run Text=" — A four-line moving-average cloud sets the trend; entries on the cloud cross, on a break through the last pivot level, on a pullback to the fast line, or on the second line crossing the third" Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </TextBlock>
             </StackPanel>
             <WrapPanel>

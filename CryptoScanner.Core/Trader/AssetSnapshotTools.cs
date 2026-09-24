@@ -1,6 +1,7 @@
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 
 using Dapper;
@@ -28,10 +29,17 @@ namespace CryptoScanner.Core.Trader;
 public static class AssetSnapshotTools
 {
     /// <summary>
-    /// The coin every value is expressed in. Also stored per row, so old snapshots stay readable
-    /// when this ever changes.
+    /// The coin the snapshots fall back on when the exchange says nothing usable about the coin it
+    /// trades in. It used to be the only answer, hardcoded, which put four of the nineteen markets
+    /// at a flat zero - see <see cref="ResolveReferenceCoin"/>.
     /// </summary>
-    public const string ReferenceCoin = "USDT";
+    public const string FallbackReferenceCoin = "USDT";
+
+    /// <summary>
+    /// The coin every value is expressed in. Also stored per row, so old snapshots stay readable
+    /// when this changes.
+    /// </summary>
+    public static string ReferenceCoin => ResolveReferenceCoin();
 
     private static readonly object captureLock = new();
 
@@ -40,6 +48,66 @@ public static class AssetSnapshotTools
     private static DateTime? lastSnapshotDay;
     private static bool lastSnapshotDayKnown;
     private static int? lastSnapshotRunId;
+
+
+    /// <summary>
+    /// The coin this exchange keeps its money in.
+    /// <para>
+    /// First choice is the main coin the api states for itself (<see cref="ExchangeOptions.DefaultQuote"/>),
+    /// because that is a declaration and not a guess. It is only taken when the scanner is actually
+    /// trading that quote though: Kucoin Spot states USDC while 854 of its 968 symbols are USDT and
+    /// the settings only fetch USDT, so the declaration alone would value nothing at all there.
+    /// </para>
+    /// <para>
+    /// Why it matters: every price in <see cref="ResolvePrice(Model.CryptoExchange, string)"/> comes
+    /// from the pair "coin + reference coin", so a reference coin that is not traded here resolves
+    /// to no pair, every price becomes zero, and with it every value. Measured 22-09-2026: with USDT
+    /// hardcoded, HyperLiquid Perpetual (USDC only), Coinbase Spot (USD), Kraken Perpetual (USD) and
+    /// Bitvavo Spot (EUR) wrote 1124 snapshot rows that were all worth zero, so the capital line of
+    /// HyperLiquid Perpetual sat on zero for the three weeks it had been running. The cash of Okx
+    /// Perpetual (USDC on a USDT market) came out of the same hole, but that one is reachable the
+    /// other way around: USDCUSDT.PERP exists, so once the reference coin is a coin that IS traded
+    /// here the normal pair lookup values it.
+    /// </para>
+    /// </summary>
+    public static string ResolveReferenceCoin()
+    {
+        // What the exchange calls its own main coin, when the scanner is really trading it
+        string? defaultQuote = ExchangeBase.ExchangeOptions.DefaultQuote;
+        if (!string.IsNullOrEmpty(defaultQuote) && IsQuoteInUse(defaultQuote))
+            return defaultQuote;
+
+        // Every market that HAS a dollar tether trades in it, and the snapshots that exist were
+        // written in it, so it goes before the count below - a market with a second quote coin must
+        // not switch coins halfway through its own history.
+        if (IsQuoteInUse(FallbackReferenceCoin))
+            return FallbackReferenceCoin;
+
+        // Whatever is left carrying the most symbols
+        string? largest = null;
+        int largestCount = 0;
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+        {
+            if (quoteData.FetchCandles && quoteData.SymbolList.Count > largestCount)
+            {
+                largest = quoteData.Name;
+                largestCount = quoteData.SymbolList.Count;
+            }
+        }
+
+        return largest ?? FallbackReferenceCoin;
+    }
+
+
+    /// <summary>
+    /// Whether this quote coin is one the scanner is fetching AND one that has symbols. Same test as
+    /// the quote selector of the dashboard uses, so both end up on the same set of coins.
+    /// </summary>
+    private static bool IsQuoteInUse(string name)
+    {
+        return GlobalData.Settings.QuoteCoins.TryGetValue(name, out CryptoQuoteData? quoteData)
+            && quoteData.FetchCandles && quoteData.SymbolList.Count > 0;
+    }
 
 
     /// <summary>
@@ -144,9 +212,13 @@ public static class AssetSnapshotTools
         List<CryptoAssetSnapshot> rows = [];
         int? runId = GlobalData.CurrentEmulatorRunId;
 
+        // Resolved once and handed down, so every row of one day is valued in the same coin even when
+        // the settings change while this runs.
+        string referenceCoin = ResolveReferenceCoin();
+
         // Collected before the semaphore is taken: this walks the positions, and the asset semaphore
         // has nothing to do with those.
-        Dictionary<string, decimal> shortPerBase = CollectShortQuantities(activeExchange, out Dictionary<string, decimal> priceHints);
+        Dictionary<string, decimal> shortPerBase = CollectShortQuantities(activeExchange, referenceCoin, out Dictionary<string, decimal> priceHints);
 
         activeExchange.Data.AssetListSemaphore.Wait();
         try
@@ -158,7 +230,7 @@ public static class AssetSnapshotTools
             foreach (CryptoAsset asset in activeExchange.Data.AssetList.Values)
             {
                 shortPerBase.Remove(asset.Name, out decimal shortQuantity);
-                rows.Add(CreateRow(activeExchange, day, runId, asset.Name,
+                rows.Add(CreateRow(activeExchange, day, runId, referenceCoin, asset.Name,
                     asset.Total, asset.Free, asset.Locked, shortQuantity, priceHints));
             }
         }
@@ -172,17 +244,17 @@ public static class AssetSnapshotTools
         // ShortQuantity - without these rows the sale proceeds would count as capital and the debt
         // behind them would not.
         foreach (var (name, shortQuantity) in shortPerBase)
-            rows.Add(CreateRow(activeExchange, day, runId, name, 0, 0, 0, shortQuantity, priceHints));
+            rows.Add(CreateRow(activeExchange, day, runId, referenceCoin, name, 0, 0, 0, shortQuantity, priceHints));
 
         return rows;
     }
 
 
     private static CryptoAssetSnapshot CreateRow(Model.CryptoExchange activeExchange, DateTime day, int? runId,
-        string name, decimal total, decimal free, decimal locked, decimal shortQuantity,
+        string referenceCoin, string name, decimal total, decimal free, decimal locked, decimal shortQuantity,
         Dictionary<string, decimal> priceHints)
     {
-        decimal price = ResolvePrice(activeExchange, name, priceHints);
+        decimal price = ResolvePrice(activeExchange, name, referenceCoin, priceHints);
         return new CryptoAssetSnapshot
         {
             EmulatorRunId = runId,
@@ -192,7 +264,7 @@ public static class AssetSnapshotTools
             Free = free,
             Locked = locked,
             ShortQuantity = shortQuantity,
-            ReferenceCoin = ReferenceCoin,
+            ReferenceCoin = referenceCoin,
             Price = price,
             Value = (total - shortQuantity) * price,
         };
@@ -205,7 +277,7 @@ public static class AssetSnapshotTools
     /// actually being traded is best taken from the symbol that is trading it.
     /// </summary>
     private static Dictionary<string, decimal> CollectShortQuantities(Model.CryptoExchange activeExchange,
-        out Dictionary<string, decimal> priceHints)
+        string referenceCoin, out Dictionary<string, decimal> priceHints)
     {
         Dictionary<string, decimal> shortPerBase = [];
         priceHints = [];
@@ -213,7 +285,7 @@ public static class AssetSnapshotTools
         foreach (CryptoPosition position in activeExchange.Data.PositionList.Values)
         {
             CryptoSymbol symbol = position.Symbol;
-            if (symbol.LastPrice.HasValue && symbol.Quote == ReferenceCoin)
+            if (symbol.LastPrice.HasValue && symbol.Quote == referenceCoin)
                 priceHints[symbol.Base] = symbol.LastPrice.Value;
 
             // Ready means the position is closed and bought back, so nothing is owed any more.
@@ -241,10 +313,19 @@ public static class AssetSnapshotTools
     /// </summary>
     public static decimal ResolvePrice(Model.CryptoExchange activeExchange, string name)
     {
-        if (name == ReferenceCoin)
+        return ResolvePrice(activeExchange, name, ResolveReferenceCoin());
+    }
+
+
+    /// <summary>
+    /// Same, with the reference coin already resolved by the caller.
+    /// </summary>
+    public static decimal ResolvePrice(Model.CryptoExchange activeExchange, string name, string referenceCoin)
+    {
+        if (name == referenceCoin)
             return 1m;
 
-        if (activeExchange.TryGetSymbolByPair(name + ReferenceCoin, out CryptoSymbol? symbol) && symbol.LastPrice.HasValue)
+        if (activeExchange.TryGetSymbolByPair(name + referenceCoin, out CryptoSymbol? symbol) && symbol.LastPrice.HasValue)
             return symbol.LastPrice.Value;
 
         return 0m;
@@ -255,12 +336,13 @@ public static class AssetSnapshotTools
     /// Same, but the price of a coin that is being traded right now is taken from the symbol trading
     /// it - during a replay only the symbols of the run have a price at all.
     /// </summary>
-    private static decimal ResolvePrice(Model.CryptoExchange activeExchange, string name, Dictionary<string, decimal> priceHints)
+    private static decimal ResolvePrice(Model.CryptoExchange activeExchange, string name, string referenceCoin,
+        Dictionary<string, decimal> priceHints)
     {
-        if (name != ReferenceCoin && priceHints.TryGetValue(name, out decimal hinted))
+        if (name != referenceCoin && priceHints.TryGetValue(name, out decimal hinted))
             return hinted;
 
-        return ResolvePrice(activeExchange, name);
+        return ResolvePrice(activeExchange, name, referenceCoin);
     }
 
 
