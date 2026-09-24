@@ -671,3 +671,64 @@ off, the strategy currently enters on the WORSE of the two readings: the crossin
 reference on 28 of its 140 five minute marks and 60 of its 203 fifteen minute ones, the run on 79
 and 139 of the same. Which of the two earns more MONEY has not been measured yet - that needs emulator runs,
 and until they are done the default stays where it is.
+
+## The break, searched to its ceiling (24 September 2026)
+
+The six markers that are reconstructed sit at 1689 of 1717 on the exact candle, and every one of
+the 28 misses is a Cross Up on the first two four hour candles of the judged window - before our
+own history is 200 candles deep, so they can never be hit. On comparable ground the six are exact.
+
+The other two were taken apart properly this time, with a measuring instrument built for it:
+`MacAgainstTheReferenceTests.WriteTheCandleFacts` writes every candle of all five sets with the
+numbers the rule is allowed to see, and `Tools/EntryTiming/_doorbraak_speeltuin.py` rebuilds the
+stretches from that file. The rebuild is checked against the shipped code first - the same ranks on
+96 443 of 96 446 candles, the same verdict on 3971 of 3973 stretches - so a candidate rule can be
+tried in a second instead of by rebuilding the project.
+
+**What the reference actually does, measured on 990 stretches over eleven coins and four
+timeframes.** It marks 273 of them, so three in four have to be turned away, and that selection is
+the whole problem: of every false mark, half sits more than ten candles from anything the reference
+drew - a stretch it never touched at all - and only a third sits within three candles of one.
+
+- It never draws more than **three** marks in one stretch: 141 of 142 up, 130 of 131 down.
+- Its marks sit at the START of the stretch: a quarter on the first candle, 71% within four.
+- The stretches it marks **run long** - a median of 7 candles against 2 for the ones it ignores.
+  That is not knowable when a stretch starts, which is exactly why it cannot be used.
+
+**Three readings of the selection, each fitted on the fifteen minute set and judged on the four
+sets that took no part in the fitting, and then the other way round as a check.** The number is the
+harmonic mean of hit rate and false rate.
+
+| the selection | fitted set | the four others |
+|---|---|---|
+| the distance from the LEVEL to the slow line (what shipped) | 0.535 | 0.413 |
+| the thickness of the cloud, with the close clear of it | 0.548 | 0.437 |
+| a fitted model over all eighteen numbers we can measure | 0.511 | 0.395 |
+
+The middle one is now in the code: at the stretch's first candle the four lines may stand at most
+**4.1** average candle ranges apart, and the close has to stand at least **0.75** past the edge of
+them. Both searches landed on the same pair (4.0 and 4.25 for the thickness, 0.75 for the clear),
+so the middle of the two is used and neither set got its own optimum. Over all five sets: 297
+markers on the exact candle becomes 307, 212 missed becomes 202, 480 false becomes 462.
+
+**The last line of that table is the important one.** A model with a free hand and every number we
+measure does WORSE than a two-threshold rule. Whatever the reference uses to pick its stretches is
+not a combination of what we can see. Three more routes were tried and all of them land at or below
+what already ships:
+
+- **Refitting the old band** on all five sets: 0.476 at best against 0.462, and only by raising the
+  marks per stretch, which buys hits with false marks.
+- **Marking the first candles of the stretch** instead of its first new extremes: worse on every
+  variant (0.370 to 0.433 against 0.462), with or without the volume condition.
+- **Dropping the level entirely** and marking a close that betters the last N. This looked the most
+  promising of all - 85% of the up markers sit on a close that betters the last fifty, against 7%
+  of all candles - but the precision is not there: 0.45 fitted, 0.38 on the rest.
+
+Per candle the separation is real and consistent across all four sets - volume against its twenty
+candle average separates at 0.79, candle size at 0.77, body at 0.75, the close's distance past the
+cloud at 0.75 - but it is already spent. Adding thresholds on top of the rule that ships buys 0.011
+on the set it is fitted on and 0.002 on the rest, which is nothing.
+
+So the break markers are not a tuning problem any more. They are at the ceiling of what these
+measurements can express, and the next step is not another threshold but a different kind of
+evidence about the reference itself.

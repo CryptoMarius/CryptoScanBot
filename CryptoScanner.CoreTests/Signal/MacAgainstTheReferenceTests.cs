@@ -261,6 +261,96 @@ public class MacAgainstTheReferenceTests : TestBase
     }
 
 
+    /// <summary>
+    /// Every candle of every set with the numbers the break rule is allowed to look at, so a
+    /// candidate rule can be tried in the counting script instead of by rebuilding this project.
+    /// <para>
+    /// Only what stands there at the time is written: the four lines, the two levels with their
+    /// age, the rank inside the run and the candle itself. Whether the run turns out well is the
+    /// future and is deliberately absent.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void WriteTheCandleFacts()
+    {
+        if (!File.Exists(Database))
+        {
+            Assert.Inconclusive("no candle database at " + Database);
+            return;
+        }
+
+        List<string> lines =
+        [
+            "symbol,interval,time,open,high,low,close,volume,fast,second,medium,slow," +
+            "levelHigh,levelHighAge,levelLow,levelLowAge,upRank,downRank,upOk,downOk"
+        ];
+        foreach (var (intervalName, intervalId, period, symbols) in Runs)
+        {
+            foreach (string name in symbols)
+            {
+                List<CryptoCandle> candles = Load(name, intervalId);
+                if (candles.Count < 250)
+                    continue;
+                lines.AddRange(Facts(name, candles, intervalName));
+            }
+        }
+
+        File.WriteAllLines(Facts_Output, lines);
+        Console.WriteLine((lines.Count - 1) + " candles written to " + Facts_Output);
+        Assert.IsTrue(lines.Count > 1);
+    }
+
+
+    private const string Facts_Output =
+        @"E:\Projects\CryptoScanBot\Tools\EntryTiming\mac-candle-facts.csv";
+
+
+    /// <summary>One pass over the candles that only reads the indicator, and fires nothing.</summary>
+    private static List<string> Facts(string name, List<CryptoCandle> candles, string intervalName)
+    {
+        MacSettings settings = new() { UseRsiLevels = true };
+        new MacPlugin().SettingsBase = settings;
+
+        IndicatorRegistry registry = new(500);
+        MacIndicatorExtension extension = new();
+        extension.Init(registry);
+
+        List<string> rows = [];
+        for (int i = 0; i < candles.Count; i++)
+        {
+            CryptoCandle candle = candles[i];
+            DateTime moment = Epoch.AddMinutes(candle.OpenTime.Minutes);
+            registry.QuoteHub.Add(new Quote(moment, candle.Open, candle.High, candle.Low,
+                candle.Close, candle.Volume));
+            extension.OnCandleAdded(new Quote(moment, candle.Open, candle.High, candle.Low,
+                candle.Close, candle.Volume));
+            CryptoData data = new();
+            extension.FillData(data);
+            if (i < 200)
+                continue;
+
+            MacCandleData mac = data.GetPluginData<MacCandleData>()!;
+            rows.Add(string.Join(",",
+                name, intervalName, moment.ToString("yyyy-MM-dd HH:mm:ss"),
+                Number(candle.Open), Number(candle.High), Number(candle.Low), Number(candle.Close),
+                Number(candle.Volume),
+                Number(mac.EmaFast), Number(mac.EmaSecond), Number(mac.SmaMedium), Number(mac.SmaSlow),
+                Number(mac.RsiLevelHigh), mac.RsiLevelHighAge,
+                Number(mac.RsiLevelLow), mac.RsiLevelLowAge,
+                mac.BreakoutRank, mac.BreakdownRank,
+                mac.BreakoutRunAllowed ? 1 : 0, mac.BreakdownRunAllowed ? 1 : 0));
+        }
+        return rows;
+    }
+
+
+    private static string Number(double? value) =>
+        value == null ? "" : value.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static string Number(decimal value) =>
+        value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+
     private static CryptoSymbol MakeSymbol(string name)
     {
         Exchange exchange = new() { Id = 1, Name = "TestExchange", FeeRate = 0.1m };

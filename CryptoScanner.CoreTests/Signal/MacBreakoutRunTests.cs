@@ -198,17 +198,17 @@ public class MacBreakoutRunTests
 
 
     /// <summary>
-    /// The verdict on a run has to follow the band, and it has to be taken on the run's FIRST
-    /// candle. Both bounds are pinned: a level that hugs the trend earns nothing, and so does one
-    /// that has been left far behind.
+    /// The verdict on a run has to follow the cloud, and it has to be taken on the run's FIRST
+    /// candle. Both halves are pinned: a cloud that stands wide open earns nothing, and neither
+    /// does a close that has barely cleared it.
     /// </summary>
     [TestMethod]
-    public void TheVerdictFollowsTheBandAroundTheTrend()
+    public void TheVerdictFollowsTheCloudAtTheStartOfTheRun()
     {
-        // MacIndicatorExtension.BreakLevelNear and BreakLevelFar. Private there on purpose, so the
-        // numbers stand here as well - if one moves without the other, this test says so.
-        const double near = 1.4;
-        const double far = 5.35;
+        // MacIndicatorExtension.BreakCloudThick and BreakCloudClear. Private there on purpose, so
+        // the numbers stand here as well - if one moves without the other, this test says so.
+        const double thick = 4.1;
+        const double clear = 0.75;
         const decimal range = 8m;
 
         List<decimal> closes = ClimbsOfDifferentSize(0.4m, 1m, 3m);
@@ -233,44 +233,47 @@ public class MacBreakoutRunTests
                 // The first candle of the run: every candle carries the same range, so the average
                 // range the indicator divides by is that range itself.
                 inside = true;
-                double distance = (level.Value - mac.SmaSlow.Value) / (double)range;
-                verdict = distance > near && distance < far;
-                measured.Add($"{i}:{distance:0.00}");
+                double thickness = (mac.CloudTop!.Value - mac.CloudBottom!.Value) / (double)range;
+                double past = ((double)closes[i] - mac.CloudTop.Value) / (double)range;
+                verdict = thickness < thick && past > clear;
+                measured.Add($"{i}:{thickness:0.00}/{past:0.00}");
                 if (verdict)
                     allowed++;
                 else
                     refused++;
             }
             Assert.AreEqual(verdict, mac.BreakoutRunAllowed,
-                $"candle {i} belongs to a run whose level stands "
-                + $"{(level.Value - mac.SmaSlow.Value) / (double)range:0.00} candle ranges from "
-                + "the slow line, and the verdict of its first candle has to hold for all of it");
+                $"candle {i} belongs to a run whose cloud was "
+                + $"{(mac.CloudTop!.Value - mac.CloudBottom!.Value) / (double)range:0.00} candle "
+                + "ranges thick at its first candle, and the verdict of that candle has to hold "
+                + "for all of it");
         }
         Assert.IsTrue(allowed > 0 && refused > 0,
-            $"this series should hold runs on both sides of the band, not {allowed} and "
-            + $"{refused} - {string.Join(" ", measured)}");
+            $"this series should hold runs the cloud lets through AND runs it turns away, not "
+            + $"{allowed} and {refused} - {string.Join(" ", measured)}");
     }
 
 
     /// <summary>
-    /// A level that sits right on top of the trend earns nothing. The candles are so big here that
-    /// the whole climb is a fraction of one of them, which is the lower bound of the band.
+    /// A close that has barely cleared the lines earns nothing. The candles are so big here that
+    /// the whole climb is a fraction of one of them, so nothing ever stands the three quarters of
+    /// a candle past the cloud that the rule asks.
     /// </summary>
     [TestMethod]
-    public void ALevelThatHugsTheTrendEarnsNothing()
+    public void ACloseThatHasBarelyClearedTheLinesEarnsNothing()
     {
         List<decimal> closes = ClimbThroughAResistance(settle: 260, rise: 25, dip: 8,
             climb: 120, step: 1m);
         List<MacCandleData?> published = Publish(closes, range: 200m);
 
         // A candle range of 200 against steps of 3 makes every distance a fraction of one range,
-        // so no level can stand the one and a half ranges clear of the trend that the band asks.
+        // so no close can stand the three quarters of a range past the cloud that the rule asks.
         foreach (MacCandleData? mac in published)
         {
             if (mac == null)
                 continue;
             Assert.IsFalse(mac.BreakoutRunAllowed,
-                "no level in this series stands clear enough of the trend");
+                "no close in this series stands clear enough of the lines");
             Assert.IsFalse(mac.BreakdownRunAllowed,
                 "and none does on the other side either");
         }

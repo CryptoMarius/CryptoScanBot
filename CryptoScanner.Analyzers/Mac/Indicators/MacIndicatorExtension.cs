@@ -57,8 +57,8 @@ public class MacIndicatorExtension : IIndicatorExtension
     private const int BreakRangeCandles = 14;       // candles in the average candle size
     private const int BreakVolumeCandles = 20;      // candles in the average volume
     private const double BreakVolumeShare = 1.0;    // the candle needs at least the average
-    private const double BreakLevelNear = 1.4;      // the level at least this far from the slow line
-    private const double BreakLevelFar = 5.35;      // and at most this far, both in candle sizes
+    private const double BreakCloudThick = 4.1;     // the four lines at most this many candle sizes apart
+    private const double BreakCloudClear = 0.75;    // and the close at least this far past their far edge
     private readonly decimal[] _breakRanges = new decimal[BreakRangeCandles];
     private readonly decimal[] _breakVolumes = new decimal[BreakVolumeCandles];
     private long _breakSeen;
@@ -226,10 +226,11 @@ public class MacIndicatorExtension : IIndicatorExtension
     /// <summary>
     /// The runs beyond a level, one per side, and where inside such a run a break marker belongs.
     /// <para>
-    /// Two layers, both settled here. A run EARNS marks when the LEVEL it breaks stands inside a
-    /// band around the trend - between <see cref="BreakLevelNear"/> and <see cref="BreakLevelFar"/>
-    /// average candle sizes from the slow line - and that verdict is then held for the whole run.
-    /// Inside a run the marks go on the candles that make a new extreme of it, counted from one.
+    /// Two layers, both settled here. A run EARNS marks when the four lines stand close together at
+    /// its first candle and the close is already clear of them - at most <see cref="BreakCloudThick"/>
+    /// candle sizes from the highest line to the lowest, and at least <see cref="BreakCloudClear"/>
+    /// past the edge - and that verdict is then held for the whole run. Inside a run the marks go on
+    /// the candles that make a new extreme of it, counted from one.
     /// </para>
     /// <para>
     /// Both numbers come from measurement against the reference indicator, not from taste: over
@@ -269,7 +270,7 @@ public class MacIndicatorExtension : IIndicatorExtension
             open = true;
             rank = 0;
             reach = up ? double.MinValue : double.MaxValue;
-            allowed = RunIsWorthMarking(level.Value, up);
+            allowed = RunIsWorthMarking(close, up);
         }
         if (up ? close <= reach : close >= reach)
             return 0;
@@ -338,41 +339,34 @@ public class MacIndicatorExtension : IIndicatorExtension
 
 
     /// <summary>
-    /// Whether a run that starts on this candle deserves marks at all: does the level it breaks
-    /// stand a sensible distance from the trend?
+    /// Whether a run that starts on this candle deserves marks at all: were the four lines close
+    /// together, and does the close already stand clear of them?
     /// <para>
-    /// This is a BAND and that is the whole point. Until 23 September 2026 it was a floor on the
-    /// distance from the CLOSE to the slow line, and that number barely separates the runs the
-    /// reference marks from the ones it leaves alone - over eleven coins the median is 3.98 for
-    /// the marked ones against 3.89 for the rest. A floor cannot see the other half of the shape:
-    /// a level that has already been left far behind belongs to a move that has happened, and the
-    /// reference does not draw that one either.
-    /// </para>
-    /// <para>
-    /// Two measures were searched over 384 runs on eleven coins at fifteen minutes and judged on
-    /// 322 runs on four coins at five minutes, thresholds always taken from the OTHER set. The
-    /// distance from the LEVEL to the slow line won: it keeps more of the drawn markers and it
-    /// travels better. Against the floor it replaces, counting markers on the exact candle:
+    /// This is the part of the break that decides WHICH stretches get marked, and it has been
+    /// searched hard. Of 990 stretches in view over eleven coins and four timeframes the reference
+    /// marks 273, so three quarters have to be turned away. Three candidates were measured over
+    /// all of them, each time fitted on the fifteen minute set and judged on the four sets that
+    /// took no part in the fitting - and then the other way round as a check:
     /// </para>
     /// <list type="bullet">
-    /// <item>fifteen minutes, 203 drawn: 139 hit and 272 false becomes 126 hit and 179 false;</item>
-    /// <item>five minutes, 140 drawn: 79 hit and 283 false becomes 73 hit and 162 false.</item>
+    /// <item>the distance from the LEVEL to the slow line, which this replaces: 0.535 and 0.413;</item>
+    /// <item>the thickness of the cloud with the close clear of it: 0.548 and 0.437;</item>
+    /// <item>every number we can measure, weighted by a fitted model: 0.511 and 0.395.</item>
     /// </list>
     /// <para>
-    /// The band also takes out the direction skew that the floor had, and it does so by
-    /// construction: the runs that stood absurdly far under the slow line in a falling market are
-    /// exactly what the upper bound removes. False marks per drawn marker were 1.19 up against
-    /// 1.46 down and are now 0.87 against 0.89. The normalised measure that was built for that
-    /// skew - the distance against its own hundred candle average - is no longer needed and is not
-    /// in the code.
+    /// Those are harmonic means of hit rate and false rate. The middle line is what stands here. It
+    /// is worth noticing that the last one is BELOW the first: a model with eighteen numbers and a
+    /// free hand does no better than the rule, which says the reference's own rule is not hiding in
+    /// anything we measure. See Mac.md.
     /// </para>
     /// <para>
-    /// The thresholds are the MIDDLE of the two searches (1.59 and 5.55 on fifteen minutes, 1.29
-    /// and 5.14 on five), so neither set got its own optimum. Still an approximation, not the
-    /// rule - see Mac.md.
+    /// Both searches landed on the same pair - 4.0 and 4.25 for the thickness, 0.75 for the clear -
+    /// and the middle of the two is what is used, so neither set got its own optimum. Against the
+    /// distance band it replaces, over all five sets: 297 markers on the exact candle becomes 307,
+    /// the missed ones 212 become 202, and the false ones 480 become 462.
     /// </para>
     /// </summary>
-    private bool RunIsWorthMarking(double level, bool up)
+    private bool RunIsWorthMarking(double close, bool up)
     {
         if (_breakSeen < BreakRangeCandles)
             return false;
@@ -383,13 +377,21 @@ public class MacIndicatorExtension : IIndicatorExtension
         if (span <= 0.0)
             return false;
 
+        double? fast = _emaFast?.Results.Count > 0 ? _emaFast.Results[^1].Ema : null;
+        double? second = _emaSecond?.Results.Count > 0 ? _emaSecond.Results[^1].Ema : null;
+        double? medium = _smaMedium?.Results.Count > 0 ? _smaMedium.Results[^1].Sma : null;
         double? slow = _smaSlow?.Results.Count > 0 ? _smaSlow.Results[^1].Sma : null;
-        if (slow == null)
+        if (fast == null || second == null || medium == null || slow == null)
             return false;
 
+        double top = Math.Max(Math.Max(fast.Value, second.Value), Math.Max(medium.Value, slow.Value));
+        double bottom = Math.Min(Math.Min(fast.Value, second.Value), Math.Min(medium.Value, slow.Value));
+        if ((top - bottom) / span >= BreakCloudThick)
+            return false;
+
+        double edge = up ? top : bottom;
         double sign = up ? 1.0 : -1.0;
-        double distance = sign * (level - slow.Value) / span;
-        return distance > BreakLevelNear && distance < BreakLevelFar;
+        return sign * (close - edge) / span > BreakCloudClear;
     }
 
 
