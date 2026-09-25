@@ -33,9 +33,9 @@ public class MacIndicatorExtension : IIndicatorExtension
 
     // The RSI levels, when they are switched on. No ring buffer this time: a crossing only needs
     // the RSI of the previous candle, and the level is the low or the high of the candle it
-    // crosses on. What IS kept is the level as it stood BEFORE this candle, because a level set on
-    // the candle in hand would be broken by that same candle - the low of a candle is always under
-    // its own close.
+    // crosses on. The level is LIVE on that candle - see TrackRsiLevel for what the reference's own
+    // plot values say about that, and for why the guard that used to hold it back a candle was
+    // guarding against something that cannot happen.
     private RsiHub? _rsi;
     private bool _useRsiLevels;
     private double _supportCross;
@@ -45,33 +45,27 @@ public class MacIndicatorExtension : IIndicatorExtension
     private long _rsiLevelHighIndex;
     private double? _rsiLevelLow;
     private long _rsiLevelLowIndex;
-    private double? _publishedHigh;
-    private long _publishedHighIndex;
-    private double? _publishedLow;
-    private long _publishedLowIndex;
 
     // The run beyond a level, per side. A run is the unbroken stretch of candles whose close
-    // stands beyond the level; inside it the reference marks the candles that make a new extreme,
-    // and only for runs that started with the price already clear of the trend. Both the running
-    // extreme and the verdict on the run are kept here, so the strategy only has to read a number.
+    // stands beyond the level AND whose wick betters the last hundred candles. The counter that
+    // decides how many of them are marked does not belong to the stretch but to the POSITION: it
+    // restarts at the entry - the fast line crossing the second - and lets three through. See
+    // TrackBreakRuns for the measurement behind every one of those words.
     private const int BreakRangeCandles = 14;       // candles in the average candle size
-    private const int BreakVolumeCandles = 20;      // candles in the average volume
-    private const double BreakVolumeShare = 1.0;    // the candle needs at least the average
-    private const double BreakCloudThick = 4.1;     // the four lines at most this many candle sizes apart
-    private const double BreakCloudClear = 0.75;    // and the close at least this far past their far edge
+    private const int BreakExtremeCandles = 100;    // the wick has to better this many candles
+    private const int BreakBarsSinceOpen = 5;       // and the entry has to be this many candles old
     private readonly decimal[] _breakRanges = new decimal[BreakRangeCandles];
-    private readonly decimal[] _breakVolumes = new decimal[BreakVolumeCandles];
+    private readonly decimal[] _breakHighs = new decimal[BreakExtremeCandles];
+    private readonly decimal[] _breakLows = new decimal[BreakExtremeCandles];
     private long _breakSeen;
-    private bool _runUpOpen;
-    private bool _runDownOpen;
-    private bool _runUpAllowed;
-    private bool _runDownAllowed;
-    private double _runUpReach;
-    private double _runDownReach;
+    private long _sinceOpenUp = long.MaxValue;
+    private long _sinceOpenDown = long.MaxValue;
     private int _runUpRank;
     private int _runDownRank;
     private int _markUpRank;
     private int _markDownRank;
+    private bool _fastWasAbove;
+    private bool _fastSideKnown;
 
     // The ring buffer of the last _left + _right + 1 candles. _next is the slot the next candle
     // overwrites, which while the buffer is full is also the oldest candle in it.
@@ -114,7 +108,7 @@ public class MacIndicatorExtension : IIndicatorExtension
             _supportCross = (double)settings.RsiLevelSupportCross;
             _resistanceCross = (double)settings.RsiLevelResistanceCross;
             _previousRsi = null;
-            _rsiLevelHigh = _rsiLevelLow = _publishedHigh = _publishedLow = null;
+            _rsiLevelHigh = _rsiLevelLow = null;
         }
 
         _left = Math.Max(1, settings.PivotLeftCandles);
@@ -126,8 +120,8 @@ public class MacIndicatorExtension : IIndicatorExtension
         _next = 0;
         _candleCount = 0;
         _breakSeen = 0;
-        _runUpOpen = _runDownOpen = false;
-        _runUpAllowed = _runDownAllowed = false;
+        _sinceOpenUp = _sinceOpenDown = long.MaxValue;
+        _fastSideKnown = false;
         _markUpRank = _markDownRank = 0;
     }
 
@@ -148,8 +142,8 @@ public class MacIndicatorExtension : IIndicatorExtension
         if (_useRsiLevels)
             TrackRsiLevel(candle);
 
-        // After the levels, never before: what a run is measured against is the level as it stood
-        // BEFORE this candle, which is exactly what TrackRsiLevel has just published.
+        // After the levels, never before: a run is measured against the level as it stands on THIS
+        // candle, which is what TrackRsiLevel has just worked out.
         TrackBreakRuns(candle);
 
         // A pivot needs its right-hand candles before it can be called one, so the candidate sits
@@ -190,6 +184,20 @@ public class MacIndicatorExtension : IIndicatorExtension
     /// The RSI levels. A support is the LOW of the candle on which the RSI crosses back up through
     /// its lower bound, a resistance the HIGH of the candle on which it crosses back down through
     /// the upper one. One of each is carried forward until the next crossing replaces it.
+    /// <para>
+    /// The level is live on the candle that SETS it, and that is not a guess: the reference draws
+    /// its Support and Resistance as plots, and a plot hands over its numbers. Held against ours
+    /// over 71 changes of both levels on bitcoin at fifteen minutes, a level that waits a candle
+    /// matches on 55 and 59 of the 71 and a level that does not wait matches on 71 and 71 - every
+    /// difference sitting on the very candle the level moved.
+    /// </para>
+    /// <para>
+    /// Until 24 September 2026 the level was held back one candle, so that a candle could not break
+    /// a level it had just set. That cannot happen anyway: a resistance IS the high of its candle
+    /// and a close never exceeds its own high, so the guard only ever cost a candle. For the break
+    /// markers it measures as a draw - 305 on the exact candle either way - and it is out because
+    /// the reference's own numbers say what the right answer is.
+    /// </para>
     /// </summary>
     private void TrackRsiLevel(IQuote candle)
     {
@@ -198,12 +206,6 @@ public class MacIndicatorExtension : IIndicatorExtension
         var results = _rsi.Results;
         if (results.Count == 0 || results[^1].Rsi == null)
             return;
-
-        // What the strategy is allowed to see on this candle is the level as it stood BEFORE it.
-        _publishedHigh = _rsiLevelHigh;
-        _publishedHighIndex = _rsiLevelHighIndex;
-        _publishedLow = _rsiLevelLow;
-        _publishedLowIndex = _rsiLevelLowIndex;
 
         double now = results[^1].Rsi!.Value;
         if (_previousRsi != null)
@@ -224,83 +226,139 @@ public class MacIndicatorExtension : IIndicatorExtension
 
 
     /// <summary>
-    /// The runs beyond a level, one per side, and where inside such a run a break marker belongs.
+    /// The break markers, per side. A candle is a candidate when its CLOSE stands beyond the level
+    /// and its WICK betters the highest high (lowest low) of the hundred candles before it; of the
+    /// candidates, the first three since the position opened are marked.
     /// <para>
-    /// Two layers, both settled here. A run EARNS marks when the four lines stand close together at
-    /// its first candle and the close is already clear of them - at most <see cref="BreakCloudThick"/>
-    /// candle sizes from the highest line to the lowest, and at least <see cref="BreakCloudClear"/>
-    /// past the edge - and that verdict is then held for the whole run. Inside a run the marks go on
-    /// the candles that make a new extreme of it, counted from one.
+    /// Every part of that is measured against the reference's own plot values on eleven coins over
+    /// five timeframes, 747 markers outside the warm-up.
     /// </para>
+    /// <list type="bullet">
+    /// <item><b>The wick, not the close.</b> All 747 better the hundred candles before them on the
+    /// wick. On the close only 85% do, and that is what held the whole reconstruction back.</item>
+    /// <item><b>Exactly a hundred.</b> 747 of 747 at 100 and 743 at 101 - an edge that sharp is a
+    /// literal number in the source, not a fitted one. It is not one of the line lengths, and it
+    /// does not move when the indicator's Speed input does.</item>
+    /// <item><b>The counter belongs to the position.</b> Anchored on the stretch it reaches 93% of
+    /// the markers at 43% precision; anchored on the entry, 89% at 81%. Three per position: two
+    /// gives 64%, four gives 96% at 75%.</item>
+    /// <item><b>And the entry has to be five candles old.</b> The reference skips candidates right
+    /// after the cross. 89% at 81% becomes 91% at 87%.</item>
+    /// <item><b>Volume is NOT a condition.</b> It looked like the strongest number of all until the
+    /// hundred candle extreme was in - it was standing in for it. Asking for the average costs six
+    /// points of agreement, asking a third more costs fourteen.</item>
+    /// </list>
     /// <para>
-    /// Both numbers come from measurement against the reference indicator, not from taste: over
-    /// four coins on five minute and daily candles this reading agrees with two to three times as
-    /// many of its break markers as breaking on the crossing candle does, on both sides and on
-    /// both intervals. It is a better approximation, not the rule itself - see Mac.md.
+    /// Together: 683 of 747 on the exact candle with 98 false, against 487 with 608 false for the
+    /// stretch reading it replaces. Held apart, the fifteen minute set gives 91% and 87% and the
+    /// four sets that took no part in any choice give 92% and 88% - the out of sample half is the
+    /// better one, so nothing here is fitted to noise. See Mac.md.
     /// </para>
     /// </summary>
     private void TrackBreakRuns(IQuote candle)
     {
         _breakRanges[(int)(_breakSeen % BreakRangeCandles)] = candle.High - candle.Low;
-        _breakVolumes[(int)(_breakSeen % BreakVolumeCandles)] = candle.Volume;
-        _breakSeen++;
 
-        double close = (double)candle.Close;
-        _markUpRank = TrackOneRun(close, true, ref _runUpOpen, ref _runUpAllowed,
-            ref _runUpReach, ref _runUpRank);
-        _markDownRank = TrackOneRun(close, false, ref _runDownOpen, ref _runDownAllowed,
-            ref _runDownReach, ref _runDownRank);
+        // The entry the counter hangs on, and the hundred candle window, are both read BEFORE this
+        // candle goes into the buffers - so "the hundred candles before this one" really is before.
+        TrackTheEntry();
+
+        _markUpRank = TrackOneSide(candle, true, ref _sinceOpenUp, ref _runUpRank);
+        _markDownRank = TrackOneSide(candle, false, ref _sinceOpenDown, ref _runDownRank);
+
+        _breakHighs[(int)(_breakSeen % BreakExtremeCandles)] = candle.High;
+        _breakLows[(int)(_breakSeen % BreakExtremeCandles)] = candle.Low;
+        _breakSeen++;
     }
 
 
-    /// <summary>One side of <see cref="TrackBreakRuns"/>. Returns this candle's rank, or zero.</summary>
-    private int TrackOneRun(double close, bool up, ref bool open, ref bool allowed,
-        ref double reach, ref int rank)
+    /// <summary>The fast line crossing the second one, which is what restarts the counter.</summary>
+    private void TrackTheEntry()
     {
-        double? level = up ? _publishedHigh : _publishedLow;
-        bool beyond = level != null && (up ? close > level.Value : close < level.Value);
-        if (!beyond)
-        {
-            open = false;
-            allowed = false;
-            return 0;
-        }
-        if (!open)
-        {
-            open = true;
-            rank = 0;
-            reach = up ? double.MinValue : double.MaxValue;
-            allowed = RunIsWorthMarking(close, up);
-        }
-        if (up ? close <= reach : close >= reach)
-            return 0;
-        reach = close;
-        rank++;
+        double? fast = _emaFast?.Results.Count > 0 ? _emaFast.Results[^1].Ema : null;
+        double? second = _emaSecond?.Results.Count > 0 ? _emaSecond.Results[^1].Ema : null;
+        if (fast == null || second == null)
+            return;
 
-        // The candle also has to carry volume. Measured over six coins on fifteen minute candles
-        // the stretches the reference marks run a median of 2.4 to 3.1 times the twenty candle
-        // average against 1.6 for the ones it leaves alone, while the two distances that pick the
-        // stretch barely separate them at all. Asking for the average alone lifts the agreement on
-        // both the fifteen minute set it was found on AND the five minute set it was not - 31 to
-        // 34 and 15 to 16 - which is why it is a rule and not a curve through the noise.
-        //
-        // The rank keeps counting: this candle IS the next new extreme of its run whether it is
-        // marked or not, so a quiet one does not hand its number to the candle after it.
-        if (!EnoughVolume())
+        if (_sinceOpenUp != long.MaxValue)
+            _sinceOpenUp++;
+        if (_sinceOpenDown != long.MaxValue)
+            _sinceOpenDown++;
+
+        bool above = fast.Value > second.Value;
+        if (_fastSideKnown && above != _fastWasAbove)
+        {
+            if (above)
+            {
+                _sinceOpenUp = 0;
+                _runUpRank = 0;
+            }
+            else
+            {
+                _sinceOpenDown = 0;
+                _runDownRank = 0;
+            }
+        }
+        _fastWasAbove = above;
+        _fastSideKnown = true;
+    }
+
+
+    /// <summary>One side of <see cref="TrackBreakRuns"/>. Returns this candle's number, or zero.</summary>
+    private int TrackOneSide(IQuote candle, bool up, ref long sinceOpen, ref int rank)
+    {
+        double? level = up ? _rsiLevelHigh : _rsiLevelLow;
+        double close = (double)candle.Close;
+        if (level == null || (up ? close <= level.Value : close >= level.Value))
             return 0;
 
-        // And the SECOND line has to stand on the break's side of the slow line. A break away from
-        // the trend is one the reference does not mark, and this is the sharpest way it says so: of
-        // every break marker it draws on eleven coins over four timeframes, not one has the second
-        // line on the wrong side - 203 of 203 on fifteen minutes, 140 of 140 on five, and all of
-        // them on four hours and daily. Of the candles it does NOT mark, a fifth do.
-        //
-        // What it buys, against the rule without it: 62 false marks fewer for one marker given up,
-        // and it pulls the same way on all four sets - 195 false becomes 172, 189 becomes 177, 105
-        // becomes 83 and 49 becomes 44.
+        if (!WickBettersTheHundred(candle, up))
+            return 0;
+
+        // The cloud still has to point the way of the break. Both of these hold on every one of the
+        // 747 markers; the fast line against the second is nearly implied by the counter's anchor
+        // and is kept because it says out loud which side of that cross we are on.
         if (!SecondLineWithTheBreak(up))
             return 0;
+        if (!FastLineWithTheBreak(up))
+            return 0;
+
+        // Too soon after the entry the reference draws nothing.
+        if (sinceOpen < BreakBarsSinceOpen)
+            return 0;
+
+        rank++;
         return rank;
+    }
+
+
+    /// <summary>
+    /// Whether this candle's wick betters every one of the <see cref="BreakExtremeCandles"/> before
+    /// it. The candle itself is not in the buffers yet, so the whole buffer IS its history.
+    /// </summary>
+    private bool WickBettersTheHundred(IQuote candle, bool up)
+    {
+        if (_breakSeen < BreakExtremeCandles)
+            return false;
+        decimal[] buffer = up ? _breakHighs : _breakLows;
+        decimal best = buffer[0];
+        for (int i = 1; i < buffer.Length; i++)
+        {
+            if (up ? buffer[i] > best : buffer[i] < best)
+                best = buffer[i];
+        }
+        return up ? candle.High > best : candle.Low < best;
+    }
+
+
+    /// <summary>Whether the fast line stands on the side of the second one the break is going.</summary>
+    private bool FastLineWithTheBreak(bool up)
+    {
+        double? fast = _emaFast?.Results.Count > 0 ? _emaFast.Results[^1].Ema : null;
+        double? second = _emaSecond?.Results.Count > 0 ? _emaSecond.Results[^1].Ema : null;
+        if (fast == null || second == null)
+            return false;
+        return up ? fast.Value > second.Value : fast.Value < second.Value;
     }
 
 
@@ -319,79 +377,6 @@ public class MacIndicatorExtension : IIndicatorExtension
         if (second == null || slow == null)
             return false;
         return up ? second.Value > slow.Value : second.Value < slow.Value;
-    }
-
-
-    /// <summary>Whether the newest candle carries at least the average volume of the last twenty.</summary>
-    private bool EnoughVolume()
-    {
-        if (_breakSeen < BreakVolumeCandles)
-            return false;
-        decimal total = 0m;
-        foreach (decimal volume in _breakVolumes)
-            total += volume;
-        if (total <= 0m)
-            return true;                    // no volume anywhere: do not let it block the mark
-        decimal average = total / BreakVolumeCandles;
-        decimal newest = _breakVolumes[(int)((_breakSeen - 1) % BreakVolumeCandles)];
-        return (double)newest >= BreakVolumeShare * (double)average;
-    }
-
-
-    /// <summary>
-    /// Whether a run that starts on this candle deserves marks at all: were the four lines close
-    /// together, and does the close already stand clear of them?
-    /// <para>
-    /// This is the part of the break that decides WHICH stretches get marked, and it has been
-    /// searched hard. Of 990 stretches in view over eleven coins and four timeframes the reference
-    /// marks 273, so three quarters have to be turned away. Three candidates were measured over
-    /// all of them, each time fitted on the fifteen minute set and judged on the four sets that
-    /// took no part in the fitting - and then the other way round as a check:
-    /// </para>
-    /// <list type="bullet">
-    /// <item>the distance from the LEVEL to the slow line, which this replaces: 0.535 and 0.413;</item>
-    /// <item>the thickness of the cloud with the close clear of it: 0.548 and 0.437;</item>
-    /// <item>every number we can measure, weighted by a fitted model: 0.511 and 0.395.</item>
-    /// </list>
-    /// <para>
-    /// Those are harmonic means of hit rate and false rate. The middle line is what stands here. It
-    /// is worth noticing that the last one is BELOW the first: a model with eighteen numbers and a
-    /// free hand does no better than the rule, which says the reference's own rule is not hiding in
-    /// anything we measure. See Mac.md.
-    /// </para>
-    /// <para>
-    /// Both searches landed on the same pair - 4.0 and 4.25 for the thickness, 0.75 for the clear -
-    /// and the middle of the two is what is used, so neither set got its own optimum. Against the
-    /// distance band it replaces, over all five sets: 297 markers on the exact candle becomes 307,
-    /// the missed ones 212 become 202, and the false ones 480 become 462.
-    /// </para>
-    /// </summary>
-    private bool RunIsWorthMarking(double close, bool up)
-    {
-        if (_breakSeen < BreakRangeCandles)
-            return false;
-        decimal total = 0m;
-        foreach (decimal range in _breakRanges)
-            total += range;
-        double span = (double)total / BreakRangeCandles;
-        if (span <= 0.0)
-            return false;
-
-        double? fast = _emaFast?.Results.Count > 0 ? _emaFast.Results[^1].Ema : null;
-        double? second = _emaSecond?.Results.Count > 0 ? _emaSecond.Results[^1].Ema : null;
-        double? medium = _smaMedium?.Results.Count > 0 ? _smaMedium.Results[^1].Sma : null;
-        double? slow = _smaSlow?.Results.Count > 0 ? _smaSlow.Results[^1].Sma : null;
-        if (fast == null || second == null || medium == null || slow == null)
-            return false;
-
-        double top = Math.Max(Math.Max(fast.Value, second.Value), Math.Max(medium.Value, slow.Value));
-        double bottom = Math.Min(Math.Min(fast.Value, second.Value), Math.Min(medium.Value, slow.Value));
-        if ((top - bottom) / span >= BreakCloudThick)
-            return false;
-
-        double edge = up ? top : bottom;
-        double sign = up ? 1.0 : -1.0;
-        return sign * (close - edge) / span > BreakCloudClear;
     }
 
 
@@ -430,7 +415,7 @@ public class MacIndicatorExtension : IIndicatorExtension
         // all-null object, so the strategy can tell "not ready" from "ready but zero".
         if (fast == null && second == null && medium == null && slow == null
             && _pivotHigh == null && _pivotLow == null
-            && _publishedHigh == null && _publishedLow == null)
+            && _rsiLevelHigh == null && _rsiLevelLow == null)
             return;
 
         long newest = _candleCount - 1;
@@ -445,14 +430,14 @@ public class MacIndicatorExtension : IIndicatorExtension
             PivotHighAge = _pivotHigh == null ? 0 : (int)Math.Min(int.MaxValue, newest - _pivotHighIndex),
             PivotLow = _pivotLow,
             PivotLowAge = _pivotLow == null ? 0 : (int)Math.Min(int.MaxValue, newest - _pivotLowIndex),
-            RsiLevelHigh = _publishedHigh,
-            RsiLevelHighAge = _publishedHigh == null ? 0 : (int)Math.Min(int.MaxValue, newest - _publishedHighIndex),
-            RsiLevelLow = _publishedLow,
-            RsiLevelLowAge = _publishedLow == null ? 0 : (int)Math.Min(int.MaxValue, newest - _publishedLowIndex),
+            RsiLevelHigh = _rsiLevelHigh,
+            RsiLevelHighAge = _rsiLevelHigh == null ? 0 : (int)Math.Min(int.MaxValue, newest - _rsiLevelHighIndex),
+            RsiLevelLow = _rsiLevelLow,
+            RsiLevelLowAge = _rsiLevelLow == null ? 0 : (int)Math.Min(int.MaxValue, newest - _rsiLevelLowIndex),
             BreakoutRank = _markUpRank,
-            BreakoutRunAllowed = _runUpAllowed,
+            BreakoutRunAllowed = _sinceOpenUp >= BreakBarsSinceOpen,
             BreakdownRank = _markDownRank,
-            BreakdownRunAllowed = _runDownAllowed,
+            BreakdownRunAllowed = _sinceOpenDown >= BreakBarsSinceOpen,
         });
     }
 }

@@ -218,11 +218,12 @@ public class MacSecondLineExitTests : TestBase
 
 
     /// <summary>
-    /// And only while the price is still on the position's side of the SLOW line. Past that line
-    /// the trend itself is gone and the reference stops drawing the warning.
+    /// The price itself may be past the slow line. What stood here until 25 September 2026 said it
+    /// may not, and that cost 51 of the reference's 1083 close markers - every one of them a
+    /// crossing where the stack was still whole while the close had slipped past the slow line.
     /// </summary>
     [TestMethod]
-    public void ACrossingPastTheSlowLine_IsNoExit()
+    public void ACrossingWithThePricePastTheSlowLine_IsStillAnExit()
     {
         new MacPlugin().SettingsBase = new MacSettings
         {
@@ -230,16 +231,25 @@ public class MacSecondLineExitTests : TestBase
             ExitOnCloudFlip = false,
         };
         MacBase strategy = Series(CryptoTradeSide.Long, 105m, 100.0, 95m, 100.0);
-        // The close of 95 is under the slow line instead of over it.
-        strategy.CandleLast.CandleData!.GetPluginData<MacCandleData>()!.SmaSlow = 96.0;
-        Assert.IsFalse(strategy.IsExitSignal(), "the price is already past the slow line");
+        // The close of 95 sits under the slow line, but the lines themselves are still stacked the
+        // way a long wants them: the fast at 101 over the second at 100, over the third at 98, over
+        // the slow one at 96 - and only then the price at 95.
+        MacCandleData mac = strategy.CandleLast.CandleData!.GetPluginData<MacCandleData>()!;
+        mac.SmaMedium = 98.0;
+        mac.SmaSlow = 96.0;
+        Assert.IsTrue(strategy.IsExitSignal(), strategy.ExtraText);
     }
 
 
     /// <summary>
-    /// The cloud has to be stacked the way of the position: the second line on our side of the
-    /// third. It is the sharpest of the four conditions - of the 178 markers the reference draws
-    /// over four coins, not one has the second line on the wrong side.
+    /// The cloud has to be stacked the way of the position ALL THE WAY: the second line on our side
+    /// of the third and the third on our side of the slow one.
+    /// <para>
+    /// This is the exit rule and there is nothing else to it. Over 4282 crossings of the second
+    /// line on eleven coins and five timeframes the reference draws 1083 close markers, and the
+    /// full stack picks out 1083 of those 1083 - no miss on any set, on either side - while firing
+    /// three times more than it should.
+    /// </para>
     /// </summary>
     [TestMethod]
     public void ACrossingWithTheCloudUnstacked_IsNoExit()
@@ -253,6 +263,22 @@ public class MacSecondLineExitTests : TestBase
         // The third line over the second one: the cloud is not stacked for a long.
         strategy.CandleLast.CandleData!.GetPluginData<MacCandleData>()!.SmaMedium = 101.0;
         Assert.IsFalse(strategy.IsExitSignal(), "the second line is under the third");
+    }
+
+
+    /// <summary>The other half of the stack: the third line has to be on our side of the slow one.</summary>
+    [TestMethod]
+    public void ACrossingWithTheThirdLinePastTheSlowOne_IsNoExit()
+    {
+        new MacPlugin().SettingsBase = new MacSettings
+        {
+            ExitOnSecondLineCross = true,
+            ExitOnCloudFlip = false,
+        };
+        MacBase strategy = Series(CryptoTradeSide.Long, 105m, 100.0, 95m, 100.0);
+        // The slow line over the third: the stack is broken at its far end, whatever the price does.
+        strategy.CandleLast.CandleData!.GetPluginData<MacCandleData>()!.SmaSlow = 94.0;
+        Assert.IsFalse(strategy.IsExitSignal(), "the third line sits under the slow one");
     }
 
 

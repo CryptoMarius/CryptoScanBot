@@ -139,25 +139,36 @@ public class MacRsiLevelsTests
 
 
     [TestMethod]
-    public void On_NeverHandsOutALevelSetByTheCandleInHand()
+    public void On_ALevelSetByTheCandleInHandCannotBeBrokenByIt()
     {
-        // A level set on the candle in hand would be broken by that same candle, because the low of
-        // a candle always sits under its own close. The published level therefore has to predate
-        // the candle it is read on - which is what its age of at least one candle says.
+        // The level is LIVE on the candle that sets it, which is what the reference does - read off
+        // its own Support and Resistance plots, 71 of 71 changes match that way and 55 of 71 match
+        // when the level is held back a candle.
+        //
+        // Holding it back was a guard against a candle breaking a level of its own making, and that
+        // guard was never needed: a support IS the low of its candle and a close never falls below
+        // its own low. That is the property asserted here, on the candles whose level is their own.
         new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = true };
         List<CryptoCandle> candles = FallAndRise(60, 60);
         List<MacCandleData?> seen = Feed(candles);
 
+        int eigen = 0;
         for (int i = 0; i < candles.Count; i++)
         {
             MacCandleData? mac = seen[i];
             if (mac?.RsiLevelLow == null)
                 continue;
-            Assert.IsTrue(mac.RsiLevelLowAge >= 1,
-                $"candle {i} was handed a support of its own making (age {mac.RsiLevelLowAge})");
-            Assert.AreNotEqual((double)candles[i].Low, mac.RsiLevelLow.Value,
-                $"candle {i} was handed its own low as the support");
+            if (mac.RsiLevelLowAge == 0)
+            {
+                eigen++;
+                Assert.AreEqual((double)candles[i].Low, mac.RsiLevelLow.Value,
+                    $"candle {i} carries an age of zero, so the support has to be its own low");
+            }
+            Assert.IsTrue((double)candles[i].Close >= mac.RsiLevelLow.Value,
+                $"candle {i} closed under the support it was handed, which may never happen "
+                + $"({candles[i].Close:N8} against {mac.RsiLevelLow.Value:N8})");
         }
+        Assert.IsTrue(eigen > 0, "this series should hold at least one candle that sets its own level");
     }
 
 

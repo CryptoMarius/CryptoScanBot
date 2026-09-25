@@ -62,13 +62,16 @@ public sealed class MacCandleData
     /// </summary>
     public double? RsiLevelHigh { get; set; }
 
-    /// <summary>How many candles ago that RSI resistance sits.</summary>
+    /// <summary>
+    /// How many candles ago that RSI resistance sits. Zero on the candle that sets it, which is
+    /// allowed: a close never exceeds its own high, so that candle can never break it.
+    /// </summary>
     public int RsiLevelHighAge { get; set; }
 
     /// <summary>The support taken where the RSI turned: the LOW of that candle.</summary>
     public double? RsiLevelLow { get; set; }
 
-    /// <summary>How many candles ago that RSI support sits.</summary>
+    /// <summary>How many candles ago that RSI support sits. Zero on the candle that sets it.</summary>
     public int RsiLevelLowAge { get; set; }
 
     /// <summary>

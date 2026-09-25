@@ -75,30 +75,23 @@ public class MacSettings : SettingsSignalStrategyBase
     public bool EntryOnBreakoutRun { get; set; } = false;
 
     /// <summary>
-    /// How many candles of one stretch beyond the level may carry a break entry, when
-    /// <see cref="EntryOnBreakoutRun"/> is on.
+    /// How many break entries one POSITION may carry, counted from the candle the fast line crossed
+    /// the second.
     /// <para>
-    /// FOUR, not three. Three was read off the five minute charts, where the reference does not
-    /// seem to go beyond it, and four harvests together say otherwise - it is better on every one
-    /// of them, which is as close to proof as this investigation gets:
+    /// Until 25 September 2026 this counted inside a stretch beyond the level, and that was the
+    /// wrong anchor. Measured against the reference's own markers on eleven coins over five
+    /// timeframes, 747 of them: counted per stretch the best reading reaches 93% of the markers
+    /// while only 43% of what it fires is right; counted per position it reaches 89% at 81%.
     /// </para>
-    /// <list type="bullet">
-    /// <item>fifteen minutes: 126 hit and 179 false becomes 138 and 195;</item>
-    /// <item>five minutes: 73 and 162 becomes 84 and 189;</item>
-    /// <item>four hours: 29 and 90 becomes 35 and 105;</item>
-    /// <item>daily: 30 and 39 becomes 34 and 49.</item>
-    /// </list>
     /// <para>
-    /// Five is better again on fifteen minutes and flat everywhere else, so it is not taken. How
-    /// far a stretch runs is very much a property of the market: over the four hour set a marked
-    /// stretch holds a median of SEVEN new extremes against two on fifteen minutes, which is why
-    /// this cap costs the most there - see Mac.md.
+    /// And three is the number, not two and not four: two reaches 64% of the markers, four reaches
+    /// 96% but its precision falls from 87% to 75%. See Mac.md.
     /// </para>
     /// </summary>
-    [SettingCaption("Breakout entries per run",
-        Tooltip = "At most this many entries inside one stretch beyond the level. Four is the best "
-            + "of it over four different timeframes.")]
-    public int BreakoutEntriesPerRun { get; set; } = 4;
+    [SettingCaption("Breakout entries per position",
+        Tooltip = "At most this many break entries between one entry and the next. Three is what "
+            + "the reference indicator draws.")]
+    public int BreakoutEntriesPerRun { get; set; } = 3;
 
     /// <summary>
     /// Fire on the cloud turning: the fast EMA closing above the second one for a long, under it for

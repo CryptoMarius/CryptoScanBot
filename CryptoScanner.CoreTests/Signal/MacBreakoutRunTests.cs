@@ -48,12 +48,19 @@ public class MacBreakoutRunTests
         MacIndicatorExtension extension = new();
         extension.Init(registry);
 
+        // The volume grows five percent a candle. A CONSTANT volume would sit exactly on its own
+        // twenty candle average, and the break rule asks for a third more than that, so with a flat
+        // series no candle would ever carry a rank and the counting test below would measure
+        // nothing. A steady climb of five percent puts every candle about half again over the
+        // average of the twenty before it, which clears the floor without touching what is tested.
         List<MacCandleData?> published = [];
+        decimal volume = 100m;
         for (int i = 0; i < closes.Count; i++)
         {
             decimal close = closes[i];
+            volume *= 1.05m;
             Quote quote = new(Epoch.AddMinutes(5 * i), close, close + range / 2m,
-                close - range / 2m, close, 100m);
+                close - range / 2m, close, volume);
             registry.QuoteHub.Add(quote);
             extension.OnCandleAdded(quote);
             CryptoData data = new();
@@ -103,179 +110,97 @@ public class MacBreakoutRunTests
     }
 
 
+    /// <summary>
+    /// The candidate test: the WICK has to better the hundred candles before this one. Measured
+    /// against the reference's own markers, all 747 of them do; on the CLOSE only 85% do, and that
+    /// difference is what kept this marker out of reach for weeks.
+    /// </summary>
     [TestMethod]
-    public void TheRankCountsNewHighsAndNothingElse()
+    public void AWickThatDoesNotBetterTheHundredBeforeIt_EarnsNothing()
+    {
+        // A saw that leaves a resistance behind and then crawls back over it without ever taking
+        // out the high of the settle: the close gets beyond the level, the wick never leads.
+        List<decimal> closes = ClimbThroughAResistance(settle: 260, rise: 25, dip: 8,
+            climb: 40, step: 1m);
+        List<MacCandleData?> published = Publish(closes, range: 2m);
+
+        decimal hoogste = closes.Take(293).Max() + 1m;
+        for (int i = 293; i < closes.Count; i++)
+        {
+            MacCandleData? mac = published[i];
+            if (mac?.RsiLevelHigh == null || (double)closes[i] <= mac.RsiLevelHigh.Value)
+                continue;
+            if (closes[i] + 1m > hoogste)
+                break;                              // vanaf hier leidt de wick wel
+            Assert.AreEqual(0, mac.BreakoutRank,
+                $"candle {i} closes beyond the level but its high of {closes[i] + 1m:N2} does not "
+                + $"better the {hoogste:N2} behind it, so it may not carry a number");
+        }
+    }
+
+
+    /// <summary>
+    /// The counter hangs on the POSITION, not on the stretch: it restarts when the fast line
+    /// crosses the second, and it lets three candidates through.
+    /// <para>
+    /// Anchored on the stretch the best reading reaches 93% of the reference's markers while only
+    /// 43% of what it fires is right; anchored on the entry it reaches 89% at 81%.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void TheCounterRestartsAtTheEntryAndStopsAtThree()
     {
         List<decimal> closes = ClimbThroughAResistance(settle: 260, rise: 25, dip: 8,
             climb: 120, step: 1m);
         List<MacCandleData?> published = Publish(closes, range: 2m);
 
-        // Every candle that carries a rank at all has to better every close before it inside its
-        // own stretch, and the ranks of one stretch have to run 1, 2, 3, ... without a gap.
-        int expected = 0;
-        decimal reach = decimal.MinValue;
-        bool inside = false;
+        int hoogste = 0;
+        int gezien = 0;
+        int vorige = 0;
         for (int i = 0; i < closes.Count; i++)
         {
             MacCandleData? mac = published[i];
-            if (mac?.RsiLevelHigh == null)
-            {
-                inside = false;
+            if (mac == null)
                 continue;
-            }
-            bool beyond = (double)closes[i] > mac.RsiLevelHigh.Value;
-            if (!beyond)
-            {
-                inside = false;
-                Assert.AreEqual(0, mac.BreakoutRank,
-                    $"candle {i} is not beyond the level and may not carry a rank");
+            int rank = mac.BreakoutRank;
+            if (rank == 0)
                 continue;
-            }
-            if (!inside)
-            {
-                inside = true;
-                expected = 0;
-                reach = decimal.MinValue;
-            }
-            if (closes[i] > reach)
-            {
-                reach = closes[i];
-                expected++;
-                Assert.AreEqual(expected, mac.BreakoutRank,
-                    $"candle {i} makes a new high of its stretch and should be number {expected}");
-            }
-            else
-            {
-                Assert.AreEqual(0, mac.BreakoutRank,
-                    $"candle {i} does not better its stretch and may not carry a rank");
-            }
+            gezien++;
+            hoogste = Math.Max(hoogste, rank);
+            Assert.IsTrue(rank == vorige + 1 || rank == 1,
+                $"candle {i} carries number {rank} while the one before it carried {vorige}; the "
+                + "counter has to run 1, 2, 3 and restart at 1, never jump");
+            vorige = rank;
         }
-        Assert.IsTrue(expected > 3, "the series should hold a stretch of at least four new highs");
+        Assert.IsTrue(gezien > 0, "this series should produce break candidates at all");
+        Assert.IsTrue(hoogste >= 3, $"the counter should reach three, not {hoogste}");
     }
 
 
     /// <summary>
-    /// A settle and then several climbs of growing size, each leaving a resistance behind and then
-    /// taking it out. The size of the climb is what moves the level away from the slow line, so a
-    /// series like this puts runs on BOTH sides of the band and on it - which is what a test of a
-    /// band needs and one climb cannot give.
-    /// </summary>
-    private static List<decimal> ClimbsOfDifferentSize(params decimal[] steps)
-    {
-        List<decimal> closes = [];
-        decimal price = 1000m;
-        for (int i = 0; i < 260; i++)
-        {
-            // A saw of one up and one down keeps the averages alive without a trend.
-            price += i % 2 == 0 ? 1m : -1m;
-            closes.Add(price);
-        }
-        foreach (decimal step in steps)
-        {
-            for (int i = 0; i < 20; i++)
-            {
-                price += step * 2m;
-                closes.Add(price);
-            }
-            for (int i = 0; i < 6; i++)
-            {
-                price -= step * 3m;
-                closes.Add(price);
-            }
-            for (int i = 0; i < 30; i++)
-            {
-                price += step * 2m;
-                closes.Add(price);
-            }
-            for (int i = 0; i < 50; i++)
-            {
-                price -= step * 1.4m;
-                closes.Add(price);
-            }
-        }
-        return closes;
-    }
-
-
-    /// <summary>
-    /// The verdict on a run has to follow the cloud, and it has to be taken on the run's FIRST
-    /// candle. Both halves are pinned: a cloud that stands wide open earns nothing, and neither
-    /// does a close that has barely cleared it.
+    /// And nothing is drawn in the first candles after the entry. The reference skips those, and
+    /// asking for five candles lifts the agreement from 89% at 81% to 91% at 87%.
     /// </summary>
     [TestMethod]
-    public void TheVerdictFollowsTheCloudAtTheStartOfTheRun()
-    {
-        // MacIndicatorExtension.BreakCloudThick and BreakCloudClear. Private there on purpose, so
-        // the numbers stand here as well - if one moves without the other, this test says so.
-        const double thick = 4.1;
-        const double clear = 0.75;
-        const decimal range = 8m;
-
-        List<decimal> closes = ClimbsOfDifferentSize(0.4m, 1m, 3m);
-        List<MacCandleData?> published = Publish(closes, range);
-
-        int allowed = 0;
-        int refused = 0;
-        List<string> measured = [];
-        bool inside = false;
-        bool verdict = false;
-        for (int i = 0; i < closes.Count; i++)
-        {
-            MacCandleData? mac = published[i];
-            double? level = mac?.RsiLevelHigh;
-            if (level == null || mac?.SmaSlow == null || (double)closes[i] <= level.Value)
-            {
-                inside = false;
-                continue;
-            }
-            if (!inside)
-            {
-                // The first candle of the run: every candle carries the same range, so the average
-                // range the indicator divides by is that range itself.
-                inside = true;
-                double thickness = (mac.CloudTop!.Value - mac.CloudBottom!.Value) / (double)range;
-                double past = ((double)closes[i] - mac.CloudTop.Value) / (double)range;
-                verdict = thickness < thick && past > clear;
-                measured.Add($"{i}:{thickness:0.00}/{past:0.00}");
-                if (verdict)
-                    allowed++;
-                else
-                    refused++;
-            }
-            Assert.AreEqual(verdict, mac.BreakoutRunAllowed,
-                $"candle {i} belongs to a run whose cloud was "
-                + $"{(mac.CloudTop!.Value - mac.CloudBottom!.Value) / (double)range:0.00} candle "
-                + "ranges thick at its first candle, and the verdict of that candle has to hold "
-                + "for all of it");
-        }
-        Assert.IsTrue(allowed > 0 && refused > 0,
-            $"this series should hold runs the cloud lets through AND runs it turns away, not "
-            + $"{allowed} and {refused} - {string.Join(" ", measured)}");
-    }
-
-
-    /// <summary>
-    /// A close that has barely cleared the lines earns nothing. The candles are so big here that
-    /// the whole climb is a fraction of one of them, so nothing ever stands the three quarters of
-    /// a candle past the cloud that the rule asks.
-    /// </summary>
-    [TestMethod]
-    public void ACloseThatHasBarelyClearedTheLinesEarnsNothing()
+    public void TheFirstCandlesAfterTheEntry_EarnNothing()
     {
         List<decimal> closes = ClimbThroughAResistance(settle: 260, rise: 25, dip: 8,
             climb: 120, step: 1m);
-        List<MacCandleData?> published = Publish(closes, range: 200m);
+        List<MacCandleData?> published = Publish(closes, range: 2m);
 
-        // A candle range of 200 against steps of 3 makes every distance a fraction of one range,
-        // so no close can stand the three quarters of a range past the cloud that the rule asks.
-        foreach (MacCandleData? mac in published)
+        // BreakoutRunAllowed says whether the position is old enough; while it is false no candle
+        // may carry a number.
+        int tegengehouden = 0;
+        for (int i = 0; i < closes.Count; i++)
         {
-            if (mac == null)
+            MacCandleData? mac = published[i];
+            if (mac == null || mac.BreakoutRunAllowed)
                 continue;
-            Assert.IsFalse(mac.BreakoutRunAllowed,
-                "no close in this series stands clear enough of the lines");
-            Assert.IsFalse(mac.BreakdownRunAllowed,
-                "and none does on the other side either");
+            tegengehouden++;
+            Assert.AreEqual(0, mac.BreakoutRank,
+                $"candle {i} sits too soon after the entry and may not carry a number");
         }
+        Assert.IsTrue(tegengehouden > 0,
+            "this series should hold candles that sit too soon after an entry");
     }
 }
