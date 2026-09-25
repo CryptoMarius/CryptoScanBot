@@ -25,8 +25,10 @@
 #  workflow artifacts.
 #
 #  This workflow is what makes the build verifiable for a third party: anyone can see which commit
-#  produced which zip. That is also what SignPath Foundation asks for, and the signing step would
-#  be added right after the packages are zipped.
+#  produced which zip. That is also what SignPath Foundation asks for. The signing steps are in
+#  place but dormant: they submit the packages to SignPath.io only when the credentials for it are
+#  configured, and until the certificate has been granted they are not - so a release comes out
+#  unsigned instead of failing.
 # =================================================================================================
 
 name: Release
@@ -36,9 +38,16 @@ on:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
+    inputs:
+      sign:
+        description: 'Submit the packages to SignPath (a tag run always does)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+  # The signing action reads the run it is part of and downloads the artifact it submits.
+  actions: read
 
 jobs:
   build:
@@ -248,6 +257,7 @@ jobs:
       # This only matters for a manual run. On a tag run the three zips are attached to the release
       # itself, and there they are separate files regardless.
       - name: Keep the Windows package as an artifact
+        id: upload-win
         uses: actions/upload-artifact@v7
         with:
           path: build/CryptoScanBot-${{ steps.version.outputs.version }}-win-x64.zip
@@ -255,6 +265,7 @@ jobs:
           retention-days: 14
 
       - name: Keep the macOS package as an artifact
+        id: upload-osx
         uses: actions/upload-artifact@v7
         with:
           path: build/CryptoScanBot-${{ steps.version.outputs.version }}-osx-arm64.zip
@@ -262,11 +273,109 @@ jobs:
           retention-days: 14
 
       - name: Keep the Linux package as an artifact
+        id: upload-linux
         uses: actions/upload-artifact@v7
         with:
           path: build/CryptoScanBot-${{ steps.version.outputs.version }}-linux-x64.zip
           archive: false
           retention-days: 14
+
+      # ===============================================================================================
+      #  Signing by SignPath.io
+      #
+      #  The three packages go up one by one: a signing request covers one artifact, and every
+      #  request is approved by hand. SignPath does not receive the file from this workflow, it
+      #  fetches the artifact from the run itself - which is why the upload steps above have to come
+      #  first and why they are not there for convenience alone.
+      #
+      #  Nothing here happens until four values are in place: the api token as a repository secret
+      #  and the three names as repository variables.
+      #
+      #    secret  SIGNPATH_API_TOKEN
+      #    var     SIGNPATH_ORGANIZATION_ID
+      #    var     SIGNPATH_PROJECT_SLUG
+      #    var     SIGNPATH_SIGNING_POLICY_SLUG
+      #
+      #  Until the certificate of the SignPath Foundation has been granted they are not, the steps
+      #  are skipped, and the release comes out unsigned - a release that is late is worse than a
+      #  release that is not signed yet.
+      # ===============================================================================================
+      - name: Is signing configured?
+        id: signing
+        shell: pwsh
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+        run: |
+          # Four values that all have to be there, read by three steps. Answered once here so the
+          # three cannot disagree, and named one by one so the log says what is missing instead of
+          # only that something is.
+          $missing = @()
+          if (-not $env:SIGNPATH_API_TOKEN) { $missing += 'secret SIGNPATH_API_TOKEN' }
+          if (-not $env:SIGNPATH_ORGANIZATION_ID) { $missing += 'variable SIGNPATH_ORGANIZATION_ID' }
+          if (-not $env:SIGNPATH_PROJECT_SLUG) { $missing += 'variable SIGNPATH_PROJECT_SLUG' }
+          if (-not $env:SIGNPATH_SIGNING_POLICY_SLUG) { $missing += 'variable SIGNPATH_SIGNING_POLICY_SLUG' }
+
+          if ($missing.Count -eq 0) {
+            Write-Host 'SignPath is configured, the packages will be submitted for signing.'
+            'configured=true' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          }
+          else {
+            Write-Host "::notice::Not signing, $($missing -join ' and ') not set. The packages stay unsigned."
+            'configured=false' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          }
+
+      # A tag run signs, a manual run only when it was started with the sign box ticked. Signing a
+      # package nobody will publish costs an approval and half an hour of waiting, so it is not what
+      # a manual run should do by default.
+      - name: Sign the Windows package
+        if: steps.signing.outputs.configured == 'true' && (github.ref_type == 'tag' || inputs.sign)
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.upload-win.outputs.artifact-id }}
+          # The artifact IS the zip, not a zip around it, because the upload steps above pass
+          # archive: false. Without this the action would unpack the signed package over the output
+          # folder instead of leaving the zip whole.
+          skip-decompress: true
+          wait-for-completion: true
+          # A signing request waits for a human, so the wait is measured in minutes. The default of
+          # ten is short enough to lose a release over a cup of coffee.
+          wait-for-completion-timeout-in-seconds: 1800
+          output-artifact-directory: signed
+
+      - name: Sign the macOS package
+        if: steps.signing.outputs.configured == 'true' && (github.ref_type == 'tag' || inputs.sign)
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.upload-osx.outputs.artifact-id }}
+          skip-decompress: true
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          output-artifact-directory: signed
+
+      - name: Sign the Linux package
+        if: steps.signing.outputs.configured == 'true' && (github.ref_type == 'tag' || inputs.sign)
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.upload-linux.outputs.artifact-id }}
+          skip-decompress: true
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          output-artifact-directory: signed
 
       - name: Attach the packages to the release
         if: github.ref_type == 'tag'
@@ -336,7 +445,14 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "could not create the release for $tag" }
           }
 
+          # The signed packages when the signing steps ran, the ones straight from the build
+          # otherwise. Both folders carry the same three names, so the upload below does not care
+          # which of the two it gets.
+          $source = Join-Path $env:GITHUB_WORKSPACE 'signed'
+          if (-not (Test-Path (Join-Path $source '*.zip'))) { $source = Join-Path $env:GITHUB_WORKSPACE 'build' }
+          Write-Host "Uploading the packages from $source"
+
           # --clobber so a rerun of the workflow replaces the assets instead of failing on them.
-          $zips = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'build') -Filter *.zip | ForEach-Object { $_.FullName }
+          $zips = Get-ChildItem $source -Filter *.zip | ForEach-Object { $_.FullName }
           gh release upload $tag @zips --clobber
           if ($LASTEXITCODE -ne 0) { throw "could not upload the packages to $tag" }
