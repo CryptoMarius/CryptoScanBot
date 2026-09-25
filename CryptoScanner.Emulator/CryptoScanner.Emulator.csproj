@@ -13,7 +13,6 @@
 		<SelfContained>true</SelfContained>
 
 		<!-- Version / Company / Copyright / Authors are shared via Directory.Build.props -->
-		<Product>CryptoScanBot.Emulator</Product>
 		<Description>Backtest emulator for the CryptoScanBot scanner</Description>
 		<Configurations>Debug;Release</Configurations>
 

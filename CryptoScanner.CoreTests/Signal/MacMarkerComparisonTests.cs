@@ -33,7 +33,7 @@ namespace CryptoScanner.CoreTests.Signal;
 public class MacMarkerComparisonTests : TestBase
 {
     private const string Database = @"E:\CryptoScanBot\Data\Binance\Perpetual\Binance Perpetual.db";
-    private const string Output = @"E:\tbo\EntryTiming\mac-scanner-signals.csv";
+    private const string Output = @"E:\Projects\CryptoScanBot.tools\studies\macloud\mac-scanner-signals.csv";
 
     // The identifier of an interval in the candle database is the enum value plus one. More than
     // one interval is run now: the fifteen minute chart is the second, independent set the run
@@ -295,7 +295,7 @@ public class MacMarkerComparisonTests : TestBase
 
 
     private const string Facts_Output =
-        @"E:\tbo\EntryTiming\mac-candle-facts.csv";
+        @"E:\Projects\CryptoScanBot.tools\studies\macloud\mac-candle-facts.csv";
 
 
     /// <summary>One pass over the candles that only reads the indicator, and fires nothing.</summary>

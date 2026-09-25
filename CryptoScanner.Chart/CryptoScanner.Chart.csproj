@@ -7,7 +7,6 @@
 		<Configurations>Debug;Release</Configurations>
 
 		<!-- Shared chart window, extracted from the scanner so the emulator can show it too. -->
-		<Product>CryptoScanBot.Chart</Product>
 		<Description>Shared chart window for the scanner and the emulator</Description>
 	</PropertyGroup>
 

@@ -7,7 +7,6 @@
     <Nullable>enable</Nullable>
     <RootNamespace>CryptoScanner.Photino</RootNamespace>
     <AssemblyName>CryptoScanBot.Photino</AssemblyName>
-    <Product>CryptoScanBot Photino</Product>
 
     <!-- Icon of the executable itself (Explorer, task bar, alt-tab). Shared with the Avalonia host
          rather than copied, so there is one icon to maintain. -->

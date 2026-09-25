@@ -16,6 +16,13 @@
 
     <Company>Marius</Company>
     <Authors>Marius</Authors>
+
+    <!--
+      One product name for every assembly that ends up in a release package. SignPath enforces
+      this with a file metadata restriction: all signed binaries must carry the name of the
+      project, so a Product per project would be rejected once the packages are signed.
+    -->
+    <Product>CryptoScanBot</Product>
     <Copyright>Copyright © 2026 Marius</Copyright>
   </PropertyGroup>
 

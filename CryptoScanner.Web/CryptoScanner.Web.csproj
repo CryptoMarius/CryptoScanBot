@@ -6,7 +6,6 @@
     <Nullable>enable</Nullable>
     <RootNamespace>CryptoScanner.Web</RootNamespace>
     <AssemblyName>CryptoScanBot.Web</AssemblyName>
-    <Product>CryptoScanBot Web</Product>
   </PropertyGroup>
 
   <ItemGroup>

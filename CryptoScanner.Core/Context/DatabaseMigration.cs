@@ -1589,8 +1589,9 @@ public class DatabaseMigration
         // StochDir (52) are absent because no plugin ever registered them; a row holding a value
         // that is not in the map keeps that value, so it stays visible instead of turning into null.
         //
-        // The numbers were reused over time: 28 was AtrRb until 2026-06-19, then Baba, and 0c73b955
-        // (2026-07-23) renamed Baba to Vbs and Bre to Dbr without changing the strategy. Checked
+        // The numbers were reused over time: 28 was AtrRb until 2026-06-19, then the strategy that
+        // is now Vbs, and 0c73b955 (2026-07-23) gave it that name and renamed Bre to Dbr, neither
+        // of them changing what the strategy does. Checked
         // against every database here: no row with 28/29/30 predates that renumbering, so mapping
         // them to today's names is correct. 20/22 (Stoch/SmaDist) were dropped in a93939e7
         // (2026-03-29) and only survive as history in a few old databases.

@@ -19,7 +19,6 @@
 		<!-- Version / Company / Copyright / Authors are shared via Directory.Build.props -->
 
 		<!-- Product Info (project specific) -->
-		<Product>CryptoScanBot</Product>
 		<Description>Crypto scanner and trading bot</Description>
 		<PackageProjectUrl>https://github.com/CryptoMarius/CryptoScanBot</PackageProjectUrl>
 		<Configurations>Debug;Release</Configurations>
