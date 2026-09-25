@@ -7,7 +7,8 @@ namespace CryptoScanner.Analyzers.Mac;
 /// <summary>The four cloud lines and the levels in force at one candle.</summary>
 public readonly record struct MacLineValues(
     double? EmaFast, double? EmaSecond, double? SmaMedium, double? SmaSlow,
-    double? PivotHigh, double? PivotLow)
+    double? PivotHigh, double? PivotLow,
+    double? RsiLevelHigh = null, double? RsiLevelLow = null)
 {
     public bool HasCloud => EmaFast != null && EmaSecond != null && SmaMedium != null && SmaSlow != null;
 
@@ -85,6 +86,17 @@ public static class MacLinesHelper
         var medium = quotes.ToSma(mediumLength);
         var slow = quotes.ToSma(slowLength);
 
+        // The RSI levels, the same way the extension works them out: the strength index crossing up
+        // through its lower bound sets the support at that candle's LOW, crossing down through the
+        // upper one sets the resistance at its HIGH, and the level is live on that candle.
+        int rsiLength = Math.Max(2, settings.RsiLevelLength);
+        var strength = quotes.ToRsi(rsiLength);
+        double supportCross = (double)settings.RsiLevelSupportCross;
+        double resistanceCross = (double)settings.RsiLevelResistanceCross;
+        double? rsiHigh = null;
+        double? rsiLow = null;
+        double? previousRsi = null;
+
         int left = Math.Max(1, settings.PivotLeftCandles);
         int right = Math.Max(1, settings.PivotRightCandles);
         int window = left + right + 1;
@@ -119,8 +131,22 @@ public static class MacLinesHelper
                     pivotLow = (double)low;
             }
 
+            double? now = strength[i].Rsi;
+            if (now != null)
+            {
+                if (previousRsi != null)
+                {
+                    if (previousRsi.Value < supportCross && now.Value >= supportCross)
+                        rsiLow = (double)candles[i].Low;
+                    if (previousRsi.Value > resistanceCross && now.Value <= resistanceCross)
+                        rsiHigh = (double)candles[i].High;
+                }
+                previousRsi = now;
+            }
+
             result[i] = new MacLineValues(
-                fast[i].Ema, second[i].Ema, medium[i].Sma, slow[i].Sma, pivotHigh, pivotLow);
+                fast[i].Ema, second[i].Ema, medium[i].Sma, slow[i].Sma, pivotHigh, pivotLow,
+                rsiHigh, rsiLow);
         }
 
         return result;

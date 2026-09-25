@@ -9,7 +9,7 @@ using Exchange = CryptoScanner.Core.Model.CryptoExchange;
 namespace CryptoScanner.CoreTests.Signal;
 
 /// <summary>
-/// The exit the reference draws as Close Long and Close Short: the close crossing back through the
+/// The exit the strategy draws as Close Long and Close Short: the close crossing back through the
 /// SECOND line against the position.
 /// <para>
 /// Measured against twelve catalogued markers on four coins, this rule hits every one of them -
@@ -200,7 +200,7 @@ public class MacSecondLineExitTests : TestBase
     /// <summary>
     /// The crossing only counts while the cloud still points the way of the position. Without that
     /// the very same candle is an exit for a long AND for a short, which is how this fired 314
-    /// times against the 134 markers the reference draws.
+    /// times against the 134 markers the strategy draws.
     /// </summary>
     [TestMethod]
     public void ACrossingWithTheCloudAgainstUs_IsNoExit()
@@ -219,7 +219,7 @@ public class MacSecondLineExitTests : TestBase
 
     /// <summary>
     /// The price itself may be past the slow line. What stood here until 25 September 2026 said it
-    /// may not, and that cost 51 of the reference's 1083 close markers - every one of them a
+    /// may not, and that cost 51 of the strategy's 1083 close markers - every one of them a
     /// crossing where the stack was still whole while the close had slipped past the slow line.
     /// </summary>
     [TestMethod]
@@ -246,7 +246,7 @@ public class MacSecondLineExitTests : TestBase
     /// of the third and the third on our side of the slow one.
     /// <para>
     /// This is the exit rule and there is nothing else to it. Over 4282 crossings of the second
-    /// line on eleven coins and five timeframes the reference draws 1083 close markers, and the
+    /// line on eleven coins and five timeframes the strategy draws 1083 close markers, and the
     /// full stack picks out 1083 of those 1083 - no miss on any set, on either side - while firing
     /// three times more than it should.
     /// </para>

@@ -1,4 +1,7 @@
 using CryptoScanner.Analyzers.Mac;
+using Skender.Stock.Indicators;
+using CryptoScanner.Core.Signal.Indicators;
+using CryptoScanner.Analyzers.Mac.Indicators;
 using CryptoScanner.Analyzers.Mac.Chart;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -725,45 +728,142 @@ public class MacBreakoutOnRealCandlesTests : TestBase
     }
 
 
+    /// <summary>
+    /// The nine catalogued marks of 2020, 2024 and 2025 cannot be checked from these stretches any
+    /// more, and that is a property of the FIXTURE, not of the rule.
+    /// <para>
+    /// Until 25 September 2026 the chart drew a deliberately wide guess that needed only a pivot
+    /// level and five candles of history, so a block of 130 candles was enough to test it. The rule
+    /// the strategy actually uses needs 150 candles before the slow line exists and a hundred
+    /// before the window does, and these blocks hold 130, 167 and 138. Pasting a year and a half of
+    /// daily candles per stretch into a test file to recover three assertions is not worth it; what
+    /// replaces them is the check below, which catches the thing that actually goes wrong - the
+    /// chart and the strategy drifting apart.
+    /// </para>
+    /// </summary>
     [TestMethod]
-    public void NoKnownBreakoutIsMissed()
+    public void TheseStretchesAreTooShortForTheRealRule()
     {
-        Assert.IsTrue(Breakouts(Autumn2020).Contains("2020-10-21"), "21 October 2020");
-
-        var autumn2024 = Breakouts(Autumn2024);
-        Assert.IsTrue(autumn2024.Contains("2024-10-28"), "28 October 2024");
-        Assert.IsTrue(autumn2024.Contains("2024-10-29"), "29 October 2024 - the same level, marked twice");
-        Assert.IsTrue(autumn2024.Contains("2024-11-06"), "6 November 2024");
-
-        var spring2025 = Breakouts(Spring2025);
-        Assert.IsTrue(spring2025.Contains("2025-05-12"), "12 May 2025");
-        Assert.IsTrue(spring2025.Contains("2025-05-18"), "18 May 2025");
-
-        // Read off the video rather than a screenshot, so the day could be one out either way -
-        // the cluster itself is certain.
-        var winter2024 = Breakouts(Autumn2024);
-        Assert.IsTrue(winter2024.Count > 0, "the 2024 stretch should carry marks");
+        // The 2024 stretch is the only one long enough to reach the slow line at all, and even
+        // there only its last seventeen candles can carry a mark.
+        Assert.AreEqual(0, Breakouts(Autumn2020).Count,
+            "130 candles never reach the slow line, so nothing may be drawn");
+        Assert.AreEqual(0, Breakouts(Spring2025).Count,
+            "138 candles never reach the slow line either");
     }
 
 
     /// <summary>
-    /// How eager the marker is. The reference draws six to nine marks a year on this chart; this
-    /// rule draws about three times that, and the number is here so a change to it is noticed
-    /// rather than discovered on the chart.
+    /// The chart and the strategy have to draw the same break markers. They are two separate
+    /// implementations of one rule - the overlay walks a whole candle list, the extension is fed
+    /// one candle at a time - and two paths to the same numbers is a known way to drift apart.
     /// </summary>
     [TestMethod]
-    public void TheMarkerIsAboutThreeTimesTooEager()
+    public void TheChartAndTheStrategyAgreeOnTheBreak()
     {
-        int marks = Breakouts(Autumn2024).Count + Breakouts(Spring2025).Count;
-        Assert.IsTrue(marks is > 2 and < 30,
-            "expected a handful of marks over these two stretches, found " + marks);
+        // The chart always draws its own level, which is the RSI one. The strategy only
+        // computes it when the setting is on - and it is OFF by default, so without this line the
+        // strategy fires nothing and the two cannot be compared at all. That difference between the
+        // drawing and the default settings is deliberate; see Mac.md.
+        MacSettings before = MacPlugin.Settings;
+        new MacPlugin().SettingsBase = new MacSettings();
+        try
+        {
+        List<CryptoCandle> candles = Climb();
+        var overlay = new MacChartOverlay()
+            .GetLabels(MakeSymbol(), GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m],
+                       candles)
+            .Where(l => l.StyleKey == MacChartOverlay.KeyBreakout)
+            .Select(l => l.Time)
+            .ToHashSet();
+
+        IndicatorRegistry registry = new(1000);
+        MacIndicatorExtension extension = new();
+        extension.Init(registry);
+        HashSet<long> strategy = [];
+        DateTime epoch = new(2010, 1, 4, 0, 0, 0, DateTimeKind.Utc);
+        foreach (CryptoCandle candle in candles)
+        {
+            DateTime moment = epoch.AddMinutes(candle.OpenTime.Minutes);
+            Quote quote = new(moment, candle.Open, candle.High, candle.Low, candle.Close,
+                candle.Volume);
+            registry.QuoteHub.Add(quote);
+            extension.OnCandleAdded(quote);
+            CryptoData data = new();
+            extension.FillData(data);
+            MacCandleData? mac = data.GetPluginData<MacCandleData>();
+            if (mac != null && mac.BreakoutRank is >= 1 and <= 3)
+                strategy.Add(new DateTimeOffset(moment).ToUnixTimeSeconds());
+        }
+
+        Assert.IsTrue(strategy.Count > 0, "this series should produce break markers at all");
+        CollectionAssert.AreEquivalent(strategy.ToList(), overlay.ToList(),
+            $"the chart drew {overlay.Count} and the strategy fired {strategy.Count}");
+        }
+        finally
+        {
+            new MacPlugin().SettingsBase = before;
+        }
     }
 
 
     /// <summary>
-    /// A breakout confirms a move that was already under way, so the candle the cloud turns on can
-    /// never carry one - however far it clears its level.
+    /// A settle, a rise that pushes the strength index over its upper bound, a dip that brings it
+    /// back under - which is what SETS the resistance - and then a climb that takes it out. Long
+    /// enough for the slow line and for the hundred candle window.
     /// </summary>
+    private static List<CryptoCandle> Climb()
+    {
+        List<CryptoCandle> candles = [];
+        decimal price = 1000m;
+        decimal volume = 100m;
+        CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
+        List<decimal> closes = [];
+        for (int i = 0; i < 400; i++)
+            closes.Add(price += i % 2 == 0 ? 1m : -1m);
+        for (int i = 0; i < 25; i++)
+            closes.Add(price += 3m);
+        for (int i = 0; i < 8; i++)
+            closes.Add(price -= 4m);
+        for (int i = 0; i < 200; i++)
+            closes.Add(price += 3m);
+
+        for (int i = 0; i < closes.Count; i++)
+        {
+            volume *= 1.01m;
+            candles.Add(new CryptoCandle
+            {
+                TickDecimals = 2,
+                OpenTime = new CandleTime((uint)((i + 1) * interval.Duration)),
+                Open = closes[i],
+                High = closes[i] + 1m,
+                Low = closes[i] - 1m,
+                Close = closes[i],
+                Volume = volume,
+            });
+        }
+        return candles;
+    }
+
+
+    private static CryptoSymbol MakeSymbol()
+    {
+        Exchange exchange = new() { Id = 1, Name = "TestExchange", FeeRate = 0.1m };
+        return new CryptoSymbol
+        {
+            Id = 1,
+            Name = "BTCUSDT",
+            Base = "BTC",
+            Quote = "USDT",
+            Exchange = exchange,
+            ExchangeId = exchange.Id,
+            ExchangeName = exchange.Name,
+            QuoteData = GlobalData.AddQuoteData("USDT"),
+            PriceTickSize = 0.01m,
+        };
+    }
+
+
     [TestMethod]
     public void TheCandleTheCloudTurnsOnCarriesNoBreakout()
     {

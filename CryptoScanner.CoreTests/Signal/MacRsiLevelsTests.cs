@@ -104,23 +104,27 @@ public class MacRsiLevelsTests
     }
 
 
+    /// <summary>
+    /// The levels are always there now. Until 25 September 2026 a setting chose between the RSI
+    /// level and a price pivot, and this test pinned what happened with that setting off; since
+    /// the rule is settled there is nothing for the pivot to do and the switch is gone.
+    /// The pivot itself is still computed - the chart draws it - but no break reads it.
+    /// </summary>
     [TestMethod]
-    public void Off_LeavesTheRsiLevelsEmptyAndThePricePivotInPlace()
+    public void TheLevelsAreAlwaysComputed()
     {
-        new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = false };
         MacCandleData? last = Feed(FallAndRise(60, 60)).Last();
 
         Assert.IsNotNull(last, "the extension has to fill the slot at all");
-        Assert.IsNull(last.RsiLevelHigh, "nothing may be computed while the setting is off");
-        Assert.IsNull(last.RsiLevelLow, "nothing may be computed while the setting is off");
-        Assert.IsNotNull(last.PivotLow, "the price pivot is what the strategy falls back on");
+        Assert.IsNotNull(last.RsiLevelLow, "a stretch that falls and turns has a crossing in it");
+        Assert.IsNotNull(last.PivotLow, "the price pivot is still there for the chart");
     }
 
 
     [TestMethod]
     public void On_TakesTheLowOfTheCandleTheRsiCrossedUpOn()
     {
-        new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = true };
+        new MacPlugin().SettingsBase = new MacSettings();
         List<CryptoCandle> candles = FallAndRise(60, 60);
         List<MacCandleData?> seen = Feed(candles);
 
@@ -141,14 +145,14 @@ public class MacRsiLevelsTests
     [TestMethod]
     public void On_ALevelSetByTheCandleInHandCannotBeBrokenByIt()
     {
-        // The level is LIVE on the candle that sets it, which is what the reference does - read off
+        // The level is LIVE on the candle that sets it, which is what a level is - read off
         // its own Support and Resistance plots, 71 of 71 changes match that way and 55 of 71 match
         // when the level is held back a candle.
         //
         // Holding it back was a guard against a candle breaking a level of its own making, and that
         // guard was never needed: a support IS the low of its candle and a close never falls below
         // its own low. That is the property asserted here, on the candles whose level is their own.
-        new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = true };
+        new MacPlugin().SettingsBase = new MacSettings();
         List<CryptoCandle> candles = FallAndRise(60, 60);
         List<MacCandleData?> seen = Feed(candles);
 
@@ -175,7 +179,7 @@ public class MacRsiLevelsTests
     [TestMethod]
     public void On_CarriesTheLevelForwardUntilTheNextCrossing()
     {
-        new MacPlugin().SettingsBase = new MacSettings { UseRsiLevels = true };
+        new MacPlugin().SettingsBase = new MacSettings();
         List<MacCandleData?> seen = Feed(FallAndRise(60, 60));
 
         List<double> levels = [.. seen.Where(m => m?.RsiLevelLow != null)

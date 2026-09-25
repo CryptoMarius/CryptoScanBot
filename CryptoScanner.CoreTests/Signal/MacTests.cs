@@ -36,11 +36,14 @@ public class MacTests : TestBase
         // Settings has an internal setter, so the shared instance is adjusted in place rather than
         // replaced - and put back in cleanup, because every test in the process reads that one object.
         ApplyDefaults(MacPlugin.Settings);
+        // Most tests here use the BREAK as their vehicle - they are about the cloud, the volume or
+        // the slope, not about which trigger fires - so that is the one switched on.
+        MacPlugin.Settings.EntryOnBreakMarker = true;
+        MacPlugin.Settings.EntryOnOpenMarker = false;
 
         // MakeSeries puts the level at 101 and the tests close just through it, which the measured
         // buffer of 2% would swallow. The buffer is a separate rule with tests of its own, so it is
         // out of the way here; a test that is about the buffer sets the value it wants.
-        MacPlugin.Settings.BreakoutBufferPercentage = 0m;
     }
 
     [TestCleanup]
@@ -49,11 +52,10 @@ public class MacTests : TestBase
     private static void ApplyDefaults(MacSettings settings)
     {
         MacSettings fresh = new();
-        settings.EntryOnBreakout = fresh.EntryOnBreakout;
-        settings.EntryOnSecondLineCross = fresh.EntryOnSecondLineCross;
-        settings.EntryOnCloudCross = fresh.EntryOnCloudCross;
-        settings.EntryOnSpringboard = fresh.EntryOnSpringboard;
-        settings.EntryOnLineCross = fresh.EntryOnLineCross;
+        settings.EntryOnBreakMarker = fresh.EntryOnBreakMarker;
+        settings.EntryOnCloseMarker = fresh.EntryOnCloseMarker;
+        settings.EntryOnOpenMarker = fresh.EntryOnOpenMarker;
+        settings.EntryOnCrossMarker = fresh.EntryOnCrossMarker;
         settings.Speed = fresh.Speed;
         settings.FastEmaLength = fresh.FastEmaLength;
         settings.SecondEmaLength = fresh.SecondEmaLength;
@@ -66,8 +68,6 @@ public class MacTests : TestBase
         settings.SlowLineLookbackCandles = fresh.SlowLineLookbackCandles;
         settings.PivotLeftCandles = fresh.PivotLeftCandles;
         settings.PivotRightCandles = fresh.PivotRightCandles;
-        settings.PivotMaximumAgeCandles = fresh.PivotMaximumAgeCandles;
-        settings.BreakoutBufferPercentage = fresh.BreakoutBufferPercentage;
         settings.UseRsiFilter = fresh.UseRsiFilter;
         settings.RsiLongMinimum = fresh.RsiLongMinimum;
         settings.RsiShortMaximum = fresh.RsiShortMaximum;
@@ -136,10 +136,16 @@ public class MacTests : TestBase
             // A long gets a cloud under the price and pointing up, a short one above it pointing
             // down, so every test starts from a candle that only lacks the break.
             mac[i] = side == CryptoTradeSide.Long
+                // The level is the RSI one; the price pivot is still computed but nothing reads it
+                // for a break any more - no entry reads it.
+                // The break number comes from the indicator now: it has already decided that this
+                // candle is one the strategy marks, so a test about anything else just needs it set.
                 ? new MacCandleData { EmaFast = 99, EmaSecond = 98.5, SmaMedium = 98, SmaSlow = 97,
-                    PivotHigh = 101, PivotHighAge = 5 }
+                    PivotHigh = 101, PivotHighAge = 5, RsiLevelHigh = 101, RsiLevelHighAge = 5,
+                    BreakoutRank = 1, BreakoutRunAllowed = true }
                 : new MacCandleData { EmaFast = 101, EmaSecond = 101.5, SmaMedium = 102, SmaSlow = 103,
-                    PivotLow = 99, PivotLowAge = 5 };
+                    PivotLow = 99, PivotLowAge = 5, RsiLevelLow = 99, RsiLevelLowAge = 5,
+                    BreakdownRank = 1, BreakdownRunAllowed = true };
             data[i] = new CryptoData { Rsi = side == CryptoTradeSide.Long ? 60.0 : 40.0 };
         }
         shape?.Invoke(mac);
@@ -237,17 +243,15 @@ public class MacTests : TestBase
     private static void OnlyTheSecondLineCross()
     {
         MacSettings settings = MacPlugin.Settings;
-        settings.EntryOnBreakout = false;
-        settings.EntryOnBreakoutRun = false;
-        settings.EntryOnCloudCross = false;
-        settings.EntryOnSpringboard = false;
-        settings.EntryOnLineCross = false;
-        settings.EntryOnSecondLineCross = true;
+        settings.EntryOnBreakMarker = false;
+        settings.EntryOnOpenMarker = false;
+        settings.EntryOnCrossMarker = false;
+        settings.EntryOnCloseMarker = true;
     }
 
 
     /// <summary>
-    /// The reference draws "Close Short" when the close crosses UP through the second line. Read as
+    /// the strategy draws "Close Short" when the close crosses UP through the second line. Read as
     /// an entry that is a LONG: what closes a short opens a long.
     /// </summary>
     [TestMethod]
@@ -328,122 +332,6 @@ public class MacTests : TestBase
     // ═══════════════════════════════════════════════════════════════════════
     //  The break
     // ═══════════════════════════════════════════════════════════════════════
-
-    [TestMethod]
-    public void ACloseThroughTheResistance_IsALong()
-    {
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shapeCandles: candles => candles[0].Close = 102m);
-
-        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
-        StringAssert.Contains(algorithm.ExtraText, "broke the resistance");
-    }
-
-
-    [TestMethod]
-    public void ACloseThroughTheSupport_IsAShort()
-    {
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough,
-            shapeCandles: candles => candles[0].Close = 98m);
-
-        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
-        StringAssert.Contains(algorithm.ExtraText, "broke the support");
-    }
-
-
-    [TestMethod]
-    public void ACloseThatStaysUnderTheResistance_IsNoSignal()
-    {
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
-
-        Assert.IsFalse(algorithm.IsSignal());
-        StringAssert.Contains(algorithm.ExtraText, "did not clear the resistance");
-    }
-
-
-    /// <summary>
-    /// A level that was already broken on the previous candle is not a break. Without this check a
-    /// market trading above its resistance would signal on every candle.
-    /// </summary>
-    [TestMethod]
-    public void ALevelThatWasAlreadyBroken_IsNoSignal()
-    {
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
-        {
-            candles[0].Close = 103m;
-            candles[1].Close = 102m;
-        });
-
-        Assert.IsFalse(algorithm.IsSignal());
-        StringAssert.Contains(algorithm.ExtraText, "already broken");
-    }
-
-
-    [TestMethod]
-    public void NoLevelYet_IsNoSignal()
-    {
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: mac =>
-            {
-                foreach (var t in mac)
-                    t.PivotHigh = null;
-            },
-            shapeCandles: candles => candles[0].Close = 102m);
-
-        Assert.IsFalse(algorithm.IsSignal());
-        StringAssert.Contains(algorithm.ExtraText, "no pivot high");
-    }
-
-
-    [TestMethod]
-    public void ALevelPastItsMaximumAge_IsNoSignal()
-    {
-        MacPlugin.Settings.PivotMaximumAgeCandles = 20;
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: mac =>
-            {
-                foreach (var t in mac)
-                    t.PivotHighAge = 21;
-            },
-            shapeCandles: candles => candles[0].Close = 102m);
-
-        Assert.IsFalse(algorithm.IsSignal());
-        StringAssert.Contains(algorithm.ExtraText, "candles old");
-    }
-
-
-    /// <summary>
-    /// An old level is accepted by default: a level that has held for a long time is the one the
-    /// market watches, so age is not a reason to ignore it unless a run says otherwise.
-    /// </summary>
-    [TestMethod]
-    public void AnOldLevel_IsAcceptedByDefault()
-    {
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shape: mac =>
-            {
-                foreach (var t in mac)
-                    t.PivotHighAge = 5000;
-            },
-            shapeCandles: candles => candles[0].Close = 102m);
-
-        Assert.AreEqual(0, MacPlugin.Settings.PivotMaximumAgeCandles);
-        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
-    }
-
-
-    /// <summary>The buffer lifts the trigger above the level, so a break of one tick is not enough.</summary>
-    [TestMethod]
-    public void ABreakSmallerThanTheBuffer_IsNoSignal()
-    {
-        MacPlugin.Settings.BreakoutBufferPercentage = 1m;
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shapeCandles: candles => candles[0].Close = 101.5m);
-
-        Assert.IsFalse(algorithm.IsSignal());
-        StringAssert.Contains(algorithm.ExtraText, "did not clear the resistance");
-    }
-
 
     // ═══════════════════════════════════════════════════════════════════════
     //  The cloud
@@ -552,8 +440,8 @@ public class MacTests : TestBase
     [TestMethod]
     public void TheCloudCrossingUp_IsALongOfItsOwn()
     {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnCloudCross = true;
+        MacPlugin.Settings.EntryOnBreakMarker = false;
+        MacPlugin.Settings.EntryOnOpenMarker = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: mac =>
         {
             // The cloud pointed DOWN on the candle before, so the candle in hand is the cross.
@@ -569,8 +457,8 @@ public class MacTests : TestBase
     [TestMethod]
     public void TheCloudCrossingDown_IsAShortOfItsOwn()
     {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnCloudCross = true;
+        MacPlugin.Settings.EntryOnBreakMarker = false;
+        MacPlugin.Settings.EntryOnOpenMarker = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough, shape: mac =>
         {
             mac[1].EmaFast = 102;
@@ -589,8 +477,8 @@ public class MacTests : TestBase
     [TestMethod]
     public void ACloudThatAlreadyPointedThisWay_IsNoCross()
     {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnCloudCross = true;
+        MacPlugin.Settings.EntryOnBreakMarker = false;
+        MacPlugin.Settings.EntryOnOpenMarker = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
 
         Assert.IsFalse(algorithm.IsSignal());
@@ -605,8 +493,8 @@ public class MacTests : TestBase
     [TestMethod]
     public void ACrossFiresEvenWithPriceOutsideTheCloudSwitchedOn()
     {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnCloudCross = true;
+        MacPlugin.Settings.EntryOnBreakMarker = false;
+        MacPlugin.Settings.EntryOnOpenMarker = true;
         MacPlugin.Settings.RequirePriceOutsideCloud = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: mac =>
         {
@@ -624,8 +512,8 @@ public class MacTests : TestBase
     [TestMethod]
     public void WithBothTriggersOff_NothingFires()
     {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnCloudCross = false;
+        MacPlugin.Settings.EntryOnBreakMarker = false;
+        MacPlugin.Settings.EntryOnOpenMarker = false;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shapeCandles: candles => candles[0].Close = 102m);
 
@@ -638,60 +526,6 @@ public class MacTests : TestBase
     //  The springboard bounce - the pullback entry
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// The price dips to the fast line and closes back above it, with the previous candle already
-    /// above it. That is the bounce; no level has to be broken for it.
-    /// </summary>
-    [TestMethod]
-    public void ADipToTheFastLineThatClosesBackAbove_IsALong()
-    {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnSpringboard = true;
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shapeCandles: candles =>
-            {
-                // The candle reaches down to 99 (the fast EMA) and closes at 100 again.
-                candles[0].Low = 98.5m;
-                candles[0].Close = 100m;
-            });
-
-        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
-        StringAssert.Contains(algorithm.ExtraText, "bounced off the fast line");
-    }
-
-
-    /// <summary>A candle that never comes near the fast line is not a bounce.</summary>
-    [TestMethod]
-    public void ACandleThatNeverReachesTheFastLine_IsNoBounce()
-    {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnSpringboard = true;
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
-
-        // The default series has its low at 99.5, just above the fast EMA of 99.
-        Assert.IsFalse(algorithm.IsSignal());
-        StringAssert.Contains(algorithm.ExtraText, "did not reach the fast line");
-    }
-
-
-    /// <summary>A candle that dips AND closes under the line is a break, not a bounce.</summary>
-    [TestMethod]
-    public void ACandleThatClosesUnderTheFastLine_IsNoBounce()
-    {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnSpringboard = true;
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
-            shapeCandles: candles =>
-            {
-                candles[0].Low = 98m;
-                candles[0].Close = 98.5m;
-            });
-
-        Assert.IsFalse(algorithm.IsSignal());
-        StringAssert.Contains(algorithm.ExtraText, "closed under the fast line");
-    }
-
-
     // ═══════════════════════════════════════════════════════════════════════
     //  The line cross - the second line through the third
     // ═══════════════════════════════════════════════════════════════════════
@@ -703,8 +537,8 @@ public class MacTests : TestBase
     [TestMethod]
     public void TheSecondLineClosingOverTheThird_IsALong()
     {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnLineCross = true;
+        MacPlugin.Settings.EntryOnBreakMarker = false;
+        MacPlugin.Settings.EntryOnCrossMarker = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shape: mac =>
             {
@@ -725,8 +559,8 @@ public class MacTests : TestBase
     [TestMethod]
     public void TheLineCrossFiresWhileTheCloudStillPointsDown()
     {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnLineCross = true;
+        MacPlugin.Settings.EntryOnBreakMarker = false;
+        MacPlugin.Settings.EntryOnCrossMarker = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shape: mac =>
             {
@@ -743,8 +577,8 @@ public class MacTests : TestBase
     [TestMethod]
     public void TwoLinesThatDoNotMeet_AreNoLineCross()
     {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnLineCross = true;
+        MacPlugin.Settings.EntryOnBreakMarker = false;
+        MacPlugin.Settings.EntryOnCrossMarker = true;
         // The default series has the second line above the third on BOTH candles.
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough);
 
@@ -757,8 +591,8 @@ public class MacTests : TestBase
     [TestMethod]
     public void TheSecondLineClosingUnderTheThird_IsAShort()
     {
-        MacPlugin.Settings.EntryOnBreakout = false;
-        MacPlugin.Settings.EntryOnLineCross = true;
+        MacPlugin.Settings.EntryOnBreakMarker = false;
+        MacPlugin.Settings.EntryOnCrossMarker = true;
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough,
             shape: mac =>
             {
@@ -1071,11 +905,11 @@ public class MacIndicatorExtensionTests : TestBase
 
 
     /// <summary>
-    /// The three speeds of the reference indicator, each measured off its status line and fitted
+    /// The three speeds, each measured off its status line and fitted
     /// against our own candles to the cent. The first line does not move.
     /// </summary>
     [TestMethod]
-    public void EachSpeedHasTheLengthsMeasuredOffTheReference()
+    public void EachSpeedHasTheLengthsMeasuredOffMaCloud()
     {
         MacSettings settings = new() { Speed = MacSpeed.Standard };
         Assert.AreEqual((20, 40, 50, 150), settings.Lines(), "Standard");

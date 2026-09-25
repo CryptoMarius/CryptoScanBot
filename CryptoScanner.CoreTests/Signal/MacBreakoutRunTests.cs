@@ -11,7 +11,7 @@ namespace CryptoScanner.CoreTests.Signal;
 /// The break read as a RUN: which candles inside a stretch beyond the level carry a mark, and which
 /// stretches earn marks at all.
 /// <para>
-/// Both layers come from measurement against the reference indicator, so both are pinned here. The
+/// Both layers come from measurement against the strategy, so both are pinned here. The
 /// counting layer is exact and can be asserted on a handful of candles; the stretch layer is a
 /// BAND on how far the level stands from the slow line, which is asserted as a property - the
 /// verdict on every run has to follow the band, on the run's first candle and nowhere else.
@@ -41,7 +41,7 @@ public class MacBreakoutRunTests
     /// </summary>
     private static List<MacCandleData?> Publish(IReadOnlyList<decimal> closes, decimal range)
     {
-        MacSettings settings = new() { UseRsiLevels = true };
+        MacSettings settings = new();
         new MacPlugin().SettingsBase = settings;
 
         IndicatorRegistry registry = new(500);
@@ -112,7 +112,7 @@ public class MacBreakoutRunTests
 
     /// <summary>
     /// The candidate test: the WICK has to better the hundred candles before this one. Measured
-    /// against the reference's own markers, all 747 of them do; on the CLOSE only 85% do, and that
+    /// against its own markers, all 747 of them do; on the CLOSE only 85% do, and that
     /// difference is what kept this marker out of reach for weeks.
     /// </summary>
     [TestMethod]
@@ -143,7 +143,7 @@ public class MacBreakoutRunTests
     /// The counter hangs on the POSITION, not on the stretch: it restarts when the fast line
     /// crosses the second, and it lets three candidates through.
     /// <para>
-    /// Anchored on the stretch the best reading reaches 93% of the reference's markers while only
+    /// Anchored on the stretch the best reading reaches 93% of the strategy's markers while only
     /// 43% of what it fires is right; anchored on the entry it reaches 89% at 81%.
     /// </para>
     /// </summary>
@@ -178,18 +178,20 @@ public class MacBreakoutRunTests
 
 
     /// <summary>
-    /// And nothing is drawn in the first candles after the entry. The reference skips those, and
-    /// asking for five candles lifts the agreement from 89% at 81% to 91% at 87%.
+    /// And the close NINE candles back has to have stood past the second line. That one condition
+    /// is what makes the strategy skip candidates - at the start of a position and in the middle
+    /// of one alike - and it is exact: at a lag of eight it misses 55 of the 747 markers and fires
+    /// 59 too many, at nine it misses nothing and fires nothing extra, at ten it misses 72.
     /// </summary>
     [TestMethod]
-    public void TheFirstCandlesAfterTheEntry_EarnNothing()
+    public void ACandleWhoseCloseWasNotPastTheSecondLineNineBack_EarnsNothing()
     {
         List<decimal> closes = ClimbThroughAResistance(settle: 260, rise: 25, dip: 8,
             climb: 120, step: 1m);
         List<MacCandleData?> published = Publish(closes, range: 2m);
 
-        // BreakoutRunAllowed says whether the position is old enough; while it is false no candle
-        // may carry a number.
+        // BreakoutRunAllowed carries the answer of that look back, so while it is false no candle
+        // may carry a number - and it has to be false somewhere, or the test proves nothing.
         int tegengehouden = 0;
         for (int i = 0; i < closes.Count; i++)
         {
@@ -198,9 +200,38 @@ public class MacBreakoutRunTests
                 continue;
             tegengehouden++;
             Assert.AreEqual(0, mac.BreakoutRank,
-                $"candle {i} sits too soon after the entry and may not carry a number");
+                $"candle {i} had its close under the second line nine candles back and may not "
+                + "carry a number");
         }
         Assert.IsTrue(tegengehouden > 0,
-            "this series should hold candles that sit too soon after an entry");
+            "this series should hold candles whose close was not yet past the second line");
+    }
+
+
+    /// <summary>
+    /// The look back is read on the candle in hand, not one later. FillData runs after the tracking
+    /// and the counter has moved on by then, so reading it again there asks about the candle EIGHT
+    /// back - which turned away four markers per side and per coin before it was caught.
+    /// </summary>
+    [TestMethod]
+    public void TheLookBackIsReadOnTheCandleItBelongsTo()
+    {
+        List<decimal> closes = ClimbThroughAResistance(settle: 260, rise: 25, dip: 8,
+            climb: 120, step: 1m);
+        List<MacCandleData?> published = Publish(closes, range: 2m);
+
+        int gecontroleerd = 0;
+        for (int i = 9; i < closes.Count; i++)
+        {
+            MacCandleData? mac = published[i];
+            if (mac?.EmaSecond == null || published[i - 9]?.EmaSecond == null)
+                continue;
+            bool voorbij = (double)closes[i - 9] > published[i - 9]!.EmaSecond!.Value;
+            gecontroleerd++;
+            Assert.AreEqual(voorbij, mac.BreakoutRunAllowed,
+                $"candle {i} should report the close of candle {i - 9} against the second line "
+                + "of that same candle");
+        }
+        Assert.IsTrue(gecontroleerd > 100, "not enough candles were compared to prove anything");
     }
 }

@@ -6,28 +6,24 @@ namespace CryptoScanner.Analyzers.Mac.Config;
 
 public partial class StrategyMacSettingsViewModel : ObservableObject
 {
+    // The four markers the strategy draws, in the order they appear on screen. Only the first is on:
+    // it is the one the indicator itself calls an entry.
     [ObservableProperty]
-    private bool _entryOnBreakout = true;
+    private bool _entryOnOpenMarker = true;
 
     [ObservableProperty]
-    private bool _entryOnBreakoutRun = false;
+    private bool _entryOnCrossMarker = false;
+
+    [ObservableProperty]
+    private bool _entryOnCloseMarker = false;
+
+    [ObservableProperty]
+    private bool _entryOnBreakMarker = false;
 
     [ObservableProperty]
     private int _breakoutEntriesPerRun = 3;
 
-    [ObservableProperty]
-    private bool _entryOnSecondLineCross = false;
-
-    [ObservableProperty]
-    private bool _entryOnCloudCross = false;
-
-    [ObservableProperty]
-    private bool _entryOnSpringboard = false;
-
-    [ObservableProperty]
-    private bool _entryOnLineCross = false;
-
-    /// <summary>The three speeds of the reference indicator, plus Custom for the four numbers.</summary>
+    /// <summary>The three speeds, plus Custom for the four numbers.</summary>
     public static MacSpeed[] Speeds { get; } = Enum.GetValues<MacSpeed>();
 
     [ObservableProperty]
@@ -114,13 +110,11 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
 
     public void LoadConfig(MacSettings settings)
     {
-        EntryOnBreakout = settings.EntryOnBreakout;
-        EntryOnBreakoutRun = settings.EntryOnBreakoutRun;
+        EntryOnBreakMarker = settings.EntryOnBreakMarker;
         BreakoutEntriesPerRun = settings.BreakoutEntriesPerRun;
-        EntryOnSecondLineCross = settings.EntryOnSecondLineCross;
-        EntryOnCloudCross = settings.EntryOnCloudCross;
-        EntryOnSpringboard = settings.EntryOnSpringboard;
-        EntryOnLineCross = settings.EntryOnLineCross;
+        EntryOnCloseMarker = settings.EntryOnCloseMarker;
+        EntryOnOpenMarker = settings.EntryOnOpenMarker;
+        EntryOnCrossMarker = settings.EntryOnCrossMarker;
         Speed = settings.Speed;
         FastEmaLength = settings.FastEmaLength;
         SecondEmaLength = settings.SecondEmaLength;
@@ -133,9 +127,6 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
         SlowLineLookbackCandles = settings.SlowLineLookbackCandles;
         PivotLeftCandles = settings.PivotLeftCandles;
         PivotRightCandles = settings.PivotRightCandles;
-        PivotMaximumAgeCandles = settings.PivotMaximumAgeCandles;
-        BreakoutBufferPercentage = settings.BreakoutBufferPercentage;
-        UseRsiLevels = settings.UseRsiLevels;
         RsiLevelLength = settings.RsiLevelLength;
         RsiLevelSupportCross = settings.RsiLevelSupportCross;
         RsiLevelResistanceCross = settings.RsiLevelResistanceCross;
@@ -152,13 +143,11 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
 
     public void SaveConfig(MacSettings settings)
     {
-        settings.EntryOnBreakout = EntryOnBreakout;
-        settings.EntryOnBreakoutRun = EntryOnBreakoutRun;
+        settings.EntryOnBreakMarker = EntryOnBreakMarker;
         settings.BreakoutEntriesPerRun = BreakoutEntriesPerRun;
-        settings.EntryOnSecondLineCross = EntryOnSecondLineCross;
-        settings.EntryOnCloudCross = EntryOnCloudCross;
-        settings.EntryOnSpringboard = EntryOnSpringboard;
-        settings.EntryOnLineCross = EntryOnLineCross;
+        settings.EntryOnCloseMarker = EntryOnCloseMarker;
+        settings.EntryOnOpenMarker = EntryOnOpenMarker;
+        settings.EntryOnCrossMarker = EntryOnCrossMarker;
         settings.Speed = Speed;
         settings.FastEmaLength = FastEmaLength;
         settings.SecondEmaLength = SecondEmaLength;
@@ -171,9 +160,6 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
         settings.SlowLineLookbackCandles = SlowLineLookbackCandles;
         settings.PivotLeftCandles = PivotLeftCandles;
         settings.PivotRightCandles = PivotRightCandles;
-        settings.PivotMaximumAgeCandles = PivotMaximumAgeCandles;
-        settings.BreakoutBufferPercentage = BreakoutBufferPercentage;
-        settings.UseRsiLevels = UseRsiLevels;
         settings.RsiLevelLength = RsiLevelLength;
         settings.RsiLevelSupportCross = RsiLevelSupportCross;
         settings.RsiLevelResistanceCross = RsiLevelResistanceCross;

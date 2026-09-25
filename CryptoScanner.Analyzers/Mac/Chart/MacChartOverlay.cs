@@ -62,12 +62,12 @@ public class MacChartOverlay : IChartOverlay
         // The two entry markers carry the colours of the Pine script, so the same marker has the
         // same colour on this chart and on TradingView. They used to be a plain green and red,
         // which read well on their own but made the pair impossible to lay side by side. The short
-        // is therefore MAGENTA rather than red - that is the reference's own colour for it.
+        // is therefore MAGENTA rather than red - that is its own colour for it.
         new() { Key = KeyOpenLong, Label = "Open long marker", Color = "#FF00E676" },
         new() { Key = KeyOpenShort, Label = "Open short marker", Color = "#FFE040FB" },
         new() { Key = KeyBreakout, Label = "Breakout marker", Color = "#FFFFFFFF" },
         new() { Key = KeyBreakdown, Label = "Breakdown marker", Color = "#FFD4E157" },
-        // The four colours the reference uses for these, read off its own style screen: a
+        // The four colours the strategy uses for these, read off its own style screen: a
         // green and a red cross for the line crossing, a blue and an orange diamond for the
         // exit.
         new() { Key = KeyCrossUp, Label = "Cross up marker", Color = "#FF00D96F" },
@@ -264,8 +264,8 @@ public class MacChartOverlay : IChartOverlay
         chart.Series.Add(longMarks);
         chart.Series.Add(shortMarks);
 
-        // A breakout dot goes UNDER the candle and a breakdown mark above it, which is where the
-        // reference puts them: its own settings screen reads "Breakout, below bar" and "Breakdown,
+        // A breakout dot goes UNDER the candle and a breakdown mark above it, which is where the strategy
+        //  puts them: its own settings screen reads "Breakout, below bar" and "Breakdown,
         // above bar". That is the same side as the entry triangles, hence the larger gap.
         var breakoutDots = new ScatterSeries
         {
@@ -302,7 +302,7 @@ public class MacChartOverlay : IChartOverlay
         chart.Series.Add(breakoutDots);
         chart.Series.Add(breakdownDots);
 
-        // The line crossing and the exit, on the side of the candle the reference puts them:
+        // The line crossing and the exit, on the side of the candle the strategy puts them:
         // Cross Up and Close Long over the bar, Cross Down and Close Short under it.
         var crossUp = Marks("mac.cross.up", MarkerType.Cross, KeyCrossUp, group);
         var crossDown = Marks("mac.cross.down", MarkerType.Cross, KeyCrossDown, group);
@@ -353,7 +353,7 @@ public class MacChartOverlay : IChartOverlay
 
 
     /// <summary>
-    /// The second line crossing the third: EMA(40) through SMA(50), which is the reference's Cross
+    /// The second line crossing the third: EMA(40) through SMA(50), which is the strategy's Cross
     /// Up and Cross Down. It runs AHEAD of the cloud cross, so it is drawn even while the cloud
     /// still points the other way. Counted against the chart over four coins it misses none.
     /// </summary>
@@ -455,45 +455,45 @@ public class MacChartOverlay : IChartOverlay
     }
 
 
-    /// <summary>How long after the turn of the cloud a mark can appear, in candles.</summary>
-    private const int MarkEarliest = 8;
-    private const int MarkLatest = 60;
+    /// <summary>How many candles the wick has to better, and how far back the close is read.</summary>
+    private const int MarkExtremeCandles = 100;
+    private const int MarkLookBack = 9;
 
-    /// <summary>Over how many candles the price has to make a new extreme to be marked.</summary>
-    private const int MarkExtremeCandles = 5;
+    /// <summary>How many marks one position may carry.</summary>
+    private const int MarkPerPosition = 3;
 
 
     /// <summary>
-    /// The candles that trade through the last confirmed level: a white dot under the candle
-    /// (Breakout) and a yellow one above it (Breakdown).
+    /// The break markers: a white dot under the candle (Breakout) and a yellow one above it
+    /// (Breakdown). This is the strategy's rule exactly, the same one the strategy fires on.
     /// <para>
-    /// Four conditions, and every one of them is measured against the catalogued marks rather than
-    /// chosen. Nine of those are pinned down in MacBreakoutOnRealCandlesTests: 24 October 2023,
-    /// 11 to 13 February 2024, 28 and 29 October 2024, 6 November 2024, and 12, 18 and 19 May 2025.
+    /// Until 25 September 2026 the chart drew something else here - a deliberately wide guess
+    /// around a pivot level that printed about three times too many marks - because the rule was
+    /// not known. It is now, measured against the indicator's own plot values on eleven coins over
+    /// five timeframes: 477 Breakouts and 376 Breakdowns, every one on the same candle, with
+    /// nothing drawn that the strategy does not draw.
     /// </para>
     /// <list type="number">
-    /// <item>The HIGH trades through the last confirmed level - not the close. 19 May 2025 carries
-    /// a mark while closing under its level, and one level can be marked more than once: 28 and 29
-    /// October 2024 both break the same one.</item>
-    /// <item>The cloud points the way of the break.</item>
-    /// <item>Not the candle the cloud turned on: a mark prints AFTER the entry, never on it.</item>
-    /// <item>Between MarkEarliest and MarkLatest candles after that turn, and a new extreme over
-    /// MarkExtremeCandles candles. The nine known marks sit between 11 and 46 candles after their
-    /// turn, so the band has room on both sides of what was measured.</item>
+    /// <item>The CLOSE stands beyond the level and the WICK betters the highest high (lowest low)
+    /// of the <see cref="MarkExtremeCandles"/> candles before it.</item>
+    /// <item>The close <see cref="MarkLookBack"/> candles back already stood past the second line.
+    /// This is what makes the strategy skip candidates, at the start of a position and inside one
+    /// alike.</item>
+    /// <item>The second line stands on the break's side of the slow one.</item>
+    /// <item>The counter restarts when the fast line crosses the second - the candle that draws
+    /// Open Long or Open Short - and lets <see cref="MarkPerPosition"/> through.</item>
     /// </list>
     /// <para>
-    /// DELIBERATELY WIDE, by about three to one: this draws some thirty marks a year on a daily
-    /// chart where six to nine are wanted. It contains all nine catalogued ones, which is the
-    /// property worth keeping until the missing condition is found. What that condition is, is not
-    /// guessed at here: measuring how far price stands from the cloud narrows the count but costs
-    /// money on every setting tried, so no narrowing is built in.
+    /// The level is the RSI one, which is what the strategy draws; the pivot level the old drawing
+    /// used is still on MacLineValues for the strategy's own breakout trigger. See Mac.md.
     /// </para>
     /// </summary>
     private static IEnumerable<(int Index, bool Up)> FindConfirmations(MacLineValues[] values,
                                                                        List<CryptoCandle> candles)
     {
-        bool? cloudUp = null;
-        int turnedAt = -1;
+        int upRank = 0;
+        int downRank = 0;
+        bool? fastAbove = null;
 
         for (int i = 0; i < values.Length && i < candles.Count; i++)
         {
@@ -501,42 +501,55 @@ public class MacChartOverlay : IChartOverlay
             if (v.EmaFast == null || v.EmaSecond == null)
                 continue;
 
-            bool up = v.EmaFast.Value > v.EmaSecond.Value;
-            if (cloudUp == null)
-                cloudUp = up;
-            else if (up != cloudUp.Value)
+            // The entry the counter hangs on.
+            bool above = v.EmaFast.Value > v.EmaSecond.Value;
+            if (fastAbove != null && above != fastAbove.Value)
             {
-                turnedAt = i;
-                cloudUp = up;
+                if (above)
+                    upRank = 0;
+                else
+                    downRank = 0;
             }
+            fastAbove = above;
 
-            if (turnedAt < 0 || i - turnedAt < MarkEarliest || i - turnedAt > MarkLatest)
+            if (i < MarkExtremeCandles || v.SmaSlow == null)
                 continue;
-            if (i < MarkExtremeCandles)
+            MacLineValues back = values[i - MarkLookBack];
+            if (back.EmaSecond == null)
                 continue;
 
-            if (up)
+            for (int side = 0; side < 2; side++)
             {
-                if (v.PivotHigh == null || (double)candles[i].High <= v.PivotHigh.Value)
+                bool up = side == 0;
+                double? level = up ? v.RsiLevelHigh : v.RsiLevelLow;
+                if (level == null)
                     continue;
-                if (!IsExtreme(candles, i, true))
+
+                double close = (double)candles[i].Close;
+                if (up ? close <= level.Value : close >= level.Value)
                     continue;
-                yield return (i, true);
-            }
-            else
-            {
-                if (v.PivotLow == null || (double)candles[i].Low >= v.PivotLow.Value)
+                if (!WickBettersTheWindow(candles, i, up))
                     continue;
-                if (!IsExtreme(candles, i, false))
+
+                double closeBack = (double)candles[i - MarkLookBack].Close;
+                if (up ? closeBack <= back.EmaSecond.Value : closeBack >= back.EmaSecond.Value)
                     continue;
-                yield return (i, false);
+                if (up ? v.EmaSecond.Value <= v.SmaSlow.Value : v.EmaSecond.Value >= v.SmaSlow.Value)
+                    continue;
+
+                int rank = up ? ++upRank : ++downRank;
+                if (rank <= MarkPerPosition)
+                    yield return (i, up);
             }
         }
     }
 
 
-    /// <summary>Whether this candle makes a new extreme over the MarkExtremeCandles before it.</summary>
-    private static bool IsExtreme(List<CryptoCandle> candles, int index, bool up)
+    /// <summary>
+    /// Whether this candle's wick betters every one of the <see cref="MarkExtremeCandles"/> before
+    /// it. The candle itself is not part of its own window.
+    /// </summary>
+    private static bool WickBettersTheWindow(List<CryptoCandle> candles, int index, bool up)
     {
         for (int back = 1; back <= MarkExtremeCandles; back++)
         {

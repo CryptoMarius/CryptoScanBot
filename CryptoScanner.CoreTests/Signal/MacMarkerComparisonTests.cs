@@ -20,7 +20,7 @@ namespace CryptoScanner.CoreTests.Signal;
 /// candles and writes down, per candle, what it fires.
 /// <para>
 /// The point is that a rule written out in a side language proves nothing about the scanner. What
-/// the chart of the reference has to be held against is this code, with its own conditions - the
+/// the chart of the strategy has to be held against is this code, with its own conditions - the
 /// cloud that has to point the right way, the level that has to be old enough, the settings as
 /// they really are. The result goes to a file that the counting script reads.
 /// </para>
@@ -30,10 +30,10 @@ namespace CryptoScanner.CoreTests.Signal;
 /// </summary>
 [DoNotParallelize]
 [TestClass]
-public class MacAgainstTheReferenceTests : TestBase
+public class MacMarkerComparisonTests : TestBase
 {
     private const string Database = @"E:\CryptoScanBot\Data\Binance\Perpetual\Binance Perpetual.db";
-    private const string Output = @"E:\Projects\CryptoScanBot\Tools\EntryTiming\mac-scanner-signals.csv";
+    private const string Output = @"E:\tbo\EntryTiming\mac-scanner-signals.csv";
 
     // The identifier of an interval in the candle database is the enum value plus one. More than
     // one interval is run now: the fifteen minute chart is the second, independent set the run
@@ -104,10 +104,9 @@ public class MacAgainstTheReferenceTests : TestBase
                 Console.WriteLine($"{name} {intervalName}: {candles.Count} candles");
                 if (candles.Count < 250)
                     continue;
-                // "breakrun" is the same marker as "breakout", read as a run instead of a
-                // crossing. Both are written so the two readings can be counted against the chart
-                // side by side.
-                foreach (string kind in new[] { "open", "cross", "breakout", "breakrun", "exit" })
+                // One pass per marker kind, so each one is measured on its own instead of
+                // through a mixture of triggers.
+                foreach (string kind in new[] { "open", "cross", "break", "exit" })
                     lines.AddRange(Run(name, candles, kind, intervalName, period));
             }
         }
@@ -170,15 +169,10 @@ public class MacAgainstTheReferenceTests : TestBase
     {
         MacSettings settings = new()
         {
-            EntryOnBreakout = kind is "breakout" or "breakrun",
-            EntryOnBreakoutRun = kind == "breakrun",
-            EntryOnCloudCross = kind == "open",
-            EntryOnSpringboard = false,
-            EntryOnLineCross = kind == "cross",
+            EntryOnBreakMarker = kind == "break",
+            EntryOnOpenMarker = kind == "open",
+            EntryOnCrossMarker = kind == "cross",
             RequirePriceOutsideCloud = false,
-            BreakoutBufferPercentage = 0m,
-            PivotMaximumAgeCandles = 0,
-            UseRsiLevels = true,
             ExitOnCloudFlip = false,
             ExitOnSecondLineCross = kind == "exit",
         };
@@ -254,8 +248,7 @@ public class MacAgainstTheReferenceTests : TestBase
         {
             "open" => longSide ? "Open Long" : "Open Short",
             "cross" => longSide ? "Cross Up" : "Cross Down",
-            "breakout" => longSide ? "Breakout" : "Breakdown",
-            "breakrun" => longSide ? "Breakout run" : "Breakdown run",
+            "break" => longSide ? "Breakout" : "Breakdown",
             _ => longSide ? "Close Long" : "Close Short",
         };
     }
@@ -302,13 +295,13 @@ public class MacAgainstTheReferenceTests : TestBase
 
 
     private const string Facts_Output =
-        @"E:\Projects\CryptoScanBot\Tools\EntryTiming\mac-candle-facts.csv";
+        @"E:\tbo\EntryTiming\mac-candle-facts.csv";
 
 
     /// <summary>One pass over the candles that only reads the indicator, and fires nothing.</summary>
     private static List<string> Facts(string name, List<CryptoCandle> candles, string intervalName)
     {
-        MacSettings settings = new() { UseRsiLevels = true };
+        MacSettings settings = new();
         new MacPlugin().SettingsBase = settings;
 
         IndicatorRegistry registry = new(500);

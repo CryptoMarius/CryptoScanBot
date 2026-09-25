@@ -79,7 +79,7 @@ public sealed class MacCandleData
     /// one, or zero when the close is not beyond the level or does not better the run's own high.
     /// <para>
     /// A run is the unbroken stretch of candles whose close stands beyond the level. Measured
-    /// against the reference indicator over four coins, its break marker lands on a candle that
+    /// against the strategy over four coins, its break marker lands on a candle that
     /// makes a new high of such a run in 87 of 98 cases - 35% of those candles carry one against
     /// 4% of all the others - and never later than the eighth, almost always the first three.
     /// </para>
@@ -88,7 +88,7 @@ public sealed class MacCandleData
 
     /// <summary>
     /// Whether the run this candle belongs to was worth marking at all, judged on its FIRST candle
-    /// and then held for the whole run. Of 251 runs the reference marks 54, so this is where the
+    /// and then held for the whole run. Of 251 runs the strategy marks 54, so this is where the
     /// selection happens; the rank above only says where inside a run the marks go.
     /// </summary>
     public bool BreakoutRunAllowed { get; set; }

@@ -16,9 +16,9 @@ namespace CryptoScanner.Analyzers.Mac;
 /// </summary>
 [Serializable]
 /// <summary>
-/// The three speeds the reference indicator offers, plus one for our own numbers.
+/// The three speeds, plus one for our own numbers.
 /// <para>
-/// The reference has exactly ONE setting - "TBO Speed" - and all it does is move three of the four
+/// there is exactly ONE setting for the lines - a line speed - and all it does is move three of the four
 /// moving average lengths. Read off its status line on two candles of thirty minute bitcoin and
 /// fitted against our own candles, every number lands on one length to the cent. The FIRST line
 /// does not move: it is EMA(20) on all three.
@@ -46,40 +46,64 @@ public class MacSettings : SettingsSignalStrategyBase
     // StrategyMacSettingsView.axaml.
 
     /// <summary>
-    /// Fire on the break through the last pivot level: the trade this strategy is named after.
+    /// The four markers the strategy draws, and whether each one opens a position.
+    /// <para>
+    /// These are not four ideas of our own: they are exactly what the indicator puts on the chart,
+    /// and the scanner reproduces all four on the candle - 4063 of 4063 markers over eleven coins
+    /// and five timeframes. What is NOT known is which of them earns money, and that is why only
+    /// the first is on: it is the only one the indicator itself calls an entry. The other three are
+    /// worth watching and can be switched on one at a time to be measured. See Mac.md.
+    /// </para>
     /// </summary>
-    [SettingCaption("Entry on breakout", SubHeader = "Entry trigger",
-        Tooltip = "Fire when the candle closes through the last pivot level, with the cloud pointing "
-            + "the way of the trade.")]
-    public bool EntryOnBreakout { get; set; } = true;
+    [SettingCaption("Entry on Open Long / Open Short", SubHeader = "Entry trigger",
+        Tooltip = "The fast line crossing the second. This is the marker the strategy draws as the "
+            + "entry itself.")]
+    public bool EntryOnOpenMarker { get; set; } = true;
 
     /// <summary>
-    /// Read the breakout the way the reference indicator draws it instead of on the crossing candle.
+    /// The second line crossing the third: Cross Up and Cross Down.
     /// <para>
-    /// The crossing candle is the obvious reading and it is the wrong one: measured against the
-    /// reference over four coins it agrees with 17 of its 95 break markers on five minute candles
-    /// and fires 228 times. What the reference actually marks are the candles that make a NEW
-    /// EXTREME within an unbroken stretch beyond the level - the first three of them - and only in
-    /// stretches that began with the price already clear of the trend. That reading agrees with 44
-    /// of the 95, and holds up on daily candles as well.
-    /// </para>
-    /// <para>
-    /// Off by default: it is a better approximation of the reference, not a measured improvement of
-    /// the result. Turn it on to measure it. See Mac.md.
+    /// It fires BEFORE the cloud has turned, so it is earlier than the entry marker and it is not
+    /// confirmed by it. On the chart it reads as "the trend is turning", which is why it is off
+    /// until a run says what it is worth.
     /// </para>
     /// </summary>
-    [SettingCaption("Breakout as a run, not a crossing",
-        Tooltip = "Enter on the first three candles that make a new extreme within a stretch beyond "
-            + "the level, instead of on the candle that crosses it. Closer to what the reference "
-            + "indicator draws. Needs 'Entry on breakout' to be on.")]
-    public bool EntryOnBreakoutRun { get; set; } = false;
+    [SettingCaption("Entry on Cross Up / Cross Down",
+        Tooltip = "The second line crossing the third. Earlier than the entry marker, and not "
+            + "confirmed by it.")]
+    public bool EntryOnCrossMarker { get; set; } = false;
+
+    /// <summary>
+    /// The close crossing back through the second line: Close Long and Close Short.
+    /// <para>
+    /// the strategy draws this to CLOSE the position on the other side, so taking it as an entry is
+    /// deliberately counter-trend - the cloud is still pointing the other way when it fires.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Entry on Close Long / Close Short",
+        Tooltip = "The close crossing back through the second line. the strategy draws it to close the "
+            + "opposite position, so as an entry it is counter-trend.")]
+    public bool EntryOnCloseMarker { get; set; } = false;
+
+    /// <summary>
+    /// The break through the level: Breakout and Breakdown.
+    /// <para>
+    /// The candle closes beyond the level with its wick past the hundred candles before it, and it
+    /// is one of the first <see cref="BreakoutEntriesPerRun"/> such candles since the position
+    /// opened. A follow-through marker rather than an entry, so it is off by default.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Entry on Breakout / Breakdown",
+        Tooltip = "The close beyond the level with the wick past the hundred candles before it. A "
+            + "follow-through marker, not an entry of its own.")]
+    public bool EntryOnBreakMarker { get; set; } = false;
 
     /// <summary>
     /// How many break entries one POSITION may carry, counted from the candle the fast line crossed
     /// the second.
     /// <para>
     /// Until 25 September 2026 this counted inside a stretch beyond the level, and that was the
-    /// wrong anchor. Measured against the reference's own markers on eleven coins over five
+    /// wrong anchor. Measured against its own markers on eleven coins over five
     /// timeframes, 747 of them: counted per stretch the best reading reaches 93% of the markers
     /// while only 43% of what it fires is right; counted per position it reaches 89% at 81%.
     /// </para>
@@ -90,67 +114,8 @@ public class MacSettings : SettingsSignalStrategyBase
     /// </summary>
     [SettingCaption("Breakout entries per position",
         Tooltip = "At most this many break entries between one entry and the next. Three is what "
-            + "the reference indicator draws.")]
+            + "the strategy draws.")]
     public int BreakoutEntriesPerRun { get; set; } = 3;
-
-    /// <summary>
-    /// Fire on the cloud turning: the fast EMA closing above the second one for a long, under it for
-    /// a short. A different idea from the level break - the turn itself instead of a level that
-    /// gives way - which is why each trigger has its own switch and they are measured apart.
-    /// </summary>
-    /// <summary>
-    /// Enter on the close crossing the SECOND line the way this side trades.
-    /// <para>
-    /// This is the marker the reference draws to CLOSE the opposite position: its "Close Long" is
-    /// the close falling through the second line, so entering a short on it is entering on what
-    /// closes a long. A long entry wants the mirror of that, the reference's "Close Short".
-    /// </para>
-    /// <para>
-    /// It is the only trigger besides the line cross that fires while the cloud still points the
-    /// other way, so it is exempt from that check - see MacBase.IsSignal. Of the eight markers the
-    /// reference draws these two are reconstructed to within a few per cent, which is why they are
-    /// worth trading on at all.
-    /// </para>
-    /// </summary>
-    [SettingCaption("Entry on close crossing the second line",
-        Tooltip = "Enter when the close crosses the second line this side's way. That is the "
-            + "marker the reference draws to close the opposite position.")]
-    public bool EntryOnSecondLineCross { get; set; } = false;
-
-    [SettingCaption("Entry on cloud cross",
-        Tooltip = "Fire when the fast EMA crosses the second one: above it for a long, under it for "
-            + "a short. A separate trigger from the breakout; both may be on at the same time.")]
-    public bool EntryOnCloudCross { get; set; } = false;
-
-    /// <summary>
-    /// Fire on the pullback to the fast EMA inside a trend that is already running: wait for the
-    /// trend, then buy the dip to the fast line instead of chasing a break.
-    /// <para>
-    /// The candle has to reach the fast EMA and close back on the trade's side of it, with the
-    /// previous candle already on that side - so it is a dip INTO the line, not a first crossing.
-    /// </para>
-    /// </summary>
-    [SettingCaption("Entry on springboard bounce",
-        Tooltip = "Fire when the price dips to the fast EMA inside a running trend and closes back "
-            + "above it (below for a short).")]
-    public bool EntryOnSpringboard { get; set; } = false;
-
-    /// <summary>
-    /// Fire on the second line crossing the third: EMA(40) through SMA(50). This one runs AHEAD of
-    /// the cloud cross - the second line gives way before the fast line does - so it is the earliest
-    /// of the four triggers and the only one that fires while the cloud still points the other way.
-    /// <para>
-    /// Measured against the markers on four coins: the reference draws this event eight times and
-    /// the rule fires it eight times, on the same eight days, and downwards five times against
-    /// seven. The cloud test is skipped for this trigger, because waiting for the cloud would turn
-    /// it into the cross it is supposed to precede.
-    /// </para>
-    /// </summary>
-    [SettingCaption("Entry on line cross",
-        Tooltip = "Fire when the second EMA crosses the medium SMA: above it for a long, under it "
-            + "for a short. Fires before the cloud turns, so the cloud may still point the other "
-            + "way.")]
-    public bool EntryOnLineCross { get; set; } = false;
 
     /// <summary>
     /// Which set of lengths the four lines use.
@@ -161,7 +126,7 @@ public class MacSettings : SettingsSignalStrategyBase
     /// </para>
     /// </summary>
     [SettingCaption("Line speed", SeparatorBefore = true, SubHeader = "Cloud",
-        Tooltip = "The three speeds of the reference indicator. Standard is 20/40/50/150, Fast is "
+        Tooltip = "The three speeds. Standard is 20/40/50/150, Fast is "
             + "20/30/40/80, Slow is 20/50/100/200. Choose Custom to use the four numbers below.")]
     public MacSpeed Speed { get; set; } = MacSpeed.Standard;
 
@@ -297,32 +262,8 @@ public class MacSettings : SettingsSignalStrategyBase
             + "is confirmed, so a break is always against a level that was already there.")]
     public int PivotRightCandles { get; set; } = 5;
 
-    /// <summary>
-    /// Take support and resistance from the RSI instead of from a price pivot.
-    /// <para>
-    /// A support is the LOW of the candle on which the RSI crosses back up through
-    /// <see cref="RsiLevelSupportCross"/>; a resistance is the HIGH of the candle on which it
-    /// crosses back down through <see cref="RsiLevelResistanceCross"/>. One level of each kind is
-    /// carried forward until the next crossing replaces it.
-    /// </para>
-    /// <para>
-    /// Measured against 45 readings on three coins: every one of them is reproduced to the cent.
-    /// A symmetric price pivot puts a level down every few candles and most carry nothing; this
-    /// puts ten to sixteen down in five hundred candles, which is what a chart actually shows.
-    /// </para>
-    /// <para>
-    /// Off by default: it changes which levels exist and therefore every breakout entry, and that
-    /// has to be earned in a run rather than on the levels being right.
-    /// </para>
-    /// </summary>
-    [SettingCaption("Levels from the RSI", SeparatorBefore = true,
-        Tooltip = "Support is the low of the candle where the RSI crosses back up through its "
-            + "lower bound, resistance the high of the candle where it crosses back down through "
-            + "the upper one.")]
-    public bool UseRsiLevels { get; set; } = false;
-
     /// <summary>The RSI the levels are read from. Wilder's, the same one the RSI filter uses.</summary>
-    [SettingCaption("RSI length for levels", Indented = true, VisibleWhen = nameof(UseRsiLevels),
+    [SettingCaption("RSI length for levels", SeparatorBefore = true, SubHeader = "Levels",
         Tooltip = "Length of the RSI the levels are taken from.")]
     public int RsiLevelLength { get; set; } = 14;
 
@@ -331,44 +272,16 @@ public class MacSettings : SettingsSignalStrategyBase
     /// 30.1 and 34.9 the candle before and 37.2 and 45.0 on the candle itself, so 30 misses every
     /// one of them and 40 misses half.
     /// </summary>
-    [SettingCaption("RSI cross for support", Indented = true, VisibleWhen = nameof(UseRsiLevels),
+    [SettingCaption("RSI cross for support", Indented = true,
         Tooltip = "The RSI level that has to be crossed upwards for the candle's low to become "
             + "the support.")]
     public decimal RsiLevelSupportCross { get; set; } = 35m;
 
     /// <summary>The RSI level a resistance crossing comes down through. Measured at 65.</summary>
-    [SettingCaption("RSI cross for resistance", Indented = true, VisibleWhen = nameof(UseRsiLevels),
+    [SettingCaption("RSI cross for resistance", Indented = true,
         Tooltip = "The RSI level that has to be crossed downwards for the candle's high to become "
             + "the resistance.")]
     public decimal RsiLevelResistanceCross { get; set; } = 65m;
-
-    /// <summary>
-    /// How old the level may be, in candles. Zero - the default - accepts a level of any age.
-    /// <para>
-    /// It started at 200 on the assumption that an old level is a stale one, which is an assumption
-    /// and not a finding: a level that has held for months is exactly the one the market watches. An
-    /// age limit therefore has to earn its place in a run of its own.
-    /// </para>
-    /// </summary>
-    [SettingCaption("Maximum level age",
-        Tooltip = "How many candles ago the level may sit. Zero - the default - accepts a level of "
-            + "any age, however long it has been there.")]
-    public int PivotMaximumAgeCandles { get; set; } = 0;
-
-    /// <summary>
-    /// How far beyond the level the candle has to close, as a percentage of the level. Zero takes
-    /// any close beyond it, which on a coin with a wide spread means a break of one tick counts.
-    /// <para>
-    /// It stood at 2% for a day on the strength of a chart image where a day that cleared its
-    /// level by 0.64% appeared to carry no mark. It does carry one, read off that same image more
-    /// carefully later, so the margin had no measurement behind it and is back to zero. It is a
-    /// setting to measure in a run, not something to read off a picture.
-    /// </para>
-    /// </summary>
-    [SettingCaption("Breakout buffer %",
-        Tooltip = "How far beyond the level the candle has to close, as a percentage of the level. "
-            + "Zero takes any close beyond it.")]
-    public decimal BreakoutBufferPercentage { get; set; } = 0m;
 
     /// <summary>
     /// A long wants the RSI at or above its minimum, a short at or below its maximum: the momentum
@@ -415,7 +328,7 @@ public class MacSettings : SettingsSignalStrategyBase
     /// Leave the position when the close crosses back through the SECOND line against it: down
     /// through it for a long, up through it for a short.
     /// <para>
-    /// This is the reference's Close Long and Close Short, measured rather than invented: over
+    /// This is the strategy's Close Long and Close Short, measured rather than invented: over
     /// twelve catalogued markers on four coins the close crossing the second line hits every one,
     /// eight of eight on the short side and four of four on the long side. Its own guide calls
     /// these the signals to act on, and a cluster of them near a level its best setup.

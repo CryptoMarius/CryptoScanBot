@@ -20,40 +20,32 @@
                      third, which happens before the cloud turns. -->
                 <TextBlock Text="Entry trigger" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
 
-                <CheckBox IsChecked="{Binding EntryOnBreakout, Mode=TwoWay}"
-                          Content="Entry on breakout" FontSize="12"
-                          ToolTip.Tip="Fire when the candle closes through the last pivot level, with the cloud pointing the way of the trade."/>
+                <!-- The four markers the strategy draws, and whether each one opens a position.
+                     Only the first is on: it is the one the indicator itself calls an entry. The
+                     other three are reproduced on the candle but what they EARN is unmeasured. -->
+                <CheckBox IsChecked="{Binding EntryOnOpenMarker, Mode=TwoWay}"
+                          Content="Entry on Open Long / Open Short" FontSize="12"
+                          ToolTip.Tip="The fast line crossing the second. This is the marker the strategy draws as the entry itself."/>
 
-                <CheckBox IsChecked="{Binding EntryOnBreakoutRun, Mode=TwoWay}"
-                          Content="Breakout as a run, not a crossing" FontSize="12"
-                          ToolTip.Tip="Enter on the first three candles that make a new extreme within a stretch beyond the level, instead of on the candle that crosses it. Closer to what the reference indicator draws. Needs 'Entry on breakout' to be on."/>
+                <CheckBox IsChecked="{Binding EntryOnCrossMarker, Mode=TwoWay}"
+                          Content="Entry on Cross Up / Cross Down" FontSize="12"
+                          ToolTip.Tip="The second line crossing the third. It fires before the cloud has turned, so it is earlier than the entry marker and not confirmed by it."/>
+
+                <CheckBox IsChecked="{Binding EntryOnCloseMarker, Mode=TwoWay}"
+                          Content="Entry on Close Long / Close Short" FontSize="12"
+                          ToolTip.Tip="The close crossing back through the second line. the strategy draws it to close the opposite position, so as an entry it is deliberately counter-trend."/>
+
+                <CheckBox IsChecked="{Binding EntryOnBreakMarker, Mode=TwoWay}"
+                          Content="Entry on Breakout / Breakdown" FontSize="12"
+                          ToolTip.Tip="The close beyond the level with the wick past the hundred candles before it. A follow-through marker rather than an entry of its own."/>
 
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="At most this many entries inside one stretch beyond the level. The reference never draws more than three.">
-                    <TextBlock Grid.Column="0" Text="Breakout entries per run:" VerticalAlignment="Center" FontSize="12"/>
+                      ToolTip.Tip="At most this many break entries between one entry and the next. three is the most this ever draws.">
+                    <TextBlock Grid.Column="0" Text="Breakout entries per position:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding BreakoutEntriesPerRun, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
-
-                <!-- The same crossing the exit reads, taken from the other side: the marker the
-                     reference draws to close a long is what opens a short here. Exempt from the
-                     cloud check, because by definition the cloud still points the other way. -->
-                <CheckBox IsChecked="{Binding EntryOnSecondLineCross, Mode=TwoWay}"
-                          Content="Entry on close crossing the second line" FontSize="12"
-                          ToolTip.Tip="Enter when the close crosses the second line this side's way. That is the marker the reference draws to close the opposite position: its Close Long opens a short here, its Close Short opens a long."/>
-
-                <CheckBox IsChecked="{Binding EntryOnCloudCross, Mode=TwoWay}"
-                          Content="Entry on cloud cross" FontSize="12"
-                          ToolTip.Tip="Fire when the fast EMA crosses the second one: above it for a long, under it for a short. A separate trigger from the breakout; both may be on at the same time."/>
-
-                <CheckBox IsChecked="{Binding EntryOnSpringboard, Mode=TwoWay}"
-                          Content="Entry on springboard bounce" FontSize="12"
-                          ToolTip.Tip="Fire when the price dips to the fast EMA inside a running trend and closes back above it (below for a short)."/>
-
-                <CheckBox IsChecked="{Binding EntryOnLineCross, Mode=TwoWay}"
-                          Content="Entry on line cross" FontSize="12"
-                          ToolTip.Tip="Fire when the second EMA crosses the medium SMA: above it for a long, under it for a short. Fires before the cloud turns, so the cloud may still point the other way."/>
 
                 <Separator Margin="0,4"/>
 
@@ -61,11 +53,11 @@
                      the strength (how far the outer two are apart). -->
                 <TextBlock Text="Cloud" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
 
-                <!-- The reference indicator has exactly one setting and all it does is move three
+                <!-- the strategy has exactly one setting and all it does is move three
                      of the four lengths. The four numbers below count only on Custom; choosing a
                      speed does not write them. -->
                 <Grid ColumnDefinitions="180,110,*" RowDefinitions="Auto"
-                      ToolTip.Tip="The three speeds of the reference indicator. Standard is 20/40/50/150, Fast is 20/30/40/80, Slow is 20/50/100/200. Choose Custom to use the four numbers below.">
+                      ToolTip.Tip="The three speeds. Standard is 20/40/50/150, Fast is 20/30/40/80, Slow is 20/50/100/200. Choose Custom to use the four numbers below.">
                     <TextBlock Grid.Column="0" Text="Line speed:" VerticalAlignment="Center" FontSize="12"/>
                     <ComboBox Grid.Column="1" ItemsSource="{Binding Speeds}"
                               SelectedItem="{Binding Speed, Mode=TwoWay}"
@@ -166,27 +158,6 @@
                 </Grid>
 
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="How many candles ago the level may sit. Zero - the default - accepts a level of any age, however long it has been there.">
-                    <TextBlock Grid.Column="0" Text="Maximum level age:" VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Grid.Column="1"
-                             Text="{Binding PivotMaximumAgeCandles, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="How far beyond the level the candle has to close, as a percentage of the level. Zero takes any close beyond it.">
-                    <TextBlock Grid.Column="0" Text="Breakout buffer %:" VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Grid.Column="1"
-                             Text="{Binding BreakoutBufferPercentage, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-                <CheckBox IsChecked="{Binding UseRsiLevels, Mode=TwoWay}"
-                          Content="Levels from the RSI" FontSize="12"
-                          ToolTip.Tip="Support is the low of the candle where the RSI crosses back up through its lower bound, resistance the high of the candle where it crosses back down through the upper one."/>
-
-                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      IsVisible="{Binding UseRsiLevels}"
                       ToolTip.Tip="Length of the RSI the levels are taken from.">
                     <TextBlock Grid.Column="0" Text="RSI length for levels:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1" Text="{Binding RsiLevelLength, Mode=TwoWay}"
@@ -194,7 +165,6 @@
                 </Grid>
 
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      IsVisible="{Binding UseRsiLevels}"
                       ToolTip.Tip="The RSI level that has to be crossed upwards for the candle's low to become the support.">
                     <TextBlock Grid.Column="0" Text="RSI cross for support:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1" Text="{Binding RsiLevelSupportCross, Mode=TwoWay}"
@@ -202,7 +172,6 @@
                 </Grid>
 
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      IsVisible="{Binding UseRsiLevels}"
                       ToolTip.Tip="The RSI level that has to be crossed downwards for the candle's high to become the resistance.">
                     <TextBlock Grid.Column="0" Text="RSI cross for resistance:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1" Text="{Binding RsiLevelResistanceCross, Mode=TwoWay}"
