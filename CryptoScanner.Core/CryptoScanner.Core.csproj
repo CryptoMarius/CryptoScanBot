@@ -265,8 +265,8 @@
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <!-- Base classes for the exchanges (Subscription, SymbolBase, rate limiter events) stay here;
          the exchange specific packages moved to CryptoScanner.Exchanges. -->
-    <PackageReference Include="CryptoExchange.Net" Version="12.5.1" />
-    <PackageReference Include="Dapper" Version="2.1.86" />
+    <PackageReference Include="CryptoExchange.Net" Version="13.0.0" />
+    <PackageReference Include="Dapper" Version="2.1.89" />
     <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.3.8" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
@@ -277,7 +277,7 @@
          arrive as a transitive dependency of Telegram.Bot, which is no longer referenced. -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NLog" Version="6.2.1" />
-    <PackageReference Include="NPOI" Version="2.8.0" />
+    <PackageReference Include="NPOI" Version="2.8.1" />
     <!-- NPOI 2.8.0 depends on SkiaSharp 3.119.2, Avalonia.Skia on SkiaSharp 2.88.9. NuGet unifies the
          MANAGED SkiaSharp.dll to the highest version (3.119.2), but the native asset packages are
          resolved separately: Avalonia pins SkiaSharp.NativeAssets.Linux 2.88.9 and nothing raises it,

@@ -191,9 +191,12 @@ public static class LibraryRateLimit
         try
         {
             RequestDefinition definition = new(baseAddress, path, HttpMethod.Post);
+            // allowedRateRatio (CryptoExchange.Net 13): share of the budget this request may use, 0..1.
+            // 1.0 = the full budget, the same as the package uses for its own requests; the booking
+            // must sit in the same budget, not in a narrower one.
             await gate.ProcessAsync(NullLogger.Instance, Interlocked.Increment(ref itemId),
                 RateLimitItemType.Request, definition, null, weight, RateLimitingBehaviour.Wait,
-                null, cancellationToken);
+                null, 1.0, cancellationToken);
         }
         catch (OperationCanceledException)
         {

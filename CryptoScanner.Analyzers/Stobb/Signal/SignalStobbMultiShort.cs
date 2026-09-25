@@ -47,13 +47,13 @@ public class SignalStobbMultiShort : SignalStobbBase
         // Controle op de RSI
         if (StobbPlugin.Settings.IncludeRsi && !CandleLast.RsiOverbought())
         {
-            response = "rsi niet overbought";
+            response = "rsi not overbought";
             return false;
         }
 
         if (StobbPlugin.Settings.OnlyIfPreviousStobb && HadStobbInThelastXCandles(SignalSide, 5, 60, StobbPlugin.Settings.UseLowHigh) == null)
         {
-            response = "geen voorgaande stobb gevonden";
+            response = "no previous stobb found";
             return false;
         }
 

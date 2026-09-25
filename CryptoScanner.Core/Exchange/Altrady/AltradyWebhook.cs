@@ -307,6 +307,14 @@ public class AltradyWebhook
                     expiryPrice = position.EntryPrice.Value * (1 + tpPercentage / 100m);
                 else
                     expiryPrice = position.EntryPrice.Value * (1 - tpPercentage / 100m);
+
+                // Put it on the tick grid the same way every other price we calculate is put there,
+                // so the level in Altrady is the level in our own administration. Measured 25-09-2026:
+                // without this the webhook sent 0.585015 for a symbol with a tick of 0.0001 and
+                // 133.07425 for one with a tick of 0.01. Altrady never places this as an order - it
+                // compares it to the price itself - so this changes the number, not the behaviour.
+                expiryPrice = expiryPrice.Value.ClampPrice(position.Side, position.Symbol.PriceMinimum,
+                    position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
             }
 
             if (GlobalData.Settings.Trading.EntryRemoveTime > 0 || expiryPrice.HasValue)
