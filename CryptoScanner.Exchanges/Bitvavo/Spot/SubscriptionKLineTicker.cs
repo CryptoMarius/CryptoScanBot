@@ -39,8 +39,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 {
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        SubscriptionBundle!.SocketClient ??= new BitvavoSocketClient();
-        var client = (BitvavoSocketClient)SubscriptionBundle.SocketClient;
+        // One client per bundle, even when two subscriptions of that bundle start in the same
+        // moment; see SubscriptionBundle.GetOrCreateSocketClient.
+        var client = SubscriptionBundle!.GetOrCreateSocketClient(() => new BitvavoSocketClient());
 
         InitializeCache(SymbolList);
 

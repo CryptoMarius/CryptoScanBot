@@ -12,8 +12,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions)
 {
     public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        SubscriptionBundle!.SocketClient ??= new KrakenSocketClient();
-        var client = (KrakenSocketClient)SubscriptionBundle!.SocketClient;
+        // One client per bundle, even when two subscriptions of that bundle start in the same
+        // moment; see SubscriptionBundle.GetOrCreateSocketClient.
+        var client = SubscriptionBundle!.GetOrCreateSocketClient(() => new KrakenSocketClient());
         var api = client.SpotApi;
 
         InitializeCache(SymbolList);
