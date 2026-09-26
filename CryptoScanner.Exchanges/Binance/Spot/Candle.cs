@@ -31,7 +31,25 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
             ?? throw new Exception($"Not supported interval");
 
-        LimitRate.WaitForFairWeight(LimitRate.KlineWeight);
+        // Ask for the size of the gap instead of the maximum. Binance charges a klines call by the
+        // number of candles asked for, and a catch-up after a short outage needs a handful: 25
+        // minutes of 1m candles cost weight 1 where the fixed 1000 cost 5 at the exchange and were
+        // booked as 10 here. See LimitRate.WeightForKlineLimit for the measurement of 25-09-2026.
+        // At least one candle, so a fetchFrom that already sits on the current minute still asks.
+        CandleTime nowAligned = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, 1);
+        int limit = Api.ExchangeOptions.CandleLimit;
+        if (nowAligned > fetchFrom)
+        {
+            long candlesNeeded = (nowAligned - fetchFrom) / interval.Duration + 1;
+            if (candlesNeeded < limit)
+                limit = (int)candlesNeeded;
+        }
+        else
+            limit = 1;
+        if (limit < 1)
+            limit = 1;
+
+        LimitRate.WaitForFairWeight(LimitRate.WeightForKlineLimit(limit));
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         // No endTime: ask for "the next CandleLimit candles at or after startTime". With an
@@ -45,7 +63,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         int attempt = 0;
     Again:
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
-            startTime: fetchFrom.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
+            startTime: fetchFrom.ToDateTime(), limit: limit);
         if (!result.Success)
         {
             if (await RetryAfterRateLimitAsync(result.Error, prefix, ++attempt))

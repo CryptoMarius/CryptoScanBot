@@ -27,6 +27,29 @@ public static class LimitRate
     /// </summary>
     public const long KlineWeight = 10;
 
+    /// <summary>
+    /// What a klines request of <paramref name="limit"/> candles really costs, with the brackets
+    /// Binance.Net itself uses (the same table on the spot and the futures client).
+    /// <para>
+    /// The catch-up used to ask for 1000 candles every time and book <see cref="KlineWeight"/> for
+    /// it, which is wrong twice over: the exchange charges 5 for that bracket, not 10, so the brake
+    /// here closed twice as early as the exchange would. The restart of 25-09-2026 16:55 on Binance
+    /// Perpetual, after 23 minutes of standstill, cost 356 calls, 207 "delay needed for weight"
+    /// lines and 5 minutes 11 seconds without analysis - while 25 candles per coin were needed and
+    /// the whole catch-up would have fitted in one minute of the budget at the real weight.
+    /// </para>
+    /// </summary>
+    public static long WeightForKlineLimit(int limit)
+    {
+        if (limit <= 100)
+            return 1;
+        if (limit <= 500)
+            return 2;
+        if (limit <= 1000)
+            return 5;
+        return 10;
+    }
+
     public static long CurrentWeight { get; set; }
     static private List<BinanceWeight> List { get; } = [];
 
