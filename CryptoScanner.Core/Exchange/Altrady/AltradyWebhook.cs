@@ -134,12 +134,19 @@ public class AltradyWebhook
     }
 
 
-    public static async Task DelegateControlToAltradyAsync(CryptoPosition position, string url = "", string command = "open")
+    /// <summary>
+    /// Send the position to the Altrady webhook. Returns true only when Altrady answered with a signal id,
+    /// which is the single proof that the position was really opened on their side. Anything else (no api
+    /// keys, no exchange code, a product the webhook cannot express, an http error, or an answer without a
+    /// signal id such as {"error":"Too many positions opened"}) returns false, so the caller can undo its
+    /// own administration instead of running a position without a counterpart.
+    /// </summary>
+    public static async Task<bool> DelegateControlToAltradyAsync(CryptoPosition position, string url = "", string command = "open")
     {
         if (GlobalData.AltradyApi.Key == "" || GlobalData.AltradyApi.Secret == "")
         {
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} unable to send to Altrady webhook, no api key's available");
-            return;
+            return false;
         }
 
         if (url == "")
@@ -154,7 +161,7 @@ public class AltradyWebhook
             if (externalUrls == null || externalUrls.Altrady == null || externalUrls.Altrady!.Code == "")
             {
                 GlobalData.AddErrorToLogTab($"error webhook {position.Symbol.Name} {position.Interval!.Name} no exchange code available");
-                return;
+                return false;
             }
 
 
@@ -186,7 +193,7 @@ public class AltradyWebhook
             {
                 GlobalData.AddErrorToLogTab($"error webhook {position.Symbol.Name} {position.Interval!.Name} " +
                     $"product {product} cannot be expressed in the Altrady webhook symbol format, position not delegated");
-                return;
+                return false;
             }
 
             request.exchange = externalUrls.Altrady.Code;
@@ -377,6 +384,19 @@ public class AltradyWebhook
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook result {result} {info}");
             ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name}Altrady webhook result {result} {info}");
             GlobalData.AddTextToTelegram($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook {position.Side} price={position.EntryPrice}", position, CryptoTelegramCategory.OrderPlaced);
+
+            // The signal id is the only proof that Altrady really opened the position. An answer like
+            // {"error":"Too many positions opened"} parses into an empty object, so AltradyPositionId stays
+            // null. Until now that was only the INFO line above and the paper position lived on without a
+            // counterpart at Altrady.
+            bool accepted = !string.IsNullOrEmpty(position.AltradyPositionId);
+            if (!accepted)
+            {
+                GlobalData.AddErrorToLogTab($"{position.Symbol.Name} {position.Interval.Name} Altrady refused the position: {result}");
+                GlobalData.AddTextToTelegram($"{position.Symbol.Name} {position.Interval.Name} Altrady refused the position: {result}",
+                    position, CryptoTelegramCategory.OrderPlaced);
+            }
+            return accepted;
         }
         catch (HttpRequestException error)
         {
@@ -389,16 +409,19 @@ public class AltradyWebhook
             }
 
             GlobalData.AddErrorToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook error {errorMessage}");
+            return false;
         }
         catch (TaskCanceledException error)
         {
             ScannerLog.Logger.Error(error);
             GlobalData.AddErrorToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook timeout: {error.Message}");
+            return false;
         }
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error);
             GlobalData.AddErrorToLogTab($" {position.Symbol.Name} {position.Interval!.Name} Webhook error:error={error}");
+            return false;
         }
     }
 
