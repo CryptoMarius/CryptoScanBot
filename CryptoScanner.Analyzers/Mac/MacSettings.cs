@@ -247,19 +247,29 @@ public class MacSettings : SettingsSignalStrategyBase
     /// How many candles left and right of a candle have to be lower (higher) before it counts as a
     /// pivot high (low). Larger means fewer and more important levels, and a level that is
     /// confirmed later: a pivot is only known once its right-hand candles are in.
+    /// <para>
+    /// Chart only. Since the breakout markers moved onto the RSI levels (see BrokeTheLevel), the
+    /// strategy itself no longer reads this pivot - only the chart overlay draws it as the
+    /// support/resistance line. See Mac.md.
+    /// </para>
     /// </summary>
-    [SettingCaption("Pivot candles left", SeparatorBefore = true, SubHeader = "Support and resistance",
-        Tooltip = "How many candles to the left have to be lower than the pivot candle.")]
+    [SettingCaption("Pivot candles left", SeparatorBefore = true, SubHeader = "Support and resistance (chart only)",
+        Tooltip = "How many candles to the left have to be lower than the pivot candle. Chart only - "
+            + "draws the support/resistance line, does not affect the strategy's own signals.")]
     public int PivotLeftCandles { get; set; } = 5;
 
     /// <summary>
     /// The right-hand side of the pivot. Also the delay: the level is only confirmed this many
     /// candles after the fact, which is why a break can never be measured against the candle that
     /// made the level.
+    /// <para>
+    /// Chart only, same as <see cref="PivotLeftCandles"/>.
+    /// </para>
     /// </summary>
     [SettingCaption("Pivot candles right",
         Tooltip = "How many candles to the right have to be lower. Also the delay before the level "
-            + "is confirmed, so a break is always against a level that was already there.")]
+            + "is confirmed, so a break is always against a level that was already there. Chart "
+            + "only - draws the support/resistance line, does not affect the strategy's own signals.")]
     public int PivotRightCandles { get; set; } = 5;
 
     /// <summary>The RSI the levels are read from. Wilder's, the same one the RSI filter uses.</summary>

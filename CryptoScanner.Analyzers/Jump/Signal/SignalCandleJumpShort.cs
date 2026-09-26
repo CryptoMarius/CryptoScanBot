@@ -50,7 +50,11 @@ public class SignalCandleJumpShort : SignalCreateBase
             // Is het gedaald? (maar pas op, het kan alweer gestegen zijn)
             if (minDate > maxDate)
             {
-                decimal perc = 100m * (maxValue / minValue - 1);
+                // A drop is measured from its starting point, which is the max (the min came later),
+                // so 4% means the same thing on the long side and on the short side. Using
+                // maxValue / minValue - 1 would be the rise back from the min and is the larger number,
+                // which made the short fire below the configured percentage.
+                decimal perc = 100m * (1 - minValue / maxValue);
                 if (perc >= settings.CandlePercentage)
                 {
                     ExtraText = "-" + perc.ToString("N2") + "%";

@@ -17,7 +17,7 @@ Standard Ichimoku parameters are used:
 - Kijun-Sen: 26 periods
 - Senkou Span B: 52 periods
 
-Cloud values (Senkou Span A and B) are aligned to the current candle by offsetting 26 periods back from the calculated values.
+Cloud values (Senkou Span A and B) are read from the last result row. The library already shifts the spans forward — the Senkou Span values on row `i` are computed from row `i - senkouOffset` — so the last row is the cloud that sits under the current candle, and its Tenkan-Sen and Kijun-Sen are the lines of that same candle. No extra offsetting is applied.
 
 ### Phase 3: Breakout detection
 

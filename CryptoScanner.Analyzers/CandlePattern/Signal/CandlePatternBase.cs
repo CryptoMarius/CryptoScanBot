@@ -69,13 +69,28 @@ public class CandlePatternBase : SignalCreateBase
 
     /// <summary>
     /// Whether price actually moved against the trade over the candles before the pattern. Measured
-    /// from the close BEFORE the pattern started, so the pattern's own candles are not counted as
-    /// the move they are supposed to reverse.
+    /// from the close BEFORE those candles up to the close of the candle BEFORE the last one, so the
+    /// reversal candle itself is not counted as part of the move it is supposed to reverse. Taking
+    /// the last close instead would measure the NET move including the reversal, and the stronger the
+    /// reversal the sooner it would be rejected.
+    /// <para>
+    /// For the two-candle shapes (engulfing, harami, piercing line, tweezer) that candle before the
+    /// last one is still the first candle of the pattern, so its own move is counted. That is a
+    /// deliberate limitation: keeping the reversal candle out is what the measurement was about.
+    /// </para>
     /// </summary>
     private bool PrecededByAMoveTheOtherWay(CandlePatternStrategySettings settings, MyData? previous)
     {
         if (settings.PrecedingCandles <= 0)
             return true;
+
+        // The caller already fetched this one with GetPrevCandle, so null cannot happen here; a
+        // signal without the candle the move is measured to simply does not fire.
+        if (previous == null)
+        {
+            ExtraText = "not enough candles for the preceding move";
+            return false;
+        }
 
         MyData? walk = previous;
         for (int step = 0; step < settings.PrecedingCandles; step++)
@@ -88,12 +103,14 @@ public class CandlePatternBase : SignalCreateBase
         }
 
         decimal from = walk!.Candle.Close;
-        decimal to = CandleLast!.Candle.Close;
+        decimal to = previous.Candle.Close;
         if (from <= 0)
             return false;
 
         // Positive when price moved AGAINST the trade over those candles: down before a long, up
-        // before a short. That is what makes it a reversal rather than a continuation.
+        // before a short. That is what makes it a reversal rather than a continuation. The reversal
+        // candle's own close stays out of it, so a pattern that recovers the whole move in one candle
+        // still qualifies.
         decimal moved = 100m * (SignalSide == CryptoTradeSide.Long ? from - to : to - from) / from;
         if (moved < settings.PrecedingPercentage || moved <= 0)
         {

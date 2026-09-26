@@ -71,13 +71,11 @@ public class IchimokuKumoBreakoutLong : SignalCreateBase
         //3) Een positieve(groene) Kumo future
         //4) Chikou span boven prijs
 
-        // Senkou Span A/B are projected 26 periods forward; the cloud values that align with the
-        // current candle sit at index (count - 1 - kijunPeriods), not at results.Last().
+        // The library already shifts the spans forward: the SenkouSpan values on row i are computed
+        // from row i - senkouOffset (Ichimoku.StaticSeries: results[i - senkouOffset]), so the last
+        // row IS the cloud under this candle and carries this candle's KijunSen.
         List<IchimokuResult> resultList = results.ToList();
-        int cloudIndex = resultList.Count - 1 - kijunPeriods;
-        if (cloudIndex < 0)
-            return false;
-        IchimokuResult cloud = resultList[cloudIndex];
+        IchimokuResult cloud = resultList[^1];
         if (cloud.SenkouSpanA == null || cloud.SenkouSpanB == null || cloud.KijunSen == null)
             return false;
 

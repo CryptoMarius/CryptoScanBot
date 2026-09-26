@@ -29,6 +29,23 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     /// </summary>
     public DateTime LastActivity => new(Interlocked.Read(ref _lastActivityTicks), DateTimeKind.Utc);
 
+    /// <summary>
+    /// Moment (UTC) the EXCHANGE last sent something over this subscription. The same as
+    /// <see cref="LastActivity"/> for every subscription that only marks activity when a message
+    /// arrives; <see cref="SubscriptionKLineCachedTicker"/> overrides it because it also marks
+    /// activity for the flat candles it invents itself.
+    /// <para>
+    /// This is what the inactivity check in <see cref="SubscriptionManager.NeedsRestart"/> has to
+    /// look at. On the twelve markets with a cached ticker the flush stamped activity every minute
+    /// for as long as there was a price to repeat, so the check could never fire there and a topic
+    /// that fell silent without the connection breaking (an exchange that stops pushing, a
+    /// resubscribe answered with "ok" that delivers nothing) was never restarted - it kept producing
+    /// flat candles at a frozen price. The per-exchange MaximumTickerInactivity suggested that check
+    /// still did something on those markets; it did not.
+    /// </para>
+    /// </summary>
+    public virtual DateTime LastSocketActivity => LastActivity;
+
     protected void MarkActivity()
     {
         Interlocked.Exchange(ref _lastActivityTicks, GlobalData.Clock.UtcNow.Ticks);

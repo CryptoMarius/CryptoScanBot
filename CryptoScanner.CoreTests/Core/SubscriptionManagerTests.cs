@@ -44,6 +44,42 @@ public class SubscriptionManagerTests
     }
 
 
+    /// <summary>
+    /// Stands in for a cached kline ticker (HyperLiquid, Kraken, Kucoin, Mexc, BitMart, Coinbase,
+    /// Bitvavo). No socket, but the same bookkeeping: the cache is (re)initialised on a start, a
+    /// socket message stamps the socket activity, and the minute flush marks a ticker count for
+    /// every flat candle it invents.
+    /// </summary>
+    public class FakeCachedSubscription(ExchangeOptions exchangeOptions) : SubscriptionKLineCachedTicker(exchangeOptions)
+    {
+        public override Task<WebSocketResult<UpdateSubscription>?> Subscribe()
+            => Task.FromResult<WebSocketResult<UpdateSubscription>?>(null);
+
+        public override Task StartAsync()
+        {
+            // What Subscribe() does on a real exchange, without the socket part
+            InitializeCache(SymbolList);
+            return Task.CompletedTask;
+        }
+
+        public override Task StopAsync() => Task.CompletedTask;
+
+        /// <summary>One minute of the flush that found nothing in the cache and invented a flat candle.</summary>
+        public void SimulateInventedMinute() => IncrementTickerCount();
+
+        /// <summary>One kline update from the exchange.</summary>
+        public void SimulateSocketUpdate()
+            => UpdateCacheFromKline(ExchangeNames[0], GlobalData.Clock.UtcNow, 10m, 10m, 10m, 10m, 1m);
+    }
+
+
+    /// <summary>A clock the test moves by hand, so the inactivity check can be judged without waiting.</summary>
+    private sealed class FixedClock : IClock
+    {
+        public DateTime UtcNow { get; set; }
+    }
+
+
     private const string Quote = "TSTQ";
 
     private static CryptoQuoteData PrepareQuote()
@@ -317,5 +353,86 @@ public class SubscriptionManagerTests
             "an update for the added symbol would be dropped without this entry");
         Assert.AreEqual(subscription.SymbolList.Count, subscription.SymbolByExchangeName.Count);
         Assert.AreEqual(subscription.SymbolList.Count, subscription.ExchangeNames.Count);
+    }
+
+
+    private static (SubscriptionManager Manager, ExchangeOptions Options) CreateCachedManager()
+    {
+        ExchangeOptions options = new() { ExchangeName = "TestExchange" };
+        options.SetDefaultOptions("TestExchange", Quote, 500, true, 10, 10);
+        return (new SubscriptionManager(options, typeof(FakeCachedSubscription), CryptoTickerType.kline), options);
+    }
+
+
+    /// <summary>
+    /// The flat candles a cached ticker invents used to count as activity, so on those twelve
+    /// markets the inactivity check could never fire: a topic that fell silent without the
+    /// connection breaking was never restarted and kept producing candles at a frozen price. The
+    /// check reads Subscription.LastSocketActivity for that reason.
+    /// </summary>
+    [TestMethod]
+    public async Task CachedTickerWithOnlyInventedCandlesIsStillReportedInactive()
+    {
+        CryptoQuoteData quoteData = PrepareQuote();
+        AddSymbol(quoteData, "AAA");
+
+        IClock previousClock = GlobalData.Clock;
+        FixedClock clock = new() { UtcNow = new DateTime(2026, 9, 19, 8, 0, 0, DateTimeKind.Utc) };
+        GlobalData.Clock = clock;
+        try
+        {
+            var (manager, options) = CreateCachedManager();
+            await manager.StartAsync();
+            var subscription = (FakeCachedSubscription)manager.SubscriptionBundleList[0].SubscriptionList[0];
+
+            // The exchange stops pushing while the connection stays up. The flush keeps inventing a
+            // flat candle every minute, and each one marks a ticker count.
+            for (int minute = 1; minute <= 30; minute++)
+            {
+                clock.UtcNow = clock.UtcNow.AddMinutes(1);
+                subscription.SimulateInventedMinute();
+            }
+
+            Assert.IsTrue(subscription.LastActivity > clock.UtcNow - options.MaximumTickerInactivity,
+                "the invented candles keep LastActivity fresh, which is exactly why the check may not use it");
+            Assert.IsTrue(manager.NeedsRestart(),
+                "a topic that stopped delivering has to be restarted, however many flat candles the flush invents");
+        }
+        finally
+        {
+            GlobalData.Clock = previousClock;
+        }
+    }
+
+
+    [TestMethod]
+    public async Task CachedTickerThatKeepsReceivingIsLeftAlone()
+    {
+        CryptoQuoteData quoteData = PrepareQuote();
+        AddSymbol(quoteData, "AAA");
+
+        IClock previousClock = GlobalData.Clock;
+        FixedClock clock = new() { UtcNow = new DateTime(2026, 9, 19, 8, 0, 0, DateTimeKind.Utc) };
+        GlobalData.Clock = clock;
+        try
+        {
+            var (manager, _) = CreateCachedManager();
+            await manager.StartAsync();
+            var subscription = (FakeCachedSubscription)manager.SubscriptionBundleList[0].SubscriptionList[0];
+
+            for (int minute = 1; minute <= 30; minute++)
+            {
+                clock.UtcNow = clock.UtcNow.AddMinutes(1);
+                subscription.SimulateSocketUpdate();
+                subscription.SimulateInventedMinute();
+            }
+
+            Assert.IsFalse(manager.NeedsRestart(),
+                "a market that keeps delivering must not be rebuilt");
+        }
+        finally
+        {
+            GlobalData.Clock = previousClock;
+        }
     }
 }

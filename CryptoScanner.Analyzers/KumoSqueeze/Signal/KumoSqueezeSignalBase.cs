@@ -132,14 +132,11 @@ public class KumoSqueezeSignalBase : SignalCreateBase
         if (results == null || !results.Any())
             return null;
 
-        // Senkou Span A/B are projected kijunPeriods forward; the cloud values that
-        // align with the current candle sit at index (count - 1 - kijunPeriods).
+        // The library already shifts the spans forward: the SenkouSpan values on row i are computed
+        // from row i - senkouOffset (Ichimoku.StaticSeries: results[i - senkouOffset]), so the last
+        // row IS the cloud under this candle, and its TenkanSen/KijunSen are this candle's lines.
         List<IchimokuResult> resultList = results.ToList();
-        int cloudIndex = resultList.Count - 1 - kijunPeriods;
-        if (cloudIndex < 0)
-            return null;
-
-        IchimokuResult cloud = resultList[cloudIndex];
+        IchimokuResult cloud = resultList[^1];
         if (cloud.SenkouSpanA == null || cloud.SenkouSpanB == null)
             return null;
 

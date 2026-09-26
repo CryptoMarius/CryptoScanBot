@@ -1303,21 +1303,30 @@ public class PositionMonitor : IDisposable
                         PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, position.Side, result.tradeParams.OrderSide,
                             step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity, "HandleEntryPart.PaperAndAltrady");
 
-                        if (step.OrderType == CryptoOrderType.Market)
-                        {
-                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime, BaseIntervalDuration);
-                            position.Reposition = false;
-                        }
-
                         // Also delegate control to Altrady, but ONLY for the entry. Opening a position is
                         // the only thing we delegate — a dca, a moved take profit or a close is not
                         // supported. Sending it anyway means Altrady opens a SECOND position with its own
                         // id instead of adding to the first one (2026-08-13: AKEUSDT 12:00:00 id 58624873
                         // and, when the entry filled and the dca was placed, 12:01:11 id 58624883).
+                        //
+                        // The webhook goes out BEFORE the paper fill, so a refusal can still be undone
+                        // cleanly: the paper order is on the book but not filled, and cancelling it only
+                        // releases the reservation.
                         if (part.Purpose == CryptoPartPurpose.Entry)
                         {
-                            await AltradyWebhook.DelegateControlToAltradyAsync(position);
+                            bool accepted = await AltradyWebhook.DelegateControlToAltradyAsync(position);
                             Database.Connection.Update(position);
+                            if (!accepted)
+                            {
+                                await ClosePaperPositionAfterAltradyRefusal(position, part, step);
+                                return;
+                            }
+                        }
+
+                        if (step.OrderType == CryptoOrderType.Market)
+                        {
+                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime, BaseIntervalDuration);
+                            position.Reposition = false;
                         }
                     }
                     else
@@ -1371,6 +1380,37 @@ public class PositionMonitor : IDisposable
                 }
             }
         }
+    }
+
+
+    /// <summary>
+    /// Altrady did not take the entry: take the paper side back to where it was before the order, so the
+    /// two books stay in step. The entry order is still unfilled at this point (the webhook is sent before
+    /// the paper fill), so cancelling it is enough; nothing has been booked on the paper balances yet.
+    /// The position leaves the position list with status Cancelled, the same way a replaced waiting
+    /// position does (CreateOrExtendPositionAsync), so the coin is free again for the next signal.
+    /// </summary>
+    private async Task ClosePaperPositionAfterAltradyRefusal(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
+    {
+        var (cancelled, _) = await TradeTools.CancelOrder(Database, position, part, step,
+            LastCandle1mCloseTimeDate, CryptoOrderStatus.PositionClosed, "cancelling because Altrady refused the position");
+        if (!cancelled)
+        {
+            // Cannot happen on paper (Cancel never fails there); leave it to the normal processing
+            position.ForceCheckPosition = true;
+            return;
+        }
+
+        part.CloseTime = LastCandle1mCloseTimeDate;
+        Database.Connection.Update(part);
+
+        position.Status = CryptoPositionStatus.Cancelled;
+        position.CloseTime = LastCandle1mCloseTimeDate;
+        position.UpdateTime = LastCandle1mCloseTimeDate;
+        Database.Connection.Update(position);
+
+        PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, true);
+        GlobalData.AddTextToLogTab($"{position.Symbol.Name} paper position closed because Altrady refused it");
     }
 
 

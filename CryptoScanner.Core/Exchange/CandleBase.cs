@@ -117,12 +117,22 @@ public class CandleBase(ExchangeBase api)
             // LastCandleSynchronized only moves when this fetch actually brought candles in. While the
             // socket keeps up it is already at "now" and the loop inside returns without fetching, so
             // a move means the socket missed that stretch - a dead stream, a standby, a restart.
+            //
+            // A gap was filled when the pointer moved over a stretch that had no candles at all (the
+            // final-event exchanges), or when a candle the ticker invented was replaced by a real one
+            // (the cached tickers). The second half is what the move alone cannot see: on a cached
+            // ticker the pointer waited at SynthesizedFrom and moves on every catch-up, whether the
+            // exchange confirmed the invented prices or not. A thin coin whose invented minutes turn
+            // out to be right gets neither, and so no reset.
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
             CandleTime? synchronizedBefore = symbolInterval.LastCandleSynchronized;
+            bool hadSynthesized = symbolInterval.SynthesizedFrom.HasValue;
+            int replacedBefore = symbolInterval.SynthesizedReplaced;
 
             await Api.Candle.GetCandlesForIntervalAsync(client, symbol, interval);
 
-            if (symbolInterval.LastCandleSynchronized != synchronizedBefore)
+            if ((symbolInterval.LastCandleSynchronized != synchronizedBefore && !hadSynthesized)
+                || symbolInterval.SynthesizedReplaced != replacedBefore)
                 gapWasFilled = true;
         }
 
@@ -137,9 +147,15 @@ public class CandleBase(ExchangeBase api)
     /// <summary>
     /// Throw away everything that was DERIVED from candles while a stretch of them was missing.
     /// <para>
-    /// The candles themselves heal on their own: CandleTools.CreateCandle overwrites an existing
-    /// entry with the real one and clears IsFilled, and BulkCalculateCandles rebuilds the higher
-    /// intervals from the corrected minutes. What does not heal is anything built ON them while
+    /// The candles themselves are healed by the catch-up above: CandleTools.CreateCandle overwrites
+    /// an existing entry with the real one and clears IsFilled, and BulkCalculateCandles rebuilds the
+    /// higher intervals from the corrected minutes. That only works because the catch-up still asks
+    /// for those minutes, and until 26-09-2026 it did not: the flat candles of a cached ticker kept
+    /// the list contiguous, LastCandleSynchronized walked over them to "now" and there was nothing
+    /// left to fetch, so the flat minutes of 19-09-2026 08:34-08:36 UTC (95 coins on HyperLiquid
+    /// Perpetual) were still in the database a week later and this reset never fired. The pointer now
+    /// waits at CryptoSymbolInterval.SynthesizedFrom until the exchange has been asked. What does not
+    /// heal by itself is anything built ON them while
     /// they were wrong. During an outage the flush timer keeps synthesising flat candles at the
     /// last known price and feeding them through the analysis, so the ZigZag has absorbed pivots
     /// that were decided on prices which never traded - and since CryptoCandle is a struct, each
@@ -465,6 +481,14 @@ public class CandleBase(ExchangeBase api)
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
+            // The exchange has been asked for the invented stretch (or, for an interval it does not
+            // serve, the stretch was rebuilt from the interval below by the previous round of
+            // BulkCalculateCandles): from here on the pointer may walk again. As long as the fetch
+            // brought nothing at all the pointer stays where it is and the next catch-up asks again.
+            if (symbolInterval.SynthesizedFrom.HasValue
+                && (!intervalSupported || symbolInterval.LastCandleSynchronized > symbolInterval.SynthesizedFrom))
+                symbolInterval.SynthesizedFrom = null;
+
             // once
             CandleTools.UpdateCandleFetched(symbol, interval);
 

@@ -72,6 +72,13 @@ public static class CandleTools
             // Candles are getting removed are some key..
             if (quoteVolume > candle.Volume)
                 candle.Volume = quoteVolume;
+
+            // A real candle arriving over an invented one is the event the catch-up wants to know
+            // about: it proves the derived state (ZigZag, zones, trend) was built on a price that
+            // never traded, so GetCandlesForAllIntervalsAsync has to reset it.
+            if (candle.IsFilled && !isFilled)
+                symbolInterval.SynthesizedReplaced++;
+
             candle.IsFilled = isFilled;
             candles[candleOpenUnix] = candle;
         }
@@ -277,6 +284,22 @@ public static class CandleTools
 
             // Process the single 1m candle
             CryptoCandle candle = CreateCandle(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, quoteVolume, isFilled);
+
+            // Remember where the invented stretch starts, for the 1m list and for every interval that
+            // is built on it: the higher candles that close over this minute are just as invented.
+            // Before the UpdateCandleFetched below, otherwise the pointer has already walked over the
+            // invented minute and the catch-up will never ask the exchange for it again.
+            if (isFilled)
+            {
+                foreach (CryptoInterval markInterval in GlobalData.IntervalList)
+                {
+                    CryptoSymbolInterval markSymbolInterval = symbol.GetSymbolInterval(markInterval.IntervalPeriod);
+                    CandleTime alignedOpen = candle.OpenTime.AlignToIntervalMinutes(markInterval.Duration);
+                    if (!markSymbolInterval.SynthesizedFrom.HasValue || alignedOpen < markSymbolInterval.SynthesizedFrom.Value)
+                        markSymbolInterval.SynthesizedFrom = alignedOpen;
+                }
+            }
+
             // Update administration of the last processed candle
             UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
 
@@ -463,8 +486,15 @@ public static class CandleTools
             var candles = symbolInterval.CandleList;
             if (candles.Count != 0)
             {
+                // Never walk past a candle the ticker invented itself. That stretch still has to be
+                // asked from the exchange, and this pointer is where the catch-up starts asking.
                 while (candles.TryGetValue(symbolInterval.LastCandleSynchronized.Value, out CryptoCandle _))
+                {
+                    if (symbolInterval.SynthesizedFrom.HasValue
+                        && symbolInterval.LastCandleSynchronized.Value >= symbolInterval.SynthesizedFrom.Value)
+                        break;
                     symbolInterval.LastCandleSynchronized += interval.Duration;
+                }
             }
         }
     }

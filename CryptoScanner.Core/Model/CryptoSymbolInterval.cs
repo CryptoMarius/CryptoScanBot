@@ -14,6 +14,31 @@ public class CryptoSymbolInterval
     // The last synchronized candle with the exchange (without gaps)
     public CandleTime? LastCandleSynchronized { get; set; }
 
+    /// <summary>
+    /// First candle the live ticker had to invent (a flat candle at the last price) since the exchange
+    /// last confirmed this interval, or null when every candle in the list came from the exchange.
+    /// UpdateCandleFetched never moves LastCandleSynchronized past this point, so the next catch-up asks
+    /// the exchange for the invented stretch and CreateCandle replaces it with what really traded.
+    /// <para>
+    /// Without this the twelve markets with a cached ticker (HyperLiquid, Kraken, Kucoin, Mexc, BitMart,
+    /// Coinbase and Bitvavo) filled every minute of a broken connection with a flat candle, which kept
+    /// the 1m list contiguous, pushed LastCandleSynchronized up to "now" and left the REST catch-up
+    /// nothing to fetch. Measured on HyperLiquid Perpetual 19-09-2026 08:34-08:36 UTC: 95, 93 and 95
+    /// coins flat at the same time (BTC, ETH, SOL and HYPE among them), still in the database a week
+    /// later and aggregated into every higher interval.
+    /// </para>
+    /// <para>
+    /// In memory only: after a restart the stored LastSync is what the catch-up starts from.
+    /// </para>
+    /// </summary>
+    public CandleTime? SynthesizedFrom { get; set; }
+
+    /// <summary>
+    /// How often an invented candle was replaced by a real one from the exchange. The catch-up reads it
+    /// to decide whether the derived state (trend, zones) was built on prices that never traded.
+    /// </summary>
+    public int SynthesizedReplaced;
+
     // The periods that were already requested from the exchange for this interval. The zone engine
     // asks this before it starts looking for missing candles, because on an exchange that skips a
     // minute without trades the candles can never answer "complete" and the same history would be

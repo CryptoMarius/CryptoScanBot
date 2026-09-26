@@ -13,7 +13,7 @@ public class SignalStobbLong : SignalStobbBase
         if (StobbPlugin.Settings.IncludeSoftSbm)
         {
             // Check ma lines
-            if (!CandleLast!.IsSbmConditionsOverbought())
+            if (!CandleLast!.IsSbmConditionsOversold())
             {
                 response = "no sbm conditions";
                 return false;

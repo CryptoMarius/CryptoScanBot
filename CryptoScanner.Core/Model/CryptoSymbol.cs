@@ -261,6 +261,9 @@ public partial class CryptoSymbol
         {
             count += symbolInterval.CandleList.Count;
             symbolInterval.CandleList.Clear();
+            // Nothing invented is left to protect, and a stale marker would keep
+            // CandleTools.UpdateCandleFetched from walking over the refetched history.
+            symbolInterval.SynthesizedFrom = null;
         }
         return count > 0;
     }

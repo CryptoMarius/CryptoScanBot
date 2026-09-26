@@ -42,6 +42,29 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     public bool Enabled { get; set; } = true;
 
     /// <summary>
+    /// One at a time through the four paths that start, stop or rearrange subscriptions:
+    /// <see cref="StartAsync"/>, <see cref="StopAsync"/>, <see cref="CheckSubscriptions"/> and
+    /// <see cref="SynchronizeSymbolsAsync"/>.
+    /// <para>
+    /// Two of them run from timers that know nothing of each other - TimerCheckDataStream_Tick (every
+    /// 5 minutes, 30 seconds while there is trouble) and the hourly refresh cycle, which calls
+    /// CheckSubscriptions and SynchronizeSymbolsAsync one after the other. Two overlapping restart
+    /// rounds both pass the "already started" test in Subscription.StartAsync, both subscribe, and
+    /// the second assignment overwrites the first: that first UpdateSubscription is never
+    /// unsubscribed, keeps delivering into the same callback and keeps counting against the
+    /// subscription limit of the exchange (HyperLiquid allows 1000 per address). The same two paths
+    /// also walk SubscriptionBundleList while the synchronisation removes entries from it, which
+    /// throws "Collection was modified" on the timer thread where System.Timers.Timer swallows it
+    /// and that check silently stops happening.
+    /// </para>
+    /// <para>
+    /// These four never call each other, so there is no recursion to worry about. NeedsRestart and
+    /// DumpSubscriptionInfo only read and stay outside.
+    /// </para>
+    /// </summary>
+    private readonly SemaphoreSlim _lifecycleLock = new(1, 1);
+
+    /// <summary>
     /// Voor de user subscription
     /// </summary>
     private List<Subscription> CreateUserSubscription(ref int symbolCount)
@@ -149,6 +172,20 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     }
 
     public virtual async Task StartAsync()
+    {
+        await _lifecycleLock.WaitAsync();
+        try
+        {
+            await StartInternalAsync();
+        }
+        finally
+        {
+            _lifecycleLock.Release();
+        }
+    }
+
+
+    private async Task StartInternalAsync()
     {
         if (!Enabled)
         {
@@ -305,6 +342,20 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
 
     public virtual async Task StopAsync()
     {
+        await _lifecycleLock.WaitAsync();
+        try
+        {
+            await StopInternalAsync();
+        }
+        finally
+        {
+            _lifecycleLock.Release();
+        }
+    }
+
+
+    private async Task StopInternalAsync()
+    {
         if (!Enabled)
             return;
 
@@ -385,9 +436,15 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
         bool restart = false;
         DateTime deadline = GlobalData.Clock.UtcNow - ExchangeOptions.MaximumTickerInactivity;
 
-        foreach (var bundle in SubscriptionBundleList)
+        // Over a COPY of both lists. This runs on the timer thread while SynchronizeSymbolsAsync can
+        // be removing an emptied subscription or bundle, and an enumerator over a List<T> that is
+        // modified throws "Collection was modified". TimerCheckDataStream_Tick is a plain void, so
+        // System.Timers.Timer swallows that and this whole check silently does not happen. Copying
+        // does not enumerate (List<T> copies through its array), so it cannot throw; a subscription
+        // that disappears while we judge it is judged for nothing, which costs nothing.
+        foreach (var bundle in SubscriptionBundleList.ToList())
         {
-            foreach (var subscription in bundle.SubscriptionList)
+            foreach (var subscription in bundle.SubscriptionList.ToList())
             {
                 count++;
 
@@ -409,11 +466,17 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                 // delivered a single candle, which the TickerCount comparison below cannot detect because it
                 // only looks at subscriptions that were already running. Only for the kline subscription: a user subscription
                 // can legitimately stay quiet for hours when there is no order activity.
-                if (TickerType == CryptoTickerType.kline && subscription.LastActivity < deadline)
+                //
+                // LastSocketActivity and not LastActivity: a cached ticker also marks activity for
+                // the flat candles it invents itself, so on those twelve markets this test could
+                // never fire - a topic that stopped delivering without the connection breaking was
+                // never restarted and kept producing candles at a frozen price. See
+                // Subscription.LastSocketActivity. For every other subscription the two are the same.
+                if (TickerType == CryptoTickerType.kline && subscription.LastSocketActivity < deadline)
                 {
                     restart = true;
                     subscription.NeedsRestart = true;
-                    ScannerLog.Logger.Trace($"{TickerType} subscription {subscription.Name} inactive since {subscription.LastActivity} (utc) {subscription.SymbolOverview}");
+                    ScannerLog.Logger.Trace($"{TickerType} subscription {subscription.Name} inactive since {subscription.LastSocketActivity} (utc) {subscription.SymbolOverview}");
                     continue;
                 }
 
@@ -438,6 +501,20 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
 
 
     public virtual async Task CheckSubscriptions()
+    {
+        await _lifecycleLock.WaitAsync();
+        try
+        {
+            await CheckSubscriptionsInternalAsync();
+        }
+        finally
+        {
+            _lifecycleLock.Release();
+        }
+    }
+
+
+    private async Task CheckSubscriptionsInternalAsync()
     {
         // Only the subscriptions that reported a problem are restarted. They share a socket client per
         // group, but stopping and starting a single subscription does not disturb its neighbours, so
@@ -479,7 +556,10 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                 else if (subscription.ErrorDuringStartup)
                     reason = "error during startup";
                 else
-                    reason = $"inactive for {(now - subscription.LastActivity).TotalMinutes:N0} minutes";
+                    // The same moment NeedsRestart judged, so the number in the log matches the
+                    // decision - for a cached ticker that is the last socket message, not the last
+                    // flat candle it invented.
+                    reason = $"inactive for {(now - subscription.LastSocketActivity).TotalMinutes:N0} minutes";
                 // The counters of the ticker itself, when it keeps any. They say whether the minute
                 // timer ran at all, whether the socket delivered anything, and which flush branch
                 // fired - see Subscription.ActivityDiagnostics.
@@ -535,6 +615,20 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     /// only arrives an hour later with the next catch-up. Does nothing at all when nothing changed.
     /// </summary>
     public virtual async Task SynchronizeSymbolsAsync()
+    {
+        await _lifecycleLock.WaitAsync();
+        try
+        {
+            await SynchronizeSymbolsInternalAsync();
+        }
+        finally
+        {
+            _lifecycleLock.Release();
+        }
+    }
+
+
+    private async Task SynchronizeSymbolsInternalAsync()
     {
         if (!Enabled || TickerType == CryptoTickerType.user || SubscriptionBundleList.Count == 0)
             return;
@@ -697,9 +791,11 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
         GlobalData.AddTextToLogTab("");
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} Subscription info {TickerType}");
 
-        foreach (var bundle in SubscriptionBundleList)
+        // Over a copy, same reason as in NeedsRestart: this is called from outside the lifecycle
+        // lock while the synchronisation can be rearranging the lists.
+        foreach (var bundle in SubscriptionBundleList.ToList())
         {
-            foreach (var subscription in bundle.SubscriptionList)
+            foreach (var subscription in bundle.SubscriptionList.ToList())
             {
                 GlobalData.AddTextToLogTab($"{TickerType} subscription {subscription.Name} " +
                     $"ErrorDuringStartup={subscription.ErrorDuringStartup} " +

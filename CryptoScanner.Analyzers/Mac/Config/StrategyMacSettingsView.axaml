@@ -138,11 +138,13 @@
                 <Separator Margin="0,4"/>
 
                 <!-- Support and resistance: the pivots the break is measured against. A pivot is only
-                     confirmed once its right-hand candles are in, so the level always predates the break. -->
-                <TextBlock Text="Support and resistance" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+                     confirmed once its right-hand candles are in, so the level always predates the break.
+                     Chart only: since the breakout markers moved onto the RSI levels, the strategy itself
+                     no longer reads this pivot - only the chart overlay draws it. See Mac.md. -->
+                <TextBlock Text="Support and resistance (chart only)" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
 
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="How many candles to the left have to be lower than the pivot candle.">
+                      ToolTip.Tip="How many candles to the left have to be lower than the pivot candle. Chart only - draws the support/resistance line, does not affect the strategy's own signals.">
                     <TextBlock Grid.Column="0" Text="Pivot candles left:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding PivotLeftCandles, Mode=TwoWay}"
@@ -150,7 +152,7 @@
                 </Grid>
 
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="How many candles to the right have to be lower. Also the delay before the level is confirmed, so a break is always against a level that was already there.">
+                      ToolTip.Tip="How many candles to the right have to be lower. Also the delay before the level is confirmed, so a break is always against a level that was already there. Chart only - draws the support/resistance line, does not affect the strategy's own signals.">
                     <TextBlock Grid.Column="0" Text="Pivot candles right:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding PivotRightCandles, Mode=TwoWay}"
