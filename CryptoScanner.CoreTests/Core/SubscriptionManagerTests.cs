@@ -46,9 +46,8 @@ public class SubscriptionManagerTests
 
     /// <summary>
     /// Stands in for a cached kline ticker (HyperLiquid, Kraken, Kucoin, Mexc, BitMart, Coinbase,
-    /// Bitvavo). No socket, but the same bookkeeping: the cache is (re)initialised on a start, a
-    /// socket message stamps the socket activity, and the minute flush marks a ticker count for
-    /// every flat candle it invents.
+    /// Bitvavo). No socket, but the same bookkeeping: the cache is (re)initialised on a start, and the
+    /// minute flush marks a ticker count for every real or invented candle it produces.
     /// </summary>
     public class FakeCachedSubscription(ExchangeOptions exchangeOptions) : SubscriptionKLineCachedTicker(exchangeOptions)
     {
@@ -365,13 +364,18 @@ public class SubscriptionManagerTests
 
 
     /// <summary>
-    /// The flat candles a cached ticker invents used to count as activity, so on those twelve
-    /// markets the inactivity check could never fire: a topic that fell silent without the
-    /// connection breaking was never restarted and kept producing candles at a frozen price. The
-    /// check reads Subscription.LastSocketActivity for that reason.
+    /// Flat candles count as activity, on purpose: a HIP-3 deployed market on HyperLiquid Perpetual
+    /// (DRAMUSDC.IO, IONQUSDC.IO, USTECHUSDC.MKTS) routinely goes 30 to over 300 minutes between real
+    /// trades, measured against its own candle history on 26-09-2026 - nowhere near a broken feed. A
+    /// brief experiment (commit 8ae5cf4e) split this out into a separate LastSocketActivity that
+    /// ignored invented candles, which restarted HyperLiquid Perpetual repeatedly for exactly those
+    /// symbols. Reverted the same day: a market can legitimately stay silent far longer than any
+    /// threshold we would want to set here, and TimerRestartStreams already rebuilds every
+    /// subscription once every 24 hours regardless, so there is an outer bound without this check
+    /// having to guess one.
     /// </summary>
     [TestMethod]
-    public async Task CachedTickerWithOnlyInventedCandlesIsStillReportedInactive()
+    public async Task CachedTickerWithOnlyInventedCandlesIsNotReportedInactive()
     {
         CryptoQuoteData quoteData = PrepareQuote();
         AddSymbol(quoteData, "AAA");
@@ -385,8 +389,8 @@ public class SubscriptionManagerTests
             await manager.StartAsync();
             var subscription = (FakeCachedSubscription)manager.SubscriptionBundleList[0].SubscriptionList[0];
 
-            // The exchange stops pushing while the connection stays up. The flush keeps inventing a
-            // flat candle every minute, and each one marks a ticker count.
+            // The exchange genuinely has no trade to report while the connection stays up. The flush
+            // keeps inventing a flat candle every minute, and each one marks a ticker count.
             for (int minute = 1; minute <= 30; minute++)
             {
                 clock.UtcNow = clock.UtcNow.AddMinutes(1);
@@ -394,9 +398,9 @@ public class SubscriptionManagerTests
             }
 
             Assert.IsTrue(subscription.LastActivity > clock.UtcNow - options.MaximumTickerInactivity,
-                "the invented candles keep LastActivity fresh, which is exactly why the check may not use it");
-            Assert.IsTrue(manager.NeedsRestart(),
-                "a topic that stopped delivering has to be restarted, however many flat candles the flush invents");
+                "the invented candles keep LastActivity fresh - that is what trusts the subscription");
+            Assert.IsFalse(manager.NeedsRestart(),
+                "a market that is simply quiet must not be rebuilt, however many minutes it stays that way");
         }
         finally
         {

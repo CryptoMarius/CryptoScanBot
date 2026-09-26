@@ -78,10 +78,18 @@ public class SignalPrepare
         return result;
     }
 
+    // The buckets are keyed on the interval NAME (that is what the lookups ask for), but ordered
+    // by DURATION, shortest first. Ordered by name the walk went 15m, 1d, 1h, 1m, 2h, 30m, 4h, 5m,
+    // and IndicatorData.ApplyLux, which wants the Lux value of the 5m candle that closed on the
+    // same tick, found the 5m Data not filled yet for 15m/30m/1h and fell back to the full
+    // recalculation every time - in 413 runs "from 5m data" never got above zero (open point 89).
+    private static readonly IComparer<string> IntervalNameByDuration = Comparer<string>.Create(
+        (a, b) => GlobalData.IntervalListPeriodName[a].Duration.CompareTo(GlobalData.IntervalListPeriodName[b].Duration));
+
     private static void Add(SignalPrepareKind kind, string intervalName)
     {
         CryptoInterval interval = GlobalData.IntervalListPeriodName[intervalName];
-        Preparing.TryAdd(kind, []);
+        Preparing.TryAdd(kind, new SortedList<string, CryptoInterval>(IntervalNameByDuration));
         Preparing[kind].TryAdd(intervalName, interval);
     }
 
@@ -89,6 +97,10 @@ public class SignalPrepare
     {
         // Default setup
         Preparing.Clear();
+
+        // The strategies and intervals start over here (settings applied, emulator run started), so
+        // the "indicators not ready" bookkeeping of SignalCreate starts over with them.
+        SignalCreate.ResetIndicatorsNotReadyLog();
 
 
         foreach (AlgorithmDefinition strategyDef in RegisterAlgorithms.AlgorithmDefinitionList.Values)

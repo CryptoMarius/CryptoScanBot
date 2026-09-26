@@ -26,7 +26,12 @@ public class FailedBreakoutBase : SignalCreateBase
             return false;
 
         FailedBreakoutSettings settings = FailedBreakoutPlugin.Settings;
-        if ((settings.BBMinPercentage > 0 || settings.BBMaxPercentage > 0) && data.CandleData == null)
+        // The percentage as well, not only the CandleData: while the hub warms up the object is
+        // there but the Bollinger fields are still null, and CheckBollingerBandsWidth compares a
+        // null with a boundary, which is false both ways - so the filter silently let the first
+        // twenty or so candles per symbol through (open point 111).
+        if ((settings.BBMinPercentage > 0 || settings.BBMaxPercentage > 0)
+            && (data.CandleData == null || data.CandleData.BollingerBandsPercentage == null))
             return false;
 
         return true;

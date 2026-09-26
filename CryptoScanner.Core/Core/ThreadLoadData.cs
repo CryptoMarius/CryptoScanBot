@@ -343,6 +343,14 @@ public class ThreadLoadData
                 //************************************************************************************
                 if (Interrupted())
                     return;
+
+                // The volume decision BEFORE the subscriptions are laid out, and after the candles are
+                // in memory: CryptoSymbol.UpdateEnoughVolume reads the newest 1m candle to keep a coin
+                // inside the hysteresis band on board across a restart. Until now the first decision
+                // was only taken inside the candle fetch below, after the layout had already left such
+                // a coin out, and it took an hour (the next synchronisation) to get it back.
+                Exchange.CandleBase.UpdateVolumeDecisions();
+
                 await klineTicker!.StartAsync();
 
                 //************************************************************************************

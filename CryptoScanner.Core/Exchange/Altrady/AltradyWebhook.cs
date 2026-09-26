@@ -135,6 +135,125 @@ public class AltradyWebhook
 
 
     /// <summary>
+    /// Serialize the payload, log it with the credentials masked, post it and return the raw answer.
+    /// Shared by the open and the close signal so both end up in the log the same way.
+    /// </summary>
+    private static async Task<string> PostSignalAsync(CryptoPosition position, string url, dynamic request)
+    {
+        string json = request.ToString();
+        string jsonFlat = request.ToString(Newtonsoft.Json.Formatting.None);
+
+        // The api key and secret are part of the payload, so the flat json that goes to the log
+        // tab carries them in plain text - and that line is written at Info level, so it lands in
+        // CryptoScanBot.log and in the day archive. Masked on a COPY, because `request` is the
+        // object that is serialized into the body a few lines down. The Trace line below keeps the
+        // full json: trace is off by default and is where you look when a webhook is rejected.
+        string jsonFlatMasked = MaskSecrets(jsonFlat);
+        GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook request {jsonFlatMasked}");
+        ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook request {json}");
+
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await _httpClient.PostAsync(url, content);
+
+        return await response.Content.ReadAsStringAsync();
+    }
+
+
+    /// <summary>
+    /// Give Altrady the same profit lock the trader runs itself, so their stop travels with ours
+    /// instead of sitting still at the initial distance. Their webhook has no action that moves the
+    /// stop of a running position, so this has to be arranged in the opening signal - and Follow
+    /// Price does exactly what <see cref="Trader.ProfitLockCalculator"/> does: nothing until the
+    /// price reaches the trigger, then the stop follows the best price at a fixed distance and never
+    /// hands ground back. Both percentages are measured from the AVERAGE entry on their side, which
+    /// moves along with a filled dca just like our own break-even price does.
+    /// <para>
+    /// Only the trailing method is handed over. The fixed method (break even plus a percentage) has
+    /// no counterpart: their BREAK_EVEN and FOLLOW_TAKE_PROFIT move the stop when a take profit
+    /// FILLS and need two or more targets, where ours moves on a profit trigger with one target. In
+    /// that setting Altrady keeps the initial stop and only our own administration moves.
+    /// </para>
+    /// </summary>
+    internal static JObject BuildStopLossBlock(decimal stopPercentage, bool moveSlToBreakEven,
+        CryptoProfitLockMethod method, decimal triggerPercentage, decimal trailPercentage)
+    {
+        dynamic stop_loss = new JObject();
+        stop_loss.stop_percentage = stopPercentage;
+
+        if (!moveSlToBreakEven || method != CryptoProfitLockMethod.TrailingPercentage)
+            return stop_loss;
+
+        // Their trailing distance has to stay between zero and ninety-nine percent
+        if (triggerPercentage <= 0 || trailPercentage <= 0 || trailPercentage >= 99)
+            return stop_loss;
+
+        stop_loss.protection_type = "PRICE";
+        stop_loss.trailing_percentage = triggerPercentage;
+        stop_loss.trailing_distance = trailPercentage;
+        return stop_loss;
+    }
+
+
+    /// <summary>
+    /// The body of a close signal, kept apart from the sending so it can be verified in a test.
+    /// A price is deliberately absent: with `order_type` market Altrady refuses the combination.
+    /// </summary>
+    internal static JObject BuildClosePayload(CryptoPosition position, string exchangeCode, string apiKey, string apiSecret)
+    {
+        dynamic request = new JObject();
+        request.action = "close";
+        request.api_key = apiKey;
+        request.api_secret = apiSecret;
+        request.exchange = exchangeCode;
+        request.symbol = $"{exchangeCode}_{position.Symbol.Quote}_{position.Symbol.Base}";
+        if (position.Side == Enums.CryptoTradeSide.Long)
+            request.side = "long";
+        else
+            request.side = "short";
+        request.order_type = "market";
+        if (!string.IsNullOrEmpty(position.AltradyPositionId))
+            request.signal_id = position.AltradyPositionId;
+        return request;
+    }
+
+
+    /// <summary>
+    /// Close the position Altrady opened for us, because our own administration is finished with it.
+    /// The scanner owns the exit - stop, target, trailing stop, timeout - and Altrady only executes.
+    /// Their webhook has no action that moves a stop of a running position, so a close signal is the
+    /// only way to keep both sides in step while our own stop travels.
+    /// <para>
+    /// `order_type` is required on a close. Market is a pseudo market order at Altrady (a limit ten
+    /// percent away from the price) and must NOT be combined with a price. The signal id is the id
+    /// Altrady generated for the opening signal, which is exactly what is stored in
+    /// <see cref="CryptoPosition.AltradyPositionId"/>; with one position per market it is not
+    /// strictly needed, but it makes the signal address one position instead of every position for
+    /// this market and side.
+    /// </para>
+    /// </summary>
+    private static async Task<bool> CloseAtAltradyAsync(CryptoPosition position, string url, CryptoExternalUrls externalUrls)
+    {
+        dynamic request = BuildClosePayload(position, externalUrls.Altrady!.Code!,
+            GlobalData.AltradyApi.Key, GlobalData.AltradyApi.Secret);
+
+        string result = await PostSignalAsync(position, url, request);
+
+        // A close answers with the position it closed; a refusal answers with an error member. There
+        // is no signal id to check against, because a close does not create a new signal.
+        bool accepted = TryParse(result) != null && !result.Contains("\"error\"");
+        GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook close result {result}");
+        ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook close result {result}");
+        // No telegram message on a refused close, unlike a refused open. Altrady runs the same stop
+        // and the same target as we do, so in the normal case their position is already gone by the
+        // time our administration closes and the close signal finds nothing left to do. That is not
+        // worth a message per position; the error tab keeps it for when it IS something else.
+        if (!accepted)
+            GlobalData.AddErrorToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady refused the close: {result}");
+        return accepted;
+    }
+
+
+    /// <summary>
     /// Send the position to the Altrady webhook. Returns true only when Altrady answered with a signal id,
     /// which is the single proof that the position was really opened on their side. Anything else (no api
     /// keys, no exchange code, a product the webhook cannot express, an http error, or an answer without a
@@ -163,6 +282,12 @@ public class AltradyWebhook
                 GlobalData.AddErrorToLogTab($"error webhook {position.Symbol.Name} {position.Interval!.Name} no exchange code available");
                 return false;
             }
+
+            // A close is a handful of fields and none of the entry settings below apply to it. The
+            // product check further down is skipped on purpose: a position can only carry an Altrady
+            // id when the opening signal already passed that check.
+            if (command == "close")
+                return await CloseAtAltradyAsync(position, url, externalUrls);
 
 
             // some documentation (nicely done, thanks!)
@@ -278,9 +403,10 @@ public class AltradyWebhook
             // When the strategy provides its own SL percentage, use it directly (measured from entry).
             // DCAs beyond this SL are already filtered out of the dca_orders array above, so the SL
             // is always on the correct side of all placed DCAs.
+            decimal? initialStopPercentage = null;
             if (position.SlPercentage is decimal slPercentage)
             {
-                request.stop_loss_percentage = slPercentage;
+                initialStopPercentage = slPercentage;
             }
             else if (GlobalData.Settings.Trading.StopLossPercentage > 0)
             {
@@ -289,7 +415,16 @@ public class AltradyWebhook
                 //stop_loss.stop_percentage = GlobalData.Settings.Trading.StopLossPercentage;
                 //stop_loss.cool_down_amount = 0;
                 //stop_loss.cool_down_time_frame = "minute";
-                request.stop_loss_percentage = stopLossPercentage + GlobalData.Settings.Trading.StopLossPercentage;
+                initialStopPercentage = stopLossPercentage + GlobalData.Settings.Trading.StopLossPercentage;
+            }
+
+            if (initialStopPercentage.HasValue)
+            {
+                request.stop_loss = BuildStopLossBlock(initialStopPercentage.Value,
+                    GlobalData.Settings.Trading.MoveSlToBreakEven,
+                    GlobalData.Settings.Trading.MoveSlToBreakEvenMethod,
+                    GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage,
+                    GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage);
             }
 
             //// Expiration time in minutes
@@ -339,22 +474,7 @@ public class AltradyWebhook
 
 
             // Send request using HttpClient
-            string json = request.ToString();
-            string jsonFlat = request.ToString(Newtonsoft.Json.Formatting.None);
-
-            // The api key and secret are part of the payload, so the flat json that goes to the log
-            // tab carries them in plain text - and that line is written at Info level, so it lands in
-            // CryptoScanBot.log and in the day archive. Masked on a COPY, because `request` is the
-            // object that is serialized into the body a few lines down. The Trace line below keeps the
-            // full json: trace is off by default and is where you look when a webhook is rejected.
-            string jsonFlatMasked = MaskSecrets(jsonFlat);
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook request {jsonFlatMasked}");
-            ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook request {json}");
-
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await _httpClient.PostAsync(url, content);
-
-            string result = await response.Content.ReadAsStringAsync();
+            string result = await PostSignalAsync(position, url, request);
             //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook response {result}");
             //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook");
 

@@ -382,9 +382,11 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
 
     public virtual void Reset()
     {
-        foreach (var bundle in SubscriptionBundleList)
+        // Over a copy of both lists, for the same reason as NeedsRestart: this is called from the
+        // user interface while SynchronizeSymbolsAsync may be removing a subscription or a bundle.
+        foreach (var bundle in SubscriptionBundleList.ToList())
         {
-            foreach (var subscription in bundle.SubscriptionList)
+            foreach (var subscription in bundle.SubscriptionList.ToList())
             {
                 Interlocked.Exchange(ref subscription.TickerCount, 0);
                 // Also reset TickerCountLast so NeedsRestart() doesn't false-trigger
@@ -398,9 +400,10 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     public virtual int Count()
     {
         int tickerCount = 0;
-        foreach (var bundle in SubscriptionBundleList)
+        // Over a copy of both lists, see Reset.
+        foreach (var bundle in SubscriptionBundleList.ToList())
         {
-            foreach (var subscription in bundle.SubscriptionList)
+            foreach (var subscription in bundle.SubscriptionList.ToList())
             {
                 tickerCount += subscription.TickerCount;
             }
@@ -467,16 +470,19 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                 // only looks at subscriptions that were already running. Only for the kline subscription: a user subscription
                 // can legitimately stay quiet for hours when there is no order activity.
                 //
-                // LastSocketActivity and not LastActivity: a cached ticker also marks activity for
-                // the flat candles it invents itself, so on those twelve markets this test could
-                // never fire - a topic that stopped delivering without the connection breaking was
-                // never restarted and kept producing candles at a frozen price. See
-                // Subscription.LastSocketActivity. For every other subscription the two are the same.
-                if (TickerType == CryptoTickerType.kline && subscription.LastSocketActivity < deadline)
+                // LastActivity, not just the exchange's own messages: a cached ticker's flat candles count
+                // too, on purpose. Reverted 26-09-2026 - splitting them out (LastSocketActivity, commit
+                // 8ae5cf4e) restarted HyperLiquid Perpetual repeatedly for DRAMUSDC.IO/IONQUSDC.IO/
+                // USTECHUSDC.MKTS, HIP-3 deployed markets that routinely go 30 to over 300 minutes between
+                // trades (measured against their own candle history) - nowhere near a broken feed. A market
+                // can legitimately stay silent far longer than any threshold we would want to set here, and
+                // TimerRestartStreams already rebuilds every subscription once every 24 hours regardless, so
+                // there is an outer bound without this check having to guess one.
+                if (TickerType == CryptoTickerType.kline && subscription.LastActivity < deadline)
                 {
                     restart = true;
                     subscription.NeedsRestart = true;
-                    ScannerLog.Logger.Trace($"{TickerType} subscription {subscription.Name} inactive since {subscription.LastSocketActivity} (utc) {subscription.SymbolOverview}");
+                    ScannerLog.Logger.Trace($"{TickerType} subscription {subscription.Name} inactive since {subscription.LastActivity} (utc) {subscription.SymbolOverview}");
                     continue;
                 }
 
@@ -556,10 +562,8 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
                 else if (subscription.ErrorDuringStartup)
                     reason = "error during startup";
                 else
-                    // The same moment NeedsRestart judged, so the number in the log matches the
-                    // decision - for a cached ticker that is the last socket message, not the last
-                    // flat candle it invented.
-                    reason = $"inactive for {(now - subscription.LastSocketActivity).TotalMinutes:N0} minutes";
+                    // The same moment NeedsRestart judged, so the number in the log matches the decision.
+                    reason = $"inactive for {(now - subscription.LastActivity).TotalMinutes:N0} minutes";
                 // The counters of the ticker itself, when it keeps any. They say whether the minute
                 // timer ran at all, whether the socket delivered anything, and which flush branch
                 // fired - see Subscription.ActivityDiagnostics.

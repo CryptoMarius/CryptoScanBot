@@ -98,13 +98,20 @@ public static class IndicatorEngine
             long profWarmupStart = Stopwatch.GetTimestamp();
 
             long profCollectStart = Stopwatch.GetTimestamp();
-            List<IQuote>? history = CollectCandles(symbol, interval, candleOpenTime, out _, calculateCandles);
+            List<IQuote>? history = CollectCandles(symbol, interval, candleOpenTime, out string reason, calculateCandles);
             PipelineProfiler.RecordPrepCollect(Stopwatch.GetTimestamp() - profCollectStart);
             if (history == null)
             {
                 PipelineProfiler.RecordPrepNotEnoughHistory();
+                // The reason used to be thrown away here and the caller logged a bare "Error
+                // collecting history" on every candle instead. Once per shortage; the next line about
+                // this symbol and interval comes when the indicators could be built after all, or never.
+                if (symbolInterval.IndicatorPrepareError == null)
+                    GlobalData.AddTextToLogTab($"{reason} (reported once, quiet until the indicators can be built)");
+                symbolInterval.IndicatorPrepareError = reason;
                 return false;
             }
+            symbolInterval.IndicatorPrepareError = null;
 
             // The hub advances its Lux Multi-RSI over the candles it is fed, so on a 15m or 1h hub
             // that value is a Lux over 15m/1h candles — not the 5m value the field promises.

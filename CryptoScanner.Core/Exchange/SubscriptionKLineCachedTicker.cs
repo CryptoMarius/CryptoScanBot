@@ -44,34 +44,6 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
     private int _socketRejected;       // updates dropped by the zero/invalid OHLC guard
     private int _socketUnknownSymbol;  // updates dropped, the name was not in the cache
     private long _lastFlushTicks;      // moment the minute timer last ran, UTC ticks
-    private long _lastSocketTicks;     // moment a socket message last arrived, UTC ticks
-
-
-    /// <summary>
-    /// Only what the EXCHANGE delivered, never the flat candles the flush invents. See
-    /// <see cref="Subscription.LastSocketActivity"/> for why the health check needs that distinction:
-    /// IncrementTickerCount in the flat branch below kept LastActivity fresh every minute, which made
-    /// the inactivity check unable to fire on any of the twelve cached markets.
-    /// </summary>
-    public override DateTime LastSocketActivity => new(Interlocked.Read(ref _lastSocketTicks), DateTimeKind.Utc);
-
-    private void MarkSocketActivity()
-    {
-        Interlocked.Exchange(ref _lastSocketTicks, GlobalData.Clock.UtcNow.Ticks);
-    }
-
-
-    /// <summary>
-    /// A freshly (re)started subscription has not had the chance to receive anything yet, so it gets
-    /// the moment of the start as its socket activity - exactly as <see cref="Subscription.StartAsync"/>
-    /// does for LastActivity. Without it every restart round would immediately mark its own
-    /// subscriptions inactive again.
-    /// </summary>
-    public override async Task StartAsync()
-    {
-        MarkSocketActivity();
-        await base.StartAsync();
-    }
 
 
     public override string ActivityDiagnostics
@@ -124,9 +96,6 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
         Interlocked.Exchange(ref _socketRejected, 0);
         Interlocked.Exchange(ref _socketUnknownSymbol, 0);
         Interlocked.Exchange(ref _lastFlushTicks, 0);
-        // Not zero: this is the start of a new round, and a subscription that has just resubscribed
-        // must not look inactive before the exchange had a chance to send its first message.
-        MarkSocketActivity();
 
         _cache = [];
         foreach (var symbol in symbols)
@@ -159,7 +128,6 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
         }
 
         Interlocked.Increment(ref _socketUpdates);
-        MarkSocketActivity();
         _cacheSemaphore.Wait();
         try
         {
@@ -216,7 +184,6 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
         }
 
         Interlocked.Increment(ref _socketUpdates);
-        MarkSocketActivity();
         _cacheSemaphore.Wait();
         try
         {

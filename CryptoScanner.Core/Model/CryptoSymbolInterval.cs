@@ -124,6 +124,14 @@ public class CryptoSymbolInterval
     public int IndicatorHubAddCount = 0;
     public SortedDictionary<CandleTime, CryptoData> Data = [];
 
+    // Why the hub could not be built for the newest candle (too little history, with the count), set
+    // by IndicatorData.PrepareViaHub and cleared by the first successful warm-up. Logged ONCE per
+    // shortage, and SignalExecute stays quiet as long as it is set: a young coin with 87 daily candles
+    // used to produce two lines per day for 173 days, per strategy and per side - 45% of the log of
+    // emulator run 1621 - and the one time that line marked a real fault it was lost in the noise
+    // (open point 84).
+    public string? IndicatorPrepareError = null;
+
 
     public bool TryGetCandle(CandleTime time, out MyData? myData)
     {

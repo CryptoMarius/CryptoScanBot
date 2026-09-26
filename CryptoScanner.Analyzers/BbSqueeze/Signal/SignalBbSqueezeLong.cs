@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Analyzers.BbSqueeze.Signal;
 
@@ -20,6 +21,14 @@ public class SignalBbSqueezeLong : SignalBbSqueezeBase
         if (!WasSqueezed(settings.SqueezeMinCandles, settings.BBSqueezeMaxPercentage))
         {
             ExtraText = "No prior squeeze detected";
+            return false;
+        }
+
+        // The direction. Without this step the long and the short were the same test and, with the
+        // MACD filter off, fired on the same candle (open point 107). Same rule as kumosqueeze.
+        if (!CandleLast.IsAboveBollingerBands(useLowHigh: false))
+        {
+            ExtraText = "Close not above upper BB";
             return false;
         }
 

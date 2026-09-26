@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Core.Enums;
 
+using CryptoScanner.Core.Core;
 using Dapper.Contrib.Extensions;
 
 using System.Text.Json.Serialization;
@@ -239,8 +240,36 @@ public partial class CryptoSymbol
             return;
         }
 
+        // No decision yet (a symbol straight from the database: a start or a restart of the session).
+        // Decide as if the previous answer was "yes" when the symbol was demonstrably being followed
+        // just before: a 1m candle in the last few hours only gets there through a subscription or a
+        // catch-up, and both exist only for symbols above the boundary. Without this a coin inside
+        // the hysteresis band (0,75 to 0,9 of the boundary) fell off at every restart of the session
+        // and only came back after crossing 0,9 again (GRASSUSDT.PERP, 25-09-2026, open point 91).
+        // Not in the emulator: its candles are history, not proof of a subscription, and its runs
+        // have to stay comparable.
+        if (VolumeAboveThreshold == null && !GlobalData.IsEmulatorMode && WasFollowedRecently())
+            VolumeAboveThreshold = true;
+
         double factor = VolumeAboveThreshold == true ? VolumeThresholdLeaveFactor : VolumeThresholdEnterFactor;
         VolumeAboveThreshold = Volume > factor * QuoteData.MinimalVolume;
+    }
+
+    // How recent the newest 1m candle has to be for the symbol to count as "was being followed".
+    // Three hours covers a restart of the session, a standby of the machine and a rebuild, and is
+    // far shorter than the hourly refresh needs to be off before a coin's volume can change class.
+    private const uint RecentlyFollowedMinutes = 3 * 60;
+
+    /// <summary>
+    /// True when the newest 1m candle in memory is at most <see cref="RecentlyFollowedMinutes"/> old.
+    /// </summary>
+    private bool WasFollowedRecently()
+    {
+        CryptoCandleList candles = GetSymbolInterval(CryptoIntervalPeriod.interval1m).CandleList;
+        if (!candles.TryGetLastCandle(out CryptoCandle candle))
+            return false;
+        CandleTime limit = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1) - RecentlyFollowedMinutes;
+        return candle.OpenTime >= limit;
     }
 
     public bool EnoughVolume()

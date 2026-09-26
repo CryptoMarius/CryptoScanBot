@@ -221,8 +221,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private void ResetDashboard()
     {
-        // Clear position data
-        QueryPositionDataList.Clear();
+        // Clear position data (a new list, not Clear: a chart may still be drawing from the old one)
+        QueryPositionDataList = [];
         OpenData = new QueryPositionData();
         ClosedData = new QueryPositionData();
         TotalData = new QueryPositionData();
@@ -359,7 +359,11 @@ public partial class DashboardPositionsViewModel : ObservableObject
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
 
-        QueryPositionDataList.Clear();
+        // Built aside and swapped in as a whole. Two refreshes can overlap (the timer and a user action,
+        // each on its own Task.Run), and clearing the list in place while the other one is drawing a
+        // chart from it threw "Collection was modified" (HyperLiquid Perpetual, 25-09-2026 09:31). A
+        // foreach that started on the previous list keeps enumerating that list, so nothing breaks.
+        List<QueryPositionData> positionDataList = [];
         var openData = new QueryPositionData();
         var closedData = new QueryPositionData();
 
@@ -367,7 +371,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         {
             if (data.CloseTime.HasValue)
             {
-                QueryPositionDataList.Add(data);
+                positionDataList.Add(data);
                 closedData.Positions += data.Positions;
                 closedData.Invested += data.Invested;
                 closedData.Returned += data.Returned;
@@ -386,6 +390,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             }
         }
 
+        QueryPositionDataList = positionDataList;
         OpenData = openData;
         ClosedData = closedData;
     }

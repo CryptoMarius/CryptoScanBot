@@ -10,7 +10,8 @@ namespace CryptoScanner.Core.Core;
 ///   <item><see cref="PrepareTicks"/> — <c>SignalPrepare.Execute</c> (indicator calculation).</item>
 ///   <item><see cref="ExecuteTicks"/> — <c>SignalExecute.ExecuteAsync</c> (strategy algorithms,
 ///         which themselves touch some indicators).</item>
-///   <item><see cref="TradeTicks"/> — paper-trade fills + trading rules + create/extend position.</item>
+///   <item><see cref="TradeTicks"/> — strategy exit + skip decision + paper-trade fills + trading
+///         rules + create/extend position (the first three counted as execute until 26-09-2026).</item>
 ///   <item><see cref="PositionCheckTicks"/> — <c>ThreadCheckPosition.AddToQueue</c> (the
 ///         ThreadCheckFinishedPosition path; in emulator mode this runs synchronously and opens a DB
 ///         connection, so this bucket tells us whether optimising that is worthwhile).</item>
@@ -68,6 +69,8 @@ public static class PipelineProfiler
     // SignalExecute.ExecuteAsync. Tells us whether the dominant SignalExecute time is normal-strategy
     // evaluation, zone-touch detection (FVG/DLZ/SMC), or scales with the number of signals created.
     // The "rest" (barometer + loop overhead) is ExecuteTicks − SeStrategyTicks − SeZoneTouchTicks.
+    // Since 26-09-2026 ExecuteTicks is measured around SignalExecute.ExecuteAsync alone, so that rest
+    // really is the loop; before that it also held the strategy exit and the paper-trade order check.
     public static long SeStrategyTicks;    // ExecuteAlgorithmAsync for normal (barometer-checked) strategies
     public static long SeZoneTouchTicks;   // ExecuteAlgorithmAsync for the FVG/DLZ/SMC zone strategies
     public static long SeEvaluations;      // number of ExecuteAlgorithmAsync calls

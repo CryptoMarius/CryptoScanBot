@@ -861,7 +861,9 @@ public class PositionMonitor : IDisposable
         }
 
         decimal breakEven = position.TpGridBreakEvenPrice;
-        decimal price = breakEven + (multiplier * breakEven * (percentage / 100));
+        // Through PricePlacement since 26-09-2026 (open point 27): a short's target used to be
+        // breakEven * (1 - p), which is further away in log terms than the long's breakEven * (1 + p).
+        decimal price = PricePlacement.Favorable(position.Side, breakEven, percentage);
         return price.ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
     }
 
@@ -1036,7 +1038,7 @@ public class PositionMonitor : IDisposable
                     lockLevel = position.TrailingStopPrice;
                 }
                 else
-                    lockLevel = position.BreakEvenPrice + multiplier * position.BreakEvenPrice * lockPct / 100m;
+                    lockLevel = ProfitLockCalculator.FixedStop(position.Side, position.BreakEvenPrice, lockPct, lockPct);
 
                 decimal lockStop = lockLevel
                     .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
@@ -2137,7 +2139,7 @@ public class PositionMonitor : IDisposable
             {
                 // Not armed yet: wake up on the candle that reaches the trigger.
                 decimal lockPct = GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage;
-                boundary = position.BreakEvenPrice + multiplier * position.BreakEvenPrice * lockPct / 100m;
+                boundary = ProfitLockCalculator.TriggerPrice(position.Side, position.BreakEvenPrice, lockPct);
             }
             else if (GlobalData.Settings.Trading.MoveSlToBreakEvenMethod == CryptoProfitLockMethod.TrailingPercentage
                      && position.TrailingStopPrice > 0)
@@ -2444,6 +2446,7 @@ public class PositionMonitor : IDisposable
                 skipSignals = true;
 
             // Calculate signals and touch of the dlz and fvg zones
+            long profSignalExecuteStart = Stopwatch.GetTimestamp();
             if (!skipSignals)
                 await SignalExecute.ExecuteAsync(Symbol, LastCandle1mCloseTime);
             long profTradeStart = Stopwatch.GetTimestamp();
@@ -2493,10 +2496,16 @@ public class PositionMonitor : IDisposable
                 await GlobalData.ThreadCheckPosition!.AddToQueue(currentPosition!);
             PipelineProfiler.RecordAddToQueue(Stopwatch.GetTimestamp() - profAddToQueueStart);
 
+            // The execute bucket is SignalExecute.ExecuteAsync and nothing else. It used to run from
+            // the end of SignalPrepare to profTradeStart, which also covered CheckStrategyExit, the
+            // skip decision and PaperTradingCheckOrders: in run 1620 that was 98% of a sub-bucket
+            // labelled "barometer + loop", and whoever optimised on it looked in the wrong place
+            // (open point 87). Those three now count as trade, where they belong.
+            long profExecuteTicks = profTradeStart - profSignalExecuteStart;
             PipelineProfiler.Record(
                 prepare: profExecuteStart - profPrepareStart,
-                execute: profTradeStart - profExecuteStart,
-                trade: profPositionCheckStart - profTradeStart,
+                execute: profExecuteTicks,
+                trade: profPositionCheckStart - profExecuteStart - profExecuteTicks,
                 positionCheck: Stopwatch.GetTimestamp() - profPositionCheckStart);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Clean " + traceText);

@@ -759,6 +759,8 @@ public sealed class ReplayRunner
 
         // Sub-breakdown of the algorithms (SignalExecute) bucket: normal-strategy evaluation vs.
         // zone-touch (FVG/DLZ/SMC) vs. the rest (barometer + loop overhead, derived from the total).
+        // The total is SignalExecute.ExecuteAsync alone since 26-09-2026 (open point 87); a run from
+        // before that date carries the strategy exit and the paper-trade order check in "other".
         // The eval/signal counters reveal whether the cost scales with evaluations or with signals.
         double seStrategy = Seconds(PipelineProfiler.SeStrategyTicks);
         double seZoneTouch = Seconds(PipelineProfiler.SeZoneTouchTicks);

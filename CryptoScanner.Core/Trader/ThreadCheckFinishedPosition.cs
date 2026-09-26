@@ -2,6 +2,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Exchange.Altrady;
 using CryptoScanner.Core.Model;
 
 using System.Diagnostics;
@@ -183,6 +184,21 @@ public class ThreadCheckFinishedPosition
 
         if (removePosition)
         {
+            // The scanner owns the exit, Altrady only executes: the moment our own administration is
+            // finished with the position - stop, target, trailing stop or timeout - their counterpart
+            // has to go as well. Without this the delegated position lives on at Altrady under its own
+            // stop and target, which is how the two administrations drifted apart (measured 26-09-2026:
+            // 51 positions closed here and still open there).
+            // Only when the position really reached Altrady: no id means the opening signal was refused
+            // and there is nothing to close. Never from the emulator, which must not touch the network.
+            if (!GlobalData.IsEmulatorMode
+                && !string.IsNullOrEmpty(position.AltradyPositionId)
+                && (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady
+                 || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady))
+            {
+                await AltradyWebhook.DelegateControlToAltradyAsync(position, command: "close");
+            }
+
             // Send the position to the closed positions ViewModel
             PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, true);
         }

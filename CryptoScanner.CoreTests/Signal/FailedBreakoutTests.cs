@@ -468,6 +468,44 @@ public class FailedBreakoutTests : TestBase
     }
 
 
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The Bollinger filter while the hub is still warming up (open point 111)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void WhileTheBollingerPercentageIsStillNull_TheIndicatorsAreNotOkay()
+    {
+        FailedBreakoutPlugin.Settings.BBMinPercentage = 1.0;
+        try
+        {
+            var (algorithm, candles) = MakeSeries(CryptoTradeSide.Short, Enough, _ => { });
+
+            // What the hub hands out for the first candles: a CryptoData without the Bollinger
+            // fields. CheckBollingerBandsWidth compares null with the boundary and says "in range".
+            MyData warmingUp = new() { Candle = candles[0], CandleData = new CryptoData() };
+            Assert.IsFalse(algorithm.IndicatorsOkay(warmingUp), "a null percentage passed the BB filter");
+
+            MyData ready = new() { Candle = candles[0], CandleData = new CryptoData { BollingerBandsPercentage = 2.0 } };
+            Assert.IsTrue(algorithm.IndicatorsOkay(ready));
+        }
+        finally
+        {
+            FailedBreakoutPlugin.Settings.BBMinPercentage = 0.0;
+        }
+    }
+
+    [TestMethod]
+    public void WithoutABollingerFilter_TheNullPercentageDoesNotMatter()
+    {
+        FailedBreakoutPlugin.Settings.BBMinPercentage = 0.0;
+        FailedBreakoutPlugin.Settings.BBMaxPercentage = 0.0;
+        var (algorithm, candles) = MakeSeries(CryptoTradeSide.Short, Enough, _ => { });
+
+        MyData warmingUp = new() { Candle = candles[0], CandleData = new CryptoData() };
+        Assert.IsTrue(algorithm.IndicatorsOkay(warmingUp));
+    }
+
+
     /// <summary>
     /// Adds an open DLZ zone on the interval the series was built on. Only the side, the band and
     /// the open time are read; the rest is what the model demands.

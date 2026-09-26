@@ -199,7 +199,16 @@ public class SignalExecute
                                 // Counter for mainscreen so you can see symbols analyzing etc..
                                 Interlocked.Increment(ref analyseCount);
                             }
-                            else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting history");
+                            else
+                            {
+                                // Quiet when PrepareViaHub already said why (too little history, once
+                                // per symbol and interval, see CryptoSymbolInterval.IndicatorPrepareError).
+                                // What is left is the case that deserves a line: enough candles and
+                                // still no indicator data for this candle. Not "Debug": the line is
+                                // unconditional.
+                                if (symbol.GetSymbolInterval(interval.IntervalPeriod).IndicatorPrepareError == null)
+                                    GlobalData.AddTextToLogTab($"Signal create {symbol.Name} {interval.Name} {side} Error collecting history (no indicator data for this candle)");
+                            }
                         }
                         else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting algorithm {entry.Key.strategy}");
                     }

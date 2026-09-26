@@ -650,6 +650,26 @@ public class ScannerSession : IScannerSession
                 // Back to the normal rhythm after a shortened check (see above)
                 if (TimerCheckDataStream.Interval < 5 * 60 * 1000)
                     TimerCheckDataStream.InitTimerInterval(5 * 60);
+
+                // No subscription is broken as a whole. One level deeper: a single symbol that
+                // stopped delivering while its bundle stayed alive (open point 34). Own task, because
+                // it asks the exchange over REST and this is a timer thread.
+                Model.CryptoExchange? exchange = GlobalData.ActiveExchange;
+                SubscriptionManager klineTicker = ExchangeBase.KLineTicker;
+                if (exchange != null)
+                {
+                    Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await SilentSymbolCatchUp.RunAsync(klineTicker, exchange.GetApiInstance().Candle, ExchangeBase.ExchangeOptions);
+                        }
+                        catch (Exception error)
+                        {
+                            ScannerLog.Logger.Error(error, "SilentSymbolCatchUp");
+                        }
+                    });
+                }
             }
         }
     }
@@ -711,6 +731,10 @@ public class ScannerSession : IScannerSession
     // countdown afterwards and stretched the effective period far beyond the configured interval.
     private int _getExchangeInfoAndCandlesRunning = 0;
 
+    // Set when the timer fired while a cycle was still running; the finishing cycle then reschedules
+    // the timer on a short delay instead of letting the request wait a whole interval.
+    private int _getExchangeInfoAndCandlesRequestedWhileRunning = 0;
+
     private void TimerGetExchangeInfoAndCandles_Tick(object? sender, EventArgs? e)
     {
         // Ophalen van candle candles bijwerken
@@ -722,7 +746,12 @@ public class ScannerSession : IScannerSession
 
         if (Interlocked.CompareExchange(ref _getExchangeInfoAndCandlesRunning, 1, 0) != 0)
         {
-            GlobalData.AddTextToLogTab("Refresh of exchange info and candles is still running, skipping this cycle");
+            // Not lost, only postponed: the running cycle asks again as soon as it is done (see the
+            // finally below). Skipping outright meant that the refresh ConnectionWasLost schedules two
+            // minutes after a drop fell away whenever the hourly cycle was still fetching, and the gap
+            // that drop left was only closed a full interval later (doorlichting subscriptions 25-09-2026).
+            Interlocked.Exchange(ref _getExchangeInfoAndCandlesRequestedWhileRunning, 1);
+            GlobalData.AddTextToLogTab("Refresh of exchange info and candles is still running, repeating it right after");
             return;
         }
 
@@ -778,6 +807,12 @@ public class ScannerSession : IScannerSession
             finally
             {
                 Interlocked.Exchange(ref _getExchangeInfoAndCandlesRunning, 0);
+
+                // A request that arrived while this cycle was running is served now, half a minute
+                // from here, and not at the next full interval.
+                if (Interlocked.Exchange(ref _getExchangeInfoAndCandlesRequestedWhileRunning, 0) != 0
+                    && TimerGetExchangeInfoAndCandles.Enabled)
+                    TimerGetExchangeInfoAndCandles.InitTimerInterval(30);
             }
         });
         //_ = ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors

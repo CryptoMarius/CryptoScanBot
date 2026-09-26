@@ -7,6 +7,8 @@ using CryptoScanner.Core.Signal.Indicators;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Trend;
 
+using System.Collections.Concurrent;
+
 namespace CryptoScanner.Core.Signal;
 
 public delegate void AnalyseEvent(CryptoSignal signal);
@@ -573,6 +575,17 @@ public class SignalCreate
         }
     }
 
+    // The combinations that were reported as "indicators not ready" and have not recovered since.
+    // Shared by the four candle workers, hence concurrent; the value is unused.
+    private static readonly ConcurrentDictionary<string, byte> IndicatorsNotReadyLogged = new();
+
+    /// <summary>
+    /// Forget which combinations were reported. Called by SignalPrepare.Prepare, so a combination
+    /// that no longer exists (a strategy switched off, a delisted coin) does not stay behind, and a
+    /// combination that still fails after the settings changed is reported once more.
+    /// </summary>
+    public static void ResetIndicatorsNotReadyLog() => IndicatorsNotReadyLogged.Clear();
+
     public async Task<bool> ExecuteAlgorithmAsync(AlgorithmDefinition strategyDefinition)
     {
         SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Name);
@@ -590,8 +603,20 @@ public class SignalCreate
                 ScannerLog.Logger.Info($"Debug Signal create {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             //GlobalData.AddTextToLogTab($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
-            if (algorithm.IndicatorsOkay(myData!)
-                && algorithm.EntryConditionsBeforeSignal()
+
+            // A strategy whose indicators never fill used to give zero signals without a word in the
+            // log (open point 79). One line per symbol, interval, strategy and side, and a new one only
+            // after the indicators were okay in between - every candle would drown the log.
+            string notReadyKey = $"{Symbol.Name}|{Interval.Name}|{strategyDefinition.Name}|{Side}";
+            if (!algorithm.IndicatorsOkay(myData!))
+            {
+                if (IndicatorsNotReadyLogged.TryAdd(notReadyKey, 0))
+                    GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side} indicators not ready, strategy skipped until they are");
+                return false;
+            }
+            IndicatorsNotReadyLogged.TryRemove(notReadyKey, out _);
+
+            if (algorithm.EntryConditionsBeforeSignal()
                 && algorithm.IsSignal()
                 && algorithm.EntryConditionsAfterSignal())
                 return await PrepareAndSendSignalAsync(algorithm);
