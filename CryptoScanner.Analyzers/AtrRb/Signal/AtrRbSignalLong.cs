@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
@@ -43,7 +43,7 @@ public class AtrRbSignalLong : SignalCreateBase
             return false;
         }
 
-        if (!AtrRbBandsHelper.IsLowerBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double lowerBand))
+        if (!AtrRbBandsHelper.IsLowerBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double lowerBand, exactCandle: true))
         {
             ExtraText = "no lower band break";
             return false;
@@ -96,7 +96,7 @@ public class AtrRbSignalLong : SignalCreateBase
             _slPercentage = (decimal)pctDeviation;
 
 
-        ExtraText = $"hit lower band {pctDeviation:N2}%";
+        ExtraText = $"hit lower band, stop distance {pctDeviation:N2}%";
         return true;
     }
 }

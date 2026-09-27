@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -421,8 +421,8 @@ public partial class RunResultsView : UserControl
         var sb = new System.Text.StringBuilder();
 
         // Header row — same order and names as the grid columns.
-        sb.AppendLine("Id\tLabel\tPeriod\tStarted\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tWin%\tProfit\tProfit%\tInvested\t" +
-            "Peak cap.\tPeak pos\tPeak %\tStart cap.\tEnd cap.\tReturn %\tLong\tProfit long\tShort\tProfit short\tBest case\tWorst case\tAvg dur.\tMin dur.\tMax dur.");
+        sb.AppendLine("Id\tLabel\tPeriod\tStarted\tBuild\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tWin%\tProfit\tProfit%\tInvested\t" +
+            "Peak cap.\tPeak pos\tPeak %\tDrawdown %\tStart cap.\tEnd cap.\tReturn %\tLong\tProfit long\tShort\tProfit short\tBest case\tWorst case\tAvg dur.\tMin dur.\tMax dur.");
 
         foreach (RunRow r in rows)
         {
@@ -430,6 +430,7 @@ public partial class RunResultsView : UserControl
             sb.Append(r.Label).Append('\t');
             sb.Append(r.Period).Append('\t');
             sb.Append(r.StartedLocal).Append('\t');
+            sb.Append(r.BuildStampText).Append('\t');
             sb.Append(r.FinishedLocal).Append('\t');
             sb.Append(r.Duration).Append('\t');
             sb.Append(r.Result).Append('\t');
@@ -446,6 +447,7 @@ public partial class RunResultsView : UserControl
             sb.Append(r.PeakInvested).Append('\t');
             sb.Append(r.PeakPositions).Append('\t');
             sb.Append(r.PeakProfitPercentage).Append('\t');
+            sb.Append(r.MaxDrawdownPercentage).Append('\t');
             sb.Append(r.StartCapitalText).Append('\t');
             sb.Append(r.EndCapitalText).Append('\t');
             sb.Append(r.CapitalReturnPercentageText).Append('\t');

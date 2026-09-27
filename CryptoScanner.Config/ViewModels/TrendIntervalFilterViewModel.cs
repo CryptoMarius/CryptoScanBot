@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -25,6 +25,10 @@ public partial class TrendIntervalFilterViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<IntervalCheckboxViewModel> _intervals = [];
 
+    // The trend against the trade direction instead of with it (open point 51).
+    [ObservableProperty]
+    private bool _inverted = false;
+
     // Split the flat list into two halves for a two-column top-to-bottom layout
     public IEnumerable<IntervalCheckboxViewModel> IntervalsColumn1 => Intervals.Take((Intervals.Count + 1) / 2);
     public IEnumerable<IntervalCheckboxViewModel> IntervalsColumn2 => Intervals.Skip((Intervals.Count + 1) / 2);
@@ -33,6 +37,7 @@ public partial class TrendIntervalFilterViewModel : ObservableObject
     public void LoadConfig(SettingsTextualIntervalTrend settings, CryptoTradeSide side)
     {
         string trendText = side == CryptoTradeSide.Long ? "bullish" : "bearish";
+        Inverted = settings.Inverted;
 
         Intervals.Clear();
         foreach (var interval in GlobalData.IntervalList)
@@ -52,6 +57,7 @@ public partial class TrendIntervalFilterViewModel : ObservableObject
 
     public void SaveConfig(SettingsTextualIntervalTrend settings)
     {
+        settings.Inverted = Inverted;
         settings.List.Clear();
         foreach (var item in Intervals)
         {

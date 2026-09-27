@@ -1,3 +1,4 @@
+﻿using CryptoScanner.Analyzers.Dlz;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal;
 
@@ -18,18 +19,24 @@ namespace CryptoScanner.CoreTests.Signal;
 public class SignalPrepareIntervalOrderTests : TestBase
 {
     private List<string> _dlzIntervals = [];
+    private List<string> _longStrategies = [];
 
     [TestInitialize]
     public void Setup()
     {
         InitTestSession();
         _dlzIntervals = [.. GlobalData.Settings.Signal.ZonesDlz.IntervalList];
+        _longStrategies = [.. GlobalData.Settings.Signal.Long.Strategy];
+        // A configured zone kind that no enabled strategy reads is dropped since open point 32, so
+        // the bucket under test needs a registered AND enabled reader.
+        RegisterAndEnablePlugin(new DlzPlugin());
     }
 
     [TestCleanup]
     public void Restore()
     {
         GlobalData.Settings.Signal.ZonesDlz.IntervalList = _dlzIntervals;
+        GlobalData.Settings.Signal.Long.Strategy = _longStrategies;
         SignalPrepare.Prepare();
     }
 

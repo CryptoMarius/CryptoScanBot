@@ -79,7 +79,12 @@ public abstract class SignalTrendLongBase : SignalCreateBase
     public override bool IsSignal()
     {
         if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval10m)
+        {
+            // Said out loud since open point 110; TrendSettings.MinimumInterval keeps the UI from
+            // offering these intervals in the first place.
+            ExtraText = "interval below 10m";
             return false;
+        }
 
         _ = SymbolTrend.CalculateSymbolTrendAsync(Symbol, TrendSettings).Result;
 
@@ -162,7 +167,12 @@ public abstract class SignalTrendLongBase : SignalCreateBase
     /// signal candle was expiring before AllowStepIn ever got a real chance. The trend-revert
     /// check above remains the safety net for that waiting phase.
     /// </summary>
-    public override bool GiveUp(CryptoSignal signal)
+    // By design no time limit while waiting for the pullback pivot (see below), so the base expiry
+    // after EntryRemoveTime is switched off here; the adverse-move limit and the "position already
+    // open" test of SignalBase.GiveUp do apply since open point 78.
+    protected override bool SignalExpires => false;
+
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
         // Trend has already flipped back — setup is invalidated
         CryptoTrendIndicator against = ArmedAgainst(ArmedOn);

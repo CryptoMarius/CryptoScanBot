@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
@@ -695,7 +695,7 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     /// the short bias rather than invalidating it. The actual invalidation is the opposite-side
     /// Extreme (ext_buy), via an ephemeral Long instance.
     /// </summary>
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
         var opposite = new SignalBbmaOmniLong
         {
@@ -860,6 +860,11 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         {
             ExtraText = $"HTF setup: {htfSetup}";
             //GlobalData.AddTextToLogTab($"{logPrefix} HTF CheckHtf: no setup found");
+            return false;
+        }
+        if (!IsSetupAllowed(htfSetup))
+        {
+            ExtraText = $"HTF setup {htfSetup} rejected by the settings";
             return false;
         }
         //GlobalData.AddTextToLogTab($"{logPrefix} HTF CheckHtf: found {htfSetup}");

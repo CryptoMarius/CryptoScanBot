@@ -70,8 +70,6 @@ public static class StopLossCalculator
     /// </summary>
     public static SlResult Calculate(in SlInput input)
     {
-        int multiplier = input.Side == CryptoTradeSide.Long ? +1 : -1;
-
         // Determine which SL source and percentage to use
         SlSource source;
         decimal slPercent;
@@ -109,24 +107,23 @@ public static class StopLossCalculator
         else
             anchor = input.EntryPrice;
 
-        decimal perc = slPercent / 100m;
-        decimal stop = anchor - (multiplier * anchor * perc);
+        // Through PricePlacement since 26-09-2026 (open point 27): a short's stop used to be
+        // anchor * (1 + p), which is closer in log terms than the long's anchor * (1 - p).
+        decimal stop = PricePlacement.Adverse(input.Side, anchor, slPercent);
 
         // Limit: signal source uses a 1% buffer beyond the stop; global source uses
         // the configured limit percentage from the same anchor.
         decimal limit;
         if (source == SlSource.Signal)
         {
-            decimal limitPerc = 1m / 100m;
-            limit = stop - (multiplier * stop * limitPerc);
+            limit = PricePlacement.Adverse(input.Side, stop, 1m);
         }
         else
         {
             decimal limitPctValue = input.GlobalStopLossLimitPercentage;
             if (limitPctValue <= input.GlobalStopLossPercentage)
                 limitPctValue = input.GlobalStopLossPercentage + 1m;
-            perc = limitPctValue / 100m;
-            limit = anchor - (multiplier * anchor * perc);
+            limit = PricePlacement.Adverse(input.Side, anchor, limitPctValue);
         }
 
         return new SlResult

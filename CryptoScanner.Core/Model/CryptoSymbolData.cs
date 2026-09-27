@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Zones;
 
 namespace CryptoScanner.Core.Model;
 
@@ -26,6 +27,15 @@ public class CryptoSymbolData
     /// </summary>
     // Lock for manipulates candles
     public SemaphoreSlim CandleLock { get; set; } = new(1, 1);
+
+    // One analysis of this symbol at a time. ThreadMonitorCandle starts a task per arriving 1m
+    // candle with a global limit of four, and nothing kept two candles of the SAME symbol from
+    // running at once: when the first took longer than a minute, the next fed the same
+    // IntervalIndicatorHub (documented as not thread-safe) from a second thread and both wrote
+    // IndicatorHubLastAdded, a corrupt or doubly fed series without a word (open point 86). Taken
+    // with Wait(0): a candle that finds the previous one still running is skipped and counted,
+    // and the hub then sees a gap and warms up again, which is the cheap and correct recovery.
+    public SemaphoreSlim AnalysisLock { get; } = new(1, 1);
     // Interval related data like candles, last candle fetched, zones
     public List<CryptoSymbolInterval> SymbolIntervalList { get; set; } = [];
 
@@ -43,8 +53,22 @@ public class CryptoSymbolData
     // in-memory zones are already kept current via the incremental calculation + ThreadSaveObjects
     // queue, so reloading from the DB on every tick was pure redundant I/O and also defeated any
     // incremental zone calculation (it wiped the per-call cursors every time). null = live scope.
+    // True while the last 1m candle of this symbol was NOT analysed (new coin, volume or price under
+    // the limit in PositionMonitor.NewCandleArrivedAsync). The indicator hub then sees a gap on the
+    // next analysed candle and warms up again; this flag lets the profiler count those warm-ups
+    // apart from the ones a real gap causes (open point 90).
+    public bool LastCandleSkipped { get; set; }
+
     public bool ZonesLoaded { get; set; }
     public int? ZonesLoadedRunId { get; set; }
+
+    // Which candle windows the zone calculation has already established as present in memory, per
+    // interval. On the symbol since 26-09-2026 (open point 67): ZoneThreadCalculate used to build a
+    // fresh one per recalculation and clear it afterwards, so every recalculation went back to
+    // candles.db for windows that were still in memory from the previous one. The two trims that
+    // throw candles away (ZoneCandleEngine.CleanLoadedCandlesAsync, CandleTools.CleanCandleDataAsync)
+    // forget the windows they cut off, so a window is only ever claimed while its candles are there.
+    public ZoneCandleWindows ZoneCandleWindows { get; } = new();
 
     // For display in the symbol grid
     // These are the closest DLZ zones (calculated from all the zones)

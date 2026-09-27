@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 
 using System.Text.Json.Serialization;
 
@@ -23,11 +23,9 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
     [SettingCaption("Minimum percentage", Group = GroupSettings)]
     public double MinimumPercentage { get; set; } = 0.25;
 
-    // How far outside the zone edge (in %) the candle low/high may still be for the combined
-    // Stobb+FVG / StoRsi+FVG signals to qualify. Kept separate from WarnPercentage (which does
-    // not exist here) so the two purposes do not interfere.
-    [SettingCaption("Near zone percentage", Group = GroupZoneStrength)]
-    public decimal NearZonePercentage { get; set; } = 0.25m;
+    // NearZonePercentage and RejectionLookback were removed on 26-09-2026 (open point 108): the
+    // combined Stobb/StoRsi+FVG signals that read the first no longer exist, and an fvg.rejection
+    // never did. A settings file that still carries the keys is read without them.
 
     // Maximum number of wick-touches before a zone is considered exhausted and closed.
     // Supply/demand theory: 0=fresh, 1=tested, 2=weakening, 3+=avoid. Default 2 keeps the
@@ -41,12 +39,6 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
     // is one implementation in ZoneInvalidation. See CryptoZoneTouchLevel.
     [SettingCaption("Touch level", Group = GroupZoneStrength)]
     public CryptoZoneTouchLevel TouchLevel { get; set; } = CryptoZoneTouchLevel.Edge;
-
-    // How many candles back (including the current one) the rejection check may inspect.
-    // 1 = only the current candle must show the test+close-back-outside pattern.
-    // 2 = a previous candle may have done the wick, with the current candle as confirmation close.
-    [SettingCaption("Rejection lookback", Group = GroupZoneStrength)]
-    public int RejectionLookback { get; set; } = 2;
 
     // When true, a zone closes as soon as price has been at or past its middle - regardless of how
     // many visits it has left. The reasoning: half of what made the level hold has been taken out of

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Indicators;
 
@@ -8,9 +8,8 @@ namespace CryptoScanner.Analyzers.Vbs.Indicators;
 
 /// <summary>
 /// Registers the VWAP band hubs on the shared QuoteHub: two synthetic
-/// hubs (hlc3 and hlc3^2) for the volume-weighted variance, plus ATR hubs
-/// for the pad term and the stop-loss %. Writes the band values to the
-/// dedicated CryptoData fields
+/// hubs (hlc3 and hlc3^2) for the volume-weighted variance, plus the SMA of the candle range for
+/// the ACS. Writes the band values to the plugin slot of CryptoData.
 /// </summary>
 public class VbsIndicatorExtension : IIndicatorExtension
 {
@@ -20,17 +19,12 @@ public class VbsIndicatorExtension : IIndicatorExtension
     private VwmaHub? _vpsVwmaSrc;
     private VwmaHub? _vpsVwmaSq;
     private SmaHub? _rangeSma;
-    private AtrHub? _atrVpsSl;
     private double _vbsMult;
     private double _acsFactor;
 
     public void Init(IndicatorRegistry registry)
     {
         var vbs = VbsPlugin.Settings;
-
-        // Through the registry, so an Atr(Length) requested elsewhere is the same hub instead of a
-        // second one doing identical work on every candle.
-        _atrVpsSl = registry.Atr(vbs.Length);
 
         // The VWAP band needs hlc3 and hlc3 squared, which are values this plugin produces itself —
         // they cannot chain off the price hub, hence a derived hub per series.
@@ -64,12 +58,6 @@ public class VbsIndicatorExtension : IIndicatorExtension
         var vbsData = new VbsCandleData();
         bool any = false;
 
-        if (_atrVpsSl?.Results.Count > 0 && _atrVpsSl.Results[^1].Atr != null)
-        {
-            vbsData.AtrSl = _atrVpsSl.Results[^1].Atr;
-            any = true;
-        }
-
         var vbsSrc = _vpsVwmaSrc?.Results;
         var vbsSq = _vpsVwmaSq?.Results;
         if (vbsSrc?.Count > 0 && vbsSq?.Count > 0)
@@ -84,7 +72,6 @@ public class VbsIndicatorExtension : IIndicatorExtension
                 vbsData.Basis = mean.Value;
                 vbsData.Upper = mean.Value + pad;
                 vbsData.Lower = mean.Value - pad;
-                vbsData.VwStdev = vwStdev;
                 any = true;
             }
         }

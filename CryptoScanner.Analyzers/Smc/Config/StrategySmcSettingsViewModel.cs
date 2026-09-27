@@ -50,9 +50,6 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _maxTouches = 0;
 
-    [ObservableProperty]
-    private int _rejectionLookback = 3;
-
 
     public void LoadConfig(SettingsSignalStrategySmc settings)
     {
@@ -69,7 +66,6 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
         MaxTouches = settings.MaxTouches;
         TouchLevel = settings.TouchLevel;
         CloseZonesPastMidpoint = settings.CloseZonesPastMidpoint;
-        RejectionLookback = settings.RejectionLookback;
     }
 
     public void SaveConfig(SettingsSignalStrategySmc settings)
@@ -87,6 +83,5 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
         settings.MaxTouches = MaxTouches;
         settings.TouchLevel = TouchLevel;
         settings.CloseZonesPastMidpoint = CloseZonesPastMidpoint;
-        settings.RejectionLookback = RejectionLookback;
     }
 }

@@ -137,10 +137,28 @@ public class SignalCreateBase
 
 
     /// <summary>
-    /// Give up when the trader fails to pick up the signal within EntryRemoveTime bars
-    /// after it fired (for example when no trading slot is free).
+    /// Whether a signal of this strategy expires after Trading.EntryRemoveTime candles. Every
+    /// strategy but one says yes; the trend strategy waits for a pullback pivot without a time
+    /// limit by design and counts its own expiry from that pivot.
     /// </summary>
-    public virtual bool GiveUp(CryptoSignal signal)
+    protected virtual bool SignalExpires => true;
+
+    /// <summary>
+    /// The strategy's own reasons to drop a waiting signal, asked AFTER the base rules in
+    /// <see cref="GiveUp"/> said no. Override this and not GiveUp: of the seventeen overrides of
+    /// GiveUp, eight did not call the base and thereby switched off the expiry, the adverse-move
+    /// limit and the "position already open" test at once, without a word (open point 78). GiveUp
+    /// itself is no longer virtual, so that cannot happen again.
+    /// </summary>
+    public virtual bool GiveUpStrategy(CryptoSignal signal) => false;
+
+    /// <summary>
+    /// Give up when the trader fails to pick up the signal within EntryRemoveTime bars
+    /// after it fired (for example when no trading slot is free), when the price ran too far
+    /// against it, or when a position is already open - and then whatever the strategy adds in
+    /// <see cref="GiveUpStrategy"/>.
+    /// </summary>
+    public bool GiveUp(CryptoSignal signal)
     {
         // BUGFIX: the previous condition was
         //     signal.CloseDate.Minutes + N * Duration < CandleLast.OpenTime.Minutes
@@ -153,7 +171,7 @@ public class SignalCreateBase
         // candle's OPEN time, i.e. CandleLast (the just-closed signal-interval candle)
         // sits at or beyond the N-th candle after signal.OpenDate.
         CandleTime expiryTime = CandleTime.FromDateTime(signal.OpenDate) + GlobalData.Settings.Trading.EntryRemoveTime * signal.Interval.Duration;
-        if (CandleLast.Candle.OpenTime >= expiryTime)
+        if (SignalExpires && CandleLast.Candle.OpenTime >= expiryTime)
         {
             ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
 
@@ -181,7 +199,7 @@ public class SignalCreateBase
             return true;
         }
 
-        return false;
+        return GiveUpStrategy(signal);
     }
 
 
@@ -699,7 +717,8 @@ public class SignalCreateBase
 
     protected bool InLowerPartOfBollingerBands(int candleCount, decimal percentage, bool useLowHigh)
     {
-        // Was the price near the lower bb?
+        // Was the price near the lower bb? The LOWER of open and close, the mirror of the upper
+        // helper - this took the higher one until 26-09-2026 (open point 115).
 
         MyData? last = CandleLast;
         while (candleCount-- > 0)
@@ -711,7 +730,7 @@ public class SignalCreateBase
             if (useLowHigh)
                 value = last.Candle.Low;
             else
-                value = Math.Max(last.Candle.Open, last.Candle.Close);
+                value = Math.Min(last.Candle.Open, last.Candle.Close);
 
             if (value <= band)
                 return true;
@@ -1054,7 +1073,7 @@ public class SignalCreateBase
 
     public bool CheckTrendSecondary(int intervalCount = 2)
     {
-        return CheckTrend(false, "primary", intervalCount);
+        return CheckTrend(false, "secondary", intervalCount);
     }
 
 }

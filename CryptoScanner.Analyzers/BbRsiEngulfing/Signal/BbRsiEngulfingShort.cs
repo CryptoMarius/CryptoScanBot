@@ -29,7 +29,7 @@ public class BbRsiEngulfingShort : SignalCreateBase
         ExtraText = "";
 
         // BB width must be at least 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(StobbPlugin.Settings.BBMinPercentage, 0)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
+        if (!CandleLast.CheckBollingerBandsWidth(BbRsiEngulfingPlugin.Settings.BBMinPercentage, BbRsiEngulfingPlugin.Settings.BBMaxPercentage)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Settings.Strategy;
+﻿using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Vbs;
 

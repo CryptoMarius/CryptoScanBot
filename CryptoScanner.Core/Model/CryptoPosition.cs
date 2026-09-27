@@ -258,10 +258,17 @@ public static class CryptoPositionHelper
         }
     }
 
+    /// <summary>
+    /// How far the last price sits past break-even, in percent of the break-even price: positive is
+    /// profit. On the same 0-based scale for a finished position as for a running one since
+    /// 26-09-2026: it used to return the stored 100-based percentage for Ready and 0-based
+    /// otherwise, and the callers subtracted 100 from both, so a running position showed -98
+    /// instead of +2 (open point 29).
+    /// </summary>
     public static decimal CurrentBreakEvenPercentage(this CryptoPosition position)
     {
         if (position.Status == CryptoPositionStatus.Ready)
-            return position.Percentage;
+            return position.Percentage - 100m;
 
         if (!position.Symbol.LastPrice.HasValue)
             return 0m;
@@ -269,10 +276,11 @@ public static class CryptoPositionHelper
         if (position.BreakEvenPrice == 0 || position.Symbol.LastPrice.Value == 0)
             return 0;
 
+        // Both sides measured against the break-even price; the long used to divide by the last price.
         if (position.Side == CryptoTradeSide.Long)
-            return 100 - 100 * position.BreakEvenPrice / position.Symbol.LastPrice.Value;
+            return 100 * (position.Symbol.LastPrice.Value - position.BreakEvenPrice) / position.BreakEvenPrice;
         else
-            return 100 - 100 * position.Symbol.LastPrice.Value / position.BreakEvenPrice;
+            return 100 * (position.BreakEvenPrice - position.Symbol.LastPrice.Value) / position.BreakEvenPrice;
     }
 
     public static TimeSpan Duration(this CryptoPosition position)

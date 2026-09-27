@@ -174,18 +174,20 @@ public class SignalCreate
     /// Percentage change over 24 hours, measured on the signal's OWN interval rather than on the
     /// 1m list. Both closes then lie exactly 24 hours apart, and only a handful of candles is
     /// needed (96 on 15m, 24 on 1h) instead of 1441 minute candles.
-    /// Returns 0 when that candle is missing, or when the interval does not divide into 24 hours.
+    /// Returns null when that candle is missing, or when the interval does not divide into 24 hours:
+    /// until 26-09-2026 that was a 0, which always sat inside the limits and passed the check
+    /// without a measurement (open point 115).
     /// </summary>
-    private float CalculateLast24HoursChange()
+    private float? CalculateLast24HoursChange()
     {
         const long periodInMinutes = 24 * 60;
         if (Interval.Duration == 0 || periodInMinutes % Interval.Duration != 0)
-            return 0;
+            return null;
 
         CandleTime openTime = Candle.OpenTime; // Note: backtest, alway's take the signal candle
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
         if (!symbolInterval.CandleList.TryGetValue(openTime - periodInMinutes, out CryptoCandle candlePrev))
-            return 0;
+            return null;
 
         double closeLast = (double)Candle.Close;
         double closePrev = (double)candlePrev.Close;
@@ -308,6 +310,8 @@ public class SignalCreate
             signal.Barometer30m = 0;
 
         barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval1h);
+        // Market breadth of the same 1h measurement (open point 11, phase 2)
+        signal.MarketBreadth1h = barometerData.PricePercentageRising.HasValue ? (float)barometerData.PricePercentageRising.Value : null;
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer1h = (float)barometerData.PriceBarometer.Value;
         else
@@ -327,8 +331,11 @@ public class SignalCreate
 
 
         // de 24 change moet in een bepaald interval zitten
-        signal.Last24HoursChange = CalculateLast24HoursChange();
-        if (!signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
+        // Not measurable (no candle 24 hours back, or an interval that does not divide into a day)
+        // means the check is skipped, not passed with a zero.
+        float? change24h = CalculateLast24HoursChange();
+        signal.Last24HoursChange = change24h ?? 0;
+        if (change24h.HasValue && !change24h.Value.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
             {

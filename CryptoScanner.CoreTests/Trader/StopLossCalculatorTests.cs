@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Trader;
 
 using static CryptoScanner.Core.Trader.StopLossCalculator;
@@ -65,8 +65,9 @@ public class StopLossCalculatorTests
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Signal, result.Source);
-        // Short 3% SL from 100 → stop = 100 - (-1)*100*0.03 = 103
-        Assert.AreEqual(103m, result.Stop);
+        // Short 3% SL from 100 → stop = 100 / (1 - 0.03) = 103.09: the log mirror of the long's 97,
+        // not the arithmetic 103 (PricePlacement, open point 27).
+        Assert.AreEqual(100m / 0.97m, result.Stop);
         Assert.IsNotNull(result.Limit);
         // Limit should be above the stop (further from entry for a short)
         Assert.IsTrue(result.Limit > result.Stop,
@@ -149,8 +150,8 @@ public class StopLossCalculatorTests
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Global, result.Source);
-        // Short 5% SL from 100 → stop = 100 - (-1)*100*0.05 = 105
-        Assert.AreEqual(105m, result.Stop);
+        // Short 5% SL from 100 → stop = 100 / (1 - 0.05) = 105.26 (the log mirror of 95)
+        Assert.AreEqual(100m / 0.95m, result.Stop);
     }
 
     [TestMethod]
@@ -225,8 +226,8 @@ public class StopLossCalculatorTests
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Signal, result.Source);
-        // Signal SL anchors on entry (100), not DCA (105): stop = 100 + 100*0.03 = 103
-        Assert.AreEqual(103m, result.Stop,
+        // Signal SL anchors on entry (100), not DCA (105): stop = 100 / (1 - 0.03) = 103.09
+        Assert.AreEqual(100m / 0.97m, result.Stop,
             "Signal SL must anchor on entry, ignoring ExtremeDcaPrice");
     }
 
@@ -260,8 +261,8 @@ public class StopLossCalculatorTests
         };
         var result = Calculate(input);
 
-        // stop = 100 + 100*0.015 = 101.5
-        Assert.AreEqual(101.5m, result.Stop,
+        // stop = 100 / (1 - 0.015) = 101.52
+        Assert.AreEqual(100m / 0.985m, result.Stop,
             "Signal SL anchors on entry even when DCA exists beyond it");
     }
 
@@ -297,8 +298,8 @@ public class StopLossCalculatorTests
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Global, result.Source);
-        // stop = 105 + 105*0.015 = 106.575
-        Assert.AreEqual(106.575m, result.Stop);
+        // stop = 105 / (1 - 0.015) = 106.60
+        Assert.AreEqual(105m / 0.985m, result.Stop);
         Assert.IsTrue(result.Stop > 105m,
             $"Short global SL ({result.Stop}) must be above DCA (105)");
     }
@@ -382,8 +383,8 @@ public class StopLossCalculatorTests
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Signal, result.Source);
-        // 1.8% from entry 150 → stop = 150 + 2.7 = 152.7
-        decimal expected = entry + entry * 1.8m / 100m;
+        // 1.8% from entry 150 → stop = 150 / (1 - 0.018) = 152.75 (the log mirror of 147.3)
+        decimal expected = entry / (1m - 1.8m / 100m);
         Assert.AreEqual(expected, result.Stop);
     }
 

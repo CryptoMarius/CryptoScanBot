@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Signal;
+﻿using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Analyzers.KumoSqueeze.Signal;
@@ -78,7 +78,7 @@ public class KumoSqueezeSignalShort : KumoSqueezeSignalBase
             }
             if (cloud.TenkanSen >= cloud.KijunSen)
             {
-                ExtraText = $"Tenkan {cloud.TenkanSen:N8} not above Kijun {cloud.KijunSen:N8}";
+                ExtraText = $"Tenkan {cloud.TenkanSen:N8} not below Kijun {cloud.KijunSen:N8}";
                 return false;
             }
         }

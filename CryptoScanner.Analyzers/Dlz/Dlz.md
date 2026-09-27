@@ -1,12 +1,11 @@
-# Dominant Liquidity Zones (DLZ)
+﻿# Dominant Liquidity Zones (DLZ)
 
 ## Overview
 
-The **DLZ** strategy monitors pre-calculated support/resistance zones derived from ZigZag analysis. When price touches an open zone, the strategy fires an alarm. The signal itself does not close zones: when a zone closes is decided by the shared closing rules in `ZoneInvalidation` (see [Zone lifetime](#zone-lifetime)). A secondary "near" variant fires an early warning when price approaches a zone. This is a **production** strategy and one of the core zone-based strategies in the scanner.
+The **DLZ** strategy monitors pre-calculated support/resistance zones derived from ZigZag analysis. When price touches an open zone, the strategy fires an alarm. The signal itself does not close zones: when a zone closes is decided by the shared closing rules in `ZoneInvalidation` (see [Zone lifetime](#zone-lifetime)). This is a **production** strategy and one of the core zone-based strategies in the scanner.
 
 Two signal variants:
 - **dlz** — fires when price touches a zone (at most once per zone per hour; the zone stays open until the closing rules close it).
-- **dlz.near** — fires an early warning when price approaches within `WarnPercentage` of a zone.
 
 ## How it works
 
@@ -30,15 +29,6 @@ Iterates over the configured `IntervalList` (default: `["1h"]`):
 The alarm is throttled to once per zone per hour (`AlarmDate`): a zone survives its first touch, so without this every candle of the same test would report again.
 
 Weak zones can be skipped when `ZoneStartApply = true`.
-
-### Signal: DLZ near (dlz.near)
-
-Alarm-only — does not close zones:
-
-- **Long**: `alarmPrice = zone.Top × (100 + WarnPercentage) / 100`. Fires if candle Low ≤ alarmPrice.
-- **Short**: `alarmPrice = zone.Bottom × (100 − WarnPercentage) / 100`. Fires if candle High ≥ alarmPrice.
-
-At most one alarm per zone per hour.
 
 ## Signal conditions summary
 
@@ -73,12 +63,10 @@ At most one alarm per zone per hour.
 | `ZoomLowerTimeFrames` | true | Zoom zones to lower timeframes |
 | `MinimumZoomedPercentage` | 0.2 | Min zone width % for zoomed zones |
 | `MaximumZoomedPercentage` | 0.7 | Max zone width % for zoomed zones |
-| `WarnPercentage` | 0.25 | Distance % for "near" warning signals |
 | `NearZonePercentage` | 0.25 | Proximity % for combined strategy checks |
 | `MaxTouches` | 2 | Visits a zone survives; it closes after that. 0 = never used up, only a break closes it (see [Zone lifetime](#zone-lifetime)) |
 | `TouchLevel` | Edge | How far price must come in before a visit counts: Edge (wick reaches the near edge) or Midpoint (wick reaches the middle) |
 | `CloseZonesPastMidpoint` | false | Close the zone as soon as price has ever reached its middle, whatever the visit count (was `DisqualifyOnMitigation`) |
-| `RejectionLookback` | 1 | Candles to look back for zone rejection |
 | `ZoneStartApply` | false | Skip Weak zones |
 | `ZoneStartCandleCount` | 5 | Zone start lookback for strength |
 | `ZoneStartPercentage` | 2.5 | Zone start percentage threshold |
@@ -114,22 +102,20 @@ The rules run realtime after every closed zone-interval candle (`ZoneDlz.Invalid
 
 ```
 CryptoScanner.Analyzers/Dlz/
-├── DlzPlugin.cs                              # Plugin registration (dlz + dlz.near)
+├── DlzPlugin.cs                              # Plugin registration (dlz)
 ├── Dlz.md                                    # This document
 ├── Config/
 │   ├── StrategyDlzTabView.axaml              # Settings tab UI (complex layout with zone filters)
 │   └── StrategyDlzTabViewModel.cs            # Settings viewmodel
 └── Signal/
     ├── SignalDominantLevelLong.cs             # Long: alarm when candle touches demand zone
-    ├── SignalDominantLevelShort.cs            # Short: alarm when candle touches supply zone
-    ├── SignalDominantLevelNearLong.cs         # Long near: alarm when approaching demand zone
-    └── SignalDominantLevelNearShort.cs        # Short near: alarm when approaching supply zone
+    └── SignalDominantLevelShort.cs            # Short: alarm when candle touches supply zone
 ```
 
 Zone closing rules: `CryptoScanner.Core/Zones/ZoneInvalidation.cs`
 Settings class: `CryptoScanner.Core/Settings/Strategy/SettingsSignalStrategyDlz.cs`
-Enum values: `CryptoSignalStrategy.DominantLevel = 1000`, `CryptoSignalStrategy.DominantLevelNear = 1001`
+Enum values: `CryptoSignalStrategy.DominantLevel = 1000` (`DominantLevelNear = 1001` stays in the enum for stored signals; the near variant was removed on 26-09-2026, it had not been registered since 17-09)
 
 ## Registration
 
-Registered as a **production** strategy in `AnalyzerRegistration.cs`. Strategy names in the UI: **dlz**, **dlz.near**.
+Registered as a **production** strategy in `AnalyzerRegistration.cs`. Strategy name in the UI: **dlz**.

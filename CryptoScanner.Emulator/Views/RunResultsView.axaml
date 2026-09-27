@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -61,6 +61,10 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 				<DataGridTextColumn Header="Started" Binding="{Binding StartedLocal}" Width="120"/>
+                <!-- The build that made the run. Runs on different builds are not comparable, and
+                     the 29-08-2026 break (+432,07 against +734,17 for the same settings) could only
+                     be found from dates and commits (open point 52). -->
+				<DataGridTextColumn Header="Build" Binding="{Binding BuildStampText}" Width="120"/>
 				<DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="400"/>
 				<DataGridTextColumn Header="Period" Binding="{Binding Period}" Width="210"/>
 				<DataGridTextColumn Header="Finished" Binding="{Binding FinishedLocal}" Width="130" IsVisible="False"/>
@@ -160,6 +164,16 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PeakProfitPercentageText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- The deepest fall of the capital from an earlier high, from the daily snapshots of
+                     the run. Two runs with the same profit are not the same when one of them was
+                     down 40% halfway (open point 47). -->
+                <DataGridTemplateColumn Header="Drawdown %" Width="90" SortMemberPath="MaxDrawdownPercentage">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding MaxDrawdownText}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

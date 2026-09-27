@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Nachtelijke controle van een exchange-run.
 
@@ -2570,8 +2570,13 @@ def classify_error(message):
     struikeling gelden. Daarna onze code, want die weegt het zwaarst. Pas dan de bekende herstelde
     vormen, en wat overblijft valt bewust door.
     """
+    # Alleen de melding zelf, niet de stacktrace die read_log_lines erachter plakt: die bevat
+    # "at CryptoScanner.TradingView." voor elke fout die door die code loopt, waardoor een
+    # storm van 12.194 mislukte handshakes op 26-08-2026 als "niet van ons" onzichtbaar bleef
+    # (open punt 33). De eerste frame begint met " at <naam>(", en daar knippen we.
+    head = re.split(r"\s+at\s+[\w.<>`\[\]]+\(", message, 1)[0]
     lowered = message.lower()
-    if any(part in message for part in ERRORS_NOT_OURS):
+    if any(part in head for part in ERRORS_NOT_OURS):
         return "notOurs"
     if any(part in lowered for part in ERRORS_DELIBERATE):
         return "recovered"
@@ -2705,7 +2710,36 @@ def check_errors(report, entries, error_entries, top_count):
 # ==============================================================================================
 # 6. Signalen, zones, posities
 # ==============================================================================================
-def check_signals(report, main_db, exchange_names, window_start, window_end, trading_active):
+# Regels in het hoofdlog die zeggen dat de analyse WEL liep en een signaal afkeurde. Als er nul
+# signalen in het venster staan is dit de eerste plek om te kijken: een filter dat zijn werk doet
+# leest anders precies als een analyse die niet draaide (open punt 22).
+REJECTION_HINTS = (
+    ("below minimum", "onder een minimum (bijv. band range index)"),
+    ("not between", "buiten een bereik (24h/effective %)"),
+    ("not analysed:", "symbool overgeslagen (blacklist, whitelist, tick)"),
+    ("indicators not ready", "indicatoren nog niet gereed"),
+    ("barometer", "barometer"),
+    ("bb.width", "bollinger-breedte"),
+    ("stop after", "signaal verlopen"),
+)
+
+
+def count_rejections(entries, window_start, window_end):
+    """Per soort afkeurregel het aantal in het venster, op de tekst van REJECTION_HINTS."""
+    counts = Counter()
+    for moment, _level, _logger, message in entries or []:
+        if window_start and window_end and moment and not (window_start <= moment <= window_end):
+            continue
+        lowered = message.lower()
+        for needle, label in REJECTION_HINTS:
+            if needle in lowered:
+                counts[label] += 1
+                break
+    return counts
+
+
+def check_signals(report, main_db, exchange_names, window_start, window_end, trading_active,
+                  entries=None):
     if main_db is None:
         report.add("signals", "Signalen", UNKNOWN, ["Geen hoofddatabase gevonden."])
         return {}
@@ -2774,10 +2808,22 @@ def check_signals(report, main_db, exchange_names, window_start, window_end, tra
                     "{}={}".format(key, value) for key, value in per_side.most_common())))
                 lines.append("")
             else:
-                verdict = worst(verdict, ATTENTION)
-                lines.append("Helemaal geen signalen in dit venster. Dat kan op een rustige nacht, "
-                             "maar als de candles normaal binnenkomen betekent het meestal dat de "
-                             "analyse voor deze exchange niet gedraaid heeft.")
+                rejections = count_rejections(entries, window_start, window_end)
+                if rejections:
+                    # De analyse liep en keurde af: dat is het filter dat zijn werk doet. Binance
+                    # Perpetual kreeg op 18/19-08-2026 "aandacht" met 215 regels "band range index
+                    # ... below minimum" in het log (open punt 22).
+                    lines.append("Geen signalen in dit venster, maar het hoofdlog laat zien dat de "
+                                 "analyse wel liep en afkeurde: "
+                                 + ", ".join("{} ({})".format(label, count)
+                                             for label, count in rejections.most_common(5))
+                                 + ". Dat is het filter dat zijn werk doet, geen analyse die niet draaide.")
+                else:
+                    verdict = worst(verdict, ATTENTION)
+                    lines.append("Helemaal geen signalen in dit venster en ook geen afkeurregels in het "
+                                 "hoofdlog. Dat kan op een rustige nacht, maar als de candles normaal "
+                                 "binnenkomen betekent het meestal dat de analyse voor deze exchange "
+                                 "niet gedraaid heeft.")
                 lines.append("")
 
             if trading_active:
@@ -3373,7 +3419,7 @@ def main():
     check_streams(report, window_entries, window_hours or 1.0)
     check_errors(report, window_entries, window_error_entries, arguments.top)
     check_signals(report, main_db, exchange_names, utc_start, utc_end,
-                  settings_facts.get("tradingActive", False))
+                  settings_facts.get("tradingActive", False), window_entries)
     # Lokale tijden: sample-process.ps1 schrijft Get-Date, niet UTC.
     check_memory(report, folder, arguments.memory_csv, window_start, window_end)
 

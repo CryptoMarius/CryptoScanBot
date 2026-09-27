@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Signal;
+﻿using CryptoScanner.Core.Signal;
 
 public static class SmaHelper
 {
@@ -38,6 +38,13 @@ public static class SmaHelper
         // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
         decimal? value = (decimal?)data.CandleData?.Sma200 - (decimal?)data.CandleData?.Sma50;
         decimal? value2 = ((decimal?)data.CandleData?.Sma200 + (decimal?)data.CandleData?.Sma50) / 2;
+        // Only a real zero divisor: a null (SMA not ready) keeps passing, as it always did and as
+        // HelperExtensionNullTests demands - no data is no objection.
+        if (value2 == 0)
+        {
+            response = "percentage sma200 and sma50 (divisor is zero)";
+            return false;
+        }
         decimal? perc = 100 * value / value2;
         if (perc < percentage)
         {
@@ -54,6 +61,13 @@ public static class SmaHelper
     {
         decimal? value = (decimal?)data.CandleData?.Sma50 - (decimal?)data.CandleData?.Sma20;
         decimal? value2 = ((decimal?)data.CandleData?.Sma50 + (decimal?)data.CandleData?.Sma20) / 2;
+        // Only a real zero divisor: a null (SMA not ready) keeps passing, as it always did and as
+        // HelperExtensionNullTests demands - no data is no objection.
+        if (value2 == 0)
+        {
+            response = "percentage sma50 and sma20 (divisor is zero)";
+            return false;
+        }
         decimal? perc = 100 * value / value2;
         if (perc < percentage)
         {
@@ -71,6 +85,13 @@ public static class SmaHelper
         // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
         decimal? value = (decimal?)data.CandleData?.Sma200 - (decimal?)data.CandleData?.Sma20;
         decimal? value2 = ((decimal?)data.CandleData?.Sma200 + (decimal?)data.CandleData?.Sma20) / 2;
+        // Only a real zero divisor: a null (SMA not ready) keeps passing, as it always did and as
+        // HelperExtensionNullTests demands - no data is no objection.
+        if (value2 == 0)
+        {
+            response = "percentage sma200 and sma20 (divisor is zero)";
+            return false;
+        }
         decimal? perc = 100 * value / value2;
         if (perc < percentage)
         {

@@ -752,7 +752,7 @@ public sealed class ReplayRunner
                 $"collect {collect:F1}s, hubFeed {hubFeed:F1}s");
             GlobalData.AddTextToLogTab(
                 $"Warmup reason — hubNull {PipelineProfiler.PrepWarmupHubNull}, " +
-                $"gap {PipelineProfiler.PrepWarmupGap}, " +
+                $"gap {PipelineProfiler.PrepWarmupGap} (of which after a skipped symbol {PipelineProfiler.PrepWarmupAfterSkip}), " +
                 $"explicitWindow {PipelineProfiler.PrepWarmupExplicit}, " +
                 $"configChanged {PipelineProfiler.PrepWarmupConfig}");
         }

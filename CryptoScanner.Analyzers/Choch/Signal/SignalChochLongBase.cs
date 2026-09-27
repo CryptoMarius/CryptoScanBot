@@ -43,9 +43,17 @@ public abstract class SignalChochLongBase : SignalCreateBase
     // don't flood the log with the same message every candle.
     private static readonly HashSet<(string, string, string)> _loggedNoChoch = [];
 
+    // Under a lock: four candle workers reach this static set at once (open point 114).
+    private static bool MarkLogged((string, string, string) key)
+    {
+        lock (_loggedNoChoch)
+            return _loggedNoChoch.Add(key);
+    }
+
     public static void ResetDiagnosticLog()
     {
-        _loggedNoChoch.Clear();
+        lock (_loggedNoChoch)
+            _loggedNoChoch.Clear();
         SignalChochShortBase.ResetDiagnosticLog();
     }
 
@@ -53,7 +61,12 @@ public abstract class SignalChochLongBase : SignalCreateBase
     {
         // Skip the very noisy lower timeframes
         if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval5m)
+        {
+            // Said out loud since open point 110; ChochSettings.MinimumInterval keeps the UI from
+            // offering these intervals in the first place.
+            ExtraText = "interval below 5m";
             return false;
+        }
 
         _ = SymbolTrend.CalculateSymbolTrendAsync(Symbol, TrendSettings).Result;
 
@@ -65,7 +78,7 @@ public abstract class SignalChochLongBase : SignalCreateBase
         if (lastChoCh == null)
         {
             ExtraText = "no CHoCH";
-            if (debugLog && _loggedNoChoch.Add((Symbol.Name, Interval.Name, SignalStrategy)))
+            if (debugLog && MarkLogged((Symbol.Name, Interval.Name, SignalStrategy)))
                 ScannerLog.Logger.Info($"CHoCH diag {Symbol.Name} {Interval.Name} {SignalStrategy} long: {ExtraText} (events={trendData.StructureEvents.Count}, trend={trendData.Trend})");
             return false;
         }
@@ -145,7 +158,7 @@ public abstract class SignalChochLongBase : SignalCreateBase
     }
 
 
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
         // Setup invalidated when the BOS trend has flipped back to Bearish — applies to
         // both variants (a direct entry waiting to step in OR a pullback entry that
@@ -156,6 +169,6 @@ public abstract class SignalChochLongBase : SignalCreateBase
             return true;
         }
 
-        return base.GiveUp(signal);
+        return false;
     }
 }

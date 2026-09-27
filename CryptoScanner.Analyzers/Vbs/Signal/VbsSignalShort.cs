@@ -1,4 +1,5 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
 
@@ -113,9 +114,14 @@ public class VbsSignalShort : VbsSignalVbs
                     ExtraText = $"no vbs data on {higherPeriod}";
                     return false;
                 }
+                // The band of the last closed higher candle, the price of the running one; see
+                // VbsSignalLong (open point 73d).
+                CryptoCandle htfPrice = htfCandle.Candle;
+                if (IndicatorEngine.TryGetRunningHigherCandle(Symbol, Interval, CandleLast.Candle.OpenTime, higherPeriod, out CryptoCandle running))
+                    htfPrice = running;
                 double htfUpper = htfVbs.Upper.Value;
-                double htfHigh = (double)htfCandle.Candle.High;
-                double htfClose = (double)htfCandle.Candle.Close;
+                double htfHigh = (double)htfPrice.High;
+                double htfClose = (double)htfPrice.Close;
                 if (htfHigh <= htfUpper && htfClose <= htfUpper)
                 {
                     ExtraText = $"no upper band break on {result.higherInterval.Interval.Name}";
@@ -136,7 +142,8 @@ public class VbsSignalShort : VbsSignalVbs
         // Entry = the most extreme of the Close and the band.
         _entryPrice = Math.Max(candle.Close, band);
 
-        if (settings.UseStopLoss)
+        // Only with a real ACS, see VbsSignalLong (open point 74a).
+        if (settings.UseStopLoss && pctDeviation > 0)
             _slPercentage = (decimal)pctDeviation;
 
         // Take-profit = RiskRewardRatio * SL-distance (RiskRewardRatio * ACS%), handed to the trader as a
@@ -145,7 +152,7 @@ public class VbsSignalShort : VbsSignalVbs
             _tpPercentage = (decimal)(settings.RiskRewardRatio * pctDeviation);
 
         //MarkSignalFired();
-        ExtraText = $"hit upper band {pctDeviation:N2}% {_entryPrice}";
+        ExtraText = $"hit upper band, ACS {pctDeviation:N2}% {_entryPrice}";
         return true;
     }
 }

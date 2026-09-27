@@ -47,6 +47,23 @@ public static class IndicatorEngine
 
 
     /// <summary>
+    /// The higher-interval candle that CONTAINS the lower candle at <paramref name="openTime"/>:
+    /// the one that is still running at the moment the lower candle closes, built up minute by
+    /// minute by CandleTools. <see cref="CalculateIndicatorsForInterval"/> deliberately steps back
+    /// to the last closed higher candle, because only closed candles have indicator data; a
+    /// confirmation that wants to know whether the higher timeframe shows the break NOW reads the
+    /// band from that closed candle and the price from this one (open point 73d).
+    /// </summary>
+    public static bool TryGetRunningHigherCandle(CryptoSymbol symbol, CryptoInterval interval,
+        CandleTime openTime, CryptoIntervalPeriod higherIntervalPeriod, out CryptoCandle candle)
+    {
+        CryptoSymbolInterval symbolHigherInterval = symbol.GetSymbolInterval(higherIntervalPeriod);
+        var result = IntervalTools.StartOfIntervalCandle3(openTime, interval.Duration, symbolHigherInterval.Interval.Duration);
+        return symbolHigherInterval.CandleList.TryGetValue(result.targetStart, out candle);
+    }
+
+
+    /// <summary>
     /// Ensures <see cref="CryptoSymbolInterval.Data"/> holds the indicator data for
     /// <paramref name="candleOpenTime"/>, filled incrementally via the per-interval QuoteHub.
     /// Returns false when there is not enough history yet.
@@ -95,6 +112,8 @@ public static class IndicatorEngine
         if (warmup)
         {
             PipelineProfiler.RecordPrepWarmupReason(hubNull, gap, explicitWindow, configChanged);
+            if (!hubNull && gap && symbol.Data.LastCandleSkipped)
+                PipelineProfiler.RecordPrepWarmupAfterSkip();
             long profWarmupStart = Stopwatch.GetTimestamp();
 
             long profCollectStart = Stopwatch.GetTimestamp();

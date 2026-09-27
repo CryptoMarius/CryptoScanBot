@@ -1,4 +1,4 @@
-#if DEBUG
+﻿#if DEBUG
 using CryptoScanner.Analyzers.Choch.Signal;
 #endif
 using CryptoScanner.Core.Const;
@@ -6,6 +6,7 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trader;
 
 
 using Dapper;
@@ -318,6 +319,29 @@ public static class EmulatorDb
     /// drag every average towards zero.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The largest fall from a running high, in percent of that high, over a capital series in date
+    /// order. A series that only ever rises gives 0; 100, 120, 90, 130, 65 gives 50 (the fall from
+    /// 130 to 65, deeper than the 25 from 120 to 90).
+    /// </summary>
+    public static decimal MaxDrawdownPercentage(IReadOnlyList<AssetSnapshotTools.AssetSnapshotDay> days)
+    {
+        decimal peak = 0m;
+        decimal deepest = 0m;
+        foreach (AssetSnapshotTools.AssetSnapshotDay day in days)
+        {
+            if (day.Value > peak)
+                peak = day.Value;
+            if (peak <= 0m)
+                continue;
+            decimal drawdown = 100m * (peak - day.Value) / peak;
+            if (drawdown > deepest)
+                deepest = drawdown;
+        }
+        return deepest;
+    }
+
+
     private static void ComputeRunSummary(CryptoDatabase database, CryptoEmulatorRun run)
     {
         int id = run.Id;
@@ -326,6 +350,10 @@ public static class EmulatorDb
         var peak = database.Connection.QueryFirstOrDefault<PeakRow>(PeakExposureSql, new { id });
         run.PeakInvested = (decimal)(peak?.Money ?? 0.0);
         run.PeakPositions = (int)(peak?.Positions ?? 0.0);
+
+        // The deepest fall from an earlier high, over the daily capital totals the run wrote
+        // (AssetSnapshot, one row per replayed day) - open point 47.
+        run.MaxDrawdownPercentage = MaxDrawdownPercentage(AssetSnapshotTools.LoadDailyTotals(id));
 
         // Long and short kept apart. A short's stop sits nearer and its target further, so a
         // directional claim can only be made per side - the aggregate hides exactly that.

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -37,11 +37,6 @@
             <!-- Only if there is a previous storsi signal -->
             <CheckBox IsChecked="{Binding SkipFirstSignal, Mode=TwoWay}"
                       Content="Only if there is a previous storsi signal"
-                      FontSize="12"/>
-
-            <!-- Only when macd shows recovery -->
-            <CheckBox IsChecked="{Binding CheckMacdRecovery, Mode=TwoWay}"
-                      Content="Only when macd shows recovery"
                       FontSize="12"/>
 
         </StackPanel>

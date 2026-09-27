@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
@@ -18,7 +18,6 @@ public class SignalSuperTrendBreakoutBase : SignalCreateBase
            || data.Candle.OpenTime == 0
            || data.CandleData == null
            || data.CandleData.SuperTrend == null
-           || data.CandleData.BollingerBandsDeviation == null
            )
             return false;
 
@@ -150,11 +149,8 @@ public class SignalSuperTrendBreakoutBase : SignalCreateBase
     }
 
 
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
-        if (base.GiveUp(signal))
-            return true;
-
         // Give up when the SuperTrend flips back against the signal direction
         if (SignalSide == CryptoTradeSide.Long && CandleLast?.CandleData?.SuperTrendUpperBand != null)
         {

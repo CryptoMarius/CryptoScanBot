@@ -1,4 +1,4 @@
-@page "/chart"
+﻿@page "/chart"
 @using CryptoScanner.Analyzers.Nwe
 @using CryptoScanner.Analyzers.Nwe.Signal
 @using CryptoScanner.Core.Context
@@ -523,7 +523,7 @@
     private string WindowBannerTooltip =>
         "The chart is showing this position instead of the live market. Candles come straight from "
         + "candles.db, so history older than the scanner keeps in memory is drawn too. "
-        + "Lux is left out here — it computes on the live candles only. Click × to go back to now.";
+        + "Click × to go back to now.";
 
     /// <summary>The "back to now" button next to the window banner.</summary>
     private async Task OnLeaveWindow()
@@ -1347,11 +1347,11 @@
                 };
             }
 
-            // Lux is the one indicator that reads symbolInterval.CandleList itself instead of taking
-            // the candles it is given (LuxIndicator.CalculateRange), so in a position window it
-            // would compute over the live candles and paste the result onto history. Left out
-            // there, and the window banner says so, rather than drawing something that is wrong.
-            if (_showLux && rawCandles.Count > 0 && _windowStart == null)
+            // Lux used to read symbolInterval.CandleList itself instead of the candles it is given,
+            // so in a position window it computed over the live candles and was left out there.
+            // Since 26-09-2026 it walks candleSource, the same list the rest of this chart draws
+            // (open point 55), so the window shows it too.
+            if (_showLux && rawCandles.Count > 0)
             {
                 // Computed on the interval the chart is SHOWING, the same way the Avalonia chart does
                 // it (CryptoScanner.Chart Lux.Draw passes interval.IntervalPeriod). This used to be
@@ -1362,7 +1362,7 @@
                 int luxCount = rawCandles.Count;
                 CandleTime endTime = rawCandles[^1].OpenTime;
 
-                LuxIndicator.CalculateRange(_currentSymbol, period,
+                LuxIndicator.CalculateRange(candleSource, symbolInterval.Interval.Duration,
                     endTime, luxCount, out int[] overSoldHistory, out int[] overBoughtHistory);
 
                 // CalculateRange writes output[i] for the candle endTime - (count-1-i) steps back, so
@@ -1408,7 +1408,7 @@
 
                 if (_showPositions)
                     ChartDataService.BuildPositionOverlays(_currentSymbol, symbolInterval.Interval, from, to,
-                        segments, dots, verticals);
+                        segments, dots, verticals, candleSource);
             }
 
             if (_dtbZones.Count > 0)

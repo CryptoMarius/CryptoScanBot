@@ -1213,7 +1213,8 @@ public class TradeTools
             if (signalSlPercentage.HasValue && dcaEntry.Percentage >= signalSlPercentage.Value)
                 continue;
 
-            decimal dcaPrice = entryPrice - (multiplier * entryPrice * Math.Abs(dcaEntry.Percentage) / 100m);
+            // Through PricePlacement since 26-09-2026 (open point 27), like the stop and the target.
+            decimal dcaPrice = PricePlacement.Adverse(side, entryPrice, Math.Abs(dcaEntry.Percentage));
             dcaPrice = dcaPrice.ClampPrice(side, symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize);
             if (dcaPrice <= 0)
             {
@@ -1276,7 +1277,7 @@ public class TradeTools
                 allocated += tpQuantity;
             }
 
-            decimal tpPrice = entryPrice + (multiplier * entryPrice * tpList[i].Percentage / 100m);
+            decimal tpPrice = PricePlacement.Favorable(side, entryPrice, tpList[i].Percentage);
             tpPrice = tpPrice.ClampPrice(side, symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize);
             if (!CheckOrder($"take profit {i + 1} ({tpList[i].Percentage}%)", tpQuantity, tpPrice, out reason))
                 return false;

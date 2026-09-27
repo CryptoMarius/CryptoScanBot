@@ -1,6 +1,8 @@
 ﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
+using System.Text.Json.Serialization;
+
 namespace CryptoScanner.Analyzers.FailedBreakout;
 
 /// <summary>
@@ -119,6 +121,9 @@ public class FailedBreakoutSettings : SettingsSignalStrategyBase
             + "intervals under Signal.Zones* must be filled, otherwise there are no zones and "
             + "nothing fires.")]
     public List<string> RequireZone { get; set; } = [];
+
+    [JsonIgnore]
+    public override IEnumerable<string> RequiredZoneKinds => RequireZone;
 
     /// <summary>
     /// How much room to allow around the zone, as a percentage of the zone's own price. Zero is

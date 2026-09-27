@@ -14,14 +14,13 @@ public static class ColorHelper
     public const string Red = "text-red";
     public const string Neutral = "text-neutral";
 
+    // Green means "this coin is followed", red "it is not": CryptoSymbol.EnoughVolume, hysteresis
+    // included, the same as the Avalonia grid (open point 18).
     public static string GetVolumeColorClass(CryptoSymbol symbol, double volume)
     {
         if (volume <= 0)
-            return Neutral;
-        else if (volume < (double)symbol.QuoteData.MinimalVolume)
             return Red;
-        else
-            return Green;
+        return symbol.EnoughVolume() ? Green : Red;
     }
 
     public static string GetColorClassViaSign(double value)

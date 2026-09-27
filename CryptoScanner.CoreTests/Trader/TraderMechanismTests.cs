@@ -277,7 +277,7 @@ public class TraderMechanismTests
         var sl = RecalcAndGetSl(position);
 
         Assert.AreEqual(SlSource.Signal, sl.Source);
-        Assert.AreEqual(103m, sl.Stop, "Short 3% signal SL from 100 = 103");
+        Assert.AreEqual(100m / 0.97m, sl.Stop, "Short 3% signal SL from 100 = 100 / 0.97 = 103.09 (log mirror, open point 27)");
     }
 
     [TestMethod]
@@ -350,8 +350,8 @@ public class TraderMechanismTests
 
         Assert.AreEqual(1, position.PartCount);
         Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL stays active after DCA fill");
-        // Signal SL always anchors on EntryPrice, even after a DCA fill: 100 + 3% = 103.
-        Assert.AreEqual(100m + 100m * 0.03m, sl.Stop, "Signal SL = 100 + 3% = 103");
+        // Signal SL always anchors on EntryPrice, even after a DCA fill: 100 / (1 - 0.03) = 103.09.
+        Assert.AreEqual(100m / (1m - 0.03m), sl.Stop, "Signal SL = 100 / 0.97 = 103.09");
     }
 
     [TestMethod]
@@ -439,8 +439,8 @@ public class TraderMechanismTests
 
         Assert.AreEqual(2, position.PartCount);
         Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL stays active after multiple DCA fills");
-        // Signal SL always anchors on EntryPrice (100), regardless of how many DCAs filled: 103.
-        Assert.AreEqual(100m + 100m * 0.03m, sl.Stop, "Signal SL stays anchored on entry price (100)");
+        // Signal SL always anchors on EntryPrice (100), regardless of how many DCAs filled: 103.09.
+        Assert.AreEqual(100m / (1m - 0.03m), sl.Stop, "Signal SL stays anchored on entry price (100)");
     }
 
 

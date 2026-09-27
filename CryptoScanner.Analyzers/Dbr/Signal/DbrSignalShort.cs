@@ -64,7 +64,7 @@ public class DbrSignalShort : SignalCreateBase
             return false;
         }
 
-        if (!DbrBandsHelper.IsUpperBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double bandWidthPct, out double upperBand, out string reason))
+        if (!DbrBandsHelper.IsUpperBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double bandWidthPct, out double upperBand, out string reason, exactCandle: true))
         {
             ExtraText = reason;
             return false;

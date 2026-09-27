@@ -1,4 +1,4 @@
-using CryptoScanner.Analyzers.Stobb;
+﻿using CryptoScanner.Analyzers.Stobb;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -246,7 +246,7 @@ public class SignalBbmaShort : SignalBbmaBase
     /// Invalidates the setup when the current candle is a Long Extreme.
     /// A bullish extreme after a bearish CSM means the setup has been overridden — give up.
     /// </summary>
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
         BbmaState state = GetBbmaState(CandleLast);
         return state == BbmaState.Extreme || state == BbmaState.MagicExtreme;
@@ -258,7 +258,7 @@ public class SignalBbmaShort : SignalBbmaBase
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(StobbPlugin.Settings.BBMinPercentage, 100))
+        if (!CandleLast.CheckBollingerBandsWidth(BbmaPlugin.Settings.BBMinPercentage, BbmaPlugin.Settings.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;

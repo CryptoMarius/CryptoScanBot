@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -8,7 +8,13 @@
              x:Class="CryptoScanner.Config.Views.TrendIntervalFilterView">
 
     <HeaderedContentControl Classes="groupbox" Header="Trend interval filter">
-        <Grid ColumnDefinitions="Auto,Auto" Margin="8" ColumnSpacing="8">
+      <StackPanel Margin="8" Spacing="4">
+        <!-- The trend against the trade direction (open point 51) -->
+        <CheckBox IsChecked="{Binding Inverted, Mode=TwoWay}"
+                  Content="Against the trade direction (long needs bearish, short bullish)"
+                  FontSize="12"
+                  ToolTip.Tip="Off: the ticked intervals must trend WITH the trade, as always. On: they must trend AGAINST it - a long only while the trend falls, a short only while it rises. Built for strategies that buy the band, like dbr."/>
+        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
 
             <ItemsControl Grid.Column="0" ItemsSource="{Binding IntervalsColumn1}">
                 <ItemsControl.ItemTemplate>
@@ -33,6 +39,7 @@
             </ItemsControl>
 
         </Grid>
+      </StackPanel>
     </HeaderedContentControl>
 
 </UserControl>

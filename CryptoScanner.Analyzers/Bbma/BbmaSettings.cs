@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Settings.Strategy;
+﻿using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Bbma;
 
@@ -16,6 +16,16 @@ public class BbmaSettings : SettingsSignalStrategyBase
     private const string GroupReentry = "Reentry";
     private const string GroupHtfSetup = "HTF setup";
     private const string GroupExit = "Exit";
+
+    // Own BB range since 26-09-2026 (open point 109): this strategy used to read stobb's pair, so
+    // whoever tuned stobb silently retuned this one too. The defaults are what it effectively ran
+    // with (stobb's 1,5 and no upper bound).
+    [SettingCaption("Filter on BB%")]
+    public double BBMinPercentage { get; set; } = 1.50;
+
+    [SettingCaption("", SameRowAs = nameof(BBMinPercentage))]
+    public double BBMaxPercentage { get; set; } = 0.0;
+
 
     /// <summary>
     /// The strict reading of the rules: the reentry candle must not close beyond the MA5/10 zone
@@ -57,6 +67,29 @@ public class BbmaSettings : SettingsSignalStrategyBase
             + "H Mhv, J RejectedEma50, G GapBbEma50, 2 Csak2, A Csaa, X Cross, D Csd, M Csm. "
             + "Empty accepts every trigger.")]
     public string RejectedLtfTriggers { get; set; } = "";
+
+    /// <summary>
+    /// MTF letters (the middle letter of the code) that do NOT give a signal, as one string without
+    /// separators - the same letters as above plus '-' for "nothing on the MTF". "-" rejects R-M,
+    /// R-2 and R-X, the codes that fired most on the first day (open point 65). Empty accepts every
+    /// MTF state, the behaviour so far.
+    /// </summary>
+    [SettingCaption("Rejected MTF states", Group = GroupReentry, Indented = true,
+        Tooltip = "Letters of the middle (MTF) position of the code that do not give a signal, as one "
+            + "string: E Extreme, T Tpw, H Mhv, J RejectedEma50, G GapBbEma50, 2 Csak2, A Csaa, "
+            + "X Cross, D Csd, M Csm, R Reentry, - nothing. Empty accepts every MTF state.")]
+    public string RejectedMtfStates { get; set; } = "";
+
+    /// <summary>
+    /// HTF setups that do NOT give a signal, comma separated, compared with the full setup name the
+    /// signal shows between brackets: CSD, CSM, TPW&gt;CSD, TPW&gt;CSM, MHV&gt;CSD or MHV&gt;CSM
+    /// (open point 65). Empty accepts every setup, the behaviour so far.
+    /// </summary>
+    [SettingCaption("Rejected HTF setups", Group = GroupHtfSetup, Indented = true,
+        Tooltip = "HTF setups that do not give a signal, comma separated, exactly as the signal shows "
+            + "them between brackets: CSD, CSM, TPW>CSD, TPW>CSM, MHV>CSD, MHV>CSM. Empty accepts "
+            + "every setup.")]
+    public string RejectedHtfSetups { get; set; } = "";
 
     /// <summary>
     /// How many HTF candles back the setup behind the HTF reentry may lie. The rules give two

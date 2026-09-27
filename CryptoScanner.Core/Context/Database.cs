@@ -470,6 +470,7 @@ public class CryptoDatabase : IDisposable
                 "Barometer1h TEXT NULL," +
                 "Barometer4h TEXT NULL," +
                 "Barometer1d TEXT NULL," +
+                "MarketBreadth1h TEXT NULL," +
 
                 // statistics
                 "PriceMin TEXT NULL," +
@@ -614,6 +615,7 @@ public class CryptoDatabase : IDisposable
                 "Barometer1h TEXT NULL," +
                 "Barometer4h TEXT NULL," +
                 "Barometer1d TEXT NULL," +
+                "MarketBreadth1h TEXT NULL," +
 
                 // statistics
                 "PriceMin TEXT NULL," +
@@ -1022,6 +1024,7 @@ public class CryptoDatabase : IDisposable
                 // CryptoEmulatorRun for why). Decimals are TEXT like Profit/Invested above.
                 "PeakInvested TEXT NULL," +
                 "PeakPositions INTEGER NOT NULL DEFAULT 0," +
+                "MaxDrawdownPercentage TEXT NULL," +
                 "PositionsLong INTEGER NOT NULL DEFAULT 0," +
                 "PositionsShort INTEGER NOT NULL DEFAULT 0," +
                 "ProfitLong TEXT NULL," +

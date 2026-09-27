@@ -1,4 +1,4 @@
-using CryptoScanner.Analyzers.Stobb;
+﻿using CryptoScanner.Analyzers.Stobb;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 
@@ -24,7 +24,7 @@ public class SignalNweBbShort : SignalNweBbBase
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(StobbPlugin.Settings.BBMinPercentage, 100))
+        if (!CandleLast.CheckBollingerBandsWidth(NwePlugin.Settings.BBMinPercentage, NwePlugin.Settings.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
@@ -90,7 +90,8 @@ public class SignalNweBbShort : SignalNweBbBase
         return true;
     }
 
-    public override bool GiveUp(CryptoSignal signal)
+    // See SignalNweBbLong (open point 75b).
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
         if (CandleTime.FromDateTime(signal.CloseDate).Minutes + 3 * Interval.Duration < CandleLast.Candle.OpenTime.Minutes)
         {

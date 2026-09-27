@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Settings.Strategy;
 
@@ -16,9 +16,6 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
     private bool _skipFirstSignal = false;
 
     [ObservableProperty]
-    private bool _checkMacdRecovery = false;
-
-    [ObservableProperty]
     private double _bbMinPercentage = 1.50;
 
     [ObservableProperty]
@@ -30,7 +27,6 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         BbMaxPercentage = settings.BBMaxPercentage;
         SkipFirstSignal = settings.SkipFirstSignal;
         AddRsiAmount = settings.AddRsiAmount;
-        CheckMacdRecovery = settings.CheckMacdRecovery;
         CheckBollingerBandsCondition = settings.CheckBollingerBandsCondition;
     }
 
@@ -40,7 +36,6 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         settings.BBMaxPercentage = BbMaxPercentage;
         settings.SkipFirstSignal = SkipFirstSignal;
         settings.AddRsiAmount = AddRsiAmount;
-        settings.CheckMacdRecovery = CheckMacdRecovery;
         settings.CheckBollingerBandsCondition = CheckBollingerBandsCondition;
     }
 }

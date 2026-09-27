@@ -285,14 +285,15 @@ public partial class BaseConvertersViewModel : ObservableObject
         return $"{number:N2}";
     }
 
+    // Green means "this coin is followed", red means "it is not" - the same answer the scanner gives
+    // itself in CryptoSymbol.EnoughVolume, hysteresis included. Comparing with MinimalVolume here
+    // coloured a coin between 90% and 100% of the limit red while it was being followed, and a coin
+    // with volume zero neutral while it certainly was not (open point 18).
     internal IBrush GetVolumeColor(CryptoSymbol symbol, double volume)
     {
         if (volume <= 0)
-            return BrushNeutral;
-        else if (volume < (double)symbol.QuoteData.MinimalVolume)
             return BrushRed;
-        else
-            return BrushGreen;
+        return symbol.EnoughVolume() ? BrushGreen : BrushRed;
     }
 
 }

@@ -23,11 +23,11 @@ public static class AtrRbBandsHelper
     /// Returns true when the candle at <paramref name="openTime"/> breaks below the macro lower
     /// band (EMA - ATR * OuterMult) and is the lowest Low within the trailing BreakLookback window.
     /// This mirrors exactly the lower-band label condition drawn on the chart.
-    /// <paramref name="pctDeviation"/> is the percentage the Low sits below the basis,
-    /// the same number printed as the chart label.
+    /// <paramref name="pctDeviation"/> is the stop-loss distance in percent: StopLossAtrFactor times
+    /// the ATR as a share of the close (not a band measure, whatever the older text said - open point 74c).
     /// </summary>
     public static bool IsLowerBandBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime,
-        out double pctDeviation, out double lowerBand)
+        out double pctDeviation, out double lowerBand, bool exactCandle = false)
     {
         pctDeviation = 0;
         lowerBand = 0;
@@ -39,10 +39,16 @@ public static class AtrRbBandsHelper
         if (candles.Count < settings.Length + settings.BreakLookback)
             return false;
 
-        // Locate the requested (just-closed) candle; fall back to the most recent one.
+        // Locate the requested (just-closed) candle; fall back to the most recent one - unless the
+        // caller is the strategy's own interval (exactCandle), where a missing candle is a gap and
+        // not a reason to judge the newest one (open point 73c, see DbrBandsHelper.IsBandBreak).
         int idx = candles.FindIndex(c => c.OpenTime == openTime);
         if (idx < 0)
+        {
+            if (exactCandle)
+                return false;
             idx = candles.Count - 1;
+        }
         if (idx < settings.BreakLookback - 1)
             return false;
 
@@ -58,11 +64,10 @@ public static class AtrRbBandsHelper
     /// Returns true when the candle at <paramref name="openTime"/> breaks above the macro upper
     /// band (EMA + ATR * OuterMult) and is the highest High within the trailing BreakLookback window.
     /// This mirrors exactly the upper-band label condition drawn on the chart.
-    /// <paramref name="pctDeviation"/> is the percentage the High sits above the basis,
-    /// the same number printed as the chart label.
+    /// <paramref name="pctDeviation"/> is the stop-loss distance in percent, see IsLowerBandBreak.
     /// </summary>
     public static bool IsUpperBandBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime,
-        out double pctDeviation, out double upperBand)
+        out double pctDeviation, out double upperBand, bool exactCandle = false)
     {
         pctDeviation = 0;
         upperBand = 0;
@@ -74,10 +79,16 @@ public static class AtrRbBandsHelper
         if (candles.Count < settings.Length + settings.BreakLookback)
             return false;
 
-        // Locate the requested (just-closed) candle; fall back to the most recent one.
+        // Locate the requested (just-closed) candle; fall back to the most recent one - unless the
+        // caller is the strategy's own interval (exactCandle), where a missing candle is a gap and
+        // not a reason to judge the newest one (open point 73c, see DbrBandsHelper.IsBandBreak).
         int idx = candles.FindIndex(c => c.OpenTime == openTime);
         if (idx < 0)
+        {
+            if (exactCandle)
+                return false;
             idx = candles.Count - 1;
+        }
         if (idx < settings.BreakLookback - 1)
             return false;
 

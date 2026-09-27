@@ -22,11 +22,8 @@ public class SignalStobbBase : SignalCreateBase
     }
 
 
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
-        if (base.GiveUp(signal))
-            return true;
-
         switch (SignalSide)
         {
             case CryptoTradeSide.Long:

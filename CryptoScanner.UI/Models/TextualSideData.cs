@@ -16,9 +16,14 @@ public class TextualSideData
     public List<TextualBarometerRange> BarometerRanges { get; set; } = [];
     public bool BarometerConsensusActive { get; set; }
     public int BarometerMinConsensus { get; set; }
+    public bool BarometerBreadthActive { get; set; }
+    public decimal BarometerBreadthMinimum { get; set; }
+    public decimal BarometerBreadthMaximum { get; set; } = 100m;
     public bool BarometerLog { get; set; }
     public List<TextualCheckItem> TrendIntervals { get; set; } = [];
     public bool TrendIntervalLog { get; set; }
+    // The trend against the trade direction instead of with it (open point 51).
+    public bool TrendIntervalInverted { get; set; }
     public bool SymbolTrendActive { get; set; }
     public decimal SymbolTrendMin { get; set; } = -100m;
     public decimal SymbolTrendMax { get; set; } = 100m;
@@ -69,6 +74,9 @@ public class TextualSideData
         }
         side.BarometerConsensusActive = textual.Barometer.ConsensusActive;
         side.BarometerMinConsensus = textual.Barometer.MinConsensus;
+        side.BarometerBreadthActive = textual.Barometer.BreadthActive;
+        side.BarometerBreadthMinimum = textual.Barometer.BreadthMinimum;
+        side.BarometerBreadthMaximum = textual.Barometer.BreadthMaximum;
         side.BarometerLog = textual.Barometer.Log;
 
         foreach (var interval in GlobalData.IntervalList)
@@ -80,6 +88,7 @@ public class TextualSideData
             });
         }
         side.TrendIntervalLog = textual.IntervalTrend.Log;
+        side.TrendIntervalInverted = textual.IntervalTrend.Inverted;
 
         if (textual.SymbolTrend.List.Count > 0)
         {
@@ -120,6 +129,10 @@ public class TextualSideData
         }
         textual.Barometer.ConsensusActive = BarometerConsensusActive;
         textual.Barometer.MinConsensus = BarometerMinConsensus;
+        textual.Barometer.BreadthActive = BarometerBreadthActive;
+        // Ensure min < max, as in the Avalonia view model
+        textual.Barometer.BreadthMinimum = Math.Min(BarometerBreadthMinimum, BarometerBreadthMaximum);
+        textual.Barometer.BreadthMaximum = Math.Max(BarometerBreadthMinimum, BarometerBreadthMaximum);
         textual.Barometer.Log = BarometerLog;
 
         textual.IntervalTrend.List = TrendIntervals
@@ -127,6 +140,7 @@ public class TextualSideData
             .Select(t => t.Name)
             .ToList();
         textual.IntervalTrend.Log = TrendIntervalLog;
+        textual.IntervalTrend.Inverted = TrendIntervalInverted;
 
         textual.SymbolTrend.List.Clear();
         if (SymbolTrendActive)

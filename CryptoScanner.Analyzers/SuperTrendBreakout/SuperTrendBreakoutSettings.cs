@@ -1,14 +1,13 @@
-using CryptoScanner.Core.Settings.Strategy;
+﻿using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.SuperTrendBreakout;
 
 [Serializable]
 public class SuperTrendBreakoutSettings : SettingsSignalStrategyBase
 {
-    // Number of candles to look back for a recently closed DLZ zone
-    [SettingCaption("Zone lookback (candles)",
-        Tooltip = "The number of candles to look back for a zone the price was near. 0 means the current candle only.")]
-    public int ZoneLookbackCandles { get; set; } = 5;
+    // ZoneLookbackCandles was removed on 26-09-2026 (open point 108): nothing ever read it, the
+    // proximity check looks at the current candle only. A settings file that still carries the key
+    // is read without it.
 
     // Include open zones in the proximity check
     [SettingCaption("Include open zones",

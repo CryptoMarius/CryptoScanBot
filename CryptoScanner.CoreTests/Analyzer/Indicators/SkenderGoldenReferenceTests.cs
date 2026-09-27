@@ -94,6 +94,8 @@ public class SkenderReferenceRegressionTests
         public double? VbsBasis { get; set; }
         public double? VbsUpper { get; set; }
         public double? VbsLower { get; set; }
+        // VbsVwStdev and VbsAtrSl stay in the snapshot for the stored reference files, but are no
+        // longer produced nor compared: removed from VbsCandleData on 26-09-2026 (open point 74b).
         public double? VbsVwStdev { get; set; }
         public double? VbsAcs { get; set; }
         public double? VbsAtrSl { get; set; }
@@ -208,9 +210,7 @@ public class SkenderReferenceRegressionTests
                 VbsBasis = vbsBands[i].HasValue ? vbsBands[i].Basis : null,
                 VbsUpper = vbsBands[i].HasValue ? vbsBands[i].Upper : null,
                 VbsLower = vbsBands[i].HasValue ? vbsBands[i].Lower : null,
-                VbsVwStdev = vbsBands[i].HasValue ? vbsBands[i].VwStdev : null,
                 VbsAcs = vbsBands[i].HasValue ? vbsBands[i].Acs : null,
-                VbsAtrSl = vbsAtrSl[i].Atr,
 
                 NweCenter = repCenter[i],
                 NweUpper = repUpper[i],
@@ -319,9 +319,7 @@ public class SkenderReferenceRegressionTests
             VbsBasis = vbs?.Basis,
             VbsUpper = vbs?.Upper,
             VbsLower = vbs?.Lower,
-            VbsVwStdev = vbs?.VwStdev,
             VbsAcs = vbs?.Acs,
-            VbsAtrSl = vbs?.AtrSl,
 
             NweCenter = nwe?.Center,
             NweUpper = nwe?.Upper,
@@ -408,9 +406,7 @@ public class SkenderReferenceRegressionTests
         Cmp("VbsBasis", expected.VbsBasis, actual.VbsBasis, tolerance, pluginDiffs);
         Cmp("VbsUpper", expected.VbsUpper, actual.VbsUpper, tolerance, pluginDiffs);
         Cmp("VbsLower", expected.VbsLower, actual.VbsLower, tolerance, pluginDiffs);
-        Cmp("VbsVwStdev", expected.VbsVwStdev, actual.VbsVwStdev, tolerance, pluginDiffs);
         Cmp("VbsAcs", expected.VbsAcs, actual.VbsAcs, tolerance, pluginDiffs);
-        Cmp("VbsAtrSl", expected.VbsAtrSl, actual.VbsAtrSl, tolerance, pluginDiffs);
 
         Cmp("NweCenter", expected.NweCenter, actual.NweCenter, tolerance, pluginDiffs);
         Cmp("NweUpper", expected.NweUpper, actual.NweUpper, tolerance, pluginDiffs);

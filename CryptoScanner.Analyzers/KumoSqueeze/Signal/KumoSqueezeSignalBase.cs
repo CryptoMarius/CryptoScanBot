@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
 using Skender.Stock.Indicators;
@@ -144,11 +144,8 @@ public class KumoSqueezeSignalBase : SignalCreateBase
     }
 
 
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
-        if (base.GiveUp(signal))
-            return true;
-
         // Give up when the BB width collapses again (re-squeeze) after the breakout
         var settings = KumoSqueezePlugin.Settings;
         if (CandleLast?.CandleData?.BollingerBandsPercentage <= settings.BBSqueezeMaxPercentage)

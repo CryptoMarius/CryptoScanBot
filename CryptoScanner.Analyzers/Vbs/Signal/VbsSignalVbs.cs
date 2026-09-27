@@ -1,13 +1,13 @@
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Analyzers.Vbs.Signal;
 
 /// <summary>
-/// Shared base for the VBS long/short signals. Adds the optional DLZ / FVG / SMC zone-rejection
-/// confluence filter (the three checkboxes in the VBS settings), mirroring SignalStoRsiBase, plus the
-/// delayed-entry rule: don't enter on the signal candle, wait one candle and enter on the band of that
-/// next candle (see <see cref="AllowStepIn"/>).
+/// Shared base for the VBS long/short signals: the give-up rule (a newer vbs signal supersedes an
+/// older one) and the entry price / stop / take-profit overrides the two sides fill in. The zone
+/// confluence filter and the delayed entry this summary used to describe were removed long ago;
+/// AllowStepIn below only keeps their old body as a comment (open point 74d).
 /// </summary>
 public class VbsSignalVbs : SignalCreateBase
 {
@@ -63,7 +63,7 @@ public class VbsSignalVbs : SignalCreateBase
     /// during an UP-slide) — so we don't step into a knife that started sliding after the band break.
     /// Otherwise the standard base GiveUp applies (EntryRemoveTime / a position is already open).
     /// </summary>
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
         foreach (CryptoSignal other in symbolInterval.SignalList.ToList())
@@ -78,7 +78,7 @@ public class VbsSignalVbs : SignalCreateBase
             }
         }
 
-        return base.GiveUp(signal);
+        return false;
     }
 
     public override bool AllowStepIn(CryptoSignal signal)

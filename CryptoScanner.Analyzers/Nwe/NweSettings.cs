@@ -15,6 +15,21 @@ public class NweSettings : SettingsSignalStrategyBase
     [SettingCaption("Multiplication", Group = GroupEnvelope)]
     public decimal Multiplication { get; set; } = 3.0m;
 
+    // Own BB range since 26-09-2026 (open point 109): this strategy used to read stobb's pair, so
+    // whoever tuned stobb silently retuned this one too. The defaults are what it effectively ran
+    // with (stobb's 1,5 and no upper bound).
+    [SettingCaption("Filter on BB%")]
+    public double BBMinPercentage { get; set; } = 1.50;
+
+    [SettingCaption("", SameRowAs = nameof(BBMinPercentage))]
+    public double BBMaxPercentage { get; set; } = 0.0;
+
+    // Until 26-09-2026 this was hard-wired, without a switch and without a word on the tab: a nwe
+    // signal needed a stobb or storsi condition somewhere in the last ten candles (open point 75c).
+    // On keeps that behaviour; every run so far measured it.
+    [SettingCaption("Require a stobb or storsi condition in the last 10 candles")]
+    public bool RequireRecentStobbOrStorsi { get; set; } = true;
+
     [SettingCaption("With RSI oversold/overbought conditions")]
     public bool IncludeRsi { get; set; } = false;
 

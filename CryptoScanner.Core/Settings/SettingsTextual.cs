@@ -48,6 +48,13 @@ public class SettingsTextualBarometer
     public bool ConsensusActive { get; set; } = false;
     // Minimum number of higher-timeframe barometers that must align with the signal direction (0 = disabled)
     public int MinConsensus { get; set; } = 0;
+
+    // Optional condition on the market breadth of the 1h measurement: the percentage of the coins of
+    // the quote that rose over the last hour must lie between these two (0..100). Off by default,
+    // and with 0..100 it lets everything through anyway (open point 11, phase 3).
+    public bool BreadthActive { get; set; } = false;
+    public decimal BreadthMinimum { get; set; } = 0m;
+    public decimal BreadthMaximum { get; set; } = 100m;
 }
 
 
@@ -64,4 +71,11 @@ public class SettingsTextualIntervalTrend
 {
     public List<string> List { get; set; } = [];
     public bool Log = false;
+
+    // Demand the trend AGAINST the trade direction: bearish for a long, bullish for a short. Built
+    // for dbr, which buys the lower band: over six runs on the current code every bit of its long
+    // profit came while the 1h trend was falling (+936,09 over 1536 trades) and the longs in a rising
+    // 1h trend lost (-30,48 over 4393), and no setting could express that (open point 51). Off is
+    // what every run so far measured.
+    public bool Inverted = false;
 }

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
@@ -45,7 +45,11 @@ public class SignalOrderBlockLong : SignalCreateBase
                 // Freshness / strength filters.
                 if (settings.OnlyStrong && zone.Strength != CryptoZoneStrength.Strong)
                     continue;
-                if (zone.TouchCount > settings.MaxTouches)
+                // Same meaning as ZoneInvalidation gives MaxTouches: 0 is "never used up", otherwise
+                // the zone is done once the visits reach it. The old "> MaxTouches" read 0 as "only
+                // untouched zones", the opposite of the tooltip, and with the default 2 it was dead
+                // because the zone layer closes such a zone first (open point 104).
+                if (settings.MaxTouches > 0 && zone.TouchCount >= settings.MaxTouches)
                     continue;
 
                 // Touch: price has entered the zone band (wick inside [Bottom, Top]).

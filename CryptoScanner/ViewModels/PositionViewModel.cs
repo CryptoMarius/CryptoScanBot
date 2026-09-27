@@ -427,7 +427,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
                     _BreakEvenPercentText = "";
                 else
-                    _BreakEvenPercentText = (Object.CurrentBreakEvenPercentage() - 100).ToString0("N2");
+                    _BreakEvenPercentText = Object.CurrentBreakEvenPercentage().ToString0("N2");
             }
             return _BreakEvenPercentText!;
         }

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Settings;
+﻿using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.KumoSqueeze;
@@ -10,7 +10,8 @@ public class KumoSqueezeSettings : SettingsSignalStrategyBase
     // StrategyKumoSqueezeSettingsView.axaml, because that order is what the Blazor hosts render.
     // Serialization is by name, so moving a property does not affect an existing settings file.
 
-    // Maximum BB width percentage to qualify as a squeeze (BandWidth < SMA(BandWidth, 20))
+    // Maximum BB width percentage to qualify as a squeeze: the BB width % of the candle itself under
+    // this value (there is no SMA of the width involved, whatever an older text here said).
     [SettingCaption("BB squeeze max %", SubHeader = "Bollinger Squeeze")]
     public double BBSqueezeMaxPercentage { get; set; } = 2.0;
 

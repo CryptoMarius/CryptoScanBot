@@ -22,7 +22,7 @@ public static class ProfitLockCalculator
     /// The price at which the lock arms: break-even plus the trigger percentage (minus, for a short).
     /// </summary>
     public static decimal TriggerPrice(CryptoTradeSide side, decimal breakEvenPrice, decimal triggerPercentage)
-        => breakEvenPrice + Multiplier(side) * breakEvenPrice * triggerPercentage / 100m;
+        => PricePlacement.Favorable(side, breakEvenPrice, triggerPercentage);
 
     /// <summary>
     /// How far the position is in profit right now, in percent from break-even. Negative when the
@@ -44,7 +44,9 @@ public static class ProfitLockCalculator
         decimal triggerPercentage, decimal slPercentage)
     {
         decimal pct = Math.Min(slPercentage, triggerPercentage);
-        return breakEvenPrice + Multiplier(side) * breakEvenPrice * pct / 100m;
+        // The placements in this file go through PricePlacement since 26-09-2026 (open point 27), so
+        // a short's lock, trail and trigger sit at the same log distance as the long's.
+        return PricePlacement.Favorable(side, breakEvenPrice, pct);
     }
 
     /// <summary>
@@ -60,7 +62,7 @@ public static class ProfitLockCalculator
         decimal trailPercentage, decimal currentTrailingStop)
     {
         int multiplier = Multiplier(side);
-        decimal candidate = favorablePrice - multiplier * favorablePrice * trailPercentage / 100m;
+        decimal candidate = PricePlacement.Adverse(side, favorablePrice, trailPercentage);
 
         if (currentTrailingStop <= 0)
             return candidate;
@@ -69,6 +71,42 @@ public static class ProfitLockCalculator
         return multiplier == 1
             ? Math.Max(candidate, currentTrailingStop)
             : Math.Min(candidate, currentTrailingStop);
+    }
+
+    /// <summary>
+    /// Where the stop goes for <see cref="CryptoProfitLockMethod.TrailingKeltnerPsar"/>, from the last
+    /// closed candle of the position interval and its Keltner channel and parabolic SAR.
+    /// <para>
+    /// Long: the lower of the lower band and the SAR, one tick under it. When the whole candle sits
+    /// above the upper band (low above it) the price has run away from the channel and the stop goes
+    /// up to the upper band - "if the price is far above the KC high we take the KC as stop", as the
+    /// old trader put it. Short is the mirror image. <paramref name="floor"/> is the fixed lock level
+    /// (break-even plus the SL percentage): the channel may sit below break-even right after the lock
+    /// armed, and a profit lock must never hand the profit back. <paramref name="currentTrailingStop"/>
+    /// is the ratchet, 0 when the lock has just armed.
+    /// </para>
+    /// </summary>
+    public static decimal KeltnerPsarStop(CryptoTradeSide side, decimal candleLow, decimal candleHigh,
+        decimal keltnerLower, decimal keltnerUpper, decimal psar, decimal tickSize, decimal floor,
+        decimal currentTrailingStop)
+    {
+        decimal candidate;
+        if (side == CryptoTradeSide.Long)
+        {
+            candidate = Math.Min(keltnerLower, psar) - tickSize;
+            if (candleLow > keltnerUpper - tickSize)
+                candidate = Math.Max(candidate, keltnerUpper - tickSize);
+            candidate = Math.Max(candidate, floor);
+            return currentTrailingStop <= 0 ? candidate : Math.Max(candidate, currentTrailingStop);
+        }
+        else
+        {
+            candidate = Math.Max(keltnerUpper, psar) + tickSize;
+            if (candleHigh < keltnerLower + tickSize)
+                candidate = Math.Min(candidate, keltnerLower + tickSize);
+            candidate = Math.Min(candidate, floor);
+            return currentTrailingStop <= 0 ? candidate : Math.Min(candidate, currentTrailingStop);
+        }
     }
 
     /// <summary>
@@ -104,9 +142,12 @@ public static class ProfitLockCalculator
     public static decimal PriceThatMovesTrailingStop(CryptoTradeSide side, decimal trailingStop,
         decimal trailPercentage)
     {
-        decimal factor = 1m - Multiplier(side) * trailPercentage / 100m;
+        decimal factor = 1m - trailPercentage / 100m;
         if (factor <= 0)
             return trailingStop;
-        return trailingStop / factor;
+        // The exact inverse of TrailingStop: long stop = price * factor, short stop = price / factor.
+        if (side == CryptoTradeSide.Long)
+            return trailingStop / factor;
+        return trailingStop * factor;
     }
 }

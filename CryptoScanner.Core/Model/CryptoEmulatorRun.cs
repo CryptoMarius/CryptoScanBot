@@ -1,4 +1,4 @@
-using Dapper.Contrib.Extensions;
+﻿using Dapper.Contrib.Extensions;
 
 namespace CryptoScanner.Core.Model;
 
@@ -88,6 +88,15 @@ public class CryptoEmulatorRun
 
     /// <summary>Most positions open at the same moment; the practical limit next to the slot count.</summary>
     public int PeakPositions { get; set; }
+
+    /// <summary>
+    /// The deepest fall of the run's capital from an earlier high, in percent of that high, read
+    /// from the daily AssetSnapshot rows at run end (open point 47). Says more about a strategy
+    /// than the end profit alone: two runs with the same result, one of which was down 40% halfway.
+    /// Zero for a run that never fell below an earlier high, and for runs from before database
+    /// version 100 until they are recalculated.
+    /// </summary>
+    public decimal MaxDrawdownPercentage { get; set; }
 
     // Closed positions and their realised profit per side. A short's stop sits nearer and its
     // target further (both are an arithmetic percentage of the anchor), so the two sides are never

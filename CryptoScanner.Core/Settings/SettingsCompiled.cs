@@ -50,6 +50,10 @@ public class SettingsCompiled
     public bool BarometerConsensusActive = false;
     // Minimum number of higher-timeframe barometers that must align with the signal direction (0 = disabled)
     public int BarometerMinConsensus = 0;
+    // The market breadth condition (mirrors SettingsTextualBarometer.Breadth*)
+    public bool BarometerBreadthActive = false;
+    public decimal BarometerBreadthMinimum = 0m;
+    public decimal BarometerBreadthMaximum = 100m;
 
     //// Relative volume filter
     //public SettingsCompiledVolume Volume = new();
@@ -85,10 +89,11 @@ public class SettingsCompiled
             // Interval trend (up/down)
             if (settings.IntervalTrend.List.Contains(interval.Name))
             {
-                if (side == CryptoTradeSide.Long)
-                    Trend.Add(interval.IntervalPeriod, CryptoTrendIndicator.Bullish);
-                if (side == CryptoTradeSide.Short)
-                    Trend.Add(interval.IntervalPeriod, CryptoTrendIndicator.Bearish);
+                // With the trend, or - Inverted - against it (open point 51).
+                bool wantBullish = side == CryptoTradeSide.Long;
+                if (settings.IntervalTrend.Inverted)
+                    wantBullish = !wantBullish;
+                Trend.Add(interval.IntervalPeriod, wantBullish ? CryptoTrendIndicator.Bullish : CryptoTrendIndicator.Bearish);
             }
 
             // Barometer (ranged)
@@ -99,6 +104,9 @@ public class SettingsCompiled
         BarometerLog = settings.Barometer.Log;
         BarometerConsensusActive = settings.Barometer.ConsensusActive;
         BarometerMinConsensus = settings.Barometer.MinConsensus;
+        BarometerBreadthActive = settings.Barometer.BreadthActive;
+        BarometerBreadthMinimum = settings.Barometer.BreadthMinimum;
+        BarometerBreadthMaximum = settings.Barometer.BreadthMaximum;
 
         //Volume.Active = settings.Volume.IsActive;
         //Volume.MinRelative = settings.Volume.MinRelVol;

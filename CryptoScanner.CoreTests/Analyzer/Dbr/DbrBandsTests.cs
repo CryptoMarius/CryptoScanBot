@@ -120,39 +120,6 @@ public class DbrBandsTests
             Assert.IsTrue(band.BandWidthPct > 0, "BandWidthPct must be positive");
     }
 
-    // ── Stochastic-RSI filter ────────────────────────────────────────────
-
-    [TestMethod]
-    public void ComputeBands_StochDisabled_StochKIsNull()
-    {
-        DbrPlugin.Settings.RequireStochOsOb = false;
-        var candles = MakeCandles(WarmupCandles);
-        var bands = DbrBandsHelper.ComputeBands(candles);
-
-        Assert.IsNull(bands[^1].StochK, "StochK must be null when stoch filter is disabled");
-        Assert.IsNull(bands[^1].StochD, "StochD must be null when stoch filter is disabled");
-    }
-
-    [TestMethod]
-    public void ComputeBands_StochEnabled_StochKPopulated()
-    {
-        DbrPlugin.Settings.RequireStochOsOb = true;
-        try
-        {
-            var candles = MakeCandles(WarmupCandles);
-            var bands = DbrBandsHelper.ComputeBands(candles);
-
-            Assert.IsNotNull(bands[^1].StochK, "StochK must be populated when stoch filter is enabled");
-            Assert.IsNotNull(bands[^1].StochD, "StochD must be populated when stoch filter is enabled");
-            Assert.IsTrue(bands[^1].StochK >= 0 && bands[^1].StochK <= 100,
-                $"StochK must be in [0,100], got {bands[^1].StochK}");
-        }
-        finally
-        {
-            DbrPlugin.Settings.RequireStochOsOb = false;
-        }
-    }
-
     // ── IsLongBreak / IsShortBreak ───────────────────────────────────────
 
     [TestMethod]

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 
 using System.Text.Json.Serialization;
 
@@ -116,12 +116,8 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
     [SettingCaption("Close zones past the midpoint", Group = GroupSignal)]
     public bool CloseZonesPastMidpoint { get; set; } = false;
 
-    // How many candles back (including the current one) the smc.rejection variant may look
-    // for the "tested the zone" wick. 1 = the rejection wick + close-back-outside must happen
-    // on the same candle. 3 = the wick into the zone may be up to 2 candles before the
-    // confirming close-back-outside candle.
-    [SettingCaption("Rejection lookback (smc.rejection)", Group = GroupSignal)]
-    public int RejectionLookback { get; set; } = 3;
+    // RejectionLookback was removed on 26-09-2026 together with the smc.rejection classes it served
+    // (open points 108 and 112). A settings file that still carries the key is read without it.
 
     // Only fire on Strong zones (powerful expansion). Set false to also alarm on Weak zones.
     [SettingCaption("Only strong zones", Group = GroupSignal)]

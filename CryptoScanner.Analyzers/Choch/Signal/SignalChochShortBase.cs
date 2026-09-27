@@ -37,15 +37,27 @@ public abstract class SignalChochShortBase : SignalCreateBase
 
     private static readonly HashSet<(string, string, string)> _loggedNoChoch = [];
 
+    // Under a lock: four candle workers reach this static set at once (open point 114).
+    private static bool MarkLogged((string, string, string) key)
+    {
+        lock (_loggedNoChoch)
+            return _loggedNoChoch.Add(key);
+    }
+
     public static void ResetDiagnosticLog()
     {
-        _loggedNoChoch.Clear();
+        lock (_loggedNoChoch)
+            _loggedNoChoch.Clear();
     }
 
     public override bool IsSignal()
     {
         if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval5m)
+        {
+            // See SignalChochLongBase (open point 110).
+            ExtraText = "interval below 5m";
             return false;
+        }
 
         _ = SymbolTrend.CalculateSymbolTrendAsync(Symbol, TrendSettings).Result;
 
@@ -57,7 +69,7 @@ public abstract class SignalChochShortBase : SignalCreateBase
         if (lastChoCh == null)
         {
             ExtraText = "no CHoCH";
-            if (debugLog && _loggedNoChoch.Add((Symbol.Name, Interval.Name, SignalStrategy)))
+            if (debugLog && MarkLogged((Symbol.Name, Interval.Name, SignalStrategy)))
                 ScannerLog.Logger.Info($"CHoCH diag {Symbol.Name} {Interval.Name} {SignalStrategy} short: {ExtraText} (events={trendData.StructureEvents.Count}, trend={trendData.Trend})");
             return false;
         }
@@ -133,7 +145,7 @@ public abstract class SignalChochShortBase : SignalCreateBase
     }
 
 
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
         // Setup invalidated when the BOS trend has flipped back to Bullish.
         if (GetBosTrend().Trend == CryptoTrendIndicator.Bullish)
@@ -142,6 +154,6 @@ public abstract class SignalChochShortBase : SignalCreateBase
             return true;
         }
 
-        return base.GiveUp(signal);
+        return false;
     }
 }

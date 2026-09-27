@@ -1,4 +1,4 @@
-using CryptoScanner.Analyzers.Sbm;
+﻿using CryptoScanner.Analyzers.Sbm;
 using CryptoScanner.Analyzers.Stobb;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -63,7 +63,10 @@ public class SignalNweBase : SignalCreateBase
     public override bool AdditionalChecks(MyData data, out string response)
     {
         // Controle op de ma-lijnen
-        if (NwePlugin.Settings.IncludeSoftSbm && SignalSide == CryptoTradeSide.Long)
+        // Both sides. The outer condition used to demand Long as well, which made the short branch
+        // below unreachable: with "With SBM conditions MA-lines" on, a long got the MA test and a
+        // short got nothing, since the setting was introduced (open point 75a).
+        if (NwePlugin.Settings.IncludeSoftSbm)
         {
             if (SignalSide == CryptoTradeSide.Long)
             {
@@ -150,7 +153,9 @@ public class SignalNweBase : SignalCreateBase
             }
         }
 
-        if (HadStorsiInThelastXCandles(SignalSide, 0, 10, 4) == null && HadStobbInThelastXCandles(SignalSide, 0, 10, StobbPlugin.Settings.UseLowHigh) == null)
+        // A setting since 26-09-2026 (open point 75c); it was an unconditional, hidden requirement.
+        if (NwePlugin.Settings.RequireRecentStobbOrStorsi
+            && HadStorsiInThelastXCandles(SignalSide, 0, 10, 4) == null && HadStobbInThelastXCandles(SignalSide, 0, 10, StobbPlugin.Settings.UseLowHigh) == null)
         {
             response = "no previous storsi/stobb found";
             return false;
@@ -167,7 +172,7 @@ public class SignalNweBase : SignalCreateBase
     public override bool IsSignal()
     {
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(StobbPlugin.Settings.BBMinPercentage, 0))
+        if (!CandleLast.CheckBollingerBandsWidth(NwePlugin.Settings.BBMinPercentage, NwePlugin.Settings.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;

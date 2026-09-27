@@ -55,7 +55,9 @@ public class ZoneThreadCalculate
                 //trendZigZagIndicatorList.Add((trend.TrendType, trend.UseHighLow),
                 //    new(trend.TrendType, trend.UseHighLow, 1.0m));
 
-                ZoneCandleWindows loadedCandlesInMemory = new();
+                // The symbol's own windows, kept across recalculations (open point 67): what the previous
+                // recalculation established as present is not read from candles.db again.
+                ZoneCandleWindows loadedCandlesInMemory = symbol.Data.ZoneCandleWindows;
 
                 // Hold ZoneLock for the entire load + recalculation so ScanForNew cannot
                 // concurrently write to the same OrderedList (non-thread-safe List<T> inside).
@@ -68,6 +70,8 @@ public class ZoneThreadCalculate
                     // but is pure overhead (and breaks incremental calculation) if repeated on every drain.
                     if (!symbol.Data.ZonesLoaded || symbol.Data.ZonesLoadedRunId != GlobalData.CurrentEmulatorRunId)
                     {
+                        // A new run scope starts from nothing, windows included.
+                        loadedCandlesInMemory.Clear();
                         ZoneDlz.LoadZonesForSymbol(symbol, GlobalData.CurrentEmulatorRunId);
                         symbol.Data.ZonesLoaded = true;
                         symbol.Data.ZonesLoadedRunId = GlobalData.CurrentEmulatorRunId;
@@ -123,7 +127,9 @@ public class ZoneThreadCalculate
                     if (!GlobalData.IsEmulatorMode)
                         await ZoneCandleEngine.SaveCandleDataToDiskAsync(symbol, loadedCandlesInMemory);
 
-                    loadedCandlesInMemory.Clear();
+                    // No Clear() any more: the windows stay on the symbol (open point 67). The save above
+                    // already marked the written intervals as saved, and the prune below forgets the
+                    // windows it cuts off.
 
                     // Pruning runs in the emulator too, since 23-08-2026. It used to be skipped there,
                     // and the replay then kept every candle the zoom had pulled in until the chunk

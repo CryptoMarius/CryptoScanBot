@@ -213,12 +213,13 @@ public class TriggerPriceTests
     {
         GlobalData.Settings.Trading.MoveSlToBreakEven = true;
         GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage = 2m;
-        // BE=100, lockPct=2% → threshold = 100 - 100*2/100 = 98, nearer than TP=95
+        // BE=100, lockPct=2% → threshold = 100 / 1.02 = 98.04 (the log mirror of the long's 102,
+        // open point 27), nearer than TP=95
         var position = MakePosition(CryptoTradeSide.Short, breakEvenPrice: 100m);
 
         PositionMonitor.UpdateTriggerPrices(position, nearestTpPrice: 95m, slStop: 105m);
 
-        Assert.AreEqual(98m, position.TriggerPriceBottom);
+        Assert.AreEqual(100m / 1.02m, position.TriggerPriceBottom);
         Assert.AreEqual(105m, position.TriggerPriceTop);
     }
 
@@ -922,8 +923,8 @@ public class TriggerPriceTests
 
         PositionMonitor.UpdateTriggerPrices(position, nearestTpPrice: 95m, slStop: 105m);
 
-        // Short: trigger sits below break-even (98), the SL would land at 99
-        Assert.AreEqual(98m, position.TriggerPriceBottom);
+        // Short: trigger sits below break-even (100 / 1.02 = 98.04), the SL would land at 99.01
+        Assert.AreEqual(100m / 1.02m, position.TriggerPriceBottom);
         Assert.AreEqual(105m, position.TriggerPriceTop);
 
         Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 99.5m, candleLow: 98.5m));
@@ -969,12 +970,12 @@ public class TriggerPriceTests
         GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage = 1.5m;
 
         var position = MakePosition(CryptoTradeSide.Short, breakEvenPrice: 100m, slMovedToBreakEven: true);
-        position.TrailingStopPrice = 91.35m;    // trailing 1.5% above a low of 90
+        position.TrailingStopPrice = 90m / 0.985m;    // trailing 1.5% above a low of 90 (log mirror, open point 27)
 
-        PositionMonitor.UpdateTriggerPrices(position, nearestTpPrice: 70m, slStop: 91.35m);
+        PositionMonitor.UpdateTriggerPrices(position, nearestTpPrice: 70m, slStop: 90m / 0.985m);
 
         Assert.AreEqual(90m, Math.Round(position.TriggerPriceBottom!.Value, 8));
-        Assert.AreEqual(91.35m, position.TriggerPriceTop);
+        Assert.AreEqual(90m / 0.985m, position.TriggerPriceTop);
 
         Assert.IsFalse(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 91m, candleLow: 90.5m));
         Assert.IsTrue(PositionMonitor.ShouldRunHandlePosition(position, candleHigh: 91m, candleLow: 89m));

@@ -16,9 +16,9 @@ public struct DbrBandValue
     public double Lower;        // middle - halfRange * (OuterMult / 2.5)
     public double Middle;       // (highestHigh + lowestLow) / 2
     public double BandWidthPct; // (Upper - Middle) / Middle * 100 — the label percentage
-    public double? Rsi;         // RSI(RsiLength); only filled when the RSI filter is enabled
-    public double? StochK;      // Stochastic-RSI %K; only filled when the stoch filter is enabled
-    public double? StochD;      // Stochastic-RSI %D; only filled when the stoch filter is enabled
+    // Rsi, StochK and StochD were removed on 26-09-2026 (open point 73a): they were computed here
+    // on every evaluation - an RSI(14) and a full Stoch-RSI chain over 260 candles - and nobody
+    // read them. The RSI and stoch filters of the signal read the hub's CandleData instead.
 }
 
 /// <summary>
@@ -47,30 +47,9 @@ public static class DbrBandsHelper
         if (count == 0)
             return result;
 
-        IReadOnlyList<IQuote> quotes = candles.AsQuotes();
-
-        // RSI — only computed when the RSI filter is enabled. Uses the standard RSI(14) from general settings.
-        var rsiSettings = GlobalData.Settings.General.SettingsRsi;
-        IReadOnlyList<RsiResult>? rsiList = null;
-        if (settings.UseRsiFilter)
-            rsiList = quotes.ToRsi(rsiSettings.Length);
-
-        // Stochastic-RSI — computed manually so it matches the Pine chain exactly:
-        // raw = stoch(rsi, length), %K = SMA(raw, K), %D = SMA(%K, D).
-        // Uses the standard stoch settings (length 14, K 3, D 3) from general settings.
-        var stochSettings = GlobalData.Settings.General.SettingsStoch;
-        double?[]? stochK = null;
-        double?[]? stochD = null;
-        if (settings.RequireStochOsOb)
-            ComputeStochRsi(quotes, stochSettings.Length, stochSettings.SmoothingK, stochSettings.SmoothingD, out stochK, out stochD);
-
         for (int i = 0; i < count; i++)
         {
             ref DbrBandValue value = ref result[i];
-
-            value.Rsi = rsiList?[i].Rsi;
-            value.StochK = stochK?[i];
-            value.StochD = stochD?[i];
 
             // Donchian over the PREVIOUS BandLength candles, excluding the current one
             // (Pine: ta.highest(high[1], len) / ta.lowest(low[1], len)).
@@ -110,9 +89,9 @@ public static class DbrBandsHelper
     /// <paramref name="bandWidthPct"/> is the same percentage printed as the chart label.
     /// </summary>
     public static bool IsLowerBandBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime,
-        out double bandWidthPct, out double lowerBand, out string reason)
+        out double bandWidthPct, out double lowerBand, out string reason, bool exactCandle = false)
     {
-        return IsBandBreak(symbolInterval, openTime, isLong: true, out bandWidthPct, out lowerBand, out reason);
+        return IsBandBreak(symbolInterval, openTime, isLong: true, out bandWidthPct, out lowerBand, out reason, exactCandle);
     }
 
     /// <summary>
@@ -122,13 +101,18 @@ public static class DbrBandsHelper
     /// <paramref name="bandWidthPct"/> is the same percentage printed as the chart label.
     /// </summary>
     public static bool IsUpperBandBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime,
-        out double bandWidthPct, out double upperBand, out string reason)
+        out double bandWidthPct, out double upperBand, out string reason, bool exactCandle = false)
     {
-        return IsBandBreak(symbolInterval, openTime, isLong: false, out bandWidthPct, out upperBand, out reason);
+        return IsBandBreak(symbolInterval, openTime, isLong: false, out bandWidthPct, out upperBand, out reason, exactCandle);
     }
 
+    /// <param name="exactCandle">True from the strategy's own interval: the candle at
+    /// <paramref name="openTime"/> has to be in the snapshot, and its absence (a gap in the list) is
+    /// reported instead of silently judged on the newest candle (open point 73c). False from the
+    /// higher-timeframe confirmation, which passes the LOWER open time on purpose and wants the
+    /// newest higher candle, the one that is still running.</param>
     private static bool IsBandBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime, bool isLong,
-        out double bandWidthPct, out double bandPrice, out string reason)
+        out double bandWidthPct, out double bandPrice, out string reason, bool exactCandle = false)
     {
         bandWidthPct = 0;
         bandPrice = 0;
@@ -146,7 +130,14 @@ public static class DbrBandsHelper
         // Locate the requested (just-closed) candle; fall back to the most recent one.
         int idx = candles.FindIndex(c => c.OpenTime == openTime);
         if (idx < 0)
+        {
+            if (exactCandle)
+            {
+                reason = $"candle {openTime.ToDateTime():yyyy-MM-dd HH:mm} not in the snapshot";
+                return false;
+            }
             idx = candles.Count - 1;
+        }
 
         DbrBandValue[] bands = ComputeBands(candles);
         return isLong
@@ -378,74 +369,5 @@ public static class DbrBandsHelper
 
         reason = "";
         return true;
-    }
-
-    /// <summary>
-    /// Stochastic-RSI exactly as the Pine script chains it:
-    ///   rsi  = ta.rsi(close, length)
-    ///   raw  = ta.stoch(rsi, rsi, rsi, length)
-    ///   %K   = ta.sma(raw, kLength)
-    ///   %D   = ta.sma(%K, dLength)
-    /// </summary>
-    private static void ComputeStochRsi(IReadOnlyList<IQuote> quotes, int length, int kLength, int dLength,
-        out double?[] stochK, out double?[] stochD)
-    {
-        IReadOnlyList<RsiResult> rsiList = quotes.ToRsi(length);
-        int count = rsiList.Count;
-
-        // Raw stochastic of the RSI series over the same length.
-        var raw = new double?[count];
-        for (int i = 0; i < count; i++)
-        {
-            double lowest = double.MaxValue;
-            double highest = double.MinValue;
-            bool complete = i >= length - 1;
-            for (int j = i - length + 1; complete && j <= i; j++)
-            {
-                if (j < 0 || !rsiList[j].Rsi.HasValue)
-                {
-                    complete = false;
-                    break;
-                }
-                double rsi = rsiList[j].Rsi!.Value;
-                if (rsi < lowest)
-                    lowest = rsi;
-                if (rsi > highest)
-                    highest = rsi;
-            }
-            if (complete && rsiList[i].Rsi.HasValue)
-            {
-                double range = highest - lowest;
-                raw[i] = range > 0 ? (rsiList[i].Rsi!.Value - lowest) / range * 100 : 0;
-            }
-        }
-
-        stochK = Sma(raw, kLength);
-        stochD = Sma(stochK, dLength);
-    }
-
-    // Simple moving average over a nullable series; null while the window is incomplete.
-    private static double?[] Sma(double?[] values, int length)
-    {
-        var result = new double?[values.Length];
-        for (int i = 0; i < values.Length; i++)
-        {
-            if (i < length - 1)
-                continue;
-            double sum = 0;
-            bool complete = true;
-            for (int j = i - length + 1; j <= i; j++)
-            {
-                if (!values[j].HasValue)
-                {
-                    complete = false;
-                    break;
-                }
-                sum += values[j]!.Value;
-            }
-            if (complete)
-                result[i] = sum / length;
-        }
-        return result;
     }
 }

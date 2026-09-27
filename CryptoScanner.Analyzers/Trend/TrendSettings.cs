@@ -1,3 +1,4 @@
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Trend;
@@ -5,6 +6,10 @@ namespace CryptoScanner.Analyzers.Trend;
 [Serializable]
 public class TrendSettings : SettingsSignalStrategyBase
 {
+    // The signal classes skip everything under 10m. Saying so here greys those intervals out in
+    // the interval picker instead of offering them and producing nothing (open point 110).
+    public override CryptoIntervalPeriod MinimumInterval => CryptoIntervalPeriod.interval10m;
+
     private const string GroupEntry = "Entry";
     private const string GroupExit = "Exit";
 

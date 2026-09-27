@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -15,6 +15,16 @@
         <HeaderedContentControl Classes="groupbox" Header="Reentry">
             <StackPanel Margin="4" Spacing="4">
 
+                <!-- Filter on BB% (own pair since 26-09-2026, open point 109) -->
+                <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto">
+                    <TextBlock Grid.Column="0" Text="Filter on BB%:" VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding BbMinPercentage, Mode=TwoWay, StringFormat=N2}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+                    <TextBox Grid.Column="2" Text="{Binding BbMaxPercentage, Mode=TwoWay, StringFormat=N2}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
                 <CheckBox IsChecked="{Binding ReentryStrict, Mode=TwoWay}"
                           Content="Strict reentry" FontSize="12"
                           ToolTip.Tip="The reentry candle must close back beyond BOTH MA5 and MA10 (not inside the zone) and the MA5/10 zone must sit on the trend side of the mid-band. Off is the loose OmniView form: back beyond MA5 or MA10, zone anywhere."/>
@@ -24,6 +34,23 @@
                     <TextBlock Grid.Column="0" Text="Min candles after trigger:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding ReentryMinCandlesAfterTrigger, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <!-- Which codes give a signal (open point 65): letters that are rejected -->
+                <Grid ColumnDefinitions="160,120,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="Trigger letters that do not count as a setup, as one string: E Extreme, T Tpw, H Mhv, J RejectedEma50, G GapBbEma50, 2 Csak2, A Csaa, X Cross, D Csd, M Csm. Empty accepts every trigger.">
+                    <TextBlock Grid.Column="0" Text="Rejected LTF triggers:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding RejectedLtfTriggers, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="160,120,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="Letters of the middle (MTF) position of the code that do not give a signal, as one string: E Extreme, T Tpw, H Mhv, J RejectedEma50, G GapBbEma50, 2 Csak2, A Csaa, X Cross, D Csd, M Csm, R Reentry, - nothing. Empty accepts every MTF state.">
+                    <TextBlock Grid.Column="0" Text="Rejected MTF states:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding RejectedMtfStates, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
 
@@ -45,6 +72,15 @@
                 <CheckBox IsChecked="{Binding HtfSetupExtremeInvalidates, Mode=TwoWay}" Margin="20,0,0,0"
                           Content="Opposite Extreme voids the setup" FontSize="12"
                           ToolTip.Tip="An opposite-side Extreme on the HTF after the setup (exhaustion at the far band) voids it as well. Off lets only an opposite CSM void it."/>
+
+                <!-- Which setups give a signal (open point 65) -->
+                <Grid ColumnDefinitions="160,200,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="HTF setups that do not give a signal, comma separated, exactly as the signal shows them between brackets: CSD, CSM, TPW>CSD, TPW>CSM, MHV>CSD, MHV>CSM. Empty accepts every setup.">
+                    <TextBlock Grid.Column="0" Text="Rejected HTF setups:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding RejectedHtfSetups, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
             </StackPanel>
         </HeaderedContentControl>

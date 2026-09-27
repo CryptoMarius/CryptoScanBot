@@ -375,9 +375,14 @@ public static class ChartDataService
 
     /// <param name="verticals">Filled with the open moment of every position drawn, for the
     /// sub-panels to carry down. Same times as the vertical markers on the main chart.</param>
+    /// <param name="candles">The candles the chart is drawing. In a position window that is the
+    /// window's own list from candles.db and not the live one; the gap the open marker leaves around
+    /// the candle used to be measured on the live list, where an old candle is not to be found, so
+    /// the marker fell back to the entry price and came out a different length (open point 56).
+    /// Null means the live list.</param>
     public static void BuildPositionOverlays(CryptoSymbol symbol, CryptoInterval interval,
         CandleTime from, CandleTime to, List<ChartSegment> segments, List<ChartDot> dots,
-        List<ChartVertical> verticals)
+        List<ChartVertical> verticals, CryptoCandleList? candles = null)
     {
         string sql = "select * from position where SymbolId = @SymbolId " +
             "and CreateTime <= @To and (CloseTime is null or CloseTime >= @From) " +
@@ -566,9 +571,9 @@ public static class ChartDataService
                     decimal candleBelow = entry;
                     // The candle the marker is drawn ON, so the gap it leaves matches that candle's
                     // own wicks — the same one xStart resolved to.
-                    var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                    CryptoCandleList candleList = candles ?? symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
                     CandleTime openCandleTime = CandleContaining(position.CreateTime, interval.Duration);
-                    if (symbolInterval.CandleList.TryGetValue(openCandleTime, out CryptoCandle openCandle))
+                    if (candleList.TryGetValue(openCandleTime, out CryptoCandle openCandle))
                     {
                         candleAbove = openCandle.High + 0.01m * openCandle.High;
                         candleBelow = openCandle.Low - 0.01m * openCandle.Low;

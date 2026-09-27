@@ -340,6 +340,7 @@ public class ZoneCandleEngine
                 // then throws "Collection was modified after the enumerator was instantiated".
                 // RemoveBefore does the same front-trim under the write lock.
                 symbolInterval.CandleList.RemoveBefore(startFetchUnix);
+                symbol.Data.ZoneCandleWindows.ForgetBefore(symbolInterval.IntervalPeriod, startFetchUnix, symbolInterval.Interval.Duration);
             }
         }
         finally

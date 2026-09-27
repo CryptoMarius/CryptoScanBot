@@ -1,11 +1,13 @@
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Analyzers.Nwe.Signal;
 
 /// <summary>
 /// Shared computation for the NWE × BB crossover signals.
-/// Builds a time-ordered history of non-repainting NWE and BB values.
+/// Builds a time-ordered history of NWE and BB values. The NWE is the REPAINTING (smoothed) envelope
+/// over the whole list, the one the chart draws: the previous two bars therefore carry a band that
+/// was smoothed with the current candle in hand (open point 75e, documented rather than changed).
 /// </summary>
 public abstract class SignalNweBbBase : SignalCreateBase
 {
@@ -51,8 +53,8 @@ public abstract class SignalNweBbBase : SignalCreateBase
     }
 
     /// <summary>
-    /// Returns the last <see cref="Lookback"/> bars (oldest-first) with matched
-    /// non-repainting NWE and BB values. Returns false when there is insufficient history.
+    /// Returns the last <see cref="Lookback"/> bars (oldest-first) with matched repainting NWE and
+    /// BB values (see the class summary). Returns false when there is insufficient history.
     /// </summary>
     protected bool TryBuildHistory(out NweBbBar[] bars)
     {

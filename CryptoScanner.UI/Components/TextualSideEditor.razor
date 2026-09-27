@@ -90,6 +90,18 @@
                        disabled="@(!Side.BarometerConsensusActive)"
                        @bind="Side.BarometerMinConsensus" style="width: 70px;" />
             </div>
+            @* Market breadth, one row as in BarometerFilterView *@
+            <div class="field" title="Percentage of the coins of the quote that rose over the last hour must lie between these two">
+                <input type="checkbox" class="input-checkbox" @bind="Side.BarometerBreadthActive" />
+                <label style="margin-left: 4px; width: 100px;">Breadth 1h %</label>
+                <input type="number" class="input-number" min="0" max="100" step="5"
+                       disabled="@(!Side.BarometerBreadthActive)"
+                       @bind="Side.BarometerBreadthMinimum" style="width: 70px;" />
+                <span style="margin: 0 4px;">..</span>
+                <input type="number" class="input-number" min="0" max="100" step="5"
+                       disabled="@(!Side.BarometerBreadthActive)"
+                       @bind="Side.BarometerBreadthMaximum" style="width: 70px;" />
+            </div>
             <div class="field">
                 <input type="checkbox" class="input-checkbox" @bind="Side.BarometerLog" />
                 <label style="margin-left: 4px;">Log if outside boundaries</label>
@@ -109,6 +121,11 @@
                         <label style="margin-left: 4px;">@t.Name interval=bullish</label>
                     </div>
                 }
+            </div>
+            @* The trend against the trade direction (open point 51) *@
+            <div class="field" title="Off: the ticked intervals must trend WITH the trade, as always. On: they must trend AGAINST it - a long only while the trend falls, a short only while it rises. Built for strategies that buy the band, like dbr.">
+                <input type="checkbox" class="input-checkbox" @bind="Side.TrendIntervalInverted" />
+                <label>Against the trade direction (long needs bearish, short bullish)</label>
             </div>
             <div class="field">
                 <input type="checkbox" class="input-checkbox" @bind="Side.TrendIntervalLog" />

@@ -1,14 +1,29 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CryptoScanner.Analyzers.Bbma.Config;
 
 public partial class StrategyBbmaSettingsViewModel : ObservableObject
 {
     [ObservableProperty]
+    private double _bbMinPercentage = 1.50;
+
+    [ObservableProperty]
+    private double _bbMaxPercentage = 0.0;
+
+    [ObservableProperty]
     private bool _reentryStrict = true;
 
     [ObservableProperty]
     private int _reentryMinCandlesAfterTrigger = 3;
+
+    [ObservableProperty]
+    private string _rejectedLtfTriggers = "";
+
+    [ObservableProperty]
+    private string _rejectedMtfStates = "";
+
+    [ObservableProperty]
+    private string _rejectedHtfSetups = "";
 
     [ObservableProperty]
     private int _htfSetupLookback = 10;
@@ -37,8 +52,13 @@ public partial class StrategyBbmaSettingsViewModel : ObservableObject
 
     public void LoadConfig(BbmaSettings settings)
     {
+        BbMinPercentage = settings.BBMinPercentage;
+        BbMaxPercentage = settings.BBMaxPercentage;
         ReentryStrict = settings.ReentryStrict;
         ReentryMinCandlesAfterTrigger = settings.ReentryMinCandlesAfterTrigger;
+        RejectedLtfTriggers = settings.RejectedLtfTriggers;
+        RejectedMtfStates = settings.RejectedMtfStates;
+        RejectedHtfSetups = settings.RejectedHtfSetups;
         HtfSetupLookback = settings.HtfSetupLookback;
         HtfSetupExtremeInvalidates = settings.HtfSetupExtremeInvalidates;
         TakeProfitAtOuterBand = settings.TakeProfitAtOuterBand;
@@ -51,8 +71,13 @@ public partial class StrategyBbmaSettingsViewModel : ObservableObject
 
     public void SaveConfig(BbmaSettings settings)
     {
+        settings.BBMinPercentage = BbMinPercentage;
+        settings.BBMaxPercentage = BbMaxPercentage;
         settings.ReentryStrict = ReentryStrict;
         settings.ReentryMinCandlesAfterTrigger = ReentryMinCandlesAfterTrigger;
+        settings.RejectedLtfTriggers = (RejectedLtfTriggers ?? "").Trim();
+        settings.RejectedMtfStates = (RejectedMtfStates ?? "").Trim();
+        settings.RejectedHtfSetups = (RejectedHtfSetups ?? "").Trim();
         settings.HtfSetupLookback = HtfSetupLookback;
         settings.HtfSetupExtremeInvalidates = HtfSetupExtremeInvalidates;
         settings.TakeProfitAtOuterBand = TakeProfitAtOuterBand;

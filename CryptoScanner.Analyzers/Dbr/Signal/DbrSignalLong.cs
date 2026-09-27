@@ -64,7 +64,7 @@ public class DbrSignalLong : SignalCreateBase
             return false;
         }
 
-        if (!DbrBandsHelper.IsLowerBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double bandWidthPct, out double lowerBand, out string reason))
+        if (!DbrBandsHelper.IsLowerBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double bandWidthPct, out double lowerBand, out string reason, exactCandle: true))
         {
             ExtraText = reason;
             return false;

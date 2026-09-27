@@ -29,7 +29,7 @@ public class IchimokuKumoBreakoutShort : SignalCreateBase
 
         // BB width filter: only enforce minimum; skip the Stobb maximum (5%) because Kumo Breakout
         // is a momentum strategy that fires after a breakout — typically at higher volatility.
-        if (!CandleLast.CheckBollingerBandsWidth(StobbPlugin.Settings.BBMinPercentage, 0))
+        if (!CandleLast.CheckBollingerBandsWidth(IChimokuKumoBreakoutPlugin.Settings.BBMinPercentage, IChimokuKumoBreakoutPlugin.Settings.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;

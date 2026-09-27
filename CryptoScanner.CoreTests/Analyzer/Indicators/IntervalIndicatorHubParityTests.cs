@@ -1,4 +1,4 @@
-using CryptoScanner.Analyzers.Bbma;
+﻿using CryptoScanner.Analyzers.Bbma;
 using CryptoScanner.Analyzers.MacdCross;
 using CryptoScanner.Analyzers.Vbs;
 using CryptoScanner.Core.Contracts;
@@ -167,11 +167,9 @@ public class IntervalIndicatorHubParityTests
         // The VBS values live in the plugin's own slot, exactly as VbsIndicatorExtension writes them.
         result.SetPluginData(new VbsCandleData
         {
-            AtrSl = atrVbsSl[i].Atr,
             Basis = vbsBands[i].HasValue ? vbsBands[i].Basis : null,
             Upper = vbsBands[i].HasValue ? vbsBands[i].Upper : null,
             Lower = vbsBands[i].HasValue ? vbsBands[i].Lower : null,
-            VwStdev = vbsBands[i].HasValue ? vbsBands[i].VwStdev : null,
         });
         return result;
     }
@@ -193,11 +191,9 @@ public class IntervalIndicatorHubParityTests
         Eq("PSar", hub.PSar, batch.PSar, maxRel);
         var hubVbs = hub.GetPluginData<VbsCandleData>();
         var batchVbs = batch.GetPluginData<VbsCandleData>();
-        Eq("VbsAtrSl", hubVbs?.AtrSl, batchVbs?.AtrSl, maxRel);
         Eq("VbsBasis", hubVbs?.Basis, batchVbs?.Basis, maxRel);
         Eq("VbsUpper", hubVbs?.Upper, batchVbs?.Upper, maxRel);
         Eq("VbsLower", hubVbs?.Lower, batchVbs?.Lower, maxRel);
-        Eq("VbsVwStdev", hubVbs?.VwStdev, batchVbs?.VwStdev, maxRel);
 #if DEBUG
         Eq("Ema50", hub.Ema50, batch.Ema50, maxRel);
         Eq("Atr14", hub.Atr14, batch.Atr14, maxRel);

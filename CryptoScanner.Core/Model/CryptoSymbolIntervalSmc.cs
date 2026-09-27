@@ -29,6 +29,14 @@ public class CryptoSymbolIntervalSmc
     public int CachedAverageWindow { get; set; } = -1;
     public int CachedBaseMaxCandles { get; set; } = -1;
 
+    /// <summary>
+    /// Set when the detection on the interval boundary found the zone lock taken (the DLZ
+    /// recalculation holds it for minutes, and is queued on the same boundaries). SignalPrepare then
+    /// retries on the next 1m candle instead of on the next interval boundary, which on 1h was an
+    /// hour later and on 4h four (open point 85). Cleared by the detection that did run.
+    /// </summary>
+    public bool DetectPending { get; set; }
+
 
     /// <summary>
     /// Empties the zone list without touching the cursor. Deliberately separate from

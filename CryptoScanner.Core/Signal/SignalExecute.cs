@@ -4,7 +4,9 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Contracts;
 
@@ -58,6 +60,7 @@ public class SignalExecute
     {
         // New setup
         Executing.Clear();
+        SymbolRejectsLogged.Clear();
 
         foreach (AlgorithmDefinition strategyDef in RegisterAlgorithms.AlgorithmDefinitionList.Values)
         {
@@ -102,6 +105,39 @@ public class SignalExecute
     }
 
 
+    // The (symbol, side, reason) combinations that were reported as "not analysed". Cleared in
+    // Prepare, which is also when the black and white list can have changed.
+    private static readonly ConcurrentDictionary<string, byte> SymbolRejectsLogged = new();
+
+    /// <summary>
+    /// The three tests on the symbol itself that PrepareAndSendSignalAsync applies to a finished
+    /// signal: black list, white list and tick size. <paramref name="reason"/> is a fixed key for the
+    /// once-only log, <paramref name="detail"/> the text with the numbers.
+    /// </summary>
+    internal static bool SymbolAllowed(CryptoSymbol symbol, CryptoTradeSide side, decimal tickPercentage,
+        out string reason, out string detail)
+    {
+        if (TradingConfig.Signals[side].InBlackList(symbol.Name) == MatchBlackAndWhiteList.Present)
+        {
+            reason = detail = "blacklisted";
+            return false;
+        }
+        if (TradingConfig.Signals[side].InWhiteList(symbol.Name) == MatchBlackAndWhiteList.NotPresent)
+        {
+            reason = detail = "not whitelisted";
+            return false;
+        }
+        if (tickPercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
+        {
+            reason = "tick perc to high";
+            detail = $"the tick size percentage is too high {tickPercentage:N3}";
+            return false;
+        }
+        reason = detail = "";
+        return true;
+    }
+
+
     public static async Task ExecuteAsync(CryptoSymbol symbol, CandleTime lastCandle1mCloseTime)
     {
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
@@ -117,6 +153,17 @@ public class SignalExecute
         // same verdict, and once is enough.
         HashSet<string> reactionsLogged = [];
 
+        // Properties of the SYMBOL, not of the candle: a blacklisted, non-whitelisted or too coarse
+        // symbol used to run the full strategy evaluation on every candle - including the 60-candle
+        // walk of CalculateAdditionalSignalProperties - and then vanish in PrepareAndSendSignalAsync
+        // without a word (open point 88). Decided here, before any strategy runs, and said once per
+        // symbol, side and reason. Only while ShowInvalidSignals is off: with it on the user wants to
+        // SEE those signals as invalid in the grid, and SignalCreate still marks them so.
+        bool rejectSymbolHere = !GlobalData.Settings.General.ShowInvalidSignals;
+        decimal tickPercentage = symbol.LastPrice is > 0
+            ? 100 * symbol.PriceTickSize / symbol.LastPrice.Value
+            : 0;
+
         //List<CryptoSignal> signalList = [];
         foreach (var entry in Executing.ToList())
         {
@@ -127,6 +174,13 @@ public class SignalExecute
                     try
                     {
                         var side = entry.Key.side;
+                        if (rejectSymbolHere && !SymbolAllowed(symbol, side, tickPercentage, out string reason, out string detail))
+                        {
+                            if (SymbolRejectsLogged.TryAdd($"{symbol.Name}|{side}|{reason}", 0))
+                                GlobalData.AddTextToLogTab($"{symbol.Name} {side} not analysed: {detail}");
+                            continue;
+                        }
+
                         if (entry.Key.checkBarometer) // Skip for the dlz and fvg zones
                         {
                             // Barometer check
@@ -141,6 +195,16 @@ public class SignalExecute
                             if (TradingConfig.Signals[side].BarometerConsensusActive &&
                                 !BarometerHelper.CheckConsensusBarometer(GlobalData.ActiveExchange!, symbol.Quote,
                                     interval.IntervalPeriod, TradingConfig.Signals[side].Barometer, TradingConfig.Signals[side].BarometerMinConsensus, side, out reaction))
+                            {
+                                if (TradingConfig.Signals[side].BarometerLog && reactionsLogged.Add($"{side} {reaction}"))
+                                    GlobalData.AddTextToLogTab($"{symbol.Name} {side} {reaction}");
+                                continue;
+                            }
+
+                            // Market breadth check (open point 11, phase 3) - only when enabled
+                            if (TradingConfig.Signals[side].BarometerBreadthActive &&
+                                !BarometerHelper.CheckBreadth(GlobalData.ActiveExchange!, symbol.Quote,
+                                    TradingConfig.Signals[side].BarometerBreadthMinimum, TradingConfig.Signals[side].BarometerBreadthMaximum, out reaction))
                             {
                                 if (TradingConfig.Signals[side].BarometerLog && reactionsLogged.Add($"{side} {reaction}"))
                                     GlobalData.AddTextToLogTab($"{symbol.Name} {side} {reaction}");

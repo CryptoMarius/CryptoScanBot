@@ -553,6 +553,8 @@ public static class CandleTools
                     // was instantiated". CandleLock below does not cover it - the writers take the
                     // list's own lock, not this semaphore.
                     removed += symbolInterval.CandleList.RemoveBefore(startFetchUnix);
+                    // The zone calculation may not go on claiming the windows that just left (open point 67).
+                    symbol.Data.ZoneCandleWindows.ForgetBefore(symbolInterval.IntervalPeriod, startFetchUnix, symbolInterval.Interval.Duration);
 
                     // Remove old candle indicator data, on its OWN boundary and not on the candle one.
                     //

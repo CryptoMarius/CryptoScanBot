@@ -53,7 +53,10 @@ public class SignalDominantLevelShort : SignalCreateBase
                             // throttles its proximity alarm: a zone now survives its first touch
                             // (MaxTouches decides that), so without this it would report on every
                             // candle of the same test.
+                            // Both edges, see SignalDominantLevelLong (open point 105): a candle
+                            // entirely ABOVE a supply zone is through it, not touching it.
                             if (CandleLast.Candle.High >= zone.Bottom
+                                && CandleLast.Candle.Low <= zone.Top
                                 && (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1)))
                             {
                                 if (settings.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)

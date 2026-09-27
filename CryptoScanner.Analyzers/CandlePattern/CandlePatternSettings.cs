@@ -1,5 +1,7 @@
 ﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
+
+using System.Text.Json.Serialization;
 using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Analyzers.CandlePattern;
@@ -83,6 +85,9 @@ public class CandlePatternStrategySettings : SettingsSignalStrategyBase
             + "to switch the requirement off. The zone intervals under Signal.Zones* must be filled, "
             + "otherwise there are no zones and nothing fires.")]
     public List<string> RequireZone { get; set; } = [];
+
+    [JsonIgnore]
+    public override IEnumerable<string> RequiredZoneKinds => RequireZone;
 
     /// <summary>
     /// How much room to allow around the zone, as a percentage of the zone's own price. Zero is

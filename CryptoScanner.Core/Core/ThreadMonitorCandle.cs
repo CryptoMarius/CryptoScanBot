@@ -20,6 +20,9 @@ public class ThreadMonitorCandle
     }
 
 
+    /// <summary>How often a candle was skipped because the previous candle of the same symbol was still being analysed.</summary>
+    public static int SkippedBusySymbol;
+
     public void AddToQueue(CryptoSymbol symbol, CryptoCandle candle)
     {
         if (!GlobalData.IsEmulatorMode && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running
@@ -40,9 +43,25 @@ public class ThreadMonitorCandle
                     await Semaphore.WaitAsync();
                     try
                     {
-                        // Er is een 1m candle gearriveerd, acties adhv deze candle..
-                        using PositionMonitor positionMonitor = new(symbol, candle);
-                        await positionMonitor.NewCandleArrivedAsync();
+                        // Never two candles of the same symbol at once, see CryptoSymbolData.AnalysisLock
+                        // (open point 86). Skipped, not queued: the previous minute is still busy on
+                        // this symbol, and the hub recovers from the gap by itself.
+                        if (!symbol.Data.AnalysisLock.Wait(0))
+                        {
+                            Interlocked.Increment(ref SkippedBusySymbol);
+                            GlobalData.AddTextToLogTab($"{symbol.Name} candle {candle.OpenTime.ToDateTime():HH:mm} skipped, the previous candle of this symbol is still being analysed (#{SkippedBusySymbol})");
+                            return;
+                        }
+                        try
+                        {
+                            // Er is een 1m candle gearriveerd, acties adhv deze candle..
+                            using PositionMonitor positionMonitor = new(symbol, candle);
+                            await positionMonitor.NewCandleArrivedAsync();
+                        }
+                        finally
+                        {
+                            symbol.Data.AnalysisLock.Release();
+                        }
                     }
                     catch (Exception error)
                     {

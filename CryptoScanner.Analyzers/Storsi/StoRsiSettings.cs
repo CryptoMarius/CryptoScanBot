@@ -22,8 +22,8 @@ public class StoRsiSettings : SettingsSignalStrategyBase
     [SettingCaption("Only if there is a previous storsi signal")]
     public bool SkipFirstSignal { get; set; } = false;
 
-    [SettingCaption("Only when macd shows recovery")]
-    public bool CheckMacdRecovery { get; set; } = false;
+    // CheckMacdRecovery was removed on 26-09-2026 (open point 108): storsi never did a MACD
+    // recovery test, see StoRsiBase. A settings file that still carries the key is read without it.
 
     public StoRsiSettings() : base()
     {

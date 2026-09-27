@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Analyzers.BbSqueeze.Signal;
@@ -121,11 +121,8 @@ public class SignalBbSqueezeBase : SignalCreateBase
     }
 
 
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
-        if (base.GiveUp(signal))
-            return true;
-
         var settings = BbSqueezePlugin.Settings;
 
         // Skip the re-squeeze check during the grace period after the signal fired;

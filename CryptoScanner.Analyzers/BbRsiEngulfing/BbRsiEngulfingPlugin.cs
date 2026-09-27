@@ -1,14 +1,12 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.BbRsiEngulfing;
 
 /// <summary>
-/// The Ichimoku Kumo (Cloud) Breakout is a strategy where traders enter a 
-/// position when the price forcefully pushes above or below the Ichimoku Cloud. 
-/// It signals a massive shift in medium-to-long-term market sentiment and is 
-/// generally validated when the Chikou Span (lagging line) clears historical 
-/// price action in the direction of the breakout.
+/// Bollinger Bands, RSI and an engulfing candle: a long when an engulfing candle forms at the
+/// lower band with an oversold RSI, a short at the upper band with an overbought RSI. The header
+/// used to describe the Ichimoku Kumo breakout, copied along with the file (open point 112).
 /// </summary>
 public class BbRsiEngulfingPlugin : IStrategyPlugin
 {

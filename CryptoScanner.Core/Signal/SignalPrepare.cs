@@ -1,6 +1,7 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Zones;
 
 using System.Diagnostics;
@@ -37,6 +38,34 @@ public class SignalPrepare
     /// <summary>All interval names in the effective DLZ prep bucket.</summary>
     public static IEnumerable<string> EffectiveDlzIntervals
         => Preparing.TryGetValue(SignalPrepareKind.Dlz, out var list) ? list.Keys : [];
+
+    /// <summary>
+    /// Whether any ENABLED strategy reads zones of this kind: the zone strategy of the kind itself,
+    /// a plugin that declares RequiresDlzZones, or a strategy whose settings demand the kind
+    /// (RequireZone on candlepattern and failedbreakout). A filled ZonesXxx.IntervalList used to
+    /// mean "calculate", full stop - a storsi queue line copied from a dlz line dragged the whole
+    /// dominant-level calculation along for a strategy that never looks at it (open point 32).
+    /// </summary>
+    private static bool AnyEnabledStrategyUsesZones(string kind)
+    {
+        bool Enabled(string name) => GlobalData.Settings.Signal.Long.Strategy.Contains(name)
+            || GlobalData.Settings.Signal.Short.Strategy.Contains(name);
+
+        foreach (AlgorithmDefinition strategyDef in RegisterAlgorithms.AlgorithmDefinitionList.Values)
+        {
+            if (!Enabled(strategyDef.Name))
+                continue;
+            // The zone strategy of this kind: dlz, fvg, smc (and their variants, dlz.xxx).
+            if (strategyDef.IsZoneStrategy && strategyDef.Name.StartsWith(kind, StringComparison.OrdinalIgnoreCase))
+                return true;
+            SettingsSignalStrategyBase? settings = PluginManager.LiveSettings(strategyDef.Name);
+            if (settings != null && settings.RequiredZoneKinds.Any(k => k.Equals(kind, StringComparison.OrdinalIgnoreCase)))
+                return true;
+        }
+        if (kind.Equals("dlz", StringComparison.OrdinalIgnoreCase) && AnyEnabledStrategyRequiresDlzZones())
+            return true;
+        return false;
+    }
 
     private static bool AnyEnabledStrategyRequiresDlzZones()
     {
@@ -156,6 +185,18 @@ public class SignalPrepare
             Add(SignalPrepareKind.Smc, intervalName);
         }
 
+        // A configured kind that no enabled strategy reads is not calculated (open point 32). Said
+        // once, here, so a queue line or a settings file with a forgotten interval list is not a
+        // silent hour of dominant-level work.
+        foreach (var (kindEnum, kindName) in new[] { (SignalPrepareKind.Dlz, "dlz"), (SignalPrepareKind.Fvg, "fvg"), (SignalPrepareKind.Smc, "smc") })
+        {
+            if (Preparing.TryGetValue(kindEnum, out var bucket) && bucket.Count > 0 && !AnyEnabledStrategyUsesZones(kindName))
+            {
+                GlobalData.AddTextToLogTab($"Zones {kindName}: interval list {string.Join(",", bucket.Keys)} is set but no enabled strategy reads these zones, not calculated");
+                Preparing.Remove(kindEnum);
+            }
+        }
+
 
         // Remove the unused items
         foreach (var item in Preparing.ToList())
@@ -168,6 +209,13 @@ public class SignalPrepare
     }
 
 
+
+    /// <summary>
+    /// How often the SMC detection on an interval boundary found the zone lock taken and had to
+    /// wait for a later 1m candle. Makes the collision with the DLZ recalculation measurable,
+    /// which it never was (open point 85).
+    /// </summary>
+    public static int SmcDetectDeferred;
 
     public static async Task ExecuteAsync(CryptoSymbol symbol, CryptoCandle lastCandle1m, CandleTime lastCandle1mCloseTime)
     {
@@ -296,12 +344,16 @@ public class SignalPrepare
         {
             foreach (var interval in indexList.Values)
             {
-                if (lastCandle1mCloseTime % interval.Duration == 0)
+                // Or a retry: the comment above promised "the next 1m candle", but without the flag
+                // the next attempt was the next interval boundary (open point 85).
+                CryptoSymbolIntervalSmc smc = symbol.GetSymbolInterval(interval.IntervalPeriod).Smc;
+                if (lastCandle1mCloseTime % interval.Duration == 0 || smc.DetectPending)
                 {
                     if (symbol.Data.ZoneLock.Wait(0))
                     {
                         try
                         {
+                            smc.DetectPending = false;
                             long profSmcStart = Stopwatch.GetTimestamp();
                             ZoneSmc.Detect(symbol, interval);
                             PipelineProfiler.RecordSmcInline(Stopwatch.GetTimestamp() - profSmcStart);
@@ -310,6 +362,12 @@ public class SignalPrepare
                         {
                             symbol.Data.ZoneLock.Release();
                         }
+                    }
+                    else
+                    {
+                        if (!smc.DetectPending)
+                            Interlocked.Increment(ref SmcDetectDeferred);
+                        smc.DetectPending = true;
                     }
                 }
             }

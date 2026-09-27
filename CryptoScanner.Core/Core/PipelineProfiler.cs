@@ -64,6 +64,7 @@ public static class PipelineProfiler
     public static long PrepWarmupGap;          // this candle does not directly follow the last one added
     public static long PrepWarmupExplicit;     // caller asked for a bigger window (chart)
     public static long PrepWarmupConfig;       // settings changed since the hub was built
+    public static long PrepWarmupAfterSkip;    // of the gap warm-ups: the gap was a candle PositionMonitor skipped (volume/price/new coin), open point 90
 
     // Sub-breakdown of the ExecuteTicks ("algorithms") bucket, accumulated inside
     // SignalExecute.ExecuteAsync. Tells us whether the dominant SignalExecute time is normal-strategy
@@ -309,6 +310,7 @@ public static class PipelineProfiler
         PrepWarmupGap = 0;
         PrepWarmupExplicit = 0;
         PrepWarmupConfig = 0;
+        PrepWarmupAfterSkip = 0;
 
         SeStrategyTicks = 0;
         SeZoneTouchTicks = 0;
@@ -438,6 +440,15 @@ public static class PipelineProfiler
             Interlocked.Increment(ref PrepWarmupExplicit);
         else if (configChanged)
             Interlocked.Increment(ref PrepWarmupConfig);
+    }
+
+
+    /// <summary>A gap warm-up whose gap was a skipped candle (see CryptoSymbolData.LastCandleSkipped).</summary>
+    public static void RecordPrepWarmupAfterSkip()
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Increment(ref PrepWarmupAfterSkip);
     }
 
 

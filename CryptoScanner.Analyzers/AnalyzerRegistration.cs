@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 
 namespace CryptoScanner.Analyzers;
 
@@ -48,7 +48,6 @@ public static class AnalyzerRegistration
         PluginManager.Register(new Choch.ChochPlugin());
 
         // Lots of noise, there is alway's some sort of dtd to be found
-        PluginManager.Register(new DoubleTopBottom.DoubleTopBottomPlugin());
 
         PluginManager.Register(new IChimokuKumoBreakout.IChimokuKumoBreakoutPlugin());
         PluginManager.Register(new KumoSqueeze.KumoSqueezePlugin());

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 99;
+    public readonly static int CurrentDatabaseVersion = 101;
 
 
     /// <summary>
@@ -2232,6 +2232,41 @@ public class DatabaseMigration
                 transaction);
             GlobalData.AddTextToLogTab("Database version 99: EmulatorRun records the build date of "
                 + "the binary that made the run");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // The deepest capital drawdown of a run, next to the peak capital it already stores (open
+        // point 47). Computed at run end from the daily AssetSnapshot rows; existing runs get it
+        // through the recalculation in the emulator, as long as their snapshots are still there.
+        if (CurrentVersion > version.Version && version.Version == 99)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table EmulatorRun add MaxDrawdownPercentage TEXT NULL", transaction); } catch { } // ignore
+            GlobalData.AddTextToLogTab("Database version 100: EmulatorRun records the deepest capital drawdown of the run");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // The market breadth (percentage of rising coins, 1h) at the moment of the signal, on the
+        // signal and on the position, so it can be measured whether signals in a broad market do
+        // better (open point 11, phase 2).
+        if (CurrentVersion > version.Version && version.Version == 100)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Signal add MarketBreadth1h TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add MarketBreadth1h TEXT NULL", transaction); } catch { } // ignore
+            GlobalData.AddTextToLogTab("Database version 101: signals and positions record the market breadth (1h)");
 
             // update version
             version.Version += 1;

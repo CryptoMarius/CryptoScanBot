@@ -1,11 +1,10 @@
-# Smart Money Concepts — Order Blocks (SMC)
+﻿# Smart Money Concepts — Order Blocks (SMC)
 
 ## Overview
 
-The **SMC** strategy identifies supply and demand zones using the Smart Money Concepts (ICT) Order Block methodology. Zones are detected where a base of small-range candles precedes an expansion (large-range) candle, indicating institutional accumulation or distribution. Two signal variants exist:
+The **SMC** strategy identifies supply and demand zones using the Smart Money Concepts (ICT) Order Block methodology. Zones are detected where a base of small-range candles precedes an expansion (large-range) candle, indicating institutional accumulation or distribution. One signal variant exists (the rejection variant was removed on 26-09-2026, it had not been registered since 17-09):
 
 - **smc** — fires on zone touch (wick enters the zone).
-- **smc.rejection** — fires on confirmed bounce (candle closes beyond the proximal edge after a recent zone test).
 
 This is a **production** strategy.
 
@@ -36,13 +35,6 @@ The signal also skips zones whose `TouchCount` is above `MaxTouches`. With the d
 
 Alarm rate-limited to once per zone per hour.
 
-### Signal: SMC rejection (smc.rejection)
-
-Confirmed bounce with lookback:
-
-- **Long**: current candle closes **above** zone.Top (proximal edge). Within the last `RejectionLookback` candles (default 3), at least one candle must have wicked into the zone. Signal price is set to zone.Top for limit-order entry.
-- **Short**: current candle closes **below** zone.Bottom. Lookback must show a candle that tested the zone.
-
 ## Signal conditions summary
 
 ### Long entry (smc — touch)
@@ -54,14 +46,6 @@ Confirmed bounce with lookback:
 | 3 | Wick intersects zone | Low ≤ zone.Top AND High ≥ zone.Bottom |
 | 4 | Zone is Strong (optional) | When OnlyStrong is enabled |
 | 5 | Not already alarmed this hour | Rate-limited to once per zone per hour |
-
-### Long entry (smc.rejection — bounce)
-
-| # | Condition | Description |
-|---|-----------|-------------|
-| 1 | Open demand zone exists | Zone with Side = Long, not closed |
-| 2 | Close > zone.Top | Price bounced above proximal edge |
-| 3 | Recent zone test | A candle within RejectionLookback wicked into the zone |
 
 ## Settings
 
@@ -80,7 +64,6 @@ Confirmed bounce with lookback:
 | `MaxTouches` | 2 | Visits a zone survives; it closes after that. 0 = never used up, only a break closes it (see [Zone lifetime](#zone-lifetime)) |
 | `TouchLevel` | Midpoint | How far price must come in before a visit counts: Edge (wick reaches the near edge) or Midpoint (wick reaches the middle) |
 | `CloseZonesPastMidpoint` | false | Close the zone as soon as price has ever reached its middle. With `TouchLevel = Midpoint` this equals `MaxTouches = 1` |
-| `RejectionLookback` | 3 | Candles to look back for zone test (rejection variant) |
 
 The `MaxTouches` default was 1 while the signal counted by itself (0 and 1 touches allowed, zone stayed open). Under the shared closing rules 2 means the same thing: the zone closes on its second visit.
 
@@ -116,22 +99,20 @@ The rules run realtime after every closed zone-interval candle, again on a zone 
 
 ```
 CryptoScanner.Analyzers/Smc/
-├── SmcPlugin.cs                                  # Plugin registration (smc + smc.rejection)
+├── SmcPlugin.cs                                  # Plugin registration (smc)
 ├── Smc.md                                        # This document
 ├── Config/
 │   ├── StrategySmcTabView.axaml                  # Settings tab UI
 │   └── StrategySmcTabViewModel.cs                # Settings viewmodel
 └── Signal/
     ├── SignalOrderBlockLong.cs                    # Long touch: wick into demand zone
-    ├── SignalOrderBlockShort.cs                   # Short touch: wick into supply zone
-    ├── SignalOrderBlockRejectionLong.cs           # Long rejection: confirmed bounce above zone
-    └── SignalOrderBlockRejectionShort.cs          # Short rejection: confirmed bounce below zone
+    └── SignalOrderBlockShort.cs                   # Short touch: wick into supply zone
 ```
 
 Zone closing rules: `CryptoScanner.Core/Zones/ZoneInvalidation.cs`
 Settings class: `CryptoScanner.Core/Settings/Strategy/SettingsSignalStrategySmc.cs`
-Enum values: `CryptoSignalStrategy.OrderBlock = 1004`, `CryptoSignalStrategy.OrderBlockRejection = 1006`
+Enum values: `CryptoSignalStrategy.OrderBlock = 1004` (`OrderBlockRejection = 1006` stays in the enum for stored signals)
 
 ## Registration
 
-Registered as a **production** strategy in `AnalyzerRegistration.cs`. Strategy names in the UI: **smc**, **smc.rejection**.
+Registered as a **production** strategy in `AnalyzerRegistration.cs`. Strategy name in the UI: **smc**.

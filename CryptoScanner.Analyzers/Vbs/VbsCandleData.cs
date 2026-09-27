@@ -1,4 +1,4 @@
-namespace CryptoScanner.Analyzers.Vbs;
+﻿namespace CryptoScanner.Analyzers.Vbs;
 
 /// <summary>
 /// VBS band values for one candle, computed once by <see cref="Indicators.VbsIndicatorExtension"/>
@@ -20,15 +20,12 @@ public sealed class VbsCandleData
     /// <summary>Basis - Mult * vwStdev.</summary>
     public double? Lower { get; set; }
 
-    /// <summary>Volume-weighted stdev of hlc3, so a stop-loss can be expressed in vwStdev units.</summary>
-    public double? VwStdev { get; set; }
-
     /// <summary>
     /// ACS (Average Candle Size) as a percentage: AcsFactor * SMA((high-low)/close, AcsLength) * 100.
     /// Drives the stop-loss (SL = entry -/+ Acs%).
     /// </summary>
     public double? Acs { get; set; }
 
-    /// <summary>The slow ATR(Length) used for the older ATR-based stop-loss percentage.</summary>
-    public double? AtrSl { get; set; }
+    // VwStdev and AtrSl were removed on 26-09-2026 (open point 74b): nothing read them since the ACS
+    // replaced the ATR stop in commit 70075e92 (2026-08-09).
 }

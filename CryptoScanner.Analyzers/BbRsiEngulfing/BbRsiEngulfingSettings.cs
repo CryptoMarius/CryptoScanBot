@@ -2,14 +2,19 @@
 
 namespace CryptoScanner.Analyzers.BbRsiEngulfing;
 
-// "dbr" — Donchian Breakout Reversion (DBR): Donchian-based outer bands (the gray "plateaus") with an
-// EMA+ATR middle cloud (DIDO). A long alert fires when the Low breaks the macro LOWER band; a short
-// when the High breaks the macro UPPER band, with optional HMA-trend / RSI / Stochastic-RSI filters.
-// These parameters drive BOTH the chart drawer (DbrBands) and the dbr signal (DbrBandsHelper),
-// so the chart and the alert always stay in sync. Defaults match the original Pine inputs.
+// Settings of the bbrsiengulfing strategy (Bollinger Bands, RSI and an engulfing candle). The
+// header used to describe dbr, copied along with the file (open point 112).
 [Serializable]
 public class BbRsiEngulfingSettings : SettingsSignalStrategyBase
 {
+    // Own BB range since 26-09-2026 (open point 109): this strategy used to read stobb's pair, so
+    // whoever tuned stobb silently retuned this one too. The defaults are what it effectively ran
+    // with (stobb's 1,5 and no upper bound).
+    [SettingCaption("Filter on BB%")]
+    public double BBMinPercentage { get; set; } = 1.50;
+
+    [SettingCaption("", SameRowAs = nameof(BBMinPercentage))]
+    public double BBMaxPercentage { get; set; } = 0.0;
 
     // The fourth check of this strategy is called "engulfing" but tests whether the candle closes
     // above the HIGH of the previous one (below the LOW for a short). That is a breakout condition,

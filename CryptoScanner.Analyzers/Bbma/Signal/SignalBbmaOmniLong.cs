@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
@@ -730,7 +730,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
     /// runs on a freshly-constructed algorithm instance (see PositionMonitor) where
     /// OppositeExtremeChecker was never wired up by IsSignal().
     /// </summary>
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
         var opposite = new SignalBbmaOmniShort
         {
@@ -911,6 +911,11 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         {
             ExtraText = $"HTF setup: {htfSetup}";
             //GlobalData.AddTextToLogTab($"{logPrefix} HTF CheckHtf: no setup found");
+            return false;
+        }
+        if (!IsSetupAllowed(htfSetup))
+        {
+            ExtraText = $"HTF setup {htfSetup} rejected by the settings";
             return false;
         }
         //GlobalData.AddTextToLogTab($"{logPrefix} HTF CheckHtf: found {htfSetup}");

@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trader;
 
@@ -214,10 +214,17 @@ public class AltradySlConsistencyTests
             GlobalStopLossLimitPercentage = 6m,
         });
 
+        // Since 26-09-2026 (PricePlacement, open point 27) the paper stop of a short is the log
+        // mirror of the long's - entry / (1 - p) - while Altrady, which is handed the percentage,
+        // places it arithmetically at entry * (1 + p). Same anchor, same percentage, a fraction
+        // apart in price: at 2,5% that is 102,56 against 102,50.
         decimal altradySlPrice = ShortPrice(entry, signalSlPct);
+        decimal expected = entry / (1m - signalSlPct / 100m);
 
-        Assert.AreEqual(altradySlPrice, ptResult.Stop,
-            "Signal SL: both systems must produce the same stop price");
+        Assert.AreEqual(expected, ptResult.Stop,
+            "Signal SL: the paper stop is the log mirror of the long's");
+        Assert.IsTrue(Math.Abs(ptResult.Stop!.Value - altradySlPrice) / entry < 0.001m,
+            $"Altrady's own placement ({altradySlPrice}) should be within 0,1% of ours ({ptResult.Stop})");
     }
 
     [TestMethod]

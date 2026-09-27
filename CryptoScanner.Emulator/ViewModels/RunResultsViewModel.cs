@@ -1,4 +1,4 @@
-using Avalonia.Threading;
+﻿using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -26,6 +26,14 @@ public class RunRow
 {
     public int Id { get; set; }
     public DateTime StartedAt { get; set; }
+
+    // The write time of the emulator binary that made the run (database version 99). Two runs with
+    // different stamps ran different code, which is what open point 52 asked to see in the report:
+    // the same configuration gave +432,07 and +734,17 on 29-08-2026 with a code change in between.
+    public DateTime? BuildStamp { get; set; }
+    public string BuildStampText => BuildStamp.HasValue
+        ? DateTime.SpecifyKind(BuildStamp.Value, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+        : "";
     public DateTime? FinishedAt { get; set; }
 
     // Nullable: runs created before the period columns existed have NULL here.
@@ -63,6 +71,8 @@ public class RunRow
     // which is the same stake going round and says nothing about the capital needed.
     public decimal PeakInvested { get; set; }
     public int PeakPositions { get; set; }
+    // Deepest fall of the capital from an earlier high, in percent (open point 47).
+    public decimal MaxDrawdownPercentage { get; set; }
     public int PositionsLong { get; set; }
     public int PositionsShort { get; set; }
     public decimal ProfitLong { get; set; }
@@ -143,6 +153,7 @@ public class RunRow
     public string InvestedText => Invested.ToString("N2");
     public string PeakInvestedText => PeakInvested.ToString("N2");
     public string PeakProfitPercentageText => PeakProfitPercentage.ToString("N2") + "%";
+    public string MaxDrawdownText => MaxDrawdownPercentage.ToString("N2") + "%";
     public string BestCaseText => BestCase.ToString("N2");
     public string WorstCaseText => WorstCase.ToString("N2");
     public string ProfitLongText => ProfitLong.ToString("N2");
@@ -304,9 +315,9 @@ public partial class RunResultsViewModel : ObservableObject
     /// keeps the grid correct for a database whose positions have been archived away.
     /// </summary>
     private const string RunSelect =
-        "SELECT r.Id, r.StartedAt, r.FinishedAt, r.Label, r.FromDate, r.ToDate, r.Result, " +
+        "SELECT r.Id, r.StartedAt, r.FinishedAt, r.BuildStamp, r.Label, r.FromDate, r.ToDate, r.Result, " +
         "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.Profit, r.Invested, " +
-        "       r.PeakInvested, r.PeakPositions, r.PositionsLong, r.PositionsShort, r.ProfitLong, r.ProfitShort, " +
+        "       r.PeakInvested, r.PeakPositions, r.MaxDrawdownPercentage, r.PositionsLong, r.PositionsShort, r.ProfitLong, r.ProfitShort, " +
         "       r.AverageWin, r.AverageLoss, r.AvgDurationSec, r.MinDurationSec, r.MaxDurationSec, " +
         // Start capital and the asset-management switch live in the run configuration blob. SQLite's
         // json_extract reads them in the query, which keeps the grid fast (parsing ConfigJson per row
@@ -509,6 +520,7 @@ public partial class RunResultsViewModel : ObservableObject
             "PeakInvested" => r => r.PeakInvested,
             "PeakPositions" => r => r.PeakPositions,
             "PeakProfitPercentage" => r => r.PeakProfitPercentage,
+            "MaxDrawdownPercentage" => r => r.MaxDrawdownPercentage,
             "StartCapital" => r => r.StartCapital,
             "EndCapital" => r => r.HasCapitalReturn ? r.EndCapital : null,
             "CapitalReturnPercentage" => r => r.HasCapitalReturn ? r.CapitalReturnPercentage : null,

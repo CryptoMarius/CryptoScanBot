@@ -10,6 +10,8 @@ using CryptoScanner.Core.Signal;
 
 using Dapper.Contrib.Extensions;
 
+using Skender.Stock.Indicators;
+
 using System.Diagnostics;
 
 namespace CryptoScanner.Core.Trader;
@@ -223,6 +225,56 @@ public class PositionMonitor : IDisposable
     /// them out here would only mean doing that test twice.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// A cooldown setting in minutes. With CooldownInCandles it is a number of candles of the given
+    /// interval instead (open point 69); a null interval means "minutes" regardless.
+    /// </summary>
+    internal static int CooldownMinutes(int value, CryptoInterval? interval)
+    {
+        if (interval == null || !GlobalData.Settings.Trading.CooldownInCandles)
+            return value;
+        return value * (int)interval.Duration; // Duration is in minutes
+    }
+
+
+    /// <summary>
+    /// Whether the symbol is still in its buy cooldown or its loss cooldown. Interval null counts
+    /// the settings as minutes, otherwise as candles of that interval (see CooldownMinutes).
+    /// </summary>
+    private bool InTradeCooldown(CryptoInterval? interval, out string reaction)
+    {
+        int lossMinutes = CooldownMinutes(GlobalData.Settings.Trading.LossCooldownTime, interval);
+        int buyMinutes = CooldownMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime, interval);
+
+        // Compare against the candle's CLOSE time: that is the moment this decision is taken, and
+        // it is what LastTradeDate itself is written with. Comparing against the OPEN time made the
+        // cooldown outlive itself by one base interval - 4 minutes on a 5m run, 14 on a 15m run -
+        // so a coarser base interval discarded signals that a 1m run acted on.
+        // A losing trade can buy a longer wait than the normal cooldown. It is counted from the
+        // close of that losing position, not from the last fill, and it is a separate clock: a DCA
+        // or take profit fill afterwards must not push it forward or cut it short.
+        bool inLossCooldown = lossMinutes > 0
+            && Symbol.LastLossDate.HasValue
+            && Symbol.LastLossDate.Value.AddMinutes(lossMinutes) > LastCandle1mCloseTimeDate;
+
+        if (inLossCooldown
+            || (Symbol.LastTradeDate.HasValue && Symbol.LastTradeDate?.AddMinutes(buyMinutes) > LastCandle1mCloseTimeDate))
+        {
+            // Bypass cooldown when an unfilled position exists — no actual trade took place yet,
+            // so a newer signal should be allowed to replace the waiting entry order.
+            if (!GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out var cooldownPos)
+                || cooldownPos.Status != CryptoPositionStatus.Waiting)
+            {
+                reaction = inLossCooldown ? "is in cooldown after a loss" : "is in cooldown";
+                return true;
+            }
+        }
+
+        reaction = "";
+        return false;
+    }
+
+
     internal static List<CryptoSymbolInterval> OrderIntervalsForSignals(
         List<CryptoSymbolInterval> symbolIntervals, decimal lastPrice)
     {
@@ -295,30 +347,13 @@ public class PositionMonitor : IDisposable
         }
 
         // Om te voorkomen dat we te snel achter elkaar in dezelfde munt stappen
-        // Compare against the candle's CLOSE time: that is the moment this decision is taken, and
-        // it is what LastTradeDate itself is written with. Comparing against the OPEN time made the
-        // cooldown outlive itself by one base interval - 4 minutes on a 5m run, 14 on a 15m run -
-        // so a coarser base interval discarded signals that a 1m run acted on.
-        // A losing trade can buy a longer wait than the normal cooldown. It is counted from the
-        // close of that losing position, not from the last fill, and it is a separate clock: a DCA
-        // or take profit fill afterwards must not push it forward or cut it short.
-        bool inLossCooldown = GlobalData.Settings.Trading.LossCooldownTime > 0
-            && Symbol.LastLossDate.HasValue
-            && Symbol.LastLossDate.Value.AddMinutes(GlobalData.Settings.Trading.LossCooldownTime) > LastCandle1mCloseTimeDate;
-
-        if (inLossCooldown
-            || (Symbol.LastTradeDate.HasValue && Symbol.LastTradeDate?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1mCloseTimeDate))
+        // In candles (CooldownInCandles) the length depends on the interval of each signal, so the
+        // check moves into the loop below; in minutes it holds for every signal at once.
+        if (!GlobalData.Settings.Trading.CooldownInCandles && InTradeCooldown(null, out reaction))
         {
-            // Bypass cooldown when an unfilled position exists — no actual trade took place yet,
-            // so a newer signal should be allowed to replace the waiting entry order.
-            if (!GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out var cooldownPos)
-                || cooldownPos.Status != CryptoPositionStatus.Waiting)
-            {
-                reaction = inLossCooldown ? "is in cooldown after a loss" : "is in cooldown";
-                GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-                Symbol.ClearSignals();
-                return;
-            }
+            GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
+            Symbol.ClearSignals();
+            return;
         }
 
         // Check the trading rules of the user (a quick drop of a symbol causes a pause)
@@ -361,6 +396,14 @@ public class PositionMonitor : IDisposable
                     if (signal.Strategy == null || !TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        continue;
+                    }
+
+                    // The cooldowns counted in candles of this signal's interval (open point 69)
+                    if (GlobalData.Settings.Trading.CooldownInCandles && InTradeCooldown(interval, out string cooldownReaction))
+                    {
+                        GlobalData.AddTextToLogTab($"{text} {cooldownReaction} (removed)");
                         symbolInterval.SignalList.Remove(signal);
                         continue;
                     }
@@ -1026,7 +1069,25 @@ public class PositionMonitor : IDisposable
             if (position.SlMovedToBreakEven)
             {
                 decimal lockLevel;
-                if (trailing)
+                if (GlobalData.Settings.Trading.MoveSlToBreakEvenMethod == CryptoProfitLockMethod.TrailingKeltnerPsar
+                    && position.Interval != null)
+                {
+                    // Keltner channel and parabolic SAR of the position interval (open point 48). The
+                    // level only changes when a position-interval candle closes, so it is recomputed
+                    // then (or when there is no level yet) and read back from TrailingStopPrice in
+                    // between - which also carries it over a restart.
+                    decimal floor = ProfitLockCalculator.FixedStop(position.Side, position.BreakEvenPrice, lockPct, lockPct);
+                    if ((position.TrailingStopPrice <= 0 || LastCandle1mCloseTime % position.Interval.Duration == 0)
+                        && TryKeltnerPsar(position.Interval, out CryptoCandle channelCandle, out decimal keltnerLower,
+                            out decimal keltnerUpper, out decimal psar))
+                    {
+                        position.TrailingStopPrice = ProfitLockCalculator.KeltnerPsarStop(position.Side,
+                            channelCandle.Low, channelCandle.High, keltnerLower, keltnerUpper, psar,
+                            position.Symbol.PriceTickSize, floor, position.TrailingStopPrice);
+                    }
+                    lockLevel = position.TrailingStopPrice > 0 ? position.TrailingStopPrice : floor;
+                }
+                else if (trailing)
                 {
                     // Follow the best price the position has seen - for the trail that IS the high
                     // (the low for a short), even though arming needs the whole candle. The ratchet
@@ -1056,6 +1117,71 @@ public class PositionMonitor : IDisposable
         }
 
         return (stop, limit);
+    }
+
+
+    // The channel settings of the old trader: Skender's defaults for both indicators.
+    private const int KeltnerEmaPeriods = 20;
+    private const double KeltnerMultiplier = 2;
+    private const int KeltnerAtrPeriods = 10;
+    private const double PsarAccelerationStep = 0.02;
+    private const double PsarMaxAccelerationFactor = 0.2;
+    private const int KeltnerPsarWindow = 150;
+
+    /// <summary>
+    /// The last CLOSED candle of the interval with its Keltner channel and parabolic SAR, computed
+    /// over the most recent <see cref="KeltnerPsarWindow"/> closed candles. False when there are too
+    /// few candles or an indicator has no value yet.
+    /// </summary>
+    private bool TryKeltnerPsar(CryptoInterval interval, out CryptoCandle candle, out decimal keltnerLower,
+        out decimal keltnerUpper, out decimal psar)
+    {
+        candle = default;
+        keltnerLower = 0;
+        keltnerUpper = 0;
+        psar = 0;
+
+        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
+        var candles = symbolInterval.CandleList;
+
+        // Walk back from the last closed candle of the interval; stop at the first gap
+        CandleTime openTime = (LastCandle1mCloseTime - interval.Duration).AlignToIntervalMinutes(interval.Duration);
+        List<CryptoCandle> window = new(KeltnerPsarWindow);
+        while (window.Count < KeltnerPsarWindow && candles.TryGetValue(openTime, out CryptoCandle c))
+        {
+            window.Add(c);
+            openTime -= interval.Duration;
+        }
+        if (window.Count < 2 * KeltnerEmaPeriods)
+            return false;
+        window.Reverse();
+
+        IReadOnlyList<IQuote> quotes = window.AsQuotes();
+        KeltnerResult keltner = quotes.ToKeltner(KeltnerEmaPeriods, KeltnerMultiplier, KeltnerAtrPeriods)[^1];
+        ParabolicSarResult sar = quotes.ToParabolicSar(PsarAccelerationStep, PsarMaxAccelerationFactor)[^1];
+        if (keltner.LowerBand == null || keltner.UpperBand == null || sar.Sar == null)
+            return false;
+
+        candle = window[^1];
+        keltnerLower = (decimal)keltner.LowerBand.Value;
+        keltnerUpper = (decimal)keltner.UpperBand.Value;
+        psar = (decimal)sar.Sar.Value;
+        return true;
+    }
+
+
+    /// <summary>
+    /// A Keltner/PSAR profit lock that is armed moves its stop on every close of a position-interval
+    /// candle, whatever the price does - so that close has to get through both price fences
+    /// (CandleCanMovePosition and ShouldRunHandlePosition), just like the maximum duration.
+    /// </summary>
+    internal static bool KeltnerPsarStepDue(CryptoPosition position, CandleTime closeTime)
+    {
+        return GlobalData.Settings.Trading.MoveSlToBreakEven
+            && GlobalData.Settings.Trading.MoveSlToBreakEvenMethod == CryptoProfitLockMethod.TrailingKeltnerPsar
+            && position.SlMovedToBreakEven
+            && position.Interval != null
+            && closeTime % position.Interval.Duration == 0;
     }
 
 
@@ -1684,7 +1810,7 @@ public class PositionMonitor : IDisposable
 
                             // Na een timeout (barometer, tradingrules) even 5 minuten helemaal niets doen
                             if (newStatus == CryptoOrderStatus.TradingRules || newStatus == CryptoOrderStatus.BarameterToLow)
-                                Symbol.LastTradeDate = LastCandle1mCloseTimeDate.AddMinutes(-GlobalData.Settings.Trading.GlobalBuyCooldownTime + 5);
+                                Symbol.LastTradeDate = LastCandle1mCloseTimeDate.AddMinutes(-CooldownMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime, position.Interval) + 5);
 
                             if (timeOut)
                             {
@@ -2120,6 +2246,8 @@ public class PositionMonitor : IDisposable
             return true;
         if (position.ExitRequested)
             return true;
+        if (KeltnerPsarStepDue(position, CandleTime.FromDateTime(now)))
+            return true;
         return ShouldRunHandlePosition(position, candleHigh, candleLow);
     }
 
@@ -2274,6 +2402,10 @@ public class PositionMonitor : IDisposable
         if (IsPastMaxDuration(position, candleCloseTime.ToDateTime()))
             return true;
 
+        // The Keltner/PSAR profit lock moves on the close of a position-interval candle, quiet or not
+        if (KeltnerPsarStepDue(position, candleCloseTime))
+            return true;
+
         // Same reasoning for a strategy that asked for the exit: the candle that follows the cross
         // back is as likely as not a quiet one.
         if (position.ExitRequested)
@@ -2346,6 +2478,7 @@ public class PositionMonitor : IDisposable
                         GlobalData.AddTextToLogTab($"{Symbol.Name} {response}");
                     if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
                         ScannerLog.Logger.Info($"{Symbol.Name} {response}");
+                    Symbol.Data.LastCandleSkipped = true;
                     return;
                 }
 
@@ -2358,6 +2491,7 @@ public class PositionMonitor : IDisposable
                         GlobalData.AddTextToLogTab($"{Symbol.Name} {response}");
                     if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
                         ScannerLog.Logger.Info($"{Symbol.Name} {response}");
+                    Symbol.Data.LastCandleSkipped = true;
                     return;
                 }
 
@@ -2368,6 +2502,7 @@ public class PositionMonitor : IDisposable
                         GlobalData.AddTextToLogTab($"{Symbol.Name} {response}");
                     if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
                         ScannerLog.Logger.Info($"{Symbol.Name} {response}");
+                    Symbol.Data.LastCandleSkipped = true;
                     return;
                 }
             }
@@ -2380,6 +2515,7 @@ public class PositionMonitor : IDisposable
 
             // Alway's calculate the indicators, queue the fvg and dlz zones etc
             await SignalPrepare.ExecuteAsync(Symbol, LastCandle1m, LastCandle1mCloseTime);
+            Symbol.Data.LastCandleSkipped = false;
             long profExecuteStart = Stopwatch.GetTimestamp();
 
             // The strategy's own way out, asked on every close of the position's interval. Before the

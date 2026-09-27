@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Zones;
@@ -127,6 +127,21 @@ public class ZoneCandleWindows
     {
         lock (perInterval)
             return perInterval.TryGetValue(period, out IntervalState? state) && state.Changed;
+    }
+
+
+    /// <summary>
+    /// The candles before <paramref name="firstKept"/> were trimmed from the in-memory list, so the
+    /// windows that covered them are not available any more and have to be read again if ever asked.
+    /// Called by the two trims, now that the windows outlive one calculation (open point 67).
+    /// </summary>
+    public void ForgetBefore(CryptoIntervalPeriod period, CandleTime firstKept, uint duration)
+    {
+        lock (perInterval)
+        {
+            if (perInterval.TryGetValue(period, out IntervalState? state))
+                state.Read.ForgetUpTo(firstKept - duration, duration);
+        }
     }
 
 

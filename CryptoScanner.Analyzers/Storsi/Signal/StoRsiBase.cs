@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
@@ -28,11 +28,8 @@ public class StoRsiBase : SignalCreateBase
         return true;
     }
 
-    public override bool GiveUp(CryptoSignal signal)
+    public override bool GiveUpStrategy(CryptoSignal signal)
     {
-        if (base.GiveUp(signal))
-            return true;
-
         switch (SignalSide)
         {
             case CryptoTradeSide.Long:

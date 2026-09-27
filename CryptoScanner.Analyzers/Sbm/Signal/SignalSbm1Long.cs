@@ -36,12 +36,8 @@ public class SignalSbm1Long : SignalSbmBase
             return false;
         }
 
-        if (!this.IsMacdRecoveryOversold(SbmPlugin.Settings.CandlesForMacdRecovery))
-        {
-            ExtraText = "no macd recovery";
-            return false;
-        }
-
+        // The MACD recovery is tested in SignalSbmBase.AdditionalChecks; it used to be tested here as
+        // well, twice per candle for the same answer (open point 114).
         return true;
     }
 }

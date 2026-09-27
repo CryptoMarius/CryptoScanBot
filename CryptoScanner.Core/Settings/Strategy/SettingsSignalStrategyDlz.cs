@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 
 using System.Text.Json.Serialization;
@@ -41,9 +41,9 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
     // Existing settings files still carry the old key; unknown properties are skipped on load and it
     // disappears the next time the file is written.
 
-    // Signal percentage — used by SignalDominantLevelNearLong/Short for the "approaching zone" alarm.
-    [SettingCaption("Approach warning percentage", Group = GroupDominantZones)]
-    public decimal WarnPercentage { get; set; } = 0.25m;
+    // WarnPercentage was removed on 26-09-2026 together with the dlz.near classes it served, and
+    // RejectionLookback below with it, which nothing ever read (open points 108 and 112). A settings
+    // file that still carries the keys is read without them.
 
     [SettingCaption("Candles zoom", Group = GroupDominantZones, Unit = "(1h candles)")]
     public int CandleCountZoom { get; set; } = 125;
@@ -68,12 +68,6 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
     // is one implementation in ZoneInvalidation. See CryptoZoneTouchLevel.
     [SettingCaption("Touch level", Group = GroupZoneStrength)]
     public CryptoZoneTouchLevel TouchLevel { get; set; } = CryptoZoneTouchLevel.Edge;
-
-    // How many candles back (including the current one) the rejection check may inspect.
-    // 1 = only the current candle must show the test+close-back-outside pattern.
-    // 2 = a previous candle may have done the wick, with the current candle as confirmation close.
-    [SettingCaption("Rejection lookback", Group = GroupZoneStrength)]
-    public int RejectionLookback { get; set; } = 1;
 
     // When true, a zone closes as soon as price has been at or past its middle - regardless of how
     // many visits it has left. The reasoning: half of what made the level hold has been taken out of

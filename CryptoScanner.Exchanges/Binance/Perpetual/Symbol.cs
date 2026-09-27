@@ -120,7 +120,15 @@ public class Symbol() : SymbolBase(), ISymbol
                                 continue;
                             }
 
-                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset, ProductOfExchange(exchange));
+                            // The product from the contract type, as Okx derives it from instCategory: a
+                            // TradFi perpetual is named BASEQUOTE.TRADFI and carries the TradFi label,
+                            // where until 26-09-2026 it went through as an ordinary perpetual and the
+                            // distinction was lost (open point 42). Like on Okx the rename leaves the
+                            // candle rows under the old .PERP name behind in candles.db.
+                            string product = symbolData.ContractType == ContractType.PerpetualTradFi
+                                ? CryptoProduct.TradFi
+                                : ProductOfExchange(exchange);
+                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset, product);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
                                 //Temporarily copy everything (because of the new fields)

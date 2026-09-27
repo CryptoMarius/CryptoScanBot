@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 using System.Text.Json.Serialization;
@@ -21,9 +21,10 @@ public class SettingsSignalStrategyBase
     /// The intervals this strategy runs on. EMPTY means "whatever is ticked for the side", which is
     /// how every strategy behaved before this existed, so an untouched settings file keeps working.
     /// <para>
-    /// A filled list can only NARROW that: candles are fetched and kept for the intervals ticked on
-    /// the Signals tab, so a strategy that asks for one that is not ticked would be looking at
-    /// candles that never arrive. The effective list is therefore the intersection of the two.
+    /// A filled list REPLACES the side's list for this strategy (SignalExecute.IntervalsFor): the
+    /// candles are there for every interval, CandleTools builds them all from the minute candles,
+    /// and SignalPrepare prepares the indicators for the same list. An older text here said the two
+    /// were intersected; they are not (open point 115).
     /// </para>
     /// </summary>
     [SettingCaption("Intervals", Group = GroupIntervals)]
@@ -36,6 +37,14 @@ public class SettingsSignalStrategyBase
     /// </summary>
     [JsonIgnore]
     public virtual CryptoIntervalPeriod MinimumInterval => CryptoIntervalPeriod.interval1m;
+
+    /// <summary>
+    /// The zone kinds (dlz, fvg, smc) this strategy reads when it is enabled, as the names the
+    /// RequireZone settings spell them. Empty for a strategy that never looks at a zone. SignalPrepare
+    /// asks this to skip a zone kind that is configured but read by nobody (open point 32).
+    /// </summary>
+    [JsonIgnore]
+    public virtual IEnumerable<string> RequiredZoneKinds => [];
 
     public bool PlaySound { get; set; } = false;
     public bool PlaySpeech { get; set; } = false;

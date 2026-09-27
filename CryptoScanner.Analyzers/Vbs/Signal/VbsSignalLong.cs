@@ -1,4 +1,5 @@
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
 
@@ -113,9 +114,15 @@ public class VbsSignalLong : VbsSignalVbs
                     ExtraText = $"no vbs data on {higherPeriod}";
                     return false;
                 }
+                // The band of the last CLOSED higher candle (the hub has no indicator data for a
+                // running one), but the price of the higher candle that is RUNNING: on three of the
+                // four lower candles the closed one is up to a whole higher period old (open point 73d).
+                CryptoCandle htfPrice = htfCandle.Candle;
+                if (IndicatorEngine.TryGetRunningHigherCandle(Symbol, Interval, CandleLast.Candle.OpenTime, higherPeriod, out CryptoCandle running))
+                    htfPrice = running;
                 double htfLower = htfVbs.Lower.Value;
-                double htfLow = (double)htfCandle.Candle.Low;
-                double htfClose = (double)htfCandle.Candle.Close;
+                double htfLow = (double)htfPrice.Low;
+                double htfClose = (double)htfPrice.Close;
                 if (htfLow >= htfLower && htfClose >= htfLower)
                 {
                     ExtraText = $"no lower band break on {result.higherInterval.Interval.Name}";
@@ -136,7 +143,11 @@ public class VbsSignalLong : VbsSignalVbs
         // Entry = the most extreme of the Close and the band.
         _entryPrice = Math.Min(candle.Close, band);
 
-        if (settings.UseStopLoss)
+        // Only with a real ACS, the same guard the take-profit has: an ACS that is still null (the
+        // hub warming up, AcsLength above Length) gave 0 here, and StopLossCalculator takes 0 as a
+        // valid strategy value and puts the stop on the entry price itself (open point 74a). Null
+        // leaves the trader on the global stop loss instead.
+        if (settings.UseStopLoss && pctDeviation > 0)
             _slPercentage = (decimal)pctDeviation;
 
         // Take-profit = RiskRewardRatio * SL-distance (RiskRewardRatio * ACS%), handed to the trader as a
@@ -145,7 +156,7 @@ public class VbsSignalLong : VbsSignalVbs
             _tpPercentage = (decimal)(settings.RiskRewardRatio * pctDeviation);
 
         //MarkSignalFired();
-        ExtraText = $"hit lower band {pctDeviation:N2}% {_entryPrice}";
+        ExtraText = $"hit lower band, ACS {pctDeviation:N2}% {_entryPrice}";
         return true;
     }
 }

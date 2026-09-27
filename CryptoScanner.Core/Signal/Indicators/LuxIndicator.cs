@@ -174,8 +174,20 @@ public class LuxIndicator
         CandleTime endOpenTime, int count, out int[] overSoldHistory, out int[] overBoughtHistory)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(cryptoIntervalPeriod);
-        uint duration = symbolInterval.Interval.Duration;
+        CalculateRange(symbolInterval.CandleList, symbolInterval.Interval.Duration, endOpenTime, count,
+            out overSoldHistory, out overBoughtHistory);
+    }
 
+
+    /// <summary>
+    /// The same walk over a candle list the caller hands in, so a chart window over history (the
+    /// candles of a finished position, straight from candles.db) gets the Lux of THOSE candles
+    /// instead of the live list pasted onto old dates (open point 55). The symbol overload above
+    /// calls this with the live list.
+    /// </summary>
+    public static void CalculateRange(CryptoCandleList candles, uint duration,
+        CandleTime endOpenTime, int count, out int[] overSoldHistory, out int[] overBoughtHistory)
+    {
         // Walk needs WarmupBars warmup bars before the first recorded bar, plus (count − 1) extra to
         // reach endOpenTime. Total span = (WarmupBars + count − 1) bars before endOpenTime.
         CandleTime startOpenTime = endOpenTime - (uint)(WarmupBars + count - 1) * duration;
@@ -201,7 +213,7 @@ public class LuxIndicator
         while (loop <= endOpenTime)
         {
             candlePrev = candleLast;
-            if (symbolInterval.CandleList.TryGetValue(loop, out candleLast) && candlePrev.OpenTime != 0)
+            if (candles.TryGetValue(loop, out candleLast) && candlePrev.OpenTime != 0)
             {
                 int k = 0;
                 int overbuy = 0;

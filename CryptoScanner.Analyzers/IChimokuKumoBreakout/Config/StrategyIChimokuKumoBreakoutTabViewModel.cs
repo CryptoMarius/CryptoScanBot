@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Config.ViewModels;
 
@@ -8,6 +8,9 @@ public partial class StrategyIChimokuKumoBreakoutTabViewModel : ObservableObject
 {
     [ObservableProperty]
     SoundAndColorsViewModel _soundAndColorsViewModel;
+
+    [ObservableProperty]
+    StrategyIChimokuKumoBreakoutSettingsViewModel _strategyIChimokuKumoBreakoutSettingsViewModel;
 
     // Which intervals this strategy runs on. Empty means "the same as the side".
     [ObservableProperty]
@@ -19,6 +22,7 @@ public partial class StrategyIChimokuKumoBreakoutTabViewModel : ObservableObject
     public StrategyIChimokuKumoBreakoutTabViewModel()
     {
         _soundAndColorsViewModel = new();
+        _strategyIChimokuKumoBreakoutSettingsViewModel = new();
         _intervalViewModel = new();
         _strategyEntryConditionsViewModel = new();
     }
@@ -26,6 +30,7 @@ public partial class StrategyIChimokuKumoBreakoutTabViewModel : ObservableObject
     public void LoadConfig(IChimokuKumoBreakoutSettings settings)
     {
         SoundAndColorsViewModel.LoadConfig(settings);
+        StrategyIChimokuKumoBreakoutSettingsViewModel.LoadConfig(settings);
         IntervalViewModel.LoadStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
@@ -33,6 +38,7 @@ public partial class StrategyIChimokuKumoBreakoutTabViewModel : ObservableObject
     public void SaveConfig(IChimokuKumoBreakoutSettings settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
+        StrategyIChimokuKumoBreakoutSettingsViewModel.SaveConfig(settings);
         IntervalViewModel.SaveStrategyConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
