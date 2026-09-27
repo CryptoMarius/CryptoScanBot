@@ -206,6 +206,18 @@ public static class IndicatorEngine
             return null;
         }
 
+        // A plugin with a longer window (IStrategyPlugin.RequiredHistory, e.g. the MA Cloud on an
+        // SMA(300)) gets that many candles when they are in memory, so its indicator has a value
+        // right after the warm-up instead of only after enough incremental candles. The requirement
+        // above stays 260: raising it would stop every other strategy on an interval with fewer
+        // candles in memory.
+        if (calculateCandles <= 0)
+        {
+            int wanted = Indicators.IntervalIndicatorHub.PluginRequiredHistory() + 60;
+            if (wanted > maxCandles)
+                maxCandles = Math.Min(wanted, intervalCandles.Count);
+        }
+
         // this would normally be enough, but we need to fill in the missing candles (afaics)
         //var x = intervalCandles.Values.TakeLast(maxCandles);
 

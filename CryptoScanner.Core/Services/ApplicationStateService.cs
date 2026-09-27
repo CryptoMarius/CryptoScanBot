@@ -86,10 +86,14 @@ public class ApplicationStateService
 
         // Window positions are stored in a shared (exchange-independent) location so they
         // persist when the user switches to a different database/exchange folder.
-        string sharedDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Const.Constants.AppName);
-        if (!Directory.Exists(sharedDir))
-            Directory.CreateDirectory(sharedDir);
-        _windowStatePath = Path.Combine(sharedDir, "CryptoScanBot-window.json");
+        //string sharedDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Const.Constants.AppName);
+        //if (!Directory.Exists(sharedDir))
+        //    Directory.CreateDirectory(sharedDir);
+        //_windowStatePath = Path.Combine(sharedDir, "CryptoScanBot-window.json");
+        // Since 27-09-2026 the file sits next to CryptoScanBot-settings.json in the data folder (-f).
+        // The shared location meant every instance, test runs included, wrote into the standard data
+        // folder whatever -f said, and all of them overwrote each other's window positions.
+        _windowStatePath = Path.Combine(directory, "CryptoScanBot-window.json");
 
         // Load states on initialization
         _states = LoadFromFile();

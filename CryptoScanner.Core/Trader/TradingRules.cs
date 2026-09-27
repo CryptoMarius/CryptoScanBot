@@ -144,6 +144,10 @@ public static class TradingRules
 
             if (!BarometerHelper.ValidBarometerConditions(activeExchange, quoteName, TradingConfig.Trading[side].Barometer, out reaction))
                 pause.Text = reaction;
+            // Market breadth (open point 11, phase 3) - only when enabled
+            else if (TradingConfig.Trading[side].BarometerBreadthActive &&
+                !BarometerHelper.CheckBreadth(activeExchange, quoteName, TradingConfig.Trading[side].BarometerBreadthMinimum, TradingConfig.Trading[side].BarometerBreadthMaximum, out reaction))
+                pause.Text = reaction;
             if (pause.Text != "")
             {
                 pause.Until = lastCandle1mCloseTime.AddMinutes(5);

@@ -998,8 +998,14 @@ window.ChartWidget = {
                 ? self._candleAt(param.time)
                 : null;
 
+            // The price under the cursor, as the Avalonia subtitle shows it (parity point B7)
+            var price = null;
+            if (param && param.point && candle) {
+                try { price = candleSeries.coordinateToPrice(param.point.y); } catch (e) { price = null; }
+            }
+
             // Off the chart the last candle is shown again, so the bar is never empty
-            self._renderOhlcv(candle || self._lastCandle());
+            self._renderOhlcv(candle || self._lastCandle(), price);
 
             // The panes below are charts of their own and would keep no crosshair at all
             self._broadcastCrosshair('main', param && param.time !== undefined ? param.time : null);
@@ -1063,7 +1069,7 @@ window.ChartWidget = {
         return value.toFixed(0);
     },
 
-    _renderOhlcv: function (candle) {
+    _renderOhlcv: function (candle, price) {
         var host = document.getElementById('chart-ohlcv');
         if (!host) return;
 
@@ -1076,6 +1082,23 @@ window.ChartWidget = {
         var rising = candle.close >= candle.open;
         var cls = rising ? 'ohlcv-up' : 'ohlcv-down';
 
+        // Date of the candle and the price under the cursor, the first half of the
+        // Avalonia subtitle: "ddd yyyy-MM-dd HH:mm, price: x (O: .. H: .. L: .. C: .. V: ..)"
+        // The times in the widget are already shifted to local time (_toLocalTime), so the UTC
+        // getters give the wall clock time.
+        var html = '';
+        if (typeof candle.time === 'number') {
+            var t = new Date(candle.time * 1000);
+            var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+            var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            html += '<span class="ohlcv-value">' + days[t.getUTCDay()] + ' ' + t.getUTCFullYear() + '-' + pad(t.getUTCMonth() + 1)
+                  + '-' + pad(t.getUTCDate()) + ' ' + pad(t.getUTCHours()) + ':' + pad(t.getUTCMinutes()) + '</span>';
+        }
+        if (typeof price === 'number' && isFinite(price)) {
+            html += '<span class="ohlcv-key">price</span>'
+                  + '<span class="ohlcv-value">' + price.toFixed(d) + '</span>';
+        }
+
         var parts = [
             ['O', candle.open.toFixed(d)],
             ['H', candle.high.toFixed(d)],
@@ -1083,7 +1106,6 @@ window.ChartWidget = {
             ['C', candle.close.toFixed(d)],
         ];
 
-        var html = '';
         for (var i = 0; i < parts.length; i++)
             html += '<span class="ohlcv-key">' + parts[i][0] + '</span>'
                   + '<span class="ohlcv-value ' + cls + '">' + parts[i][1] + '</span>';

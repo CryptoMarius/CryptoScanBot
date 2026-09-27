@@ -81,6 +81,19 @@ public partial class MainWindowViewModel : ObservableObject
     /// </summary>
     public RunResultsViewModel RunResults { get; } = new();
 
+    /// <summary>
+    /// Backs the Capital tab: the capital per day of the last finished run (open point 53). Loaded
+    /// once at start and again whenever a run finishes, next to the Results refresh.
+    /// </summary>
+    public CapitalCurveViewModel CapitalCurve { get; } = CreateCapitalCurve();
+
+    private static CapitalCurveViewModel CreateCapitalCurve()
+    {
+        CapitalCurveViewModel capitalCurve = new();
+        capitalCurve.ShowLatest();
+        return capitalCurve;
+    }
+
 
     private CancellationTokenSource? _cts;
 
@@ -1547,6 +1560,7 @@ public partial class MainWindowViewModel : ObservableObject
             // The run just added/updated its EmulatorRun row (and its signals/positions); pull
             // the fresh numbers into the Results tab so it reflects this run immediately.
             RunResults.Refresh();
+            CapitalCurve.ShowLatest();
 
             _cts?.Dispose();
             _cts = null;

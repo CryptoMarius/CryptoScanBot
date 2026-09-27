@@ -93,6 +93,19 @@ public sealed class IntervalIndicatorHub
     // Keeping it small also keeps pruning O(200) instead of O(100k).
     private const int HubCacheSize = 200;
 
+    /// <summary>
+    /// The longest window any registered plugin declares through IStrategyPlugin.RequiredHistory
+    /// (0 when none does). Since 27-09-2026 the cache is at least this big, so a configurable window
+    /// above 200 no longer throws at construction; the standard 200 stays the floor.
+    /// </summary>
+    public static int PluginRequiredHistory()
+    {
+        int required = 0;
+        foreach (var plugin in PluginManager.LoadedPlugins.Values.Distinct())
+            required = Math.Max(required, plugin.RequiredHistory);
+        return required;
+    }
+
     // The CryptoData fields BuildCurrent knows how to fill from a declared indicator. Anything a
     // plugin declares outside this list is still built and shared through the registry, it just has
     // no dedicated CryptoData field — the plugin reads it through its own IIndicatorExtension.
@@ -124,7 +137,8 @@ public sealed class IntervalIndicatorHub
     {
         var settings = GlobalData.Settings.General;
         ConfigVersion = IndicatorConfiguration.Version;
-        _registry = new IndicatorRegistry(HubCacheSize);
+        //_registry = new IndicatorRegistry(HubCacheSize);
+        _registry = new IndicatorRegistry(Math.Max(HubCacheSize, PluginRequiredHistory()));
 
         // Base set — parameters identical to what the batch path used to compute.
         _bb = _registry.BollingerBands(settings.SettingsBb.Length, settings.SettingsBb.Deviation);

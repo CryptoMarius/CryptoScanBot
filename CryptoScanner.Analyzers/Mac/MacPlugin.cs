@@ -59,6 +59,20 @@ public class MacPlugin : IStrategyPlugin
     public IIndicatorExtension? CreateIndicatorExtension() => new Indicators.MacIndicatorExtension();
 
     /// <summary>
+    /// The slow and medium SMA follow the speed setting, and on Custom they can be any length: a run
+    /// with SMA(300) threw "Insufficient cache size for SMA(300)" on a hub cache of 200 (run 1496,
+    /// 2026-09). The slope lookback reads that many candles further back on top of it.
+    /// </summary>
+    public int RequiredHistory
+    {
+        get
+        {
+            var lengths = Settings.Lines();
+            return Math.Max(lengths.Medium, lengths.Slow) + Math.Max(1, Settings.SlowLineLookbackCandles);
+        }
+    }
+
+    /// <summary>
     /// The four lines and the two levels on the chart, so what the strategy reacts to can be seen
     /// instead of taken on trust.
     /// </summary>

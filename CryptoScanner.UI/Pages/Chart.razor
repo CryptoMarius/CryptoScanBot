@@ -80,6 +80,13 @@
            itself — the crosshair fires on every mouse move, which is far too often to route
            through Blazor. *@
         <span id="chart-ohlcv" class="chart-ohlcv"></span>
+
+        @* The title the Avalonia chart carries (ChartWindowViewModel, "maintrend.title"): the trend
+           of the selected zigzag, the candles it was computed over and its number of points. *@
+        @if (!string.IsNullOrEmpty(_chartTitle))
+        {
+            <span class="chart-title" title="Trend of the selected zigzag, the candles it was computed over and its number of points">@_chartTitle</span>
+        }
     </div>
 
     @if (_indicatorMenuOpen)
@@ -208,6 +215,9 @@
 
 @code {
     private string? _currentSymbolName;
+
+    // The trend line of the Avalonia chart title, filled in AddZigZagOverlays (parity point B7)
+    private string _chartTitle = "";
     private CryptoSymbol? _currentSymbol;
     private string _selectedInterval = "interval1h";
     private bool _initialized;
@@ -1723,7 +1733,13 @@
             ? GlobalData.Settings.Trend.Primary
             : GlobalData.Settings.Trend.Secondary;
         if (!_zigZagIndicators.TryGetValue((trendSettings.TrendType, trendSettings.UseHighLow), out var indicator))
+        {
+            _chartTitle = "";
             return;
+        }
+
+        // Same text as the Avalonia chart title: "Bullish candles=1234 points=56"
+        _chartTitle = $"{TrendInterval.InterpretZigZagPoints(indicator, null)} candles={indicator.CandleCount} points={indicator.ZigZagList.Count}";
 
         // The FIB group always works on the high/low variant, same as the Avalonia chart
         var fibTrendType = _fibTrendType == TrendType.Primary ? TrendType.Primary : TrendType.Secondary;

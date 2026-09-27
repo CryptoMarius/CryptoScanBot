@@ -58,6 +58,9 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     private int _lossCooldownTime = 0; // int (EXACT match, in minutes; 0 = off)
 
     [ObservableProperty]
+    private bool _cooldownInCandles = false; // bool (EXACT match): the two cooldowns in candles of the signal interval
+
+    [ObservableProperty]
     private decimal _maxPositionDurationDays = 0m; // decimal (EXACT match, in days; 0 = off)
 
     // Slot limits (all int - EXACT match)
@@ -95,6 +98,7 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         GlobalBuyCooldownTime = settings.GlobalBuyCooldownTime;
         SignalCooldownAfterTradeTime = settings.SignalCooldownAfterTradeTime;
         LossCooldownTime = settings.LossCooldownTime;
+        CooldownInCandles = settings.CooldownInCandles;
         MaxPositionDurationDays = settings.MaxPositionDurationDays;
         SoundTradeNotification = general.SoundTradeNotification;
 
@@ -120,6 +124,7 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         settings.GlobalBuyCooldownTime = GlobalBuyCooldownTime;
         settings.SignalCooldownAfterTradeTime = SignalCooldownAfterTradeTime;
         settings.LossCooldownTime = LossCooldownTime;
+        settings.CooldownInCandles = CooldownInCandles;
         settings.MaxPositionDurationDays = MaxPositionDurationDays;
         general.SoundTradeNotification = SoundTradeNotification;
 

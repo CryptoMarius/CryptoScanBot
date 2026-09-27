@@ -43,6 +43,32 @@
                                FormatString="0"/>
             </Grid>
 
+            <!-- Market breadth: percentage of the coins that rose over the last hour (0..100) -->
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="8" Margin="0,4,0,0">
+                <CheckBox Grid.Column="0"
+                          IsChecked="{Binding BreadthActive, Mode=TwoWay}"
+                          Content="Breadth 1h %"
+                          ToolTip.Tip="Percentage of the coins of the quote that rose over the last hour must lie between these two"
+                          FontSize="12"
+                          VerticalAlignment="Center"
+                          MinWidth="80"/>
+                <NumericUpDown Grid.Column="1"
+                               Value="{Binding BreadthMinimum, Mode=TwoWay}"
+                               IsEnabled="{Binding BreadthActive}"
+                               Minimum="0" Maximum="100" Increment="5"
+                               Height="26" FontSize="12" Padding="4,2"
+                               CornerRadius="4" Width="80"
+                               FormatString="0"/>
+                <TextBlock Grid.Column="2" Text=".." VerticalAlignment="Center"/>
+                <NumericUpDown Grid.Column="3"
+                               Value="{Binding BreadthMaximum, Mode=TwoWay}"
+                               IsEnabled="{Binding BreadthActive}"
+                               Minimum="0" Maximum="100" Increment="5"
+                               Height="26" FontSize="12" Padding="4,2"
+                               CornerRadius="4" Width="80"
+                               FormatString="0"/>
+            </Grid>
+
             <!-- Log checkbox -->
             <CheckBox IsChecked="{Binding Log, Mode=TwoWay}"
                       Content="Log if outside boundaries"

@@ -248,7 +248,32 @@ public class SignalBbmaOmniBase : SignalBbmaBase
         // Triggers the settings reject outright (BbmaSettings.RejectedLtfTriggers). Empty by
         // default, so this changes nothing unless a run asks for it.
         string rejected = BbmaPlugin.Settings.RejectedLtfTriggers;
-        return string.IsNullOrEmpty(rejected) || !rejected.Contains(code[2]);
+        //return string.IsNullOrEmpty(rejected) || !rejected.Contains(code[2]);
+        if (!string.IsNullOrEmpty(rejected) && rejected.Contains(code[2]))
+            return false;
+
+        // The same for the MTF letter (BbmaSettings.RejectedMtfStates, open point 65)
+        string rejectedMtf = BbmaPlugin.Settings.RejectedMtfStates;
+        return string.IsNullOrEmpty(rejectedMtf) || !rejectedMtf.Contains(code[1]);
+    }
+
+
+    /// <summary>
+    /// Whether the HTF setup CheckHtf found may give a signal (BbmaSettings.RejectedHtfSetups, open
+    /// point 65): the full name ("CSD", "MHV>CSD") compared with the comma separated list, case and
+    /// spaces ignored. Empty accepts every setup.
+    /// </summary>
+    public static bool IsSetupAllowed(string htfSetup)
+    {
+        string rejected = BbmaPlugin.Settings.RejectedHtfSetups;
+        if (string.IsNullOrWhiteSpace(rejected))
+            return true;
+        foreach (string entry in rejected.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (string.Equals(entry.Replace(" ", ""), htfSetup, StringComparison.OrdinalIgnoreCase))
+                return false;
+        }
+        return true;
     }
 
 

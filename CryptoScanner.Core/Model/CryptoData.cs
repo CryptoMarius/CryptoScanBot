@@ -293,6 +293,12 @@ public class CryptoData2 : CryptoData
     public float? Barometer4h { get; set; }
     public float? Barometer1d { get; set; }
 
+    // Market breadth at the moment of the signal: the percentage of the coins of the quote that
+    // rose over the last hour (the 1h barometer measurement, BarometerResult.PercentageRising).
+    // Stored so it can be measured later whether signals in a broad market do better (open point 11,
+    // phase 2). Null when the barometer was not calculated.
+    public float? MarketBreadth1h { get; set; }
+
     // Market trend percentage (primary)
     public float TrendPercentagePrimary { get; set; }
     public float TrendPercentageSecondary { get; set; }
@@ -347,6 +353,7 @@ public class CryptoData2 : CryptoData
             Barometer1h = source2.Barometer1h;
             Barometer4h = source2.Barometer4h;
             Barometer1d = source2.Barometer1d;
+            MarketBreadth1h = source2.MarketBreadth1h;
 
             AvgBB = source2.AvgBB;
         }

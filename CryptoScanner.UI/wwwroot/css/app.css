@@ -1452,6 +1452,15 @@ code {
 }
 
 .chart-ohlcv .ohlcv-up { color: var(--green); }
+
+/* The trend line the Avalonia chart has as its title (parity point B7) */
+.chart-title {
+    margin-left: auto;
+    padding-left: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
 .chart-ohlcv .ohlcv-down { color: var(--red); }
 
 /* ── EXPERIMENT: indicator dropdown in the header bar, TradingView style ── */

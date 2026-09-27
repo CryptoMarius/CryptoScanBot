@@ -2,6 +2,8 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
+using System.Collections.Concurrent;
+
 namespace CryptoScanner.Core.Exchange;
 
 /// <summary>
@@ -63,7 +65,16 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
     }
 
     // Combined per-symbol entry: symbol metadata + its running candle cache, keyed by exchange name.
-    private Dictionary<string, (CryptoSymbol Symbol, CryptoCandleList Candles)> _cache = [];
+    // Pending holds the socket updates that have not been merged into Candles yet (open point 92):
+    // the socket callback only enqueues, the minute flush merges and then flushes. Before 27-09-2026
+    // the callback took the cache semaphore itself, which the flush holds across
+    // Process1mCandleAsync - and CryptoExchange.Net calls the callback synchronously on the receive
+    // loop, so on HyperLiquid thirty topics of one connection waited for the processing of one candle.
+    private Dictionary<string, (CryptoSymbol Symbol, CryptoCandleList Candles, ConcurrentQueue<PendingUpdate> Pending)> _cache = [];
+
+    /// <summary>One socket update waiting to be merged: a kline (cumulative volume) or a trade (additive volume).</summary>
+    private readonly record struct PendingUpdate(bool IsTrade, DateTime Time,
+        decimal Open, decimal High, decimal Low, decimal Close, decimal Volume);
 
     // Raw list of exchange names — for exchanges that take a List<string>.
     protected IReadOnlyList<string> SymbolNamesAsGenericArray => [.. _cache.Keys];
@@ -99,7 +110,7 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
 
         _cache = [];
         foreach (var symbol in symbols)
-            _cache.TryAdd(symbol.ExchangeName, (symbol, []));
+            _cache.TryAdd(symbol.ExchangeName, (symbol, [], new ConcurrentQueue<PendingUpdate>()));
     }
 
     /// <summary>
@@ -128,10 +139,54 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
         }
 
         Interlocked.Increment(ref _socketUpdates);
+        // Since 27-09-2026 the update only goes into the queue of its symbol; the flush merges it
+        // (MergeKline below). The queue keeps the order of arrival, so the ordering stays preserved.
+        entry.Pending.Enqueue(new PendingUpdate(false, openTime, open, high, low, close, volume));
+    }
+
+    /// <summary>
+    /// Merge the queued socket updates of one symbol into its running candles, in order of arrival.
+    /// Called by the flush with the cache semaphore held.
+    /// </summary>
+    private static void MergePending(CryptoSymbol symbol, CryptoCandleList candles, ConcurrentQueue<PendingUpdate> pending)
+    {
+        while (pending.TryDequeue(out PendingUpdate update))
+        {
+            if (update.IsTrade)
+                MergeTrade(symbol, candles, update.Time, update.Close, update.Volume);
+            else
+                MergeKline(symbol, candles, update.Time, update.Open, update.High, update.Low, update.Close, update.Volume);
+        }
+    }
+
+
+    /// <summary>
+    /// For tests: merge what is queued for the symbol and return its running candle of that minute,
+    /// exactly what the flush would hand to Process1mCandleAsync.
+    /// </summary>
+    internal bool TryGetMergedCandle(string exchangeName, DateTime time, out CryptoCandle candle)
+    {
+        candle = default;
+        if (!_cache.TryGetValue(exchangeName, out var entry))
+            return false;
         _cacheSemaphore.Wait();
         try
         {
-            var (symbol, candles) = entry;
+            MergePending(entry.Symbol, entry.Candles, entry.Pending);
+            return entry.Candles.TryGetValue(CandleTime.AlignFromDateTime(time, 1), out candle);
+        }
+        finally
+        {
+            _cacheSemaphore.Release();
+        }
+    }
+
+
+    /// <summary>The merge of one kline update into the running candle (see UpdateCacheFromKline).</summary>
+    private static void MergeKline(CryptoSymbol symbol, CryptoCandleList candles, DateTime openTime,
+        decimal open, decimal high, decimal low, decimal close, decimal volume)
+    {
+        {
             CandleTime candleOpen = CandleTime.AlignFromDateTime(openTime, 1);
 
             if (candles.TryGetValue(candleOpen, out CryptoCandle candle))
@@ -162,10 +217,6 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                 });
             }
         }
-        finally
-        {
-            _cacheSemaphore.Release();
-        }
     }
 
     /// <summary>
@@ -184,10 +235,15 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
         }
 
         Interlocked.Increment(ref _socketUpdates);
-        _cacheSemaphore.Wait();
-        try
+        // Since 27-09-2026 only enqueued, merged by the flush (MergeTrade below), see the kline variant
+        entry.Pending.Enqueue(new PendingUpdate(true, tradeTime, price, price, price, price, quoteVolume));
+    }
+
+    /// <summary>The merge of one trade into the running candle (see UpdateCacheFromTrade).</summary>
+    private static void MergeTrade(CryptoSymbol symbol, CryptoCandleList candles, DateTime tradeTime,
+        decimal price, decimal quoteVolume)
+    {
         {
-            var (symbol, candles) = entry;
             CandleTime candleOpen = CandleTime.AlignFromDateTime(tradeTime, 1);
 
             if (candles.TryGetValue(candleOpen, out CryptoCandle candle))
@@ -214,10 +270,6 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                     Volume = quoteVolume,
                 });
             }
-        }
-        finally
-        {
-            _cacheSemaphore.Release();
         }
     }
 
@@ -288,13 +340,16 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
             Interlocked.Increment(ref _flushTicks);
             Interlocked.Exchange(ref _lastFlushTicks, GlobalData.Clock.UtcNow.Ticks);
 
-            foreach (var (symbol, candles) in _cache.Values)
+            foreach (var (symbol, candles, pending) in _cache.Values)
             {
                 try
                 {
                     await _cacheSemaphore.WaitAsync();
                     try
                     {
+                        // Merge what the socket delivered since the last flush, in order of arrival
+                        MergePending(symbol, candles, pending);
+
                         CryptoCandleList cache = candles;
                         CandleTime expectedUpto = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1) - interval.Duration;
 

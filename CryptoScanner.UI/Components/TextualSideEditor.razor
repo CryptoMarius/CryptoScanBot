@@ -113,6 +113,12 @@
     <div class="settings-group" style="min-width: 300px;">
         <div class="settings-group-header">Trend interval filter (@SideLabel)</div>
         <div class="settings-group-body">
+            @* The trend against the trade direction (open point 51). Above the intervals, where
+               TrendIntervalFilterView has it. *@
+            <div class="field" title="Off: the ticked intervals must trend WITH the trade, as always. On: they must trend AGAINST it - a long only while the trend falls, a short only while it rises. Built for strategies that buy the band, like dbr.">
+                <input type="checkbox" class="input-checkbox" @bind="Side.TrendIntervalInverted" />
+                <label>Against the trade direction (long needs bearish, short bullish)</label>
+            </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px;">
                 @foreach (var t in Side.TrendIntervals)
                 {
@@ -121,11 +127,6 @@
                         <label style="margin-left: 4px;">@t.Name interval=bullish</label>
                     </div>
                 }
-            </div>
-            @* The trend against the trade direction (open point 51) *@
-            <div class="field" title="Off: the ticked intervals must trend WITH the trade, as always. On: they must trend AGAINST it - a long only while the trend falls, a short only while it rises. Built for strategies that buy the band, like dbr.">
-                <input type="checkbox" class="input-checkbox" @bind="Side.TrendIntervalInverted" />
-                <label>Against the trade direction (long needs bearish, short bullish)</label>
             </div>
             <div class="field">
                 <input type="checkbox" class="input-checkbox" @bind="Side.TrendIntervalLog" />

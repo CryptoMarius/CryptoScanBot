@@ -244,6 +244,13 @@ public class SettingsTrading
     // timed out never bought anything, so it is not a losing trade.
     public int LossCooldownTime { get; set; } = 0;
 
+    // When true, GlobalBuyCooldownTime and LossCooldownTime are counted in CANDLES of the interval of
+    // the signal that wants to step in, instead of in minutes: 2 is two 15m candles on a 15m signal
+    // and two 1m candles on a 1m signal (open point 69). Off by default, so existing settings keep
+    // meaning minutes. SignalCooldownAfterTradeTime stays in minutes either way: it guards against
+    // a base-interval dependency, not against a strategy interval.
+    public bool CooldownInCandles { get; set; } = false;
+
     // Days a position may stay open before it is closed at whatever the market offers, counted
     // from position.CreateTime. Zero switches it off, which is the default: nothing changes until
     // a value is entered.

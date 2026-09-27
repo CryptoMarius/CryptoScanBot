@@ -44,6 +44,14 @@ public interface IStrategyPlugin
     /// </summary>
     IReadOnlyList<Signal.Indicators.IndicatorKey> RequiredIndicators => [];
 
+    /// <summary>
+    /// How many candles the longest window of this plugin's own indicators needs, for a plugin
+    /// whose windows follow its settings (the MA Cloud builds an SMA of any configured length). The
+    /// indicator hub sizes its cache to at least this, and the warm-up feeds this many candles when
+    /// they are in memory. Zero means the standard window of 200 is enough.
+    /// </summary>
+    int RequiredHistory => 0;
+
     /// <summary>When true, the engine ensures DLZ zone calculation is active even when
     /// the DLZ strategy itself is not in the signal list. Strategies that check DLZ
     /// zone proximity (e.g. SuperTrendBreakout) should return true.</summary>

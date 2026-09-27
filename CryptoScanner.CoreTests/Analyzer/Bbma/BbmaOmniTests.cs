@@ -52,6 +52,9 @@ public class BbmaOmniTests : TestBase
         settings.ReentryStrict = fresh.ReentryStrict;
         settings.ReentryMinCandlesAfterTrigger = fresh.ReentryMinCandlesAfterTrigger;
         settings.HtfSetupLookback = fresh.HtfSetupLookback;
+        settings.RejectedLtfTriggers = fresh.RejectedLtfTriggers;
+        settings.RejectedMtfStates = fresh.RejectedMtfStates;
+        settings.RejectedHtfSetups = fresh.RejectedHtfSetups;
         settings.HtfSetupExtremeInvalidates = fresh.HtfSetupExtremeInvalidates;
         settings.TakeProfitAtOuterBand = fresh.TakeProfitAtOuterBand;
         settings.TakeProfitOnHtfBand = fresh.TakeProfitOnHtfBand;
@@ -186,6 +189,28 @@ public class BbmaOmniTests : TestBase
         Assert.IsFalse(SignalBbmaOmniBase.IsCodeMatch("ERE"), "the HTF has to be in reentry");
         Assert.IsFalse(SignalBbmaOmniBase.IsCodeMatch("-RE"), "the HTF has to be in reentry");
         Assert.IsFalse(SignalBbmaOmniBase.IsCodeMatch(""), "a malformed code never matches");
+    }
+
+
+    /// <summary>Which codes give a signal can be chosen per letter and per HTF setup (open point 65).</summary>
+    [TestMethod]
+    public void CodeMatch_RejectsTheLettersAndSetupsTheSettingsName()
+    {
+        BbmaPlugin.Settings.RejectedMtfStates = "-";
+        Assert.IsFalse(SignalBbmaOmniBase.IsCodeMatch("R-M"), "nothing on the MTF is rejected");
+        Assert.IsTrue(SignalBbmaOmniBase.IsCodeMatch("RDM"), "a CSD on the MTF still passes");
+
+        BbmaPlugin.Settings.RejectedMtfStates = "";
+        BbmaPlugin.Settings.RejectedLtfTriggers = "M";
+        Assert.IsFalse(SignalBbmaOmniBase.IsCodeMatch("R-M"), "a CSM trigger is rejected");
+        Assert.IsTrue(SignalBbmaOmniBase.IsCodeMatch("R-2"), "a CSAK2 trigger still passes");
+
+        Assert.IsTrue(SignalBbmaOmniBase.IsSetupAllowed("CSD"), "empty accepts every setup");
+        BbmaPlugin.Settings.RejectedHtfSetups = "csm, MHV > CSD";
+        Assert.IsFalse(SignalBbmaOmniBase.IsSetupAllowed("CSM"));
+        Assert.IsFalse(SignalBbmaOmniBase.IsSetupAllowed("MHV>CSD"));
+        Assert.IsTrue(SignalBbmaOmniBase.IsSetupAllowed("CSD"), "the full name counts, not a part of it");
+        Assert.IsTrue(SignalBbmaOmniBase.IsSetupAllowed("TPW>CSM"));
     }
 
 

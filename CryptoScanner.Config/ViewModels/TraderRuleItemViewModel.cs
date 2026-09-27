@@ -11,7 +11,7 @@ public partial class TraderRuleItemViewModel : ObservableObject
     private int _index = 0;
 
     [ObservableProperty]
-    private string _symbol = "BTCUSDT"; // string (EXACT match)
+    private string _symbol = ""; // string (EXACT match), empty = the bitcoin pair of the active exchange
 
     [ObservableProperty]
     private double _percentage = 4.0; // double (EXACT match)

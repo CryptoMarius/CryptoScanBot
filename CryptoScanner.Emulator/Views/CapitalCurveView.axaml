@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
+             xmlns:oxy="clr-namespace:OxyPlot.Avalonia;assembly=OxyPlot.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="420"
+             x:Class="CryptoScanner.Emulator.Views.CapitalCurveView"
+             x:DataType="vm:CapitalCurveViewModel">
+
+    <!-- The capital per day of the last finished run (open point 53) -->
+    <Grid RowDefinitions="Auto,*" RowSpacing="4">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBlock Grid.Column="0" Text="{Binding Caption}" FontSize="14" VerticalAlignment="Center"/>
+            <Button Grid.Column="1" Content="Refresh" Command="{Binding ShowLatestCommand}"/>
+        </Grid>
+        <oxy:PlotView Grid.Row="1" Model="{Binding Model}" Background="Transparent"/>
+    </Grid>
+</UserControl>

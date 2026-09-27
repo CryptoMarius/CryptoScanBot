@@ -502,6 +502,8 @@ class Program
             // bounds stored here are the last normal rectangle, only the state is taken now.
             CaptureNormalWindowBounds();
 
+            // A window closed while minimized is stored as Normal on purpose, exactly like the Avalonia
+            // SaveWindowState: it would otherwise come back minimized, and invisible (parity B11).
             _stateService.SaveWindowStateName("MainWindow", isMaximized ? "Maximized" : "Normal");
 
             // Window positions live in a SECOND, exchange-independent file, and the startup merge

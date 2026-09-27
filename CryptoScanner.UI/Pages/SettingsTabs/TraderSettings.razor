@@ -71,14 +71,15 @@
                 <label>Cool down after loss (m)</label>
                 <input type="number" class="input-number" min="0" @bind="_lossCooldown" />
             </div>
-            <div class="field" title="Candles of the signal's own interval to watch before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below EntryRemoveTime, otherwise the signal expires before the wait is over and nothing is ever entered.">
-                <label>Wait after signal (candles)</label>
-                <input type="number" class="input-number" min="0" @bind="_entryWaitCandles" />
+            <div class="field" title="Count the cool down time and the cool down after loss in candles of the interval of the signal that wants to step in, instead of in minutes: 2 is two 15m candles on a 15m signal and two 1m candles on a 1m signal. The signal cool down after trade stays in minutes.">
+                <input type="checkbox" class="input-checkbox" @bind="_cooldownInCandles" />
+                <label>Cool down time and cool down after loss in candles</label>
             </div>
-            <div class="field" title="How far price may run against the signal during that wait, as a positive percentage of the signal price. Above this the signal is dropped. Zero means no limit: the wait then only delays the entry and skips none.">
-                <label>Max move against the signal (%)</label>
-                <input type="number" class="input-number" min="0" step="0.5" @bind="_entryMaxAdverse" />
-            </div>
+            @* "Wait after signal (candles)" and "Max move against the signal (%)" stood here as well, a
+               second copy of the two fields in the Entry conditions block (EntryConditionsEditor).
+               Avalonia has them only there (TraderMiscSettingsView does not), and SaveTo wrote these
+               first and the entry-conditions block over them afterwards, so what was typed here was
+               thrown away on save. Removed 27-09-2026. *@
             <div class="field" title="Days a position may stay open before it is closed at whatever the market offers, counted from the moment it was created. Zero switches it off. Decimals are allowed, so 0.5 is twelve hours. Meant for the rare position that walks away and never comes back: it holds capital that cannot be put to work anywhere else.">
                 <label>Close position after (days)</label>
                 <input type="number" class="input-number" min="0" step="0.5" @bind="_maxPositionDurationDays" />
@@ -338,9 +339,11 @@
                     <select class="input-select" @bind="_moveSlBeMethod">
                         <option value="@CryptoProfitLockMethod.Fixed">Fixed stop above break even</option>
                         <option value="@CryptoProfitLockMethod.TrailingPercentage">Trailing behind the price</option>
+                        <option value="@CryptoProfitLockMethod.TrailingKeltnerPsar">Trailing on Keltner channel and PSAR</option>
                     </select>
                 </div>
-                @if (_moveSlBeMethod == CryptoProfitLockMethod.Fixed)
+                @* The Keltner/PSAR trail uses the fixed level as its floor, so it shows the same field *@
+                @if (_moveSlBeMethod != CryptoProfitLockMethod.TrailingPercentage)
                 {
                     <div class="field" title="Where the SL is placed once the trigger is reached, measured from break-even. Keep it below the trigger to leave room between the price and the stop; e.g. trigger 3% with stop loss 1.5% locks in 1.5% profit and gives the position 1.5% of room. A value above the trigger is capped to the trigger.">
                         <label>Profit lock stop loss %</label>
@@ -429,9 +432,10 @@
     private int _buyCooldown;
     private int _signalCooldownAfterTrade;
     private int _lossCooldown;
+    private bool _cooldownInCandles;
     private decimal _maxPositionDurationDays;
-    private int _entryWaitCandles;
-    private decimal _entryMaxAdverse;
+    //private int _entryWaitCandles;
+    //private decimal _entryMaxAdverse;
     private CryptoTakeProfitStrategy _tpStrategy;
     private bool _addDustToTp;
     private decimal _stopLoss;
@@ -596,9 +600,10 @@
         _buyCooldown = t.GlobalBuyCooldownTime;
         _signalCooldownAfterTrade = t.SignalCooldownAfterTradeTime;
         _lossCooldown = t.LossCooldownTime;
+        _cooldownInCandles = t.CooldownInCandles;
         _maxPositionDurationDays = t.MaxPositionDurationDays;
-        _entryWaitCandles = t.EntryConditions.EntryWaitCandles;
-        _entryMaxAdverse = t.EntryConditions.EntryMaxAdversePercentage;
+        //_entryWaitCandles = t.EntryConditions.EntryWaitCandles;
+        //_entryMaxAdverse = t.EntryConditions.EntryMaxAdversePercentage;
         _tpStrategy = t.TakeProfitStrategy;
         _addDustToTp = t.AddDustToTp;
         _stopLoss = t.StopLossPercentage;
@@ -649,9 +654,10 @@
         t.GlobalBuyCooldownTime = _buyCooldown;
         t.SignalCooldownAfterTradeTime = _signalCooldownAfterTrade;
         t.LossCooldownTime = _lossCooldown;
+        t.CooldownInCandles = _cooldownInCandles;
         t.MaxPositionDurationDays = _maxPositionDurationDays;
-        t.EntryConditions.EntryWaitCandles = _entryWaitCandles;
-        t.EntryConditions.EntryMaxAdversePercentage = _entryMaxAdverse;
+        //t.EntryConditions.EntryWaitCandles = _entryWaitCandles;
+        //t.EntryConditions.EntryMaxAdversePercentage = _entryMaxAdverse;
         t.TakeProfitStrategy = _tpStrategy;
         t.AddDustToTp = _addDustToTp;
         t.StopLossPercentage = _stopLoss;

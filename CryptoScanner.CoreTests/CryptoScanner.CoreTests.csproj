@@ -33,6 +33,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Zones\Data\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Trend\ETHUSDT\ETHUSDT-1h.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

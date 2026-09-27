@@ -6,6 +6,18 @@ namespace CryptoScanner.Core.Barometer;
 
 public static class BarometerHelper
 {
+    /// <summary>
+    /// Below this many coins a barometer describes no market: on BitMart Perpetual the USDC barometer
+    /// is one coin, so it is the price change of that one coin with a market name on it. Such a
+    /// barometer is treated as neutral - it neither blocks nor counts - in every check below (open
+    /// point 40). The same limit as the emulator (BarometerReplay.MinimumSymbols) and the report.
+    /// </summary>
+    public const int MinimumSymbols = 5;
+
+    /// <summary>True when the measurement rests on fewer than <see cref="MinimumSymbols"/> coins.</summary>
+    public static bool TooFewSymbols(CryptoBarometerData barometerData)
+        => barometerData.PriceSymbolCount.HasValue && barometerData.PriceSymbolCount.Value < MinimumSymbols;
+
     public static bool CheckValidBarometer(Model.CryptoExchange activeExchange, string quoteName, CryptoIntervalPeriod intervalPeriod, (decimal minValue, decimal maxValue) values, out string reaction)
     {
         if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval? interval))
@@ -31,6 +43,13 @@ public static class BarometerHelper
 
             reaction = $"Barometer {interval.Name} not calculated";
             return false;
+        }
+
+        // Too few coins to be a market: neutral (open point 40)
+        if (TooFewSymbols(barometerData))
+        {
+            reaction = "";
+            return true;
         }
 
         if (!barometerData.PriceBarometer.IsBetween(values.minValue, values.maxValue))
@@ -64,6 +83,45 @@ public static class BarometerHelper
     }
 
 
+    /// <summary>
+    /// The market breadth condition (open point 11, phase 3): the percentage of the coins of the quote
+    /// that rose over the last hour must lie between minimum and maximum. Missing breadth is handled
+    /// as a missing barometer: neutral in the emulator, a refusal in the live scanner.
+    /// </summary>
+    public static bool CheckBreadth(Model.CryptoExchange activeExchange, string quoteName, decimal minimum, decimal maximum, out string reaction)
+    {
+        CryptoBarometerData? barometerData = activeExchange.Data.GetBarometer(quoteName, CryptoIntervalPeriod.interval1h);
+        if (!barometerData.PricePercentageRising.HasValue)
+        {
+            if (GlobalData.IsEmulatorMode)
+            {
+                reaction = "";
+                return true;
+            }
+
+            reaction = "Market breadth 1h not calculated";
+            return false;
+        }
+
+        // Too few coins to be a market: neutral (open point 40)
+        if (TooFewSymbols(barometerData))
+        {
+            reaction = "";
+            return true;
+        }
+
+        decimal breadth = barometerData.PricePercentageRising.Value;
+        if (breadth < minimum || breadth > maximum)
+        {
+            reaction = $"Market breadth 1h {breadth.ToString0("N1")}% not between {minimum.ToString0("N1")} and {maximum.ToString0("N1")}";
+            return false;
+        }
+
+        reaction = "";
+        return true;
+    }
+
+
     /// Check how many higher-timeframe barometers align with the signal direction.
     /// Only active barometer intervals (those enabled via the Active checkbox) with a higher
     /// duration than the signal interval are considered.
@@ -81,9 +139,11 @@ public static class BarometerHelper
             return true; // Unknown signal interval - skip check
 
         // Only include active barometers with a higher duration than the signal interval
+        // (and, since 27-09-2026, only those that rest on enough coins to be a market - open point 40)
         List<CryptoIntervalPeriod> higherIntervals = activeBarometerIntervals.Keys
             .Where(p => GlobalData.IntervalListPeriod.TryGetValue(p, out CryptoInterval? bInterval) &&
-                        bInterval!.Duration > signalInterval.Duration)
+                        bInterval!.Duration > signalInterval.Duration &&
+                        !TooFewSymbols(activeExchange.Data.GetBarometer(quoteName, p)))
             .ToList();
 
         // If fewer higher intervals are available than required, the check cannot be satisfied - skip it

@@ -32,6 +32,16 @@ public partial class BarometerFilterViewModel : ObservableObject
     [ObservableProperty]
     private int _minConsensus = 0;
 
+    // The market breadth condition: percentage of rising coins (1h) between minimum and maximum
+    [ObservableProperty]
+    private bool _breadthActive = false;
+
+    [ObservableProperty]
+    private decimal _breadthMinimum = 0m;
+
+    [ObservableProperty]
+    private decimal _breadthMaximum = 100m;
+
     public BarometerFilterViewModel()
     {
         _interval15m = new BarometerFilterRangeViewModel { Caption = "15m", MinValue = -999, MaxValue = 999, IsActive = false };
@@ -46,6 +56,9 @@ public partial class BarometerFilterViewModel : ObservableObject
         Log = settings.Log;
         ConsensusActive = settings.ConsensusActive;
         MinConsensus = settings.MinConsensus;
+        BreadthActive = settings.BreadthActive;
+        BreadthMinimum = settings.BreadthMinimum;
+        BreadthMaximum = settings.BreadthMaximum;
 
         LoadInterval("15m", Interval15m, settings.List);
         LoadInterval("30m", Interval30m, settings.List);
@@ -84,6 +97,10 @@ public partial class BarometerFilterViewModel : ObservableObject
         settings.Log = Log;
         settings.ConsensusActive = ConsensusActive;
         settings.MinConsensus = MinConsensus;
+        settings.BreadthActive = BreadthActive;
+        // Ensure min < max, as with the barometer ranges
+        settings.BreadthMinimum = Math.Min(BreadthMinimum, BreadthMaximum);
+        settings.BreadthMaximum = Math.Max(BreadthMinimum, BreadthMaximum);
     }
 
     private static void SaveInterval(string key, BarometerFilterRangeViewModel interval,

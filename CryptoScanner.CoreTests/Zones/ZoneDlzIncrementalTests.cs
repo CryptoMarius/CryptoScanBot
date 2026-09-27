@@ -122,7 +122,7 @@ public class ZoneDlzIncrementalTests : TestBase
     /// is what makes a difference in the CALCULATION visible instead of hidden by the diff.
     /// </para>
     /// </summary>
-    private static async Task<List<CryptoZone>> Replay(CryptoSymbol symbol, CryptoInterval interval,
+    internal static async Task<List<CryptoZone>> Replay(CryptoSymbol symbol, CryptoInterval interval,
         CryptoCandleList candles, int blockSize,
         ZoneCandleWindows? alreadyLoaded = null)
     {
@@ -194,7 +194,7 @@ public class ZoneDlzIncrementalTests : TestBase
     /// A short, readable account of where two zone sets differ. Dumping both lists in full makes a
     /// failure unreadable at 160 zones, and the interesting part is which ones went missing.
     /// </summary>
-    private static string CompareZones(List<CryptoZone> full, List<CryptoZone> chunked, int blockSize)
+    internal static string CompareZones(List<CryptoZone> full, List<CryptoZone> chunked, int blockSize)
     {
         List<ZoneKey> expected = [.. full.Select(ZoneKey.Of).OrderBy(k => k.OpenTime)];
         List<ZoneKey> actual = [.. chunked.Select(ZoneKey.Of).OrderBy(k => k.OpenTime)];

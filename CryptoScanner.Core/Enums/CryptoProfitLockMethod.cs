@@ -22,4 +22,15 @@ public enum CryptoProfitLockMethod
     /// the take profit - a pullback leaves it where it is.
     /// </summary>
     TrailingPercentage,
+
+    /// <summary>
+    /// The stop follows the Keltner channel and the parabolic SAR of the position interval, the
+    /// method of the old trader (2021-2023, see git dd7caa72b): on every close of a position-interval
+    /// candle the stop goes to the lower of the lower Keltner band and the SAR (the higher of the
+    /// upper band and the SAR, for a short); when the whole candle sits above the upper band it goes
+    /// up to the upper band instead. Never below the <see cref="Fixed"/> level
+    /// (<c>MoveSlToBreakEvenSlPercentage</c>) and, like the percentage trail, only ever towards the
+    /// take profit (open point 48).
+    /// </summary>
+    TrailingKeltnerPsar,
 }

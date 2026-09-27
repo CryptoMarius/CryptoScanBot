@@ -10,7 +10,8 @@ public partial class TraderStopLossViewModel : ObservableObject
     private readonly Dictionary<string, CryptoProfitLockMethod> _profitLockMethodList = new()
     {
         { "Fixed stop above break even", CryptoProfitLockMethod.Fixed },
-        { "Trailing behind the price", CryptoProfitLockMethod.TrailingPercentage }
+        { "Trailing behind the price", CryptoProfitLockMethod.TrailingPercentage },
+        { "Trailing on Keltner channel and PSAR", CryptoProfitLockMethod.TrailingKeltnerPsar }
     };
 
     [ObservableProperty]
@@ -37,7 +38,8 @@ public partial class TraderStopLossViewModel : ObservableObject
     public Dictionary<string, CryptoProfitLockMethod> ProfitLockMethodList => _profitLockMethodList;
 
     /// <summary>Which of the two percentage fields belongs to the selected method.</summary>
-    public bool IsFixedProfitLock => MoveSlToBreakEvenMethod == CryptoProfitLockMethod.Fixed;
+    // The Keltner/PSAR trail uses the fixed level as its floor, so it shows the same field.
+    public bool IsFixedProfitLock => MoveSlToBreakEvenMethod != CryptoProfitLockMethod.TrailingPercentage;
     public bool IsTrailingProfitLock => MoveSlToBreakEvenMethod == CryptoProfitLockMethod.TrailingPercentage;
 
     partial void OnMoveSlToBreakEvenMethodChanged(CryptoProfitLockMethod value)
