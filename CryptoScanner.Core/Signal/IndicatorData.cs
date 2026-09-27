@@ -102,6 +102,14 @@ public static class IndicatorEngine
         // the reason it cannot continue tells you whether that is fixable.
         bool hubNull = symbolInterval.IndicatorHub == null || symbolInterval.IndicatorHubLastAdded == null;
         bool gap = !hubNull && symbolInterval.IndicatorHubLastAdded!.Value + interval.Duration != candleOpenTime;
+        // On a market with opening hours the candle before this one is the last candle of the
+        // previous session, not the minute before: a closed night is no gap (open point 9)
+        if (gap && !Exchange.ExchangeBase.ExchangeOptions.ContinuousMarket)
+        {
+            var previous = symbolInterval.CandleList.GetLastValues(candleOpenTime - interval.Duration, 1, interval.Duration);
+            if (previous.Count == 1 && previous[0].OpenTime == symbolInterval.IndicatorHubLastAdded!.Value)
+                gap = false;
+        }
         bool explicitWindow = calculateCandles > 0;
         // Settings changed since this hub was built: its indicator parameters and its set of
         // plugin extensions are frozen at construction, so rebuild instead of feeding it further.
@@ -220,6 +228,23 @@ public static class IndicatorEngine
 
         // this would normally be enough, but we need to fill in the missing candles (afaics)
         //var x = intervalCandles.Values.TakeLast(maxCandles);
+
+        // A market with opening hours: the last real candles, without flat stand-ins for the hours
+        // the exchange was closed (open point 9). The barometer symbol never lives on such a market.
+        if (!Exchange.ExchangeBase.ExchangeOptions.ContinuousMarket && !symbol.IsBarometerSymbol())
+        {
+            CandleTime lastOpen = openTime - openTime % interval.Duration;
+            List<IQuote> real = [];
+            foreach (CryptoCandle candle in intervalCandles.GetLastValues(lastOpen, maxCandles, interval.Duration))
+                real.Add(candle);
+            if (real.Count < maxCandles)
+            {
+                errorstr = $"{symbol.Name} Not enough candles available for interval {interval.Name} count={real.Count} requested={maxCandles}";
+                return null;
+            }
+            errorstr = "";
+            return real;
+        }
 
         // A fix for calculating indicators for the barometer symbol..
         uint duration = interval.Duration;

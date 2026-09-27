@@ -31,7 +31,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
         // Alpaca needs a key for its market data as well, not just for trading. Say so once instead of
         // letting the SDK throw somewhere further down with a message that explains nothing.
-        if (GlobalData.TradingApi.Key == "" || GlobalData.TradingApi.Secret == "")
+        if (GlobalData.AlpacaApi.Key == "" || GlobalData.AlpacaApi.Secret == "")
         {
             GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} needs an API key and secret " +
                 $"(register a free account at alpaca.markets and enter the paper trading key)");
@@ -40,7 +40,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
         try
         {
-            SecretKey secretKey = new(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+            SecretKey secretKey = new(GlobalData.AlpacaApi.Key, GlobalData.AlpacaApi.Secret);
 
             // ListAssetsAsync is on IAlpacaTradingClient, the market data is on IAlpacaDataClient
             using IAlpacaTradingClient tradingClient = Environments.Paper.GetAlpacaTradingClient(secretKey);

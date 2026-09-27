@@ -169,7 +169,7 @@ public partial class ConfigurationViewModel : ObservableObject
         // Apis
         ApiAltradyViewModel.LoadConfig(GlobalData.AltradyApi);
         ApiTelegramViewModel.LoadConfig(GlobalData.Telegram);
-        ApiAlpacaViewModel.LoadConfig(GlobalData.TradingApi);
+        ApiAlpacaViewModel.LoadConfig(GlobalData.AlpacaApi);
 
         // Black and White lists
         BlackAndWhiteListTabViewModel.LoadConfig(settings);
@@ -205,7 +205,7 @@ public partial class ConfigurationViewModel : ObservableObject
         // Apis
         ApiAltradyViewModel.SaveConfig(GlobalData.AltradyApi);
         ApiTelegramViewModel.SaveConfig(GlobalData.Telegram);
-        ApiAlpacaViewModel.SaveConfig(GlobalData.TradingApi);
+        ApiAlpacaViewModel.SaveConfig(GlobalData.AlpacaApi);
 
         // Black and White lists
         BlackAndWhiteListTabViewModel.SaveConfig(settings);

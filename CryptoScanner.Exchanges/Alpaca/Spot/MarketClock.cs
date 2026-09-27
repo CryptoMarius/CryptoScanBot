@@ -76,11 +76,11 @@ public static class MarketClock
 
         try
         {
-            if (GlobalData.TradingApi.Key == "")
+            if (GlobalData.AlpacaApi.Key == "")
                 return;
 
             using IAlpacaTradingClient client = Environments.Paper.GetAlpacaTradingClient(
-                new SecretKey(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret));
+                new SecretKey(GlobalData.AlpacaApi.Key, GlobalData.AlpacaApi.Secret));
 
             LimitRate.WaitForFairWeight(1);
             var clock = await client.GetClockAsync(ExchangeBase.CancellationToken);

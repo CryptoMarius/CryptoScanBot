@@ -71,9 +71,9 @@ public class Api : ExchangeBase
 
     public override IDisposable GetClient()
     {
-        if (GlobalData.TradingApi.Key != "")
+        if (GlobalData.AlpacaApi.Key != "")
             return Environments.Paper.GetAlpacaDataClient(
-                new SecretKey(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret));
+                new SecretKey(GlobalData.AlpacaApi.Key, GlobalData.AlpacaApi.Secret));
 
         throw new InvalidOperationException("Alpaca requires an API key. Register a free account at alpaca.markets.");
     }
@@ -93,6 +93,8 @@ public class Api : ExchangeBase
         // the instrument the rest of the market follows. "BTCUSD" (the default) does not exist here.
         ExchangeOptions.SetDefaultOptions("Alpaca", "USD", 1000, false, MaxSymbols,
             minimalVolume: 0, pauseSymbol: "SPYUSD");
+        // A stock exchange closes: no flat candles for nights and weekends (open point 9)
+        ExchangeOptions.ContinuousMarket = false;
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KLineTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);

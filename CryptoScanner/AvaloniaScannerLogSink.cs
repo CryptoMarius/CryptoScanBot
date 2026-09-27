@@ -119,10 +119,18 @@ internal sealed class AvaloniaScannerLogSink : ILogSink
     /// Add to this list only for a message that is understood AND outside our control - it is meant to
     /// keep the error log meaningful, not to make it quiet.
     /// </para>
+    /// <para>
+    /// "PlatformImpl is null, couldn't handle input" (open point 1) is an input event that arrives
+    /// for a window or popup that has just been closed: the release of the click that closed the
+    /// configuration window, or of the click that picked an item in a dropdown, whose popup is gone by
+    /// then. Avalonia drops the event and says so; nothing is lost. It was the only kind of Avalonia
+    /// warning left in the logs of the nineteen scanners (Okx and HyperLiquid Perpetual, 23/24-09-2026).
+    /// </para>
     /// </summary>
     private static readonly string[] DemotedToTrace =
     [
         "RequestCommitAsync timed out",
+        "PlatformImpl is null, couldn't handle input",
     ];
 
     private static void Write(LogEventLevel level, string area, object? source, string message)

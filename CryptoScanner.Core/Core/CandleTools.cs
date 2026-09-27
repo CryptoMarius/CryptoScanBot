@@ -376,6 +376,10 @@ public static class CandleTools
 
     public static void BulkAddMissingCandles(CryptoSymbol symbol, CryptoInterval interval)
     {
+        // A market with opening hours has no candles at night and must not get flat ones (open point 9)
+        if (!ExchangeBase.ExchangeOptions.ContinuousMarket)
+            return;
+
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         if (symbolInterval.LastCandleSynchronized == null)
             return;

@@ -133,6 +133,13 @@ public static class GlobalData
     public static SettingsAltradyApi AltradyApi { get; set; } = new();
 
     /// <summary>
+    /// Alpaca API key (paper trading), in a file of its own since 27-09-2026 (open point 9). It used
+    /// to share TradingApi with the exchange keys, so saving the Alpaca tab overwrote the exchange key
+    /// and the other way round.
+    /// </summary>
+    public static SettingsExchangeApi AlpacaApi { get; set; } = new();
+
+    /// <summary>
     /// Telegram related instellingen
     /// </summary>
     public static SettingsTelegram Telegram { get; set; } = new();
@@ -840,12 +847,46 @@ public static class GlobalData
 
 
 
+    /// <summary>
+    /// The Alpaca key from CryptoScanBot-alpaca.json. A data folder from before 27-09-2026 has no such
+    /// file; when that folder runs Alpaca, its key is the one in TradingApi and is carried over, so an
+    /// existing Alpaca scanner keeps its key.
+    /// </summary>
+    public static void LoadAlpacaConfiguration()
+    {
+        string fileName = $"{Constants.AppName}-alpaca.json";
+        try
+        {
+            string fullName = Path.Combine(AppDataFolder, fileName);
+            if (File.Exists(fullName))
+            {
+                AlpacaApi = ReadJsonFile<SettingsExchangeApi>(AppDataFolder, fileName) ?? new();
+            }
+            else if (Settings.General.ExchangeName.StartsWith("Alpaca", StringComparison.OrdinalIgnoreCase) && TradingApi.Key != "")
+            {
+                AlpacaApi = new SettingsExchangeApi
+                {
+                    Key = TradingApi.Key,
+                    Secret = TradingApi.Secret,
+                    PassPhrase = TradingApi.PassPhrase,
+                };
+            }
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "");
+            AddErrorToLogTab($"Error loading {fileName} " + error.ToString());
+        }
+    }
+
+
     public static void LoadConfiguration()
     {
         LoadScannerConfiguration();
         LoadExchangeConfiguration();
         LoadTelegramConfiguration();
         LoadAltradyConfiguration();
+        LoadAlpacaConfiguration();
         LoadWebLinkConfiguration();
     }
 
@@ -911,6 +952,7 @@ public static class GlobalData
                 WriteJsonFile(baseFolder, $"{Constants.AppName}-telegram.json", Telegram);
                 WriteJsonFile(baseFolder, $"{Constants.AppName}-exchange.json", TradingApi);
                 WriteJsonFile(baseFolder, $"{Constants.AppName}-altrady.json", AltradyApi);
+                WriteJsonFile(baseFolder, $"{Constants.AppName}-alpaca.json", AlpacaApi);
             }
             catch (Exception error)
             {

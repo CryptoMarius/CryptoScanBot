@@ -43,11 +43,11 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         {
             if (_sharedClient == null)
             {
-                if (GlobalData.TradingApi.Key == "")
+                if (GlobalData.AlpacaApi.Key == "")
                     throw new InvalidOperationException("Alpaca requires an API key for streaming.");
 
                 var configuration = Environments.Paper.GetAlpacaDataStreamingClientConfiguration(
-                    new SecretKey(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret));
+                    new SecretKey(GlobalData.AlpacaApi.Key, GlobalData.AlpacaApi.Secret));
                 // The SDK derives the endpoint from the environment instead of from the plan, and the
                 // one it picks is not always the feed we are allowed to read (see Api.DataStreamEndpoint)
                 configuration.ApiEndpoint = Api.DataStreamEndpoint;

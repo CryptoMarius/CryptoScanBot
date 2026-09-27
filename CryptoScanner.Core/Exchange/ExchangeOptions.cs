@@ -87,6 +87,14 @@ public class ExchangeOptions // : IExchangeOptions
     // Used to fill in a pause rule that has no symbol of its own (see ScannerSession).
     public string PauseSymbol { get; set; } = "";
 
+    // False for a market with opening hours (Alpaca, US stocks): nights and weekends have no candles
+    // and must not get any. A crypto exchange trades around the clock, so a missing minute there is
+    // a quiet minute and gets a flat candle (BulkAddMissingCandles); on a stock exchange two thirds of
+    // a 1m series would be such invented candles and every indicator would read them (open point 9).
+    // With false the gap is left alone, the indicators are fed the last real candles, and the first
+    // candle after a closed stretch is no reason to rebuild the indicator hub.
+    public bool ContinuousMarket { get; set; } = true;
+
     // Aantal symbols per subscription (een limiet van de exchange)
     public int SymbolLimitPerSubscription { get; set; }
 
