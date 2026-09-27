@@ -537,7 +537,40 @@ public class SignalCreateBase
         if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
             return false;
 
+        // Last: it scans a few hundred 1h candles, the most expensive check of all
+        if (settings.SkipShortAboveSupport && SignalSide == CryptoTradeSide.Short
+            && !CheckRoomAboveSupport(settings.SupportMinimumRoomAtr))
+            return false;
+
         return true;
+    }
+
+
+    /// <summary>
+    /// The short filter of SettingsEntryConditions.SkipShortAboveSupport: false when the nearest 1h
+    /// support under the price is closer than <paramref name="minimumRoomAtr"/> average 1h candles.
+    /// Too little 1h history (fewer than 60 candles) or no support at all lets the short through.
+    /// </summary>
+    protected bool CheckRoomAboveSupport(decimal minimumRoomAtr)
+    {
+        CryptoInterval? hour = GlobalData.IntervalListPeriod.GetValueOrDefault(CryptoIntervalPeriod.interval1h);
+        if (hour == null)
+            return true;
+
+        // The 1h candles that are closed at the close of the candle being evaluated
+        CandleTime closeTime = CandleLast.Candle.OpenTime + Interval.Duration;
+        CandleTime lastHour = new CandleTime(closeTime.Minutes - hour.Duration).AlignToIntervalMinutes(hour.Duration);
+        List<CryptoCandle> candles = SupportResistanceCandles.Collect(Symbol, hour, lastHour, CandleTools.CandleCountFetch);
+        if (candles.Count < 60)
+            return true;
+
+        double price = (double)CandleLast.Candle.Close;
+        double? room = SupportResistance.RoomToNextLevel(candles, price, CryptoTradeSide.Short, out double level);
+        if (room == null || room.Value >= (double)minimumRoomAtr)
+            return true;
+
+        ExtraText = $"short just above the 1h support {level.ToString(Symbol.PriceDisplayFormat)} ({room.Value:N2} ATR, minimum {minimumRoomAtr:N2})";
+        return false;
     }
 
 

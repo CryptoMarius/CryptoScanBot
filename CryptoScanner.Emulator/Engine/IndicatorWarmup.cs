@@ -98,6 +98,12 @@ public static class IndicatorWarmup
         var dlzSettings = GlobalData.Settings.Signal.ZonesDlz;
         if (dlzSettings.IntervalList.Contains(interval.Name) && CandleTools.CandleCountFetch > depth)
             depth = CandleTools.CandleCountFetch;
+
+        // The short filter reads 1h support levels over the last 300 candles plus their pivots and
+        // ATR; the live scanner has 500 1h candles for it, so the emulator keeps the same.
+        if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1h && CandleTools.CandleCountFetch > depth
+            && Core.Trend.SupportResistanceCandles.ShortFilterActive())
+            depth = CandleTools.CandleCountFetch;
         return depth;
     }
 

@@ -136,6 +136,18 @@
                              ToolTip.Tip="Number of preceding candles that must also close on the correct side of MA200 (0 = disabled)."/>
                 </Grid>
 
+                <!-- No short just above a 1h support (open point 46) -->
+                <Grid ColumnDefinitions="Auto,6,60,6,Auto" Margin="0,4,0,0" ToolTip.Tip="Skip a short when a 1h support (at least two pivots close together) lies closer under the price than this many average 1h candles (ATR). Such shorts did worse than the other shorts in the measurement; longs just under a resistance showed no such pattern, so there is no long counterpart.">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding SkipShortAboveSupport, Mode=TwoWay}"
+                              Content="No short within" FontSize="12"/>
+                    <TextBox Grid.Column="2"
+                             Text="{Binding SupportMinimumRoomAtr, Mode=TwoWay}"
+                             IsEnabled="{Binding SkipShortAboveSupport}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                    <TextBlock Grid.Column="4" Text="ATR above a 1h support"
+                               VerticalAlignment="Center" FontSize="12"/>
+                </Grid>
+
                 <!-- Watch the signal for a while before acting on it -->
                 <Grid ColumnDefinitions="Auto,6,60,12,Auto,6,60" Margin="0,6,0,0">
                     <TextBlock Grid.Column="0" Text="Wait after signal (candles)"

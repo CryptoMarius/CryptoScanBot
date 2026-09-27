@@ -64,6 +64,16 @@ public class SettingsEntryConditions
     // The shapes themselves live on as the CandlePattern STRATEGY, where they decide whether there
     // is a signal at all instead of delaying one (run 706: +449.73 over 2609 trades).
 
+    // Skip a SHORT that would open just above a support: a horizontal 1h level (at least two pivots
+    // close together) less than SupportMinimumRoomAtr average 1h candles (ATR 14) under the price.
+    // Off by default. Measured on 27-09-2026 on the positions of runs 509 (dbr) and 891
+    // (failedbreakout): such shorts did worse than the other shorts in both runs and in both halves
+    // of the period; skipping them would have added +73,79 to failedbreakout (329 positions fewer)
+    // and next to nothing to dbr. Longs just under a resistance showed no such pattern, so there is
+    // no long counterpart. The levels come from SupportResistance.CurrentLevels.
+    public bool SkipShortAboveSupport { get; set; } = false;
+    public decimal SupportMinimumRoomAtr { get; set; } = 0.5m;
+
     public int StochExtremeLookback { get; set; } = 20;
     public int StochMinExtremeBars { get; set; } = 0;
     public decimal StochMinExtremeArea { get; set; } = 0m;

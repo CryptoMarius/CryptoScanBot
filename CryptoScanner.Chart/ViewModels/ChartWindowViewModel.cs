@@ -944,6 +944,15 @@ public partial class ChartWindowViewModel : ObservableObject
                 OxyColors.White, Session.MinDate, Session.MaxDate, group);
         }
 
+        // Support/resistance (open point 46); redrawn when a candle arrives or the symbol changes
+        group = "candles.supportresistance";
+        if (Toggle(model, group, Session.ShowSupportResistance,
+            $"{Session.SymbolBase}{Session.SymbolQuote}{Interval.Name}{lastCandleTime.Minutes}"))
+        {
+            RemoveFromChart(model, group);
+            SupportResistanceOverlay.Draw(model, WindowCandleList, group);
+        }
+
         if (_refreshChart && sender != null)
         {
             model.InvalidatePlot(true);

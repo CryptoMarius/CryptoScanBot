@@ -19,6 +19,9 @@ public static class AnalyzerRegistration
         // The break that did not hold
         PluginManager.Register(new FailedBreakout.FailedBreakoutPlugin());
 
+        // The support/resistance flip (open point 46): a broken level retested from the other side
+        PluginManager.Register(new SrFlip.SrFlipPlugin());
+
         PluginManager.Register(new Dlz.DlzPlugin());
         PluginManager.Register(new Fvg.FvgPlugin());
         PluginManager.Register(new Jump.JumpPlugin());

@@ -28,6 +28,8 @@ public class EntryConditionsData
     public bool CheckPriceAboveMa200 { get; set; }
     public decimal Ma200MinDistancePercentage { get; set; }
     public int Ma200ConfirmationCandles { get; set; }
+    public bool SkipShortAboveSupport { get; set; }
+    public decimal SupportMinimumRoomAtr { get; set; } = 0.5m;
 
     public int EntryWaitCandles { get; set; }
     public decimal EntryMaxAdversePercentage { get; set; }
@@ -53,6 +55,8 @@ public class EntryConditionsData
         CheckPriceAboveMa200 = e.CheckPriceAboveMa200;
         Ma200MinDistancePercentage = e.Ma200MinDistancePercentage;
         Ma200ConfirmationCandles = e.Ma200ConfirmationCandles;
+        SkipShortAboveSupport = e.SkipShortAboveSupport;
+        SupportMinimumRoomAtr = e.SupportMinimumRoomAtr;
 
         EntryWaitCandles = e.EntryWaitCandles;
         EntryMaxAdversePercentage = e.EntryMaxAdversePercentage;
@@ -80,6 +84,8 @@ public class EntryConditionsData
         e.CheckPriceAboveMa200 = CheckPriceAboveMa200;
         e.Ma200MinDistancePercentage = Ma200MinDistancePercentage;
         e.Ma200ConfirmationCandles = Ma200ConfirmationCandles;
+        e.SkipShortAboveSupport = SkipShortAboveSupport;
+        e.SupportMinimumRoomAtr = Math.Max(0m, SupportMinimumRoomAtr);
 
         e.EntryWaitCandles = EntryWaitCandles;
         e.EntryMaxAdversePercentage = EntryMaxAdversePercentage;

@@ -4,6 +4,27 @@ xx-09-2026 2.6.8
 - Markettrend zichtbaar maken in de grafiek (waar ook de barometer in getoond wordt)
 - De markt trend is omgezet naar een symboltrend en we hebben nu ook een globale marktrend per quote
 
+- Trader: De prijzen van een short liggen nu op dezelfde logaritmische afstand als die van een long; het doel lag 2,3% verder weg en de stop 4,6% dichterbij
+- Altrady: Een positie geldt alleen als geopend als Altrady een signaal-id teruggeeft; bij een foutmelding draait de scanner zijn eigen administratie terug
+- Altrady: De stop-prijs in de webhook staat nu op het tick-grid van de munt, zodat het niveau daar hetzelfde is als hier
+- Scanner: Een munt die stilvalt terwijl zijn abonnement gewoon doorloopt wordt nu via REST bijgewerkt (STORJUSDT stond 454 minuten stil)
+- Websockets: Een fout in de candle-verwerking verdween zonder spoor; die wordt nu gelogd, en een bundel gebruikt nog maar een socketclient
+- Binance: Een candle-inhaalslag vraagt alleen het ontbrekende stuk op in plaats van duizend candles, dat scheelt een factor tien in het gewicht
+- Binance Perpetual: Een TradFi-contract heet nu .TRADFI, net als op Okx
+- Zones: Een zonesoort die geen enkele ingeschakelde strategie leest wordt niet meer berekend
+- Zones: De candlevensters blijven bewaard tussen twee herberekeningen door
+- Signalen: Munten op de zwarte lijst of met een te grove tickgrootte worden nu vooraf afgewezen, met een melding in plaats van stilzwijgend
+- Strategie MA Cloud: Vier instapmomenten (Open, Cross, Close en Breakout), een snelheidsinstelling voor de vier lijnlengtes, niveaus op de RSI en een uitstap op de tweede lijnkruising
+- Strategieen: dlz.near, de SMC-afwijzing en DoubleTopBottom zijn verwijderd, die stonden al niet meer geregistreerd
+- Fix: Ichimoku las de wolk 26 candles te oud, zowel bij ichimokukumobreakout als bij kumosqueeze
+- Fix: Bij bbsqueeze waren long en short dezelfde test, met de MACD-filter uit vuurden ze op dezelfde candle
+- Fix: De jump-short vuurde onder het ingestelde percentage, de daling werd van het verkeerde punt gemeten
+- Fix: De Bollinger-breedte liet de eerste twintig candles per munt door zolang de indicator nog warmliep
+- Fix: De voorafgaande beweging van een candle-patroon telt de omkeercandle zelf niet meer mee
+- Emulator: Per run de diepste terugval van het kapitaal, en van welke build de run kwam
+- Instellingen: De velden van de experimentele strategieen staan alleen nog in de debug-build
+- Releases: De workflow haalt de release-notitie uit dit bestand en ondertekent de bestanden
+
 19-09-2026 2.6.7
 - Documentatie bijgewerkt
 - Overbodige instellingen van de asset management verwijderd (zie trader/assets)

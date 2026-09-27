@@ -107,6 +107,11 @@
                 <label class="chart-toggle"><input type="checkbox" @bind="_showZigZag" @bind:after="LoadChart" /> Show zigzag</label>
                 <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog(ZigZagStyleKey, "ZigZag"))">&#9881;</button>
             </div>
+            <div class="chart-indicator-row">
+                <label class="chart-toggle" title="Horizontal support and resistance (at least two pivots close together), sloped lines through the last two lower highs or higher lows, and an arrow where a broken level was retested from the other side and held (a flip)">
+                    <input type="checkbox" @bind="_showSupportResistance" @bind:after="LoadChart" /> Support/resistance
+                </label>
+            </div>
 
             <div class="chart-indicator-heading">FIB</div>
             <div class="chart-indicator-row">
@@ -270,6 +275,7 @@
     private bool _showPositions = true;
     private bool _showZigZag;
     private bool _showPivots;
+    private bool _showSupportResistance;
     private bool _showFib;
     private bool _showVolume = true;
     private bool _showRsi;
@@ -578,6 +584,7 @@
         _showSignals = _session.ShowSignals;
         _showPositions = _session.ShowPositions;
         _showPivots = _session.ShowPoints;
+        _showSupportResistance = _session.ShowSupportResistance;
         _showZigZag = _session.TrendShowZigZag;
         _showFib = _session.ShowFibRetracement;
         _showFibZigZag = _session.ShowFibZigZag;
@@ -616,6 +623,7 @@
         _session.ShowSignals = _showSignals;
         _session.ShowPositions = _showPositions;
         _session.ShowPoints = _showPivots;
+        _session.ShowSupportResistance = _showSupportResistance;
         _session.TrendShowZigZag = _showZigZag;
         _session.ShowFibRetracement = _showFib;
         _session.ShowFibZigZag = _showFibZigZag;
@@ -1202,6 +1210,9 @@
                 AddZigZagOverlays(overlays, symbolInterval, priceLines, markers);
             }
 
+            if (_showSupportResistance)
+                AddSupportResistanceOverlays(rawCandles, priceLines, segments, markers);
+
             // Plugin bands (BBMA, ATR reversal bands, VBS, DBR) expose their lines
             // through the renderer-agnostic GetSeries so this chart can draw them too. Their style
             // travels separately, keyed the same way as the points.
@@ -1723,6 +1734,65 @@
         // What makes LastSwingHigh/LastSwingLow — and with them the FIB levels — valid.
         foreach (var indicator in indicators)
             indicator.FinishBatch();
+    }
+
+    /// <summary>
+    /// Support and resistance on the candles of the chart (open point 46), from the same Core scan the
+    /// trader filter uses: the horizontal levels as they stand now (red above the price, green under
+    /// it, with the number of pivots), the sloped lines from their first pivot to the last candle,
+    /// and an arrow at every flip - a broken level that was retested from the other side and held.
+    /// </summary>
+    private static void AddSupportResistanceOverlays(List<CryptoCandle> candles,
+        List<ChartDataService.ChartPriceLine> priceLines, List<ChartDataService.ChartSegment> segments,
+        List<ChartDataService.ChartMarker> markers)
+    {
+        if (candles.Count < 30)
+            return;
+
+        SupportResistanceResult result = SupportResistance.Scan(candles);
+        double last = (double)candles[^1].Close;
+
+        foreach (SupportResistanceLevel level in result.Levels)
+        {
+            priceLines.Add(new ChartDataService.ChartPriceLine
+            {
+                price = level.Price,
+                color = level.Price >= last ? "#ef5350" : "#26a69a",
+                lineStyle = 2,
+                title = $"S/R {level.Touches}x",
+            });
+        }
+
+        int lastIndex = candles.Count - 1;
+        foreach (SupportResistanceLine line in result.Lines)
+        {
+            segments.Add(new ChartDataService.ChartSegment
+            {
+                time1 = candles[line.Index1].OpenTime.ToUnixSeconds(),
+                price1 = line.Price1,
+                time2 = candles[lastIndex].OpenTime.ToUnixSeconds(),
+                price2 = line.ValueAt(lastIndex),
+                color = line.IsResistance ? "#ff7043" : "#66bb6a",
+                width = 1,
+                dash = 0,
+                text = line.IsResistance ? "resistance" : "support",
+            });
+        }
+
+        foreach (SupportResistanceEvent e in result.Events)
+        {
+            if (e.Type != SupportResistanceEventType.Flip)
+                continue;
+            bool isLong = e.Side == CryptoTradeSide.Long;
+            markers.Add(new ChartDataService.ChartMarker
+            {
+                time = e.Time.ToUnixSeconds(),
+                position = isLong ? "belowBar" : "aboveBar",
+                color = isLong ? "#26a69a" : "#ef5350",
+                shape = isLong ? "arrowUp" : "arrowDown",
+                text = "flip",
+            });
+        }
     }
 
     private void AddZigZagOverlays(Dictionary<string, object> overlays, CryptoSymbolInterval symbolInterval,

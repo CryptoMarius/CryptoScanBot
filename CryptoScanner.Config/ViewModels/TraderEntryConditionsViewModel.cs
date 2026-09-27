@@ -34,6 +34,13 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     [ObservableProperty]
     private bool _checkPriceAboveMa200 = false;
 
+    // No short just above a 1h support (open point 46)
+    [ObservableProperty]
+    private bool _skipShortAboveSupport = false;
+
+    [ObservableProperty]
+    private decimal _supportMinimumRoomAtr = 0.5m;
+
     [ObservableProperty]
     private decimal _ma200MinDistancePercentage = 0m;
 
@@ -83,6 +90,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         CheckPriceAboveMa200 = ec.CheckPriceAboveMa200;
         Ma200MinDistancePercentage = ec.Ma200MinDistancePercentage;
         Ma200ConfirmationCandles = ec.Ma200ConfirmationCandles;
+        SkipShortAboveSupport = ec.SkipShortAboveSupport;
+        SupportMinimumRoomAtr = ec.SupportMinimumRoomAtr;
         EntryWaitCandles = ec.EntryWaitCandles;
         EntryMaxAdversePercentage = ec.EntryMaxAdversePercentage;
         WaitForStochRecovery = ec.WaitForStochRecovery;
@@ -112,6 +121,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         ec.CheckPriceAboveMa200 = CheckPriceAboveMa200;
         ec.Ma200MinDistancePercentage = Ma200MinDistancePercentage;
         ec.Ma200ConfirmationCandles = Ma200ConfirmationCandles;
+        ec.SkipShortAboveSupport = SkipShortAboveSupport;
+        ec.SupportMinimumRoomAtr = Math.Max(0m, SupportMinimumRoomAtr);
         ec.EntryWaitCandles = EntryWaitCandles;
         ec.EntryMaxAdversePercentage = EntryMaxAdversePercentage;
         ec.WaitForStochRecovery = WaitForStochRecovery;

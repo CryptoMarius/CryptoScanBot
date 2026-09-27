@@ -13,15 +13,21 @@ public partial class ChartTrendSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _showZigZag = false;
 
+    // Support/resistance: levels, sloped lines and flips (open point 46)
+    [ObservableProperty]
+    private bool _showSupportResistance = false;
+
     public void LoadFromSession(ZoneSession session)
     {
         TrendType = session.TrendType;
         ShowZigZag = session.TrendShowZigZag;
+        ShowSupportResistance = session.ShowSupportResistance;
     }
 
     public void SaveToSession(ZoneSession session)
     {
         session.TrendType = TrendType;
         session.TrendShowZigZag = ShowZigZag;
+        session.ShowSupportResistance = ShowSupportResistance;
     }
 }

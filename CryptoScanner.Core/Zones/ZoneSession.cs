@@ -34,6 +34,9 @@ public class ZoneSession
     public TrendType TrendType { get; set; } = TrendType.Primary;
     public bool TrendShowZigZag { get; set; } = false;
 
+    // Support/resistance: horizontal levels, sloped lines and the flips on them (open point 46)
+    public bool ShowSupportResistance { get; set; } = false;
+
     // fib
     public TrendType FibTrend { get; set; } = TrendType.Primary;
     public bool ShowFibRetracement { get; set; } = false;

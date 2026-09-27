@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="320"
+             xmlns:vm="using:CryptoScanner.Analyzers.SrFlip.Config"
+             x:DataType="vm:StrategySrFlipSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.SrFlip.Config.StrategySrFlipSettingsView">
+
+    <StackPanel Spacing="5">
+
+        <HeaderedContentControl Classes="groupbox" Header="Flip">
+            <StackPanel Margin="4" Spacing="4">
+
+                <CheckBox IsChecked="{Binding UseHorizontal, Mode=TwoWay}"
+                          Content="Flip on horizontal levels" FontSize="12"
+                          ToolTip.Tip="A horizontal level (pivots close together) that broke and was retested from the other side and held."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="How many pivots a horizontal level must have before its flip counts. Two is the minimum a level has; three or four are the stronger levels.">
+                    <TextBlock Grid.Column="0" Text="Minimum touches:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding MinimumTouches, Mode=TwoWay}" IsEnabled="{Binding UseHorizontal}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <CheckBox IsChecked="{Binding UseSloped, Mode=TwoWay}"
+                          Content="Flip on sloped lines" FontSize="12"
+                          ToolTip.Tip="A falling line through two lower highs, or a rising line through two higher lows, that broke and was retested from the other side and held."/>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="How many candles of the signal interval are scanned for levels and lines. The levels come from the last 300; the rest lets the scan settle.">
+                    <TextBlock Grid.Column="0" Text="History candles:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding HistoryCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+        <HeaderedContentControl Classes="groupbox" Header="Exit">
+            <StackPanel Margin="4" Spacing="4">
+
+                <CheckBox IsChecked="{Binding StopBeyondLevel, Mode=TwoWay}"
+                          Content="Stop beyond the level" FontSize="12"
+                          ToolTip.Tip="The stop loss sits half an average candle (ATR) beyond the level that flipped. Off uses the global stop loss percentage."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="The take profit as a multiple of the stop distance, 2 means twice as far as the stop. Zero leaves the trader's own take profit.">
+                    <TextBlock Grid.Column="0" Text="Take profit (x the stop):" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding RiskRewardRatio, Mode=TwoWay}" IsEnabled="{Binding StopBeyondLevel}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+    </StackPanel>
+
+</UserControl>

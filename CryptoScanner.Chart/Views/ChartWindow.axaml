@@ -64,6 +64,10 @@
                         <CheckBox IsChecked="{Binding TrendSettings.ShowZigZag, Mode=TwoWay}"
                                   Content="Show zigzag"
                                   FontSize="12"/>
+                        <CheckBox IsChecked="{Binding TrendSettings.ShowSupportResistance, Mode=TwoWay}"
+                                  Content="Support/resistance"
+                                  ToolTip.Tip="Horizontal support and resistance (at least two pivots close together), sloped lines through the last two lower highs or higher lows, and a triangle where a broken level was retested from the other side and held (a flip)"
+                                  FontSize="12"/>
                     </StackPanel>
                 </HeaderedContentControl>
 

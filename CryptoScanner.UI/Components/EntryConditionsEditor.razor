@@ -105,6 +105,16 @@
                        @bind="Data.Ma200ConfirmationCandles" disabled="@(!Data.CheckPriceAboveMa200)" />
             </span>
         </div>
+        @* No short just above a 1h support (open point 46), one row as in TraderEntryConditionsView *@
+        <div class="field" title="Skip a short when a 1h support (at least two pivots close together) lies closer under the price than this many average 1h candles (ATR). Such shorts did worse than the other shorts in the measurement; longs just under a resistance showed no such pattern, so there is no long counterpart.">
+            <input type="checkbox" class="input-checkbox" @bind="Data.SkipShortAboveSupport" />
+            <label>No short within</label>
+            <span class="field-control">
+                <input type="number" class="input-number" step="0.1" min="0" style="width: 60px;"
+                       @bind="Data.SupportMinimumRoomAtr" disabled="@(!Data.SkipShortAboveSupport)" />
+                <span class="field-unit">ATR above a 1h support</span>
+            </span>
+        </div>
         @* Watch the signal for a while before acting on it — the same row the Avalonia view puts
            under the MA200 block. *@
         <div class="field space-before"
