@@ -58,7 +58,7 @@ public class SrFlipSignalTests : TestBase
         var (symbol, interval, symbolInterval, candles) = Load();
         // The whole history in the window, so the strategy sees exactly what one scan over the
         // candles sees (the scan is causal, so its events up to candle k do not depend on later ones).
-        new SrFlipPlugin().SettingsBase = new SrFlipSettings { HistoryCandles = candles.Count };
+        new SrFlipPlugin().SettingsBase = new SrFlipSettings { WaitForConfirmation = false, VolumeFactor = 0, HistoryCandles = candles.Count };
         SupportResistanceResult scan = SupportResistance.Scan(candles);
 
         // From candle 60 on: the strategy wants at least that much history before it scans at all
@@ -94,20 +94,76 @@ public class SrFlipSignalTests : TestBase
         // A horizontal flip on a candle that has no sloped flip on the same side
         var horizontal = scan.Events.First(e => e.Type == SupportResistanceEventType.Flip && e.Kind == SupportResistanceKind.Horizontal && e.Index >= 60
             && !FlipOn(scan, e.Index, e.Side, x => x.Kind == SupportResistanceKind.Sloped));
-        new SrFlipPlugin().SettingsBase = new SrFlipSettings { HistoryCandles = candles.Count, UseHorizontal = false };
+        new SrFlipPlugin().SettingsBase = new SrFlipSettings { WaitForConfirmation = false, VolumeFactor = 0, HistoryCandles = candles.Count, UseHorizontal = false };
         Assert.IsFalse(Algorithm(horizontal.Side, symbol, interval, symbolInterval, candles[horizontal.Index]).IsSignal(),
             "horizontal switched off");
 
-        new SrFlipPlugin().SettingsBase = new SrFlipSettings { HistoryCandles = candles.Count, UseSloped = false,
+        new SrFlipPlugin().SettingsBase = new SrFlipSettings { WaitForConfirmation = false, VolumeFactor = 0, HistoryCandles = candles.Count, UseSloped = false,
             MinimumTouches = scan.Events.Where(e => e.Index == horizontal.Index && e.Side == horizontal.Side).Max(e => e.Touches) + 1 };
         Assert.IsFalse(Algorithm(horizontal.Side, symbol, interval, symbolInterval, candles[horizontal.Index]).IsSignal(),
             "a level with fewer touches than asked does not count");
 
         var sloped = scan.Events.First(e => e.Type == SupportResistanceEventType.Flip && e.Kind == SupportResistanceKind.Sloped && e.Index >= 60
             && !FlipOn(scan, e.Index, e.Side, x => x.Kind == SupportResistanceKind.Horizontal));
-        new SrFlipPlugin().SettingsBase = new SrFlipSettings { HistoryCandles = candles.Count, UseSloped = false };
+        new SrFlipPlugin().SettingsBase = new SrFlipSettings { WaitForConfirmation = false, VolumeFactor = 0, HistoryCandles = candles.Count, UseSloped = false };
         Assert.IsFalse(Algorithm(sloped.Side, symbol, interval, symbolInterval, candles[sloped.Index]).IsSignal(),
             "sloped switched off");
+    }
+
+
+    /// <summary>
+    /// With WaitForConfirmation (29-09-2026) the signal comes on the first candle after the retest that
+    /// closes in the trade direction and beyond the retest candle's high (long) or low (short) - never on
+    /// the retest itself, and once per flip. Worked out here from the candles, independent of the strategy.
+    /// </summary>
+    [TestMethod]
+    public void WithConfirmationItSignalsOnTheFirstCandleThatTurns()
+    {
+        var (symbol, interval, symbolInterval, candles) = Load();
+        const int window = 3;
+        new SrFlipPlugin().SettingsBase = new SrFlipSettings { HistoryCandles = candles.Count, WaitForConfirmation = true,
+            ConfirmationCandles = window, VolumeFactor = 0 };
+        SupportResistanceResult scan = SupportResistance.Scan(candles);
+
+        int confirmed = 0, unconfirmed = 0;
+        foreach (var flip in scan.Events.Where(e => e.Type == SupportResistanceEventType.Flip && e.Index >= 60 && e.Index + window < candles.Count))
+        {
+            int side = flip.Side == CryptoTradeSide.Long ? 1 : -1;
+            double atr = Math.Abs(flip.Level - flip.Stop) / SupportResistance.Default.StopAtr;
+            CryptoCandle retest = candles[flip.Index];
+            int? expected = null;
+            for (int j = flip.Index + 1; j <= flip.Index + window; j++)
+            {
+                CryptoCandle c = candles[j];
+                if ((flip.Level - (double)c.Close) * side > SupportResistance.Default.RetestAtr * atr)
+                    break;
+                bool turns = side == 1 ? c.Close > c.Open : c.Close < c.Open;
+                bool beyond = side == 1 ? c.Close > retest.High : c.Close < retest.Low;
+                if (turns && beyond)
+                {
+                    expected = j;
+                    break;
+                }
+            }
+
+            // Another flip of the same side close by can confirm on the same candle; skip those
+            if (scan.Events.Any(e => e.Type == SupportResistanceEventType.Flip && e.Side == flip.Side && e != flip
+                && Math.Abs(e.Index - flip.Index) <= window))
+                continue;
+
+            Assert.IsFalse(Algorithm(flip.Side, symbol, interval, symbolInterval, retest).IsSignal(),
+                $"no signal on the retest candle {flip.Index} itself");
+            for (int j = flip.Index + 1; j <= flip.Index + window; j++)
+            {
+                var algorithm = Algorithm(flip.Side, symbol, interval, symbolInterval, candles[j]);
+                Assert.AreEqual(j == expected, algorithm.IsSignal(), $"flip at {flip.Index}, candle {j}: {algorithm.ExtraText}");
+            }
+            if (expected != null)
+                confirmed++;
+            else
+                unconfirmed++;
+        }
+        Assert.IsTrue(confirmed > 3 && unconfirmed > 3, $"both cases in the data ({confirmed} confirmed, {unconfirmed} not)");
     }
 
 
@@ -118,7 +174,7 @@ public class SrFlipSignalTests : TestBase
         SupportResistanceResult scan = SupportResistance.Scan(candles);
         var flip = scan.Events.First(e => e.Type == SupportResistanceEventType.Flip && e.Index >= 60);
 
-        new SrFlipPlugin().SettingsBase = new SrFlipSettings { HistoryCandles = candles.Count, StopBeyondLevel = false };
+        new SrFlipPlugin().SettingsBase = new SrFlipSettings { WaitForConfirmation = false, VolumeFactor = 0, HistoryCandles = candles.Count, StopBeyondLevel = false };
         var algorithm = Algorithm(flip.Side, symbol, interval, symbolInterval, candles[flip.Index]);
         Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
         Assert.IsNull(algorithm.OverrideSlPercentage);

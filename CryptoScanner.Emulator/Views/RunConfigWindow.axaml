@@ -90,7 +90,7 @@
 
         <!-- Symbol checklist -->
         <Border Grid.Row="5" BorderBrush="#808080" BorderThickness="1" CornerRadius="3">
-            <DataGrid ItemsSource="{Binding FilteredSymbols}"
+            <DataGrid x:Name="SymbolsGrid" ItemsSource="{Binding FilteredSymbols}"
                       CanUserReorderColumns="True"
                       CanUserResizeColumns="True"
                       CanUserSortColumns="True"

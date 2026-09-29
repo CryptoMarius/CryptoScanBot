@@ -15,6 +15,12 @@
             <div class="chart-style-compact-item">
                 <div class="chart-style-compact-label">@definition.Label</div>
                 <div class="chart-style-compact-controls">
+                    @if (definition.CanHide)
+                    {
+                        <input type="checkbox" class="chart-style-visible" title="Show on the chart"
+                               checked="@style.Visible"
+                               @onchange="e => OnVisibleChanged(key, e)" />
+                    }
                     <ColorPickerCell Value="@style.Color"
                                      ValueChanged="argb => OnColorChanged(key, argb)"
                                      Title="@definition.Label" />
@@ -49,6 +55,20 @@ else
                 var key = definition.Key;
                 var style = Styles[key];
                 <tr>
+                    @* Only a series that may be left off the chart gets the checkbox; the cell stays
+                       for the rest so the columns keep lining up. A table without any such series
+                       gets no column at all. *@
+                    @if (AnyCanHide)
+                    {
+                        <td class="chart-style-visible-cell">
+                            @if (definition.CanHide)
+                            {
+                                <input type="checkbox" class="chart-style-visible" title="Show on the chart"
+                                       checked="@style.Visible"
+                                       @onchange="e => OnVisibleChanged(key, e)" />
+                            }
+                        </td>
+                    }
                     <td class="chart-style-label">@definition.Label</td>
                     @* Same editor as the basecoins and strategy colours: a swatch that opens the
                        shared ARGB dialog. That dialog is modal, so it is never clipped. *@
@@ -132,6 +152,14 @@ else
             Styles[key].LineStyle = lineStyle;
             await NotifyChanged();
         }
+    }
+
+    private bool AnyCanHide => Definitions.Any(d => d.CanHide);
+
+    private async Task OnVisibleChanged(string key, ChangeEventArgs e)
+    {
+        Styles[key].Visible = e.Value is bool b && b;
+        await NotifyChanged();
     }
 
     private async Task ResetOne(string key)

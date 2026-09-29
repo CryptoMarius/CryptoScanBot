@@ -182,7 +182,15 @@ public class ThreadCheckFinishedPosition
             }
         }
 
-        if (removePosition)
+        // A closed position passes here twice: CalculatePositionResultsViaOrders queues it once more
+        // (DelayUntil + 10s) at the moment it marks it Ready, while the same round already arrives
+        // here. The first pass removes it from the position list; the second one found nothing to
+        // remove, but it did send the Altrady close a second time (measured 27-09-2026: every close
+        // went out twice, ten seconds apart). Only the pass that still finds it in the list acts.
+        bool stillListed = GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? listed)
+            && ReferenceEquals(listed, position);
+
+        if (removePosition && stillListed)
         {
             // The scanner owns the exit, Altrady only executes: the moment our own administration is
             // finished with the position - stop, target, trailing stop or timeout - their counterpart

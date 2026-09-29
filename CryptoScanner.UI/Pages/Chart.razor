@@ -202,12 +202,10 @@
             </div>
         </div>
     }
-    @* The bottom pane carries the time axis (ChartWidget._applyBottomTimeScale), so it needs the
-       height for it on top of its own — otherwise the axis eats into the indicator it belongs to. *@
+    @* ONE element. Volume, oscillator and macd are panes of the chart in here, not charts of
+       their own in a div of their own, so there is nothing left to keep the same size, the same
+       width or on the same candle. The chart divides the height between its panes itself. *@
     <div id="chart-main" class="chart-panel chart-panel-main"></div>
-    <div id="chart-volume" class="chart-panel chart-panel-sub" style="display:@(_showVolume ? "block" : "none"); height:@(PanelHeight(80, "volume"))px;"></div>
-    <div id="chart-oscillator" class="chart-panel chart-panel-sub" style="display:@(ShowOscillatorPanel ? "block" : "none"); height:@(PanelHeight(120, "oscillator"))px;"></div>
-    <div id="chart-macd" class="chart-panel chart-panel-sub" style="display:@(_showMacd ? "block" : "none"); height:@(PanelHeight(120, "macd"))px;"></div>
 </div>
 </div>
 
@@ -257,6 +255,7 @@
 
     // Double top/bottom rectangles, filled while building the zigzag overlays
     private readonly List<ChartDataService.ChartRect> _dtbZones = [];
+    private readonly List<ChartDataService.ChartRect> _srZones = [];
 
     private bool _showBB = true;
     private bool _showSma200;
@@ -316,24 +315,6 @@
     private List<(string Key, string Label)> _allOverlays = [];
 
     private bool ShowOscillatorPanel => _showRsi || _showStoch || _showLux;
-
-    // Height the time axis needs. Measured against the axis the main chart used to draw: the labels
-    // are 10px, and lightweight-charts puts its own padding and tick marks around them.
-    private const int TimeAxisHeight = 26;
-
-    /// <summary>
-    /// Which pane sits at the bottom, and so carries the time axis for all of them. Empty when no
-    /// sub-panel is switched on and the main chart keeps it. Must stay in step with the pane order
-    /// in ChartWidget._applyBottomTimeScale.
-    /// </summary>
-    private string BottomPanelKey =>
-        _showMacd ? "macd"
-        : ShowOscillatorPanel ? "oscillator"
-        : _showVolume ? "volume"
-        : "";
-
-    private int PanelHeight(int height, string key) =>
-        BottomPanelKey == key ? height + TimeAxisHeight : height;
 
     private readonly Dictionary<string, string> _pluginOverlays = [];
     private readonly Dictionary<string, bool> _pluginOverlayStates = [];
@@ -889,7 +870,8 @@
             if (style.Color != definition.Default.Color
                 || style.LineWidth != definition.Default.LineWidth
                 || style.LineStyle != definition.Default.LineStyle
-                || style.Dots != definition.Default.Dots)
+                || style.Dots != definition.Default.Dots
+                || style.Visible != definition.Default.Visible)
             {
                 target.Styles[definition.Key] = style.Clone();
             }
@@ -999,6 +981,15 @@
 
     private bool _loadingChart;
     private bool _loadPending;
+
+    /// <summary>The length of one candle of the chosen interval, in seconds. The chart uses it to
+    /// tell a candle that stands for a MOMENT from one that stands for a calendar day or week.</summary>
+    private uint SelectedIntervalSeconds =>
+        Enum.TryParse<CryptoIntervalPeriod>(_selectedInterval, out var p)
+            && GlobalData.IntervalListPeriod.TryGetValue(p, out var i)
+            ? i.Duration
+            : 0u;
+
 
     /// <summary>
     /// Rebuild the chart. Every checkbox calls this, and ChartWidget.setData throws away all series
@@ -1166,6 +1157,7 @@
             var verticals = new List<ChartDataService.ChartVertical>();
             var overlayLabels = new List<object>();
             _dtbZones.Clear();
+            _srZones.Clear();
 
             if (_showBB)
             {
@@ -1211,7 +1203,7 @@
             }
 
             if (_showSupportResistance)
-                AddSupportResistanceOverlays(rawCandles, priceLines, segments, markers);
+                AddSupportResistanceOverlays(rawCandles, priceLines, segments, markers, _srZones);
 
             // Plugin bands (BBMA, ATR reversal bands, VBS, DBR) expose their lines
             // through the renderer-agnostic GetSeries so this chart can draw them too. Their style
@@ -1227,6 +1219,10 @@
                 foreach (var series in overlay.GetSeries(_currentSymbol, symbolInterval.Interval, rawCandles))
                 {
                     if (series.Points.Count == 0)
+                        continue;
+
+                    // Switched off in the style editor (a series whose definition allows that)
+                    if (!ChartStyleSettings.IsVisible(series.Key))
                         continue;
 
                     // The look: what the user configured for this key wins, and the plugin's own
@@ -1306,6 +1302,10 @@
                     string labelColor = label.Color;
                     if (!string.IsNullOrEmpty(label.StyleKey))
                     {
+                        // Switched off in the style editor (a marker whose definition allows that)
+                        if (!ChartStyleSettings.IsVisible(label.StyleKey))
+                            continue;
+
                         var labelStyle = ChartStyleSettings.Current.Get(label.StyleKey);
                         if (labelStyle != null)
                             labelColor = labelStyle.ToCssColor();
@@ -1434,6 +1434,8 @@
 
             if (_dtbZones.Count > 0)
                 zones = zones.Concat(_dtbZones).ToList();
+            if (_srZones.Count > 0)
+                zones = zones.Concat(_srZones).ToList();
 
             var extras = new
             {
@@ -1444,6 +1446,10 @@
                 dots,
                 verticals,
                 labels = overlayLabels,
+                // How long one candle lasts. The chart needs it to decide whether a candle stands
+                // for a MOMENT, which is read on the local wall clock, or for a calendar day or
+                // week, which has no clock time at all.
+                intervalSeconds = SelectedIntervalSeconds,
             };
 
             // The Avalonia chart can hide the candles and only show the overlays
@@ -1741,10 +1747,19 @@
     /// trader filter uses: the horizontal levels as they stand now (red above the price, green under
     /// it, with the number of pivots), the sloped lines from their first pivot to the last candle,
     /// and an arrow at every flip - a broken level that was retested from the other side and held.
+    /// Each level is also drawn as a block, from its lowest to its highest pivot (at least one ATR
+    /// high), starting at its oldest pivot and running to the right edge; overlapping blocks merge.
     /// </summary>
+    /// <summary>
+    /// From how many touches a support/resistance zone is worth drawing. Three, the same bar the
+    /// scan itself uses before it acts on a level (SupportResistance.MinEventTouches) - drawing
+    /// what we would not trade on only fills the chart.
+    /// </summary>
+    private const int SupportResistanceDrawFrom = 3;
+
     private static void AddSupportResistanceOverlays(List<CryptoCandle> candles,
         List<ChartDataService.ChartPriceLine> priceLines, List<ChartDataService.ChartSegment> segments,
-        List<ChartDataService.ChartMarker> markers)
+        List<ChartDataService.ChartMarker> markers, List<ChartDataService.ChartRect> zones)
     {
         if (candles.Count < 30)
             return;
@@ -1752,26 +1767,91 @@
         SupportResistanceResult result = SupportResistance.Scan(candles);
         double last = (double)candles[^1].Close;
 
-        foreach (SupportResistanceLevel level in result.Levels)
+        // The MERGED zones, not the loose levels. Both used to be drawn: a block per zone and on
+        // top of that a dotted line WITH an axis label per level, so there were more numbers on
+        // the axis than blocks on the chart. On a weekly bitcoin chart that came to thirteen rows
+        // of labels in an unbroken column, and the price itself disappeared between them.
+        List<SupportResistanceZone> merged = SupportResistance.Zones(result.Levels);
+
+        // Two touches is the weakest thing the clustering can produce, and the scan itself does
+        // not act on a level below MinEventTouches either - so drawing them adds noise and no
+        // information. The nearest level above and below survive whatever their strength: those
+        // are the two the eye is looking for.
+        SupportResistanceZone? nearestAbove = null;
+        SupportResistanceZone? nearestBelow = null;
+        foreach (SupportResistanceZone zone in merged)
         {
+            if (zone.Price >= last)
+            {
+                if (nearestAbove == null || zone.Price < nearestAbove.Value.Price)
+                    nearestAbove = zone;
+            }
+            else if (nearestBelow == null || zone.Price > nearestBelow.Value.Price)
+            {
+                nearestBelow = zone;
+            }
+        }
+
+        foreach (SupportResistanceZone zone in merged)
+        {
+            bool nearest = (nearestAbove != null && zone.Price == nearestAbove.Value.Price)
+                || (nearestBelow != null && zone.Price == nearestBelow.Value.Price);
+            if (zone.Touches < SupportResistanceDrawFrom && !nearest)
+                continue;
+
+            bool above = zone.Price >= last;
+
+            // Strength as WEIGHT instead of as a number: a band that has held six times is darker
+            // and has a firmer edge than one that held three. The count stays, but only as the
+            // small caption at the right-hand end of the block - not as a row on the axis.
+            string fill = above
+                ? zone.Touches >= 6 ? "rgba(239,83,80,0.22)" : zone.Touches >= 4 ? "rgba(239,83,80,0.14)" : "rgba(239,83,80,0.08)"
+                : zone.Touches >= 6 ? "rgba(38,166,154,0.22)" : zone.Touches >= 4 ? "rgba(38,166,154,0.14)" : "rgba(38,166,154,0.08)";
+
+            zones.Add(new ChartDataService.ChartRect
+            {
+                time1 = candles[zone.FirstIndex].OpenTime.ToUnixSeconds(),
+                time2 = null,
+                price1 = zone.High,
+                price2 = zone.Low,
+                fill = fill,
+                border = above ? "rgba(239,83,80,0.50)" : "rgba(38,166,154,0.50)",
+                text = $"{zone.Touches}x",
+                textColor = above ? "#ef5350" : "#26a69a",
+            });
+
+            // Only the two nearest levels keep a line, and only they claim a label on the axis.
+            // The line is what ties that label to its block; for the rest the block says it all,
+            // and a line on the weighted middle of a band that is an ATR high claims a precision
+            // the method does not have.
+            if (!nearest)
+                continue;
+
             priceLines.Add(new ChartDataService.ChartPriceLine
             {
-                price = level.Price,
-                color = level.Price >= last ? "#ef5350" : "#26a69a",
+                price = zone.Price,
+                color = above ? "#ef5350" : "#26a69a",
                 lineStyle = 2,
-                title = $"S/R {level.Touches}x",
+                // No "S/R 4x" any more: the colour says which side it is and the block carries the
+                // count, while the text took up half the width of the axis label.
+                title = "",
+                axisLabelVisible = true,
             });
         }
 
         int lastIndex = candles.Count - 1;
         foreach (SupportResistanceLine line in result.Lines)
         {
+            // Only a line with its third touch counts, and a broken one ends at its breakout
+            if (!line.IsConfirmed)
+                continue;
+            int endIndex = line.BrokenAt ?? lastIndex;
             segments.Add(new ChartDataService.ChartSegment
             {
                 time1 = candles[line.Index1].OpenTime.ToUnixSeconds(),
                 price1 = line.Price1,
-                time2 = candles[lastIndex].OpenTime.ToUnixSeconds(),
-                price2 = line.ValueAt(lastIndex),
+                time2 = candles[endIndex].OpenTime.ToUnixSeconds(),
+                price2 = line.ValueAt(endIndex),
                 color = line.IsResistance ? "#ff7043" : "#66bb6a",
                 width = 1,
                 dash = 0,
@@ -1783,10 +1863,15 @@
         {
             if (e.Type != SupportResistanceEventType.Flip)
                 continue;
+            // On the candle the srflip strategy enters on (the confirmation candle), not on the retest;
+            // a flip that never got an entry gets no marker
+            int? entry = CryptoScanner.Analyzers.SrFlip.Signal.SrFlipBase.EntryIndex(candles, e, CryptoScanner.Analyzers.SrFlip.SrFlipPlugin.Settings);
+            if (entry == null)
+                continue;
             bool isLong = e.Side == CryptoTradeSide.Long;
             markers.Add(new ChartDataService.ChartMarker
             {
-                time = e.Time.ToUnixSeconds(),
+                time = candles[entry.Value].OpenTime.ToUnixSeconds(),
                 position = isLong ? "belowBar" : "aboveBar",
                 color = isLong ? "#26a69a" : "#ef5350",
                 shape = isLong ? "arrowUp" : "arrowDown",

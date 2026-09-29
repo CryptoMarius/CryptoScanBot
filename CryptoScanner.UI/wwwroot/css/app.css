@@ -1683,13 +1683,12 @@ code {
     height: calc(100% - 33px);
     min-height: 400px;
 }
+/* One element that takes the whole area. Volume, oscillator and macd used to be siblings with a
+   height of their own here; they are panes inside this one now and the chart divides the height
+   between them, so there is nothing left to size from the outside. */
 .chart-panel-main {
     flex: 1 1 auto;
     min-height: 200px;
-}
-.chart-panel-sub {
-    flex: 0 0 auto;
-    border-top: 1px solid var(--border-low);
 }
 
 /* "You are looking at a position, not at now" — sits in the header bar next to the pickers */

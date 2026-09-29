@@ -8,13 +8,22 @@ public partial class StrategySrFlipSettingsViewModel : ObservableObject
     private bool _useHorizontal = true;
 
     [ObservableProperty]
-    private int _minimumTouches = 2;
+    private int _minimumTouches = 3;
 
     [ObservableProperty]
     private bool _useSloped = true;
 
     [ObservableProperty]
     private int _historyCandles = 500;
+
+    [ObservableProperty]
+    private bool _waitForConfirmation = true;
+
+    [ObservableProperty]
+    private int _confirmationCandles = 3;
+
+    [ObservableProperty]
+    private decimal _volumeFactor = 1.5m;
 
     [ObservableProperty]
     private bool _stopBeyondLevel = true;
@@ -29,6 +38,9 @@ public partial class StrategySrFlipSettingsViewModel : ObservableObject
         MinimumTouches = settings.MinimumTouches;
         UseSloped = settings.UseSloped;
         HistoryCandles = settings.HistoryCandles;
+        WaitForConfirmation = settings.WaitForConfirmation;
+        ConfirmationCandles = settings.ConfirmationCandles;
+        VolumeFactor = settings.VolumeFactor;
         StopBeyondLevel = settings.StopBeyondLevel;
         RiskRewardRatio = settings.RiskRewardRatio;
     }
@@ -39,6 +51,9 @@ public partial class StrategySrFlipSettingsViewModel : ObservableObject
         settings.MinimumTouches = Math.Max(2, MinimumTouches);
         settings.UseSloped = UseSloped;
         settings.HistoryCandles = Math.Max(60, HistoryCandles);
+        settings.WaitForConfirmation = WaitForConfirmation;
+        settings.ConfirmationCandles = Math.Max(1, ConfirmationCandles);
+        settings.VolumeFactor = Math.Max(0m, VolumeFactor);
         settings.StopBeyondLevel = StopBeyondLevel;
         settings.RiskRewardRatio = Math.Max(0m, RiskRewardRatio);
     }

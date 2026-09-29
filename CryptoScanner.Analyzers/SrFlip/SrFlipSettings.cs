@@ -18,6 +18,7 @@ namespace CryptoScanner.Analyzers.SrFlip;
 public class SrFlipSettings : SettingsSignalStrategyBase
 {
     private const string GroupFlip = "Flip";
+    private const string GroupConfirmation = "Confirmation";
     private const string GroupExit = "Exit";
 
     /// <summary>Report a flip on a horizontal level (at least MinimumTouches pivots close together).</summary>
@@ -27,8 +28,8 @@ public class SrFlipSettings : SettingsSignalStrategyBase
 
     /// <summary>How many pivots a horizontal level needs before its flip counts. Two is the minimum a level has.</summary>
     [SettingCaption("Minimum touches", Group = GroupFlip, Indented = true, EnabledWhen = nameof(UseHorizontal),
-        Tooltip = "How many pivots a horizontal level must have before its flip counts. Two is the minimum a level has; three or four are the stronger levels.")]
-    public int MinimumTouches { get; set; } = 2;
+        Tooltip = "How many pivots a horizontal level must have before its flip counts. Since 28-09-2026 a level needs three before it breaks at all; four or more are the stronger levels.")]
+    public int MinimumTouches { get; set; } = 3;
 
     /// <summary>Report a flip on a sloped line (through two lower highs or two higher lows).</summary>
     [SettingCaption("Flip on sloped lines", Group = GroupFlip,
@@ -43,6 +44,25 @@ public class SrFlipSettings : SettingsSignalStrategyBase
     [SettingCaption("History candles", Group = GroupFlip,
         Tooltip = "How many candles of the signal interval are scanned for levels and lines. The levels come from the last 300; the rest lets the scan settle.")]
     public int HistoryCandles { get; set; } = 500;
+
+    /// <summary>
+    /// Wait for the candle that actually turns, the way a trader does (Marius, 29-09-2026): after the
+    /// retest, the first candle that closes in the trade direction (green for a long, red for a short)
+    /// and beyond the retest candle's high (long) or low (short). Off trades the retest candle itself.
+    /// </summary>
+    [SettingCaption("Wait for a confirmation candle", Group = GroupConfirmation,
+        Tooltip = "After the retest, wait for the first candle that closes in the trade direction (green for a long, red for a short) and beyond the high (long) or low (short) of the retest candle. Off enters on the retest candle itself.")]
+    public bool WaitForConfirmation { get; set; } = true;
+
+    /// <summary>How many candles after the retest the confirmation may take; later and the flip is dropped.</summary>
+    [SettingCaption("Within candles", Group = GroupConfirmation, Indented = true, EnabledWhen = nameof(WaitForConfirmation),
+        Tooltip = "How many candles after the retest the confirmation candle may come. A close back through the level before that drops the flip.")]
+    public int ConfirmationCandles { get; set; } = 3;
+
+    /// <summary>The entry candle's volume against the average of the 20 candles before it. Zero is off.</summary>
+    [SettingCaption("Volume (x the average)", Group = GroupConfirmation,
+        Tooltip = "The entry candle must trade at least this many times the average volume of the 20 candles before it. 1.5 means half again as much. Zero is off.")]
+    public decimal VolumeFactor { get; set; } = 1.5m;
 
     /// <summary>The stop just beyond the level (half an average candle past it), handed to the trader.</summary>
     [SettingCaption("Stop beyond the level", Group = GroupExit,

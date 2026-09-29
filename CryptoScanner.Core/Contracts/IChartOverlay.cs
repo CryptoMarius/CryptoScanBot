@@ -80,6 +80,13 @@ public sealed class ChartOverlayStyleDefinition
 
     /// <summary>True for a filled area rather than a line, so the screen can say so.</summary>
     public bool IsFill { get; set; }
+
+    /// <summary>
+    /// The style editor offers a "visible" checkbox for this element, so it can be left off the
+    /// chart while the rest of the overlay stays. The overlay has to honour it in its Avalonia Draw
+    /// (ChartStyleSettings.IsVisible); the Photino chart skips a hidden series by itself.
+    /// </summary>
+    public bool CanHide { get; set; }
 }
 
 

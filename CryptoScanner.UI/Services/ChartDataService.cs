@@ -56,6 +56,13 @@ public static class ChartDataService
         public string color { get; set; } = "#888888";
         public int lineStyle { get; set; } = 2;
         public string title { get; set; } = "";
+
+        /// <summary>
+        /// Whether this line also gets a label pinned on the price axis. Off for a line that is
+        /// one of many: thirteen support and resistance levels each claiming a row turned the
+        /// axis into an unbroken column of numbers, which hides the price itself.
+        /// </summary>
+        public bool axisLabelVisible { get; set; } = true;
     }
 
     /// <summary>

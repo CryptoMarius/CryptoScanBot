@@ -191,6 +191,17 @@ public class SignalCreateBase
         if (TrackAndRejectOnAdverseMove(signal))
             return true;
 
+        // The short filter (SkipShortAboveSupport) drops the signal here for the same reason. It
+        // started in CheckExpensiveEntryConditions, i.e. in AllowStepIn, where a "no" only postponed
+        // the short: the trader kept the signal and opened it later, once the price had fallen through
+        // the support and there was no support under it any more - at a worse price. Emulator runs
+        // 1741/1742 (29-09-2026): 272 of 396 new shorts opened within two hours after a skipped one on
+        // the same coin, and the 1 ATR run fell from +680 to +39.
+        var entryConditions2 = ResolveEntryConditions();
+        if (entryConditions2.SkipShortAboveSupport && SignalSide == CryptoTradeSide.Short
+            && !CheckRoomAboveSupport(entryConditions2.SupportMinimumRoomAtr))
+            return true;
+
         // Avoid duplicate signals — but allow a newer signal to replace a Waiting (unfilled) position
         var position = PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol);
         if (position != null && position.Status >= CryptoPositionStatus.Trading)
@@ -538,9 +549,10 @@ public class SignalCreateBase
             return false;
 
         // Last: it scans a few hundred 1h candles, the most expensive check of all
-        if (settings.SkipShortAboveSupport && SignalSide == CryptoTradeSide.Short
-            && !CheckRoomAboveSupport(settings.SupportMinimumRoomAtr))
-            return false;
+        // Moved to GiveUp on 29-09-2026: here a "no" postponed the short instead of skipping it.
+        //if (settings.SkipShortAboveSupport && SignalSide == CryptoTradeSide.Short
+        //    && !CheckRoomAboveSupport(settings.SupportMinimumRoomAtr))
+        //    return false;
 
         return true;
     }
@@ -551,6 +563,9 @@ public class SignalCreateBase
     /// support under the price is closer than <paramref name="minimumRoomAtr"/> average 1h candles.
     /// Too little 1h history (fewer than 60 candles) or no support at all lets the short through.
     /// </summary>
+    // Per symbol: the 1h candle the levels were made for, the levels and the ATR of that candle
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (CandleTime Hour, List<(double Price, int Touches)>? Levels, double Atr)> SupportLevelCache = new();
+
     protected bool CheckRoomAboveSupport(decimal minimumRoomAtr)
     {
         CryptoInterval? hour = GlobalData.IntervalListPeriod.GetValueOrDefault(CryptoIntervalPeriod.interval1h);
@@ -560,12 +575,20 @@ public class SignalCreateBase
         // The 1h candles that are closed at the close of the candle being evaluated
         CandleTime closeTime = CandleLast.Candle.OpenTime + Interval.Duration;
         CandleTime lastHour = new CandleTime(closeTime.Minutes - hour.Duration).AlignToIntervalMinutes(hour.Duration);
-        List<CryptoCandle> candles = SupportResistanceCandles.Collect(Symbol, hour, lastHour, CandleTools.CandleCountFetch);
-        if (candles.Count < 60)
+        // The levels only change with a new 1h candle, and GiveUp asks on every candle a signal waits
+        var key = Symbol.Name;
+        if (!SupportLevelCache.TryGetValue(key, out var cached) || cached.Hour != lastHour)
+        {
+            List<CryptoCandle> candles = SupportResistanceCandles.Collect(Symbol, hour, lastHour, CandleTools.CandleCountFetch);
+            var levels = candles.Count < 60 ? null : SupportResistance.CurrentLevels(candles, out double levelAtr);
+            cached = (lastHour, levels, levels == null ? double.NaN : SupportResistance.LastAtr(candles));
+            SupportLevelCache[key] = cached;
+        }
+        if (cached.Levels == null)
             return true;
 
         double price = (double)CandleLast.Candle.Close;
-        double? room = SupportResistance.RoomToNextLevel(candles, price, CryptoTradeSide.Short, out double level);
+        double? room = SupportResistance.RoomToNextLevel(cached.Levels, cached.Atr, price, CryptoTradeSide.Short, out double level);
         if (room == null || room.Value >= (double)minimumRoomAtr)
             return true;
 

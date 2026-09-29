@@ -34,6 +34,7 @@ public static class ColumnHints
     {
         ["Id"] = "Number of the run in this session database.",
         ["Started"] = "When the run started (local time).",
+        ["Build"] = "Write time of the emulator build that made the run. Runs made by different builds ran different code and are not strictly comparable.",
         ["Label"] = "The label from the queue entry, plus the base interval and, when the entry had one, its own period.",
         ["Period"] = "The replayed window (from → to) and its length in days. Only runs over the same period can be compared.",
         ["Finished"] = "When the run finished (local time).",
@@ -52,6 +53,7 @@ public static class ColumnHints
         ["Peak cap."] = "Peak capital: the most that was tied up in open positions at any one moment. This is the money an account needed to run this.",
         ["Peak pos"] = "The largest number of positions open at the same time.",
         ["Peak %"] = "100 × Profit / Peak cap. — the return on the capital that was actually tied up. A stricter filter trades less and needs less capital, so compare the money as well.",
+        ["Drawdown %"] = "The deepest fall of the account value from an earlier high, in percent of that high: 100 × (high − value) / high. Measured once per replayed day, so a dip that recovered within the same day is not in it. Example: 100, 120, 90, 130, 65 gives 50 (130 → 65).",
         ["Start cap."] = "The start capital of the run configuration. Only meaningful when asset management was on.",
         ["End cap."] = "Start cap. + Profit.",
         ["Return %"] = "100 × Profit / Start cap. A dash when asset management was off: then the start capital never limited what was traded and a percentage of it says nothing. Not per day — compared runs cover the same period.",
@@ -72,6 +74,10 @@ public static class ColumnHints
         ["Created"] = "When the position was opened (local time).",
         ["Closed"] = "When the position was closed (local time); a dash while it is still open.",
         ["Duration"] = "Time from entry to close.",
+        ["Symbol"] = "The coin the position was opened on.",
+        ["Interval"] = "The interval of the signal that opened the position.",
+        ["Side"] = "Long or Short.",
+        ["Strategy"] = "The strategy whose signal opened the position.",
         ["Parts"] = "Filled parts: the entry counts as 1, every filled DCA part adds one. A trailing + means a DCA order is still pending on an open position.",
         ["Status"] = "Waiting = entry order placed, not filled yet. Trading = open. Ready = closed. Timeout = the entry order never filled. Cancelled = a newer signal invalidated the waiting position.",
         ["Profit"] = "Realised result in the quote currency, fees included. Meaningless while the position is still open (nothing has been returned yet).",
@@ -86,10 +92,26 @@ public static class ColumnHints
     public static readonly IReadOnlyDictionary<string, string> Signals = new Dictionary<string, string>
     {
         ["Signal time"] = "Open time of the candle the signal fired on (local time).",
+        ["Symbol"] = "The coin the signal fired on.",
+        ["Interval"] = "The interval of the candle the signal fired on.",
+        ["Side"] = "Long or Short.",
+        ["Strategy"] = "The strategy that produced the signal.",
         ["Signal price"] = "The price the strategy reported for the signal, normally the close of that candle.",
         ["SL %"] = "The stop-loss distance the strategy handed over, as a percentage of the signal price. A dash means the global stop-loss percentage applies.",
         ["Valid"] = "ok = the signal passed the entry conditions; invalid = it was rejected (the reason is in the log).",
         ["Position"] = "The position this signal opened, or a dash when it opened none (rejected, a position was already open, or the entry timed out).",
         ["Pos. created"] = "When that position was opened (local time).",
+        ["Pos. status"] = "Status of that position at the end of the run: Waiting, Trading, Ready, Timeout or Cancelled. A dash when the signal opened no position.",
+        ["Profit"] = "Realised result of that position in the quote currency, fees included. Meaningless while the position is still open.",
+        ["%"] = "Returned as a percentage of the invested stake of that position: 100 = break-even, 101.50 = 1.5% profit, 98 = 2% loss.",
+        ["EventText"] = "The strategy's own text for the signal (the code, the setup, the intervals, the handed-over stop and take profit).",
+    };
+
+
+    /// <summary>The symbol selection of the run configuration window.</summary>
+    public static readonly IReadOnlyDictionary<string, string> Symbols = new Dictionary<string, string>
+    {
+        ["Symbol"] = "The coin. Checked coins are replayed by the run.",
+        ["Volume"] = "24h volume in the quote currency, as the scanner currently knows it. 0 for a coin that only comes from a saved run configuration and is not (yet) known on the active exchange.",
     };
 }

@@ -66,7 +66,8 @@
             if (style.Color != definition.Default.Color
                 || style.LineWidth != definition.Default.LineWidth
                 || style.LineStyle != definition.Default.LineStyle
-                || style.Dots != definition.Default.Dots)
+                || style.Dots != definition.Default.Dots
+                || style.Visible != definition.Default.Visible)
             {
                 target.Styles[definition.Key] = style.Clone();
             }

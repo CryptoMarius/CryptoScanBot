@@ -1,3 +1,4 @@
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
@@ -9,6 +10,25 @@ public enum SupportResistanceKind
     Horizontal,
     Sloped,
 }
+
+/// <summary>Where the tops and bottoms (pivots) of the levels and lines come from.</summary>
+public enum SupportResistancePivots
+{
+    /// <summary>
+    /// The scanner's own ZigZag: secondary, on the wicks (high/low), swing points after Lance Beggs.
+    /// The same pivots the chart draws and trend and DLZ work with. The default since 28-09-2026:
+    /// Marius did not want two kinds of pivots in the scanner.
+    /// </summary>
+    ZigZag,
+
+    /// <summary>
+    /// A simple fractal: the highest high (lowest low) of PivotLeft/PivotRight candles on either side,
+    /// LinePivot for the sloped lines. Only here so the port can still be held to the offline
+    /// measurement it was made from (sr_flip_scan.py), which is written that way to run fast.
+    /// </summary>
+    Fractal,
+}
+
 
 /// <summary>What happened at a level or line.</summary>
 public enum SupportResistanceEventType
@@ -33,17 +53,40 @@ public sealed class SupportResistanceLevel
     /// <summary>How many pivots (highs and lows) make up the level.</summary>
     public int Touches { get; internal set; }
 
+    /// <summary>
+    /// The bottom and top of the level as a zone: the lowest and highest pivot in it, at least
+    /// <see cref="SupportResistance.ZoneHeightAtr"/> * ATR apart (around <see cref="Price"/>), the
+    /// way traders draw their zones. Only for drawing; the breakouts and flips work with <see cref="Price"/>.
+    /// </summary>
+    public double Low { get; internal set; }
+    public double High { get; internal set; }
+
+    /// <summary>The candle of the oldest pivot in the level, where its zone starts.</summary>
+    public int FirstIndex { get; internal set; }
+
     // Walk state: which side of the level the price is on (+1 above, -1 under), and a running break
     internal int State;
     internal int? BreakIndex;
     internal int BreakSide;
+
+    // Closer to the theory (28-09-2026): the price ran far enough away after the breakout, how often
+    // the level flipped and was crossed, and whether it is done (a chop zone or flipped twice)
+    internal bool Departed;
+    internal int Flips;
+    internal int Crossings;
+    internal bool Retired;
 }
 
 
 /// <summary>
-/// A sloped support/resistance line through two pivots of the same kind: a falling line through
-/// two highs (resistance) or a rising line through two lows (support). Straight in log price, so the
-/// slope is a percentage per candle.
+/// A sloped support/resistance line through two clear pivots of the same kind: a falling line
+/// through two tops (resistance) or a rising line through two bottoms (support). Straight in log price,
+/// so the slope is a percentage per candle.
+/// <para>
+/// Since 28-09-2026 drawn the way a trader draws one (Marius found the old ones "merkwaardig"): clear
+/// tops and bottoms only (LinePivot candles on either side), no close beyond the line between its
+/// two points or since, counted from a third touch, and gone at the first close beyond it.
+/// </para>
 /// </summary>
 public sealed class SupportResistanceLine
 {
@@ -55,11 +98,23 @@ public sealed class SupportResistanceLine
     /// <summary>True for a falling line through two highs, false for a rising line through two lows.</summary>
     public bool IsResistance { get; internal set; }
 
+    /// <summary>The two pivots plus every later touch (a wick within RetestAtr, LineTouchGap apart).</summary>
+    public int Touches { get; internal set; } = 2;
+
+    /// <summary>A line counts - is drawn, can break - from its third touch.</summary>
+    public bool IsConfirmed => Touches >= 3;
+
+    /// <summary>The candle of the breakout while the retest window runs, null otherwise.</summary>
+    public int? BrokenAt => BreakIndex;
+
     internal double LogPrice1;
     internal double LogPrice2;
     internal int? BreakIndex;
     internal int BreakSide;
     internal bool Done;
+    internal int LastTouch;
+    internal int Start;
+    internal bool Departed;
 
     /// <summary>The price of the line at candle <paramref name="index"/>.</summary>
     public double ValueAt(int index)
@@ -69,6 +124,13 @@ public sealed class SupportResistanceLine
 
 /// <summary>One breakout or flip, at the close of candle <see cref="Index"/>. Touches is the number of
 /// pivots in a horizontal level, and 2 for a sloped line (the two pivots it runs through).</summary>
+/// <summary>
+/// A block drawn on the chart: one or more levels whose zones overlap, merged into one
+/// (see <see cref="SupportResistance.Zones"/>). Only for drawing.
+/// </summary>
+public readonly record struct SupportResistanceZone(double Low, double High, double Price, int Touches, int FirstIndex);
+
+
 public readonly record struct SupportResistanceEvent(
     SupportResistanceKind Kind,
     SupportResistanceEventType Type,
@@ -119,10 +181,29 @@ public static class SupportResistance
         public double RetestAtr { get; init; } = 0.25;
         public int RetestWindow { get; init; } = 30;
         public int MinLineSpan { get; init; } = 10;
+        public int LinePivot { get; init; } = 10;
+        public int LineTouchGap { get; init; } = 5;
+        public SupportResistancePivots PivotSource { get; init; } = SupportResistancePivots.ZigZag;
+
+        // Closer to the theory of the flip (28-09-2026, Marius: "wel heel veel flips"): the price has
+        // to run this many ATR away after the breakout before a return counts as the retest; a level
+        // needs this many pivots before it breaks and flips; a level that flipped RetireFlips times or
+        // was crossed RetireCrossings times is done.
+        public double DepartureAtr { get; init; } = 1.0;
+        public int MinEventTouches { get; init; } = 3;
+        public int RetireFlips { get; init; } = 2;
+        public int RetireCrossings { get; init; } = 4;
         public double StopAtr { get; init; } = 0.5;
     }
 
     public static Parameters Default { get; } = new();
+
+    /// <summary>
+    /// The minimum height of a level's zone in ATRs (28-09-2026). The pivots of a level lie within
+    /// ToleranceAtr of each other, which gave blocks of a quarter ATR - much thinner than the zones
+    /// traders draw (about one ATR on a BTC-EUR 8h chart). Only for drawing; a candidate setting.
+    /// </summary>
+    public const double ZoneHeightAtr = 1.0;
 
     private readonly record struct Pivot(int Confirm, int Index, double Price, int Kind);
 
@@ -155,7 +236,36 @@ public static class SupportResistance
 
     /// <summary>Fractal pivots, in the order they get confirmed.</summary>
     private static List<Pivot> Pivots(double[] high, double[] low, Parameters p)
+        => Pivots(high, low, p.PivotLeft, p.PivotRight);
+
+    /// <summary>
+    /// The final points of the ZigZag, oldest first, as pivots known at candle <paramref name="confirm"/>.
+    /// <para>
+    /// Left out: every dummy (the provisional right-hand edge, not a swing) and the LAST real point.
+    /// That one is not final yet: as long as no swing of the other kind follows it, a new extreme
+    /// moves it (ZigZagIndicator reuses the point for the new candle). A top counts from the moment
+    /// a bottom follows it, and the other way round (Marius, 28-09-2026).
+    /// </para>
+    /// </summary>
+    private static List<Pivot> ZigZagPivots(ZigZagIndicator zigZag, Dictionary<CandleTime, int> indexByTime, int confirm)
     {
+        List<Pivot> result = new(zigZag.ZigZagList.Count);
+        foreach (ZigZagResult point in zigZag.ZigZagList)
+        {
+            if (point.Dummy || !indexByTime.TryGetValue(point.Candle.OpenTime, out int index))
+                continue;
+            result.Add(new Pivot(confirm, index, point.Value, point.PointType == 'H' ? +1 : -1));
+        }
+        if (result.Count > 0)
+            result.RemoveAt(result.Count - 1);
+        return result;
+    }
+
+
+    /// <summary>Fractal pivots with <paramref name="left"/>/<paramref name="right"/> candles on either side.</summary>
+    private static List<Pivot> Pivots(double[] high, double[] low, int left, int right)
+    {
+        Parameters p = Default with { PivotLeft = left, PivotRight = right };
         List<Pivot> result = [];
         int n = high.Length;
         for (int i = p.PivotLeft; i < n - p.PivotRight; i++)
@@ -228,10 +338,29 @@ public static class SupportResistance
             return result;
 
         List<double> prices = [];
-        foreach (Pivot q in Pivots(high, low, p))
+        if (p.PivotSource == SupportResistancePivots.ZigZag)
         {
-            if (q.Confirm <= last && q.Index >= last - p.LevelLookback)
-                prices.Add(q.Price);
+            // The ZigZag as it stands after the last candle: everything it shows is known by then
+            var zigZag = new ZigZagIndicator(TrendType.Secondary, useHighLow: true);
+            Dictionary<CandleTime, int> indexByTime = new(n);
+            for (int i = 0; i < n; i++)
+            {
+                indexByTime[candles[i].OpenTime] = i;
+                zigZag.Calculate(candles[i], batchProcess: true);
+            }
+            foreach (Pivot q in ZigZagPivots(zigZag, indexByTime, last))
+            {
+                if (q.Index >= last - p.LevelLookback)
+                    prices.Add(q.Price);
+            }
+        }
+        else
+        {
+            foreach (Pivot q in Pivots(high, low, p))
+            {
+                if (q.Confirm <= last && q.Index >= last - p.LevelLookback)
+                    prices.Add(q.Price);
+            }
         }
         prices.Sort();
 
@@ -258,6 +387,37 @@ public static class SupportResistance
 
 
     /// <summary>
+    /// The zones of <paramref name="levels"/> for the chart, with overlapping zones merged into one
+    /// block (28-09-2026): with a height of one ATR, levels about one ATR apart otherwise make a
+    /// stack of blocks that touch or overlap. A merged block runs from the lowest bottom to the
+    /// highest top, adds up the touches, starts at the oldest pivot, and its price is the average
+    /// of the levels weighted by their touches. Sorted from low to high.
+    /// </summary>
+    public static List<SupportResistanceZone> Zones(IEnumerable<SupportResistanceLevel> levels)
+    {
+        List<SupportResistanceZone> result = [];
+        double weighted = 0;
+        foreach (SupportResistanceLevel level in levels.OrderBy(l => l.Low))
+        {
+            if (result.Count > 0 && level.Low <= result[^1].High)
+            {
+                SupportResistanceZone zone = result[^1];
+                int touches = zone.Touches + level.Touches;
+                weighted += level.Price * level.Touches;
+                result[^1] = new SupportResistanceZone(zone.Low, Math.Max(zone.High, level.High),
+                    weighted / touches, touches, Math.Min(zone.FirstIndex, level.FirstIndex));
+            }
+            else
+            {
+                weighted = level.Price * level.Touches;
+                result.Add(new SupportResistanceZone(level.Low, level.High, level.Price, level.Touches, level.FirstIndex));
+            }
+        }
+        return result;
+    }
+
+
+    /// <summary>
     /// How much room there is between <paramref name="price"/> and the nearest level on the side of
     /// <paramref name="side"/> (under the price for a short, above it for a long), in ATRs of the
     /// last candle. Null when there is no such level (or no ATR yet): nothing is in the way.
@@ -265,8 +425,34 @@ public static class SupportResistance
     public static double? RoomToNextLevel(IReadOnlyList<CryptoCandle> candles, double price, CryptoTradeSide side,
         out double level, Parameters? parameters = null)
     {
-        level = double.NaN;
         var levels = CurrentLevels(candles, out double atr, parameters);
+        return RoomToNextLevel(levels, atr, price, side, out level);
+    }
+
+
+    /// <summary>The ATR of the last candle, the unit of <see cref="RoomToNextLevel(IReadOnlyList{CryptoCandle}, double, CryptoTradeSide, out double, Parameters?)"/>.</summary>
+    public static double LastAtr(IReadOnlyList<CryptoCandle> candles, Parameters? parameters = null)
+    {
+        Parameters p = parameters ?? Default;
+        int n = candles.Count;
+        if (n == 0)
+            return double.NaN;
+        double[] high = new double[n], low = new double[n], close = new double[n];
+        for (int i = 0; i < n; i++)
+        {
+            high[i] = (double)candles[i].High;
+            low[i] = (double)candles[i].Low;
+            close[i] = (double)candles[i].Close;
+        }
+        return Atr(high, low, close, p.AtrLength)[n - 1];
+    }
+
+
+    /// <summary>The same room, from levels and an ATR worked out before (the short filter caches them per 1h candle).</summary>
+    public static double? RoomToNextLevel(List<(double Price, int Touches)> levels, double atr, double price,
+        CryptoTradeSide side, out double level)
+    {
+        level = double.NaN;
         if (double.IsNaN(atr) || atr <= 0)
             return null;
 
@@ -307,6 +493,20 @@ public static class SupportResistance
         List<SupportResistanceLevel> levels = [];
         List<SupportResistanceLine> lines = [];
         HashSet<(int, int, bool)> usedLines = [];
+        List<Pivot> linePivots = Pivots(high, low, p.LinePivot, p.LinePivot);
+        List<Pivot> lineConfirmed = [];
+        int nextLine = 0;
+
+        // The ZigZag source: fed one candle at a time, so at candle i it shows exactly what a live
+        // scanner would have seen then. Its last points can still move (see
+        // ZigZagIndicator.MutableTailLength); a changed top or bottom counts as a new one.
+        bool useZigZag = p.PivotSource == SupportResistancePivots.ZigZag;
+        var zigZag = new ZigZagIndicator(TrendType.Secondary, useHighLow: true);
+        Dictionary<CandleTime, int> indexByTime = new(n);
+        for (int i = 0; i < n; i++)
+            indexByTime[candles[i].OpenTime] = i;
+        (int Count, CandleTime Time1, double Value1, CandleTime Time2, double Value2) signature = default;
+        (int Index, double Price) lastTop = (-1, 0), lastBottom = (-1, 0);
 
         void Add(SupportResistanceKind kind, SupportResistanceEventType type, int side, int i, double level, double stop, int touches = 2)
             => result.Events.Add(new SupportResistanceEvent(kind, type, side == 1 ? CryptoTradeSide.Long : CryptoTradeSide.Short,
@@ -314,33 +514,43 @@ public static class SupportResistance
 
         void RebuildLevels(int i)
         {
-            List<double> prices = [];
+            // The pivot index travels along with the price, for the zone of the level
+            List<(double Price, int Index)> prices = [];
             foreach (Pivot q in confirmed)
             {
                 if (q.Index >= i - p.LevelLookback)
-                    prices.Add(q.Price);
+                    prices.Add((q.Price, q.Index));
             }
-            prices.Sort();
+            prices.Sort((a, b) => a.Price.CompareTo(b.Price));
 
             double tolerance = p.ToleranceAtr * atr[i];
-            List<List<double>> clusters = [];
-            foreach (double price in prices)
+            List<List<(double Price, int Index)>> clusters = [];
+            foreach (var pivot in prices)
             {
-                if (clusters.Count > 0 && price - clusters[^1][^1] <= tolerance)
-                    clusters[^1].Add(price);
+                if (clusters.Count > 0 && pivot.Price - clusters[^1][^1].Price <= tolerance)
+                    clusters[^1].Add(pivot);
                 else
-                    clusters.Add([price]);
+                    clusters.Add([pivot]);
             }
 
             List<SupportResistanceLevel> fresh = [];
-            foreach (List<double> cluster in clusters)
+            foreach (var cluster in clusters)
             {
                 if (cluster.Count < 2)
                     continue;
                 double sum = 0;
-                foreach (double x in cluster)
-                    sum += x;
+                int firstIndex = int.MaxValue;
+                foreach (var x in cluster)
+                {
+                    sum += x.Price;
+                    firstIndex = Math.Min(firstIndex, x.Index);
+                }
                 double price = sum / cluster.Count;
+
+                // Sorted on price, so the first and last pivot are the bottom and top of the zone
+                double zoneHalf = ZoneHeightAtr * atr[i] / 2;
+                double zoneLow = Math.Min(cluster[0].Price, price - zoneHalf);
+                double zoneHigh = Math.Max(cluster[^1].Price, price + zoneHalf);
 
                 // One cluster per level, see the Python version
                 SupportResistanceLevel? keep = null;
@@ -356,6 +566,9 @@ public static class SupportResistance
                 {
                     keep.Price = price;
                     keep.Touches = cluster.Count;
+                    keep.Low = zoneLow;
+                    keep.High = zoneHigh;
+                    keep.FirstIndex = firstIndex;
                     fresh.Add(keep);
                 }
                 else
@@ -364,6 +577,9 @@ public static class SupportResistance
                     {
                         Price = price,
                         Touches = cluster.Count,
+                        Low = zoneLow,
+                        High = zoneHigh,
+                        FirstIndex = firstIndex,
                         State = close[i] > price ? 1 : -1,
                     });
                 }
@@ -371,36 +587,24 @@ public static class SupportResistance
             levels = fresh;
         }
 
-        void RebuildLines()
+        // On a new clear top (bottom) b: the line back to the most recent HIGHER top (LOWER bottom)
+        // from which no close went beyond the line up to candle i. Null when there is no such top.
+        SupportResistanceLine? NewLine(int i, Pivot b)
         {
-            Pivot? high1 = null, high2 = null, low1 = null, low2 = null;
-            foreach (Pivot q in confirmed)
+            bool resistance = b.Kind == 1;
+            for (int k = lineConfirmed.Count - 2; k >= 0; k--)
             {
-                if (q.Kind == 1)
-                {
-                    high1 = high2;
-                    high2 = q;
-                }
-                else
-                {
-                    low1 = low2;
-                    low2 = q;
-                }
-            }
-
-            List<(Pivot a, Pivot b, bool resistance)> candidates = [];
-            if (high1 != null && high2!.Value.Price < high1.Value.Price && high2.Value.Index - high1.Value.Index >= p.MinLineSpan)
-                candidates.Add((high1.Value, high2.Value, true));
-            if (low1 != null && low2!.Value.Price > low1.Value.Price && low2.Value.Index - low1.Value.Index >= p.MinLineSpan)
-                candidates.Add((low1.Value, low2.Value, false));
-
-            List<SupportResistanceLine> fresh = [];
-            foreach (var (a, b, resistance) in candidates)
-            {
+                Pivot a = lineConfirmed[k];
+                if (a.Kind != b.Kind || b.Index - a.Index < p.MinLineSpan)
+                    continue;
+                if (b.Index - a.Index > p.LevelLookback)
+                    break;
+                if ((resistance && a.Price <= b.Price) || (!resistance && a.Price >= b.Price))
+                    continue;
                 if (usedLines.Contains((a.Index, b.Index, resistance)))
                     continue;
-                SupportResistanceLine? existing = lines.Find(l => l.Index1 == a.Index && l.Index2 == b.Index && l.IsResistance == resistance);
-                fresh.Add(existing ?? new SupportResistanceLine
+
+                var line = new SupportResistanceLine
                 {
                     Index1 = a.Index,
                     Index2 = b.Index,
@@ -409,34 +613,107 @@ public static class SupportResistance
                     LogPrice1 = Math.Log(a.Price),
                     LogPrice2 = Math.Log(b.Price),
                     IsResistance = resistance,
-                });
+                    LastTouch = b.Index,
+                    Start = i,
+                };
+                bool ok = true;
+                for (int j = a.Index + 1; j <= i; j++)
+                {
+                    double value = line.ValueAt(j);
+                    if ((resistance && close[j] > value) || (!resistance && close[j] < value))
+                    {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok)
+                    return line;
             }
-            // A line in a running break keeps its retest window
-            foreach (SupportResistanceLine line in lines)
+            return null;
+        }
+
+        void AddLine(int i, Pivot b)
+        {
+            SupportResistanceLine? fresh = NewLine(i, b);
+            if (fresh != null)
             {
-                if (line.BreakIndex != null && !fresh.Contains(line))
-                    fresh.Add(line);
+                foreach (SupportResistanceLine old in lines)
+                {
+                    if (old.IsResistance == fresh.IsResistance && old.BreakIndex == null)
+                    {
+                        old.Done = true;
+                        usedLines.Add((old.Index1, old.Index2, old.IsResistance));
+                    }
+                }
+                lines.RemoveAll(l => l.Done);
+                lines.Add(fresh);
             }
-            lines = fresh;
         }
 
         for (int i = 0; i < n; i++)
         {
+            if (useZigZag)
+                zigZag.Calculate(candles[i], batchProcess: true);
+
             if (double.IsNaN(atr[i]))
                 continue;
 
-            bool changed = false;
-            // <= and not ==: a pivot confirmed during the ATR warm-up must not block every later one
-            while (next < pivots.Count && pivots[next].Confirm <= i)
+            if (useZigZag)
             {
-                confirmed.Add(pivots[next]);
-                next++;
-                changed = true;
+                // Only when the ZigZag changed: a new point, or one of the last two moved
+                var list = zigZag.ZigZagList;
+                int count = list.Count;
+                var now = (count,
+                    count > 0 ? list[^1].Candle.OpenTime : default, count > 0 ? list[^1].Value : 0,
+                    count > 1 ? list[^2].Candle.OpenTime : default, count > 1 ? list[^2].Value : 0);
+                if (now != signature)
+                {
+                    signature = now;
+                    confirmed = ZigZagPivots(zigZag, indexByTime, i);
+                    RebuildLevels(i);
+
+                    // A new (or moved) top gives a new resistance line, a new bottom a new support line
+                    int top = confirmed.FindLastIndex(q => q.Kind == 1);
+                    if (top >= 0 && (confirmed[top].Index, confirmed[top].Price) != lastTop)
+                    {
+                        lastTop = (confirmed[top].Index, confirmed[top].Price);
+                        lineConfirmed = confirmed.GetRange(0, top + 1);
+                        AddLine(i, confirmed[top]);
+                    }
+                    int bottom = confirmed.FindLastIndex(q => q.Kind == -1);
+                    if (bottom >= 0 && (confirmed[bottom].Index, confirmed[bottom].Price) != lastBottom)
+                    {
+                        lastBottom = (confirmed[bottom].Index, confirmed[bottom].Price);
+                        lineConfirmed = confirmed.GetRange(0, bottom + 1);
+                        AddLine(i, confirmed[bottom]);
+                    }
+                }
             }
-            if (changed)
+            else
             {
-                RebuildLevels(i);
-                RebuildLines();
+                bool changed = false;
+                // <= and not ==: a pivot confirmed during the ATR warm-up must not block every later one
+                while (next < pivots.Count && pivots[next].Confirm <= i)
+                {
+                    confirmed.Add(pivots[next]);
+                    next++;
+                    changed = true;
+                }
+                if (changed)
+                {
+                    RebuildLevels(i);
+                    //RebuildLines();
+                }
+
+                // A new clear top gives a new resistance line, a new clear bottom a new support line. It
+                // replaces the line of the same role unless that one is in a running break.
+                while (nextLine < linePivots.Count && linePivots[nextLine].Confirm <= i)
+                {
+                    Pivot b = linePivots[nextLine];
+                    lineConfirmed.Add(b);
+                    nextLine++;
+                    AddLine(i, b);
+                }
             }
 
             double brk = p.BreakAtr * atr[i];
@@ -444,23 +721,44 @@ public static class SupportResistance
 
             foreach (SupportResistanceLevel level in levels)
             {
+                if (level.Retired)
+                    continue;
                 double price = level.Price;
                 if (level.BreakIndex == null)
                 {
                     if (level.State == -1 && close[i] > price + brk)
                     {
-                        level.BreakIndex = i;
-                        level.BreakSide = 1;
-                        Add(SupportResistanceKind.Horizontal, SupportResistanceEventType.Breakout, 1, i, price, price - p.StopAtr * atr[i], level.Touches);
+                        level.Crossings++;
+                        if (level.Touches >= p.MinEventTouches)
+                        {
+                            level.BreakIndex = i;
+                            level.BreakSide = 1;
+                            level.Departed = high[i] >= price + p.DepartureAtr * atr[i];
+                            Add(SupportResistanceKind.Horizontal, SupportResistanceEventType.Breakout, 1, i, price, price - p.StopAtr * atr[i], level.Touches);
+                        }
+                        else
+                            level.State = 1;
                     }
                     else if (level.State == 1 && close[i] < price - brk)
                     {
-                        level.BreakIndex = i;
-                        level.BreakSide = -1;
-                        Add(SupportResistanceKind.Horizontal, SupportResistanceEventType.Breakout, -1, i, price, price + p.StopAtr * atr[i], level.Touches);
+                        level.Crossings++;
+                        if (level.Touches >= p.MinEventTouches)
+                        {
+                            level.BreakIndex = i;
+                            level.BreakSide = -1;
+                            level.Departed = low[i] <= price - p.DepartureAtr * atr[i];
+                            Add(SupportResistanceKind.Horizontal, SupportResistanceEventType.Breakout, -1, i, price, price + p.StopAtr * atr[i], level.Touches);
+                        }
+                        else
+                            level.State = -1;
                     }
                     else
-                        level.State = close[i] > price ? 1 : -1;
+                    {
+                        int state = close[i] > price ? 1 : -1;
+                        if (state != level.State)
+                            level.Crossings++;
+                        level.State = state;
+                    }
                 }
                 else
                 {
@@ -476,41 +774,59 @@ public static class SupportResistance
                         {
                             level.BreakIndex = null;
                             level.State = -side;
+                            level.Crossings++;
                         }
-                        else if (side == 1 && low[i] <= price + ret && close[i] > price)
+                        else if (level.Departed && side == 1 && low[i] <= price + ret && close[i] > price)
                         {
                             Add(SupportResistanceKind.Horizontal, SupportResistanceEventType.Flip, 1, i, price, price - p.StopAtr * atr[i], level.Touches);
                             level.BreakIndex = null;
                             level.State = 1;
+                            level.Flips++;
                         }
-                        else if (side == -1 && high[i] >= price - ret && close[i] < price)
+                        else if (level.Departed && side == -1 && high[i] >= price - ret && close[i] < price)
                         {
                             Add(SupportResistanceKind.Horizontal, SupportResistanceEventType.Flip, -1, i, price, price + p.StopAtr * atr[i], level.Touches);
                             level.BreakIndex = null;
                             level.State = -1;
+                            level.Flips++;
                         }
+                        else if ((side == 1 && high[i] >= price + p.DepartureAtr * atr[i]) || (side == -1 && low[i] <= price - p.DepartureAtr * atr[i]))
+                            level.Departed = true;
                     }
                 }
+                if (level.Flips >= p.RetireFlips || level.Crossings >= p.RetireCrossings)
+                    level.Retired = true;
             }
 
             foreach (SupportResistanceLine line in lines)
             {
-                if (i <= line.Index2)
+                if (i <= line.Start)
                     continue;
                 double value = line.ValueAt(i);
                 if (line.BreakIndex == null)
                 {
-                    if (line.IsResistance && close[i] > value + brk)
+                    bool crossed = (line.IsResistance && close[i] > value) || (!line.IsResistance && close[i] < value);
+                    if (crossed)
                     {
-                        line.BreakIndex = i;
-                        line.BreakSide = 1;
-                        Add(SupportResistanceKind.Sloped, SupportResistanceEventType.Breakout, 1, i, value, value - p.StopAtr * atr[i]);
+                        // Gone at the first close beyond it; a breakout when it was a real line and the
+                        // close went far enough
+                        if (line.Touches >= 3 && Math.Abs(close[i] - value) > brk)
+                        {
+                            int side = line.IsResistance ? 1 : -1;
+                            line.BreakIndex = i;
+                            line.BreakSide = side;
+                            line.Departed = side == 1 ? high[i] >= value + p.DepartureAtr * atr[i] : low[i] <= value - p.DepartureAtr * atr[i];
+                            Add(SupportResistanceKind.Sloped, SupportResistanceEventType.Breakout, side, i, value,
+                                value - side * p.StopAtr * atr[i], line.Touches);
+                        }
+                        else
+                            line.Done = true;
                     }
-                    else if (!line.IsResistance && close[i] < value - brk)
+                    else if (((line.IsResistance && high[i] >= value - ret) || (!line.IsResistance && low[i] <= value + ret))
+                        && i - line.LastTouch >= p.LineTouchGap)
                     {
-                        line.BreakIndex = i;
-                        line.BreakSide = -1;
-                        Add(SupportResistanceKind.Sloped, SupportResistanceEventType.Breakout, -1, i, value, value + p.StopAtr * atr[i]);
+                        line.Touches++;
+                        line.LastTouch = i;
                     }
                 }
                 else
@@ -525,16 +841,18 @@ public static class SupportResistance
                     {
                         if ((side == 1 && close[i] < value - ret) || (side == -1 && close[i] > value + ret))
                             line.Done = true;
-                        else if (side == 1 && low[i] <= value + ret && close[i] > value)
+                        else if (line.Departed && side == 1 && low[i] <= value + ret && close[i] > value)
                         {
-                            Add(SupportResistanceKind.Sloped, SupportResistanceEventType.Flip, 1, i, value, value - p.StopAtr * atr[i]);
+                            Add(SupportResistanceKind.Sloped, SupportResistanceEventType.Flip, 1, i, value, value - p.StopAtr * atr[i], line.Touches);
                             line.Done = true;
                         }
-                        else if (side == -1 && high[i] >= value - ret && close[i] < value)
+                        else if (line.Departed && side == -1 && high[i] >= value - ret && close[i] < value)
                         {
-                            Add(SupportResistanceKind.Sloped, SupportResistanceEventType.Flip, -1, i, value, value + p.StopAtr * atr[i]);
+                            Add(SupportResistanceKind.Sloped, SupportResistanceEventType.Flip, -1, i, value, value + p.StopAtr * atr[i], line.Touches);
                             line.Done = true;
                         }
+                        else if ((side == 1 && high[i] >= value + p.DepartureAtr * atr[i]) || (side == -1 && low[i] <= value - p.DepartureAtr * atr[i]))
+                            line.Departed = true;
                     }
                 }
             }

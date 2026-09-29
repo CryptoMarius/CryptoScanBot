@@ -88,6 +88,24 @@ public class AltradyCloseSignalTests
     }
 
     [TestMethod]
+    public void AnEmptySuccessAnswerIsAnAcceptedClose()
+    {
+        // Every close of 27-09-2026 came back with an empty body; that is a receipt, not a refusal.
+        Assert.IsTrue(AltradyWebhook.IsCloseAccepted(200, ""));
+        Assert.IsTrue(AltradyWebhook.IsCloseAccepted(204, ""));
+    }
+
+
+    [TestMethod]
+    public void AnErrorMemberOrAnErrorStatusIsARefusedClose()
+    {
+        Assert.IsFalse(AltradyWebhook.IsCloseAccepted(200, "{\"error\":\"Too many positions opened\"}"));
+        Assert.IsFalse(AltradyWebhook.IsCloseAccepted(400, ""));
+        Assert.IsFalse(AltradyWebhook.IsCloseAccepted(500, "Internal Server Error"));
+    }
+
+
+    [TestMethod]
     public void StopLossBlockHandsTheProfitLockToAltrady()
     {
         // The live settings of 26-09-2026: trailing method, trigger at 6,5% and 1,5% behind price.

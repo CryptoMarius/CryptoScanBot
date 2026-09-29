@@ -42,12 +42,20 @@ public class ChartLineStyle
     /// <summary>Drawn as dots per point instead of a connected line (used by PSar).</summary>
     public bool Dots { get; set; }
 
+    /// <summary>
+    /// Whether the series is drawn at all. Only offered in the editor for a series whose definition
+    /// says it can be hidden (ChartSeriesDefinition.CanHide); for every other series it stays true.
+    /// A file written before this field existed has no value for it and so reads as visible.
+    /// </summary>
+    public bool Visible { get; set; } = true;
+
     public ChartLineStyle Clone() => new()
     {
         Color = Color,
         LineWidth = LineWidth,
         LineStyle = LineStyle,
         Dots = Dots,
+        Visible = Visible,
     };
 }
 
@@ -83,8 +91,12 @@ public class ChartStyleSettings
     /// chart toolbar, so the little configuration popup there can show exactly its own lines.
     /// <paramref name="Key"/> must match the overlay key produced in Chart.razor / plugin GetSeries.
     /// </summary>
+    /// <param name="CanHide">The editor shows a "visible" checkbox for this series. Off for the
+    /// rest: most series ARE the indicator, and switching those off is what the overlay checkbox on
+    /// the toolbar is for.</param>
     public sealed record ChartSeriesDefinition(
-        string OverlayKey, string Group, string Key, string Label, ChartLineStyle Default);
+        string OverlayKey, string Group, string Key, string Label, ChartLineStyle Default,
+        bool CanHide = false);
 
     /// <summary>
     /// Every stylable series, in the order the settings screen shows them: the built-in ones below
@@ -120,7 +132,8 @@ public class ChartStyleSettings
                         Color = definition.Color,
                         LineWidth = definition.LineWidth,
                         LineStyle = definition.LineStyle,
-                    }));
+                    },
+                    definition.CanHide));
             }
         }
         return [.. all];
@@ -233,6 +246,12 @@ public class ChartStyleSettings
         }
         return new ChartLineStyle();
     }
+
+    /// <summary>
+    /// Whether a series is to be drawn, as the user left it in the style editor. Both charts ask
+    /// this: the Photino chart for every plugin series, the Avalonia overlays in their own Draw.
+    /// </summary>
+    public static bool IsVisible(string key) => Current.Get(key).Visible;
 
     /// <summary>Built-in look of a series, ignoring anything the user changed.</summary>
     public static ChartLineStyle DefaultFor(string key)

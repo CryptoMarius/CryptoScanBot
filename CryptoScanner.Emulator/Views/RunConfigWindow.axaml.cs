@@ -18,6 +18,10 @@ public partial class RunConfigWindow : Window
     public RunConfigWindow()
     {
         InitializeComponent();
+
+        // A hover hint per column header, like the grids of the Results tab.
+        Helpers.ColumnHints.Apply(SymbolsGrid, Helpers.ColumnHints.Symbols);
+
         ViewModel = new RunConfigViewModel();
         DataContext = ViewModel;
     }

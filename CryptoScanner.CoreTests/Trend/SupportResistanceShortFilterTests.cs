@@ -21,6 +21,9 @@ public class SupportResistanceShortFilterTests : TestBase
 {
     private sealed record ExpectedLevels(int index, double atr, List<double> levels);
 
+    // The measurement uses simple fractal pivots; the scanner uses its ZigZag (28-09-2026)
+    private static readonly SupportResistance.Parameters Fractal = SupportResistance.Default with { PivotSource = SupportResistancePivots.Fractal };
+
     private static string DataPath(string file)
         => Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)!, "Zones", "Data", file);
 
@@ -36,7 +39,7 @@ public class SupportResistanceShortFilterTests : TestBase
 
         foreach (var e in expected)
         {
-            var levels = SupportResistance.CurrentLevels(candles.GetRange(0, e.index + 1), out double atr);
+            var levels = SupportResistance.CurrentLevels(candles.GetRange(0, e.index + 1), out double atr, Fractal);
             Assert.AreEqual(e.atr, atr, 1e-9 * e.atr, $"ATR at candle {e.index}");
             CollectionAssert.AreEqual(e.levels.Select(x => Math.Round(x, 8)).ToList(),
                 levels.Select(l => Math.Round(l.Price, 8)).ToList(), $"levels at candle {e.index}");
@@ -72,15 +75,15 @@ public class SupportResistanceShortFilterTests : TestBase
         for (int k = 0; k < 10; k++)
             candles.Add(Candle(i++, 106, 106.5, 105.5, 106));
 
-        double? room = SupportResistance.RoomToNextLevel(candles, 106, CryptoTradeSide.Short, out double level);
+        double? room = SupportResistance.RoomToNextLevel(candles, 106, CryptoTradeSide.Short, out double level, Fractal);
         Assert.IsNotNull(room, "the double bottom is a support");
         Assert.AreEqual(100.025, level, 1e-9);
         Assert.IsTrue(room > 1, $"six points above the support is more than an ATR, got {room}");
 
-        room = SupportResistance.RoomToNextLevel(candles, 100.3, CryptoTradeSide.Short, out _);
+        room = SupportResistance.RoomToNextLevel(candles, 100.3, CryptoTradeSide.Short, out _, Fractal);
         Assert.IsTrue(room < 0.5, $"just above the support, got {room}");
 
-        room = SupportResistance.RoomToNextLevel(candles, 99, CryptoTradeSide.Short, out _);
+        room = SupportResistance.RoomToNextLevel(candles, 99, CryptoTradeSide.Short, out _, Fractal);
         Assert.IsNull(room, "under the support there is no support in the way of a short");
     }
 
@@ -131,5 +134,82 @@ public class SupportResistanceShortFilterTests : TestBase
                 skipped++;
         }
         Assert.IsTrue(skipped > 0 && allowed > 0, $"both outcomes occur (skipped {skipped}, allowed {allowed})");
+    }
+
+
+    /// <summary>
+    /// A short just above a support is DROPPED (GiveUp), not postponed (AllowStepIn). As a "not yet"
+    /// the trader opened it later, after the price fell through the support - emulator runs 1741/1742
+    /// (29-09-2026) went from +680 to +564 and +39 that way.
+    /// </summary>
+    [TestMethod]
+    public void AShortJustAboveASupportIsDroppedNotPostponed()
+    {
+        InitTestSession();
+        using CryptoDatabase database = new();
+        database.Open();
+        CryptoSymbol symbol = CreateTestSymbol(database);
+        CryptoInterval hour = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h];
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(hour.IntervalPeriod);
+        LoadCandleDataFromDisk(symbolInterval.CandleList, DataPath("SOLUSDT-1h.json"));
+        List<CryptoCandle> candles = [.. symbolInterval.CandleList.Values];
+
+        var settings = GlobalData.Settings.Trading.EntryConditions;
+        bool savedSkip = settings.SkipShortAboveSupport;
+        decimal savedRoom = settings.SupportMinimumRoomAtr;
+        int savedRemove = GlobalData.Settings.Trading.EntryRemoveTime;
+        try
+        {
+            settings.SkipShortAboveSupport = true;
+            settings.SupportMinimumRoomAtr = 0.5m;
+            GlobalData.Settings.Trading.EntryRemoveTime = 1000;
+
+            int dropped = 0;
+            for (int k = 600; k < candles.Count; k += 37)
+            {
+                var signal = new CryptoSignal
+                {
+                    Exchange = symbol.Exchange,
+                    ExchangeId = symbol.ExchangeId,
+                    Symbol = symbol,
+                    SymbolId = symbol.Id,
+                    Interval = hour,
+                    IntervalId = hour.Id,
+                    Candle = null,
+                    Side = CryptoTradeSide.Short,
+                    Strategy = "test",
+                    OpenDate = candles[k].OpenTime.ToDateTime(),
+                    SignalPrice = candles[k].Close,
+                };
+                var algorithm = new Probe
+                {
+                    Symbol = symbol,
+                    Interval = hour,
+                    SymbolInterval = symbolInterval,
+                    SignalSide = CryptoTradeSide.Short,
+                    SignalStrategy = "test",
+                    CandleLast = new MyData { Candle = candles[k], CandleData = new CryptoData() },
+                };
+                bool tooClose = !new Probe
+                {
+                    Symbol = symbol, Interval = hour, SymbolInterval = symbolInterval, SignalSide = CryptoTradeSide.Short,
+                    SignalStrategy = "test", CandleLast = new MyData { Candle = candles[k], CandleData = new CryptoData() },
+                }.RoomAboveSupport(0.5m);
+
+                Assert.AreEqual(tooClose, algorithm.GiveUp(signal), $"candle {k}: GiveUp follows the filter ({algorithm.ExtraText})");
+                if (tooClose)
+                {
+                    dropped++;
+                    Assert.IsTrue(algorithm.ExtraText.StartsWith("short just above the 1h support"), algorithm.ExtraText);
+                }
+            }
+            Assert.IsTrue(dropped > 0, "some shorts were dropped");
+        }
+        finally
+        {
+            settings.SkipShortAboveSupport = savedSkip;
+            settings.SupportMinimumRoomAtr = savedRoom;
+            GlobalData.Settings.Trading.EntryRemoveTime = savedRemove;
+        }
     }
 }

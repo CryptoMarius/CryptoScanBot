@@ -138,7 +138,7 @@ public class AltradyWebhook
     /// Serialize the payload, log it with the credentials masked, post it and return the raw answer.
     /// Shared by the open and the close signal so both end up in the log the same way.
     /// </summary>
-    private static async Task<string> PostSignalAsync(CryptoPosition position, string url, dynamic request)
+    private static async Task<(int statusCode, string body)> PostSignalAsync(CryptoPosition position, string url, dynamic request)
     {
         string json = request.ToString();
         string jsonFlat = request.ToString(Newtonsoft.Json.Formatting.None);
@@ -155,7 +155,24 @@ public class AltradyWebhook
         var content = new StringContent(json, Encoding.UTF8, "application/json");
         HttpResponseMessage response = await _httpClient.PostAsync(url, content);
 
-        return await response.Content.ReadAsStringAsync();
+        // The status code travels along with the body: a close is answered with an EMPTY body, so
+        // the body alone cannot tell an accepted close from a failed one.
+        return ((int)response.StatusCode, await response.Content.ReadAsStringAsync());
+    }
+
+
+    /// <summary>
+    /// Did Altrady accept the close signal? Their documentation describes no answer body for a close
+    /// (only for a reverse: "204 no content" on receipt), and in practice every close since 26-09-2026
+    /// came back with an empty body. So the http status decides: a 2xx is accepted, unless the body
+    /// carries an error member - the way the webhook refuses an open, e.g. {"error":"Too many
+    /// positions opened"}.
+    /// </summary>
+    internal static bool IsCloseAccepted(int statusCode, string body)
+    {
+        if (statusCode < 200 || statusCode > 299)
+            return false;
+        return !body.Contains("\"error\"");
     }
 
 
@@ -236,19 +253,22 @@ public class AltradyWebhook
         dynamic request = BuildClosePayload(position, externalUrls.Altrady!.Code!,
             GlobalData.AltradyApi.Key, GlobalData.AltradyApi.Secret);
 
-        string result = await PostSignalAsync(position, url, request);
+        (int statusCode, string result) = await PostSignalAsync(position, url, (JObject)request);
 
         // A close answers with the position it closed; a refusal answers with an error member. There
         // is no signal id to check against, because a close does not create a new signal.
-        bool accepted = TryParse(result) != null && !result.Contains("\"error\"");
-        GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook close result {result}");
-        ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook close result {result}");
+        //bool accepted = TryParse(result) != null && !result.Contains("\"error\"");
+        // Measured 27-09-2026: every close came back with an empty body, which the line above counted
+        // as a refusal. The http status is what tells them apart (see IsCloseAccepted).
+        bool accepted = IsCloseAccepted(statusCode, result);
+        GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook close result status={statusCode} {result}");
+        ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook close result status={statusCode} {result}");
         // No telegram message on a refused close, unlike a refused open. Altrady runs the same stop
         // and the same target as we do, so in the normal case their position is already gone by the
         // time our administration closes and the close signal finds nothing left to do. That is not
         // worth a message per position; the error tab keeps it for when it IS something else.
         if (!accepted)
-            GlobalData.AddErrorToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady refused the close: {result}");
+            GlobalData.AddErrorToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady refused the close: status={statusCode} {result}");
         return accepted;
     }
 
@@ -474,7 +494,7 @@ public class AltradyWebhook
 
 
             // Send request using HttpClient
-            string result = await PostSignalAsync(position, url, request);
+            (_, string result) = await PostSignalAsync(position, url, (JObject)request);
             //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook response {result}");
             //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook");
 

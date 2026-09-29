@@ -17,6 +17,10 @@ namespace CryptoScanner.CoreTests.Trend;
 [TestClass]
 public class SupportResistanceTests : TestBase
 {
+    // The measurement uses simple fractal pivots; the scanner uses its ZigZag (28-09-2026). The
+    // comparison with the measurement runs on the fractal source, everything else on the default.
+    private static readonly SupportResistance.Parameters Fractal = SupportResistance.Default with { PivotSource = SupportResistancePivots.Fractal };
+
     private static List<CryptoCandle> Load(string file)
     {
         InitTestSession();
@@ -40,7 +44,7 @@ public class SupportResistanceTests : TestBase
         var expected = JsonSerializer.Deserialize<List<Expected>>(
             File.ReadAllText(Path.Combine(path, "Zones", "Data", name + "-sr-events.json")))!;
 
-        SupportResistanceResult result = SupportResistance.Scan(candles);
+        SupportResistanceResult result = SupportResistance.Scan(candles, Fractal);
 
         int shown = 0;
         int count = Math.Min(expected.Count, result.Events.Count);
@@ -78,8 +82,9 @@ public class SupportResistanceTests : TestBase
 
 
     /// <summary>
-    /// Price bounces twice off 110 from below (two pivot highs), breaks out to 116, comes back to
-    /// 110.2 and closes above it: a horizontal breakout and then a long flip on the level.
+    /// Price bounces three times off 110 from below (three pivot highs - since 28-09-2026 a level needs
+    /// three before it breaks), breaks out to 116, runs away and comes back to 110.3 and closes above
+    /// it: a horizontal breakout and then a long flip on the level.
     /// </summary>
     [TestMethod]
     public void AResistanceThatBreaksAndHoldsIsALongFlip()
@@ -105,6 +110,9 @@ public class SupportResistanceTests : TestBase
         Leg(109, 101, 10);
         Leg(101, 108, 10);
         Top(110.1);          // second top at 110
+        Leg(109, 101, 10);
+        Leg(101, 108, 10);
+        Top(110.05);         // third top at 110
         Leg(109, 102, 10);
         Leg(102, 109, 7);
         // The breakout has to be ONE candle from under the level to more than BreakAtr * ATR above
@@ -113,7 +121,7 @@ public class SupportResistanceTests : TestBase
         Leg(116, 110.3, 6);  // retest of 110 from above
         Leg(110.3, 115, 10);
 
-        SupportResistanceResult result = SupportResistance.Scan(candles);
+        SupportResistanceResult result = SupportResistance.Scan(candles, Fractal);
 
         Assert.IsTrue(result.Events.Exists(e => e.Kind == SupportResistanceKind.Horizontal
             && e.Type == SupportResistanceEventType.Breakout && e.Side == CryptoTradeSide.Long),
@@ -123,6 +131,71 @@ public class SupportResistanceTests : TestBase
         Assert.AreNotEqual(default, flip, "the retest that held");
         Assert.IsTrue(Math.Abs(flip.Level - 110.3) < 1.0, $"flip on the 110 level, got {flip.Level}");
         Assert.IsTrue(flip.Stop < flip.Level, "the stop of a long flip lies under the level");
+    }
+
+
+    /// <summary>
+    /// A sloped line the way a trader draws one (28-09-2026): at every moment, the lines that are
+    /// still standing run through a higher and a lower top (bottom), and no close went beyond them
+    /// from their first point on - unless the line is in a running break.
+    /// </summary>
+    [TestMethod]
+    [DataRow("SOLUSDT-1h")]
+    [DataRow("XRPUSDT-15m")]
+    public void AStandingLineHasNoCloseBeyondIt(string name)
+    {
+        List<CryptoCandle> candles = Load(name + ".json");
+        int checkedLines = 0;
+        for (int end = 400; end <= candles.Count; end += 250)
+        {
+            var part = candles.GetRange(0, end);
+            SupportResistanceResult result = SupportResistance.Scan(part);
+            foreach (SupportResistanceLine line in result.Lines)
+            {
+                if (line.BrokenAt != null)
+                    continue;
+                Assert.IsTrue(line.IsResistance ? line.Price2 < line.Price1 : line.Price2 > line.Price1, "falling tops, rising bottoms");
+                for (int k = line.Index1 + 1; k < part.Count; k++)
+                {
+                    double value = line.ValueAt(k);
+                    double close = (double)part[k].Close;
+                    Assert.IsTrue(line.IsResistance ? close <= value : close >= value,
+                        $"{name} candle {k}: close {close} beyond the line ({value}) that runs from {line.Index1} to {line.Index2}");
+                }
+                checkedLines++;
+            }
+        }
+        Assert.IsTrue(checkedLines > 0, "there were standing lines to check");
+    }
+
+
+    /// <summary>
+    /// The scanner's source (28-09-2026): the tops and bottoms are the points of its own ZigZag,
+    /// secondary, on the wicks - the ZigZag the chart draws. Every standing line runs through two of
+    /// them, and never through the last point, which can still move.
+    /// </summary>
+    [TestMethod]
+    [DataRow("SOLUSDT-1h")]
+    [DataRow("XRPUSDT-15m")]
+    public void TheLinesRunThroughZigZagPoints(string name)
+    {
+        List<CryptoCandle> candles = Load(name + ".json");
+        SupportResistanceResult result = SupportResistance.Scan(candles);
+
+        var zigZag = new ZigZagIndicator(TrendType.Secondary, useHighLow: true);
+        foreach (CryptoCandle candle in candles)
+            zigZag.Calculate(candle, batchProcess: true);
+        var real = zigZag.ZigZagList.Where(z => !z.Dummy).ToList();
+        var points = real.Take(real.Count - 1).Select(z => (z.Candle.OpenTime, z.Value)).ToHashSet();
+
+        Console.WriteLine($"{name}: {result.Events.Count(e => e.Type == SupportResistanceEventType.Flip)} flips, "
+            + $"{result.Levels.Count} levels, {result.Lines.Count} lines at the end");
+        Assert.IsTrue(result.Events.Count > 0, "the ZigZag source finds breakouts and flips");
+        foreach (SupportResistanceLine line in result.Lines)
+        {
+            Assert.IsTrue(points.Contains((candles[line.Index1].OpenTime, line.Price1)), "first point is a ZigZag point");
+            Assert.IsTrue(points.Contains((candles[line.Index2].OpenTime, line.Price2)), "second point is a final ZigZag point, not the last one");
+        }
     }
 
 

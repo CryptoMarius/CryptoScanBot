@@ -18,7 +18,7 @@
                           ToolTip.Tip="A horizontal level (pivots close together) that broke and was retested from the other side and held."/>
 
                 <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
-                      ToolTip.Tip="How many pivots a horizontal level must have before its flip counts. Two is the minimum a level has; three or four are the stronger levels.">
+                      ToolTip.Tip="How many pivots a horizontal level must have before its flip counts. A level needs three before it breaks at all; four or more are the stronger levels.">
                     <TextBlock Grid.Column="0" Text="Minimum touches:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1" Text="{Binding MinimumTouches, Mode=TwoWay}" IsEnabled="{Binding UseHorizontal}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
@@ -32,6 +32,30 @@
                       ToolTip.Tip="How many candles of the signal interval are scanned for levels and lines. The levels come from the last 300; the rest lets the scan settle.">
                     <TextBlock Grid.Column="0" Text="History candles:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1" Text="{Binding HistoryCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+        <HeaderedContentControl Classes="groupbox" Header="Confirmation">
+            <StackPanel Margin="4" Spacing="4">
+
+                <CheckBox IsChecked="{Binding WaitForConfirmation, Mode=TwoWay}"
+                          Content="Wait for a confirmation candle" FontSize="12"
+                          ToolTip.Tip="After the retest, wait for the first candle that closes in the trade direction (green for a long, red for a short) and beyond the high (long) or low (short) of the retest candle. Off enters on the retest candle itself."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="How many candles after the retest the confirmation candle may come. A close back through the level before that drops the flip.">
+                    <TextBlock Grid.Column="0" Text="Within candles:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding ConfirmationCandles, Mode=TwoWay}" IsEnabled="{Binding WaitForConfirmation}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="The entry candle must trade at least this many times the average volume of the 20 candles before it. 1.5 means half again as much. Zero is off.">
+                    <TextBlock Grid.Column="0" Text="Volume (x the average):" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding VolumeFactor, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
 

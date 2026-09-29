@@ -1,3 +1,5 @@
+using CryptoScanner.Analyzers.SrFlip;
+using CryptoScanner.Analyzers.SrFlip.Signal;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
@@ -18,6 +20,8 @@ namespace CryptoScanner.Chart.ViewModels.Chart;
 /// and the trader filter use: the horizontal levels as they stand now (red above the price, green
 /// under it, with the number of pivots), the sloped lines from their first pivot to the last candle,
 /// and a triangle at every flip - a broken level that was retested from the other side and held.
+/// Each level is also drawn as a block, from its lowest to its highest pivot (at least one ATR high),
+/// starting at its oldest pivot and running to the right edge; overlapping blocks merge.
 /// </summary>
 public static class SupportResistanceOverlay
 {
@@ -25,6 +29,12 @@ public static class SupportResistanceOverlay
     private static readonly OxyColor Below = OxyColor.FromRgb(0x26, 0xa6, 0x9a);
     private static readonly OxyColor ResistanceLine = OxyColor.FromRgb(0xff, 0x70, 0x43);
     private static readonly OxyColor SupportLine = OxyColor.FromRgb(0x66, 0xbb, 0x6a);
+
+    /// <summary>
+    /// From how many touches a zone is worth drawing. Three, the same bar the scan itself uses
+    /// before it acts on a level - drawing what we would not trade on only fills the chart.
+    /// </summary>
+    private const int DrawFrom = 3;
 
     internal static void Draw(PlotModel chart, List<CryptoCandle> candles, string tag)
     {
@@ -34,17 +44,73 @@ public static class SupportResistanceOverlay
         SupportResistanceResult result = CoreScan.Scan(candles);
         double last = (double)candles[^1].Close;
 
-        foreach (CoreLevel level in result.Levels)
+        // The MERGED zones, not the loose levels. Both used to be drawn: a block per zone and on
+        // top of that a dashed line WITH its own caption per level, so there were more captions on
+        // the chart than blocks under them. On a weekly bitcoin chart that came to thirteen of
+        // them stacked down the right-hand edge.
+        List<SupportResistanceZone> merged = CoreScan.Zones(result.Levels);
+
+        // Two touches is the weakest thing the clustering can produce, and the scan itself does
+        // not act on a level below MinEventTouches either. The nearest level above and below
+        // survive whatever their strength: those are the two the eye is looking for.
+        SupportResistanceZone? nearestAbove = null;
+        SupportResistanceZone? nearestBelow = null;
+        foreach (SupportResistanceZone zone in merged)
         {
+            if (zone.Price >= last)
+            {
+                if (nearestAbove == null || zone.Price < nearestAbove.Value.Price)
+                    nearestAbove = zone;
+            }
+            else if (nearestBelow == null || zone.Price > nearestBelow.Value.Price)
+            {
+                nearestBelow = zone;
+            }
+        }
+
+        foreach (SupportResistanceZone zone in merged)
+        {
+            bool nearest = (nearestAbove != null && zone.Price == nearestAbove.Value.Price)
+                || (nearestBelow != null && zone.Price == nearestBelow.Value.Price);
+            if (zone.Touches < DrawFrom && !nearest)
+                continue;
+
+            OxyColor color = zone.Price >= last ? Above : Below;
+
+            // Strength as WEIGHT instead of as a number: a band that has held six times is darker
+            // and has a firmer edge than one that held three.
+            byte fill = zone.Touches >= 6 ? (byte)56 : zone.Touches >= 4 ? (byte)36 : (byte)20;
+
+            chart.Annotations.Add(new RectangleAnnotation
+            {
+                Layer = AnnotationLayer.BelowSeries,
+                MinimumX = candles[zone.FirstIndex].OpenTime.Minutes,
+                // MaximumX left at its default: the block runs to the right edge
+                MinimumY = zone.Low,
+                MaximumY = zone.High,
+                Fill = OxyColor.FromAColor(fill, color),
+                Stroke = OxyColor.FromAColor(zone.Touches >= 6 ? (byte)160 : (byte)110, color),
+                StrokeThickness = zone.Touches >= 6 ? 2 : 1,
+                Text = $"{zone.Touches}x",
+                TextColor = color,
+                YAxisKey = "price",
+                Tag = tag,
+            });
+
+            // Only the two nearest levels keep a line. For the rest the block says it all, and a
+            // line on the weighted middle of a band an ATR high claims a precision the method does
+            // not have.
+            if (!nearest)
+                continue;
+
             chart.Annotations.Add(new LineAnnotation
             {
                 Type = LineAnnotationType.Horizontal,
-                Y = level.Price,
-                Color = level.Price >= last ? Above : Below,
+                Y = zone.Price,
+                Color = color,
                 LineStyle = LineStyle.Dash,
                 StrokeThickness = 1,
-                Text = $"S/R {level.Touches}x",
-                TextColor = level.Price >= last ? Above : Below,
+                Text = string.Empty,
                 YAxisKey = "price",
                 Tag = tag,
             });
@@ -53,6 +119,10 @@ public static class SupportResistanceOverlay
         int lastIndex = candles.Count - 1;
         foreach (SupportResistanceLine line in result.Lines)
         {
+            // Only a line with its third touch counts, and a broken one ends at its breakout
+            if (!line.IsConfirmed)
+                continue;
+            int endIndex = line.BrokenAt ?? lastIndex;
             var series = new LineSeries
             {
                 Title = tag + (line.IsResistance ? " resistance" : " support"),
@@ -62,7 +132,7 @@ public static class SupportResistanceOverlay
                 Tag = tag,
             };
             series.Points.Add(new DataPoint(candles[line.Index1].OpenTime.Minutes, line.Price1));
-            series.Points.Add(new DataPoint(candles[lastIndex].OpenTime.Minutes, line.ValueAt(lastIndex)));
+            series.Points.Add(new DataPoint(candles[endIndex].OpenTime.Minutes, line.ValueAt(endIndex)));
             chart.Series.Add(series);
         }
 
@@ -72,7 +142,12 @@ public static class SupportResistanceOverlay
         {
             if (e.Type != SupportResistanceEventType.Flip)
                 continue;
-            CryptoCandle candle = candles[e.Index];
+            // On the candle the srflip strategy enters on (the confirmation candle), not on the retest;
+            // a flip that never got an entry gets no marker
+            int? entry = SrFlipBase.EntryIndex(candles, e, SrFlipPlugin.Settings);
+            if (entry == null)
+                continue;
+            CryptoCandle candle = candles[entry.Value];
             if (e.Side == CryptoTradeSide.Long)
                 flipLong.Points.Add(new ScatterPoint(candle.OpenTime.Minutes, (double)candle.Low * 0.998));
             else

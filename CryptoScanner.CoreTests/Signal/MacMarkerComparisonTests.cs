@@ -34,6 +34,10 @@ public class MacMarkerComparisonTests : TestBase
 {
     private const string Database = @"E:\CryptoScanBot\Data\Binance\Perpetual\Binance Perpetual.db";
     private const string Output = @"E:\Projects\CryptoScanBot.tools\studies\macloud\mac-scanner-signals.csv";
+    // The Speed input of the indicator moves the lengths of all four lines, so it changes the
+    // signals themselves. Comparing those against a harvest taken on Standard would only show
+    // that they differ, which is why this goes into a file of its own with the speed per row.
+    private const string SpeedOutput = @"E:\Projects\CryptoScanBot.tools\studies\macloud\mac-scanner-signals-speed.csv";
 
     // The identifier of an interval in the candle database is the enum value plus one. More than
     // one interval is run now: the fifteen minute chart is the second, independent set the run
@@ -62,10 +66,22 @@ public class MacMarkerComparisonTests : TestBase
         // instead of ten days, and the break markers alone come to 91 - almost half again what the
         // fifteen minute set holds. Our daily candles start 10 May 2025, so the judgeable window
         // begins two hundred candles later, on 26 November.
+        // 1000PEPE was added on 28 September 2026 as a coin the rule was NEVER fitted on, and with
+        // a price three orders of magnitude smaller than the rest - which is where a rounding
+        // mistake in the levels or in the wick comparison would show first.
         ("1d", 15, CryptoIntervalPeriod.interval1d,
             ["BTCUSDT.PERP", "ETHUSDT.PERP", "SOLUSDT.PERP", "NEARUSDT.PERP",
              "HYPEUSDT.PERP", "XRPUSDT.PERP", "DOGEUSDT.PERP",
-             "ADAUSDT.PERP", "LINKUSDT.PERP", "AVAXUSDT.PERP", "SUIUSDT.PERP"]),
+             "ADAUSDT.PERP", "LINKUSDT.PERP", "AVAXUSDT.PERP", "SUIUSDT.PERP",
+             "1000PEPEUSDT.PERP",
+             // BNB as the quiet counterpart of PEPE: long flat stretches, where the lines
+             // lie close together and a marker is easiest to fire one candle early or late.
+             "BNBUSDT.PERP"]),
+        // WEEKLY candles, harvested 28 September 2026. Seven years of market on one coin: the
+        // indicator holds four hundred bars whatever the interval, and on weeks that reaches back
+        // to September 2019. Only eighteen markers come out of it - a week is a slow candle - but
+        // they sit in market the other sets never touch.
+        ("1w", 16, CryptoIntervalPeriod.interval1w, ["BTCUSDT.PERP"]),
     ];
 
     private static readonly DateTime Epoch = new(2010, 1, 4, 0, 0, 0, DateTimeKind.Utc);
@@ -113,6 +129,56 @@ public class MacMarkerComparisonTests : TestBase
 
         File.WriteAllLines(Output, lines);
         Console.WriteLine((lines.Count - 1) + " signals written to " + Output);
+        Assert.IsTrue(lines.Count > 1, "the scanner fired nothing at all, which is a fault here");
+    }
+
+
+    /// <summary>
+    /// The same comparison with the Speed input of the indicator on Fast and on Slow. Both move the
+    /// lengths of all four lines - Fast to 20/30/40/80, Slow to 20/50/100/200 - so every marker can
+    /// land on another candle, and a harvest of one speed says nothing about the others.
+    /// <para>
+    /// BNB only, on daily candles: the point is whether the SETTING is reproduced, and for that one
+    /// coin with markers on both speeds is enough. Harvested 28 September 2026.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void WriteWhatTheScannerFiresPerSpeed()
+    {
+        if (!File.Exists(Database))
+        {
+            Assert.Inconclusive("no candle database at " + Database);
+            return;
+        }
+
+        // BNB on daily candles, ETH and SOL on fifteen minutes. The daily set gives markers over a
+        // year, the fifteen minute one gives many markers over four days - the harvest stops at
+        // four hundred bars whatever the interval, so the two buy different things.
+        (string Interval, int Id, CryptoIntervalPeriod Period, string[] Symbols)[] runs =
+        [
+            ("1d", 15, CryptoIntervalPeriod.interval1d, ["BNBUSDT.PERP"]),
+            ("15m", 6, CryptoIntervalPeriod.interval15m, ["ETHUSDT.PERP", "SOLUSDT.PERP"]),
+        ];
+
+        List<string> lines = ["speed,symbol,interval,time,kind"];
+        foreach (MacSpeed speed in new[] { MacSpeed.Fast, MacSpeed.Slow })
+        {
+            foreach (var (intervalName, intervalId, period, symbols) in runs)
+            {
+                foreach (string name in symbols)
+                {
+                    List<CryptoCandle> candles = Load(name, intervalId);
+                    if (candles.Count < 250)
+                        continue;
+                    foreach (string kind in new[] { "open", "cross", "break", "exit" })
+                        lines.AddRange(Run(name, candles, kind, intervalName, period, speed)
+                            .Select(line => speed + "," + line));
+                }
+            }
+        }
+
+        File.WriteAllLines(SpeedOutput, lines);
+        Console.WriteLine((lines.Count - 1) + " signals written to " + SpeedOutput);
         Assert.IsTrue(lines.Count > 1, "the scanner fired nothing at all, which is a fault here");
     }
 
@@ -165,7 +231,7 @@ public class MacMarkerComparisonTests : TestBase
     /// measured on its own instead of through a mixture of triggers.
     /// </summary>
     private static List<string> Run(string name, List<CryptoCandle> candles, string kind,
-        string intervalName, CryptoIntervalPeriod period)
+        string intervalName, CryptoIntervalPeriod period, MacSpeed speed = MacSpeed.Standard)
     {
         MacSettings settings = new()
         {
@@ -175,6 +241,7 @@ public class MacMarkerComparisonTests : TestBase
             RequirePriceOutsideCloud = false,
             ExitOnCloudFlip = false,
             ExitOnSecondLineCross = kind == "exit",
+            Speed = speed,
         };
         new MacPlugin().SettingsBase = settings;
 

@@ -293,6 +293,31 @@ public class EmulatorQueueEntry
     public bool? UseAssetManagement { get; set; }
 
     /// <summary>
+    /// The stake of ONE entry, in quote currency, for this run only. Null or omitted leaves the
+    /// amount from the settings file alone.
+    /// <para>
+    /// It is here rather than in <see cref="TradingOverrides"/> because it does not live in
+    /// SettingsTrading at all: the amount sits on the quote coin, in Settings.QuoteCoins, which
+    /// those overrides cannot reach.
+    /// </para>
+    /// <para>
+    /// The reason to measure it: the runs so far entered with 15 on a starting capital of 10.000,
+    /// so at their busiest moment 4,5% of the money was in the market and on average 0,9%. Every
+    /// result we have is therefore a result on a tenth of a percent of the capital, and how it
+    /// behaves when the stake goes up - until the balance starts refusing entries - is the largest
+    /// unmeasured lever there is.
+    /// </para>
+    /// <para>
+    /// It is applied to EVERY quote coin and put back when the run ends, through the same
+    /// save-and-revert every other override uses, so the next run and the settings file are
+    /// untouched. The entry PERCENTAGE is set to zero alongside it: with a percentage standing the
+    /// amount is never read (TradeTools.GetEntryAmount), and an entry amount that is quietly
+    /// ignored is the worst of both.
+    /// </para>
+    /// </summary>
+    public decimal? EntryAmount { get; set; }
+
+    /// <summary>
     /// Trading/risk config (SL, TP, DCA). Takes precedence over the entry-level
     /// StopLossPercentage/TpList/DcaList properties.
     /// </summary>

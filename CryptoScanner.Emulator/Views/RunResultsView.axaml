@@ -60,18 +60,20 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-				<DataGridTextColumn Header="Started" Binding="{Binding StartedLocal}" Width="120"/>
+				<DataGridTextColumn Header="Started" Binding="{Binding StartedLocal}" SortMemberPath="StartedLocal" Width="120"/>
                 <!-- The build that made the run. Runs on different builds are not comparable, and
                      the 29-08-2026 break (+432,07 against +734,17 for the same settings) could only
                      be found from dates and commits (open point 52). -->
-				<DataGridTextColumn Header="Build" Binding="{Binding BuildStampText}" Width="120"/>
-				<DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="400"/>
-				<DataGridTextColumn Header="Period" Binding="{Binding Period}" Width="210"/>
-				<DataGridTextColumn Header="Finished" Binding="{Binding FinishedLocal}" Width="130" IsVisible="False"/>
-				<DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="90"/>
+				<DataGridTextColumn Header="Build" Binding="{Binding BuildStampText}" SortMemberPath="BuildStampText" Width="120"/>
+				<DataGridTextColumn Header="Label" Binding="{Binding Label}" SortMemberPath="Label" Width="400"/>
+				<DataGridTextColumn Header="Period" Binding="{Binding Period}" SortMemberPath="Period" Width="210"/>
+				<DataGridTextColumn Header="Finished" Binding="{Binding FinishedLocal}" SortMemberPath="FinishedLocal" Width="130" IsVisible="False"/>
+				<DataGridTextColumn Header="Duration" Binding="{Binding Duration}" SortMemberPath="Duration" Width="90"/>
                 <!-- Wide enough for "duplicate of run 515": a recognised repeat is recorded as a row
                      whose Result names the run it matched, so the reference has to be readable. -->
-                <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="160"/>
+                <!-- Narrowed to fit "completed" / "cancelled"; a longer "duplicate of run …" is clipped
+                     and shows in full when the column is widened (the width is remembered). -->
+                <DataGridTextColumn Header="Result" Binding="{Binding Result}" SortMemberPath="Result" Width="85"/>
                 <DataGridTemplateColumn Header="Signals" Width="65" SortMemberPath="SignalCount">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -232,9 +234,9 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Avg dur." Binding="{Binding AvgDurationText}" Width="90"/>
-                <DataGridTextColumn Header="Min dur." Binding="{Binding MinDurationText}" Width="90"/>
-                <DataGridTextColumn Header="Max dur." Binding="{Binding MaxDurationText}" Width="90"/>
+                <DataGridTextColumn Header="Avg dur." Binding="{Binding AvgDurationText}" SortMemberPath="AvgDurationText" Width="90"/>
+                <DataGridTextColumn Header="Min dur." Binding="{Binding MinDurationText}" SortMemberPath="MinDurationText" Width="90"/>
+                <DataGridTextColumn Header="Max dur." Binding="{Binding MaxDurationText}" SortMemberPath="MaxDurationText" Width="90"/>
 			</DataGrid.Columns>
         </DataGrid>
 

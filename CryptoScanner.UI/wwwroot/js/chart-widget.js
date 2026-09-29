@@ -1,3 +1,62 @@
+// The markers a plugin overlay asks for arrive as a single character - the triangle of an entry,
+// the circle of a break - because a caption is what the overlay contract carries. Drawn as TEXT
+// they depend on the system font: another shape, another baseline, another size than the chart
+// they are held against. Drawn as SHAPES they are ours, and they match what TradingView paints.
+var MARKER_VORMEN = {
+    '▲': 'driehoekOp',
+    '▼': 'driehoekNeer',
+    '●': 'cirkel',
+    '✕': 'kruis',
+    '◆': 'ruit',
+};
+
+/// Draws one marker centred on (x, y), in device pixels, with a dark rim so a pale marker on a
+/// pale background keeps its edge.
+function tekenMarker(ctx, soort, x, y, r, kleur) {
+    ctx.beginPath();
+    if (soort === 'driehoekOp') {
+        ctx.moveTo(x, y - r);
+        ctx.lineTo(x + r, y + r * 0.8);
+        ctx.lineTo(x - r, y + r * 0.8);
+        ctx.closePath();
+    }
+    else if (soort === 'driehoekNeer') {
+        ctx.moveTo(x, y + r);
+        ctx.lineTo(x + r, y - r * 0.8);
+        ctx.lineTo(x - r, y - r * 0.8);
+        ctx.closePath();
+    }
+    else if (soort === 'ruit') {
+        ctx.moveTo(x, y - r);
+        ctx.lineTo(x + r, y);
+        ctx.lineTo(x, y + r);
+        ctx.lineTo(x - r, y);
+        ctx.closePath();
+    }
+    else if (soort === 'kruis') {
+        // Two strokes, not a filled shape: a cross has no inside.
+        var d = r * 0.8;
+        ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d);
+        ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d);
+        ctx.lineWidth = Math.max(2, r * 0.55);
+        ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+        ctx.stroke();
+        ctx.lineWidth = Math.max(1, r * 0.4);
+        ctx.strokeStyle = kleur;
+        ctx.stroke();
+        return;
+    }
+    else {
+        ctx.arc(x, y, r, 0, 2 * Math.PI);
+    }
+    ctx.lineWidth = Math.max(1.5, r * 0.5);
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+    ctx.stroke();
+    ctx.fillStyle = kleur;
+    ctx.fill();
+}
+
+
 // Rectangle primitive — lightweight-charts has no built-in box annotation, so zones
 // (dominant level, fair value gap, order block) are drawn through a series primitive.
 function createRectanglePrimitive() {
@@ -427,15 +486,36 @@ function createSegmentPrimitive() {
                         try { x = timeScale.timeToCoordinate(first.time); } catch (e) { x = null; }
                         if (x === null || !isFinite(x)) continue;
 
+                        // A caption of ONE character is a marker, not a sentence: the triangle of
+                        // an entry, the circle of a break, the cross of a line crossing. Those are
+                        // drawn bigger, with a dark rim, and they are allowed to sit far closer
+                        // together than a caption is.
+                        //
+                        // The rule below used to reserve the full width plus six pixels for every
+                        // caption alike, and everything that did not fit was dropped without a
+                        // trace. Zoomed out that is most of them: three break markers on a weekly
+                        // chart were invisible until the chart was zoomed in far enough for them to
+                        // clear each other. A marker that is not drawn reads as a marker that is
+                        // not there, which is the one thing a chart of this must never say.
+                        var teken = true;
+                        for (var g0 = 0; g0 < group.length; g0++)
+                            if (!MARKER_VORMEN[group[g0].text]) teken = false;
+
+                        ctx.font = Math.round(10 * vRatio) + 'px sans-serif';
+                        var straal = 5 * vRatio;
+
                         // Widest line of the stack decides whether it fits next to the previous one
                         var w = 0;
                         for (var g = 0; g < group.length; g++)
-                            w = Math.max(w, ctx.measureText(group[g].text).width);
+                            w = Math.max(w, teken ? 2 * straal : ctx.measureText(group[g].text).width);
 
                         var left = x * hRatio - w / 2;
                         var lane = first.above ? 'above' : 'below';
                         if (left < lastRight[lane]) continue;
-                        lastRight[lane] = left + w + 6 * hRatio;
+                        // A marker only has to clear the one before it by two pixels; a caption
+                        // keeps the old margin, because two of those beside each other are
+                        // genuinely unreadable.
+                        lastRight[lane] = teken ? left + 2 * hRatio : left + w + 6 * hRatio;
 
                         ctx.textBaseline = first.above ? 'bottom' : 'top';
 
@@ -455,8 +535,16 @@ function createSegmentPrimitive() {
                                     : Math.max(yText, previous + lineHeight);
                             previous = yText;
 
-                            ctx.fillStyle = l.color || '#ffffff';
-                            ctx.fillText(l.text, x * hRatio - ctx.measureText(l.text).width / 2, yText);
+                            if (teken) {
+                                tekenMarker(ctx, MARKER_VORMEN[l.text], x * hRatio,
+                                    yText + (first.above ? -straal : straal), straal,
+                                    l.color || '#ffffff');
+                            }
+                            else {
+                                ctx.fillStyle = l.color || '#ffffff';
+                                ctx.fillText(l.text,
+                                    x * hRatio - ctx.measureText(l.text).width / 2, yText);
+                            }
                         }
                     }
                     }
@@ -612,13 +700,31 @@ window.ChartWidget = {
     _verticalHandlers: null,
     _interactionSuspended: false,
     _pendingFit: true,
+    _pendingPriceOnly: false,
     _lastCandles: null,
+    _markerLaag: null,
+    _markerSerie: null,
 
     ensureLibrary: function () {
         return new Promise(function (resolve, reject) {
             if (window.LightweightCharts) { resolve(); return; }
             var script = document.createElement('script');
-            script.src = 'https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js';
+            // From the project, not from unpkg.com. Fetching it over the internet meant no chart
+            // at all without a connection, and a trading application that needs a stranger's
+            // server to start is not something to leave standing.
+            //
+            // The path is taken from THIS file's own script tag rather than written out: the
+            // Photino host serves these from _content/CryptoScanner.UI/js/ and the web host from
+            // somewhere else, and a hard-coded folder would work in one and leave the other
+            // without a chart at all.
+            var eigen = '_content/CryptoScanner.UI/js/';
+            var tags = document.getElementsByTagName('script');
+            for (var i = 0; i < tags.length; i++) {
+                var bron = tags[i].src || '';
+                var k = bron.indexOf('chart-widget.js');
+                if (k > 0) { eigen = bron.substring(0, k); break; }
+            }
+            script.src = eigen + 'lightweight-charts.standalone.production.js';
             script.onload = function () { resolve(); };
             script.onerror = function () { reject('Failed to load lightweight-charts'); };
             document.head.appendChild(script);
@@ -970,7 +1076,7 @@ window.ChartWidget = {
             { width: container.clientWidth, height: container.clientHeight }
         ));
 
-        var candleSeries = chart.addCandlestickSeries({
+        var candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
             upColor: '#22c55e', downColor: '#f0616d',
             borderDownColor: '#f0616d', borderUpColor: '#22c55e',
             wickDownColor: '#f0616d', wickUpColor: '#22c55e',
@@ -1007,8 +1113,8 @@ window.ChartWidget = {
             // Off the chart the last candle is shown again, so the bar is never empty
             self._renderOhlcv(candle || self._lastCandle(), price);
 
-            // The panes below are charts of their own and would keep no crosshair at all
-            self._broadcastCrosshair('main', param && param.time !== undefined ? param.time : null);
+            // The crosshair reaches every pane by itself now: they are panes of THIS chart, not
+            // charts of their own that had to be told where the mouse was.
         });
     },
 
@@ -1118,78 +1224,76 @@ window.ChartWidget = {
         host.innerHTML = html;
     },
 
-    _createSubChart: function (containerId, hideTimeScale) {
-        var container = document.getElementById(containerId);
-        if (!container) return null;
+    /// A panel is now a PANE of the one chart, not a chart of its own.
+    ///
+    /// It used to be four charts side by side - candles, volume, oscillator, macd - each with its
+    /// own time scale, its own crosshair and its own price axis, kept in step by hand. That cost
+    /// six functions and every one of them could come apart: the panes drifting away from each
+    /// other on a scroll, a position marker landing on another candle in the volume panel than on
+    /// the candles, the crosshair bouncing between four charts, a price axis that measured itself
+    /// differently per pane and so gave each one a different plot width. Every one of those was
+    /// patched, and the patches are what this replaces.
+    ///
+    /// A pane cannot drift: there is one time scale for all of them.
+    /// How tall each pane is. The panes divide the height between them by weight, so this is the
+    /// one place that decides the candles get the room and the panels stay a strip - where three
+    /// container heights in the markup used to do it, each of which then had to be measured back
+    /// out of the DOM to keep the charts the same size.
+    _verdeelPanelen: function (veranderd) {
+        var main = this._charts.main;
+        if (!main) return;
 
-        var chart = LightweightCharts.createChart(container, Object.assign(
-            this._chartOptions(hideTimeScale),
-            { width: container.clientWidth, height: container.clientHeight }
-        ));
-
-        new ResizeObserver(function () {
-            chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
-        }).observe(container);
-
-        // Keep the handler: the sub-charts are destroyed and rebuilt on every setData, and the
-        // subscription this puts on the MAIN chart outlives them unless it is cancelled.
-        var mainHandler = this._syncTimeScale(chart);
-        var entry = { chart: chart, container: container, series: {}, mainRangeHandler: mainHandler };
-
-        // One bar per candle, without a value: whitespace, which draws nothing and scales nothing.
-        //
-        // The panes follow each other by LOGICAL range - bar numbers, not times - and a chart
-        // numbers the bars of its own series. An indicator hands over no value for the bars it
-        // needs to warm up (RSI 14, MACD 25), so bar 0 of the MACD pane was candle 25 and the whole
-        // pane sat a warmup to the left of the candles: the position marker, the crosshair and the
-        // time axis under the bottom pane all pointed at the wrong candle. With this the pane holds
-        // exactly the bars the candles do, whatever its indicators leave out.
-        //
-        // Kept out of entry.series on purpose: that is where _attachVerticals and the crosshair
-        // pick an anchor series, and a series without a single value answers neither
-        // priceToCoordinate nor coordinateToPrice.
+        var gewicht = { main: 4, volume: 1, oscillator: 1.4, macd: 1.4 };
         try {
-            var spacer = chart.addLineSeries({
-                lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false,
-            });
-            spacer.setData((this._lastCandles || []).map(function (c) { return { time: c.time }; }));
-            entry.spacer = spacer;
+            var panes = main.chart.panes();
+            panes[0].setStretchFactor(gewicht.main);
+
+            var namen = ['volume', 'oscillator', 'macd'];
+            for (var i = 0; i < namen.length; i++) {
+                // The live pane, not entry.paneIndex, which goes stale once a pane above it is dropped
+                var pane = this._paneOf(this._charts[namen[i]]);
+                if (!pane) continue;
+                pane.setStretchFactor(gewicht[namen[i]]);
+            }
+
+            // The weights alone change nothing: the chart only divides the height again while it
+            // lays itself out, and it skips that when the size did not change. One pixel taller and
+            // back forces the pass. Without it every panel below the candles gets a height of zero
+            // and the chart looks as if the panels were never made - measured on 5.2.1.
+            //
+            // But a resize keeps the BAR SPACING and moves the visible range to suit, so the nudge
+            // walks the chart sideways - and doing that on every refresh is exactly the "it keeps
+            // jumping and I keep scrolling back" this rebuild is meant to end. So it only happens
+            // when the SET OF PANELS actually changed, which is when someone switches a panel on
+            // or off. An ordinary refresh leaves the layout, and the view, entirely alone.
+            // Only when a panel actually came or went. A resize keeps the BAR SPACING and moves
+            // the visible range to suit, so this nudge walks the chart sideways - and doing that on
+            // every refresh is the "it keeps jumping and I keep scrolling back" this rebuild is
+            // meant to end. Switching a panel on or off is a moment the user is looking at the
+            // layout anyway; a refresh is not.
+            if (!veranderd) return;
+
+            var doos = main.container;
+            if (doos && doos.clientHeight > 0) {
+                main.chart.resize(doos.clientWidth, doos.clientHeight + 1, true);
+                main.chart.resize(doos.clientWidth, doos.clientHeight, true);
+            }
         }
         catch (e) { }
-
-        return entry;
     },
 
-    /// Two-way link between the main chart and one sub-panel. Returns the handler installed on the
-    /// MAIN chart, which the caller must hand back to _unsyncTimeScale when the sub-chart goes —
-    /// see _removeSubCharts.
-    _syncTimeScale: function (subChart) {
-        var self = this;
-        var mainChart = this._charts.main.chart;
+    _createPane: function () {
+        var main = this._charts.main;
+        if (!main) return null;
 
-        var mainHandler = function (range) {
-            if (self._syncing || !range) return;
-            self._syncing = true;
-            try { subChart.timeScale().setVisibleLogicalRange(range); } catch (e) { }
-            self._syncing = false;
-        };
-        mainChart.timeScale().subscribeVisibleLogicalRangeChange(mainHandler);
+        // The pane comes into being with the first series that names it, so its number is simply
+        // the next one after the panes that exist.
+        var nummer = 1;
+        try { nummer = main.chart.panes().length; } catch (e) { }
 
-        subChart.timeScale().subscribeVisibleLogicalRangeChange(function (range) {
-            if (self._syncing || !range) return;
-
-            // A sub-chart created during setData fits itself to its own data and reports that
-            // here. Following it would drag the main chart to wherever this panel happens to sit,
-            // which is not something the user did. Only follow a sub-chart the user scrolled.
-            if (self._settingData) return;
-
-            self._syncing = true;
-            try { mainChart.timeScale().setVisibleLogicalRange(range); } catch (e) { }
-            self._syncing = false;
-        });
-
-        return mainHandler;
+        return { chart: main.chart, paneIndex: nummer, series: {} };
     },
+
 
     /// Hang the position markers in one sub-panel. Any of its series will do as the anchor — a
     /// primitive draws over the whole pane, it does not belong to the series it is attached to.
@@ -1206,203 +1310,13 @@ window.ChartWidget = {
         } catch (e) { }
     },
 
-    /// The time axis belongs on the BOTTOM pane, so the sub-panels sit above it instead of each
-    /// being cut off by an axis of their own (or, as before, by no axis at all while the main chart
-    /// kept it halfway up the screen). Which pane that is depends on what is switched on, so it is
-    /// decided here, after the panels exist, rather than fixed when they are created.
-    ///
-    /// Chart.razor reserves the extra height for it — see BottomPanelKey there; the order below is
-    /// the order of the panes in that markup and the two have to agree.
-    _applyBottomTimeScale: function () {
-        var order = ['main', 'volume', 'oscillator', 'macd'];
 
-        var bottom = 'main';
-        for (var i = 0; i < order.length; i++) {
-            if (this._charts[order[i]]) bottom = order[i];
-        }
 
-        for (var j = 0; j < order.length; j++) {
-            var entry = this._charts[order[j]];
-            if (!entry) continue;
-            try { entry.chart.applyOptions({ timeScale: { visible: order[j] === bottom } }); }
-            catch (e) { }
-        }
-    },
 
-    /// Give every pane the same price-axis width, so the four charts line up.
-    ///
-    /// Each pane is a chart of its own and sizes its price axis to its own labels: "1.1400" on the
-    /// candles, "40K" on the volume, "Signal -0.01" on the MACD. A wider axis leaves a narrower
-    /// plot, so the SAME logical range was drawn over a different number of pixels in every pane -
-    /// the panes drifted apart towards the right, and the time axis under the bottom one no longer
-    /// stood under the candles it belongs to. Widening them all to the widest one puts every pane
-    /// on the same plot width, and the axis back under its own bars.
-    _alignPriceScales: function () {
-        var order = ['main', 'volume', 'oscillator', 'macd'];
-        var widest = 0;
-
-        for (var i = 0; i < order.length; i++) {
-            var entry = this._charts[order[i]];
-            if (!entry) continue;
-            try {
-                var width = entry.chart.priceScale('right').width();
-                if (isFinite(width) && width > widest) widest = width;
-            }
-            catch (e) { }
-        }
-
-        // Nothing painted yet - a price scale reports 0 until its first frame. The pass scheduled
-        // after the layout has settled does the work then.
-        if (widest <= 0) return;
-
-        var narrowed = false;
-        for (var j = 0; j < order.length; j++) {
-            var pane = this._charts[order[j]];
-            if (!pane) continue;
-
-            var own = 0;
-            try { own = pane.chart.priceScale('right').width(); } catch (e) { continue; }
-
-            // minimumWidth, not a fixed width: a pane that needs more keeps what it needs, and the
-            // next pass measures that as the new widest. It settles after one round.
-            var current = 0;
-            try { current = pane.chart.options().rightPriceScale.minimumWidth || 0; } catch (e) { }
-            if (current !== widest) {
-                try { pane.chart.applyOptions({ rightPriceScale: { minimumWidth: widest } }); }
-                catch (e) { }
-            }
-
-            if (own >= widest) continue;
-
-            // The option alone changes nothing: lightweight-charts only recomputes the axis width
-            // while it lays the chart out, and it skips laying out when the size did not change -
-            // which applyOptions on anything but width/height never does. One pixel taller and
-            // back forces the pass. Measured on 4.2.0: without this the MACD pane kept its own
-            // narrower axis and the panes stayed out of line.
-            try {
-                var w = pane.container.clientWidth;
-                var h = pane.container.clientHeight;
-                pane.chart.resize(w, h + 1, true);
-                pane.chart.resize(w, h, true);
-                narrowed = true;
-            }
-            catch (e) { }
-        }
-
-        if (!narrowed) return;
-
-        // A resize keeps the bar spacing and moves the visible range instead, so a pane whose plot
-        // just got narrower now shows a slightly different stretch of history than the rest. Put
-        // them all back on the main chart's range - the same thing _syncTimeScale does on a scroll.
-        var range = null;
-        try { range = this._charts.main.chart.timeScale().getVisibleLogicalRange(); } catch (e) { }
-        if (!range) return;
-
-        var self = this;
-        this._syncing = true;
-        try {
-            order.forEach(function (key) {
-                if (key === 'main') return;
-                var entry = self._charts[key];
-                if (!entry) return;
-                try { entry.chart.timeScale().setVisibleLogicalRange(range); } catch (e) { }
-            });
-        }
-        finally {
-            this._syncing = false;
-        }
-    },
-
-    /// Align once the panes have painted. A price scale reports a width of zero until its first
-    /// frame, and a freshly built sub-panel paints in the frame after this is scheduled - so one
-    /// callback is not enough to be sure of catching them. A handful of frames is, and a pass over
-    /// panes that already line up costs a measurement and nothing else.
-    _scheduleAlign: function (frames) {
-        var self = this;
-        var left = frames || 3;
-
-        var step = function () {
-            self._alignPriceScales();
-            if (--left <= 0) return;
-            if (window.requestAnimationFrame) window.requestAnimationFrame(step);
-            else setTimeout(step, 16);
-        };
-
-        if (window.requestAnimationFrame) window.requestAnimationFrame(step);
-        else setTimeout(step, 16);
-    },
-
-    /// Draw the crosshair of whichever pane the mouse is over in the other three as well.
-    ///
-    /// The panes are separate charts, so the vertical line stopped at the bottom of the candles and
-    /// the volume, RSI/stochastic and MACD below it gave no clue which bar was being read. Every
-    /// pane broadcasts the time under the cursor and the others place their crosshair on it.
-    ///
-    /// The price handed over sits ABOVE the top of the receiving pane on purpose: setCrosshairPosition
-    /// always draws both lines, and a price off the pane leaves the horizontal one - and its axis
-    /// label - outside the visible area. What stays is the vertical line, which is the point.
-    _broadcastCrosshair: function (sourceKey, time) {
-        if (this._crosshairSyncing) return;
-
-        // Same time as the last round: nothing to redraw, and it stops a chart that answers its own
-        // setCrosshairPosition with another crosshair event from bouncing the four panes forever.
-        if (time === this._crosshairTime) return;
-        this._crosshairTime = time;
-
-        var self = this;
-        this._crosshairSyncing = true;
-        try {
-            Object.keys(this._charts).forEach(function (key) {
-                if (key === sourceKey) return;
-
-                var entry = self._charts[key];
-                if (!entry) return;
-
-                try {
-                    if (time === null || time === undefined) {
-                        entry.chart.clearCrosshairPosition();
-                        return;
-                    }
-
-                    var seriesKeys = Object.keys(entry.series || {});
-                    if (seriesKeys.length === 0) return;
-
-                    var series = entry.series[seriesKeys[0]];
-                    var price = series.coordinateToPrice(-20);
-                    if (price === null || !isFinite(price)) return;
-
-                    entry.chart.setCrosshairPosition(price, time, series);
-                }
-                catch (e) { }
-            });
-        }
-        finally {
-            this._crosshairSyncing = false;
-        }
-    },
 
     _crosshairTime: null,
     _crosshairSyncing: false,
 
-    /// Let the sub-panels broadcast their crosshair too, so hovering the MACD marks the candle
-    /// above it. They are destroyed and rebuilt on every setData and their subscriptions go with
-    /// them, so this is called again each time; the main chart subscribes once, in _createMainChart.
-    _syncCrosshairs: function () {
-        var order = ['volume', 'oscillator', 'macd'];
-        var self = this;
-
-        order.forEach(function (key) {
-            var entry = self._charts[key];
-            if (!entry) return;
-
-            try {
-                entry.chart.subscribeCrosshairMove(function (param) {
-                    self._broadcastCrosshair(key, param && param.time !== undefined ? param.time : null);
-                });
-            }
-            catch (e) { }
-        });
-    },
 
     /// Drop every sub-panel, subscription included.
     ///
@@ -1413,23 +1327,6 @@ window.ChartWidget = {
     /// live panel's handler ran, so the panels stopped following, and the main chart could be
     /// dragged off its own candles by a range that belonged to nothing. That is the chart going
     /// black after the third click on an overlay.
-    _removeSubCharts: function () {
-        var self = this;
-        Object.keys(this._charts).forEach(function (key) {
-            if (key === 'main') return;
-
-            var entry = self._charts[key];
-            if (entry.mainRangeHandler) {
-                try {
-                    self._charts.main.chart.timeScale()
-                        .unsubscribeVisibleLogicalRangeChange(entry.mainRangeHandler);
-                } catch (e) { }
-            }
-            try { entry.chart.remove(); } catch (e) { }
-            delete self._charts[key];
-        });
-    },
-
     _addPriceLine: function (series, price, color, lineStyle, title, axisLabelVisible) {
         return series.createPriceLine({
             price: price,
@@ -1476,7 +1373,12 @@ window.ChartWidget = {
 
     setStyles: function (styles) {
         this._userStyles = styles || {};
+        this._styleSignature = JSON.stringify(this._userStyles);
     },
+
+    // Part of the shape key of every sub-panel (_verversPanelen). A reused panel only gets new
+    // data, never new series options, so a changed colour has to count as a changed shape.
+    _styleSignature: '',
 
     // Styles a plugin overlay asked for, keyed by series key. They sit between the user's own
     // settings and the built-in table: the user still wins, but a plugin line is no longer drawn
@@ -1491,13 +1393,16 @@ window.ChartWidget = {
     // which is what paints them.
     _bands: [],
     _bandSeries: [],
+    _bandVorm: null,
 
     setBands: function (bands) {
-        // Shifted to local time HERE, because bands do not travel through setData and so miss the
-        // conversion its four arguments get. Without this the band sits on UTC while the candles
-        // sit on local time: two grids next to each other, which doubles the number of positions on
+        // Kept RAW here and shifted in setData, together with everything else. The shift used to
+        // happen here, because bands do not travel through setData's four arguments - but setData
+        // now decides per interval WHETHER to shift at all, and that decision is not known yet at
+        // this point. Doing it in one place also removes the older trap: a band on UTC beside
+        // candles on local time is two grids next to each other, which doubles the positions on
         // the time axis and leaves the cloud half a candle beside the candles it belongs to.
-        this._bands = this._localizeTimes(bands) || [];
+        this._bands = bands || [];
     },
 
     // A custom series that fills between a high and a low per bar, in two colours: one series
@@ -1516,6 +1421,20 @@ window.ChartWidget = {
         var renderer = {
             draw: function (target, priceConverter) {
                 if (!data || !data.bars || data.bars.length === 0) return;
+                // Wrapped for the same reason the zone overlay is: an exception thrown from a
+                // series renderer aborts the render pass of the whole pane, and what stays on
+                // screen is the previous frame. A cloud that cannot be drawn must cost the cloud,
+                // not every line beside it.
+                try {
+                    // Through the closure variable, not through `this`: the library calls draw()
+                    // on whatever it holds, and the binding is not ours to rely on.
+                    renderer._drawBand(target, priceConverter);
+                } catch (e) {
+                    if (window.console) console.error('band draw failed', e);
+                }
+            },
+
+            _drawBand: function (target, priceConverter) {
                 target.useBitmapCoordinateSpace(function (scope) {
                     var ctx = scope.context;
                     var hr = scope.horizontalPixelRatio;
@@ -1523,10 +1442,34 @@ window.ChartWidget = {
                     ctx.save();
 
                     var from = 0, to = data.bars.length;
+                    var visFrom = 0, visTo = data.bars.length;
                     if (data.visibleRange) {
-                        from = Math.max(0, data.visibleRange.from - 1);
-                        to = Math.min(data.bars.length, data.visibleRange.to + 1);
+                        visFrom = Math.max(0, data.visibleRange.from);
+                        visTo = Math.min(data.bars.length, data.visibleRange.to);
+                        from = Math.max(0, visFrom - 1);
+                        to = Math.min(data.bars.length, visTo + 1);
                     }
+
+                    // lightweight-charts 5 only brings bar.x up to date for the bars IN VIEW
+                    // (visibleRange, "to" exclusive). A bar outside it keeps the x of the last frame
+                    // it was visible in - or null if it never was. Measured: after zooming out and
+                    // back in, the bar just left of the view still said x = 629 while the first
+                    // visible one was at 3. Used as a corner, that stale x is what drew the blocks
+                    // with a straight side into the cloud, differently after every zoom.
+                    // So an x is only taken from a bar in view. The one bar on either side, which
+                    // the cloud needs to run to the edge instead of stopping half a bar short, gets
+                    // its x from its visible neighbour and the bar spacing.
+                    var spacing = data.barSpacing;
+                    var xOf = function (i) {
+                        var x = null;
+                        if (i >= visFrom && i < visTo)
+                            x = data.bars[i].x;
+                        else if (i === visFrom - 1 && visFrom < visTo)
+                            x = data.bars[visFrom].x - spacing;
+                        else if (i === visTo && visTo > visFrom)
+                            x = data.bars[visTo - 1].x + spacing;
+                        return typeof x === 'number' && isFinite(x) ? x : null;
+                    };
 
                     var run = [];
                     var runColor = null;
@@ -1548,14 +1491,22 @@ window.ChartWidget = {
 
                     for (var i = from; i < to; i++) {
                         var bar = data.bars[i];
+                        var barX = xOf(i);
+                        if (!bar || barX === null)
+                            continue;
+                        // originalData is ABSENT on a whitespace point - the band has no value
+                        // there, which is exactly what isWhitespace() reports to the library. Reading
+                        // .high off it threw, and an exception here aborts the whole render pass, so
+                        // the pane kept the pixels of the previous frame: shapes that no longer line
+                        // up with the candles under them, until something forced a full redraw.
                         var d = bar.originalData;
-                        if (d.high === null || d.high === undefined || d.low === null || d.low === undefined) {
+                        if (!d || d.high === null || d.high === undefined || d.low === null || d.low === undefined) {
                             flush();
                             runColor = null;
                             continue;
                         }
                         var point = {
-                            x: bar.x * hr,
+                            x: barX * hr,
                             high: priceConverter(d.high) * vr,
                             low: priceConverter(d.low) * vr,
                         };
@@ -1660,10 +1611,17 @@ window.ChartWidget = {
     setData: function (candles, overlays, panels, extras) {
         if (!this._loaded || !this._charts.main) return;
 
+        // TERUGGEDRAAID 28-09-2026. Hier stond een poging om een candle van een DAG of langer niet
+        // naar lokale tijd te schuiven en de klok van de tijdas te halen, omdat zo'n candle voor een
+        // kalenderdag staat en niet voor een moment - op een weekchart zat elke candle op maandag
+        // 02:00 en dat stond ook op de as. Die wijziging maakte de as slechter in plaats van beter
+        // (er bleef vrijwel geen enkel label over), en ik kon het niet nameten voordat het bij de
+        // gebruiker stond. Eerst een manier om dit te ZIEN, dan pas opnieuw proberen.
         this._localizeTimes(candles);
         this._localizeTimes(overlays);
         this._localizeTimes(panels);
         this._localizeTimes(extras);
+        this._localizeTimes(this._bands);
 
         var self = this;
         var mainEntry = this._charts.main;
@@ -1680,22 +1638,9 @@ window.ChartWidget = {
         this._settingData = true;
         var setDataRun = ++this._setDataRun;
 
-        // Remember where the user was looking, so a toggle does not move the chart.
-        //
-        // In TIME, not in bar indices. A logical range is an offset from the first bar, and the
-        // first bar moves: the scanner trims old candles as new ones come in, so between two
-        // refreshes the whole series can shift. Restoring index 800..930 onto a series that just
-        // lost a few hundred bars at the front lands past the end - an empty chart with the
-        // candles pushed off to the left, which is exactly the jump that kept happening.
-        // Times survive that. The logical range is kept only as a fallback for when the window
-        // holds no bars at all and getVisibleRange returns nothing.
-        var visibleRange = null;
-        var visibleTimeRange = null;
-        try {
-            visibleRange = mainEntry.chart.timeScale().getVisibleLogicalRange();
-            visibleTimeRange = mainEntry.chart.timeScale().getVisibleRange();
-        } catch (e) { }
-
+        // The new candles. Where the user was looking is NOT remembered and put back - the chart
+        // keeps its own view across a setData, and reading it out to write it back was what made
+        // it jump. See the note further down, where that write-back used to be.
         mainEntry.series.candles.setData(candles);
         this._lastCandles = candles;
 
@@ -1728,36 +1673,69 @@ window.ChartWidget = {
             try { mainEntry.chart.removeSeries(mainEntry.overlays[key]); } catch (e) { }
         });
 
-        // The filled bands of a plugin overlay. Added FIRST so they end up under the candles, and
-        // torn down the same way the line overlays are.
-        this._bandSeries.forEach(function (s) {
-            try { mainEntry.chart.removeSeries(s); } catch (e) { }
-        });
-        this._bandSeries = [];
-        if (this._bands && this._bands.length > 0 && mainEntry.chart.addCustomSeries) {
-            var bandSelf = this;
-            this._bands.forEach(function (band) {
-                if (!band || !band.points || band.points.length === 0) return;
-                try {
-                    var series = mainEntry.chart.addCustomSeries(bandSelf._makeBandSeries(), {
-                        fillUp: band.fillUp,
-                        fillDown: band.fillDown,
-                        priceLineVisible: false,
-                        lastValueVisible: false,
-                        crosshairMarkerVisible: false,
-                        // Kept out of the autoscale: the cloud lies between lines that already
-                        // count, so letting it vote only risks pulling the price scale around on
-                        // every redraw.
-                        autoscaleInfoProvider: function () { return null; },
-                    });
-                    series.setData(band.points.filter(function (p) { return inRange(p.time); }));
-                    bandSelf._bandSeries.push(series);
-                } catch (e) {
-                    // A band that cannot be drawn must never take the whole chart down with it.
-                    console.warn('band ' + band.key + ' failed: ' + e);
-                }
+        // The filled bands of a plugin overlay - the cloud. KEPT between refreshes, like the
+        // panels: a series that is thrown away and made again is a series that has no pixels for
+        // a frame, and what stays on screen in that frame is the one before it. That is the cloud
+        // leaving pieces of itself behind and then quietly repairing them.
+        //
+        // Only when the SET of bands changes - another plugin, another colour - is it built anew.
+        var bandVorm = (this._bands || []).map(function (b) {
+            return (b && b.key) + ':' + (b && b.fillUp) + ':' + (b && b.fillDown);
+        }).join(',');
+
+        if (bandVorm !== this._bandVorm) {
+            this._bandVorm = bandVorm;
+            this._bandSeries.forEach(function (s) {
+                try { mainEntry.chart.removeSeries(s); } catch (e) { }
             });
+            this._bandSeries = [];
+
+            if (this._bands && this._bands.length > 0 && mainEntry.chart.addCustomSeries) {
+                var bandSelf = this;
+                this._bands.forEach(function (band) {
+                    if (!band || !band.points || band.points.length === 0) return;
+                    try {
+                        var series = mainEntry.chart.addCustomSeries(bandSelf._makeBandSeries(), {
+                            fillUp: band.fillUp,
+                            fillDown: band.fillDown,
+                            priceLineVisible: false,
+                            lastValueVisible: false,
+                            crosshairMarkerVisible: false,
+                            // Kept out of the autoscale: the cloud lies between lines that already
+                            // count, so letting it vote only risks pulling the price scale around on
+                            // every redraw.
+                            autoscaleInfoProvider: function () { return null; },
+                        });
+                        series.__bandKey = band.key;
+                        // Under the candles and the lines. On the first build it is made before
+                        // them and lands there by itself, but a new colour rebuilds it on a chart
+                        // that already has them, and a new series goes on top of everything.
+                        try { series.setSeriesOrder(bandSelf._bandSeries.length); } catch (e) { }
+                        bandSelf._bandSeries.push(series);
+                    } catch (e) {
+                        // A band that cannot be drawn must never take the whole chart down with it.
+                        console.warn('band ' + band.key + ' failed: ' + e);
+                    }
+                });
+            }
         }
+
+        // The data goes in every time. BY KEY, not by position: a band with no points is skipped
+        // when the series are made, so the two lists do not line up one to one.
+        var perSleutel = {};
+        (this._bands || []).forEach(function (band) {
+            if (band && band.key) perSleutel[band.key] = band;
+        });
+        this._bandSeries.forEach(function (serie) {
+            var band = perSleutel[serie.__bandKey];
+            if (!band || !band.points) return;
+            try {
+                serie.setData(band.points.filter(function (pt) { return inRange(pt.time); }));
+            } catch (e) {
+                // Rejected data (a time twice, out of order) silently left the cloud away
+                console.warn('band ' + serie.__bandKey + ' setData failed: ' + e);
+            }
+        });
         mainEntry.overlays = {};
 
         // Remove old price lines (positions)
@@ -1777,7 +1755,7 @@ window.ChartWidget = {
 
                 var style = self._styleFor(key);
 
-                var series = mainEntry.chart.addLineSeries({
+                var series = mainEntry.chart.addSeries(LightweightCharts.LineSeries, {
                     color: style.color,
                     // lineVisible, not lineWidth: 0. lightweight-charts only accepts 1..4 there and
                     // silently falls back to its default of 3 for anything else, which is why the
@@ -1809,7 +1787,17 @@ window.ChartWidget = {
         if (extras && extras.markers)
             markers = extras.markers.filter(function (m) { return candleTimes[m.time] === true; });
         markers.sort(function (a, b) { return a.time - b.time; });
-        try { mainEntry.series.candles.setMarkers(markers); } catch (e) { }
+        // One handle, kept and reused. createSeriesMarkers ADDS a layer where the old setMarkers
+        // replaced the list, so calling it per refresh stacks a new set of markers on the candles
+        // every single redraw.
+        try {
+            if (this._markerLaag && this._markerSerie === mainEntry.series.candles)
+                this._markerLaag.setMarkers(markers);
+            else {
+                this._markerLaag = LightweightCharts.createSeriesMarkers(mainEntry.series.candles, markers);
+                this._markerSerie = mainEntry.series.candles;
+            }
+        } catch (e) { }
 
         // Position levels: bounded segments with a caption, not full-width price lines
         this._applySegments(extras && extras.segments ? extras.segments : []);
@@ -1822,35 +1810,36 @@ window.ChartWidget = {
         if (extras && extras.priceLines) {
             extras.priceLines.forEach(function (pl) {
                 var line = self._addPriceLine(
-                    mainEntry.series.candles, pl.price, pl.color, pl.lineStyle, pl.title);
+                    mainEntry.series.candles, pl.price, pl.color, pl.lineStyle, pl.title,
+                    pl.axisLabelVisible);
                 mainEntry.priceLines.push(line);
             });
         }
 
-        // Remove old sub-charts (except main), subscriptions included
-        this._removeSubCharts();
-
-        // Set BEFORE the panels are built: each one picks these up as it is created
+        // Set BEFORE the panels are touched: a panel that IS built picks these up as it is made
         this._verticals = (extras && extras.verticals) ? extras.verticals : [];
 
-        // Create sub-panels
-        if (panels) {
-            if (panels.volume) this._createVolumePanel(panels.volume);
-            // RSI, stochastic and Lux share one panel — they are all bounded oscillators,
-            // so a single pane saves a lot of vertical space
-            if (panels.rsi || panels.stoch || panels.lux)
-                this._createOscillatorPanel(panels.rsi, panels.stoch, panels.lux);
-            if (panels.macd) this._createMacdPanel(panels.macd);
+        // Panels: kept where they can be, rebuilt only where they must. The layout is only
+        // disturbed when one actually came or went.
+        var veranderd = this._verversPanelen(panels);
+        this._verdeelPanelen(veranderd);
+
+        // Another coin over the same days: the price axis goes back to automatic, the time window
+        // stays. Unless the window does not overlap what this coin HAS - a coin listed last month
+        // shown on a window from last year is a blank pane - and then it falls back to fitting.
+        if (this._pendingPriceOnly && !this._pendingFit) {
+            this._pendingPriceOnly = false;
+            try { mainEntry.chart.priceScale('right').applyOptions({ autoScale: true }); } catch (e) { }
+
+            var zichtbaar = null;
+            try { zichtbaar = mainEntry.chart.timeScale().getVisibleRange(); } catch (e) { }
+            var eerste = candles && candles.length ? candles[0].time : null;
+            var laatste = candles && candles.length ? candles[candles.length - 1].time : null;
+            var overlap = zichtbaar && eerste !== null
+                && zichtbaar.to >= eerste && zichtbaar.from <= laatste;
+            if (!overlap)
+                this._zoomLast(candles ? candles.length : 0);
         }
-
-        // Which pane carries the time axis depends on which of them exist, so this comes last
-        this._applyBottomTimeScale();
-
-        // Fresh panels: they carry no crosshair subscription yet, and their price axes are as wide
-        // as their own labels until they are pulled into line. Aligned once more after the layout
-        // has settled, at the end of the deferred block below.
-        this._syncCrosshairs();
-        this._alignPriceScales();
 
         // Only reset the view when the chart shows something else than before. Fitting on every
         // call threw away the zoom and scroll position on each overlay toggle.
@@ -1875,15 +1864,16 @@ window.ChartWidget = {
                 this._zoomLast(candles ? candles.length : 0);
             }
         }
-        else if (visibleTimeRange) {
-            try { mainEntry.chart.timeScale().setVisibleRange(visibleTimeRange); }
-            catch (e) {
-                try { mainEntry.chart.timeScale().setVisibleLogicalRange(visibleRange); } catch (e2) { }
-            }
-        }
-        else if (visibleRange) {
-            try { mainEntry.chart.timeScale().setVisibleLogicalRange(visibleRange); } catch (e) { }
-        }
+        // Nothing else. The view is NOT written back any more.
+        //
+        // It had to be, as long as every refresh threw the sub-charts away and built new ones that
+        // each fitted themselves to their own data. With one chart there is nothing to rebuild:
+        // setData on a series leaves the time scale exactly where it stood - measured on 5.2.1.
+        //
+        // And writing it back was not free. The range was read at the START of this function, so
+        // anything that had not settled yet was captured stale and then forced back onto the
+        // chart: the view jumping away from where it was put, which is the thing that made this
+        // chart tiring to use.
 
         // Release the sync guard only once the sub-charts have settled. Their range callbacks are
         // queued, not immediate, so clearing it here and now would let them through after all.
@@ -1900,9 +1890,6 @@ window.ChartWidget = {
             self._ensureCandlesInView(candles);
             self._ensureCandlesVisible(candles);
 
-            // Price axis widths are only final once the panes have painted, and _ensureCandlesVisible
-            // may have just changed the range - and with it the number of digits on the axis.
-            self._scheduleAlign(3);
         }, 0);
     },
 
@@ -2020,6 +2007,16 @@ window.ChartWidget = {
         this._pendingFit = true;
     },
 
+    /// Another coin, same stretch of market. Keeps the time window the user is looking at and only
+    /// puts the PRICE axis back on automatic - a coin at 3,46 on a scale still set to 84..91 draws
+    /// its candles far below the pane, which reads as an empty chart with nothing saying why.
+    ///
+    /// Zooming to the last candles on every symbol change threw away where he was looking, and
+    /// comparing two coins over the same days then meant scrolling back by hand every time.
+    keepTimeWindow: function () {
+        this._pendingPriceOnly = true;
+    },
+
     _applySegments: function (segments) {
         var mainEntry = this._charts.main;
         if (!this._segmentPrimitive) {
@@ -2042,16 +2039,164 @@ window.ChartWidget = {
         }
     },
 
+    /// Bring the panels into line with what was asked for, keeping what can be kept.
+    ///
+    /// They used to be thrown away and built again on every refresh, because they were charts of
+    /// their own and there was no cheaper way. That is what made the chart restless: new panels
+    /// have no size until the chart lays itself out again, that pass moves the view sideways, and
+    /// the view then had to be written back from a value read before any of it happened.
+    ///
+    /// Now a panel is only rebuilt when its SHAPE changes - when the stochastic is switched on
+    /// beside the RSI, say, so the pane needs other series. An ordinary refresh replaces the data
+    /// in the series that are already there and touches nothing else.
+    ///
+    /// Returns whether any panel was made or dropped, which is the only case the layout has to be
+    /// worked out again.
+    _verversPanelen: function (panels) {
+        var styleKey = '|' + this._styleSignature;
+        var wil = {
+            volume: panels && panels.volume ? 'volume' + styleKey : null,
+            oscillator: panels && (panels.rsi || panels.stoch || panels.lux)
+                ? [panels.rsi ? 'rsi:' + panels.rsi.oversold + '-' + panels.rsi.overbought : '',
+                   panels.stoch ? 'stoch:' + panels.stoch.oversold + '-' + panels.stoch.overbought : '',
+                   panels.lux ? 'lux' : ''].join('|') + styleKey
+                : null,
+            macd: panels && panels.macd ? 'macd' + styleKey : null,
+        };
+
+        var veranderd = false;
+        var self = this;
+
+        // The panes always stand in this order under the candles. A new pane can only be added
+        // at the BOTTOM, so a panel that changes takes every panel below it along: they are all
+        // dropped and made again in order. Dropping only the changed one put its replacement
+        // under the macd (lux, then macd, then rsi gave candles - macd - oscillator).
+        var volgorde = ['volume', 'oscillator', 'macd'];
+        var eersteWijziging = volgorde.length;
+        for (var v = 0; v < volgorde.length; v++) {
+            var bestaand = this._charts[volgorde[v]];
+            var huidig = bestaand ? bestaand.vorm : null;
+            if (huidig !== wil[volgorde[v]]) {
+                eersteWijziging = v;
+                break;
+            }
+        }
+
+        // Back to front, so the panes above the one being dropped keep their place
+        for (var w = volgorde.length - 1; w >= eersteWijziging; w--) {
+            if (this._charts[volgorde[w]]) {
+                this._verwijderPaneel(volgorde[w]);
+                veranderd = true;
+            }
+        }
+
+        if (panels) {
+            if (wil.volume) {
+                if (this._charts.volume) this._vulVolume(this._charts.volume, panels.volume);
+                else { this._createVolumePanel(panels.volume); veranderd = true; }
+                if (this._charts.volume) this._charts.volume.vorm = wil.volume;
+            }
+            // RSI, stochastic and Lux share one panel — they are all bounded oscillators,
+            // so a single pane saves a lot of vertical space
+            if (wil.oscillator !== null) {
+                if (this._charts.oscillator)
+                    this._vulOscillator(this._charts.oscillator, panels.rsi, panels.stoch, panels.lux);
+                else {
+                    this._createOscillatorPanel(panels.rsi, panels.stoch, panels.lux);
+                    veranderd = true;
+                }
+                if (this._charts.oscillator) this._charts.oscillator.vorm = wil.oscillator;
+            }
+            if (wil.macd) {
+                if (this._charts.macd) this._vulMacd(this._charts.macd, panels.macd);
+                else { this._createMacdPanel(panels.macd); veranderd = true; }
+                if (this._charts.macd) this._charts.macd.vorm = wil.macd;
+            }
+        }
+
+        return veranderd;
+    },
+
+    /// Drop one panel: its series first, then the pane.
+    _verwijderPaneel: function (naam) {
+        var entry = this._charts[naam];
+        var main = this._charts.main;
+        if (!entry || !main) return;
+
+        // The pane is looked up through its own series, not through entry.paneIndex: that is the
+        // number the pane had when it was made, and dropping a pane above it renumbers it.
+        var pane = this._paneOf(entry);
+
+        Object.keys(entry.series || {}).forEach(function (sleutel) {
+            try { main.chart.removeSeries(entry.series[sleutel]); } catch (e) { }
+        });
+
+        // lightweight-charts 5 removes a pane by itself as soon as its last series is gone. The
+        // removePane(entry.paneIndex) that stood here then removed the pane that had moved up into
+        // that number - the macd, when the oscillator above it was rebuilt. Only a pane that is
+        // really still there and really empty is removed here.
+        try {
+            if (pane && main.chart.panes().indexOf(pane) > 0 && pane.getSeries().length === 0)
+                main.chart.removePane(pane.paneIndex());
+        } catch (e) { }
+        delete this._charts[naam];
+    },
+
+    /// The pane a panel lives in, as it stands NOW. Null when the panel has no series.
+    _paneOf: function (entry) {
+        if (!entry || !entry.series) return null;
+        var keys = Object.keys(entry.series);
+        if (keys.length === 0) return null;
+        try { return entry.series[keys[0]].getPane(); } catch (e) { return null; }
+    },
+
+    _vulVolume: function (entry, candles) {
+        var up = this._styleFor('volumeUp').color;
+        var down = this._styleFor('volumeDown').color;
+        try {
+            entry.series.volume.setData(candles.map(function (c) {
+                return { time: c.time, value: c.volume || 0,
+                         color: c.close >= c.open ? up : down };
+            }));
+        } catch (e) { }
+    },
+
+    _vulOscillator: function (entry, rsiData, stochData, luxData) {
+        try {
+            if (rsiData && entry.series.rsi) entry.series.rsi.setData(rsiData.data);
+            if (stochData && entry.series.k) entry.series.k.setData(stochData.k);
+            if (stochData && entry.series.d) entry.series.d.setData(stochData.d);
+            if (luxData && entry.series.luxOversold) {
+                // Same transform as _createOscillatorPanel: oversold hangs down from 100. Passing
+                // the raw reading here filled the whole pane red after the first refresh.
+                entry.series.luxOversold.setData(luxData.map(function (d) {
+                    return { time: d.time, value: 100 - d.oversold };
+                }));
+                entry.series.luxOverbought.setData(luxData.map(function (d) {
+                    return { time: d.time, value: d.overbought };
+                }));
+            }
+        } catch (e) { }
+    },
+
+    _vulMacd: function (entry, macdData) {
+        try {
+            entry.series.histogram.setData(macdData.histogram);
+            entry.series.macd.setData(macdData.macdLine);
+            entry.series.signal.setData(macdData.signal);
+        } catch (e) { }
+    },
+
     _createVolumePanel: function (candles) {
-        var entry = this._createSubChart('chart-volume', true);
+        var entry = this._createPane();
         if (!entry) return;
 
         var up = this._styleFor('volumeUp').color;
         var down = this._styleFor('volumeDown').color;
 
-        var series = entry.chart.addHistogramSeries({
+        var series = entry.chart.addSeries(LightweightCharts.HistogramSeries, {
             priceFormat: { type: 'volume' },
-        });
+        }, entry.paneIndex);
         series.setData(candles.map(function (c) {
             return {
                 time: c.time,
@@ -2065,17 +2210,17 @@ window.ChartWidget = {
     },
 
     _createOscillatorPanel: function (rsiData, stochData, luxData) {
-        var entry = this._createSubChart('chart-oscillator', true);
+        var entry = this._createPane();
         if (!entry) return;
 
         var levelSeries = null;
 
         if (rsiData) {
             var rsiStyle = this._styleFor('rsi');
-            var rsiSeries = entry.chart.addLineSeries({
+            var rsiSeries = entry.chart.addSeries(LightweightCharts.LineSeries, {
                 color: rsiStyle.color, lineWidth: rsiStyle.lineWidth, lineStyle: rsiStyle.lineStyle,
                 lastValueVisible: true, priceLineVisible: false, crosshairMarkerVisible: false, title: 'RSI',
-            });
+            }, entry.paneIndex);
             rsiSeries.setData(rsiData.data);
             entry.series.rsi = rsiSeries;
             levelSeries = rsiSeries;
@@ -2088,17 +2233,17 @@ window.ChartWidget = {
 
         if (stochData) {
             var kStyle = this._styleFor('stochK');
-            var kSeries = entry.chart.addLineSeries({
+            var kSeries = entry.chart.addSeries(LightweightCharts.LineSeries, {
                 color: kStyle.color, lineWidth: kStyle.lineWidth, lineStyle: kStyle.lineStyle,
                 lastValueVisible: true, priceLineVisible: false, crosshairMarkerVisible: false, title: '%K',
-            });
+            }, entry.paneIndex);
             kSeries.setData(stochData.k);
 
             var dStyle = this._styleFor('stochD');
-            var dSeries = entry.chart.addLineSeries({
+            var dSeries = entry.chart.addSeries(LightweightCharts.LineSeries, {
                 color: dStyle.color, lineWidth: dStyle.lineWidth, lineStyle: dStyle.lineStyle,
                 lastValueVisible: true, priceLineVisible: false, crosshairMarkerVisible: false, title: '%D',
-            });
+            }, entry.paneIndex);
             dSeries.setData(stochData.d);
 
             entry.series.k = kSeries;
@@ -2138,7 +2283,7 @@ window.ChartWidget = {
             var transparent = 'rgba(0,0,0,0)';
 
             // Oversold: filled from the top (100) down to the reading, exactly Pine's per_under.
-            var osSeries = entry.chart.addBaselineSeries({
+            var osSeries = entry.chart.addSeries(LightweightCharts.BaselineSeries, {
                 baseValue: { type: 'price', price: 100 },
                 bottomLineColor: this._withAlpha(osStyle.color, 0.9),
                 bottomFillColor1: osStyle.color,
@@ -2150,13 +2295,13 @@ window.ChartWidget = {
                 lineStyle: osStyle.lineStyle || 0,
                 lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false,
                 autoscaleInfoProvider: pinTo0to100,
-            });
+            }, entry.paneIndex);
             osSeries.setData(luxData.map(function (d) {
                 return { time: d.time, value: 100 - d.oversold };
             }));
 
             // Overbought: filled from the baseline (0) up to the reading.
-            var obSeries = entry.chart.addBaselineSeries({
+            var obSeries = entry.chart.addSeries(LightweightCharts.BaselineSeries, {
                 baseValue: { type: 'price', price: 0 },
                 topLineColor: this._withAlpha(obStyle.color, 0.9),
                 topFillColor1: obStyle.color,
@@ -2168,7 +2313,7 @@ window.ChartWidget = {
                 lineStyle: obStyle.lineStyle || 0,
                 lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false,
                 autoscaleInfoProvider: pinTo0to100,
-            });
+            }, entry.paneIndex);
             obSeries.setData(luxData.map(function (d) {
                 return { time: d.time, value: d.overbought };
             }));
@@ -2194,26 +2339,26 @@ window.ChartWidget = {
     },
 
     _createMacdPanel: function (macdData) {
-        var entry = this._createSubChart('chart-macd', true);
+        var entry = this._createPane();
         if (!entry) return;
 
-        var histSeries = entry.chart.addHistogramSeries({
+        var histSeries = entry.chart.addSeries(LightweightCharts.HistogramSeries, {
             lastValueVisible: false, priceLineVisible: false,
-        });
+        }, entry.paneIndex);
         histSeries.setData(macdData.histogram);
 
         var macdStyle = this._styleFor('macdLine');
-        var macdSeries = entry.chart.addLineSeries({
+        var macdSeries = entry.chart.addSeries(LightweightCharts.LineSeries, {
             color: macdStyle.color, lineWidth: macdStyle.lineWidth, lineStyle: macdStyle.lineStyle,
             lastValueVisible: true, priceLineVisible: false, crosshairMarkerVisible: false, title: 'MACD',
-        });
+        }, entry.paneIndex);
         macdSeries.setData(macdData.macdLine);
 
         var signalStyle = this._styleFor('macdSignal');
-        var signalSeries = entry.chart.addLineSeries({
+        var signalSeries = entry.chart.addSeries(LightweightCharts.LineSeries, {
             color: signalStyle.color, lineWidth: signalStyle.lineWidth, lineStyle: signalStyle.lineStyle,
             lastValueVisible: true, priceLineVisible: false, crosshairMarkerVisible: false, title: 'Signal',
-        });
+        }, entry.paneIndex);
         signalSeries.setData(macdData.signal);
 
         this._addPriceLine(macdSeries, 0, 'rgba(150,150,150,0.3)');
@@ -2227,18 +2372,30 @@ window.ChartWidget = {
 
     addMarkers: function (markers) {
         if (!this._loaded || !this._charts.main) return;
-        this._charts.main.series.candles.setMarkers(markers);
+        var serie = this._charts.main.series.candles;
+        if (this._markerLaag && this._markerSerie === serie)
+            this._markerLaag.setMarkers(markers);
+        else {
+            this._markerLaag = LightweightCharts.createSeriesMarkers(serie, markers);
+            this._markerSerie = serie;
+        }
     },
 
     dispose: function () {
-        var self = this;
-        Object.keys(this._charts).forEach(function (key) {
-            try { self._charts[key].chart.remove(); } catch (e) { }
-        });
+        // One chart, so one remove. Every panel entry points at the SAME chart object now, and
+        // removing it a second time throws.
+        try { if (this._charts.main) this._charts.main.chart.remove(); } catch (e) { }
         this._charts = {};
+        this._markerLaag = null;
+        this._markerSerie = null;
         this._zonePrimitive = null;
         this._segmentPrimitive = null;
         this._measurePrimitive = null;
+        // The cloud series belonged to the chart just removed. Kept, the next setData saw an
+        // unchanged _bandVorm, made no new ones and only filled the dead ones - so after leaving
+        // the Chart tab and coming back (or a theme change) the cloud was gone for good.
+        this._bandSeries = [];
+        this._bandVorm = null;
         this._lastCandles = null;
         this._loaded = false;
     }

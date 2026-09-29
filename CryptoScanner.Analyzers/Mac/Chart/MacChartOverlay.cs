@@ -1,5 +1,6 @@
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -55,25 +56,25 @@ public class MacChartOverlay : IChartOverlay
         new() { Key = KeySecond, Label = "Second EMA", Color = "#804FD1C5" },
         new() { Key = KeyMedium, Label = "Medium SMA", Color = "#55BDBDBD" },
         new() { Key = KeySlow, Label = "Slow SMA", Color = "#FFEC7BA5", LineWidth = 2 },
-        new() { Key = KeyResistance, Label = "Resistance", Color = "#FFEF5350", LineStyle = 1 },
-        new() { Key = KeySupport, Label = "Support", Color = "#FF66BB6A", LineStyle = 1 },
+        new() { Key = KeyResistance, Label = "Resistance", Color = "#FFEF5350", LineStyle = 1, CanHide = true },
+        new() { Key = KeySupport, Label = "Support", Color = "#FF66BB6A", LineStyle = 1, CanHide = true },
         new() { Key = KeyCloudUp, Label = "Cloud up", Color = "#4D53A092", IsFill = true },
         new() { Key = KeyCloudDown, Label = "Cloud down", Color = "#4DB1648C", IsFill = true },
         // The two entry markers carry the colours of the Pine script, so the same marker has the
         // same colour on this chart and on TradingView. They used to be a plain green and red,
         // which read well on their own but made the pair impossible to lay side by side. The short
         // is therefore MAGENTA rather than red - that is its own colour for it.
-        new() { Key = KeyOpenLong, Label = "Open long marker", Color = "#FF00E676" },
-        new() { Key = KeyOpenShort, Label = "Open short marker", Color = "#FFE040FB" },
-        new() { Key = KeyBreakout, Label = "Breakout marker", Color = "#FFFFFFFF" },
-        new() { Key = KeyBreakdown, Label = "Breakdown marker", Color = "#FFD4E157" },
+        new() { Key = KeyOpenLong, Label = "Open long marker", Color = "#FF00E676", CanHide = true },
+        new() { Key = KeyOpenShort, Label = "Open short marker", Color = "#FFE040FB", CanHide = true },
+        new() { Key = KeyBreakout, Label = "Breakout marker", Color = "#FFFFFFFF", CanHide = true },
+        new() { Key = KeyBreakdown, Label = "Breakdown marker", Color = "#FFD4E157", CanHide = true },
         // The four colours the strategy uses for these, read off its own style screen: a
         // green and a red cross for the line crossing, a blue and an orange diamond for the
         // exit.
-        new() { Key = KeyCrossUp, Label = "Cross up marker", Color = "#FF00D96F" },
-        new() { Key = KeyCrossDown, Label = "Cross down marker", Color = "#FFFF5252" },
-        new() { Key = KeyCloseLong, Label = "Close long marker", Color = "#FF2962FF" },
-        new() { Key = KeyCloseShort, Label = "Close short marker", Color = "#FFF59200" },
+        new() { Key = KeyCrossUp, Label = "Cross up marker", Color = "#FF00D96F", CanHide = true },
+        new() { Key = KeyCrossDown, Label = "Cross down marker", Color = "#FFFF5252", CanHide = true },
+        new() { Key = KeyCloseLong, Label = "Close long marker", Color = "#FF2962FF", CanHide = true },
+        new() { Key = KeyCloseShort, Label = "Close short marker", Color = "#FFF59200", CanHide = true },
     ];
 
 
@@ -222,8 +223,11 @@ public class MacChartOverlay : IChartOverlay
         chart.Series.Add(second);
         chart.Series.Add(slow);
         chart.Series.Add(fast);
-        chart.Series.Add(resistance);
-        chart.Series.Add(support);
+        // The levels can be switched off in the style editor; the Photino chart skips them by itself
+        if (ChartStyleSettings.IsVisible(KeyResistance))
+            chart.Series.Add(resistance);
+        if (ChartStyleSettings.IsVisible(KeySupport))
+            chart.Series.Add(support);
 
         // The crossings as a marker instead of a caption: a triangle under the candle for a long and
         // above it for a short, so a chart with many of them stays readable.
@@ -261,8 +265,8 @@ public class MacChartOverlay : IChartOverlay
                 shortMarks.Points.Add(new ScatterPoint(x, (double)candles[index].High * (1 + MarkerGap)));
         }
 
-        chart.Series.Add(longMarks);
-        chart.Series.Add(shortMarks);
+        AddIfVisible(chart, longMarks, KeyOpenLong);
+        AddIfVisible(chart, shortMarks, KeyOpenShort);
 
         // A breakout dot goes UNDER the candle and a breakdown mark above it, which is where the strategy
         //  puts them: its own settings screen reads "Breakout, below bar" and "Breakdown,
@@ -299,8 +303,8 @@ public class MacChartOverlay : IChartOverlay
                 breakdownDots.Points.Add(new ScatterPoint(x, (double)candles[index].High * (1 + 2 * MarkerGap)));
         }
 
-        chart.Series.Add(breakoutDots);
-        chart.Series.Add(breakdownDots);
+        AddIfVisible(chart, breakoutDots, KeyBreakout);
+        AddIfVisible(chart, breakdownDots, KeyBreakdown);
 
         // The line crossing and the exit, on the side of the candle the strategy puts them:
         // Cross Up and Close Long over the bar, Cross Down and Close Short under it.
@@ -317,8 +321,8 @@ public class MacChartOverlay : IChartOverlay
             else
                 crossDown.Points.Add(new ScatterPoint(x, (double)candles[index].Low * (1 - MarkerGap)));
         }
-        chart.Series.Add(crossUp);
-        chart.Series.Add(crossDown);
+        AddIfVisible(chart, crossUp, KeyCrossUp);
+        AddIfVisible(chart, crossDown, KeyCrossDown);
 
         var closeLong = Marks("mac.close.long", MarkerType.Diamond, KeyCloseLong, group);
         var closeShort = Marks("mac.close.short", MarkerType.Diamond, KeyCloseShort, group);
@@ -333,8 +337,16 @@ public class MacChartOverlay : IChartOverlay
             else
                 closeShort.Points.Add(new ScatterPoint(x, (double)candles[index].Low * (1 - MarkerGap)));
         }
-        chart.Series.Add(closeLong);
-        chart.Series.Add(closeShort);
+        AddIfVisible(chart, closeLong, KeyCloseLong);
+        AddIfVisible(chart, closeShort, KeyCloseShort);
+    }
+
+
+    /// <summary>A marker series, unless it was switched off in the style editor.</summary>
+    private static void AddIfVisible(PlotModel chart, ScatterSeries series, string key)
+    {
+        if (ChartStyleSettings.IsVisible(key))
+            chart.Series.Add(series);
     }
 
 

@@ -507,6 +507,7 @@ public partial class RunResultsViewModel : ObservableObject
             "FinishedLocal" => r => r.FinishedAt,
             "Duration" => r => (r.FinishedAt ?? DateTime.UtcNow) - r.StartedAt,
             "Result" => r => r.Result,
+            "BuildStampText" => r => r.BuildStamp,
             "SignalCount" => r => r.SignalCount,
             "PositionCount" => r => r.PositionCount,
             "PositionsOpen" => r => r.PositionsOpen,

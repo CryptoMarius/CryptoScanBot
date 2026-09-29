@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Analyzers.Dbr;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
 using CryptoScanner.Emulator.Engine;
 
 using System.Text.Json;
@@ -209,5 +210,75 @@ public class SignalGridExpanderTests : TestBase
 
         Assert.AreEqual(originalSize, DbrPlugin.Settings.MaxCandleSizeRatio);
         Assert.AreEqual(originalVolume, DbrPlugin.Settings.MaxCandleVolumeRatio);
+    }
+
+    /// <summary>
+    /// The stake of one entry can be set per run, and is put back afterwards.
+    /// <para>
+    /// The putting back is the whole point: it lives in Settings.QuoteCoins, which is shared by the
+    /// live scanner and the settings file. A run that left its own stake standing would change
+    /// every run behind it and the user's own configuration with it, and nothing on screen would
+    /// say so.
+    /// </para>
+    /// </summary>
+    [TestMethod]
+    public void EntryAmountIsAppliedToEveryQuoteAndReverted()
+    {
+        InitTestSession();
+
+        if (GlobalData.Settings.QuoteCoins.Count == 0)
+        {
+            GlobalData.Settings.QuoteCoins.Add("USDT", new CryptoQuoteData
+            {
+                Name = "USDT",
+                EntryAmount = 15m,
+                EntryPercentage = 2.5f,
+            });
+        }
+
+        var voor = GlobalData.Settings.QuoteCoins.Values
+            .Select(q => (q.Name, q.EntryAmount, q.EntryPercentage)).ToList();
+
+        var entry = new EmulatorQueueEntry { EntryAmount = 250m };
+        var overrides = SignalGridExpander.Apply(entry);
+        try
+        {
+            foreach (var quote in GlobalData.Settings.QuoteCoins.Values)
+            {
+                Assert.AreEqual(250m, quote.EntryAmount, $"{quote.Name} kreeg de inzet niet");
+                // the percentage has to go, or the amount is never read at all
+                Assert.AreEqual(0f, quote.EntryPercentage, $"{quote.Name} houdt zijn percentage");
+            }
+        }
+        finally
+        {
+            SignalGridExpander.Revert(overrides);
+        }
+
+        foreach (var (naam, bedrag, percentage) in voor)
+        {
+            var quote = GlobalData.Settings.QuoteCoins[naam];
+            Assert.AreEqual(bedrag, quote.EntryAmount, $"{naam} kreeg zijn inzet niet terug");
+            Assert.AreEqual(percentage, quote.EntryPercentage, $"{naam} kreeg zijn percentage niet terug");
+        }
+    }
+
+
+    /// <summary>Without the field nothing is touched - an older queue file must not change.</summary>
+    [TestMethod]
+    public void WithoutEntryAmountNothingChanges()
+    {
+        InitTestSession();
+
+        if (GlobalData.Settings.QuoteCoins.Count == 0)
+            GlobalData.Settings.QuoteCoins.Add("USDT", new CryptoQuoteData { Name = "USDT", EntryAmount = 15m });
+
+        var voor = GlobalData.Settings.QuoteCoins.Values.Select(q => q.EntryAmount).ToList();
+
+        var overrides = SignalGridExpander.Apply(new EmulatorQueueEntry());
+        SignalGridExpander.Revert(overrides);
+
+        var na = GlobalData.Settings.QuoteCoins.Values.Select(q => q.EntryAmount).ToList();
+        CollectionAssert.AreEqual(voor, na);
     }
 }

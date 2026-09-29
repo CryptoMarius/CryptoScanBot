@@ -1,5 +1,6 @@
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 
 using System.Reflection;
@@ -80,6 +81,42 @@ public static class SignalGridExpander
         object tradingObj = GlobalData.Settings.Trading;
         foreach (var (propPath, jsonVal) in entry.TradingOverrides)
             ApplyDottedProperty(tradingObj, propPath, jsonVal, saved);
+
+        ApplyEntryAmount(entry, saved);
+    }
+
+    /// <summary>
+    /// The stake of one entry for this run, on every quote coin.
+    /// <para>
+    /// Both values are saved through the same <see cref="Override"/> list the rest uses, so
+    /// <see cref="Revert"/> puts them back when the run ends and neither the next run nor the
+    /// settings file carries anything over.
+    /// </para>
+    /// <para>
+    /// The percentage goes to zero with it, because it WINS: GetEntryAmount reads the amount only
+    /// when the percentage is zero. Setting the amount while a percentage stands would change
+    /// nothing at all, and a run that measures nothing looks exactly like a run that measures
+    /// something.
+    /// </para>
+    /// </summary>
+    private static void ApplyEntryAmount(EmulatorQueueEntry entry, List<Override> saved)
+    {
+        if (entry.EntryAmount is not decimal bedrag || bedrag <= 0)
+            return;
+
+        PropertyInfo? amountProp = typeof(CryptoQuoteData).GetProperty(nameof(CryptoQuoteData.EntryAmount));
+        PropertyInfo? percentProp = typeof(CryptoQuoteData).GetProperty(nameof(CryptoQuoteData.EntryPercentage));
+        if (amountProp == null || percentProp == null)
+            return;
+
+        foreach (CryptoQuoteData quote in GlobalData.Settings.QuoteCoins.Values)
+        {
+            saved.Add(new Override(quote, amountProp, amountProp.GetValue(quote)));
+            amountProp.SetValue(quote, bedrag);
+
+            saved.Add(new Override(quote, percentProp, percentProp.GetValue(quote)));
+            percentProp.SetValue(quote, Convert.ChangeType(0, percentProp.PropertyType));
+        }
     }
 
     private static void ApplyProps(object target, Dictionary<string, JsonElement> props, List<Override> saved)

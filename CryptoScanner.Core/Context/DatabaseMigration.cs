@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 101;
+    public readonly static int CurrentDatabaseVersion = 102;
 
 
     /// <summary>
@@ -2220,6 +2220,30 @@ public class DatabaseMigration
         // Name is the same value version 53 would have used. A row without a Name cannot be repaired
         // from within the database; it is only counted, so the number shows up in the log rather
         // than the symbol quietly staying away.
+        if (CurrentVersion > version.Version && version.Version == 97)
+        {
+            using var transaction = database.BeginTransaction();
+
+            int repaired = database.Connection.Execute(
+                "update Symbol set ExchangeName = Name " +
+                "where (ExchangeName is null or ExchangeName = '') and Name is not null and Name <> ''",
+                transaction: transaction);
+            if (repaired > 0)
+                GlobalData.AddTextToLogTab($"Database version 98: {repaired} symbol(s) had no ExchangeName, filled from the symbol name");
+
+            int unrepairable = database.Connection.ExecuteScalar<int>(
+                "select count(*) from Symbol where Name is null or Name = ''",
+                transaction: transaction);
+            if (unrepairable > 0)
+                GlobalData.AddErrorToLogTab($"Database version 98: {unrepairable} symbol(s) have no name at all and are skipped while loading");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
         if (CurrentVersion > version.Version && version.Version == 98)
         {
             using var transaction = database.BeginTransaction();
@@ -2275,31 +2299,10 @@ public class DatabaseMigration
         }
 
 
-        if (CurrentVersion > version.Version && version.Version == 97)
-        {
-            using var transaction = database.BeginTransaction();
-
-            int repaired = database.Connection.Execute(
-                "update Symbol set ExchangeName = Name " +
-                "where (ExchangeName is null or ExchangeName = '') and Name is not null and Name <> ''",
-                transaction: transaction);
-            if (repaired > 0)
-                GlobalData.AddTextToLogTab($"Database version 98: {repaired} symbol(s) had no ExchangeName, filled from the symbol name");
-
-            int unrepairable = database.Connection.ExecuteScalar<int>(
-                "select count(*) from Symbol where Name is null or Name = ''",
-                transaction: transaction);
-            if (unrepairable > 0)
-                GlobalData.AddErrorToLogTab($"Database version 98: {unrepairable} symbol(s) have no name at all and are skipped while loading");
-
-            // update version
-            version.Version += 1;
-            database.Connection.Update(version, transaction);
-            transaction.Commit();
-        }
-
-
-        if (CurrentVersion > version.Version && version.Version == 96)
+        // This step was numbered 96 as well, next to the band range step of 05-09-2026, so it never
+        // ran: the band range step comes first and leaves the database at 97. Renumbered to 101 on
+        // 28-09-2026. Runs that already have a start capital are skipped, so it is safe where it did run.
+        if (CurrentVersion > version.Version && version.Version == 101)
         {
             using var transaction = database.BeginTransaction();
 
@@ -2344,7 +2347,7 @@ public class DatabaseMigration
                 }
             }
             if (filled > 0)
-                GlobalData.AddTextToLogTab($"Database version 97: start capital of 10.000 recorded on {filled} older run(s), so they show a return percentage again");
+                GlobalData.AddTextToLogTab($"Database version 102: start capital of 10.000 recorded on {filled} older run(s), so they show a return percentage again");
 
             // update version
             version.Version += 1;

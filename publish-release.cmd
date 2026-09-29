@@ -80,7 +80,7 @@ rem where the script is started. Do NOT end it with a backslash - the next line 
 rem is there anyway, because tar.exe would otherwise choke: in -C "%PUBLISHDIR%" a trailing
 rem backslash escapes the closing quote, the directory argument swallows the folder name that
 rem follows it, and tar reports "no files or directories specified".
-set PUBLISHDIR=E:\CryptoScanBot\bin\Build
+set PUBLISHDIR=E:\CryptoScanBot\bin\Release\Build
 if "%PUBLISHDIR:~-1%"=="\" set PUBLISHDIR=%PUBLISHDIR:~0,-1%
 
 if not exist "%PUBLISHDIR%" mkdir "%PUBLISHDIR%"
