@@ -732,6 +732,9 @@ public class PositionMonitor : IDisposable
                                 position = PositionTools.CreatePosition(Symbol, signal.Strategy, signal.Side,
                                     signal.EventText, symbolInterval, LastCandle1mCloseTimeDate);
                                 PositionTools.AddSignalProperties(position, signal);
+                                // Held back from the free balance until the entry order is on the book,
+                                // so a position created on another symbol in the meantime cannot spend it
+                                position.PlannedEntryAmount = entryValue;
                                 Database.Connection.Insert(position);
                                 PositionTools.AddPosition(position);
                                 PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry,
@@ -1570,10 +1573,33 @@ public class PositionMonitor : IDisposable
         if (!position.EntryPrice.HasValue || position.TpGridBreakEvenPrice == 0 || position.Invested == 0)
             return prices;
 
+        decimal entryPrice = position.TpGridBreakEvenPrice;
+        foreach (int i in MissingDcaLevelIndexes(position))
+        {
+            var dcaEntry = GlobalData.Settings.Trading.DcaList[i];
+            decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
+            prices.Add((i, position.Side == CryptoTradeSide.Long ? entryPrice - diffPrice : entryPrice + diffPrice));
+        }
+        return prices;
+    }
+
+
+    /// <summary>
+    /// The indexes in the DCA list of the levels this position has not created a part for yet, and
+    /// will create one for. The pricing above and the reservation in PaperAssets.UnplacedCommitment
+    /// both read this, so what is placed and what is held back for it can never disagree.
+    /// <para>
+    /// No entry price is needed: a position that is still waiting for its entry already has all of
+    /// its levels ahead of it.
+    /// </para>
+    /// </summary>
+    internal static List<int> MissingDcaLevelIndexes(CryptoPosition position)
+    {
+        List<int> levels = [];
+
         // Afgesloten DCA parts sluiten we uit (omdat we zogenaamde jojo's uitvoeren, zie CanOpenAdditionalDca)
         int existingDcaParts = position.PartList.Values.Count(p => p.Purpose == CryptoPartPurpose.Dca && !p.CloseTime.HasValue);
 
-        decimal entryPrice = position.TpGridBreakEvenPrice;
         for (int i = existingDcaParts; i < GlobalData.Settings.Trading.DcaList.Count; i++)
         {
             var dcaEntry = GlobalData.Settings.Trading.DcaList[i];
@@ -1583,10 +1609,9 @@ public class PositionMonitor : IDisposable
             if (position.SlPercentage.HasValue && dcaEntry.Percentage >= position.SlPercentage.Value)
                 continue;
 
-            decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
-            prices.Add((i, position.Side == CryptoTradeSide.Long ? entryPrice - diffPrice : entryPrice + diffPrice));
+            levels.Add(i);
         }
-        return prices;
+        return levels;
     }
 
 
@@ -1635,13 +1660,18 @@ public class PositionMonitor : IDisposable
 
         var info = AssetTools.GetAsset(GlobalData.ActiveExchange!, Symbol);
 
+        // These levels are already held back from the free balance for THIS position (see
+        // PaperAssets.UnplacedCommitment), so that money is ours to spend here - without adding it
+        // back a position would refuse the very levels it reserved.
+        decimal available = info.QuoteFree + PaperAssets.UnplacedDcaCommitment(position);
+
         List<(int levelIndex, decimal price)> affordable = [];
         decimal committed = 0;
         foreach (var level in missingLevels)
         {
             // Same sum HandleDcaPart uses: the factor is a percentage of the entry amount
             decimal cost = (decimal)position.EntryAmount * GlobalData.Settings.Trading.DcaList[level.levelIndex].Factor / 100m;
-            if (committed + cost > info.QuoteFree)
+            if (committed + cost > available)
                 break;
             committed += cost;
             affordable.Add(level);
@@ -1649,7 +1679,7 @@ public class PositionMonitor : IDisposable
 
         if (affordable.Count < missingLevels.Count)
             GlobalData.AddTextToLogTab($"{text}: {affordable.Count} of {missingLevels.Count} level(s) fit in the free "
-                + $"{Symbol.Quote}={info.QuoteFree} - the rest follows once money is freed up");
+                + $"{Symbol.Quote}={available} - the rest follows once money is freed up");
 
         return affordable;
     }

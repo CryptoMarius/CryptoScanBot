@@ -67,6 +67,12 @@ public partial class CryptoPosition : CryptoData2
     // Hulpmiddelen voor statistiek en dca (niet noodzakelijk)
     public decimal? EntryPrice { get; set; }
     public decimal? EntryAmount { get; set; }
+    // The entry value (quote) the asset check approved when the position was created. EntryAmount is
+    // only filled once the entry order is placed; until then this is what the paper balance holds
+    // back for it (PaperAssets.UnplacedCommitment). Not persisted: after a restart the entry order
+    // is on the book and EntryAmount has taken over.
+    [Computed]
+    public decimal? PlannedEntryAmount { get; set; }
     public decimal? ProfitPrice { get; set; }
 
     // Number of DCA parts that have actually been filled (Invested > 0).

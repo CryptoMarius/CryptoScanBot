@@ -1165,6 +1165,14 @@ window.ChartWidget = {
         Object.keys(main.overlays).forEach(function (key) {
             try { main.overlays[key].applyOptions({ priceFormat: format }); } catch (e) { }
         });
+
+        // The cloud as well - and it matters most there. The price axis takes its format from the
+        // FIRST series on the scale, and the cloud is put first on purpose (setSeriesOrder, so it
+        // lies under the candles). With the library default of two decimals the whole axis of a
+        // coin at 0.0057 read 0.01 / 0.00, whatever precision the candles had.
+        (this._bandSeries || []).forEach(function (serie) {
+            try { serie.applyOptions({ priceFormat: format }); } catch (e) { }
+        });
     },
 
     _formatVolume: function (value) {

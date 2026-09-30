@@ -367,4 +367,314 @@ public class PaperAssetsReservationTests : TestBase
         bool room = AssetTools.CheckAssetsCoverEntryAndDca(GlobalData.ActiveExchange!, symbol, 1000m, out string reason);
         Assert.AreEqual(expectedRoom, room, reason);
     }
+
+
+    /// <summary>
+    /// A ladder of more than one level: the entry has to fit together with EVERY level behind it.
+    /// Entry 100 with levels of 200% and 400% commits 100 + 200 + 400 = 700, so 700 is exactly
+    /// enough and 699 is not - before the first position, for both sides.
+    /// </summary>
+    [TestMethod]
+    [DataRow(700.0, true, DisplayName = "700: entry plus both levels fit exactly")]
+    [DataRow(699.0, false, DisplayName = "699: one short of the whole ladder")]
+    public void AnEntry_IsOnlyAllowedWhenEveryDcaLevelFits(double startCapital, bool expectedRoom)
+    {
+        var (_, symbol, _) = Arrange((decimal)startCapital);
+        GlobalData.Settings.Trading.DcaList =
+        [
+            new CryptoDcaEntry { Percentage = 2m, Factor = 200m },
+            new CryptoDcaEntry { Percentage = 4m, Factor = 400m },
+        ];
+
+        bool room = AssetTools.CheckAssetsCoverEntryAndDca(GlobalData.ActiveExchange!, symbol, 100m, out string reason);
+        Assert.AreEqual(expectedRoom, room, reason);
+    }
+
+
+    /// <summary>
+    /// The same two-level ladder once a position is open: the filled entry and BOTH DCA orders on
+    /// the book are out of the free balance, identically for a long and a short, and as the levels
+    /// fill the free balance does not move - the money only changes from reserved to invested.
+    /// </summary>
+    [TestMethod]
+    [DataRow(CryptoTradeSide.Long, DisplayName = "long")]
+    [DataRow(CryptoTradeSide.Short, DisplayName = "short")]
+    public void AnOpenPosition_HoldsTheEntryAndEveryDcaLevel(CryptoTradeSide side)
+    {
+        var (database, symbol, assetQuote) = Arrange(Start);
+        DateTime t = DateTime.UtcNow.AddHours(-48);
+        CryptoPosition position = CreateOpenPosition(database, symbol, side, t);
+
+        var entry = PlaceOrder(database, position, CryptoPartPurpose.Entry, EntrySide(side), 100m, 1m, t);
+        FillOrder(position, entry, 100m);
+        var dca1 = PlaceOrder(database, position, CryptoPartPurpose.Dca, EntrySide(side), 100m, 2m, t);
+        var dca2 = PlaceOrder(database, position, CryptoPartPurpose.Dca, EntrySide(side), 100m, 4m, t);
+        Assert.AreEqual(Start - 700m, assetQuote.Free, "entry 100 + dca 200 + dca 400 out of the free balance");
+
+        FillOrder(position, dca1, 100m);
+        Assert.AreEqual(Start - 700m, assetQuote.Free, "first level filled: reserved became invested");
+
+        FillOrder(position, dca2, 100m);
+        Assert.AreEqual(Start - 700m, assetQuote.Free, "whole ladder filled: still 700 in the position");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  Promised but not on the book yet (PaperAssets.UnplacedCommitment)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// A position as the trader creates it: the asset check approved an entry of 100, the position
+    /// exists, and no order has been placed for it yet.
+    /// </summary>
+    private static CryptoPosition CreateApprovedPosition(CryptoDatabase database, CryptoSymbol symbol,
+        CryptoTradeSide side, DateTime startTime, decimal entryAmount)
+    {
+        CryptoPosition position = CreateOpenPosition(database, symbol, side, startTime);
+        position.PlannedEntryAmount = entryAmount;
+        return position;
+    }
+
+    /// <summary>Place the entry order the way HandlePosition does, which also fills in EntryAmount.</summary>
+    private static CryptoPositionStep PlaceEntry(CryptoDatabase database, CryptoPosition position, decimal price, decimal quantity, DateTime t)
+    {
+        var step = PlaceOrder(database, position, CryptoPartPurpose.Entry, EntrySide(position.Side), price, quantity, t);
+        position.EntryAmount = price * quantity;
+        return step;
+    }
+
+
+    /// <summary>
+    /// The case Marius asked about on 30-09-2026: positions opened one after the other with a limit
+    /// entry. 1000 capital, entry 100 and one level of 200% - 300 per position, so three fit. The
+    /// entry check approves the whole 300, but only the entry order was locked; the ladder goes on the
+    /// book after the fill. So the next position saw 900, then 800, ... and eight passed the check.
+    /// Now the ladder is held back from the moment the position exists.
+    /// </summary>
+    [TestMethod]
+    [DataRow(CryptoTradeSide.Long, DisplayName = "long")]
+    [DataRow(CryptoTradeSide.Short, DisplayName = "short")]
+    public void WaitingLimitEntries_HoldTheirLadderBack(CryptoTradeSide side)
+    {
+        var (database, symbol, assetQuote) = Arrange(1000m);
+        CryptoSymbol second = CreateSecondSymbol(database, symbol);
+        GlobalData.Settings.Trading.DcaList = [new CryptoDcaEntry { Percentage = 2m, Factor = 200m }];
+        DateTime t = DateTime.UtcNow.AddHours(-48);
+
+        CryptoPosition first = CreateApprovedPosition(database, symbol, side, t, 100m);
+        PlaceEntry(database, first, 100m, 1m, t);
+        Assert.AreEqual(700m, assetQuote.Free, "the waiting entry of 100 AND its level of 200 are held back");
+
+        CryptoPosition secondPosition = CreateApprovedPosition(database, second, side, t, 100m);
+        PlaceEntry(database, secondPosition, 100m, 1m, t);
+        Assert.AreEqual(400m, assetQuote.Free, "two positions, 600 committed");
+
+        Assert.IsTrue(AssetTools.CheckAssetsCoverEntryAndDca(GlobalData.ActiveExchange!, symbol, 100m, out _),
+            "a third still fits: 300 of the 400");
+        assetQuote.Total -= 200m; // as if a third symbol had taken 200 in the meantime
+        PaperAssets.RefreshLocked(GlobalData.ActiveExchange!);
+        Assert.IsFalse(AssetTools.CheckAssetsCoverEntryAndDca(GlobalData.ActiveExchange!, symbol, 100m, out string reason),
+            "200 left: no room for 300 - before this fix the check saw 800 and said yes. " + reason);
+    }
+
+
+    /// <summary>
+    /// Between creating a position and placing its entry order the position holds nothing on the
+    /// book at all. The entry and the ladder are held back from the moment the check approved them.
+    /// </summary>
+    [TestMethod]
+    [DataRow(CryptoTradeSide.Long, DisplayName = "long")]
+    [DataRow(CryptoTradeSide.Short, DisplayName = "short")]
+    public void ACreatedPosition_HoldsItsEntryBeforeTheOrderExists(CryptoTradeSide side)
+    {
+        var (database, symbol, assetQuote) = Arrange(Start);
+        GlobalData.Settings.Trading.DcaList = [new CryptoDcaEntry { Percentage = 2m, Factor = 200m }];
+        DateTime t = DateTime.UtcNow.AddHours(-48);
+
+        CryptoPosition position = CreateApprovedPosition(database, symbol, side, t, 100m);
+        PaperAssets.RefreshLocked(GlobalData.ActiveExchange!);
+        Assert.AreEqual(Start - 300m, assetQuote.Free, "entry 100 and level 200, with no order on the book yet");
+
+        PlaceEntry(database, position, 100m, 1m, t);
+        Assert.AreEqual(Start - 300m, assetQuote.Free, "the entry moved from promised to on the book - no change");
+    }
+
+
+    /// <summary>
+    /// The whole way from promise to filled ladder, on both sides: the free balance stays at start
+    /// minus 300 at every step, because money only moves from promised to on the book to invested.
+    /// </summary>
+    [TestMethod]
+    [DataRow(CryptoTradeSide.Long, DisplayName = "long")]
+    [DataRow(CryptoTradeSide.Short, DisplayName = "short")]
+    public void FromPromiseToFilledLadder_TheFreeBalanceNeverMoves(CryptoTradeSide side)
+    {
+        var (database, symbol, assetQuote) = Arrange(Start);
+        GlobalData.Settings.Trading.DcaList = [new CryptoDcaEntry { Percentage = 2m, Factor = 200m }];
+        DateTime t = DateTime.UtcNow.AddHours(-48);
+
+        CryptoPosition position = CreateApprovedPosition(database, symbol, side, t, 100m);
+        var entry = PlaceEntry(database, position, 100m, 1m, t);
+        FillOrder(position, entry, 100m);
+        position.Status = CryptoPositionStatus.Trading;
+        PaperAssets.RefreshLocked(GlobalData.ActiveExchange!);
+        Assert.AreEqual(Start - 300m, assetQuote.Free, "entry filled, level still promised");
+        Assert.AreEqual(200m, PaperAssets.UnplacedDcaCommitment(position),
+            "this is what AffordableDcaLevels adds back, so the position can place its own level");
+
+        var dca = PlaceOrder(database, position, CryptoPartPurpose.Dca, EntrySide(side), 100m, 2m, t);
+        Assert.AreEqual(0m, PaperAssets.UnplacedDcaCommitment(position), "the level is on the book now");
+        Assert.AreEqual(Start - 300m, assetQuote.Free, "level on the book");
+
+        FillOrder(position, dca, 100m);
+        Assert.AreEqual(Start - 300m, assetQuote.Free, "level filled");
+    }
+
+
+    /// <summary>
+    /// Once the profit lock has armed no DCA order is placed any more, so nothing is held back for
+    /// the levels that were never placed.
+    /// </summary>
+    [TestMethod]
+    public void AnArmedProfitLock_ReleasesTheUnplacedLevels()
+    {
+        var (database, symbol, assetQuote) = Arrange(Start);
+        GlobalData.Settings.Trading.DcaList = [new CryptoDcaEntry { Percentage = 2m, Factor = 200m }];
+        DateTime t = DateTime.UtcNow.AddHours(-48);
+
+        CryptoPosition position = CreateApprovedPosition(database, symbol, CryptoTradeSide.Long, t, 100m);
+        var entry = PlaceEntry(database, position, 100m, 1m, t);
+        FillOrder(position, entry, 100m);
+        position.Status = CryptoPositionStatus.Trading;
+        position.SlMovedToBreakEven = true;
+        PaperAssets.RefreshLocked(GlobalData.ActiveExchange!);
+
+        Assert.AreEqual(Start - 100m, assetQuote.Free, "only the filled entry remains");
+    }
+
+
+    /// <summary>
+    /// A level beyond the signal's own stop is never placed (PositionMonitor skips it), so it is not
+    /// held back either: stop 3%, levels at 2% and 4% - only the 2% level counts.
+    /// </summary>
+    [TestMethod]
+    public void ALevelBeyondTheSignalStop_IsNotHeldBack()
+    {
+        var (database, symbol, assetQuote) = Arrange(Start);
+        GlobalData.Settings.Trading.DcaList =
+        [
+            new CryptoDcaEntry { Percentage = 2m, Factor = 200m },
+            new CryptoDcaEntry { Percentage = 4m, Factor = 400m },
+        ];
+        DateTime t = DateTime.UtcNow.AddHours(-48);
+
+        CryptoPosition position = CreateApprovedPosition(database, symbol, CryptoTradeSide.Long, t, 100m);
+        position.SlPercentage = 3m;
+        PaperAssets.RefreshLocked(GlobalData.ActiveExchange!);
+
+        Assert.AreEqual(Start - 100m - 200m, assetQuote.Free, "entry and the 2% level; the 4% level lies beyond the stop");
+    }
+
+
+    /// <summary>With asset management off nothing is held back: nothing is refused for money then either.</summary>
+    [TestMethod]
+    public void WithAssetManagementOff_NothingIsHeldBack()
+    {
+        var (database, symbol, assetQuote) = Arrange(Start);
+        GlobalData.Settings.Trading.UseAssetManagement = false;
+        GlobalData.Settings.Trading.DcaList = [new CryptoDcaEntry { Percentage = 2m, Factor = 200m }];
+        DateTime t = DateTime.UtcNow.AddHours(-48);
+
+        CreateApprovedPosition(database, symbol, CryptoTradeSide.Long, t, 100m);
+        PaperAssets.RefreshLocked(GlobalData.ActiveExchange!);
+
+        Assert.AreEqual(Start, assetQuote.Free);
+    }
+}
+
+
+/// <summary>
+/// The check afterwards (CapitalCheck), which reads only the positions and so does not share the
+/// blind spots of the reservation model it is meant to catch.
+/// </summary>
+[TestClass]
+public class CapitalCheckTests
+{
+    private static readonly DateTime T0 = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    [TestMethod]
+    public void WithinTheCapital_NoBreach()
+    {
+        var positions = new[]
+        {
+            new CapitalCheck.Position("USDT", T0, T0.AddDays(2), 300m, 10m),
+            new CapitalCheck.Position("USDT", T0.AddDays(1), T0.AddDays(3), 300m, -5m),
+            new CapitalCheck.Position("USDT", T0.AddDays(1), null, 300m, 0m),
+        };
+        Assert.AreEqual(0, CapitalCheck.Find(positions, 1000m).Count, "900 of 1000 at the most");
+    }
+
+
+    /// <summary>
+    /// Run 1765 in miniature: four positions of 300 open at once on 1000 of capital.
+    /// </summary>
+    [TestMethod]
+    public void MoreOpenThanTheCapital_IsReportedWithTheWorstMoment()
+    {
+        var positions = new[]
+        {
+            new CapitalCheck.Position("USDT", T0, null, 300m, 0m),
+            new CapitalCheck.Position("USDT", T0.AddDays(1), null, 300m, 0m),
+            new CapitalCheck.Position("USDT", T0.AddDays(2), null, 300m, 0m),
+            new CapitalCheck.Position("USDT", T0.AddDays(3), null, 300m, 0m),
+        };
+        List<CapitalCheck.Breach> breaches = CapitalCheck.Find(positions, 1000m);
+
+        Assert.AreEqual(1, breaches.Count);
+        Assert.AreEqual(1200m, breaches[0].Committed);
+        Assert.AreEqual(1000m, breaches[0].Available);
+        Assert.AreEqual(T0.AddDays(3), breaches[0].Moment);
+    }
+
+
+    /// <summary>Profit that has been realised is money the account has: it raises what may be open.</summary>
+    [TestMethod]
+    public void RealisedProfit_RaisesTheCapital()
+    {
+        var positions = new[]
+        {
+            new CapitalCheck.Position("USDT", T0, T0.AddDays(1), 500m, 300m),
+            new CapitalCheck.Position("USDT", T0.AddDays(2), null, 650m, 0m),
+            new CapitalCheck.Position("USDT", T0.AddDays(2), null, 650m, 0m),
+        };
+        Assert.AreEqual(0, CapitalCheck.Find(positions, 1000m).Count, "1300 open against 1000 + 300 realised");
+    }
+
+
+    /// <summary>
+    /// A close and an open in the same minute: the freed money may be used again right away.
+    /// </summary>
+    [TestMethod]
+    public void ACloseBeforeAnOpenInTheSameMinute_FreesTheMoneyFirst()
+    {
+        var positions = new[]
+        {
+            new CapitalCheck.Position("USDT", T0, T0.AddDays(1), 1000m, 0m),
+            new CapitalCheck.Position("USDT", T0.AddDays(1), null, 1000m, 0m),
+        };
+        Assert.AreEqual(0, CapitalCheck.Find(positions, 1000m).Count);
+    }
+
+
+    /// <summary>Every quote coin has its own capital (the start capital is handed out per coin).</summary>
+    [TestMethod]
+    public void EachQuoteCoin_IsCheckedAgainstItsOwnCapital()
+    {
+        var positions = new[]
+        {
+            new CapitalCheck.Position("USDT", T0, null, 800m, 0m),
+            new CapitalCheck.Position("USDC", T0, null, 800m, 0m),
+        };
+        Assert.AreEqual(0, CapitalCheck.Find(positions, 1000m).Count, "800 each, not 1600 against one capital");
+    }
 }

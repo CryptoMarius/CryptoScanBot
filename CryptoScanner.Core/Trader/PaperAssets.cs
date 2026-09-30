@@ -198,6 +198,7 @@ public class PaperAssets
                     CryptoAssetAdjustmentReason.Reset);
 
             activeExchange.Data.AssetList.Clear();
+            Overcommitted.Clear();
 
             // Silent: the emulator resets at the start of every run, and a line per coin per run
             // buries the log. The caller says what it handed out.
@@ -299,6 +300,7 @@ public class PaperAssets
         {
             asset.Locked = lockedPerAsset.TryGetValue(asset.Name, out decimal locked) ? locked : 0;
             asset.Free = asset.Total - asset.Locked;
+            WarnWhenOvercommitted(asset);
             // An asset cannot have more reserved than it holds - as long as asset management is what
             // hands out the money. With it switched off the trader spends money it does not have on
             // purpose, and flooring the result here would hide exactly the number the run is meant
@@ -306,6 +308,39 @@ public class PaperAssets
             if (asset.Free < 0 && GlobalData.Settings.Trading.UseAssetManagement)
                 asset.Free = 0;
         }
+    }
+
+
+    // Coins that are currently overcommitted, so the warning below is written once per episode and
+    // not on every balance read
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> Overcommitted = new();
+
+    /// <summary>
+    /// The watchdog for the whole reservation model: with asset management on, what is reserved can
+    /// never be more than what is held. When it is, the checks let through something they should have
+    /// refused - which is how both leaks of 30-09-2026 would have shown up on their first tight run
+    /// (shorts that freed money, and ladders nobody held back). The floor to zero right after this
+    /// hides that number, so it is read here, before.
+    /// <para>
+    /// One percent of the balance is tolerated: an entry is weighed at the price of the check and
+    /// filled a moment later, and a quantity rounded up to the size grid adds a little on top.
+    /// </para>
+    /// </summary>
+    private static void WarnWhenOvercommitted(CryptoAsset asset)
+    {
+        if (!GlobalData.Settings.Trading.UseAssetManagement)
+            return;
+
+        decimal tolerance = Math.Max(1m, asset.Total / 100m);
+        if (asset.Free < -tolerance)
+        {
+            if (Overcommitted.TryAdd(asset.Name, true))
+                GlobalData.AddErrorToLogTab($"Asset management: {asset.Name} is overcommitted - locked {asset.Locked.ToString0()} "
+                    + $"against a balance of {asset.Total.ToString0()} ({asset.Free.ToString0()} short). A check let through "
+                    + "an order or position it should have refused.");
+        }
+        else if (asset.Free >= 0)
+            Overcommitted.TryRemove(asset.Name, out _);
     }
 
 
@@ -388,6 +423,12 @@ public class PaperAssets
                         decimal shortOpenValue = shortOpenQuantity * shortSoldValue / shortSoldQuantity;
                         AddLocked(locked, symbol.Quote, 2 * shortOpenValue);
                     }
+
+                    // What the position was promised but has not put on the book yet: the entry
+                    // before its order is placed, and the DCA levels before theirs are.
+                    decimal unplaced = UnplacedCommitment(position);
+                    if (unplaced > 0)
+                        AddLocked(locked, symbol.Quote, unplaced);
                 }
                 return locked;
             }
@@ -400,6 +441,83 @@ public class PaperAssets
 
         ScannerLog.Logger.Trace("PaperAssets.CalculateLockedAmounts: positions kept changing, keeping the previous amounts");
         return null;
+    }
+
+
+    /// <summary>
+    /// What an open position has been promised but not yet put on the book, in quote.
+    /// <para>
+    /// The asset check at entry approves the entry AND every DCA level behind it
+    /// (AssetTools.CheckAvailableAssets with reserveForDca). But only orders that are on the book are
+    /// locked, and the DCA orders only go on the book once the entry has filled - for a limit entry
+    /// that can take several candles, and even a market entry goes through the position thread first.
+    /// In between, the next position saw that money as free: with 1000 capital and positions of
+    /// 100 + a 200% level, eight positions passed the check where three fit, and most of them then
+    /// found no money left for their ladder. Holding the promise back until the order exists closes
+    /// that gap. The same holds for the entry itself between creating the position and placing its
+    /// order.
+    /// </para>
+    /// <para>
+    /// Only with asset management on - without it nothing is refused for lack of money anyway.
+    /// </para>
+    /// </summary>
+    internal static decimal UnplacedCommitment(CryptoPosition position)
+        => UnplacedEntryCommitment(position) + UnplacedDcaCommitment(position);
+
+
+    /// <summary>The entry value of a position whose entry order has not been placed yet.</summary>
+    internal static decimal UnplacedEntryCommitment(CryptoPosition position)
+    {
+        if (!IsHoldingPromises(position) || position.Invested > 0)
+            return 0;
+
+        foreach (CryptoPositionPart part in position.PartList.Values)
+        {
+            if (part.Purpose == CryptoPartPurpose.Entry && part.StepList.Count > 0)
+                return 0; // the entry order exists and is locked (or filled) on its own
+        }
+        return position.PlannedEntryAmount ?? position.EntryAmount ?? 0;
+    }
+
+
+    /// <summary>
+    /// The DCA levels a position will still place: the levels it has no part for yet (the same list
+    /// PositionMonitor places from), plus parts that were created but whose order is not on the book yet.
+    /// Nothing once the profit lock has armed, because no DCA order is placed after that.
+    /// </summary>
+    internal static decimal UnplacedDcaCommitment(CryptoPosition position)
+    {
+        if (!IsHoldingPromises(position) || position.SlMovedToBreakEven)
+            return 0;
+
+        decimal entryAmount = position.EntryAmount ?? position.PlannedEntryAmount ?? 0;
+        if (entryAmount <= 0)
+            return 0;
+
+        List<CryptoDcaEntry> dcaList = GlobalData.Settings.Trading.DcaList;
+        decimal reserved = 0;
+        foreach (int levelIndex in PositionMonitor.MissingDcaLevelIndexes(position))
+            reserved += entryAmount * dcaList[levelIndex].Factor / 100m;
+
+        foreach (CryptoPositionPart part in position.PartList.Values)
+        {
+            if (part.Purpose != CryptoPartPurpose.Dca || part.CloseTime.HasValue || part.StepList.Count > 0)
+                continue;
+            // PartNumber is the 1-based DCA level once the position has been recalculated, which
+            // PositionMonitor does right after creating the parts and before placing their orders
+            int levelIndex = part.PartNumber - 1;
+            if (levelIndex >= 0 && levelIndex < dcaList.Count)
+                reserved += entryAmount * dcaList[levelIndex].Factor / 100m;
+        }
+        return reserved;
+    }
+
+
+    private static bool IsHoldingPromises(CryptoPosition position)
+    {
+        if (!GlobalData.Settings.Trading.UseAssetManagement || position.CloseTime.HasValue)
+            return false;
+        return position.Status == CryptoPositionStatus.Waiting || position.Status == CryptoPositionStatus.Trading;
     }
 
 

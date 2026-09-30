@@ -158,6 +158,7 @@ public static class EmulatorDb
             run.Result = result;
             ComputeRunStats(database, run);
             database.Connection.Update(run);
+            ReportCapitalCheck(database, run);
         }
 
         GlobalData.CurrentEmulatorRunId = null;
@@ -229,6 +230,57 @@ public static class EmulatorDb
         {
             GlobalData.AddTextToLogTab($"WAL checkpoint FAILED: {ex.Message}");
         }
+    }
+
+
+    /// <summary>
+    /// Writes the result of <see cref="CapitalCheck"/> for a finished run to the log: one line when
+    /// every quote coin stayed within its capital, an error line per quote coin that did not. Only
+    /// for runs with asset management on - without it the capital bounds nothing by design. Run
+    /// once at the end of a run, not from the live refresh, which recomputes every 20 seconds.
+    /// </summary>
+    private static void ReportCapitalCheck(CryptoDatabase database, CryptoEmulatorRun run)
+    {
+        try
+        {
+            using JsonDocument config = JsonDocument.Parse(string.IsNullOrWhiteSpace(run.ConfigJson) ? "{}" : run.ConfigJson);
+            JsonElement root = config.RootElement;
+            if (!root.TryGetProperty("UseAssetManagement", out JsonElement useAssets) || useAssets.ValueKind != JsonValueKind.True)
+                return;
+            decimal startCapital = root.TryGetProperty("StartCapital", out JsonElement capital) && capital.TryGetDecimal(out decimal value) && value > 0
+                ? value : PaperAssets.DefaultStartCapital;
+
+            var positions = database.Connection.Query<CapitalRow>(
+                "select s.Quote as Quote, p.CreateTime as Open, p.CloseTime as Close, " +
+                "       CAST(p.Invested as REAL) as Invested, CAST(p.Profit as REAL) as Profit " +
+                "from position p join symbol s on s.Id = p.SymbolId " +
+                "where p.EmulatorRunId = @id and CAST(p.Invested as REAL) > 0", new { id = run.Id })
+                .Select(r => new CapitalCheck.Position(r.Quote ?? "", r.Open, r.Close, (decimal)r.Invested, (decimal)(r.Profit ?? 0.0)));
+
+            List<CapitalCheck.Breach> breaches = CapitalCheck.Find(positions, startCapital);
+            if (breaches.Count == 0)
+            {
+                GlobalData.AddTextToLogTab($"Capital check run #{run.Id}: every quote coin stayed within its capital of {startCapital.ToString0()}");
+                return;
+            }
+            foreach (CapitalCheck.Breach b in breaches)
+                GlobalData.AddErrorToLogTab($"Capital check run #{run.Id}: {b.Quote} held {b.Committed.ToString0()} in open positions "
+                    + $"on {b.Moment:yyyy-MM-dd HH:mm} while only {b.Available.ToString0()} was available - the asset checks let "
+                    + "through more than the account had, so this run's result is not reachable with its capital");
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddTextToLogTab($"Capital check run #{run.Id} failed: {ex.Message}");
+        }
+    }
+
+    private sealed class CapitalRow
+    {
+        public string? Quote { get; set; }
+        public DateTime Open { get; set; }
+        public DateTime? Close { get; set; }
+        public double Invested { get; set; }
+        public double? Profit { get; set; }
     }
 
 
