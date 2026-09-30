@@ -175,15 +175,43 @@ public class PaperAssetsBasicsTests : TestBase
         FillOrder(position, entry, 100m);
 
         Assert.AreEqual(1100m, assetQuote.Total, "1000 + 100 proceeds of the sell");
-        Assert.AreEqual(0m, assetQuote.Locked, "collateral released on the fill");
+        Assert.AreEqual(200m, assetQuote.Locked, "the filled short holds the owed proceeds plus its collateral");
+        Assert.AreEqual(900m, assetQuote.Free, "the entry value left the free balance, as with a long");
 
         var exit = PlaceOrder(database, position, CryptoPartPurpose.TakeProfit, CryptoOrderSide.Buy, 110m, 1m, startTime);
-        Assert.AreEqual(110m, assetQuote.Locked, "the buy-back reserves what it is going to cost");
+        Assert.AreEqual(200m, assetQuote.Locked, "the buy-back order adds nothing, the position already holds it");
         FillOrder(position, exit, 110m);
 
         Assert.AreEqual(990m, assetQuote.Total, "1000 + 100 - 110: a loss of 10");
         Assert.AreEqual(0m, assetQuote.Locked);
         Assert.AreEqual(990m, assetQuote.Free);
+    }
+
+
+    /// <summary>
+    /// A short must take as much room as a long of the same size. It used to ADD free money: the
+    /// sale proceeds landed on the balance and only the buy-back order was reserved, at its take
+    /// profit price. Emulator run 1765 (entry 800, a DCA of 1600, start capital 10.000) held 12.800
+    /// USDT in open shorts at once that way. Here: 1000 capital, a filled short of 800 and its DCA
+    /// sell of 1600 on the book - nothing is left for a second one.
+    /// </summary>
+    [TestMethod]
+    public void AShortTakesAsMuchRoomAsALong()
+    {
+        var (database, symbol, assetQuote) = Arrange(1000m);
+        DateTime startTime = DateTime.UtcNow.AddHours(-48);
+        CryptoPosition position = CreateOpenPosition(database, symbol, CryptoTradeSide.Short, startTime);
+
+        var entry = PlaceOrder(database, position, CryptoPartPurpose.Entry, CryptoOrderSide.Sell, 100m, 8m, startTime);
+        FillOrder(position, entry, 100m);
+        PlaceOrder(database, position, CryptoPartPurpose.TakeProfit, CryptoOrderSide.Buy, 80.6m, 8m, startTime);
+
+        Assert.AreEqual(1800m, assetQuote.Total, "1000 + 800 proceeds");
+        Assert.AreEqual(200m, assetQuote.Free, "800 of the 1000 is in the short, exactly as a long would have it");
+
+        PlaceOrder(database, position, CryptoPartPurpose.Dca, CryptoOrderSide.Sell, 102m, 16m, startTime);
+        Assert.AreEqual(1600m + 1632m, assetQuote.Locked, "the short holds 1600, its DCA sell 1632");
+        Assert.IsTrue(assetQuote.Free <= 0m, "the DCA sell of 1632 does not fit in the 200 that is left");
     }
 
 

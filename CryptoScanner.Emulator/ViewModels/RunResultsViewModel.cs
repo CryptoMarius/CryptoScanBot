@@ -86,6 +86,20 @@ public class RunRow
     public bool? UseAssetManagement { get; set; }
 
     /// <summary>
+    /// How many quote coins the run's symbols trade in (USDT and USDC = 2), counted by the query from
+    /// the symbol list in ConfigJson. Zero when none of those names is found in the Symbol table.
+    /// </summary>
+    public int QuoteCoinCount { get; set; }
+
+    /// <summary>
+    /// The money the run really started with. <see cref="StartCapital"/> is handed out PER quote coin
+    /// (PaperAssets.SeedStartBalances), so a run over USDT and USDC symbols had twice that amount -
+    /// and dividing the profit by one of them doubled the return. Falls back to the plain start
+    /// capital when the quote coins cannot be counted, which is how it was read before.
+    /// </summary>
+    public decimal? TotalStartCapital => StartCapital * Math.Max(1, QuoteCoinCount);
+
+    /// <summary>
     /// Whether the return on the start capital means anything for this run. It only does when the
     /// paper balances constrained the run: with asset management off nothing is ever refused for lack
     /// of money, so the start capital never bounded what was traded and a percentage of it says
@@ -94,7 +108,7 @@ public class RunRow
     public bool HasCapitalReturn => UseAssetManagement == true && StartCapital > 0;
 
     /// <summary>What the run ends on: the start capital plus the realised profit.</summary>
-    public decimal EndCapital => (StartCapital ?? 0m) + Profit;
+    public decimal EndCapital => (TotalStartCapital ?? 0m) + Profit;
 
     /// <summary>
     /// The profit against the money the run started with: 100 * Profit / StartCapital, or as a
@@ -102,7 +116,7 @@ public class RunRow
     /// are compared cover the same period, so the plain figure is what is wanted. Zero when
     /// <see cref="HasCapitalReturn"/> is false.
     /// </summary>
-    public decimal CapitalReturnPercentage => HasCapitalReturn ? 100m * Profit / StartCapital!.Value : 0m;
+    public decimal CapitalReturnPercentage => HasCapitalReturn ? 100m * Profit / TotalStartCapital!.Value : 0m;
 
     /// <summary>
     /// Return over the capital that was actually tied up: 100 * Profit / PeakInvested. This is the
@@ -158,7 +172,7 @@ public class RunRow
     public string WorstCaseText => WorstCase.ToString("N2");
     public string ProfitLongText => ProfitLong.ToString("N2");
     public string ProfitShortText => ProfitShort.ToString("N2");
-    public string StartCapitalText => StartCapital.HasValue ? StartCapital.Value.ToString("N2") : "—";
+    public string StartCapitalText => TotalStartCapital.HasValue ? TotalStartCapital.Value.ToString("N2") : "—";
     public string EndCapitalText => HasCapitalReturn ? EndCapital.ToString("N2") : "—";
     public string CapitalReturnPercentageText => HasCapitalReturn ? CapitalReturnPercentage.ToString("N2") + "%" : "—";
 
@@ -323,7 +337,11 @@ public partial class RunResultsViewModel : ObservableObject
         // json_extract reads them in the query, which keeps the grid fast (parsing ConfigJson per row
         // in C# is what once made this tab take ten seconds to open) and needs no new column.
         "       json_extract(r.ConfigJson, '$.StartCapital') AS StartCapital, " +
-        "       json_extract(r.ConfigJson, '$.UseAssetManagement') AS UseAssetManagement " +
+        "       json_extract(r.ConfigJson, '$.UseAssetManagement') AS UseAssetManagement, " +
+        // The start capital is handed out per quote coin, so the return needs to know how many the
+        // run traded in. Through the Symbol.Name index this costs about 50 ms over 1.300 runs.
+        "       (SELECT COUNT(DISTINCT s.Quote) FROM json_each(r.ConfigJson, '$.Symbols') j " +
+        "        JOIN Symbol s ON s.Name = j.value) AS QuoteCoinCount " +
         "FROM EmulatorRun r ";
 
 
@@ -522,7 +540,8 @@ public partial class RunResultsViewModel : ObservableObject
             "PeakPositions" => r => r.PeakPositions,
             "PeakProfitPercentage" => r => r.PeakProfitPercentage,
             "MaxDrawdownPercentage" => r => r.MaxDrawdownPercentage,
-            "StartCapital" => r => r.StartCapital,
+            "StartCapital" => r => r.TotalStartCapital,
+            "TotalStartCapital" => r => r.TotalStartCapital,
             "EndCapital" => r => r.HasCapitalReturn ? r.EndCapital : null,
             "CapitalReturnPercentage" => r => r.HasCapitalReturn ? r.CapitalReturnPercentage : null,
             "ProfitLong" => r => r.ProfitLong,

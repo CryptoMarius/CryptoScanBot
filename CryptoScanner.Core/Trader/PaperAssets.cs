@@ -323,10 +323,27 @@ public class PaperAssets
                 foreach (CryptoPosition position in activeExchange.Data.PositionList.Values)
                 {
                     CryptoSymbol symbol = position.Symbol;
+
+                    // What a short has sold so far and bought back, counted from the fills
+                    decimal shortSoldValue = 0;
+                    decimal shortSoldQuantity = 0;
+                    decimal shortBoughtQuantity = 0;
+
                     foreach (CryptoPositionPart part in position.PartList.Values)
                     {
                         foreach (CryptoPositionStep step in part.StepList.Values)
                         {
+                            if (position.Side == CryptoTradeSide.Short && step.QuantityFilled > 0)
+                            {
+                                if (step.Side == CryptoOrderSide.Sell)
+                                {
+                                    shortSoldValue += step.QuoteQuantityFilled;
+                                    shortSoldQuantity += step.QuantityFilled;
+                                }
+                                else
+                                    shortBoughtQuantity += step.QuantityFilled;
+                            }
+
                             // Only an order that is still on the book reserves anything
                             if (step.Status != CryptoOrderStatus.New && step.Status != CryptoOrderStatus.PartiallyFilled)
                                 continue;
@@ -341,15 +358,35 @@ public class PaperAssets
                                 // Long take profit or stop loss: the base coins themselves are on the book
                                 AddLocked(locked, symbol.Base, openQuantity);
                             }
+                            else if (position.Side == CryptoTradeSide.Short && step.Side == CryptoOrderSide.Buy)
+                            {
+                                // Short take profit or stop loss: closing reserves nothing of its own, the
+                                // filled short below already holds its full value.
+                            }
                             else
                             {
-                                // Everything else reserves quote: a long entry pays quote, and a short is
-                                // tracked entirely in quote (entry collateral as well as buyback cost).
+                                // Everything else reserves quote: a long entry pays quote, and a short entry
+                                // or DCA sell puts up its value as collateral while it is on the book.
                                 // A stop order carries its price in StopPrice, not in Price.
                                 decimal price = step.Price > 0 ? step.Price : step.StopPrice ?? 0;
                                 AddLocked(locked, symbol.Quote, openQuantity * price);
                             }
                         }
+                    }
+
+                    // A filled short books its sale proceeds onto the quote balance (see Change), but that
+                    // money is owed: the coins still have to be bought back. So the open part of the short
+                    // holds twice its entry value - once for the proceeds that are not ours, and once as
+                    // the collateral a leverage 1 position puts up. The net effect on Free is the same as
+                    // a long of the same size: the entry value leaves the free balance.
+                    // Reserving only the pending buy-back order at its take profit price (the old reading)
+                    // let every short ADD free money - 800 sold, about 645 reserved - so a run full of
+                    // shorts could open far more positions than its start capital allowed.
+                    decimal shortOpenQuantity = shortSoldQuantity - shortBoughtQuantity;
+                    if (shortOpenQuantity > 0 && shortSoldQuantity > 0)
+                    {
+                        decimal shortOpenValue = shortOpenQuantity * shortSoldValue / shortSoldQuantity;
+                        AddLocked(locked, symbol.Quote, 2 * shortOpenValue);
                     }
                 }
                 return locked;

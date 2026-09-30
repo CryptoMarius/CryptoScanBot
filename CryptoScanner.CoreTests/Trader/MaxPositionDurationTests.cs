@@ -198,6 +198,27 @@ public class MaxPositionDurationTests
     }
 
 
+    /// <summary>
+    /// The THIRD gate: the trigger-price skip in NewCandleArrivedAsync, which on a 1m base decides
+    /// whether the position is handed to the position check at all. It knew only the price fence, so
+    /// the two gates above were never reached on a quiet candle - run 1765 (limit 14 days, 30-09-2026)
+    /// kept positions open for 21.7 and 30 days.
+    /// </summary>
+    [TestMethod]
+    public void ThirdGate_PastTheDeadline_IsNotSkipped()
+    {
+        GlobalData.Settings.Trading.MaxPositionDurationDays = 14m;
+        var position = MakePosition(Opened);
+        position.TriggerPriceTop = 110m;
+        position.TriggerPriceBottom = 90m;
+
+        Assert.IsFalse(PositionMonitor.NeedsAttentionRegardlessOfPrice(position, CandleTime.FromDateTime(Opened.AddDays(5))),
+            "inside the deadline the price fence decides");
+        Assert.IsTrue(PositionMonitor.NeedsAttentionRegardlessOfPrice(position, CandleTime.FromDateTime(Opened.AddDays(14))),
+            "deadline passed: handle it, whatever the price did");
+    }
+
+
     [TestMethod]
     public void SecondGate_WithTheSettingOff_IsUnchangedAtAnyAge()
     {

@@ -95,14 +95,16 @@ public class PaperAssetsTests : TestBase
         FillOrder(position, entryStep, entryPrice);
 
         Assert.AreEqual(1100m, assetQuote.Total, "USDT = 1000 + 100 sale proceeds");
-        Assert.AreEqual(0m, assetQuote.Locked, "Lock released on fill");
+        Assert.AreEqual(200m, assetQuote.Locked, "the filled short holds the owed proceeds (100) plus its collateral (100)");
+        Assert.AreEqual(900m, assetQuote.Free, "USDT free = 1100 - 200, the entry value left the free balance");
 
         // Act — TP order placed (on the book → lock USDT to cover the buyback)
+        // The filled short already holds its full value, so the buy-back order adds nothing.
         var tpStep = PlaceOrder(database, position, CryptoPartPurpose.TakeProfit, CryptoOrderSide.Buy, tpPrice, entryQty, startTime);
 
         Assert.AreEqual(1100m, assetQuote.Total, "USDT total unchanged while the order is only placed");
-        Assert.AreEqual(90m, assetQuote.Locked, "USDT locked = TP buyback cost (90)");
-        Assert.AreEqual(1010m, assetQuote.Free, "USDT free = 1100 - 90");
+        Assert.AreEqual(200m, assetQuote.Locked, "USDT locked unchanged by the TP order");
+        Assert.AreEqual(900m, assetQuote.Free, "USDT free = 1100 - 200");
 
         // Act — TP filled: lock released, buyback cost paid
         FillOrder(position, tpStep, tpPrice);

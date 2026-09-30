@@ -182,7 +182,7 @@
                 <!-- The run against the money it started with. Only filled when asset management was
                      on: with it off the start capital never bounded what was traded, and a percentage
                      of it would say nothing. Not per day - compared runs cover the same period. -->
-                <DataGridTemplateColumn Header="Start cap." Width="90" SortMemberPath="StartCapital" IsVisible="False">
+                <DataGridTemplateColumn Header="Start cap." Width="90" SortMemberPath="TotalStartCapital" IsVisible="False">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding StartCapitalText}"/>

@@ -935,6 +935,19 @@ public class PositionMonitor : IDisposable
 
 
     /// <summary>
+    /// Whether a position has to be handled on this candle even though the candle reaches none of
+    /// its trigger prices: its maximum duration ran out, the Keltner/PSAR profit lock is due to step,
+    /// or the strategy asked for the exit. Used by the trigger-price skip in NewCandleArrivedAsync,
+    /// the third gate between a candle and a repriced order next to CandleCanMovePosition and
+    /// ShouldRunHandlePosition.
+    /// </summary>
+    internal static bool NeedsAttentionRegardlessOfPrice(CryptoPosition position, CandleTime closeTime)
+        => IsPastMaxDuration(position, closeTime.ToDateTime())
+        || KeltnerPsarStepDue(position, closeTime)
+        || position.ExitRequested;
+
+
+    /// <summary>
     /// Asks the strategy that opened the position whether it wants out (SignalCreateBase.IsExitSignal),
     /// on the close of a candle of the position's own interval. A yes sets ExitRequested, after which
     /// CalculateTpPrice aims the take profit through the last price and both candle gates let the
@@ -2541,6 +2554,12 @@ public class PositionMonitor : IDisposable
                 else if (LastCandle1m.High >= existingPosition.TriggerPriceTop.Value
                       || LastCandle1m.Low <= existingPosition.TriggerPriceBottom.Value)
                     Interlocked.Increment(ref PipelineProfiler.SkipPriceOutside);
+                // The reasons to look at a position that have nothing to do with price, the same ones
+                // CandleCanMovePosition and ShouldRunHandlePosition know. This gate did not, so on a 1m
+                // base the maximum duration never fired on a quiet candle: run 1765 (limit 14 days)
+                // kept positions open for 21.7 and 30 days without a single repricing.
+                else if (NeedsAttentionRegardlessOfPrice(existingPosition, LastCandle1mCloseTime))
+                    Interlocked.Increment(ref PipelineProfiler.SkipForceCheck);
                 else
                 {
                     Interlocked.Increment(ref PipelineProfiler.SkipSuccess);
