@@ -228,6 +228,10 @@
         new() { Column = PositionColumnEnum.Barometer4h, Header = "Bm 4h", CssClass = "text-center mono", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 59 },
         new() { Column = PositionColumnEnum.Barometer1d, Header = "Bm 1d", CssClass = "text-center mono", DefaultWidth = 60, DefaultVisible = false, DefaultDisplayIndex = 60 },
         new() { Column = PositionColumnEnum.MinimumEntry, Header = "Min Entry", CssClass = "text-right mono", DefaultWidth = 60, DefaultVisible = true, DefaultDisplayIndex = 61 },
+        new() { Column = PositionColumnEnum.PriceMin, Header = "Price min", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 62 },
+        new() { Column = PositionColumnEnum.PriceMax, Header = "Price max", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 63 },
+        new() { Column = PositionColumnEnum.PriceMinPerc, Header = "Price min %", CssClass = "text-right mono", DefaultWidth = 60, DefaultVisible = true, DefaultDisplayIndex = 64 },
+        new() { Column = PositionColumnEnum.PriceMaxPerc, Header = "Price max %", CssClass = "text-right mono", DefaultWidth = 60, DefaultVisible = true, DefaultDisplayIndex = 65 },
     ];
 
     protected override void OnInitialized()

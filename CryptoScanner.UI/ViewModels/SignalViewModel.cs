@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.UI.ViewModels;
 
@@ -67,6 +68,10 @@ public class SignalViewModel
             SignalColumnEnum.Barometer1d => Object.Barometer1d?.ToString("N2") ?? "-",
 
             SignalColumnEnum.MinimumEntry => Object.MinEntry.ToString("N2"),
+
+            SignalColumnEnum.PriceMinPerc => Object.PriceMinPerc.ToString("N2"),
+            SignalColumnEnum.PriceMaxPerc => Object.PriceMaxPerc.ToString("N2"),
+            SignalColumnEnum.SignalStatus => SignalStatistics.GetStatusText(Object.SignalStatus),
             _ => "",
         };
     }
@@ -102,6 +107,8 @@ public class SignalViewModel
             SignalColumnEnum.Barometer1h => ColorHelper.GetColorClassViaSign(Object.Barometer1h),
             SignalColumnEnum.Barometer4h => ColorHelper.GetColorClassViaSign(Object.Barometer4h),
             SignalColumnEnum.Barometer1d => ColorHelper.GetColorClassViaSign(Object.Barometer1d),
+
+            SignalColumnEnum.SignalStatus => ColorHelper.GetColorClassSignalStatus(Object.SignalStatus),
 
             _ => "",
         };

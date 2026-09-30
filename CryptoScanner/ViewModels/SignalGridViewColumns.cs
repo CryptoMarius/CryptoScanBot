@@ -66,9 +66,9 @@ public class SignalColumnComparer : IComparer
                     SignalColumnEnum.Barometer4h => ObjectCompare.Compare(a.Object.Barometer4h, b.Object.Barometer4h),
                     SignalColumnEnum.Barometer1d => ObjectCompare.Compare(a.Object.Barometer1d, b.Object.Barometer1d),
                     SignalColumnEnum.MinimumEntry => ObjectCompare.Compare(a.Object.MinEntry, b.Object.MinEntry),
-                    //SignalColumnEnum.PriceMinPerc => ObjectCompare.Compare(a.Object.PriceMinPerc, b.Object.PriceMinPerc),
-                    //SignalColumnEnum.PriceMaxPerc => ObjectCompare.Compare(a.Object.PriceMaxPerc, b.Object.PriceMaxPerc),
-                    //SignalColumnEnum.SignalStatus => ObjectCompare.Compare(a.Object.SignalStatus, b.Object.SignalStatus),
+                    SignalColumnEnum.PriceMinPerc => ObjectCompare.Compare(a.Object.PriceMinPerc, b.Object.PriceMinPerc),
+                    SignalColumnEnum.PriceMaxPerc => ObjectCompare.Compare(a.Object.PriceMaxPerc, b.Object.PriceMaxPerc),
+                    SignalColumnEnum.SignalStatus => ObjectCompare.Compare(a.Object.SignalStatus, b.Object.SignalStatus),
                     _ => 0
                 };
 

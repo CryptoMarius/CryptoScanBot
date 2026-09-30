@@ -76,6 +76,7 @@ public class SignalService : IDisposable
             {
                 ProcessPendingSignals();
                 RemoveExpired();
+                UpdateStatistics();
             }
             catch (Exception error)
             {
@@ -175,6 +176,49 @@ public class SignalService : IDisposable
             ApplySort();
             SignalsChanged?.Invoke();
         }
+    }
+
+    // Once a minute, same cadence as the Avalonia TimerClearAndUpdateSignalsTick.
+    private CandleTime _lastStatisticUpdate = CandleTime.MinValue;
+
+    /// <summary>
+    /// The price statistics of the signals on the grid (PriceMin/PriceMax and the virtual
+    /// outcome, see SignalStatistics): brought up to date once a minute against the latest 1m
+    /// candle, and a changed signal is queued for saving.
+    /// </summary>
+    public void UpdateStatistics()
+    {
+        if (GlobalData.IsEmulatorMode)
+            return;
+
+        CandleTime now = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
+        if (now == _lastStatisticUpdate)
+            return;
+        _lastStatisticUpdate = now;
+
+        List<SignalViewModel> snapshot;
+        lock (_lock)
+            snapshot = _signals.ToList();
+
+        bool changed = false;
+        foreach (SignalViewModel vm in snapshot)
+        {
+            try
+            {
+                if (SignalStatistics.Update(vm.Object))
+                {
+                    GlobalData.ThreadSaveObjects?.AddToQueue(vm.Object);
+                    changed = true;
+                }
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "SignalService statistics");
+            }
+        }
+
+        if (changed)
+            SignalsChanged?.Invoke();
     }
 
     public void RemoveExpired()
@@ -335,8 +379,9 @@ internal class SignalViewModelComparer(SignalColumnEnum sortColumn) : IComparer<
             SignalColumnEnum.Barometer4h => (a.Barometer4h ?? 0).CompareTo(b.Barometer4h ?? 0),
             SignalColumnEnum.Barometer1d => (a.Barometer1d ?? 0).CompareTo(b.Barometer1d ?? 0),
             SignalColumnEnum.MinimumEntry => a.MinEntry.CompareTo(b.MinEntry),
-            // PriceMinPerc / PriceMaxPerc / SignalStatus exist as columns in the Avalonia XAML but
-            // their viewmodel properties are commented out, so those cells render empty there too.
+            SignalColumnEnum.PriceMinPerc => a.PriceMinPerc.CompareTo(b.PriceMinPerc),
+            SignalColumnEnum.PriceMaxPerc => a.PriceMaxPerc.CompareTo(b.PriceMaxPerc),
+            SignalColumnEnum.SignalStatus => a.SignalStatus.CompareTo(b.SignalStatus),
             _ => 0,
         };
 

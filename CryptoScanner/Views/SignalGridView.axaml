@@ -458,28 +458,26 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
-			<!-- PriceMinPerc
-			<DataGridTemplateColumn Header="Price min perc" Width="60" SortMemberPath="PriceMinPerc">
+			<!-- PriceMinPerc -->
+			<DataGridTemplateColumn Header="Price min %" Width="60" SortMemberPath="PriceMinPerc">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate x:DataType="vm:SignalViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PriceMinPerc}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
-			 -->
 
-			<!-- PriceMaxPerc
-			<DataGridTemplateColumn Header="Price max perc" Width="60" SortMemberPath="PriceMaxPerc">
+			<!-- PriceMaxPerc -->
+			<DataGridTemplateColumn Header="Price max %" Width="60" SortMemberPath="PriceMaxPerc">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate x:DataType="vm:SignalViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PriceMaxPerc}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
-			 -->
 
-			<!-- SignalStatus
-			<DataGridTemplateColumn Header="signal Status" Width="60" SortMemberPath="SignalStatus">
+			<!-- SignalStatus -->
+			<DataGridTemplateColumn Header="Status" Width="60" SortMemberPath="SignalStatus">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate x:DataType="vm:SignalViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -487,7 +485,6 @@
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
-			 -->
 
 		</DataGrid.Columns>
 	</DataGrid>

@@ -70,9 +70,9 @@ public enum SignalColumnEnum
 
     MinimumEntry,
 
-    //PriceMinPerc,
-    //PriceMaxPerc,
-    //SignalStatus,
+    PriceMinPerc,
+    PriceMaxPerc,
+    SignalStatus,
 }
 
 
@@ -151,10 +151,10 @@ public enum PositionColumnEnum
 
     MinimumEntry,
 
-    //PriceMin,
-    //PriceMax,
-    //PriceMinPerc,
-    //PriceMaxPerc,
+    PriceMin,
+    PriceMax,
+    PriceMinPerc,
+    PriceMaxPerc,
 }
 
 

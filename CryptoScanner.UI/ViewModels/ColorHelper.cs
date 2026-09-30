@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.UI.ViewModels;
 
@@ -85,6 +86,17 @@ public static class ColorHelper
                     return Red;
             }
         }
+        return Neutral;
+    }
+
+    // Same as the Avalonia BaseConvertersViewModel.GetSignalStatusColor: red for a stop, green
+    // for any take-profit level, neutral while the signal is still running.
+    public static string GetColorClassSignalStatus(CryptoSignalStatus status)
+    {
+        if (status == CryptoSignalStatus.Lost)
+            return Red;
+        if (SignalStatistics.IsWin(status))
+            return Green;
         return Neutral;
     }
 

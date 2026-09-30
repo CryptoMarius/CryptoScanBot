@@ -520,11 +520,11 @@ public class SignalCreate
             Candle = candle,
             EmulatorRunId = GlobalData.CurrentEmulatorRunId,
             SignalPrice = candle.Close,
-            //PriceMin = candle.Close, // statistics
-            //PriceMax = candle.Close, // statistics
-            //PriceMinPerc = 0, // statistics
-            //PriceMaxPerc = 0, // statistics
-            //SignalStatus = CryptoSignalStatus.Run,
+            PriceMin = candle.Close, // statistics
+            PriceMax = candle.Close, // statistics
+            PriceMinPerc = 0, // statistics
+            PriceMaxPerc = 0, // statistics
+            SignalStatus = CryptoSignalStatus.Run,
             SignalVolume = Symbol.Volume,
             Side = CryptoTradeSide.Long,  // gets modified later
             OpenDate = candle.OpenTime.ToDateTime(),

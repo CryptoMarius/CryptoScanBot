@@ -420,6 +420,10 @@ internal class PositionViewModelComparer(PositionColumnEnum sortColumn) : ICompa
             PositionColumnEnum.BB => (a.BollingerBandsPercentage ?? 0).CompareTo(b.BollingerBandsPercentage ?? 0),
             PositionColumnEnum.Rsi => (a.Rsi ?? 0).CompareTo(b.Rsi ?? 0),
             PositionColumnEnum.MinimumEntry => a.MinEntry.CompareTo(b.MinEntry),
+            PositionColumnEnum.PriceMin => a.PriceMin.CompareTo(b.PriceMin),
+            PositionColumnEnum.PriceMax => a.PriceMax.CompareTo(b.PriceMax),
+            PositionColumnEnum.PriceMinPerc => a.PriceMinPerc.CompareTo(b.PriceMinPerc),
+            PositionColumnEnum.PriceMaxPerc => a.PriceMaxPerc.CompareTo(b.PriceMaxPerc),
 
             _ => 0,
         };

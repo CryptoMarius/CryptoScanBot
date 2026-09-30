@@ -89,6 +89,11 @@ public class PositionViewModel
 
             PositionColumnEnum.MinimumEntry => Object.MinEntry.ToString("N2"),
 
+            PositionColumnEnum.PriceMin => Object.PriceMin.ToString0(Object.Symbol.PriceDisplayFormat),
+            PositionColumnEnum.PriceMax => Object.PriceMax.ToString0(Object.Symbol.PriceDisplayFormat),
+            PositionColumnEnum.PriceMinPerc => Object.PriceMinPerc.ToString("N2"),
+            PositionColumnEnum.PriceMaxPerc => Object.PriceMaxPerc.ToString("N2"),
+
             _ => "",
         };
     }

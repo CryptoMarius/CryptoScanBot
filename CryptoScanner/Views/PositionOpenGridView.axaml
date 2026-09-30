@@ -599,6 +599,42 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
+			<!-- PriceMin -->
+			<DataGridTemplateColumn Header="Price min" Width="75" SortMemberPath="PriceMin" IsVisible="False">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate x:DataType="vm:PositionViewModel">
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PriceMin}"/>
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
+			<!-- PriceMax -->
+			<DataGridTemplateColumn Header="Price max" Width="75" SortMemberPath="PriceMax" IsVisible="False">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate x:DataType="vm:PositionViewModel">
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PriceMax}"/>
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
+			<!-- PriceMinPerc -->
+			<DataGridTemplateColumn Header="Price min %" Width="60" SortMemberPath="PriceMinPerc">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate x:DataType="vm:PositionViewModel">
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PriceMinPerc}"/>
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
+			<!-- PriceMaxPerc -->
+			<DataGridTemplateColumn Header="Price max %" Width="60" SortMemberPath="PriceMaxPerc">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate x:DataType="vm:PositionViewModel">
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PriceMaxPerc}"/>
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
 		</DataGrid.Columns>
 	</DataGrid>
 </UserControl>

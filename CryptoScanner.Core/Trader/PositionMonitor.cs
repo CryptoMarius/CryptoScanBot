@@ -2336,6 +2336,9 @@ public class PositionMonitor : IDisposable
 
             if (!position.CloseTime.HasValue)
             {
+                // Statistics for the grid: the lowest and highest price since the signal
+                SignalStatistics.UpdatePosition(position, LastCandle1m.Low, LastCandle1m.High);
+
                 // Process any signal-based DCA that the candle thread queued up
                 ProcessPendingDcaSignal(position);
 

@@ -189,9 +189,11 @@ public partial class PositionOpenGridViewModel : ObservableObject
                 position.BreakEvenPercent = string.Empty;
                 position.CurrentProfitPercentage = string.Empty;
 
-                // Statistics (not visible at this moment?)
-                //position.PriceMinPerc = string.Empty;
-                //position.PriceMaxPerc = string.Empty;
+                // Statistics
+                position.PriceMin = string.Empty;
+                position.PriceMax = string.Empty;
+                position.PriceMinPerc = string.Empty;
+                position.PriceMaxPerc = string.Empty;
             }
             catch (Exception ex)
             {

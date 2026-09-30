@@ -312,6 +312,15 @@ public class CryptoData2 : CryptoData
     // Trend on interval
     public CryptoTrendIndicator TrendInterval { get; set; }
 
+    // Statistics: the lowest low and highest high (of the 1m candles) since the signal fired, the
+    // same two as a percentage of the signal price (0..100 scale, negative below it), and the
+    // outcome of a virtual position at the signal price. Maintained by SignalStatistics from the
+    // signal grid of both UIs, nothing in the trader reads them.
+    public decimal PriceMin { get; set; }
+    public float PriceMinPerc { get; set; }
+    public decimal PriceMax { get; set; }
+    public float PriceMaxPerc { get; set; }
+    public CryptoSignalStatus SignalStatus { get; set; }
 
     public float AvgBB { get; set; }
 
@@ -354,6 +363,12 @@ public class CryptoData2 : CryptoData
             Barometer4h = source2.Barometer4h;
             Barometer1d = source2.Barometer1d;
             MarketBreadth1h = source2.MarketBreadth1h;
+
+            PriceMin = source2.PriceMin;
+            PriceMax = source2.PriceMax;
+            PriceMinPerc = source2.PriceMinPerc;
+            PriceMaxPerc = source2.PriceMaxPerc;
+            SignalStatus = source2.SignalStatus;
 
             AvgBB = source2.AvgBB;
         }

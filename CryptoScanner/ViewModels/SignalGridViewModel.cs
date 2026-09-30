@@ -146,7 +146,7 @@ public partial class SignalGridViewModel : ObservableObject
         SignalNotification.HandleCreatedSignal(signal);
     }
 
-    //static CandleTime LastStatisticUpdate = CandleTime.MinValue;
+    static CandleTime LastStatisticUpdate = CandleTime.MinValue;
 
     private void TimerClearAndUpdateSignalsTick(object? sender, EventArgs e)
     {
@@ -161,10 +161,10 @@ public partial class SignalGridViewModel : ObservableObject
                 // Circa 1x per minuut de verouderde signalen opruimen
                 if (Signals.Count > 0)
                 {
-                    // Avoid frequent updates
-                    //CandleTime x = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
-                    //bool updateStats = x != LastStatisticUpdate;
-                    //LastStatisticUpdate = x;
+                    // Avoid frequent updates: the price statistics once per minute
+                    CandleTime x = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+                    bool updateStats = x != LastStatisticUpdate;
+                    LastStatisticUpdate = x;
 
                     for (int index = Signals.Count - 1; index >= 0; index--)
                     {
@@ -175,16 +175,16 @@ public partial class SignalGridViewModel : ObservableObject
                         if (expirationDate < DateTime.UtcNow)
                         {
                             Signals.RemoveAt(index);
-                            //updateStats = true;
+                            continue;
                         }
 
-                        //if (updateStats)
-                        //{
-                        //    if (signalInfo.UpdateSignalStatistics())
-                        //    {
-                        //        GlobalData.ThreadSaveObjects!.AddToQueue(signal);
-                        //    }
-                        //}
+                        if (updateStats)
+                        {
+                            if (signalInfo.UpdateSignalStatistics())
+                            {
+                                GlobalData.ThreadSaveObjects!.AddToQueue(signal);
+                            }
+                        }
                     }
                 }
             }

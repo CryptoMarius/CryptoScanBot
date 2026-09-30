@@ -1210,38 +1210,70 @@ public partial class PositionViewModel : BaseConvertersViewModel
         }
     }
 
-    ////public double PriceMinPerc => Object.PriceMinPerc;
-    //private string? _PriceMinPercText;
-    //public string PriceMinPerc
-    //{
-    //    get
-    //    {
-    //        _PriceMinPercText ??= Object.PriceMinPerc.ToString("N2");
-    //        return _PriceMinPercText!;
-    //    }
-    //    set
-    //    {
-    //        _PriceMinPercText = null;
-    //        OnPropertyChanged(nameof(PriceMinPerc));
-    //    }
-    //}
+    //public decimal PriceMin => Object.PriceMin;
+    private string? _PriceMinText;
+    public string PriceMin
+    {
+        get
+        {
+            _PriceMinText ??= Object.PriceMin.ToString0(Object.Symbol.PriceDisplayFormat);
+            return _PriceMinText!;
+        }
+        set
+        {
+            _PriceMinText = null;
+            OnPropertyChanged(nameof(PriceMin));
+        }
+    }
+
+    //public decimal PriceMax => Object.PriceMax;
+    private string? _PriceMaxText;
+    public string PriceMax
+    {
+        get
+        {
+            _PriceMaxText ??= Object.PriceMax.ToString0(Object.Symbol.PriceDisplayFormat);
+            return _PriceMaxText!;
+        }
+        set
+        {
+            _PriceMaxText = null;
+            OnPropertyChanged(nameof(PriceMax));
+        }
+    }
+
+    //public double PriceMinPerc => Object.PriceMinPerc;
+    private string? _PriceMinPercText;
+    public string PriceMinPerc
+    {
+        get
+        {
+            _PriceMinPercText ??= Object.PriceMinPerc.ToString("N2");
+            return _PriceMinPercText!;
+        }
+        set
+        {
+            _PriceMinPercText = null;
+            OnPropertyChanged(nameof(PriceMinPerc));
+        }
+    }
 
 
-    ////public double PriceMaxPerc => Object.PriceMaxPerc;
-    //private string? _PriceMaxPercText;
-    //public string PriceMaxPerc
-    //{
-    //    get
-    //    {
-    //        _PriceMaxPercText ??= Object.PriceMaxPerc.ToString("N2");
-    //        return _PriceMaxPercText!;
-    //    }
-    //    set
-    //    {
-    //        _PriceMaxPercText = null;
-    //        OnPropertyChanged(nameof(PriceMaxPerc));
-    //    }
-    //}
+    //public double PriceMaxPerc => Object.PriceMaxPerc;
+    private string? _PriceMaxPercText;
+    public string PriceMaxPerc
+    {
+        get
+        {
+            _PriceMaxPercText ??= Object.PriceMaxPerc.ToString("N2");
+            return _PriceMaxPercText!;
+        }
+        set
+        {
+            _PriceMaxPercText = null;
+            OnPropertyChanged(nameof(PriceMaxPerc));
+        }
+    }
 
     ////public CryptoSignalStatus SignalStatus => Object.SignalStatus;
     //private string? _SignalStatusText;

@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
 
 using System.Reflection;
 
@@ -221,35 +222,19 @@ public partial class BaseConvertersViewModel : ObservableObject
         return BrushNeutral;
     }
 
-    //internal static string GetSignalStatusText(CryptoSignalStatus status)
-    //{
-    //    switch (status)
-    //    {
-    //        case CryptoSignalStatus.Lost:
-    //            return "lost";
-    //        case CryptoSignalStatus.Win:
-    //            return "win";
-    //        case CryptoSignalStatus.Run:
-    //            return "run";
-    //    }
-    //    return "";
-    //}
+    internal static string GetSignalStatusText(CryptoSignalStatus status)
+    {
+        return SignalStatistics.GetStatusText(status);
+    }
 
-    //internal IBrush GetSignalStatusColor(CryptoSignalStatus status)
-    //{
-    //    switch (status)
-    //    {
-    //        case CryptoSignalStatus.Lost:
-    //            return BrushRed;
-    //        case CryptoSignalStatus.Win:
-    //            return BrushGreen;
-    //        case CryptoSignalStatus.Run:
-    //            return BrushNeutral;
-    //        default:
-    //            break;
-    //    }
-    //    return BrushNeutral;
-    //}
+    internal IBrush GetSignalStatusColor(CryptoSignalStatus status)
+    {
+        if (status == CryptoSignalStatus.Lost)
+            return BrushRed;
+        if (SignalStatistics.IsWin(status))
+            return BrushGreen;
+        return BrushNeutral;
+    }
 
     internal IBrush GetPositionStatusColor(CryptoPositionStatus status)
     {
