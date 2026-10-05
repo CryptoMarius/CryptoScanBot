@@ -98,6 +98,44 @@ public class CryptoEmulatorRun
     /// </summary>
     public decimal MaxDrawdownPercentage { get; set; }
 
+    /// <summary>
+    /// The same fall in USDT: how far the account value - open positions valued at the price of the
+    /// day - stood below its earlier high at the worst day of the run. Next to the fall of the closed
+    /// positions alone this is what was really under water; on run 1860 the two were 74 and about 217.
+    /// Null for runs from before database version 103, whose daily values are gone.
+    /// </summary>
+    public decimal? OpenDrawdown { get; set; }
+
+    /// <summary>The day <see cref="OpenDrawdown"/> was reached.</summary>
+    public DateTime? OpenDrawdownDate { get; set; }
+
+    // The three risk checks of the run report and the result without the ten best trades, worked out from the position digest at run end
+    // (see RunRiskMetrics). Plain columns since database version 104, because the digest is stored
+    // compressed from then on and a query cannot look inside it. Null when the run had no closed
+    // trades or no digest.
+
+    /// <summary>Calendar months of the period in which the trades that closed added up to a profit.</summary>
+    public int? MonthsInProfit { get; set; }
+
+    /// <summary>Calendar months the run period touches.</summary>
+    public int? MonthsTotal { get; set; }
+
+    /// <summary>The longest a LOSING position was open, in days.</summary>
+    public decimal? LongestLoserDays { get; set; }
+
+    /// <summary>The worst single position: its profit as a percentage of its invested amount (0..100 scale).</summary>
+    public decimal? WorstPositionPercentage { get; set; }
+
+    /// <summary>The closed profit without the ten best trades: negative means the result rests on a handful of trades.</summary>
+    public decimal? ProfitWithoutBestTen { get; set; }
+
+    /// <summary>
+    /// The account value per replayed day, open positions included, so the course of a run can still
+    /// be drawn after its AssetSnapshot rows are dropped:
+    /// <c>{"v":1,"cols":["date","value"],"rows":[["2026-01-01",20000.0],...]}</c>.
+    /// </summary>
+    public string? EquityCurveJson { get; set; }
+
     // Closed positions and their realised profit per side. A short's stop sits nearer and its
     // target further (both are an arithmetic percentage of the anchor), so the two sides are never
     // compared without that handicap in mind - which needs them counted separately.
@@ -206,5 +244,11 @@ public static class CryptoPositionDigest
         // end of the row entirely. Dropping the name here realigns the digests already stored.
         "trendP", "trendS", "stochK", "stochD", "rsi", "bbPct", "macdH", "baro1h", "trend1h",
         "event",
+        // Appended 03-10-2026: how far the price went AGAINST the position at its worst, as a
+        // percentage of the signal price (0..100 scale, negative = against): the lowest low for a
+        // long, the highest high for a short (Position.PriceMinPerc / PriceMaxPerc). Measured from
+        // the signal price, not from the averaged-down entry, so it is the move the position sat
+        // through. Null in digests written before that day.
+        "adverse",
     ];
 }

@@ -49,6 +49,10 @@ public static class SignalGridExpander
         if (unreachable != null)
             throw new NotSupportedException(unreachable);
 
+        string? unknownSection = DescribeUnknownSections(entry);
+        if (unknownSection != null)
+            throw new NotSupportedException(unknownSection);
+
         foreach (var (sectionName, props) in entry.SignalOverrides)
         {
             // "Signal" addresses SettingsSignal itself, for properties that do not live in one of
@@ -304,6 +308,10 @@ public static class SignalGridExpander
     /// </summary>
     public static string? Validate(EmulatorQueueEntry entry)
     {
+        string? unknownSection = DescribeUnknownSections(entry);
+        if (unknownSection != null)
+            return unknownSection;
+
         foreach (var (_, props) in entry.SignalOverrides)
         {
             foreach (var (propPath, jsonVal) in props)
@@ -322,6 +330,59 @@ public static class SignalGridExpander
         }
 
         return DescribeUnreachableEntryCondition(entry);
+    }
+
+
+    /// <summary>
+    /// Why a section of this entry's signal overrides reaches no settings object at all, or null
+    /// when every section does. Resolves the same way <see cref="ApplyCore"/> does: "Signal", a
+    /// field on <see cref="SettingsSignal"/>, then a plugin by its name.
+    /// <para>
+    /// A section that resolves to nothing used to be skipped without a word. On 03-10-2026 queue
+    /// files carried their overrides under "sbm1", "stobb.multi" and "choch.secondary" - the names
+    /// of sub-strategies, not of the plugins that own the settings - and every one of those runs
+    /// would have measured the defaults while its label claimed otherwise.
+    /// </para>
+    /// <para>
+    /// A sub-strategy name is refused rather than mapped onto its plugin: the settings belong to
+    /// the plugin and are shared by all of its strategies, so "sbm1" would quietly change sbm2 and
+    /// sbm3 as well. The message names the section to use instead.
+    /// </para>
+    /// </summary>
+    private static string? DescribeUnknownSections(EmulatorQueueEntry entry)
+    {
+        foreach (var sectionName in entry.SignalOverrides.Keys)
+        {
+            if (ResolvesSection(sectionName))
+                continue;
+
+            IStrategyPlugin? owner = PluginManager.LoadedPlugins
+                .FirstOrDefault(p => p.Key.Equals(sectionName, StringComparison.OrdinalIgnoreCase)).Value;
+            if (owner != null)
+                return $"Queue entry has signal overrides under \"{sectionName}\", which is a strategy of "
+                    + $"the plugin \"{owner.StrategyName}\", not a settings section. The settings belong to "
+                    + $"the plugin and are shared by all its strategies "
+                    + $"({string.Join(", ", owner.Strategies.Select(s => s.Name))}); "
+                    + $"use \"SignalOverrides\": {{ \"{owner.StrategyName}\": {{ ... }} }}.";
+
+            return $"Queue entry has signal overrides under \"{sectionName}\", which matches no settings "
+                + "section: not \"Signal\", not a field of SettingsSignal (ZonesDlz, ZonesFvg, ZonesSmc) "
+                + "and no loaded plugin. Either the name is misspelled or the plugin is not part of this "
+                + "build - the run would otherwise be measured with the defaults in its place.";
+        }
+
+        return null;
+    }
+
+
+    /// <summary>Whether <see cref="ApplyCore"/> finds a settings object for this section name.</summary>
+    private static bool ResolvesSection(string sectionName)
+    {
+        if (sectionName.Equals("Signal", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (typeof(SettingsSignal).GetField(sectionName) != null)
+            return true;
+        return PluginManager.FindByName(sectionName) != null;
     }
 
 

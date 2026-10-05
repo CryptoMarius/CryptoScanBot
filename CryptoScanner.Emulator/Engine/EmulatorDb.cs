@@ -122,8 +122,9 @@ public static class EmulatorDb
             Label = label,
             FromDate = fromDate,
             ToDate = toDate,
-            ConfigJson = configJson,
-            SettingsJson = settingsJson,
+            // Stored flat: the indentation was a third of these two columns (JsonCompact).
+            ConfigJson = JsonCompact.Flatten(configJson) ?? "",
+            SettingsJson = JsonCompact.Flatten(settingsJson),
             GitSha = gitSha,
             BuildStamp = buildStamp,
         };
@@ -394,6 +395,39 @@ public static class EmulatorDb
     }
 
 
+    /// <summary>
+    /// The largest fall from a running high in USDT, and the day it was reached, over a capital
+    /// series in date order - the account value with the open positions valued at the price of the
+    /// day. 100, 120, 90, 130, 65 gives 65 on the last day (130 down to 65).
+    /// </summary>
+    public static (decimal Amount, DateTime? Day) OpenDrawdown(IReadOnlyList<AssetSnapshotTools.AssetSnapshotDay> days)
+    {
+        decimal peak = decimal.MinValue;
+        decimal deepest = 0m;
+        DateTime? deepestDay = null;
+        foreach (AssetSnapshotTools.AssetSnapshotDay day in days)
+        {
+            if (day.Value > peak)
+                peak = day.Value;
+            decimal fall = peak - day.Value;
+            if (fall > deepest)
+            {
+                deepest = fall;
+                deepestDay = day.Date;
+            }
+        }
+        return (deepest, deepestDay);
+    }
+
+
+    /// <summary>The account value per day as a small self-describing JSON (see CryptoEmulatorRun.EquityCurveJson).</summary>
+    public static string EquityCurveJson(IReadOnlyList<AssetSnapshotTools.AssetSnapshotDay> days)
+    {
+        var rows = days.Select(d => new object[] { d.Date.ToString("yyyy-MM-dd"), Math.Round(d.Value, 2) }).ToList();
+        return JsonSerializer.Serialize(new { v = 1, cols = new[] { "date", "value" }, rows });
+    }
+
+
     private static void ComputeRunSummary(CryptoDatabase database, CryptoEmulatorRun run)
     {
         int id = run.Id;
@@ -405,7 +439,19 @@ public static class EmulatorDb
 
         // The deepest fall from an earlier high, over the daily capital totals the run wrote
         // (AssetSnapshot, one row per replayed day) - open point 47.
-        run.MaxDrawdownPercentage = MaxDrawdownPercentage(AssetSnapshotTools.LoadDailyTotals(id));
+        List<AssetSnapshotTools.AssetSnapshotDay> days = AssetSnapshotTools.LoadDailyTotals(id);
+        run.MaxDrawdownPercentage = MaxDrawdownPercentage(days);
+
+        // The same series in USDT, and the series itself, so what was under water outlives the
+        // snapshots. Left alone when there are no snapshots: an empty series says nothing, and it
+        // must not wipe the values a finished run already stored.
+        if (days.Count > 0)
+        {
+            (decimal amount, DateTime? day) = OpenDrawdown(days);
+            run.OpenDrawdown = amount;
+            run.OpenDrawdownDate = day;
+            run.EquityCurveJson = EquityCurveJson(days);
+        }
 
         // Long and short kept apart. A short's stop sits nearer and its target further, so a
         // directional claim can only be made per side - the aggregate hides exactly that.
@@ -463,7 +509,21 @@ public static class EmulatorDb
         run.DcaBreakdownJson = breakdown.Count > 0 ? JsonSerializer.Serialize(breakdown) : null;
 
         // One line per position, built in Core so the migration backfills with the same code.
-        run.PositionDigestJson = PositionDigest.Build(database, id);
+        // The risk checks are read from it before it is stored compressed (database version 104).
+        string? digest = PositionDigest.Build(database, id);
+        ApplyRiskMetrics(run, RunRiskMetrics.FromDigest(digest, run.FromDate, run.ToDate));
+        run.PositionDigestJson = PositionDigest.Pack(digest);
+    }
+
+
+    /// <summary>Copy the risk checks onto the run row; all four stay empty when there was nothing to judge.</summary>
+    public static void ApplyRiskMetrics(CryptoEmulatorRun run, RunRiskMetrics? metrics)
+    {
+        run.MonthsInProfit = metrics?.MonthsInProfit;
+        run.MonthsTotal = metrics?.MonthsTotal;
+        run.LongestLoserDays = metrics?.LongestLoserDays;
+        run.WorstPositionPercentage = metrics?.WorstPositionPercentage;
+        run.ProfitWithoutBestTen = metrics?.ProfitWithoutBestTen;
     }
 
 

@@ -200,28 +200,131 @@ internal sealed class BarometerReplay
     /// </summary>
     public void Execute(CandleTime lastClosedMinute)
     {
+        bool traderReadsTrend = TraderReadsCachedTrend();
+
         foreach ((CryptoQuoteData quoteData, List<CryptoSymbol> symbols) in perQuote)
         {
-            // The market trend of this quote coin, once per minute for the whole quote rather than
-            // once per interval: the trend is a property of the coin, not of the interval it is
-            // asked about, so computing it inside the interval loop below would do the same work
-            // five times.
-            MeasureMarketTrend(quoteData, symbols);
-
+            // First read back what an earlier run over the same coins already measured. The
+            // barometer is a function of the candles, the coin list and the volume threshold, and
+            // none of those changed - runs 802 and 803 proved it on their own numbers: same period,
+            // same 66 coins, and on all 39.365 shared moments the values were identical to the cent.
+            List<CryptoInterval> toMeasure = [];
+            List<CryptoInterval> withoutMarketTrend = [];
             foreach (CryptoInterval interval in intervals)
             {
-                // Already measured by an earlier run over the same coins? Then read it back instead
-                // of computing it again. The barometer is a function of the candles, the coin list
-                // and the volume threshold, and none of those changed - runs 802 and 803 proved it
-                // on their own numbers: same period, same 66 coins, and on all 39.365 shared moments
-                // the values were identical to the cent.
-                if (reuse && ReadCandles(quoteData.Name, interval, lastClosedMinute))
+                if (reuse && ReadCandles(quoteData.Name, interval, lastClosedMinute, out bool marketTrendRead))
+                {
+                    if (!marketTrendRead)
+                        withoutMarketTrend.Add(interval);
                     continue;
+                }
 
+                toMeasure.Add(interval);
+                withoutMarketTrend.Add(interval);
+            }
+
+            // The market trend of this quote coin, once per minute for the whole quote rather than
+            // once per interval: the trend is a property of the coin, not of the interval it is
+            // asked about, so computing it inside the interval loop would do the same work five
+            // times. Only for the intervals the stored series did not hand it back for: until
+            // 03-10-2026 it was measured every minute BEFORE the read above, which then overwrote
+            // it - 30,8 million trend calculations per run (minutes x coins x two zigzag settings)
+            // thrown away, 2.023s of the 2.838s run 1870 took. Runs went from 20 to 53 minutes on
+            // the day it was added (19-09-2026).
+            if (MustMeasureMarketTrend(withoutMarketTrend.Count, traderReadsTrend))
+                MeasureMarketTrend(quoteData, symbols, withoutMarketTrend);
+
+            foreach (CryptoInterval interval in toMeasure)
+            {
                 BarometerTools.CalculateForSymbols(exchange, quoteData, symbols, interval, lastClosedMinute, MinimumSymbols, result);
                 StoreCandles(quoteData.Name, interval);
             }
         }
+    }
+
+
+    /// <summary>
+    /// Put the stored $BMP/$BMX candles of one chunk into memory, so <see cref="ReadCandles"/> can
+    /// find them. Only when the series is reused; a run that measures writes them itself.
+    /// <para>
+    /// Missing until 03-10-2026, and with it the whole reuse did nothing: the startup load only
+    /// reads the recent days of a symbol (GetCandleFetchStart), so the series of a replay months
+    /// back was never in memory. Every read missed, and every minute the barometer AND the market
+    /// trend were calculated again while the log said "reading the series measured by an earlier
+    /// run". The previous chunk is dropped first, the same way the replay prunes the candles of its
+    /// own coins, so memory stays at one chunk instead of growing with the length of the run.
+    /// </para>
+    /// </summary>
+    public void LoadStoredSeries(CandleTime from, CandleTime to)
+    {
+        if (!reuse)
+            return;
+
+        foreach ((CryptoQuoteData quoteData, _) in perQuote)
+        {
+            foreach (string prefix in new[] { Constants.SymbolNameBarometerPrice, Constants.SymbolNameBarometerExtra })
+            {
+                if (!exchange.TryGetSymbolByPair(prefix + quoteData.Name, out CryptoSymbol? symbol) || symbol == null)
+                    continue;
+
+                foreach (CryptoInterval interval in intervals)
+                {
+                    List<CryptoCandle> stored = CandleSource.Load(symbol, interval, from, to);
+                    CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+                    lock (candles)
+                    {
+                        foreach (CandleTime old in candles.Keys.Where(k => k < from).ToList())
+                            candles.Remove(old);
+
+                        // A minute this run already measured itself keeps its own value.
+                        foreach (CryptoCandle candle in stored)
+                            candles.TryAdd(candle.OpenTime, candle);
+                    }
+                }
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Whether a stored $BMX candle carries a market trend: a pair of exact zeroes is a minute
+    /// nobody measured (MarketTrendBackfill uses the same rule).
+    /// </summary>
+    internal static bool MarketTrendWasStored(decimal? primary, decimal? secondary)
+    {
+        return (primary ?? 0m) != 0m || (secondary ?? 0m) != 0m;
+    }
+
+
+    /// <summary>
+    /// Whether the market trend has to be measured this minute: when the stored series left an
+    /// interval without it, or when the trader reads the trend that measuring leaves behind on
+    /// every coin (see <see cref="TraderReadsCachedTrend"/>).
+    /// </summary>
+    internal static bool MustMeasureMarketTrend(int intervalsWithoutMarketTrend, bool traderReadsTrend)
+    {
+        return traderReadsTrend || intervalsWithoutMarketTrend > 0;
+    }
+
+
+    /// <summary>
+    /// True when a trading condition reads the trend of a coin. Measuring the market trend computes
+    /// that trend on every coin each minute as a side effect, and PositionMonitor checks these
+    /// conditions on the stored value without computing it again - so when one is set, skipping the
+    /// measurement would let the trader read a trend from the last signal instead of the current
+    /// one. The analysis side is not in this list: SignalCreate computes the trend itself right
+    /// before it reads it.
+    /// </summary>
+    internal static bool TraderReadsCachedTrend()
+    {
+        foreach (CryptoTradeSide side in Sides)
+        {
+            if (!TradingConfig.Trading.TryGetValue(side, out var trading))
+                continue;
+            if (trading.Trend.Count != 0 || trading.SymbolTrend.Count != 0 || trading.SymbolTrendSecondary.Count != 0)
+                return true;
+        }
+        return false;
     }
 
 
@@ -252,7 +355,7 @@ internal sealed class BarometerReplay
     /// the trend of three coins with the word "market" written on it.
     /// </para>
     /// </summary>
-    private void MeasureMarketTrend(CryptoQuoteData quoteData, List<CryptoSymbol> symbols)
+    private void MeasureMarketTrend(CryptoQuoteData quoteData, List<CryptoSymbol> symbols, List<CryptoInterval> targets)
     {
         // The measurement itself lives in the core, because the live scanner does exactly the same
         // thing from BarometerTools - see MarketTrend for why it is not written out twice. Blocking
@@ -260,7 +363,10 @@ internal sealed class BarometerReplay
         // where nothing else is touching these symbols.
         (decimal? averagePrimary, decimal? averageSecondary) = Core.Trend.MarketTrend.Measure(symbols, MinimumSymbols);
 
-        foreach (CryptoInterval interval in intervals)
+        // Only the intervals the stored series did not hand a market trend back for. An interval
+        // that was read keeps the stored value, which is what it ended up with before as well:
+        // the read used to come after this and overwrote it.
+        foreach (CryptoInterval interval in targets)
         {
             CryptoBarometerData data = exchange.Data.GetBarometer(quoteData.Name, interval.IntervalPeriod);
             data.MarketTrendPrimary = averagePrimary;
@@ -275,8 +381,9 @@ internal sealed class BarometerReplay
     /// exactly what the run that measured it saw. False when there is no candle for this minute,
     /// which puts the caller back on calculating.
     /// </summary>
-    private bool ReadCandles(string quoteName, CryptoInterval interval, CandleTime at)
+    private bool ReadCandles(string quoteName, CryptoInterval interval, CandleTime at, out bool marketTrendRead)
     {
+        marketTrendRead = false;
         if (!exchange.TryGetSymbolByPair(Constants.SymbolNameBarometerPrice + quoteName, out CryptoSymbol? primary)
             || primary == null)
             return false;
@@ -312,6 +419,11 @@ internal sealed class BarometerReplay
             data.PriceOutlierCount = (int)extra.High;
             data.MarketTrendPrimary = BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendPrimary);
             data.MarketTrendSecondary = BarometerCandleFields.Read(extra, BarometerGraphValue.MarketTrendSecondary);
+
+            // A series stored before the market trend existed (19-09-2026) has zero in both fields.
+            // Same test as MarketTrendBackfill: both exactly zero means never measured, so that
+            // minute is measured instead of trading on a market trend of nought.
+            marketTrendRead = MarketTrendWasStored(data.MarketTrendPrimary, data.MarketTrendSecondary);
         }
         return true;
     }

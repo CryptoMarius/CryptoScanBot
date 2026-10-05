@@ -3,6 +3,8 @@ using CryptoScanner.Core.Model;
 using Dapper;
 
 using System.Globalization;
+using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
 
 namespace CryptoScanner.Core.Context;
@@ -22,7 +24,7 @@ public static class PositionDigest
         "select SymbolId, Side, CreateTime, CloseTime, Profit, Invested, PartCount, Status, " +
         "       Strategy, IntervalId, TrendPercentagePrimary, TrendPercentageSecondary, " +
         "       StochOscillator, StochSignal, Rsi, BollingerBandsPercentage, MacdHistogram, " +
-        "       Barometer1h, Trend1h, EventText " +
+        "       Barometer1h, Trend1h, EventText, PriceMinPerc, PriceMaxPerc " +
         "from position where EmulatorRunId = @id order by Id";
 
 
@@ -56,6 +58,7 @@ public static class PositionDigest
                 Number(r.BollingerBandsPercentage, 3), Number(r.MacdHistogram, 6),
                 Number(r.Barometer1h, 3), Number(r.Trend1h, 3),
                 string.IsNullOrEmpty(r.EventText) ? null : r.EventText,
+                Adverse(r),
             ]);
         }
 
@@ -65,6 +68,62 @@ public static class PositionDigest
             cols = CryptoPositionDigest.Columns,
             rows = values,
         });
+    }
+
+
+    /// <summary>
+    /// How far the price went against the position at its worst, in percent of the signal price,
+    /// negative when it went against it: the lowest low for a long, the highest high (sign flipped)
+    /// for a short. Null when the extremes were never measured.
+    /// </summary>
+    internal static double? Adverse(DigestRow r)
+    {
+        double? perc = Number(r.Side == (int)Enums.CryptoTradeSide.Long ? r.PriceMinPerc : r.PriceMaxPerc, 2);
+        if (perc == null)
+            return null;
+        return r.Side == (int)Enums.CryptoTradeSide.Long ? perc : -perc;
+    }
+
+
+    /// <summary>
+    /// The marker in front of a compressed digest. A stored digest is either plain JSON (it starts
+    /// with "{") or this prefix followed by the base64 of the gzipped JSON.
+    /// </summary>
+    public const string CompressedPrefix = "gz1:";
+
+
+    /// <summary>
+    /// The digest as it is stored on the run row: gzipped and base64-encoded behind
+    /// <see cref="CompressedPrefix"/>. Since 04-10-2026 (database version 104): the digests were
+    /// 556 MB of the 718 MB Session1 database, and the JSON of numbers compresses well. A value that
+    /// is empty or already compressed is returned as it is.
+    /// </summary>
+    public static string? Pack(string? json)
+    {
+        if (string.IsNullOrEmpty(json) || json.StartsWith(CompressedPrefix, StringComparison.Ordinal))
+            return json;
+
+        using MemoryStream buffer = new();
+        using (GZipStream zip = new(buffer, CompressionLevel.SmallestSize, leaveOpen: true))
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(json);
+            zip.Write(bytes, 0, bytes.Length);
+        }
+        return CompressedPrefix + Convert.ToBase64String(buffer.ToArray());
+    }
+
+
+    /// <summary>The digest as JSON again, whether it was stored compressed or not.</summary>
+    public static string? Unpack(string? stored)
+    {
+        if (string.IsNullOrEmpty(stored) || !stored.StartsWith(CompressedPrefix, StringComparison.Ordinal))
+            return stored;
+
+        byte[] packed = Convert.FromBase64String(stored[CompressedPrefix.Length..]);
+        using MemoryStream source = new(packed);
+        using GZipStream zip = new(source, CompressionMode.Decompress);
+        using StreamReader reader = new(zip, Encoding.UTF8);
+        return reader.ReadToEnd();
     }
 
 
@@ -88,7 +147,7 @@ public static class PositionDigest
     }
 
 
-    private sealed class DigestRow
+    internal sealed class DigestRow
     {
         public int SymbolId { get; set; }
         public int Side { get; set; }
@@ -110,5 +169,7 @@ public static class PositionDigest
         public string? Barometer1h { get; set; }
         public string? Trend1h { get; set; }
         public string? EventText { get; set; }
+        public string? PriceMinPerc { get; set; }
+        public string? PriceMaxPerc { get; set; }
     }
 }

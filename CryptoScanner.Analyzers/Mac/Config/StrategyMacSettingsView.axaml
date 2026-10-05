@@ -15,33 +15,34 @@
         <Grid ColumnDefinitions="Auto,16,Auto" RowDefinitions="Auto">
             <StackPanel Grid.Column="0" Margin="4" Spacing="4" VerticalAlignment="Top">
 
-                <!-- The four entries, each a different idea: a level that gives way, the turn of the
+                <!-- The four signals, each a different idea: a level that gives way, the turn of the
                      cloud itself, a pullback to the fast line, and the second line crossing the
                      third, which happens before the cloud turns. -->
-                <TextBlock Text="Entry trigger" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+                <TextBlock Text="Signal on marker" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
 
-                <!-- The four markers the strategy draws, and whether each one opens a position.
-                     Only the first is on: it is the one the indicator itself calls an entry. The
+                <!-- The four markers the strategy draws, and whether each one fires a signal. This is
+                     the analyzer only: which signal a trader then uses for an entry is its own
+                     choice. Only the first is on: it is the one the indicator itself calls an entry. The
                      other three are reproduced on the candle but what they EARN is unmeasured. -->
                 <CheckBox IsChecked="{Binding EntryOnOpenMarker, Mode=TwoWay}"
-                          Content="Entry on Open Long / Open Short" FontSize="12"
-                          ToolTip.Tip="The fast line crossing the second. This is the marker the strategy draws as the entry itself."/>
+                          Content="Signal on Open Long / Open Short" FontSize="12"
+                          ToolTip.Tip="The fast line crossing the second. This is the marker the indicator itself draws as the entry."/>
 
                 <CheckBox IsChecked="{Binding EntryOnCrossMarker, Mode=TwoWay}"
-                          Content="Entry on Cross Up / Cross Down" FontSize="12"
-                          ToolTip.Tip="The second line crossing the third. It fires before the cloud has turned, so it is earlier than the entry marker and not confirmed by it."/>
+                          Content="Signal on Cross Up / Cross Down" FontSize="12"
+                          ToolTip.Tip="The second line crossing the third. It fires before the cloud has turned, so it is earlier than the Open marker and not confirmed by it."/>
 
                 <CheckBox IsChecked="{Binding EntryOnCloseMarker, Mode=TwoWay}"
-                          Content="Entry on Close Long / Close Short" FontSize="12"
-                          ToolTip.Tip="The close crossing back through the second line. the strategy draws it to close the opposite position, so as an entry it is deliberately counter-trend."/>
+                          Content="Signal on Close Long / Close Short" FontSize="12"
+                          ToolTip.Tip="The close crossing back through the second line with the cloud still stacked the old way, exactly where the indicator draws the marker. It draws it to close the opposite position, so as a signal it is counter-trend."/>
 
                 <CheckBox IsChecked="{Binding EntryOnBreakMarker, Mode=TwoWay}"
-                          Content="Entry on Breakout / Breakdown" FontSize="12"
-                          ToolTip.Tip="The close beyond the level with the wick past the hundred candles before it. A follow-through marker rather than an entry of its own."/>
+                          Content="Signal on Breakout / Breakdown" FontSize="12"
+                          ToolTip.Tip="The close beyond the level with the wick past the hundred candles before it. A follow-through marker rather than a signal of its own."/>
 
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="At most this many break entries between one entry and the next. three is the most this ever draws.">
-                    <TextBlock Grid.Column="0" Text="Breakout entries per position:" VerticalAlignment="Center" FontSize="12"/>
+                      ToolTip.Tip="At most this many break signals between one Open marker and the next. Three is the most the indicator ever draws.">
+                    <TextBlock Grid.Column="0" Text="Breakout signals per position:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding BreakoutEntriesPerRun, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>

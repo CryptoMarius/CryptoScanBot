@@ -1,4 +1,5 @@
 ﻿using CryptoScanner.Analyzers.Dbr;
+using CryptoScanner.Analyzers.Sbm;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Emulator.Engine;
@@ -280,5 +281,64 @@ public class SignalGridExpanderTests : TestBase
 
         var na = GlobalData.Settings.QuoteCoins.Values.Select(q => q.EntryAmount).ToList();
         CollectionAssert.AreEqual(voor, na);
+    }
+
+
+    /// <summary>
+    /// A section that resolves to nothing used to be skipped without a word. On 03-10-2026 queue
+    /// files carried their overrides under "sbm1", "stobb.multi" and "choch.secondary" - names of
+    /// sub-strategies, not of the plugins owning the settings - and those runs would have measured
+    /// the defaults. Validate has to name the plugin section that does work.
+    /// </summary>
+    [TestMethod]
+    public void ValidateRefusesASubStrategyNameAndNamesThePlugin()
+    {
+        InitTestSession();
+        RegisterAndEnablePlugin(new SbmPlugin());
+
+        string? reason = SignalGridExpander.Validate(EntryWithOverride("sbm1", "BBMinPercentage", "1.5"));
+
+        Assert.IsNotNull(reason);
+        StringAssert.Contains(reason, "\"sbm1\"");
+        StringAssert.Contains(reason, "\"sbm\"");
+    }
+
+
+    /// <summary>Apply refuses it too, for the callers that do not validate first.</summary>
+    [TestMethod]
+    public void ApplyRefusesASubStrategyName()
+    {
+        InitTestSession();
+        RegisterAndEnablePlugin(new SbmPlugin());
+
+        Assert.ThrowsExactly<NotSupportedException>(
+            () => SignalGridExpander.Apply(EntryWithOverride("sbm1", "BBMinPercentage", "1.5")));
+    }
+
+
+    /// <summary>A name nobody claims at all is refused as well, with its own explanation.</summary>
+    [TestMethod]
+    public void ValidateRefusesAnUnknownSection()
+    {
+        InitTestSession();
+
+        string? reason = SignalGridExpander.Validate(EntryWithOverride("nosuchsection", "Anything", "1"));
+
+        Assert.IsNotNull(reason);
+        StringAssert.Contains(reason, "\"nosuchsection\"");
+        StringAssert.Contains(reason, "matches no settings section");
+    }
+
+
+    /// <summary>The sections that do resolve - "Signal", a SettingsSignal field, a plugin name - stay accepted.</summary>
+    [TestMethod]
+    public void ValidateAcceptsTheKnownSections()
+    {
+        InitTestSession();
+        RegisterAndEnablePlugin(new SbmPlugin());
+
+        Assert.IsNull(SignalGridExpander.Validate(EntryWithOverride("Signal", "AnalysisEffectivePercentage", "3.5")));
+        Assert.IsNull(SignalGridExpander.Validate(EntryWithOverride("ZonesDlz", "IntervalList", """["1h"]""")));
+        Assert.IsNull(SignalGridExpander.Validate(EntryWithOverride("sbm", "BBMinPercentage", "1.5")));
     }
 }

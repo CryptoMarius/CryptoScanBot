@@ -179,6 +179,53 @@ public class MacTests : TestBase
     /// left unmarked.
     /// </summary>
     [TestMethod]
+    public void EveryLevelLineStartsAtTheCandleThatMadeIt()
+    {
+        // A wave with a different height on every swing, so each pivot is a level of its own
+        var candles = new List<CryptoCandle>();
+        for (int i = 0; i < 400; i++)
+        {
+            double wave = Math.Sin(i / 9.0) * (600 + i);
+            decimal close = (decimal)(30000 + wave);
+            candles.Add(new CryptoCandle
+            {
+                TickDecimals = 2,
+                OpenTime = new CandleTime((uint)((i + 1) * 1440)),
+                Open = close,
+                High = close + 80m,
+                Low = close - 80m,
+                Close = close,
+                Volume = 100m,
+            });
+        }
+
+        CryptoSymbol symbol = MakeSymbol();
+        CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d];
+        var series = new MacChartOverlay().GetSeries(symbol, interval, candles);
+        var byTime = candles.ToDictionary(c => (long)c.OpenTime.ToUnixSeconds());
+
+        int checkedLevels = 0;
+        foreach ((string key, bool high) in new[] { (MacChartOverlay.KeyResistance, true), (MacChartOverlay.KeySupport, false) })
+        {
+            var points = series.Single(s => s.Key == key).Points;
+            for (int p = 0; p < points.Count; p++)
+            {
+                // The first point of every stretch: the very first one, or the one after a break
+                bool starts = !double.IsNaN(points[p].Value) && (p == 0 || double.IsNaN(points[p - 1].Value));
+                if (!starts)
+                    continue;
+
+                CryptoCandle origin = byTime[points[p].Time];
+                double made = (double)(high ? origin.High : origin.Low);
+                Assert.AreEqual(made, points[p].Value, 1e-9,
+                    $"{key} at {points[p].Value} starts on a candle whose {(high ? "high" : "low")} is {made}");
+                checkedLevels++;
+            }
+        }
+        Assert.IsTrue(checkedLevels > 10, "the wave should produce plenty of levels, got " + checkedLevels);
+    }
+
+    [TestMethod]
     public void EveryOpenLongMarkerSitsOnARealCrossing()
     {
         var candles = new List<CryptoCandle>();
@@ -251,18 +298,51 @@ public class MacTests : TestBase
 
 
     /// <summary>
-    /// the strategy draws "Close Short" when the close crosses UP through the second line. Read as
-    /// an entry that is a LONG: what closes a short opens a long.
+    /// A cloud pointing DOWN and stacked down - fast under second under medium under slow - which is
+    /// what the "Close Short" marker asks for. The candles close at 100 by default, so the
+    /// second line is put at 98.5 to keep the close above it until a test moves it.
+    /// </summary>
+    private static void CloudStackedDown(MacCandleData[] mac)
+    {
+        foreach (MacCandleData one in mac)
+        {
+            one.EmaFast = 98.0;
+            one.EmaSecond = 98.5;
+            one.SmaMedium = 99.0;
+            one.SmaSlow = 99.5;
+        }
+    }
+
+
+    /// <summary>The mirror: fast over second over medium over slow, what "Close Long" asks for.</summary>
+    private static void CloudStackedUp(MacCandleData[] mac)
+    {
+        foreach (MacCandleData one in mac)
+        {
+            one.EmaFast = 102.0;
+            one.EmaSecond = 101.5;
+            one.SmaMedium = 101.0;
+            one.SmaSlow = 100.5;
+        }
+    }
+
+
+    /// <summary>
+    /// the strategy draws "Close Short" when the close crosses UP through the second line while
+    /// the cloud still points and stacks down. Read as an entry that is a LONG: what closes a short
+    /// opens a long.
     /// </summary>
     [TestMethod]
     public void ACloseCrossingUpThroughTheSecondLine_IsALong()
     {
         OnlyTheSecondLineCross();
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
-        {
-            candles[1].Close = 98m;     // under the second line, which sits at 98.5
-            candles[0].Close = 99m;     // and through it, without reaching the level at 101
-        });
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: CloudStackedDown,
+            shapeCandles: candles =>
+            {
+                candles[1].Close = 98m;     // under the second line, which sits at 98.5
+                candles[0].Close = 99m;     // and through it, without reaching the level at 101
+            });
 
         Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
         StringAssert.Contains(algorithm.ExtraText, "close crossed over the second line");
@@ -274,11 +354,13 @@ public class MacTests : TestBase
     public void ACloseCrossingDownThroughTheSecondLine_IsAShort()
     {
         OnlyTheSecondLineCross();
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough, shapeCandles: candles =>
-        {
-            candles[1].Close = 102m;    // above the second line, which sits at 101.5
-            candles[0].Close = 101m;
-        });
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough,
+            shape: CloudStackedUp,
+            shapeCandles: candles =>
+            {
+                candles[1].Close = 102m;    // above the second line, which sits at 101.5
+                candles[0].Close = 101m;
+            });
 
         Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
         StringAssert.Contains(algorithm.ExtraText, "close crossed under the second line");
@@ -286,23 +368,41 @@ public class MacTests : TestBase
 
 
     /// <summary>
-    /// And it fires while the CLOUD still points the other way, which is the whole point: this is
-    /// the marker that closes the opposite position, so the cloud is by definition against us. Every
-    /// other trigger but the line cross is blocked there.
+    /// It fires ONLY while the cloud still points the other way, because that is what the marker
+    /// asks: Close Short is drawn to close a short, so the cloud is by definition still pointing
+    /// down. With the cloud already pointing up the indicator draws nothing, and until 30 September
+    /// 2026 the signal fired there anyway - WDCUSDT on six hours showed it.
     /// </summary>
     [TestMethod]
-    public void ItFiresEvenWhileTheCloudStillPointsTheOtherWay()
+    public void ACloseCrossingWithTheCloudAlreadyOurWay_IsNoSignal()
+    {
+        OnlyTheSecondLineCross();
+        // The default series: fast over second over medium over slow, a cloud pointing UP.
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
+        {
+            candles[1].Close = 98m;
+            candles[0].Close = 99m;
+        });
+
+        Assert.IsFalse(algorithm.IsSignal(), algorithm.ExtraText);
+        StringAssert.Contains(algorithm.ExtraText, "the close stayed on its side of the second line");
+    }
+
+
+    /// <summary>
+    /// The cloud pointing down is not enough on its own: the marker wants the whole stack, second
+    /// under medium under slow. A third line that has already given way makes the crossing noise.
+    /// </summary>
+    [TestMethod]
+    public void ACloseCrossingWithTheCloudUnstacked_IsNoSignal()
     {
         OnlyTheSecondLineCross();
         var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
             shape: mac =>
             {
+                CloudStackedDown(mac);
                 foreach (MacCandleData one in mac)
-                {
-                    // the fast line UNDER the second one: a cloud pointing down, against a long
-                    one.EmaFast = 98.0;
-                    one.EmaSecond = 98.5;
-                }
+                    one.SmaMedium = 97.0;   // the third line under the second: not stacked down
             },
             shapeCandles: candles =>
             {
@@ -310,7 +410,7 @@ public class MacTests : TestBase
                 candles[0].Close = 99m;
             });
 
-        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        Assert.IsFalse(algorithm.IsSignal(), algorithm.ExtraText);
     }
 
 
@@ -319,11 +419,13 @@ public class MacTests : TestBase
     public void ACloseThatStaysUnderTheSecondLine_IsNoSignal()
     {
         OnlyTheSecondLineCross();
-        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shapeCandles: candles =>
-        {
-            candles[1].Close = 98m;
-            candles[0].Close = 98.2m;   // still under the second line at 98.5
-        });
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shape: CloudStackedDown,
+            shapeCandles: candles =>
+            {
+                candles[1].Close = 98m;
+                candles[0].Close = 98.2m;   // still under the second line at 98.5
+            });
 
         Assert.IsFalse(algorithm.IsSignal());
     }
@@ -518,7 +620,7 @@ public class MacTests : TestBase
             shapeCandles: candles => candles[0].Close = 102m);
 
         Assert.IsFalse(algorithm.IsSignal());
-        StringAssert.Contains(algorithm.ExtraText, "no entry trigger");
+        StringAssert.Contains(algorithm.ExtraText, "no signal marker");
     }
 
 

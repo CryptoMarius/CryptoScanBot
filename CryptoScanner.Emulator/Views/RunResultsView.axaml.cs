@@ -204,6 +204,13 @@ public partial class RunResultsView : UserControl
     }
 
 
+    private void OnRefreshClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is RunResultsViewModel viewModel)
+            viewModel.Refresh();
+    }
+
+
     private void OnRunDoubleTapped(object? sender, TappedEventArgs e) => ShowPositionsForSelectedRun();
 
 
@@ -381,16 +388,40 @@ public partial class RunResultsView : UserControl
     }
 
 
-    private void OnRecalculateClick(object? sender, RoutedEventArgs e)
+    // "Recalculate stats" was removed on 03-10-2026: the run summary is computed when a run finishes,
+    // and of the 1367 runs in Session1 none still had positions without a summary - the button could
+    // no longer change anything. The live refresh of the running row calls EmulatorDb.RecalculateRuns
+    // itself and is not affected.
+
+
+    private async void OnTakeOverSettingsClick(object? sender, RoutedEventArgs e)
     {
         List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
-        if (rows.Count == 0)
+        if (TopLevel.GetTopLevel(this) is not Window owner)
             return;
         if (DataContext is not RunResultsViewModel viewModel)
             return;
 
-        // Non-destructive recompute from existing positions — no confirmation needed.
-        viewModel.RecalculateRuns(rows);
+        if (rows.Count != 1)
+        {
+            viewModel.Status = "Select a single run to take over its settings.";
+            return;
+        }
+
+        RunRow row = rows[0];
+        string label = string.IsNullOrWhiteSpace(row.Label) ? "" : $" \"{row.Label}\"";
+        string message = $"Make the settings of run #{row.Id}{label} the current settings?\n\n"
+            + "They are written over the settings file of this data folder and loaded right away. "
+            + "Settings the run did not store keep their current value, and the exchange stays as it is. "
+            + "The current file is kept as a dated backup next to it.";
+        if (!await ConfirmAsync(owner, "Take over settings", message))
+            return;
+
+        RunSettingsApplier.Apply(row.Id, out string result);
+        viewModel.Status = result;
+
+        // The settings may carry another theme, same as after the settings dialog
+        App.ApplyThemeFromSettings();
     }
 
 

@@ -69,6 +69,27 @@ window.GridInterop = {
         return Math.floor((container.clientHeight - headerHeight) / rowHeight);
     },
 
+    // The navigation keys move the selection from .NET, and the row is then scrolled into view.
+    // The browser would ALSO scroll the container on those keys, before .NET gets a word in, so the
+    // list crept away underneath the selection with every key. Only these keys are stopped; every
+    // other key keeps its default.
+    suppressNavigationScroll: function (element) {
+        if (!element || element.dataset.navScrollSuppressed) return;
+        element.dataset.navScrollSuppressed = '1';
+        element.addEventListener('keydown', function (e) {
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'ArrowDown':
+                case 'PageUp':
+                case 'PageDown':
+                case 'Home':
+                case 'End':
+                    e.preventDefault();
+                    break;
+            }
+        });
+    },
+
     focusElement: function (element) {
         if (element && element.focus)
             element.focus();

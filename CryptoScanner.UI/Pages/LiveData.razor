@@ -12,7 +12,7 @@
 @inject IJSRuntime JS
 @implements IDisposable
 
-<div class="signal-grid-wrapper">
+<div class="signal-grid-wrapper" tabindex="0" @ref="_wrapperRef" @onkeydown="OnKeyDown">
     <table class="data-table" @ref="_tableRef">
         <thead @oncontextmenu="OnHeaderContextMenu" @oncontextmenu:preventDefault="true">
             <tr>
@@ -38,10 +38,11 @@
         <tbody>
             @if (_liveData.Count > 0)
             {
-                @foreach (var vm in _liveData)
+                @for (int i = 0; i < _liveData.Count; i++)
                 {
+                    var vm = _liveData[i];
                     var row = _rowCallbacks.Get(vm);
-                    <tr class="@(SelectedItems.Contains(vm) ? "selected" : "")"
+                    <tr id="@RowId(i)" class="@(SelectedItems.Contains(vm) ? "selected" : "")"
                         @key="vm"
                         @onclick="row.Click"
                         @ondblclick="row.DoubleClick"
@@ -129,6 +130,7 @@
     private GridCallbackCache<LiveDataViewModel, RowCallbacks> _rowCallbacks = null!;
     private GridCallbackCache<ColumnRuntimeState<LiveDataColumnEnum>, HeaderCallbacks> _headerCallbacks = null!;
     private ElementReference _tableRef;
+    private ElementReference _wrapperRef;
     private DotNetObjectReference<LiveData>? _dotNetRef;
     private bool _jsInitialized;
 
@@ -229,6 +231,7 @@
             try
             {
                 await JS.InvokeVoidAsync("GridInterop.initAllResizeHandles", _tableRef, _dotNetRef);
+                await JS.InvokeVoidAsync("GridInterop.suppressNavigationScroll", _wrapperRef);
                 _jsInitialized = true;
             }
             catch (JSException)
@@ -303,6 +306,27 @@
             SelectedItems.Add(vm);
             SelectedItem = vm;
         }
+    }
+
+    private static string RowId(int index) => "livedata-row-" + index;
+
+    /// <summary>
+    /// The arrow keys, page up and down, home and end move the active row, and the selection becomes
+    /// that one row - like a DataGrid, where scrolling with the keyboard drops a multi selection.
+    /// </summary>
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        int current = SelectedItem != null ? _liveData.IndexOf(SelectedItem) : -1;
+        int target = await GridNavigation.TargetIndexAsync(JS, e.Key, current, _liveData.Count, RowId);
+        if (target < 0 || target >= _liveData.Count)
+            return;
+
+        var match = _liveData[target];
+        SelectedItems.Clear();
+        SelectedItems.Add(match);
+        SelectedItem = match;
+        StateHasChanged();
+        await GridNavigation.ScrollRowIntoViewAsync(JS, RowId(target));
     }
 
     private void OnDoubleClick(LiveDataViewModel vm)

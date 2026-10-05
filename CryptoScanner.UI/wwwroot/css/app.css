@@ -229,7 +229,13 @@ html, body {
     overflow-y: hidden;
 }
 
+/* flex: none - a section may never be squeezed below the width of its own rows. The panel scrolls
+   sideways (overflow-x above) once the window is too narrow, which is what happens the moment the
+   web view is zoomed in with Ctrl+wheel: the same panel then has fewer CSS pixels to work with.
+   Without this the sections shrank to their min-width and their values, which do not wrap, were
+   drawn straight over the heading of the section next to them. */
 .dashboard-section {
+    flex: none;
     padding: 4px 10px;
     min-width: 120px;
 }

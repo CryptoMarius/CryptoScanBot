@@ -128,6 +128,8 @@ public class MacChartOverlay : IChartOverlay
             return;
 
         MacLineValues[] values = MacLinesHelper.Compute(candles);
+        double?[] resistanceLevels = AnchorLevels(values, high: true);
+        double?[] supportLevels = AnchorLevels(values, high: false);
 
         // The cloud, filled between each neighbouring pair of lines. Every pair carries its own
         // direction, so at a turn the upper band changes colour before the lower one and the two
@@ -215,8 +217,8 @@ public class MacChartOverlay : IChartOverlay
             // continuous line that reads as a staircase, with a vertical stroke at every jump that
             // is not a price level at all. A break in the line (NaN) puts an end to the old level
             // and starts the new one, which is how support and resistance are drawn everywhere.
-            AddLevelPoint(resistance, x, v.PivotHigh, i > 0 ? values[i - 1].PivotHigh : null);
-            AddLevelPoint(support, x, v.PivotLow, i > 0 ? values[i - 1].PivotLow : null);
+            AddLevelPoint(resistance, x, resistanceLevels[i], i > 0 ? resistanceLevels[i - 1] : null);
+            AddLevelPoint(support, x, supportLevels[i], i > 0 ? supportLevels[i - 1] : null);
         }
 
         chart.Series.Add(medium);
@@ -427,6 +429,37 @@ public class MacChartOverlay : IChartOverlay
 
 
     /// <summary>
+    /// The pivot levels as they are DRAWN: each one starting at the candle whose high (or low) made
+    /// it, not at the candle that confirmed it. A pivot is only known PivotRightCandles candles
+    /// later, which is when MacLinesHelper reports it; the indicator this is modelled on draws the
+    /// line from the origin candle, so the line here started that many candles too late.
+    /// The previous level stops where the new one starts.
+    /// </summary>
+    private static double?[] AnchorLevels(MacLineValues[] values, bool high)
+    {
+        int right = Math.Max(1, MacPlugin.Settings.PivotRightCandles);
+        var result = new double?[values.Length];
+        double? previous = null;
+        for (int i = 0; i < values.Length; i++)
+        {
+            double? current = high ? values[i].PivotHigh : values[i].PivotLow;
+            if (current != null && current != previous)
+            {
+                // Confirmed here, made right candles back: draw it from there
+                for (int j = Math.Max(0, i - right); j <= i; j++)
+                    result[j] = current;
+            }
+            else
+            {
+                result[i] = current;
+            }
+            previous = current;
+        }
+        return result;
+    }
+
+
+    /// <summary>
     /// Adds one point of a level line, breaking the line where the level changes so the two levels
     /// do not get joined by a vertical stroke. A NaN makes OxyPlot lift the pen.
     /// </summary>
@@ -580,6 +613,8 @@ public class MacChartOverlay : IChartOverlay
             return [];
 
         MacLineValues[] values = MacLinesHelper.Compute(candles);
+        double?[] resistanceLevels = AnchorLevels(values, high: true);
+        double?[] supportLevels = AnchorLevels(values, high: false);
 
         // The defaults of the definitions; the host replaces them with whatever the user set in the
         // chart style screen, so every colour lives in one place.
@@ -606,8 +641,8 @@ public class MacChartOverlay : IChartOverlay
             // A level holds its value and then jumps. A NaN in front of the new value is passed on
             // as a point WITHOUT a value, which makes the renderer lift the pen - so the old level
             // ends where it ended instead of being joined to the new one by a slanted line.
-            AddWebLevel(resistance, time, v.PivotHigh, i > 0 ? values[i - 1].PivotHigh : null);
-            AddWebLevel(support, time, v.PivotLow, i > 0 ? values[i - 1].PivotLow : null);
+            AddWebLevel(resistance, time, resistanceLevels[i], i > 0 ? resistanceLevels[i - 1] : null);
+            AddWebLevel(support, time, supportLevels[i], i > 0 ? supportLevels[i - 1] : null);
         }
 
         return [medium, second, slow, fast, resistance, support];

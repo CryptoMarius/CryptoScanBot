@@ -114,7 +114,7 @@
                            @onkeydown="OnFilterKeyDown" />
                     <button class="btn sidebar-toggle-btn" @onclick="ToggleSidebar" title="Hide symbols">◄</button>
                 </div>
-                <div class="symbol-sidebar-content" tabindex="0" @onkeydown="OnSymbolGridKeyDown">
+                <div class="symbol-sidebar-content" tabindex="0" @ref="_symbolGridRef" @onkeydown="OnSymbolGridKeyDown">
                     <table class="data-table" @ref="_symbolTableRef">
                         <thead @oncontextmenu="OnHeaderContextMenu" @oncontextmenu:preventDefault="true">
                             <tr>
@@ -307,6 +307,7 @@
 
     private GridColumnState<SymbolColumnEnum>? _symbolColumns;
     private ElementReference _symbolTableRef;
+    private ElementReference _symbolGridRef;
     private ElementReference _sidebarRef;
     private ElementReference _splitterRef;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
@@ -372,6 +373,7 @@
             {
                 await JS.InvokeVoidAsync("GridInterop.initAllResizeHandles", _symbolTableRef, _dotNetRef);
                 await JS.InvokeVoidAsync("GridInterop.initSplitter", _splitterRef, _sidebarRef, _dotNetRef);
+                await JS.InvokeVoidAsync("GridInterop.suppressNavigationScroll", _symbolGridRef);
                 _jsInitialized = true;
             }
             catch (JSException)

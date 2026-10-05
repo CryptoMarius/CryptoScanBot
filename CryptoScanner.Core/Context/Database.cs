@@ -1010,6 +1010,9 @@ public class CryptoDatabase : IDisposable
                 "ConfigJson TEXT NOT NULL," +
                 "SettingsJson TEXT NULL," +
                 "GitSha TEXT NULL," +
+                // Added by a migration only until 04-10-2026, so a fresh database had no column for
+                // it and the first run of a new session failed on its insert.
+                "BuildStamp TEXT NULL," +
                 "Result TEXT NULL," +
                 "SignalCount INTEGER NOT NULL DEFAULT 0," +
                 "PositionCount INTEGER NOT NULL DEFAULT 0," +
@@ -1025,6 +1028,14 @@ public class CryptoDatabase : IDisposable
                 "PeakInvested TEXT NULL," +
                 "PeakPositions INTEGER NOT NULL DEFAULT 0," +
                 "MaxDrawdownPercentage TEXT NULL," +
+                "OpenDrawdown TEXT NULL," +
+                "OpenDrawdownDate TEXT NULL," +
+                "MonthsInProfit INTEGER NULL," +
+                "MonthsTotal INTEGER NULL," +
+                "LongestLoserDays TEXT NULL," +
+                "WorstPositionPercentage TEXT NULL," +
+                "ProfitWithoutBestTen TEXT NULL," +
+                "EquityCurveJson TEXT NULL," +
                 "PositionsLong INTEGER NOT NULL DEFAULT 0," +
                 "PositionsShort INTEGER NOT NULL DEFAULT 0," +
                 "ProfitLong TEXT NULL," +

@@ -10,10 +10,11 @@
     <Grid RowDefinitions="Auto,*,Auto" RowSpacing="6">
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-            <TextBlock FontWeight="Bold" FontSize="13" VerticalAlignment="Center"
-                       Text="Emulator runs (double-click for positions)"/>
-            <Button Content="Refresh" Command="{Binding RefreshCommand}"/>
-            <Button Content="Delete all runs…" Click="OnDeleteAllRunsClick"/>
+            <!-- Refresh and "Delete all runs" moved into the context menu of the grid (04-10-2026). -->
+            <TextBlock Text="Filter label:" VerticalAlignment="Center"/>
+            <TextBox Width="320" Text="{Binding LabelFilter}"
+                     Watermark="words in the label, e.g. mac open 1d"
+                     ToolTip.Tip="Shows only the runs whose label contains every word, in any order and case. Empty shows all runs."/>
         </StackPanel>
 
         <!-- HorizontalScrollBarVisibility is forced to Visible: on Auto the grid never showed its
@@ -22,9 +23,12 @@
              The disappearing act turned out to be the 18px rows presenter margin in App.axaml,
              fixed there by giving the presenter its own row; Visible stays so the bar is always
              present, also when the columns happen to fit. -->
+        <!-- The rows come through RunsView (the label filter), an untyped collection view, so the
+             column bindings cannot be compiled against RunRow any more: x:CompileBindings off. -->
         <DataGrid Grid.Row="1"
                   Name="RunsGrid"
-                  ItemsSource="{Binding Runs}"
+                  ItemsSource="{Binding RunsView}"
+                  x:CompileBindings="False"
                   IsReadOnly="True"
                   CanUserReorderColumns="True"
                   CanUserResizeColumns="True"
@@ -35,6 +39,8 @@
                   HorizontalScrollBarVisibility="Visible">
             <DataGrid.ContextMenu>
                 <ContextMenu>
+                    <MenuItem Header="Refresh" Click="OnRefreshClick"/>
+                    <Separator/>
                     <MenuItem Header="Adjust columns…" Click="OnAdjustColumnsClick"/>
                     <Separator/>
                     <MenuItem Header="Edit label…" Click="OnEditLabelClick"/>
@@ -44,12 +50,13 @@
                     <MenuItem Header="Show settings JSON" Click="OnShowJsonClick"/>
                     <MenuItem Header="Show emulator config" Click="OnShowEmulatorConfigClick"/>
                     <MenuItem Header="Export scanner settings…" Click="OnExportSettingsClick"/>
-                    <MenuItem Header="Recalculate stats" Click="OnRecalculateClick"/>
+                    <MenuItem Header="Take over these settings…" Click="OnTakeOverSettingsClick"/>
                     <Separator/>
                     <MenuItem Header="Copy selected rows (for Excel)" Click="OnCopyRowsClick"/>
                     <MenuItem Header="Copy all rows (for Excel)"      Click="OnCopyAllRowsClick"/>
                     <Separator/>
                     <MenuItem Header="Delete run(s)…" Click="OnDeleteRunClick"/>
+                    <MenuItem Header="Delete all runs…" Click="OnDeleteAllRunsClick"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>

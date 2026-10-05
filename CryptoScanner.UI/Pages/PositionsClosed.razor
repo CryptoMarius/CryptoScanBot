@@ -12,7 +12,7 @@
 @inject IJSRuntime JS
 @implements IDisposable
 
-<div class="signal-grid-wrapper" tabindex="0" @onkeydown="OnKeyDown">
+<div class="signal-grid-wrapper" tabindex="0" @ref="_wrapperRef" @onkeydown="OnKeyDown">
     <table class="data-table" @ref="_tableRef">
         <thead @oncontextmenu="OnHeaderContextMenu" @oncontextmenu:preventDefault="true">
             <tr>
@@ -38,10 +38,11 @@
         <tbody>
             @if (_positions.Count > 0)
             {
-                @foreach (var vm in _positions)
+                @for (int i = 0; i < _positions.Count; i++)
                 {
+                    var vm = _positions[i];
                     var row = _rowCallbacks.Get(vm);
-                    <tr class="@(SelectedPositions.Contains(vm) ? "selected" : "")"
+                    <tr id="@RowId(i)" class="@(SelectedPositions.Contains(vm) ? "selected" : "")"
                         @key="vm"
                         @onclick="row.Click"
                         @ondblclick="row.DoubleClick"
@@ -142,6 +143,7 @@
     private GridCallbackCache<PositionViewModel, RowCallbacks> _rowCallbacks = null!;
     private GridCallbackCache<ColumnRuntimeState<PositionColumnEnum>, HeaderCallbacks> _headerCallbacks = null!;
     private ElementReference _tableRef;
+    private ElementReference _wrapperRef;
     private DotNetObjectReference<PositionsClosed>? _dotNetRef;
     private bool _jsInitialized;
 
@@ -282,6 +284,7 @@
             try
             {
                 await JS.InvokeVoidAsync("GridInterop.initAllResizeHandles", _tableRef, _dotNetRef);
+                await JS.InvokeVoidAsync("GridInterop.suppressNavigationScroll", _wrapperRef);
                 _jsInitialized = true;
             }
             catch (JSException)
@@ -356,6 +359,33 @@
             SelectedPositions.Add(vm);
             SelectedPosition = vm;
         }
+    }
+
+    private static string RowId(int index) => "position-closed-row-" + index;
+
+    /// <summary>
+    /// The arrow keys, page up and down, home and end move the active row, and the selection becomes
+    /// that one row - like a DataGrid, where scrolling with the keyboard drops a multi selection.
+    /// </summary>
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Delete" && SelectedPosition?.Object != null)
+        {
+            GridCommandService.PositionDelete(SelectedPosition.Object);
+            return;
+        }
+
+        int current = SelectedPosition != null ? _positions.IndexOf(SelectedPosition) : -1;
+        int target = await GridNavigation.TargetIndexAsync(JS, e.Key, current, _positions.Count, RowId);
+        if (target < 0 || target >= _positions.Count)
+            return;
+
+        var match = _positions[target];
+        SelectedPositions.Clear();
+        SelectedPositions.Add(match);
+        SelectedPosition = match;
+        StateHasChanged();
+        await GridNavigation.ScrollRowIntoViewAsync(JS, RowId(target));
     }
 
     private void OnDoubleClick(PositionViewModel vm)
@@ -489,14 +519,6 @@
         if (_contextMenuPosition?.Object.Symbol != null)
             GridCommandService.ExportBarometerToExcel(_contextMenuPosition.Object.Symbol);
         CloseContextMenu();
-    }
-
-    private void OnKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Delete" && SelectedPosition?.Object != null)
-        {
-            GridCommandService.PositionDelete(SelectedPosition.Object);
-        }
     }
 
     private void OnMenuExportPositionToExcel()

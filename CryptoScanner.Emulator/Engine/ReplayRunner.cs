@@ -376,6 +376,9 @@ public sealed class ReplayRunner
                     replay.ResetCursors(windowFrom);
                     replays.Add(replay);
                 }
+                // The stored barometer series of this chunk, so a reused series is really read back
+                // (see BarometerReplay.LoadStoredSeries for what happened without this).
+                barometer?.LoadStoredSeries(windowFrom, chunk.End);
                 long loadElapsed = Stopwatch.GetTimestamp() - loadStart;
 
                 if (useChunks)

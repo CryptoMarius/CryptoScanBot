@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Settings;
+﻿using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Analyzers.Mac;
@@ -55,9 +55,9 @@ public class MacSettings : SettingsSignalStrategyBase
     /// worth watching and can be switched on one at a time to be measured. See Mac.md.
     /// </para>
     /// </summary>
-    [SettingCaption("Entry on Open Long / Open Short", SubHeader = "Entry trigger",
-        Tooltip = "The fast line crossing the second. This is the marker the strategy draws as the "
-            + "entry itself.")]
+    [SettingCaption("Signal on Open Long / Open Short", SubHeader = "Signal on marker",
+        Tooltip = "The fast line crossing the second. This is the marker the indicator itself draws "
+            + "as the entry.")]
     public bool EntryOnOpenMarker { get; set; } = true;
 
     /// <summary>
@@ -68,8 +68,8 @@ public class MacSettings : SettingsSignalStrategyBase
     /// until a run says what it is worth.
     /// </para>
     /// </summary>
-    [SettingCaption("Entry on Cross Up / Cross Down",
-        Tooltip = "The second line crossing the third. Earlier than the entry marker, and not "
+    [SettingCaption("Signal on Cross Up / Cross Down",
+        Tooltip = "The second line crossing the third. Earlier than the Open marker, and not "
             + "confirmed by it.")]
     public bool EntryOnCrossMarker { get; set; } = false;
 
@@ -79,10 +79,16 @@ public class MacSettings : SettingsSignalStrategyBase
     /// the strategy draws this to CLOSE the position on the other side, so taking it as an entry is
     /// deliberately counter-trend - the cloud is still pointing the other way when it fires.
     /// </para>
+    /// <para>
+    /// It is the marker exactly, with the same three conditions the exit reads: the crossing, the
+    /// cloud still pointing the old way, and the cloud stacked that way. Since 30 September 2026;
+    /// before that the signal took the bare crossing and fired where the indicator draws nothing.
+    /// </para>
     /// </summary>
-    [SettingCaption("Entry on Close Long / Close Short",
-        Tooltip = "The close crossing back through the second line. the strategy draws it to close the "
-            + "opposite position, so as an entry it is counter-trend.")]
+    [SettingCaption("Signal on Close Long / Close Short",
+        Tooltip = "The close crossing back through the second line with the cloud still stacked the "
+            + "old way, exactly where the indicator draws the marker. It draws it to close the "
+            + "opposite position, so as a signal it is counter-trend.")]
     public bool EntryOnCloseMarker { get; set; } = false;
 
     /// <summary>
@@ -93,9 +99,9 @@ public class MacSettings : SettingsSignalStrategyBase
     /// opened. A follow-through marker rather than an entry, so it is off by default.
     /// </para>
     /// </summary>
-    [SettingCaption("Entry on Breakout / Breakdown",
+    [SettingCaption("Signal on Breakout / Breakdown",
         Tooltip = "The close beyond the level with the wick past the hundred candles before it. A "
-            + "follow-through marker, not an entry of its own.")]
+            + "follow-through marker, not a signal of its own.")]
     public bool EntryOnBreakMarker { get; set; } = false;
 
     /// <summary>
@@ -112,9 +118,9 @@ public class MacSettings : SettingsSignalStrategyBase
     /// 96% but its precision falls from 87% to 75%. See Mac.md.
     /// </para>
     /// </summary>
-    [SettingCaption("Breakout entries per position",
-        Tooltip = "At most this many break entries between one entry and the next. Three is what "
-            + "the strategy draws.")]
+    [SettingCaption("Breakout signals per position",
+        Tooltip = "At most this many break signals between one Open marker and the next. Three is "
+            + "what the indicator draws.")]
     public int BreakoutEntriesPerRun { get; set; } = 3;
 
     /// <summary>

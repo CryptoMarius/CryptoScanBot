@@ -8,7 +8,7 @@ out of the combination. The strategy trades the signals; the chart overlay draws
 | line | default | what it is |
 | --- | --- | --- |
 | fast | EMA(20) | the line a pullback bounces off |
-| second | EMA(40) | the one entries and exits turn on |
+| second | EMA(40) | the one the Open and Close markers turn on |
 | third | SMA(50) | the one the trend crossing goes through |
 | slow | SMA(150) | the trend itself |
 
@@ -46,13 +46,13 @@ statement about a candle that has CLOSED; nothing is drawn or fired on a running
 
 ### Open Long / Open Short
 
-The fast line crosses the second one: above it for a long, under it for a short. This is the entry
-the strategy is built around.
+The fast line crosses the second one: above it for a long, under it for a short. This is the marker the
+indicator itself calls the entry, and the signal the strategy is built around.
 
 ### Cross Up / Cross Down
 
 The second line crosses the third one. It happens BEFORE the cloud turns, so it runs ahead of the
-entry and is not confirmed by it - on the chart it reads as "the trend is turning".
+Open marker and is not confirmed by it - on the chart it reads as "the trend is turning".
 
 ### Close Long / Close Short
 
@@ -64,8 +64,14 @@ line only means something while the lines behind it are still in order; once the
 given way, the trend it was part of has gone and the crossing is noise.
 
 The strategy uses this in two ways. As an EXIT (`ExitOnSecondLineCross`) it closes the position it
-belongs to. As an ENTRY (`EntryOnCloseMarker`) it opens one the other way, which is deliberately
+belongs to. As a SIGNAL (`EntryOnCloseMarker`) it fires one the other way, which is deliberately
 counter-trend: the cloud is by definition still pointing the old way when it fires.
+
+Both read the one rule, `IsCloseMarker`, so the signal lands on exactly the candles the marker
+does. Until 30 September 2026 the signal took the bare crossing without the stack, and fired on
+candles where the indicator draws nothing - WDCUSDT on six hours, with the cloud already pointing
+up, was the one that showed it. `MacMarkerComparisonTests.TheCloseSignalIsTheMirrorOfTheCloseExit`
+holds the two against each other over every harvested set.
 
 ### Breakout / Breakdown
 
@@ -96,25 +102,28 @@ adds nothing once that is in.
 
 ## Settings
 
-### Which signals open a position
+### Which markers fire a signal
 
-| setting | signal | default |
+| setting | marker | default |
 | --- | --- | --- |
 | `EntryOnOpenMarker` | Open Long / Open Short | **on** |
 | `EntryOnCrossMarker` | Cross Up / Cross Down | off |
 | `EntryOnCloseMarker` | Close Long / Close Short | off |
 | `EntryOnBreakMarker` | Breakout / Breakdown | off |
 
-Only the first is on, because it is the only one of the four that is an entry by nature. The other
-three are real signals and the scanner fires them on the right candle, but what they EARN is not
-known - so they are for the trader to switch on, one at a time, so that a run can be attributed.
+These four switches are the analyzer's, not the trader's: they say which of the markers becomes
+a signal. They have nothing to do with an entry - at most they decide which signal a trader can
+later use for one. Only the first is on, because it is the only one of the four the indicator
+itself calls an entry. The other three are real markers and the scanner fires them on the right
+candle, but what they EARN is not known - so they are to be switched on one at a time, so that a
+run can be attributed.
 
 ### The rest
 
 | setting | default | what it does |
 | --- | --- | --- |
 | `Speed` | Standard | the four line lengths, see above |
-| `BreakoutEntriesPerRun` | 3 | break entries per position |
+| `BreakoutEntriesPerRun` | 3 | break signals per position |
 | `RequirePriceOutsideCloud` | on | the close has to be clear of the cloud for a break |
 | `MinimumCloudWidthPercentage` | 0 | a minimum width for the cloud; costs money at every setting tried |
 | `RequireCloudWidening` | off | the cloud has to be wider than on the candle before |
@@ -131,7 +140,7 @@ The overlay draws all eight markers with the same rules the strategy fires on - 
 candles through both paths has to mark exactly the same ones, and a test says so. Two
 implementations of one rule is a known way to drift apart.
 
-Shapes and placement: a triangle for the entry, a cross for the trend crossing, a diamond for the
+Shapes and placement: a triangle for the Open marker, a cross for the trend crossing, a diamond for the
 close marker, a circle for the break. Long markers sit under the candle, short ones above it.
 
 ## What has been measured on money

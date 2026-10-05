@@ -1,9 +1,16 @@
 CryptoScanBot release historie:
 
 xx-09-2026 2.6.8
+- Signalen: De statistieken zijn terug - wat een positie op de signaalprijs had opgeleverd, en hoe ver de prijs sindsdien mee- en tegenliep
+- Trader: Een short zet nu zijn volle waarde vast in plaats van alleen de terugkooporder, zodat papertrading niet meer meer posities toestaat dan het saldo toelaat
+- Trader: Een positie gaat alleen open als de instap en alle bijkooporders samen nog passen
+- Strategie Mac: Het Close-signaal vuurt nu precies waar de indicator de markering tekent, en de niveaus beginnen bij de candle die ze maakte
+- Emulator: Per run de diepste terugval in USDT met de datum, en de drie risicocontroles van het rapport als kolommen
+- Emulator: De posities en instellingen van een run worden compacter opgeslagen; dat scheelt ruim een derde aan ruimte
+- Emulator: Een label-filter boven het resultatenrooster, met "instellingen overnemen" en "alle runs verwijderen"
+- Grids: Pijltjes, page up en down, home en end verplaatsen de actieve regel ook in de webversie
 - Markettrend zichtbaar maken in de grafiek (waar ook de barometer in getoond wordt)
 - De markt trend is omgezet naar een symboltrend en we hebben nu ook een globale marktrend per quote
-
 - Trader: De prijzen van een short liggen nu op dezelfde logaritmische afstand als die van een long; het doel lag 2,3% verder weg en de stop 4,6% dichterbij
 - Altrady: Een positie geldt alleen als geopend als Altrady een signaal-id teruggeeft; bij een foutmelding draait de scanner zijn eigen administratie terug
 - Altrady: De stop-prijs in de webhook staat nu op het tick-grid van de munt, zodat het niveau daar hetzelfde is als hier

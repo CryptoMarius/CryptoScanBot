@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 102;
+    public readonly static int CurrentDatabaseVersion = 104;
 
 
     /// <summary>
@@ -2349,6 +2349,104 @@ public class DatabaseMigration
             if (filled > 0)
                 GlobalData.AddTextToLogTab($"Database version 102: start capital of 10.000 recorded on {filled} older run(s), so they show a return percentage again");
 
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // What was under water while a run was going, kept on the run row. The daily AssetSnapshot
+        // rows value the open positions at the price of the day, but they are dropped before the next
+        // run (EmulatorDb.PurgeBeforeRun) and only a percentage of the whole account survived - over
+        // 20.000 of start capital that read as 0,14% for a fall of 28 USDT, and nobody looked at it.
+        // Existing runs keep these empty: their snapshots are gone.
+        if (CurrentVersion > version.Version && version.Version == 102)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table EmulatorRun add OpenDrawdown TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add OpenDrawdownDate TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add EquityCurveJson TEXT NULL", transaction); } catch { } // ignore
+            GlobalData.AddTextToLogTab("Database version 103: EmulatorRun records the fall including open positions, in USDT, and the daily account value");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // The position digests stored compressed, and the three risk checks of the run report kept
+        // as plain columns. The digests were 556 MB of the 718 MB emulator database (04-10-2026);
+        // gzipped they are a fraction of that. A query cannot look inside a compressed digest, so
+        // what beste-runs.sql read from it - months in profit, the longest loser, the worst
+        // position, the profit without the ten best trades - is worked out here once per run and stored next to it (see RunRiskMetrics).
+        //
+        // Per run and not one big transaction, for the same reason as version 94: an interrupted
+        // migration picks up where it stopped. A run counts as done once its digest carries the
+        // compressed prefix; the version is only raised when every run is. The freed space comes back
+        // with the next VACUUM (the emulator runs one when a queue is finished).
+        if (CurrentVersion > version.Version && version.Version == 103)
+        {
+            try { database.Connection.Execute("alter table EmulatorRun add MonthsInProfit INTEGER NULL"); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add MonthsTotal INTEGER NULL"); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add LongestLoserDays TEXT NULL"); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add WorstPositionPercentage TEXT NULL"); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add ProfitWithoutBestTen TEXT NULL"); } catch { } // ignore
+
+            List<(int Id, DateTime FromDate, DateTime ToDate)> todo = database.Connection.Query<(int, DateTime, DateTime)>(
+                "select Id, FromDate, ToDate from EmulatorRun " +
+                "where PositionDigestJson is not null and PositionDigestJson <> '' " +
+                "  and PositionDigestJson not like @prefix",
+                new { prefix = PositionDigest.CompressedPrefix + "%" }).AsList();
+
+            if (todo.Count > 0)
+                GlobalData.AddTextToLogTab($"Database version 104: compressing the position digest of {todo.Count} emulator run(s)...");
+
+            int done = 0;
+            foreach ((int runId, DateTime fromDate, DateTime toDate) in todo)
+            {
+                string? digest = database.Connection.ExecuteScalar<string?>(
+                    "select PositionDigestJson from EmulatorRun where Id = @id", new { id = runId });
+                RunRiskMetrics? metrics = null;
+                try { metrics = RunRiskMetrics.FromDigest(digest, fromDate, toDate); } catch { } // a damaged digest keeps empty metrics
+
+                database.Connection.Execute(
+                    "update EmulatorRun set PositionDigestJson = @digest, MonthsInProfit = @monthsInProfit, " +
+                    "MonthsTotal = @monthsTotal, LongestLoserDays = @longestLoser, WorstPositionPercentage = @worst, " +
+                    "ProfitWithoutBestTen = @withoutBestTen where Id = @id",
+                    new
+                    {
+                        digest = PositionDigest.Pack(digest),
+                        monthsInProfit = metrics?.MonthsInProfit,
+                        monthsTotal = metrics?.MonthsTotal,
+                        longestLoser = metrics?.LongestLoserDays,
+                        worst = metrics?.WorstPositionPercentage,
+                        withoutBestTen = metrics?.ProfitWithoutBestTen,
+                        id = runId,
+                    });
+
+                if (++done % 100 == 0)
+                    GlobalData.AddTextToLogTab($"Database version 104: {done} of {todo.Count} digests compressed");
+            }
+
+            // The settings and configuration of every run stored flat as well: the indentation was
+            // a third of those two columns (39,8 MB against 27,1 MB on Session1).
+            List<int> indented = database.Connection.Query<int>(
+                "select Id from EmulatorRun where SettingsJson like @newline or ConfigJson like @newline",
+                new { newline = "%" + (char)10 + "%" }).AsList();
+            foreach (int runId in indented)
+            {
+                (string? settingsJson, string? configJson) = database.Connection.QuerySingle<(string?, string?)>(
+                    "select SettingsJson, ConfigJson from EmulatorRun where Id = @id", new { id = runId });
+                database.Connection.Execute(
+                    "update EmulatorRun set SettingsJson = @settings, ConfigJson = @config where Id = @id",
+                    new { settings = JsonCompact.Flatten(settingsJson), config = JsonCompact.Flatten(configJson) ?? "", id = runId });
+            }
+
+            using var transaction = database.BeginTransaction();
+            GlobalData.AddTextToLogTab("Database version 104: position digests stored compressed, risk checks stored per run");
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);

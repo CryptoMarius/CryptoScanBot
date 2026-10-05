@@ -1,5 +1,7 @@
 ﻿using Avalonia.Threading;
 
+using Avalonia.Collections;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -250,6 +252,19 @@ public partial class RunResultsViewModel : ObservableObject
     [ObservableProperty]
     private string _status = "";
 
+    /// <summary>
+    /// Text to filter the grid on: a run stays visible when its label contains every word of it,
+    /// in any order and case. "mac open 1d" keeps the Open-marker runs of mac on 1d. Empty shows all.
+    /// </summary>
+    [ObservableProperty]
+    private string _labelFilter = "";
+
+    /// <summary>
+    /// What the grid shows: <see cref="Runs"/> through the label filter. The grid sorts this view;
+    /// Runs itself keeps every row, so the live refresh and the delete actions work on all of them.
+    /// </summary>
+    public DataGridCollectionView RunsView { get; }
+
     // Ticks while the Results tab is alive; each tick refreshes only the active run's row (no-op when no
     // run is running). 15s is plenty — the user wants "a bit more than the progress bar", not a live feed.
     private readonly DispatcherTimer _liveTimer;
@@ -264,6 +279,7 @@ public partial class RunResultsViewModel : ObservableObject
 
     public RunResultsViewModel()
     {
+        RunsView = new DataGridCollectionView(Runs) { Filter = MatchesLabelFilter };
         Refresh();
 
         _liveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
@@ -355,6 +371,38 @@ public partial class RunResultsViewModel : ObservableObject
     }
 
 
+    /// <summary>True when the run's label contains every word of <see cref="LabelFilter"/>.</summary>
+    internal static bool LabelMatches(string? label, string? filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter))
+            return true;
+        string text = label ?? "";
+        return filter.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .All(word => text.Contains(word, StringComparison.OrdinalIgnoreCase));
+    }
+
+
+    private bool MatchesLabelFilter(object item) => item is RunRow row && LabelMatches(row.Label, LabelFilter);
+
+
+    partial void OnLabelFilterChanged(string value)
+    {
+        RunsView.Refresh();
+        UpdateStatus();
+    }
+
+
+    private void UpdateStatus()
+    {
+        if (Runs.Count == 0)
+            Status = "No runs yet — start one from the main window.";
+        else if (string.IsNullOrWhiteSpace(LabelFilter))
+            Status = $"{Runs.Count} run(s).";
+        else
+            Status = $"{RunsView.Count} of {Runs.Count} run(s) match \"{LabelFilter}\".";
+    }
+
+
     [RelayCommand]
     public void Refresh()
     {
@@ -381,9 +429,7 @@ public partial class RunResultsViewModel : ObservableObject
             sw.Stop();
             GlobalData.AddTextToLogTab($"RunResults.Refresh: loaded {Runs.Count} run(s) in {sw.Elapsed.TotalMilliseconds:N0} ms");
 
-            Status = Runs.Count == 0
-                ? "No runs yet — start one from the main window."
-                : $"{Runs.Count} run(s).";
+            UpdateStatus();
         }
         catch (Exception ex)
         {
@@ -461,35 +507,6 @@ public partial class RunResultsViewModel : ObservableObject
         {
             Refresh();
             Status = $"Failed to update label: {ex.Message}";
-        }
-    }
-
-
-    /// <summary>
-    /// Recomputes and stores each selected run's aggregates (counts, won/lost/open, Profit, Invested)
-    /// from its current positions, then reloads the grid. Use to backfill runs that predate a stat
-    /// column (e.g. Invested → the Profit % column) or after positions changed. Non-destructive.
-    /// </summary>
-    public void RecalculateRuns(IReadOnlyList<RunRow> rows)
-    {
-        if (rows.Count == 0)
-            return;
-
-        try
-        {
-            var (updated, skipped) = EmulatorDb.RecalculateRuns(rows.Select(r => r.Id));
-            Refresh();
-            // Say what was skipped instead of quietly reporting a smaller number: a run whose
-            // positions have been archived away cannot be recalculated, and is deliberately left as
-            // it stands rather than being overwritten with zeros.
-            Status = skipped == 0
-                ? $"Recalculated {updated} run(s)."
-                : $"Recalculated {updated} run(s); {skipped} left alone (positions no longer stored).";
-        }
-        catch (Exception ex)
-        {
-            Refresh();
-            Status = $"Failed to recalculate run(s): {ex.Message}";
         }
     }
 

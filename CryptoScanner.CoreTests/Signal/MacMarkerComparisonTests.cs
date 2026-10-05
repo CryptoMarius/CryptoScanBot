@@ -134,6 +134,52 @@ public class MacMarkerComparisonTests : TestBase
 
 
     /// <summary>
+    /// The SIGNAL on the Close marker has to land on exactly the candles the EXIT on that marker
+    /// lands on, mirrored: a long signal on every Close Short, a short signal on every Close Long.
+    /// The exit is what has been held against the chart, so this is what makes that measurement
+    /// count for the signal too. Until 30 September 2026 the signal read the bare crossing and
+    /// fired on candles where the indicator draws nothing.
+    /// </summary>
+    [TestMethod]
+    public void TheCloseSignalIsTheMirrorOfTheCloseExit()
+    {
+        if (!File.Exists(Database))
+        {
+            Assert.Inconclusive("no candle database at " + Database);
+            return;
+        }
+
+        int exits = 0;
+        int sets = 0;
+        List<string> differences = [];
+        foreach (var (intervalName, intervalId, period, symbols) in Runs)
+        {
+            foreach (string name in symbols)
+            {
+                List<CryptoCandle> candles = Load(name, intervalId);
+                if (candles.Count < 250)
+                    continue;
+                sets++;
+
+                // The exit labels Close Long on the long side; the signal labels the SAME candle
+                // Close Long on its short side, so the two lists read alike when they agree.
+                HashSet<string> exit = [.. Run(name, candles, "exit", intervalName, period)];
+                HashSet<string> signal = [.. Run(name, candles, "close", intervalName, period)];
+                exits += exit.Count;
+                differences.AddRange(exit.Except(signal).Select(line => "exit only: " + line));
+                differences.AddRange(signal.Except(exit).Select(line => "signal only: " + line));
+                Console.WriteLine($"{name} {intervalName}: {exit.Count} exits, {signal.Count} signals, "
+                    + $"{exit.Except(signal).Count() + signal.Except(exit).Count()} differences");
+            }
+        }
+
+        Console.WriteLine($"{sets} sets, {exits} Close markers");
+        Assert.IsTrue(exits > 0, "no Close marker fired anywhere, which is a fault here");
+        Assert.AreEqual(0, differences.Count, string.Join(Environment.NewLine, differences));
+    }
+
+
+    /// <summary>
     /// The same comparison with the Speed input of the indicator on Fast and on Slow. Both move the
     /// lengths of all four lines - Fast to 20/30/40/80, Slow to 20/50/100/200 - so every marker can
     /// land on another candle, and a harvest of one speed says nothing about the others.
@@ -238,6 +284,7 @@ public class MacMarkerComparisonTests : TestBase
             EntryOnBreakMarker = kind == "break",
             EntryOnOpenMarker = kind == "open",
             EntryOnCrossMarker = kind == "cross",
+            EntryOnCloseMarker = kind == "close",
             RequirePriceOutsideCloud = false,
             ExitOnCloudFlip = false,
             ExitOnSecondLineCross = kind == "exit",
@@ -316,6 +363,8 @@ public class MacMarkerComparisonTests : TestBase
             "open" => longSide ? "Open Long" : "Open Short",
             "cross" => longSide ? "Cross Up" : "Cross Down",
             "break" => longSide ? "Breakout" : "Breakdown",
+            // The signal on the Close marker enters the OTHER way: a long on Close Short.
+            "close" => longSide ? "Close Short" : "Close Long",
             _ => longSide ? "Close Long" : "Close Short",
         };
     }

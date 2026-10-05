@@ -82,7 +82,7 @@ public class MacBase : SignalCreateBase
         if (!settings.EntryOnOpenMarker && !settings.EntryOnCrossMarker
             && !settings.EntryOnCloseMarker && !settings.EntryOnBreakMarker)
         {
-            ExtraText = "no entry trigger is switched on";
+            ExtraText = "no signal marker is switched on";
             return false;
         }
 
@@ -280,24 +280,84 @@ public class MacBase : SignalCreateBase
     /// UP through that line, which is the strategy's Close Short.
     /// </para>
     /// <para>
-    /// The three guards the EXIT carries - the cloud pointing the way of the position, the close on
-    /// that side of the slow line, the cloud stacked - are NOT repeated here. They exist to stop an
-    /// exit firing against a trend that is still running, which is the opposite of what an entry on
-    /// this crossing is for. What does apply is everything <see cref="IsSignal"/> asks of every
-    /// trigger: the cloud width, the slope of the slow line, and the rest.
+    /// It is the marker itself, with everything the marker asks: the crossing, the cloud still
+    /// pointing the way of the position being closed, and the cloud stacked that way. Until
+    /// 30 September 2026 the entry read the bare crossing and left the other two out, on the
+    /// reasoning that they exist to stop an exit firing against a running trend. The effect was a
+    /// signal on every close through the second line, on candles where the indicator draws
+    /// nothing - WDCUSDT on six hours was the one that showed it. A signal named after a marker
+    /// fires where the marker is, so the one rule is shared with the exit in
+    /// <see cref="IsCloseMarker"/>. What applies on top is everything <see cref="IsSignal"/> asks
+    /// of every trigger: the cloud width, the slope of the slow line, and the rest.
     /// </para>
     /// </summary>
     private bool CloseCrossedTheSecondLine(MacCandleData mac, MacCandleData? macPrev,
         MyData? candlePrev)
     {
-        if (macPrev?.EmaSecond == null || mac.EmaSecond == null || candlePrev == null)
+        if (candlePrev == null)
             return false;
 
-        double close = (double)CandleLast.Candle.Close;
-        double closePrev = (double)candlePrev.Candle.Close;
-        return SignalSide == CryptoTradeSide.Long
-            ? closePrev <= macPrev.EmaSecond.Value && close > mac.EmaSecond.Value
-            : closePrev >= macPrev.EmaSecond.Value && close < mac.EmaSecond.Value;
+        // A long enters on Close Short, a short on Close Long: the marker of the OTHER side.
+        CryptoTradeSide markerSide = SignalSide == CryptoTradeSide.Long
+            ? CryptoTradeSide.Short
+            : CryptoTradeSide.Long;
+        return IsCloseMarker(markerSide, mac, macPrev, CandleLast.Candle.Close, candlePrev.Candle.Close);
+    }
+
+
+    /// <summary>
+    /// Whether the candle in hand carries the Close Long (<paramref name="markerSide"/> long) or
+    /// Close Short marker: the close crossing back through the second line against that side, with
+    /// the cloud still pointing and stacked that side's way. One function for the exit and the
+    /// signal, so the two can never drift apart again.
+    /// </summary>
+    private static bool IsCloseMarker(CryptoTradeSide markerSide, MacCandleData mac,
+        MacCandleData? macPrev, decimal closeNow, decimal closeBefore)
+    {
+        if (mac.EmaSecond == null || macPrev?.EmaSecond == null)
+            return false;
+
+        double close = (double)closeNow;
+        double closePrev = (double)closeBefore;
+        bool crossed = markerSide == CryptoTradeSide.Long
+            ? closePrev >= macPrev.EmaSecond.Value && close < mac.EmaSecond.Value
+            : closePrev <= macPrev.EmaSecond.Value && close > mac.EmaSecond.Value;
+        if (!crossed)
+            return false;
+
+        // Two conditions that belong to the crossing, both measured against the marker the strategy
+        //  draws for it, over 629 crossings on four coins.
+        //
+        // The cloud has to still point the way of the position. Without it the same crossing fires
+        // on BOTH sides - a long and a short exit on one candle - which is why this fired 314 times
+        // against the 134 the strategy draws.
+        if (mac.EmaFast == null)
+            return false;
+        bool cloudWithUs = markerSide == CryptoTradeSide.Long
+            ? mac.EmaFast.Value > mac.EmaSecond.Value
+            : mac.EmaFast.Value < mac.EmaSecond.Value;
+        if (!cloudWithUs)
+            return false;
+
+        // And the cloud has to be STACKED the way of the position, all the way down: the second
+        // line on our side of the third AND the third on our side of the slow one. Together with
+        // the fast line over the second that is the FULL stack - fast > second > medium > slow for
+        // a long - and that turns out to be the whole rule.
+        //
+        // A close falling back through the second line only means something while the lines
+        // behind it are still in order. Once the third line has given way, the trend it was part of
+        // has gone and the crossing is noise.
+        //
+        // What stood here until 25 September 2026 asked instead that the CLOSE was still on the
+        // position's side of the slow line. That is a near miss of the same idea: over 4282
+        // crossings it turns away one exit in twenty that the stack keeps, and lets about as many
+        // through that the stack does not.
+        if (mac.SmaMedium == null || mac.SmaSlow == null)
+            return false;
+        bool cloudStacked = markerSide == CryptoTradeSide.Long
+            ? mac.EmaSecond.Value > mac.SmaMedium.Value && mac.SmaMedium.Value > mac.SmaSlow.Value
+            : mac.EmaSecond.Value < mac.SmaMedium.Value && mac.SmaMedium.Value < mac.SmaSlow.Value;
+        return cloudStacked;
     }
 
 
@@ -462,50 +522,11 @@ public class MacBase : SignalCreateBase
         if (!GetPrevCandle(CandleLast, out MyData? candlePrev) || candlePrev == null)
             return false;
         MacCandleData? macPrev = candlePrev.CandleData!.GetPluginData<MacCandleData>();
-        if (macPrev?.EmaSecond == null)
-            return false;
 
-        double close = (double)CandleLast.Candle.Close;
-        double closePrev = (double)candlePrev.Candle.Close;
-        bool crossed = SignalSide == CryptoTradeSide.Long
-            ? closePrev >= macPrev.EmaSecond.Value && close < mac.EmaSecond.Value
-            : closePrev <= macPrev.EmaSecond.Value && close > mac.EmaSecond.Value;
-        if (!crossed)
-            return false;
-
-        // Two conditions that belong to the crossing, both measured against the marker the strategy
-        //  draws for it, over 629 crossings on four coins.
-        //
-        // The cloud has to still point the way of the position. Without it the same crossing fires
-        // on BOTH sides - a long and a short exit on one candle - which is why this fired 314 times
-        // against the 134 the strategy draws.
-        if (mac.EmaFast == null)
-            return false;
-        bool cloudWithUs = SignalSide == CryptoTradeSide.Long
-            ? mac.EmaFast.Value > mac.EmaSecond.Value
-            : mac.EmaFast.Value < mac.EmaSecond.Value;
-        if (!cloudWithUs)
-            return false;
-
-        // And the cloud has to be STACKED the way of the position, all the way down: the second
-        // line on our side of the third AND the third on our side of the slow one. Together with
-        // the fast line over the second that is the FULL stack - fast > second > medium > slow for
-        // a long - and that turns out to be the whole rule.
-        //
-        // A close falling back through the second line only means something while the lines
-        // behind it are still in order. Once the third line has given way, the trend it was part of
-        // has gone and the crossing is noise.
-        //
-        // What stood here until 25 September 2026 asked instead that the CLOSE was still on the
-        // position's side of the slow line. That is a near miss of the same idea: over 4282
-        // crossings it turns away one exit in twenty that the stack keeps, and lets about as many
-        // through that the stack does not.
-        if (mac.SmaMedium == null || mac.SmaSlow == null)
-            return false;
-        bool cloudStacked = SignalSide == CryptoTradeSide.Long
-            ? mac.EmaSecond.Value > mac.SmaMedium.Value && mac.SmaMedium.Value > mac.SmaSlow.Value
-            : mac.EmaSecond.Value < mac.SmaMedium.Value && mac.SmaMedium.Value < mac.SmaSlow.Value;
-        if (!cloudStacked)
+        // The marker of our own side: Close Long ends a long. The conditions live in IsCloseMarker,
+        // where the signal on the same marker reads them too.
+        decimal close = CandleLast.Candle.Close;
+        if (!IsCloseMarker(SignalSide, mac, macPrev, close, candlePrev.Candle.Close))
             return false;
 
         ExtraText = SignalSide == CryptoTradeSide.Long
