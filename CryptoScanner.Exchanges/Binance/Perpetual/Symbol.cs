@@ -146,6 +146,11 @@ public class Symbol() : SymbolBase(), ISymbol
                                 symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxQuantity ?? 0;
                                 symbol.QuantityTickSize = symbolData.LotSizeFilter?.StepSize ?? 0;
 
+                                // Minimum order value (in quote). Without it nothing knew that a take
+                                // profit of a quarter of a 15 USDT entry (3.75) is below the 5 USDT
+                                // Binance Futures accepts - Altrady drops such orders silently.
+                                symbol.QuoteValueMinimum = symbolData.MinNotionalFilter?.MinNotional ?? 0;
+
                                 //Minimum and maximum price for an order (in base price)
                                 symbol.PriceMinimum = symbolData.PriceFilter?.MinPrice ?? 0;
                                 symbol.PriceMaximum = symbolData.PriceFilter?.MaxPrice ?? 0;

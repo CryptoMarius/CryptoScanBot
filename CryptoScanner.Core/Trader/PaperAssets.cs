@@ -68,6 +68,15 @@ public class PaperAssets
                 if (logToTab)
                     GlobalData.AddTextToLogTab($"Paper asset {name} started at {entry.Total.ToString0()}");
             }
+
+            // A default list without the coin this exchange trades in leaves every signal refused
+            if (logToTab)
+            {
+                foreach (string missing in TradedQuotesMissing(GlobalData.Settings.QuoteCoins.Values, defaults))
+                    GlobalData.AddTextToLogTab($"Warning: the default paper assets hold no {missing}, the coin this exchange " +
+                        $"trades in - no position can be opened until {missing} is booked under Paper assets or added to the " +
+                        "default paper assets (settings, trader)");
+            }
             return;
         }
 
@@ -88,6 +97,19 @@ public class PaperAssets
                     GlobalData.AddTextToLogTab($"Paper asset {quoteData.Name} started at {fallback.ToString0()}");
             }
         }
+    }
+
+
+    /// <summary>
+    /// The quote coins that are traded (FetchCandles) but have no amount in the default paper assets.
+    /// </summary>
+    internal static List<string> TradedQuotesMissing(IEnumerable<CryptoQuoteData> quotes, List<CryptoPaperAssetDefault> defaults)
+    {
+        HashSet<string> present = new(defaults
+            .Where(d => !string.IsNullOrWhiteSpace(d.Name) && d.Total > 0)
+            .Select(d => d.Name.Trim().ToUpperInvariant()));
+        return quotes.Where(q => q.FetchCandles && !present.Contains(q.Name.ToUpperInvariant()))
+            .Select(q => q.Name.ToUpperInvariant()).ToList();
     }
 
 

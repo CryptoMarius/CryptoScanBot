@@ -1,6 +1,17 @@
 CryptoScanBot release historie:
 
-xx-09-2026 2.6.8
+xx-10-2026 2.6.8
+- Altrady: De inzet die naar Altrady gaat is apart in te stellen; de scanner handelt zijn eigen bedrag, zodat de papieren uitslag met de emulator vergelijkbaar blijft
+- Altrady: Een waarschuwing per takeprofit-niveau dat onder het minimum van de beurs blijft; Altrady plaatste die order zonder melding niet
+- Papertrading: Als het saldo de munt niet heeft waarin de beurs handelt, zegt de melding nu wat je eraan moet doen in plaats van alleen "No assets available"
+- Altrady: De chart wordt nu rechtstreeks aan de Altrady-applicatie doorgegeven; het onzichtbare browservenster is alleen nog de terugvaloptie
+- Trader: Een positie is vanuit het grid te sluiten, met winst of met verlies; de order staat meteen op de beurs
+- Trader: De twee stop-beschermingen van Altrady (gemiddelde instapprijs en meelopend met de takeprofit) worden gevolgd, zodat beide administraties op hetzelfde niveau sluiten
+- Trader: Het laatste takeprofit-niveau kan meelopen, en een limit-instap is een percentage gunstiger te plaatsen dan de signaalprijs
+- Strategie Mac: De stop is als veelvoud van de gemiddelde candlegrootte in te stellen, met een onder- en bovengrens
+- Emulator: Nieuwe keuze "Stop after this run" maakt de lopende run af en begint niets nieuws
+- Emulator: Een wachtrij-bestand met .debug.json wordt door een release-build overgeslagen
+- Trader: Bij het verwijderen van alle posities verdwijnt ook de kapitaallijn, die hoorde immers bij die posities
 - Signalen: De statistieken zijn terug - wat een positie op de signaalprijs had opgeleverd, en hoe ver de prijs sindsdien mee- en tegenliep
 - Trader: Een short zet nu zijn volle waarde vast in plaats van alleen de terugkooporder, zodat papertrading niet meer meer posities toestaat dan het saldo toelaat
 - Trader: Een positie gaat alleen open als de instap en alle bijkooporders samen nog passen

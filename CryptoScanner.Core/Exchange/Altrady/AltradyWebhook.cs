@@ -225,6 +225,38 @@ public class AltradyWebhook
 
 
     /// <summary>
+    /// The entry amount sent to Altrady: AltradyEntryAmount when it is set, otherwise the scanner's own.
+    /// </summary>
+    internal static decimal? AltradyAmount(decimal? scannerAmount, decimal altradyEntryAmount)
+        => altradyEntryAmount > 0 ? altradyEntryAmount : scannerAmount;
+
+
+    /// <summary>
+    /// A warning per take profit level whose order stays below the minimum of the exchange - the
+    /// minimum order value, or the minimum quantity on the exchanges that only state that one (Kucoin
+    /// and MEXC futures, Alpaca): Altrady does not place such an order and does not report it either.
+    /// </summary>
+    internal static List<string> TakeProfitsBelowMinimum(List<CryptoTpEntry> tpList, decimal entryAmount, decimal minimum, string quote,
+        decimal price = 0, decimal quantityMinimum = 0, string baseCoin = "")
+    {
+        List<string> warnings = [];
+        if (entryAmount <= 0)
+            return warnings;
+        for (int i = 0; i < tpList.Count; i++)
+        {
+            decimal value = entryAmount * tpList[i].Factor / 100m;
+            if (minimum > 0 && value < minimum)
+                warnings.Add($"TP{i + 1} of {value:N2} {quote} is below the exchange minimum of {minimum:N2} {quote}: " +
+                    "Altrady would not place it. Raise the entry amount (Altrady entry amount in the trader settings)");
+            else if (quantityMinimum > 0 && price > 0 && value / price < quantityMinimum)
+                warnings.Add($"TP{i + 1} of {value / price:G6} {baseCoin} is below the exchange minimum of {quantityMinimum:G6} {baseCoin}: " +
+                    "Altrady would not place it. Raise the entry amount (Altrady entry amount in the trader settings)");
+        }
+        return warnings;
+    }
+
+
+    /// <summary>
     /// The take profit levels of an open signal. <paramref name="trailPercentage"/> above zero makes
     /// the LAST level trail: Altrady starts following the price at that level with trailing_distance
     /// behind it instead of selling there, which is only allowed on the last take profit. Their
@@ -398,22 +430,39 @@ public class AltradyWebhook
             // the shorts of the same day went through. Altrady's own help page on webhook errors says
             // the exchange then accepts only one of the two size fields and the other one has to be
             // used. A limit entry keeps quote_amount, which has never been refused.
+            // Altrady may get another amount than the scanner trades itself (AltradyEntryAmount)
+            decimal? sendAmount = AltradyAmount(position.EntryAmount, GlobalData.Settings.Trading.AltradyEntryAmount);
             decimal? baseAmount = null;
             if (GlobalData.Settings.Trading.EntryOrderType == Enums.CryptoOrderType.Market &&
-                position.EntryAmount.HasValue && position.EntryPrice.HasValue)
+                sendAmount.HasValue && position.EntryPrice.HasValue)
             {
-                baseAmount = CalculateBaseAmount(position.Symbol, position.EntryAmount.Value, position.EntryPrice.Value);
+                baseAmount = CalculateBaseAmount(position.Symbol, sendAmount.Value, position.EntryPrice.Value);
             }
 
             if (baseAmount.HasValue)
                 request.base_amount = baseAmount.Value;
             else
-                request.quote_amount = position.EntryAmount;
+                request.quote_amount = sendAmount;
 
             // TP body (multiple). A per-signal TP override collapses this to a single TP; see EffectiveTpList.
             var tpList = Trader.TradeTools.EffectiveTpList(position);
             if (tpList.Count > 0)
+            {
                 request.take_profit = BuildTakeProfitBlock(tpList, GlobalData.Settings.Trading.TakeProfitTrailPercentage);
+
+                // Altrady drops a take profit below the exchange minimum without a word, which leaves a
+                // position without its exits. Such a position is not started at all: refused here, before
+                // anything is sent, it goes the same way as a position Altrady refuses itself.
+                List<string> tooSmall = TakeProfitsBelowMinimum(tpList, sendAmount ?? 0, position.Symbol.QuoteValueMinimum, position.Symbol.Quote,
+                    position.EntryPrice ?? 0, position.Symbol.QuantityMinimum, position.Symbol.Base);
+                if (tooSmall.Count > 0)
+                {
+                    foreach (string warning in tooSmall)
+                        GlobalData.AddErrorToLogTab($"{position.Symbol.Name} {warning}");
+                    GlobalData.AddErrorToLogTab($"{position.Symbol.Name} {position.Interval!.Name} position not started: a take profit is below the exchange minimum");
+                    return false;
+                }
+            }
 
 
             // DCA body (multiple)

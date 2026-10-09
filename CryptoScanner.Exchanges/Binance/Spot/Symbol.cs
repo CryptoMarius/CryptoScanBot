@@ -93,6 +93,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxQuantity ?? 0;
                                 symbol.QuantityTickSize = symbolData.LotSizeFilter?.StepSize ?? 0;
 
+                                // Minimum order value (in quote); newer symbols carry it in the NOTIONAL filter
+                                symbol.QuoteValueMinimum = symbolData.NotionalFilter?.MinNotional ?? symbolData.MinNotionalFilter?.MinNotional ?? 0;
+
                                 //Minimum and maximum price for an order (in base price)
                                 symbol.PriceMinimum = symbolData.PriceFilter?.MinPrice ?? 0;
                                 symbol.PriceMaximum = symbolData.PriceFilter?.MaxPrice ?? 0;

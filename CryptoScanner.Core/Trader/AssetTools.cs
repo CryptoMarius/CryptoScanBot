@@ -169,6 +169,22 @@ public class AssetTools
 
 
     /// <summary>
+    /// The reason an entry is refused for want of the quote coin. On a paper account it says what to
+    /// do about it: a balance without the coin the exchange trades in (a reset to a default list that
+    /// held USDT on a USDC exchange, 09-10-2026 on HyperLiquid) refused every signal with only
+    /// "No assets available" in the log.
+    /// </summary>
+    public static string NoAssetsText(string quote)
+    {
+        CryptoTradeVia via = GlobalData.Settings.Trading.TradeVia;
+        if (via == CryptoTradeVia.PaperTrade || via == CryptoTradeVia.PaperTradingAndAltrady)
+            return $"No assets available for {quote}: the paper balance holds no {quote}. "
+                + $"Book it under Paper assets, or add {quote} to the default paper assets (settings, trader) and reset";
+        return $"No assets available for {quote}";
+    }
+
+
+    /// <summary>
     /// Whether there is room for an entry, and how big that entry may be.
     /// </summary>
     /// <param name="reserveForDca">
@@ -184,7 +200,7 @@ public class AssetTools
 
         bool useAssetManagement = GlobalData.Settings.Trading.UseAssetManagement;
         if (useAssetManagement && info.QuoteTotal <= 0)
-            return (false, 0, info, $"No assets available for {symbol.Quote}");
+            return (false, 0, info, NoAssetsText(symbol.Quote));
 
 
         // The entry value (in quote). With asset management on it is sized against what is FREE - the

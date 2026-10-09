@@ -975,7 +975,7 @@ public class TradeTools
         var info = AssetTools.GetAsset(GlobalData.ActiveExchange!, symbol);
         if (info.QuoteTotal <= 0)
         {
-            GlobalData.AddTextToLogTab($"No assets available for {symbol.Quote}");
+            GlobalData.AddTextToLogTab(AssetTools.NoAssetsText(symbol.Quote));
             return;
         }
 

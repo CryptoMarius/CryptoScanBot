@@ -205,4 +205,29 @@ public class AltradyCloseSignalTests
         Assert.IsNull(block[0]["trailing_distance"]);
         Assert.AreEqual(24m, (decimal?)block[0]["price_percentage"]);
     }
+
+
+    [TestMethod]
+    public void AltradyGetsItsOwnEntryAmountWhenItIsSet()
+    {
+        Assert.AreEqual(100m, AltradyWebhook.AltradyAmount(15m, 100m));
+        Assert.AreEqual(15m, AltradyWebhook.AltradyAmount(15m, 0m), "0 = the scanner's own entry amount");
+    }
+
+
+    [TestMethod]
+    public void TakeProfitsBelowTheExchangeMinimumAreReported()
+    {
+        var levels = new List<CryptoTpEntry>
+        {
+            new() { Percentage = 5m, Factor = 25m }, new() { Percentage = 10m, Factor = 25m },
+            new() { Percentage = 20m, Factor = 25m }, new() { Percentage = 40m, Factor = 25m },
+        };
+        Assert.AreEqual(4, AltradyWebhook.TakeProfitsBelowMinimum(levels, 15m, 5m, "USDT").Count, "15 / 4 = 3.75 < 5");
+        Assert.AreEqual(0, AltradyWebhook.TakeProfitsBelowMinimum(levels, 100m, 5m, "USDT").Count, "100 / 4 = 25 >= 5");
+        Assert.AreEqual(0, AltradyWebhook.TakeProfitsBelowMinimum(levels, 15m, 0m, "USDT").Count, "no minimum known");
+        // Only a minimum quantity known: 15 / 4 = 3.75 USDT at price 1 is 3.75 coins, below 10
+        Assert.AreEqual(4, AltradyWebhook.TakeProfitsBelowMinimum(levels, 15m, 0m, "USDT", 1m, 10m, "ABC").Count);
+        Assert.AreEqual(0, AltradyWebhook.TakeProfitsBelowMinimum(levels, 100m, 0m, "USDT", 1m, 10m, "ABC").Count);
+    }
 }

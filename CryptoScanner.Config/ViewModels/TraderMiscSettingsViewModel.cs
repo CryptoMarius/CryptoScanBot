@@ -32,6 +32,9 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     private CryptoTradeVia _tradeVia = CryptoTradeVia.PaperTrade; // enum (EXACT match)
 
     [ObservableProperty]
+    private decimal _altradyEntryAmount = 0m;
+
+    [ObservableProperty]
     private bool _disableNewPositions = false; // bool (EXACT match)
 
     [ObservableProperty]
@@ -88,6 +91,7 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     public void LoadConfig(SettingsTrading settings, SettingsGeneral general)
     {
         TradeVia = settings.TradeVia;
+        AltradyEntryAmount = settings.AltradyEntryAmount;
         DisableNewPositions = settings.DisableNewPositions;
         UseAssetManagement = settings.UseAssetManagement;
         LogCanceledOrders = settings.LogCanceledOrders;
@@ -109,6 +113,7 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     public void SaveConfig(SettingsTrading settings, SettingsGeneral general)
     {
         settings.TradeVia = TradeVia;
+        settings.AltradyEntryAmount = AltradyEntryAmount;
         settings.DisableNewPositions = DisableNewPositions;
         settings.UseAssetManagement = UseAssetManagement;
         settings.LogCanceledOrders = LogCanceledOrders;

@@ -113,6 +113,13 @@ public class SettingsTrading
     // De 3 account types zijn raar gekozen
     public CryptoTradeVia TradeVia { get; set; } = CryptoTradeVia.PaperTrade;
 
+    // The entry amount (quote coin) sent to Altrady, 0 = the scanner's own entry amount. The scanner
+    // keeps trading its own amount, so its paper results stay comparable with the emulator; Altrady
+    // gets a size the exchange accepts. With four take profit levels of a quarter each, 15 USDT
+    // gives orders of 3.75 - below the 5 USDT minimum of Binance Futures and the 10 USDC of
+    // HyperLiquid - and Altrady drops those take profits without a word (09-10-2026).
+    public decimal AltradyEntryAmount { get; set; } = 0m;
+
     /// <summary>
     /// The balances a paper account starts with, one entry per coin. This list IS the starting point
     /// of a paper account: it is handed out on an empty database and on every reset, and it is the

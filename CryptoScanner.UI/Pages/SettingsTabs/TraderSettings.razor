@@ -48,6 +48,12 @@
                     }
                 </select>
             </div>
+            <div class="field" title="The entry amount in the quote coin that is sent to Altrady, 0 = the same as the scanner. The scanner keeps trading its own entry amount, so its results stay comparable with the emulator. Use it to give every take profit level a size the exchange accepts.">
+                <label>Altrady entry amount</label>
+                <span class="field-control">
+                    <input type="number" class="input-number" step="1" min="0" @bind="_altradyEntryAmount" />
+                </span>
+            </div>
             <div class="field">
                 <input type="checkbox" class="input-checkbox" @bind="_soundTradeNotification" />
                 <label>Sound trade notification</label>
@@ -440,6 +446,7 @@
 
     private bool _active;
     private CryptoTradeVia _tradeVia;
+    private decimal _altradyEntryAmount;
     private bool _disableNewPositions;
     private bool _useAssetManagement;
     private bool _logCanceledOrders;
@@ -614,6 +621,7 @@
         var t = settings.Trading;
         _active = t.Active;
         _tradeVia = t.TradeVia;
+        _altradyEntryAmount = t.AltradyEntryAmount;
         _disableNewPositions = t.DisableNewPositions;
         _useAssetManagement = t.UseAssetManagement;
         _logCanceledOrders = t.LogCanceledOrders;
@@ -670,6 +678,7 @@
         var t = settings.Trading;
         t.Active = _active;
         t.TradeVia = _tradeVia;
+        t.AltradyEntryAmount = _altradyEntryAmount;
         t.DisableNewPositions = _disableNewPositions;
         t.UseAssetManagement = _useAssetManagement;
         t.LogCanceledOrders = _logCanceledOrders;

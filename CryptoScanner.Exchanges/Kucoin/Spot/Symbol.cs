@@ -111,6 +111,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                                                                          // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
                                     symbol.QuantityTickSize = symbolData.BaseIncrement;
 
+                                    // Minimum order value (in quote)
+                                    symbol.QuoteValueMinimum = symbolData.MinFunds ?? 0;
+
                                     // The minimum and maximum price for an order (in base price)
                                     // The definitions do contain a minPrice and a maxPrice, but they are not filled
                                     // (which has consequences for the Clamp, which does expect values)

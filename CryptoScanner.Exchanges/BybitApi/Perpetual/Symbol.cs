@@ -160,6 +160,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxOrderQuantity ?? 0;
                                 symbol.QuantityTickSize = symbolData.LotSizeFilter?.QuantityStep ?? 0;
 
+                                // Minimum order value (in quote)
+                                symbol.QuoteValueMinimum = symbolData.LotSizeFilter?.MinNotionalValue ?? 0;
+
                                 // The minimum and maximum price for an order (in base price)
                                 // The definitions do contain a minPrice and a maxPrice, but they are not filled
                                 // (which has consequences for the Clamp, which does expect values)
