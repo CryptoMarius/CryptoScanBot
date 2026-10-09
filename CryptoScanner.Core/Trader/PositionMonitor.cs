@@ -1169,18 +1169,25 @@ public class PositionMonitor : IDisposable
     /// </summary>
     internal static int HighestFilledTakeProfitLevel(CryptoPosition position)
     {
-        int highest = 0;
+        // COUNTED, not read from the part number. The levels fill in order, so the number of take
+        // profit parts that filled at their target is the highest level reached. The part number is
+        // not the level: a position gets its take profit parts twice at the entry (one set of four
+        // cancelled, then parts 5 to 8), so TP1 sat on part 5 and was read as "5 levels filled" -
+        // which put the stop on TP4, far beyond the price, and the paper fill booked it there.
+        // Measured 09-10-2026 on run 2508: all 2.491 positions had eight take profit parts, and
+        // every position that reached TP1 closed its rest at the TP4 price.
+        int filled = 0;
+        CryptoOrderSide side = position.GetTakeProfitOrderSide();
         foreach (CryptoPositionPart part in position.PartList.Values)
         {
-            if (part.Purpose != CryptoPartPurpose.TakeProfit || !part.CloseTime.HasValue || part.PartNumber <= highest)
+            if (part.Purpose != CryptoPartPurpose.TakeProfit || !part.CloseTime.HasValue)
                 continue;
 
-            CryptoOrderSide side = position.GetTakeProfitOrderSide();
             CryptoPositionStep? step = PositionTools.FindPositionPartStep(part, side, true);
             if (step != null && IsFilledAtTarget(step))
-                highest = part.PartNumber;
+                filled++;
         }
-        return highest;
+        return filled;
     }
 
 
@@ -1226,11 +1233,26 @@ public class PositionMonitor : IDisposable
         decimal lockLimit = ProfitLockCalculator.StopLimit(position.Side, lockStop)
             .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
+        // A stop on the wrong side of the price (above it for a long) is no protection: a real
+        // exchange fills it at the market at once, and the paper fill would book it at the stop
+        // price - a profit that never existed. Never move the stop there.
+        if (!StopIsBehindThePrice(position.Side, lockStop, LastCandle1m.Close))
+        {
+            GlobalData.AddErrorToLogTab($"{position.Symbol.Name} profit lock: SL {lockStop.ToString0()} would sit beyond the price " +
+                $"{LastCandle1m.Close.ToString0()}, not moved (TP{filledLevels} filled)");
+            return (stop, limit);
+        }
+
         // Tighten only, like the other methods
         if (ProfitLockCalculator.Tightens(position.Side, lockStop, stop))
             return (lockStop, lockLimit);
         return (stop, limit);
     }
+
+
+    /// <summary>Whether a stop sits on the losing side of the price: below it for a long, above it for a short.</summary>
+    internal static bool StopIsBehindThePrice(CryptoTradeSide side, decimal stop, decimal price)
+        => side == CryptoTradeSide.Long ? stop < price : stop > price;
 
 
     /// <summary>What a trailing last take profit adds to the order placement of one round.</summary>

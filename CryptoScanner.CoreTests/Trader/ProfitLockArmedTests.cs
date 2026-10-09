@@ -156,4 +156,21 @@ public class ProfitLockArmedTests
         var trail = new PositionMonitor.TakeProfitTrail(null, null, 80m, 80m);
         Assert.AreEqual(80m, PositionMonitor.NearestTakeProfitPrice(CryptoTradeSide.Short, targets, 0, trail));
     }
+
+    // ── A moved stop never beyond the price ─────────────────────────────────
+
+    [TestMethod]
+    public void Long_StopAboveThePrice_IsRefused()
+    {
+        // Position 1461 of run 2508: price 225.73, stop moved to 301.24 (the TP4 level)
+        Assert.IsFalse(PositionMonitor.StopIsBehindThePrice(CryptoTradeSide.Long, 301.24m, 225.73m));
+        Assert.IsTrue(PositionMonitor.StopIsBehindThePrice(CryptoTradeSide.Long, 215.17m, 225.73m));
+    }
+
+    [TestMethod]
+    public void Short_StopBelowThePrice_IsRefused()
+    {
+        Assert.IsFalse(PositionMonitor.StopIsBehindThePrice(CryptoTradeSide.Short, 90m, 100m));
+        Assert.IsTrue(PositionMonitor.StopIsBehindThePrice(CryptoTradeSide.Short, 110m, 100m));
+    }
 }
