@@ -110,6 +110,38 @@ public static class ProfitLockCalculator
     }
 
     /// <summary>
+    /// Whether a method is armed by take profit fills instead of by <c>MoveSlToBreakEvenPercentage</c>.
+    /// These are the two stop protections Altrady runs itself, so the trigger percentage plays no part.
+    /// </summary>
+    public static bool IsArmedByTakeProfit(CryptoProfitLockMethod method)
+        => method == CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit
+        || method == CryptoProfitLockMethod.FollowTakeProfit;
+
+    /// <summary>
+    /// Where the stop goes for <see cref="CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit"/> and
+    /// <see cref="CryptoProfitLockMethod.FollowTakeProfit"/>, or null while no take profit has filled.
+    /// <para>
+    /// <paramref name="filledLevels"/> is the highest take profit level that has filled (1-based,
+    /// 0 for none) and <paramref name="tpPercentages"/> the configured levels, measured from
+    /// <paramref name="anchor"/> - the same anchor the take profit prices are placed from. After TP1
+    /// the stop sits on the anchor itself. Follow Take Profit then moves it to the price of the level
+    /// before the last filled one: TP2 filled puts it on TP1, TP3 filled on TP2, and so on.
+    /// </para>
+    /// </summary>
+    public static decimal? TakeProfitStop(CryptoTradeSide side, CryptoProfitLockMethod method,
+        decimal anchor, int filledLevels, IReadOnlyList<decimal> tpPercentages)
+    {
+        if (filledLevels <= 0 || anchor <= 0 || !IsArmedByTakeProfit(method))
+            return null;
+
+        if (method == CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit || filledLevels == 1)
+            return anchor;
+
+        int previous = Math.Min(filledLevels - 1, tpPercentages.Count);
+        return PricePlacement.Favorable(side, anchor, tpPercentages[previous - 1]);
+    }
+
+    /// <summary>
     /// Whether the profit-lock level actually replaces the stop that is already there. Tighten only:
     /// it wins when there was no stop at all, or when it sits closer to the price than the current
     /// one (long: higher is tighter; short: lower is tighter). A trailing stop that could ever

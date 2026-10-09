@@ -380,6 +380,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
             flyout.Items.Add(new MenuItem { Header = "Position delete from database", Command = new CommandPositionDelete(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Position add additional DCA", Command = new CommandPositionCreateAdditionalDca(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Position cancel open DCA", Command = new CommandPositionRemoveAdditionalDca(), CommandParameter = parameter });
+            flyout.Items.Add(new MenuItem { Header = "Position close (take profit or loss)", Command = new CommandPositionClose(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Export position information to Excel", Command = new CommandExcelPositionInformation(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Delete all positions", Command = new CommandPositionDeleteAll(), CommandParameter = parameter });

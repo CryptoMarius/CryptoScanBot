@@ -106,6 +106,10 @@ public partial class MainWindowViewModel : ObservableObject
     // carry on with the next entry).
     private bool _stopRequested;
 
+    // Set by "Stop after this run": the run in progress finishes, nothing new starts. Unlike Stop it
+    // cancels nothing, so no run ends up cancelled and half measured.
+    private bool _stopAfterRun;
+
 
     /// <summary>
     /// Re-opens the SetupWindow so the user can pick a different data folder or exchange.
@@ -653,6 +657,8 @@ public partial class MainWindowViewModel : ObservableObject
                 bool completed = await RunOnceAsync(algoConfig, force: true);
                 if (!completed)
                     break; // Stop was pressed (or the run failed) — abandon the rest of the batch.
+                if (_stopAfterRun)
+                    break; // "Stop after this run" — the run is complete, start no new one.
             }
         }
         finally
@@ -718,10 +724,11 @@ public partial class MainWindowViewModel : ObservableObject
         HashSet<string> stuck = new(StringComparer.OrdinalIgnoreCase);
 
         _stopRequested = false;
+        _stopAfterRun = false;
         IsRunning = true;
         try
         {
-            while (!_stopRequested)
+            while (!_stopRequested && !_stopAfterRun)
             {
                 string? file = EmulatorQueueFolder.PickNext(folder, DateTime.UtcNow, EmulatorQueueFolder.SettleTime, stuck);
                 if (file == null)
@@ -820,8 +827,9 @@ public partial class MainWindowViewModel : ObservableObject
         finally
         {
             IsRunning = false;
-            Status = "Queue folder stopped.";
-            GlobalData.AddTextToLogTab("Queue folder: stopped watching");
+            Status = _stopAfterRun ? "Queue folder stopped after the run in progress." : "Queue folder stopped.";
+            GlobalData.AddTextToLogTab(_stopAfterRun ? "Queue folder: stopped after the run in progress" : "Queue folder: stopped watching");
+            _stopAfterRun = false;
         }
     }
 
@@ -1057,6 +1065,11 @@ public partial class MainWindowViewModel : ObservableObject
                 {
                     EmulatorQueueEntry entry = queue[i];
 
+                    // "Stop after this run": the previous run is complete, so this is where the batch
+                    // ends, the same way a Stop between two runs would.
+                    if (_stopAfterRun)
+                        _stopRequested = true;
+
                     // A Stop during the last run no longer reaches the return below, now that a run
                     // which did not complete only ends the batch when it was actually stopped.
                     if (_stopRequested)
@@ -1235,7 +1248,8 @@ public partial class MainWindowViewModel : ObservableObject
                         };
 
                         Status = $"Queue {runIndex}/{totalRuns}: {algoName} — {entryLabel}";
-                        _queueProgress = $"{runIndex}/{totalRuns}";
+                        // The queue file in front, so the window says which file is running
+                        _queueProgress = $"{source} {runIndex}/{totalRuns}";
                         OnPropertyChanged(nameof(ProgressLabel));
 
                         // Clear the bulk data BEFORE the next run starts, so the database holds one
@@ -1567,6 +1581,20 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         return completed;
+    }
+
+
+    /// <summary>
+    /// Lets the run in progress finish and starts nothing after it - no cancelled, half-measured run.
+    /// When the folder queue is only waiting for a new file it stops right away.
+    /// </summary>
+    [RelayCommand]
+    private void StopAfterRun()
+    {
+        _stopAfterRun = true;
+        _waitCts?.Cancel();
+        Status = "Stopping after the run in progress…";
+        GlobalData.AddTextToLogTab("Stop after the run in progress requested");
     }
 
 

@@ -38,6 +38,9 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _onlyStrong = true;
 
+    [ObservableProperty]
+    private int _rejectionLookback = 3; // smc.rejection, back on 06-10-2026
+
     /// <summary>The values the touch level ComboBox offers; see CryptoZoneTouchLevel.</summary>
     public static CryptoZoneTouchLevel[] TouchLevels { get; } = Enum.GetValues<CryptoZoneTouchLevel>();
 
@@ -63,6 +66,7 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
         RequireOppositeBaseColor = settings.RequireOppositeBaseColor;
 
         OnlyStrong = settings.OnlyStrong;
+        RejectionLookback = settings.RejectionLookback;
         MaxTouches = settings.MaxTouches;
         TouchLevel = settings.TouchLevel;
         CloseZonesPastMidpoint = settings.CloseZonesPastMidpoint;
@@ -80,6 +84,7 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
         settings.RequireOppositeBaseColor = RequireOppositeBaseColor;
 
         settings.OnlyStrong = OnlyStrong;
+        settings.RejectionLookback = RejectionLookback;
         settings.MaxTouches = MaxTouches;
         settings.TouchLevel = TouchLevel;
         settings.CloseZonesPastMidpoint = CloseZonesPastMidpoint;

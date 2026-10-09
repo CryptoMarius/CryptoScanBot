@@ -2,6 +2,7 @@
 @using CryptoScanner.Core.Enums
 @using CryptoScanner.Core.Model
 @using CryptoScanner.Core.Settings
+@using CryptoScanner.Core.Trader
 @using CryptoScanner.UI.Components
 @using CryptoScanner.UI.Models
 
@@ -179,6 +180,13 @@
                     <span class="field-unit">candles</span>
                 </span>
             </div>
+            <div class="field" title="Only for a limit entry: place the order this percentage better than the signal price - below it for a long, above it for a short - so the entry waits for a pullback. 0 places it at the signal price. A pullback that does not come within the remove time cancels the entry.">
+                <label>Limit below signal price</label>
+                <span class="field-control">
+                    <input type="number" class="input-number" step="0.1" min="0" @bind="_entryLimitOffsetPct" />
+                    <span class="field-unit">%</span>
+                </span>
+            </div>
         </div>
     </div>
 
@@ -259,6 +267,13 @@
                 <input type="checkbox" class="input-checkbox" @bind="_addDustToTp" />
                 <label>Add dust to TP</label>
             </div>
+            <div class="field" title="Trailing on the last take profit level, 0 = off. Once the price reaches the last level it is not sold there: a stop follows the best price at this distance and only moves towards more profit. Sent to Altrady as trailing_distance on the last take profit.">
+                <label>Trailing on last take profit %</label>
+                <span class="field-control">
+                    <input type="number" class="input-number" step="0.1" min="0" @bind="_tpTrailPct" />
+                    <span class="field-unit">%</span>
+                </span>
+            </div>
 
             @* Same shape as the DCA levels above: buttons first, then one row per level. *@
             <div class="field settings-table-buttons">
@@ -327,23 +342,32 @@
             </div>
             @if (_moveSlBe)
             {
-                <div class="field" title="How far above break-even (below for a short) the price has to reach before the profit lock arms itself. The whole candle has to be past that level (the low for a long, the high for a short), so a wick through the trigger does not arm the lock. E.g. 2% arms the lock once a whole candle sits 2% in profit.">
-                    <label>Profit lock trigger %</label>
-                    <span class="field-control">
-                        <input type="number" class="input-number" step="0.1" min="0" @bind="_moveSlBePct" />
-                        <span class="field-unit">%</span>
-                    </span>
-                </div>
-                <div class="field" title="What happens once the trigger is reached. A fixed stop is placed once and stays there; a trailing stop follows the price at a fixed distance and only ever moves towards the take profit.">
+                @if (!ProfitLockCalculator.IsArmedByTakeProfit(_moveSlBeMethod))
+                {
+                    <div class="field" title="How far above break-even (below for a short) the price has to reach before the profit lock arms itself. The whole candle has to be past that level (the low for a long, the high for a short), so a wick through the trigger does not arm the lock. E.g. 2% arms the lock once a whole candle sits 2% in profit.">
+                        <label>Profit lock trigger %</label>
+                        <span class="field-control">
+                            <input type="number" class="input-number" step="0.1" min="0" @bind="_moveSlBePct" />
+                            <span class="field-unit">%</span>
+                        </span>
+                    </div>
+                }
+                <div class="field" title="What happens once the trigger is reached. A fixed stop is placed once and stays there; a trailing stop follows the price at a fixed distance and only ever moves towards the take profit. The two Altrady methods have no trigger: after TP1 has filled the stop goes to break-even, and Follow take profit then moves it to TP1 after TP2, to TP2 after TP3, and so on. They need two or more take profit levels and are sent along to Altrady.">
                     <label>Profit lock method</label>
                     <select class="input-select" @bind="_moveSlBeMethod">
                         <option value="@CryptoProfitLockMethod.Fixed">Fixed stop above break even</option>
                         <option value="@CryptoProfitLockMethod.TrailingPercentage">Trailing behind the price</option>
                         <option value="@CryptoProfitLockMethod.TrailingKeltnerPsar">Trailing on Keltner channel and PSAR</option>
+                        <option value="@CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit">Break even after TP1 (Altrady)</option>
+                        <option value="@CryptoProfitLockMethod.FollowTakeProfit">Follow take profit (Altrady)</option>
                     </select>
                 </div>
                 @* The Keltner/PSAR trail uses the fixed level as its floor, so it shows the same field *@
-                @if (_moveSlBeMethod != CryptoProfitLockMethod.TrailingPercentage)
+                @if (ProfitLockCalculator.IsArmedByTakeProfit(_moveSlBeMethod))
+                {
+                    @* Armed by a filled take profit: no trigger, no stop or trail percentage *@
+                }
+                else if (_moveSlBeMethod != CryptoProfitLockMethod.TrailingPercentage)
                 {
                     <div class="field" title="Where the SL is placed once the trigger is reached, measured from break-even. Keep it below the trigger to leave room between the price and the stop; e.g. trigger 3% with stop loss 1.5% locks in 1.5% profit and gives the position 1.5% of room. A value above the trigger is capped to the trigger.">
                         <label>Profit lock stop loss %</label>
@@ -428,6 +452,7 @@
     private int _slotsShort;
     private CryptoOrderType _entryOrderType;
     private int _entryRemoveTime;
+    private decimal _entryLimitOffsetPct;
     private CryptoOrderType _dcaOrderType;
     private int _buyCooldown;
     private int _signalCooldownAfterTrade;
@@ -438,6 +463,7 @@
     //private decimal _entryMaxAdverse;
     private CryptoTakeProfitStrategy _tpStrategy;
     private bool _addDustToTp;
+    private decimal _tpTrailPct;
     private decimal _stopLoss;
     private decimal _stopLossLimit;
     private bool _moveSlBe;
@@ -596,6 +622,7 @@
         _slotsShort = t.SlotsMaximalShort;
         _entryOrderType = Supported(t.EntryOrderType, EntryOrderTypeList);
         _entryRemoveTime = t.EntryRemoveTime;
+        _entryLimitOffsetPct = t.EntryLimitOffsetPercentage;
         _dcaOrderType = Supported(t.DcaOrderType, DcaOrderTypeList);
         _buyCooldown = t.GlobalBuyCooldownTime;
         _signalCooldownAfterTrade = t.SignalCooldownAfterTradeTime;
@@ -606,6 +633,7 @@
         //_entryMaxAdverse = t.EntryConditions.EntryMaxAdversePercentage;
         _tpStrategy = t.TakeProfitStrategy;
         _addDustToTp = t.AddDustToTp;
+        _tpTrailPct = t.TakeProfitTrailPercentage;
         _stopLoss = t.StopLossPercentage;
         _stopLossLimit = t.StopLossLimitPercentage;
         _moveSlBe = t.MoveSlToBreakEven;
@@ -650,6 +678,7 @@
         t.SlotsMaximalShort = _slotsShort;
         t.EntryOrderType = _entryOrderType;
         t.EntryRemoveTime = _entryRemoveTime;
+        t.EntryLimitOffsetPercentage = _entryLimitOffsetPct;
         t.DcaOrderType = _dcaOrderType;
         t.GlobalBuyCooldownTime = _buyCooldown;
         t.SignalCooldownAfterTradeTime = _signalCooldownAfterTrade;
@@ -660,6 +689,7 @@
         //t.EntryConditions.EntryMaxAdversePercentage = _entryMaxAdverse;
         t.TakeProfitStrategy = _tpStrategy;
         t.AddDustToTp = _addDustToTp;
+        t.TakeProfitTrailPercentage = _tpTrailPct;
         t.StopLossPercentage = _stopLoss;
         t.StopLossLimitPercentage = _stopLossLimit;
         t.MoveSlToBreakEven = _moveSlBe;

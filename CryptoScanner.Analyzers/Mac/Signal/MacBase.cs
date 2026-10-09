@@ -50,6 +50,11 @@ public class MacBase : SignalCreateBase
     protected virtual MacSettings Settings => MacPlugin.Settings;
 
 
+    /// <summary>The stop of the signal when StopAtrMultiplier is set, null to leave it to the trader.</summary>
+    private decimal? StopPercentage;
+    public override decimal? OverrideSlPercentage => StopPercentage;
+
+
     /// <summary>
     /// Whether the cloud points the way this trade wants: the fast ema above the second one for a
     /// long, under it for a short. Exactly on it counts as neither.
@@ -78,6 +83,7 @@ public class MacBase : SignalCreateBase
     public override bool IsSignal()
     {
         ExtraText = "";
+        StopPercentage = null;
         MacSettings settings = Settings;
         if (!settings.EntryOnOpenMarker && !settings.EntryOnCrossMarker
             && !settings.EntryOnCloseMarker && !settings.EntryOnBreakMarker)
@@ -246,7 +252,18 @@ public class MacBase : SignalCreateBase
         if (settings.UseVolumeFilter && !VolumeOkay(settings, out volumeText))
             return false;
 
-        ExtraText = $"{trigger}, cloud {cloudWidth:N2}% wide{cloudText}{slopeText}{rsiText}{volumeText}";
+        // The stop, only for a signal that is really there; it walks a stretch of candles as well.
+        string stopText = "";
+        if (settings.StopAtrMultiplier > 0)
+        {
+            if (!AverageTrueRangePercentage(settings.StopAtrLength, close, out decimal atrPercentage))
+                return false;
+            StopPercentage = Math.Round(BoundedStop(settings.StopAtrMultiplier * atrPercentage,
+                settings.StopAtrMinimumPercentage, settings.StopAtrMaximumPercentage), 2);
+            stopText = $", sl {StopPercentage.Value:N2}% ({settings.StopAtrMultiplier}x ATR {atrPercentage:N2}%)";
+        }
+
+        ExtraText = $"{trigger}, cloud {cloudWidth:N2}% wide{cloudText}{slopeText}{rsiText}{volumeText}{stopText}";
         return true;
     }
 
@@ -439,6 +456,54 @@ public class MacBase : SignalCreateBase
     /// volume of the VolumeAverageCandles candles BEFORE it. The signal candle is left out of that
     /// average on purpose - a spike that is part of its own average is a smaller spike.
     /// </summary>
+    /// <summary>
+    /// The ATR stop kept between its lower and upper bound; a bound of 0 or less is not used.
+    /// </summary>
+    public static decimal BoundedStop(decimal stopPercentage, decimal minimumPercentage, decimal maximumPercentage)
+    {
+        if (minimumPercentage > 0 && stopPercentage < minimumPercentage)
+            stopPercentage = minimumPercentage;
+        if (maximumPercentage > 0 && stopPercentage > maximumPercentage)
+            stopPercentage = maximumPercentage;
+        return stopPercentage;
+    }
+
+
+    /// <summary>
+    /// The average true range of the last closed candles, the signal candle included, as a
+    /// percentage of the close. A plain average of the true ranges: the true range of a candle is the
+    /// largest of its own range and the gaps to the previous close, so a gap counts as movement.
+    /// </summary>
+    private bool AverageTrueRangePercentage(int length, decimal close, out decimal percentage)
+    {
+        percentage = 0m;
+        length = Math.Max(1, length);
+        decimal sum = 0m;
+        MyData? walk = CandleLast;
+        for (int i = 0; i < length; i++)
+        {
+            if (!GetPrevCandle(walk, out MyData? previous) || previous == null)
+            {
+                ExtraText = $"not enough candles for the average true range ({i} of {length})";
+                return false;
+            }
+            decimal high = walk!.Candle.High;
+            decimal low = walk.Candle.Low;
+            decimal previousClose = previous.Candle.Close;
+            sum += Math.Max(high - low, Math.Max(Math.Abs(high - previousClose), Math.Abs(low - previousClose)));
+            walk = previous;
+        }
+
+        if (close <= 0 || sum <= 0)
+        {
+            ExtraText = "no range to set the stop from";
+            return false;
+        }
+        percentage = sum / length / close * 100m;
+        return true;
+    }
+
+
     private bool VolumeOkay(MacSettings settings, out string text)
     {
         text = "";

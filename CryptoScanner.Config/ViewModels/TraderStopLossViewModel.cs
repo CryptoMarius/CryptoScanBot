@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Trader;
 
 namespace CryptoScanner.Config.ViewModels;
 
@@ -11,7 +12,9 @@ public partial class TraderStopLossViewModel : ObservableObject
     {
         { "Fixed stop above break even", CryptoProfitLockMethod.Fixed },
         { "Trailing behind the price", CryptoProfitLockMethod.TrailingPercentage },
-        { "Trailing on Keltner channel and PSAR", CryptoProfitLockMethod.TrailingKeltnerPsar }
+        { "Trailing on Keltner channel and PSAR", CryptoProfitLockMethod.TrailingKeltnerPsar },
+        { "Break even after TP1 (Altrady)", CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit },
+        { "Follow take profit (Altrady)", CryptoProfitLockMethod.FollowTakeProfit }
     };
 
     [ObservableProperty]
@@ -39,13 +42,22 @@ public partial class TraderStopLossViewModel : ObservableObject
 
     /// <summary>Which of the two percentage fields belongs to the selected method.</summary>
     // The Keltner/PSAR trail uses the fixed level as its floor, so it shows the same field.
-    public bool IsFixedProfitLock => MoveSlToBreakEvenMethod != CryptoProfitLockMethod.TrailingPercentage;
+    public bool IsFixedProfitLock => MoveSlToBreakEvenMethod != CryptoProfitLockMethod.TrailingPercentage
+        && !ProfitLockCalculator.IsArmedByTakeProfit(MoveSlToBreakEvenMethod);
     public bool IsTrailingProfitLock => MoveSlToBreakEvenMethod == CryptoProfitLockMethod.TrailingPercentage;
+    // The two Altrady protections are armed by a filled take profit, not by the trigger percentage
+    public bool ShowProfitLockTrigger => MoveSlToBreakEven && !ProfitLockCalculator.IsArmedByTakeProfit(MoveSlToBreakEvenMethod);
 
     partial void OnMoveSlToBreakEvenMethodChanged(CryptoProfitLockMethod value)
     {
         OnPropertyChanged(nameof(IsFixedProfitLock));
         OnPropertyChanged(nameof(IsTrailingProfitLock));
+        OnPropertyChanged(nameof(ShowProfitLockTrigger));
+    }
+
+    partial void OnMoveSlToBreakEvenChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowProfitLockTrigger));
     }
 
     public void LoadConfig(SettingsTrading settings)

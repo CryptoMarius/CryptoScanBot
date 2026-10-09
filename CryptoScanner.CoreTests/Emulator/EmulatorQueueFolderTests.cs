@@ -116,4 +116,21 @@ public class EmulatorQueueFolderTests
         Assert.IsTrue(File.Exists(second));
         StringAssert.EndsWith(second, "20260907-0815-1 01-current.json");
     }
+
+
+    [TestMethod]
+    public void AReleaseBuildLeavesTheDebugOnlyFilesAlone()
+    {
+        DateTime old = DateTime.UtcNow.AddHours(-1);
+        string debugOnly = Path.Combine(_folder, "01-choch" + EmulatorQueueFolder.DebugOnlySuffix);
+        string release = Path.Combine(_folder, "02-mac.json");
+        File.WriteAllText(debugOnly, "[]");
+        File.WriteAllText(release, "[]");
+        File.SetLastWriteTimeUtc(debugOnly, old);
+        File.SetLastWriteTimeUtc(release, old);
+
+        Assert.AreEqual(release, EmulatorQueueFolder.PickNext(_folder, DateTime.UtcNow, TimeSpan.Zero, includeDebugOnly: false));
+        Assert.AreEqual(debugOnly, EmulatorQueueFolder.PickNext(_folder, DateTime.UtcNow, TimeSpan.Zero, includeDebugOnly: true),
+            "a Debug build runs everything, in name order");
+    }
 }

@@ -149,6 +149,49 @@ public class AssetAdjustmentTests : TestBase
 
 
     [TestMethod]
+    public void Deleting_all_positions_starts_the_capital_line_over()
+    {
+        using CryptoDatabase database = Arrange(out CryptoSymbol _);
+        IClock previousClock = GlobalData.Clock;
+        CryptoQuoteData quoteData = GlobalData.AddQuoteData("USDT");
+        bool previousFetchCandles = quoteData.FetchCandles;
+        try
+        {
+            quoteData.FetchCandles = true;
+
+            // Two days of history, with a correction in between so the ledger has something in it too
+            GlobalData.Clock = new EmulatorClock { UtcNow = Day };
+            SetBalance("USDT", 10000m);
+            AssetSnapshotTools.Capture(GlobalData.ActiveExchange!, Day);
+            GlobalData.Clock = new EmulatorClock { UtcNow = Day.AddDays(1).AddHours(10) };
+            PaperAssets.SetAsset(GlobalData.ActiveExchange!, "USDT", 8000m);
+            AssetSnapshotTools.Capture(GlobalData.ActiveExchange!, Day.AddDays(1));
+            Assert.AreEqual(2, LoadTestDays().Count, "the history is there before the delete");
+
+            // Every position goes, and with it the history those positions made
+            GlobalData.Clock = new EmulatorClock { UtcNow = Day.AddDays(2).AddHours(10) };
+            Assert.IsTrue(PaperAssetsEditor.ResetAfterDeletingAllPositions(GlobalData.ActiveExchange));
+
+            List<AssetSnapshotTools.AssetSnapshotDay> days = LoadTestDays();
+            Assert.AreEqual(1, days.Count, "only today is left");
+            Assert.AreEqual(Day.AddDays(2), days[0].Date);
+            Assert.AreEqual(10000m, days[0].Value, "the start capital, not the 8.000 the deleted positions left");
+            Assert.AreEqual(0m, days[0].Adjustment, "the bookings of the reset itself are the starting point, not a correction");
+
+            // The ledger lines from before the delete are gone, those of the reset itself stay
+            List<CryptoAssetAdjustment> ledger = ReadLedger(database);
+            Assert.IsFalse(ledger.Any(e => e.EventTime < Day.AddDays(2)), "nothing from before the delete");
+            Assert.IsTrue(ledger.Any(e => e.Reason == CryptoAssetAdjustmentReason.StartCapital), "the start capital that was just handed out");
+        }
+        finally
+        {
+            quoteData.FetchCandles = previousFetchCandles;
+            GlobalData.Clock = previousClock;
+        }
+    }
+
+
+    [TestMethod]
     public void Starting_over_leaves_both_halves_in_the_ledger()
     {
         using CryptoDatabase database = Arrange(out CryptoSymbol _);

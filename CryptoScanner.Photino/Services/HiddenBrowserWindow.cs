@@ -18,6 +18,11 @@ namespace CryptoScanner.Photino.Services;
 /// session, which lives in the WebView2 profile.
 /// </para>
 /// <para>
+/// Since 06-10-2026 this is the fallback only: an Altrady deep link first goes over the local
+/// WebSocket of the desktop application (Core, AltradyDeepLink) and this window is used when that
+/// does not answer, for instance because Altrady is not running.
+/// </para>
+/// <para>
 /// The window is parked far off-screen instead of being hidden. A window that is genuinely hidden
 /// gives the browser engine every reason to suspend the page, and the redirect is exactly what must
 /// not be suspended; off-screen it is a normal, visible window as far as the engine is concerned.

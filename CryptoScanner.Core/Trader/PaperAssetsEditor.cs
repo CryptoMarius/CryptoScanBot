@@ -214,14 +214,25 @@ public static class PaperAssetsEditor
     /// to hand out a different one.
     /// </para>
     /// <para>
-    /// Does nothing when the balances are not ours to hand out: with real trading or Altrady the money
-    /// is at the exchange, and seeding paper balances there would invent money that does not exist.
+    /// The capital per day goes with them: that line is the course of the positions that were just
+    /// deleted, and without positions there is no history to draw. The snapshots and the ledger of
+    /// the live scanner are dropped, and the snapshot <see cref="Reset"/> takes afterwards is the
+    /// new first point - the start capital, on today.
+    /// </para>
+    /// <para>
+    /// Hands out nothing when the balances are not ours to hand out: with real trading or Altrady the
+    /// money is at the exchange, and seeding paper balances there would invent money that does not
+    /// exist. The history is dropped there as well, for the same reason as above.
     /// </para>
     /// </summary>
     public static bool ResetAfterDeletingAllPositions(Model.CryptoExchange? activeExchange)
     {
         if (activeExchange == null)
             return false;
+
+        // Before the reset, otherwise the reset's own ledger lines (the old balance out, the start
+        // capital in) would be thrown away with the rest.
+        AssetSnapshotTools.DeleteLiveHistory();
 
         if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading ||
             GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)

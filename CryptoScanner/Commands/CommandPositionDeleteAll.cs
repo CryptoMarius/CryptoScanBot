@@ -23,7 +23,7 @@ public class CommandPositionDeleteAll : CommandBase
             return;
 
         var dialog = new ConfirmDialog(
-            "Delete all positions from the database, and hand out the start capital again?", "Delete positions")
+            "Delete all positions from the database, hand out the start capital again and start the capital per day over?", "Delete positions")
         {
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
         };

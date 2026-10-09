@@ -7,6 +7,10 @@ namespace CryptoScanner.Core.Enums;
 /// <c>MoveSlToBreakEvenPercentage</c> in profit, measured from the break-even price. What differs
 /// is where the stop goes afterwards, and whether it keeps moving.
 /// </para>
+/// <para>
+/// Except for the last two, which mirror Altrady's own stop protections: those are armed by a
+/// filled take profit and ignore the trigger percentage.
+/// </para>
 /// </summary>
 public enum CryptoProfitLockMethod
 {
@@ -33,4 +37,21 @@ public enum CryptoProfitLockMethod
     /// take profit (open point 48).
     /// </summary>
     TrailingKeltnerPsar,
+
+    /// <summary>
+    /// Altrady's "TSL: Average Entry Price" (webhook protection_type BREAK_EVEN): once the first
+    /// take profit has filled, the stop goes to the average entry price and stays there. Not armed by
+    /// <c>MoveSlToBreakEvenPercentage</c> but by that fill, so it needs at least two take profit
+    /// levels - with one level the position is closed by the time the stop would move.
+    /// </summary>
+    BreakEvenAfterFirstTakeProfit,
+
+    /// <summary>
+    /// Altrady's "TSL: Follow Take Profit" (webhook protection_type FOLLOW_TAKE_PROFIT): once the
+    /// first take profit has filled the stop goes to the average entry price, and every following
+    /// fill moves it up to the price of the take profit before it (TP2 filled: stop at TP1, TP3
+    /// filled: stop at TP2, ...). Needs at least two take profit levels, like
+    /// <see cref="BreakEvenAfterFirstTakeProfit"/>.
+    /// </summary>
+    FollowTakeProfit,
 }

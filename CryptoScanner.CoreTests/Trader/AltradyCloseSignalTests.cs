@@ -1,6 +1,7 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange.Altrady;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 
 using Exchange = CryptoScanner.Core.Model.CryptoExchange;
 
@@ -138,5 +139,70 @@ public class AltradyCloseSignalTests
         Assert.AreEqual(8m, (decimal?)block["stop_percentage"]);
         Assert.IsNull(block["protection_type"]);
         Assert.IsNull(block["trailing_distance"]);
+    }
+
+
+    [TestMethod]
+    public void FollowTakeProfitIsHandedToAltrady()
+    {
+        var block = AltradyWebhook.BuildStopLossBlock(5m, true, CryptoProfitLockMethod.FollowTakeProfit, 6.5m, 1.5m, 3);
+
+        Assert.AreEqual(5m, (decimal?)block["stop_percentage"]);
+        Assert.AreEqual("FOLLOW_TAKE_PROFIT", (string?)block["protection_type"]);
+        Assert.IsNull(block["trailing_percentage"], "their take profit protection has no trigger of its own");
+        Assert.IsNull(block["trailing_distance"]);
+    }
+
+
+    [TestMethod]
+    public void BreakEvenAfterTheFirstTakeProfitIsHandedToAltrady()
+    {
+        var block = AltradyWebhook.BuildStopLossBlock(5m, true, CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit, 6.5m, 1.5m, 2);
+
+        Assert.AreEqual("BREAK_EVEN", (string?)block["protection_type"]);
+        Assert.IsNull(block["trailing_percentage"]);
+    }
+
+
+    [TestMethod]
+    public void TheTakeProfitProtectionsNeedTwoTargets()
+    {
+        // Altrady: with one take profit the stop never moves, so nothing is sent
+        var block = AltradyWebhook.BuildStopLossBlock(5m, true, CryptoProfitLockMethod.FollowTakeProfit, 6.5m, 1.5m, 1);
+
+        Assert.AreEqual(5m, (decimal?)block["stop_percentage"]);
+        Assert.IsNull(block["protection_type"]);
+    }
+
+
+    [TestMethod]
+    public void TheLastTakeProfitTrailsAtAltrady()
+    {
+        var levels = new List<CryptoTpEntry>
+        {
+            new() { Percentage = 5m, Factor = 25m },
+            new() { Percentage = 10m, Factor = 25m },
+            new() { Percentage = 24m, Factor = 50m },
+        };
+        var block = AltradyWebhook.BuildTakeProfitBlock(levels, 3m);
+
+        Assert.AreEqual(3, block.Count);
+        Assert.IsNull(block[0]["trailing_distance"], "only the last take profit may trail");
+        Assert.IsNull(block[1]["trailing_distance"]);
+        Assert.AreEqual(3m, (decimal?)block[2]["trailing_distance"]);
+        Assert.AreEqual(24m, (decimal?)block[2]["price_percentage"], "trailing starts at the last target");
+        Assert.AreEqual(50m, (decimal?)block[2]["position_percentage"]);
+    }
+
+
+    [TestMethod]
+    public void WithoutTrailingTheTakeProfitsAreSentAsTheyAre()
+    {
+        var levels = new List<CryptoTpEntry> { new() { Percentage = 24m, Factor = 100m } };
+        var block = AltradyWebhook.BuildTakeProfitBlock(levels, 0m);
+
+        Assert.AreEqual(1, block.Count);
+        Assert.IsNull(block[0]["trailing_distance"]);
+        Assert.AreEqual(24m, (decimal?)block[0]["price_percentage"]);
     }
 }

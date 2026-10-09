@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Helpers;
 
 namespace CryptoScanner.Commands;
 
@@ -29,7 +30,10 @@ public class CommandLaunchTradingAppHidden : CommandBase
                     $"{dto.interval.Name} via the hidden browser: {Url}");
                 // Through the wrapper instead of straight at the service: it says so in the log when
                 // the hidden browser does not exist yet, where this threw a NullReferenceException.
-                App.OpenInHiddenBrowser(Url);
+                // Since 06-10-2026 by way of the shared helper: the Altrady deep link goes over the
+                // local WebSocket first and only falls back to the hidden browser (App.OpenInHiddenBrowser,
+                // wired through CommandHelper.OpenHiddenBrowser at startup).
+                ExternalLinkHelper.OpenHidden(Url);
             }
         }
     }

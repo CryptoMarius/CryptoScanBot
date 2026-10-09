@@ -41,6 +41,8 @@ public static class AnalyzerRegistration
 
         // From the Malysian trader Oma Ally, not much signals but performs well (no profits yet)
         //PluginManager.Register(new Bbma.BbmaPlugin());
+        // Back on 06-10-2026 (still inside #if DEBUG), to be measured again.
+        PluginManager.Register(new Bbma.BbmaPlugin());
 
         PluginManager.Register(new BbRsiEngulfing.BbRsiEngulfingPlugin());
 

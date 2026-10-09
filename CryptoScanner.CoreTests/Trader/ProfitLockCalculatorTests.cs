@@ -263,4 +263,33 @@ public class ProfitLockCalculatorTests
             Assert.AreEqual(first, ProfitLockCalculator.FixedStop(CryptoTradeSide.Long, breakEven, trigger, sl));
         Assert.AreEqual(101.5m, first);
     }
+
+
+    // ── Altrady take profit protections ─────────────────────────────────────
+
+    private static readonly decimal[] Levels = [5m, 10m, 15m, 24m];
+
+    [TestMethod]
+    public void TakeProfitStop_BeforeTheFirstFill_DoesNothing()
+        => Assert.IsNull(ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Long, CryptoProfitLockMethod.FollowTakeProfit, 100m, 0, Levels));
+
+    [TestMethod]
+    public void TakeProfitStop_AfterTp1_GoesToBreakEven()
+        => Assert.AreEqual(100m, ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Long, CryptoProfitLockMethod.FollowTakeProfit, 100m, 1, Levels));
+
+    [TestMethod]
+    public void TakeProfitStop_Follow_AfterTp3_SitsOnTp2()
+        => Assert.AreEqual(110m, ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Long, CryptoProfitLockMethod.FollowTakeProfit, 100m, 3, Levels));
+
+    [TestMethod]
+    public void TakeProfitStop_Follow_Short_AfterTp2_SitsOnTp1()
+        => Assert.AreEqual(100m / 1.05m, ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Short, CryptoProfitLockMethod.FollowTakeProfit, 100m, 2, Levels));
+
+    [TestMethod]
+    public void TakeProfitStop_BreakEven_StaysOnBreakEvenAfterLaterFills()
+        => Assert.AreEqual(100m, ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Long, CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit, 100m, 3, Levels));
+
+    [TestMethod]
+    public void TakeProfitStop_OtherMethods_AreNotArmedByAFill()
+        => Assert.IsNull(ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Long, CryptoProfitLockMethod.TrailingPercentage, 100m, 2, Levels));
 }

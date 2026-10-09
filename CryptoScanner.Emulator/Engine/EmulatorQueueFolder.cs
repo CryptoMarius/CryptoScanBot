@@ -26,6 +26,20 @@ public static class EmulatorQueueFolder
     public static string DoneFolder => Path.Combine(Folder, DoneFolderName);
     public static string FailedFolder => Path.Combine(Folder, FailedFolderName);
 
+    /// <summary>
+    /// A queue file whose name ends in this holds strategies that are only registered in a Debug
+    /// build (the ones inside #if DEBUG in AnalyzerRegistration). A Release emulator, which is a lot
+    /// faster, leaves those files alone instead of failing on them; a Debug emulator runs them.
+    /// </summary>
+    public const string DebugOnlySuffix = ".debug.json";
+
+    /// <summary>Whether this build runs the debug-only queue files.</summary>
+#if DEBUG
+    public static bool RunsDebugOnlyFiles => true;
+#else
+    public static bool RunsDebugOnlyFiles => false;
+#endif
+
 
     /// <summary>
     /// The next file to run: the alphabetically first .json in the folder whose last write is at
@@ -34,11 +48,14 @@ public static class EmulatorQueueFolder
     /// of the name is enough to decide the order. Files in <paramref name="skip"/> (full paths) are
     /// left out: the loop puts a file there that it is done with but could not move away.
     /// </summary>
-    public static string? PickNext(string folder, DateTime utcNow, TimeSpan settleTime, IReadOnlySet<string>? skip = null)
+    public static string? PickNext(string folder, DateTime utcNow, TimeSpan settleTime, IReadOnlySet<string>? skip = null,
+        bool? includeDebugOnly = null)
     {
         Directory.CreateDirectory(folder);
+        bool debugOnly = includeDebugOnly ?? RunsDebugOnlyFiles;
         return Directory.GetFiles(folder, "*.json", SearchOption.TopDirectoryOnly)
             .Where(f => Path.GetExtension(f).Equals(".json", StringComparison.OrdinalIgnoreCase))
+            .Where(f => debugOnly || !f.EndsWith(DebugOnlySuffix, StringComparison.OrdinalIgnoreCase))
             .Where(f => skip == null || !skip.Contains(f))
             .Where(f => File.GetLastWriteTimeUtc(f) <= utcNow - settleTime)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)

@@ -377,6 +377,29 @@ public class MacSettings : SettingsSignalStrategyBase
             + "leaves. Zero leaves on the first candle the EMAs cross back.")]
     public int ExitConfirmationCandles { get; set; } = 0;
 
+    /// <summary>
+    /// The stop loss as a multiple of the average true range of the signal interval instead of a
+    /// fixed percentage, 0 = off (the trader's stop loss applies). A fixed 5% is nothing on a daily
+    /// candle of one coin and a week of movement on another; the ATR scales the stop to how much the
+    /// coin really moves. The percentage it comes to travels with the signal, so the trader and the
+    /// Altrady webhook use it as the stop of that position, measured from the entry.
+    /// </summary>
+    [SettingCaption("Stop at ATR multiple", SeparatorBefore = true, SubHeader = "Stop loss",
+        Tooltip = "The stop loss of the position as a multiple of the average true range of the signal interval, measured from the entry. 0 leaves the stop to the trader settings. Sent to Altrady as the stop of the position.")]
+    public decimal StopAtrMultiplier { get; set; } = 0m;
+
+    /// <summary>How many closed candles the average true range is taken over.</summary>
+    [SettingCaption("ATR candles", Indented = true, Tooltip = "How many closed candles of the signal interval the average true range is taken over.")]
+    public int StopAtrLength { get; set; } = 14;
+
+    /// <summary>The ATR stop never closer than this percentage from the entry, 0 = no lower bound.</summary>
+    [SettingCaption("ATR stop minimum %", Indented = true, Tooltip = "The ATR stop is never placed closer than this percentage from the entry, 0 = no lower bound. Keeps a quiet coin from getting a stop every small swing reaches.")]
+    public decimal StopAtrMinimumPercentage { get; set; } = 0m;
+
+    /// <summary>The ATR stop never further than this percentage from the entry, 0 = no upper bound.</summary>
+    [SettingCaption("ATR stop maximum %", Indented = true, Tooltip = "The ATR stop is never placed further than this percentage from the entry, 0 = no upper bound. Keeps a wild coin from running far against the position.")]
+    public decimal StopAtrMaximumPercentage { get; set; } = 0m;
+
     public MacSettings() : base()
     {
         SoundFileLong = "sound-signal-oversold.wav";

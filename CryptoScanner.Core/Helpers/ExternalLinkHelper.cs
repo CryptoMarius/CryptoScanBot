@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Exchange.Altrady;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Helpers;
@@ -83,6 +84,23 @@ public static class ExternalLinkHelper
         ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false);
     }
 
+    /// <summary>
+    /// Hand an address to the trading application without the user seeing a browser. An Altrady
+    /// deep link is sent over the local WebSocket of the desktop application
+    /// (<see cref="AltradyDeepLink"/>); when that does not answer, or the address is not an Altrady
+    /// link at all, the host's hidden browser gets it - the route every click took before.
+    /// </summary>
+    public static void OpenHidden(string url)
+    {
+        AltradyDeepLink.Open(url, fallbackUrl =>
+        {
+            if (OpenHiddenBrowser == null)
+                GlobalData.AddErrorToLogTab($"Linktools: this application has no hidden browser, {fallbackUrl} was not opened");
+            else
+                OpenHiddenBrowser.Invoke(fallbackUrl);
+        });
+    }
+
     public static void ActivateTradingApp(CryptoTradingApp tradingApp,
         CryptoSymbol symbol, CryptoInterval interval, CryptoExternalUrlType viaTradingBrowser, bool activateTab = true)
     {
@@ -124,10 +142,9 @@ public static class ExternalLinkHelper
             {
                 if (useHiddenBrowser)
                 {
-                    if (OpenHiddenBrowser == null)
-                        GlobalData.AddErrorToLogTab($"Linktools: this application has no hidden browser, {Url} was not opened");
-                    else
-                        OpenHiddenBrowser.Invoke(Url);
+                    // Since 06-10-2026 the Altrady deep link goes over the local WebSocket of the
+                    // desktop application first; the hidden browser is the fallback (see OpenHidden)
+                    OpenHidden(Url);
                 }
                 else
                 {

@@ -13,6 +13,11 @@ namespace CryptoScanner.Services;
 /// <summary>
 /// Hidden browser service for background operations
 /// Uses official Avalonia.Controls.WebView with platform-native browser engines
+/// <para>
+/// Since 06-10-2026 this is the fallback only: an Altrady deep link first goes over the local
+/// WebSocket of the desktop application (Core, AltradyDeepLink) and this window is used when that
+/// does not answer, for instance because Altrady is not running.
+/// </para>
 /// </summary>
 public class HiddenBrowserService : IDisposable
 {

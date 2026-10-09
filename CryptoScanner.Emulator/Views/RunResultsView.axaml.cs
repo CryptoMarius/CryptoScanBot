@@ -548,8 +548,17 @@ public partial class RunResultsView : UserControl
             return;
 
         bool confirmed = await ConfirmAsync(owner, "Delete all runs",
-            $"Delete ALL {count} run(s) and all of their signals and positions?\n\nThis cannot be undone.");
+            $"Delete ALL {count} run(s) and all of their signals and positions?\n\n" +
+            "This deletes every run in the database, also the ones the label filter hides.\n\nThis cannot be undone.");
         if (!confirmed)
+            return;
+
+        // A second, deliberate step (04-10-2026): the menu item sits right under "Delete run(s)…", and
+        // one wrong click plus one confirmation nearly cost the whole session. Typing the number of
+        // runs cannot be done on autopilot the way a second Yes can.
+        string? typed = await PromptTextAsync(owner, "Delete all runs - second confirmation",
+            $"To really delete all {count} runs, type the number {count} and press OK.", "");
+        if (typed?.Trim() != count.ToString(System.Globalization.CultureInfo.InvariantCulture))
             return;
 
         viewModel.DeleteAllRuns();

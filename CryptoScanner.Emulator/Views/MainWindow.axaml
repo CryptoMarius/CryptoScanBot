@@ -56,6 +56,9 @@
                                       Command="{Binding RunAllAlgorithmsCommand}"
                                       CommandParameter="{Binding $parent[Window]}"
                                       IsEnabled="{Binding !IsRunning}"/>
+                            <MenuItem Header="Stop after this run"
+                                      Command="{Binding StopAfterRunCommand}"
+                                      IsEnabled="{Binding IsRunning}"/>
                             <MenuItem Header="Stop"
                                       Command="{Binding StopCommand}"
                                       IsEnabled="{Binding IsRunning}"/>
@@ -115,15 +118,20 @@
                                 Command="{Binding RunQueueFolderCommand}"
                                 IsVisible="{Binding !IsRunning}"
                                 ToolTip.Tip="Runs the queue files in the Queue folder one after the other and keeps watching the folder for new ones until Stop. Every entry has its own SL%, TP and DCA and names its own algorithm; symbols and period come from the run parameters. A finished file moves to Queue\Done, an unreadable one to Queue\Failed."/>
+                        <Button Content="Stop after this run"
+                                Command="{Binding StopAfterRunCommand}"
+                                IsVisible="{Binding IsRunning}"
+                                ToolTip.Tip="Lets the run in progress finish, then stops. No cancelled run."/>
                         <Button Content="Stop"
                                 Command="{Binding StopCommand}"
                                 IsVisible="{Binding IsRunning}"
-                                Background="#A03030" Foreground="White"/>
+                                Background="#A03030" Foreground="White"
+                                ToolTip.Tip="Stops right away. The run in progress is cancelled."/>
                     </StackPanel>
                 </Border>
 
                 <!-- ─── Header (titel + hint) ─────────────────────────────────────────────── -->
-                <StackPanel Grid.Row="1" Margin="4,0,0,0">
+                <StackPanel Grid.Row="1" Margin="4,0,0,0" IsVisible="false">
                     <TextBlock FontSize="20" FontWeight="Bold" Text="CryptoScanBot Emulator"/>
                     <TextBlock FontSize="11" Foreground="Gray"
                                Text="Backtest replay over a dedicated data folder. Edit settings.json via Configure; symbols and dates via Run parameters."/>

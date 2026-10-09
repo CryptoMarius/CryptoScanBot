@@ -19,6 +19,9 @@ public partial class TraderEntryViewModel : ObservableObject
     [ObservableProperty]
     private int _entryRemoveTime = 5; // int (EXACT match, in minutes)
 
+    [ObservableProperty]
+    private decimal _entryLimitOffsetPercentage = 0m;
+
     public Dictionary<string, CryptoOrderType> OrderTypeList => _orderTypeList;
 
     public void LoadConfig(SettingsTrading settings)
@@ -27,11 +30,13 @@ public partial class TraderEntryViewModel : ObservableObject
         // build - leaves the combobox empty and would be written back untouched on OK.
         EntryOrderType = _orderTypeList.ContainsValue(settings.EntryOrderType) ? settings.EntryOrderType : CryptoOrderType.Market;
         EntryRemoveTime = settings.EntryRemoveTime;
+        EntryLimitOffsetPercentage = settings.EntryLimitOffsetPercentage;
     }
 
     public void SaveConfig(SettingsTrading settings)
     {
         settings.EntryOrderType = EntryOrderType;
         settings.EntryRemoveTime = EntryRemoveTime;
+        settings.EntryLimitOffsetPercentage = EntryLimitOffsetPercentage;
     }
 }

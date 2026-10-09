@@ -99,6 +99,14 @@
                               VerticalAlignment="Center"/>
                 </Grid>
 
+                <!-- smc.rejection, back on 06-10-2026 -->
+                <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto">
+                    <TextBlock Grid.Column="0" Text="Rejection lookback (smc.rejection):" VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="2" Text="{Binding RejectionLookback, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
                 <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto">
                     <TextBlock Grid.Column="0" Text="Only strong zones:" VerticalAlignment="Center"
                                Margin="0,0,12,0" FontSize="12"/>

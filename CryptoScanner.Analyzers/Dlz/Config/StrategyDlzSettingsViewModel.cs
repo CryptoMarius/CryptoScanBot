@@ -11,6 +11,9 @@ public partial class StrategyDlzSettingsViewModel : ObservableObject
     private int _candleCountZoom = 125; // int, max: 6000
 
     [ObservableProperty]
+    private decimal _warnPercentage = 0.25m; // dlz.near, back on 06-10-2026
+
+    [ObservableProperty]
     private decimal _nearZonePercentage = 0.25m;
 
     /// <summary>The values the touch level ComboBox offers; see CryptoZoneTouchLevel.</summary>
@@ -28,6 +31,7 @@ public partial class StrategyDlzSettingsViewModel : ObservableObject
     public void LoadConfig(SettingsSignalStrategyDlz settings)
     {
         CandleCountZoom = settings.CandleCountZoom;
+        WarnPercentage = settings.WarnPercentage;
         NearZonePercentage = settings.NearZonePercentage;
         MaxTouches = settings.MaxTouches;
         TouchLevel = settings.TouchLevel;
@@ -37,6 +41,7 @@ public partial class StrategyDlzSettingsViewModel : ObservableObject
     public void SaveConfig(SettingsSignalStrategyDlz settings)
     {
         settings.CandleCountZoom = CandleCountZoom;
+        settings.WarnPercentage = WarnPercentage;
         settings.NearZonePercentage = NearZonePercentage;
         settings.MaxTouches = MaxTouches;
         settings.TouchLevel = TouchLevel;

@@ -209,6 +209,11 @@ public class SettingsTrading
     public CryptoOrderType EntryOrderType { get; set; } = CryptoOrderType.Market;
     // Verwijder de order indien niet na zoveel candles gevuld
     public int EntryRemoveTime { get; set; } = 5;
+    // Only for a limit entry: how far better than the signal price the order is placed, 0 = at the
+    // signal price. Below it for a long and above it for a short, so the entry waits for a pullback;
+    // when the pullback does not come within EntryRemoveTime candles the entry is cancelled. The
+    // Altrady webhook sends the resulting price as signal_price.
+    public decimal EntryLimitOffsetPercentage { get; set; } = 0m;
     // Het afwijkend percentage bij het kopen
     //public decimal GlobalBuyVarying { get; set; } = -0.01m; // verlagen
 
@@ -274,6 +279,11 @@ public class SettingsTrading
 
     // Allow previous (small) dust to be added to the TP
     public bool AddDustToTp { get; set; } = true;
+    // Trailing on the LAST take profit level, 0 = off. Once the price reaches that level it is not
+    // sold there: a stop follows the best price at this distance and only ever moves towards more
+    // profit. Altrady does the same with trailing_distance on its last take profit, so the webhook
+    // hands this over and the position is managed there as well.
+    public decimal TakeProfitTrailPercentage { get; set; } = 0m;
     // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
     //public bool LockProfits { get; set; } = false;
 

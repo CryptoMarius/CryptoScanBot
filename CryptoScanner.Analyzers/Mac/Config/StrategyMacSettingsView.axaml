@@ -259,6 +259,43 @@
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
 
+                <Separator Margin="0,4"/>
+
+                <!-- Stop loss from the average true range instead of the trader's fixed percentage -->
+                <TextBlock Text="Stop loss" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="The stop loss of the position as a multiple of the average true range of the signal interval, measured from the entry. 0 leaves the stop to the trader settings. Sent to Altrady as the stop of the position.">
+                    <TextBlock Grid.Column="0" Text="Stop at ATR multiple:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding StopAtrMultiplier, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="How many closed candles of the signal interval the average true range is taken over.">
+                    <TextBlock Grid.Column="0" Text="ATR candles:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding StopAtrLength, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="The ATR stop is never placed closer than this percentage from the entry, 0 = no lower bound. Keeps a quiet coin from getting a stop every small swing reaches.">
+                    <TextBlock Grid.Column="0" Text="ATR stop minimum %:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding StopAtrMinimumPercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="The ATR stop is never placed further than this percentage from the entry, 0 = no upper bound. Keeps a wild coin from running far against the position.">
+                    <TextBlock Grid.Column="0" Text="ATR stop maximum %:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding StopAtrMaximumPercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
             </StackPanel>
         </Grid>
     </HeaderedContentControl>

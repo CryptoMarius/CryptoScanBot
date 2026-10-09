@@ -53,7 +53,7 @@ public static class ColumnHints
         ["Peak cap."] = "Peak capital: the most that was tied up in open positions at any one moment. This is the money an account needed to run this.",
         ["Peak pos"] = "The largest number of positions open at the same time.",
         ["Peak %"] = "100 × Profit / Peak cap. — the return on the capital that was actually tied up. A stricter filter trades less and needs less capital, so compare the money as well.",
-        ["Drawdown %"] = "The deepest fall of the account value from an earlier high, in percent of that high: 100 × (high − value) / high. Measured once per replayed day, so a dip that recovered within the same day is not in it. Example: 100, 120, 90, 130, 65 gives 50 (130 → 65).",
+        ["Drawdown %"] = "Lower is better. How far the account sank below its earlier high at the worst moment. On an account of 10,000: 0.11% is about 11 USDT, 8% about 800 USDT.",
         ["Start cap."] = "The start capital of the run configuration. Only meaningful when asset management was on.",
         ["End cap."] = "Start cap. + Profit.",
         ["Return %"] = "100 × Profit / Start cap. A dash when asset management was off: then the start capital never limited what was traded and a percentage of it says nothing. Not per day — compared runs cover the same period.",

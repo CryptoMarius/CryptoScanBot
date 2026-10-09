@@ -45,6 +45,11 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
     // RejectionLookback below with it, which nothing ever read (open points 108 and 112). A settings
     // file that still carries the keys is read without them.
 
+    // Back on 06-10-2026: dlz.near is registered again in Debug builds (DlzPlugin), and this is what
+    // it reads for the "approaching zone" alarm. The old settings key is picked up again as it was.
+    [SettingCaption("Approach warning percentage (dlz.near)", Group = GroupDominantZones)]
+    public decimal WarnPercentage { get; set; } = 0.25m;
+
     [SettingCaption("Candles zoom", Group = GroupDominantZones, Unit = "(1h candles)")]
     public int CandleCountZoom { get; set; } = 125;
 

@@ -55,6 +55,9 @@ public partial class TraderTakeProfitViewModel : ObservableObject
     private bool _addDustToTp = true; // bool (EXACT match)
 
     [ObservableProperty]
+    private decimal _takeProfitTrailPercentage = 0m;
+
+    [ObservableProperty]
     private ObservableCollection<TpItemViewModel> _tpItems = [];
 
     public Dictionary<string, CryptoTakeProfitStrategy> StrategyList => _strategyList;
@@ -63,6 +66,7 @@ public partial class TraderTakeProfitViewModel : ObservableObject
     {
         TakeProfitStrategy = settings.TakeProfitStrategy;
         AddDustToTp = settings.AddDustToTp;
+        TakeProfitTrailPercentage = settings.TakeProfitTrailPercentage;
 
         TpItems.Clear();
         int index = 1;
@@ -78,6 +82,7 @@ public partial class TraderTakeProfitViewModel : ObservableObject
     {
         settings.TakeProfitStrategy = TakeProfitStrategy;
         settings.AddDustToTp = AddDustToTp;
+        settings.TakeProfitTrailPercentage = TakeProfitTrailPercentage;
 
         settings.TpList.Clear();
         foreach (var item in TpItems)

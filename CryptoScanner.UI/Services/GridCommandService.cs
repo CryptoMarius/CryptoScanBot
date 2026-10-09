@@ -345,6 +345,28 @@ public class GridCommandService
         });
     }
 
+    /// <summary>
+    /// "Position close": take the profit or the loss right now. The work is in ManualExit, shared with
+    /// the Avalonia CommandPositionClose; the confirmation is asked by the page before it gets here.
+    /// </summary>
+    public void PositionClose(CryptoPosition position)
+    {
+        Task.Run(async () =>
+        {
+            try
+            {
+                using CryptoDatabase db = new();
+                db.Connection.Open();
+                await ManualExit.RequestExitAsync(db, position);
+            }
+            catch (Exception ex)
+            {
+                ScannerLog.Logger.Error(ex, "");
+                GlobalData.AddTextToLogTab($"Error closing position {position.Id} {position.Symbol.Name}: {ex.Message}");
+            }
+        });
+    }
+
     public static void ExportPositionToExcel(CryptoPosition position)
     {
         Task.Run(() =>

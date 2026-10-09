@@ -38,12 +38,16 @@
                                Value="{Binding MinConsensus, Mode=TwoWay}"
                                IsEnabled="{Binding ConsensusActive}"
                                Minimum="1" Maximum="5" Increment="1"
-                               Height="26" FontSize="12" Padding="4,2"
-                               CornerRadius="4" Width="110"
+                               Height="26" FontSize="12" Padding="6,2"
+                               CornerRadius="4" Width="100"
+                               ShowButtonSpinner="False"
                                FormatString="0"/>
             </Grid>
 
             <!-- Market breadth: percentage of the coins that rose over the last hour (0..100) -->
+            <!-- No spinner buttons on these numeric fields (06-10-2026): the two arrow buttons took most
+                 of the width and left a sliver to type in. Same width as the range boxes above; the
+                 arrow keys and the mouse wheel still step the value. -->
             <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="8" Margin="0,4,0,0">
                 <CheckBox Grid.Column="0"
                           IsChecked="{Binding BreadthActive, Mode=TwoWay}"
@@ -56,16 +60,18 @@
                                Value="{Binding BreadthMinimum, Mode=TwoWay}"
                                IsEnabled="{Binding BreadthActive}"
                                Minimum="0" Maximum="100" Increment="5"
-                               Height="26" FontSize="12" Padding="4,2"
-                               CornerRadius="4" Width="80"
+                               Height="26" FontSize="12" Padding="6,2"
+                               CornerRadius="4" Width="100"
+                               ShowButtonSpinner="False"
                                FormatString="0"/>
                 <TextBlock Grid.Column="2" Text=".." VerticalAlignment="Center"/>
                 <NumericUpDown Grid.Column="3"
                                Value="{Binding BreadthMaximum, Mode=TwoWay}"
                                IsEnabled="{Binding BreadthActive}"
                                Minimum="0" Maximum="100" Increment="5"
-                               Height="26" FontSize="12" Padding="4,2"
-                               CornerRadius="4" Width="80"
+                               Height="26" FontSize="12" Padding="6,2"
+                               CornerRadius="4" Width="100"
+                               ShowButtonSpinner="False"
                                FormatString="0"/>
             </Grid>
 

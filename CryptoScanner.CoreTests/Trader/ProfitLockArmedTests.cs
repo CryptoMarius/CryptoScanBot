@@ -104,4 +104,56 @@ public class ProfitLockArmedTests
         Assert.IsFalse(PositionMonitor.ProfitLockArmed(CryptoTradeSide.Long, 0m, Trigger, 102m, 104m, out decimal profit));
         Assert.AreEqual(0m, profit);
     }
+
+
+    // ── Take profit filled at its target or by the stop ────────────────────
+
+    private static CryptoScanner.Core.Model.CryptoPositionStep Step(decimal price, decimal? stopPrice, decimal averagePrice)
+        => new() { Price = price, StopPrice = stopPrice, AveragePrice = averagePrice };
+
+    [TestMethod]
+    public void TakeProfitStep_FilledAtTheTarget_CountsAsFilled()
+        => Assert.IsTrue(PositionMonitor.IsFilledAtTarget(Step(105m, 95m, 105m)));
+
+    [TestMethod]
+    public void TakeProfitStep_FilledByTheStop_DoesNotCount()
+    {
+        // A stopped-out position closes its take profit parts too; that is no TP1 fill and must not
+        // move the stop of the rest to break-even.
+        Assert.IsFalse(PositionMonitor.IsFilledAtTarget(Step(105m, 95m, 95m)));
+    }
+
+    [TestMethod]
+    public void TakeProfitStep_Short_FilledByTheStop_DoesNotCount()
+        => Assert.IsFalse(PositionMonitor.IsFilledAtTarget(Step(95m, 105m, 105m)));
+
+    [TestMethod]
+    public void TakeProfitStep_WithoutAFill_DoesNotCount()
+        => Assert.IsFalse(PositionMonitor.IsFilledAtTarget(Step(105m, 95m, 0m)));
+
+
+    // ── Wake-up price with a trailing last take profit ─────────────────────
+
+    private static List<(int Level, CryptoScanner.Core.Model.CryptoPositionPart Part, decimal Price, decimal Quantity)> Targets(params (int level, decimal price)[] items)
+        => items.Select(i => (i.level, (CryptoScanner.Core.Model.CryptoPositionPart)null!, i.price, 1m)).ToList();
+
+    [TestMethod]
+    public void NearestTakeProfit_UsesTheArmingPriceInsteadOfTheParkedLimit()
+    {
+        // TP1 at 105 still open, the trailing TP2 is parked at 1240 and arms at 124
+        var targets = Targets((0, 105m), (1, 1240m));
+        var trail = new PositionMonitor.TakeProfitTrail(null, null, 124m, 124m);
+        Assert.AreEqual(105m, PositionMonitor.NearestTakeProfitPrice(CryptoTradeSide.Long, targets, 1, trail));
+
+        targets = Targets((1, 1240m));
+        Assert.AreEqual(124m, PositionMonitor.NearestTakeProfitPrice(CryptoTradeSide.Long, targets, 1, trail));
+    }
+
+    [TestMethod]
+    public void NearestTakeProfit_Short_UsesTheArmingPrice()
+    {
+        var targets = Targets((0, 9.5m));
+        var trail = new PositionMonitor.TakeProfitTrail(null, null, 80m, 80m);
+        Assert.AreEqual(80m, PositionMonitor.NearestTakeProfitPrice(CryptoTradeSide.Short, targets, 0, trail));
+    }
 }

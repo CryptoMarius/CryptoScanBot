@@ -107,6 +107,18 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _exitConfirmationCandles = 0;
 
+    [ObservableProperty]
+    private decimal _stopAtrMultiplier = 0m;
+
+    [ObservableProperty]
+    private int _stopAtrLength = 14;
+
+    [ObservableProperty]
+    private decimal _stopAtrMinimumPercentage = 0m;
+
+    [ObservableProperty]
+    private decimal _stopAtrMaximumPercentage = 0m;
+
 
     public void LoadConfig(MacSettings settings)
     {
@@ -139,6 +151,10 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
         ExitOnSecondLineCross = settings.ExitOnSecondLineCross;
         ExitOnCloudFlip = settings.ExitOnCloudFlip;
         ExitConfirmationCandles = settings.ExitConfirmationCandles;
+        StopAtrMultiplier = settings.StopAtrMultiplier;
+        StopAtrLength = settings.StopAtrLength;
+        StopAtrMinimumPercentage = settings.StopAtrMinimumPercentage;
+        StopAtrMaximumPercentage = settings.StopAtrMaximumPercentage;
     }
 
     public void SaveConfig(MacSettings settings)
@@ -172,5 +188,9 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
         settings.ExitOnSecondLineCross = ExitOnSecondLineCross;
         settings.ExitOnCloudFlip = ExitOnCloudFlip;
         settings.ExitConfirmationCandles = ExitConfirmationCandles;
+        settings.StopAtrMultiplier = StopAtrMultiplier;
+        settings.StopAtrLength = StopAtrLength;
+        settings.StopAtrMinimumPercentage = StopAtrMinimumPercentage;
+        settings.StopAtrMaximumPercentage = StopAtrMaximumPercentage;
     }
 }

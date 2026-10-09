@@ -838,6 +838,18 @@ public class PositionMonitor : IDisposable
 
 
 
+    /// <summary>
+    /// The price of a limit entry: the signal price, moved EntryLimitOffsetPercentage in the adverse
+    /// direction (lower for a long, higher for a short) so the order waits for a pullback.
+    /// </summary>
+    internal static decimal LimitEntryPrice(CryptoTradeSide side, decimal signalPrice, decimal offsetPercentage)
+    {
+        if (offsetPercentage <= 0 || offsetPercentage >= 100)
+            return signalPrice;
+        return PricePlacement.Adverse(side, signalPrice, offsetPercentage);
+    }
+
+
     private decimal CorrectBuyOrDcaPrice(CryptoPosition position, decimal price)
     {
         if (position.Side == CryptoTradeSide.Long)
@@ -1062,7 +1074,14 @@ public class PositionMonitor : IDisposable
         // did when it was one value.
         // Open DCA orders are cancelled separately in CancelOrdersIfClosedOrTimeoutOrReposition
         // once the flag is set.
+        // The two Altrady protections (BREAK_EVEN and FOLLOW_TAKE_PROFIT) are armed by a filled take
+        // profit instead of a trigger percentage; they are handled in their own block below.
         if (GlobalData.Settings.Trading.MoveSlToBreakEven
+            && ProfitLockCalculator.IsArmedByTakeProfit(GlobalData.Settings.Trading.MoveSlToBreakEvenMethod))
+        {
+            (stop, limit) = ApplyTakeProfitLock(position, stop, limit);
+        }
+        else if (GlobalData.Settings.Trading.MoveSlToBreakEven
             && position.BreakEvenPrice > 0)
         {
             int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
@@ -1133,6 +1152,164 @@ public class PositionMonitor : IDisposable
         }
 
         return (stop, limit);
+    }
+
+
+    /// <summary>
+    /// The highest take profit level of the position that has completely filled AT ITS TARGET
+    /// (1-based), 0 when none has.
+    /// <para>
+    /// The stop loss rides on the same order as every take profit level (Price is the target,
+    /// StopPrice the stop), so a closed take profit part on its own says nothing: a stopped-out
+    /// position closes those parts too. Counting that as "TP1 filled" moved the stop of the rest to
+    /// break-even, above a price that had just fallen through the stop, and the paper fill then
+    /// booked it at break-even - emulator runs 2277-2282 (07-10-2026) showed zero losing positions
+    /// because of it. Only a fill closer to the target than to the stop counts.
+    /// </para>
+    /// </summary>
+    internal static int HighestFilledTakeProfitLevel(CryptoPosition position)
+    {
+        int highest = 0;
+        foreach (CryptoPositionPart part in position.PartList.Values)
+        {
+            if (part.Purpose != CryptoPartPurpose.TakeProfit || !part.CloseTime.HasValue || part.PartNumber <= highest)
+                continue;
+
+            CryptoOrderSide side = position.GetTakeProfitOrderSide();
+            CryptoPositionStep? step = PositionTools.FindPositionPartStep(part, side, true);
+            if (step != null && IsFilledAtTarget(step))
+                highest = part.PartNumber;
+        }
+        return highest;
+    }
+
+
+    /// <summary>
+    /// Whether a filled take profit step was filled by its target (Price) and not by the stop
+    /// (StopPrice) that rides on the same order.
+    /// </summary>
+    internal static bool IsFilledAtTarget(CryptoPositionStep step)
+    {
+        if (step.AveragePrice <= 0)
+            return false;
+        if (!step.StopPrice.HasValue)
+            return true;
+        return Math.Abs(step.AveragePrice - step.Price) < Math.Abs(step.AveragePrice - step.StopPrice.Value);
+    }
+
+
+    /// <summary>
+    /// The stop protections Altrady runs itself once a take profit has filled: BREAK_EVEN moves the
+    /// stop to the entry after TP1, FOLLOW_TAKE_PROFIT also moves it to TP1 after TP2, to TP2 after
+    /// TP3, and so on. The scanner follows along so its own administration closes at the same level.
+    /// The anchor is TpGridBreakEvenPrice, the price the take profits are placed from: the average
+    /// entry plus the commission, a fraction of a percent above Altrady's plain average entry.
+    /// </summary>
+    private (decimal? stop, decimal? limit) ApplyTakeProfitLock(CryptoPosition position, decimal? stop, decimal? limit)
+    {
+        int filledLevels = HighestFilledTakeProfitLevel(position);
+        List<decimal> percentages = TradeTools.EffectiveTpList(position).Select(e => e.Percentage).ToList();
+        decimal? lockLevel = ProfitLockCalculator.TakeProfitStop(position.Side, GlobalData.Settings.Trading.MoveSlToBreakEvenMethod,
+            position.TpGridBreakEvenPrice, filledLevels, percentages);
+        if (lockLevel == null)
+            return (stop, limit);
+
+        if (!position.SlMovedToBreakEven)
+        {
+            position.SlMovedToBreakEven = true;
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} profit lock: TP{filledLevels} filled, SL moved to {lockLevel.Value.ToString0()} " +
+                $"({GlobalData.Settings.Trading.MoveSlToBreakEvenMethod})");
+        }
+
+        decimal lockStop = lockLevel.Value
+            .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+        decimal lockLimit = ProfitLockCalculator.StopLimit(position.Side, lockStop)
+            .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+
+        // Tighten only, like the other methods
+        if (ProfitLockCalculator.Tightens(position.Side, lockStop, stop))
+            return (lockStop, lockLimit);
+        return (stop, limit);
+    }
+
+
+    /// <summary>What a trailing last take profit adds to the order placement of one round.</summary>
+    internal readonly record struct TakeProfitTrail(decimal? Stop, decimal? Limit, decimal? Wake, decimal? TargetPrice);
+
+
+    /// <summary>
+    /// The trailing last take profit (SettingsTrading.TakeProfitTrailPercentage), Altrady's
+    /// trailing_distance on its last take profit. Until the price reaches the last level that level
+    /// is not sold there; from then on a stop follows the best price at the trailing distance and
+    /// only ever moves towards more profit. The level's own limit is parked far away so the target
+    /// can never fill it - the stop is the exit. A position past its maximum duration or with an
+    /// exit requested leaves the normal way.
+    /// <para>
+    /// Changes the price of the trailing level in <paramref name="targets"/> and returns its stop,
+    /// the price that moves the trail (or arms it) and the real target, or an empty result when the
+    /// trailing is off or the last level is not open.
+    /// </para>
+    /// </summary>
+    private TakeProfitTrail ApplyTakeProfitTrail(CryptoPosition position, int lastLevel,
+        List<(int Level, CryptoPositionPart Part, decimal Price, decimal Quantity)> targets)
+    {
+        decimal trailPct = GlobalData.Settings.Trading.TakeProfitTrailPercentage;
+        if (trailPct <= 0 || trailPct >= 99 || IsPastMaxDuration(position) || position.ExitRequested)
+            return default;
+
+        int index = targets.FindIndex(t => t.Level == lastLevel);
+        if (index < 0)
+            return default;
+
+        var target = targets[index];
+        decimal targetPrice = target.Price;
+        bool isLong = position.Side == CryptoTradeSide.Long;
+        decimal best = isLong ? LastCandle1m.High : LastCandle1m.Low;
+
+        decimal previous = position.TakeProfitTrailStopPrice;
+        if (previous > 0 || (isLong ? best >= targetPrice : best <= targetPrice))
+        {
+            position.TakeProfitTrailStopPrice = ProfitLockCalculator.TrailingStop(position.Side, best, trailPct, previous);
+            if (previous <= 0)
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} TP{lastLevel + 1} reached at {targetPrice.ToString0()}, " +
+                    $"trailing {trailPct:N2}% behind the price from {position.TakeProfitTrailStopPrice.ToString0()}");
+            if (position.TakeProfitTrailStopPrice != previous)
+                Database.Connection.Update(position);
+        }
+
+        // Park the limit where it cannot fill, the stop does the exit
+        decimal parked = (isLong ? targetPrice * 10m : targetPrice / 10m)
+            .ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+        targets[index] = (target.Level, target.Part, parked, target.Quantity);
+
+        if (position.TakeProfitTrailStopPrice <= 0)
+            return new TakeProfitTrail(null, null, targetPrice, targetPrice);
+
+        decimal stop = position.TakeProfitTrailStopPrice
+            .ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+        decimal limit = ProfitLockCalculator.StopLimit(position.Side, stop)
+            .ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+        decimal wake = ProfitLockCalculator.PriceThatMovesTrailingStop(position.Side, stop, trailPct);
+        return new TakeProfitTrail(stop, limit, wake, targetPrice);
+    }
+
+
+    /// <summary>
+    /// The nearest price on the profitable side that has to wake the position up: the targets of the
+    /// normal levels, and for a trailing last level the price that arms or moves its trail.
+    /// </summary>
+    internal static decimal NearestTakeProfitPrice(CryptoTradeSide side,
+        List<(int Level, CryptoPositionPart Part, decimal Price, decimal Quantity)> targets, int lastLevel, TakeProfitTrail trail)
+    {
+        bool isLong = side == CryptoTradeSide.Long;
+        decimal? nearest = null;
+        foreach (var t in targets)
+        {
+            decimal price = t.Level == lastLevel && trail.Wake.HasValue ? trail.Wake.Value : t.Price;
+            if (nearest == null || (isLong ? price < nearest : price > nearest))
+                nearest = price;
+        }
+        return nearest ?? targets[0].Price;
     }
 
 
@@ -1254,7 +1431,9 @@ public class PositionMonitor : IDisposable
             switch (orderType)
             {
                 case CryptoOrderType.Limit:
-                    entryPrice = CorrectBuyOrDcaPrice(position, part.SignalPrice);
+                    entryPrice = CorrectBuyOrDcaPrice(position, LimitEntryPrice(position.Side, part.SignalPrice,
+                        GlobalData.Settings.Trading.EntryLimitOffsetPercentage)
+                        .ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize));
                     break;
                 case CryptoOrderType.Market:
                     entryPrice = part.Symbol.LastPrice ?? 0;
@@ -2119,6 +2298,12 @@ public class PositionMonitor : IDisposable
 
                 List<(int Level, CryptoPositionPart Part, decimal Price, decimal Quantity)> targets = ComputeTargets();
                 (decimal? stop, decimal? limit) sl = CalculateSlPrices(position);
+                // A trailing last take profit gets its own stop; every other level keeps the shared one
+                TakeProfitTrail trail = ApplyTakeProfitTrail(position, levels.Count - 1, targets);
+                (decimal? stop, decimal? limit) StopFor(int level)
+                    => level == levels.Count - 1 && trail.Stop.HasValue && ProfitLockCalculator.Tightens(position.Side, trail.Stop.Value, sl.stop)
+                        ? (trail.Stop, trail.Limit)
+                        : sl;
 
                 bool anyChange = false;
                 Dictionary<int, bool> hadExistingOrder = [];
@@ -2127,10 +2312,11 @@ public class PositionMonitor : IDisposable
                 {
                     CryptoPositionStep? order = PositionTools.FindPositionPartStep(t.Part, takeProfitOrderSide, false);
                     hadExistingOrder[t.Level] = order != null;
+                    (decimal? levelStop, decimal? levelLimit) = StopFor(t.Level);
                     if (order == null || order.Quantity != t.Quantity
                         || PriceMoved(order.Price, t.Price, tickSize)
-                        || PriceMoved(order.StopPrice, sl.stop, tickSize)
-                        || PriceMoved(order.StopLimitPrice, sl.limit, tickSize))
+                        || PriceMoved(order.StopPrice, levelStop, tickSize)
+                        || PriceMoved(order.StopLimitPrice, levelLimit, tickSize))
                     {
                         if (order != null)
                             GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction TP{t.Level + 1}: {order.Price:N6} to {t.Price.ToString0()}");
@@ -2148,14 +2334,23 @@ public class PositionMonitor : IDisposable
                         TradeTools.CalculateProfitAndBreakEvenPrice(position);
                         targets = ComputeTargets();
                         sl = CalculateSlPrices(position);
+                        trail = ApplyTakeProfitTrail(position, levels.Count - 1, targets);
 
                         foreach (var t in targets)
                         {
                             string text = hadExistingOrder.GetValueOrDefault(t.Level) ? $"modifying TP{t.Level + 1} " : $"placing TP{t.Level + 1} ";
+                            (decimal? levelStop, decimal? levelLimit) = StopFor(t.Level);
 
                             // And place the take profit order for this level (last open level minimizes dust)
                             await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, t.Part,
-                                t.Price, sl.stop, sl.limit, LastCandle1mCloseTimeDate, text, t.Quantity, includeDust: t.Level == lastOpenIndex);
+                                t.Price, levelStop, levelLimit, LastCandle1mCloseTimeDate, text, t.Quantity, includeDust: t.Level == lastOpenIndex);
+                        }
+
+                        // The trailing level was placed at a parked price; show the real target
+                        if (trail.TargetPrice.HasValue)
+                        {
+                            position.ProfitPrice = trail.TargetPrice.Value;
+                            Database.Connection.Update(position);
                         }
                     }
                     else
@@ -2168,7 +2363,12 @@ public class PositionMonitor : IDisposable
                 if (!cancelFailed)
                 {
                     decimal? nearestDca = FindNearestUnfilledDcaPrice(position);
-                    UpdateTriggerPrices(position, targets[0].Price, sl.stop, nearestDca);
+                    // Wake up on the nearest real target: the parked price of a trailing level is not
+                    // one, its wake-up is the price that arms or moves the trail. On the other side the
+                    // tightest stop counts, which is the trail once it is above the shared stop.
+                    decimal nearestTp = NearestTakeProfitPrice(position.Side, targets, levels.Count - 1, trail);
+                    (decimal? nearestStop, _) = StopFor(levels.Count - 1);
+                    UpdateTriggerPrices(position, nearestTp, nearestStop ?? sl.stop, nearestDca);
                 }
             }
         }
@@ -2301,7 +2501,10 @@ public class PositionMonitor : IDisposable
 
         // Favorable side: nearest TP, capped by profit-lock threshold if applicable
         decimal favorablePrice = nearestTpPrice;
-        if (GlobalData.Settings.Trading.MoveSlToBreakEven && position.BreakEvenPrice > 0)
+        // The protections armed by a take profit fill need no boundary of their own: the nearest TP
+        // already is the price that moves their stop.
+        if (GlobalData.Settings.Trading.MoveSlToBreakEven && position.BreakEvenPrice > 0
+            && !ProfitLockCalculator.IsArmedByTakeProfit(GlobalData.Settings.Trading.MoveSlToBreakEvenMethod))
         {
             int multiplier = isLong ? +1 : -1;
             decimal boundary = 0;

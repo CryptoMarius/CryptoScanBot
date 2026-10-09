@@ -25,6 +25,14 @@ public class DlzPlugin : IStrategyPlugin
         //    typeof(Signal.SignalDominantLevelNearShort),
         //    IsZoneStrategy: true
         //),
+#if DEBUG
+        // Level approaching - back on 06-10-2026, in Debug builds only, to be measured again.
+        new("dlz.near",
+            typeof(Signal.SignalDominantLevelNearLong),
+            typeof(Signal.SignalDominantLevelNearShort),
+            IsZoneStrategy: true
+        ),
+#endif
     ];
 
 

@@ -127,6 +127,45 @@ public static class AssetSnapshotTools
 
 
     /// <summary>
+    /// Throw away the whole history of the live scanner: every snapshot and every ledger line without
+    /// a run id. The emulator runs keep theirs.
+    /// <para>
+    /// For "Delete all positions": the capital line is the course of those positions, so once they
+    /// are gone there is nothing left for it to show - a line that keeps running from three months
+    /// back would be the history of trades that no longer exist. The caller takes a fresh snapshot
+    /// of today afterwards, so the line starts over on the start capital that was just handed out.
+    /// </para>
+    /// </summary>
+    public static void DeleteLiveHistory()
+    {
+        lock (captureLock)
+        {
+            try
+            {
+                using CryptoDatabase database = new();
+                database.Open();
+                using var transaction = database.BeginTransaction();
+
+                database.Connection.Execute("delete from AssetSnapshot where EmulatorRunId is null", transaction: transaction);
+                database.Connection.Execute("delete from AssetAdjustment where EmulatorRunId is null", transaction: transaction);
+
+                transaction.Commit();
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "AssetSnapshotTools.DeleteLiveHistory");
+            }
+
+            // The cached day belongs to the series that was just deleted, so CaptureIfDue must read
+            // the table again (an empty one, now) instead of skipping today.
+            lastSnapshotDay = null;
+            lastSnapshotDayKnown = false;
+            lastSnapshotRunId = null;
+        }
+    }
+
+
+    /// <summary>
     /// Take a snapshot when the day of <see cref="GlobalData.Clock"/> has no snapshot yet. Cheap
     /// enough to call every minute: normally this is one comparison of two dates.
     /// </summary>

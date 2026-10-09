@@ -41,7 +41,7 @@
                       ToolTip.Tip="Once the position reaches the trigger % below, the SL moves to the stop loss % above break-even to lock in profit. Open DCA orders are cancelled at that point."/>
 
             <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
-                  IsVisible="{Binding MoveSlToBreakEven}">
+                  IsVisible="{Binding ShowProfitLockTrigger}">
                 <TextBlock Grid.Column="0" Text="Profit lock trigger %:"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"
@@ -58,7 +58,7 @@
                 <TextBlock Grid.Column="0" Text="Profit lock method:"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"
-                           ToolTip.Tip="What happens once the trigger is reached. A fixed stop is placed once and stays there; a trailing stop follows the price at a fixed distance and only ever moves towards the take profit."/>
+                           ToolTip.Tip="What happens once the trigger is reached. A fixed stop is placed once and stays there; a trailing stop follows the price at a fixed distance and only ever moves towards the take profit. The two Altrady methods have no trigger: after TP1 has filled the stop goes to break-even, and Follow take profit then moves it to TP1 after TP2, to TP2 after TP3, and so on. They need two or more take profit levels and are sent along to Altrady."/>
                 <ComboBox Grid.Column="2"
                           ItemsSource="{Binding ProfitLockMethodList}"
                           SelectedValue="{Binding MoveSlToBreakEvenMethod, Mode=TwoWay}"

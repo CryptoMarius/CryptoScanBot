@@ -192,12 +192,25 @@ public class AltradyWebhook
     /// </para>
     /// </summary>
     internal static JObject BuildStopLossBlock(decimal stopPercentage, bool moveSlToBreakEven,
-        CryptoProfitLockMethod method, decimal triggerPercentage, decimal trailPercentage)
+        CryptoProfitLockMethod method, decimal triggerPercentage, decimal trailPercentage, int takeProfitCount = 1)
     {
         dynamic stop_loss = new JObject();
         stop_loss.stop_percentage = stopPercentage;
 
-        if (!moveSlToBreakEven || method != CryptoProfitLockMethod.TrailingPercentage)
+        if (!moveSlToBreakEven)
+            return stop_loss;
+
+        // Altrady's own protections after a take profit fill. Both need two or more take profit
+        // levels; with one there is nothing left to protect once it fills, and the scanner does not
+        // move its stop either (see PositionMonitor.ApplyTakeProfitLock).
+        if (Trader.ProfitLockCalculator.IsArmedByTakeProfit(method))
+        {
+            if (takeProfitCount >= 2)
+                stop_loss.protection_type = method == CryptoProfitLockMethod.FollowTakeProfit ? "FOLLOW_TAKE_PROFIT" : "BREAK_EVEN";
+            return stop_loss;
+        }
+
+        if (method != CryptoProfitLockMethod.TrailingPercentage)
             return stop_loss;
 
         // Their trailing distance has to stay between zero and ninety-nine percent
@@ -208,6 +221,28 @@ public class AltradyWebhook
         stop_loss.trailing_percentage = triggerPercentage;
         stop_loss.trailing_distance = trailPercentage;
         return stop_loss;
+    }
+
+
+    /// <summary>
+    /// The take profit levels of an open signal. <paramref name="trailPercentage"/> above zero makes
+    /// the LAST level trail: Altrady starts following the price at that level with trailing_distance
+    /// behind it instead of selling there, which is only allowed on the last take profit. Their
+    /// distance has to stay between zero and ninety-nine percent.
+    /// </summary>
+    internal static JArray BuildTakeProfitBlock(List<CryptoTpEntry> tpList, decimal trailPercentage)
+    {
+        JArray tp_orders = new();
+        for (int i = 0; i < tpList.Count; i++)
+        {
+            dynamic tp = new JObject();
+            tp.position_percentage = tpList[i].Factor;
+            tp.price_percentage = tpList[i].Percentage;
+            if (i == tpList.Count - 1 && trailPercentage > 0 && trailPercentage < 99)
+                tp.trailing_distance = trailPercentage;
+            tp_orders.Add(tp);
+        }
+        return tp_orders;
     }
 
 
@@ -378,19 +413,7 @@ public class AltradyWebhook
             // TP body (multiple). A per-signal TP override collapses this to a single TP; see EffectiveTpList.
             var tpList = Trader.TradeTools.EffectiveTpList(position);
             if (tpList.Count > 0)
-            {
-                dynamic tp_orders = new JArray();
-                request.take_profit = tp_orders;
-
-                foreach (CryptoTpEntry entry in tpList)
-                {
-                    dynamic tp = new JObject();
-                    tp_orders.Add(tp);
-
-                    tp.position_percentage = entry.Factor;
-                    tp.price_percentage = entry.Percentage;
-                }
-            }
+                request.take_profit = BuildTakeProfitBlock(tpList, GlobalData.Settings.Trading.TakeProfitTrailPercentage);
 
 
             // DCA body (multiple)
@@ -444,7 +467,8 @@ public class AltradyWebhook
                     GlobalData.Settings.Trading.MoveSlToBreakEven,
                     GlobalData.Settings.Trading.MoveSlToBreakEvenMethod,
                     GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage,
-                    GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage);
+                    GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage,
+                    tpList.Count);
             }
 
             //// Expiration time in minutes

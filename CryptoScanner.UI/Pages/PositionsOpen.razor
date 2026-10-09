@@ -2,6 +2,7 @@
 @using CryptoScanner.Core.Core
 @using CryptoScanner.Core.Enums
 @using CryptoScanner.Core.Model
+@using CryptoScanner.Core.Trader
 @using CryptoScanner.UI.Services
 @using CryptoScanner.UI.ViewModels
 @using CryptoScanner.UI.Components
@@ -98,6 +99,7 @@
             <div class="context-menu-item" @onclick="OnMenuPositionDelete">Position delete from database</div>
             <div class="context-menu-item" @onclick="OnMenuPositionAddDca">Position add additional DCA</div>
             <div class="context-menu-item" @onclick="OnMenuPositionCancelDca">Position cancel open DCA</div>
+            <div class="context-menu-item" @onclick="OnMenuPositionClose">Position close (take profit or loss)</div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" @onclick="OnMenuCopySymbolName">Copy symbol name</div>
             <div class="context-menu-item" @onclick="OnMenuCopyDataCells">Copy all data cells</div>
@@ -128,8 +130,13 @@
 
 <CryptoScanner.UI.Components.ConfirmDialog @bind-Visible="_confirmDeleteAllVisible"
     Title="Delete all positions"
-    Message="Are you sure you want to delete all positions from the database, and hand out the start capital again?"
+    Message="Are you sure you want to delete all positions from the database, hand out the start capital again and start the capital per day over?"
     OnConfirmed="OnConfirmDeleteAll" />
+
+<CryptoScanner.UI.Components.ConfirmDialog @bind-Visible="_confirmCloseVisible"
+    Title="Close position"
+    Message="@_confirmCloseMessage"
+    OnConfirmed="OnConfirmClose" />
 
 @code {
     private enum ContextMenuType { None, Row, Header }
@@ -164,6 +171,9 @@
     private ElementReference _contextMenuRef;
     private bool _contextMenuPositioned;
     private bool _confirmDeleteAllVisible;
+    private bool _confirmCloseVisible;
+    private string _confirmCloseMessage = "";
+    private CryptoPosition? _positionToClose;
     private double _contextMenuX;
     private double _contextMenuY;
     private ContextMenuType _contextMenuType;
@@ -547,6 +557,26 @@
     {
         Task.Run(() => new CryptoScanner.Core.Excel.ExcelPostionsDump().ExportToExcel());
         CloseContextMenu();
+    }
+
+    private void OnMenuPositionClose()
+    {
+        // Money moves on this one, so ask first; the position is remembered because the
+        // context menu (and its row) is gone by the time the dialog answers.
+        if (_contextMenuPosition?.Object != null && ManualExit.CanExit(_contextMenuPosition.Object))
+        {
+            _positionToClose = _contextMenuPosition.Object;
+            _confirmCloseMessage = ManualExit.ConfirmationText(_positionToClose);
+            _confirmCloseVisible = true;
+        }
+        CloseContextMenu();
+    }
+
+    private void OnConfirmClose()
+    {
+        if (_positionToClose != null)
+            GridCommandService.PositionClose(_positionToClose);
+        _positionToClose = null;
     }
 
     private void OnMenuDeleteAllPositions()

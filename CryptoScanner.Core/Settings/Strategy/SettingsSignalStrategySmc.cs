@@ -119,6 +119,11 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
     // RejectionLookback was removed on 26-09-2026 together with the smc.rejection classes it served
     // (open points 108 and 112). A settings file that still carries the key is read without it.
 
+    // Back on 06-10-2026: smc.rejection is registered again in Debug builds (SmcPlugin). How many
+    // candles back (including the current one) it may look for the "tested the zone" wick.
+    [SettingCaption("Rejection lookback (smc.rejection)", Group = GroupSignal)]
+    public int RejectionLookback { get; set; } = 3;
+
     // Only fire on Strong zones (powerful expansion). Set false to also alarm on Weak zones.
     [SettingCaption("Only strong zones", Group = GroupSignal)]
     public bool OnlyStrong { get; set; } = false;

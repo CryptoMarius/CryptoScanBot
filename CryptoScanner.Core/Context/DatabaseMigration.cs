@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 104;
+    public readonly static int CurrentDatabaseVersion = 105;
 
 
     /// <summary>
@@ -2447,6 +2447,22 @@ public class DatabaseMigration
 
             using var transaction = database.BeginTransaction();
             GlobalData.AddTextToLogTab("Database version 104: position digests stored compressed, risk checks stored per run");
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 08-10-2026 Trailing last take profit. Like TrailingStopPrice the level has to survive a
+        // restart, otherwise the trail would restart from the current candle.
+        if (CurrentVersion > version.Version && version.Version == 104)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Position add TakeProfitTrailStopPrice TEXT NULL", transaction); } catch { } // ignore
+
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);

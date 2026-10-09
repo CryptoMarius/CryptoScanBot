@@ -118,6 +118,10 @@ public partial class CryptoPosition : CryptoData2
     // position had already gained.
     public decimal TrailingStopPrice { get; set; }
 
+    // The stop of a trailing last take profit (SettingsTrading.TakeProfitTrailPercentage), 0 while
+    // the price has not reached that level yet. Persisted for the same reason as TrailingStopPrice.
+    public decimal TakeProfitTrailStopPrice { get; set; }
+
     [Computed]
     public decimal MinEntry
     {
