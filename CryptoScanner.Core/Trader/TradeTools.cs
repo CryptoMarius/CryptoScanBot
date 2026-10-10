@@ -927,7 +927,27 @@ public class TradeTools
         database.Connection.Update<CryptoPosition>(position);
 
         // Aankondiging dat we deze order gaan annuleren (de tradehandler weet dan dat wij het waren en het niet de user was via de exchange)
-        step.CancelInProgress = true;
+        //step.CancelInProgress = true;
+        //
+        // Paper orders are filled by the candle thread (PaperTrading.CheckStepAgainstCandle) under a
+        // lock on the position. Claim the order under the same lock: if it filled already it cannot
+        // be cancelled any more, just like on a real exchange. The caller then skips placing its
+        // replacement and the next pass books the fill; before, the replacement was placed in a part
+        // that the fill had just closed and stayed there, never checked again.
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+        {
+            lock (position)
+            {
+                if (step.OrderId != null && position.OrderList.Find(step.OrderId) != null)
+                {
+                    ScannerLog.Logger.Trace($"{position.Symbol.Name} {part.Purpose} order={step.OrderId} filled before it could be cancelled");
+                    return (false, null);
+                }
+                step.CancelInProgress = true;
+            }
+        }
+        else
+            step.CancelInProgress = true;
         database.Connection.Update<CryptoPositionStep>(step);
 
         // Annuleer de order

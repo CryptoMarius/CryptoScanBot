@@ -22,6 +22,14 @@ namespace CryptoScanner.Core.Trader;
 /// (arithmetic) way, so a delegated short sits a fraction off from the paper administration.
 /// </para>
 /// </summary>
+/// <para>
+/// Changed back on 10-10-2026: a short uses the plain percentage again, <c>anchor * (1 - p)</c>
+/// downward and <c>anchor * (1 + p)</c> upward, exactly the way Altrady places the percentages it is
+/// handed. The scanner follows Altrady wherever it can: the emulator has to predict what Altrady does
+/// live, and the mirrored prices did not exist there (a short's 24% target: Altrady 76,00, the scanner
+/// 80,65). The small built-in handicap of a short described above is real live, so the emulator now
+/// shows it again. Every DCA, take profit, stop, trail and lock price goes through this one class.
+/// </para>
 public static class PricePlacement
 {
     /// <summary>
@@ -33,7 +41,8 @@ public static class PricePlacement
         decimal factor = 1m + percentage / 100m;
         if (side == CryptoTradeSide.Long)
             return anchor * factor;
-        return anchor / factor;
+        //return anchor / factor;
+        return anchor * (1m - percentage / 100m);
     }
 
     /// <summary>
@@ -46,8 +55,9 @@ public static class PricePlacement
         decimal factor = 1m - percentage / 100m;
         if (side == CryptoTradeSide.Long)
             return anchor * factor;
-        if (factor <= 0)
-            return anchor * (1m + percentage / 100m);
-        return anchor / factor;
+        //if (factor <= 0)
+        //    return anchor * (1m + percentage / 100m);
+        //return anchor / factor;
+        return anchor * (1m + percentage / 100m);
     }
 }

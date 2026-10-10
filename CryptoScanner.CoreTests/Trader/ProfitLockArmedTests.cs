@@ -173,4 +173,23 @@ public class ProfitLockArmedTests
         Assert.IsFalse(PositionMonitor.StopIsBehindThePrice(CryptoTradeSide.Short, 90m, 100m));
         Assert.IsTrue(PositionMonitor.StopIsBehindThePrice(CryptoTradeSide.Short, 110m, 100m));
     }
+
+    // ── Altrady Follow price: the trigger is reached, measured from the average entry ──
+
+    [TestMethod]
+    public void Reached_Long_HighTouchesTheTrigger()
+    {
+        // Average entry 100, trigger 15%: a candle with high 115 reaches it, even with a low of 110
+        Assert.IsTrue(PositionMonitor.ProfitLockReached(CryptoTradeSide.Long, 100m, 15m, 110m, 115m, out decimal pct));
+        Assert.AreEqual(15m, pct);
+        Assert.IsFalse(PositionMonitor.ProfitLockReached(CryptoTradeSide.Long, 100m, 15m, 110m, 114.9m, out _));
+    }
+
+    [TestMethod]
+    public void Reached_Short_LowTouchesTheTrigger()
+    {
+        // Average entry 100, trigger 15%: the short reaches it when the low is 85 (plain percentage)
+        Assert.IsTrue(PositionMonitor.ProfitLockReached(CryptoTradeSide.Short, 100m, 15m, 85m, 92m, out _));
+        Assert.IsFalse(PositionMonitor.ProfitLockReached(CryptoTradeSide.Short, 100m, 15m, 85.1m, 92m, out _));
+    }
 }

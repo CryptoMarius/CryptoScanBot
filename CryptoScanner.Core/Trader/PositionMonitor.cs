@@ -144,10 +144,13 @@ public class PositionMonitor : IDisposable
         // This guards against triggering an unnecessary DCA after a pause or restart.
         decimal entryPrice = position.EntryPrice.Value;
         var dcaEntry = GlobalData.Settings.Trading.DcaList[position.PartCount];
-        decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
+        //decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
+        // Through PricePlacement, the one place every DCA, take profit and stop price is computed
+        decimal levelPrice = PricePlacement.Adverse(position.Side, entryPrice, Math.Abs(dcaEntry.Percentage));
         if (position.Side == CryptoTradeSide.Long)
         {
-            dcaPrice = entryPrice - diffPrice;
+            //dcaPrice = entryPrice - diffPrice;
+            dcaPrice = levelPrice;
             if (dcaPrice >= step.Price)
             {
                 reaction = $"dca {percentage} is niet nodig (long)";
@@ -156,7 +159,8 @@ public class PositionMonitor : IDisposable
         }
         else
         {
-            dcaPrice = entryPrice + diffPrice;
+            //dcaPrice = entryPrice + diffPrice;
+            dcaPrice = levelPrice;
             if (dcaPrice <= step.Price)
             {
                 reaction = $"dca {percentage} is niet nodig (short)";
@@ -1033,6 +1037,48 @@ public class PositionMonitor : IDisposable
     }
 
 
+    /// <summary>
+    /// Whether the price REACHED the trigger this candle (the high for a long, the low for a short),
+    /// measured from <paramref name="anchor"/>: how Altrady starts its Follow price trailing stop.
+    /// </summary>
+    internal static bool ProfitLockReached(CryptoTradeSide side, decimal anchor,
+        decimal triggerPercentage, decimal candleLow, decimal candleHigh, out decimal profitPercentage)
+    {
+        profitPercentage = 0;
+        if (anchor <= 0)
+            return false;
+
+        int multiplier = side == CryptoTradeSide.Long ? +1 : -1;
+        decimal best = side == CryptoTradeSide.Long ? candleHigh : candleLow;
+        profitPercentage = multiplier * (best - anchor) / anchor * 100m;
+        return profitPercentage >= triggerPercentage;
+    }
+
+
+    /// <summary>
+    /// The plain average price of everything bought in (entry and DCA fills), without fees: the
+    /// "average entry" Altrady measures its percentages from. 0 when nothing filled yet.
+    /// </summary>
+    internal static decimal AverageEntryPrice(CryptoPosition position)
+    {
+        CryptoOrderSide entrySide = position.GetEntryOrderSide();
+        decimal value = 0, quantity = 0;
+        foreach (CryptoPositionPart part in position.PartList.Values)
+        {
+            if (part.Purpose != CryptoPartPurpose.Entry && part.Purpose != CryptoPartPurpose.Dca)
+                continue;
+            foreach (CryptoPositionStep step in part.StepList.Values)
+            {
+                if (step.Side != entrySide || !step.Status.IsFilled() || step.QuantityFilled <= 0)
+                    continue;
+                value += step.AveragePrice * step.QuantityFilled;
+                quantity += step.QuantityFilled;
+            }
+        }
+        return quantity > 0 ? value / quantity : 0;
+    }
+
+
     private (decimal? stop, decimal? limit) CalculateSlPrices(CryptoPosition position)
     {
         // Only paper-trade mode supports SL orders (real trading would need OCO, not yet implemented).
@@ -1092,9 +1138,22 @@ public class PositionMonitor : IDisposable
             // just armed the lock, so it would fill on the spot.
             decimal lockPct = Math.Min(GlobalData.Settings.Trading.MoveSlToBreakEvenSlPercentage, triggerPct);
 
-            if (!position.SlMovedToBreakEven
-                && ProfitLockArmed(position.Side, position.BreakEvenPrice, triggerPct,
-                    LastCandle1m.Low, LastCandle1m.High, out decimal profitPct))
+            // The trailing method is Altrady's "Follow price" (the webhook hands it over as
+            // trailing_percentage / trailing_distance), so it arms the way Altrady arms it: the trigger
+            // is measured from the plain average entry price, and trailing starts as soon as the price
+            // REACHES it. BreakEvenPrice drops after every partial take profit, so measured from there
+            // the lock armed far too early (run 2661, BNB short of 02-02: in the minute TP1 filled,
+            // where Altrady started 4 hours later). Changed 10-10-2026. The fixed and Keltner methods
+            // have no Altrady counterpart and keep their own rule.
+            bool armed;
+            decimal profitPct;
+            if (trailing)
+                armed = ProfitLockReached(position.Side, AverageEntryPrice(position), triggerPct,
+                    LastCandle1m.Low, LastCandle1m.High, out profitPct);
+            else
+                armed = ProfitLockArmed(position.Side, position.BreakEvenPrice, triggerPct,
+                    LastCandle1m.Low, LastCandle1m.High, out profitPct);
+            if (!position.SlMovedToBreakEven && armed)
             {
                 position.SlMovedToBreakEven = true;
                 string where = trailing ? $"trailing {trailPct:N2}% behind the price" : $"BE+{lockPct:N2}%";
@@ -1236,12 +1295,15 @@ public class PositionMonitor : IDisposable
         // A stop on the wrong side of the price (above it for a long) is no protection: a real
         // exchange fills it at the market at once, and the paper fill would book it at the stop
         // price - a profit that never existed. Never move the stop there.
+        //
+        // Changed 09-10-2026: refusing it put the ORIGINAL stop back on the rest of the position
+        // (run 2545: a quarter left open for six days at -6.8% after the stop at TP1 was hit).
+        // Altrady moves the stop anyway and closes at the market at once; the paper fill now does
+        // the same, a stop beyond the price fills at the open of the next candle
+        // (PaperTrading.StopFillPrice), so no profit is invented. Only noted in the log.
         if (!StopIsBehindThePrice(position.Side, lockStop, LastCandle1m.Close))
-        {
-            GlobalData.AddErrorToLogTab($"{position.Symbol.Name} profit lock: SL {lockStop.ToString0()} would sit beyond the price " +
-                $"{LastCandle1m.Close.ToString0()}, not moved (TP{filledLevels} filled)");
-            return (stop, limit);
-        }
+            ScannerLog.Logger.Info($"{position.Symbol.Name} profit lock: SL {lockStop.ToString0()} lies beyond the price " +
+                $"{LastCandle1m.Close.ToString0()} (TP{filledLevels} filled), closes at the market");
 
         // Tighten only, like the other methods
         if (ProfitLockCalculator.Tightens(position.Side, lockStop, stop))
@@ -1276,8 +1338,22 @@ public class PositionMonitor : IDisposable
         List<(int Level, CryptoPositionPart Part, decimal Price, decimal Quantity)> targets)
     {
         decimal trailPct = GlobalData.Settings.Trading.TakeProfitTrailPercentage;
-        if (trailPct <= 0 || trailPct >= 99 || IsPastMaxDuration(position) || position.ExitRequested)
+        if (trailPct <= 0 || trailPct >= 99)
             return default;
+
+        // Leaving the normal way: the target becomes the exit price, but an armed trail keeps
+        // protecting the last level until that exit fills (otherwise it fell back to the looser
+        // shared stop for those minutes).
+        if (IsPastMaxDuration(position) || position.ExitRequested)
+        {
+            if (position.TakeProfitTrailStopPrice <= 0)
+                return default;
+            decimal exitStop = position.TakeProfitTrailStopPrice
+                .ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+            decimal exitLimit = ProfitLockCalculator.StopLimit(position.Side, exitStop)
+                .ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+            return new TakeProfitTrail(exitStop, exitLimit, null, null);
+        }
 
         int index = targets.FindIndex(t => t.Level == lastLevel);
         if (index < 0)
@@ -1778,8 +1854,12 @@ public class PositionMonitor : IDisposable
         foreach (int i in MissingDcaLevelIndexes(position))
         {
             var dcaEntry = GlobalData.Settings.Trading.DcaList[i];
-            decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
-            prices.Add((i, position.Side == CryptoTradeSide.Long ? entryPrice - diffPrice : entryPrice + diffPrice));
+            //decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
+            //prices.Add((i, position.Side == CryptoTradeSide.Long ? entryPrice - diffPrice : entryPrice + diffPrice));
+            // Through PricePlacement, the one place every DCA, take profit and stop price is computed
+            // (10-10-2026). It was computed here, in CanOpenAdditionalDca and in the order check of
+            // TradeTools separately, and the three did not agree for a short.
+            prices.Add((i, PricePlacement.Adverse(position.Side, entryPrice, Math.Abs(dcaEntry.Percentage))));
         }
         return prices;
     }
@@ -1799,7 +1879,14 @@ public class PositionMonitor : IDisposable
         List<int> levels = [];
 
         // Afgesloten DCA parts sluiten we uit (omdat we zogenaamde jojo's uitvoeren, zie CanOpenAdditionalDca)
-        int existingDcaParts = position.PartList.Values.Count(p => p.Purpose == CryptoPartPurpose.Dca && !p.CloseTime.HasValue);
+        //int existingDcaParts = position.PartList.Values.Count(p => p.Purpose == CryptoPartPurpose.Dca && !p.CloseTime.HasValue);
+        //
+        // Every DCA part counts, closed ones too (changed 09-10-2026). A DCA part's PartNumber is its
+        // sequence among ALL DCA parts and HandleEntryPart/PaperAssets read PartNumber - 1 as its
+        // level; skipping closed parts here re-created a level under the next part number, which
+        // then sized it with the factor of the level after it. Nothing sells a DCA part on its own
+        // any more (no jojo), so a closed DCA part can only belong to a closed position anyway.
+        int existingDcaParts = position.PartList.Values.Count(p => p.Purpose == CryptoPartPurpose.Dca);
 
         for (int i = existingDcaParts; i < GlobalData.Settings.Trading.DcaList.Count; i++)
         {
@@ -2233,8 +2320,18 @@ public class PositionMonitor : IDisposable
                 if (part.Purpose == CryptoPartPurpose.Dca)
                     await HandleEntryPart(position, part, GlobalData.Settings.Trading.DcaOrderType);
             }
-            // remember the tp parts, one per configured TP level - PartNumber is the 1-based level
-            // ("TP 1", "TP 2", ...); convert back to the 0-based index used for TpList/levels lookups.
+        }
+
+        // remember the tp parts, one per configured TP level - PartNumber is the 1-based level
+        // ("TP 1", "TP 2", ...); convert back to the 0-based index used for TpList/levels lookups.
+        // Collected AFTER the entry and DCA parts are handled, not in the same loop: a market entry
+        // fills inside HandleEntryPart, the fill queues the position again and (in the emulator at
+        // once) a nested HandlePosition places the take profit parts 1 to 4. A list taken before
+        // that missed them, so this call created parts 5 to 8 and cancelled the orders of 1 to 4 -
+        // on every position since August (2 take profit parts instead of 1 in the archive of
+        // 30-08-2026), and with four levels the duplicate TP1 filled twice (09-10-2026).
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+        {
             if (part.Purpose == CryptoPartPurpose.TakeProfit)
                 takeProfitPartsByLevel[part.PartNumber - 1] = part;
         }

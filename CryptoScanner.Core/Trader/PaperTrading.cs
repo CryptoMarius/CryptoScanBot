@@ -212,7 +212,8 @@ public class PaperTrading
                         if (order != null)
                         {
                             orderList.Add(order);
-                            break;
+                            // No break: every order of the candle fills, like CheckAllSteps
+                            //break;
                         }
                     }
                 }
@@ -239,7 +240,18 @@ public class PaperTrading
     private static CryptoOrder? CheckStepAgainstCandle(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle candle, uint candleDuration = 1)
     {
-        if (step.Status != CryptoOrderStatus.New)
+        // Live, this runs on the candle thread while the position thread may be cancelling the same
+        // order (TradeTools.CancelOrder). The position is the lock both take: an order that is being
+        // cancelled does not fill, and an order that filled cannot be cancelled any more.
+        lock (position)
+            return CheckStepAgainstCandleLocked(database, position, part, step, candle, candleDuration);
+    }
+
+
+    private static CryptoOrder? CheckStepAgainstCandleLocked(CryptoDatabase database,
+        CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle candle, uint candleDuration)
+    {
+        if (step.Status != CryptoOrderStatus.New || step.CancelInProgress)
             return null;
         // Fix: A step/order cannot be closed if it is not yet created.
         if (step.CreateTime > candle.Date)
@@ -250,7 +262,7 @@ public class PaperTrading
             if (step.OrderType == CryptoOrderType.Market)
                 return CreatePaperTradeOrder(database, position, part, step, candle.Close, candle.OpenTime, candleDuration);
             if (step.StopPrice.HasValue && candle.High >= step.StopPrice)
-                return CreatePaperTradeOrder(database, position, part, step, step.StopPrice.Value, candle.OpenTime, candleDuration);
+                return CreatePaperTradeOrder(database, position, part, step, StopFillPrice(step.Side, step.StopPrice.Value, candle), candle.OpenTime, candleDuration);
             // Strict < on purpose: the price has to go THROUGH the limit price, not merely touch
             // it - on a real exchange a touch leaves you at the back of the order book. The stop
             // orders above do fill on a touch, which is the pessimistic side for them too.
@@ -262,7 +274,7 @@ public class PaperTrading
             if (step.OrderType == CryptoOrderType.Market)
                 return CreatePaperTradeOrder(database, position, part, step, candle.Close, candle.OpenTime, candleDuration);
             if (step.StopPrice.HasValue && candle.Low <= step.StopPrice)
-                return CreatePaperTradeOrder(database, position, part, step, step.StopPrice.Value, candle.OpenTime, candleDuration);
+                return CreatePaperTradeOrder(database, position, part, step, StopFillPrice(step.Side, step.StopPrice.Value, candle), candle.OpenTime, candleDuration);
             // Strict > on purpose: see the buy side above.
             if (candle.High > step.Price)
                 return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime, candleDuration);
@@ -270,6 +282,15 @@ public class PaperTrading
 
         return null;
     }
+
+
+    /// <summary>
+    /// The price a triggered stop fills at. A stop becomes a market order once it is hit, so when the
+    /// candle already opened beyond the stop (a gap, or a stop that was placed beyond the price) it
+    /// fills at the open, not at the stop: entry 100, stop 95, candle opens at 90 -> filled at 90.
+    /// </summary>
+    internal static decimal StopFillPrice(CryptoOrderSide side, decimal stopPrice, CryptoCandle candle)
+        => side == CryptoOrderSide.Sell ? Math.Min(stopPrice, candle.Open) : Math.Max(stopPrice, candle.Open);
 
 
     internal static async Task PaperTradingCheckStep(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle lastCandle1m, uint candleDuration = 1)
@@ -341,20 +362,96 @@ public class PaperTrading
 
     /// <summary>
     /// Runs every open step of the position against one candle, in the existing order.
+    /// <para>
+    /// All fills of the candle are collected first and handled afterwards, like a real exchange where
+    /// every order is live during the whole minute. Handling a fill at once ran its cascade (cancel
+    /// and re-place every take profit order, with this candle as their create time) before the next
+    /// step was checked, so only ONE order could fill per candle: a stop closed one take profit part
+    /// per minute and left the rest open (run 2545, 09-10-2026: 250 of 366 positions, one part open
+    /// for six more days with the original stop), and a spike through TP1 to TP3 filled TP1 only.
+    /// </para>
     /// </summary>
     private static async Task CheckAllSteps(CryptoDatabase database, CryptoPosition position,
         CryptoCandle candle, uint candleDuration)
     {
+        List<CryptoOrder> orderList = [];
         foreach (CryptoPositionPart part in position.PartList.Values.ToList())
         {
             if (!part.CloseTime.HasValue)
             {
                 foreach (CryptoPositionStep step in part.StepList.Values.ToList())
                 {
-                    await PaperTradingCheckStep(database, position, part, step, candle, candleDuration);
+                    //await PaperTradingCheckStep(database, position, part, step, candle, candleDuration);
+                    CryptoOrder? order = CheckStepAgainstCandle(database, position, part, step, candle, candleDuration);
+                    if (order != null)
+                        orderList.Add(order);
                 }
             }
         }
+
+        // The orders are in the position's order list already, so the first cascade books every
+        // fill of this candle before it decides anything; the next calls only re-check the position.
+        foreach (CryptoOrder order in orderList)
+            await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
+
+        // A stop that was hit closes the WHOLE position, like on an exchange. The stop orders only
+        // carried the quantity from before this candle, so a DCA that filled in the same candle was
+        // left over and closed a minute later at a worse price (run 2661, LINK long of 22-08).
+        // Altrady's stop belongs to the position and closes all of it at once (changed 10-10-2026). The
+        // cascade above placed new orders for that rest, with this candle as their create time;
+        // their stop is checked against this same candle, the targets are not (that would be a
+        // second, optimistic look at the candle).
+        if (orderList.Any(o => IsStopFill(position, o)))
+            await CheckStopsPlacedInCandle(database, position, candle, candleDuration);
+    }
+
+
+    /// <summary>Whether a filled exit order was triggered by its stop and not by its target.</summary>
+    private static bool IsStopFill(CryptoPosition position, CryptoOrder order)
+    {
+        if (order.Side != position.GetTakeProfitOrderSide())
+            return false;
+        CryptoPositionStep? step = position.PartList.Values.SelectMany(p => p.StepList.Values).FirstOrDefault(s => s.OrderId == order.OrderId);
+        return step != null && step.StopPrice.HasValue && order.Price != step.Price;
+    }
+
+
+    /// <summary>
+    /// Fills the stops of the orders the cascade of this candle has just placed, when the candle
+    /// reached them. Emulator only in practice: live the cascade runs later on the position thread,
+    /// and the next candle picks the rest up (filled at its open when that is already beyond the stop).
+    /// </summary>
+    private static async Task CheckStopsPlacedInCandle(CryptoDatabase database, CryptoPosition position,
+        CryptoCandle candle, uint candleDuration)
+    {
+        if (!GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? current) || current != position)
+            return;
+
+        CryptoOrderSide exitSide = position.GetTakeProfitOrderSide();
+        List<CryptoOrder> orderList = [];
+        lock (position)
+        {
+            foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+            {
+                if (part.CloseTime.HasValue)
+                    continue;
+                foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+                {
+                    if (step.Status != CryptoOrderStatus.New || step.CancelInProgress || step.Side != exitSide || !step.StopPrice.HasValue)
+                        continue;
+                    bool hit = exitSide == CryptoOrderSide.Sell ? candle.Low <= step.StopPrice : candle.High >= step.StopPrice;
+                    if (!hit)
+                        continue;
+                    CryptoOrder? order = CreatePaperTradeOrder(database, position, part, step,
+                        StopFillPrice(step.Side, step.StopPrice.Value, candle), candle.OpenTime, candleDuration);
+                    if (order != null)
+                        orderList.Add(order);
+                }
+            }
+        }
+
+        foreach (CryptoOrder order in orderList)
+            await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
     }
 
 

@@ -558,4 +558,77 @@ public class PaperTradingTests : TestBase
         Assert.IsTrue(position.DelayUntil > DateTime.MinValue,
             "HandleTradeAsync should set DelayUntil to a future time");
     }
+
+    // ─── Stops: a gap through the stop fills at the open ─────────────────────
+
+    [TestMethod]
+    public async Task CheckStep_SellStop_GapBelowTheStop_FillsAtTheOpen()
+    {
+        var (db, symbol) = SetupTestEnvironment();
+        var position = CreateTestPosition(db, symbol, CryptoTradeSide.Long);
+        var part = CreateTestPart(position, CryptoPartPurpose.TakeProfit);
+        var step = CreateTestStep(db, position, part,
+            CryptoOrderSide.Sell, CryptoOrderType.StopLimit, price: 110m, quantity: 1m, stopPrice: 95m);
+
+        // Entry 100, stop 95, the candle opens at 90: a stop-market sells at 90, not at 95
+        var candle = MakeCandle(open: 90m, high: 91m, low: 88m, close: 89m);
+        await PaperTrading.PaperTradingCheckStep(db, position, part, step, candle);
+
+        Assert.AreEqual(90m, position.OrderList.Values[0].Price);
+    }
+
+    [TestMethod]
+    public async Task CheckStep_BuyStop_GapAboveTheStop_FillsAtTheOpen()
+    {
+        var (db, symbol) = SetupTestEnvironment();
+        var position = CreateTestPosition(db, symbol, CryptoTradeSide.Short);
+        var part = CreateTestPart(position, CryptoPartPurpose.TakeProfit);
+        var step = CreateTestStep(db, position, part,
+            CryptoOrderSide.Buy, CryptoOrderType.StopLimit, price: 90m, quantity: 1m, stopPrice: 105m);
+
+        var candle = MakeCandle(open: 110m, high: 112m, low: 109m, close: 111m);
+        await PaperTrading.PaperTradingCheckStep(db, position, part, step, candle);
+
+        Assert.AreEqual(110m, position.OrderList.Values[0].Price);
+    }
+
+    // ─── All orders of one candle fill together ──────────────────────────────
+
+    [TestMethod]
+    public async Task CheckOrders_StopHit_ClosesEveryTakeProfitPartInTheSameCandle()
+    {
+        var (db, symbol) = SetupTestEnvironment();
+        var position = CreateTestPosition(db, symbol, CryptoTradeSide.Long);
+        // Four take profit levels, each order carrying the shared stop at 95
+        foreach (decimal target in new[] { 105m, 110m, 115m, 124m })
+        {
+            var part = CreateTestPart(position, CryptoPartPurpose.TakeProfit);
+            CreateTestStep(db, position, part, CryptoOrderSide.Sell, CryptoOrderType.StopLimit, price: target, quantity: 1m, stopPrice: 95m);
+        }
+
+        var candle = MakeCandle(open: 97m, high: 98m, low: 94m, close: 96m);
+        await PaperTrading.PaperTradingCheckOrders(db, GlobalData.ActiveExchange!, symbol, candle);
+
+        Assert.AreEqual(4, position.OrderList.Count, "a hit stop closes all four parts in that minute");
+        foreach (CryptoOrder order in position.OrderList.Values)
+            Assert.AreEqual(95m, order.Price);
+    }
+
+    [TestMethod]
+    public async Task CheckOrders_SpikeThroughThreeTargets_FillsThemAll()
+    {
+        var (db, symbol) = SetupTestEnvironment();
+        var position = CreateTestPosition(db, symbol, CryptoTradeSide.Long);
+        foreach (decimal target in new[] { 105m, 110m, 115m, 124m })
+        {
+            var part = CreateTestPart(position, CryptoPartPurpose.TakeProfit);
+            CreateTestStep(db, position, part, CryptoOrderSide.Sell, CryptoOrderType.StopLimit, price: target, quantity: 1m, stopPrice: 95m);
+        }
+
+        // Entry 100, a wick to 121 and back to 104: TP1, TP2 and TP3 are all passed
+        var candle = MakeCandle(open: 101m, high: 121m, low: 100m, close: 104m);
+        await PaperTrading.PaperTradingCheckOrders(db, GlobalData.ActiveExchange!, symbol, candle);
+
+        Assert.AreEqual(3, position.OrderList.Count);
+    }
 }

@@ -180,6 +180,8 @@ public static class ProfitLockCalculator
         // The exact inverse of TrailingStop: long stop = price * factor, short stop = price / factor.
         if (side == CryptoTradeSide.Long)
             return trailingStop / factor;
-        return trailingStop * factor;
+        //return trailingStop * factor;
+        // Since 10-10-2026 a short's trail is price * (1 + p) (plain percentage, as Altrady), so its inverse
+        return trailingStop / (1m + trailPercentage / 100m);
     }
 }

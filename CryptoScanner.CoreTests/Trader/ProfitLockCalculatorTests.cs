@@ -19,7 +19,7 @@ public class ProfitLockCalculatorTests
 
     [TestMethod]
     public void TriggerPrice_Short_SitsBelowBreakEven()
-        => Assert.AreEqual(100m / 1.03m, ProfitLockCalculator.TriggerPrice(CryptoTradeSide.Short, 100m, 3m));
+        => Assert.AreEqual(97m, ProfitLockCalculator.TriggerPrice(CryptoTradeSide.Short, 100m, 3m));
 
     [TestMethod]
     public void ProfitPercentage_Short_IsPositiveWhenPriceFalls()
@@ -37,14 +37,14 @@ public class ProfitLockCalculatorTests
 
     [TestMethod]
     public void FixedStop_Short_UsesTheSlPercentage()
-        => Assert.AreEqual(100m / 1.015m, ProfitLockCalculator.FixedStop(CryptoTradeSide.Short, 100m, 3m, 1.5m));
+        => Assert.AreEqual(98.5m, ProfitLockCalculator.FixedStop(CryptoTradeSide.Short, 100m, 3m, 1.5m));
 
     [TestMethod]
     public void FixedStop_SlPercentageAboveTrigger_IsCappedToTheTrigger()
     {
         // A stop beyond the level that just armed the lock would fill on the spot
         Assert.AreEqual(103m, ProfitLockCalculator.FixedStop(CryptoTradeSide.Long, 100m, 3m, 5m));
-        Assert.AreEqual(100m / 1.03m, ProfitLockCalculator.FixedStop(CryptoTradeSide.Short, 100m, 3m, 5m));
+        Assert.AreEqual(97m, ProfitLockCalculator.FixedStop(CryptoTradeSide.Short, 100m, 3m, 5m));
     }
 
     // ── Trailing ────────────────────────────────────────────────────────────
@@ -61,8 +61,7 @@ public class ProfitLockCalculatorTests
 
     [TestMethod]
     public void TrailingStop_Short_FirstCallSitsAboveThePrice()
-        // 97 / (1 - 0.015) = 98.48: the log mirror of the long's 103 * (1 - 0.015) (open point 27)
-        => Assert.AreEqual(97m / 0.985m, ProfitLockCalculator.TrailingStop(CryptoTradeSide.Short, 97m, 1.5m, 0m));
+        => Assert.AreEqual(98.455m, ProfitLockCalculator.TrailingStop(CryptoTradeSide.Short, 97m, 1.5m, 0m));
 
     [TestMethod]
     public void TrailingStop_Long_FollowsANewHigh()
@@ -249,7 +248,7 @@ public class ProfitLockCalculatorTests
         }
 
         Assert.IsTrue(armed);
-        Assert.AreEqual(88m / 0.985m, trailingStop, "de laagste bodem van 88 bepaalt het eindniveau");
+        Assert.AreEqual(89.32m, trailingStop, "de laagste bodem van 88 bepaalt het eindniveau");
     }
 
     [TestMethod]
@@ -283,7 +282,8 @@ public class ProfitLockCalculatorTests
 
     [TestMethod]
     public void TakeProfitStop_Follow_Short_AfterTp2_SitsOnTp1()
-        => Assert.AreEqual(100m / 1.05m, ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Short, CryptoProfitLockMethod.FollowTakeProfit, 100m, 2, Levels));
+        // TP1 of a short at 5%: 100 * (1 - 0.05) = 95, the plain percentage as Altrady places it
+        => Assert.AreEqual(95m, ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Short, CryptoProfitLockMethod.FollowTakeProfit, 100m, 2, Levels));
 
     [TestMethod]
     public void TakeProfitStop_BreakEven_StaysOnBreakEvenAfterLaterFills()
