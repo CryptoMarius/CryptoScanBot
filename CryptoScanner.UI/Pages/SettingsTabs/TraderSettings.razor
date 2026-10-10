@@ -361,13 +361,25 @@
                 <div class="field" title="What happens once the trigger is reached. A fixed stop is placed once and stays there; a trailing stop follows the price at a fixed distance and only ever moves towards the take profit. The two Altrady methods have no trigger: after TP1 has filled the stop goes to break-even, and Follow take profit then moves it to TP1 after TP2, to TP2 after TP3, and so on. They need two or more take profit levels and are sent along to Altrady.">
                     <label>Profit lock method</label>
                     <select class="input-select" @bind="_moveSlBeMethod">
-                        <option value="@CryptoProfitLockMethod.Fixed">Fixed stop above break even</option>
+                        @* Through Altrady only the methods Altrady runs itself; a method that is already
+                           set stays, marked, so nothing is changed behind the user's back (10-10-2026) *@
+                        @if (!AltradyOn || _moveSlBeMethod == CryptoProfitLockMethod.Fixed)
+                        {
+                            <option value="@CryptoProfitLockMethod.Fixed">Fixed stop above break even@(AltradyOn ? " (not with Altrady)" : "")</option>
+                        }
                         <option value="@CryptoProfitLockMethod.TrailingPercentage">Trailing behind the price</option>
-                        <option value="@CryptoProfitLockMethod.TrailingKeltnerPsar">Trailing on Keltner channel and PSAR</option>
+                        @if (!AltradyOn || _moveSlBeMethod == CryptoProfitLockMethod.TrailingKeltnerPsar)
+                        {
+                            <option value="@CryptoProfitLockMethod.TrailingKeltnerPsar">Trailing on Keltner channel and PSAR@(AltradyOn ? " (not with Altrady)" : "")</option>
+                        }
                         <option value="@CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit">Break even after TP1 (Altrady)</option>
                         <option value="@CryptoProfitLockMethod.FollowTakeProfit">Follow take profit (Altrady)</option>
                     </select>
                 </div>
+                @if (AltradyOn && !ProfitLockCalculator.IsSupportedByAltrady(_moveSlBeMethod))
+                {
+                    <div class="field" style="color:#d0021b">Altrady does not support this method: while trading through Altrady the stop is not moved. Choose trailing, break even after TP1 or follow take profit.</div>
+                }
                 @* The Keltner/PSAR trail uses the fixed level as its floor, so it shows the same field *@
                 @if (ProfitLockCalculator.IsArmedByTakeProfit(_moveSlBeMethod))
                 {
@@ -477,6 +489,7 @@
     private decimal _moveSlBePct;
     private decimal _moveSlBeSlPct;
     private CryptoProfitLockMethod _moveSlBeMethod;
+    private bool AltradyOn => ProfitLockCalculator.UsesAltrady(_tradeVia);
     private decimal _moveSlBeTrailPct;
 
     /// <summary>

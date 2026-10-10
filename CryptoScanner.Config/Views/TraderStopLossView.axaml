@@ -67,6 +67,9 @@
                           FontSize="12"/>
             </Grid>
 
+            <TextBlock IsVisible="{Binding ShowAltradyLockWarning}" Foreground="#D0021B" FontSize="12" TextWrapping="Wrap"
+                       Text="Altrady does not support this method: while trading through Altrady the stop is not moved. Choose trailing, break even after TP1 or follow take profit."/>
+
             <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
                   IsVisible="{Binding IsFixedProfitLock}">
                 <TextBlock Grid.Column="0" Text="Profit lock stop loss %:"

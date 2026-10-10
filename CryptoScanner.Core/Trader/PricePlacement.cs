@@ -42,6 +42,12 @@ public static class PricePlacement
         if (side == CryptoTradeSide.Long)
             return anchor * factor;
         //return anchor / factor;
+        // A short's target of 100% or more lies at or below zero. Such a level is used as "never"
+        // (for instance 200% for the part that leaves through a trailing stop), so it goes to a price
+        // the market never reaches instead. Without this the order check threw on the negative price
+        // and no short was opened at all (runs 2706/2707, 10-10-2026).
+        if (percentage >= 100m)
+            return anchor / factor;
         return anchor * (1m - percentage / 100m);
     }
 

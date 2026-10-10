@@ -86,6 +86,13 @@ public partial class TraderTabViewModel : ObservableObject
         _traderIntervalLongViewModel.ShortCounterpart = _traderIntervalShortViewModel;
         _traderIntervalShortViewModel.LongCounterpart = _traderIntervalLongViewModel;
         _traderIntervalShortViewModel.ShortCounterpart = _traderIntervalShortViewModel;
+
+        // The profit lock choices depend on the Trading choice (Altrady runs only some of them)
+        _traderMiscSettingsViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(TraderMiscSettingsViewModel.TradeVia))
+                _traderStopLossViewModel.UsesAltrady = Core.Trader.ProfitLockCalculator.UsesAltrady(_traderMiscSettingsViewModel.TradeVia);
+        };
     }
 
     internal void LoadConfig(SettingsTrading settings, SettingsGeneral general)
@@ -95,6 +102,7 @@ public partial class TraderTabViewModel : ObservableObject
         TraderEntryConditionsViewModel.LoadConfig(settings);
         TraderTakeProfitViewModel.LoadConfig(settings);
         TraderStopLossViewModel.LoadConfig(settings);
+        TraderStopLossViewModel.UsesAltrady = Core.Trader.ProfitLockCalculator.UsesAltrady(TraderMiscSettingsViewModel.TradeVia);
         TraderEntryViewModel.LoadConfig(settings);
         TraderDcaViewModel.LoadConfig(settings);
 

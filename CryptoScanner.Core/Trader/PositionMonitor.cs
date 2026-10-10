@@ -1079,6 +1079,9 @@ public class PositionMonitor : IDisposable
     }
 
 
+    private static bool _unsupportedLockReported;
+
+
     private (decimal? stop, decimal? limit) CalculateSlPrices(CryptoPosition position)
     {
         // Only paper-trade mode supports SL orders (real trading would need OCO, not yet implemented).
@@ -1126,6 +1129,19 @@ public class PositionMonitor : IDisposable
             && ProfitLockCalculator.IsArmedByTakeProfit(GlobalData.Settings.Trading.MoveSlToBreakEvenMethod))
         {
             (stop, limit) = ApplyTakeProfitLock(position, stop, limit);
+        }
+        else if (GlobalData.Settings.Trading.MoveSlToBreakEven
+            && !ProfitLockCalculator.IsSupportedByAltrady(GlobalData.Settings.Trading.MoveSlToBreakEvenMethod)
+            && ProfitLockCalculator.UsesAltrady(GlobalData.Settings.Trading.TradeVia))
+        {
+            // Altrady does not know this method and keeps its initial stop; moving only our own stop
+            // would let the two administrations drift apart (10-10-2026). Only without Altrady.
+            if (!_unsupportedLockReported)
+            {
+                _unsupportedLockReported = true;
+                GlobalData.AddTextToLogTab($"Profit lock {GlobalData.Settings.Trading.MoveSlToBreakEvenMethod} is not applied: " +
+                    "Altrady does not support it, the stop stays where Altrady keeps it (choose trailing, break even after TP1 or follow take profit)");
+            }
         }
         else if (GlobalData.Settings.Trading.MoveSlToBreakEven
             && position.BreakEvenPrice > 0)

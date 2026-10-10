@@ -38,7 +38,42 @@ public partial class TraderStopLossViewModel : ObservableObject
     [ObservableProperty]
     private decimal _moveSlToBreakEvenTrailPercentage = 1.5m;
 
-    public Dictionary<string, CryptoProfitLockMethod> ProfitLockMethodList => _profitLockMethodList;
+    //public Dictionary<string, CryptoProfitLockMethod> ProfitLockMethodList => _profitLockMethodList;
+
+    /// <summary>
+    /// Trading through Altrady (set by TraderTabViewModel from the Trading choice): only the methods
+    /// Altrady runs itself can be chosen then. A method that is already set stays in the list, marked,
+    /// so nothing is changed behind the user's back.
+    /// </summary>
+    [ObservableProperty]
+    private bool _usesAltrady;
+
+    public Dictionary<string, CryptoProfitLockMethod> ProfitLockMethodList
+    {
+        get
+        {
+            if (!UsesAltrady)
+                return _profitLockMethodList;
+            Dictionary<string, CryptoProfitLockMethod> list = [];
+            foreach (var (caption, method) in _profitLockMethodList)
+            {
+                if (ProfitLockCalculator.IsSupportedByAltrady(method))
+                    list[caption] = method;
+                else if (method == MoveSlToBreakEvenMethod)
+                    list[caption + " (not with Altrady)"] = method;
+            }
+            return list;
+        }
+    }
+
+    /// <summary>The chosen method does nothing while trading through Altrady.</summary>
+    public bool ShowAltradyLockWarning => UsesAltrady && MoveSlToBreakEven && !ProfitLockCalculator.IsSupportedByAltrady(MoveSlToBreakEvenMethod);
+
+    partial void OnUsesAltradyChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ProfitLockMethodList));
+        OnPropertyChanged(nameof(ShowAltradyLockWarning));
+    }
 
     /// <summary>Which of the two percentage fields belongs to the selected method.</summary>
     // The Keltner/PSAR trail uses the fixed level as its floor, so it shows the same field.
@@ -50,6 +85,7 @@ public partial class TraderStopLossViewModel : ObservableObject
 
     partial void OnMoveSlToBreakEvenMethodChanged(CryptoProfitLockMethod value)
     {
+        OnPropertyChanged(nameof(ShowAltradyLockWarning));
         OnPropertyChanged(nameof(IsFixedProfitLock));
         OnPropertyChanged(nameof(IsTrailingProfitLock));
         OnPropertyChanged(nameof(ShowProfitLockTrigger));
@@ -57,6 +93,7 @@ public partial class TraderStopLossViewModel : ObservableObject
 
     partial void OnMoveSlToBreakEvenChanged(bool value)
     {
+        OnPropertyChanged(nameof(ShowAltradyLockWarning));
         OnPropertyChanged(nameof(ShowProfitLockTrigger));
     }
 

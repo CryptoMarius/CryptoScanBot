@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
 xx-10-2026 2.6.8
+- Trader: De winstbescherming meet vanaf de gemiddelde instapprijs, dezelfde prijs waar Altrady zijn percentages vandaan haalt
 - Altrady: De inzet die naar Altrady gaat is apart in te stellen; de scanner handelt zijn eigen bedrag, zodat de papieren uitslag met de emulator vergelijkbaar blijft
 - Altrady: Een waarschuwing per takeprofit-niveau dat onder het minimum van de beurs blijft; Altrady plaatste die order zonder melding niet
 - Papertrading: Als het saldo de munt niet heeft waarin de beurs handelt, zegt de melding nu wat je eraan moet doen in plaats van alleen "No assets available"
@@ -22,7 +23,6 @@ xx-10-2026 2.6.8
 - Grids: Pijltjes, page up en down, home en end verplaatsen de actieve regel ook in de webversie
 - Markettrend zichtbaar maken in de grafiek (waar ook de barometer in getoond wordt)
 - De markt trend is omgezet naar een symboltrend en we hebben nu ook een globale marktrend per quote
-- Trader: De prijzen van een short liggen nu op dezelfde logaritmische afstand als die van een long; het doel lag 2,3% verder weg en de stop 4,6% dichterbij
 - Altrady: Een positie geldt alleen als geopend als Altrady een signaal-id teruggeeft; bij een foutmelding draait de scanner zijn eigen administratie terug
 - Altrady: De stop-prijs in de webhook staat nu op het tick-grid van de munt, zodat het niveau daar hetzelfde is als hier
 - Scanner: Een munt die stilvalt terwijl zijn abonnement gewoon doorloopt wordt nu via REST bijgewerkt (STORJUSDT stond 454 minuten stil)

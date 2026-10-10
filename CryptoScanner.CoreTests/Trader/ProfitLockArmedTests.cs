@@ -192,4 +192,38 @@ public class ProfitLockArmedTests
         Assert.IsTrue(PositionMonitor.ProfitLockReached(CryptoTradeSide.Short, 100m, 15m, 85m, 92m, out _));
         Assert.IsFalse(PositionMonitor.ProfitLockReached(CryptoTradeSide.Short, 100m, 15m, 85.1m, 92m, out _));
     }
+
+    // ── Which methods can be used while trading through Altrady ─────────────
+
+    [TestMethod]
+    public void Altrady_RunsOnlyItsOwnThreeMethods()
+    {
+        Assert.IsTrue(ProfitLockCalculator.IsSupportedByAltrady(CryptoProfitLockMethod.TrailingPercentage));
+        Assert.IsTrue(ProfitLockCalculator.IsSupportedByAltrady(CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit));
+        Assert.IsTrue(ProfitLockCalculator.IsSupportedByAltrady(CryptoProfitLockMethod.FollowTakeProfit));
+        Assert.IsFalse(ProfitLockCalculator.IsSupportedByAltrady(CryptoProfitLockMethod.Fixed));
+        Assert.IsFalse(ProfitLockCalculator.IsSupportedByAltrady(CryptoProfitLockMethod.TrailingKeltnerPsar));
+        Assert.IsTrue(ProfitLockCalculator.UsesAltrady(CryptoTradeVia.PaperTradingAndAltrady));
+        Assert.IsTrue(ProfitLockCalculator.UsesAltrady(CryptoTradeVia.Altrady));
+        Assert.IsFalse(ProfitLockCalculator.UsesAltrady(CryptoTradeVia.PaperTrade));
+    }
+
+    // ── Price placement: plain percentage, and a "never" level stays positive ──
+
+    [TestMethod]
+    public void Placement_Short_PlainPercentage_AsAltrady()
+    {
+        Assert.AreEqual(76m, PricePlacement.Favorable(CryptoTradeSide.Short, 100m, 24m));
+        Assert.AreEqual(105m, PricePlacement.Adverse(CryptoTradeSide.Short, 100m, 5m));
+        Assert.AreEqual(124m, PricePlacement.Favorable(CryptoTradeSide.Long, 100m, 24m));
+        Assert.AreEqual(95m, PricePlacement.Adverse(CryptoTradeSide.Long, 100m, 5m));
+    }
+
+    [TestMethod]
+    public void Placement_Short_TargetOf200Percent_StaysAbovezero()
+    {
+        // 200% is used as "never" (the rest leaves through a trailing stop): it must stay a valid price
+        decimal price = PricePlacement.Favorable(CryptoTradeSide.Short, 100m, 200m);
+        Assert.IsTrue(price > 0 && price < 50m);
+    }
 }

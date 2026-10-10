@@ -117,6 +117,21 @@ public static class ProfitLockCalculator
         => method == CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit
         || method == CryptoProfitLockMethod.FollowTakeProfit;
 
+
+    /// <summary>
+    /// Whether Altrady runs this method itself (the webhook hands it over): trailing (Follow price),
+    /// break even after TP1 and Follow take profit. The fixed level and the Keltner/PSAR trail have no
+    /// Altrady counterpart: with Altrady on, only the scanner's own stop would move and the scanner
+    /// and Altrady positions would drift apart.
+    /// </summary>
+    public static bool IsSupportedByAltrady(CryptoProfitLockMethod method)
+        => method == CryptoProfitLockMethod.TrailingPercentage || IsArmedByTakeProfit(method);
+
+
+    /// <summary>Whether the positions are (also) traded through Altrady.</summary>
+    public static bool UsesAltrady(CryptoTradeVia tradeVia)
+        => tradeVia == CryptoTradeVia.Altrady || tradeVia == CryptoTradeVia.PaperTradingAndAltrady;
+
     /// <summary>
     /// Where the stop goes for <see cref="CryptoProfitLockMethod.BreakEvenAfterFirstTakeProfit"/> and
     /// <see cref="CryptoProfitLockMethod.FollowTakeProfit"/>, or null while no take profit has filled.
