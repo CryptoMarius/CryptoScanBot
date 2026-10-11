@@ -76,6 +76,14 @@ public class MacTests : TestBase
         settings.VolumeAverageCandles = fresh.VolumeAverageCandles;
         settings.ExitOnCloudFlip = fresh.ExitOnCloudFlip;
         settings.ExitConfirmationCandles = fresh.ExitConfirmationCandles;
+        settings.StopAtrMultiplier = fresh.StopAtrMultiplier;
+        settings.StopAtrLength = fresh.StopAtrLength;
+        settings.StopAtrMinimumPercentage = fresh.StopAtrMinimumPercentage;
+        settings.StopAtrMaximumPercentage = fresh.StopAtrMaximumPercentage;
+        settings.StopBehindLevel = fresh.StopBehindLevel;
+        settings.StopLevelMarginAtr = fresh.StopLevelMarginAtr;
+        settings.TakeProfitStopMultiple = fresh.TakeProfitStopMultiple;
+        settings.LimitEntryPrice = fresh.LimitEntryPrice;
     }
 
 
@@ -817,6 +825,172 @@ public class MacTests : TestBase
 
         Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
         StringAssert.Contains(algorithm.ExtraText, "volume 4.00x");
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The stop behind the level, the take profit at a stop multiple, the limit entry
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// A long breaks the resistance at 101 with a close of 102. Every candle ranges 1.00, so the
+    /// average true range is 1.00 and half of it puts the stop at 100.50: 1.50 under 102 is 1.47%.
+    /// The take profit at twice the stop is 2.94%.
+    /// </summary>
+    [TestMethod]
+    public void TheStopSitsHalfAnAtrUnderTheBrokenLevel()
+    {
+        MacPlugin.Settings.StopBehindLevel = true;
+        MacPlugin.Settings.StopLevelMarginAtr = 0.5m;
+        MacPlugin.Settings.StopAtrLength = 5;
+        MacPlugin.Settings.TakeProfitStopMultiple = 2m;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        Assert.AreEqual(1.47m, algorithm.OverrideSlPercentage);
+        Assert.AreEqual(2.94m, algorithm.OverrideProfitPercentage);
+        Assert.IsNull(algorithm.OverrideSignalPrice, "the entry stays at the close");
+    }
+
+
+    /// <summary>
+    /// Without a level behind the close the ATR stop takes over: the resistance at 101 is above a
+    /// close of 100 that broke nothing, so there is no level to put the stop behind.
+    /// </summary>
+    [TestMethod]
+    public void WithoutALevelBehindTheEntry_TheAtrStopApplies()
+    {
+        MacPlugin.Settings.EntryOnBreakMarker = false;
+        MacPlugin.Settings.EntryOnOpenMarker = true;
+        MacPlugin.Settings.StopBehindLevel = true;
+        MacPlugin.Settings.StopAtrMultiplier = 2m;
+        MacPlugin.Settings.StopAtrLength = 5;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough, shape: mac =>
+        {
+            mac[1].EmaFast = 98;
+            mac[1].EmaSecond = 99;
+        });
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        // Two ranges of 1.00 on a close of 100: 2%.
+        Assert.AreEqual(2.00m, algorithm.OverrideSlPercentage);
+        StringAssert.Contains(algorithm.ExtraText, "2x ATR");
+    }
+
+
+    /// <summary>A take profit multiple without a stop of the signal leaves the trader's grid alone.</summary>
+    [TestMethod]
+    public void ATakeProfitMultipleWithoutAStop_LeavesTheTakeProfitToTheTrader()
+    {
+        MacPlugin.Settings.TakeProfitStopMultiple = 2m;
+        var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+            shapeCandles: candles => candles[0].Close = 102m);
+
+        Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+        Assert.IsNull(algorithm.OverrideSlPercentage);
+        Assert.IsNull(algorithm.OverrideProfitPercentage);
+    }
+
+
+    /// <summary>
+    /// A limit entry on the level waits at the broken resistance of 101, and the stop is measured
+    /// from THERE: 100.50 is 0.50 under 101, which is 0.50%, and twice that is the take profit.
+    /// </summary>
+    [TestMethod]
+    public void ALimitEntryOnTheLevel_WaitsAtTheRetestAndMeasuresTheStopFromThere()
+    {
+        CryptoOrderType before = GlobalData.Settings.Trading.EntryOrderType;
+        try
+        {
+            GlobalData.Settings.Trading.EntryOrderType = CryptoOrderType.Limit;
+            MacPlugin.Settings.LimitEntryPrice = MacEntryPrice.Level;
+            MacPlugin.Settings.StopBehindLevel = true;
+            MacPlugin.Settings.StopLevelMarginAtr = 0.5m;
+            MacPlugin.Settings.StopAtrLength = 5;
+            MacPlugin.Settings.TakeProfitStopMultiple = 2m;
+            var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+                shapeCandles: candles => candles[0].Close = 102m);
+
+            Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+            Assert.AreEqual(101m, algorithm.OverrideSignalPrice);
+            Assert.AreEqual(0.50m, algorithm.OverrideSlPercentage);
+            Assert.AreEqual(1.00m, algorithm.OverrideProfitPercentage);
+        }
+        finally
+        {
+            GlobalData.Settings.Trading.EntryOrderType = before;
+        }
+    }
+
+
+    /// <summary>
+    /// A market entry ignores the limit price: handing it over would size the entry on the level
+    /// while the order fills at the market.
+    /// </summary>
+    [TestMethod]
+    public void AMarketEntry_IgnoresTheLimitPrice()
+    {
+        CryptoOrderType before = GlobalData.Settings.Trading.EntryOrderType;
+        try
+        {
+            GlobalData.Settings.Trading.EntryOrderType = CryptoOrderType.Market;
+            MacPlugin.Settings.LimitEntryPrice = MacEntryPrice.SecondLine;
+            var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Long, Enough,
+                shapeCandles: candles => candles[0].Close = 102m);
+
+            Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+            Assert.IsNull(algorithm.OverrideSignalPrice);
+            StringAssert.Contains(algorithm.ExtraText, "the entry order type is not Limit");
+        }
+        finally
+        {
+            GlobalData.Settings.Trading.EntryOrderType = before;
+        }
+    }
+
+
+    /// <summary>A short waits at the second line ABOVE the close: 101.5 over a close of 98.</summary>
+    [TestMethod]
+    public void AShortLimitOnTheSecondLine_WaitsAboveTheClose()
+    {
+        CryptoOrderType before = GlobalData.Settings.Trading.EntryOrderType;
+        try
+        {
+            GlobalData.Settings.Trading.EntryOrderType = CryptoOrderType.Limit;
+            MacPlugin.Settings.LimitEntryPrice = MacEntryPrice.SecondLine;
+            var (algorithm, _, _) = MakeSeries(CryptoTradeSide.Short, Enough,
+                shapeCandles: candles => candles[0].Close = 98m);
+
+            Assert.IsTrue(algorithm.IsSignal(), algorithm.ExtraText);
+            Assert.AreEqual(101.5m, algorithm.OverrideSignalPrice);
+        }
+        finally
+        {
+            GlobalData.Settings.Trading.EntryOrderType = before;
+        }
+    }
+
+
+    [TestMethod]
+    public void TheNearestLevelBehind_IsTheClosestOnTheProtectedSide()
+    {
+        Assert.AreEqual(101m, MacPriceLevels.NearestLevelBehind(CryptoTradeSide.Long, 102m, 101, 95));
+        Assert.AreEqual(95m, MacPriceLevels.NearestLevelBehind(CryptoTradeSide.Long, 100m, 101, 95));
+        Assert.IsNull(MacPriceLevels.NearestLevelBehind(CryptoTradeSide.Long, 100m, 101, null));
+        Assert.AreEqual(99m, MacPriceLevels.NearestLevelBehind(CryptoTradeSide.Short, 98m, 105, 99));
+        Assert.IsNull(MacPriceLevels.NearestLevelBehind(CryptoTradeSide.Long, 101m, 101, null));
+        Assert.AreEqual(101m, MacPriceLevels.NearestLevelBehind(CryptoTradeSide.Long, 101m, 101, null, true));
+    }
+
+
+    [TestMethod]
+    public void TheStopBehindTheLevel_IsMeasuredTheWayTheTraderPlacesIt()
+    {
+        // Long: entry 100, level 95, margin 1 -> stop 94 -> 6%.
+        Assert.AreEqual(6m, MacPriceLevels.StopPercentageBehindLevel(CryptoTradeSide.Long, 100m, 95m, 1m));
+        // Short: entry 100, level 105, margin 1 -> stop 106 -> 6%.
+        Assert.AreEqual(6m, MacPriceLevels.StopPercentageBehindLevel(CryptoTradeSide.Short, 100m, 105m, 1m));
     }
 
 

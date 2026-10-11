@@ -1,3 +1,4 @@
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal;
 
@@ -54,6 +55,14 @@ public class MacBase : SignalCreateBase
     private decimal? StopPercentage;
     public override decimal? OverrideSlPercentage => StopPercentage;
 
+    /// <summary>The take profit of the signal when TakeProfitStopMultiple is set, null to leave it to the trader.</summary>
+    private decimal? ProfitPercentage;
+    public override decimal? OverrideProfitPercentage => ProfitPercentage;
+
+    /// <summary>The limit entry price of the signal when LimitEntryPrice is set, null for the close.</summary>
+    private decimal? EntryPrice;
+    public override decimal? OverrideSignalPrice => EntryPrice;
+
 
     /// <summary>
     /// Whether the cloud points the way this trade wants: the fast ema above the second one for a
@@ -84,6 +93,8 @@ public class MacBase : SignalCreateBase
     {
         ExtraText = "";
         StopPercentage = null;
+        ProfitPercentage = null;
+        EntryPrice = null;
         MacSettings settings = Settings;
         if (!settings.EntryOnOpenMarker && !settings.EntryOnCrossMarker
             && !settings.EntryOnCloseMarker && !settings.EntryOnBreakMarker)
@@ -252,18 +263,103 @@ public class MacBase : SignalCreateBase
         if (settings.UseVolumeFilter && !VolumeOkay(settings, out volumeText))
             return false;
 
-        // The stop, only for a signal that is really there; it walks a stretch of candles as well.
-        string stopText = "";
-        if (settings.StopAtrMultiplier > 0)
-        {
-            if (!AverageTrueRangePercentage(settings.StopAtrLength, close, out decimal atrPercentage))
-                return false;
-            StopPercentage = Math.Round(BoundedStop(settings.StopAtrMultiplier * atrPercentage,
-                settings.StopAtrMinimumPercentage, settings.StopAtrMaximumPercentage), 2);
-            stopText = $", sl {StopPercentage.Value:N2}% ({settings.StopAtrMultiplier}x ATR {atrPercentage:N2}%)";
-        }
+        // The entry price, the stop and the take profit, only for a signal that is really there.
+        if (!EntryStopAndProfit(settings, mac, close, out string stopText))
+            return false;
 
         ExtraText = $"{trigger}, cloud {cloudWidth:N2}% wide{cloudText}{slopeText}{rsiText}{volumeText}{stopText}";
+        return true;
+    }
+
+
+    /// <summary>
+    /// The limit entry price, the stop and the take profit of a signal that is there.
+    /// <para>
+    /// The stop is a percentage measured from the entry, the way the trader and Altrady place it,
+    /// so it is computed from the price the position will really enter at: the limit price when the
+    /// trader enters with a limit order, the close otherwise. A stop behind the level measured from
+    /// the close while the order waits at that same level would land far too close.
+    /// </para>
+    /// </summary>
+    private bool EntryStopAndProfit(MacSettings settings, MacCandleData mac, decimal close, out string text)
+    {
+        text = "";
+
+        // The limit price, when there is one behind the close. Without one the close stays.
+        decimal reference = close;
+        if (settings.LimitEntryPrice != MacEntryPrice.Close)
+        {
+            decimal? price = settings.LimitEntryPrice == MacEntryPrice.Level
+                ? MacPriceLevels.NearestLevelBehind(SignalSide, close, mac.RsiLevelHigh, mac.RsiLevelLow)
+                : MacPriceLevels.NearestLevelBehind(SignalSide, close, mac.EmaSecond, null);
+            // Handed over only for a limit entry: the trader sizes the entry on the signal price,
+            // and a market order filling at the close on an amount sized at the level would buy
+            // more than the entry amount.
+            if (GlobalData.Settings.Trading.EntryOrderType != CryptoOrderType.Limit)
+            {
+                text = $", {settings.LimitEntryPrice} ignored, the entry order type is not Limit";
+            }
+            else if (price is decimal limit)
+            {
+                EntryPrice = limit;
+                reference = limit;
+                text = $", limit {limit:N8} ({settings.LimitEntryPrice})";
+            }
+            else
+            {
+                text = $", no {settings.LimitEntryPrice} behind the close, entry at the close";
+            }
+        }
+
+        // The ATR walks a stretch of candles, so it is only taken when one of the two stops wants it.
+        bool needAtr = settings.StopAtrMultiplier > 0 || (settings.StopBehindLevel && settings.StopLevelMarginAtr > 0);
+        decimal atrPercentage = 0m;
+        if (needAtr && !AverageTrueRangePercentage(settings.StopAtrLength, close, out atrPercentage))
+            return false;
+
+        // The stop behind the level first; without a level behind the entry the ATR stop applies.
+        decimal? stop = null;
+        if (settings.StopBehindLevel)
+        {
+            // Inclusive: a limit entry waiting ON the level keeps its stop behind that same level,
+            // not behind the next one further away.
+            decimal? level = MacPriceLevels.NearestLevelBehind(SignalSide, reference, mac.RsiLevelHigh, mac.RsiLevelLow, true);
+            if (level is decimal levelPrice)
+            {
+                decimal margin = settings.StopLevelMarginAtr * atrPercentage * close / 100m;
+                decimal levelStop = MacPriceLevels.StopPercentageBehindLevel(SignalSide, reference, levelPrice, margin);
+                if (levelStop > 0)
+                {
+                    stop = levelStop;
+                    text += $", sl behind level {levelPrice:N8}";
+                }
+            }
+        }
+        if (stop == null && settings.StopAtrMultiplier > 0)
+        {
+            stop = settings.StopAtrMultiplier * atrPercentage;
+            text += $", sl {settings.StopAtrMultiplier}x ATR {atrPercentage:N2}%";
+        }
+
+        if (stop is decimal stopPercentage)
+        {
+            StopPercentage = Math.Round(BoundedStop(stopPercentage,
+                settings.StopAtrMinimumPercentage, settings.StopAtrMaximumPercentage), 2);
+            text += $" = {StopPercentage.Value:N2}%";
+
+            // A stop that rounds to nothing would sit on the entry; leave it to the trader then.
+            if (StopPercentage.Value <= 0)
+            {
+                StopPercentage = null;
+                return true;
+            }
+
+            if (settings.TakeProfitStopMultiple > 0)
+            {
+                ProfitPercentage = Math.Round(settings.TakeProfitStopMultiple * StopPercentage.Value, 2);
+                text += $", tp {ProfitPercentage.Value:N2}% ({settings.TakeProfitStopMultiple}x sl)";
+            }
+        }
         return true;
     }
 

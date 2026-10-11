@@ -119,6 +119,21 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
     [ObservableProperty]
     private decimal _stopAtrMaximumPercentage = 0m;
 
+    [ObservableProperty]
+    private bool _stopBehindLevel = false;
+
+    [ObservableProperty]
+    private decimal _stopLevelMarginAtr = 0.5m;
+
+    [ObservableProperty]
+    private decimal _takeProfitStopMultiple = 0m;
+
+    /// <summary>The three prices a limit entry can wait at.</summary>
+    public static MacEntryPrice[] EntryPrices { get; } = Enum.GetValues<MacEntryPrice>();
+
+    [ObservableProperty]
+    private MacEntryPrice _limitEntryPrice = MacEntryPrice.Close;
+
 
     public void LoadConfig(MacSettings settings)
     {
@@ -155,6 +170,10 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
         StopAtrLength = settings.StopAtrLength;
         StopAtrMinimumPercentage = settings.StopAtrMinimumPercentage;
         StopAtrMaximumPercentage = settings.StopAtrMaximumPercentage;
+        StopBehindLevel = settings.StopBehindLevel;
+        StopLevelMarginAtr = settings.StopLevelMarginAtr;
+        TakeProfitStopMultiple = settings.TakeProfitStopMultiple;
+        LimitEntryPrice = settings.LimitEntryPrice;
     }
 
     public void SaveConfig(MacSettings settings)
@@ -192,5 +211,9 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
         settings.StopAtrLength = StopAtrLength;
         settings.StopAtrMinimumPercentage = StopAtrMinimumPercentage;
         settings.StopAtrMaximumPercentage = StopAtrMaximumPercentage;
+        settings.StopBehindLevel = StopBehindLevel;
+        settings.StopLevelMarginAtr = StopLevelMarginAtr;
+        settings.TakeProfitStopMultiple = TakeProfitStopMultiple;
+        settings.LimitEntryPrice = LimitEntryPrice;
     }
 }

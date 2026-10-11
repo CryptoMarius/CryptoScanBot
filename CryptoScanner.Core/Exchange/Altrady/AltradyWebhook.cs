@@ -117,6 +117,12 @@ public class AltradyWebhook
         if (quoteAmount <= 0 || price <= 0)
             return null;
 
+        // The same rule as the scanner's own entry (10-10-2026): rounded up only within 25% above the
+        // amount, otherwise down, and no quantity at all when nothing on the grid fits.
+        decimal sameAsScanner = Trader.TradeTools.EntryQuantityOnGrid(symbol, quoteAmount, price);
+        return sameAsScanner > 0 ? sameAsScanner : null;
+
+#pragma warning disable CS0162 // the old rule, kept for reference
         decimal baseAmount = quoteAmount / price;
         decimal onGrid = baseAmount.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
 
@@ -131,6 +137,7 @@ public class AltradyWebhook
         if (onGrid <= 0)
             return null;
         return onGrid;
+#pragma warning restore CS0162
     }
 
 
@@ -225,13 +232,6 @@ public class AltradyWebhook
 
 
     /// <summary>
-    /// The entry amount sent to Altrady: AltradyEntryAmount when it is set, otherwise the scanner's own.
-    /// </summary>
-    internal static decimal? AltradyAmount(decimal? scannerAmount, decimal altradyEntryAmount)
-        => altradyEntryAmount > 0 ? altradyEntryAmount : scannerAmount;
-
-
-    /// <summary>
     /// A warning per take profit level whose order stays below the minimum of the exchange - the
     /// minimum order value, or the minimum quantity on the exchanges that only state that one (Kucoin
     /// and MEXC futures, Alpaca): Altrady does not place such an order and does not report it either.
@@ -247,10 +247,10 @@ public class AltradyWebhook
             decimal value = entryAmount * tpList[i].Factor / 100m;
             if (minimum > 0 && value < minimum)
                 warnings.Add($"TP{i + 1} of {value:N2} {quote} is below the exchange minimum of {minimum:N2} {quote}: " +
-                    "Altrady would not place it. Raise the entry amount (Altrady entry amount in the trader settings)");
+                    "Altrady would not place it. Raise the entry amount or use fewer take profits");
             else if (quantityMinimum > 0 && price > 0 && value / price < quantityMinimum)
                 warnings.Add($"TP{i + 1} of {value / price:G6} {baseCoin} is below the exchange minimum of {quantityMinimum:G6} {baseCoin}: " +
-                    "Altrady would not place it. Raise the entry amount (Altrady entry amount in the trader settings)");
+                    "Altrady would not place it. Raise the entry amount or use fewer take profits");
         }
         return warnings;
     }
@@ -430,8 +430,10 @@ public class AltradyWebhook
             // the shorts of the same day went through. Altrady's own help page on webhook errors says
             // the exchange then accepts only one of the two size fields and the other one has to be
             // used. A limit entry keeps quote_amount, which has never been refused.
-            // Altrady may get another amount than the scanner trades itself (AltradyEntryAmount)
-            decimal? sendAmount = AltradyAmount(position.EntryAmount, GlobalData.Settings.Trading.AltradyEntryAmount);
+            // Altrady gets the same amount the scanner trades itself (the separate Altrady entry
+            // amount of 09-10-2026 was removed again on 11-10-2026: a plan too large for its entry
+            // amount is refused for the scanner and Altrady alike)
+            decimal? sendAmount = position.EntryAmount;
             decimal? baseAmount = null;
             if (GlobalData.Settings.Trading.EntryOrderType == Enums.CryptoOrderType.Market &&
                 sendAmount.HasValue && position.EntryPrice.HasValue)

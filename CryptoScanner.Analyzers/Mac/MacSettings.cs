@@ -40,6 +40,27 @@ public enum MacSpeed
 }
 
 
+/// <summary>
+/// The price a MAC signal hands to the trader as its entry. Only a LIMIT entry
+/// (Settings.Trading.EntryOrderType) waits for it; a market entry takes the price of the moment.
+/// </summary>
+public enum MacEntryPrice
+{
+    /// <summary>The close of the signal candle, as every other strategy does.</summary>
+    Close,
+
+    /// <summary>
+    /// The nearest level behind the close: for a long the highest of the resistance and the support
+    /// that lies under the close, for a short the lowest that lies above it. After a breakout that
+    /// is the level just broken, so the order waits for the retest.
+    /// </summary>
+    Level,
+
+    /// <summary>The second line of the cloud (EMA 40 on Standard), when it lies behind the close.</summary>
+    SecondLine,
+}
+
+
 public class MacSettings : SettingsSignalStrategyBase
 {
     // NOTE: the declaration order below is the order the settings appear on screen, and it follows
@@ -392,13 +413,64 @@ public class MacSettings : SettingsSignalStrategyBase
     [SettingCaption("ATR candles", Indented = true, Tooltip = "How many closed candles of the signal interval the average true range is taken over.")]
     public int StopAtrLength { get; set; } = 14;
 
-    /// <summary>The ATR stop never closer than this percentage from the entry, 0 = no lower bound.</summary>
-    [SettingCaption("ATR stop minimum %", Indented = true, Tooltip = "The ATR stop is never placed closer than this percentage from the entry, 0 = no lower bound. Keeps a quiet coin from getting a stop every small swing reaches.")]
+    /// <summary>
+    /// The stop never closer than this percentage from the entry, 0 = no lower bound. Holds for the
+    /// ATR stop and for the stop behind the level alike.
+    /// </summary>
+    [SettingCaption("Stop minimum %", Indented = true, Tooltip = "Higher is a wider stop. The stop (ATR or behind the level) is never placed closer than this percentage from the entry, 0 = no lower bound. Keeps a quiet coin from getting a stop every small swing reaches.")]
     public decimal StopAtrMinimumPercentage { get; set; } = 0m;
 
-    /// <summary>The ATR stop never further than this percentage from the entry, 0 = no upper bound.</summary>
-    [SettingCaption("ATR stop maximum %", Indented = true, Tooltip = "The ATR stop is never placed further than this percentage from the entry, 0 = no upper bound. Keeps a wild coin from running far against the position.")]
+    /// <summary>
+    /// The stop never further than this percentage from the entry, 0 = no upper bound. Holds for the
+    /// ATR stop and for the stop behind the level alike.
+    /// </summary>
+    [SettingCaption("Stop maximum %", Indented = true, Tooltip = "Lower is a tighter stop. The stop (ATR or behind the level) is never placed further than this percentage from the entry, 0 = no upper bound. Keeps a wild coin from running far against the position.")]
     public decimal StopAtrMaximumPercentage { get; set; } = 0m;
+
+    /// <summary>
+    /// Place the stop behind the nearest level instead of at a distance: for a long under the
+    /// highest of the resistance and the support that lies under the entry, for a short above the
+    /// lowest that lies above it. After a breakout that is the level just broken - the classic place
+    /// for the stop, because a close back under it means the break failed.
+    /// <para>
+    /// Takes precedence over the ATR stop; when there is no level behind the entry the ATR stop
+    /// applies (when set), and otherwise the trader's own stop. The bounds above hold for it too.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Stop behind the level", Tooltip = "Puts the stop just behind the level the price broke (or the nearest level behind the entry). Without such a level the ATR stop or the trader's stop applies.")]
+    public bool StopBehindLevel { get; set; } = false;
+
+    /// <summary>
+    /// How far beyond the level the stop goes, in average true ranges (over <see cref="StopAtrLength"/>
+    /// candles), so a wick that just touches the level does not stop the position out. 0 puts the
+    /// stop exactly on the level.
+    /// </summary>
+    [SettingCaption("Margin beyond the level (ATR)", Indented = true, EnabledWhen = nameof(StopBehindLevel),
+        Tooltip = "Higher is a wider stop. How many average true ranges beyond the level the stop lies, for example 0.5 is half an average candle range. 0 puts it exactly on the level.")]
+    public decimal StopLevelMarginAtr { get; set; } = 0.5m;
+
+    /// <summary>
+    /// The take profit as a multiple of the stop of THIS signal (the ATR stop or the stop behind
+    /// the level), 0 = off and the trader's take profit grid applies. Set, it replaces that grid by
+    /// one target that closes the whole position. A signal without its own stop keeps the grid.
+    /// </summary>
+    [SettingCaption("Take profit at stop multiple", SeparatorBefore = true, SubHeader = "Take profit",
+        Tooltip = "Higher is a further target. The take profit as a multiple of the stop of the signal, for example 2 with a stop of 4% gives a target of 8%. 0 leaves the take profit to the trader settings. Only works with the ATR stop or the stop behind the level.")]
+    public decimal TakeProfitStopMultiple { get; set; } = 0m;
+
+    /// <summary>
+    /// The price the signal hands over as its entry. Only used when the trader enters with a LIMIT
+    /// order (Settings.Trading.EntryOrderType): the order then waits at this price until it fills or
+    /// Trading.EntryRemoveTime candles have passed. A market entry ignores it.
+    /// <para>
+    /// A MAC position often dips once more after the signal; a limit at the level or at the second
+    /// line buys that dip instead of the close. The price it cannot buy is a breakout that runs on
+    /// without looking back.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Limit entry price", SeparatorBefore = true, SubHeader = "Limit entry",
+        Tooltip = "Where the limit entry waits: Close is the close of the signal candle, Level is the level just broken (the retest), SecondLine is the second line of the cloud. Needs the entry order type Limit in the trader settings.")]
+    public MacEntryPrice LimitEntryPrice { get; set; } = MacEntryPrice.Close;
 
     public MacSettings() : base()
     {

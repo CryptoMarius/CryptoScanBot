@@ -133,6 +133,11 @@ run can be attributed.
 | `ExitOnCloudFlip` | off | out when the cloud turns against the position |
 | `RsiLevelLength` / `RsiLevelSupportCross` / `RsiLevelResistanceCross` | 14 / 35 / 65 | the levels |
 | `PivotLeftCandles` / `PivotRightCandles` | 5 / 5 | the price pivot, which only the chart draws |
+| `StopAtrMultiplier` / `StopAtrLength` | 0 / 14 | the stop as a multiple of the average true range, 0 = the trader's stop |
+| `StopBehindLevel` / `StopLevelMarginAtr` | off / 0.5 | the stop behind the nearest level behind the entry (after a break: the level just broken), that many ATR beyond it; first choice, the ATR stop when there is no level |
+| `StopAtrMinimumPercentage` / `StopAtrMaximumPercentage` | 0 / 0 | bounds on either stop, 0 = no bound |
+| `TakeProfitStopMultiple` | 0 | one take profit at this multiple of the signal's own stop, replacing the trader's grid; needs one of the two stops |
+| `LimitEntryPrice` | Close | where a limit entry waits: the close, the level (the retest) or the second line; only with entry order type Limit, and the stop is then measured from that price |
 
 ## Chart overlay
 

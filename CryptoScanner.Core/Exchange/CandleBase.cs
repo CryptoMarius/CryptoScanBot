@@ -533,6 +533,24 @@ public class CandleBase(ExchangeBase api)
         // because unixLoop is also moved forward over candles that were already present, and because
         // the loop can break out early - then only the part up to here was really asked for.
         CandleTime askedUpTo = unixLoop;
+
+        // The bulk of a long history from the exchange's download archive first, when it has one.
+        // The api loop below then only asks for what the archive does not hold yet (today, and the
+        // days the archive has not published). Emulator only: the scanner asks for short windows,
+        // where a whole archive file per request would cost more than the api call it replaces.
+        if (GlobalData.IsEmulatorMode && unixLoop < unixMax)
+        {
+            CryptoSymbolInterval archiveInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            int countBefore = archiveInterval.CandleList.Count;
+            CandleTime archiveUpTo = await FetchFromArchiveAsync(symbol, interval, unixLoop, unixMax);
+            totalFetched += archiveInterval.CandleList.Count - countBefore;
+            if (archiveUpTo > unixLoop)
+            {
+                unixLoop = archiveUpTo;
+                askedUpTo = archiveUpTo;
+            }
+        }
+
         if (unixLoop < unixMax)
         {
             var api = symbol.Exchange.GetApiInstance();
@@ -581,6 +599,19 @@ public class CandleBase(ExchangeBase api)
         //        $"{CandleTools.GetUnixDate(unixLoop).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()}) fetched {totalFetched}");
 
         return (totalFetched > 0, askedUpTo);
+    }
+
+
+    /// <summary>
+    /// Bulk history from a download archive of the exchange, for the exchanges that publish one
+    /// (Binance: data.binance.vision). Adds the candles of [<paramref name="from"/>, <paramref name="until"/>)
+    /// it can find there and returns how far that uninterrupted coverage reaches; everything from
+    /// there on is left to the api. The default has no archive and returns <paramref name="from"/>.
+    /// </summary>
+    protected virtual Task<CandleTime> FetchFromArchiveAsync(CryptoSymbol symbol, CryptoInterval interval,
+        CandleTime from, CandleTime until)
+    {
+        return Task.FromResult(from);
     }
 
 

@@ -96,4 +96,40 @@ public class AltradyBaseAmountTests
         Assert.IsNull(AltradyWebhook.CalculateBaseAmount(symbol, quoteAmount: 0m, price: 1m));
         Assert.IsNull(AltradyWebhook.CalculateBaseAmount(symbol, quoteAmount: 15m, price: 0m));
     }
+
+    // ── One entry rule for the scanner and Altrady: up only within 25% ──────
+
+    [TestMethod]
+    public void EntryQuantity_Uni_UpWouldBe25_5Percent_RoundsDown()
+    {
+        // 15 / 4.708 = 3.19; 4 coins = 18.83 USDT (+25.5%), too much, so 3 (14.12 USDT)
+        var symbol = CreateSymbol(tick: 1m, minimum: 1m, maximum: 0m);
+        Assert.AreEqual(3m, CryptoScanner.Core.Trader.TradeTools.EntryQuantityOnGrid(symbol, 15m, 4.708m));
+        Assert.AreEqual(3m, AltradyWebhook.CalculateBaseAmount(symbol, 15m, 4.708m));
+    }
+
+    [TestMethod]
+    public void EntryQuantity_Ada_UpWithin25Percent_RoundsUp()
+    {
+        // 15 / 0.2934 = 51.1; 52 coins = 15.26 USDT (+1.7%)
+        var symbol = CreateSymbol(tick: 1m, minimum: 1m, maximum: 0m);
+        Assert.AreEqual(52m, CryptoScanner.Core.Trader.TradeTools.EntryQuantityOnGrid(symbol, 15m, 0.2934m));
+    }
+
+    [TestMethod]
+    public void EntryQuantity_Eth_Up15Percent_RoundsUp()
+    {
+        // 15 / 2464.36 = 0.00609; 0.007 ETH = 17.25 USDT (+15%)
+        var symbol = CreateSymbol(tick: 0.001m, minimum: 0.001m, maximum: 0m);
+        Assert.AreEqual(0.007m, CryptoScanner.Core.Trader.TradeTools.EntryQuantityOnGrid(symbol, 15m, 2464.36m));
+    }
+
+    [TestMethod]
+    public void EntryQuantity_Btc_MinimumIsFiveTimesTheAmount_NoEntry()
+    {
+        // 0.001 BTC at 78519.7 = 78.52 USDT (+423%), and rounded down is nothing: no entry anywhere
+        var symbol = CreateSymbol(tick: 0.001m, minimum: 0.001m, maximum: 0m);
+        Assert.AreEqual(0m, CryptoScanner.Core.Trader.TradeTools.EntryQuantityOnGrid(symbol, 15m, 78519.7m));
+        Assert.IsNull(AltradyWebhook.CalculateBaseAmount(symbol, 15m, 78519.7m));
+    }
 }

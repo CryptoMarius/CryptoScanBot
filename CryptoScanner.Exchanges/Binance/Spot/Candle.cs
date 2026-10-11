@@ -143,4 +143,11 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         return (true, count, fetchedUpTo);
     }
 
+
+    protected override Task<CandleTime> FetchFromArchiveAsync(CryptoSymbol symbol, CryptoInterval interval,
+        CandleTime from, CandleTime until)
+    {
+        return BinanceArchive.FetchAsync(BinanceArchive.MarketSpot, symbol, interval, from, until);
+    }
+
 }

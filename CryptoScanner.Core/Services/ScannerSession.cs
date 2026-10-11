@@ -651,25 +651,12 @@ public class ScannerSession : IScannerSession
                 if (TimerCheckDataStream.Interval < 5 * 60 * 1000)
                     TimerCheckDataStream.InitTimerInterval(5 * 60);
 
-                // No subscription is broken as a whole. One level deeper: a single symbol that
-                // stopped delivering while its bundle stayed alive (open point 34). Own task, because
-                // it asks the exchange over REST and this is a timer thread.
-                Model.CryptoExchange? exchange = GlobalData.ActiveExchange;
-                SubscriptionManager klineTicker = ExchangeBase.KLineTicker;
-                if (exchange != null)
-                {
-                    Task.Run(async () =>
-                    {
-                        try
-                        {
-                            await SilentSymbolCatchUp.RunAsync(klineTicker, exchange.GetApiInstance().Candle, ExchangeBase.ExchangeOptions);
-                        }
-                        catch (Exception error)
-                        {
-                            ScannerLog.Logger.Error(error, "SilentSymbolCatchUp");
-                        }
-                    });
-                }
+                // A single symbol that falls silent inside a living subscription is accepted on
+                // purpose: a minute without a trade is filled flat, LastCandleSynchronized waits at
+                // the first filled minute, and the hourly refresh asks the exchange for that stretch.
+                // A delisted symbol leaves the subscriptions through the hourly symbol refresh
+                // (Status 0). The per-symbol REST catch-up that used to run here (27-09-2026) was
+                // built on a delisting mistaken for a dead stream and was removed on 11-10-2026.
             }
         }
     }
@@ -770,6 +757,10 @@ public class ScannerSession : IScannerSession
                 // but never subscribed (Okx Perpetual, night of 02/03-09-2026). The message that
                 // tells the grids to rebuild is sent once, below, after the volume decisions.
                 ThreadLoadData.IndexQuoteDataSymbols(GlobalData.ActiveExchange!, notifyUserInterface: false);
+
+                // A symbol that went to status 0 above gets no candles any more, so an open position
+                // on it would never move again. Close it in our own administration (open point 120).
+                await DelistedPositions.CloseAsync();
 
                 // The tick sizes were just refreshed too, and the decimals a candle is stored with
                 // follow from them - so this goes before anything that can write one.

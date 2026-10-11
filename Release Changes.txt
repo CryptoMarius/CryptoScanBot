@@ -1,8 +1,13 @@
 CryptoScanBot release historie:
 
 xx-10-2026 2.6.8
+- Trader: Een positie op een munt die de beurs niet meer verhandelt wordt afgesloten tegen de laatst bekende prijs; die bleef eerder voor altijd open staan met het geld vast
+- Trader: De scanner en Altrady rekenen de instaphoeveelheid nu op dezelfde manier uit, zodat beide administraties dezelfde hoeveelheid aanhouden
+- Binance: De geschiedenis komt uit het publieke data-archief in plaats van alleen via de API
+- Strategie Mac: Een limit-instap op het dichtstbijzijnde niveau achter de prijs, een stop net achter dat niveau, en een doel als veelvoud van de eigen stop
+- Emulator: Perioden die de beurs niet heeft worden niet elke keer opnieuw opgevraagd; dat scheelde ongeveer 180 verzoeken per inhaalslag
+- Trader: Bij handelen via Altrady zijn alleen de stop-methoden te kiezen die Altrady zelf uitvoert; bij een andere keuze zegt het scherm dat de stop daar niet meeschuift
 - Trader: De winstbescherming meet vanaf de gemiddelde instapprijs, dezelfde prijs waar Altrady zijn percentages vandaan haalt
-- Altrady: De inzet die naar Altrady gaat is apart in te stellen; de scanner handelt zijn eigen bedrag, zodat de papieren uitslag met de emulator vergelijkbaar blijft
 - Altrady: Een waarschuwing per takeprofit-niveau dat onder het minimum van de beurs blijft; Altrady plaatste die order zonder melding niet
 - Papertrading: Als het saldo de munt niet heeft waarin de beurs handelt, zegt de melding nu wat je eraan moet doen in plaats van alleen "No assets available"
 - Altrady: De chart wordt nu rechtstreeks aan de Altrady-applicatie doorgegeven; het onzichtbare browservenster is alleen nog de terugvaloptie
@@ -25,7 +30,6 @@ xx-10-2026 2.6.8
 - De markt trend is omgezet naar een symboltrend en we hebben nu ook een globale marktrend per quote
 - Altrady: Een positie geldt alleen als geopend als Altrady een signaal-id teruggeeft; bij een foutmelding draait de scanner zijn eigen administratie terug
 - Altrady: De stop-prijs in de webhook staat nu op het tick-grid van de munt, zodat het niveau daar hetzelfde is als hier
-- Scanner: Een munt die stilvalt terwijl zijn abonnement gewoon doorloopt wordt nu via REST bijgewerkt (STORJUSDT stond 454 minuten stil)
 - Websockets: Een fout in de candle-verwerking verdween zonder spoor; die wordt nu gelogd, en een bundel gebruikt nog maar een socketclient
 - Binance: Een candle-inhaalslag vraagt alleen het ontbrekende stuk op in plaats van duizend candles, dat scheelt een factor tien in het gewicht
 - Binance Perpetual: Een TradFi-contract heet nu .TRADFI, net als op Okx

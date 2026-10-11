@@ -1109,41 +1109,94 @@ public class TradeTools
 
 
 
+    /// <summary>
+    /// How far an entry may end up above the planned amount when its quantity is rounded UP to the
+    /// symbol's quantity grid (10-10-2026, Marius): more is not acceptable, the entry is then rounded down.
+    /// </summary>
+    public const decimal EntryRoundUpMaximumPercentage = 25m;
+
+
+    /// <summary>
+    /// The entry quantity for a planned amount at a price, on the symbol's quantity grid. The scanner
+    /// and the Altrady webhook both use this, so the paper position and the Altrady position always
+    /// hold the same quantity (they did not: the webhook always rounded up, the scanner only within
+    /// 2.5% - UNI at 4.708 with 15 USDT: Altrady 4, the scanner 3; BTC at 78.520: Altrady 0.001 BTC =
+    /// 78.52 USDT, the scanner no entry).
+    /// <para>
+    /// Rounded up to the next step (or to the symbol's minimum quantity) when that stays within
+    /// <see cref="EntryRoundUpMaximumPercentage"/> above the amount, otherwise rounded down. Returns 0
+    /// when no quantity on the grid fits: no entry, in the scanner and in Altrady alike.
+    /// </para>
+    /// </summary>
+    public static decimal EntryQuantityOnGrid(CryptoSymbol symbol, decimal quoteAmount, decimal price)
+    {
+        if (quoteAmount <= 0 || price <= 0)
+            return 0;
+
+        decimal raw = quoteAmount / price;
+        decimal tick = symbol.QuantityTickSize;
+        decimal down = tick > 0 ? Math.Floor(raw / tick) * tick : raw;
+        if (symbol.QuantityMaximum > 0 && down > symbol.QuantityMaximum)
+            down = tick > 0 ? Math.Floor(symbol.QuantityMaximum / tick) * tick : symbol.QuantityMaximum;
+
+        decimal up = down;
+        if (tick > 0 && down < raw)
+            up = down + tick;
+        if (up < symbol.QuantityMinimum)
+            up = symbol.QuantityMinimum;
+
+        bool upFits = (symbol.QuantityMaximum <= 0 || up <= symbol.QuantityMaximum)
+            && (up * price - quoteAmount) / quoteAmount * 100m <= EntryRoundUpMaximumPercentage;
+        if (upFits)
+            return up;
+        if (down >= symbol.QuantityMinimum && down > 0)
+            return down;
+        return 0;
+    }
+
+
     public static decimal CorrectEntryQuantityIfWayLess(CryptoSymbol symbol, decimal entryValue, decimal entryQuantity, decimal entryPrice)
     {
-        // Daar kunnen we niets mee aanvangen
-        if (entryValue == 0 || entryQuantity == 0 || entryPrice == 0)
-            return 0;
-
-
-        // Is er een grote afwijking van tenminste -X%
-        decimal clampedEntryValue = entryQuantity * entryPrice;
-        decimal percentage = 100 * (clampedEntryValue - entryValue) / entryValue;
-
-        // Het verschil is te groot, hier kunnen we niet instappen
-        if (percentage > 125)
-        {
-            GlobalData.AddTextToLogTab($"{symbol.Name} because of the quantity tick size {symbol.QuantityTickSize} we cannot enter with the far too high {clampedEntryValue} ({percentage:N2}%) (DEBUG)");
-            return 0;
-        }
-
-        if (clampedEntryValue < entryValue)
-        {
-            // Wellicht er iets bijtellen?
-            decimal newEntryQuantity = entryQuantity + symbol.QuantityTickSize;
-            decimal newEntryValue = newEntryQuantity * entryPrice;
-            percentage = 100 * (newEntryValue - entryValue) / entryValue; // 100 * (16 - 2.50) / 2.50 = 540
-            if (percentage.IsBetween(-2.5m, 2.5m))
-            {
-                // 2.5% marge is okay, we willen er niet te ver boven
-                if (percentage > 0.1m) // hele kleine verschillen willen we liever niet zien
-                    GlobalData.AddTextToLogTab($"{symbol.Name} because of the quantity tick size {symbol.QuantityTickSize} the entry value was raised to {newEntryValue} ({percentage:N2}%) (DEBUG)");
-                return newEntryQuantity;
-            }
-        }
-
-        return entryQuantity;
+        // Replaced on 10-10-2026 by EntryQuantityOnGrid (the same rule as the Altrady webhook); the
+        // quantity passed in is no longer used. The old rule is kept below for reference.
+        return EntryQuantityOnGrid(symbol, entryValue, entryPrice);
     }
+
+    // The old body of CorrectEntryQuantityIfWayLess:
+    //{
+    //    // Daar kunnen we niets mee aanvangen
+    //    if (entryValue == 0 || entryQuantity == 0 || entryPrice == 0)
+    //        return 0;
+
+
+    //    // Is er een grote afwijking van tenminste -X%
+    //    decimal clampedEntryValue = entryQuantity * entryPrice;
+    //    decimal percentage = 100 * (clampedEntryValue - entryValue) / entryValue;
+
+    //    // Het verschil is te groot, hier kunnen we niet instappen
+    //    if (percentage > 125)
+    //    {
+    //        GlobalData.AddTextToLogTab($"{symbol.Name} because of the quantity tick size {symbol.QuantityTickSize} we cannot enter with the far too high {clampedEntryValue} ({percentage:N2}%) (DEBUG)");
+    //        return 0;
+    //    }
+
+    //    if (clampedEntryValue < entryValue)
+    //    {
+    //        // Wellicht er iets bijtellen?
+    //        decimal newEntryQuantity = entryQuantity + symbol.QuantityTickSize;
+    //        decimal newEntryValue = newEntryQuantity * entryPrice;
+    //        percentage = 100 * (newEntryValue - entryValue) / entryValue; // 100 * (16 - 2.50) / 2.50 = 540
+    //        if (percentage.IsBetween(-2.5m, 2.5m))
+    //        {
+    //            // 2.5% marge is okay, we willen er niet te ver boven
+    //            if (percentage > 0.1m) // hele kleine verschillen willen we liever niet zien
+    //                GlobalData.AddTextToLogTab($"{symbol.Name} because of the quantity tick size {symbol.QuantityTickSize} the entry value was raised to {newEntryValue} ({percentage:N2}%) (DEBUG)");
+    //            return newEntryQuantity;
+    //        }
+    //    }
+
+    //    return entryQuantity;
+    //}
 
 
     /// <summary>

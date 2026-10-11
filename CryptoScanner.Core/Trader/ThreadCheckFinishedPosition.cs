@@ -199,7 +199,12 @@ public class ThreadCheckFinishedPosition
             // 51 positions closed here and still open there).
             // Only when the position really reached Altrady: no id means the opening signal was refused
             // and there is nothing to close. Never from the emulator, which must not touch the network.
+            // Not for a delisted symbol either: the exchange settled that position, Altrady would
+            // only refuse the close (DelistedPositions). The status covers a restart in between,
+            // when the in-memory flag is gone but the symbol is still on status 0.
             if (!GlobalData.IsEmulatorMode
+                && !position.Delisted
+                && position.Symbol.Status != 0
                 && !string.IsNullOrEmpty(position.AltradyPositionId)
                 && (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady
                  || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady))

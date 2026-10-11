@@ -281,19 +281,58 @@
                 </Grid>
 
                 <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
-                      ToolTip.Tip="The ATR stop is never placed closer than this percentage from the entry, 0 = no lower bound. Keeps a quiet coin from getting a stop every small swing reaches.">
-                    <TextBlock Grid.Column="0" Text="ATR stop minimum %:" VerticalAlignment="Center" FontSize="12"/>
+                      ToolTip.Tip="Higher is a wider stop. The stop (ATR or behind the level) is never placed closer than this percentage from the entry, 0 = no lower bound. Keeps a quiet coin from getting a stop every small swing reaches.">
+                    <TextBlock Grid.Column="0" Text="Stop minimum %:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding StopAtrMinimumPercentage, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
 
                 <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
-                      ToolTip.Tip="The ATR stop is never placed further than this percentage from the entry, 0 = no upper bound. Keeps a wild coin from running far against the position.">
-                    <TextBlock Grid.Column="0" Text="ATR stop maximum %:" VerticalAlignment="Center" FontSize="12"/>
+                      ToolTip.Tip="Lower is a tighter stop. The stop (ATR or behind the level) is never placed further than this percentage from the entry, 0 = no upper bound. Keeps a wild coin from running far against the position.">
+                    <TextBlock Grid.Column="0" Text="Stop maximum %:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding StopAtrMaximumPercentage, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <CheckBox IsChecked="{Binding StopBehindLevel, Mode=TwoWay}"
+                          Content="Stop behind the level" FontSize="12"
+                          ToolTip.Tip="Puts the stop just behind the level the price broke (or the nearest level behind the entry). Without such a level the ATR stop or the trader's stop applies."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      IsEnabled="{Binding StopBehindLevel}"
+                      ToolTip.Tip="Higher is a wider stop. How many average true ranges beyond the level the stop lies, for example 0.5 is half an average candle range. 0 puts it exactly on the level.">
+                    <TextBlock Grid.Column="0" Text="Margin beyond the level (ATR):" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding StopLevelMarginAtr, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Separator Margin="0,4"/>
+
+                <!-- Take profit as a multiple of the stop of the signal -->
+                <TextBlock Text="Take profit" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Higher is a further target. The take profit as a multiple of the stop of the signal, for example 2 with a stop of 4% gives a target of 8%. 0 leaves the take profit to the trader settings. Only works with the ATR stop or the stop behind the level.">
+                    <TextBlock Grid.Column="0" Text="Take profit at stop multiple:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding TakeProfitStopMultiple, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Separator Margin="0,4"/>
+
+                <!-- Where a limit entry waits; needs the entry order type Limit in the trader settings -->
+                <TextBlock Text="Limit entry" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+                <Grid ColumnDefinitions="160,100,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Where the limit entry waits: Close is the close of the signal candle, Level is the level just broken (the retest), SecondLine is the second line of the cloud. Needs the entry order type Limit in the trader settings.">
+                    <TextBlock Grid.Column="0" Text="Limit entry price:" VerticalAlignment="Center" FontSize="12"/>
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding EntryPrices}"
+                              SelectedItem="{Binding LimitEntryPrice, Mode=TwoWay}"
+                              Height="26" FontSize="12" HorizontalAlignment="Stretch"/>
                 </Grid>
 
             </StackPanel>

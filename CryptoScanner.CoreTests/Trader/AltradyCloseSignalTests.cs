@@ -208,14 +208,6 @@ public class AltradyCloseSignalTests
 
 
     [TestMethod]
-    public void AltradyGetsItsOwnEntryAmountWhenItIsSet()
-    {
-        Assert.AreEqual(100m, AltradyWebhook.AltradyAmount(15m, 100m));
-        Assert.AreEqual(15m, AltradyWebhook.AltradyAmount(15m, 0m), "0 = the scanner's own entry amount");
-    }
-
-
-    [TestMethod]
     public void TakeProfitsBelowTheExchangeMinimumAreReported()
     {
         var levels = new List<CryptoTpEntry>

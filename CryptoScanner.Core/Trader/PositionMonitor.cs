@@ -2000,6 +2000,11 @@ public class PositionMonitor : IDisposable
             if (position.SlMovedToBreakEven)
                 return;
 
+            // Nor on a delisted symbol: the position is being closed (DelistedPositions), a new DCA
+            // order would only be placed and cancelled again right after
+            if (position.Delisted)
+                return;
+
             List<(int levelIndex, decimal price)> missingLevels = GetMissingFixedPercentageDcaPrices(position);
             if (missingLevels.Count > 0)
             {
@@ -2174,6 +2179,15 @@ public class PositionMonitor : IDisposable
                                         position.UpdateTime = LastCandle1mCloseTimeDate;
                                         position.CloseTime = LastCandle1mCloseTimeDate;
                                         Database.Connection.Update<CryptoPosition>(position);
+
+                                        // Nothing was bought: the entry never filled. LastTradeDate was
+                                        // stamped when the part was PLACED (PositionTools.CreatePositionPart),
+                                        // so without this the symbol would sit out the full buy cooldown
+                                        // after a timeout, discarding signals as "is in cooldown" although
+                                        // no trade took place. The short wait after a tradingrules or
+                                        // barometer cancel (set a few lines up) is deliberate and stays.
+                                        if (newStatus != CryptoOrderStatus.TradingRules && newStatus != CryptoOrderStatus.BarameterToLow)
+                                            Symbol.LastTradeDate = null;
                                     }
                                 }
 

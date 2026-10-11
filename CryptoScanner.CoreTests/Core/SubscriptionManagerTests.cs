@@ -237,6 +237,63 @@ public class SubscriptionManagerTests
     }
 
 
+    /// <summary>
+    /// The other half of the listing scenario (open point 120). STORJUSDT on Binance Perpetual was
+    /// settled on 26-08-2026 09:00 UTC and kept its subscription for hours, which was mistaken for a
+    /// dead stream. The route out is the hourly refresh: GetSymbolsAsync puts a symbol the exchange
+    /// no longer trades (missing, or a status other than trading such as SETTLING) on status 0, the
+    /// index rebuild leaves it out, and the synchronisation drops it. When the exchange trades it
+    /// again it comes back the same way a new listing does.
+    /// </summary>
+    [TestMethod]
+    public async Task DelistedSymbolLeavesItsSubscriptionAndComesBackWhenRelisted()
+    {
+        CryptoQuoteData quoteData = PrepareQuote();
+        var exchange = GlobalData.ActiveExchange!;
+        CryptoSymbol aaa = AddSymbol(quoteData, "AAA");
+        CryptoSymbol bbb = AddSymbol(quoteData, "BBB");
+        exchange.SymbolListName[aaa.Name] = aaa;
+        exchange.SymbolListName[bbb.Name] = bbb;
+
+        // Same reason as in SymbolListedAfterStartupGetsASubscription: the rebuild touches every quote
+        var savedQuotes = GlobalData.Settings.QuoteCoins.Values.Select(q => (Quote: q, q.SymbolList)).ToList();
+        try
+        {
+            SubscriptionManager manager = CreateManager(symbolsPerSubscription: 10);
+            await manager.StartAsync();
+            CollectionAssert.AreEqual(new List<string> { "AAATSTQ", "BBBTSTQ" }, TestQuoteSymbolNames(manager));
+
+            // The hourly symbol refresh finds BBB delisted (what the exchange's GetSymbolsAsync does)
+            bbb.Status = 0;
+            await manager.SynchronizeSymbolsAsync();
+            CollectionAssert.AreEqual(new List<string> { "AAATSTQ", "BBBTSTQ" }, TestQuoteSymbolNames(manager),
+                "without rebuilding the index the delisted symbol keeps its subscription");
+
+            ThreadLoadData.IndexQuoteDataSymbols(exchange, notifyUserInterface: false);
+            await manager.SynchronizeSymbolsAsync();
+            CollectionAssert.AreEqual(new List<string> { "AAATSTQ" }, TestQuoteSymbolNames(manager),
+                "after the rebuild the delisted symbol is out of the subscriptions");
+
+            // The exchange trades it again
+            bbb.Status = 1;
+            ThreadLoadData.IndexQuoteDataSymbols(exchange, notifyUserInterface: false);
+            await manager.SynchronizeSymbolsAsync();
+            CollectionAssert.AreEqual(new List<string> { "AAATSTQ", "BBBTSTQ" }, TestQuoteSymbolNames(manager),
+                "a relisted symbol gets its subscription back");
+        }
+        finally
+        {
+            exchange.SymbolListName.Remove(aaa.Name);
+            exchange.SymbolListName.Remove(bbb.Name);
+            foreach (var (savedQuote, savedList) in savedQuotes)
+            {
+                savedQuote.SymbolList = savedList;
+                GlobalData.Settings.QuoteCoins[savedQuote.Name] = savedQuote;
+            }
+        }
+    }
+
+
     [TestMethod]
     public async Task DroppedSymbolIsRemoved()
     {

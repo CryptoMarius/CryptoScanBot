@@ -311,6 +311,9 @@ public partial class MainWindowViewModel : ObservableObject
                 CandleDatabase.InitializeSchema(GlobalData.ActiveExchange);
                 using var candleDb = new CandleDatabase(GlobalData.ActiveExchange);
                 candleDb.Open();
+                // Which periods were asked from the exchange before: asked once counts as accepted
+                // (history before a listing, holes in the exchange's data). Emulator-only table.
+                EmulatorHistoryAskedStore.EnsureTable(candleDb.Connection);
 
                 foreach (string symbolName in config.Symbols)
                 {
@@ -337,6 +340,7 @@ public partial class MainWindowViewModel : ObservableObject
                     // disk/candles.db into the in-memory CandleList, so the IsDataLocal verify
                     // step sees the full picture instead of only the bounded startup load.
                     ZoneCandleWindows loadedCandlesInMemory = new();
+                    EmulatorHistoryAskedStore.Load(candleDb.Connection, symbol);
 
 
                     // ── Step 1: determine the fetch start per interval ───────────────────────
@@ -434,6 +438,7 @@ public partial class MainWindowViewModel : ObservableObject
                     // already on disk.
                     SetStatus($"Saving {symbol.Name} to database ({symbolIdx}/{total})…");
                     CandleDatabase.SaveCandlesForSymbol(candleDb.Connection, symbol);
+                    EmulatorHistoryAskedStore.Save(candleDb.Connection, symbol);
                     symbol.ClearCandles();
 
                     GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done (saved, memory released)");
@@ -1039,6 +1044,12 @@ public partial class MainWindowViewModel : ObservableObject
         Dictionary<string, (decimal, decimal)> savedSignalShortBarometer = GlobalData.Settings.Signal.Short.Barometer.List;
         bool savedSignalShortBarometerConsensus = GlobalData.Settings.Signal.Short.Barometer.ConsensusActive;
         int savedSignalShortBarometerMinConsensus = GlobalData.Settings.Signal.Short.Barometer.MinConsensus;
+        bool savedSignalLongBreadthActive = GlobalData.Settings.Signal.Long.Barometer.BreadthActive;
+        decimal savedSignalLongBreadthMinimum = GlobalData.Settings.Signal.Long.Barometer.BreadthMinimum;
+        decimal savedSignalLongBreadthMaximum = GlobalData.Settings.Signal.Long.Barometer.BreadthMaximum;
+        bool savedSignalShortBreadthActive = GlobalData.Settings.Signal.Short.Barometer.BreadthActive;
+        decimal savedSignalShortBreadthMinimum = GlobalData.Settings.Signal.Short.Barometer.BreadthMinimum;
+        decimal savedSignalShortBreadthMaximum = GlobalData.Settings.Signal.Short.Barometer.BreadthMaximum;
         List<(decimal, decimal)> savedSignalLongSymbolTrend = GlobalData.Settings.Signal.Long.SymbolTrend.List;
         List<(decimal, decimal)> savedSignalShortSymbolTrend = GlobalData.Settings.Signal.Short.SymbolTrend.List;
         List<(decimal, decimal)> savedSignalLongSymbolTrendSecondary = GlobalData.Settings.Signal.Long.SymbolTrendSecondary.List;
@@ -1100,6 +1111,12 @@ public partial class MainWindowViewModel : ObservableObject
                     GlobalData.Settings.Signal.Short.Barometer.List = savedSignalShortBarometer;
                     GlobalData.Settings.Signal.Short.Barometer.ConsensusActive = savedSignalShortBarometerConsensus;
                     GlobalData.Settings.Signal.Short.Barometer.MinConsensus = savedSignalShortBarometerMinConsensus;
+                    GlobalData.Settings.Signal.Long.Barometer.BreadthActive = savedSignalLongBreadthActive;
+                    GlobalData.Settings.Signal.Long.Barometer.BreadthMinimum = savedSignalLongBreadthMinimum;
+                    GlobalData.Settings.Signal.Long.Barometer.BreadthMaximum = savedSignalLongBreadthMaximum;
+                    GlobalData.Settings.Signal.Short.Barometer.BreadthActive = savedSignalShortBreadthActive;
+                    GlobalData.Settings.Signal.Short.Barometer.BreadthMinimum = savedSignalShortBreadthMinimum;
+                    GlobalData.Settings.Signal.Short.Barometer.BreadthMaximum = savedSignalShortBreadthMaximum;
                     GlobalData.Settings.Signal.Long.SymbolTrend.List = savedSignalLongSymbolTrend;
                     GlobalData.Settings.Signal.Short.SymbolTrend.List = savedSignalShortSymbolTrend;
                     GlobalData.Settings.Signal.Long.SymbolTrendSecondary.List = savedSignalLongSymbolTrendSecondary;
@@ -1328,6 +1345,12 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Signal.Short.Barometer.List = savedSignalShortBarometer;
             GlobalData.Settings.Signal.Short.Barometer.ConsensusActive = savedSignalShortBarometerConsensus;
             GlobalData.Settings.Signal.Short.Barometer.MinConsensus = savedSignalShortBarometerMinConsensus;
+            GlobalData.Settings.Signal.Long.Barometer.BreadthActive = savedSignalLongBreadthActive;
+            GlobalData.Settings.Signal.Long.Barometer.BreadthMinimum = savedSignalLongBreadthMinimum;
+            GlobalData.Settings.Signal.Long.Barometer.BreadthMaximum = savedSignalLongBreadthMaximum;
+            GlobalData.Settings.Signal.Short.Barometer.BreadthActive = savedSignalShortBreadthActive;
+            GlobalData.Settings.Signal.Short.Barometer.BreadthMinimum = savedSignalShortBreadthMinimum;
+            GlobalData.Settings.Signal.Short.Barometer.BreadthMaximum = savedSignalShortBreadthMaximum;
             GlobalData.Settings.Signal.Long.SymbolTrend.List = savedSignalLongSymbolTrend;
             GlobalData.Settings.Signal.Short.SymbolTrend.List = savedSignalShortSymbolTrend;
             GlobalData.Settings.Signal.Long.SymbolTrendSecondary.List = savedSignalLongSymbolTrendSecondary;

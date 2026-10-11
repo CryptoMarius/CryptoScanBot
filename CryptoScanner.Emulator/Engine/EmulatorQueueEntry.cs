@@ -33,6 +33,20 @@ public class EmulatorSideConfig
     /// <summary>Override Signal.{Side}.Barometer.MinConsensus.</summary>
     public int? BarometerMinConsensus { get; set; }
 
+    /// <summary>
+    /// Override Signal.{Side}.Barometer.BreadthActive: the percentage of the coins of the quote that
+    /// rose over the last hour must lie between BarometerBreadthMinimum and BarometerBreadthMaximum.
+    /// A dotted path in SignalOverrides cannot reach it, because Barometer is a field on
+    /// SettingsTextual and ApplyDottedProperty only navigates properties (it skips silently).
+    /// </summary>
+    public bool? BarometerBreadthActive { get; set; }
+
+    /// <summary>Override Signal.{Side}.Barometer.BreadthMinimum (0..100).</summary>
+    public decimal? BarometerBreadthMinimum { get; set; }
+
+    /// <summary>Override Signal.{Side}.Barometer.BreadthMaximum (0..100).</summary>
+    public decimal? BarometerBreadthMaximum { get; set; }
+
     /// <summary>Override Signal.{Side}.SymbolTrend.List. Each entry is [min, max].</summary>
     public List<decimal[]>? SymbolTrend { get; set; }
 
@@ -54,6 +68,9 @@ public class EmulatorSideConfig
             Barometer = target?.Barometer,
             BarometerConsensusActive = target?.BarometerConsensusActive,
             BarometerMinConsensus = target?.BarometerMinConsensus,
+            BarometerBreadthActive = target?.BarometerBreadthActive,
+            BarometerBreadthMinimum = target?.BarometerBreadthMinimum,
+            BarometerBreadthMaximum = target?.BarometerBreadthMaximum,
             SymbolTrend = target?.SymbolTrend,
             SymbolTrendSecondary = target?.SymbolTrendSecondary,
         };
@@ -66,6 +83,9 @@ public class EmulatorSideConfig
             result.Barometer ??= mirrorSource.Barometer;
             result.BarometerConsensusActive ??= mirrorSource.BarometerConsensusActive;
             result.BarometerMinConsensus ??= mirrorSource.BarometerMinConsensus;
+            result.BarometerBreadthActive ??= mirrorSource.BarometerBreadthActive;
+            result.BarometerBreadthMinimum ??= mirrorSource.BarometerBreadthMinimum;
+            result.BarometerBreadthMaximum ??= mirrorSource.BarometerBreadthMaximum;
             result.SymbolTrend ??= mirrorSource.SymbolTrend;
             result.SymbolTrendSecondary ??= mirrorSource.SymbolTrendSecondary;
         }
@@ -104,6 +124,15 @@ public class EmulatorSideConfig
 
         if (config.BarometerMinConsensus.HasValue)
             signal.Barometer.MinConsensus = config.BarometerMinConsensus.Value;
+
+        if (config.BarometerBreadthActive.HasValue)
+            signal.Barometer.BreadthActive = config.BarometerBreadthActive.Value;
+
+        if (config.BarometerBreadthMinimum.HasValue)
+            signal.Barometer.BreadthMinimum = config.BarometerBreadthMinimum.Value;
+
+        if (config.BarometerBreadthMaximum.HasValue)
+            signal.Barometer.BreadthMaximum = config.BarometerBreadthMaximum.Value;
 
         if (config.SymbolTrend != null)
             signal.SymbolTrend.List = config.SymbolTrend.Select(a => (a[0], a[1])).ToList();

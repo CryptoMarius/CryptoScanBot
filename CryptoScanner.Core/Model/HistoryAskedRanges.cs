@@ -47,6 +47,17 @@ public class HistoryAskedRanges
     /// True when one single remembered period covers the whole of [from..to], so asking the exchange
     /// again cannot turn up anything: what is missing inside it is missing at the exchange too.
     /// </summary>
+    /// <summary>
+    /// A copy of the remembered periods, oldest first. Read-only; used by the emulator to keep them
+    /// between sessions (EmulatorHistoryAskedStore), the scanner does not use it.
+    /// </summary>
+    public List<(CandleTime From, CandleTime To)> Snapshot()
+    {
+        lock (ranges)
+            return [.. ranges];
+    }
+
+
     public bool WasAsked(CandleTime from, CandleTime to)
     {
         lock (ranges)

@@ -167,6 +167,11 @@ public partial class CryptoPosition : CryptoData2
     [Computed]
     public bool ExitRequested { get; set; } = false;
 
+    // Closed by DelistedPositions because the exchange no longer trades the symbol. The exchange
+    // settled the position itself, so ThreadCheckFinishedPosition sends no close to Altrady.
+    [Computed]
+    public bool Delisted { get; set; } = false;
+
     [Computed]
     public decimal? TriggerPriceTop { get; set; }
     [Computed]
