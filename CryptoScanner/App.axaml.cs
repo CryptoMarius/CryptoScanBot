@@ -38,19 +38,9 @@ public partial class App : Application
         EventOpenInInternalBrowser.Invoke(url, switchTab);
     }
 
-    // Forward url to our not visible browser tabsheet (to avoid an extra dialog)
-    internal static HiddenBrowserService EventOpenHiddenBrowser { get; private set; } = null!;
-    internal static void OpenInHiddenBrowser(string url)
-    {
-        // Assigned in OnFrameworkInitializationCompleted; until then the null conditional below
-        // swallowed the request, which is exactly the invisible failure this logging is about.
-        if (EventOpenHiddenBrowser == null)
-        {
-            GlobalData.AddErrorToLogTab($"Hidden browser: it is not initialized yet, {url} was not opened");
-            return;
-        }
-        EventOpenHiddenBrowser.Navigate(url);
-    }
+    // The invisible browser window that loaded the Altrady deep links (HiddenBrowserService) was
+    // removed on 11-10-2026: the deep link goes over the local WebSocket of Altrady now, with the
+    // system browser as fallback. See Core ExternalLinkHelper.OpenTradingAppLink.
 
 
     public override void Initialize()
@@ -77,7 +67,6 @@ public partial class App : Application
         // Wire the shared chart project's browser launchers to this app's browser (the chart project
         // has no hard dependency on App; the emulator leaves these null and only uses the system browser).
         CryptoScanner.Helpers.CommandHelper.OpenInternalBrowser = OpenInInternalBrowser;
-        CryptoScanner.Helpers.CommandHelper.OpenHiddenBrowser = OpenInHiddenBrowser;
 
         GlobalData.RunOnUiThread = action => Dispatcher.UIThread.Post(action);
 
@@ -219,10 +208,6 @@ public partial class App : Application
 
             GlobalData.SignalRService = new SignalRService();
             _ = GlobalData.SignalRService.StartAsync();
-
-            // Initialize a hidden browser to avoid the Altrady start question in the browser
-            EventOpenHiddenBrowser = GlobalData.Services.GetRequiredService<HiddenBrowserService>();
-            EventOpenHiddenBrowser.Initialize();
         }
 
         System.Diagnostics.Debug.WriteLine($"GlobalData initialized - Symbols: {GlobalData.ActiveExchange?.SymbolListName.Count ?? 0}, Signals: {GlobalData.SignalQueue.Count}");
@@ -305,27 +290,6 @@ public partial class App : Application
         ApplicationStateService applicationStateService = GlobalData.GetService<ApplicationStateService>()
             ?? throw new InvalidOperationException("ApplicationStateService not registered");
         applicationStateService.FlushToDisk();
-
-        // Dispose hidden browser
-        ScannerLog.Logger.Trace($"OnApplicationExit(hiddenBrowser?.Dispose)");
-        var hiddenBrowser = GlobalData.GetService<HiddenBrowserService>();
-        if (hiddenBrowser != null)
-        {
-            // Dispatch to UI thread for browser disposal
-            await Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                try
-                {
-                    hiddenBrowser.Dispose();
-                    ScannerLog.Logger.Trace($"OnApplicationExit(hiddenBrowser disposed successfully)");
-                }
-                catch (Exception ex)
-                {
-                    ScannerLog.Logger.Error(ex, "Error disposing hidden browser");
-                    ScannerLog.Logger.Trace($"OnApplicationExit(hiddenBrowser dispose error: {ex.Message})");
-                }
-            });
-        }
 
         System.Diagnostics.Debug.WriteLine($"OnApplicationExit(all operations completed)");
     }

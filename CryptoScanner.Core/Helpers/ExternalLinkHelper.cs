@@ -17,12 +17,15 @@ namespace CryptoScanner.Core.Helpers;
 /// </summary>
 public static class ExternalLinkHelper
 {
-    // Host supplied browser launchers. The Avalonia scanner wires these to its embedded WebView
-    // tabs, the Photino/Web hosts wire them to their own browser tab; the emulator (which has no
-    // embedded browser) leaves them null, so the internal/hidden path is a no-op there while the
+    // Host supplied browser launcher. The Avalonia scanner wires this to its embedded WebView
+    // tab, the Photino/Web hosts wire it to their own browser tab; the emulator (which has no
+    // embedded browser) leaves it null, so the internal path is a no-op there while the
     // external-browser path still works.
+    // Until 11-10-2026 there was a second launcher here, OpenHiddenBrowser, for an invisible
+    // browser window that loaded the Altrady deep link so its redirect would bring the desktop
+    // application to the front. The local WebSocket of Altrady made that window superfluous
+    // (see OpenTradingAppLink), so both hosts dropped it.
     public static Action<string, bool>? OpenInternalBrowser { get; set; }
-    public static Action<string>? OpenHiddenBrowser { get; set; }
 
     /// <summary>Open a url in the system browser.</summary>
     public static void OpenSystemBrowser(string url)
@@ -85,20 +88,16 @@ public static class ExternalLinkHelper
     }
 
     /// <summary>
-    /// Hand an address to the trading application without the user seeing a browser. An Altrady
-    /// deep link is sent over the local WebSocket of the desktop application
-    /// (<see cref="AltradyDeepLink"/>); when that does not answer, or the address is not an Altrady
-    /// link at all, the host's hidden browser gets it - the route every click took before.
+    /// Hand an address to the trading application. An Altrady deep link is sent over the local
+    /// WebSocket of the desktop application (<see cref="AltradyDeepLink"/>), so the user sees no
+    /// browser at all; when that does not answer (Altrady is not running, or an older version
+    /// without the socket), or the address is not an Altrady link at all, the system browser
+    /// gets it. The web link then takes the detour past the Altrady website, which hands over to
+    /// the desktop application when it runs and otherwise opens the web version.
     /// </summary>
-    public static void OpenHidden(string url)
+    public static void OpenTradingAppLink(string url)
     {
-        AltradyDeepLink.Open(url, fallbackUrl =>
-        {
-            if (OpenHiddenBrowser == null)
-                GlobalData.AddErrorToLogTab($"Linktools: this application has no hidden browser, {fallbackUrl} was not opened");
-            else
-                OpenHiddenBrowser.Invoke(fallbackUrl);
-        });
+        AltradyDeepLink.Open(url, OpenSystemBrowser);
     }
 
     public static void ActivateTradingApp(CryptoTradingApp tradingApp,
@@ -122,10 +121,12 @@ public static class ExternalLinkHelper
             // From the outside they are indistinguishable: the hidden browser sits off-screen on
             // purpose and the system browser hands the address to another application, so a click
             // that ends up somewhere unexpected looks exactly like a click that did nothing at all.
+            // (The hidden browser is gone since 11-10-2026; the Altrady socket took its place and
+            // the system browser is the fallback, see OpenTradingAppLink.)
             bool useInternalBrowser = viaTradingBrowser == CryptoExternalUrlType.Internal;
-            bool useHiddenBrowser = !useInternalBrowser && Execute == CryptoExternalUrlType.Internal;
+            bool useTradingAppLink = !useInternalBrowser && Execute == CryptoExternalUrlType.Internal;
             string route = useInternalBrowser ? "internal browser"
-                : useHiddenBrowser ? "hidden browser"
+                : useTradingAppLink ? "Altrady socket, else the system browser"
                 : "system browser";
             GlobalData.AddTextToLogTab($"Linktools activate {tradingApp} {symbol.Name} {interval.Name} via the {route}: {Url}");
 
@@ -140,11 +141,11 @@ public static class ExternalLinkHelper
             }
             else
             {
-                if (useHiddenBrowser)
+                if (useTradingAppLink)
                 {
                     // Since 06-10-2026 the Altrady deep link goes over the local WebSocket of the
-                    // desktop application first; the hidden browser is the fallback (see OpenHidden)
-                    OpenHidden(Url);
+                    // desktop application first; the system browser is the fallback (see OpenTradingAppLink)
+                    OpenTradingAppLink(Url);
                 }
                 else
                 {

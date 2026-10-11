@@ -40,7 +40,6 @@ internal class MyServices
         services.AddSingleton<ITradingViewService, TradingViewService>();
         services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
         services.AddSingleton<IScannerSession, ScannerSession>();
-        services.AddSingleton<HiddenBrowserService>();
 
 
         // Register ViewModels as Transient

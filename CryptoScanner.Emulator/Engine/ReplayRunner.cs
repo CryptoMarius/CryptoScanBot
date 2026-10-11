@@ -441,7 +441,10 @@ public sealed class ReplayRunner
                     }
 
                     processedBars += ticksThisMinute.Count;
-                    int percent = totalBars > 0 ? Math.Min(100, 100 * processedBars / totalBars) : 0;
+                    // In long: 100 x processedBars passes int.MaxValue from 21,5 million bars on, which
+                    // a run of 121 coins over 273 days (47,6 million) reaches at 45% - the percentage
+                    // went negative and the progress bar stayed empty for the rest of the run.
+                    int percent = totalBars > 0 ? (int)Math.Min(100L, 100L * processedBars / totalBars) : 0;
                     if (percent != lastReportedPercent)
                     {
                         lastReportedPercent = percent;

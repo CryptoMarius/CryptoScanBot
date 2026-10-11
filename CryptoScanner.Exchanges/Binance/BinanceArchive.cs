@@ -53,6 +53,13 @@ public static class BinanceArchive
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(5) };
 
     /// <summary>
+    /// Files downloaded at the same time. One connection gets about 1 MB/s from the archive, so the
+    /// files of a symbol come in side by side: four monthly files of SOLUSDT took 7.2 seconds one
+    /// after the other and 1.9 seconds together (measured 11-10-2026). They are still added in order.
+    /// </summary>
+    private const int ParallelDownloads = 6;
+
+    /// <summary>
     /// The archive name of an interval, or null when the archive is not used for it. Limited to
     /// intervals up to a day: their candles never cross the day and month boundaries the archive
     /// files are cut on. A week starts on a Monday and would straddle two files.
@@ -159,22 +166,22 @@ public static class BinanceArchive
     }
 
 
-    private static async Task<(BinanceArchiveStatus status, List<BinanceArchiveKline> klines)> DownloadAsync(string url, string prefix)
+    private static async Task<(BinanceArchiveStatus status, List<BinanceArchiveKline> klines, long bytes)> DownloadAsync(string url, string prefix, CancellationToken cancellationToken = default)
     {
         try
         {
-            using HttpResponseMessage response = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            using HttpResponseMessage response = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             if (response.StatusCode == HttpStatusCode.NotFound)
-                return (BinanceArchiveStatus.NotFound, []);
+                return (BinanceArchiveStatus.NotFound, [], 0);
             if (!response.IsSuccessStatusCode)
             {
                 GlobalData.AddTextToLogTab($"{prefix} archive {url} answered {(int)response.StatusCode}");
-                return (BinanceArchiveStatus.Failed, []);
+                return (BinanceArchiveStatus.Failed, [], 0);
             }
 
             // The zip is read from memory: ZipArchive needs a seekable stream, and the files are small.
             using MemoryStream memory = new();
-            await response.Content.CopyToAsync(memory);
+            await response.Content.CopyToAsync(memory, cancellationToken);
             memory.Position = 0;
             using ZipArchive zip = new(memory, ZipArchiveMode.Read);
             List<BinanceArchiveKline> klines = [];
@@ -185,13 +192,91 @@ public static class BinanceArchive
                 using StreamReader reader = new(entry.Open());
                 klines.AddRange(ParseCsv(reader));
             }
-            return (BinanceArchiveStatus.Found, klines);
+            return (BinanceArchiveStatus.Found, klines, memory.Length);
         }
         catch (Exception error)
         {
-            GlobalData.AddTextToLogTab($"{prefix} archive {url} failed: {error.Message}");
-            return (BinanceArchiveStatus.Failed, []);
+            // A download that was called off (the fetch stopped early) is not worth a line
+            if (!cancellationToken.IsCancellationRequested)
+                GlobalData.AddTextToLogTab($"{prefix} archive {url} failed: {error.Message}");
+            return (BinanceArchiveStatus.Failed, [], 0);
         }
+    }
+
+
+    /// <summary>
+    /// <see cref="DownloadAsync"/> behind the gate that limits how many files come in at once.
+    /// </summary>
+    private static async Task<(BinanceArchiveStatus status, List<BinanceArchiveKline> klines, long bytes)> DownloadGatedAsync(
+        string url, string prefix, SemaphoreSlim gate, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await gate.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return (BinanceArchiveStatus.Failed, [], 0);
+        }
+        try
+        {
+            return await DownloadAsync(url, prefix, cancellationToken);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+
+    /// <summary>
+    /// One log line per archive file, so a long fetch shows where it is: which month or day, how far
+    /// along the list of files, and what came in. A fetch of a symbol-year of 1m takes some twenty
+    /// seconds, and without these lines the log stays silent for all of that.
+    /// </summary>
+    private static void LogPiece(string prefix, string intervalName, BinanceArchivePiece piece, int number, int total,
+        BinanceArchiveStatus status, int candles, long bytes)
+    {
+        string date = piece.Monthly
+            ? piece.Start.ToString("yyyy-MM", CultureInfo.InvariantCulture)
+            : piece.Start.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        string result = status switch
+        {
+            BinanceArchiveStatus.Found => $"{candles} candles {bytes / (1024.0 * 1024.0):0.0} MB",
+            BinanceArchiveStatus.NotFound => "not in archive",
+            _ => "failed",
+        };
+        GlobalData.AddTextToLogTab($"{prefix} archive {date} ({number}/{total}) {result}");
+        GlobalData.CandleFetchProgress?.Invoke($"{intervalName} archive {date} ({number}/{total})");
+    }
+
+
+    /// <summary>
+    /// True when every candle of the part of <paramref name="piece"/> inside [<paramref name="from"/>,
+    /// <paramref name="until"/>) is in the list already.
+    /// <para>
+    /// The emulator builds 3m up to 1d from 1m before it asks for them, but each interval starts its
+    /// warm-up at its own moment before the replay window (3m some fifty minutes before 1m, 1h two
+    /// months). Those first candles cannot be built, the walk stops at the first one that is missing
+    /// and the whole period is handed over. The api skipped the candles that were present after one
+    /// call; without this check the archive downloaded every month again - about sixty files per
+    /// symbol where ten were needed (CRVUSDT and DASHUSDT, 11-10-2026).
+    /// </para>
+    /// </summary>
+    internal static bool IsPiecePresent(CryptoCandleList candles, uint duration, BinanceArchivePiece piece,
+        DateTime from, DateTime until)
+    {
+        DateTime start = piece.Start > from ? piece.Start : from;
+        DateTime end = piece.End < until ? piece.End : until;
+        CandleTime time = CandleTime.FromDateTime(start);
+        CandleTime endTime = CandleTime.FromDateTime(end);
+        while (time < endTime)
+        {
+            if (!candles.ContainsKey(time))
+                return false;
+            time += duration;
+        }
+        return true;
     }
 
 
@@ -246,63 +331,115 @@ public static class BinanceArchive
         int files = 0;
         int candles = 0;
         bool stopped = false;
-        foreach (BinanceArchivePiece piece in pieces)
+        // Files whose candles are all in memory already are not downloaded (see IsPiecePresent)
+        CryptoCandleList candleList = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+        bool[] present = pieces.Select(piece => IsPiecePresent(candleList, interval.Duration, piece, fromDate, untilDate)).ToArray();
+        int skipped = present.Count(p => p);
+
+        // Numbering for the log lines; grows when a month is split into its days
+        int number = 0;
+        int total = pieces.Count - skipped;
+
+        // All files are asked for up front, a few at a time (ParallelDownloads), and taken in order
+        // below. Leaving the loop early calls off whatever has not come in yet.
+        using CancellationTokenSource downloadCancel = CancellationTokenSource.CreateLinkedTokenSource(ExchangeBase.CancellationToken);
+        using SemaphoreSlim gate = new(ParallelDownloads);
+        List<Task<(BinanceArchiveStatus status, List<BinanceArchiveKline> klines, long bytes)>> downloads = pieces
+            .Select((piece, index) => present[index]
+                ? Task.FromResult<(BinanceArchiveStatus, List<BinanceArchiveKline>, long)>((BinanceArchiveStatus.Found, [], 0))
+                : DownloadGatedAsync(PieceUrl(market, symbol.ExchangeName, intervalName, piece), prefix, gate, downloadCancel.Token))
+            .ToList();
+        try
         {
-            if (ExchangeBase.CancellationToken.IsCancellationRequested)
+            for (int index = 0; index < pieces.Count; index++)
             {
-                stopped = true;
-                break;
-            }
-
-            var (status, klines) = await DownloadAsync(PieceUrl(market, symbol.ExchangeName, intervalName, piece), prefix);
-            if (status == BinanceArchiveStatus.Found)
-            {
-                files++;
-                candles += await AddCandlesAsync(symbol, interval, klines, fromDate, untilDate);
-            }
-            else if (status == BinanceArchiveStatus.NotFound && piece.Monthly && !piece.Recent)
-            {
-                // No history in that month
-            }
-            else if (status == BinanceArchiveStatus.NotFound && piece.Monthly)
-            {
-                // Monthly file not published yet: the days of that month one by one
-                DateTime day = piece.Start < fromDate.Date ? fromDate.Date : piece.Start;
-                DateTime today = DateTime.UtcNow.Date;
-                while (day < piece.End && day < untilDate && day.AddDays(1) <= today)
+                BinanceArchivePiece piece = pieces[index];
+                if (ExchangeBase.CancellationToken.IsCancellationRequested)
                 {
-                    BinanceArchivePiece dayPiece = new(false, day, day.AddDays(1), false);
-                    var (dayStatus, dayKlines) = await DownloadAsync(PieceUrl(market, symbol.ExchangeName, intervalName, dayPiece), prefix);
-                    if (dayStatus != BinanceArchiveStatus.Found)
-                    {
-                        stopped = true;
-                        break;
-                    }
-                    files++;
-                    candles += await AddCandlesAsync(symbol, interval, dayKlines, fromDate, untilDate);
-                    covered = dayPiece.End < untilDate ? dayPiece.End : untilDate;
-                    day = day.AddDays(1);
-                }
-                if (!stopped && day < piece.End && day < untilDate)
                     stopped = true;
-                if (stopped)
                     break;
-                continue;
-            }
-            else
-            {
-                // A day that is not published yet, or a download that failed
-                stopped = true;
-                break;
-            }
+                }
 
-            covered = piece.End < untilDate ? piece.End : untilDate;
+                if (present[index])
+                {
+                    covered = piece.End < untilDate ? piece.End : untilDate;
+                    continue;
+                }
+
+                var (status, klines, bytes) = await downloads[index];
+                downloads[index] = Task.FromResult<(BinanceArchiveStatus, List<BinanceArchiveKline>, long)>((status, [], 0)); // release the klines
+                number++;
+                int added = 0;
+                if (status == BinanceArchiveStatus.Found)
+                    added = await AddCandlesAsync(symbol, interval, klines, fromDate, untilDate);
+                LogPiece(prefix, intervalName, piece, number, total, status, added, bytes);
+                if (status == BinanceArchiveStatus.Found)
+                {
+                    files++;
+                    candles += added;
+                }
+                else if (status == BinanceArchiveStatus.NotFound && piece.Monthly && !piece.Recent)
+                {
+                    // No history in that month
+                }
+                else if (status == BinanceArchiveStatus.NotFound && piece.Monthly)
+                {
+                    // Monthly file not published yet: the days of that month one by one
+                    DateTime day = piece.Start < fromDate.Date ? fromDate.Date : piece.Start;
+                    DateTime today = DateTime.UtcNow.Date;
+                    DateTime lastDay = piece.End;
+                    if (untilDate < lastDay)
+                        lastDay = untilDate;
+                    if (today < lastDay)
+                        lastDay = today;
+                    if (lastDay > day)
+                        total += (int)Math.Ceiling((lastDay - day).TotalDays);
+                    while (day < piece.End && day < untilDate && day.AddDays(1) <= today)
+                    {
+                        BinanceArchivePiece dayPiece = new(false, day, day.AddDays(1), false);
+                        var (dayStatus, dayKlines, dayBytes) = await DownloadAsync(PieceUrl(market, symbol.ExchangeName, intervalName, dayPiece), prefix);
+                        number++;
+                        int dayAdded = 0;
+                        if (dayStatus == BinanceArchiveStatus.Found)
+                            dayAdded = await AddCandlesAsync(symbol, interval, dayKlines, fromDate, untilDate);
+                        LogPiece(prefix, intervalName, dayPiece, number, total, dayStatus, dayAdded, dayBytes);
+                        if (dayStatus != BinanceArchiveStatus.Found)
+                        {
+                            stopped = true;
+                            break;
+                        }
+                        files++;
+                        candles += dayAdded;
+                        covered = dayPiece.End < untilDate ? dayPiece.End : untilDate;
+                        day = day.AddDays(1);
+                    }
+                    if (!stopped && day < piece.End && day < untilDate)
+                        stopped = true;
+                    if (stopped)
+                        break;
+                    continue;
+                }
+                else
+                {
+                    // A day that is not published yet, or a download that failed
+                    stopped = true;
+                    break;
+                }
+
+                covered = piece.End < untilDate ? piece.End : untilDate;
+            }
+        }
+        finally
+        {
+            // Nothing may still be running on the gate and the token when they are disposed
+            downloadCancel.Cancel();
+            await Task.WhenAll(downloads);
         }
 
         CandleTime coveredTime = CandleTime.FromDateTime(covered);
         if (files > 0 || coveredTime > from)
             GlobalData.AddTextToLogTab($"{prefix} archive {from.ToDateTime():yyyy-MM-dd HH:mm}..{covered:yyyy-MM-dd HH:mm} " +
-                $"received: {candles} from {files} file(s){(stopped ? ", rest via api" : "")}");
+                $"received: {candles} from {files} file(s){(skipped > 0 ? $", {skipped} already present" : "")}{(stopped ? ", rest via api" : "")}");
         return coveredTime > from ? coveredTime : from;
     }
 }

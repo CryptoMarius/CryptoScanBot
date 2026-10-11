@@ -265,6 +265,12 @@ public partial class RunResultsViewModel : ObservableObject
     /// </summary>
     public DataGridCollectionView RunsView { get; }
 
+    /// <summary>Raised when the user selects a run in the grid; the Capital tab follows it.</summary>
+    public event Action<int>? RunSelected;
+
+    /// <summary>Called by the grid when its selected row changes.</summary>
+    public void OnRunSelected(int runId) => RunSelected?.Invoke(runId);
+
     // Ticks while the Results tab is alive; each tick refreshes only the active run's row (no-op when no
     // run is running). 15s is plenty — the user wants "a bit more than the progress bar", not a live feed.
     private readonly DispatcherTimer _liveTimer;

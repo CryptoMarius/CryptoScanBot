@@ -1,6 +1,10 @@
 CryptoScanBot release historie:
 
 xx-10-2026 2.6.8
+- Altrady: Het onzichtbare browservenster is verdwenen; de chart gaat rechtstreeks naar de Altrady-applicatie, en lukt dat niet dan opent de gewone browser het adres
+- Binance: Het data-archief wordt alleen gebruikt als het via de API meerdere aanvragen zou kosten, en de bestanden komen een paar tegelijk binnen
+- Binance: Tijdens het ophalen van candles staat per bestand een regel in het log, zodat een lange inhaalslag niet stil lijkt te staan
+- Emulator: De kapitaallijn volgt de run die je in het resultatenrooster aanklikt
 - Trader: Een positie op een munt die de beurs niet meer verhandelt wordt afgesloten tegen de laatst bekende prijs; die bleef eerder voor altijd open staan met het geld vast
 - Trader: De scanner en Altrady rekenen de instaphoeveelheid nu op dezelfde manier uit, zodat beide administraties dezelfde hoeveelheid aanhouden
 - Binance: De geschiedenis komt uit het publieke data-archief in plaats van alleen via de API

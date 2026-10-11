@@ -12,7 +12,7 @@ public class CommandLaunchTradingAppHidden : CommandBase
         {
             dto.interval ??= GlobalData.IntervalListPeriod[GlobalData.Settings.General.DefaultInterval];
             System.Diagnostics.Debug.WriteLine($"CommandLaunchTradingAppHidden {dto.symbol.Name}");
-            System.Diagnostics.Debug.WriteLine($"Opening {dto.symbol.Name} in trading program via hidden browser");
+            System.Diagnostics.Debug.WriteLine($"Opening {dto.symbol.Name} in trading program via the Altrady socket");
 
             //this.ActivateTradingApp(GlobalData.Settings.General.TradingApp, dto.symbol, dto.interval, CryptoExternalUrlType.External);
 
@@ -27,13 +27,13 @@ public class CommandLaunchTradingAppHidden : CommandBase
             if (Url != "")
             {
                 GlobalData.AddTextToLogTab($"Linktools activate {GlobalData.Settings.General.TradingApp} {dto.symbol.Name} " +
-                    $"{dto.interval.Name} via the hidden browser: {Url}");
+                    $"{dto.interval.Name} via the Altrady socket, else the system browser: {Url}");
                 // Through the wrapper instead of straight at the service: it says so in the log when
                 // the hidden browser does not exist yet, where this threw a NullReferenceException.
                 // Since 06-10-2026 by way of the shared helper: the Altrady deep link goes over the
-                // local WebSocket first and only falls back to the hidden browser (App.OpenInHiddenBrowser,
-                // wired through CommandHelper.OpenHiddenBrowser at startup).
-                ExternalLinkHelper.OpenHidden(Url);
+                // local WebSocket first. The hidden browser it fell back to was removed on 11-10-2026;
+                // the system browser is the fallback now.
+                ExternalLinkHelper.OpenTradingAppLink(Url);
             }
         }
     }

@@ -17,8 +17,9 @@ namespace CryptoScanner.Core.Exchange.Altrady;
 /// <para>
 /// This replaces the detour the scanner used to need: loading the https address in an invisible
 /// browser window so its redirect to the altrady:// protocol would bring the application to the
-/// front. That window still exists in both hosts as the fallback for when the socket does not
-/// answer, for instance because Altrady is not running or an older version has no socket yet.
+/// front. That window was removed from both hosts on 11-10-2026; when the socket does not answer,
+/// for instance because Altrady is not running or an older version has no socket yet, the address
+/// goes to the system browser instead.
 /// </para>
 /// </summary>
 public static class AltradyDeepLink
@@ -38,7 +39,7 @@ public static class AltradyDeepLink
     /// <summary>
     /// Open the address in Altrady. The socket is tried first, on a worker thread so the click that
     /// caused it is not held up; when the socket does not take the link the <paramref name="fallback"/>
-    /// gets the original address (the hidden browser in the hosts). An address that is not an
+    /// gets the original address (the system browser in the hosts). An address that is not an
     /// Altrady deep link goes straight to the fallback.
     /// </summary>
     public static void Open(string url, Action<string> fallback)
@@ -65,7 +66,7 @@ public static class AltradyDeepLink
                 GlobalData.AddTextToLogTab($"Altrady: the local WebSocket failed for {route}: {error.Message}");
             }
 
-            GlobalData.AddTextToLogTab($"Altrady: the local WebSocket did not take {route}, using the hidden browser instead");
+            GlobalData.AddTextToLogTab($"Altrady: the local WebSocket did not take {route}, opening {url} in the system browser instead");
             try
             {
                 fallback(url);

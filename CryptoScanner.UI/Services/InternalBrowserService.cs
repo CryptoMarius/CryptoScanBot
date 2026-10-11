@@ -36,13 +36,10 @@ public class InternalBrowserService : IDisposable
     /// </summary>
     public Action<string>? OpenBrowserWindow { get; set; }
 
-    /// <summary>
-    /// Set by the host when it has an invisible browser of its own for the deep links that hand a
-    /// symbol to a trading application (Altrady). Those links are https addresses that
-    /// only redirect to the altrady:// protocol, so loading them in a browser the user never sees
-    /// takes them straight to the desktop application instead of by way of the Altrady website.
-    /// </summary>
-    public Action<string>? OpenHiddenBrowserWindow { get; set; }
+    // Until 11-10-2026 the host could also set OpenHiddenBrowserWindow here: an invisible browser
+    // of its own for the deep links that hand a symbol to Altrady, so the redirect to the altrady://
+    // protocol ran out of the user's sight. The local WebSocket of Altrady made that superfluous
+    // (Core ExternalLinkHelper.OpenTradingAppLink); the system browser is the fallback now.
 
     public void Navigate(string url, bool switchTab)
     {
@@ -150,12 +147,8 @@ public class InternalBrowserService : IDisposable
     {
         ExternalLinkHelper.OpenInternalBrowser = Navigate;
 
-        // The "hidden browser" targets (Altrady deep links) go to the host's invisible browser
-        // window when it has one — the Photino host does, and that is what removes the detour past
-        // the Altrady website. Resolved per call because the host sets the property after Register.
-        // Without one the system browser is the fallback: it does carry the user's Altrady session,
-        // unlike the plain HttpClient GET this host used before, which could never authenticate.
-        ExternalLinkHelper.OpenHiddenBrowser = url => (OpenHiddenBrowserWindow ?? ExternalLinkHelper.OpenSystemBrowser).Invoke(url);
+        // The Altrady deep links need no launcher from this host anymore: Core sends them over the
+        // local WebSocket of Altrady and opens the system browser when that does not answer.
 
         // The Avalonia MainWindow points the browser at BTC+quote as soon as it opens. Here the
         // symbols are not loaded yet at startup, so wait for the first symbols-loaded message.

@@ -83,9 +83,15 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary>
     /// Backs the Capital tab: the capital per day of the last finished run (open point 53). Loaded
-    /// once at start and again whenever a run finishes, next to the Results refresh.
+    /// once at start and again whenever a run finishes, next to the Results refresh, and for the
+    /// run the user selects in the Results grid.
     /// </summary>
     public CapitalCurveViewModel CapitalCurve { get; } = CreateCapitalCurve();
+
+    public MainWindowViewModel()
+    {
+        RunResults.RunSelected += CapitalCurve.ShowRun;
+    }
 
     private static CapitalCurveViewModel CreateCapitalCurve()
     {
@@ -333,7 +339,11 @@ public partial class MainWindowViewModel : ObservableObject
                         continue;
                     }
 
-                    SetStatus($"Fetching candles for {symbol.Name} ({symbolIdx}/{total})…");
+                    string symbolStatus = $"Fetching candles for {symbol.Name} ({symbolIdx}/{total})…";
+                    SetStatus(symbolStatus);
+                    // The archive download reports per file; shown behind the symbol so the status moves
+                    // during the twenty-odd seconds a symbol can take.
+                    GlobalData.CandleFetchProgress = text => SetStatus($"{symbolStatus}  {text}");
 
                     // One dict per symbol, exactly like the DLZ zone-calculation path: it tells
                     // ZoneCandleEngine.FetchFrom which intervals it has already materialised from
@@ -465,6 +475,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
         finally
         {
+            GlobalData.CandleFetchProgress = null;
             IsRunning = false;
             _cts?.Dispose();
             _cts = null;

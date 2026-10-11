@@ -38,7 +38,6 @@ class Program
     private static SymbolService? _symbolService;
     private static InternalBrowserService? _internalBrowser;
     private static TradingViewWindow? _tradingViewWindow;
-    private static HiddenBrowserWindow? _hiddenBrowserWindow;
 
     [STAThread]
     static void Main(string[] args)
@@ -228,10 +227,10 @@ class Program
         _tradingViewWindow = new TradingViewWindow(app.MainWindow);
         _internalBrowser.OpenBrowserWindow = url => _tradingViewWindow.Show(url);
 
-        // The Altrady deep links get an invisible window with a browser of its own, so
-        // the trading application comes up without the user first landing on the Altrady website.
-        _hiddenBrowserWindow = new HiddenBrowserWindow(app.MainWindow);
-        _internalBrowser.OpenHiddenBrowserWindow = url => _hiddenBrowserWindow.Navigate(url);
+        // The Altrady deep links used to get an invisible window with a browser of their own here
+        // (HiddenBrowserWindow), so the trading application came up without the user first landing
+        // on the Altrady website. Removed on 11-10-2026: the deep link goes over the local WebSocket
+        // of Altrady now, with the system browser as fallback (Core ExternalLinkHelper.OpenTradingAppLink).
 
         // Start the scanner engine (same sequence as Avalonia App.InitializeGlobalDataAsync)
         _scannerSession = app.Services.GetRequiredService<IScannerSession>();
@@ -540,7 +539,6 @@ class Program
         try { _logService?.Dispose(); } catch { }
         try { _symbolService?.Dispose(); } catch { }
         try { _tradingViewWindow?.Close(); } catch { }
-        try { _hiddenBrowserWindow?.Close(); } catch { }
         try { _internalBrowser?.Dispose(); } catch { }
 
         try

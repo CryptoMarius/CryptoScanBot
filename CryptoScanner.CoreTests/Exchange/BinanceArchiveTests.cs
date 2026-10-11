@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.Binance.Tests;
 
@@ -75,6 +76,61 @@ public class BinanceArchiveTests
         Assert.HasCount(1, klines);
         Assert.AreEqual(Utc(2025, 10, 1), klines[0].OpenTime);
         Assert.AreEqual(41003.5m, klines[0].QuoteVolume);
+    }
+
+    private static CryptoCandleList Candles3m(DateTime from, DateTime until)
+    {
+        CryptoCandleList candles = [];
+        for (CandleTime time = CandleTime.FromDateTime(from); time < CandleTime.FromDateTime(until); time += 3u)
+            candles.Add(time, new CryptoCandle { OpenTime = time });
+        return candles;
+    }
+
+    [TestMethod]
+    public void IsPiecePresent_MonthBuiltFrom1m_IsSkipped()
+    {
+        // 3m built from 1m from 30-12 23:50, while the 3m window starts at 23:00
+        DateTime from = Utc(2025, 12, 30, 23, 0);
+        DateTime until = Utc(2026, 10, 1);
+        CryptoCandleList candles = Candles3m(Utc(2025, 12, 30, 23, 51), until);
+        var pieces = BinanceArchive.PlanPieces(from, until, Utc(2026, 10, 11));
+
+        // December misses its first candles and has to come in; January is complete
+        Assert.IsFalse(BinanceArchive.IsPiecePresent(candles, 3, pieces[0], from, until));
+        Assert.IsTrue(BinanceArchive.IsPiecePresent(candles, 3, pieces[1], from, until));
+    }
+
+    [TestMethod]
+    public void IsPiecePresent_OneCandleMissing_IsDownloaded()
+    {
+        DateTime from = Utc(2026, 1, 1);
+        DateTime until = Utc(2026, 2, 1);
+        CryptoCandleList candles = Candles3m(from, until);
+        candles.Remove(CandleTime.FromDateTime(Utc(2026, 1, 15, 12, 0)));
+        var pieces = BinanceArchive.PlanPieces(from, until, Utc(2026, 10, 11));
+
+        Assert.IsFalse(BinanceArchive.IsPiecePresent(candles, 3, pieces[0], from, until));
+    }
+
+    [TestMethod]
+    public void MoreMissingThan_WarmUpBeforeBuiltPart_IsNotEnoughForTheArchive()
+    {
+        // 3m: 500 candles of warm-up missing in front of nine months that were built from 1m
+        DateTime from = Utc(2025, 12, 30, 23, 0);
+        DateTime until = Utc(2026, 10, 1);
+        CryptoCandleList candles = Candles3m(Utc(2025, 12, 31, 0, 0).AddMinutes(1500), until);
+
+        Assert.IsFalse(CandleBase.MoreMissingThan(candles, 3, CandleTime.FromDateTime(from), CandleTime.FromDateTime(until), 5000));
+        Assert.IsTrue(CandleBase.MoreMissingThan(candles, 3, CandleTime.FromDateTime(from), CandleTime.FromDateTime(until), 400));
+    }
+
+    [TestMethod]
+    public void MoreMissingThan_NothingPresent_GoesToTheArchive()
+    {
+        DateTime from = Utc(2026, 1, 1);
+        DateTime until = Utc(2026, 10, 1);
+
+        Assert.IsTrue(CandleBase.MoreMissingThan([], 1, CandleTime.FromDateTime(from), CandleTime.FromDateTime(until), 5000));
     }
 
     [TestMethod]

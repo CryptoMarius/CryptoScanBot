@@ -82,6 +82,16 @@ public partial class RunResultsView : UserControl
         // Delete action would hit the wrong one. Tunnelling so we see the press before the
         // ContextMenu's own handling consumes it.
         RunsGrid.AddHandler(PointerPressedEvent, OnGridPointerPressed, RoutingStrategies.Tunnel);
+
+        // The Capital tab shows the curve of the selected run
+        RunsGrid.SelectionChanged += OnRunsGridSelectionChanged;
+    }
+
+
+    private void OnRunsGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (RunsGrid.SelectedItem is RunRow row && DataContext is RunResultsViewModel viewModel)
+            viewModel.OnRunSelected(row.Id);
     }
 
 

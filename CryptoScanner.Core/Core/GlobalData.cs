@@ -111,6 +111,13 @@ public static class GlobalData
     public static string CandleProgressText { get; set; } = "";
 
     /// <summary>
+    /// Receives a short progress text from inside a long candle fetch (the file being downloaded from
+    /// an exchange archive), for a caller that wants to show it. The emulator sets it for the duration
+    /// of its "Fetch candles" step and clears it afterwards; null means nobody listens.
+    /// </summary>
+    public static Action<string>? CandleFetchProgress { get; set; }
+
+    /// <summary>
     /// Scanner settings
     /// </summary>
     public static SettingsBasic Settings { get; set; } = new();

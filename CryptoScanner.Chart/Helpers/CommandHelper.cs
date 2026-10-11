@@ -10,19 +10,14 @@ namespace CryptoScanner.Helpers;
 /// </summary>
 public static class CommandHelper
 {
-    // Host-supplied browser launchers. The scanner wires these to its App.OpenInInternalBrowser /
-    // App.OpenInHiddenBrowser at startup; the emulator (which has no embedded browser) leaves them
-    // null, so the internal/hidden path falls back to the system browser there.
+    // Host-supplied browser launcher. The scanner wires this to its App.OpenInInternalBrowser at
+    // startup; the emulator (which has no embedded browser) leaves it null, so the internal path
+    // falls back to the system browser there. (OpenHiddenBrowser went with the hidden browser
+    // window on 11-10-2026; the Altrady socket replaced it, see ExternalLinkHelper.OpenTradingAppLink.)
     public static Action<string, bool>? OpenInternalBrowser
     {
         get => Core.Helpers.ExternalLinkHelper.OpenInternalBrowser;
         set => Core.Helpers.ExternalLinkHelper.OpenInternalBrowser = value;
-    }
-
-    public static Action<string>? OpenHiddenBrowser
-    {
-        get => Core.Helpers.ExternalLinkHelper.OpenHiddenBrowser;
-        set => Core.Helpers.ExternalLinkHelper.OpenHiddenBrowser = value;
     }
 
     public static void ActivateTradingApp(CryptoTradingApp tradingApp,

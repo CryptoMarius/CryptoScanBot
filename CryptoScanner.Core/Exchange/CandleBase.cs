@@ -28,6 +28,12 @@ public class CandleBase(ExchangeBase api)
     private static readonly TimeSpan RateLimitAttemptDelay = TimeSpan.FromSeconds(5);
 
     /// <summary>
+    /// The download archive is only used when the api would need more than this many klines calls for
+    /// the missing stretch. Below that the api is as quick or quicker (see FetchFrom).
+    /// </summary>
+    private const int ArchiveMinimumCalls = 5;
+
+    /// <summary>
     /// Answers whether the caller should ask again after a refused request, and does the waiting.
     ///
     /// <para>
@@ -538,7 +544,21 @@ public class CandleBase(ExchangeBase api)
         // The api loop below then only asks for what the archive does not hold yet (today, and the
         // days the archive has not published). Emulator only: the scanner asks for short windows,
         // where a whole archive file per request would cost more than the api call it replaces.
-        if (GlobalData.IsEmulatorMode && unixLoop < unixMax)
+        //
+        // Only for a stretch the api would need several calls for. A call of 1000 1m candles took about
+        // 0.5 s, a daily archive file 0.56 s and a monthly one 1.8 s (Binance, measured 11-10-2026), so a
+        // few missing candles are quicker through the api than through a whole archive file.
+        //
+        // Counted on the candles that are really missing, not on the length of the stretch: the walk
+        // that hands this over stops at the first missing candle, and for 3m up to 1h that is the
+        // warm-up just before the part that was already built from 1m. Measured on the span, those
+        // 500-1500 candles went to the archive one small file at a time, about 1 s per interval, where
+        // the api skips the present candles and needs one or two calls (ZKUSDT, 11-10-2026).
+        long archiveMinimumCandles = (long)ArchiveMinimumCalls * ExchangeBase.ExchangeOptions.CandleLimit;
+        if (GlobalData.IsEmulatorMode && unixLoop < unixMax
+            && (unixMax - unixLoop) / interval.Duration > archiveMinimumCandles
+            && MoreMissingThan(symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList, interval.Duration,
+                unixLoop, unixMax, archiveMinimumCandles))
         {
             CryptoSymbolInterval archiveInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
             int countBefore = archiveInterval.CandleList.Count;
@@ -599,6 +619,26 @@ public class CandleBase(ExchangeBase api)
         //        $"{CandleTools.GetUnixDate(unixLoop).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()}) fetched {totalFetched}");
 
         return (totalFetched > 0, askedUpTo);
+    }
+
+
+    /// <summary>
+    /// True when more than <paramref name="limit"/> candles of [<paramref name="from"/>, <paramref name="until"/>)
+    /// are not in the list. Stops counting as soon as the answer is known.
+    /// </summary>
+    internal static bool MoreMissingThan(CryptoCandleList candles, uint duration, CandleTime from, CandleTime until, long limit)
+    {
+        long missing = 0;
+        for (CandleTime time = from; time < until; time += duration)
+        {
+            if (!candles.ContainsKey(time))
+            {
+                missing++;
+                if (missing > limit)
+                    return true;
+            }
+        }
+        return false;
     }
 
 
