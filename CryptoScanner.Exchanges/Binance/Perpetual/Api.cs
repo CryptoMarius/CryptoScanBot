@@ -263,7 +263,7 @@ public class Api : ExchangeBase
             {
                 Code = "BIFU",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/BIFU_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/dashboard#/d/BIFU_{QUOTE}_{BASE}?resolution={resolution}",
             },
             TradingView = new()
             {

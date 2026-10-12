@@ -248,7 +248,7 @@ public class Api : ExchangeBase
             {
                 Code = "HYPERLIQUID",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/HYPERLIQUID_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/dashboard#/d/HYPERLIQUID_{QUOTE}_{BASE}?resolution={resolution}",
             },
             TradingView = new()
             {

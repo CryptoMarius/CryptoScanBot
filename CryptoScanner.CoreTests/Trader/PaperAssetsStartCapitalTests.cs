@@ -174,6 +174,40 @@ public class PaperAssetsStartCapitalTests : TestBase
     }
 
 
+    /// <summary>
+    /// The reset of the trader settings screen hands out the list as that screen shows it, not the
+    /// saved one - the rows next to the button may not have been saved yet. The saved list stays
+    /// as it was.
+    /// </summary>
+    [TestMethod]
+    public void TheSettingsScreenResetUsesTheListOnScreen()
+    {
+        using CryptoDatabase database = new();
+        database.Open();
+        CryptoSymbol symbol = CreateTestSymbol(database);
+        DeleteAllPositionRelatedStuff(database);
+
+        var (quoteUsdt, _) = ArrangeTwoQuoteCoins(symbol);
+
+        GlobalData.Settings.Trading.PaperAssetDefaults =
+        [
+            new CryptoPaperAssetDefault { Name = quoteUsdt.Name, Total = 250m },
+        ];
+
+        PaperAssetsEditor.ResetToDefaults(GlobalData.ActiveExchange,
+        [
+            new CryptoPaperAssetDefault { Name = quoteUsdt.Name, Total = 900m },
+            new CryptoPaperAssetDefault { Name = "BTC", Total = 0.2m },
+        ]);
+
+        Assert.AreEqual(900m, GlobalData.ActiveExchange!.Data.AssetList[quoteUsdt.Name].Total,
+            "the amount on screen, not the saved 250");
+        Assert.AreEqual(0.2m, GlobalData.ActiveExchange!.Data.AssetList["BTC"].Total);
+        Assert.AreEqual(1, GlobalData.Settings.Trading.PaperAssetDefaults.Count, "the saved list is not touched");
+        Assert.AreEqual(250m, GlobalData.Settings.Trading.PaperAssetDefaults[0].Total);
+    }
+
+
     /// <summary>Half-filled rows from the settings screen are skipped, not handed out as nothing.</summary>
     [TestMethod]
     public void ADefaultAssetWithoutACoinOrAnAmountIsSkipped()

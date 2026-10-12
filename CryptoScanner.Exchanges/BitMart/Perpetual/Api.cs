@@ -148,7 +148,7 @@ public class Api : ExchangeBase
             {
                 Code = "BITMF",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/BITMF_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/dashboard#/d/BITMF_{QUOTE}_{BASE}?resolution={resolution}",
             },
             // No TradingView: it does not carry this exchange at all. Their symbol search answers an
             // empty list for exchange=BITMART where the same call on BINANCE returns the pairs

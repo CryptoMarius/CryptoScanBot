@@ -100,6 +100,14 @@ public class CryptoDatabase : IDisposable
                 // it must be applied on every Open. Harmless for the live scanner (only matters under
                 // contention, which the single-threaded live path never hits).
                 Connection.Execute("PRAGMA busy_timeout=5000;");
+                // Emulator only: do not wait for the disk on every commit. With WAL and the default
+                // synchronous=FULL a commit cost 1.78 ms on E:, with NORMAL 0.08 ms (11-10-2026), and a
+                // run does tens of thousands of them while the other threads wait for the write lock.
+                // NORMAL in WAL mode loses nothing on an application crash, only the last transactions
+                // on a power failure - and an emulator run can simply be repeated. Per-connection
+                // setting, so it has to be applied on every Open, like busy_timeout above.
+                if (GlobalData.IsEmulatorMode)
+                    Connection.Execute("PRAGMA synchronous=NORMAL;");
                 return;
             }
             catch (ObjectDisposedException) when (attempt < maxAttempts)

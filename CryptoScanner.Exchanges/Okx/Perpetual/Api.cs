@@ -279,7 +279,7 @@ public class Api : ExchangeBase
                 // The _SWAP suffix is part of the symbol name at Altrady, without it the market does not
                 // open. Note the order: Altrady puts the quote first, so it cannot be built from
                 // {EXCHANGENAME} ("SHIB-USDT-SWAP") either.
-                Url = "https://app.altrady.com/d/OKEXF_{QUOTE}_{BASE}_SWAP:{interval}",
+                Url = "https://app.altrady.com/dashboard#/d/OKEXF_{QUOTE}_{BASE}_SWAP?resolution={resolution}",
                 //https://app.altrady.com/dashboard#/d/OKEXF_USDT_SHIB_SWAP?resolution=5
             },
             TradingView = new()
@@ -319,7 +319,7 @@ public class Api : ExchangeBase
                         // becomes APR_UM-XPERP-310815, and the quote it files it under is USDC.
                         // Confirmed against their own code for APRUSDC on 28-08-2026, and the same
                         // shape holds for every one of the 155 contracts.
-                        Url = "https://app.altrady.com/d/OKEXF_{QUOTE}_{BASE}_UM-XPERP-{expiry}:{interval}",
+                        Url = "https://app.altrady.com/dashboard#/d/OKEXF_{QUOTE}_{BASE}_UM-XPERP-{expiry}?resolution={resolution}",
                     },
                     TradingView = new()
                     {

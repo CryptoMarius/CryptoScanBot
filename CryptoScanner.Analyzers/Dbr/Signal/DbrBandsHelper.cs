@@ -48,38 +48,55 @@ public static class DbrBandsHelper
             return result;
 
         for (int i = 0; i < count; i++)
-        {
-            ref DbrBandValue value = ref result[i];
-
-            // Donchian over the PREVIOUS BandLength candles, excluding the current one
-            // (Pine: ta.highest(high[1], len) / ta.lowest(low[1], len)).
-            if (i < settings.BandLength)
-                continue;
-
-            double highestHigh = double.MinValue;
-            double lowestLow = double.MaxValue;
-            for (int j = i - settings.BandLength; j < i; j++)
-            {
-                double high = (double)candles[j].High;
-                double low = (double)candles[j].Low;
-                if (high > highestHigh)
-                    highestHigh = high;
-                if (low < lowestLow)
-                    lowestLow = low;
-            }
-
-            double middle = (highestHigh + lowestLow) / 2;
-            double halfRange = (highestHigh - lowestLow) / 2;
-            double band = halfRange * (settings.OuterMult / 2.5);
-
-            value.HasBands = true;
-            value.Middle = middle;
-            value.Upper = middle + band;
-            value.Lower = middle - band;
-            value.BandWidthPct = middle != 0 ? band / middle * 100 : 0;
-        }
+            ComputeBandAt(candles, i, settings, ref result[i]);
 
         return result;
+    }
+
+    /// <summary>
+    /// The bands of the indexes [<paramref name="firstIndex"/>, <paramref name="lastIndex"/>] only;
+    /// every other entry of the (index-aligned) result stays empty. The signal reads the breaking
+    /// candle and the one before it, and computing all 260 to read two cost 152 of the 164 us per
+    /// evaluation (dbr, 11-10-2026: 0.19 ms per evaluation, 1718s in a run of 2858s). Same
+    /// arithmetic as <see cref="ComputeBands"/>, so the values are bit-identical.
+    /// </summary>
+    private static DbrBandValue[] ComputeBandsRange(List<CryptoCandle> candles, int firstIndex, int lastIndex)
+    {
+        var settings = DbrPlugin.Settings;
+        var result = new DbrBandValue[candles.Count];
+        for (int i = Math.Max(0, firstIndex); i <= lastIndex && i < candles.Count; i++)
+            ComputeBandAt(candles, i, settings, ref result[i]);
+        return result;
+    }
+
+    private static void ComputeBandAt(List<CryptoCandle> candles, int i, DbrSettings settings, ref DbrBandValue value)
+    {
+        // Donchian over the PREVIOUS BandLength candles, excluding the current one
+        // (Pine: ta.highest(high[1], len) / ta.lowest(low[1], len)).
+        if (i < settings.BandLength)
+            return;
+
+        double highestHigh = double.MinValue;
+        double lowestLow = double.MaxValue;
+        for (int j = i - settings.BandLength; j < i; j++)
+        {
+            double high = (double)candles[j].High;
+            double low = (double)candles[j].Low;
+            if (high > highestHigh)
+                highestHigh = high;
+            if (low < lowestLow)
+                lowestLow = low;
+        }
+
+        double middle = (highestHigh + lowestLow) / 2;
+        double halfRange = (highestHigh - lowestLow) / 2;
+        double band = halfRange * (settings.OuterMult / 2.5);
+
+        value.HasBands = true;
+        value.Middle = middle;
+        value.Upper = middle + band;
+        value.Lower = middle - band;
+        value.BandWidthPct = middle != 0 ? band / middle * 100 : 0;
     }
 
     /// <summary>
@@ -139,7 +156,8 @@ public static class DbrBandsHelper
             idx = candles.Count - 1;
         }
 
-        DbrBandValue[] bands = ComputeBands(candles);
+        // IsLongBreak/IsShortBreak read the bands of idx and idx - 1 (stacking rule), nothing else.
+        DbrBandValue[] bands = ComputeBandsRange(candles, idx - 1, idx);
         return isLong
             ? IsLongBreak(candles, bands, idx, out bandWidthPct, out bandPrice, out reason)
             : IsShortBreak(candles, bands, idx, out bandWidthPct, out bandPrice, out reason);
@@ -173,7 +191,8 @@ public static class DbrBandsHelper
         if (idx < 0)
             idx = candles.Count - 1;
 
-        DbrBandValue[] bands = ComputeBands(candles);
+        // The walk below reads idx down to idx - withinCandles + 1, plus the one before each (stacking rule).
+        DbrBandValue[] bands = ComputeBandsRange(candles, idx - withinCandles, idx);
         for (int i = 0; i < withinCandles && idx - i >= 0; i++)
         {
             bool broke = isLong

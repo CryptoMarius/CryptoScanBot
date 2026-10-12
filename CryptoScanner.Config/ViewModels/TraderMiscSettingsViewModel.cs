@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Trader;
 
 using System.Collections.ObjectModel;
 
@@ -72,6 +74,13 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
 
     public Dictionary<string, CryptoTradeVia> TradeViaList => _tradeViaList;
 
+    /// <summary>
+    /// The reset button is only offered in the scanner: the emulator hands out the start capital at
+    /// the start of every run itself, and shows this screen for the settings of a run, not of a
+    /// running paper account.
+    /// </summary>
+    public bool CanResetPaperAssets => !GlobalData.IsEmulatorMode;
+
     [RelayCommand]
     private void AddPaperAssetDefault()
     {
@@ -83,6 +92,28 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     {
         if (PaperAssetDefaults.Count > 0)
             PaperAssetDefaults.RemoveAt(PaperAssetDefaults.Count - 1);
+    }
+
+    /// <summary>
+    /// Throw every paper balance away and hand out the default asset list as this screen shows it -
+    /// also when it has not been saved yet. See PaperAssetsEditor.ResetToDefaults.
+    /// </summary>
+    public void ResetPaperAssets()
+    {
+        PaperAssetsEditor.ResetToDefaults(GlobalData.ActiveExchange, CollectPaperAssetDefaults());
+    }
+
+    /// <summary>The rows of the default asset list as settings; a row without a coin is left out.</summary>
+    private List<CryptoPaperAssetDefault> CollectPaperAssetDefaults()
+    {
+        List<CryptoPaperAssetDefault> list = [];
+        foreach (PaperAssetDefaultItemViewModel item in PaperAssetDefaults)
+        {
+            string name = item.Name.Trim().ToUpperInvariant();
+            if (name.Length > 0)
+                list.Add(new CryptoPaperAssetDefault { Name = name, Total = item.Total });
+        }
+        return list;
     }
 
     public void LoadConfig(SettingsTrading settings, SettingsGeneral general)
@@ -115,12 +146,7 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
 
         // A row without a coin is an empty row somebody added and left alone, not a setting.
         settings.PaperAssetDefaults.Clear();
-        foreach (PaperAssetDefaultItemViewModel item in PaperAssetDefaults)
-        {
-            string name = item.Name.Trim().ToUpperInvariant();
-            if (name.Length > 0)
-                settings.PaperAssetDefaults.Add(new CryptoPaperAssetDefault { Name = name, Total = item.Total });
-        }
+        settings.PaperAssetDefaults.AddRange(CollectPaperAssetDefaults());
         settings.GlobalBuyCooldownTime = GlobalBuyCooldownTime;
         settings.SignalCooldownAfterTradeTime = SignalCooldownAfterTradeTime;
         settings.LossCooldownTime = LossCooldownTime;

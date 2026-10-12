@@ -164,6 +164,12 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
+                        <!-- Start over with the list above, the same reset as Tools -> Paper assets -->
+                        <Button Content="Reset paper assets" Click="OnResetPaperAssetsClick"
+                                IsVisible="{Binding CanResetPaperAssets}"
+                                FontSize="12" Margin="0,4,0,0"
+                                ToolTip.Tip="Throw every paper balance away right now and hand out the default asset list above, as it stands on screen - also when it has not been saved yet. Empty hands out 10.000 per traded quote coin. The same reset as Tools -> Paper assets."/>
+
                     </StackPanel>
                 </HeaderedContentControl>
 

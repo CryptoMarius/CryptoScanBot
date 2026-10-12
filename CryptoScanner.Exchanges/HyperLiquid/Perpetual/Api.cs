@@ -271,7 +271,7 @@ public class Api : ExchangeBase
             {
                 Code = "HYPERLIQUIDF",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/HYPERLIQUIDF_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/dashboard#/d/HYPERLIQUIDF_{QUOTE}_{BASE}?resolution={resolution}",
             },
             // TradingView carries part of the deployed markets and not all of them: XYZ100USDC.P,
             // SP500USDC.P and BRENTOILUSDC.P exist there on 27-08-2026, GOLDUSDC.P and SNDKUSDC.P do
@@ -303,7 +303,7 @@ public class Api : ExchangeBase
                 {
                     Code = "HYPERLIQUIDF",
                     Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/HYPERLIQUIDF_{QUOTE}_{BASE}_{PRODUCT}:{interval}",
+                    Url = "https://app.altrady.com/dashboard#/d/HYPERLIQUIDF_{QUOTE}_{BASE}_{PRODUCT}?resolution={resolution}",
                 },
                 TradingView = new()
                 {

@@ -151,6 +151,18 @@
                             }
                         </tbody>
                     </table>
+
+                    @* Start over with the list above, the same reset as Tools -> Paper assets. The web
+                       scanner has no emulator mode, but the check keeps it equal to the Avalonia view. *@
+                    @if (!GlobalData.IsEmulatorMode)
+                    {
+                        <div class="field settings-table-buttons">
+                            <button class="btn btn-secondary" @onclick="() => _confirmResetPaperAssetsVisible = true"
+                                    title="Throw every paper balance away right now and hand out the default asset list above, as it stands on screen - also when it has not been saved yet. Empty hands out 10.000 per traded quote coin. The same reset as Tools -> Paper assets.">
+                                Reset paper assets
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -437,6 +449,12 @@
 
 </div>
 
+@* Deliberately behind a confirmation: this wipes the balances of a running paper session. *@
+<ConfirmDialog @bind-Visible="_confirmResetPaperAssetsVisible"
+               Title="Reset paper assets"
+               Message="Throw every paper balance away and hand out the default paper assets again?"
+               OnConfirmed="OnResetPaperAssetsConfirmed" />
+
 @code {
     private int _subTab;
     private TextualSideData _longSide = new();
@@ -564,6 +582,30 @@
     {
         if (_paperAssetDefaults.Count > 0)
             _paperAssetDefaults.RemoveAt(_paperAssetDefaults.Count - 1);
+    }
+
+    private bool _confirmResetPaperAssetsVisible;
+
+    /// <summary>
+    /// Throw every paper balance away and hand out the default asset list as this screen shows it -
+    /// also when it has not been saved yet. See PaperAssetsEditor.ResetToDefaults.
+    /// </summary>
+    private void OnResetPaperAssetsConfirmed()
+    {
+        PaperAssetsEditor.ResetToDefaults(GlobalData.ActiveExchange, CollectPaperAssetDefaults());
+    }
+
+    /// <summary>The rows of the default asset list as settings; a row without a coin is left out.</summary>
+    private List<CryptoPaperAssetDefault> CollectPaperAssetDefaults()
+    {
+        List<CryptoPaperAssetDefault> list = [];
+        foreach (var entry in _paperAssetDefaults)
+        {
+            string name = (entry.Name ?? "").Trim().ToUpperInvariant();
+            if (name.Length > 0)
+                list.Add(new CryptoPaperAssetDefault { Name = name, Total = entry.Total });
+        }
+        return list;
     }
 
     private void RemoveDca()

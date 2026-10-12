@@ -358,11 +358,16 @@ public sealed class ReplayRunner
                 // timeframes from a lower one — the fetch computed them once and wrote them away, so
                 // recomputing them here is duplicated work AND a second implementation that can drift
                 // from what is stored.
-                var replays = new List<SymbolReplay>();
+                //
+                // Loaded in parallel: one symbol on one thread took 5.5s per chunk on 121 coins (214s of
+                // a 2415s run, 11-10-2026) while the other cores sat idle. Every load opens its own
+                // read connection, and the result array keeps the symbol order, so the replay is the same.
+                var loadedReplays = new SymbolReplay[symbols.Count];
                 int chunkBars = 0;
                 long loadStart = Stopwatch.GetTimestamp();
-                foreach (var symbol in symbols)
+                Parallel.For(0, symbols.Count, parallelOptions, index =>
                 {
+                    var symbol = symbols[index];
                     Dictionary<CryptoIntervalPeriod, CryptoCandleList> perInterval = [];
                     foreach (CryptoInterval interval in GlobalData.IntervalList)
                     {
@@ -370,12 +375,13 @@ public sealed class ReplayRunner
                             symbol, chunk.LoadFrom(interval.Duration), chunk.LoadTo, interval);
                         perInterval[interval.IntervalPeriod] = list;
                         if (interval.IntervalPeriod == baseInterval.IntervalPeriod)
-                            chunkBars += list.Count;
+                            Interlocked.Add(ref chunkBars, list.Count);
                     }
                     var replay = new SymbolReplay { Symbol = symbol, Candles = perInterval };
                     replay.ResetCursors(windowFrom);
-                    replays.Add(replay);
-                }
+                    loadedReplays[index] = replay;
+                });
+                var replays = new List<SymbolReplay>(loadedReplays);
                 // The stored barometer series of this chunk, so a reused series is really read back
                 // (see BarometerReplay.LoadStoredSeries for what happened without this).
                 barometer?.LoadStoredSeries(windowFrom, chunk.End);

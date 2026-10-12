@@ -351,7 +351,7 @@ public class Api : ExchangeBase
             {
                 Code = "BYBI",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/BYBI_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/dashboard#/d/BYBI_{QUOTE}_{BASE}?resolution={resolution}",
             },
             TradingView = new()
             {

@@ -45,6 +45,25 @@ public class SettingsLinksDeployedTests
     }
 
     private static readonly CryptoInterval Interval30m = new() { Name = "30m", Duration = 30 };
+    private static readonly CryptoInterval Interval1d = new() { Name = "1d", Duration = 1440 };
+
+
+    /// <summary>
+    /// Altrady reads the resolution as a TradingView code: minutes within a day, a letter from a
+    /// day up. TradingView takes the minutes as they are.
+    /// </summary>
+    [TestMethod]
+    public void ADayInterval_IsTheLetterDForAltradyAndMinutesForTradingView()
+    {
+        var (links, exchange) = Setup();
+        CryptoSymbol ada = CreateSymbol(exchange, "ADA", CryptoProduct.Perpetual, "ADA");
+
+        var (altrady, _) = links.GetExternalRef(exchange, CryptoTradingApp.Altrady, false, ada, Interval1d);
+        var (tradingView, _) = links.GetExternalRef(exchange, CryptoTradingApp.TradingView, false, ada, Interval1d);
+
+        Assert.AreEqual("https://app.altrady.com/dashboard#/d/HYPERLIQUIDF_USDC_ADA?resolution=D", altrady);
+        Assert.AreEqual("https://www.tradingview.com/chart/?symbol=HYPERLIQUID:ADAUSDC.P&interval=1440", tradingView);
+    }
 
 
     [TestMethod]
@@ -55,7 +74,7 @@ public class SettingsLinksDeployedTests
 
         var (url, _) = links.GetExternalRef(exchange, CryptoTradingApp.Altrady, false, tesla, Interval30m);
 
-        Assert.AreEqual("https://app.altrady.com/d/HYPERLIQUIDF_USDC_TSLA_XYZ:30", url);
+        Assert.AreEqual("https://app.altrady.com/dashboard#/d/HYPERLIQUIDF_USDC_TSLA_XYZ?resolution=30", url);
     }
 
 
@@ -83,7 +102,7 @@ public class SettingsLinksDeployedTests
         var (altrady, _) = links.GetExternalRef(exchange, CryptoTradingApp.Altrady, false, ada, Interval30m);
         var (tradingView, _) = links.GetExternalRef(exchange, CryptoTradingApp.TradingView, false, ada, Interval30m);
 
-        Assert.AreEqual("https://app.altrady.com/d/HYPERLIQUIDF_USDC_ADA:30", altrady);
+        Assert.AreEqual("https://app.altrady.com/dashboard#/d/HYPERLIQUIDF_USDC_ADA?resolution=30", altrady);
         Assert.AreEqual("https://www.tradingview.com/chart/?symbol=HYPERLIQUID:ADAUSDC.P&interval=30", tradingView);
     }
 

@@ -87,7 +87,7 @@ public class SettingsLinksOkxTests
         var (okx, _) = links.GetExternalRef(exchange, CryptoTradingApp.ExchangeUrl, false, pltr, Interval15m);
 
         Assert.AreEqual("https://www.tradingview.com/chart/?symbol=OKX:PLTRUSD.UMQ2031&interval=15", tradingView);
-        Assert.AreEqual("https://app.altrady.com/d/OKEXF_USDC_PLTR_UM-XPERP-310801:15", altrady);
+        Assert.AreEqual("https://app.altrady.com/dashboard#/d/OKEXF_USDC_PLTR_UM-XPERP-310801?resolution=15", altrady);
         Assert.AreEqual("https://www.okx.com/trade-futures/pltr-usd_um_xperp-310801", okx);
     }
 
@@ -102,7 +102,7 @@ public class SettingsLinksOkxTests
         var (altrady, _) = links.GetExternalRef(exchange, CryptoTradingApp.Altrady, false, asts, Interval15m);
 
         Assert.AreEqual("https://www.tradingview.com/chart/?symbol=OKX:ASTSUSDT.P&interval=15", tradingView);
-        Assert.AreEqual("https://app.altrady.com/d/OKEXF_USDT_ASTS_SWAP:15", altrady);
+        Assert.AreEqual("https://app.altrady.com/dashboard#/d/OKEXF_USDT_ASTS_SWAP?resolution=15", altrady);
     }
 
 

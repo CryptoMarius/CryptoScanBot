@@ -145,7 +145,7 @@ public class Api : ExchangeBase
             {
                 Code = "MEXC",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/MEXC_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/dashboard#/d/MEXC_{QUOTE}_{BASE}?resolution={resolution}",
             },
             TradingView = new()
             {

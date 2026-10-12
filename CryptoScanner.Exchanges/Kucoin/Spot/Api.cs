@@ -155,7 +155,7 @@ public class Api : ExchangeBase
             {
                 Code = "KUCN",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/KUCN_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/dashboard#/d/KUCN_{QUOTE}_{BASE}?resolution={resolution}",
             },
             TradingView = new()
             {

@@ -502,4 +502,73 @@ public class DbrBandsTests
 
         DbrPlugin.Settings.MaxCandleSizeRatio = 0;
     }
+
+    // ── Signal path computes only the bands it reads ─────────────────────
+
+    /// <summary>
+    /// The signal path computes the bands of the breaking candle and the one before it only
+    /// (11-10-2026, it used to compute all 260). Every verdict, band price and percentage has to
+    /// be exactly what the full computation over the same snapshot gives - on every candle of a
+    /// series with breaks in both directions, with and without stacking.
+    /// </summary>
+    [TestMethod]
+    public void BandBreak_SameVerdictAsFullComputation()
+    {
+        List<CryptoCandle> candles = MakeCandles(600, amplitude: 25.0);
+        bool allowStackBefore = DbrPlugin.Settings.AllowStack;
+        int breaks = 0;
+        try
+        {
+            foreach (bool allowStack in new[] { true, false })
+            {
+                DbrPlugin.Settings.AllowStack = allowStack;
+                for (int end = 30; end <= candles.Count; end += 1)
+                {
+                    List<CryptoCandle> prefix = candles.GetRange(0, end);
+                    CryptoSymbolInterval si = LoadSymbolInterval(prefix);
+                    List<CryptoCandle> snapshot = prefix.GetRange(Math.Max(0, end - 260), Math.Min(260, end));
+                    DbrBandValue[] full = DbrBandsHelper.ComputeBands(snapshot);
+                    int idx = snapshot.Count - 1;
+                    CandleTime openTime = prefix[^1].OpenTime;
+
+                    bool expectLong = DbrBandsHelper.IsLongBreak(snapshot, full, idx, out double expLongPct, out double expLongBand, out string expLongReason);
+                    bool gotLong = DbrBandsHelper.IsLowerBandBreak(si, openTime, out double gotLongPct, out double gotLongBand, out string gotLongReason, exactCandle: true);
+                    Assert.AreEqual(expectLong, gotLong, $"long verdict at {end}");
+                    Assert.AreEqual(expLongPct, gotLongPct, $"long percentage at {end}");
+                    Assert.AreEqual(expLongBand, gotLongBand, $"long band at {end}");
+                    Assert.AreEqual(expLongReason, gotLongReason, $"long reason at {end}");
+
+                    bool expectShort = DbrBandsHelper.IsShortBreak(snapshot, full, idx, out double expShortPct, out double expShortBand, out string expShortReason);
+                    bool gotShort = DbrBandsHelper.IsUpperBandBreak(si, openTime, out double gotShortPct, out double gotShortBand, out string gotShortReason, exactCandle: true);
+                    Assert.AreEqual(expectShort, gotShort, $"short verdict at {end}");
+                    Assert.AreEqual(expShortPct, gotShortPct, $"short percentage at {end}");
+                    Assert.AreEqual(expShortBand, gotShortBand, $"short band at {end}");
+                    Assert.AreEqual(expShortReason, gotShortReason, $"short reason at {end}");
+
+                    if (expectLong || expectShort)
+                        breaks++;
+
+                    // The lookback walks several candles back, each with the one before it.
+                    int expectedAgo = -1;
+                    for (int i = 0; i < 5 && idx - i >= 0; i++)
+                    {
+                        if (DbrBandsHelper.IsLongBreak(snapshot, full, idx - i, out _, out _, out _))
+                        {
+                            expectedAgo = i;
+                            break;
+                        }
+                    }
+                    bool found = DbrBandsHelper.TryFindRecentBreak(si, openTime, isLong: true, withinCandles: 5, out int candlesAgo);
+                    Assert.AreEqual(expectedAgo >= 0, found, $"lookback found at {end}");
+                    if (found)
+                        Assert.AreEqual(expectedAgo, candlesAgo, $"lookback candles ago at {end}");
+                }
+            }
+        }
+        finally
+        {
+            DbrPlugin.Settings.AllowStack = allowStackBefore;
+        }
+        Assert.IsTrue(breaks > 20, $"the series has to contain band breaks to prove anything ({breaks})");
+    }
 }

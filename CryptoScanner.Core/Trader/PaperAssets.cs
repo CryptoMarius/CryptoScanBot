@@ -48,10 +48,15 @@ public class PaperAssets
     /// coin. Zero says there is no such amount - the scanner passes zero, so a paper account whose
     /// default asset list is empty starts at nothing and says so instead of inventing money.
     /// </para>
+    /// <para>
+    /// <paramref name="defaults"/> replaces the saved list for this one call - the trader settings
+    /// screen resets with the rows it shows, which may not have been saved yet.
+    /// </para>
     /// </summary>
-    private static void SeedStartBalances(Model.CryptoExchange activeExchange, decimal fallback, bool logToTab)
+    private static void SeedStartBalances(Model.CryptoExchange activeExchange, decimal fallback, bool logToTab,
+        List<CryptoPaperAssetDefault>? defaults = null)
     {
-        List<CryptoPaperAssetDefault> defaults = GlobalData.Settings.Trading.PaperAssetDefaults;
+        defaults ??= GlobalData.Settings.Trading.PaperAssetDefaults;
         if (defaults.Count > 0)
         {
             foreach (CryptoPaperAssetDefault entry in defaults)
@@ -199,9 +204,11 @@ public class PaperAssets
     /// Wipe every paper balance and hand out the starting balances again - the default asset list
     /// when there is one, and otherwise the traded quote coins at <paramref name="startCapital"/>
     /// (see <see cref="SeedStartBalances"/>). The emulator calls this at the start of a run so every
-    /// run starts with the same money; the UI offers it as a "start over".
+    /// run starts with the same money; the UI offers it as a "start over". <paramref name="defaults"/>
+    /// takes the place of the saved default asset list, null keeps the saved one.
     /// </summary>
-    public static void ResetAssets(Model.CryptoExchange activeExchange, decimal startCapital)
+    public static void ResetAssets(Model.CryptoExchange activeExchange, decimal startCapital,
+        List<CryptoPaperAssetDefault>? defaults = null)
     {
         activeExchange.Data.AssetListSemaphore.Wait();
         try
@@ -224,7 +231,7 @@ public class PaperAssets
 
             // Silent: the emulator resets at the start of every run, and a line per coin per run
             // buries the log. The caller says what it handed out.
-            SeedStartBalances(activeExchange, startCapital, logToTab: false);
+            SeedStartBalances(activeExchange, startCapital, logToTab: false, defaults);
         }
         finally
         {

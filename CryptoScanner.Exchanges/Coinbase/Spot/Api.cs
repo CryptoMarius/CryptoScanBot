@@ -187,7 +187,7 @@ public class Api : ExchangeBase
                 // valid exchange values ("Coinbase or GDAX")
                 Code = "GDAX",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/GDAX_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/dashboard#/d/GDAX_{QUOTE}_{BASE}?resolution={resolution}",
             },
             TradingView = new()
             {

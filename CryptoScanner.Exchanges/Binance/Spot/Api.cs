@@ -269,7 +269,7 @@ public class Api : ExchangeBase
             {
                 Code = "BINA",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/BINA_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/dashboard#/d/BINA_{QUOTE}_{BASE}?resolution={resolution}",
             },
             TradingView = new()
             {

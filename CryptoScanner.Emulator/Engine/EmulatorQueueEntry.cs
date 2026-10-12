@@ -24,6 +24,13 @@ public class EmulatorSideConfig
     /// <summary>Override Signal.{Side}.IntervalTrend.List for this side.</summary>
     public List<string>? TrendIntervals { get; set; }
 
+    /// <summary>
+    /// Override Signal.{Side}.IntervalTrend.Inverted: true asks the trend of TrendIntervals AGAINST
+    /// the side (bearish for long, bullish for short), for strategies that trade against the trend
+    /// such as dbr (open point 51). Without this key a queue file could not reach it at all.
+    /// </summary>
+    public bool? TrendIntervalsInverted { get; set; }
+
     /// <summary>Override Signal.{Side}.Barometer.List. Key = interval, value = [min, max].</summary>
     public Dictionary<string, decimal[]>? Barometer { get; set; }
 
@@ -65,6 +72,7 @@ public class EmulatorSideConfig
             Strategy = target?.Strategy,
             Intervals = target?.Intervals,
             TrendIntervals = target?.TrendIntervals,
+            TrendIntervalsInverted = target?.TrendIntervalsInverted,
             Barometer = target?.Barometer,
             BarometerConsensusActive = target?.BarometerConsensusActive,
             BarometerMinConsensus = target?.BarometerMinConsensus,
@@ -80,6 +88,7 @@ public class EmulatorSideConfig
             result.Strategy ??= mirrorSource.Strategy;
             result.Intervals ??= mirrorSource.Intervals;
             result.TrendIntervals ??= mirrorSource.TrendIntervals;
+            result.TrendIntervalsInverted ??= mirrorSource.TrendIntervalsInverted;
             result.Barometer ??= mirrorSource.Barometer;
             result.BarometerConsensusActive ??= mirrorSource.BarometerConsensusActive;
             result.BarometerMinConsensus ??= mirrorSource.BarometerMinConsensus;
@@ -115,6 +124,9 @@ public class EmulatorSideConfig
 
         if (config.TrendIntervals != null)
             signal.IntervalTrend.List = new List<string>(config.TrendIntervals);
+
+        if (config.TrendIntervalsInverted.HasValue)
+            signal.IntervalTrend.Inverted = config.TrendIntervalsInverted.Value;
 
         if (config.Barometer != null)
             signal.Barometer.List = config.Barometer.ToDictionary(kv => kv.Key, kv => (kv.Value[0], kv.Value[1]));

@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Exchange.Altrady;
 using CryptoScanner.Core.Model;
 
 using System.Globalization;
@@ -36,6 +37,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     //altrady://market/BINA_ETH_LOKA:2
     ///https://app.altrady.com/d/BINA_BTC_BETA:1
     ///https://app.altrady.com/d/BINA_BTC_USDT:2
+    ///https://app.altrady.com/dashboard#/d/BINA_USDT_BTC?resolution=60 (the documented form, used since 11-10-2026)
     ///https://app.muunship.com/chart/BN-BETABTC?l=5&resolution=1
     ///https://www.tradingview.com/chart/?symbol=BINANCE:BETABTC&interval=1
 
@@ -175,6 +177,13 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             string intervalCode = ((int)interval.Duration).ToString();
             urlTemplate = urlTemplate.Replace("{interval}", intervalCode.ToLower());
             urlTemplate = urlTemplate.Replace("{INTERVAL}", intervalCode.ToUpper());
+
+            // Interval: the TradingView resolution code Altrady reads behind ?resolution= (since
+            // 11-10-2026 the Altrady templates use this instead of :{interval}). Minutes within a
+            // day, letter codes from a day up: 1440 is D, 10080 is W.
+            string resolutionCode = AltradyDeepLink.ResolutionOf(intervalCode);
+            urlTemplate = urlTemplate.Replace("{resolution}", resolutionCode);
+            urlTemplate = urlTemplate.Replace("{RESOLUTION}", resolutionCode);
 
             // Interval: name 1h, 2h etc..
             urlTemplate = urlTemplate.Replace("{intervalname}", interval.Name.ToLower());

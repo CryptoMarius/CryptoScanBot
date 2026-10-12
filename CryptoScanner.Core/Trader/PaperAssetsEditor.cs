@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 
 using System.Globalization;
 
@@ -186,20 +187,37 @@ public static class PaperAssetsEditor
     }
 
 
-    /// <summary>Throw everything away and hand out the start capital again.</summary>
-    public static void Reset(Model.CryptoExchange? activeExchange, decimal startCapital)
+    /// <summary>
+    /// Throw everything away and hand out the start capital again. <paramref name="defaultAssets"/>
+    /// replaces the saved default asset list for this reset; null uses the saved one.
+    /// </summary>
+    public static void Reset(Model.CryptoExchange? activeExchange, decimal startCapital,
+        List<CryptoPaperAssetDefault>? defaultAssets = null)
     {
         if (activeExchange == null)
             return;
 
-        PaperAssets.ResetAssets(activeExchange, startCapital);
+        PaperAssets.ResetAssets(activeExchange, startCapital, defaultAssets);
         // Which of the two roads was taken is worth reading back afterwards, so say it here.
-        int defaults = GlobalData.Settings.Trading.PaperAssetDefaults.Count;
+        int defaults = (defaultAssets ?? GlobalData.Settings.Trading.PaperAssetDefaults).Count;
         if (defaults > 0)
             GlobalData.AddTextToLogTab($"Paper assets reset to the {defaults} default asset(s)");
         else
             GlobalData.AddTextToLogTab($"Paper assets reset to {startCapital.ToString0()} per traded quote coin");
         CaptureToday(activeExchange);
+    }
+
+
+    /// <summary>
+    /// The reset of the trader settings screen: start over with the default asset list as that screen
+    /// shows it, which may not have been saved yet - the button sits right next to that list, so
+    /// what is on screen is what the user expects to get. An empty list falls back to
+    /// <see cref="PaperAssets.DefaultStartCapital"/> per traded quote coin, the same amount deleting
+    /// all positions hands out.
+    /// </summary>
+    public static void ResetToDefaults(Model.CryptoExchange? activeExchange, List<CryptoPaperAssetDefault> defaultAssets)
+    {
+        Reset(activeExchange, PaperAssets.DefaultStartCapital, defaultAssets);
     }
 
 
