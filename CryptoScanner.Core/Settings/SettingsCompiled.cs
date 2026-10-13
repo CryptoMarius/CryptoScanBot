@@ -42,6 +42,12 @@ public class SettingsCompiled
     public List<(decimal minValue, decimal maxValue)> SymbolTrendSecondary { get; set; } = [];
     public bool SymbolTrendSecondaryLog = false;
 
+    // Market RSI band in which the signal is skipped (mirrors SettingsTextualMarketRsi)
+    public bool MarketRsiActive = false;
+    public decimal MarketRsiMinimum = 45m;
+    public decimal MarketRsiMaximum = 55m;
+    public bool MarketRsiLog = false;
+
     // Via interval + Value (ranged)
     // Minimale barometer om de meldingen te genereren
     public Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> Barometer { get; set; } = [];
@@ -139,6 +145,12 @@ public class SettingsCompiled
                 SymbolTrendSecondary.Add((minValue, maxValue));
         }
         SymbolTrendSecondaryLog = settings.SymbolTrendSecondary.Log;
+
+        // Market RSI band in which the signal is skipped
+        MarketRsiActive = settings.MarketRsi.Active;
+        MarketRsiMinimum = Math.Min(settings.MarketRsi.Minimum, settings.MarketRsi.Maximum);
+        MarketRsiMaximum = Math.Max(settings.MarketRsi.Minimum, settings.MarketRsi.Maximum);
+        MarketRsiLog = settings.MarketRsi.Log;
 
 
         Strategy.Clear();

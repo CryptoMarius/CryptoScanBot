@@ -372,6 +372,8 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         flyout.Items.Add(new MenuItem { Header = "Open Tradingview internal", Command = new CommandLaunchTradingViewInternal(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open Tradingview External", Command = new CommandLaunchTradingViewExternal(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open the exchange", Command = new CommandLaunchExchange(), CommandParameter = parameter });
+        if (_targetMenu == TargetMenu.Signal)
+            flyout.Items.Add(new MenuItem { Header = "Send to Altrady as trade setup", Command = new CommandAltradyTradeSetup(), CommandParameter = parameter });
 
         if (_targetMenu == TargetMenu.Position)
         {

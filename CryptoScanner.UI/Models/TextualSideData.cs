@@ -32,6 +32,11 @@ public class TextualSideData
     public decimal SymbolTrendSecondaryMin { get; set; } = -100m;
     public decimal SymbolTrendSecondaryMax { get; set; } = 100m;
     public bool SymbolTrendSecondaryLog { get; set; }
+    // The market RSI band in which a signal is skipped (off by default)
+    public bool MarketRsiActive { get; set; }
+    public decimal MarketRsiMin { get; set; } = 45m;
+    public decimal MarketRsiMax { get; set; } = 55m;
+    public bool MarketRsiLog { get; set; }
 
     private static readonly string[] BarometerIntervals = ["15m", "30m", "1h", "4h", "1d"];
 
@@ -106,6 +111,11 @@ public class TextualSideData
         }
         side.SymbolTrendSecondaryLog = textual.SymbolTrendSecondary.Log;
 
+        side.MarketRsiActive = textual.MarketRsi.Active;
+        side.MarketRsiMin = textual.MarketRsi.Minimum;
+        side.MarketRsiMax = textual.MarketRsi.Maximum;
+        side.MarketRsiLog = textual.MarketRsi.Log;
+
         return side;
     }
 
@@ -159,6 +169,11 @@ public class TextualSideData
                 Math.Max(SymbolTrendSecondaryMin, SymbolTrendSecondaryMax)));
         }
         textual.SymbolTrendSecondary.Log = SymbolTrendSecondaryLog;
+
+        textual.MarketRsi.Active = MarketRsiActive;
+        textual.MarketRsi.Minimum = Math.Min(MarketRsiMin, MarketRsiMax);
+        textual.MarketRsi.Maximum = Math.Max(MarketRsiMin, MarketRsiMax);
+        textual.MarketRsi.Log = MarketRsiLog;
     }
 
     public static void SelectAll(List<TextualCheckItem> items)

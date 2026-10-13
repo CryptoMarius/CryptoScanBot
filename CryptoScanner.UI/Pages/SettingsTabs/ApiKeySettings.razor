@@ -83,7 +83,10 @@
     </div>
 
     <!-- Alpaca: the same box as the Alpaca tab of ApiAlpacaView, in a key file of its own (open point 9) -->
-    <div class="settings-group">
+    @* Alpaca is parked: the markets stand at IsSupported = false, so the exchange itself is already
+       invisible and this key box has nothing left to serve. Hidden rather than removed (as with the
+       exchange keys below), so the values keep loading and saving exactly as before. *@
+    <div class="settings-group" style="display:none;">
         <div class="settings-group-header">Alpaca API key (paper trading)</div>
         <div class="settings-group-body">
             <div class="field">

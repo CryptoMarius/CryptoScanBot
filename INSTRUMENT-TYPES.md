@@ -145,7 +145,7 @@ Bybit, Okx, BloFin en Kucoin geven ze als gewone perpetual, dus die krijgen we z
 1. HyperLiquid xyz-dex erbij halen. Grootste gat, 101 markten en $2,1 miljard per dag, met een naamgeving die niet botst. De aanroep is dezelfde als nu met een extra `dex`-parameter.
 2. Binance TradFi-perpetuals erbij halen. 175 markten en $13,4 miljard per dag. Een waarde extra toelaten in de filter op regel 91. Wel eerst uitzoeken hoe de bestaande controle op `UnderlyingSubType` zich hiertoe verhoudt.
 3. Okx xperp laten liggen. 150 van de 151 zijn dubbel en het volume is 1,7% van de swaps. Alleen bouwen als u met USDC als onderpand wilt handelen.
-4. Handelsuren onder ogen zien voordat 1 en 2 draaien. Aandelen en grondstoffen handelen niet doorlopend. Perpetuals erop wel, maar met veel dunnere boeken buiten de uren van de onderliggende markt. Dat geeft gaten en sprongen in de candles, hetzelfde probleem als bij Alpaca.
+4. Handelsuren onder ogen zien voordat 1 en 2 draaien. Aandelen en grondstoffen handelen niet doorlopend. Perpetuals erop wel, maar met veel dunnere boeken buiten de uren van de onderliggende markt. Dat geeft gaten en sprongen in de candles, hetzelfde probleem als bij Alpaca (dat sinds 13-10-2026 voorlopig uitgezet staat, zie `CryptoScanner.Exchanges/Alpaca/Alpaca.md`).
 
 ## Verantwoording
 

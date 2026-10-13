@@ -35,6 +35,7 @@
                         <settings:TrendIntervalFilterView DataContext="{Binding TraderTrendIntervalFilterLongViewModel}" />
                         <settings:SymbolTrendFilterView DataContext="{Binding TraderSymbolTrendFilterLongViewModel}" />
                         <settings:SymbolTrendFilterView DataContext="{Binding TraderSymbolTrendFilterSecondaryLongViewModel}" />
+                        <settings:MarketRsiFilterView DataContext="{Binding TraderMarketRsiFilterLongViewModel}" />
                     </StackPanel>
                     <!-- Col 2: Intervals -->
                     <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">
@@ -59,6 +60,7 @@
                         <settings:TrendIntervalFilterView DataContext="{Binding TraderTrendIntervalFilterShortViewModel}" />
                         <settings:SymbolTrendFilterView DataContext="{Binding TraderSymbolTrendFilterShortViewModel}" />
                         <settings:SymbolTrendFilterView DataContext="{Binding TraderSymbolTrendFilterSecondaryShortViewModel}" />
+                        <settings:MarketRsiFilterView DataContext="{Binding TraderMarketRsiFilterShortViewModel}" />
                     </StackPanel>
                     <!-- Col 2: Intervals -->
                     <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">

@@ -36,6 +36,10 @@ public class SettingsTextual
 
     // The same for the secondary zigzag setting.
     public SettingsTextualSymbolTrend SymbolTrendSecondary = new();
+
+    // Skip the signal while the market RSI (the 1h RSI of every coin of the quote, averaged) lies
+    // in a band - see Barometer.MarketRsi.
+    public SettingsTextualMarketRsi MarketRsi = new();
 }
 
 
@@ -55,6 +59,20 @@ public class SettingsTextualBarometer
     public bool BreadthActive { get; set; } = false;
     public decimal BreadthMinimum { get; set; } = 0m;
     public decimal BreadthMaximum { get; set; } = 100m;
+}
+
+
+[Serializable]
+public class SettingsTextualMarketRsi
+{
+    // Off by default, so every run and setting so far keeps its result. Measured on Session2
+    // runs 2, 3 (dbr) and 10, 11 (mac) on 12-10-2026: longs entered while the market RSI was
+    // between 45 and 55 lost money in all four runs while the rest was positive.
+    public bool Active = false;
+    // Skip when Minimum <= market RSI <= Maximum (0..100)
+    public decimal Minimum = 45m;
+    public decimal Maximum = 55m;
+    public bool Log = false;
 }
 
 

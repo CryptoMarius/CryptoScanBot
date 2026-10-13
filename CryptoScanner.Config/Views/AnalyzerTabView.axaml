@@ -29,6 +29,7 @@
                         <settings:TrendIntervalFilterView DataContext="{Binding AnalyzerTrendIntervalFilterLongViewModel}" />
                         <settings:SymbolTrendFilterView DataContext="{Binding AnalyzerSymbolTrendFilterLongViewModel}" />
                         <settings:SymbolTrendFilterView DataContext="{Binding AnalyzerSymbolTrendFilterSecondaryLongViewModel}" />
+                        <settings:MarketRsiFilterView DataContext="{Binding AnalyzerMarketRsiFilterLongViewModel}" />
                     </StackPanel>
                     <!-- Col 2: Intervals -->
                     <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">
@@ -53,6 +54,7 @@
                         <settings:TrendIntervalFilterView DataContext="{Binding AnalyzerTrendIntervalFilterShortViewModel}" />
                         <settings:SymbolTrendFilterView DataContext="{Binding AnalyzerSymbolTrendFilterShortViewModel}" />
                         <settings:SymbolTrendFilterView DataContext="{Binding AnalyzerSymbolTrendFilterSecondaryShortViewModel}" />
+                        <settings:MarketRsiFilterView DataContext="{Binding AnalyzerMarketRsiFilterShortViewModel}" />
                     </StackPanel>
                     <!-- Col 2: Intervals -->
                     <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">

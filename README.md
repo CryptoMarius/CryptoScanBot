@@ -13,7 +13,8 @@ CryptoScanBot signal scanner for the following exchanges:
 - OKX Spot, Perpetual and XPerp (the USD_UM contracts, settled in USD value and payable in USDC)
 
 And, not a crypto exchange but plugged in as one so the same analyzers can run on US equities:
-- Alpaca (paper trading, an api key is mandatory even for market data)
+- Alpaca (paper trading, an api key is mandatory even for market data) - switched off for now, see
+  [Alpaca.md](CryptoScanner.Exchanges/Alpaca/Alpaca.md)
 
 The Crypto scanner was initially only intended to generate oversold signals on the Binance exchange (because someone said something about DYOR and you shouldn't say that to a programmer). In the meantime, the application has been overhauled a number of times, split, merged the best points, improved, simplified, adapted for SBM signals and made multi-exchange.
 

@@ -596,6 +596,16 @@ public class PositionMonitor : IDisposable
                                 continue;
                             }
 
+                            // The market RSI band in which this side does not step in (reads every coin of the
+                            // quote, cached per minute, so after the cheap checks above)
+                            if (!PositionTools.ValidMarketRsiConditions(signal.Symbol, LastCandle1mCloseTime, TradingConfig.Trading[signal.Side], out reaction))
+                            {
+                                if (TradingConfig.Trading[signal.Side].MarketRsiLog)
+                                    GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                symbolInterval.SignalList.Remove(signal);
+                                continue;
+                            }
+
                             // Alleen deze 2 ondersteunen we op dit moment (bool CanTrade introduceren ofzo)
                             // Voorlopig alleen traden op Bybit Spot en Perpetual (alleen daar kan ik het testen)
                             if (!GlobalData.ActiveExchange!.IsSupported)
@@ -2846,12 +2856,46 @@ public class PositionMonitor : IDisposable
     public bool OrdersAlreadyProcessed { get; set; }
 
 
+    // Handed from PrepareCandleAsync to TradeCandleAsync. False when the first half returned early
+    // or failed, in which case the original single method did nothing more either.
+    private bool tradeStepWanted;
+    private bool canSkipPositionProcessing;
+    private bool skipSignals;
+    private long profPrepareStart;
+    private long profExecuteStart;
+    private long profExecuteTicks;
+    private long profTradeTicksBeforeSignals;
+
+
     /// <summary>
-    /// We have a new candle (for the scanner a 1m interval, emulator can be a higher 
+    /// We have a new candle (for the scanner a 1m interval, emulator can be a higher
     /// interval candle), calculate the signals
+    /// <para>
+    /// Two halves. <see cref="PrepareCandleAsync"/> touches only this symbol (indicators, order
+    /// fills, signals); <see cref="TradeCandleAsync"/> decides on positions and orders, and that
+    /// reads state every symbol shares - the free balance and the slots. The live scanner runs them
+    /// straight after each other. The emulator runs the first half of all symbols of a minute in
+    /// parallel and then the second half one symbol at a time in a fixed order: with both halves
+    /// in parallel, whichever thread happened to come first got the last slot or the last free
+    /// money, and the same run gave a different result every time (Session2 runs 49 and 71,
+    /// 13-10-2026: +5044.78 against +4746.87 on identical settings).
+    /// </para>
     /// </summary>
     public async Task NewCandleArrivedAsync()
     {
+        await PrepareCandleAsync();
+        await TradeCandleAsync();
+    }
+
+
+    /// <summary>
+    /// The first half of <see cref="NewCandleArrivedAsync"/>: everything that only reads and writes
+    /// this symbol. Order fills do change the shared balance, but only by adding to it, which ends
+    /// in the same total whatever the order of the threads.
+    /// </summary>
+    public async Task PrepareCandleAsync()
+    {
+        tradeStepWanted = false;
         try
         {
             if (!GlobalData.Settings.Signal.Active ||
@@ -2909,12 +2953,12 @@ public class PositionMonitor : IDisposable
             // are only accumulated when PipelineProfiler.Enabled (the emulator turns it on), so the
             // live scanner is unaffected. Splits this method into indicators / algorithms / trade
             // handling / position-finished check so we can see where the dominant pipeline cost sits.
-            long profPrepareStart = Stopwatch.GetTimestamp();
+            profPrepareStart = Stopwatch.GetTimestamp();
 
             // Alway's calculate the indicators, queue the fvg and dlz zones etc
             await SignalPrepare.ExecuteAsync(Symbol, LastCandle1m, LastCandle1mCloseTime);
             Symbol.Data.LastCandleSkipped = false;
-            long profExecuteStart = Stopwatch.GetTimestamp();
+            profExecuteStart = Stopwatch.GetTimestamp();
 
             // The strategy's own way out, asked on every close of the position's interval. Before the
             // skip decision below, because a requested exit has to force the position through it.
@@ -2925,7 +2969,7 @@ public class PositionMonitor : IDisposable
 
             // When a position exists and the candle stays inside the known TP/SL/DCA
             // boundaries, order simulation and position processing can be skipped entirely.
-            bool canSkipPositionProcessing = false;
+            canSkipPositionProcessing = false;
             if (hasPosition)
             {
                 Interlocked.Increment(ref PipelineProfiler.SkipHasPosition);
@@ -2975,7 +3019,7 @@ public class PositionMonitor : IDisposable
 
             // Only skip signal generation for filled positions (status >= Trading).
             // Waiting (unfilled) positions allow signals so a newer signal can replace them.
-            bool skipSignals = hasPosition && existingPosition!.Status >= CryptoPositionStatus.Trading;
+            skipSignals = hasPosition && existingPosition!.Status >= CryptoPositionStatus.Trading;
 
             // Also stay quiet for a short while after the last fill on this symbol. Closing a
             // position IS a fill (take profit or stop loss), so this covers the case where the
@@ -2989,6 +3033,32 @@ public class PositionMonitor : IDisposable
             long profSignalExecuteStart = Stopwatch.GetTimestamp();
             if (!skipSignals)
                 await SignalExecute.ExecuteAsync(Symbol, LastCandle1mCloseTime);
+
+            // The execute bucket is SignalExecute.ExecuteAsync and nothing else (see TradeCandleAsync)
+            profExecuteTicks = Stopwatch.GetTimestamp() - profSignalExecuteStart;
+            profTradeTicksBeforeSignals = profSignalExecuteStart - profExecuteStart;
+            tradeStepWanted = true;
+        }
+        catch (Exception error)
+        {
+            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddErrorToLogTab($"{Symbol.Name} error Monitor {error.Message}");
+        }
+    }
+
+
+    /// <summary>
+    /// The second half of <see cref="NewCandleArrivedAsync"/>: open, extend and handle the position.
+    /// Reads the free balance and the slots, so the emulator runs it one symbol at a time.
+    /// </summary>
+    public async Task TradeCandleAsync()
+    {
+        if (!tradeStepWanted)
+            return;
+        tradeStepWanted = false;
+        try
+        {
             long profTradeStart = Stopwatch.GetTimestamp();
 
             // Pause because of trading rules or low barometer
@@ -3041,11 +3111,12 @@ public class PositionMonitor : IDisposable
             // skip decision and PaperTradingCheckOrders: in run 1620 that was 98% of a sub-bucket
             // labelled "barometer + loop", and whoever optimised on it looked in the wrong place
             // (open point 87). Those three now count as trade, where they belong.
-            long profExecuteTicks = profTradeStart - profSignalExecuteStart;
+            // Trade is measured in two pieces since the split into PrepareCandleAsync and
+            // TradeCandleAsync: in the emulator the wait between the two halves is not this symbol's work.
             PipelineProfiler.Record(
                 prepare: profExecuteStart - profPrepareStart,
                 execute: profExecuteTicks,
-                trade: profPositionCheckStart - profExecuteStart - profExecuteTicks,
+                trade: profTradeTicksBeforeSignals + (profPositionCheckStart - profTradeStart),
                 positionCheck: Stopwatch.GetTimestamp() - profPositionCheckStart);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Clean " + traceText);

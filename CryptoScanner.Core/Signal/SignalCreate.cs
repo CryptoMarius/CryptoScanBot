@@ -449,6 +449,15 @@ public class SignalCreate
             signal.IsInvalid = true;
         }
 
+        // The market RSI band in which this side skips a signal. Last, and only for a signal that is
+        // still valid: it reads the candles of every coin of the quote (cached per minute).
+        if (!signal.IsInvalid && !PositionTools.ValidMarketRsiConditions(signal.Symbol, Candle.OpenTime + signal.Interval.Duration,
+            TradingConfig.Signals[signal.Side], out reaction))
+        {
+            eventText.Add(reaction);
+            signal.IsInvalid = true;
+        }
+
 
         if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
             return false;

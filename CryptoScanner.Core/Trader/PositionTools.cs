@@ -1,9 +1,11 @@
 ﻿using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -434,6 +436,34 @@ public static class PositionTools
         }
 
         reaction = "";
+        return true;
+    }
+
+    /// <summary>
+    /// Is the market RSI outside the band in which this side skips a signal? Always true when the
+    /// filter is off, and also when there is no market RSI (too few coins with enough candles): a
+    /// missing measurement does not stop trading, it is only said in the reaction.
+    /// </summary>
+    public static bool ValidMarketRsiConditions(CryptoSymbol symbol, CandleTime momentTime, SettingsCompiled settings,
+        out string reaction)
+    {
+        reaction = "";
+        if (!settings.MarketRsiActive || symbol.QuoteData == null)
+            return true;
+
+        double? marketRsi = MarketRsi.Calculate(symbol.QuoteData, momentTime, out int symbolCount);
+        if (marketRsi == null)
+        {
+            reaction = $"Market RSI not available ({symbolCount} coins)";
+            return true;
+        }
+
+        decimal value = (decimal)marketRsi.Value;
+        if (value.IsBetween(settings.MarketRsiMinimum, settings.MarketRsiMaximum))
+        {
+            reaction = $"Market RSI {value:N1} between {settings.MarketRsiMinimum.ToString0("N1")} and {settings.MarketRsiMaximum.ToString0("N1")}";
+            return false;
+        }
         return true;
     }
 

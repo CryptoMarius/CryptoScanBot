@@ -92,6 +92,7 @@
             <div class="context-menu-item" @onclick="OnMenuOpenTradingViewInternal">Open TradingView internal</div>
             <div class="context-menu-item" @onclick="OnMenuOpenTradingViewExternal">Open TradingView external</div>
             <div class="context-menu-item" @onclick="OnMenuOpenExchange">Open the exchange</div>
+            <div class="context-menu-item" @onclick="OnMenuAltradyTradeSetup">Send to Altrady as trade setup</div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" @onclick="OnMenuCopySymbolName">Copy symbol name</div>
             <div class="context-menu-item" @onclick="OnMenuCopyDataCells">Copy all data cells</div>
@@ -497,6 +498,13 @@
             var cells = string.Join("\t", _columnState!.VisibleColumns.Select(c => _contextMenuSignal.GetCellValue(c.Column)));
             await GridCommandService.CopyDataCellsAsync(cells);
         }
+        CloseContextMenu();
+    }
+
+    private void OnMenuAltradyTradeSetup()
+    {
+        if (_contextMenuSignal?.Object != null)
+            GridCommandService.SendAltradyTradeSetup(_contextMenuSignal.Object);
         CloseContextMenu();
     }
 

@@ -171,6 +171,25 @@
         </div>
     </div>
 
+    @* Market RSI filter: skip while the averaged 1h RSI of all coins lies in the band *@
+    <div class="settings-group" style="min-width: 200px;"
+         title="The RSI 14 of every coin of the quote on its own 1h candles, averaged. A signal is skipped while that average lies between the two values.">
+        <div class="settings-group-header">Market RSI filter, skip between (@SideLabel)</div>
+        <div class="settings-group-body">
+            <div class="field" style="margin: 4px 0;">
+                <input type="checkbox" class="input-checkbox" @bind="Side.MarketRsiActive" />
+                <label style="margin-left: 4px; width: 50px;">RSI</label>
+                <input type="number" class="input-number" step="0.1" @bind="Side.MarketRsiMin" style="width: 70px;" />
+                <span style="margin: 0 4px;">..</span>
+                <input type="number" class="input-number" step="0.1" @bind="Side.MarketRsiMax" style="width: 70px;" />
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="Side.MarketRsiLog" />
+                <label>Log if skipped</label>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @code {

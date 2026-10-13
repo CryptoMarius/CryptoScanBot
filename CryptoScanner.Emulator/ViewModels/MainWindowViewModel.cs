@@ -1049,6 +1049,11 @@ public partial class MainWindowViewModel : ObservableObject
         List<string> savedSignalShortInterval = GlobalData.Settings.Signal.Short.Interval;
         List<string> savedSignalLongIntervalTrend = GlobalData.Settings.Signal.Long.IntervalTrend.List;
         List<string> savedSignalShortIntervalTrend = GlobalData.Settings.Signal.Short.IntervalTrend.List;
+        // Restored with the list: a queue entry with TrendIntervalsInverted left it on for every
+        // later entry of the batch (Session2 runs 67-98, 12/13-10-2026, harmless there only
+        // because their interval list was empty).
+        bool savedSignalLongIntervalTrendInverted = GlobalData.Settings.Signal.Long.IntervalTrend.Inverted;
+        bool savedSignalShortIntervalTrendInverted = GlobalData.Settings.Signal.Short.IntervalTrend.Inverted;
         Dictionary<string, (decimal, decimal)> savedSignalLongBarometer = GlobalData.Settings.Signal.Long.Barometer.List;
         bool savedSignalLongBarometerConsensus = GlobalData.Settings.Signal.Long.Barometer.ConsensusActive;
         int savedSignalLongBarometerMinConsensus = GlobalData.Settings.Signal.Long.Barometer.MinConsensus;
@@ -1065,6 +1070,8 @@ public partial class MainWindowViewModel : ObservableObject
         List<(decimal, decimal)> savedSignalShortSymbolTrend = GlobalData.Settings.Signal.Short.SymbolTrend.List;
         List<(decimal, decimal)> savedSignalLongSymbolTrendSecondary = GlobalData.Settings.Signal.Long.SymbolTrendSecondary.List;
         List<(decimal, decimal)> savedSignalShortSymbolTrendSecondary = GlobalData.Settings.Signal.Short.SymbolTrendSecondary.List;
+        SettingsTextualMarketRsi savedSignalLongMarketRsi = GlobalData.Settings.Signal.Long.MarketRsi;
+        SettingsTextualMarketRsi savedSignalShortMarketRsi = GlobalData.Settings.Signal.Short.MarketRsi;
 
         int totalRuns = selectedAlgorithms.Sum(a =>
             queue.Where((e, i) => !blockedEntries.Contains(i))
@@ -1116,6 +1123,8 @@ public partial class MainWindowViewModel : ObservableObject
                     GlobalData.Settings.Signal.Short.Interval = savedSignalShortInterval;
                     GlobalData.Settings.Signal.Long.IntervalTrend.List = savedSignalLongIntervalTrend;
                     GlobalData.Settings.Signal.Short.IntervalTrend.List = savedSignalShortIntervalTrend;
+                    GlobalData.Settings.Signal.Long.IntervalTrend.Inverted = savedSignalLongIntervalTrendInverted;
+                    GlobalData.Settings.Signal.Short.IntervalTrend.Inverted = savedSignalShortIntervalTrendInverted;
                     GlobalData.Settings.Signal.Long.Barometer.List = savedSignalLongBarometer;
                     GlobalData.Settings.Signal.Long.Barometer.ConsensusActive = savedSignalLongBarometerConsensus;
                     GlobalData.Settings.Signal.Long.Barometer.MinConsensus = savedSignalLongBarometerMinConsensus;
@@ -1132,6 +1141,8 @@ public partial class MainWindowViewModel : ObservableObject
                     GlobalData.Settings.Signal.Short.SymbolTrend.List = savedSignalShortSymbolTrend;
                     GlobalData.Settings.Signal.Long.SymbolTrendSecondary.List = savedSignalLongSymbolTrendSecondary;
                     GlobalData.Settings.Signal.Short.SymbolTrendSecondary.List = savedSignalShortSymbolTrendSecondary;
+                    GlobalData.Settings.Signal.Long.MarketRsi = savedSignalLongMarketRsi;
+                    GlobalData.Settings.Signal.Short.MarketRsi = savedSignalShortMarketRsi;
 
                     decimal effectiveSL = entry.Trading?.StopLossPercentage ?? entry.StopLossPercentage;
                     GlobalData.Settings.Trading.StopLossPercentage = effectiveSL;
@@ -1350,6 +1361,8 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Signal.Short.Interval = savedSignalShortInterval;
             GlobalData.Settings.Signal.Long.IntervalTrend.List = savedSignalLongIntervalTrend;
             GlobalData.Settings.Signal.Short.IntervalTrend.List = savedSignalShortIntervalTrend;
+            GlobalData.Settings.Signal.Long.IntervalTrend.Inverted = savedSignalLongIntervalTrendInverted;
+            GlobalData.Settings.Signal.Short.IntervalTrend.Inverted = savedSignalShortIntervalTrendInverted;
             GlobalData.Settings.Signal.Long.Barometer.List = savedSignalLongBarometer;
             GlobalData.Settings.Signal.Long.Barometer.ConsensusActive = savedSignalLongBarometerConsensus;
             GlobalData.Settings.Signal.Long.Barometer.MinConsensus = savedSignalLongBarometerMinConsensus;
@@ -1366,6 +1379,8 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Signal.Short.SymbolTrend.List = savedSignalShortSymbolTrend;
             GlobalData.Settings.Signal.Long.SymbolTrendSecondary.List = savedSignalLongSymbolTrendSecondary;
             GlobalData.Settings.Signal.Short.SymbolTrendSecondary.List = savedSignalShortSymbolTrendSecondary;
+            GlobalData.Settings.Signal.Long.MarketRsi = savedSignalLongMarketRsi;
+            GlobalData.Settings.Signal.Short.MarketRsi = savedSignalShortMarketRsi;
             // One closing line naming what did not run, so a batch that ran overnight can be judged
             // from the log without counting rows in the results grid.
             if (blockedEntries.Count > 0 || failedRuns > 0)

@@ -185,6 +185,14 @@ public class GridCommandService
         Task.Run(() => new ExcelSignalDump(signal).ExportToExcel());
     }
 
+    /// <summary>
+    /// Hand the signal to Altrady as a prefilled trade setup (same as the Avalonia CommandAltradyTradeSetup).
+    /// </summary>
+    public void SendAltradyTradeSetup(CryptoSignal signal)
+    {
+        Core.Exchange.Altrady.AltradyTradeSetup.Send(signal);
+    }
+
     public void PositionRecalculate(CryptoPosition position)
     {
         Task.Run(async () =>

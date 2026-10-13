@@ -1,6 +1,13 @@
 CryptoScanBot release historie:
 
 xx-10-2026 2.6.8
+- Emulator: Een wachtrij-regel die de trend tegen de richting van de handel in vraagt, laat dat niet meer aan staan voor de regels erna
+- Alpaca: De beurs staat voorlopig uit, en daarmee is ook het scherm met de Alpaca-sleutels verdwenen
+- Altrady: De weblinks van alle beurzen gebruiken nu de gedocumenteerde vorm met het interval erachter, zodat de juiste chart opent
+- Instellingen: Nieuwe knop "Reset paper assets" gooit de papieren saldi weg en deelt de standaardlijst opnieuw uit, na een bevestiging
+- Strategie dbr: Rekent de banden alleen nog uit voor de candles die het signaal leest; dat was ruim de helft van de rekentijd van een run
+- Emulator: Een wachtrij-regel kan de trend tegen de richting van de handel in vragen, wat dbr nodig heeft
+- Emulator: De candles van een blok worden parallel geladen
 - Altrady: Het onzichtbare browservenster is verdwenen; de chart gaat rechtstreeks naar de Altrady-applicatie, en lukt dat niet dan opent de gewone browser het adres
 - Binance: Het data-archief wordt alleen gebruikt als het via de API meerdere aanvragen zou kosten, en de bestanden komen een paar tegelijk binnen
 - Binance: Tijdens het ophalen van candles staat per bestand een regel in het log, zodat een lange inhaalslag niet stil lijkt te staan

@@ -1,0 +1,26 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="390" d:DesignHeight="120"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             x:DataType="vm:MarketRsiFilterViewModel"
+             x:Class="CryptoScanner.Config.Views.MarketRsiFilterView">
+
+    <HeaderedContentControl Classes="groupbox" Header="{Binding Header}"
+                            ToolTip.Tip="The RSI 14 of every coin of the quote on its own 1h candles, averaged. A signal is skipped while that average lies between the two values.">
+        <StackPanel Margin="8" Spacing="8">
+
+            <!-- RSI band that is skipped -->
+            <settings:BarometerFilterRangeView DataContext="{Binding RsiRange}" />
+
+            <!-- Log checkbox -->
+            <CheckBox IsChecked="{Binding Log, Mode=TwoWay}"
+                      Content="Log if skipped"
+                      FontSize="12"/>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

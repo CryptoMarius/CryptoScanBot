@@ -7,6 +7,12 @@ a regular exchange, so the existing analyzers, zones and emulator can run on US 
 Everything runs against the **paper trading** environment, so no real money is involved.
 An API key and secret are still mandatory, even for reading market data only.
 
+> **Switched off for now (13-10-2026).** Both Alpaca markets stand at `IsSupported = false` in
+> `Database.CreateExchangeList()`, and the Alpaca key screen is hidden in both user interfaces
+> (`IsVisible="False"` in Avalonia, `display:none` in Photino). Nothing was removed, so turning
+> it back on is one attribute per interface plus `IsSupported = true`. The rest of this document
+> describes the implementation as it stands.
+
 ## Links
 
 | What | URL |

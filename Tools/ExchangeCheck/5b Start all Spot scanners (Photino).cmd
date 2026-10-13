@@ -98,6 +98,8 @@ rem  is not part of a crypto night. Remove the rem to take it along:
 rem echo Alpaca
 rem start "" "%BIN%\CryptoScanBot.Photino.exe" -e "Alpaca" -f "%DATA%\Alpaca"
 rem timeout /t %WAIT% /nobreak >nul
+rem  Since 13-10-2026 Alpaca stands at IsSupported = false as well, so taking it
+rem  along needs that flag back on first - see CryptoScanner.Exchanges\Alpaca\Alpaca.md
 
 rem  Not here: BitMart Spot and BloFin Spot both stand at IsSupported = false in
 rem  CryptoDatabase.CreateExchangeList, each with the reason next to it.

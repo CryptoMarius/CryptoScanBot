@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
@@ -77,6 +78,10 @@ public sealed class ReplayRunner
     // scheduling, NLog writes, etc. Whatever remains after subtracting outerLoop from wall-warmup
     // is overhead that lives entirely outside the loop (startup/shutdown bookkeeping, etc.).
     private long elapsedOuterLoop;
+
+    // Wall-clock of phase A2, the serial trade half of every minute (see the replay loop). Part of
+    // the pipeline bucket; logged on its own so the price of running it serially stays visible.
+    private long elapsedSerialTrade;
 
     // Per-decile (0-9% .. 90-99%) wall-clock buckets to pinpoint where the run slows down.
     private readonly long[] decileWallTicks = new long[10];
@@ -416,17 +421,40 @@ public sealed class ReplayRunner
 
                     long iterStart = Stopwatch.GetTimestamp();
 
-                    // ── Phase A: per-symbol compute (indicators + signal/trade pipeline) ──────
+                    // ── Phase A: per-symbol compute (indicators, order fills, signals) ────────
+                    // Only what touches the symbol itself. The decisions that read the free balance
+                    // and the slots wait for phase A2: run in parallel, whichever thread came first
+                    // got the last slot or the last money, and the same run gave a different result
+                    // every time (Session2 runs 49 and 71, 13-10-2026).
+                    var monitors = new PositionMonitor?[ticksThisMinute.Count];
                     if (RunParallel && ticksThisMinute.Count > 1)
                     {
-                        await Parallel.ForEachAsync(ticksThisMinute, parallelOptions,
-                            async (item, _) => await ProcessComputeAsync(item.Replay, item.Candle, openTime, closeTime));
+                        await Parallel.ForEachAsync(Enumerable.Range(0, ticksThisMinute.Count), parallelOptions,
+                            async (index, _) => monitors[index] = await ProcessComputeAsync(
+                                ticksThisMinute[index].Replay, ticksThisMinute[index].Candle, openTime, closeTime));
                     }
                     else
                     {
-                        foreach (var item in ticksThisMinute)
-                            await ProcessComputeAsync(item.Replay, item.Candle, openTime, closeTime);
+                        for (int index = 0; index < ticksThisMinute.Count; index++)
+                            monitors[index] = await ProcessComputeAsync(
+                                ticksThisMinute[index].Replay, ticksThisMinute[index].Candle, openTime, closeTime);
                     }
+
+                    // ── Phase A2: the trade half, one symbol at a time in symbol order ──────────
+                    long serialStart = Stopwatch.GetTimestamp();
+                    for (int index = 0; index < ticksThisMinute.Count; index++)
+                    {
+                        using PositionMonitor? monitor = monitors[index];
+                        if (monitor == null)
+                            await ProcessPerMinuteAsync(ticksThisMinute[index].Replay, ticksThisMinute[index].Candle, openTime, closeTime);
+                        else
+                        {
+                            long tradeStart = Stopwatch.GetTimestamp();
+                            await monitor.TradeCandleAsync();
+                            elapsedPipeline += Stopwatch.GetTimestamp() - tradeStart;
+                        }
+                    }
+                    elapsedSerialTrade += Stopwatch.GetTimestamp() - serialStart;
 
                     // ── Phase B: persist + zones (serial, deterministic order) ────────────────
                     await PersistAndCalculateZonesAsync();
@@ -707,6 +735,8 @@ public sealed class ReplayRunner
             $"zones {zoneDrain:F1}s ({zoneDrain / total:P0}), " +
             $"flush {flush:F1}s ({flush / total:P0}), " +
             $"barometer {barometerTime:F1}s ({barometerTime / total:P0})");
+        GlobalData.AddTextToLogTab(
+            $"Serial trade (phase A2, part of pipeline) — {Seconds(elapsedSerialTrade):F1}s wall-clock");
 
         // Sub-breakdown of the "pipeline" phase from the PipelineProfiler (NewCandleArrivedAsync).
         // Percentages are of the pipeline total so they line up with the line above. Only emitted
@@ -1015,8 +1045,42 @@ public sealed class ReplayRunner
 
     /// <summary>
     /// Phase A — per-symbol compute (parallel-safe). Hands the engine the candles that have closed
-    /// at this point in the replay, then runs the live scanner analysis pipeline (signals,
-    /// paper-trade, position eval).
+    /// and runs the first half of the pipeline (PositionMonitor.PrepareCandleAsync: indicators,
+    /// order fills, signals). Returns the monitor so phase A2 can run the trade half in a fixed
+    /// order. Returns null when this base candle has to be handled per minute: those minutes place
+    /// orders, which reads the free balance, so the whole symbol then runs in phase A2
+    /// (<see cref="ProcessPerMinuteAsync"/>).
+    /// </summary>
+    private async Task<PositionMonitor?> ProcessComputeAsync(SymbolReplay replay, CryptoCandle candle, CandleTime openTime, CandleTime closeTime)
+    {
+        long t0 = Stopwatch.GetTimestamp();
+        CryptoSymbol symbol = replay.Symbol;
+
+        var exchange = GlobalData.ActiveExchange!;
+        bool descend = activeBaseInterval.Duration > 1
+            && exchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position)
+            && PositionMonitor.CandleCanMovePosition(position!, candle, closeTime);
+        if (descend)
+            return null;
+
+        replay.AdvanceTo(closeTime);
+        symbol.LastPrice = candle.Close;
+
+        long t1 = Stopwatch.GetTimestamp();
+        Interlocked.Add(ref elapsedProcess1m, t1 - t0);
+
+        PositionMonitor positionMonitor = new(symbol, candle, activeBaseInterval.Duration);
+        await positionMonitor.PrepareCandleAsync();
+        Interlocked.Add(ref elapsedPipeline, Stopwatch.GetTimestamp() - t1);
+        return positionMonitor;
+    }
+
+
+    /// <summary>
+    /// The whole pipeline of one symbol for one base candle, in one go. Phase A2 runs it for a
+    /// symbol whose base candle has to be handled per minute (see <see cref="ProcessComputeAsync"/>).
+    /// Hands the engine the candles that have closed at this point in the replay, then runs the
+    /// live scanner analysis pipeline (signals, paper-trade, position eval).
     ///
     /// Two rhythms. The ANALYSIS always runs once per base candle — that is what makes a coarser
     /// base interval faster. The ORDER handling drops to minute resolution as soon as this base
@@ -1025,7 +1089,7 @@ public sealed class ReplayRunner
     /// moment on. Handling it on the coarse candle stamps the fill at the END of that candle, which
     /// is what made a 5m run miss a take profit a 1m run did take.
     /// </summary>
-    private async Task ProcessComputeAsync(SymbolReplay replay, CryptoCandle candle, CandleTime openTime, CandleTime closeTime)
+    private async Task ProcessPerMinuteAsync(SymbolReplay replay, CryptoCandle candle, CandleTime openTime, CandleTime closeTime)
     {
         long t0 = Stopwatch.GetTimestamp();
         CryptoSymbol symbol = replay.Symbol;
@@ -1135,6 +1199,9 @@ public sealed class ReplayRunner
 
         // Zone-check timestamp
         exchange.LastZoneCheckTime = null;
+
+        // The market RSI caches per quote: another run can replay the same hours with other coins
+        MarketRsi.Reset();
 
         // Per-quote transient state: barometer values and pause-barometer timers
         foreach (var quoteData in exchange.Data.QuoteDataList.Values)

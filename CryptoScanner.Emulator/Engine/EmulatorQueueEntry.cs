@@ -61,6 +61,12 @@ public class EmulatorSideConfig
     public List<decimal[]>? SymbolTrendSecondary { get; set; }
 
     /// <summary>
+    /// Override Signal.{Side}.MarketRsi: [min, max] switches the filter on and skips a signal while
+    /// the market RSI lies in that band, an empty list switches it off.
+    /// </summary>
+    public decimal[]? MarketRsi { get; set; }
+
+    /// <summary>
     /// Creates a resolved config by merging the target with a mirror source.
     /// Null fields on the target are filled from the source. Enabled is never mirrored.
     /// </summary>
@@ -81,6 +87,7 @@ public class EmulatorSideConfig
             BarometerBreadthMaximum = target?.BarometerBreadthMaximum,
             SymbolTrend = target?.SymbolTrend,
             SymbolTrendSecondary = target?.SymbolTrendSecondary,
+            MarketRsi = target?.MarketRsi,
         };
 
         if (mirrorSource != null)
@@ -97,6 +104,7 @@ public class EmulatorSideConfig
             result.BarometerBreadthMaximum ??= mirrorSource.BarometerBreadthMaximum;
             result.SymbolTrend ??= mirrorSource.SymbolTrend;
             result.SymbolTrendSecondary ??= mirrorSource.SymbolTrendSecondary;
+            result.MarketRsi ??= mirrorSource.MarketRsi;
         }
 
         return result;
@@ -151,6 +159,17 @@ public class EmulatorSideConfig
 
         if (config.SymbolTrendSecondary != null)
             signal.SymbolTrendSecondary.List = config.SymbolTrendSecondary.Select(a => (a[0], a[1])).ToList();
+
+        // A new object rather than changing the existing one: the queue keeps the original by
+        // reference and puts it back after the entry
+        if (config.MarketRsi != null)
+        {
+            if (config.MarketRsi.Length != 0 && config.MarketRsi.Length != 2)
+                throw new NotSupportedException($"MarketRsi needs [min, max] or [], not {config.MarketRsi.Length} values");
+            signal.MarketRsi = config.MarketRsi.Length == 2
+                ? new SettingsTextualMarketRsi { Active = true, Minimum = config.MarketRsi[0], Maximum = config.MarketRsi[1], Log = signal.MarketRsi.Log }
+                : new SettingsTextualMarketRsi { Active = false, Log = signal.MarketRsi.Log };
+        }
     }
 }
 

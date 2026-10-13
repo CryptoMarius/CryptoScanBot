@@ -21,6 +21,8 @@ public partial class AnalyzerTabViewModel : ObservableObject
     [ObservableProperty]
     private SymbolTrendFilterViewModel _analyzerSymbolTrendFilterSecondaryLongViewModel;
     [ObservableProperty]
+    private MarketRsiFilterViewModel _analyzerMarketRsiFilterLongViewModel;
+    [ObservableProperty]
     private TrendIntervalFilterViewModel _analyzerTrendIntervalFilterLongViewModel;
 
     [ObservableProperty]
@@ -33,6 +35,8 @@ public partial class AnalyzerTabViewModel : ObservableObject
     private SymbolTrendFilterViewModel _analyzerSymbolTrendFilterShortViewModel;
     [ObservableProperty]
     private SymbolTrendFilterViewModel _analyzerSymbolTrendFilterSecondaryShortViewModel;
+    [ObservableProperty]
+    private MarketRsiFilterViewModel _analyzerMarketRsiFilterShortViewModel;
     [ObservableProperty]
     private TrendIntervalFilterViewModel _analyzerTrendIntervalFilterShortViewModel;
 
@@ -48,6 +52,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         _analyzerBarometerFilterLongViewModel = new();
         _analyzerSymbolTrendFilterLongViewModel = new() { Header = "Symbol trend filter (primary)" };
         _analyzerSymbolTrendFilterSecondaryLongViewModel = new() { Header = "Symbol trend filter (secondary)" };
+        _analyzerMarketRsiFilterLongViewModel = new();
         _analyzerTrendIntervalFilterLongViewModel = new();
 
         _analyzerIntervalShortViewModel = new();
@@ -55,6 +60,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         _analyzerBarometerFilterShortViewModel = new();
         _analyzerSymbolTrendFilterShortViewModel = new() { Header = "Symbol trend filter (primary)" };
         _analyzerSymbolTrendFilterSecondaryShortViewModel = new() { Header = "Symbol trend filter (secondary)" };
+        _analyzerMarketRsiFilterShortViewModel = new();
         _analyzerTrendIntervalFilterShortViewModel = new();
 
         // Wire up the "Copy from..." popup on the strategy views so each side knows about
@@ -81,6 +87,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerBarometerFilterLongViewModel.LoadConfig(settings.Long.Barometer);
         AnalyzerSymbolTrendFilterLongViewModel.LoadConfig(settings.Long.SymbolTrend);
         AnalyzerSymbolTrendFilterSecondaryLongViewModel.LoadConfig(settings.Long.SymbolTrendSecondary);
+        AnalyzerMarketRsiFilterLongViewModel.LoadConfig(settings.Long.MarketRsi);
         AnalyzerTrendIntervalFilterLongViewModel.LoadConfig(settings.Long.IntervalTrend, CryptoTradeSide.Long);
 
         AnalyzerIntervalShortViewModel.LoadConfig(settings.Short.Interval);
@@ -88,6 +95,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerBarometerFilterShortViewModel.LoadConfig(settings.Short.Barometer);
         AnalyzerSymbolTrendFilterShortViewModel.LoadConfig(settings.Short.SymbolTrend);
         AnalyzerSymbolTrendFilterSecondaryShortViewModel.LoadConfig(settings.Short.SymbolTrendSecondary);
+        AnalyzerMarketRsiFilterShortViewModel.LoadConfig(settings.Short.MarketRsi);
         AnalyzerTrendIntervalFilterShortViewModel.LoadConfig(settings.Short.IntervalTrend, CryptoTradeSide.Short);
     }
 
@@ -100,6 +108,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerBarometerFilterLongViewModel.SaveConfig(settings.Long.Barometer);
         AnalyzerSymbolTrendFilterLongViewModel.SaveConfig(settings.Long.SymbolTrend);
         AnalyzerSymbolTrendFilterSecondaryLongViewModel.SaveConfig(settings.Long.SymbolTrendSecondary);
+        AnalyzerMarketRsiFilterLongViewModel.SaveConfig(settings.Long.MarketRsi);
         AnalyzerTrendIntervalFilterLongViewModel.SaveConfig(settings.Long.IntervalTrend);
 
         AnalyzerIntervalShortViewModel.SaveConfig(settings.Short.Interval);
@@ -107,6 +116,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerBarometerFilterShortViewModel.SaveConfig(settings.Short.Barometer);
         AnalyzerSymbolTrendFilterShortViewModel.SaveConfig(settings.Short.SymbolTrend);
         AnalyzerSymbolTrendFilterSecondaryShortViewModel.SaveConfig(settings.Short.SymbolTrendSecondary);
+        AnalyzerMarketRsiFilterShortViewModel.SaveConfig(settings.Short.MarketRsi);
         AnalyzerTrendIntervalFilterShortViewModel.SaveConfig(settings.Short.IntervalTrend);
     }
 }

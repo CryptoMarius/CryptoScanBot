@@ -82,7 +82,11 @@
 				            <TabItem Header="Altrady" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                                 <settings:ApiAltradyView DataContext="{Binding ApiAltradyViewModel}" />
 				            </TabItem>
-				            <TabItem Header="Alpaca" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                            <!-- Alpaca is parked: the markets stand at IsSupported = false, so the exchange
+                                 itself is already invisible and this key screen has nothing left to serve.
+                                 Hidden rather than removed, so the values keep loading and saving exactly
+                                 as before and the tab is one attribute away from coming back. -->
+				            <TabItem Header="Alpaca" FontSize="15" FontWeight="Bold" Margin="0,0,0,2" IsVisible="False">
                                 <settings:ApiAlpacaView DataContext="{Binding ApiAlpacaViewModel}" />
 				            </TabItem>
                         </TabControl>
