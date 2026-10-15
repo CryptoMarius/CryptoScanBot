@@ -24,6 +24,7 @@ public class BarometerTools
             {
                 CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
                 CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerExtra, quoteData);
+                CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerState, quoteData);
             }
         }
     }
@@ -80,7 +81,7 @@ public class BarometerTools
     }
 
 
-    private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoSymbol? bmSymbolExtra,
+    private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoSymbol? bmSymbolExtra, CryptoSymbol? bmSymbolState,
         CryptoInterval interval, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool priceBarometer,
         decimal? marketTrendPrimary = null, decimal? marketTrendSecondary = null)
     {
@@ -98,6 +99,14 @@ public class BarometerTools
         // full measurement for figures that are already in hand.
         CryptoSymbolInterval? symbolIntervalExtra = bmSymbolExtra?.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList? candlesExtra = symbolIntervalExtra?.CandleList;
+
+        // The market state goes into a third symbol. It does not come out of this measurement but out
+        // of the candles of the quote (see MarketState), on the BTC interval the long side of the
+        // analyzer uses; the same value for every interval, like the market trend.
+        CryptoCandleList? candlesState = priceBarometer ? bmSymbolState?.GetSymbolInterval(interval.IntervalPeriod).CandleList : null;
+        CryptoIntervalPeriod stateInterval = GlobalData.IntervalListPeriodName.TryGetValue(
+            GlobalData.Settings.Signal.Long.MarketState.Interval, out CryptoInterval? stateIntervalDef)
+            ? stateIntervalDef.IntervalPeriod : CryptoIntervalPeriod.interval4h;
 
         // Remove old candles from the barometer symbol (< 24 hours, 1440 candles).
         // Barometer does not run in the emulator (it needs the full symbol pool), so the
@@ -126,6 +135,17 @@ public class BarometerTools
             {
                 if (c.OpenTime < startFetchUnix)
                     candlesExtra.Remove(c.OpenTime);
+                else break;
+            }
+        }
+
+        // And so does the third
+        if (candlesState != null)
+        {
+            while (candlesState.TryGetFirstCandle(out CryptoCandle c))
+            {
+                if (c.OpenTime < startFetchUnix)
+                    candlesState.Remove(c.OpenTime);
                 else break;
             }
         }
@@ -251,10 +271,44 @@ public class BarometerTools
                 }
 
 
+                // The market state and the market RSI of the same minute, in the third symbol
+                MarketStateValue? marketState = candlesState != null
+                    ? MarketState.Calculate(quoteData, periodStart + 1u, stateInterval) : null;
+                double? marketRsi = candlesState != null
+                    ? MarketRsi.Calculate(quoteData, periodStart + 1u, out _) : null;
+                if (candlesState != null && (marketState != null || marketRsi.HasValue))
+                {
+                    if (!candlesState.TryGetValue(periodStart, out CryptoCandle candleState))
+                    {
+                        candleState = new CryptoCandle
+                        {
+                            OpenTime = periodStart,
+                        };
+                        candlesState.Add(candleState.OpenTime, candleState);
+                    }
+
+                    candleState.TickDecimals = bmSymbolState!.PriceDecimals;
+                    if (marketState != null)
+                        BarometerCandleFields.StoreState(ref candleState, marketState);
+                    if (marketRsi.HasValue)
+                        BarometerCandleFields.StoreMarketRsi(ref candleState, marketRsi.Value);
+                    candlesState[periodStart] = candleState;
+                }
+
                 // Administratie bijwerken
                 if (priceBarometer)
                 {
                     StorePriceResult(barometerData, result, periodStart);
+
+                    if (marketState != null)
+                    {
+                        barometerData.MarketState = (decimal)Math.Round(marketState.Score, 2);
+                        barometerData.MarketStateBtc = (decimal)Math.Round(marketState.BtcPart, 2);
+                        barometerData.MarketStateBreadth = (decimal)Math.Round(marketState.Breadth, 2);
+                        barometerData.MarketState72h = (decimal)Math.Round(marketState.Market72h, 2);
+                    }
+                    if (marketRsi.HasValue)
+                        barometerData.MarketRsi = (decimal)Math.Round(marketRsi.Value, 2);
 
                     // The market trend belongs to the quote coin and not to this interval, so every
                     // interval of the quote carries the same value - exactly as the emulator stores
@@ -286,6 +340,39 @@ public class BarometerTools
 
             // Naar de volgende 1m candle
             periodStart += 1;
+        }
+
+        // The market state can be calculated for any minute that has candles, unlike the market trend,
+        // so fill every minute of the graph window that has a barometer candle but no state yet. After
+        // a restart the loop above only walks the minutes since the previous session, which left the
+        // graph with a few minutes of history: too short for an hour line, and too short to read.
+        if (candlesState != null)
+        {
+            CandleTime fillFrom = CandleTime.AlignFromDateTime(DateTime.UtcNow.AddHours(-Constants.BarometerGraphHours), 1);
+            if (fillFrom < startFetchUnix)
+                fillFrom = startFetchUnix;
+            foreach (CryptoCandle barometerCandle in candles.GetLastNValues(Constants.BarometerGraphHours * 60, 1))
+            {
+                CandleTime minute = barometerCandle.OpenTime;
+                if (minute < fillFrom || candlesState.TryGetValue(minute, out _))
+                    continue;
+
+                MarketStateValue? fillState = MarketState.Calculate(quoteData, minute + 1u, stateInterval);
+                double? fillRsi = MarketRsi.Calculate(quoteData, minute + 1u, out _);
+                if (fillState == null && !fillRsi.HasValue)
+                    continue;
+
+                CryptoCandle candleState = new()
+                {
+                    OpenTime = minute,
+                    TickDecimals = bmSymbolState!.PriceDecimals,
+                };
+                if (fillState != null)
+                    BarometerCandleFields.StoreState(ref candleState, fillState);
+                if (fillRsi.HasValue)
+                    BarometerCandleFields.StoreMarketRsi(ref candleState, fillRsi.Value);
+                candlesState.TryAdd(minute, candleState);
+            }
         }
 
         // The market trend of this run, on the newest minute that got a candle. The trend can only
@@ -338,7 +425,7 @@ public class BarometerTools
     /// <summary>
     /// Deze routine maakt barometer per 1m (ondanks dat we met de IntervalPeriod suggereren dat we het in een bepaald interval doen)
     /// </summary>
-    private static void CalculateBarometerIntervals(CryptoSymbol symbol, CryptoSymbol? symbolExtra,
+    private static void CalculateBarometerIntervals(CryptoSymbol symbol, CryptoSymbol? symbolExtra, CryptoSymbol? symbolState,
         CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool pricebarometer,
         decimal? marketTrendPrimary = null, decimal? marketTrendSecondary = null)
     {
@@ -352,7 +439,7 @@ public class BarometerTools
             if (Array.IndexOf(BarometerIntervals, interval.IntervalPeriod) >= 0)
             {
                 //GlobalData.AddTextToLogTab("Calculating barometer chart " + bmSymbol.Name + " " + interval.Name);
-                CalculateBarometerInternal(symbol, symbolExtra, interval, quoteData, calcBarometerMethod, pricebarometer,
+                CalculateBarometerInternal(symbol, symbolExtra, symbolState, interval, quoteData, calcBarometerMethod, pricebarometer,
                     marketTrendPrimary, marketTrendSecondary);
             }
         }
@@ -528,6 +615,7 @@ public class BarometerTools
         //GlobalData.AddTextToLogTab($"Barometer {quoteData.Name}");
         CryptoSymbol? symbol = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
         CryptoSymbol? symbolExtra = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerExtra, quoteData);
+        CryptoSymbol? symbolState = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerState, quoteData);
         if (symbol != null)
         {
             // Once per quote coin and not once per interval: the trend is a property of the coin,
@@ -538,7 +626,7 @@ public class BarometerTools
             if (measureMarketTrend)
                 (marketTrendPrimary, marketTrendSecondary) = Trend.MarketTrend.Measure(quoteData.SymbolList, Trend.MarketTrend.MinimumSymbols);
 
-            CalculateBarometerIntervals(symbol, symbolExtra, quoteData, CryptoBarometerPrice.CalculatePriceBarometer, true,
+            CalculateBarometerIntervals(symbol, symbolExtra, symbolState, quoteData, CryptoBarometerPrice.CalculatePriceBarometer, true,
                 marketTrendPrimary, marketTrendSecondary);
 
             // And the minutes nobody measured, which is what a restart leaves behind. After the

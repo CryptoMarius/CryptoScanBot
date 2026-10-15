@@ -48,6 +48,23 @@ public class EmulatorRunFingerprintTests : TestBase
 
 
     [TestMethod]
+    public void TheSerialTradeHalfOnHashesLikeARunFromBeforeTheSwitch()
+    {
+        // On is what every run did before the switch existed, so those checksums have to keep
+        // matching; off replays differently once money or slots run out, so it is another run.
+        string before = EmulatorRunFingerprint.Compute(
+            "{\"ExchangeName\":\"Binance Perpetual\",\"BaseInterval\":\"1m\"}", Settings);
+        string serial = EmulatorRunFingerprint.Compute(
+            "{\"ExchangeName\":\"Binance Perpetual\",\"BaseInterval\":\"1m\",\"SerialTradeHalf\":true}", Settings);
+        string parallel = EmulatorRunFingerprint.Compute(
+            "{\"ExchangeName\":\"Binance Perpetual\",\"BaseInterval\":\"1m\",\"SerialTradeHalf\":false}", Settings);
+
+        Assert.AreEqual(before, serial);
+        Assert.AreNotEqual(before, parallel);
+    }
+
+
+    [TestMethod]
     public void ADifferentBaseIntervalIsADifferentRun()
     {
         // The base interval decides how often the strategy is evaluated AND how orders fill, so two

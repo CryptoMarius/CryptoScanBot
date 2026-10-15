@@ -37,6 +37,15 @@ public class TextualSideData
     public decimal MarketRsiMin { get; set; } = 45m;
     public decimal MarketRsiMax { get; set; } = 55m;
     public bool MarketRsiLog { get; set; }
+    // The market state band (-100..+100) in which this side steps in (off by default)
+    public bool MarketStateActive { get; set; }
+    public decimal MarketStateMin { get; set; } = -100m;
+    public decimal MarketStateMax { get; set; } = 100m;
+    public string MarketStateInterval { get; set; } = "4h";
+    public bool MarketStateLog { get; set; }
+    // Trader only: close a position once the market moved this far against it (off by default)
+    public bool MarketExitActive { get; set; }
+    public decimal MarketExitPercentage { get; set; } = 3m;
 
     private static readonly string[] BarometerIntervals = ["15m", "30m", "1h", "4h", "1d"];
 
@@ -116,6 +125,15 @@ public class TextualSideData
         side.MarketRsiMax = textual.MarketRsi.Maximum;
         side.MarketRsiLog = textual.MarketRsi.Log;
 
+        side.MarketStateActive = textual.MarketState.Active;
+        side.MarketStateMin = textual.MarketState.Minimum;
+        side.MarketStateMax = textual.MarketState.Maximum;
+        side.MarketStateInterval = textual.MarketState.Interval;
+        side.MarketStateLog = textual.MarketState.Log;
+
+        side.MarketExitActive = textual.MarketExit.Active;
+        side.MarketExitPercentage = textual.MarketExit.Percentage;
+
         return side;
     }
 
@@ -174,6 +192,15 @@ public class TextualSideData
         textual.MarketRsi.Minimum = Math.Min(MarketRsiMin, MarketRsiMax);
         textual.MarketRsi.Maximum = Math.Max(MarketRsiMin, MarketRsiMax);
         textual.MarketRsi.Log = MarketRsiLog;
+
+        textual.MarketState.Active = MarketStateActive;
+        textual.MarketState.Minimum = Math.Min(MarketStateMin, MarketStateMax);
+        textual.MarketState.Maximum = Math.Max(MarketStateMin, MarketStateMax);
+        textual.MarketState.Interval = MarketStateInterval;
+        textual.MarketState.Log = MarketStateLog;
+
+        textual.MarketExit.Active = MarketExitActive;
+        textual.MarketExit.Percentage = Math.Max(0m, MarketExitPercentage);
     }
 
     public static void SelectAll(List<TextualCheckItem> items)

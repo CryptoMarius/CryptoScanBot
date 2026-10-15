@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
@@ -606,6 +607,16 @@ public class PositionMonitor : IDisposable
                                 continue;
                             }
 
+                            // The market states in which this side steps in (reads every coin of the quote,
+                            // cached per hour)
+                            if (!PositionTools.ValidMarketStateConditions(signal.Symbol, LastCandle1mCloseTime, TradingConfig.Trading[signal.Side], out reaction))
+                            {
+                                if (TradingConfig.Trading[signal.Side].MarketStateLog)
+                                    GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                symbolInterval.SignalList.Remove(signal);
+                                continue;
+                            }
+
                             // Alleen deze 2 ondersteunen we op dit moment (bool CanTrade introduceren ofzo)
                             // Voorlopig alleen traden op Bybit Spot en Perpetual (alleen daar kan ik het testen)
                             if (!GlobalData.ActiveExchange!.IsSupported)
@@ -1025,6 +1036,45 @@ public class PositionMonitor : IDisposable
         position.ForceCheckPosition = true;
         GlobalData.AddTextToLogTab($"{Symbol.Name} {position.SideText} position {position.Id} exit requested by {position.Strategy}: {algorithm.ExtraText}");
     }
+
+    /// <summary>
+    /// Closes the position when the whole market of the quote moved Trading.{Side}.MarketExit
+    /// percent against it since the entry (see MarketMove). Asked once per whole hour, the rhythm
+    /// the market move is measured in, and only for a filled position. Uses the same door as the
+    /// strategy exit: ExitRequested makes CalculateTpPrice aim through the last price, and the
+    /// scanner's own close sends the close signal to Altrady.
+    /// </summary>
+    private void CheckMarketExit(CryptoPosition position)
+    {
+        if (position.ExitRequested || position.CloseTime.HasValue || position.Status != CryptoPositionStatus.Trading)
+            return;
+
+        SettingsCompiled settings = TradingConfig.Trading[position.Side];
+        if (!settings.MarketExitActive || Symbol.QuoteData == null)
+            return;
+
+        // Once per whole hour
+        if (LastCandle1mCloseTime % 60 != 0)
+            return;
+
+        double? move = MarketMove.Since(Symbol.QuoteData, CandleTime.AlignFromDateTime(position.CreateTime, 1), LastCandle1mCloseTime);
+        if (!move.HasValue || !MarketExitDue(position.Side, move.Value, settings.MarketExitPercentage))
+            return;
+
+        position.ExitRequested = true;
+        position.ForceCheckPosition = true;
+        GlobalData.AddTextToLogTab($"{Symbol.Name} {position.SideText} position {position.Id} exit requested: " +
+            $"the market moved {move.Value:N2}% since the entry, {settings.MarketExitPercentage.ToString0("N1")}% against the position is the limit");
+    }
+
+
+    /// <summary>
+    /// Has the market moved <paramref name="percentage"/> or more against a position on
+    /// <paramref name="side"/>? A long is against a falling market, a short against a rising one.
+    /// </summary>
+    internal static bool MarketExitDue(CryptoTradeSide side, double marketMove, decimal percentage)
+        => percentage > 0 && MarketMove.ForSide(marketMove, side) <= -(double)percentage;
+
 
     /// <summary>
     /// Has the position moved far enough into profit to arm the profit lock? The whole candle has to
@@ -2964,6 +3014,10 @@ public class PositionMonitor : IDisposable
             // skip decision below, because a requested exit has to force the position through it.
             if (hasPosition)
                 CheckStrategyExit(existingPosition!);
+
+            // The same door when the whole market turned against the position since its entry
+            if (hasPosition)
+                CheckMarketExit(existingPosition!);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
 

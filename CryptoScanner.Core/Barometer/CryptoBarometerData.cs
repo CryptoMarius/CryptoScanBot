@@ -38,6 +38,16 @@ public class CryptoBarometerData
     public decimal? MarketTrendPrimary { get; set; } = null;
     public decimal? MarketTrendSecondary { get; set; } = null;
 
+    // The market state (see Barometer.MarketState): a score from -100 to +100, plus the parts it is made
+    // of. Like the market trend it belongs to the quote and not to the interval.
+    public decimal? MarketState { get; set; } = null;
+    public decimal? MarketStateBtc { get; set; } = null;
+    public decimal? MarketStateBreadth { get; set; } = null;
+    public decimal? MarketState72h { get; set; } = null;
+
+    // The market RSI (see Barometer.MarketRsi): the 1h RSI 14 of every coin, averaged. Also per quote.
+    public decimal? MarketRsi { get; set; } = null;
+
     // Experimental, needs another attemp in the future!
     public CandleTime? VolumeDateTime { get; set; } = null;
     public decimal? VolumeBarometer { get; set; } = null;
@@ -58,6 +68,12 @@ public class CryptoBarometerData
 
         MarketTrendPrimary = null;
         MarketTrendSecondary = null;
+
+        MarketState = null;
+        MarketStateBtc = null;
+        MarketStateBreadth = null;
+        MarketState72h = null;
+        MarketRsi = null;
 
         VolumeDateTime = null;
         VolumeBarometer = null;

@@ -1,6 +1,13 @@
 CryptoScanBot release historie:
 
 xx-10-2026 2.6.8
+- Signalen: Nieuwe voorwaarde op de markttoestand, een cijfer van -100 tot +100 uit de stand van BTC, het aandeel munten boven hun eigen uurs-EMA50 en de beweging over 72 uur
+- Trader: Een positie kan gesloten worden als de hele markt sinds de instap een ingesteld percentage tegen hem in is bewogen
+- Chart: De markttoestand en de markt-RSI staan in de barometer-grafiek, elk op een eigen vaste schaal
+- Emulator: Het resultatenvenster toont per positie de markttoestand bij de instap
+- Signalen: Nieuwe voorwaarde op de markt-RSI, het gemiddelde van de uurs-RSI van alle munten van een quote; een zijde stapt niet in terwijl dat gemiddelde binnen de ingestelde band ligt
+- Altrady: Een signaal is als voorbereid order naar Altrady te sturen, met instap, bijkopen, doelen en stop ingevuld; jij bevestigt het daar zelf
+- Emulator: Dezelfde run geeft weer dezelfde uitkomst; de beslissingen die om hetzelfde geld en dezelfde slots gaan lopen nu in vaste volgorde
 - Emulator: Een wachtrij-regel die de trend tegen de richting van de handel in vraagt, laat dat niet meer aan staan voor de regels erna
 - Alpaca: De beurs staat voorlopig uit, en daarmee is ook het scherm met de Alpaca-sleutels verdwenen
 - Altrady: De weblinks van alle beurzen gebruiken nu de gedocumenteerde vorm met het interval erachter, zodat de juiste chart opent

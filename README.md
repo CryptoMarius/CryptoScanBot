@@ -30,7 +30,7 @@ Furthermore: Very nice that you try this application, in the wiki you can find a
 
 ## License
 
-Copyright (C) 2026 Marius
+Copyright (C) 2026 Marius Ellen
 
 CryptoScanBot is free software: you can redistribute it and/or modify it under the terms of the
 GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -61,8 +61,8 @@ Free code signing provided by [SignPath.io](https://about.signpath.io), certific
 
 ### Team roles
 
-- Committers and reviewers: Marius ([CryptoMarius](https://github.com/CryptoMarius))
-- Approvers (who approves a signing request): Marius ([CryptoMarius](https://github.com/CryptoMarius))
+- Committers and reviewers: Marius Ellen ([CryptoMarius](https://github.com/CryptoMarius))
+- Approvers (who approves a signing request): Marius Ellen ([CryptoMarius](https://github.com/CryptoMarius))
 
 The project is maintained by one person. Every release is built by the GitHub Actions workflow in
 `.github/workflows/release.yml` from a tagged commit of this repository, and every signing request

@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="390" d:DesignHeight="150"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             x:DataType="vm:MarketStateFilterViewModel"
+             x:Class="CryptoScanner.Config.Views.MarketStateFilterView">
+
+    <HeaderedContentControl Classes="groupbox" Header="{Binding Header}"
+                            ToolTip.Tip="Higher is a stronger market. The market state of the quote, once per hour, from -100 (everything down) to +100 (everything up): the average of BTC on the chosen interval (distance to the EMA200 and slope of the EMA50), the share of coins above their own 1h EMA50, and the change of all coins over 72 hours. A signal is only taken while the score lies between the two values.">
+        <StackPanel Margin="8" Spacing="8">
+
+            <!-- Score band in which a signal is taken -->
+            <settings:BarometerFilterRangeView DataContext="{Binding ScoreRange}" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8" IsEnabled="{Binding ScoreRange.IsActive}">
+                <TextBlock Text="BTC trend interval" VerticalAlignment="Center" FontSize="12"/>
+                <ComboBox ItemsSource="{Binding Intervals}" SelectedItem="{Binding Interval, Mode=TwoWay}"
+                          FontSize="12" MinWidth="70"
+                          ToolTip.Tip="Longer reacts later but tells a rising from a falling market better: 4h did best in the study"/>
+            </StackPanel>
+
+            <CheckBox IsChecked="{Binding Log, Mode=TwoWay}"
+                      Content="Log if skipped"
+                      FontSize="12"/>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

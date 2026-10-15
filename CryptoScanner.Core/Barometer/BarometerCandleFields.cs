@@ -22,6 +22,16 @@ public enum BarometerGraphValue
     // secondary. Also in $BMX, in the two fields that were still free.
     MarketTrendPrimary,
     MarketTrendSecondary,
+
+    // The market state score and its parts, in the candles of the third symbol ($BMS). See
+    // Barometer.MarketState.
+    MarketState,
+    MarketStateBtc,
+    MarketStateBreadth,
+    MarketState72h,
+
+    // The market RSI, in the last free field of the third symbol. See Barometer.MarketRsi.
+    MarketRsi,
 }
 
 /// <summary>
@@ -108,6 +118,31 @@ public static class BarometerCandleFields
 
 
     /// <summary>
+    /// Write the market state of one minute into the candle of the THIRD barometer symbol ($BMS).
+    /// Unlike the market trend it can be calculated for any minute that has candles, so every minute
+    /// the barometer writes gets it. Volume holds the market RSI, see <see cref="StoreMarketRsi"/>.
+    /// </summary>
+    public static void StoreState(ref CryptoCandle candle, MarketStateValue state)
+    {
+        candle.Open = (decimal)Math.Round(state.BtcPart, 2);
+        candle.High = (decimal)Math.Round(state.Breadth, 2);
+        candle.Low = (decimal)Math.Round(state.Market72h, 2);
+        candle.Close = (decimal)Math.Round(state.Score, 2);
+    }
+
+
+    /// <summary>
+    /// Write the market RSI of one minute into the Volume field of the THIRD barometer symbol ($BMS).
+    /// Separate from <see cref="StoreState"/> because either of the two can be missing on its own (too
+    /// few coins with 14 hours of history, or no BTC trend yet).
+    /// </summary>
+    public static void StoreMarketRsi(ref CryptoCandle candle, double marketRsi)
+    {
+        candle.Volume = (decimal)Math.Round(marketRsi, 2);
+    }
+
+
+    /// <summary>
     /// The same two writes, but from a stored measurement instead of a fresh <see cref="BarometerResult"/>.
     /// <para>
     /// The emulator needs this: it measures per quote coin and per interval and then writes the
@@ -183,6 +218,13 @@ public static class BarometerCandleFields
             BarometerGraphValue.MarketTrendPrimary => candle.Low,
             BarometerGraphValue.MarketTrendSecondary => candle.Volume,
 
+            // Third symbol ($BMS)
+            BarometerGraphValue.MarketState => candle.Close,
+            BarometerGraphValue.MarketStateBtc => candle.Open,
+            BarometerGraphValue.MarketStateBreadth => candle.High,
+            BarometerGraphValue.MarketState72h => candle.Low,
+            BarometerGraphValue.MarketRsi => candle.Volume,
+
             _ => candle.Close,
         };
     }
@@ -201,7 +243,10 @@ public static class BarometerCandleFields
     /// </summary>
     public static bool UsesInterval(BarometerGraphValue value)
     {
-        return value is not (BarometerGraphValue.MarketTrendPrimary or BarometerGraphValue.MarketTrendSecondary);
+        return value is not (BarometerGraphValue.MarketTrendPrimary or BarometerGraphValue.MarketTrendSecondary
+            or BarometerGraphValue.MarketState or BarometerGraphValue.MarketStateBtc
+            or BarometerGraphValue.MarketStateBreadth or BarometerGraphValue.MarketState72h
+            or BarometerGraphValue.MarketRsi);
     }
 
 
@@ -211,6 +256,10 @@ public static class BarometerCandleFields
     /// </summary>
     public static string GetSymbolName(BarometerGraphValue value)
     {
+        if (value is BarometerGraphValue.MarketState or BarometerGraphValue.MarketStateBtc
+                or BarometerGraphValue.MarketStateBreadth or BarometerGraphValue.MarketState72h
+                or BarometerGraphValue.MarketRsi)
+            return Const.Constants.SymbolNameBarometerState;
         return value is BarometerGraphValue.Movement or BarometerGraphValue.BitcoinVersusMarket
                 or BarometerGraphValue.MarketTrendPrimary or BarometerGraphValue.MarketTrendSecondary
             ? Const.Constants.SymbolNameBarometerExtra
@@ -231,6 +280,11 @@ public static class BarometerCandleFields
             BarometerGraphValue.BitcoinVersusMarket => "BTC vs rest",
             BarometerGraphValue.MarketTrendPrimary => "Market trend",
             BarometerGraphValue.MarketTrendSecondary => "Market trend (2nd)",
+            BarometerGraphValue.MarketState => "Market state",
+            BarometerGraphValue.MarketStateBtc => "Market state: BTC",
+            BarometerGraphValue.MarketStateBreadth => "Market state: above EMA50",
+            BarometerGraphValue.MarketState72h => "Market state: 72h",
+            BarometerGraphValue.MarketRsi => "Market RSI",
             _ => "Average",
         };
     }
@@ -256,6 +310,11 @@ public static class BarometerCandleFields
         BarometerGraphValue.BitcoinVersusMarket,
         BarometerGraphValue.MarketTrendPrimary,
         BarometerGraphValue.MarketTrendSecondary,
+        BarometerGraphValue.MarketState,
+        BarometerGraphValue.MarketStateBtc,
+        BarometerGraphValue.MarketStateBreadth,
+        BarometerGraphValue.MarketState72h,
+        BarometerGraphValue.MarketRsi,
     ];
 
     /// The labels of the figures the graph can draw, in dropdown order.
@@ -310,6 +369,16 @@ public static class BarometerCandleFields
         if (barometer.MarketTrendSecondary.HasValue)
             lines.Add($"Market trend (2nd) {barometer.MarketTrendSecondary.Value:N1}%");
 
+        // The market state score, with the parts it was made of
+        if (barometer.MarketState.HasValue)
+        {
+            lines.Add($"Market state {barometer.MarketState.Value:+0;-0;0} (-100..+100; BTC {barometer.MarketStateBtc ?? 0:+0;-0;0}, "
+                + $"{barometer.MarketStateBreadth ?? 0:N0}% above EMA50, 72h {barometer.MarketState72h ?? 0:N1}%)");
+        }
+
+        if (barometer.MarketRsi.HasValue)
+            lines.Add($"Market RSI {barometer.MarketRsi.Value:N1} (1h RSI 14 of every coin, averaged)");
+
         if (barometer.PriceSymbolCount.HasValue)
             lines.Add($"Based on {barometer.PriceSymbolCount.Value} coins");
 
@@ -359,6 +428,40 @@ public static class BarometerCandleFields
             {
                 CenteredOnZero = true,
                 MinimumSpan = 20m,
+                Decimals = 0,
+            },
+            // The market state figures get a FIXED scale. They change once per hour, so over the
+            // graph window they are long flat stretches, and a scale that follows the data puts its
+            // lowest value exactly on the bottom edge - where such a flat line disappears into the
+            // border. A fixed scale also keeps the picture comparable from one day to the next.
+            // Above the EMA50 and the market RSI: 0..100 with the neutral 50 as reference line.
+            BarometerGraphValue.MarketStateBreadth or BarometerGraphValue.MarketRsi => new BarometerGraphScale
+            {
+                CenteredOnZero = false,
+                Low = 0m,
+                High = 100m,
+                ReferenceLine = 50m,
+                GridStep = 25m,
+                Decimals = 0,
+            },
+            // The score and its BTC part: -100..+100 around zero
+            BarometerGraphValue.MarketState or BarometerGraphValue.MarketStateBtc => new BarometerGraphScale
+            {
+                CenteredOnZero = false,
+                Low = -100m,
+                High = 100m,
+                ReferenceLine = 0m,
+                GridStep = 50m,
+                Decimals = 0,
+            },
+            // The market over 72 hours: -20..+20 percent, which holds all but the most extreme days
+            BarometerGraphValue.MarketState72h => new BarometerGraphScale
+            {
+                CenteredOnZero = false,
+                Low = -20m,
+                High = 20m,
+                ReferenceLine = 0m,
+                GridStep = 10m,
                 Decimals = 0,
             },
             BarometerGraphValue.Spread => new BarometerGraphScale

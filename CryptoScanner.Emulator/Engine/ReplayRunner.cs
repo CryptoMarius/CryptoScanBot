@@ -421,40 +421,51 @@ public sealed class ReplayRunner
 
                     long iterStart = Stopwatch.GetTimestamp();
 
-                    // ── Phase A: per-symbol compute (indicators, order fills, signals) ────────
-                    // Only what touches the symbol itself. The decisions that read the free balance
-                    // and the slots wait for phase A2: run in parallel, whichever thread came first
-                    // got the last slot or the last money, and the same run gave a different result
-                    // every time (Session2 runs 49 and 71, 13-10-2026).
-                    var monitors = new PositionMonitor?[ticksThisMinute.Count];
-                    if (RunParallel && ticksThisMinute.Count > 1)
+                    if (!config.SerialTradeHalf && RunParallel && ticksThisMinute.Count > 1)
                     {
-                        await Parallel.ForEachAsync(Enumerable.Range(0, ticksThisMinute.Count), parallelOptions,
-                            async (index, _) => monitors[index] = await ProcessComputeAsync(
-                                ticksThisMinute[index].Replay, ticksThisMinute[index].Candle, openTime, closeTime));
+                        // ── Phase A, unsplit: the whole pipeline of every symbol in parallel ─────
+                        // The behaviour before 13-10-2026, by choice (EmulatorRunConfig.SerialTradeHalf).
+                        // Repeatable only while neither the money nor the slots run out.
+                        await Parallel.ForEachAsync(ticksThisMinute, parallelOptions,
+                            async (item, _) => await ProcessPerMinuteAsync(item.Replay, item.Candle, openTime, closeTime));
                     }
                     else
                     {
-                        for (int index = 0; index < ticksThisMinute.Count; index++)
-                            monitors[index] = await ProcessComputeAsync(
-                                ticksThisMinute[index].Replay, ticksThisMinute[index].Candle, openTime, closeTime);
-                    }
-
-                    // ── Phase A2: the trade half, one symbol at a time in symbol order ──────────
-                    long serialStart = Stopwatch.GetTimestamp();
-                    for (int index = 0; index < ticksThisMinute.Count; index++)
-                    {
-                        using PositionMonitor? monitor = monitors[index];
-                        if (monitor == null)
-                            await ProcessPerMinuteAsync(ticksThisMinute[index].Replay, ticksThisMinute[index].Candle, openTime, closeTime);
+                        // ── Phase A: per-symbol compute (indicators, order fills, signals) ────────
+                        // Only what touches the symbol itself. The decisions that read the free balance
+                        // and the slots wait for phase A2: run in parallel, whichever thread came first
+                        // got the last slot or the last money, and the same run gave a different result
+                        // every time (Session2 runs 49 and 71, 13-10-2026).
+                        var monitors = new PositionMonitor?[ticksThisMinute.Count];
+                        if (RunParallel && ticksThisMinute.Count > 1)
+                        {
+                            await Parallel.ForEachAsync(Enumerable.Range(0, ticksThisMinute.Count), parallelOptions,
+                                async (index, _) => monitors[index] = await ProcessComputeAsync(
+                                    ticksThisMinute[index].Replay, ticksThisMinute[index].Candle, openTime, closeTime));
+                        }
                         else
                         {
-                            long tradeStart = Stopwatch.GetTimestamp();
-                            await monitor.TradeCandleAsync();
-                            elapsedPipeline += Stopwatch.GetTimestamp() - tradeStart;
+                            for (int index = 0; index < ticksThisMinute.Count; index++)
+                                monitors[index] = await ProcessComputeAsync(
+                                    ticksThisMinute[index].Replay, ticksThisMinute[index].Candle, openTime, closeTime);
                         }
+
+                        // ── Phase A2: the trade half, one symbol at a time in symbol order ──────────
+                        long serialStart = Stopwatch.GetTimestamp();
+                        for (int index = 0; index < ticksThisMinute.Count; index++)
+                        {
+                            using PositionMonitor? monitor = monitors[index];
+                            if (monitor == null)
+                                await ProcessPerMinuteAsync(ticksThisMinute[index].Replay, ticksThisMinute[index].Candle, openTime, closeTime);
+                            else
+                            {
+                                long tradeStart = Stopwatch.GetTimestamp();
+                                await monitor.TradeCandleAsync();
+                                elapsedPipeline += Stopwatch.GetTimestamp() - tradeStart;
+                            }
+                        }
+                        elapsedSerialTrade += Stopwatch.GetTimestamp() - serialStart;
                     }
-                    elapsedSerialTrade += Stopwatch.GetTimestamp() - serialStart;
 
                     // ── Phase B: persist + zones (serial, deterministic order) ────────────────
                     await PersistAndCalculateZonesAsync();
@@ -1202,6 +1213,10 @@ public sealed class ReplayRunner
 
         // The market RSI caches per quote: another run can replay the same hours with other coins
         MarketRsi.Reset();
+
+        // The same for the market state and the market move
+        MarketState.Reset();
+        MarketMove.Reset();
 
         // Per-quote transient state: barometer values and pause-barometer timers
         foreach (var quoteData in exchange.Data.QuoteDataList.Values)

@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Settings;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Settings;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -67,6 +68,25 @@ public class EmulatorSideConfig
     public decimal[]? MarketRsi { get; set; }
 
     /// <summary>
+    /// Override Signal.{Side}.MarketState: [min, max] switches the filter on and only steps in while
+    /// the market state score (-100..+100) lies in that band, an empty list switches it off.
+    /// </summary>
+    public decimal[]? MarketState { get; set; }
+
+    /// <summary>
+    /// Override Signal.{Side}.MarketState.Interval: the interval of the BTC trend ("1h", "2h", "3h",
+    /// "4h"). Only changes the interval, not whether the filter is on.
+    /// </summary>
+    public string? MarketStateInterval { get; set; }
+
+    /// <summary>
+    /// Override Trading.{Side}.MarketExit: close a position once the market moved this many percent
+    /// against it since the entry. Above zero switches it on, zero switches it off. Unlike the other
+    /// keys this one sets the TRADER side: it decides about open positions, not about signals.
+    /// </summary>
+    public decimal? MarketExit { get; set; }
+
+    /// <summary>
     /// Creates a resolved config by merging the target with a mirror source.
     /// Null fields on the target are filled from the source. Enabled is never mirrored.
     /// </summary>
@@ -88,6 +108,9 @@ public class EmulatorSideConfig
             SymbolTrend = target?.SymbolTrend,
             SymbolTrendSecondary = target?.SymbolTrendSecondary,
             MarketRsi = target?.MarketRsi,
+            MarketState = target?.MarketState,
+            MarketStateInterval = target?.MarketStateInterval,
+            MarketExit = target?.MarketExit,
         };
 
         if (mirrorSource != null)
@@ -105,6 +128,9 @@ public class EmulatorSideConfig
             result.SymbolTrend ??= mirrorSource.SymbolTrend;
             result.SymbolTrendSecondary ??= mirrorSource.SymbolTrendSecondary;
             result.MarketRsi ??= mirrorSource.MarketRsi;
+            result.MarketState ??= mirrorSource.MarketState;
+            result.MarketStateInterval ??= mirrorSource.MarketStateInterval;
+            result.MarketExit ??= mirrorSource.MarketExit;
         }
 
         return result;
@@ -169,6 +195,50 @@ public class EmulatorSideConfig
             signal.MarketRsi = config.MarketRsi.Length == 2
                 ? new SettingsTextualMarketRsi { Active = true, Minimum = config.MarketRsi[0], Maximum = config.MarketRsi[1], Log = signal.MarketRsi.Log }
                 : new SettingsTextualMarketRsi { Active = false, Log = signal.MarketRsi.Log };
+        }
+
+        // Also a new object, for the same reason
+        if (config.MarketState != null || config.MarketStateInterval != null)
+        {
+            SettingsTextualMarketState current = signal.MarketState;
+            SettingsTextualMarketState state = new()
+            {
+                Active = current.Active,
+                Minimum = current.Minimum,
+                Maximum = current.Maximum,
+                Interval = current.Interval,
+                Log = current.Log,
+            };
+            if (config.MarketState != null)
+            {
+                if (config.MarketState.Length != 0 && config.MarketState.Length != 2)
+                    throw new NotSupportedException($"MarketState needs [min, max] or [], not {config.MarketState.Length} values");
+                state.Active = config.MarketState.Length == 2;
+                if (state.Active)
+                {
+                    state.Minimum = config.MarketState[0];
+                    state.Maximum = config.MarketState[1];
+                }
+            }
+            if (config.MarketStateInterval != null)
+            {
+                if (!GlobalData.IntervalListPeriodName.ContainsKey(config.MarketStateInterval))
+                    throw new NotSupportedException($"MarketStateInterval \"{config.MarketStateInterval}\" is not an interval");
+                state.Interval = config.MarketStateInterval;
+            }
+            signal.MarketState = state;
+        }
+
+        // The trader side, and a new object for the same reason as above
+        if (config.MarketExit.HasValue)
+        {
+            if (config.MarketExit.Value < 0)
+                throw new NotSupportedException($"MarketExit needs a percentage of zero or more, not {config.MarketExit.Value}");
+            trading.MarketExit = new SettingsTextualMarketExit
+            {
+                Active = config.MarketExit.Value > 0,
+                Percentage = config.MarketExit.Value > 0 ? config.MarketExit.Value : trading.MarketExit.Percentage,
+            };
         }
     }
 }
@@ -255,6 +325,12 @@ public class EmulatorQueueEntry
     /// Null or omitted keeps it on. A run with barometer conditions refuses to start when it is off.
     /// </summary>
     public bool? CalculateBarometer { get; set; }
+
+    /// <summary>
+    /// Runs the trade half of every minute serially (true) or the whole pipeline in parallel (false),
+    /// see EmulatorRunConfig.SerialTradeHalf. Null or omitted keeps whatever the run configuration says.
+    /// </summary>
+    public bool? SerialTradeHalf { get; set; }
 
     /// <summary>
     /// Restricts this run to a single trade side: "Long" or "Short".

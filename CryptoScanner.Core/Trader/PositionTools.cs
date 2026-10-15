@@ -467,4 +467,33 @@ public static class PositionTools
         return true;
     }
 
+    /// <summary>
+    /// Does the market state of the quote lie in the band in which this side may step in? Always true
+    /// when the filter is off, and also when there is no market state (too few coins, or too few BTC
+    /// candles): a missing measurement does not stop trading, it is only said in the reaction.
+    /// </summary>
+    public static bool ValidMarketStateConditions(CryptoSymbol symbol, CandleTime momentTime, SettingsCompiled settings,
+        out string reaction)
+    {
+        reaction = "";
+        if (!settings.MarketStateActive || symbol.QuoteData == null)
+            return true;
+
+        MarketStateValue? value = MarketState.Calculate(symbol.QuoteData, momentTime, settings.MarketStateInterval);
+        if (value == null)
+        {
+            reaction = "Market state not available";
+            return true;
+        }
+
+        decimal score = (decimal)value.Score;
+        if (!score.IsBetween(settings.MarketStateMinimum, settings.MarketStateMaximum))
+        {
+            reaction = $"Market state {score:N0} outside {settings.MarketStateMinimum.ToString0("N0")} .. {settings.MarketStateMaximum.ToString0("N0")}"
+                + $" (BTC {value.BtcPart:N0}, {value.Breadth:N0}% above EMA50, market 72h {value.Market72h:N1}%)";
+            return false;
+        }
+        return true;
+    }
+
 }

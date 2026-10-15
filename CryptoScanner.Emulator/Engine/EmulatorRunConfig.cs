@@ -69,6 +69,24 @@ public class EmulatorRunConfig
     public bool UseAssetManagement { get; set; } = true;
 
     /// <summary>
+    /// Whether the trade half of every replayed minute (PositionMonitor.TradeCandleAsync: the entry,
+    /// DCA and slot decisions) runs one symbol at a time in symbol order.
+    /// <para>
+    /// On (the default): identical runs give identical results. The trade half reads the free
+    /// balance and the slots, and with all symbols of a minute in parallel the thread that happened
+    /// to come first got the last slot or the last money (Session2 runs 49 and 71, 13-10-2026).
+    /// Off: the whole pipeline of every symbol runs in parallel, as before 13-10-2026. Faster, and
+    /// still repeatable as long as neither the money nor the slots run out during the run; once
+    /// they do, the run is no longer repeatable.
+    /// </para>
+    /// <para>
+    /// Asset management off does not make this redundant: it only takes the money out of the race,
+    /// the slots (SlotsMaximalLong/Short) are still shared.
+    /// </para>
+    /// </summary>
+    public bool SerialTradeHalf { get; set; } = true;
+
+    /// <summary>
     /// Whether this run measures the market barometer while it replays.
     /// <para>
     /// On (the default) every replayed minute measures the barometer over the coins of the run, which

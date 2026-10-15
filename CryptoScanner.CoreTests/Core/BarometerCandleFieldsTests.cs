@@ -267,4 +267,52 @@ public class BarometerCandleFieldsTests
         BarometerCandleFields.Store(ref current, result);
         Assert.IsFalse(BarometerCandleFields.IsLegacyLayout(current), "a filled candle is not the old layout");
     }
+
+
+    [TestMethod]
+    public void TheMarketStateGoesIntoTheThirdSymbolAndReadsBack()
+    {
+        MarketStateValue state = new(-41.236, -55.554, 34.567, -2.345, 120);
+        CryptoCandle candle = new() { TickDecimals = 2 };
+
+        BarometerCandleFields.StoreState(ref candle, state);
+
+        Assert.AreEqual(-41.24m, BarometerCandleFields.Read(candle, BarometerGraphValue.MarketState));
+        Assert.AreEqual(-55.55m, BarometerCandleFields.Read(candle, BarometerGraphValue.MarketStateBtc));
+        Assert.AreEqual(34.57m, BarometerCandleFields.Read(candle, BarometerGraphValue.MarketStateBreadth));
+        Assert.AreEqual(-2.35m, BarometerCandleFields.Read(candle, BarometerGraphValue.MarketState72h));
+        Assert.AreEqual(0m, candle.Volume, "the market RSI is written separately");
+        BarometerCandleFields.StoreMarketRsi(ref candle, 47.126);
+        Assert.AreEqual(47.13m, BarometerCandleFields.Read(candle, BarometerGraphValue.MarketRsi));
+        Assert.AreEqual(-41.24m, BarometerCandleFields.Read(candle, BarometerGraphValue.MarketState), "the RSI leaves the score alone");
+        Assert.AreEqual(47.13m, BarometerCandleFields.ReadForGraph(candle, BarometerGraphValue.MarketRsi), "a 0..100 scale");
+        Assert.AreEqual(50m, BarometerCandleFields.GetScale(BarometerGraphValue.MarketRsi).ReferenceLine, "neutral at 50");
+
+        foreach (BarometerGraphValue value in new[] { BarometerGraphValue.MarketState, BarometerGraphValue.MarketStateBtc,
+            BarometerGraphValue.MarketStateBreadth, BarometerGraphValue.MarketState72h, BarometerGraphValue.MarketRsi })
+        {
+            Assert.AreEqual(Constants.SymbolNameBarometerState, BarometerCandleFields.GetSymbolName(value));
+            Assert.IsFalse(BarometerCandleFields.UsesInterval(value), "the market state belongs to the quote, not to the interval");
+            Assert.AreEqual(value, BarometerCandleFields.Parse(BarometerCandleFields.GetName(value)));
+            CollectionAssert.Contains(BarometerCandleFields.Names.ToList(), BarometerCandleFields.GetName(value));
+        }
+
+        // Above the EMA50 is drawn on its own 0..100 scale, not shifted like the breadth of the last hour
+        Assert.AreEqual(34.57m, BarometerCandleFields.ReadForGraph(candle, BarometerGraphValue.MarketStateBreadth));
+    }
+
+    [TestMethod]
+    public void TheTooltipNamesTheMarketState()
+    {
+        CryptoBarometerData data = new()
+        {
+            PriceBarometer = 0.5m,
+            MarketState = 45m,
+            MarketStateBtc = 60m,
+            MarketStateBreadth = 65m,
+            MarketState72h = 3.2m,
+        };
+
+        StringAssert.Contains(BarometerCandleFields.Describe(data), "Market state +45");
+    }
 }

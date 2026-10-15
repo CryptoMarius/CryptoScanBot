@@ -40,6 +40,14 @@ public class SettingsTextual
     // Skip the signal while the market RSI (the 1h RSI of every coin of the quote, averaged) lies
     // in a band - see Barometer.MarketRsi.
     public SettingsTextualMarketRsi MarketRsi = new();
+
+    // Only step in while the market state of the quote (a score from -100 to +100) lies in a band -
+    // see Barometer.MarketState.
+    public SettingsTextualMarketState MarketState = new();
+
+    // Trader only: close a position once the whole market moved this far against it since the
+    // entry - see Barometer.MarketMove.
+    public SettingsTextualMarketExit MarketExit = new();
 }
 
 
@@ -73,6 +81,36 @@ public class SettingsTextualMarketRsi
     public decimal Minimum = 45m;
     public decimal Maximum = 55m;
     public bool Log = false;
+}
+
+
+[Serializable]
+public class SettingsTextualMarketState
+{
+    // Off by default, so every run and setting so far keeps its result. Measured on Session2 on
+    // 13/14-10-2026 (study market-regime): the long profit of dbr, failedbreakout, candlepattern and
+    // mac came from entries at a score of +60 and higher.
+    public bool Active = false;
+    // Step in when Minimum <= score <= Maximum (-100..+100)
+    public decimal Minimum = -100m;
+    public decimal Maximum = 100m;
+    // The interval of the BTC part of the score. 4h told rising from falling best in the study;
+    // 1h, 2h and 3h react earlier but predict less.
+    public string Interval = "4h";
+    public bool Log = false;
+}
+
+
+[Serializable]
+public class SettingsTextualMarketExit
+{
+    // Off by default, so every run and setting so far keeps its result. Measured on Session2 on
+    // 14-10-2026: positions during which the market moved 3% against them lost money in every
+    // strategy, while all the other positions earned.
+    public bool Active = false;
+    // How far the market (all coins of the quote, averaged) may move against the position since the
+    // entry before it is closed, in percent
+    public decimal Percentage = 3m;
 }
 
 

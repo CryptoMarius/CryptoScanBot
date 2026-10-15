@@ -226,4 +226,24 @@ public class RunLabelTests
         Assert.IsTrue(weggelaten.UseAssetManagement ?? true);
         Assert.IsFalse(weggelaten.UseAssetManagement ?? false);
     }
+
+
+    /// <summary>
+    /// The serial trade half binds from a queue entry like the asset management switch, and an
+    /// entry without it falls back to the run configuration.
+    /// </summary>
+    [TestMethod]
+    public void SerialTradeHalf_BindsFromTheQueueFile()
+    {
+        var opties = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        var parallel = System.Text.Json.JsonSerializer.Deserialize<EmulatorQueueEntry>(
+            """{"Label":"P1","SerialTradeHalf":false}""", opties);
+        var omitted = System.Text.Json.JsonSerializer.Deserialize<EmulatorQueueEntry>(
+            """{"Label":"P0"}""", opties);
+
+        Assert.AreEqual(false, parallel!.SerialTradeHalf);
+        Assert.IsNull(omitted!.SerialTradeHalf, "omitted has to fall back to the run configuration");
+        Assert.IsTrue(new EmulatorRunConfig().SerialTradeHalf, "serial is the default");
+    }
 }

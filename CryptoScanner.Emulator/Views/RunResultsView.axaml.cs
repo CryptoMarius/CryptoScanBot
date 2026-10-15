@@ -103,6 +103,12 @@ public partial class RunResultsView : UserControl
     /// </summary>
     private void OnGridSorting(object? sender, DataGridColumnEventArgs e)
     {
+        // A sort that RestoreSortIndicator asked for is not a click of the user. Taking it for one
+        // flipped the saved direction every time the grid came back into view (switching to the
+        // Capital tab and back detaches and re-attaches it), so the order changed on every return.
+        if (_restoringSort)
+            return;
+
         string? sortPath = e.Column.SortMemberPath;
         if (string.IsNullOrEmpty(sortPath))
             return;
@@ -129,6 +135,7 @@ public partial class RunResultsView : UserControl
 
     private string? _currentSortColumn;
     private ListSortDirection _currentSortDirection = ListSortDirection.Ascending;
+    private bool _restoringSort;
 
     /// <summary>The key the runs grid is stored under in CryptoScanBot-user.json.</summary>
     private const string GridName = "EmulatorRuns";
@@ -205,7 +212,15 @@ public partial class RunResultsView : UserControl
                 : ListSortDirection.Ascending;
 
             var column = RunsGrid.Columns.FirstOrDefault(c => c.SortMemberPath == config.SortColumn);
-            column?.Sort(_currentSortDirection);
+            _restoringSort = true;
+            try
+            {
+                column?.Sort(_currentSortDirection);
+            }
+            finally
+            {
+                _restoringSort = false;
+            }
         }
         catch
         {

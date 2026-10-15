@@ -48,6 +48,17 @@ public class SettingsCompiled
     public decimal MarketRsiMaximum = 55m;
     public bool MarketRsiLog = false;
 
+    // Market state band in which this side may step in (mirrors SettingsTextualMarketState)
+    public bool MarketStateActive = false;
+    public decimal MarketStateMinimum = -100m;
+    public decimal MarketStateMaximum = 100m;
+    public CryptoIntervalPeriod MarketStateInterval = CryptoIntervalPeriod.interval4h;
+    public bool MarketStateLog = false;
+
+    // Close a position once the market moved this far against it (mirrors SettingsTextualMarketExit)
+    public bool MarketExitActive = false;
+    public decimal MarketExitPercentage = 3m;
+
     // Via interval + Value (ranged)
     // Minimale barometer om de meldingen te genereren
     public Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> Barometer { get; set; } = [];
@@ -151,6 +162,18 @@ public class SettingsCompiled
         MarketRsiMinimum = Math.Min(settings.MarketRsi.Minimum, settings.MarketRsi.Maximum);
         MarketRsiMaximum = Math.Max(settings.MarketRsi.Minimum, settings.MarketRsi.Maximum);
         MarketRsiLog = settings.MarketRsi.Log;
+
+        // Market state band in which this side may step in
+        MarketStateActive = settings.MarketState.Active;
+        MarketStateMinimum = Math.Min(settings.MarketState.Minimum, settings.MarketState.Maximum);
+        MarketStateMaximum = Math.Max(settings.MarketState.Minimum, settings.MarketState.Maximum);
+        MarketStateInterval = GlobalData.IntervalListPeriodName.TryGetValue(settings.MarketState.Interval, out CryptoInterval? marketStateInterval)
+            ? marketStateInterval.IntervalPeriod : CryptoIntervalPeriod.interval4h;
+        MarketStateLog = settings.MarketState.Log;
+
+        // Close a position once the market moved this far against it
+        MarketExitActive = settings.MarketExit.Active && settings.MarketExit.Percentage > 0;
+        MarketExitPercentage = settings.MarketExit.Percentage;
 
 
         Strategy.Clear();

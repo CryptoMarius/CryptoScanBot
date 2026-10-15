@@ -13,6 +13,7 @@ public static class Constants
     // that, so the measurement is spread over two symbols. Both are written in the same pass from the
     // same measurement; see BarometerCandleFields for which figure lives where.
     public const string SymbolNameBarometerExtra = "$BMX"; // Second page of the price barometer
+    public const string SymbolNameBarometerState = "$BMS"; // Market state (rising / uncertain / falling) and its parts
 
     // The licence the application is published under. The GPL asks a program that already shows
     // legal notices to name its licence there as well, so both About screens (Avalonia and Photino)

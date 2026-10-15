@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="390" d:DesignHeight="80"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:MarketExitViewModel"
+             x:Class="CryptoScanner.Config.Views.MarketExitView">
+
+    <HeaderedContentControl Classes="groupbox" Header="{Binding Header}"
+                            ToolTip.Tip="Lower closes sooner. Closes an open position once the whole market (all coins of the quote, averaged) moved this many percent against it since the entry: down for a long, up for a short. Checked once per hour; the position leaves at the market price.">
+        <StackPanel Margin="8" Spacing="8" Orientation="Horizontal">
+            <CheckBox IsChecked="{Binding IsActive, Mode=TwoWay}"
+                      Content="Close when the market moved"
+                      FontSize="12" VerticalAlignment="Center"/>
+            <TextBox Text="{Binding Percentage, Mode=TwoWay}"
+                     IsEnabled="{Binding IsActive}"
+                     Width="70" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            <TextBlock Text="% against" FontSize="12" VerticalAlignment="Center"/>
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

@@ -1072,6 +1072,10 @@ public partial class MainWindowViewModel : ObservableObject
         List<(decimal, decimal)> savedSignalShortSymbolTrendSecondary = GlobalData.Settings.Signal.Short.SymbolTrendSecondary.List;
         SettingsTextualMarketRsi savedSignalLongMarketRsi = GlobalData.Settings.Signal.Long.MarketRsi;
         SettingsTextualMarketRsi savedSignalShortMarketRsi = GlobalData.Settings.Signal.Short.MarketRsi;
+        SettingsTextualMarketState savedSignalLongMarketState = GlobalData.Settings.Signal.Long.MarketState;
+        SettingsTextualMarketState savedSignalShortMarketState = GlobalData.Settings.Signal.Short.MarketState;
+        SettingsTextualMarketExit savedTradingLongMarketExit = GlobalData.Settings.Trading.Long.MarketExit;
+        SettingsTextualMarketExit savedTradingShortMarketExit = GlobalData.Settings.Trading.Short.MarketExit;
 
         int totalRuns = selectedAlgorithms.Sum(a =>
             queue.Where((e, i) => !blockedEntries.Contains(i))
@@ -1143,6 +1147,10 @@ public partial class MainWindowViewModel : ObservableObject
                     GlobalData.Settings.Signal.Short.SymbolTrendSecondary.List = savedSignalShortSymbolTrendSecondary;
                     GlobalData.Settings.Signal.Long.MarketRsi = savedSignalLongMarketRsi;
                     GlobalData.Settings.Signal.Short.MarketRsi = savedSignalShortMarketRsi;
+                    GlobalData.Settings.Signal.Long.MarketState = savedSignalLongMarketState;
+                    GlobalData.Settings.Signal.Short.MarketState = savedSignalShortMarketState;
+                    GlobalData.Settings.Trading.Long.MarketExit = savedTradingLongMarketExit;
+                    GlobalData.Settings.Trading.Short.MarketExit = savedTradingShortMarketExit;
 
                     decimal effectiveSL = entry.Trading?.StopLossPercentage ?? entry.StopLossPercentage;
                     GlobalData.Settings.Trading.StopLossPercentage = effectiveSL;
@@ -1282,6 +1290,7 @@ public partial class MainWindowViewModel : ObservableObject
                             // barometer that difference is a measurement, and the duplicate window
                             // decides whether this entry is replayed at all.
                             CalculateBarometer = entry.CalculateBarometer ?? baseConfig.CalculateBarometer,
+                            SerialTradeHalf = entry.SerialTradeHalf ?? baseConfig.SerialTradeHalf,
                             DuplicateCheckDays = baseConfig.DuplicateCheckDays,
                             Label = runLabel,
                         };
@@ -1381,6 +1390,10 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Signal.Short.SymbolTrendSecondary.List = savedSignalShortSymbolTrendSecondary;
             GlobalData.Settings.Signal.Long.MarketRsi = savedSignalLongMarketRsi;
             GlobalData.Settings.Signal.Short.MarketRsi = savedSignalShortMarketRsi;
+            GlobalData.Settings.Signal.Long.MarketState = savedSignalLongMarketState;
+            GlobalData.Settings.Signal.Short.MarketState = savedSignalShortMarketState;
+            GlobalData.Settings.Trading.Long.MarketExit = savedTradingLongMarketExit;
+            GlobalData.Settings.Trading.Short.MarketExit = savedTradingShortMarketExit;
             // One closing line naming what did not run, so a batch that ran overnight can be judged
             // from the log without counting rows in the results grid.
             if (blockedEntries.Count > 0 || failedRuns > 0)

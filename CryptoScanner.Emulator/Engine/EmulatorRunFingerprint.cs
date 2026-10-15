@@ -384,6 +384,11 @@ public static class EmulatorRunFingerprint
             // carries the list and a queue run leaves it empty, so keeping it in meant the two could
             // never look like the same measurement even when they replayed exactly the same thing.
             obj.Remove("SelectedAlgorithms");
+            // The serial trade half at its default (on) is what every run since 13-10-2026 did before
+            // the switch existed, so it is left out and those checksums keep matching. Off stays in:
+            // once money or slots run out, that run replays differently.
+            if (obj["SerialTradeHalf"] is JsonValue serial && serial.TryGetValue(out bool serialOn) && serialOn)
+                obj.Remove("SerialTradeHalf");
             return obj.ToJsonString();
         }
         catch (JsonException)

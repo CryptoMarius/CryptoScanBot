@@ -75,6 +75,14 @@ public partial class RunConfigViewModel : ObservableObject
     [ObservableProperty]
     private bool _useAssetManagement = true;
 
+    /// <summary>
+    /// Whether the trade half of every minute runs one symbol at a time, so identical runs give
+    /// identical results. Off: everything in parallel, faster, but no longer repeatable once the
+    /// money or the slots run out (see EmulatorRunConfig.SerialTradeHalf).
+    /// </summary>
+    [ObservableProperty]
+    private bool _serialTradeHalf = true;
+
     /// <summary>Live text filter over the symbol list (substring, case-insensitive).</summary>
     [ObservableProperty]
     private string _symbolFilter = "";
@@ -107,6 +115,7 @@ public partial class RunConfigViewModel : ObservableObject
         SelectedBaseInterval = BaseIntervals.Contains(config.BaseInterval) ? config.BaseInterval : "1m";
         StartCapital = config.StartCapital > 0 ? config.StartCapital : PaperAssets.DefaultStartCapital;
         UseAssetManagement = config.UseAssetManagement;
+        SerialTradeHalf = config.SerialTradeHalf;
 
         // Pre-check the symbols already in the run config. Build the full list from the active
         // exchange's known symbols; any config symbol not (yet) on the exchange is still added so
@@ -243,6 +252,7 @@ public partial class RunConfigViewModel : ObservableObject
         config.BaseInterval = SelectedBaseInterval ?? "1m";
         config.StartCapital = StartCapital > 0 ? StartCapital : PaperAssets.DefaultStartCapital;
         config.UseAssetManagement = UseAssetManagement;
+        config.SerialTradeHalf = SerialTradeHalf;
         return true;
     }
 }

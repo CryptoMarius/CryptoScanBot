@@ -458,6 +458,15 @@ public class SignalCreate
             signal.IsInvalid = true;
         }
 
+        // The market states in which this side may step in. Also last: it reads the candles of every
+        // coin of the quote (cached per hour).
+        if (!signal.IsInvalid && !PositionTools.ValidMarketStateConditions(signal.Symbol, Candle.OpenTime + signal.Interval.Duration,
+            TradingConfig.Signals[signal.Side], out reaction))
+        {
+            eventText.Add(reaction);
+            signal.IsInvalid = true;
+        }
+
 
         if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
             return false;

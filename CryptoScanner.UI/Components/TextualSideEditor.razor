@@ -190,9 +190,57 @@
         </div>
     </div>
 
+    @* Market state filter: only step in while the market state score lies in the band *@
+    <div class="settings-group" style="min-width: 200px;"
+         title="Higher is a stronger market. The market state of the quote, once per hour, from -100 (everything down) to +100 (everything up): the average of BTC on the chosen interval (distance to the EMA200 and slope of the EMA50), the share of coins above their own 1h EMA50, and the change of all coins over 72 hours. A signal is only taken while the score lies between the two values.">
+        <div class="settings-group-header">Market state filter, step in between (@SideLabel)</div>
+        <div class="settings-group-body">
+            <div class="field" style="margin: 4px 0;">
+                <input type="checkbox" class="input-checkbox" @bind="Side.MarketStateActive" />
+                <label style="margin-left: 4px; width: 50px;">Score</label>
+                <input type="number" class="input-number" step="1" @bind="Side.MarketStateMin" style="width: 70px;" />
+                <span style="margin: 0 4px;">..</span>
+                <input type="number" class="input-number" step="1" @bind="Side.MarketStateMax" style="width: 70px;" />
+            </div>
+            <div class="field" style="margin: 4px 0;">
+                <label style="margin-right: 6px;">BTC trend interval</label>
+                <select class="input-select" @bind="Side.MarketStateInterval" disabled="@(!Side.MarketStateActive)"
+                        title="Longer reacts later but tells a rising from a falling market better: 4h did best in the study">
+                    @foreach (var interval in MarketStateIntervals)
+                    {
+                        <option value="@interval">@interval</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <input type="checkbox" class="input-checkbox" @bind="Side.MarketStateLog" />
+                <label>Log if skipped</label>
+            </div>
+        </div>
+    </div>
+
+    @* Market exit (trader only): close a position once the whole market turned against it *@
+    @if (ShowMarketExit)
+    {
+        <div class="settings-group" style="min-width: 200px;"
+             title="Lower closes sooner. Closes an open position once the whole market (all coins of the quote, averaged) moved this many percent against it since the entry: down for a long, up for a short. Checked once per hour; the position leaves at the market price.">
+            <div class="settings-group-header">Market exit (@SideLabel)</div>
+            <div class="settings-group-body">
+                <div class="field" style="margin: 4px 0;">
+                    <input type="checkbox" class="input-checkbox" @bind="Side.MarketExitActive" />
+                    <label style="margin-left: 4px;">Close when the market moved</label>
+                    <input type="number" class="input-number" step="0.5" min="0" @bind="Side.MarketExitPercentage" style="width: 70px; margin: 0 4px;" disabled="@(!Side.MarketExitActive)" />
+                    <label>% against</label>
+                </div>
+            </div>
+        </div>
+    }
+
 </div>
 
 @code {
+    private static readonly string[] MarketStateIntervals = ["1h", "2h", "3h", "4h"];
+
     [Parameter, EditorRequired]
     public TextualSideData Side { get; set; } = null!;
 
@@ -215,6 +263,10 @@
 
     [Parameter]
     public string CrossLabel { get; set; } = "";
+
+    // The market exit decides about open positions, so only the trader shows it
+    [Parameter]
+    public bool ShowMarketExit { get; set; }
 
     private static readonly HashSet<string> MinuteIntervals = ["1m", "2m", "3m", "5m", "10m", "15m", "30m"];
     private static readonly HashSet<string> HourIntervals = ["1h", "2h", "3h", "4h", "6h", "8h", "12h"];

@@ -3,10 +3,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
 
 using Dapper;
 
 using System.Collections.ObjectModel;
+using System.Text.Json;
 
 namespace CryptoScanner.Emulator.ViewModels;
 
@@ -29,6 +31,7 @@ public class PositionRow
     public decimal? SignalPrice { get; set; }
     public decimal? SlPercentage { get; set; }
     public string? EventText { get; set; }
+    public decimal Invested { get; set; }
 
     // Part composition, persisted on Position: PartCount = number of filled DCA parts (entry excluded,
     // a pending unfilled DCA excluded); ActiveDca = an open DCA is still standing. Used by PartsText.
@@ -73,6 +76,9 @@ public class PositionRow
 
     // Per-signal stop-loss distance (% from entry) carried over from the signal; blank when not set.
     public string SlPercentageText => SlPercentage.HasValue ? SlPercentage.Value.ToString("N2") : "—";
+
+    // What the position put in, entry plus filled DCA's, in the quote currency
+    public string InvestedText => Invested.ToString("N2");
 
     // Per-signal stop-loss distance (% from entry) carried over from the signal; blank when not set.
     public string SignalPriceText => SignalPrice.HasValue ? SignalPrice.Value.ToString("N2") : "—";
@@ -133,13 +139,23 @@ public partial class RunPositionsViewModel : ObservableObject
                 "SELECT p.Id, p.CreateTime, p.CloseTime, s.Name as Symbol, i.Name as Interval, " +
                 "       p.Side, p.Strategy, p.Status, p.Profit, p.Percentage, " +
                 "       p.SignalPrice, p.SlPercentage, p.EventText, " +
-                "       p.PartCount, p.ActiveDca " +
+                "       p.PartCount, p.ActiveDca, p.Invested " +
                 "FROM Position p " +
                 "LEFT JOIN Symbol s ON s.Id = p.SymbolId " +
                 "LEFT JOIN Interval i ON i.Id = p.IntervalId " +
                 "WHERE p.EmulatorRunId = @runId " +
                 "ORDER BY p.CreateTime",
                 new { runId });
+
+            // The Position table only holds the positions of the latest run: it is cleared before the
+            // next one starts. For an older run the positions come from the digest that is stored on
+            // the run row - fewer columns, but the same positions.
+            bool fromDigest = false;
+            if (rows.AsList().Count == 0)
+            {
+                rows = LoadFromDigest(database, runId);
+                fromDigest = rows.AsList().Count != 0;
+            }
 
             // Attach the quote currency's display format per row so Profit shows the quote's own
             // decimals. The symbols of the run's exchange are loaded in memory (with their QuoteData);
@@ -157,11 +173,78 @@ public partial class RunPositionsViewModel : ObservableObject
 
             Status = Positions.Count == 0
                 ? "This run produced no positions."
-                : $"{Positions.Count} position(s).";
+                : fromDigest
+                    ? $"{Positions.Count} position(s), read from the digest of this run (it is not the latest run): " +
+                      "price, stop and orders are not stored there, the percentage is the profit on what was invested."
+                    : $"{Positions.Count} position(s).";
         }
         catch (Exception ex)
         {
             Status = $"Failed to load positions: {ex.Message}";
         }
+    }
+
+
+    /// <summary>
+    /// The positions of a run from its PositionDigestJson (see Core PositionDigest): symbol, side,
+    /// times, profit, invested, filled DCA's, status, strategy, interval and the signal text. The
+    /// columns are looked up by name, so a digest with more or fewer columns still reads. Empty when
+    /// the run has no digest.
+    /// </summary>
+    private static List<PositionRow> LoadFromDigest(CryptoDatabase database, int runId)
+    {
+        List<PositionRow> result = [];
+        string? stored = database.Connection.ExecuteScalar<string?>(
+            "SELECT PositionDigestJson FROM EmulatorRun WHERE Id = @runId", new { runId });
+        string? json = PositionDigest.Unpack(stored);
+        if (string.IsNullOrEmpty(json))
+            return result;
+
+        Dictionary<int, string> symbols = database.Connection
+            .Query<(int Id, string Name)>("SELECT Id, Name FROM Symbol").ToDictionary(s => s.Id, s => s.Name);
+        Dictionary<int, string> intervals = database.Connection
+            .Query<(int Id, string Name)>("SELECT Id, Name FROM Interval").ToDictionary(i => i.Id, i => i.Name);
+
+        using JsonDocument document = JsonDocument.Parse(json);
+        JsonElement root = document.RootElement;
+        List<string> columns = root.GetProperty("cols").EnumerateArray().Select(c => c.GetString() ?? "").ToList();
+        int Column(string name) => columns.IndexOf(name);
+        int sym = Column("sym"), side = Column("side"), open = Column("open"), close = Column("close"),
+            profit = Column("profit"), invested = Column("invested"), dca = Column("dca"), status = Column("status"),
+            strat = Column("strat"), iv = Column("iv"), eventText = Column("event");
+
+        static bool Has(JsonElement row, int index) =>
+            index >= 0 && index < row.GetArrayLength() && row[index].ValueKind != JsonValueKind.Null;
+
+        int number = 0;
+        foreach (JsonElement row in root.GetProperty("rows").EnumerateArray())
+        {
+            number++;
+            PositionRow position = new()
+            {
+                // The digest keeps no position id; the order is the order of the run
+                Id = number,
+                Side = Has(row, side) ? row[side].GetInt32() : 0,
+                Status = Has(row, status) ? row[status].GetInt32() : 0,
+                Strategy = Has(row, strat) ? row[strat].GetString() : null,
+                Profit = Has(row, profit) ? row[profit].GetDecimal() : 0m,
+                Invested = Has(row, invested) ? row[invested].GetDecimal() : 0m,
+                PartCount = Has(row, dca) ? row[dca].GetInt32() : 0,
+                EventText = Has(row, eventText) ? row[eventText].GetString() : null,
+            };
+            if (Has(row, sym) && symbols.TryGetValue(row[sym].GetInt32(), out string? symbolName))
+                position.Symbol = symbolName;
+            if (Has(row, iv) && intervals.TryGetValue(row[iv].GetInt32(), out string? intervalName))
+                position.Interval = intervalName;
+            // Minutes since CandleTime.Epoch, stored as UTC like the Position table
+            if (Has(row, open))
+                position.CreateTime = DateTime.SpecifyKind(CandleTime.Epoch.AddMinutes(row[open].GetInt64()), DateTimeKind.Unspecified);
+            if (Has(row, close))
+                position.CloseTime = DateTime.SpecifyKind(CandleTime.Epoch.AddMinutes(row[close].GetInt64()), DateTimeKind.Unspecified);
+            if (position.Invested > 0)
+                position.Percentage = position.Profit / position.Invested * 100m;
+            result.Add(position);
+        }
+        return result;
     }
 }
