@@ -4,45 +4,30 @@ xx-10-2026 2.6.8
 - Signalen: Nieuwe voorwaarde op de markttoestand, een cijfer van -100 tot +100 uit de stand van BTC, het aandeel munten boven hun eigen uurs-EMA50 en de beweging over 72 uur
 - Trader: Een positie kan gesloten worden als de hele markt sinds de instap een ingesteld percentage tegen hem in is bewogen
 - Chart: De markttoestand en de markt-RSI staan in de barometer-grafiek, elk op een eigen vaste schaal
-- Emulator: Het resultatenvenster toont per positie de markttoestand bij de instap
 - Signalen: Nieuwe voorwaarde op de markt-RSI, het gemiddelde van de uurs-RSI van alle munten van een quote; een zijde stapt niet in terwijl dat gemiddelde binnen de ingestelde band ligt
 - Altrady: Een signaal is als voorbereid order naar Altrady te sturen, met instap, bijkopen, doelen en stop ingevuld; jij bevestigt het daar zelf
-- Emulator: Dezelfde run geeft weer dezelfde uitkomst; de beslissingen die om hetzelfde geld en dezelfde slots gaan lopen nu in vaste volgorde
-- Emulator: Een wachtrij-regel die de trend tegen de richting van de handel in vraagt, laat dat niet meer aan staan voor de regels erna
 - Alpaca: De beurs staat voorlopig uit, en daarmee is ook het scherm met de Alpaca-sleutels verdwenen
 - Altrady: De weblinks van alle beurzen gebruiken nu de gedocumenteerde vorm met het interval erachter, zodat de juiste chart opent
 - Instellingen: Nieuwe knop "Reset paper assets" gooit de papieren saldi weg en deelt de standaardlijst opnieuw uit, na een bevestiging
 - Strategie dbr: Rekent de banden alleen nog uit voor de candles die het signaal leest; dat was ruim de helft van de rekentijd van een run
-- Emulator: Een wachtrij-regel kan de trend tegen de richting van de handel in vragen, wat dbr nodig heeft
-- Emulator: De candles van een blok worden parallel geladen
 - Altrady: Het onzichtbare browservenster is verdwenen; de chart gaat rechtstreeks naar de Altrady-applicatie, en lukt dat niet dan opent de gewone browser het adres
-- Binance: Het data-archief wordt alleen gebruikt als het via de API meerdere aanvragen zou kosten, en de bestanden komen een paar tegelijk binnen
 - Binance: Tijdens het ophalen van candles staat per bestand een regel in het log, zodat een lange inhaalslag niet stil lijkt te staan
-- Emulator: De kapitaallijn volgt de run die je in het resultatenrooster aanklikt
 - Trader: Een positie op een munt die de beurs niet meer verhandelt wordt afgesloten tegen de laatst bekende prijs; die bleef eerder voor altijd open staan met het geld vast
 - Trader: De scanner en Altrady rekenen de instaphoeveelheid nu op dezelfde manier uit, zodat beide administraties dezelfde hoeveelheid aanhouden
-- Binance: De geschiedenis komt uit het publieke data-archief in plaats van alleen via de API
 - Strategie Mac: Een limit-instap op het dichtstbijzijnde niveau achter de prijs, een stop net achter dat niveau, en een doel als veelvoud van de eigen stop
-- Emulator: Perioden die de beurs niet heeft worden niet elke keer opnieuw opgevraagd; dat scheelde ongeveer 180 verzoeken per inhaalslag
 - Trader: Bij handelen via Altrady zijn alleen de stop-methoden te kiezen die Altrady zelf uitvoert; bij een andere keuze zegt het scherm dat de stop daar niet meeschuift
 - Trader: De winstbescherming meet vanaf de gemiddelde instapprijs, dezelfde prijs waar Altrady zijn percentages vandaan haalt
 - Altrady: Een waarschuwing per takeprofit-niveau dat onder het minimum van de beurs blijft; Altrady plaatste die order zonder melding niet
 - Papertrading: Als het saldo de munt niet heeft waarin de beurs handelt, zegt de melding nu wat je eraan moet doen in plaats van alleen "No assets available"
-- Altrady: De chart wordt nu rechtstreeks aan de Altrady-applicatie doorgegeven; het onzichtbare browservenster is alleen nog de terugvaloptie
 - Trader: Een positie is vanuit het grid te sluiten, met winst of met verlies; de order staat meteen op de beurs
 - Trader: De twee stop-beschermingen van Altrady (gemiddelde instapprijs en meelopend met de takeprofit) worden gevolgd, zodat beide administraties op hetzelfde niveau sluiten
 - Trader: Het laatste takeprofit-niveau kan meelopen, en een limit-instap is een percentage gunstiger te plaatsen dan de signaalprijs
 - Strategie Mac: De stop is als veelvoud van de gemiddelde candlegrootte in te stellen, met een onder- en bovengrens
-- Emulator: Nieuwe keuze "Stop after this run" maakt de lopende run af en begint niets nieuws
-- Emulator: Een wachtrij-bestand met .debug.json wordt door een release-build overgeslagen
 - Trader: Bij het verwijderen van alle posities verdwijnt ook de kapitaallijn, die hoorde immers bij die posities
 - Signalen: De statistieken zijn terug - wat een positie op de signaalprijs had opgeleverd, en hoe ver de prijs sindsdien mee- en tegenliep
 - Trader: Een short zet nu zijn volle waarde vast in plaats van alleen de terugkooporder, zodat papertrading niet meer meer posities toestaat dan het saldo toelaat
 - Trader: Een positie gaat alleen open als de instap en alle bijkooporders samen nog passen
 - Strategie Mac: Het Close-signaal vuurt nu precies waar de indicator de markering tekent, en de niveaus beginnen bij de candle die ze maakte
-- Emulator: Per run de diepste terugval in USDT met de datum, en de drie risicocontroles van het rapport als kolommen
-- Emulator: De posities en instellingen van een run worden compacter opgeslagen; dat scheelt ruim een derde aan ruimte
-- Emulator: Een label-filter boven het resultatenrooster, met "instellingen overnemen" en "alle runs verwijderen"
 - Grids: Pijltjes, page up en down, home en end verplaatsen de actieve regel ook in de webversie
 - Markettrend zichtbaar maken in de grafiek (waar ook de barometer in getoond wordt)
 - De markt trend is omgezet naar een symboltrend en we hebben nu ook een globale marktrend per quote
@@ -61,9 +46,22 @@ xx-10-2026 2.6.8
 - Fix: De jump-short vuurde onder het ingestelde percentage, de daling werd van het verkeerde punt gemeten
 - Fix: De Bollinger-breedte liet de eerste twintig candles per munt door zolang de indicator nog warmliep
 - Fix: De voorafgaande beweging van een candle-patroon telt de omkeercandle zelf niet meer mee
-- Emulator: Per run de diepste terugval van het kapitaal, en van welke build de run kwam
 - Instellingen: De velden van de experimentele strategieen staan alleen nog in de debug-build
 - Releases: De workflow haalt de release-notitie uit dit bestand en ondertekent de bestanden
+- Emulator: Het resultatenvenster toont per positie de markttoestand bij de instap
+- Emulator: Dezelfde run geeft weer dezelfde uitkomst; de beslissingen die om hetzelfde geld en dezelfde slots gaan lopen nu in vaste volgorde
+- Emulator: Een wachtrij-regel die de trend tegen de richting van de handel in vraagt, laat dat niet meer aan staan voor de regels erna
+- Emulator: Een wachtrij-regel kan de trend tegen de richting van de handel in vragen, wat dbr nodig heeft
+- Emulator: De candles van een blok worden parallel geladen
+- Emulator - Binance: De geschiedenis komt uit het publieke data-archief, maar alleen als het via de API meerdere aanvragen zou kosten; de bestanden komen een paar tegelijk binnen
+- Emulator: De kapitaallijn volgt de run die je in het resultatenrooster aanklikt
+- Emulator: Perioden die de beurs niet heeft worden niet elke keer opnieuw opgevraagd; dat scheelde ongeveer 180 verzoeken per inhaalslag
+- Emulator: Nieuwe keuze "Stop after this run" maakt de lopende run af en begint niets nieuws
+- Emulator: Een wachtrij-bestand met .debug.json wordt door een release-build overgeslagen
+- Emulator: Per run de diepste terugval in USDT met de datum, en de drie risicocontroles van het rapport als kolommen
+- Emulator: De posities en instellingen van een run worden compacter opgeslagen; dat scheelt ruim een derde aan ruimte
+- Emulator: Een label-filter boven het resultatenrooster, met "instellingen overnemen" en "alle runs verwijderen"
+- Emulator: Per run is te zien van welke build hij kwam
 
 19-09-2026 2.6.7
 - Documentatie bijgewerkt
