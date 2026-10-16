@@ -1,6 +1,9 @@
 CryptoScanBot release historie:
 
 xx-10-2026 2.6.8
+- Chart: De langzame barometer-cijfers (markttrend, markttoestand, markt-RSI) lopen nu over dagen in plaats van zeven uur, met de dag op de as
+- Chart: Elke keuze in het barometer-uitklapmenu legt zichzelf uit, en het dichtgeklapte vakje vertelt welk cijfer er getekend wordt
+- Trader: De stop-loss rekent vanaf de instap, net als Altrady, en de globale stop ligt voorbij de verste bijkoop die echt geplaatst wordt
 - Signalen: Nieuwe voorwaarde op de markttoestand, een cijfer van -100 tot +100 uit de stand van BTC, het aandeel munten boven hun eigen uurs-EMA50 en de beweging over 72 uur
 - Trader: Een positie kan gesloten worden als de hele markt sinds de instap een ingesteld percentage tegen hem in is bewogen
 - Chart: De markttoestand en de markt-RSI staan in de barometer-grafiek, elk op een eigen vaste schaal
