@@ -304,4 +304,86 @@ public class EntryOrderSetLimitTests : TestBase
         Assert.IsFalse(fits, "0.02 ZEC split three ways is under one size tick per level");
         StringAssert.Contains(reason, "take profit");
     }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  The price limits
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// LABUSDT.PERP as it stood on 27-06-2026: Binance accepts no order price above 20.0.
+    /// </summary>
+    private static CryptoSymbol LabSymbol()
+    {
+        var symbol = ZecSymbol();
+        symbol.Name = "LABUSDT.PERP";
+        symbol.PriceMaximum = 20m;
+        symbol.PriceTickSize = 0.001m;
+        symbol.QuantityMinimum = 1m;
+        symbol.QuantityTickSize = 1m;
+        symbol.QuoteValueMinimum = 5m;
+        return symbol;
+    }
+
+
+    /// <summary>
+    /// The short that went in at 19.792 on 27-06-2026. Its DCA's lie above the maximum price, and
+    /// they used to be put ON the maximum together with the stop, so the whole ladder filled and
+    /// stopped out in one candle on a rise of 1.4%. Now the position is not opened.
+    /// </summary>
+    [TestMethod]
+    public void AShortWhoseDcaLiesAboveTheMaximumPriceIsRefused()
+    {
+        bool fits = TradeTools.CheckOrderSetAgainstSymbolLimits(LabSymbol(), CryptoTradeSide.Short,
+            entryPrice: 19.792m, entryQuantity: 6m, signalSlPercentage: null, out string reason);
+
+        Assert.IsFalse(fits, "the first DCA at 2% is 20.19, above the maximum of 20");
+        StringAssert.Contains(reason, "dca 1");
+        StringAssert.Contains(reason, "outside the symbol limits");
+    }
+
+
+    /// <summary>
+    /// The mirror: a long at the same price has its DCA's and stop below, but its profit target of
+    /// 7.5% lies above the maximum - a target that would otherwise be quietly moved to 20.0.
+    /// </summary>
+    [TestMethod]
+    public void ALongWhoseTargetLiesAboveTheMaximumPriceIsRefused()
+    {
+        bool fits = TradeTools.CheckOrderSetAgainstSymbolLimits(LabSymbol(), CryptoTradeSide.Long,
+            entryPrice: 19.792m, entryQuantity: 6m, signalSlPercentage: null, out string reason);
+
+        Assert.IsFalse(fits);
+        StringAssert.Contains(reason, "take profit 1");
+    }
+
+
+    /// <summary>
+    /// Far enough under the maximum every price of the plan fits, and the short is opened.
+    /// </summary>
+    [TestMethod]
+    public void AShortWellUnderTheMaximumPriceFits()
+    {
+        bool fits = TradeTools.CheckOrderSetAgainstSymbolLimits(LabSymbol(), CryptoTradeSide.Short,
+            entryPrice: 10m, entryQuantity: 6m, signalSlPercentage: null, out string reason);
+
+        Assert.IsTrue(fits, reason);
+    }
+
+
+    /// <summary>
+    /// Only the stop above the maximum: the DCA's are switched off and the stop of 4% (limit 5%)
+    /// above an entry of 19.5 lands at 20.28 / 20.475.
+    /// </summary>
+    [TestMethod]
+    public void AShortWhoseStopLiesAboveTheMaximumPriceIsRefused()
+    {
+        GlobalData.Settings.Trading.DcaList = [];
+
+        bool fits = TradeTools.CheckOrderSetAgainstSymbolLimits(LabSymbol(), CryptoTradeSide.Short,
+            entryPrice: 19.5m, entryQuantity: 6m, signalSlPercentage: null, out string reason);
+
+        Assert.IsFalse(fits);
+        StringAssert.Contains(reason, "stop loss 1");
+    }
 }

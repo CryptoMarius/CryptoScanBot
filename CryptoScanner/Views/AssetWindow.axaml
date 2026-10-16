@@ -8,12 +8,12 @@
 		x:DataType="vm:AssetWindowViewModel"
 		x:CompileBindings="False"
 		Title="Paper assets"
-		Width="520" Height="440" MinWidth="420" MinHeight="320"
+		Width="600" Height="440" MinWidth="500" MinHeight="320"
 		WindowStartupLocation="CenterOwner" CanResize="True" ShowInTaskbar="False">
 
 	<!-- Border around entire content -->
 	<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
-	<Grid RowDefinitions="Auto,*,Auto,Auto,Auto" Margin="10" RowSpacing="8">
+	<Grid RowDefinitions="Auto,*,Auto,Auto" Margin="10" RowSpacing="8">
 
 		<TextBlock Grid.Row="0" Text="{Binding Summary}" Foreground="Gray" FontSize="11"
 				   VerticalAlignment="Center"/>
@@ -66,6 +66,19 @@
 							</DataTemplate>
 						</DataGridTemplateColumn.CellTemplate>
 					</DataGridTemplateColumn>
+
+					<!-- Take the coin out of the paper account. Same as correcting it to zero and
+						 pressing Apply, but without having to know that. -->
+					<DataGridTemplateColumn Header="" Width="70" IsReadOnly="True">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate x:DataType="vm:AssetRowViewModel">
+								<Button Content="Remove" Padding="6,1" FontSize="11"
+										HorizontalAlignment="Center" VerticalAlignment="Center"
+										Click="OnRemoveClick"
+										ToolTip.Tip="Take this coin out of the paper account. It is recorded as a manual correction, so the capital line does not read it as a loss."/>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
 				</DataGrid.Columns>
 			</DataGrid>
 		</Border>
@@ -83,23 +96,20 @@
 					ToolTip.Tip="Book this balance. It is recorded as a manual correction, so the capital line does not read it as profit."/>
 		</Grid>
 
-		<!-- Start over -->
-		<Grid Grid.Row="3" ColumnDefinitions="Auto,140,*">
-			<TextBlock Grid.Column="0" Text="Start capital:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-			<NumericUpDown Grid.Column="1" Value="{Binding StartCapital}"
-						   Minimum="0" Increment="1000" FormatString="N2" ShowButtonSpinner="False"
-						   ToolTip.Tip="Amount handed out per traded quote coin when you press Reset. Not used at all when the default asset list in the settings holds anything - that list is handed out instead."/>
-			<Button Grid.Column="2" Content="Reset to start capital" Margin="8,0,0,0"
-					HorizontalAlignment="Left" Click="OnResetClick"
-					ToolTip.Tip="Throw every paper balance away and hand out the starting balances again: the default asset list from the settings when there is one, and otherwise the start capital for each traded quote coin."/>
+		<!-- Action buttons. Start over sits on the left, apart from the everyday buttons. The amounts
+			 it hands out are the default assets of the settings (trader, asset management); this
+			 window has no amount of its own any more. -->
+		<Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto">
+			<Button Grid.Column="0" Content="Reset to defaults" HorizontalContentAlignment="Center" Click="OnResetClick"
+					ToolTip.Tip="Throw every paper balance away and hand out the default assets from the settings (trader, asset management) again."/>
+			<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+				<Button Content="Refresh" HorizontalContentAlignment="Center" Click="OnRefreshClick" Width="90"
+						ToolTip.Tip="Read the balances again. The trader keeps changing them while this window is open; unapplied edits in the list are discarded."/>
+				<Button Content="Apply" HorizontalContentAlignment="Center" Click="OnApplyClick" Width="90"
+						ToolTip.Tip="Save the amounts changed in the Total column. Rows that were not changed are left alone."/>
+				<Button Content="Close" HorizontalContentAlignment="Center" Click="OnCloseClick" Width="90"/>
+			</StackPanel>
 		</Grid>
-
-		<!-- Action buttons -->
-		<StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-			<Button Content="Refresh" HorizontalContentAlignment="Center" Click="OnRefreshClick" Width="90"/>
-			<Button Content="Apply" HorizontalContentAlignment="Center" Click="OnApplyClick" Width="90"/>
-			<Button Content="Close" HorizontalContentAlignment="Center" Click="OnCloseClick" Width="90"/>
-		</StackPanel>
 
 	</Grid>
 	</Border>

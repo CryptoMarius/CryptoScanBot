@@ -607,6 +607,14 @@ public class PositionMonitor : IDisposable
                                 continue;
                             }
 
+                            // The entry filters of the market-regime study, same rule as the analyzer
+                            if (!EntryFilters.Valid(signal.Symbol, signal.Side, LastCandle1mCloseTime, TradingConfig.Trading[signal.Side], out reaction))
+                            {
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                symbolInterval.SignalList.Remove(signal);
+                                continue;
+                            }
+
                             // The market states in which this side steps in (reads every coin of the quote,
                             // cached per hour)
                             if (!PositionTools.ValidMarketStateConditions(signal.Symbol, LastCandle1mCloseTime, TradingConfig.Trading[signal.Side], out reaction))
@@ -636,6 +644,16 @@ public class PositionMonitor : IDisposable
                                 if (!SymbolTools.CheckAvailableSlots(GlobalData.ActiveExchange, Symbol, signal.Side, out reaction))
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
+                                    Symbol.ClearSignals();
+                                    return;
+                                }
+
+                                // At most this many new positions on this side within an hour
+                                SettingsCompiled sideSettings = TradingConfig.Trading[signal.Side];
+                                if (sideSettings.EntryLimitActive
+                                    && EntryFilters.EntriesInLastHour(signal.Side, LastCandle1mCloseTimeDate) >= sideSettings.EntryLimitMaxPerHour)
+                                {
+                                    GlobalData.AddTextToLogTab($"{text} already {sideSettings.EntryLimitMaxPerHour} new {signal.Side} positions within the hour (removed)");
                                     Symbol.ClearSignals();
                                     return;
                                 }
@@ -762,6 +780,7 @@ public class PositionMonitor : IDisposable
                                 position.PlannedEntryAmount = entryValue;
                                 Database.Connection.Insert(position);
                                 PositionTools.AddPosition(position);
+                                EntryFilters.RecordEntry(signal.Side, LastCandle1mCloseTimeDate);
                                 PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry,
                                     signal.Interval, signal.Strategy, entryPrice, LastCandle1mCloseTimeDate);
 
@@ -1057,14 +1076,17 @@ public class PositionMonitor : IDisposable
         if (LastCandle1mCloseTime % 60 != 0)
             return;
 
-        double? move = MarketMove.Since(Symbol.QuoteData, CandleTime.AlignFromDateTime(position.CreateTime, 1), LastCandle1mCloseTime);
+        CandleTime entryTime = CandleTime.AlignFromDateTime(position.CreateTime, 1);
+        double? move = settings.MarketExitUseBtc
+            ? MarketMove.BtcSince(Symbol.QuoteData, entryTime, LastCandle1mCloseTime)
+            : MarketMove.Since(Symbol.QuoteData, entryTime, LastCandle1mCloseTime);
         if (!move.HasValue || !MarketExitDue(position.Side, move.Value, settings.MarketExitPercentage))
             return;
 
         position.ExitRequested = true;
         position.ForceCheckPosition = true;
         GlobalData.AddTextToLogTab($"{Symbol.Name} {position.SideText} position {position.Id} exit requested: " +
-            $"the market moved {move.Value:N2}% since the entry, {settings.MarketExitPercentage.ToString0("N1")}% against the position is the limit");
+            $"{(settings.MarketExitUseBtc ? "BTC" : "the market")} moved {move.Value:N2}% since the entry, {settings.MarketExitPercentage.ToString0("N1")}% against the position is the limit");
     }
 
 

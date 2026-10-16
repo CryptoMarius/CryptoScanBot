@@ -1217,6 +1217,7 @@ public sealed class ReplayRunner
         // The same for the market state and the market move
         MarketState.Reset();
         MarketMove.Reset();
+        CryptoScanner.Core.Signal.EntryFilters.Reset();
 
         // Per-quote transient state: barometer values and pause-barometer timers
         foreach (var quoteData in exchange.Data.QuoteDataList.Values)

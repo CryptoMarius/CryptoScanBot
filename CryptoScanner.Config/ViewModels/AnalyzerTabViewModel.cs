@@ -25,6 +25,8 @@ public partial class AnalyzerTabViewModel : ObservableObject
     [ObservableProperty]
     private MarketStateFilterViewModel _analyzerMarketStateFilterLongViewModel;
     [ObservableProperty]
+    private EntryFiltersViewModel _analyzerEntryFiltersLongViewModel;
+    [ObservableProperty]
     private TrendIntervalFilterViewModel _analyzerTrendIntervalFilterLongViewModel;
 
     [ObservableProperty]
@@ -42,6 +44,8 @@ public partial class AnalyzerTabViewModel : ObservableObject
     [ObservableProperty]
     private MarketStateFilterViewModel _analyzerMarketStateFilterShortViewModel;
     [ObservableProperty]
+    private EntryFiltersViewModel _analyzerEntryFiltersShortViewModel;
+    [ObservableProperty]
     private TrendIntervalFilterViewModel _analyzerTrendIntervalFilterShortViewModel;
 
 
@@ -58,6 +62,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         _analyzerSymbolTrendFilterSecondaryLongViewModel = new() { Header = "Symbol trend filter (secondary)" };
         _analyzerMarketRsiFilterLongViewModel = new();
         _analyzerMarketStateFilterLongViewModel = new();
+        _analyzerEntryFiltersLongViewModel = new();
         _analyzerTrendIntervalFilterLongViewModel = new();
 
         _analyzerIntervalShortViewModel = new();
@@ -67,6 +72,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         _analyzerSymbolTrendFilterSecondaryShortViewModel = new() { Header = "Symbol trend filter (secondary)" };
         _analyzerMarketRsiFilterShortViewModel = new();
         _analyzerMarketStateFilterShortViewModel = new();
+        _analyzerEntryFiltersShortViewModel = new();
         _analyzerTrendIntervalFilterShortViewModel = new();
 
         // Wire up the "Copy from..." popup on the strategy views so each side knows about
@@ -95,6 +101,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerSymbolTrendFilterSecondaryLongViewModel.LoadConfig(settings.Long.SymbolTrendSecondary);
         AnalyzerMarketRsiFilterLongViewModel.LoadConfig(settings.Long.MarketRsi);
         AnalyzerMarketStateFilterLongViewModel.LoadConfig(settings.Long.MarketState);
+        AnalyzerEntryFiltersLongViewModel.LoadConfig(settings.Long);
         AnalyzerTrendIntervalFilterLongViewModel.LoadConfig(settings.Long.IntervalTrend, CryptoTradeSide.Long);
 
         AnalyzerIntervalShortViewModel.LoadConfig(settings.Short.Interval);
@@ -104,6 +111,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerSymbolTrendFilterSecondaryShortViewModel.LoadConfig(settings.Short.SymbolTrendSecondary);
         AnalyzerMarketRsiFilterShortViewModel.LoadConfig(settings.Short.MarketRsi);
         AnalyzerMarketStateFilterShortViewModel.LoadConfig(settings.Short.MarketState);
+        AnalyzerEntryFiltersShortViewModel.LoadConfig(settings.Short);
         AnalyzerTrendIntervalFilterShortViewModel.LoadConfig(settings.Short.IntervalTrend, CryptoTradeSide.Short);
     }
 
@@ -118,6 +126,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerSymbolTrendFilterSecondaryLongViewModel.SaveConfig(settings.Long.SymbolTrendSecondary);
         AnalyzerMarketRsiFilterLongViewModel.SaveConfig(settings.Long.MarketRsi);
         AnalyzerMarketStateFilterLongViewModel.SaveConfig(settings.Long.MarketState);
+        AnalyzerEntryFiltersLongViewModel.SaveConfig(settings.Long);
         AnalyzerTrendIntervalFilterLongViewModel.SaveConfig(settings.Long.IntervalTrend);
 
         AnalyzerIntervalShortViewModel.SaveConfig(settings.Short.Interval);
@@ -127,6 +136,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerSymbolTrendFilterSecondaryShortViewModel.SaveConfig(settings.Short.SymbolTrendSecondary);
         AnalyzerMarketRsiFilterShortViewModel.SaveConfig(settings.Short.MarketRsi);
         AnalyzerMarketStateFilterShortViewModel.SaveConfig(settings.Short.MarketState);
+        AnalyzerEntryFiltersShortViewModel.SaveConfig(settings.Short);
         AnalyzerTrendIntervalFilterShortViewModel.SaveConfig(settings.Short.IntervalTrend);
     }
 }

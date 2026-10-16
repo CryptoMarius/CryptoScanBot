@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 105;
+    public readonly static int CurrentDatabaseVersion = 106;
 
 
     /// <summary>
@@ -73,7 +73,7 @@ public class DatabaseMigration
                 $"{(int)e.ExchangeType}, " +
                 $"{(int)e.TradingType}, " +
                 $"\'{e.Name}\', " +
-                "0.1," +
+                $"{e.FeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
                 $"{e.IsSupported}" +
                 $")";
                 database.Connection.Execute(sql, transaction);
@@ -2462,6 +2462,24 @@ public class DatabaseMigration
             using var transaction = database.BeginTransaction();
 
             try { database.Connection.Execute("alter table Position add TakeProfitTrailStopPrice TEXT NULL", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 16-10-2026 Real fee rates (taker, lowest tier) instead of the 0.1% that was set for every exchange.
+        // The rates come from CryptoDatabase.CreateExchangeList. Altrady's paper account charges 0.05% per side on Binance Perpetual.
+        if (CurrentVersion > version.Version && version.Version == 105)
+        {
+            using var transaction = database.BeginTransaction();
+
+            foreach (var e in CryptoDatabase.CreateExchangeList())
+                database.Connection.Execute("update Exchange set FeeRate=@feeRate where Name=@name",
+                    new { feeRate = e.FeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture), name = e.Name }, transaction);
 
             // update version
             version.Version += 1;

@@ -86,6 +86,39 @@ public class EmulatorSideConfig
     /// </summary>
     public decimal? MarketExit { get; set; }
 
+    /// <summary>Override Trading.{Side}.MarketExit.UseBtc: watch BTC instead of all coins.</summary>
+    public bool? MarketExitBtc { get; set; }
+
+    /// <summary>
+    /// Override Signal.{Side}.BtcMove: [hours, min, max] only steps in while the % change of BTC over
+    /// the last hours lies in the band; an empty list switches it off.
+    /// </summary>
+    public decimal[]? BtcMove { get; set; }
+
+    /// <summary>Override Signal.{Side}.Weekdays: the UTC days to step in on (0 = Sunday .. 6), an empty list switches it off.</summary>
+    public List<int>? Weekdays { get; set; }
+
+    /// <summary>
+    /// Override Signal.{Side}.MarketRsiCross: [level, hours] only steps in when the market RSI came out
+    /// of the zone (long: from below the level, short: from above) within the last hours; [] switches it off.
+    /// </summary>
+    public decimal[]? MarketRsiCross { get; set; }
+
+    /// <summary>
+    /// Override Signal.{Side}.HigherInterval: the interval, e.g. "1h". Together with HigherIntervalRsi
+    /// and HigherIntervalEma200; the filter is on as soon as one of those two is given and not empty/"any".
+    /// </summary>
+    public string? HigherInterval { get; set; }
+
+    /// <summary>Override the RSI band of the higher interval: [min, max], [] for none.</summary>
+    public decimal[]? HigherIntervalRsi { get; set; }
+
+    /// <summary>Override the EMA200 condition of the higher interval: "above", "below" or "any".</summary>
+    public string? HigherIntervalEma200 { get; set; }
+
+    /// <summary>Override Trading.{Side}.EntryLimit: at most this many new positions per hour, 0 switches it off.</summary>
+    public int? EntryLimitPerHour { get; set; }
+
     /// <summary>
     /// Creates a resolved config by merging the target with a mirror source.
     /// Null fields on the target are filled from the source. Enabled is never mirrored.
@@ -111,6 +144,14 @@ public class EmulatorSideConfig
             MarketState = target?.MarketState,
             MarketStateInterval = target?.MarketStateInterval,
             MarketExit = target?.MarketExit,
+            MarketExitBtc = target?.MarketExitBtc,
+            BtcMove = target?.BtcMove,
+            Weekdays = target?.Weekdays,
+            MarketRsiCross = target?.MarketRsiCross,
+            HigherInterval = target?.HigherInterval,
+            HigherIntervalRsi = target?.HigherIntervalRsi,
+            HigherIntervalEma200 = target?.HigherIntervalEma200,
+            EntryLimitPerHour = target?.EntryLimitPerHour,
         };
 
         if (mirrorSource != null)
@@ -131,6 +172,14 @@ public class EmulatorSideConfig
             result.MarketState ??= mirrorSource.MarketState;
             result.MarketStateInterval ??= mirrorSource.MarketStateInterval;
             result.MarketExit ??= mirrorSource.MarketExit;
+            result.MarketExitBtc ??= mirrorSource.MarketExitBtc;
+            result.BtcMove ??= mirrorSource.BtcMove;
+            result.Weekdays ??= mirrorSource.Weekdays;
+            result.MarketRsiCross ??= mirrorSource.MarketRsiCross;
+            result.HigherInterval ??= mirrorSource.HigherInterval;
+            result.HigherIntervalRsi ??= mirrorSource.HigherIntervalRsi;
+            result.HigherIntervalEma200 ??= mirrorSource.HigherIntervalEma200;
+            result.EntryLimitPerHour ??= mirrorSource.EntryLimitPerHour;
         }
 
         return result;
@@ -238,6 +287,89 @@ public class EmulatorSideConfig
             {
                 Active = config.MarketExit.Value > 0,
                 Percentage = config.MarketExit.Value > 0 ? config.MarketExit.Value : trading.MarketExit.Percentage,
+                UseBtc = trading.MarketExit.UseBtc,
+            };
+        }
+        if (config.MarketExitBtc.HasValue)
+        {
+            trading.MarketExit = new SettingsTextualMarketExit
+            {
+                Active = trading.MarketExit.Active,
+                Percentage = trading.MarketExit.Percentage,
+                UseBtc = config.MarketExitBtc.Value,
+            };
+        }
+
+        // The entry filters of the market-regime study; new objects, for the same reason as above
+        if (config.BtcMove != null)
+        {
+            if (config.BtcMove.Length != 0 && config.BtcMove.Length != 3)
+                throw new NotSupportedException($"BtcMove needs [hours, min, max] or [], not {config.BtcMove.Length} values");
+            signal.BtcMove = config.BtcMove.Length == 3
+                ? new SettingsTextualBtcMove { Active = true, Hours = (int)config.BtcMove[0], Minimum = config.BtcMove[1], Maximum = config.BtcMove[2] }
+                : new SettingsTextualBtcMove { Active = false };
+        }
+        if (config.Weekdays != null)
+        {
+            if (config.Weekdays.Any(d => d < 0 || d > 6))
+                throw new NotSupportedException("Weekdays takes 0 (Sunday) .. 6 (Saturday)");
+            signal.Weekdays = config.Weekdays.Count != 0
+                ? new SettingsTextualWeekdays { Active = true, Days = [.. config.Weekdays] }
+                : new SettingsTextualWeekdays { Active = false };
+        }
+        if (config.MarketRsiCross != null)
+        {
+            if (config.MarketRsiCross.Length != 0 && config.MarketRsiCross.Length != 2)
+                throw new NotSupportedException($"MarketRsiCross needs [level, hours] or [], not {config.MarketRsiCross.Length} values");
+            signal.MarketRsiCross = config.MarketRsiCross.Length == 2
+                ? new SettingsTextualMarketRsiCross { Active = true, Level = config.MarketRsiCross[0], Hours = (int)config.MarketRsiCross[1] }
+                : new SettingsTextualMarketRsiCross { Active = false };
+        }
+        if (config.HigherInterval != null || config.HigherIntervalRsi != null || config.HigherIntervalEma200 != null)
+        {
+            SettingsTextualHigherInterval current = signal.HigherInterval;
+            SettingsTextualHigherInterval higher = new()
+            {
+                Active = current.Active,
+                Interval = current.Interval,
+                RsiMinimum = current.RsiMinimum,
+                RsiMaximum = current.RsiMaximum,
+                Ema200 = current.Ema200,
+            };
+            if (config.HigherInterval != null)
+            {
+                if (!GlobalData.IntervalListPeriodName.ContainsKey(config.HigherInterval))
+                    throw new NotSupportedException($"HigherInterval \"{config.HigherInterval}\" is not an interval");
+                higher.Interval = config.HigherInterval;
+            }
+            if (config.HigherIntervalRsi != null)
+            {
+                if (config.HigherIntervalRsi.Length != 0 && config.HigherIntervalRsi.Length != 2)
+                    throw new NotSupportedException($"HigherIntervalRsi needs [min, max] or [], not {config.HigherIntervalRsi.Length} values");
+                (higher.RsiMinimum, higher.RsiMaximum) = config.HigherIntervalRsi.Length == 2
+                    ? (config.HigherIntervalRsi[0], config.HigherIntervalRsi[1]) : (0m, 100m);
+            }
+            if (config.HigherIntervalEma200 != null)
+            {
+                higher.Ema200 = config.HigherIntervalEma200.ToLowerInvariant() switch
+                {
+                    "above" => 1,
+                    "below" => -1,
+                    "any" or "" => 0,
+                    _ => throw new NotSupportedException($"HigherIntervalEma200 knows above, below and any, not \"{config.HigherIntervalEma200}\""),
+                };
+            }
+            higher.Active = higher.Ema200 != 0 || higher.RsiMinimum > 0 || higher.RsiMaximum < 100;
+            signal.HigherInterval = higher;
+        }
+        if (config.EntryLimitPerHour.HasValue)
+        {
+            if (config.EntryLimitPerHour.Value < 0)
+                throw new NotSupportedException($"EntryLimitPerHour needs zero or more, not {config.EntryLimitPerHour.Value}");
+            trading.EntryLimit = new SettingsTextualEntryLimit
+            {
+                Active = config.EntryLimitPerHour.Value > 0,
+                MaxPerHour = config.EntryLimitPerHour.Value > 0 ? config.EntryLimitPerHour.Value : trading.EntryLimit.MaxPerHour,
             };
         }
     }

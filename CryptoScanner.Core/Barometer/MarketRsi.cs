@@ -62,12 +62,46 @@ public static class MarketRsi
 
     private static readonly ConcurrentDictionary<string, QuoteCache> Caches = new();
 
+    // The market RSI at the close of a whole hour, per quote and hour open, for the "came out of
+    // oversold" entry filter that looks a number of hours back (see Signal.EntryFilters)
+    private static readonly ConcurrentDictionary<(string Quote, CandleTime HourOpen), double?> HourValues = new();
+
 
     /// <summary>
     /// Forget every cached value. The emulator calls this at the start of each run: two runs can
     /// replay the same hours with a different set of coins.
     /// </summary>
-    public static void Reset() => Caches.Clear();
+    public static void Reset()
+    {
+        Caches.Clear();
+        HourValues.Clear();
+    }
+
+
+    /// <summary>
+    /// The market RSI at the close of the whole hour that opened at <paramref name="hourOpen"/>,
+    /// without the partial step of <see cref="Calculate"/>. Cached per quote and hour; null with fewer
+    /// than <see cref="MinimumSymbols"/> coins.
+    /// </summary>
+    public static double? HourValue(CryptoQuoteData quoteData, CandleTime hourOpen)
+    {
+        if (HourValues.TryGetValue((quoteData.Name, hourOpen), out double? cached))
+            return cached;
+
+        (List<CoinState> coins, _) = BuildHourStates(quoteData, hourOpen);
+        double? value = null;
+        if (coins.Count >= MinimumSymbols)
+        {
+            double sum = 0;
+            foreach (CoinState coin in coins)
+                sum += coin.AverageLoss == 0 ? 100.0 : 100.0 - 100.0 / (1.0 + coin.AverageGain / coin.AverageLoss);
+            value = sum / coins.Count;
+        }
+        // Not cached while too few coins had the hour yet: live, a candle can arrive late
+        if (value.HasValue)
+            HourValues[(quoteData.Name, hourOpen)] = value;
+        return value;
+    }
 
 
     /// <summary>

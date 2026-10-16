@@ -2410,7 +2410,7 @@ code {
 
 /* Paper assets dialog (matches the Avalonia AssetWindow, 520x440) */
 .assets-dialog {
-    width: 520px;
+    width: 600px;
     max-width: 90vw;
 }
 
@@ -2474,6 +2474,17 @@ code {
 .assets-start-capital::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
+}
+
+/* The small Remove button in each row, Padding="6,1" FontSize="11" in the Avalonia grid. */
+.assets-remove {
+    padding: 1px 6px;
+    font-size: 11px;
+}
+
+/* Reset on the left of the footer, the other buttons stay on the right - ColumnDefinitions="Auto,*,Auto". */
+.assets-reset-button {
+    margin-right: auto;
 }
 
 

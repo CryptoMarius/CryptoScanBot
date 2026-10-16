@@ -58,6 +58,26 @@ public class SettingsCompiled
     // Close a position once the market moved this far against it (mirrors SettingsTextualMarketExit)
     public bool MarketExitActive = false;
     public decimal MarketExitPercentage = 3m;
+    public bool MarketExitUseBtc = false;
+
+    // Entry filters from the market-regime study (mirror the SettingsTextual classes of the same name)
+    public bool BtcMoveActive = false;
+    public int BtcMoveHours = 24;
+    public decimal BtcMoveMinimum = -100m;
+    public decimal BtcMoveMaximum = 100m;
+    public bool WeekdaysActive = false;
+    public HashSet<int> WeekdaysAllowed = [0, 1, 2, 3, 4, 5, 6];
+    public bool MarketRsiCrossActive = false;
+    public decimal MarketRsiCrossLevel = 35m;
+    public int MarketRsiCrossHours = 12;
+    public bool HigherIntervalActive = false;
+    public string HigherIntervalName = "1h";
+    public CryptoIntervalPeriod HigherIntervalPeriod = CryptoIntervalPeriod.interval1h;
+    public decimal HigherIntervalRsiMinimum = 0m;
+    public decimal HigherIntervalRsiMaximum = 100m;
+    public int HigherIntervalEma200 = 0;
+    public bool EntryLimitActive = false;
+    public int EntryLimitMaxPerHour = 10;
 
     // Via interval + Value (ranged)
     // Minimale barometer om de meldingen te genereren
@@ -174,6 +194,27 @@ public class SettingsCompiled
         // Close a position once the market moved this far against it
         MarketExitActive = settings.MarketExit.Active && settings.MarketExit.Percentage > 0;
         MarketExitPercentage = settings.MarketExit.Percentage;
+        MarketExitUseBtc = settings.MarketExit.UseBtc;
+
+        // Entry filters from the market-regime study
+        BtcMoveActive = settings.BtcMove.Active && settings.BtcMove.Hours > 0;
+        BtcMoveHours = settings.BtcMove.Hours;
+        BtcMoveMinimum = Math.Min(settings.BtcMove.Minimum, settings.BtcMove.Maximum);
+        BtcMoveMaximum = Math.Max(settings.BtcMove.Minimum, settings.BtcMove.Maximum);
+        WeekdaysActive = settings.Weekdays.Active;
+        WeekdaysAllowed = [.. settings.Weekdays.Days];
+        MarketRsiCrossActive = settings.MarketRsiCross.Active;
+        MarketRsiCrossLevel = settings.MarketRsiCross.Level;
+        MarketRsiCrossHours = Math.Max(1, settings.MarketRsiCross.Hours);
+        HigherIntervalActive = settings.HigherInterval.Active;
+        HigherIntervalName = settings.HigherInterval.Interval;
+        HigherIntervalPeriod = GlobalData.IntervalListPeriodName.TryGetValue(settings.HigherInterval.Interval, out CryptoInterval? higherInterval)
+            ? higherInterval.IntervalPeriod : CryptoIntervalPeriod.interval1h;
+        HigherIntervalRsiMinimum = Math.Min(settings.HigherInterval.RsiMinimum, settings.HigherInterval.RsiMaximum);
+        HigherIntervalRsiMaximum = Math.Max(settings.HigherInterval.RsiMinimum, settings.HigherInterval.RsiMaximum);
+        HigherIntervalEma200 = Math.Sign(settings.HigherInterval.Ema200);
+        EntryLimitActive = settings.EntryLimit.Active && settings.EntryLimit.MaxPerHour > 0;
+        EntryLimitMaxPerHour = settings.EntryLimit.MaxPerHour;
 
 
         Strategy.Clear();

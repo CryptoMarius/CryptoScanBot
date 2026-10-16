@@ -7,7 +7,7 @@ namespace CryptoScanner.Views;
 
 /// <summary>
 /// Shows the paper-trading balances and lets them be corrected by hand. Reset throws everything away
-/// and hands out the start capital again - the same thing the emulator does at the start of a run.
+/// and hands out the default assets of the settings again - the same thing the emulator does at the start of a run.
 /// </summary>
 public partial class AssetWindow : Window
 {
@@ -25,11 +25,19 @@ public partial class AssetWindow : Window
 
     private void OnAddClick(object? sender, RoutedEventArgs e) => ViewModel?.Add();
 
+    private void OnRemoveClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: AssetRowViewModel row })
+            ViewModel?.Remove(row);
+    }
+
     private async void OnResetClick(object? sender, RoutedEventArgs e)
     {
         // Deliberately behind a confirmation: this wipes the balances of a running paper session.
+        // The confirmation names the amounts, so nothing is handed out that the user did not see.
         ConfirmDialog dialog = new(
-            "Throw every paper balance away and hand out the start capital again?", "Reset paper assets");
+            $"Throw every paper balance away and hand out the default assets again: {AssetWindowViewModel.DescribeReset()}?",
+            "Reset paper assets");
         if (await dialog.ShowDialog<bool>(this))
             ViewModel?.Reset();
     }

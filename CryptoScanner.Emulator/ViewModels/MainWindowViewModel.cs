@@ -1076,6 +1076,16 @@ public partial class MainWindowViewModel : ObservableObject
         SettingsTextualMarketState savedSignalShortMarketState = GlobalData.Settings.Signal.Short.MarketState;
         SettingsTextualMarketExit savedTradingLongMarketExit = GlobalData.Settings.Trading.Long.MarketExit;
         SettingsTextualMarketExit savedTradingShortMarketExit = GlobalData.Settings.Trading.Short.MarketExit;
+        SettingsTextualEntryLimit savedTradingLongEntryLimit = GlobalData.Settings.Trading.Long.EntryLimit;
+        SettingsTextualEntryLimit savedTradingShortEntryLimit = GlobalData.Settings.Trading.Short.EntryLimit;
+        SettingsTextualBtcMove savedSignalLongBtcMove = GlobalData.Settings.Signal.Long.BtcMove;
+        SettingsTextualBtcMove savedSignalShortBtcMove = GlobalData.Settings.Signal.Short.BtcMove;
+        SettingsTextualWeekdays savedSignalLongWeekdays = GlobalData.Settings.Signal.Long.Weekdays;
+        SettingsTextualWeekdays savedSignalShortWeekdays = GlobalData.Settings.Signal.Short.Weekdays;
+        SettingsTextualMarketRsiCross savedSignalLongMarketRsiCross = GlobalData.Settings.Signal.Long.MarketRsiCross;
+        SettingsTextualMarketRsiCross savedSignalShortMarketRsiCross = GlobalData.Settings.Signal.Short.MarketRsiCross;
+        SettingsTextualHigherInterval savedSignalLongHigherInterval = GlobalData.Settings.Signal.Long.HigherInterval;
+        SettingsTextualHigherInterval savedSignalShortHigherInterval = GlobalData.Settings.Signal.Short.HigherInterval;
 
         int totalRuns = selectedAlgorithms.Sum(a =>
             queue.Where((e, i) => !blockedEntries.Contains(i))
@@ -1151,6 +1161,16 @@ public partial class MainWindowViewModel : ObservableObject
                     GlobalData.Settings.Signal.Short.MarketState = savedSignalShortMarketState;
                     GlobalData.Settings.Trading.Long.MarketExit = savedTradingLongMarketExit;
                     GlobalData.Settings.Trading.Short.MarketExit = savedTradingShortMarketExit;
+                    GlobalData.Settings.Trading.Long.EntryLimit = savedTradingLongEntryLimit;
+                    GlobalData.Settings.Trading.Short.EntryLimit = savedTradingShortEntryLimit;
+                    GlobalData.Settings.Signal.Long.BtcMove = savedSignalLongBtcMove;
+                    GlobalData.Settings.Signal.Short.BtcMove = savedSignalShortBtcMove;
+                    GlobalData.Settings.Signal.Long.Weekdays = savedSignalLongWeekdays;
+                    GlobalData.Settings.Signal.Short.Weekdays = savedSignalShortWeekdays;
+                    GlobalData.Settings.Signal.Long.MarketRsiCross = savedSignalLongMarketRsiCross;
+                    GlobalData.Settings.Signal.Short.MarketRsiCross = savedSignalShortMarketRsiCross;
+                    GlobalData.Settings.Signal.Long.HigherInterval = savedSignalLongHigherInterval;
+                    GlobalData.Settings.Signal.Short.HigherInterval = savedSignalShortHigherInterval;
 
                     decimal effectiveSL = entry.Trading?.StopLossPercentage ?? entry.StopLossPercentage;
                     GlobalData.Settings.Trading.StopLossPercentage = effectiveSL;
@@ -1394,6 +1414,16 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Signal.Short.MarketState = savedSignalShortMarketState;
             GlobalData.Settings.Trading.Long.MarketExit = savedTradingLongMarketExit;
             GlobalData.Settings.Trading.Short.MarketExit = savedTradingShortMarketExit;
+            GlobalData.Settings.Trading.Long.EntryLimit = savedTradingLongEntryLimit;
+            GlobalData.Settings.Trading.Short.EntryLimit = savedTradingShortEntryLimit;
+            GlobalData.Settings.Signal.Long.BtcMove = savedSignalLongBtcMove;
+            GlobalData.Settings.Signal.Short.BtcMove = savedSignalShortBtcMove;
+            GlobalData.Settings.Signal.Long.Weekdays = savedSignalLongWeekdays;
+            GlobalData.Settings.Signal.Short.Weekdays = savedSignalShortWeekdays;
+            GlobalData.Settings.Signal.Long.MarketRsiCross = savedSignalLongMarketRsiCross;
+            GlobalData.Settings.Signal.Short.MarketRsiCross = savedSignalShortMarketRsiCross;
+            GlobalData.Settings.Signal.Long.HigherInterval = savedSignalLongHigherInterval;
+            GlobalData.Settings.Signal.Short.HigherInterval = savedSignalShortHigherInterval;
             // One closing line naming what did not run, so a batch that ran overnight can be judged
             // from the log without counting rows in the results grid.
             if (blockedEntries.Count > 0 || failedRuns > 0)

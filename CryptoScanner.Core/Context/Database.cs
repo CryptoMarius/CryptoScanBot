@@ -222,17 +222,16 @@ public class CryptoDatabase : IDisposable
         return
         [
             // You must have an account and register the api key, otherwise "error unauthorized"
-            new() { Name = "Alpaca", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Alpaca", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Spot, FeeRate = 0.25m }, // taker, lowest tier
             new() { Name = "Alpaca Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.Alpaca, TradingType=CryptoTradingType.Perpetual},
 
-            new() { Name = "Binance Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Binance Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Perpetual},
+            new() { Name = "Binance Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot, FeeRate = 0.1m }, // taker, VIP 0
+            new() { Name = "Binance Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.05m }, // USDS-M taker, VIP 0
 
             // The spot side is small: the exchange offers 65 pairs here, of which 32 are quoted in USDT
-            new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
-            new() { Name = "BitMart Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Perpetual },
-
-            new() { Name = "Bitvavo Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Spot },
+            new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot, FeeRate = 0.25m }, // taker, lowest tier
+            new() { Name = "BitMart Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.06m }, // taker, LV1
+            new() { Name = "Bitvavo Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Spot, FeeRate = 0.25m }, // taker, lowest tier, EUR markets
             new() { Name = "Bitvavo Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Perpetual},
 
             // The exchange does offer spot (241 instruments), but the BloFin.Net package (JKorf) only
@@ -240,47 +239,41 @@ public class CryptoDatabase : IDisposable
             // in Exchange\BloFin\Spot was written against the SpotApi of an older package version and
             // was removed on 17-08-2026; only this registration is left, to keep the market visible as
             // an unsupported one.
-            new() { Name = "BloFin Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Spot },
-            new() { Name = "BloFin Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Perpetual },
-
+            new() { Name = "BloFin Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Spot, FeeRate = 0.1m }, // taker, VIP 0
+            new() { Name = "BloFin Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.06m }, // taker, VIP 0
             // Bybit global
-            new() { Name = "Bybit Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Bybit Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Perpetual },
-
+            new() { Name = "Bybit Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Spot, FeeRate = 0.1m }, // taker, non-VIP
+            new() { Name = "Bybit Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.055m }, // taker, non-VIP
             // Bybit EU (the MiCA regulated european entity, api.bybit.eu) is a spot only exchange:
             // instruments-info returns 132 spot instruments (111 USDC, 17 EUR, 4 PLN) and an empty
             // list for linear, inverse and option (checked 14-08-2026). So there is nothing to
             // subscribe to on the futures side, this is not a boundary or a filter problem. The
             // futures source was removed on 17-08-2026; only this registration is left, to keep the
             // market visible as an unsupported one.
-            new() { Name = "Bybit EU Spot", IsSupported = true, ExchangeType = CryptoExchangeType.BybitEu, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Bybit EU Spot", IsSupported = true, ExchangeType = CryptoExchangeType.BybitEu, TradingType=CryptoTradingType.Spot, FeeRate = 0.1m }, // taker, non-VIP
             new() { Name = "Bybit EU Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.BybitEu, TradingType=CryptoTradingType.Perpetual },
 
             // The kline stream of this exchange is fixed at 5 minutes, which is of no use for the 1m
             // candles, so those are built from the trade feed instead (as with Kraken Perpetual).
-            new() { Name = "Coinbase Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Coinbase Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Spot, FeeRate = 0.6m }, // taker, lowest tier
             // There is no Coinbase futures implementation at all, ExchangeHelper.GetApi throws for it
             new() { Name = "Coinbase Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Perpetual },
 
             // HyperLiquid
-            new() { Name = "HyperLiquid Spot", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Spot },
-            new() { Name = "HyperLiquid Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Perpetual },
+            new() { Name = "HyperLiquid Spot", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Spot, FeeRate = 0.07m }, // taker, tier 0
+            new() { Name = "HyperLiquid Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.045m }, // taker, tier 0
 
             // Kraken Perpetual has no kline websocket feed, the 1m candles are built from the trades
-            new() { Name = "Kraken Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Kraken Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Perpetual },
-
-            new() { Name = "Kucoin Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Kucoin Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Perpetual },
-
+            new() { Name = "Kraken Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot, FeeRate = 0.8m }, // taker, lowest tier since 07-2026
+            new() { Name = "Kraken Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.05m }, // taker, lowest tier
+            new() { Name = "Kucoin Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot, FeeRate = 0.1m }, // taker, LV0 class A
+            new() { Name = "Kucoin Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.06m }, // taker, LV0
             // Mexc Perpetual: market data only, the order endpoints of that exchange have been marked
             // "(Under maintenance)" since 25-07-2022 - so it can be scanned but never traded on
-            new() { Name = "Mexc Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Mexc Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Perpetual },
-
-            new() { Name = "Okx Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Okx Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Perpetual },
-
+            new() { Name = "Mexc Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot, FeeRate = 0.05m }, // taker, standard
+            new() { Name = "Mexc Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.02m }, // taker, standard
+            new() { Name = "Okx Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot, FeeRate = 0.1m }, // taker, Lv1
+            new() { Name = "Okx Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.05m }, // taker, Lv1
         ];
     }
 

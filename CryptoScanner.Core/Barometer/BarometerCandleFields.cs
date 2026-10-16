@@ -300,33 +300,49 @@ public static class BarometerCandleFields
     {
         string text = value switch
         {
-            BarometerGraphValue.Median => "The % change of the coin in the middle when all coins of the quote are ranked. "
-                + "A few outliers do not move it, so compare it with the average.",
-            BarometerGraphValue.Rising => "Share of the coins that rose, 0..100%. Drawn around 50%: above the red line more coins "
-                + "rose than fell.",
-            BarometerGraphValue.Spread => "How far the coins lie apart: the 75th minus the 25th percentile of their % change. "
-                + "Small means the market moves as one block, large means coin choice matters.",
-            BarometerGraphValue.Movement => "How far the typical coin moved in %, up or down alike. Rises when the market gets "
-                + "restless, whatever the direction.",
-            BarometerGraphValue.BitcoinVersusMarket => "Bitcoin's % change minus that of the median coin. Positive: money moves to "
-                + "Bitcoin. Negative: money moves to the smaller coins.",
-            BarometerGraphValue.MarketTrendPrimary => "The structure of the whole market, -100..+100: the trend of every coin "
-                + "(primary zigzag, weighted over all intervals from 1m to 1d), averaged over the coins.",
-            BarometerGraphValue.MarketTrendSecondary => "The market trend with the secondary zigzag, which follows every swing "
-                + "and therefore turns sooner and more often than the primary one.",
-            BarometerGraphValue.MarketState => "One score from -100 (everything down) to +100 (everything up): the average of "
-                + "the BTC part, the share of coins above their 1h EMA50 and the 72h change. Calculated once per hour.",
-            BarometerGraphValue.MarketStateBtc => "The Bitcoin part of the market state, -100..+100: the distance of BTC to its "
-                + "EMA200 (5% counts as full) and the 24h slope of its EMA50 (1.5% counts as full), on the BTC trend "
-                + "interval of the market state filter.",
-            BarometerGraphValue.MarketStateBreadth => "Share of the coins whose last 1h close is above their own 1h EMA50, "
-                + "0..100%. 50 is neutral.",
-            BarometerGraphValue.MarketState72h => "Average % change of all coins over the last 72 hours. In the market state "
-                + "+/-6% counts as full.",
-            BarometerGraphValue.MarketRsi => "The RSI 14 of every coin on its own 1h candles, averaged over the coins, 0..100. "
-                + "50 is neutral: above it the coins rose more than they fell.",
-            BarometerGraphValue.SymbolCount => "How many coins the measurement was made over.",
-            _ => "The barometer itself: the average % change of all coins of the quote over the chosen interval",
+            BarometerGraphValue.Median => "Like the average, but not pulled along by a few coins that shoot up or crash.\n"
+                + "The % change of the coin in the middle when all coins are ranked. An average far above the median "
+                + "means a few coins carry the market.",
+            BarometerGraphValue.Rising => "Whether a move is broad or carried by a few coins.\n"
+                + "The share of the coins that rose, 0..100%. Above the red 50% line more coins rose than fell.",
+            BarometerGraphValue.Spread => "Whether the choice of coin matters right now.\n"
+                + "How far the coins lie apart: the 75th minus the 25th percentile of their % change. Small: the coins "
+                + "move together. Large: some coins rise while others fall.",
+            BarometerGraphValue.Movement => "How restless the market is, whatever the direction.\n"
+                + "How far the typical coin moved in %, up or down alike. High means large swings.",
+            BarometerGraphValue.BitcoinVersusMarket => "Where the money goes: to Bitcoin or to the other coins.\n"
+                + "Bitcoin's % change minus that of the median coin. Positive: Bitcoin does better than the rest. "
+                + "Negative: the other coins do better.",
+            BarometerGraphValue.MarketTrendPrimary => "The direction of the whole market by chart structure (higher or lower "
+                + "highs and lows), -100 (every coin in a downtrend) .. +100 (every coin in an uptrend).\n"
+                + "The trend of every coin, weighted over the intervals 1m to 1d, averaged over the coins.",
+            BarometerGraphValue.MarketTrendSecondary => "Same as the market trend, but it follows every small swing.\n"
+                + "It shows a turn sooner than the market trend, and also turns more often for nothing.",
+            BarometerGraphValue.MarketState => "Whether the market as a whole is going up, down or nowhere, as one score from "
+                + "-100 (everything down) to +100 (everything up). The trader can only step in while it lies in a band "
+                + "(Market state filter).\n"
+                + "The average of three parts, each with its own graph: BTC, the coins above their EMA50 and the 72h "
+                + "change. Calculated once per hour.",
+            BarometerGraphValue.MarketStateBtc => "Whether Bitcoin itself is in an uptrend or a downtrend, -100..+100. One of the "
+                + "three parts of the market state.\n"
+                + "The average of two scores: the BTC price against its EMA200 (+5% = +100, -5% = -100) and the change "
+                + "of its EMA50 over 24 hours (+1.5% = +100, -1.5% = -100), on the BTC trend interval of the Market "
+                + "state filter.",
+            BarometerGraphValue.MarketStateBreadth => "How many coins are in an uptrend of their own, 0..100%. One of the three "
+                + "parts of the market state.\n"
+                + "The share of the coins whose last 1h close is above their own 1h EMA50. Above the red 50 line most "
+                + "coins are.",
+            BarometerGraphValue.MarketState72h => "Whether the market rose or fell over the last three days. One of the three "
+                + "parts of the market state.\n"
+                + "The average % change of all coins over 72 hours. In the market state +6% counts as +100 and -6% as -100.",
+            BarometerGraphValue.MarketRsi => "Whether the coins have mostly risen or fallen in the last hours, 0..100. High: most "
+                + "coins rose strongly. Low: most fell strongly. Around 50: no clear direction. The trader can skip "
+                + "signals while it lies in a band (Market RSI filter).\n"
+                + "The average RSI 14 (1h) of all coins.",
+            BarometerGraphValue.SymbolCount => "How many coins the other figures are measured over.\n"
+                + "A sudden drop means coins are missing, and the other figures are less reliable at that moment.",
+            _ => "How the market as a whole is doing right now. Above zero it rises, below zero it falls.\n"
+                + "The average % change of all coins of the quote over the chosen interval.",
         };
 
         string period = BarometerHourHistory.DrawsDays(value)

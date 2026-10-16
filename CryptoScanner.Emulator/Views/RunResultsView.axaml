@@ -11,10 +11,10 @@
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
             <!-- Refresh and "Delete all runs" moved into the context menu of the grid (04-10-2026). -->
-            <TextBlock Text="Filter label:" VerticalAlignment="Center"/>
-            <TextBox Width="320" Text="{Binding LabelFilter}"
-                     Watermark="words in the label, e.g. mac open 1d"
-                     ToolTip.Tip="Shows only the runs whose label contains every word, in any order and case. Empty shows all runs."/>
+            <TextBlock Text="Filter:" VerticalAlignment="Center"/>
+            <TextBox Width="420" Text="{Binding LabelFilter}"
+                     Watermark="label words and conditions, e.g. bbm return&gt;5 dd&lt;20 win&gt;=50"
+                     ToolTip.Tip="Shows only the runs whose label contains every word, in any order and case.&#10;A word with an operator (&gt; &lt; &gt;= &lt;= = !=) is a condition on a number column:&#10;  return&gt;5  dd&lt;20  profit&gt;100  profit%&gt;2  win&gt;=50  (two on one field give a range: dd&gt;5 dd&lt;20)&#10;Fields: return, dd, profit, profit%, win, peak%, peakcap, invested, signals, pos, open, won, lost, long, short, id.&#10;Empty shows all runs."/>
         </StackPanel>
 
         <!-- HorizontalScrollBarVisibility is forced to Visible: on Auto the grid never showed its

@@ -199,4 +199,28 @@ public class ClampTests
     {
         Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => 1m.Clamp(2m, 1m, Tick));
     }
+
+
+    /// <summary>
+    /// The overload with outsideLimits tells whether the price had to be moved onto a limit.
+    /// Rounding onto the tick grid alone does not count.
+    /// </summary>
+    [TestMethod]
+    public void ClampPriceTellsWhenAPriceLayOutsideTheLimits()
+    {
+        Assert.AreEqual(20m, 20.74m.ClampPrice(CryptoTradeSide.Short, 0.1m, 20m, Tick, out bool above));
+        Assert.IsTrue(above, "above the maximum");
+
+        Assert.AreEqual(0.1m, 0.04m.ClampPrice(CryptoTradeSide.Short, 0.1m, 20m, Tick, out bool below));
+        Assert.IsTrue(below, "below the minimum");
+
+        Assert.AreEqual(19.9m, 19.96m.ClampPrice(CryptoTradeSide.Short, 0.1m, 20m, Tick, out bool rounded));
+        Assert.IsFalse(rounded, "only rounded onto the grid");
+
+        Assert.AreEqual(20m, 20m.ClampPrice(CryptoTradeSide.Short, 0.1m, 20m, Tick, out bool onMaximum));
+        Assert.IsFalse(onMaximum, "exactly on the maximum is inside");
+
+        Assert.AreEqual(25m, 25m.ClampPrice(CryptoTradeSide.Short, NoMinimum, NoMaximum, Tick, out bool noMaximum));
+        Assert.IsFalse(noMaximum, "a maximum of zero means none");
+    }
 }

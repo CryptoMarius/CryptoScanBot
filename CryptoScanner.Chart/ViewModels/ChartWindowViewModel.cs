@@ -1194,7 +1194,9 @@ public partial class ChartWindowViewModel : ObservableObject
         // Draw signals
         group = "positions";
         if (Toggle(model, group, Session.ShowPositions))
-            Positions.Draw(model, Symbol, PositionList, Interval, Session.MinDate, Session.MaxDate, group);
+            // Same bound as the load: open levels run on to the end of the running candle, not to
+            // its start, or a position opened during that candle is drawn from right to left.
+            Positions.Draw(model, Symbol, PositionList, Interval, Session.MinDate, Session.MaxDate + Interval.Duration, group);
 
 
         if (_refreshChart && sender != null)
@@ -1669,7 +1671,10 @@ public partial class ChartWindowViewModel : ObservableObject
             ExtraData.LoadSignalsForSymbol(symbol, Session.MinDate, Session.MaxDate, WindowEmulatorRunId, SignalList);
             optionsInChart.TryAdd("signals", "");
             optionsInChart["signals"] = "";
-            ExtraData.LoadPositionsForSymbol(symbol, Session.MinDate, Session.MaxDate, WindowEmulatorRunId, PositionList);
+            // Up to the end of the RUNNING candle. MaxDate is the start of the current interval, so a
+            // 15m position opened during the current hour fell after it on the 1h chart and was not
+            // drawn until the hour closed.
+            ExtraData.LoadPositionsForSymbol(symbol, Session.MinDate, Session.MaxDate + Interval.Duration, WindowEmulatorRunId, PositionList);
             optionsInChart.TryAdd("positions", "");
             optionsInChart["positions"] = "";
         }

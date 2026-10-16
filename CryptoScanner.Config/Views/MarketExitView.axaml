@@ -9,7 +9,8 @@
 
     <HeaderedContentControl Classes="groupbox" Header="{Binding Header}"
                             ToolTip.Tip="Lower closes sooner. Closes an open position once the whole market (all coins of the quote, averaged) moved this many percent against it since the entry: down for a long, up for a short. Checked once per hour; the position leaves at the market price.">
-        <StackPanel Margin="8" Spacing="8" Orientation="Horizontal">
+        <StackPanel Margin="8" Spacing="8">
+        <StackPanel Spacing="8" Orientation="Horizontal">
             <CheckBox IsChecked="{Binding IsActive, Mode=TwoWay}"
                       Content="Close when the market moved"
                       FontSize="12" VerticalAlignment="Center"/>
@@ -17,6 +18,17 @@
                      IsEnabled="{Binding IsActive}"
                      Width="70" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             <TextBlock Text="% against" FontSize="12" VerticalAlignment="Center"/>
+        </StackPanel>
+            <CheckBox IsChecked="{Binding UseBtc, Mode=TwoWay}" IsEnabled="{Binding IsActive}"
+                      Content="Watch BTC instead of all coins" FontSize="12"
+                      ToolTip.Tip="The exit then looks at the move of BTC since the entry instead of the average of all coins"/>
+            <StackPanel Spacing="8" Orientation="Horizontal"
+                        ToolTip.Tip="Lower is calmer. At most this many new positions on this side within an hour: entries that come together are the market moving, not the coin.">
+                <CheckBox IsChecked="{Binding EntryLimitActive, Mode=TwoWay}" Content="At most" FontSize="12" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding EntryLimitMaxPerHour, Mode=TwoWay}" IsEnabled="{Binding EntryLimitActive}"
+                         Width="60" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                <TextBlock Text="new positions per hour" FontSize="12" VerticalAlignment="Center"/>
+            </StackPanel>
         </StackPanel>
     </HeaderedContentControl>
 

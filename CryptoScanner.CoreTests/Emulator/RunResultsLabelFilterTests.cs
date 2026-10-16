@@ -26,4 +26,58 @@ public class RunResultsLabelFilterTests
         Assert.IsFalse(RunResultsViewModel.LabelMatches(Label, "open dbr"));
         Assert.IsFalse(RunResultsViewModel.LabelMatches(null, "mac"));
     }
+
+
+    private static RunRow Row() => new()
+    {
+        Label = "bbm long 1h",
+        Profit = 250m,
+        Invested = 10_000m,               // profit% 2,5
+        PositionsWon = 6,
+        PositionsLost = 4,                // win% 60
+        MaxDrawdownPercentage = 12m,
+        StartCapital = 1_000m,
+        UseAssetManagement = true,        // return% 25
+    };
+
+
+    [TestMethod]
+    public void NumericConditionsTestTheColumns()
+    {
+        RunRow row = Row();
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "bbm return>5 dd<20"));
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "profit>=250 profit%>2,4 win>59.9"));
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "dd>5 dd<20"));
+        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "dd>15"));
+        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "profit<-100"));
+        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "mac return>5"));
+    }
+
+
+    [TestMethod]
+    public void SpacesAroundTheOperatorAreAllowed()
+    {
+        RunRow row = Row();
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "return > 1.0"));
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "bbm  dd <= 12   win >50"));
+        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "return > 30"));
+    }
+
+
+    [TestMethod]
+    public void ReturnWithoutAssetManagementNeverPasses()
+    {
+        RunRow row = Row();
+        row.UseAssetManagement = false;
+        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "return>-1000"));
+    }
+
+
+    [TestMethod]
+    public void UnfinishedOrUnknownConditionsDoNotFilter()
+    {
+        RunResultsViewModel.ParseFilter("bbm dd< foo>3", out List<string> unknown);
+        CollectionAssert.AreEqual(new[] { "foo" }, unknown);
+        Assert.IsTrue(RunResultsViewModel.RowMatches(Row(), "bbm dd<"));
+    }
 }

@@ -17,17 +17,40 @@ public partial class MarketExitViewModel : ObservableObject
     private decimal _percentage = 3m;
 
     [ObservableProperty]
+    private bool _useBtc = false;
+
+    [ObservableProperty]
+    private bool _entryLimitActive = false;
+
+    [ObservableProperty]
+    private int _entryLimitMaxPerHour = 10;
+
+    [ObservableProperty]
     private string _header = "Market exit";
 
     public void LoadConfig(SettingsTextualMarketExit settings)
     {
         IsActive = settings.Active;
         Percentage = settings.Percentage;
+        UseBtc = settings.UseBtc;
+    }
+
+    public void LoadEntryLimit(SettingsTextualEntryLimit settings)
+    {
+        EntryLimitActive = settings.Active;
+        EntryLimitMaxPerHour = settings.MaxPerHour;
+    }
+
+    public void SaveEntryLimit(SettingsTextualEntryLimit settings)
+    {
+        settings.Active = EntryLimitActive;
+        settings.MaxPerHour = Math.Max(1, EntryLimitMaxPerHour);
     }
 
     public void SaveConfig(SettingsTextualMarketExit settings)
     {
         settings.Active = IsActive;
         settings.Percentage = Math.Max(0m, Percentage);
+        settings.UseBtc = UseBtc;
     }
 }

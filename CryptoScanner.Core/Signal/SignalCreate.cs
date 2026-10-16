@@ -458,6 +458,15 @@ public class SignalCreate
             signal.IsInvalid = true;
         }
 
+        // The entry filters of the market-regime study (BTC move, weekdays, market RSI cross, higher
+        // interval). After the cheap checks: some read candles of other coins.
+        if (!signal.IsInvalid && !EntryFilters.Valid(signal.Symbol, signal.Side, Candle.OpenTime + signal.Interval.Duration,
+            TradingConfig.Signals[signal.Side], out reaction))
+        {
+            eventText.Add(reaction);
+            signal.IsInvalid = true;
+        }
+
         // The market states in which this side may step in. Also last: it reads the candles of every
         // coin of the quote (cached per hour).
         if (!signal.IsInvalid && !PositionTools.ValidMarketStateConditions(signal.Symbol, Candle.OpenTime + signal.Interval.Duration,

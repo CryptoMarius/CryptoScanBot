@@ -37,6 +37,7 @@
                         <settings:SymbolTrendFilterView DataContext="{Binding TraderSymbolTrendFilterSecondaryLongViewModel}" />
                         <settings:MarketRsiFilterView DataContext="{Binding TraderMarketRsiFilterLongViewModel}" />
                         <settings:MarketStateFilterView DataContext="{Binding TraderMarketStateFilterLongViewModel}" />
+                        <settings:EntryFiltersView DataContext="{Binding TraderEntryFiltersLongViewModel}" />
                         <settings:MarketExitView DataContext="{Binding TraderMarketExitLongViewModel}" />
                     </StackPanel>
                     <!-- Col 2: Intervals -->
@@ -64,6 +65,7 @@
                         <settings:SymbolTrendFilterView DataContext="{Binding TraderSymbolTrendFilterSecondaryShortViewModel}" />
                         <settings:MarketRsiFilterView DataContext="{Binding TraderMarketRsiFilterShortViewModel}" />
                         <settings:MarketStateFilterView DataContext="{Binding TraderMarketStateFilterShortViewModel}" />
+                        <settings:EntryFiltersView DataContext="{Binding TraderEntryFiltersShortViewModel}" />
                         <settings:MarketExitView DataContext="{Binding TraderMarketExitShortViewModel}" />
                     </StackPanel>
                     <!-- Col 2: Intervals -->

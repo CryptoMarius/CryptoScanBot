@@ -1,6 +1,10 @@
 CryptoScanBot release historie:
 
-xx-10-2026 2.6.8
+16-10-2026 2.6.8
+- Signalen: Vijf nieuwe instapvoorwaarden per zijde - de beweging van BTC over de laatste uren, de dagen van de week, de markt-RSI die net uit oversold of overbought komt, de RSI en EMA200 van de munt zelf op een hoger interval, en een maximum aantal nieuwe posities per uur
+- Papertrading: In het saldo-scherm is een munt te verwijderen en is het saldo terug te zetten naar de standaardlijst
+- Trader: Een prijs die buiten de prijsgrenzen van de munt valt wordt geweigerd in plaats van stil ergens anders geplaatst
+- Kosten: De tarieven volgen nu het papieren account van Altrady, 0,05% per kant op Binance Perpetual
 - Chart: De langzame barometer-cijfers (markttrend, markttoestand, markt-RSI) lopen nu over dagen in plaats van zeven uur, met de dag op de as
 - Chart: Elke keuze in het barometer-uitklapmenu legt zichzelf uit, en het dichtgeklapte vakje vertelt welk cijfer er getekend wordt
 - Trader: De stop-loss rekent vanaf de instap, net als Altrady, en de globale stop ligt voorbij de verste bijkoop die echt geplaatst wordt
@@ -51,6 +55,7 @@ xx-10-2026 2.6.8
 - Fix: De voorafgaande beweging van een candle-patroon telt de omkeercandle zelf niet meer mee
 - Instellingen: De velden van de experimentele strategieen staan alleen nog in de debug-build
 - Releases: De workflow haalt de release-notitie uit dit bestand en ondertekent de bestanden
+- Emulator: Het filtervak boven het resultatenrooster snapt ook voorwaarden op getallen, zoals return>5 of dd<20
 - Emulator: Het resultatenvenster toont per positie de markttoestand bij de instap
 - Emulator: Dezelfde run geeft weer dezelfde uitkomst; de beslissingen die om hetzelfde geld en dezelfde slots gaan lopen nu in vaste volgorde
 - Emulator: Een wachtrij-regel die de trend tegen de richting van de handel in vraagt, laat dat niet meer aan staan voor de regels erna

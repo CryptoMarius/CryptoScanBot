@@ -2,7 +2,7 @@
 @using CryptoScanner.Core.Trader
 
 @* Shows the paper-trading balances and lets them be corrected by hand. Reset throws everything away
-   and hands out the start capital again - the same thing the emulator does at the start of a run.
+   and hands out the default assets of the settings again - the same thing the emulator does at the start of a run.
    Mirrors the Avalonia AssetWindow; the actions themselves live in PaperAssetsEditor. *@
 
 @if (Visible)
@@ -27,6 +27,7 @@
                             <th style="width: 130px;">Total</th>
                             <th style="width: 120px;">Locked</th>
                             <th>Free</th>
+                            <th style="width: 70px;"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -45,11 +46,19 @@
                                 </td>
                                 <td class="text-right">@_rows[index].LockedText</td>
                                 <td class="text-right">@_rows[index].FreeText</td>
+                                @* Take the coin out of the paper account. Same as correcting it to
+                                   zero and pressing Apply, but without having to know that. *@
+                                <td class="text-center">
+                                    <button class="btn assets-remove" @onclick="() => OnRemoveClick(index)"
+                                            title="Take this coin out of the paper account. It is recorded as a manual correction, so the capital line does not read it as a loss.">
+                                        Remove
+                                    </button>
+                                </td>
                             </tr>
                         }
                         @if (_rows.Count == 0)
                         {
-                            <tr><td colspan="4" class="empty-state">No assets</td></tr>
+                            <tr><td colspan="5" class="empty-state">No assets</td></tr>
                         }
                     </tbody>
                 </table>
@@ -72,23 +81,23 @@
                 </button>
             </div>
 
-            <!-- Start over -->
-            <div class="assets-reset">
-                <span>Start capital:</span>
-                <input type="number" class="input-number assets-start-capital" min="0" step="1000"
-                       value="@_startCapital"
-                       @onchange="e => _startCapital = ParseDecimal(e.Value)"
-                       title="Amount handed out per traded quote coin when you press Reset. Not used at all when the default asset list in the settings holds anything - that list is handed out instead." />
-                <button class="btn" @onclick="OnResetClick"
-                        title="Throw every paper balance away and hand out the starting balances again: the default asset list from the settings when there is one, and otherwise the start capital for each traded quote coin.">
-                    Reset to start capital
-                </button>
-            </div>
-
         </div>
+        @* Start over sits on the left, apart from the everyday buttons. The amounts it hands out are
+           the default assets of the settings (trader, asset management); this dialog has no amount
+           of its own any more. *@
         <div class="modal-footer">
-            <button class="btn" @onclick="Reload">Refresh</button>
-            <button class="btn btn-primary" @onclick="OnApply">Apply</button>
+            <button class="btn assets-reset-button" @onclick="OnResetClick"
+                    title="Throw every paper balance away and hand out the default assets from the settings (trader, asset management) again.">
+                Reset to defaults
+            </button>
+            <button class="btn" @onclick="Reload"
+                    title="Read the balances again. The trader keeps changing them while this window is open; unapplied edits in the list are discarded.">
+                Refresh
+            </button>
+            <button class="btn btn-primary" @onclick="OnApply"
+                    title="Save the amounts changed in the Total column. Rows that were not changed are left alone.">
+                Apply
+            </button>
             <button class="btn btn-secondary" @onclick="OnClose">Close</button>
         </div>
     </div>
@@ -97,7 +106,7 @@
        Placed after the dialog so it lands on top of it. *@
     <ConfirmDialog @bind-Visible="_confirmResetVisible"
                    Title="Reset paper assets"
-                   Message="Throw every paper balance away and hand out the start capital again?"
+                   Message="@_resetMessage"
                    OnConfirmed="OnResetConfirmed" />
 }
 
@@ -127,9 +136,9 @@
     private string _newAssetName = "";
     private string _newAssetAmount = "";
 
-    private decimal _startCapital;
     private string _summary = "";
     private bool _confirmResetVisible;
+    private string _resetMessage = "";
 
     /// <summary>Loaded once per opening, the way the Avalonia window builds its view model.</summary>
     private bool _loaded;
@@ -138,7 +147,6 @@
     {
         if (Visible && !_loaded)
         {
-            _startCapital = PaperAssets.DefaultStartCapital;
             Reload();
             _loaded = true;
         }
@@ -187,14 +195,24 @@
         Reload();
     }
 
+    /// <summary>Take one coin out of the paper account.</summary>
+    private void OnRemoveClick(int index)
+    {
+        if (PaperAssetsEditor.Remove(GlobalData.ActiveExchange, _rows[index].Name))
+            Reload();
+    }
+
     private void OnResetClick()
     {
+        // The confirmation names the amounts, so nothing is handed out that the user did not see.
+        _resetMessage = "Throw every paper balance away and hand out the default assets again: " +
+            $"{PaperAssetsEditor.DescribeSavedDefaults()}?";
         _confirmResetVisible = true;
     }
 
     private void OnResetConfirmed()
     {
-        PaperAssetsEditor.Reset(GlobalData.ActiveExchange, _startCapital);
+        PaperAssetsEditor.ResetToSavedDefaults(GlobalData.ActiveExchange);
         Reload();
     }
 
@@ -215,8 +233,4 @@
         if (PaperAssetsEditor.TryParseAmount(value?.ToString(), out decimal amount))
             _rows[index].Total = amount;
     }
-
-    private static decimal ParseDecimal(object? value) =>
-        decimal.TryParse(value?.ToString(), System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture, out decimal result) ? result : 0m;
 }

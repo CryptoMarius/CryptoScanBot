@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="390" d:DesignHeight="360"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:EntryFiltersViewModel"
+             x:Class="CryptoScanner.Config.Views.EntryFiltersView">
+
+    <HeaderedContentControl Classes="groupbox" Header="{Binding Header}"
+                            ToolTip.Tip="Conditions from the market-regime study, all off by default. Each one only lets a signal of this side through when it holds.">
+        <StackPanel Margin="8" Spacing="10">
+
+            <!-- BTC move -->
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding BtcMoveActive}" Content="BTC move" FontSize="12"
+                          ToolTip.Tip="Only step in while the change of BTC over the last hours lies between the two values (%). Long: e.g. -3 .. 100 skips longs after BTC fell more than 3%."/>
+                <StackPanel Orientation="Horizontal" Spacing="6" IsEnabled="{Binding BtcMoveActive}">
+                    <TextBlock Text="hours" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Text="{Binding BtcMoveHours}" Width="60" Height="26" FontSize="12" Padding="6,2"/>
+                    <TextBlock Text="%" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Text="{Binding BtcMoveMinimum}" Width="70" Height="26" FontSize="12" Padding="6,2"/>
+                    <TextBlock Text=".." VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Text="{Binding BtcMoveMaximum}" Width="70" Height="26" FontSize="12" Padding="6,2"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Weekdays -->
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding WeekdaysActive}" Content="Weekdays (UTC)" FontSize="12"
+                          ToolTip.Tip="Only step in on the ticked days of the week, in UTC."/>
+                <WrapPanel IsEnabled="{Binding WeekdaysActive}">
+                    <CheckBox IsChecked="{Binding Monday}" Content="Mo" FontSize="12" Margin="0,0,6,0"/>
+                    <CheckBox IsChecked="{Binding Tuesday}" Content="Tu" FontSize="12" Margin="0,0,6,0"/>
+                    <CheckBox IsChecked="{Binding Wednesday}" Content="We" FontSize="12" Margin="0,0,6,0"/>
+                    <CheckBox IsChecked="{Binding Thursday}" Content="Th" FontSize="12" Margin="0,0,6,0"/>
+                    <CheckBox IsChecked="{Binding Friday}" Content="Fr" FontSize="12" Margin="0,0,6,0"/>
+                    <CheckBox IsChecked="{Binding Saturday}" Content="Sa" FontSize="12" Margin="0,0,6,0"/>
+                    <CheckBox IsChecked="{Binding Sunday}" Content="Su" FontSize="12"/>
+                </WrapPanel>
+            </StackPanel>
+
+            <!-- Market RSI cross -->
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding MarketRsiCrossActive}" Content="Market RSI came out of the zone" FontSize="12"
+                          ToolTip.Tip="Only step in when the market RSI (1h RSI of all coins, averaged) crossed the level within the last hours: long from below (oversold, e.g. 35), short from above (overbought, e.g. 65)."/>
+                <StackPanel Orientation="Horizontal" Spacing="6" IsEnabled="{Binding MarketRsiCrossActive}">
+                    <TextBlock Text="level" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Text="{Binding MarketRsiCrossLevel}" Width="60" Height="26" FontSize="12" Padding="6,2"/>
+                    <TextBlock Text="within hours" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Text="{Binding MarketRsiCrossHours}" Width="60" Height="26" FontSize="12" Padding="6,2"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Higher interval -->
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding HigherIntervalActive}" Content="Coin on a higher interval" FontSize="12"
+                          ToolTip.Tip="Conditions on the coin itself on a higher interval: its RSI 14 between the two values and/or its price above or below the EMA200 of that interval. A short on a weak coin (low RSI, below the EMA200) did better in the study."/>
+                <StackPanel Orientation="Horizontal" Spacing="6" IsEnabled="{Binding HigherIntervalActive}">
+                    <ComboBox ItemsSource="{Binding Intervals}" SelectedItem="{Binding HigherInterval}" FontSize="12" MinWidth="64"/>
+                    <TextBlock Text="RSI" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Text="{Binding HigherIntervalRsiMinimum}" Width="56" Height="26" FontSize="12" Padding="6,2"/>
+                    <TextBlock Text=".." VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Text="{Binding HigherIntervalRsiMaximum}" Width="56" Height="26" FontSize="12" Padding="6,2"/>
+                    <TextBlock Text="EMA200" VerticalAlignment="Center" FontSize="12"/>
+                    <ComboBox ItemsSource="{Binding Ema200Choices}" SelectedItem="{Binding HigherIntervalEma200}" FontSize="12" MinWidth="70"/>
+                </StackPanel>
+            </StackPanel>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

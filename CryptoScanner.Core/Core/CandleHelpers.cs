@@ -189,7 +189,7 @@ public static class Helper
     /// <returns>Clamped value</returns>
     public static decimal Clamp(this decimal value, decimal minValue, decimal maxValue, decimal? stepSize)
     {
-        return ClampCore(value, minValue, maxValue, stepSize, RoundingDirection.Down);
+        return ClampCore(value, minValue, maxValue, stepSize, RoundingDirection.Down, out _);
     }
 
 
@@ -229,7 +229,26 @@ public static class Helper
     /// </remarks>
     public static decimal ClampPrice(this decimal value, CryptoTradeSide side, decimal minValue, decimal maxValue, decimal? tickSize)
     {
-        return ClampCore(value, minValue, maxValue, tickSize, ResolveRounding(side));
+        return ClampCore(value, minValue, maxValue, tickSize, ResolveRounding(side), out _);
+    }
+
+
+    /// <summary>
+    /// The same as <see cref="ClampPrice(decimal, CryptoTradeSide, decimal, decimal, decimal?)"/>, and
+    /// also tells whether the price had to be moved onto <paramref name="minValue"/> or
+    /// <paramref name="maxValue"/>. Rounding onto the tick grid does not count, only the limits do.
+    /// <para>
+    /// A price that is moved onto a limit is no longer the price that was asked for. On 27-06-2026
+    /// LABUSDT.PERP (maximum price 20.0) went short at 19.792: both DCA's (20.74 and 21.73) and the
+    /// stop were put on 20.0, and the first candle that reached 20 filled all three at once - the
+    /// whole ladder in and straight out again on a rise of 1.4%. The entry check uses this to refuse
+    /// such a position instead.
+    /// </para>
+    /// </summary>
+    /// <param name="outsideLimits">True when the price lay beyond the minimum or the maximum</param>
+    public static decimal ClampPrice(this decimal value, CryptoTradeSide side, decimal minValue, decimal maxValue, decimal? tickSize, out bool outsideLimits)
+    {
+        return ClampCore(value, minValue, maxValue, tickSize, ResolveRounding(side), out outsideLimits);
     }
 
 
@@ -259,8 +278,10 @@ public static class Helper
     }
 
 
-    private static decimal ClampCore(decimal value, decimal minValue, decimal maxValue, decimal? stepSize, RoundingDirection direction)
+    private static decimal ClampCore(decimal value, decimal minValue, decimal maxValue, decimal? stepSize, RoundingDirection direction, out bool outsideLimits)
     {
+        outsideLimits = false;
+
         // TODO: Bybit heeft geen min- of maxPrice!?
         // Deze moeten dus nullable worden en moeten hieronder gecontroleerd worden
 
@@ -296,10 +317,17 @@ public static class Helper
             }
         }
 
-        if (maxValue > 0)
-            value = Math.Min(maxValue, value);
+        if (maxValue > 0 && value > maxValue)
+        {
+            value = maxValue;
+            outsideLimits = true;
+        }
 
-        value = Math.Max(minValue, value);
+        if (value < minValue)
+        {
+            value = minValue;
+            outsideLimits = true;
+        }
 
         return value.Normalize();
     }

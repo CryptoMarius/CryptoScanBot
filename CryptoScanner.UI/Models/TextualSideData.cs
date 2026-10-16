@@ -46,6 +46,25 @@ public class TextualSideData
     // Trader only: close a position once the market moved this far against it (off by default)
     public bool MarketExitActive { get; set; }
     public decimal MarketExitPercentage { get; set; } = 3m;
+    public bool MarketExitUseBtc { get; set; }
+    // Trader only: at most this many new positions per hour
+    public bool EntryLimitActive { get; set; }
+    public int EntryLimitMaxPerHour { get; set; } = 10;
+    // Entry filters from the market-regime study (off by default)
+    public bool BtcMoveActive { get; set; }
+    public int BtcMoveHours { get; set; } = 24;
+    public decimal BtcMoveMin { get; set; } = -100m;
+    public decimal BtcMoveMax { get; set; } = 100m;
+    public bool WeekdaysActive { get; set; }
+    public bool[] WeekdaysAllowed { get; set; } = [true, true, true, true, true, true, true]; // 0 = Sunday
+    public bool MarketRsiCrossActive { get; set; }
+    public decimal MarketRsiCrossLevel { get; set; } = 35m;
+    public int MarketRsiCrossHours { get; set; } = 12;
+    public bool HigherIntervalActive { get; set; }
+    public string HigherInterval { get; set; } = "1h";
+    public decimal HigherIntervalRsiMin { get; set; }
+    public decimal HigherIntervalRsiMax { get; set; } = 100m;
+    public string HigherIntervalEma200 { get; set; } = "any";
 
     private static readonly string[] BarometerIntervals = ["15m", "30m", "1h", "4h", "1d"];
 
@@ -133,6 +152,25 @@ public class TextualSideData
 
         side.MarketExitActive = textual.MarketExit.Active;
         side.MarketExitPercentage = textual.MarketExit.Percentage;
+        side.MarketExitUseBtc = textual.MarketExit.UseBtc;
+        side.EntryLimitActive = textual.EntryLimit.Active;
+        side.EntryLimitMaxPerHour = textual.EntryLimit.MaxPerHour;
+
+        side.BtcMoveActive = textual.BtcMove.Active;
+        side.BtcMoveHours = textual.BtcMove.Hours;
+        side.BtcMoveMin = textual.BtcMove.Minimum;
+        side.BtcMoveMax = textual.BtcMove.Maximum;
+        side.WeekdaysActive = textual.Weekdays.Active;
+        for (int day = 0; day < 7; day++)
+            side.WeekdaysAllowed[day] = textual.Weekdays.Days.Contains(day);
+        side.MarketRsiCrossActive = textual.MarketRsiCross.Active;
+        side.MarketRsiCrossLevel = textual.MarketRsiCross.Level;
+        side.MarketRsiCrossHours = textual.MarketRsiCross.Hours;
+        side.HigherIntervalActive = textual.HigherInterval.Active;
+        side.HigherInterval = textual.HigherInterval.Interval;
+        side.HigherIntervalRsiMin = textual.HigherInterval.RsiMinimum;
+        side.HigherIntervalRsiMax = textual.HigherInterval.RsiMaximum;
+        side.HigherIntervalEma200 = textual.HigherInterval.Ema200 > 0 ? "above" : textual.HigherInterval.Ema200 < 0 ? "below" : "any";
 
         return side;
     }
@@ -201,6 +239,24 @@ public class TextualSideData
 
         textual.MarketExit.Active = MarketExitActive;
         textual.MarketExit.Percentage = Math.Max(0m, MarketExitPercentage);
+        textual.MarketExit.UseBtc = MarketExitUseBtc;
+        textual.EntryLimit.Active = EntryLimitActive;
+        textual.EntryLimit.MaxPerHour = Math.Max(1, EntryLimitMaxPerHour);
+
+        textual.BtcMove.Active = BtcMoveActive;
+        textual.BtcMove.Hours = Math.Max(1, BtcMoveHours);
+        textual.BtcMove.Minimum = Math.Min(BtcMoveMin, BtcMoveMax);
+        textual.BtcMove.Maximum = Math.Max(BtcMoveMin, BtcMoveMax);
+        textual.Weekdays.Active = WeekdaysActive;
+        textual.Weekdays.Days = [.. Enumerable.Range(0, 7).Where(day => WeekdaysAllowed[day])];
+        textual.MarketRsiCross.Active = MarketRsiCrossActive;
+        textual.MarketRsiCross.Level = MarketRsiCrossLevel;
+        textual.MarketRsiCross.Hours = Math.Max(1, MarketRsiCrossHours);
+        textual.HigherInterval.Active = HigherIntervalActive;
+        textual.HigherInterval.Interval = HigherInterval;
+        textual.HigherInterval.RsiMinimum = Math.Min(HigherIntervalRsiMin, HigherIntervalRsiMax);
+        textual.HigherInterval.RsiMaximum = Math.Max(HigherIntervalRsiMin, HigherIntervalRsiMax);
+        textual.HigherInterval.Ema200 = HigherIntervalEma200 == "above" ? 1 : HigherIntervalEma200 == "below" ? -1 : 0;
     }
 
     public static void SelectAll(List<TextualCheckItem> items)

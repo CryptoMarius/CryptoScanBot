@@ -97,6 +97,26 @@ public static class MarketMove
 
 
     /// <summary>
+    /// The % change of BTC of the quote between the same two whole hours as <see cref="Since"/>, for
+    /// the market exit that watches BTC instead of all coins. Null when BTC or its candles are missing.
+    /// </summary>
+    public static double? BtcSince(CryptoQuoteData quoteData, CandleTime fromMoment, CandleTime toMoment)
+    {
+        CandleTime fromHour = LastHourOpen(fromMoment);
+        CandleTime nowHour = LastHourOpen(toMoment);
+        if (fromHour >= nowHour)
+            return 0;
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange == null || !exchange.TryGetSymbolByPair("BTC" + quoteData.Name, out CryptoSymbol? btc))
+            return null;
+        CryptoCandleList candles = btc.GetSymbolInterval(CryptoIntervalPeriod.interval1h).CandleList;
+        if (candles.TryGetValue(fromHour, out CryptoCandle from) && from.Close > 0 && candles.TryGetValue(nowHour, out CryptoCandle now))
+            return ((double)now.Close / (double)from.Close - 1.0) * 100.0;
+        return null;
+    }
+
+
+    /// <summary>
     /// The market move seen from one side: positive when the market went the way of the position,
     /// negative when it went against it.
     /// </summary>

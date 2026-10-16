@@ -209,6 +209,66 @@ public static class PaperAssetsEditor
 
 
     /// <summary>
+    /// Take one coin out of the paper account - the delete of the paper-assets screen. Booked as a
+    /// manual correction to zero, so the ledger records the balance that left and the capital line
+    /// does not read it as a loss.
+    /// <para>
+    /// A coin with an open order keeps its row: the reservation of that order still needs it, see
+    /// <see cref="PaperAssets.UpdateAsset"/>. The log tab says so instead of pretending it is gone.
+    /// </para>
+    /// </summary>
+    public static bool Remove(Model.CryptoExchange? activeExchange, string? name)
+    {
+        if (activeExchange == null || string.IsNullOrWhiteSpace(name))
+            return false;
+
+        PaperAssets.SetAsset(activeExchange, name, 0);
+        if (activeExchange.Data.AssetList.ContainsKey(name))
+            GlobalData.AddTextToLogTab($"Paper asset {name} set to zero, kept in the list because an open order still reserves it");
+        else
+            GlobalData.AddTextToLogTab($"Paper asset {name} removed");
+        CaptureToday(activeExchange);
+        return true;
+    }
+
+
+    /// <summary>
+    /// The reset of the paper-assets screen: start over with the default asset list as it is saved in
+    /// the settings (trader, asset management). An empty list falls back to
+    /// <see cref="PaperAssets.DefaultStartCapital"/> per traded quote coin, the same as the reset of
+    /// the trader settings screen and deleting all positions.
+    /// </summary>
+    public static void ResetToSavedDefaults(Model.CryptoExchange? activeExchange)
+    {
+        Reset(activeExchange, PaperAssets.DefaultStartCapital);
+    }
+
+
+    /// <summary>
+    /// What <see cref="ResetToSavedDefaults"/> is going to hand out, in words - for the confirmation,
+    /// so the user sees the amounts before the balances are thrown away.
+    /// </summary>
+    public static string DescribeSavedDefaults()
+    {
+        List<string> parts = [.. GlobalData.Settings.Trading.PaperAssetDefaults
+            .Where(d => !string.IsNullOrWhiteSpace(d.Name) && d.Total > 0)
+            .Select(d =>
+            {
+                string name = d.Name.Trim().ToUpperInvariant();
+                return $"{name} {FormatAmount(name, d.Total)}";
+            })];
+        if (parts.Count > 0)
+            return string.Join(", ", parts);
+
+        List<string> quotes = [.. GlobalData.Settings.QuoteCoins.Values.Where(q => q.FetchCandles).Select(q => q.Name)];
+        if (quotes.Count == 0)
+            return "nothing (no default assets and no traded quote coin)";
+        return $"{PaperAssets.DefaultStartCapital.ToString0()} per traded quote coin ({string.Join(", ", quotes)}), " +
+            "because the default asset list in the settings is empty";
+    }
+
+
+    /// <summary>
     /// The reset of the trader settings screen: start over with the default asset list as that screen
     /// shows it, which may not have been saved yet - the button sits right next to that list, so
     /// what is on screen is what the user expects to get. An empty list falls back to

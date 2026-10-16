@@ -59,9 +59,6 @@ public partial class AssetWindowViewModel : ObservableObject
     private ObservableCollection<AssetRowViewModel> _assets = [];
 
     [ObservableProperty]
-    private decimal _startCapital = PaperAssets.DefaultStartCapital;
-
-    [ObservableProperty]
     private string _summary = "";
 
     /// <summary>The coin and the amount of the add row, as typed - both are read as text.</summary>
@@ -112,10 +109,20 @@ public partial class AssetWindowViewModel : ObservableObject
         Reload();
     }
 
-    /// <summary>Throw everything away and hand out the start capital again.</summary>
+    /// <summary>Take one coin out of the paper account.</summary>
+    public void Remove(AssetRowViewModel row)
+    {
+        if (PaperAssetsEditor.Remove(GlobalData.ActiveExchange, row.Name))
+            Reload();
+    }
+
+    /// <summary>What a reset hands out, for the confirmation.</summary>
+    public static string DescribeReset() => PaperAssetsEditor.DescribeSavedDefaults();
+
+    /// <summary>Throw everything away and hand out the default assets of the settings again.</summary>
     public void Reset()
     {
-        PaperAssetsEditor.Reset(GlobalData.ActiveExchange, StartCapital);
+        PaperAssetsEditor.ResetToSavedDefaults(GlobalData.ActiveExchange);
         Reload();
     }
 }

@@ -1131,11 +1131,17 @@
             // halfway through the candle, marker and all, while the position grid already showed it.
             // Appended to the drawn series only, not to rawCandles: the indicators keep running on
             // finished candles, exactly as the Avalonia chart does.
+            // Open time of the last candle actually drawn, running ones included. The position and
+            // signal bounds below end there, not at the last finished candle.
+            CandleTime lastDrawnOpen = rawCandles.Count > 0 ? rawCandles[^1].OpenTime : CandleTime.MinValue;
             if (rawCandles.Count > 0)
             {
                 foreach (CryptoCandle candle in CandleTools.BuildRunningCandles(_currentSymbol,
                     symbolInterval.Interval, rawCandles[^1].OpenTime, runningFrom, runningTo))
                 {
+                    if (candle.OpenTime > lastDrawnOpen)
+                        lastDrawnOpen = candle.OpenTime;
+
                     candles.Add(new
                     {
                         time = candle.OpenTime.ToUnixSeconds(),
@@ -1419,7 +1425,12 @@
                 // timestamp somewhere INSIDE the running candle, so bounding on the open time
                 // dropped everything created after it - on an hourly chart that is up to an hour
                 // of the most recent activity, which is exactly what you want to see.
-                CandleTime to = rawCandles[^1].OpenTime + symbolInterval.Interval.Duration;
+                //
+                // And the end of the RUNNING candle, not of the last finished one. rawCandles stops
+                // at the last closed candle; the running one is only appended to the drawn series.
+                // A 15m position opened during the current hour therefore fell after this bound on
+                // the 1h chart and was not drawn until the hour closed.
+                CandleTime to = lastDrawnOpen + symbolInterval.Interval.Duration;
 
                 zones = ChartDataService.BuildZones(_currentSymbol,
                     _showDlzZones, _showFvgZones, _showSmcZones, from, to);

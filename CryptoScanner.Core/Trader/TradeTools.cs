@@ -1266,6 +1266,22 @@ public class TradeTools
             return true;
         }
 
+        // One price against the symbol's price limits. A price the limits would move is refused
+        // rather than placed somewhere else: on a short close under the maximum the DCA's and the
+        // stop all ended up on that maximum and filled together (LABUSDT.PERP 27-06-2026, see
+        // CandleHelpers.ClampPrice). Rounding onto the tick grid is not a reason to refuse.
+        bool CheckPrice(string what, decimal computed, out decimal price, out string why)
+        {
+            why = "";
+            price = computed.ClampPrice(side, symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize, out bool outsideLimits);
+            if (outsideLimits)
+            {
+                why = $"{what} price {computed} is outside the symbol limits {symbol.PriceMinimum}..{symbol.PriceMaximum}";
+                return false;
+            }
+            return true;
+        }
+
 
         // 1. The entry itself
         if (!CheckOrder("entry", entryQuantity, entryPrice, out reason))
@@ -1288,7 +1304,8 @@ public class TradeTools
 
             // Through PricePlacement since 26-09-2026 (open point 27), like the stop and the target.
             decimal dcaPrice = PricePlacement.Adverse(side, entryPrice, Math.Abs(dcaEntry.Percentage));
-            dcaPrice = dcaPrice.ClampPrice(side, symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize);
+            if (!CheckPrice($"dca {i + 1} ({dcaEntry.Percentage}%)", dcaPrice, out dcaPrice, out reason))
+                return false;
             if (dcaPrice <= 0)
             {
                 reason = $"dca {i + 1} price {dcaPrice} is zero";
@@ -1353,16 +1370,20 @@ public class TradeTools
             }
 
             decimal tpPrice = PricePlacement.Favorable(side, entryPrice, tpList[i].Percentage);
-            tpPrice = tpPrice.ClampPrice(side, symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize);
+            if (!CheckPrice($"take profit {i + 1} ({tpList[i].Percentage}%)", tpPrice, out tpPrice, out reason))
+                return false;
             if (!CheckOrder($"take profit {i + 1} ({tpList[i].Percentage}%)", tpQuantity, tpPrice, out reason))
                 return false;
 
             // The stop prices ride along on this same order, and for a long they sit BELOW the entry
             // - which is where an exit the exchange refuses comes from on a position that was only
             // just large enough to enter.
+            if (slResult.Stop.HasValue && !CheckPrice($"stop loss {i + 1} stop", slResult.Stop.Value, out _, out reason))
+                return false;
             if (slResult.Limit.HasValue)
             {
-                decimal slLimit = slResult.Limit.Value.ClampPrice(side, symbol.PriceMinimum, symbol.PriceMaximum, symbol.PriceTickSize);
+                if (!CheckPrice($"stop loss {i + 1} limit", slResult.Limit.Value, out decimal slLimit, out reason))
+                    return false;
                 if (slLimit > 0 && !CheckOrder($"stop loss {i + 1}", tpQuantity, slLimit, out reason))
                     return false;
             }

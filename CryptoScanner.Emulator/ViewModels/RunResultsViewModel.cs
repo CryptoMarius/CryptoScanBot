@@ -240,6 +240,16 @@ public class RunRow
 
 
 /// <summary>
+/// The runs behind the grid, with one extra: a swap that raises no change event, for a row the
+/// filtered view does not show (see <see cref="RunResultsViewModel"/>, the live refresh).
+/// </summary>
+public class RunRowCollection : ObservableCollection<RunRow>
+{
+    public void ReplaceWithoutNotify(int index, RunRow row) => Items[index] = row;
+}
+
+
+/// <summary>
 /// Backs the Results tab (<c>RunResultsView</c>). Pulls EmulatorRun rows from the emulator's CryptoScanBot.db
 /// directly with Dapper — no in-memory cache, no MVVM messages, no live-scanner machinery.
 /// The user double-clicks a row to drill into its positions (handled in code-behind).
@@ -247,7 +257,7 @@ public class RunRow
 public partial class RunResultsViewModel : ObservableObject
 {
     [ObservableProperty]
-    private ObservableCollection<RunRow> _runs = [];
+    private RunRowCollection _runs = new();
 
     [ObservableProperty]
     private string _status = "";
@@ -255,6 +265,8 @@ public partial class RunResultsViewModel : ObservableObject
     /// <summary>
     /// Text to filter the grid on: a run stays visible when its label contains every word of it,
     /// in any order and case. "mac open 1d" keeps the Open-marker runs of mac on 1d. Empty shows all.
+    /// A word with an operator is a condition on a number column instead: "bbm return>5 dd<20" keeps
+    /// the bbm runs with more than 5% return and less than 20% drawdown (see <see cref="FilterFields"/>).
     /// </summary>
     [ObservableProperty]
     private string _labelFilter = "";
@@ -285,7 +297,7 @@ public partial class RunResultsViewModel : ObservableObject
 
     public RunResultsViewModel()
     {
-        RunsView = new DataGridCollectionView(Runs) { Filter = MatchesLabelFilter };
+        RunsView = new DataGridCollectionView(Runs) { Filter = MatchesFilter };
         Refresh();
 
         _liveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
@@ -328,8 +340,20 @@ public partial class RunResultsViewModel : ObservableObject
 
             // Back on the UI thread (await resumed on the dispatcher context).
             RunRow? existing = Runs.FirstOrDefault(r => r.Id == fresh.Id);
-            if (existing != null)
+            if (existing != null && MatchesFilter(existing))
                 Runs[Runs.IndexOf(existing)] = fresh;  // in-place: only this row re-renders
+            else if (existing != null)
+            {
+                // The row is filtered out of the view. A Replace (or Remove) of an item the view does
+                // not hold makes Avalonia's DataGridCollectionView (11.3) still send a Remove at index
+                // 0 to the grid: ProcessRemoveEvent tests "index < (PageIndex + 1) * PageSize", which
+                // is -1 < 0 without paging. Every live tick then took the top visible row away, until
+                // the filtered grid was empty. The view never sees this swap; it only needs to know
+                // when the fresh row would now pass the filter.
+                Runs.ReplaceWithoutNotify(Runs.IndexOf(existing), fresh);
+                if (MatchesFilter(fresh))
+                    RunsView.Refresh();
+            }
             else
                 Runs.Insert(0, fresh);                 // run started after the grid loaded (newest first)
         }
@@ -388,11 +412,143 @@ public partial class RunResultsViewModel : ObservableObject
     }
 
 
-    private bool MatchesLabelFilter(object item) => item is RunRow row && LabelMatches(row.Label, LabelFilter);
+    /// <summary>
+    /// The numeric columns a filter word can test, by the short names typed in the filter box.
+    /// A null value (a run without a capital return, for instance) never passes a condition.
+    /// </summary>
+    internal static readonly Dictionary<string, Func<RunRow, decimal?>> FilterFields =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["id"] = r => r.Id,
+            ["return"] = r => r.HasCapitalReturn ? r.CapitalReturnPercentage : null,
+            ["return%"] = r => r.HasCapitalReturn ? r.CapitalReturnPercentage : null,
+            ["dd"] = r => r.MaxDrawdownPercentage,
+            ["drawdown"] = r => r.MaxDrawdownPercentage,
+            ["drawdown%"] = r => r.MaxDrawdownPercentage,
+            ["profit"] = r => r.Profit,
+            ["profit%"] = r => r.ProfitPercentage,
+            ["win"] = r => r.WinPercentage,
+            ["win%"] = r => r.WinPercentage,
+            ["peak%"] = r => r.PeakProfitPercentage,
+            ["peakcap"] = r => r.PeakInvested,
+            ["invested"] = r => r.Invested,
+            ["signals"] = r => r.SignalCount,
+            ["pos"] = r => r.PositionCount,
+            ["open"] = r => r.PositionsOpen,
+            ["won"] = r => r.PositionsWon,
+            ["lost"] = r => r.PositionsLost,
+            ["long"] = r => r.ProfitLong,
+            ["short"] = r => r.ProfitShort,
+        };
+
+
+    // Longest first, so ">=" is not read as ">" followed by "=5".
+    private static readonly string[] FilterOperators = [">=", "<=", "<>", "!=", ">", "<", "="];
+
+
+    /// <summary>One "field operator number" word of the filter, e.g. dd&lt;20.</summary>
+    internal sealed record FilterCondition(Func<RunRow, decimal?> Field, string Operator, decimal Value)
+    {
+        public bool Test(RunRow row)
+        {
+            decimal? actual = Field(row);
+            if (actual == null)
+                return false;
+            return Operator switch
+            {
+                ">" => actual > Value,
+                "<" => actual < Value,
+                ">=" => actual >= Value,
+                "<=" => actual <= Value,
+                "=" => actual == Value,
+                _ => actual != Value,
+            };
+        }
+    }
+
+
+    /// <summary>
+    /// Splits the filter text into label words and numeric conditions. A word with an operator in it
+    /// is a condition (return&gt;5, dd&lt;20, profit%&gt;=2, win&gt;50, profit&lt;-100); both a comma and
+    /// a dot work as decimal separator. A condition on an unknown field lands in
+    /// <paramref name="unknown"/>; one whose number is not typed yet ("dd&lt;") is skipped, so the grid
+    /// does not empty halfway through typing. Everything else is a word that the label must contain.
+    /// </summary>
+    internal static (List<string> Words, List<FilterCondition> Conditions) ParseFilter(string? filter, out List<string> unknown)
+    {
+        var words = new List<string>();
+        var conditions = new List<FilterCondition>();
+        unknown = [];
+        if (string.IsNullOrWhiteSpace(filter))
+            return (words, conditions);
+
+        // "return > 1.0" is the same condition as "return>1.0": without this the spaces split it into
+        // the label words "return", ">" and "1.0", which no label contains, and the grid went empty.
+        // The space after the operator only goes when a number follows, so "dd< foo>3" stays two words.
+        filter = System.Text.RegularExpressions.Regex.Replace(filter, @"\s*(>=|<=|<>|!=|>|<|=)(?:\s+(?=[-+]?[0-9.,]))?", "$1");
+
+        foreach (string word in filter.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            string? op = null;
+            int at = -1;
+            foreach (string candidate in FilterOperators)
+            {
+                at = word.IndexOf(candidate, StringComparison.Ordinal);
+                if (at > 0)
+                {
+                    op = candidate;
+                    break;
+                }
+            }
+
+            if (op == null)
+            {
+                words.Add(word);
+                continue;
+            }
+
+            string name = word[..at];
+            string number = word[(at + op.Length)..].Replace(',', '.');
+            if (!FilterFields.TryGetValue(name, out Func<RunRow, decimal?>? field))
+            {
+                unknown.Add(name);
+                continue;
+            }
+            if (decimal.TryParse(number, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out decimal value))
+                conditions.Add(new FilterCondition(field, op, value));
+        }
+        return (words, conditions);
+    }
+
+
+    /// <summary>True when the run passes every word and every numeric condition of <paramref name="filter"/>.</summary>
+    internal static bool RowMatches(RunRow row, string? filter)
+    {
+        var (words, conditions) = ParseFilter(filter, out _);
+        return Passes(row, words, conditions);
+    }
+
+
+    private static bool Passes(RunRow row, List<string> words, List<FilterCondition> conditions)
+    {
+        string label = row.Label ?? "";
+        return words.All(word => label.Contains(word, StringComparison.OrdinalIgnoreCase))
+            && conditions.All(condition => condition.Test(row));
+    }
+
+
+    // The parsed filter, so the view's per-row test does not split the text for every run.
+    private List<string> _filterWords = [];
+    private List<FilterCondition> _filterConditions = [];
+    private List<string> _filterUnknown = [];
+
+
+    private bool MatchesFilter(object item) => item is RunRow row && Passes(row, _filterWords, _filterConditions);
 
 
     partial void OnLabelFilterChanged(string value)
     {
+        (_filterWords, _filterConditions) = ParseFilter(value, out _filterUnknown);
         RunsView.Refresh();
         UpdateStatus();
     }
@@ -405,7 +561,10 @@ public partial class RunResultsViewModel : ObservableObject
         else if (string.IsNullOrWhiteSpace(LabelFilter))
             Status = $"{Runs.Count} run(s).";
         else
-            Status = $"{RunsView.Count} of {Runs.Count} run(s) match \"{LabelFilter}\".";
+            Status = $"{RunsView.Count} of {Runs.Count} run(s) match \"{LabelFilter}\"."
+                + (_filterUnknown.Count > 0
+                    ? $" Unknown field(s): {string.Join(", ", _filterUnknown)} - known: {string.Join(", ", FilterFields.Keys)}."
+                    : "");
     }
 
 
