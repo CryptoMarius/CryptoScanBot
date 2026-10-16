@@ -1,5 +1,6 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Settings;
 
 namespace CryptoScanner.Core.Trader;
 
@@ -36,6 +37,12 @@ public static class StopLossCalculator
         public decimal EntryPrice { get; init; }
         /// <summary>Price of the most extreme DCA step: lowest buy for long, highest sell for short. Null when no DCA step exists.</summary>
         public decimal? ExtremeDcaPrice { get; init; }
+        /// <summary>
+        /// Distance of the farthest DCA level that is placed, in percent of the entry (e.g. 10 = 10%).
+        /// Null or 0 when there are no DCA's. The global stop is measured from the entry, beyond this
+        /// level - see <see cref="Calculate"/>.
+        /// </summary>
+        public decimal? DeepestDcaPercentage { get; init; }
 
         // ── Global settings ─────────────────────────────────────────────
         /// <summary>Global SL distance in percent (Settings.Trading.StopLossPercentage). 0 = disabled.</summary>
@@ -99,13 +106,23 @@ public static class StopLossCalculator
         //     the entry; DCAs beyond that SL are not placed, so no conflict is possible.
         //   Global SL → anchor on ExtremeDcaPrice when available, so the SL sits beyond all
         //     placed DCA levels (the user did not express a specific SL distance from entry).
-        decimal anchor;
-        if (source == SlSource.Signal)
-            anchor = input.EntryPrice;
-        else if (input.ExtremeDcaPrice.HasValue)
-            anchor = input.ExtremeDcaPrice.Value;
-        else
-            anchor = input.EntryPrice;
+        //decimal anchor;
+        //if (source == SlSource.Signal)
+        //    anchor = input.EntryPrice;
+        //else if (input.ExtremeDcaPrice.HasValue)
+        //    anchor = input.ExtremeDcaPrice.Value;
+        //else
+        //    anchor = input.EntryPrice;
+
+        // Since 15-10-2026 both sources anchor on the entry, the way Altrady does it. The global
+        // stop is still "this far beyond the farthest DCA", but ADDED to that DCA's distance and
+        // measured from the entry (Altrady: stop_loss_percentage = deepest DCA% + stop%, from the
+        // first entry - measured on 25 positions on 25-09-2026), instead of taken again from the DCA
+        // price. Stacking put the stop of DCA 10% + stop 20% at 72.00 for a long and 132.00 for a
+        // short where Altrady has 70.00 and 130.00: the emulator gave shorts more room than live.
+        decimal anchor = input.EntryPrice;
+        decimal beyondDca = source == SlSource.Global ? Math.Max(0m, input.DeepestDcaPercentage ?? 0m) : 0m;
+        slPercent += beyondDca;
 
         // Through PricePlacement since 26-09-2026 (open point 27): a short's stop used to be
         // anchor * (1 + p), which is closer in log terms than the long's anchor * (1 - p).
@@ -123,7 +140,7 @@ public static class StopLossCalculator
             decimal limitPctValue = input.GlobalStopLossLimitPercentage;
             if (limitPctValue <= input.GlobalStopLossPercentage)
                 limitPctValue = input.GlobalStopLossPercentage + 1m;
-            limit = PricePlacement.Adverse(input.Side, anchor, limitPctValue);
+            limit = PricePlacement.Adverse(input.Side, anchor, limitPctValue + beyondDca);
         }
 
         return new SlResult
@@ -132,5 +149,25 @@ public static class StopLossCalculator
             Limit = limit,
             Source = source
         };
+    }
+
+
+    /// <summary>
+    /// The distance of the farthest DCA level that is placed, in percent: the largest percentage of
+    /// the list, leaving out the levels at or beyond a signal stop (those are never placed, the same
+    /// filter the Altrady webhook applies). Null when there is none.
+    /// </summary>
+    public static decimal? DeepestDcaPercentage(IEnumerable<CryptoDcaEntry> dcaList, decimal? signalSlPercentage)
+    {
+        decimal? deepest = null;
+        foreach (CryptoDcaEntry dca in dcaList)
+        {
+            if (signalSlPercentage.HasValue && dca.Percentage >= signalSlPercentage.Value)
+                continue;
+            decimal distance = Math.Abs(dca.Percentage);
+            if (!deepest.HasValue || distance > deepest.Value)
+                deepest = distance;
+        }
+        return deepest;
     }
 }

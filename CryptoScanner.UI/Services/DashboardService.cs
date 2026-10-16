@@ -694,7 +694,6 @@ public class DashboardService : IDisposable
             return false;
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        int maxPoints = Constants.BarometerGraphHours * 60;
 
         // Skip the whole rebuild when nothing behind the chart moved. The last candle covers both a
         // new measurement (its time changes) and the running minute being updated in place (its
@@ -716,7 +715,9 @@ public class DashboardService : IDisposable
         _chartStampValue = stampValue;
 
         var points = new List<BarometerPoint>();
-        var candles = symbolInterval.CandleList.GetLastNValues(maxPoints, 1);
+        // The slow figures over days with a point per hour, the rest over the last hours with a point
+        // per minute - see BarometerHourHistory, which the Avalonia dashboard reads the same way.
+        var candles = BarometerHourHistory.ReadGraphCandles(symbolInterval.CandleList, graphValue);
         foreach (var candle in candles)
         {
             points.Add(new BarometerPoint

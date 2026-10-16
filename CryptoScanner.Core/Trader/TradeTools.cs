@@ -1324,6 +1324,8 @@ public class TradeTools
                 SlPercentage = signalSlPercentage,
                 EntryPrice = entryPrice,
                 ExtremeDcaPrice = extremeDcaPrice,
+                DeepestDcaPercentage = extremeDcaPrice.HasValue
+                    ? StopLossCalculator.DeepestDcaPercentage(GlobalData.Settings.Trading.DcaList, signalSlPercentage) : null,
                 GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
                 GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
             };

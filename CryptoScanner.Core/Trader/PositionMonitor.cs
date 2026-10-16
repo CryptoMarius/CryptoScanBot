@@ -1157,6 +1157,9 @@ public class PositionMonitor : IDisposable
             SlPercentage = position.SlPercentage,
             EntryPrice = position.EntryPrice!.Value,
             ExtremeDcaPrice = extremeDcaPrice,
+            // The global stop lies this far beyond the farthest DCA, measured from the entry like Altrady
+            DeepestDcaPercentage = extremeDcaPrice.HasValue
+                ? StopLossCalculator.DeepestDcaPercentage(GlobalData.Settings.Trading.DcaList, position.SlPercentage) : null,
             GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
             GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
         };

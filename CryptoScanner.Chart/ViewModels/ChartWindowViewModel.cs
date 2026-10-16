@@ -1180,7 +1180,11 @@ public partial class ChartWindowViewModel : ObservableObject
         // Draw pivots
         group = "pivots";
         if (Toggle(model, group, Session.ShowPoints))
-            Points.Draw(model, mainIndicator.PivotList, Session.MinDate, Session.MaxDate, group);
+            //Points.Draw(model, mainIndicator.PivotList, Session.MinDate, Session.MaxDate, group);
+            // The points of the zigzag itself, which alternate high and low: the PivotList holds every
+            // local high and low before the zigzag filtered them, so two highs in a row showed up
+            // there (Marius, 15-10-2026: "ik wil de ruwe lijst niet eens zien")
+            Points.Draw(model, mainIndicator.ZigZagList, Session.MinDate, Session.MaxDate, group);
 
         // Draw signals
         group = "signals";

@@ -106,10 +106,16 @@ public partial class RunResultsView : UserControl
         // A sort that RestoreSortIndicator asked for is not a click of the user. Taking it for one
         // flipped the saved direction every time the grid came back into view (switching to the
         // Capital tab and back detaches and re-attaches it), so the order changed on every return.
-        if (_restoringSort)
-            return;
-
+        // DataGridColumn.Sort does not sort right away: it posts the sort to the dispatcher, so this
+        // event arrives after Sort has returned. A flag set around the call is therefore already
+        // cleared here; the column path of the pending restore is kept until the sort has run.
         string? sortPath = e.Column.SortMemberPath;
+        if (_restoringSortPath != null && sortPath == _restoringSortPath)
+        {
+            _restoringSortPath = null;
+            return;
+        }
+
         if (string.IsNullOrEmpty(sortPath))
             return;
 
@@ -135,7 +141,7 @@ public partial class RunResultsView : UserControl
 
     private string? _currentSortColumn;
     private ListSortDirection _currentSortDirection = ListSortDirection.Ascending;
-    private bool _restoringSort;
+    private string? _restoringSortPath;
 
     /// <summary>The key the runs grid is stored under in CryptoScanBot-user.json.</summary>
     private const string GridName = "EmulatorRuns";
@@ -212,15 +218,15 @@ public partial class RunResultsView : UserControl
                 : ListSortDirection.Ascending;
 
             var column = RunsGrid.Columns.FirstOrDefault(c => c.SortMemberPath == config.SortColumn);
-            _restoringSort = true;
-            try
-            {
-                column?.Sort(_currentSortDirection);
-            }
-            finally
-            {
-                _restoringSort = false;
-            }
+            if (column == null)
+                return;
+
+            // The sort itself runs later on the dispatcher (see OnGridSorting), so the marker stays
+            // set until then. Cleared again at a lower priority in case the grid did not sort at all,
+            // so a later click of the user on that column is never swallowed.
+            _restoringSortPath = config.SortColumn;
+            column.Sort(_currentSortDirection);
+            Dispatcher.UIThread.Post(() => _restoringSortPath = null, DispatcherPriority.Background);
         }
         catch
         {

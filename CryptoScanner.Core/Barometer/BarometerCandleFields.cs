@@ -291,6 +291,59 @@ public static class BarometerCandleFields
 
 
     /// <summary>
+    /// What a figure means, in a few lines, for the tooltip of each choice in the graph dropdown of
+    /// both dashboards. The labels themselves have to be short to fit next to the heading, which
+    /// leaves "Market state: 72h" meaning nothing to someone who has not read the wiki. Ends with the
+    /// period the graph covers, because that differs per figure (see BarometerHourHistory).
+    /// </summary>
+    public static string GetDescription(BarometerGraphValue value)
+    {
+        string text = value switch
+        {
+            BarometerGraphValue.Median => "The % change of the coin in the middle when all coins of the quote are ranked. "
+                + "A few outliers do not move it, so compare it with the average.",
+            BarometerGraphValue.Rising => "Share of the coins that rose, 0..100%. Drawn around 50%: above the red line more coins "
+                + "rose than fell.",
+            BarometerGraphValue.Spread => "How far the coins lie apart: the 75th minus the 25th percentile of their % change. "
+                + "Small means the market moves as one block, large means coin choice matters.",
+            BarometerGraphValue.Movement => "How far the typical coin moved in %, up or down alike. Rises when the market gets "
+                + "restless, whatever the direction.",
+            BarometerGraphValue.BitcoinVersusMarket => "Bitcoin's % change minus that of the median coin. Positive: money moves to "
+                + "Bitcoin. Negative: money moves to the smaller coins.",
+            BarometerGraphValue.MarketTrendPrimary => "The structure of the whole market, -100..+100: the trend of every coin "
+                + "(primary zigzag, weighted over all intervals from 1m to 1d), averaged over the coins.",
+            BarometerGraphValue.MarketTrendSecondary => "The market trend with the secondary zigzag, which follows every swing "
+                + "and therefore turns sooner and more often than the primary one.",
+            BarometerGraphValue.MarketState => "One score from -100 (everything down) to +100 (everything up): the average of "
+                + "the BTC part, the share of coins above their 1h EMA50 and the 72h change. Calculated once per hour.",
+            BarometerGraphValue.MarketStateBtc => "The Bitcoin part of the market state, -100..+100: the distance of BTC to its "
+                + "EMA200 (5% counts as full) and the 24h slope of its EMA50 (1.5% counts as full), on the BTC trend "
+                + "interval of the market state filter.",
+            BarometerGraphValue.MarketStateBreadth => "Share of the coins whose last 1h close is above their own 1h EMA50, "
+                + "0..100%. 50 is neutral.",
+            BarometerGraphValue.MarketState72h => "Average % change of all coins over the last 72 hours. In the market state "
+                + "+/-6% counts as full.",
+            BarometerGraphValue.MarketRsi => "The RSI 14 of every coin on its own 1h candles, averaged over the coins, 0..100. "
+                + "50 is neutral: above it the coins rose more than they fell.",
+            BarometerGraphValue.SymbolCount => "How many coins the measurement was made over.",
+            _ => "The barometer itself: the average % change of all coins of the quote over the chosen interval",
+        };
+
+        string period = BarometerHourHistory.DrawsDays(value)
+            ? $"Graph: last {Const.Constants.BarometerHistoryDays} days, one point per hour."
+            : $"Graph: last {Const.Constants.BarometerGraphHours} hours, one point per minute.";
+        return text + "\n" + period;
+    }
+
+
+    /// <summary>The tooltip of a dropdown label, see <see cref="GetDescription(BarometerGraphValue)"/>.</summary>
+    public static string GetDescription(string name)
+    {
+        return GetDescription(Parse(name));
+    }
+
+
+    /// <summary>
     /// The figures the graph can draw, in dropdown order. Average comes first: it is the barometer
     /// as it always was.
     /// <para>

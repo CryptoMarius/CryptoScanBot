@@ -32,6 +32,9 @@ Furthermore: Very nice that you try this application, in the wiki you can find a
 
 Copyright (C) 2026 Marius Ellen
 
+CryptoScanBot is written and maintained by Marius Ellen, on GitHub as
+[CryptoMarius](https://github.com/CryptoMarius).
+
 CryptoScanBot is free software: you can redistribute it and/or modify it under the terms of the
 GNU General Public License as published by the Free Software Foundation, either version 3 of the
 License, or (at your option) any later version.

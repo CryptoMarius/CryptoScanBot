@@ -11,6 +11,7 @@
 
     <UserControl.Resources>
         <converters:BarometerColorConverter x:Key="BarometerColorConverter" />
+        <converters:BarometerGraphValueDescriptionConverter x:Key="BarometerGraphValueDescriptionConverter" />
     </UserControl.Resources>
   
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
@@ -87,10 +88,21 @@
                 <TextBlock Text="Barometer" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" Margin="0,0,0,2"/>
                 <!-- ComboBox: which figure of the measurement the graph draws. The rows below can
                      only show two of the six; this is where the rest becomes visible. -->
+                <!-- The labels are short, so every item explains itself in a tooltip, and the closed
+                     box explains the figure that is drawn - see BarometerCandleFields.GetDescription,
+                     which the Photino dashboard shows as well. -->
                 <ComboBox FontSize="13" BorderThickness="0" Margin="0,0,0,0"
                             SelectedItem="{Binding SelectedGraphValue}" VerticalAlignment="Center" HorizontalAlignment="Left"
                             ItemsSource="{Binding GraphValues}" IsDropDownOpen="False"
-                            ToolTip.Tip="Figure shown in the graph"/>
+                            ToolTip.Tip="{Binding SelectedGraphValue, Converter={StaticResource BarometerGraphValueDescriptionConverter}}">
+                    <ComboBox.Styles>
+                        <!-- On the whole row of the item, not only on its text -->
+                        <Style Selector="ComboBoxItem">
+                            <Setter Property="ToolTip.Tip"
+                                    Value="{ReflectionBinding Converter={StaticResource BarometerGraphValueDescriptionConverter}}"/>
+                        </Style>
+                    </ComboBox.Styles>
+                </ComboBox>
             </StackPanel>
 
             <!-- The market breadth (the share of coins that rose) used to have a column of its own

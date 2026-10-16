@@ -168,6 +168,49 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
     }
 
 
+    /// <summary>
+    /// Thread-safe thinning of the part before <paramref name="cutoff"/>: of the entries there only
+    /// the ones whose key is a multiple of <paramref name="keepEvery"/> minutes stay. The barometer
+    /// keeps its slow figures this way - one candle per minute for the recent hours, one per whole
+    /// hour for the days before that (see BarometerHourHistory). Same lock and same forward scan as
+    /// <see cref="RemoveBefore"/>.
+    /// </summary>
+    public int ThinBefore(CandleTime cutoff, uint keepEvery)
+    {
+        bool ownLock = !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterWriteLock();
+        try
+        {
+            var toRemove = new List<CandleTime>();
+            using var e = base.GetEnumerator();
+            while (e.MoveNext())
+            {
+                if (e.Current.Key >= cutoff)
+                    break;
+                if (e.Current.Key % keepEvery != 0)
+                    toRemove.Add(e.Current.Key);
+            }
+            bool lastRemoved = false;
+            foreach (var key in toRemove)
+            {
+                base.Remove(key);
+                if (key == LastCandle.OpenTime)
+                    lastRemoved = true;
+            }
+
+            // Nothing at or after the cutoff can be removed here, so the newest candle only goes when
+            // the whole list was older than the cutoff. Rare, so the walk to the new newest is fine.
+            if (lastRemoved)
+                LastCandle = base.Count == 0 ? default : base.Values.Last();
+            return toRemove.Count;
+        }
+        finally
+        {
+            if (ownLock) _lock.ExitWriteLock();
+        }
+    }
+
+
     // Thread-safe clear
     public new void Clear()
     {

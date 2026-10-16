@@ -575,8 +575,6 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
     private void CreateBarometerBitmap(CryptoSymbolInterval symbolPeriod)
     {
-        int blocks = CryptoScanner.Core.Const.Constants.BarometerGraphHours;
-
         // Dimensions
         int intWidth = 400;
         int intHeight = 100;
@@ -608,43 +606,41 @@ public partial class DashBoardInformationViewModel : ObservableObject
         BarometerGraphValue graphValue = BarometerCandleFields.Parse(SelectedGraphValue);
         BarometerGraphScale graphScale = BarometerCandleFields.GetScale(graphValue);
 
+        // The slow figures (market trend, market state, market RSI) are drawn over days with a point
+        // per hour, everything else over the last hours with a point per minute. See
+        // BarometerHourHistory, which the Photino dashboard reads the same way.
+        bool drawsDays = BarometerHourHistory.DrawsDays(graphValue);
+
         // determine range of data
         CandleTime loX = CandleTime.MaxValue;
         CandleTime hiX = CandleTime.MinValue;
         float loY = float.MaxValue;
         float hiY = float.MinValue;
-        int candleCount = blocks * 60; // minutes
-        CandleTime candleTime;
-        // LastCandle instead of Keys.Last(): the save thread writes into this list while the bitmap is
-        // drawn, and enumerating it then throws "Collection was modified after the enumerator was
-        // instantiated". CryptoCandleList keeps the newest candle in a field of its own, maintained
-        // under its write lock, so reading it is both race free and O(1). OpenTime zero means the list
-        // has no newest candle (it was just emptied), and there is nothing to draw then.
-        candleTime = candleList.LastCandle.OpenTime;
-        if (candleTime == 0)
+        // Read under the list's own lock and copied, oldest first: the save thread writes into this
+        // list while the bitmap is drawn, and enumerating it then throws "Collection was modified
+        // after the enumerator was instantiated". Empty when the list has no newest candle (it was
+        // just emptied), and there is nothing to draw then.
+        List<CryptoCandle> graphCandles = BarometerHourHistory.ReadGraphCandles(candleList, graphValue);
+        if (graphCandles.Count == 0)
             return;
-        while (candleCount-- > 0)
+        foreach (CryptoCandle candle in graphCandles)
         {
-            if (candleList.TryGetValue(candleTime, out CryptoCandle candle))
+            if (loX > candle.OpenTime)
+                loX = candle.OpenTime;
+            if (hiX < candle.OpenTime)
+                hiX = candle.OpenTime;
+
+            float value = (float)BarometerCandleFields.ReadForGraph(candle, graphValue);
+
+            // Ignore very high barometer values (malfunctions Bybit Perpetual). Only figures with a
+            // ceiling drop their outliers, see BarometerGraphScale.IgnoreBeyond.
+            if (!graphScale.IgnoreBeyond.HasValue || Math.Abs(value) < (float)graphScale.IgnoreBeyond.Value)
             {
-                if (loX > candle!.OpenTime)
-                    loX = candle.OpenTime;
-                if (hiX < candle.OpenTime)
-                    hiX = candle.OpenTime;
-
-                float value = (float)BarometerCandleFields.ReadForGraph(candle, graphValue);
-
-                // Ignore very high barometer values (malfunctions Bybit Perpetual). Only figures with a
-                // ceiling drop their outliers, see BarometerGraphScale.IgnoreBeyond.
-                if (!graphScale.IgnoreBeyond.HasValue || Math.Abs(value) < (float)graphScale.IgnoreBeyond.Value)
-                {
-                    if (loY > value)
-                        loY = value;
-                    if (hiY < value)
-                        hiY = value;
-                }
+                if (loY > value)
+                    loY = value;
+                if (hiY < value)
+                    hiY = value;
             }
-            candleTime -= 1; // The barometer has each 1 minute a barometer value
         }
         if (loX == CandleTime.MaxValue)
             return;
@@ -798,15 +794,17 @@ public partial class DashBoardInformationViewModel : ObservableObject
             }
         }
 
-        // Vertical lines (show the hours)
+        // Vertical lines (show the hours, or the days for the slow figures)
         //Pen pen = new Pen(Color.Gray, 0.5F);
-        int intervalTime = 60;
-        CandleTime lastX = hiX - (hiX.Minutes % intervalTime);
+        //int intervalTime = 60;
+        //CandleTime lastX = hiX - (hiX.Minutes % intervalTime);
 
         // Every hour line carries its hour as a label at the BOTTOM, where a horizontal axis
-        // belongs, in LOCAL time so it matches the timestamp drawn in the top left corner.
-        while (lastX > loX)
+        // belongs, in LOCAL time so it matches the timestamp drawn in the top left corner. On the
+        // graph of days the lines sit on local midnight and carry the day.
+        foreach ((DateTime markUtc, string markText) in BarometerHourHistory.GetAxisMarks(loX.ToDateTime(), hiX.ToDateTime(), drawsDays))
         {
+            CandleTime lastX = CandleTime.FromDateTime(markUtc);
             //DateTime ehh = CandleTools.GetUnixDate(lastX);
             //GlobalData.AddTextToLogTab(ehh.ToLocalTime() + " " + lastX.ToString() + " intervaltime=" + intervalTime.ToString());
             SKPoint p1 = new(0, 0) { X = offsetX + scaleX * (float)(lastX - loX) };
@@ -821,7 +819,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
             // the hour itself. Shifted back inside the picture at the edges instead of being left
             // out, so the outermost hour keeps its number. The plate underneath keeps it readable
             // wherever the barometer line happens to run. Bare hour, no minutes and no leading zero.
-            string hourText = lastX.ToLocalTime().Hour.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            string hourText = markText;
             float hourWidth = axisFont.MeasureText(hourText);
             float hourX = p1.X - hourWidth / 2;
             if (hourX < 2)
@@ -833,62 +831,54 @@ public partial class DashBoardInformationViewModel : ObservableObject
             paint.Style = SKPaintStyle.Fill;
             canvas.DrawRect(hourX - 2, intHeight - 12, hourWidth + 4, 11, paint);
             canvas.DrawText(hourText, hourX, intHeight - 3, SKTextAlign.Left, axisFont, axisPaint);
-
-            lastX -= intervalTime;
         }
 
 
         bool init = false;
         SKPoint point1 = new(0, 0);
         SKPoint point2 = new(0, 0);
-        candleCount = blocks * 60;
-        // Same story as the Keys.Last() higher up: hiX is the newest candle time the loop above found,
-        // so there is no reason to walk the list a second time while another thread writes into it.
-        candleTime = hiX;
-        while (candleCount-- > 0)
+        // Same story as higher up: the candles read there are the ones drawn, so there is no reason
+        // to walk the list a second time while another thread writes into it.
+        foreach (CryptoCandle candle in graphCandles)
         {
-            if (candleList.TryGetValue(candleTime, out CryptoCandle candle))
+            float value = (float)BarometerCandleFields.ReadForGraph(candle!, graphValue);
+            point2.X = offsetX + scaleX * (float)(candle!.OpenTime - loX);
+            point2.Y = offsetY + scaleY * value;
+            //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
+
+            if (init)
             {
-                float value = (float)BarometerCandleFields.ReadForGraph(candle!, graphValue);
-                point2.X = offsetX + scaleX * (float)(candle!.OpenTime - loX);
-                point2.Y = offsetY + scaleY * value;
-                //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
-
-                if (init)
+                // Green above the reference line, red below it. Figures without such a line
+                // (spread) are never good or bad, so those get one neutral colour. Not grey:
+                // that vanished against the grey grid lines on a dark background.
+                // WhiteSmoke was that neutral colour, and on the light theme it failed the same
+                // way round the other side: near white on a near white background. It now takes
+                // the theme text colour, exactly as the Photino chart uses --text-primary.
+                if (!referenceLine.HasValue)
                 {
-                    // Green above the reference line, red below it. Figures without such a line
-                    // (spread) are never good or bad, so those get one neutral colour. Not grey:
-                    // that vanished against the grey grid lines on a dark background.
-                    // WhiteSmoke was that neutral colour, and on the light theme it failed the same
-                    // way round the other side: near white on a near white background. It now takes
-                    // the theme text colour, exactly as the Photino chart uses --text-primary.
-                    if (!referenceLine.HasValue)
-                    {
-                        paint.Color = fgColor;
-                        paint.StrokeWidth = 1;
-                        paint.Style = SKPaintStyle.Stroke;
-                    }
-                    else if (value < referenceLine.Value)
-                    {
-                        //g.DrawLine(Pens.Red, point1, point2, paint);
-                        paint.Color = SKColors.Red;
-                        paint.StrokeWidth = 1;
-                        paint.Style = SKPaintStyle.Stroke;
-                    }
-                    else
-                    {
-                        paint.Color = SKColors.Green;
-                        paint.StrokeWidth = 1;
-                        paint.Style = SKPaintStyle.Stroke;
-                        //g.DrawLine(Pens.DarkGreen, point1, point2, paint);
-                    }
-                    canvas.DrawLine(point1, point2, paint);
+                    paint.Color = fgColor;
+                    paint.StrokeWidth = 1;
+                    paint.Style = SKPaintStyle.Stroke;
                 }
-
-                point1 = point2;
-                init = true;
+                else if (value < referenceLine.Value)
+                {
+                    //g.DrawLine(Pens.Red, point1, point2, paint);
+                    paint.Color = SKColors.Red;
+                    paint.StrokeWidth = 1;
+                    paint.Style = SKPaintStyle.Stroke;
+                }
+                else
+                {
+                    paint.Color = SKColors.Green;
+                    paint.StrokeWidth = 1;
+                    paint.Style = SKPaintStyle.Stroke;
+                    //g.DrawLine(Pens.DarkGreen, point1, point2, paint);
+                }
+                canvas.DrawLine(point1, point2, paint);
             }
-            candleTime -= 1; // The barometer has each 1 minute a barometer value
+
+            point1 = point2;
+            init = true;
         }
 
         // Timestamp in the top left corner, opposite the hour labels along the bottom: those form

@@ -119,12 +119,16 @@ public class StopLossCalculatorTests
         {
             SlPercentage = null,
             ExtremeDcaPrice = 90m,  // lowest DCA buy at 90
+            DeepestDcaPercentage = 10m,
         };
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Global, result.Source);
         // 5% from anchor 90 → stop = 90 - 90*0.05 = 85.5
-        Assert.AreEqual(85.5m, result.Stop);
+        //Assert.AreEqual(85.5m, result.Stop);
+        // Since 15-10-2026 added and measured from the entry, as Altrady does: 100 - (10 + 5)% = 85
+        Assert.AreEqual(85m, result.Stop);
+        Assert.AreEqual(84m, result.Limit, "the limit the same way: 100 - (10 + 6)%");
     }
 
     [TestMethod]
@@ -272,6 +276,7 @@ public class StopLossCalculatorTests
         {
             SlPercentage = null,
             ExtremeDcaPrice = 95m,
+            DeepestDcaPercentage = 5m,
             GlobalStopLossPercentage = 1.5m,
             GlobalStopLossLimitPercentage = 2.5m,
         };
@@ -279,7 +284,9 @@ public class StopLossCalculatorTests
 
         Assert.AreEqual(SlSource.Global, result.Source);
         // stop = 95 - 95*0.015 = 93.575
-        Assert.AreEqual(93.575m, result.Stop);
+        //Assert.AreEqual(93.575m, result.Stop);
+        // Since 15-10-2026: 100 - (5 + 1.5)% = 93.5, as Altrady
+        Assert.AreEqual(93.5m, result.Stop);
         Assert.IsTrue(result.Stop < 95m,
             $"Long global SL ({result.Stop}) must be below DCA (95)");
     }
@@ -291,6 +298,7 @@ public class StopLossCalculatorTests
         {
             SlPercentage = null,
             ExtremeDcaPrice = 105m,
+            DeepestDcaPercentage = 5m,
             GlobalStopLossPercentage = 1.5m,
             GlobalStopLossLimitPercentage = 2.5m,
         };
@@ -298,7 +306,9 @@ public class StopLossCalculatorTests
 
         Assert.AreEqual(SlSource.Global, result.Source);
         // stop = 105 + 105*0.015 = 106.575
-        Assert.AreEqual(106.575m, result.Stop);
+        //Assert.AreEqual(106.575m, result.Stop);
+        // Since 15-10-2026: 100 + (5 + 1.5)% = 106.5, the mirror image of the long above, as Altrady
+        Assert.AreEqual(106.5m, result.Stop);
         Assert.IsTrue(result.Stop > 105m,
             $"Short global SL ({result.Stop}) must be above DCA (105)");
     }
@@ -401,14 +411,57 @@ public class StopLossCalculatorTests
             SlPercentage = null,  // BRE UseStopLoss=false
             EntryPrice = entry,
             ExtremeDcaPrice = deepestDca,
+            DeepestDcaPercentage = 4.5m,
             GlobalStopLossPercentage = 5m,
         };
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Global, result.Source);
         // Global SL anchors on DCA: 5% from 95.5 → stop = 95.5 - 4.775 = 90.725
-        Assert.AreEqual(95.5m - 95.5m * 5m / 100m, result.Stop);
+        //Assert.AreEqual(95.5m - 95.5m * 5m / 100m, result.Stop);
+        // Since 15-10-2026: added and measured from the entry, 100 - (4.5 + 5)% = 90.5
+        Assert.AreEqual(90.5m, result.Stop);
         Assert.IsTrue(result.Stop < deepestDca,
             $"Global SL ({result.Stop}) must be below deepest DCA ({deepestDca})");
+    }
+
+
+    /// <summary>
+    /// The global stop is the deepest DCA percentage plus the stop percentage, measured from the
+    /// entry - the number the Altrady webhook sends as stop_loss_percentage. Long and short are the
+    /// same distance from the entry (Altrady measured symmetric on 25-09-2026).
+    /// </summary>
+    [TestMethod]
+    public void GlobalSl_IsTheSameDistanceAsAltrady_LongAndShort()
+    {
+        var longResult = Calculate(LongBase() with
+        {
+            SlPercentage = null, ExtremeDcaPrice = 90m, DeepestDcaPercentage = 10m,
+            GlobalStopLossPercentage = 20m, GlobalStopLossLimitPercentage = 21m,
+        });
+        var shortResult = Calculate(ShortBase() with
+        {
+            SlPercentage = null, ExtremeDcaPrice = 110m, DeepestDcaPercentage = 10m,
+            GlobalStopLossPercentage = 20m, GlobalStopLossLimitPercentage = 21m,
+        });
+
+        Assert.AreEqual(70m, longResult.Stop, "stacking gave 72.00");
+        Assert.AreEqual(130m, shortResult.Stop, "stacking gave 132.00");
+        Assert.AreEqual(69m, longResult.Limit);
+        Assert.AreEqual(131m, shortResult.Limit);
+    }
+
+    [TestMethod]
+    public void DeepestDcaPercentage_SkipsLevelsBeyondTheSignalStop()
+    {
+        List<CryptoScanner.Core.Settings.CryptoDcaEntry> dcaList =
+        [
+            new() { Percentage = 2m, Factor = 200m },
+            new() { Percentage = 4m, Factor = 400m },
+        ];
+
+        Assert.AreEqual(4m, DeepestDcaPercentage(dcaList, null));
+        Assert.AreEqual(2m, DeepestDcaPercentage(dcaList, 3m), "the 4% level lies beyond a 3% signal stop and is never placed");
+        Assert.IsNull(DeepestDcaPercentage([], null));
     }
 }

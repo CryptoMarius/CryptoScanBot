@@ -14,8 +14,8 @@
     <AssemblyVersion>2.6.8.0</AssemblyVersion>
     <FileVersion>2.6.8.0</FileVersion>
 
-    <Company>Marius</Company>
-    <Authors>Marius</Authors>
+    <Company>Marius Ellen</Company>
+    <Authors>Marius Ellen</Authors>
 
     <!--
       One product name for every assembly that ends up in a release package. SignPath enforces
@@ -23,7 +23,7 @@
       project, so a Product per project would be rejected once the packages are signed.
     -->
     <Product>CryptoScanBot</Product>
-    <Copyright>Copyright © 2026 Marius</Copyright>
+    <Copyright>Copyright © 2026 Marius Ellen</Copyright>
   </PropertyGroup>
 
 

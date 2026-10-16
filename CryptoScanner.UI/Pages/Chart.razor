@@ -1914,7 +1914,11 @@
 
         if (_showPivots)
         {
-            foreach (var pivot in indicator.PivotList)
+            //foreach (var pivot in indicator.PivotList)
+            // The points of the zigzag itself, which alternate high and low, the same list the
+            // Avalonia chart draws since 15-10-2026. The provisional point at the right-hand edge (a
+            // dummy) is a circle: this chart has no open marker, and it can still move.
+            foreach (var pivot in indicator.ZigZagList)
             {
                 bool isHigh = pivot.PointType == 'H';
                 markers.Add(new ChartDataService.ChartMarker
@@ -1922,7 +1926,7 @@
                     time = pivot.Candle.OpenTime.ToUnixSeconds(),
                     position = isHigh ? "aboveBar" : "belowBar",
                     color = isHigh ? "#e53935" : "#ffeb3b",
-                    shape = "square",
+                    shape = pivot.Dummy ? "circle" : "square",
                     text = "",
                 });
             }

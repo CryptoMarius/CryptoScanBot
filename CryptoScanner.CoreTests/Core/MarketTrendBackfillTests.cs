@@ -202,6 +202,53 @@ public class MarketTrendBackfillTests : TestBase
 
 
     [TestMethod]
+    public void TheHourlyMeasurementEqualsTheMinuteMeasurementOnEveryWholeHour()
+    {
+        // MeasureHourly feeds the candles between two hours to the zigzag in one batch and reads the
+        // trend once per hour. That is only allowed when it lands on exactly what the minute version
+        // gives for those minutes, so the days behind the graph are the same series as the minutes.
+        CandleTime lastClosedMinute = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1) - 1;
+        BuildSymbols(lastClosedMinute, 5, rising: true);
+
+        CandleTime to = lastClosedMinute.AlignToIntervalMinutes(60);
+        CandleTime from = to - (uint)(Constants.BarometerGraphHours * 60);
+        var symbols = GlobalData.AddQuoteData(QuoteName).SymbolList;
+
+        var perMinute = MarketTrendBackfill.Measure(symbols, from, to, MarketTrend.MinimumSymbols);
+        var perHour = MarketTrendBackfill.MeasureHourly(symbols, from, to, MarketTrend.MinimumSymbols);
+
+        Assert.AreEqual(Constants.BarometerGraphHours + 1, perHour.Count, "every whole hour should get a value");
+        foreach ((CandleTime hour, (decimal? primary, decimal? secondary)) in perHour)
+        {
+            Assert.AreEqual(0u, hour % 60, $"{hour} is not a whole hour");
+            Assert.IsTrue(perMinute.TryGetValue(hour, out (decimal? Primary, decimal? Secondary) minute), $"{hour} is missing per minute");
+            Assert.AreEqual(minute.Primary, primary, $"primary trend differs at {hour}");
+            Assert.AreEqual(minute.Secondary, secondary, $"secondary trend differs at {hour}");
+        }
+    }
+
+
+    [TestMethod]
+    public void ThinningKeepsTheMinuteWindowAndTheWholeHoursBeforeIt()
+    {
+        CryptoCandleList candles = [];
+        CandleTime cutoff = new(600_000);           // a whole hour: 600000 % 60 == 0
+        for (CandleTime minute = cutoff - 180u; minute < cutoff + 30u; minute += 1u)
+            candles.TryAdd(minute, new CryptoCandle { OpenTime = minute });
+
+        candles.ThinBefore(cutoff, 60);
+
+        Assert.IsTrue(candles.TryGetValue(cutoff - 180u, out _), "a whole hour before the cutoff stays");
+        Assert.IsTrue(candles.TryGetValue(cutoff - 60u, out _), "a whole hour before the cutoff stays");
+        Assert.IsFalse(candles.TryGetValue(cutoff - 59u, out _), "a minute before the cutoff goes");
+        Assert.IsFalse(candles.TryGetValue(cutoff - 1u, out _), "a minute before the cutoff goes");
+        Assert.IsTrue(candles.TryGetValue(cutoff + 1u, out _), "the minute window stays whole");
+        Assert.AreEqual(3 + 30, candles.Count);
+        Assert.AreEqual(cutoff + 29u, candles.LastCandle.OpenTime, "the newest candle is untouched");
+    }
+
+
+    [TestMethod]
     public void TheBarometerFillsTheBacklogAndLeavesMeasuredMinutesAlone()
     {
         // The whole point, end to end: after one calculation the newest minute carries the value the

@@ -753,7 +753,14 @@ public static class CandleTools
         // The market barometer/climate is also a symbol so we must make an exception
         // This symbol needs a different amount of candles because of the length of the graph
         if (symbol.IsBarometerSymbol())
-            startTime -= Constants.BarometerGraphHours * 60; // 60 minutes
+        {
+            // The symbols with the slow figures keep days, thinned to whole hours beyond the graph
+            // hours - see BarometerHourHistory
+            if (Barometer.BarometerHourHistory.KeepsHourHistory(symbol))
+                startTime -= (uint)(Constants.BarometerHistoryDays * 24 * 60);
+            else
+                startTime -= Constants.BarometerGraphHours * 60; // 60 minutes
+        }
         else
         {
             // For the 1m we need *initially* ~1 day plus some 6 or 7 hours of candles for the barometer graph

@@ -315,4 +315,22 @@ public class BarometerCandleFieldsTests
 
         StringAssert.Contains(BarometerCandleFields.Describe(data), "Market state +45");
     }
+
+
+    [TestMethod]
+    public void EveryDropdownChoiceHasItsOwnTooltip()
+    {
+        // The labels are short; the tooltip is where a choice explains itself. A choice that fell
+        // through to the default text would quietly explain the average instead.
+        HashSet<string> seen = [];
+        foreach (string name in BarometerCandleFields.Names)
+        {
+            string description = BarometerCandleFields.GetDescription(name);
+            Assert.IsTrue(seen.Add(description), $"{name} shares its tooltip with another choice");
+
+            BarometerGraphValue value = BarometerCandleFields.Parse(name);
+            string period = BarometerHourHistory.DrawsDays(value) ? "days, one point per hour" : "hours, one point per minute";
+            StringAssert.Contains(description, period, $"{name} should say what period its graph covers");
+        }
+    }
 }

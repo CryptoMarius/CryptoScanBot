@@ -6,6 +6,11 @@ public static class Constants
 
     public const int BarometerGraphHours = 7;
 
+    // The slow figures of the barometer (market trend, market state and its parts, market RSI) move
+    // per hour and look back days, so seven hours of them is a flat line. Their graph shows this many
+    // days with one point per hour instead; see BarometerHourHistory.
+    public const int BarometerHistoryDays = 7;
+
     public const string SymbolNameBarometerPrice = "$BMP"; // Price barometer
     //public const string SymbolNameBarometerVolume = "$BMV"; // Volume barometer an experiment, needs to be continued someday
 

@@ -52,11 +52,14 @@
             <span>Barometer</span>
             @* Which figure of the measurement the graph draws. Every measurement holds six of them
                (see BarometerCandleFields) and the rows below can only show two. *@
+            @* The labels are short, so every option explains itself in a tooltip, and the closed box
+               explains the figure that is drawn - see BarometerCandleFields.GetDescription, which the
+               Avalonia dashboard shows as well. *@
             <select class="input-select dashboard-combo" value="@DashboardService.GraphValueName"
-                    @onchange="OnBarometerGraphValueChanged" title="Figure shown in the graph">
+                    @onchange="OnBarometerGraphValueChanged" title="@BarometerCandleFields.GetDescription(DashboardService.GraphValue)">
                 @foreach (var gv in DashboardService.GraphValueOptions)
                 {
-                    <option value="@gv">@gv</option>
+                    <option value="@gv" title="@BarometerCandleFields.GetDescription(gv)">@gv</option>
                 }
             </select>
         </div>
@@ -190,6 +193,13 @@
     /// 14px - far below the ~57px between two hour lines.
     /// </summary>
     private const int HourLabelWidth = 14;
+
+    /// <summary>
+    /// Width reserved for one day label, on the graph of the slow figures that runs over days. The
+    /// label is the day and its date ("Wed 14"), about 28px at 9px - well inside the ~57px between two
+    /// midnight lines over seven days.
+    /// </summary>
+    private const int DayLabelWidth = 30;
 
     /// <summary>
     /// Width reserved for one value label on the vertical axis. Wide enough for a negative figure
@@ -407,14 +417,17 @@
 
         // Vertical lines on whole hours, placed by TIME so they stay on the hour no matter how many
         // points arrived or whether any are missing. Each line carries its hour as a label at the
-        // BOTTOM, where a horizontal axis belongs, in LOCAL time so it matches the timestamp.
+        // BOTTOM, where a horizontal axis belongs, in LOCAL time so it matches the timestamp. The slow
+        // figures run over days instead (see BarometerHourHistory): their lines sit on local midnight
+        // and carry the day.
+        bool drawsDays = BarometerHourHistory.DrawsDays(DashboardService.GraphValue);
+        int markLabelWidth = drawsDays ? DayLabelWidth : HourLabelWidth;
         DateTime first = points[0].Time;
         DateTime last = points[^1].Time;
         double span = (last - first).TotalMinutes;
         if (span > 0)
         {
-            DateTime hour = new DateTime(last.Year, last.Month, last.Day, last.Hour, 0, 0, last.Kind);
-            while (hour > first)
+            foreach ((DateTime hour, string markText) in BarometerHourHistory.GetAxisMarks(first, last, drawsDays))
             {
                 double x = (hour - first).TotalMinutes / span * w;
                 sb.Append($"<line x1=\"{x.ToString("F1", ic)}\" y1=\"0\" x2=\"{x.ToString("F1", ic)}\" y2=\"{h}\" stroke=\"#808080\" stroke-width=\"1\"/>");
@@ -425,23 +438,23 @@
                 // being left out, so the outermost hour keeps its number. The plate underneath keeps
                 // it readable wherever the barometer line happens to run.
                 {
-                    string label = hour.ToLocalTime().Hour.ToString(ic);
-                    double plateX = x - HourLabelWidth / 2.0;
+                    string label = markText;
+                    double plateX = x - markLabelWidth / 2.0;
                     if (plateX < 1) plateX = 1;
-                    if (plateX + HourLabelWidth > w - 1) plateX = w - 1 - HourLabelWidth;
-                    sb.Append($"<rect x=\"{plateX.ToString("F1", ic)}\" y=\"{h - 12}\" width=\"{HourLabelWidth}\" height=\"11\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
-                    sb.Append($"<text x=\"{(plateX + HourLabelWidth / 2.0).ToString("F1", ic)}\" y=\"{h - 3}\" font-size=\"9\" text-anchor=\"middle\" fill=\"var(--text-primary)\">{label}</text>");
+                    if (plateX + markLabelWidth > w - 1) plateX = w - 1 - markLabelWidth;
+                    sb.Append($"<rect x=\"{plateX.ToString("F1", ic)}\" y=\"{h - 12}\" width=\"{markLabelWidth}\" height=\"11\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
+                    sb.Append($"<text x=\"{(plateX + markLabelWidth / 2.0).ToString("F1", ic)}\" y=\"{h - 3}\" font-size=\"9\" text-anchor=\"middle\" fill=\"var(--text-primary)\">{label}</text>");
                 }
-
-                hour = hour.AddHours(-1);
             }
         }
 
-        // The line itself, green above the reference line and red below it.
+        // The line itself, green above the reference line and red below it. Placed by TIME, like the
+        // vertical lines and like Avalonia: by position in the list a missing stretch would squeeze
+        // the line together and shift it against the hours (or days) underneath.
         for (int i = 1; i < points.Count; i++)
         {
-            decimal x1 = (decimal)(i - 1) / (points.Count - 1) * w;
-            decimal x2 = (decimal)i / (points.Count - 1) * w;
+            decimal x1 = span > 0 ? (decimal)((points[i - 1].Time - first).TotalMinutes / span) * w : 0m;
+            decimal x2 = span > 0 ? (decimal)((points[i].Time - first).TotalMinutes / span) * w : w;
             decimal y1 = YFor(points[i - 1].Value);
             decimal y2 = YFor(points[i].Value);
             // Figures without a reference line (spread) are never "good" or "bad", so they get one

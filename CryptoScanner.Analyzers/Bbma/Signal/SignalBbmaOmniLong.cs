@@ -436,7 +436,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         decimal prevUpperBand = decimal.MaxValue; // neutral: first bar never triggers reset
 
         // Forward pass — oldest first (ascending open time)
-        foreach (var time in indicatorData.Data.Keys.OrderBy(k => k))
+        foreach (var time in indicatorData.Data.Keys) // SortedDictionary: already oldest first
         {
             if (!indicatorData.CandleList.TryGetValue(time, out CryptoCandle candle)
                 || !indicatorData.Data.TryGetValue(time, out CryptoData? cd)
@@ -767,6 +767,16 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         };
         OppositeExtremeChecker = opposite.IsExtremeSellBar;
         OppositeCsmChecker = opposite.IsCsmSellBar;
+
+        // The cheap Reentry check first: the ret_buy buffer does not read the TPW cache, and most
+        // candles fail here. Building the cache walks every candle of the interval, which on every
+        // evaluation made bbma.omni about twelve times slower than the other strategies (emulator
+        // run 176: 4.9 ms per evaluation). No label in the text here, that would need the cache.
+        if (!IsReentry(CandleLast))
+        {
+            ExtraText = "LTF not in Reentry";
+            return false;
+        }
 
         // Build the forward-pass TPW cache before any GetOmniState calls, with the
         // Short-side Extreme as the cross-reset delegate (OmniView.mq5 line 823).

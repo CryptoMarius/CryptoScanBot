@@ -1808,6 +1808,17 @@ public class CandleDatabase : IDisposable
         //    buffer that candle still falls just outside on every midnight rollover.
         foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
         {
+            // The barometer symbols with hourly history keep the minute window plus one minute per
+            // whole hour before it, the same thinning their candle lists get in memory. Their
+            // candles are one per minute in every interval list, so the alignment below does not
+            // apply to them either.
+            if (Barometer.BarometerHourHistory.KeepsHourHistory(symbol))
+            {
+                foreach ((CandleTime keepStart, CandleTime keepEnd) in Barometer.BarometerHourHistory.GetKeepRanges(GlobalData.Clock.UtcNow))
+                    AddRange(result, symbolInterval.Interval.Id, keepStart, keepEnd);
+                continue;
+            }
+
             CandleTime start = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
             uint duration = symbolInterval.Interval.Duration;
             if (duration > 1)

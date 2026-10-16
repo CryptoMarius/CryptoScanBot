@@ -49,11 +49,38 @@ public static class MarketTrendBackfill
     public static SortedList<CandleTime, (decimal? Primary, decimal? Secondary)> Measure(
         IReadOnlyList<CryptoSymbol> symbolList, CandleTime from, CandleTime to, int minimumSymbols)
     {
+        return Measure(symbolList, from, to, 1, minimumSymbols);
+    }
+
+
+    /// <summary>
+    /// The market trend of every whole hour over <paramref name="from"/>..<paramref name="to"/>
+    /// inclusive (both on a whole hour) - the days of history behind the barometer graph, see
+    /// BarometerHourHistory.
+    /// <para>
+    /// The same value <see cref="Measure(IReadOnlyList{CryptoSymbol}, CandleTime, CandleTime, int)"/>
+    /// gives for that minute, at a fraction of the cost: the zigzag is still fed every candle, but
+    /// the trend is only read on the whole hours instead of after every candle, which is where the
+    /// time goes over days of 1m to 30m candles.
+    /// </para>
+    /// </summary>
+    public static SortedList<CandleTime, (decimal? Primary, decimal? Secondary)> MeasureHourly(
+        IReadOnlyList<CryptoSymbol> symbolList, CandleTime from, CandleTime to, int minimumSymbols)
+    {
+        return Measure(symbolList, from, to, 60, minimumSymbols);
+    }
+
+
+    /// <summary>The market trend at <paramref name="from"/> and every <paramref name="step"/>
+    /// minutes after it, up to and including <paramref name="to"/>.</summary>
+    private static SortedList<CandleTime, (decimal? Primary, decimal? Secondary)> Measure(
+        IReadOnlyList<CryptoSymbol> symbolList, CandleTime from, CandleTime to, uint step, int minimumSymbols)
+    {
         SortedList<CandleTime, (decimal?, decimal?)> result = [];
         if (to < from)
             return result;
 
-        int count = (int)(to.Minutes - from.Minutes) + 1;
+        int count = (int)((to.Minutes - from.Minutes) / step) + 1;
         decimal[] sumPrimary = new decimal[count];
         decimal[] sumSecondary = new decimal[count];
         int[] countPrimary = new int[count];
@@ -68,8 +95,8 @@ public static class MarketTrendBackfill
             if (symbol.QuoteData == null || !symbol.QuoteData.FetchCandles || symbol.IsBarometerSymbol() || !symbol.EnoughVolume())
                 continue;
 
-            AddSeries(symbol, GlobalData.Settings.Trend.Primary, from, to, sumPrimary, countPrimary);
-            AddSeries(symbol, GlobalData.Settings.Trend.Secondary, from, to, sumSecondary, countSecondary);
+            AddSeries(symbol, GlobalData.Settings.Trend.Primary, from, to, step, sumPrimary, countPrimary);
+            AddSeries(symbol, GlobalData.Settings.Trend.Secondary, from, to, step, sumSecondary, countSecondary);
         }
 
         for (int index = 0; index < count; index++)
@@ -80,7 +107,7 @@ public static class MarketTrendBackfill
                 ? decimal.Round(sumSecondary[index] / countSecondary[index], 8) : null;
 
             if (primary.HasValue || secondary.HasValue)
-                result.Add(from + index, (primary, secondary));
+                result.Add(from + (uint)index * step, (primary, secondary));
         }
 
         return result;
@@ -98,7 +125,7 @@ public static class MarketTrendBackfill
     /// </para>
     /// </summary>
     private static void AddSeries(CryptoSymbol symbol, SettingsZigZag trendSettings,
-        CandleTime from, CandleTime to, decimal[] sum, int[] count)
+        CandleTime from, CandleTime to, uint step, decimal[] sum, int[] count)
     {
         int minutes = sum.Length;
         long[] weightSum = new long[minutes];
@@ -113,7 +140,10 @@ public static class MarketTrendBackfill
             if (symbolInterval.CandleList.LastCandle.OpenTime == 0)
                 return; // no candles for this interval - the live calculation gives up here too
 
-            AddInterval(symbol, interval, trendSettings, from, to, weightSum);
+            if (step == 1)
+                AddInterval(symbol, interval, trendSettings, from, to, weightSum);
+            else
+                AddIntervalSampled(symbol, interval, trendSettings, from, step, weightSum);
             weightMax += interval.Duration;
         }
 
@@ -184,6 +214,54 @@ public static class MarketTrendBackfill
 
         while (index < weightSum.Length)
             weightSum[index++] += sign * duration;
+    }
+
+
+    /// <summary>
+    /// <see cref="AddInterval"/> for a series with a point every <paramref name="step"/> minutes
+    /// instead of every minute. Same warm-up, same rule - a point carries the trend after every
+    /// candle that had closed at that moment - but the candles in between two points go into the
+    /// zigzag in one batch and the trend is read once per point. Over days of 1m to 30m candles that
+    /// is the difference between reading it thousands of times per coin and a few hundred.
+    /// </summary>
+    private static void AddIntervalSampled(CryptoSymbol symbol, CryptoInterval interval, SettingsZigZag trendSettings,
+        CandleTime from, uint step, long[] weightSum)
+    {
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        if (!symbolInterval.CandleList.TryGetFirstCandle(out CryptoCandle firstCandle))
+            return;
+
+        // The first candle that had NOT yet closed at 'from'; everything before it is the warm-up.
+        CandleTime firstOpen = firstCandle.OpenTime;
+        CandleTime nextOpen = IntervalTools.StartOfIntervalCandle(from, interval.Duration);
+        while (nextOpen + interval.Duration <= from)
+            nextOpen += interval.Duration;
+        if (nextOpen < firstOpen)
+            nextOpen = firstOpen;
+
+        ZigZagIndicator indicator = new(trendSettings.TrendType, trendSettings.UseHighLow, 1.0);
+        if (nextOpen > firstOpen)
+            TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, firstOpen, nextOpen - interval.Duration).Wait();
+        int sign = SignOf(TrendInterval.InterpretZigZagPoints(indicator, null));
+
+        long duration = interval.Duration;
+        for (int index = 0; index < weightSum.Length; index++)
+        {
+            CandleTime point = from + (uint)index * step;
+
+            // Every candle that had closed at this point and is not in the zigzag yet
+            if (nextOpen + interval.Duration <= point)
+            {
+                CandleTime lastOpen = nextOpen;
+                while (lastOpen + interval.Duration + interval.Duration <= point)
+                    lastOpen += interval.Duration;
+                TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, nextOpen, lastOpen).Wait();
+                nextOpen = lastOpen + interval.Duration;
+                sign = SignOf(TrendInterval.InterpretZigZagPoints(indicator, null));
+            }
+
+            weightSum[index] += sign * duration;
+        }
     }
 
 

@@ -1031,6 +1031,12 @@ window.ChartWidget = {
             layout: {
                 background: { type: 'solid', color: d ? '#131316' : '#f0f0f5' },
                 textColor: d ? '#e0e0e0' : '#232323',
+                // The line between the price, volume and oscillator panes; the library default
+                // is a bright line that stands out more than the chart itself.
+                panes: {
+                    separatorColor: d ? '#3a3a3f' : '#c8c8d0',
+                    separatorHoverColor: d ? 'rgba(128, 128, 128, 0.3)' : 'rgba(128, 128, 128, 0.2)',
+                },
             },
             grid: {
                 vertLines: { color: d ? '#1a1a1a' : '#e8e8e8' },
@@ -1594,6 +1600,41 @@ window.ChartWidget = {
         return time - new Date(time * 1000).getTimezoneOffset() * 60;
     },
 
+    // A series in strictly ascending time, one point per time, the last one winning. The production
+    // build of lightweight-charts does NOT check this: a point out of order or a time twice is
+    // accepted without a word, and the next paint then fails ("Value is null") or draws nothing. That
+    // takes the CANDLES with it - the whole main pane stays empty while the sub-panels keep the
+    // pixels of the previous interval. The zigzag overlay did exactly that: its provisional points
+    // at the right-hand edge can land on, or before, the candle of the point before them.
+    _ordered: function (data) {
+        if (!Array.isArray(data) || data.length < 2)
+            return data;
+
+        var sorted = true;
+        for (var i = 1; i < data.length; i++) {
+            if (!(data[i].time > data[i - 1].time)) {
+                sorted = false;
+                break;
+            }
+        }
+        if (sorted)
+            return data;
+
+        // Stable, so of two points on the same time the one sent last stays last
+        var copy = data.map(function (p, index) { return { p: p, index: index }; });
+        copy.sort(function (a, b) { return a.p.time - b.p.time || a.index - b.index; });
+
+        var result = [];
+        for (var j = 0; j < copy.length; j++) {
+            var point = copy[j].p;
+            if (result.length > 0 && result[result.length - 1].time === point.time)
+                result[result.length - 1] = point;
+            else
+                result.push(point);
+        }
+        return result;
+    },
+
     _localizeTimes: function (node) {
         if (!node || typeof node !== 'object')
             return node;
@@ -1649,6 +1690,8 @@ window.ChartWidget = {
         // The new candles. Where the user was looking is NOT remembered and put back - the chart
         // keeps its own view across a setData, and reading it out to write it back was what made
         // it jump. See the note further down, where that write-back used to be.
+        // Ordered as well: _candleAt does a binary search on this same list
+        candles = this._ordered(candles);
         mainEntry.series.candles.setData(candles);
         this._lastCandles = candles;
 
@@ -1738,7 +1781,7 @@ window.ChartWidget = {
             var band = perSleutel[serie.__bandKey];
             if (!band || !band.points) return;
             try {
-                serie.setData(band.points.filter(function (pt) { return inRange(pt.time); }));
+                serie.setData(self._ordered(band.points.filter(function (pt) { return inRange(pt.time); })));
             } catch (e) {
                 // Rejected data (a time twice, out of order) silently left the cloud away
                 console.warn('band ' + serie.__bandKey + ' setData failed: ' + e);
@@ -1758,7 +1801,7 @@ window.ChartWidget = {
                 var data = overlays[key];
                 if (!data || data.length === 0) return;
 
-                data = data.filter(function (p) { return inRange(p.time); });
+                data = self._ordered(data.filter(function (p) { return inRange(p.time); }));
                 if (data.length === 0) return;
 
                 var style = self._styleFor(key);

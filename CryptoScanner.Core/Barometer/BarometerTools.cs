@@ -104,9 +104,7 @@ public class BarometerTools
         // of the candles of the quote (see MarketState), on the BTC interval the long side of the
         // analyzer uses; the same value for every interval, like the market trend.
         CryptoCandleList? candlesState = priceBarometer ? bmSymbolState?.GetSymbolInterval(interval.IntervalPeriod).CandleList : null;
-        CryptoIntervalPeriod stateInterval = GlobalData.IntervalListPeriodName.TryGetValue(
-            GlobalData.Settings.Signal.Long.MarketState.Interval, out CryptoInterval? stateIntervalDef)
-            ? stateIntervalDef.IntervalPeriod : CryptoIntervalPeriod.interval4h;
+        CryptoIntervalPeriod stateInterval = GetMarketStateInterval();
 
         // Remove old candles from the barometer symbol (< 24 hours, 1440 candles).
         // Barometer does not run in the emulator (it needs the full symbol pool), so the
@@ -129,25 +127,35 @@ public class BarometerTools
         }
 
         // The second symbol ages out on the same schedule.
+        //
+        // Its own boundary, though: the second and third symbol hold the slow figures and keep days
+        // of them, thinned to whole hours beyond the graph hours (see BarometerHourHistory). In the
+        // emulator that boundary is the same as the one above.
         if (candlesExtra != null)
         {
+            CandleTime startFetchExtra = CandleTools.GetCandleFetchStart(bmSymbolExtra!, interval, DateTime.UtcNow);
             while (candlesExtra.TryGetFirstCandle(out CryptoCandle c))
             {
-                if (c.OpenTime < startFetchUnix)
+                if (c.OpenTime < startFetchExtra)
                     candlesExtra.Remove(c.OpenTime);
                 else break;
             }
+            if (BarometerHourHistory.KeepsHourHistory(bmSymbolExtra!))
+                BarometerHourHistory.Thin(candlesExtra, DateTime.UtcNow);
         }
 
         // And so does the third
         if (candlesState != null)
         {
+            CandleTime startFetchState = CandleTools.GetCandleFetchStart(bmSymbolState!, interval, DateTime.UtcNow);
             while (candlesState.TryGetFirstCandle(out CryptoCandle c))
             {
-                if (c.OpenTime < startFetchUnix)
+                if (c.OpenTime < startFetchState)
                     candlesState.Remove(c.OpenTime);
                 else break;
             }
+            if (BarometerHourHistory.KeepsHourHistory(bmSymbolState!))
+                BarometerHourHistory.Thin(candlesState, DateTime.UtcNow);
         }
 
         // Unusable candles are not only at the front. A session that stops and starts again leaves a
@@ -609,6 +617,161 @@ public class BarometerTools
     }
 
 
+    /// <summary>The BTC interval the market state is calculated on: the one the long side of the
+    /// analyzer uses, 4h when that setting holds no known interval.</summary>
+    private static CryptoIntervalPeriod GetMarketStateInterval()
+    {
+        return GlobalData.IntervalListPeriodName.TryGetValue(
+            GlobalData.Settings.Signal.Long.MarketState.Interval, out CryptoInterval? stateIntervalDef)
+            ? stateIntervalDef.IntervalPeriod : CryptoIntervalPeriod.interval4h;
+    }
+
+
+    /// <summary>The quote coins whose hourly history has been filled in this session.</summary>
+    private static readonly HashSet<string> HourHistoryFilled = [];
+
+
+    /// <summary>
+    /// Fill in the whole hours of the days of history behind the slow figures (see
+    /// BarometerHourHistory) that have no value: all of them the first time after this was built,
+    /// and after a restart the hours the scanner was down.
+    /// <para>
+    /// Only the part older than the minute window. The minutes inside it are what the barometer
+    /// calculation and <see cref="FillMarketTrendBacklog"/> already take care of, and a $BMX candle
+    /// made here for such a minute would draw as a zero in the movement graph.
+    /// </para>
+    /// <para>
+    /// The market state and the market RSI come out of the 1h candles of the coins and the BTC candles
+    /// on the market state interval, which reach far further back than these days, so they come out
+    /// exactly as the live calculation would have given them. The market trend comes from
+    /// <see cref="Trend.MarketTrendBackfill"/>: the shortest intervals do not have candles that far
+    /// back and count as neutral there, but by duration they weigh about one percent of the total.
+    /// </para>
+    /// <para>
+    /// Once per quote per session. Not marked as done while nothing could be calculated yet, the same
+    /// way FillMarketTrendBacklog tries again on the next run.
+    /// </para>
+    /// </summary>
+    public static void FillHourHistory(CryptoQuoteData quoteData)
+    {
+        if (HourHistoryFilled.Contains(quoteData.Name))
+            return;
+
+        CryptoSymbol? symbolExtra = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerExtra, quoteData);
+        CryptoSymbol? symbolState = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerState, quoteData);
+        if (symbolExtra == null || symbolState == null)
+            return;
+        if (!BarometerHourHistory.KeepsHourHistory(symbolExtra) || !BarometerHourHistory.KeepsHourHistory(symbolState))
+        {
+            HourHistoryFilled.Add(quoteData.Name);
+            return;
+        }
+
+        // The whole hours from the start of the history up to the minute window. Rounded UP to the
+        // first whole hour, because the hour before the start would be pruned on the next run.
+        DateTime now = DateTime.UtcNow;
+        CandleTime historyStart = BarometerHourHistory.HistoryStart(now);
+        CandleTime minuteStart = BarometerHourHistory.MinuteWindowStart(now);
+        CandleTime firstHour = historyStart.AlignToIntervalMinutes(BarometerHourHistory.HourMinutes);
+        if (firstHour < historyStart)
+            firstHour += BarometerHourHistory.HourMinutes;
+
+        List<CandleTime> stateMissing = [];
+        List<CandleTime> trendMissing = [];
+        for (CandleTime hour = firstHour; hour < minuteStart; hour += BarometerHourHistory.HourMinutes)
+        {
+            bool missesState = false, missesTrend = false;
+            foreach (CryptoIntervalPeriod period in BarometerIntervals)
+            {
+                if (!symbolState.GetSymbolInterval(period).CandleList.TryGetValue(hour, out CryptoCandle candleState)
+                    || !HasMarketState(candleState) || candleState.Volume == 0)
+                    missesState = true;
+                if (!symbolExtra.GetSymbolInterval(period).CandleList.TryGetValue(hour, out CryptoCandle candleExtra)
+                    || (candleExtra.Low == 0 && candleExtra.Volume == 0))
+                    missesTrend = true;
+            }
+            if (missesState)
+                stateMissing.Add(hour);
+            if (missesTrend)
+                trendMissing.Add(hour);
+        }
+
+        if (stateMissing.Count == 0 && trendMissing.Count == 0)
+        {
+            HourHistoryFilled.Add(quoteData.Name);
+            return;
+        }
+
+        // The market state and the market RSI, as the minute after the whole hour would have seen
+        // them - the same moment the live calculation stores in the candle of that minute.
+        CryptoIntervalPeriod stateInterval = GetMarketStateInterval();
+        int stateWritten = 0;
+        foreach (CandleTime hour in stateMissing)
+        {
+            MarketStateValue? state = MarketState.Calculate(quoteData, hour + 1u, stateInterval);
+            double? rsi = MarketRsi.Calculate(quoteData, hour + 1u, out _);
+            if (state == null && !rsi.HasValue)
+                continue;
+
+            foreach (CryptoIntervalPeriod period in BarometerIntervals)
+            {
+                CryptoCandleList candles = symbolState.GetSymbolInterval(period).CandleList;
+                if (!candles.TryGetValue(hour, out CryptoCandle candle))
+                    candle = new CryptoCandle { OpenTime = hour, TickDecimals = symbolState.PriceDecimals };
+
+                // A value that was measured live stays; only what is missing is written
+                if (state != null && !HasMarketState(candle))
+                    BarometerCandleFields.StoreState(ref candle, state);
+                if (rsi.HasValue && candle.Volume == 0)
+                    BarometerCandleFields.StoreMarketRsi(ref candle, rsi.Value);
+                candles[hour] = candle;
+            }
+            stateWritten++;
+        }
+
+        // The market trend, in one pass over the stretch that misses it
+        int trendWritten = 0;
+        if (trendMissing.Count > 0)
+        {
+            SortedList<CandleTime, (decimal? Primary, decimal? Secondary)> series = Trend.MarketTrendBackfill.MeasureHourly(
+                quoteData.SymbolList, trendMissing[0], trendMissing[^1], Trend.MarketTrend.MinimumSymbols);
+            foreach (CandleTime hour in trendMissing)
+            {
+                if (!series.TryGetValue(hour, out (decimal? Primary, decimal? Secondary) value))
+                    continue;
+
+                foreach (CryptoIntervalPeriod period in BarometerIntervals)
+                {
+                    CryptoCandleList candles = symbolExtra.GetSymbolInterval(period).CandleList;
+                    if (!candles.TryGetValue(hour, out CryptoCandle candle))
+                        candle = new CryptoCandle { OpenTime = hour, TickDecimals = symbolExtra.PriceDecimals };
+                    if (candle.Low == 0 && candle.Volume == 0)
+                    {
+                        BarometerCandleFields.StoreMarketTrend(ref candle, value.Primary, value.Secondary);
+                        candles[hour] = candle;
+                    }
+                }
+                trendWritten++;
+            }
+        }
+
+        if (stateWritten == 0 && trendWritten == 0)
+            return; // too few coins, or their candles are not loaded yet - try again next time
+
+        HourHistoryFilled.Add(quoteData.Name);
+        GlobalData.AddTextToLogTab($"Barometer {quoteData.Name}: hourly history calculated afterwards, " +
+            $"market state {stateWritten} of {stateMissing.Count} hours, market trend {trendWritten} of {trendMissing.Count} hours");
+    }
+
+
+    /// <summary>Whether a $BMS candle holds a market state. A real one never has all four parts on
+    /// exactly zero - the breadth alone is a share of hundreds of coins.</summary>
+    private static bool HasMarketState(CryptoCandle candle)
+    {
+        return candle.Open != 0 || candle.High != 0 || candle.Low != 0 || candle.Close != 0;
+    }
+
+
     // Separate call because of emulator (calculate only 1 quote)
     public static void CalculatePriceBarometerForQuote(CryptoQuoteData quoteData, bool measureMarketTrend = true)
     {
@@ -645,6 +808,19 @@ public class BarometerTools
         {
             if (quoteData.FetchCandles)
                 CalculatePriceBarometerForQuote(quoteData, measureMarketTrend);
+        }
+
+        // The days of hourly history behind the slow figures, after every quote has its current
+        // barometer: the first run after a start has to fill days of it, and the signals should not
+        // wait for that. Only on the run that measures the market trend, which is the background
+        // one - see ExecuteAsync.
+        if (measureMarketTrend)
+        {
+            foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
+            {
+                if (quoteData.FetchCandles)
+                    FillHourHistory(quoteData);
+            }
         }
     }
 

@@ -421,7 +421,7 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         //  so no prevLow / prevLowerBand tracking needed for tpwsell.)
 
         // Forward pass — oldest first (ascending open time)
-        foreach (var time in indicatorData.Data.Keys.OrderBy(k => k))
+        foreach (var time in indicatorData.Data.Keys) // SortedDictionary: already oldest first
         {
             if (!indicatorData.CandleList.TryGetValue(time, out CryptoCandle candle)
                 || !indicatorData.Data.TryGetValue(time, out CryptoData? cd)
@@ -732,6 +732,14 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         };
         OppositeExtremeChecker = opposite.IsExtremeBuyBar;
         OppositeCsmChecker = opposite.IsCsmBuyBar;
+
+        // The cheap Reentry check first — see SignalBbmaOmniLong.IsSignal for why the TPW cache
+        // is only built once the candle is a Reentry.
+        if (!IsReentry(CandleLast))
+        {
+            ExtraText = "LTF not in Reentry";
+            return false;
+        }
 
         // Build the forward-pass TPW cache before any GetOmniState calls, with the
         // Long-side Extreme as the cross-reset delegate (OmniView.mq5 line 829).

@@ -28,6 +28,30 @@ public class Points
             YAxisKey = "price",
             Tag = group
         };
+        // The provisional point at the right-hand edge (a dummy of the zigzag): an open square, it
+        // can still move with the next candles
+        var seriesHighProvisional = new ScatterSeries
+        {
+            Title = "p high (provisional)",
+            MarkerSize = 3,
+            MarkerFill = OxyColors.Transparent,
+            MarkerStroke = OxyColors.Red,
+            MarkerStrokeThickness = 1,
+            MarkerType = MarkerType.Square,
+            YAxisKey = "price",
+            Tag = group
+        };
+        var seriesLowProvisional = new ScatterSeries
+        {
+            Title = "p low (provisional)",
+            MarkerSize = 3,
+            MarkerFill = OxyColors.Transparent,
+            MarkerStroke = OxyColors.Yellow,
+            MarkerStrokeThickness = 1,
+            MarkerType = MarkerType.Square,
+            YAxisKey = "price",
+            Tag = group
+        };
 
         foreach (var zigzag in pivotList)
         {
@@ -37,13 +61,13 @@ public class Points
                 ScatterSeries? series;
                 if (zigzag.PointType == 'L')
                 {
-                    series = seriesLow;
+                    series = zigzag.Dummy ? seriesLowProvisional : seriesLow;
                     value = zigzag.Value * 0.995;
                 }
                 else
                 {
                     value = zigzag.Value * 1.005;
-                    series = seriesHigh;
+                    series = zigzag.Dummy ? seriesHighProvisional : seriesHigh;
                 }
                 series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime.Minutes, value));
             }
@@ -51,6 +75,8 @@ public class Points
 
         chart.Series.Add(seriesLow);
         chart.Series.Add(seriesHigh);
+        chart.Series.Add(seriesLowProvisional);
+        chart.Series.Add(seriesHighProvisional);
     }
 
 }
