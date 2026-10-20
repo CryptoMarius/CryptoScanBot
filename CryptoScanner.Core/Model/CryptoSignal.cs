@@ -62,6 +62,10 @@ public partial class CryptoSignal : CryptoData2
     // single TP at this distance instead of the global TP grid. Populated from OverrideProfitPercentage.
     public decimal? TpPercentage { get; set; }
 
+    // Optional per-signal DCA ladder, "percentage:factor;..." (see Trader.DcaLadder), parallel to
+    // SlPercentage. Populated from OverrideDcaList and copied to the position at creation time.
+    public string? DcaLevels { get; set; }
+
     // In-memory only: set when the strategy supplied an explicit entry price via OverrideSignalPrice
     // (so SignalPrice is a deliberate entry level, not just the signal candle's close). The trader then
     // enters at SignalPrice instead of the current market price.

@@ -79,6 +79,10 @@ public class RunRow
     public int PositionsShort { get; set; }
     public decimal ProfitLong { get; set; }
     public decimal ProfitShort { get; set; }
+    // The still-open positions per side at the price of the last day (EmulatorDb.OpenPositionValueSql).
+    // Null for runs written before the columns existed.
+    public decimal? UnrealizedPnlLong { get; set; }
+    public decimal? UnrealizedPnlShort { get; set; }
     public decimal AverageWin { get; set; }
     public decimal AverageLoss { get; set; }
 
@@ -108,6 +112,33 @@ public class RunRow
     /// nothing. Legacy runs without the two fields fall out here as well.
     /// </summary>
     public bool HasCapitalReturn => UseAssetManagement == true && StartCapital > 0;
+
+    /// <summary>
+    /// The first and last value of the run's equity curve (EmulatorDb.EquityCurveJson): cash plus the
+    /// open positions at the price of that day. Read by the query with json_extract; null for runs
+    /// without a curve.
+    /// </summary>
+    public decimal? EquityStart { get; set; }
+    public decimal? EquityEnd { get; set; }
+
+    /// <summary>
+    /// What the positions still open at the end are worth against the price of the last day: the
+    /// change of the equity curve minus the realised <see cref="Profit"/>. Altrady calls it the
+    /// unrealized PnL. Without a stop loss this is where the losses hide - every closed position can
+    /// have won while the run as a whole is under water.
+    /// </summary>
+    public decimal? UnrealizedPnl => EquityStart.HasValue && EquityEnd.HasValue ? EquityEnd - EquityStart - Profit : null;
+
+    /// <summary>Realised plus unrealised: what the run is really worth at the end (Altrady: total PnL).</summary>
+    public decimal? TotalPnl => EquityStart.HasValue && EquityEnd.HasValue ? EquityEnd - EquityStart : null;
+
+    /// <summary>
+    /// Total PnL per side: the realised profit of the closed positions of that side plus what its
+    /// still-open positions are worth at the price of the last day. The run's <see cref="TotalPnl"/>
+    /// mixes both sides, which hides a side that is deep under water behind one that wins.
+    /// </summary>
+    public decimal? TotalPnlLong => UnrealizedPnlLong.HasValue ? ProfitLong + UnrealizedPnlLong : null;
+    public decimal? TotalPnlShort => UnrealizedPnlShort.HasValue ? ProfitShort + UnrealizedPnlShort : null;
 
     /// <summary>What the run ends on: the start capital plus the realised profit.</summary>
     public decimal EndCapital => (TotalStartCapital ?? 0m) + Profit;
@@ -170,6 +201,10 @@ public class RunRow
     public string PeakInvestedText => PeakInvested.ToString("N2");
     public string PeakProfitPercentageText => PeakProfitPercentage.ToString("N2") + "%";
     public string MaxDrawdownText => MaxDrawdownPercentage.ToString("N2") + "%";
+    public string UnrealizedPnlText => UnrealizedPnl.HasValue ? UnrealizedPnl.Value.ToString("N2") : "—";
+    public string TotalPnlText => TotalPnl.HasValue ? TotalPnl.Value.ToString("N2") : "—";
+    public string TotalPnlLongText => TotalPnlLong.HasValue ? TotalPnlLong.Value.ToString("N2") : "—";
+    public string TotalPnlShortText => TotalPnlShort.HasValue ? TotalPnlShort.Value.ToString("N2") : "—";
     public string BestCaseText => BestCase.ToString("N2");
     public string WorstCaseText => WorstCase.ToString("N2");
     public string ProfitLongText => ProfitLong.ToString("N2");
@@ -378,7 +413,13 @@ public partial class RunResultsViewModel : ObservableObject
         "SELECT r.Id, r.StartedAt, r.FinishedAt, r.BuildStamp, r.Label, r.FromDate, r.ToDate, r.Result, " +
         "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.Profit, r.Invested, " +
         "       r.PeakInvested, r.PeakPositions, r.MaxDrawdownPercentage, r.PositionsLong, r.PositionsShort, r.ProfitLong, r.ProfitShort, " +
+        "       r.UnrealizedPnlLong, r.UnrealizedPnlShort, " +
         "       r.AverageWin, r.AverageLoss, r.AvgDurationSec, r.MinDurationSec, r.MaxDurationSec, " +
+        // First and last value of the equity curve, for the unrealised and total PnL columns. CAST
+        // because json_extract returns an integer for a round value (100000) and a real otherwise,
+        // and Dapper stops at the first row whose type differs from the one it started with.
+        "       CAST(json_extract(r.EquityCurveJson, '$.rows[0][1]') AS REAL) AS EquityStart, " +
+        "       CAST(json_extract(r.EquityCurveJson, '$.rows[#-1][1]') AS REAL) AS EquityEnd, " +
         // Start capital and the asset-management switch live in the run configuration blob. SQLite's
         // json_extract reads them in the query, which keeps the grid fast (parsing ConfigJson per row
         // in C# is what once made this tab take ten seconds to open) and needs no new column.
@@ -427,6 +468,12 @@ public partial class RunResultsViewModel : ObservableObject
             ["drawdown%"] = r => r.MaxDrawdownPercentage,
             ["profit"] = r => r.Profit,
             ["profit%"] = r => r.ProfitPercentage,
+            ["unrealized"] = r => r.UnrealizedPnl,
+            ["unrealizedpnl"] = r => r.UnrealizedPnl,
+            ["total"] = r => r.TotalPnl,
+            ["totalpnl"] = r => r.TotalPnl,
+            ["totallong"] = r => r.TotalPnlLong,
+            ["totalshort"] = r => r.TotalPnlShort,
             ["win"] = r => r.WinPercentage,
             ["win%"] = r => r.WinPercentage,
             ["peak%"] = r => r.PeakProfitPercentage,
@@ -717,6 +764,10 @@ public partial class RunResultsViewModel : ObservableObject
             "WinPercentage" => r => r.WinPercentage,
             "Profit" => r => r.Profit,
             "ProfitPercentage" => r => r.ProfitPercentage,
+            "UnrealizedPnl" => r => r.UnrealizedPnl,
+            "TotalPnl" => r => r.TotalPnl,
+            "TotalPnlLong" => r => r.TotalPnlLong,
+            "TotalPnlShort" => r => r.TotalPnlShort,
             "Invested" => r => r.Invested,
             "PeakInvested" => r => r.PeakInvested,
             "PeakPositions" => r => r.PeakPositions,

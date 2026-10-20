@@ -121,6 +121,7 @@ public partial class MainWindowViewModel : ObservableObject
         // Subscribe the child ViewModels to filter the contents
         FilterTextChanged += SymbolGridViewModel.OnFilterTextChanged;
         FilterTextChanged += SignalGridViewModel.OnFilterTextChanged;
+        FilterTextChanged += LiveDataGridViewModel.OnFilterTextChanged;
 
         App.EventOpenInInternalBrowser += OnOpenInInternalBrowserRequested;
 

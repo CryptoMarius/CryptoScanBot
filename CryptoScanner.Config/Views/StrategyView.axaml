@@ -7,6 +7,10 @@
              x:DataType="vm:StrategyViewModel"
              x:Class="CryptoScanner.Config.Views.StrategyView">
 
+    <UserControl.Styles>
+        <StyleInclude Source="avares://CryptoScanner.Config/Views/ChipStyles.axaml"/>
+    </UserControl.Styles>
+
     <StackPanel >
         <HeaderedContentControl Classes="groupbox" Header="Strategies">
             <HeaderedContentControl.Tag>
@@ -43,15 +47,52 @@
                 </Button>
             </HeaderedContentControl.Tag>
             <DockPanel LastChildFill="True">
-                <ScrollViewer>
-                    <ItemsControl ItemsSource="{Binding StrategyList}" Margin="8">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                <!-- The switched-on strategies as chips; a click on the box opens the full list of
+                     checkboxes in a flyout, in columns so that it fits on the screen. -->
+                <Border Classes="chipBox" Width="340" Margin="4"
+                        PointerPressed="ChipBox_PointerPressed"
+                        ToolTip.Tip="Click to choose the strategies; the x on a chip removes it.">
+                    <FlyoutBase.AttachedFlyout>
+                        <Flyout Placement="BottomEdgeAlignedLeft" FlyoutPresenterClasses="chipFlyout">
+                            <ItemsControl ItemsSource="{Binding StrategyList}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Vertical" MaxHeight="440"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                                  MinWidth="150" Margin="0,0,12,0"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Flyout>
+                    </FlyoutBase.AttachedFlyout>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <ItemsControl Grid.Column="0" ItemsSource="{Binding StrategyList}" IsVisible="{Binding ShowChips}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="chip" IsVisible="{Binding IsEnabled}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}"/>
+                                            <Button Classes="chipRemove" Content="&#x2715;" Command="{Binding RemoveCommand}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Grid.Column="0" Classes="chipPlaceholder"
+                                   Text="None selected"
+                                   IsVisible="{Binding !ShowChips}"/>
+                        <TextBlock Grid.Column="1" Classes="chipArrow" Text="&#x25BC;"/>
+                    </Grid>
+                </Border>
             </DockPanel>
         </HeaderedContentControl>
     </StackPanel>

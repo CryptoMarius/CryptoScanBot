@@ -483,7 +483,7 @@ public partial class RunResultsView : UserControl
         var sb = new System.Text.StringBuilder();
 
         // Header row — same order and names as the grid columns.
-        sb.AppendLine("Id\tLabel\tPeriod\tStarted\tBuild\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tWin%\tProfit\tProfit%\tInvested\t" +
+        sb.AppendLine("Id\tLabel\tPeriod\tStarted\tBuild\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tWin%\tProfit\tUnrealized PnL\tTotal PnL\tTotal PnL Long\tTotal PnL Short\tProfit%\tInvested\t" +
             "Peak cap.\tPeak pos\tPeak %\tDrawdown %\tStart cap.\tEnd cap.\tReturn %\tLong\tProfit long\tShort\tProfit short\tBest case\tWorst case\tAvg dur.\tMin dur.\tMax dur.");
 
         foreach (RunRow r in rows)
@@ -504,6 +504,10 @@ public partial class RunResultsView : UserControl
             sb.Append(r.PositionsTimeout).Append('\t');
             sb.Append(r.WinPercentage).Append('\t');
             sb.Append(r.Profit).Append('\t');
+            sb.Append(r.UnrealizedPnl).Append('\t');
+            sb.Append(r.TotalPnl).Append('\t');
+            sb.Append(r.TotalPnlLong).Append('\t');
+            sb.Append(r.TotalPnlShort).Append('\t');
             sb.Append(r.ProfitPercentage).Append('\t');
             sb.Append(r.Invested).Append('\t');
             sb.Append(r.PeakInvested).Append('\t');

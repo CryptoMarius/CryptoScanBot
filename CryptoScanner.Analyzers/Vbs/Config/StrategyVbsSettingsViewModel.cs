@@ -41,6 +41,18 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _bandBreakConfirmationCount = 0;
 
+    [ObservableProperty]
+    private double _maxCandleSizeRatio = 0.0;
+
+    [ObservableProperty]
+    private double _maxCandleVolumeRatio = 0.0;
+
+    [ObservableProperty]
+    private int _candleAverageLength = 20;
+
+    [ObservableProperty]
+    private double _largeCandleRetracementPart = 0.0;
+
     public void LoadConfig(VbsSettings settings)
     {
         Length = settings.Length;
@@ -55,6 +67,10 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
         RiskRewardRatio = settings.RiskRewardRatio;
         RequireStochOsOb = settings.RequireStochOsOb;
         BandBreakConfirmationCount = settings.BandBreakConfirmationCount;
+        MaxCandleSizeRatio = settings.MaxCandleSizeRatio;
+        MaxCandleVolumeRatio = settings.MaxCandleVolumeRatio;
+        CandleAverageLength = settings.CandleAverageLength;
+        LargeCandleRetracementPart = settings.LargeCandleRetracementPart;
     }
 
     public void SaveConfig(VbsSettings settings)
@@ -71,5 +87,9 @@ public partial class StrategyVbsSettingsViewModel : ObservableObject
         settings.RiskRewardRatio = RiskRewardRatio;
         settings.RequireStochOsOb = RequireStochOsOb;
         settings.BandBreakConfirmationCount = BandBreakConfirmationCount;
+        settings.MaxCandleSizeRatio = MaxCandleSizeRatio;
+        settings.MaxCandleVolumeRatio = MaxCandleVolumeRatio;
+        settings.CandleAverageLength = CandleAverageLength;
+        settings.LargeCandleRetracementPart = LargeCandleRetracementPart;
     }
 }

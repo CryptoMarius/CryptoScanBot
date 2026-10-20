@@ -55,11 +55,11 @@ public partial class SetupWindowViewModel : ObservableObject
                 Exchanges.Add(exchange.Name);
         }
 
-        // Pre-select the last-used exchange (if it is still in the supported list); otherwise the first.
-        string? lastExchange = LastFolderMemory.LoadExchange();
-        SelectedExchange = lastExchange != null && Exchanges.Contains(lastExchange)
-            ? lastExchange
-            : Exchanges.FirstOrDefault();
+        // Pre-select the exchange given with -e, like the live scanner takes it; then the last-used
+        // exchange (if it is still in the supported list); otherwise the first. An unknown -e name is
+        // refused later by EmulatorBootstrap.PickupExchangeFromParameter.
+        string? lastExchange = FindExchange(LastFolderMemory.ExchangeParameter()) ?? FindExchange(LastFolderMemory.LoadExchange());
+        SelectedExchange = lastExchange ?? Exchanges.FirstOrDefault();
     }
 
 
@@ -135,26 +135,31 @@ public partial class SetupWindowViewModel : ObservableObject
     }
 
 
+    /// <summary>The supported exchange with this name (case-insensitive), or null.</summary>
+    private string? FindExchange(string? name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return null;
+        return Exchanges.FirstOrDefault(x => x.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+    }
+
+
     /// <summary>
     /// Same resolution chain Program.cs used before this dialog existed: honour --folder
     /// when given, otherwise default to "{AppName}/Emulator" through the OS-specific
     /// IPlatformService. Keeps cross-platform parity with the live scanner.
+    /// <para>
+    /// It used to write "{AppName}/Emulator" into ApplicationParams.Options.AppDataFolder when no
+    /// -f was given. That moved every later GetDataDirectory() call along with it - since the
+    /// setup choices are remembered in that folder, the first launch saved them somewhere the next
+    /// launch did not look. The subfolder is now only added to the value returned here.
+    /// </para>
     /// </summary>
     private static string ResolveDefaultDataFolder()
     {
-        ApplicationParams.InitApplicationOptions();
-        ApplicationParams.Options ??= new ApplicationParams();
-        if (string.IsNullOrEmpty(ApplicationParams.Options.AppDataFolder))
-            ApplicationParams.Options.AppDataFolder = Path.Combine(Constants.AppName, "Emulator");
-
-        IPlatformService platformService = OperatingSystem.IsWindows()
-            ? new WindowsPlatformService()
-            : OperatingSystem.IsMacOS()
-                ? new MacOSPlatformService()
-                : OperatingSystem.IsLinux()
-                    ? new LinuxPlatformService()
-                    : throw new PlatformNotSupportedException($"Platform not supported: {Environment.OSVersion.Platform}");
-
-        return platformService.GetDataDirectory();
+        string folder = LastFolderMemory.CreatePlatformService().GetDataDirectory();
+        if (LastFolderMemory.FolderParameter() == null)
+            folder = Path.Combine(folder, "Emulator");
+        return folder;
     }
 }

@@ -1,0 +1,66 @@
+@* A box of chips, one per selected item, as a compact stand-in for a long list of checkboxes; the
+   same thing the Avalonia IntervalView and StrategyView show. Each chip has an "x" that deselects
+   it; a click on the box itself opens the full list, which the page passes in as ChildContent. *@
+<div class="chip-select @(Disabled ? "disabled" : "")" style="@(string.IsNullOrEmpty(Width) ? "" : $"width: {Width};")">
+    <div class="chip-select-box" title="@Title" @onclick="Toggle">
+        <div class="chip-select-chips">
+            @if (!Disabled && Selected.Any())
+            {
+                @foreach (var name in Selected)
+                {
+                    var item = name;
+                    <span class="chip">
+                        <span>@item</span>
+                        <button type="button" class="chip-remove" disabled="@Disabled"
+                                @onclick="() => Remove(item)" @onclick:stopPropagation="true">&#x2715;</button>
+                    </span>
+                }
+            }
+            else
+            {
+                <span class="chip-placeholder">@Placeholder</span>
+            }
+        </div>
+        <span class="chip-select-arrow">&#x25BC;</span>
+    </div>
+    @if (_open && !Disabled)
+    {
+        @* Catches the next click anywhere outside the list, so it closes again. *@
+        <div class="menu-button-backdrop" @onclick="Close"></div>
+        <div class="chip-select-popup">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>The names of the selected items, in the order the chips should show them.</summary>
+    [Parameter, EditorRequired] public IEnumerable<string> Selected { get; set; } = [];
+
+    /// <summary>Called with the name of the chip whose "x" was clicked.</summary>
+    [Parameter] public EventCallback<string> OnRemove { get; set; }
+
+    /// <summary>The full list with checkboxes, shown under the box while it is open.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public string Placeholder { get; set; } = "None selected";
+
+    [Parameter] public string Title { get; set; } = "Click to choose; the x on a chip removes it.";
+
+    /// <summary>A fixed width makes the chips wrap onto the next line instead of widening the box.</summary>
+    [Parameter] public string Width { get; set; } = "";
+
+    private bool _open;
+
+    private void Toggle()
+    {
+        if (!Disabled)
+            _open = !_open;
+    }
+
+    private void Close() => _open = false;
+
+    private Task Remove(string name) => OnRemove.InvokeAsync(name);
+}

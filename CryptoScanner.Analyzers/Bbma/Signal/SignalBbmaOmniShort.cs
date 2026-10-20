@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Enums;
+﻿using System.Collections.Concurrent;
+
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
@@ -160,7 +162,13 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     /// See <see cref="SignalBbmaOmniLong"/>'s analogous cache for why this is needed
     /// (the anti-repeat guard recurses into i-1/i-2 and would otherwise be exponential).
     /// </summary>
-    private readonly Dictionary<CandleTime, bool> _extremeCache = [];
+    /// <remarks>
+    /// Shared per symbol and interval (OmniIntervalState.ExtremeSell), see SignalBbmaOmniLong.
+    /// </remarks>
+    private ConcurrentDictionary<CandleTime, bool>? _extremeCache;
+
+    private ConcurrentDictionary<CandleTime, bool> ExtremeCache
+        => _extremeCache ??= OmniIntervalState.For(SymbolInterval).ExtremeSell;
 
     /// <summary>
     /// Extreme Sell — OmniView lines 811-815, INCLUDING the anti-repeat guard
@@ -169,11 +177,11 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     /// </summary>
     private bool IsExtreme(MyData data)
     {
-        if (_extremeCache.TryGetValue(data.Candle.OpenTime, out bool cached))
+        if (ExtremeCache.TryGetValue(data.Candle.OpenTime, out bool cached))
             return cached;
 
         bool result = ComputeExtreme(data);
-        _extremeCache[data.Candle.OpenTime] = result;
+        ExtremeCache[data.Candle.OpenTime] = result;
         return result;
     }
 
@@ -412,72 +420,79 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     /// </param>
     public void BuildTpwCache(CryptoSymbolInterval indicatorData, Func<MyData, bool>? isExtremeBuy = null)
     {
-        TpwStateCache.Clear();
+        // A new dictionary, not Clear: TpwStateCache may point at the shared pass of IsSignal
+        TpwStateCache = [];
+        TpwRun run = new(TpwStateCache);
 
-        int tpwSell = 0;
-        bool prevExtremeSell = false;
-        bool prevExtremeBuy = false;
         // (The MQ5 sell reset condition on low[i-1] < LowerBand[i-1] is commented out,
         //  so no prevLow / prevLowerBand tracking needed for tpwsell.)
 
         // Forward pass — oldest first (ascending open time)
         foreach (var time in indicatorData.Data.Keys) // SortedDictionary: already oldest first
+            StepTpw(run, indicatorData, time, isExtremeBuy);
+    }
+
+    /// <summary>
+    /// One bar of the sell-side forward pass — the loop body of <see cref="BuildTpwCache"/>, also
+    /// used by the shared pass of IsSignal (see SignalBbmaOmniBase.UpdateSharedTpwCache).
+    /// <see cref="TpwRun.Count"/> is the MQ5 tpwsell counter.
+    /// </summary>
+    protected override void StepTpw(TpwRun run, CryptoSymbolInterval indicatorData, CandleTime time, Func<MyData, bool>? isExtremeBuy)
+    {
+        if (!indicatorData.CandleList.TryGetValue(time, out CryptoCandle candle)
+            || !indicatorData.Data.TryGetValue(time, out CryptoData? cd)
+            || cd == null)
         {
-            if (!indicatorData.CandleList.TryGetValue(time, out CryptoCandle candle)
-                || !indicatorData.Data.TryGetValue(time, out CryptoData? cd)
-                || cd == null)
-            {
-                // Data gap — reset counter and prev-state tracking
-                tpwSell = 0;
-                prevExtremeSell = false;
-                prevExtremeBuy = false;
-                continue;
-            }
-
-            // Skip bars before WMA and BB indicators have warmed up
-            if (cd.Wma05Low == null || cd.Wma10Low == null || cd.BollingerBandsLowerBand == null)
-            {
-                prevExtremeSell = false;
-                prevExtremeBuy = false;
-                continue;
-            }
-
-            MyData bar = new() { Candle = candle, CandleData = cd };
-
-            // MQ5 line 823: ext_sell[i-1] → tpwsell=1, tpwbuy=0
-            if (prevExtremeSell)
-                tpwSell = 1;
-
-            // MQ5 line 829: ext_buy[i-1] → tpwbuy=1, tpwsell=0  (cross-reset)
-            if (prevExtremeBuy)
-                tpwSell = 0;
-
-            // MQ5 line 836: tpwsell==1 AND low[i] <= malo5[i] OR malo10[i] → tpwsell=2 (TPW fires)
-            bool isTpwFiredHere = false;
-            if (tpwSell == 1)
-            {
-                decimal low = candle.Low;
-                decimal malo5 = (decimal)cd.Wma05Low.Value;
-                decimal malo10 = (decimal)cd.Wma10Low.Value;
-                if (low <= malo5 || low <= malo10)
-                {
-                    tpwSell = 2;
-                    isTpwFiredHere = true;
-                }
-            }
-
-            // MQ5 sell reset is commented out in the source — not applied here.
-
-            TpwStateCache[time] = new OmniBarState
-            {
-                TpwSellCount = tpwSell,
-                IsTpwSellFired = isTpwFiredHere,
-            };
-
-            // Store this bar's extremes for the next iteration's [i-1] checks
-            prevExtremeSell = IsExtreme(bar);
-            prevExtremeBuy = isExtremeBuy?.Invoke(bar) ?? false;
+            // Data gap — reset counter and prev-state tracking
+            run.Count = 0;
+            run.PrevExtremeOwn = false;
+            run.PrevExtremeOpposite = false;
+            return;
         }
+
+        // Skip bars before WMA and BB indicators have warmed up
+        if (cd.Wma05Low == null || cd.Wma10Low == null || cd.BollingerBandsLowerBand == null)
+        {
+            run.PrevExtremeOwn = false;
+            run.PrevExtremeOpposite = false;
+            return;
+        }
+
+        MyData bar = new() { Candle = candle, CandleData = cd };
+
+        // MQ5 line 823: ext_sell[i-1] → tpwsell=1, tpwbuy=0
+        if (run.PrevExtremeOwn)
+            run.Count = 1;
+
+        // MQ5 line 829: ext_buy[i-1] → tpwbuy=1, tpwsell=0  (cross-reset)
+        if (run.PrevExtremeOpposite)
+            run.Count = 0;
+
+        // MQ5 line 836: tpwsell==1 AND low[i] <= malo5[i] OR malo10[i] → tpwsell=2 (TPW fires)
+        bool isTpwFiredHere = false;
+        if (run.Count == 1)
+        {
+            decimal low = candle.Low;
+            decimal malo5 = (decimal)cd.Wma05Low.Value;
+            decimal malo10 = (decimal)cd.Wma10Low.Value;
+            if (low <= malo5 || low <= malo10)
+            {
+                run.Count = 2;
+                isTpwFiredHere = true;
+            }
+        }
+
+        // MQ5 sell reset is commented out in the source — not applied here.
+
+        run.States[time] = new OmniBarState
+        {
+            TpwSellCount = run.Count,
+            IsTpwSellFired = isTpwFiredHere,
+        };
+
+        // Store this bar's extremes for the next iteration's [i-1] checks
+        run.PrevExtremeOwn = IsExtreme(bar);
+        run.PrevExtremeOpposite = isExtremeBuy?.Invoke(bar) ?? false;
     }
 
 
@@ -743,7 +758,18 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
 
         // Build the forward-pass TPW cache before any GetOmniState calls, with the
         // Long-side Extreme as the cross-reset delegate (OmniView.mq5 line 829).
-        BuildTpwCache(SymbolInterval, opposite.IsExtremeBuyBar);
+        // Kept per symbol, interval and side, see SignalBbmaOmniLong.IsSignal.
+        TpwRun run = SharedTpwRun();
+        lock (run)
+        {
+            UpdateSharedTpwCache(run, opposite.IsExtremeBuyBar);
+            return IsSignalWithTpwCache(logPrefix);
+        }
+    }
+
+    /// <summary>The rest of <see cref="IsSignal"/>: the LTF candle is a Reentry and the TPW cache is up to date.</summary>
+    private bool IsSignalWithTpwCache(string logPrefix)
+    {
 
         //if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
         //{

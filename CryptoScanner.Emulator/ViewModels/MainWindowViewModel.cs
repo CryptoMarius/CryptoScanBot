@@ -185,42 +185,10 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         IsRunning = true;
-        Status = $"Fetching symbols for {GlobalData.ActiveExchange.Name}…";
-        GlobalData.AddTextToLogTab($"Fetch symbols: {GlobalData.ActiveExchange.Name} — start");
-
         try
         {
-            // CRITICAL: re-sync the in-memory SymbolListName from the DB before invoking the
-            // REST fetch. The Symbol table has NO UNIQUE constraint on (ExchangeId, Name); the
-            // entire dedup logic in IsSymbolAccepted (SymbolBase.cs) runs against this cache.
-            // If the cache is empty or out of sync, every Fetch click reinserts the full list,
-            // producing duplicates in the DB. Bootstrap already does this once at startup,
-            // but explicitly repeating it here is cheap (AddSymbol skips known keys) and
-            // covers state corruption scenarios (cache lost, parallel writes from elsewhere).
-            int beforeCount = GlobalData.ActiveExchange.SymbolListName.Count;
-            GlobalData.LoadSymbols();
-            int afterLoadCount = GlobalData.ActiveExchange.SymbolListName.Count;
-            GlobalData.AddTextToLogTab($"Fetch symbols: in-memory cache synced with DB ({beforeCount} → {afterLoadCount})");
-
-            // Same call the live scanner makes (ThreadLoadData.cs). Hits the exchange REST
-            // API, writes/updates rows in the Symbol table, sets LastTimeFetched.
-            await GlobalData.ActiveExchange.GetApiInstance().Symbol.GetSymbolsAsync();
-
-            // Refresh the in-memory symbol caches from the DB so Configure and run-time code
-            // see what we just persisted.
-            GlobalData.LoadSymbols();
-
-            // Wire the freshly-known symbols into their quote-side index so Configure shows
-            // the new per-quote counts immediately (otherwise it stays empty until next start).
-            ThreadLoadData.IndexQuoteDataSymbols(GlobalData.ActiveExchange);
-
-            // Same notification the live scanner sends so any future grid/Combo bindings
-            // refresh themselves.
-            GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
-
-            int count = GlobalData.ActiveExchange.SymbolListName.Count;
-            Status = $"Fetched {count} symbols for {GlobalData.ActiveExchange.Name}.";
-            GlobalData.AddTextToLogTab($"Fetch symbols: {GlobalData.ActiveExchange.Name} — done ({count} symbols)");
+            // The work itself is shared with the console program CryptoScanBot.CandleSync
+            await EmulatorCandleSync.FetchSymbolsAsync(text => Status = text);
         }
         catch (Exception ex)
         {
@@ -247,7 +215,28 @@ public partial class MainWindowViewModel : ObservableObject
     /// candle built from 1h finds the 1h list already populated when its turn comes.
     /// </summary>
     [RelayCommand]
-    private async Task FetchCandlesAsync()
+    private Task FetchCandlesAsync() => FetchCandlesUntilAsync(null);
+
+
+    /// <summary>
+    /// The same fetch as <see cref="FetchCandlesAsync"/>, but up to the current minute instead of
+    /// the run config's ToDate: it adds every candle that appeared since the last fetch. What is
+    /// in the candle database already is read from disk and not asked again, so only the new tail
+    /// goes to the exchange.
+    /// <para>
+    /// Run it regularly on an exchange that only serves its newest candles. HyperLiquid hands out
+    /// the newest 5000 per interval, 3.5 days of 1m; an update within that span leaves no hole.
+    /// </para>
+    /// </summary>
+    [RelayCommand]
+    private Task UpdateCandlesAsync() => FetchCandlesUntilAsync(DateTime.UtcNow);
+
+
+    /// <summary>
+    /// Fetch candles for every symbol of the run config, from its FromDate (plus warmup) up to
+    /// <paramref name="until"/>, or up to the run config's ToDate when that is null.
+    /// </summary>
+    private async Task FetchCandlesUntilAsync(DateTime? until)
     {
         if (GlobalData.ActiveExchange == null)
         {
@@ -255,227 +244,21 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        // A run parks the clock on the moment it last replayed. FinishRun puts it back on real time,
-        // but a run that never reached it - a crash, a kill - leaves it standing. Repeat it here,
-        // because this is the routine that suffers: ZoneCandleEngine will not ask an exchange for
-        // candles beyond the clock, so a stale one quietly limits the synchronisation to that old
-        // date and reports "done" without having fetched a thing.
-        if (GlobalData.Clock is EmulatorClock clock)
-            clock.UtcNow = DateTime.UtcNow;
-
-        EmulatorRunConfig config;
-        try
-        {
-            config = RunConfigFile.Load();
-        }
-        catch (Exception ex)
-        {
-            Status = $"Failed to read run config: {ex.Message}";
-            return;
-        }
-
-        if (config.Symbols.Count == 0)
-        {
-            Status = "Run config has no symbols — edit CryptoScanBot-Emulator.json first.";
-            return;
-        }
-
-        if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
-        {
-            Status = "1m interval not registered — cannot fetch candles.";
-            return;
-        }
-
         IsRunning = true;
-        int total = config.Symbols.Count;
-        int symbolIdx = 0;
 
         // Same cancellation source the replay run uses, so the Stop button works during a fetch
         // too. Checked at the top of the per-symbol loop: a Stop finishes the symbol in progress
         // (partial candle data for a symbol is useless) and then abandons the rest.
         _cts = new CancellationTokenSource();
-        CancellationToken cancellationToken = _cts.Token;
-        bool cancelled = false;
-
-        List<CryptoInterval> intervals = GlobalData.IntervalList;
-        GlobalData.AddTextToLogTab(
-            $"Fetch candles: {total} symbol(s), window {config.FromDate:yyyy-MM-dd HH:mm}..{config.ToDate:yyyy-MM-dd HH:mm} UTC, 1m from exchange + higher derived locally");
-
         try
         {
-            // Run the whole fetch on a background thread so the UI stays responsive, same as the
-            // replay run. ZoneCandleEngine.FetchFrom is async (network I/O) but the work between
-            // the awaits — IsDataLocal walks, candle aggregation, candles.db reads/writes — is
-            // synchronous CPU/disk work that would otherwise stutter the UI on a big fetch.
-            // Status is a UI-bound property, so every assignment inside is marshalled back to the
-            // UI thread; AddTextToLogTab already marshals itself via the Log tab.
-            await Task.Run(async () =>
-            {
-                // One connection for the whole fetch; each symbol is persisted (and its memory
-                // released) as soon as it is complete, see step 3 below. InitializeSchema is
-                // normally done by the bootstrap but is cheap and covers a fresh candle folder.
-                CandleDatabase.InitializeSchema(GlobalData.ActiveExchange);
-                using var candleDb = new CandleDatabase(GlobalData.ActiveExchange);
-                candleDb.Open();
-                // Which periods were asked from the exchange before: asked once counts as accepted
-                // (history before a listing, holes in the exchange's data). Emulator-only table.
-                EmulatorHistoryAskedStore.EnsureTable(candleDb.Connection);
-
-                foreach (string symbolName in config.Symbols)
-                {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        cancelled = true;
-                        GlobalData.AddTextToLogTab($"Fetch candles: stopped by user after {symbolIdx}/{total} symbol(s)");
-                        break;
-                    }
-
-                    symbolIdx++;
-                    // Config names may be bare pairs from before the product moved into the name
-                    if (!GlobalData.ActiveExchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol))
-                    {
-                        SetStatus($"Symbol '{symbolName}' not in exchange list — did you Fetch symbols first?");
-                        GlobalData.AddTextToLogTab($"Fetch candles: SKIP {symbolName} — not in exchange list");
-                        continue;
-                    }
-
-                    string symbolStatus = $"Fetching candles for {symbol.Name} ({symbolIdx}/{total})…";
-                    SetStatus(symbolStatus);
-                    // The archive download reports per file; shown behind the symbol so the status moves
-                    // during the twenty-odd seconds a symbol can take.
-                    GlobalData.CandleFetchProgress = text => SetStatus($"{symbolStatus}  {text}");
-
-                    // One dict per symbol, exactly like the DLZ zone-calculation path: it tells
-                    // ZoneCandleEngine.FetchFrom which intervals it has already materialised from
-                    // disk/candles.db into the in-memory CandleList, so the IsDataLocal verify
-                    // step sees the full picture instead of only the bounded startup load.
-                    ZoneCandleWindows loadedCandlesInMemory = new();
-                    EmulatorHistoryAskedStore.Load(candleDb.Connection, symbol);
-
-
-                    // ── Step 1: determine the fetch start per interval ───────────────────────
-                    // Exactly what the live scanner does before GetCandlesForAllIntervalsAsync
-                    // (see CandleBase.GetCandlesForAllSymbolsAndIntervalsAsync). It applies
-                    // GetCandleFetchStart per interval — 500 bars of that interval's own
-                    // resolution, and InitialCandleCountFetch for 1m — and then walks the
-                    // ConstructFrom chain for every interval this exchange does NOT serve, pulling
-                    // the source interval's start date back far enough to build it. That walk is a
-                    // loop, so a chain of several missing intervals cascades correctly, and it
-                    // takes the MINIMUM over all consumers so a source is deepened once for
-                    // everyone instead of once per dependent interval.
-                    //
-                    // The only difference with the scanner is the reference point: it measures back
-                    // from "now", the emulator from the START of its replay window.
-                    CandleTools.DetermineFetchStartDate(symbol, config.FromDate);
-
-                    CandleTime fetchEnd = IntervalTools.StartOfIntervalCandle(
-                        CandleTime.AlignFromDateTime(config.ToDate, interval1m.Duration), interval1m.Duration);
-
-                    // ── Step 2: fetch + derive, interval by interval ─────────────────────────
-                    // Mirrors CandleBase.GetCandlesForIntervalAsync: fetch the interval when the
-                    // exchange serves it, then fill gaps and bulk-calculate the NEXT interval from
-                    // its ConstructFrom. IntervalList runs ascending, so by the time an interval is
-                    // reached its source is complete — including the ones the exchange does not
-                    // serve, which are produced here rather than fetched.
-                    foreach (CryptoInterval interval in intervals)
-                    {
-                        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                        CandleTime fetchStart = symbolInterval.LastCandleSynchronized
-                            ?? IntervalTools.StartOfIntervalCandle(
-                                CandleTools.GetCandleFetchStart(symbol, interval, config.FromDate), interval.Duration);
-
-                        if (symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod) && fetchEnd > fetchStart)
-                        {
-                            int candleFetchCount = (int)((fetchEnd.Minutes - fetchStart.Minutes) / interval.Duration);
-                            GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — " +
-                                $"want {fetchStart.ToDateTime():yyyy-MM-dd HH:mm}..{fetchEnd.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount} bars)");
-                            try
-                            {
-                                await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, fetchStart, candleFetchCount);
-                            }
-                            catch (Exception sx)
-                            {
-                                GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — FAILED ({sx.Message})");
-                            }
-                        }
-
-                        await symbol.Data.CandleLock.WaitAsync();
-                        try
-                        {
-                            CandleTools.UpdateCandleFetched(symbol, interval);
-                            CandleTools.BulkAddMissingCandles(symbol, interval);
-
-                            // Build the next interval up from its own ConstructFrom (which is not
-                            // necessarily THIS interval — 5m is built from 1m, not from 3m).
-                            if (interval.IntervalPeriod < Enum.GetValues<CryptoIntervalPeriod>().Last())
-                            {
-                                CryptoInterval targetInterval = GlobalData.IntervalListPeriod[interval.IntervalPeriod + 1];
-                                CandleTools.BulkCalculateCandles(symbol, targetInterval.ConstructFrom!, targetInterval, fetchEnd);
-                                // Changed, so it still has to be written back - but NOT marked as
-                                // loaded. MarkAllLoaded claims MinValue..MaxValue: the whole timeline,
-                                // for ever. What was actually built here is only what could be derived
-                                // from the source candles that happened to be in memory at this moment,
-                                // and that is a good deal less than what candles.db already holds.
-                                //
-                                // With the claim in place, FetchFrom skipped its bounded disk read when
-                                // the loop reached this interval, found the holes the derivation had
-                                // left, and asked the EXCHANGE to fill them - one request per symbol per
-                                // interval, for candles that were sitting in candles.db all along. That
-                                // is why a fetch kept downloading history that was never deleted, and
-                                // why 1m was the only interval that stayed quiet: nothing derives 1m, so
-                                // it was the only one that still did its disk read.
-                                //
-                                // Reading from disk cannot undo the derivation either: the read uses
-                                // TryAdd, so a candle already in memory wins over the stored one.
-                                loadedCandlesInMemory.MarkChanged(targetInterval.IntervalPeriod);
-                            }
-                            CandleTools.UpdateCandleFetched(symbol, interval);
-                        }
-                        finally
-                        {
-                            symbol.Data.CandleLock.Release();
-                        }
-                    }
-
-                    // ── Step 3: persist this symbol to {Exchange}.db and release its memory ──
-                    // Per symbol instead of one SaveCandlesAsync at the end: with the full
-                    // interval ladder a symbol-year is ~1.2M in-memory candles (~100 MB), so a
-                    // fetch of many symbols over a long window would otherwise accumulate
-                    // gigabytes. The replay never needs these lists — TickRunner reloads per
-                    // chunk from candles.db — and ClearCandles leaves LastCandleSynchronized
-                    // intact, so a next fetch still resumes where this one ended. Bonus: a Stop
-                    // (or crash) loses at most the symbol in progress, everything before it is
-                    // already on disk.
-                    SetStatus($"Saving {symbol.Name} to database ({symbolIdx}/{total})…");
-                    CandleDatabase.SaveCandlesForSymbol(candleDb.Connection, symbol);
-                    EmulatorHistoryAskedStore.Save(candleDb.Connection, symbol);
-                    symbol.ClearCandles();
-
-                    GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done (saved, memory released)");
-                }
-            });
-
-            // On a Stop the candles fetched so far are already persisted (each symbol is saved
-            // right after its fetch), so a re-run of the fetch resumes where it left off.
-            if (cancelled)
-            {
-                Status = $"Fetch candles: stopped after {symbolIdx}/{total} symbol(s), fetched data saved.";
-                GlobalData.AddTextToLogTab($"Fetch candles: stopped ({symbolIdx}/{total} symbol(s) done)");
-            }
-            else
-            {
-                Status = $"Fetch candles: completed for {total} symbol(s).";
-                GlobalData.AddTextToLogTab($"Fetch candles: completed ({total} symbol(s))");
-            }
-        }
-        catch (Exception ex)
-        {
-            Status = $"Fetch candles failed: {ex.Message}";
-            GlobalData.AddTextToLogTab($"Fetch candles: FAILED — {ex.Message}");
+            // The work itself is shared with the console program CryptoScanBot.CandleSync
+            CandleFetchResult result = await EmulatorCandleSync.FetchCandlesAsync(until, SetStatus, _cts.Token);
+            if (result.Error != null)
+                Status = result.Error;
         }
         finally
         {
-            GlobalData.CandleFetchProgress = null;
             IsRunning = false;
             _cts?.Dispose();
             _cts = null;

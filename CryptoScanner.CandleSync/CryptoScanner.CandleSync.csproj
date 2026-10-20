@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<RuntimeIdentifiers>win-x64;osx-x64;osx-arm64;linux-x64</RuntimeIdentifiers>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<!-- Ships next to the scanner and the emulator, self-contained like both of them -->
+		<PublishSingleFile>false</PublishSingleFile>
+		<SelfContained>true</SelfContained>
+
+		<!-- Version / Company / Copyright / Authors are shared via Directory.Build.props -->
+		<Description>Keeps the emulator candle databases up to date without opening an emulator</Description>
+		<Configurations>Debug;Release</Configurations>
+
+		<AssemblyName>CryptoScanBot.CandleSync</AssemblyName>
+		<ApplicationIcon>..\CryptoScanner\Assets\AppIcon.ico</ApplicationIcon>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- The emulator carries the bootstrap and the fetch routines (EmulatorBootstrap,
+		     EmulatorCandleSync); this program runs exactly that code, without a window. -->
+		<ProjectReference Include="..\CryptoScanner.Emulator\CryptoScanner.Emulator.csproj" />
+	</ItemGroup>
+
+</Project>

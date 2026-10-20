@@ -485,6 +485,8 @@ public class CryptoDatabase : IDisposable
                 // are now stored as SlPercentage / TpPercentage.
                 "SlPercentage TEXT NULL," +
                 "TpPercentage TEXT NULL," +
+                // Optional per-signal DCA ladder, "percentage:factor;..." (see Trader.DcaLadder)
+                "DcaLevels TEXT NULL," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
@@ -630,6 +632,8 @@ public class CryptoDatabase : IDisposable
                 // the levels are now stored as SlPercentage / TpPercentage.
                 "SlPercentage TEXT NULL," +
                 "TpPercentage TEXT NULL," +
+                // Optional per-signal DCA ladder, "percentage:factor;..." (see Trader.DcaLadder)
+                "DcaLevels TEXT NULL," +
                 "SlMovedToBreakEven INTEGER NOT NULL DEFAULT 0," +
                 "TrailingStopPrice TEXT NULL," +
                 "TakeProfitTrailStopPrice TEXT NULL," +
@@ -1042,6 +1046,8 @@ public class CryptoDatabase : IDisposable
                 "PositionsShort INTEGER NOT NULL DEFAULT 0," +
                 "ProfitLong TEXT NULL," +
                 "ProfitShort TEXT NULL," +
+                "UnrealizedPnlLong TEXT NULL," +
+                "UnrealizedPnlShort TEXT NULL," +
                 "AverageWin TEXT NULL," +
                 "AverageLoss TEXT NULL," +
                 "AvgDurationSec REAL NULL," +

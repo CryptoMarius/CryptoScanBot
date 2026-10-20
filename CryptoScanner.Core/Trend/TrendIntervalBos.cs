@@ -40,17 +40,34 @@ public class TrendIntervalBos
         // TrendInterval (Dow) gets away with not filtering dummies because its 'count > 1'
         // damping requires two consecutive contra-trend pivots before flipping — BOS lacks
         // that buffer and flips on a single break, so dummies must be excluded here.
-        var zigZagList = indicator.ZigZagList.Where(z => !z.Dummy).ToList();
+        //var zigZagList = indicator.ZigZagList.Where(z => !z.Dummy).ToList();
+        // Walked in place instead of copied: this runs for every stale interval on every trend
+        // recalculation, and the copy was a new list each time for the same points.
+        List<ZigZagResult> zigZagList = indicator.ZigZagList;
+        int realCount = 0;
+        int first = -1;
+        int second = -1;
+        for (int i = 0; i < zigZagList.Count; i++)
+        {
+            if (zigZagList[i].Dummy)
+                continue;
+            if (first < 0)
+                first = i;
+            else if (second < 0)
+                second = i;
+            realCount++;
+        }
+
         CryptoTrendIndicator trend = CryptoTrendIndicator.Unknown;
         structureEvents = [];
 
         if (log != null)
         {
             log.AppendLine("");
-            log.AppendLine($"BOS/CHoCH ZigZag points={zigZagList.Count} (dummies excluded):");
+            log.AppendLine($"BOS/CHoCH ZigZag points={realCount} (dummies excluded):");
         }
 
-        if (zigZagList.Count < 2)
+        if (realCount < 2)
         {
             log?.AppendLine($"Not enough zigzag points, trend={trend}");
             return trend;
@@ -73,22 +90,24 @@ public class TrendIntervalBos
         double protectedLow;
         double recentHigh;
         double recentLow;
-        if (zigZagList[1].Value > zigZagList[0].Value)
+        if (zigZagList[second].Value > zigZagList[first].Value)
         {
-            recentLow = protectedLow = zigZagList[0].Value;
-            recentHigh = protectedHigh = zigZagList[1].Value;
+            recentLow = protectedLow = zigZagList[first].Value;
+            recentHigh = protectedHigh = zigZagList[second].Value;
             trend = CryptoTrendIndicator.Bullish;
         }
         else
         {
-            recentLow = protectedLow = zigZagList[1].Value;
-            recentHigh = protectedHigh = zigZagList[0].Value;
+            recentLow = protectedLow = zigZagList[second].Value;
+            recentHigh = protectedHigh = zigZagList[first].Value;
             trend = CryptoTrendIndicator.Bearish;
         }
 
-        for (int i = 2; i < zigZagList.Count; i++)
+        for (int i = second + 1; i < zigZagList.Count; i++)
         {
             var zigZag = zigZagList[i];
+            if (zigZag.Dummy)
+                continue;
             CryptoStructureEvent structureEvent = CryptoStructureEvent.None;
 
             if (zigZag.PointType == 'H')

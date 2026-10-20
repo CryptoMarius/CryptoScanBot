@@ -1,5 +1,6 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Analyzers.Mac.Signal;
@@ -59,6 +60,10 @@ public class MacBase : SignalCreateBase
     private decimal? ProfitPercentage;
     public override decimal? OverrideProfitPercentage => ProfitPercentage;
 
+    /// <summary>The DCA levels of the signal when DcaOnLines is set, null to leave them to the trader.</summary>
+    private List<CryptoDcaEntry>? DcaLevels;
+    public override List<CryptoDcaEntry>? OverrideDcaList => DcaLevels;
+
     /// <summary>The limit entry price of the signal when LimitEntryPrice is set, null for the close.</summary>
     private decimal? EntryPrice;
     public override decimal? OverrideSignalPrice => EntryPrice;
@@ -95,6 +100,7 @@ public class MacBase : SignalCreateBase
         StopPercentage = null;
         ProfitPercentage = null;
         EntryPrice = null;
+        DcaLevels = null;
         MacSettings settings = Settings;
         if (!settings.EntryOnOpenMarker && !settings.EntryOnCrossMarker
             && !settings.EntryOnCloseMarker && !settings.EntryOnBreakMarker)
@@ -317,9 +323,53 @@ public class MacBase : SignalCreateBase
         if (needAtr && !AverageTrueRangePercentage(settings.StopAtrLength, close, out atrPercentage))
             return false;
 
-        // The stop behind the level first; without a level behind the entry the ATR stop applies.
+        // The DCAs on the cloud lines behind the entry, and the stop on the line beyond the last one.
+        // The lines are read on the signal candle and the levels stay where they are put.
         decimal? stop = null;
-        if (settings.StopBehindLevel)
+        if (settings.DcaOnLines || settings.StopOnLineBeyondDca)
+        {
+            List<decimal> lines = MacPriceLevels.LineDistancesBehind(SignalSide, reference,
+                [mac.EmaFast, mac.EmaSecond, mac.SmaMedium, mac.SmaSlow]);
+            decimal minimumGap = Math.Max(0m, settings.DcaLineMinimumPercentage);
+            decimal deepest = 0m;
+
+            List<CryptoDcaEntry> dcaList = GlobalData.Settings.Trading.DcaList;
+            if (settings.DcaOnLines && dcaList.Count > 0)
+            {
+                //List<decimal> picked = MacPriceLevels.PickDcaDistances(lines, dcaList.Count, minimumGap);
+                // With the stop on a line one line stays free for it, so a position never uses up
+                // every line for its DCAs and ends up without a stop (run 282, 17-10-2026)
+                List<decimal> picked = settings.StopOnLineBeyondDca
+                    ? MacPriceLevels.PickDcaDistancesKeepingStopLine(lines, dcaList.Count, minimumGap, settings.StopLineMarginPercentage)
+                    : MacPriceLevels.PickDcaDistances(lines, dcaList.Count, minimumGap);
+                if (picked.Count > 0)
+                {
+                    DcaLevels = [];
+                    for (int i = 0; i < picked.Count; i++)
+                        DcaLevels.Add(new CryptoDcaEntry { Percentage = Math.Round(picked[i], 2), Factor = dcaList[i].Factor });
+                    deepest = picked[^1];
+                    text += $", dca on lines {string.Join("/", DcaLevels.Select(d => $"{d.Percentage:N2}%"))}";
+                }
+                else
+                {
+                    //text += ", no cloud line behind the entry for a dca";
+                    text += ", no free cloud line behind the entry for a dca";
+                }
+            }
+
+            if (settings.StopOnLineBeyondDca)
+            {
+                decimal? lineStop = MacPriceLevels.StopDistanceOnLineBeyond(lines, deepest, minimumGap, settings.StopLineMarginPercentage);
+                if (lineStop is decimal lineStopPercentage)
+                {
+                    stop = lineStopPercentage;
+                    text += $", sl on the line beyond the last dca";
+                }
+            }
+        }
+
+        // The stop behind the level next; without a level behind the entry the ATR stop applies.
+        if (stop == null && settings.StopBehindLevel)
         {
             // Inclusive: a limit entry waiting ON the level keeps its stop behind that same level,
             // not behind the next one further away.

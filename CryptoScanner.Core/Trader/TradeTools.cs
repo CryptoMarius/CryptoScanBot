@@ -58,6 +58,14 @@ public class TradeTools
         return GlobalData.Settings.Trading.TpList;
     }
 
+    /// <summary>
+    /// The DCA levels the trader should use for this position: the ladder the strategy handed over
+    /// with the signal (position.DcaLevels, e.g. mac with its DCAs on the cloud lines), otherwise the
+    /// global ladder from Settings.Trading.DcaList.
+    /// </summary>
+    public static List<CryptoDcaEntry> EffectiveDcaList(CryptoPosition position)
+        => position.DcaList ?? GlobalData.Settings.Trading.DcaList;
+
     public static void CalculateProfitAndBreakEvenPrice(CryptoPosition position)
     {
         // We do not return early here: the step statuses already in memory (from the last DB sync) are
@@ -1093,18 +1101,32 @@ public class TradeTools
     /// <summary>
     /// Bepaal het entry bedrag
     /// </summary>
-    public static decimal GetEntryAmount(CryptoSymbol symbol, decimal quoteAssetQuantity)
+    public static decimal GetEntryAmount(CryptoSymbol symbol, Model.CryptoExchange? activeExchange)
     {
         // Opmerking: Er is geen percentage bij papertrading mogelijk (of we moeten een werkende papertrade asset management implementeren)
         // That working paper-trade asset management now exists: the balances are maintained on every
         // order event and read back by AssetTools.GetAsset, so a percentage works for paper trading
         // and the emulator too.
+        //
+        // Since 20-10-2026 the percentage is taken of the whole ACCOUNT (AssetSnapshotTools.AccountValue:
+        // cash plus open positions at the current price), so the stake grows and shrinks with the
+        // account. Before, it was a percentage of the quote balance handed in by the caller - the free
+        // balance in one place and the total in the other, so the check and the order did not even
+        // agree - and that balance is the cash outside the positions, which shrinks while many of them
+        // are open. The amount is the floor under it: a percentage never enters with less, so a
+        // shrinking account still trades at the minimum stake instead of stopping.
 
         // Heeft de gebruiker een percentage of een aantal ingegeven?
-        if (symbol.QuoteData!.EntryPercentage > 0)
-            return (decimal)symbol.QuoteData.EntryPercentage * quoteAssetQuantity / 100.0m;
-        else
-            return symbol.QuoteData!.EntryAmount;
+        // Without asset management there is no balance to take a percentage of (see
+        // AssetTools.CheckAvailableAssets), so the check and the order both use the plain amount.
+        decimal amount = symbol.QuoteData!.EntryAmount;
+        if (symbol.QuoteData.EntryPercentage > 0 && activeExchange != null && GlobalData.Settings.Trading.UseAssetManagement)
+        {
+            decimal? accountValue = AssetSnapshotTools.AccountValue(activeExchange, symbol.Quote);
+            if (accountValue > 0)
+                return Math.Max((decimal)symbol.QuoteData.EntryPercentage * accountValue.Value / 100.0m, amount);
+        }
+        return amount;
     }
 
 
@@ -1226,8 +1248,11 @@ public class TradeTools
     /// PositionMonitor.GetMissingFixedPercentageDcaPrices).</param>
     /// <param name="reason">Filled with the first limit that is broken, empty when everything fits.</param>
     public static bool CheckOrderSetAgainstSymbolLimits(CryptoSymbol symbol, CryptoTradeSide side,
-        decimal entryPrice, decimal entryQuantity, decimal? signalSlPercentage, out string reason)
+        decimal entryPrice, decimal entryQuantity, decimal? signalSlPercentage, out string reason,
+        List<CryptoDcaEntry>? signalDcaList = null)
     {
+        // The ladder the strategy handed over with the signal, otherwise the global one
+        List<CryptoDcaEntry> dcaList = signalDcaList ?? GlobalData.Settings.Trading.DcaList;
         reason = "";
         if (entryPrice <= 0 || entryQuantity <= 0)
         {
@@ -1294,9 +1319,9 @@ public class TradeTools
         // 2. Every DCA level behind it. Sized the way HandleDcaPart sizes them: the factor is a
         // percentage of the entry amount, and the entry amount is what the entry order really cost.
         decimal? extremeDcaPrice = null;
-        for (int i = 0; i < GlobalData.Settings.Trading.DcaList.Count; i++)
+        for (int i = 0; i < dcaList.Count; i++)
         {
-            var dcaEntry = GlobalData.Settings.Trading.DcaList[i];
+            var dcaEntry = dcaList[i];
 
             // A level at or beyond the signal SL is never placed, so it is not weighed either
             if (signalSlPercentage.HasValue && dcaEntry.Percentage >= signalSlPercentage.Value)
@@ -1342,7 +1367,7 @@ public class TradeTools
                 EntryPrice = entryPrice,
                 ExtremeDcaPrice = extremeDcaPrice,
                 DeepestDcaPercentage = extremeDcaPrice.HasValue
-                    ? StopLossCalculator.DeepestDcaPercentage(GlobalData.Settings.Trading.DcaList, signalSlPercentage) : null,
+                    ? StopLossCalculator.DeepestDcaPercentage(dcaList, signalSlPercentage) : null,
                 GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
                 GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
             };

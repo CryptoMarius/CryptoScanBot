@@ -475,6 +475,23 @@ public static class EmulatorDb
             }
         }
 
+        // The still-open positions per side, valued at the price of the last snapshot day - the same
+        // price the equity curve (and with it the run's Unrealized/Total PnL) uses. Left alone without
+        // snapshots, like the equity curve, so a recalculation cannot wipe what a finished run stored.
+        if (days.Count > 0)
+        {
+            run.UnrealizedPnlLong = 0m;
+            run.UnrealizedPnlShort = 0m;
+            foreach (var row in database.Connection.Query<SideRow>(OpenPositionValueSql,
+                new { id, longSide = (int)CryptoTradeSide.Long }))
+            {
+                if (row.Side == (int)CryptoTradeSide.Long)
+                    run.UnrealizedPnlLong = (decimal)row.Profit;
+                else
+                    run.UnrealizedPnlShort = (decimal)row.Profit;
+            }
+        }
+
         // Mean winner and mean loser. With PositionsOpen they say what the run becomes if every
         // still-open position ends as the average winner, and as the average loser - which is how a
         // run with a lot of them has to be read, because the winners already closed at take profit
@@ -569,6 +586,26 @@ public static class EmulatorDb
 
 
     /// <summary>Projection for the per-side totals.</summary>
+    /// <summary>
+    /// The result per side of the positions still open at the end of a run: what was taken back so
+    /// far plus the remaining quantity at the price of the run's last snapshot day, minus the money
+    /// put in and the costs. Long: Returned + Quantity * Price - Invested - Commission; short the
+    /// other way round, because the remaining quantity is a debt that still has to be bought back.
+    /// The price comes from AssetSnapshot (one row per coin per day), so the base coin of the symbol.
+    /// </summary>
+    internal const string OpenPositionValueSql =
+        "select p.Side as Side, count(*) as Trades, sum(case when p.Side = @longSide " +
+        "  then CAST(p.Returned as REAL) + CAST(p.Quantity as REAL) * CAST(a.Price as REAL) - CAST(p.Invested as REAL) - CAST(p.Commission as REAL) " +
+        "  else CAST(p.Invested as REAL) - CAST(p.Returned as REAL) - CAST(p.Commission as REAL) - CAST(p.Quantity as REAL) * CAST(a.Price as REAL) " +
+        "  end) as Profit " +
+        "from position p " +
+        "join symbol s on s.Id = p.SymbolId " +
+        "join AssetSnapshot a on a.EmulatorRunId = @id and a.Name = s.Base " +
+        "  and a.SnapshotDate = (select max(SnapshotDate) from AssetSnapshot where EmulatorRunId = @id) " +
+        "where p.EmulatorRunId = @id and p.CloseTime is null and CAST(p.Invested as REAL) > 0 " +
+        "group by p.Side";
+
+
     private class SideRow
     {
         public int Side { get; set; }

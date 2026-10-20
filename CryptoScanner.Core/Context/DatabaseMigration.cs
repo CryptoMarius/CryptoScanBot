@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 106;
+    public readonly static int CurrentDatabaseVersion = 109;
 
 
     /// <summary>
@@ -2480,6 +2480,85 @@ public class DatabaseMigration
             foreach (var e in CryptoDatabase.CreateExchangeList())
                 database.Connection.Execute("update Exchange set FeeRate=@feeRate where Name=@name",
                     new { feeRate = e.FeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture), name = e.Name }, transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 17-10-2026 A DCA ladder of its own per signal and position (DcaLevels, see Trader.DcaLadder):
+        // a strategy that puts its DCAs on its own price levels (mac on the cloud lines) hands them over.
+        if (CurrentVersion > version.Version && version.Version == 106)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Signal add DcaLevels Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add DcaLevels Text null", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 19-10-2026 The unrealised PnL of an emulator run per side, so the total PnL can be shown per side.
+        if (CurrentVersion > version.Version && version.Version == 107)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table EmulatorRun add UnrealizedPnlLong TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add UnrealizedPnlShort TEXT NULL", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 19-10-2026 The unrealised PnL per side filled in for the runs written before version 108, so
+        // Total PnL Long/Short can be compared over the older runs as well. Only where the position
+        // digest says it exactly: open positions on one side only (or none). Runs with open longs AND
+        // shorts stay empty, the digest has no quantities to value them with (see RunUnrealizedSplit).
+        if (CurrentVersion > version.Version && version.Version == 108)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // The unrealised PnL as the Results grid computes it: last minus first value of the
+            // equity curve, minus the realised profit.
+            List<(int Id, int PositionsOpen, double Unrealized)> todo = database.Connection.Query<(int, int, double)>(
+                "select Id, PositionsOpen, " +
+                "  CAST(json_extract(EquityCurveJson, '$.rows[#-1][1]') AS REAL) - CAST(json_extract(EquityCurveJson, '$.rows[0][1]') AS REAL) " +
+                "  - CAST(Profit AS REAL) " +
+                "from EmulatorRun " +
+                "where UnrealizedPnlLong is null and UnrealizedPnlShort is null " +
+                "  and EquityCurveJson is not null and EquityCurveJson <> '' " +
+                "  and json_extract(EquityCurveJson, '$.rows[0][1]') is not null", transaction: transaction).AsList();
+
+            int filled = 0;
+            foreach ((int runId, int positionsOpen, double unrealized) in todo)
+            {
+                string? digest = database.Connection.ExecuteScalar<string?>(
+                    "select PositionDigestJson from EmulatorRun where Id = @id", new { id = runId }, transaction);
+                (decimal Long, decimal Short)? split = null;
+                try { split = RunUnrealizedSplit.Split(digest, positionsOpen, (decimal)unrealized); } catch { } // a damaged digest stays empty
+                if (split == null)
+                    continue;
+
+                database.Connection.Execute(
+                    "update EmulatorRun set UnrealizedPnlLong = @unrealizedLong, UnrealizedPnlShort = @unrealizedShort where Id = @id",
+                    new { unrealizedLong = split.Value.Long, unrealizedShort = split.Value.Short, id = runId }, transaction);
+                filled++;
+            }
+
+            if (todo.Count > 0)
+                GlobalData.AddTextToLogTab($"Database version 109: unrealised PnL per side filled in for {filled} of {todo.Count} emulator run(s)");
 
             // update version
             version.Version += 1;

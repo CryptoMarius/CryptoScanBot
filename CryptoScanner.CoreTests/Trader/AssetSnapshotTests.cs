@@ -247,4 +247,42 @@ public class AssetSnapshotTests : TestBase
             GlobalData.CurrentEmulatorRunId = null;
         }
     }
+
+    /// <summary>
+    /// The dashboard line ends on the capital of right now (20-10-2026): the snapshot of 00:00 lagged
+    /// the account by up to a day. The extra point is calculated, never written away, so the stored
+    /// series and CaptureIfDue are not touched by looking at the dashboard.
+    /// </summary>
+    [TestMethod]
+    public void The_dashboard_line_ends_on_the_capital_of_right_now()
+    {
+        using CryptoDatabase database = Arrange(out CryptoSymbol _);
+        IClock previousClock = GlobalData.Clock;
+        try
+        {
+            GlobalData.Clock = new EmulatorClock { UtcNow = Day.AddHours(1) };
+            SetBalance("USDT", 10000m);
+            AssetSnapshotTools.CaptureIfDue(GlobalData.ActiveExchange!);
+
+            // Later that day the balance has changed
+            GlobalData.Clock = new EmulatorClock { UtcNow = Day.AddHours(15) };
+            SetBalance("USDT", 10062m);
+
+            List<AssetSnapshotTools.AssetSnapshotDay> days = [.. AssetSnapshotTools.LoadDailyTotalsWithNow(GlobalData.ActiveExchange)
+                .Where(d => d.Date >= Day && d.Date <= Day.AddDays(7))];
+            Assert.AreEqual(2, days.Count, "the snapshot of the day and the point of right now");
+            Assert.AreEqual(10000m, days[0].Value);
+            Assert.IsFalse(days[0].IsNow);
+            Assert.IsTrue(days[1].IsNow);
+            Assert.AreEqual(Day.AddHours(15), days[1].Date);
+            Assert.AreEqual(10062m, days[1].Value);
+
+            Assert.AreEqual(1, ReadSnapshot(database).Count, "the point of right now is not written away");
+            Assert.AreEqual(10000m, LoadTestDays().Single().Value);
+        }
+        finally
+        {
+            GlobalData.Clock = previousClock;
+        }
+    }
 }

@@ -180,36 +180,43 @@ public class AssetManagementSwitchTests : TestBase
     /// <summary>
     /// An entry percentage is taken from what is FREE, not from the total. The difference is the
     /// money that open orders already claimed: spending it would be spending it twice.
+    /// <para>
+    /// Changed 20-10-2026: the percentage is now taken of the whole account (cash plus open positions,
+    /// TradeTools.GetEntryAmount), so the stake follows the account. Spending reserved money twice is
+    /// still prevented, by the check that the entry and its DCA levels fit in what is free.
+    /// </para>
     /// </summary>
     [TestMethod]
-    public void AnEntryPercentageIsTakenFromTheFreeBalance()
+    public void AnEntryPercentageIsTakenFromTheWholeAccount()
     {
         var (database, symbol, _) = Arrange(total: 1000m);
         ReserveWithAnOpenOrder(database, symbol, price: 100m, quantity: 6m); // 600 on the book
         symbol.QuoteData!.EntryAmount = 0;
         symbol.QuoteData.EntryPercentage = 10;
-
         var result = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange!, symbol);
 
         Assert.IsTrue(result.success, result.reaction);
-        Assert.AreEqual(40m, result.entryQuoteAsset, "10% of the 400 that is free, not of the 1000 total");
+        Assert.AreEqual(100m, result.entryQuoteAsset, "10% of the 1000 the account is worth; the 100 fits in the 400 that is free");
     }
 
     /// <summary>
     /// A percentage of a shrinking balance keeps producing ever smaller entries. The entry AMOUNT is
     /// the floor under that: below it the entry is not taken at all.
+    /// <para>
+    /// Changed 20-10-2026: below the floor the entry is now lifted onto the amount instead of refused,
+    /// so a shrinking account keeps trading at the minimum stake (TradeTools.GetEntryAmount).
+    /// </para>
     /// </summary>
     [TestMethod]
-    public void AnEntryBelowTheConfiguredAmountIsRefused()
+    public void AnEntryBelowTheConfiguredAmountIsLiftedOntoIt()
     {
         var (database, symbol, _) = Arrange(total: 200m);
         symbol.QuoteData!.EntryAmount = 50m;   // the floor
         symbol.QuoteData.EntryPercentage = 10; // 10% of 200 = 20, below the floor
-
         var result = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange!, symbol);
 
-        Assert.IsFalse(result.success, "20 is below the 50 floor");
-        StringAssert.Contains(result.reaction, "minimum entry amount");
+        Assert.IsTrue(result.success, result.reaction);
+        Assert.AreEqual(50m, result.entryQuoteAsset, "20 is below the 50 floor, so the floor is the entry");
     }
 
     /// <summary>

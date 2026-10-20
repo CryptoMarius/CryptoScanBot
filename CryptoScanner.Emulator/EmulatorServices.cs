@@ -12,7 +12,7 @@ namespace CryptoScanner.Emulator;
 /// Anything tied to the live scanner pipeline — ScannerSession, HiddenBrowserService,
 /// TradingView, websocket monitors — is deliberately absent.
 /// </summary>
-internal static class EmulatorServices
+public static class EmulatorServices
 {
     public static IServiceProvider Build()
     {

@@ -587,7 +587,9 @@ public sealed class ReplayRunner
         long Trend, long TrendCalls, long FvgInline, long SmcInline,
         long DbFlush, long DbFlushItems, long CandleArrivals,
         long DlzInline, long DlzInlineCalls, long DlzFeed, long DlzJudge, long DlzMerge,
-        long DlzBroken, long DlzFullRuns, long DlzIncrementalRuns)
+        long DlzBroken, long DlzFullRuns, long DlzIncrementalRuns,
+        long TrendLockWait, long TrendCalcBoth, long TrendCalcBothCalls, long TrendIngest, long TrendIngestCandles,
+        long TrendDow, long TrendBos)
     {
         public static ProfileSnapshot Capture(ReplayRunner runner) => new(
             runner.elapsedProcess1m, runner.elapsedPipeline, runner.elapsedZoneDrain, runner.elapsedFlush,
@@ -601,7 +603,10 @@ public sealed class ReplayRunner
             PipelineProfiler.DlzInlineTicks, PipelineProfiler.DlzInlineCalls,
             PipelineProfiler.DlzFeedTicks, PipelineProfiler.DlzJudgeTicks,
             PipelineProfiler.DlzMergeTicks, PipelineProfiler.DlzBrokenTicks,
-            PipelineProfiler.DlzFullRuns, PipelineProfiler.DlzIncrementalRuns);
+            PipelineProfiler.DlzFullRuns, PipelineProfiler.DlzIncrementalRuns,
+            PipelineProfiler.TrendLockWaitTicks, PipelineProfiler.TrendCalcBothTicks, PipelineProfiler.TrendCalcBothCalls,
+            PipelineProfiler.TrendIngestTicks, PipelineProfiler.TrendIngestCandles,
+            PipelineProfiler.TrendDowTicks, PipelineProfiler.TrendBosTicks);
     }
 
 
@@ -666,6 +671,21 @@ public sealed class ReplayRunner
                 $"judge {Seconds(now.DlzJudge - prev.DlzJudge):F1}s, " +
                 $"merge {Seconds(now.DlzMerge - prev.DlzMerge):F1}s, " +
                 $"broken {Seconds(now.DlzBroken - prev.DlzBroken):F1}s");
+        }
+
+        // The trend calculation on its own line, for the same reason: in a choch run it is nearly all
+        // of the strategy time, and the "trend" bucket above does not say which part. These counters
+        // were collected all along but never printed. The rest of "trend" (not in calcBoth or the lock
+        // wait) is the stale check and the loop over the intervals in SymbolTrend.
+        long calcBothCalls = now.TrendCalcBothCalls - prev.TrendCalcBothCalls;
+        if (calcBothCalls > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"Chunk {chunkIndex} trend — lock wait {Seconds(now.TrendLockWait - prev.TrendLockWait):F1}s | " +
+                $"calcBoth {Seconds(now.TrendCalcBoth - prev.TrendCalcBoth):F1}s over {calcBothCalls} interval(s) " +
+                $"(ingest {Seconds(now.TrendIngest - prev.TrendIngest):F1}s over {now.TrendIngestCandles - prev.TrendIngestCandles} candle(s), " +
+                $"dow {Seconds(now.TrendDow - prev.TrendDow):F1}s, " +
+                $"bos {Seconds(now.TrendBos - prev.TrendBos):F1}s)");
         }
 
         // State that survives the chunk boundary. A bucket above that keeps rising while one of these

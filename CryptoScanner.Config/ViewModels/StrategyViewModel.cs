@@ -14,6 +14,10 @@ public partial class StrategyItem : ObservableObject
 
     [ObservableProperty]
     private bool _isEnabled;
+
+    /// <summary>The "x" on the chip of this strategy: switches it off.</summary>
+    [RelayCommand]
+    private void Remove() => IsEnabled = false;
 }
 
 public partial class StrategyViewModel : ObservableObject
@@ -37,12 +41,23 @@ public partial class StrategyViewModel : ObservableObject
     [ObservableProperty]
     private string _crossTabLabel = "Trading";
 
+    /// <summary>The chips are shown as soon as one strategy is switched on.</summary>
+    public bool ShowChips => StrategyList.Any(s => s.IsEnabled);
+
     public StrategyViewModel()
     {
     }
 
+    private void OnItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(StrategyItem.IsEnabled))
+            OnPropertyChanged(nameof(ShowChips));
+    }
+
     public void LoadConfig(List<string> strategyList)
     {
+        foreach (var old in StrategyList)
+            old.PropertyChanged -= OnItemPropertyChanged;
         StrategyList.Clear();
         // Sort alphabetically by name so the UI lists e.g. sbm1/sbm2/sbm3, stobb/stobb.dlz/...,
         // storsi/storsi.dlz/... in a predictable order independent of the registration order
@@ -56,8 +71,10 @@ public partial class StrategyViewModel : ObservableObject
                 Name = algorithm.Name,
                 IsEnabled = strategyList.Contains(algorithm.Name)
             };
+            item.PropertyChanged += OnItemPropertyChanged;
             StrategyList.Add(item);
         }
+        OnPropertyChanged(nameof(ShowChips));
 
         // Refresh CanExecute now that the counterparts (typically set before LoadConfig)
         // have populated strategy lists too.

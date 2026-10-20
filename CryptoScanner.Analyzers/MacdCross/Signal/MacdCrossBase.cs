@@ -184,8 +184,10 @@ public class MacdCrossBase : SignalCreateBase
         if (settings.AdxMinimum <= 0 && settings.AdxRecentlyBelow <= 0)
             return true;
 
+        // A flat stretch (a fresh listing, a market without trades) gives 0/0 in the ADX, so the hub
+        // can hand over NaN; that is treated like a missing value instead of crashing the decimal cast.
         double? adx = CandleLast.CandleData!.Adx14;
-        if (adx == null)
+        if (adx == null || !double.IsFinite(adx.Value))
         {
             ExtraText = "adx not available yet";
             return false;
@@ -206,8 +208,13 @@ public class MacdCrossBase : SignalCreateBase
             for (int i = 0; i < within; i++)
             {
                 double? earlier = candles[i].CandleData!.Adx14;
-                if (earlier != null && earlier.Value < lowest)
+                if (earlier != null && double.IsFinite(earlier.Value) && earlier.Value < lowest)
                     lowest = earlier.Value;
+            }
+            if (lowest == double.MaxValue)
+            {
+                ExtraText = $"adx not available in the last {within} candle(s)";
+                return false;
             }
             if ((decimal)lowest >= settings.AdxRecentlyBelow)
             {

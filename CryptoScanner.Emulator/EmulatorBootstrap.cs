@@ -124,7 +124,8 @@ public static class EmulatorBootstrap
         if (string.IsNullOrEmpty(exchangeName))
             return;
 
-        string trimmed = exchangeName.Trim();
+        // The old "Futures" names, as ScannerSession accepts them as well
+        string trimmed = GlobalData.FixLegacyExchangeName(exchangeName.Trim());
         var match = GlobalData.ExchangeListName.Values
             .FirstOrDefault(x => x.Name.Equals(trimmed, StringComparison.CurrentCultureIgnoreCase));
 

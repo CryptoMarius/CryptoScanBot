@@ -295,7 +295,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
                 GetQueryTradeData();
                 // Live snapshots, so without a run id. The value is in
                 // AssetSnapshotTools.ReferenceCoin and therefore does not follow the quote above.
-                AssetSnapshotDayList = AssetSnapshotTools.LoadDailyTotals(null);
+                // The last point is the capital of right now, not the snapshot of 00:00 today.
+                AssetSnapshotDayList = AssetSnapshotTools.LoadDailyTotalsWithNow(GlobalData.ActiveExchange);
                 DoAllCharts();
                 DoAdditionalData();
             });
@@ -448,7 +449,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             MarkerType = MarkerType.Circle,
             MarkerSize = 3,
             MarkerFill = OxyColors.DodgerBlue,
-            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{4:N2}",
+            TrackerFormatString = "{0}\n{2:dd-MM-yyyy HH:mm}\n{4:N2}",
         };
 
         foreach (AssetSnapshotTools.AssetSnapshotDay day in AssetSnapshotDayList)
@@ -467,7 +468,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
                 Color = OxyColors.Orange,
                 StrokeThickness = 2,
                 LineStyle = LineStyle.Dash,
-                TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{4:N2}",
+                TrackerFormatString = "{0}\n{2:dd-MM-yyyy HH:mm}\n{4:N2}",
             };
 
             foreach (AssetSnapshotTools.AssetSnapshotDay day in AssetSnapshotDayList)

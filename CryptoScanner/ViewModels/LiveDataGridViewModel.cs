@@ -1,4 +1,5 @@
 ﻿using Avalonia.Collections;
+using Avalonia.Controls;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,9 +23,19 @@ public partial class LiveDataGridViewModel : ObservableObject
     [ObservableProperty]
     private AvaloniaList<LiveDataViewModel> _LiveDatas = [];
 
+    /// <summary>
+    /// What the grid shows: <see cref="LiveDatas"/> through the symbol filter. The filter is only
+    /// visual, LiveDatas itself keeps every row, so clearing the filter brings all of them back.
+    /// </summary>
+    public DataGridCollectionView LiveDatasView { get; }
+
+    private string _currentFilter = string.Empty;
+
     public LiveDataGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("LiveDataGridViewModel constructor called");
+
+        LiveDatasView = new DataGridCollectionView(LiveDatas) { Filter = MatchesFilter };
 
         _updateTimer.Tick += TimerAddLiveDataTick;
         _updateTimer.Start();
@@ -93,6 +104,29 @@ public partial class LiveDataGridViewModel : ObservableObject
                     Monitor.Exit(GlobalData.LiveDataQueue);
                 }
             }
+        }
+    }
+
+    private bool MatchesFilter(object item)
+    {
+        if (string.IsNullOrWhiteSpace(_currentFilter))
+            return true;
+        return item is LiveDataViewModel liveData && liveData.Object.Symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void OnFilterTextChanged(object? sender, string filterText)
+    {
+        _currentFilter = filterText;
+
+        try
+        {
+            LiveDatasView.Refresh();
+        }
+        catch (Exception error)
+        {
+            // The DataGrid can trip over its own index bookkeeping while it rebuilds (see
+            // UserControlWithGrid.ReapplySort). The rows themselves are fine.
+            ScannerLog.Logger.Error(error, "");
         }
     }
 

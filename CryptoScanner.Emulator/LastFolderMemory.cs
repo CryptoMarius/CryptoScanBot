@@ -1,4 +1,5 @@
-using CryptoScanner.Core.Const;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
 
 namespace CryptoScanner.Emulator;
 
@@ -7,6 +8,11 @@ namespace CryptoScanner.Emulator;
 /// folder and the exchange — so the next launch pre-fills both instead of forcing them through the
 /// picker/combo again. Live at the OS user-app base (not inside the chosen emulator folder — they have
 /// to survive folder switches).
+/// <para>
+/// With <c>-f</c> on the command line they live in that folder instead, the same folder the live
+/// scanner takes from <c>-f</c>. Two emulators started side by side (Binance and HyperLiquid, each
+/// with its own <c>-f</c>) then each remember their own choices instead of overwriting each other's.
+/// </para>
 /// </summary>
 public static class LastFolderMemory
 {
@@ -15,11 +21,36 @@ public static class LastFolderMemory
     private const string ExchangeFileName = "emulator-last-exchange.txt";
 
 
+    /// <summary>
+    /// The OS-specific platform service. The setup dialog runs before the services are registered,
+    /// so it is created here instead of taken from GlobalData.
+    /// </summary>
+    internal static IPlatformService CreatePlatformService()
+    {
+        return OperatingSystem.IsWindows()
+            ? new WindowsPlatformService()
+            : OperatingSystem.IsMacOS()
+                ? new MacOSPlatformService()
+                : OperatingSystem.IsLinux()
+                    ? new LinuxPlatformService()
+                    : throw new PlatformNotSupportedException($"Platform not supported: {Environment.OSVersion.Platform}");
+    }
+
+
+    /// <summary>
+    /// The folder the files are kept in: the <c>-f</c> folder when one was given, otherwise the
+    /// application folder of the user ({AppData}/CryptoScanBot) - both through
+    /// <see cref="IPlatformService.GetDataDirectory"/>, the same rules as the live scanner.
+    /// </summary>
+    internal static string MemoryFolder()
+    {
+        return CreatePlatformService().GetDataDirectory();
+    }
+
+
     private static string FilePathFor(string fileName)
     {
-        string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        string parent = Path.Combine(baseFolder, Constants.AppName);
-        return Path.Combine(parent, fileName);
+        return Path.Combine(MemoryFolder(), fileName);
     }
 
 
@@ -54,6 +85,24 @@ public static class LastFolderMemory
         {
             // Non-fatal: forgetting the last choice is annoying, not a bug worth surfacing.
         }
+    }
+
+
+    /// <summary>The folder given with <c>-f</c>, or null when the emulator was started without it.</summary>
+    internal static string? FolderParameter()
+    {
+        ApplicationParams.InitApplicationOptions();
+        string? folder = ApplicationParams.Options?.AppDataFolder;
+        return string.IsNullOrWhiteSpace(folder) ? null : folder;
+    }
+
+
+    /// <summary>The exchange given with <c>-e</c>, or null when the emulator was started without it.</summary>
+    internal static string? ExchangeParameter()
+    {
+        ApplicationParams.InitApplicationOptions();
+        string? exchange = ApplicationParams.Options?.ExchangeName;
+        return string.IsNullOrWhiteSpace(exchange) ? null : GlobalData.FixLegacyExchangeName(exchange.Trim());
     }
 
 

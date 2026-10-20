@@ -75,6 +75,16 @@ public class VbsSignalShort : VbsSignalVbs
             return false;
         }
 
+        // The candle limits (Common.BandCandleLimits, the rule of dbr): skip a band break on a
+        // candle far taller or heavier than normal, or keep it with the entry further out.
+        var candleLimit = Common.BandCandleLimits.Check(SymbolInterval, CandleLast.Candle.OpenTime, isLong: false,
+            settings.MaxCandleSizeRatio, settings.MaxCandleVolumeRatio, settings.CandleAverageLength, settings.LargeCandleRetracementPart);
+        if (candleLimit.Blocked)
+        {
+            ExtraText = candleLimit.Reason;
+            return false;
+        }
+
         //if (CandleLast.CandleData.BollingerBandsLowerBand.Value <= vbs.Lower.Value)
         //{
         //    ExtraText = "bb.lower <= vbs.band";
@@ -152,6 +162,11 @@ public class VbsSignalShort : VbsSignalVbs
             _tpPercentage = (decimal)(settings.RiskRewardRatio * pctDeviation);
 
         //MarkSignalFired();
+        // A signal on an oversized candle that was kept instead of dropped enters at the
+        // retracement price, so it only fills when price runs that much further.
+        if (candleLimit.EntryPrice is decimal retracementPrice)
+            _entryPrice = retracementPrice;
+
         ExtraText = $"hit upper band, ACS {pctDeviation:N2}% {_entryPrice}";
         return true;
     }

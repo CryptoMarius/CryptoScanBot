@@ -25,6 +25,10 @@ public partial class IntervalItem : ObservableObject
         _isChecked = isChecked;
         _isEnabled = isEnabled;
     }
+
+    /// <summary>The "x" on the chip of this interval: unticks it.</summary>
+    [RelayCommand]
+    private void Remove() => IsChecked = false;
 }
 
 public partial class IntervalViewModel : ObservableObject
@@ -40,6 +44,13 @@ public partial class IntervalViewModel : ObservableObject
     // Column 3: Days/Weeks
     [ObservableProperty]
     private ObservableCollection<IntervalItem> _dayIntervals = [];
+
+    /// <summary>
+    /// All intervals in one row, shortest first, for the chips in the box. A chip only shows
+    /// while its interval is ticked, so the box needs no list of its own to keep in step.
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<IntervalItem> _chipIntervals = [];
 
     // Same-tab counterparts (Long ↔ Short)
     public IntervalViewModel? LongCounterpart { get; set; }
@@ -69,9 +80,28 @@ public partial class IntervalViewModel : ObservableObject
     /// <summary>The list itself is only editable while the switch above it is on.</summary>
     public bool IntervalsEnabled => !ShowUseCustom || UseCustom;
 
-    partial void OnShowUseCustomChanged(bool value) => OnPropertyChanged(nameof(IntervalsEnabled));
+    /// <summary>The chips are shown while the list applies and at least one interval is ticked.</summary>
+    public bool ShowChips => IntervalsEnabled && ChipIntervals.Any(i => i.IsChecked);
 
-    partial void OnUseCustomChanged(bool value) => OnPropertyChanged(nameof(IntervalsEnabled));
+    /// <summary>The grey text in the box when there are no chips to show.</summary>
+    public string PlaceholderText => IntervalsEnabled ? "None selected" : "Follows the intervals of its side";
+
+    partial void OnShowUseCustomChanged(bool value) => NotifyIntervalsEnabled();
+
+    partial void OnUseCustomChanged(bool value) => NotifyIntervalsEnabled();
+
+    private void NotifyIntervalsEnabled()
+    {
+        OnPropertyChanged(nameof(IntervalsEnabled));
+        OnPropertyChanged(nameof(ShowChips));
+        OnPropertyChanged(nameof(PlaceholderText));
+    }
+
+    private void OnItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(IntervalItem.IsChecked))
+            OnPropertyChanged(nameof(ShowChips));
+    }
 
     public IntervalViewModel()
     {
@@ -80,6 +110,9 @@ public partial class IntervalViewModel : ObservableObject
 
     public void LoadConfig(List<string> intervalList, CryptoIntervalPeriod showFromInterval = CryptoIntervalPeriod.interval1m)
     {
+        foreach (var old in ChipIntervals)
+            old.PropertyChanged -= OnItemPropertyChanged;
+        ChipIntervals.Clear();
         DayIntervals.Clear();
         HourIntervals.Clear();
         MinuteIntervals.Clear();
@@ -96,7 +129,10 @@ public partial class IntervalViewModel : ObservableObject
             bool isEnabled = interval.IntervalPeriod >= showFromInterval;
             var item = new IntervalItem(interval.Name, intervalList.Contains(interval.Name), isEnabled);
             target.Add(item);
+            item.PropertyChanged += OnItemPropertyChanged;
+            ChipIntervals.Add(item);
         }
+        OnPropertyChanged(nameof(ShowChips));
 
         CopyFromLongCommand.NotifyCanExecuteChanged();
         CopyFromShortCommand.NotifyCanExecuteChanged();

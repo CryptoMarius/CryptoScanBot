@@ -83,9 +83,18 @@
             <!-- ═══ Right column: Trend / price / multi-TF conditions ═══ -->
             <StackPanel Grid.Column="2" Spacing="4">
 
-                <CheckBox IsChecked="{Binding CheckIncreasingMacd, Mode=TwoWay}"
-                          Content="MACD must be increasing/decreasing"
-                          FontSize="12"/>
+                <Grid ColumnDefinitions="Auto,*,Auto,60" RowDefinitions="Auto"
+                      ToolTip.Tip="Number of candles in a row the MACD histogram has to rise (fall, for a short). 0 = the strategy's own count (1 for most strategies).">
+                    <CheckBox IsChecked="{Binding CheckIncreasingMacd, Mode=TwoWay}"
+                              Content="MACD must be increasing/decreasing"
+                              FontSize="12"/>
+                    <TextBlock Grid.Column="2" Text="Candles" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12"
+                               IsEnabled="{Binding CheckIncreasingMacd}"/>
+                    <TextBox Grid.Column="3"
+                             Text="{Binding IncreasingMacdCandles, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                             IsEnabled="{Binding CheckIncreasingMacd}"/>
+                </Grid>
 
                 <CheckBox IsChecked="{Binding CheckFurtherPriceMove, Mode=TwoWay}"
                           Content="Price must be increasing/decreasing"

@@ -72,7 +72,7 @@ public class PositionMonitor : IDisposable
             return false;
         }
 
-        if (position.PartCount >= GlobalData.Settings.Trading.DcaList.Count)
+        if (position.PartCount >= TradeTools.EffectiveDcaList(position).Count)
         {
             step = null;
             percentage = 0;
@@ -144,7 +144,11 @@ public class PositionMonitor : IDisposable
         // a new DCA would be placed at a worse price than what we already have — skip it.
         // This guards against triggering an unnecessary DCA after a pause or restart.
         decimal entryPrice = position.EntryPrice.Value;
-        var dcaEntry = GlobalData.Settings.Trading.DcaList[position.PartCount];
+        // A ladder of the strategy's own is measured from the signal price: those levels lie on the
+        // strategy's price levels (mac: the cloud lines) and go to Altrady as fixed prices.
+        if (position.DcaList != null && position.SignalPrice > 0)
+            entryPrice = position.SignalPrice;
+        var dcaEntry = TradeTools.EffectiveDcaList(position)[position.PartCount];
         //decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
         // Through PricePlacement, the one place every DCA, take profit and stop price is computed
         decimal levelPrice = PricePlacement.Adverse(position.Side, entryPrice, Math.Abs(dcaEntry.Percentage));
@@ -211,7 +215,7 @@ public class PositionMonitor : IDisposable
             }
         }
 
-        GlobalData.AddTextToLogTab($"{position.Symbol.Name} DCA partcount={position.PartCount} count={GlobalData.Settings.Trading.DcaList.Count} dca.perc={dcaEntry.Percentage}");
+        GlobalData.AddTextToLogTab($"{position.Symbol.Name} DCA partcount={position.PartCount} count={TradeTools.EffectiveDcaList(position).Count} dca.perc={dcaEntry.Percentage}");
         reaction = "";
         return true;
     }
@@ -740,7 +744,7 @@ public class PositionMonitor : IDisposable
                                 // out afterwards is not the place to decide whether we should have
                                 // entered at all.
                                 if (!TradeTools.CheckOrderSetAgainstSymbolLimits(Symbol, signal.Side,
-                                    entryPrice, entryBase, signal.SlPercentage, out string limitReason))
+                                    entryPrice, entryBase, signal.SlPercentage, out string limitReason, DcaLadder.Parse(signal.DcaLevels)))
                                 {
                                     GlobalData.AddTextToLogTab(text + $" because {limitReason} the position is not opened");
                                     Symbol.ClearSignals();
@@ -1181,7 +1185,7 @@ public class PositionMonitor : IDisposable
             ExtremeDcaPrice = extremeDcaPrice,
             // The global stop lies this far beyond the farthest DCA, measured from the entry like Altrady
             DeepestDcaPercentage = extremeDcaPrice.HasValue
-                ? StopLossCalculator.DeepestDcaPercentage(GlobalData.Settings.Trading.DcaList, position.SlPercentage) : null,
+                ? StopLossCalculator.DeepestDcaPercentage(TradeTools.EffectiveDcaList(position), position.SlPercentage) : null,
             GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
             GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
         };
@@ -1653,10 +1657,9 @@ public class PositionMonitor : IDisposable
             if (position.Invested == 0)
             {
                 // Bepaal het entry bedrag, dat kan een vast bedrag of een perc van de totaal beschikbare quote asset zijn
-                decimal currentAssetQuantity = 0;
-                if (GlobalData.ActiveExchange!.Data.AssetList.TryGetValue(Symbol.Quote, out var asset) && asset != null)
-                    currentAssetQuantity = asset.Total;
-                entryValue = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity);
+                // Since 20-10-2026 the percentage is of the whole account, the same base the asset
+                // check used a moment before (TradeTools.GetEntryAmount).
+                entryValue = TradeTools.GetEntryAmount(Symbol, GlobalData.ActiveExchange);
                 // No log line here on purpose: ExchangeBase.Dump reports the placed entry order
                 // right after this, including the quantity and value AFTER rounding - which is
                 // what the user actually needs. Logging the raw amount beforehand only repeated
@@ -1681,13 +1684,14 @@ public class PositionMonitor : IDisposable
                 // position.PartCount: PartCount only counts already-FILLED dca's, but multiple dca parts can now be
                 // open (pending) at the same time when they are all placed at once, so each needs its own factor.
                 int dcaLevelIndex = part.PartNumber - 1;
-                if (position.EntryAmount.HasValue && dcaLevelIndex >= 0 && dcaLevelIndex < GlobalData.Settings.Trading.DcaList.Count)
+                List<CryptoDcaEntry> dcaList = TradeTools.EffectiveDcaList(position);
+                if (position.EntryAmount.HasValue && dcaLevelIndex >= 0 && dcaLevelIndex < dcaList.Count)
                 {
-                    var dcaEntry = GlobalData.Settings.Trading.DcaList[dcaLevelIndex];
+                    var dcaEntry = dcaList[dcaLevelIndex];
                     // dcaEntry.Factor is a percentage of the entry amount (100 = 1x, 200 = 2x, ...)
                     entryValue = (decimal)position.EntryAmount * dcaEntry.Factor / 100m;
                     GlobalData.AddTextToLogTab($"{position.Symbol.Name} averaging down with DCA {part.PartNumber} of "
-                        + $"{GlobalData.Settings.Trading.DcaList.Count} at {dcaEntry.Percentage}% from the entry price: "
+                        + $"{dcaList.Count} at {dcaEntry.Percentage}% from the entry price: "
                         + $"{entryValue} {Symbol.Quote} extra ({dcaEntry.Factor}% of the {position.EntryAmount} {Symbol.Quote} entry)");
                 }
                 else
@@ -1695,7 +1699,7 @@ public class PositionMonitor : IDisposable
                     // DCA, verdubbelen, gebaseerd op Zignally (geeft snel een asset tekort)
                     entryValue = position.Invested - position.Returned + position.Commission;
                     GlobalData.AddTextToLogTab($"{position.Symbol.Name} WARNING: DCA {part.PartNumber} has no matching level in the "
-                        + $"DCA list ({GlobalData.Settings.Trading.DcaList.Count} levels configured) - the list was probably changed "
+                        + $"DCA list ({dcaList.Count} levels configured) - the list was probably changed "
                         + $"while this position was open. Falling back to doubling the invested amount: {entryValue} {Symbol.Quote} extra");
                 }
             }
@@ -1768,7 +1772,7 @@ public class PositionMonitor : IDisposable
             // the usual Entry Remove Time rule.
             if (part.Purpose == CryptoPartPurpose.Entry && position.Invested == 0 &&
                 !TradeTools.CheckOrderSetAgainstSymbolLimits(Symbol, position.Side, price, entryQuantity,
-                    position.SlPercentage, out string entryLimitReason))
+                    position.SlPercentage, out string entryLimitReason, position.DcaList))
             {
                 GlobalData.AddTextToLogTab($"{position.Symbol.Name} entry order not placed because {entryLimitReason}");
                 return;
@@ -1952,9 +1956,15 @@ public class PositionMonitor : IDisposable
             return prices;
 
         decimal entryPrice = position.TpGridBreakEvenPrice;
+        // A ladder of the strategy's own is measured from the signal price instead: those levels lie
+        // on the strategy's price levels (mac: the cloud lines) and Altrady gets them as fixed prices,
+        // so the two administrations place them on the same price.
+        if (position.DcaList != null && position.SignalPrice > 0)
+            entryPrice = position.SignalPrice;
+        List<CryptoDcaEntry> dcaList = TradeTools.EffectiveDcaList(position);
         foreach (int i in MissingDcaLevelIndexes(position))
         {
-            var dcaEntry = GlobalData.Settings.Trading.DcaList[i];
+            var dcaEntry = dcaList[i];
             //decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
             //prices.Add((i, position.Side == CryptoTradeSide.Long ? entryPrice - diffPrice : entryPrice + diffPrice));
             // Through PricePlacement, the one place every DCA, take profit and stop price is computed
@@ -1989,9 +1999,10 @@ public class PositionMonitor : IDisposable
         // any more (no jojo), so a closed DCA part can only belong to a closed position anyway.
         int existingDcaParts = position.PartList.Values.Count(p => p.Purpose == CryptoPartPurpose.Dca);
 
-        for (int i = existingDcaParts; i < GlobalData.Settings.Trading.DcaList.Count; i++)
+        List<CryptoDcaEntry> dcaList = TradeTools.EffectiveDcaList(position);
+        for (int i = existingDcaParts; i < dcaList.Count; i++)
         {
-            var dcaEntry = GlobalData.Settings.Trading.DcaList[i];
+            var dcaEntry = dcaList[i];
 
             // When the strategy provides a signal SL, skip DCA levels that fall beyond it —
             // those would never fill because the SL triggers first.
@@ -2059,7 +2070,7 @@ public class PositionMonitor : IDisposable
         foreach (var level in missingLevels)
         {
             // Same sum HandleDcaPart uses: the factor is a percentage of the entry amount
-            decimal cost = (decimal)position.EntryAmount * GlobalData.Settings.Trading.DcaList[level.levelIndex].Factor / 100m;
+            decimal cost = (decimal)position.EntryAmount * TradeTools.EffectiveDcaList(position)[level.levelIndex].Factor / 100m;
             if (committed + cost > available)
                 break;
             committed += cost;

@@ -30,6 +30,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.Web", "Crypto
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.Exchanges", "CryptoScanner.Exchanges\CryptoScanner.Exchanges.csproj", "{2F898A42-3ECD-43AE-8826-8076B658DDF4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.CandleSync", "CryptoScanner.CandleSync\CryptoScanner.CandleSync.csproj", "{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -241,6 +243,24 @@ Global
 		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Release|x64.Build.0 = Release|Any CPU
 		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Release|x86.ActiveCfg = Release|Any CPU
 		{2F898A42-3ECD-43AE-8826-8076B658DDF4}.Release|x86.Build.0 = Release|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Debug|x64.Build.0 = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Debug|x86.Build.0 = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.MaxOS-X-Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.MaxOS-X-Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.MaxOS-X-Debug|x64.ActiveCfg = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.MaxOS-X-Debug|x64.Build.0 = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.MaxOS-X-Debug|x86.ActiveCfg = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.MaxOS-X-Debug|x86.Build.0 = Debug|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Release|x64.ActiveCfg = Release|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Release|x64.Build.0 = Release|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Release|x86.ActiveCfg = Release|Any CPU
+		{ADAF2D61-E24C-4F8C-8011-DB08034AF63D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

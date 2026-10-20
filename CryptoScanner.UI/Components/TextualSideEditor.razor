@@ -6,63 +6,75 @@
    tallest one — that is what made "Symbol trend filter primary" so much taller than its content. *@
 <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start;">
 
-    @* Strategies column *@
-    <div class="settings-group" style="min-width: 160px;">
-        <div class="settings-group-header">Strategies (@SideLabel)</div>
-        <div class="settings-group-body">
-            <div class="group-menu">
-                <MenuButton Items="StrategyMenu" Changed="StateHasChanged" />
-            </div>
-            <div style="max-height: 400px; overflow-y: auto;">
-                @foreach (var strat in Side.Strategies)
-                {
-                    <div class="field" style="margin: 2px 0;">
-                        <input type="checkbox" class="input-checkbox" @bind="strat.IsEnabled" />
-                        <label style="margin-left: 4px;">@strat.Name</label>
+    @* Strategies with the intervals underneath, like the Avalonia Analyzer and Trader tabs: both
+       are chip boxes now, so they fit in one column and leave room for the barometer. *@
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        @* Strategies column *@
+        <div class="settings-group">
+            <div class="settings-group-header">Strategies (@SideLabel)</div>
+            <div class="settings-group-body">
+                <div class="group-menu">
+                    <MenuButton Items="StrategyMenu" Changed="StateHasChanged" />
+                </div>
+                <ChipSelect Selected="Side.Strategies.Where(st => st.IsEnabled).Select(st => st.Name)"
+                            OnRemove="name => SetChecked(Side.Strategies, name, false)"
+                            Width="340px" Title="Click to choose the strategies; the x on a chip removes it.">
+                    <div class="chip-select-columns" style="grid-template-rows: repeat(@StrategyRows, auto);">
+                        @foreach (var strat in Side.Strategies)
+                        {
+                            <label class="interval-item">
+                                <input type="checkbox" class="input-checkbox" @bind="strat.IsEnabled" />
+                                <span>@strat.Name</span>
+                            </label>
+                        }
                     </div>
-                }
+                </ChipSelect>
             </div>
         </div>
-    </div>
 
-    @* Intervals column — 3-column grid matching Avalonia *@
-    <div class="settings-group" style="min-width: 280px;">
-        <div class="settings-group-header">Intervals (@SideLabel)</div>
-        <div class="settings-group-body">
-            <div class="group-menu">
-                <MenuButton Items="IntervalMenu" Changed="StateHasChanged" />
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px;">
-                <div>
-                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 2px; color: var(--text-secondary);">Minutes</div>
-                    @foreach (var iv in Side.Intervals.Where(i => IsMinuteInterval(i.Name)))
-                    {
-                        <div class="field" style="margin: 2px 0;">
-                            <input type="checkbox" class="input-checkbox" @bind="iv.IsEnabled" />
-                            <label style="margin-left: 4px;">@iv.Name</label>
-                        </div>
-                    }
+        @* Intervals column — 3-column grid matching Avalonia *@
+        <div class="settings-group">
+            <div class="settings-group-header">Intervals (@SideLabel)</div>
+            <div class="settings-group-body">
+                <div class="group-menu">
+                    <MenuButton Items="IntervalMenu" Changed="StateHasChanged" />
                 </div>
-                <div>
-                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 2px; color: var(--text-secondary);">Hours</div>
-                    @foreach (var iv in Side.Intervals.Where(i => IsHourInterval(i.Name)))
-                    {
-                        <div class="field" style="margin: 2px 0;">
-                            <input type="checkbox" class="input-checkbox" @bind="iv.IsEnabled" />
-                            <label style="margin-left: 4px;">@iv.Name</label>
+                <ChipSelect Selected="Side.Intervals.Where(i => i.IsEnabled).Select(i => i.Name)"
+                            OnRemove="name => SetChecked(Side.Intervals, name, false)"
+                            Width="340px" Title="Click to choose the intervals; the x on a chip removes it.">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px;">
+                        <div>
+                            <div style="font-weight: 600; font-size: 11px; margin-bottom: 2px; color: var(--text-secondary);">Minutes</div>
+                            @foreach (var iv in Side.Intervals.Where(i => IsMinuteInterval(i.Name)))
+                            {
+                                <div class="field" style="margin: 2px 0;">
+                                    <input type="checkbox" class="input-checkbox" @bind="iv.IsEnabled" />
+                                    <label style="margin-left: 4px;">@iv.Name</label>
+                                </div>
+                            }
                         </div>
-                    }
-                </div>
-                <div>
-                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 2px; color: var(--text-secondary);">Days/Weeks</div>
-                    @foreach (var iv in Side.Intervals.Where(i => IsDayWeekInterval(i.Name)))
-                    {
-                        <div class="field" style="margin: 2px 0;">
-                            <input type="checkbox" class="input-checkbox" @bind="iv.IsEnabled" />
-                            <label style="margin-left: 4px;">@iv.Name</label>
+                        <div>
+                            <div style="font-weight: 600; font-size: 11px; margin-bottom: 2px; color: var(--text-secondary);">Hours</div>
+                            @foreach (var iv in Side.Intervals.Where(i => IsHourInterval(i.Name)))
+                            {
+                                <div class="field" style="margin: 2px 0;">
+                                    <input type="checkbox" class="input-checkbox" @bind="iv.IsEnabled" />
+                                    <label style="margin-left: 4px;">@iv.Name</label>
+                                </div>
+                            }
                         </div>
-                    }
-                </div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 11px; margin-bottom: 2px; color: var(--text-secondary);">Days/Weeks</div>
+                            @foreach (var iv in Side.Intervals.Where(i => IsDayWeekInterval(i.Name)))
+                            {
+                                <div class="field" style="margin: 2px 0;">
+                                    <input type="checkbox" class="input-checkbox" @bind="iv.IsEnabled" />
+                                    <label style="margin-left: 4px;">@iv.Name</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </ChipSelect>
             </div>
         </div>
     </div>
@@ -342,6 +354,17 @@
     private static bool IsMinuteInterval(string name) => MinuteIntervals.Contains(name);
     private static bool IsHourInterval(string name) => HourIntervals.Contains(name);
     private static bool IsDayWeekInterval(string name) => DayWeekIntervals.Contains(name);
+
+    /// <summary>Rows per column of the strategy list in the popup: three columns.</summary>
+    private int StrategyRows => Math.Max(1, (Side.Strategies.Count + 2) / 3);
+
+    /// <summary>The "x" of a chip: unticks that item.</summary>
+    private static void SetChecked(List<TextualCheckItem> items, string name, bool value)
+    {
+        var item = items.FirstOrDefault(i => i.Name == name);
+        if (item != null)
+            item.IsEnabled = value;
+    }
 
     /// <summary>The entries of the Avalonia MenuFlyout behind the "▼" of the strategies box.</summary>
     private List<MenuAction> StrategyMenu => BuildMenu(

@@ -71,6 +71,12 @@ public static class AnalyzerRegistration
 
         PluginManager.Register(new SuperTrendBreakout.SuperTrendBreakoutPlugin());
 
+        // VWAP mean reversion: a touch of a band around the day VWAP with a reversal candle, out
+        // when a candle closes back at the VWAP. Measured on 18/19-10-2026: the VWAP exit loses on
+        // every interval, only 8h with a far fixed take profit made a small profit. Stays in Debug
+        // as a reference; the numbers are in VwapMr/VwapMr.md.
+        PluginManager.Register(new VwapMr.VwapMrPlugin());
+
 
         // Very disapointing, expected more of this strategy
         PluginManager.Register(new Trend.TrendPlugin());

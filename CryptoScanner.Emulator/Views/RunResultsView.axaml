@@ -14,7 +14,7 @@
             <TextBlock Text="Filter:" VerticalAlignment="Center"/>
             <TextBox Width="420" Text="{Binding LabelFilter}"
                      Watermark="label words and conditions, e.g. bbm return&gt;5 dd&lt;20 win&gt;=50"
-                     ToolTip.Tip="Shows only the runs whose label contains every word, in any order and case.&#10;A word with an operator (&gt; &lt; &gt;= &lt;= = !=) is a condition on a number column:&#10;  return&gt;5  dd&lt;20  profit&gt;100  profit%&gt;2  win&gt;=50  (two on one field give a range: dd&gt;5 dd&lt;20)&#10;Fields: return, dd, profit, profit%, win, peak%, peakcap, invested, signals, pos, open, won, lost, long, short, id.&#10;Empty shows all runs."/>
+                     ToolTip.Tip="Shows only the runs whose label contains every word, in any order and case.&#10;A word with an operator (&gt; &lt; &gt;= &lt;= = !=) is a condition on a number column:&#10;  return&gt;5  dd&lt;20  profit&gt;100  total&gt;0  profit%&gt;2  win&gt;=50  (two on one field give a range: dd&gt;5 dd&lt;20)&#10;Fields: return, dd, profit, total (Total PnL), unrealized (Unrealized PnL), profit%, win, peak%, peakcap, invested, signals, pos, open, won, lost, long, short, id.&#10;Empty shows all runs."/>
         </StackPanel>
 
         <!-- HorizontalScrollBarVisibility is forced to Visible: on Auto the grid never showed its
@@ -134,6 +134,36 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ProfitText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- The open positions against the price of the last day, and the run's real worth -->
+                <DataGridTemplateColumn Header="Unrealized PnL" Width="100" SortMemberPath="UnrealizedPnl">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding UnrealizedPnlText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Total PnL" Width="90" SortMemberPath="TotalPnl">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding TotalPnlText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- The same per side: realised profit of the side plus its open positions at the last price -->
+                <DataGridTemplateColumn Header="Total PnL Long" Width="110" SortMemberPath="TotalPnlLong">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding TotalPnlLongText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Total PnL Short" Width="110" SortMemberPath="TotalPnlShort">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding TotalPnlShortText}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

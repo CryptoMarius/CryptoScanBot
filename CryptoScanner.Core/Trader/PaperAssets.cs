@@ -523,7 +523,7 @@ public class PaperAssets
         if (entryAmount <= 0)
             return 0;
 
-        List<CryptoDcaEntry> dcaList = GlobalData.Settings.Trading.DcaList;
+        List<CryptoDcaEntry> dcaList = TradeTools.EffectiveDcaList(position);
         decimal reserved = 0;
         foreach (int levelIndex in PositionMonitor.MissingDcaLevelIndexes(position))
             reserved += entryAmount * dcaList[levelIndex].Factor / 100m;

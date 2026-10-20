@@ -27,7 +27,8 @@
                 <TextBlock Grid.Column="2" Text="Min. volume" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
                 <TextBlock Grid.Column="3" Text="Min. price" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
                 <TextBlock Grid.Column="4" Text="Amount" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
-                <TextBlock Grid.Column="5" Text="Percentage" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="5" Text="Percentage" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"
+                           ToolTip.Tip="Entry as a percentage of the whole account (cash plus open positions at the current price), so the stake grows and shrinks with the account. The amount is the minimum entry. Only used with asset management on; without it the amount is the entry."/>
                 <TextBlock Grid.Column="6" Text="Color" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
                 <TextBlock Grid.Column="7" Text="Symbols" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
             </Grid>

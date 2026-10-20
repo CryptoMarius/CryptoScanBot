@@ -258,7 +258,7 @@
             bool hasAdjustments = growth.Any(d => d.Adjustment != 0);
             <div class="chart-legend">
                 <span class="chart-legend-item">Start @firstValue.ToString("N2")</span>
-                <span class="chart-legend-item">Last @lastValue.ToString("N2")</span>
+                <span class="chart-legend-item">@(growth[^1].IsNow ? "Now" : "Last") @lastValue.ToString("N2")</span>
                 <span class="chart-legend-item @ColorClassForValue(difference)">@(difference >= 0 ? "+" : "")@difference.ToString("N2")</span>
                 @if (hasAdjustments)
                 {

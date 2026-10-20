@@ -190,6 +190,11 @@
 		<!-- Nested publish of the emulator to a temp folder (no recursion: the emulator does not reference the scanner). -->
 		<Exec Command="dotnet publish &quot;$(_EmulatorProject)&quot; -c $(Configuration) -r $(RuntimeIdentifier) --self-contained true -p:BundleEmulator=false -o &quot;$(_EmulatorPublishDir)&quot;" />
 
+		<!-- The console program that keeps the emulator candle databases up to date
+		     (CryptoScanBot.CandleSync) rides along in the same temp folder: it is built on the
+		     emulator, so it shares all of its files and only adds its own CryptoScanBot.CandleSync.*. -->
+		<Exec Command="dotnet publish &quot;$(MSBuildThisFileDirectory)..\CryptoScanner.CandleSync\CryptoScanner.CandleSync.csproj&quot; -c $(Configuration) -r $(RuntimeIdentifier) --self-contained true -p:BundleEmulator=false -o &quot;$(_EmulatorPublishDir)&quot;" />
+
 		<!-- Copy the emulator output over the scanner publish folder. Shared files are identical
 		     versions (overwrite is harmless); only the CryptoScanBot.Emulator.* files are really new. -->
 		<ItemGroup>

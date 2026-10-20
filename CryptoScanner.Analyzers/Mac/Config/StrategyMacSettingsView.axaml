@@ -311,6 +311,36 @@
 
                 <Separator Margin="0,4"/>
 
+                <!-- DCAs and the stop on the cloud lines behind the entry, fixed at the entry -->
+                <TextBlock Text="Levels on the cloud lines" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+                <CheckBox IsChecked="{Binding DcaOnLines, Mode=TwoWay}"
+                          Content="DCAs on the cloud lines" FontSize="12"
+                          ToolTip.Tip="Puts the DCA orders on the price of the cloud lines behind the entry (under it for a long), near to far, with the factors of the trader's DCA list. Fixed at the entry, also for Altrady. Without a line behind the entry the trader's DCA list applies."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                      ToolTip.Tip="Higher spreads the levels further. A line closer than this percentage to the entry or to the level before it is skipped, for the DCAs as well as for the stop on the line.">
+                    <TextBlock Grid.Column="0" Text="Minimum distance %:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding DcaLineMinimumPercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <CheckBox IsChecked="{Binding StopOnLineBeyondDca, Mode=TwoWay}" Margin="20,0,0,0"
+                          Content="Stop on the line beyond the last DCA" FontSize="12"
+                          ToolTip.Tip="Puts the stop on the first cloud line beyond the deepest DCA (under it for a long), plus the margin below. Fixed at the entry, also for Altrady. Without such a line the stop behind the level, the ATR stop or the trader's stop applies."/>
+
+                <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="40,0,0,0"
+                      IsEnabled="{Binding StopOnLineBeyondDca}"
+                      ToolTip.Tip="Higher is a wider stop. How many percent beyond the line the stop lies, so a wick that just touches the line does not stop the position out. 0 puts it exactly on the line.">
+                    <TextBlock Grid.Column="0" Text="Margin beyond the line %:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1"
+                             Text="{Binding StopLineMarginPercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+                <Separator Margin="0,4"/>
+
                 <!-- Take profit as a multiple of the stop of the signal -->
                 <TextBlock Text="Take profit" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
 

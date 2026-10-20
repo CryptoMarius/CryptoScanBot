@@ -108,6 +108,17 @@ public partial class CryptoPosition : CryptoData2
     // Persisted so the level survives an app restart.
     public decimal? TpPercentage { get; set; }
 
+    // Optional per-signal DCA ladder, parallel to SlPercentage: "percentage:factor;..." (see
+    // Trader.DcaLadder), populated from CryptoSignal at position creation time. When set the trader
+    // and the Altrady webhook place these levels instead of Settings.Trading.DcaList - a strategy that
+    // put its DCAs on its own price levels. Persisted so the levels survive an app restart.
+    public string? DcaLevels { get; set; }
+
+    // The ladder of DcaLevels as a list (a handful of levels, read from the text on every call);
+    // null when the position has no ladder of its own
+    [Computed]
+    public List<Settings.CryptoDcaEntry>? DcaList => Trader.DcaLadder.Parse(DcaLevels);
+
     // Sticky flag: set once the position reached the SL-protection profit threshold and
     // the stop was pulled to break-even, so CalculateSlPrices keeps it at BE and never loosens it again.
     public bool SlMovedToBreakEven { get; set; }

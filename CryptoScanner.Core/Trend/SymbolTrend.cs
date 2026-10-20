@@ -93,10 +93,15 @@ public class SymbolTrend
                             weightSum -= intervalWeight;
                         weightMax += intervalWeight;
 
-                        text = $"{symbol.Name} {interval.Name} {intervalTrend.Trend} weight={intervalWeight} sum={weightSum}";
-                        if (isCached)
-                            text += " (cached)";
-                        log?.AppendLine(text);
+                        // Only with a log: on the emulator path this ran on every recompute for every
+                        // interval, a dozen interpolations nobody read
+                        if (log != null)
+                        {
+                            text = $"{symbol.Name} {interval.Name} {intervalTrend.Trend} weight={intervalWeight} sum={weightSum}";
+                            if (isCached)
+                                text += " (cached)";
+                            log.AppendLine(text);
+                        }
                         //ScannerLog.Logger.Debug("SymbolTrend.Calculate " + text);
                     }
                     symbolTrend.Percentage = 100 * (float)weightSum / weightMax;
@@ -129,9 +134,12 @@ public class SymbolTrend
                     //    symbol.Data.TrendBos.Percentage = 100 * (float)weightSumBos / weightMaxBos;
                     //}
 
-                    log?.AppendLine("");
-                    text = $"{symbol.Name} sum ={weightSum} / {weightMax} = {symbolTrend.Percentage:N2}";
-                    log?.AppendLine(text);
+                    if (log != null)
+                    {
+                        log.AppendLine("");
+                        text = $"{symbol.Name} sum ={weightSum} / {weightMax} = {symbolTrend.Percentage:N2}";
+                        log.AppendLine(text);
+                    }
                     //ScannerLog.Logger.Debug("SymbolTrend.Calculate " + text);
                 }
             }

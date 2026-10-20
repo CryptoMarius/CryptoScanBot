@@ -48,6 +48,8 @@ public static class ColumnHints
         ["Timeout"] = "Positions whose entry order never filled and was cancelled. They never became a trade and are left out of Won, Lost and Win %.",
         ["Win %"] = "100 × Won / (Won + Lost). Timed out and still-open positions are left out. Says nothing about the size of the winners and losers.",
         ["Profit"] = "Realised profit of the CLOSED positions in the quote currency, fees included. Open positions are not in it.",
+        ["Unrealized PnL"] = "What the positions still open at the end are worth against the price of the last day: the change of the equity curve minus Profit. Without a stop loss this is where the losses are - every closed position can have won while the run is under water. A dash for runs without an equity curve.",
+        ["Total PnL"] = "Profit + Unrealized PnL: the change of the equity curve over the run, what the run is really worth at the end (Altrady: total PnL).",
         ["Profit %"] = "100 × Profit / Invested. Invested is the summed stake of every trade — the same money going round — so this percentage shrinks with the number of trades and flatters a strategy that trades little. Use Peak % or Return % instead.",
         ["Invested"] = "Sum of the stake of every closed position, DCA parts included. NOT the capital the run needed: the same money goes round many times.",
         ["Peak cap."] = "Peak capital: the most that was tied up in open positions at any one moment. This is the money an account needed to run this.",

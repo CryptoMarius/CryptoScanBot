@@ -257,6 +257,7 @@ public class SignalCreate
         // the resulting position, where PositionMonitor.CalculateSlPrices picks it up.
         signal.SlPercentage = algorithm.OverrideSlPercentage;
         signal.TpPercentage = algorithm.OverrideProfitPercentage;
+        signal.DcaLevels = DcaLadder.Format(algorithm.OverrideDcaList);
 
         List<string> eventText = [];
         if (algorithm.ExtraText != "")

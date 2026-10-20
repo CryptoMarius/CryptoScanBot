@@ -182,7 +182,8 @@ public class DashboardPositionService
     /// </remarks>
     private void LoadGrowthData()
     {
-        growthData = AssetSnapshotTools.LoadDailyTotals(null);
+        // The last point is the capital of right now, not the snapshot of 00:00 today.
+        growthData = AssetSnapshotTools.LoadDailyTotalsWithNow(GlobalData.ActiveExchange);
     }
 
     private static void QueryPositionData(string quote, out PositionStats openData, out PositionStats closedData, out List<DailyPositionData> dailyData)

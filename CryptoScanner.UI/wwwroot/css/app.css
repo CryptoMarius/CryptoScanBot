@@ -1162,6 +1162,105 @@ label.debug-item {
     cursor: pointer;
 }
 
+/* Chip box — the selected items as chips with an "x"; a click on the box opens the full list.
+   Same as the chipBox style of the Avalonia IntervalView and StrategyView. */
+.chip-select {
+    position: relative;
+    display: inline-block;
+}
+
+.chip-select-box {
+    display: flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 3px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+}
+
+.chip-select-box:hover {
+    border-color: var(--border-groupbox);
+}
+
+.chip-select.disabled .chip-select-box {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.chip-select-chips {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    min-width: 0;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    margin: 2px;
+    padding: 1px 1px 1px 6px;
+    font-size: 12px;
+    background: var(--bg-hover);
+    border-radius: 3px;
+    cursor: default;
+}
+
+.chip-remove {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 10px;
+    line-height: 1;
+    padding: 2px 4px;
+    cursor: pointer;
+}
+
+.chip-remove:hover {
+    color: var(--text-primary);
+}
+
+.chip-placeholder {
+    margin: 0 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.chip-select-arrow {
+    margin: 0 3px 0 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.chip-select-popup {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 9996;
+    margin-top: 2px;
+    padding: 8px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* The strategy list in the popup: top to bottom, then the next column, so it fits on the screen.
+   The page sets the number of rows; a column-wrapping flexbox would not widen with its columns. */
+.chip-select-columns {
+    display: grid;
+    grid-auto-flow: column;
+    column-gap: 16px;
+    row-gap: 3px;
+}
+
+.chip-select-columns .interval-item {
+    white-space: nowrap;
+    min-width: 150px;
+}
+
 /* A dimmed line of explanation inside a groupbox, for the small grey TextBlock the Avalonia views
    put under a block of settings. It is not a label/control pair, so it spans both grid columns. */
 .settings-note {

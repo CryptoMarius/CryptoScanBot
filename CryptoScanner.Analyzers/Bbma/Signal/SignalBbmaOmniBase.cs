@@ -76,7 +76,121 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     /// Per-bar TPW state cache keyed by candle open time.
     /// Built by BuildTpwCache in each Long/Short subclass before any GetOmniState calls.
     /// </summary>
-    protected Dictionary<CandleTime, OmniBarState> TpwStateCache { get; } = [];
+    protected Dictionary<CandleTime, OmniBarState> TpwStateCache { get; set; } = [];
+
+    /// <summary>
+    /// One bar of the TPW forward pass for this side (the loop body of BuildTpwCache in the
+    /// Long/Short subclass): updates <paramref name="run"/> and writes the state of
+    /// <paramref name="time"/> into <see cref="TpwRun.States"/>.
+    /// </summary>
+    protected virtual void StepTpw(TpwRun run, CryptoSymbolInterval indicatorData, CandleTime time, Func<MyData, bool>? oppositeExtreme)
+        => throw new NotImplementedException();
+
+    /// <summary>The TPW pass this side keeps for <see cref="SignalBase.SymbolInterval"/> across evaluations.</summary>
+    protected TpwRun SharedTpwRun()
+    {
+        OmniIntervalState state = OmniIntervalState.For(SymbolInterval);
+        return SignalSide == CryptoTradeSide.Long ? state.TpwBuy : state.TpwSell;
+    }
+
+    /// <summary>
+    /// Brings the shared TPW pass up to <see cref="SignalBase.CandleLast"/> and points
+    /// <see cref="TpwStateCache"/> at it. The caller holds the lock of <paramref name="run"/> for as
+    /// long as it reads the cache.
+    /// <para>
+    /// Only the candles that closed since the previous evaluation are fed, in the order a full
+    /// BuildTpwCache would feed them; a candle that is missing from Data is skipped, as the full pass
+    /// never sees it either. It starts over from the oldest candle when there is nothing yet, when
+    /// time went back (a new emulator run) or when the oldest candle left is newer than the last
+    /// one fed (the data was replaced). One difference with the full pass remains, on purpose: the
+    /// full pass started at whatever candle happened to be the oldest in memory, so a TPW phase older
+    /// than that window was forgotten - and live keeps far fewer candles (65) than the emulator. The
+    /// running pass keeps the counter, which is what OmniView does from the start of the chart.
+    /// </para>
+    /// </summary>
+    /// <summary>Test hook: the shared TPW pass brought up to CandleLast the way IsSignal does it, as a copy.</summary>
+    public Dictionary<CandleTime, OmniBarState> SharedTpwStatesForTest(Func<MyData, bool>? oppositeExtreme)
+    {
+        TpwRun run = SharedTpwRun();
+        lock (run)
+        {
+            UpdateSharedTpwCache(run, oppositeExtreme);
+            return new(run.States);
+        }
+    }
+
+    /// <summary>Test hook: a copy of the TPW cache this instance reads (after BuildTpwCache).</summary>
+    public Dictionary<CandleTime, OmniBarState> TpwStatesForTest() => new(TpwStateCache);
+
+    protected void UpdateSharedTpwCache(TpwRun run, Func<MyData, bool>? oppositeExtreme)
+    {
+        CryptoSymbolInterval indicatorData = SymbolInterval;
+        CandleTime now = CandleLast.Candle.OpenTime;
+        CandleTime first;
+        lock (indicatorData.Data)
+        {
+            if (indicatorData.Data.Count == 0)
+            {
+                TpwStateCache = run.States;
+                return;
+            }
+            first = indicatorData.Data.Keys.First();
+        }
+
+        if (run.LastProcessed != null && (now < run.LastProcessed.Value || first > run.LastProcessed.Value))
+        {
+            run.States.Clear();
+            run.Count = 0;
+            run.PrevExtremeOwn = false;
+            run.PrevExtremeOpposite = false;
+            run.PrevHigh = 0m;
+            run.PrevUpperBand = decimal.MaxValue;
+            run.LastProcessed = null;
+        }
+
+        if (run.LastProcessed == null)
+        {
+            List<CandleTime> keys = [];
+            lock (indicatorData.Data)
+            {
+                foreach (CandleTime key in indicatorData.Data.Keys)
+                {
+                    if (key > now)
+                        break;
+                    keys.Add(key);
+                }
+            }
+            foreach (CandleTime key in keys)
+                StepTpw(run, indicatorData, key, oppositeExtreme);
+        }
+        else
+        {
+            for (CandleTime time = run.LastProcessed.Value + Interval.Duration; time <= now; time += Interval.Duration)
+            {
+                bool present;
+                lock (indicatorData.Data)
+                    present = indicatorData.Data.ContainsKey(time);
+                if (present)
+                    StepTpw(run, indicatorData, time, oppositeExtreme);
+            }
+        }
+        run.LastProcessed = now;
+
+        // A candle older than the first one in Data is never asked for again
+        if (run.States.Count > 2 * indicatorData.Data.Count + 64)
+        {
+            List<CandleTime> stale = [];
+            foreach (CandleTime key in run.States.Keys)
+            {
+                if (key < first)
+                    stale.Add(key);
+            }
+            foreach (CandleTime key in stale)
+                run.States.Remove(key);
+        }
+
+        TpwStateCache = run.States;
+    }
 
     /// <summary>
     /// Optional check for an Extreme on the OPPOSITE side, used to reproduce the MQ5 CSM gate

@@ -87,6 +87,7 @@ public static class SignalGridExpander
             ApplyDottedProperty(tradingObj, propPath, jsonVal, saved);
 
         ApplyEntryAmount(entry, saved);
+        ApplyEntryPercentage(entry, saved);
     }
 
     /// <summary>
@@ -120,6 +121,27 @@ public static class SignalGridExpander
 
             saved.Add(new Override(quote, percentProp, percentProp.GetValue(quote)));
             percentProp.SetValue(quote, Convert.ChangeType(0, percentProp.PropertyType));
+        }
+    }
+
+    /// <summary>
+    /// The stake as a percentage of the account for this run, on every quote coin. Runs after
+    /// <see cref="ApplyEntryAmount"/>, so an entry that gives both keeps its amount as the floor and
+    /// its percentage on top - the amount alone would have zeroed the percentage.
+    /// </summary>
+    private static void ApplyEntryPercentage(EmulatorQueueEntry entry, List<Override> saved)
+    {
+        if (entry.EntryPercentage is not decimal percentage || percentage <= 0)
+            return;
+
+        PropertyInfo? percentProp = typeof(CryptoQuoteData).GetProperty(nameof(CryptoQuoteData.EntryPercentage));
+        if (percentProp == null)
+            return;
+
+        foreach (CryptoQuoteData quote in GlobalData.Settings.QuoteCoins.Values)
+        {
+            saved.Add(new Override(quote, percentProp, percentProp.GetValue(quote)));
+            percentProp.SetValue(quote, Convert.ChangeType(percentage, percentProp.PropertyType));
         }
     }
 
@@ -389,8 +411,11 @@ public static class SignalGridExpander
     /// <summary>Revert overrides to their saved values.</summary>
     public static void Revert(List<Override> overrides)
     {
-        foreach (var ov in overrides)
-            ov.Property.SetValue(ov.Target, ov.SavedValue);
+        // Last saved first: when one property is overridden twice (EntryAmount zeroes the entry
+        // percentage, EntryPercentage then sets it), the second save holds the value of the first
+        // override, and only undoing them in reverse order ends on the original.
+        for (int i = overrides.Count - 1; i >= 0; i--)
+            overrides[i].Property.SetValue(overrides[i].Target, overrides[i].SavedValue);
     }
 
 

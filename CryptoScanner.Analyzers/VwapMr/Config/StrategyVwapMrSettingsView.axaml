@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="320"
+             xmlns:vm="using:CryptoScanner.Analyzers.VwapMr.Config"
+             x:DataType="vm:StrategyVwapMrSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.VwapMr.Config.StrategyVwapMrSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- The bands: the day VWAP (from 00:00 UTC) plus and minus a stdev of the close. -->
+            <TextBlock Text="Bands" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The number of closes the standard deviation of the bands is taken over. The VWAP itself always runs from 00:00 UTC.">
+                <TextBlock Grid.Column="0" Text="Stdev length (closes):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding StdevLength, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The bands lie this many standard deviations above and below the day VWAP.">
+                <TextBlock Grid.Column="0" Text="Multiplier (stdev):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding Mult, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <TextBlock Text="Entry" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <CheckBox IsChecked="{Binding RequireReversalCandle, Mode=TwoWay}"
+                      Content="Require a reversal candle" FontSize="12"
+                      ToolTip.Tip="A long also wants a green candle (close above open), a short a red one. Off fires on the band touch alone."/>
+
+            <Separator Margin="0,4"/>
+
+            <!-- The exit the idea comes with. The take profit of the trading settings keeps working next to it. -->
+            <TextBlock Text="Exit" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Stop loss as a percentage from the entry. Zero leaves the position to the stop loss of the trading settings.">
+                <TextBlock Grid.Column="0" Text="Stop loss %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding StopLossPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <CheckBox IsChecked="{Binding ExitAtVwap, Mode=TwoWay}"
+                      Content="Exit at the VWAP" FontSize="12"
+                      ToolTip.Tip="Leave when a candle closes at or beyond the day VWAP. The take profit of the trading settings keeps working next to it; set that wide to measure the VWAP exit alone."/>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

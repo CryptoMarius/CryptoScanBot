@@ -470,13 +470,16 @@ public class AltradyWebhook
             // DCA body (multiple)
             // When the strategy provides a signal SL, skip DCA levels that fall beyond it — those
             // would never fill because the SL triggers first.
+            // The ladder the strategy handed over with the signal (DCAs on its own price levels),
+            // otherwise the global one.
+            List<CryptoDcaEntry> dcaList = Trader.TradeTools.EffectiveDcaList(position);
             decimal stopLossPercentage = 0;
-            if (GlobalData.Settings.Trading.DcaList.Count > 0)
+            if (dcaList.Count > 0)
             {
                 dynamic dca_orders = new JArray();
                 request.dca_orders = dca_orders;
 
-                foreach (var dcaItem in GlobalData.Settings.Trading.DcaList)
+                foreach (var dcaItem in dcaList)
                 {
                     if (position.SlPercentage.HasValue && dcaItem.Percentage >= position.SlPercentage.Value)
                         continue;
@@ -486,7 +489,14 @@ public class AltradyWebhook
 
                     // dcaItem.Factor is already a percentage (100 = 1x, 200 = 2x, ...)
                     dca.quantity_percentage = dcaItem.Factor;
-                    dca.price_percentage = dcaItem.Percentage;
+                    // A ladder of the strategy's own lies on its price levels (mac: the cloud lines) and
+                    // goes as a fixed price: Altrady measures price_percentage from the AVERAGE entry,
+                    // which would move the level off the line after a fill or an earlier DCA.
+                    if (position.DcaList != null && position.SignalPrice > 0)
+                        dca.price = Trader.PricePlacement.Adverse(position.Side, position.SignalPrice, dcaItem.Percentage)
+                            .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+                    else
+                        dca.price_percentage = dcaItem.Percentage;
 
                     if (dcaItem.Percentage > stopLossPercentage)
                         stopLossPercentage = dcaItem.Percentage;

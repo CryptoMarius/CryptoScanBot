@@ -586,6 +586,18 @@ public class EmulatorQueueEntry
     public decimal? EntryAmount { get; set; }
 
     /// <summary>
+    /// The stake of one entry as a percentage of the whole account (cash plus open positions at the
+    /// current price), for this run only, on every quote coin. Null or omitted leaves the percentage
+    /// from the settings file alone. Applied after <see cref="EntryAmount"/>, which then acts as the
+    /// floor: an entry is never smaller than the amount (TradeTools.GetEntryAmount).
+    /// <para>
+    /// Added 20-10-2026 to measure a stake that grows with the account against a fixed one. Only
+    /// works with asset management on; without it the amount is the entry.
+    /// </para>
+    /// </summary>
+    public decimal? EntryPercentage { get; set; }
+
+    /// <summary>
     /// Trading/risk config (SL, TP, DCA). Takes precedence over the entry-level
     /// StopLossPercentage/TpList/DcaList properties.
     /// </summary>

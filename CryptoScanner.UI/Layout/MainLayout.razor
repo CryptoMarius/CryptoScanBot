@@ -16,6 +16,7 @@
 @using CryptoScanner.UI.Components
 @inject SymbolService SymbolService
 @inject SignalService SignalService
+@inject LiveDataService LiveDataService
 @inject GridCommandService GridCommandService
 @inject ApplicationStateService StateService
 @inject DashboardService DashboardService
@@ -610,13 +611,14 @@
     }
 
     /// <summary>
-    /// The filter box drives both the symbol panel and the signal grid, the same way Avalonia
-    /// wires MainWindowViewModel.FilterTextChanged to both grids.
+    /// The filter box drives the symbol panel, the signal grid and the live data grid, the same way
+    /// Avalonia wires MainWindowViewModel.FilterTextChanged to those grids.
     /// </summary>
     private void ApplyFilter()
     {
         SymbolService.SetFilter(_symbolFilter);
         SignalService.SetFilter(_symbolFilter);
+        LiveDataService.SetFilter(_symbolFilter);
     }
 
     private void OnSymbolSort(SymbolColumnEnum column)

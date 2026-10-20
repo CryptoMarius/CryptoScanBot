@@ -39,6 +39,9 @@
                             <MenuItem Header="Fetch candles"
                                       Command="{Binding FetchCandlesCommand}"
                                       IsEnabled="{Binding !IsRunning}"/>
+                            <MenuItem Header="Update candles to now"
+                                      Command="{Binding UpdateCandlesCommand}"
+                                      IsEnabled="{Binding !IsRunning}"/>
                             <Separator/>
                             <MenuItem Header="Run parameters..."
                                       Command="{Binding EditRunConfigCommand}"
@@ -94,6 +97,10 @@
                                 Command="{Binding FetchCandlesCommand}"
                                 IsEnabled="{Binding !IsRunning}"
                                 ToolTip.Tip="Pulls candles for every symbol in CryptoScanBot-Emulator.json and persists them. May take a while; only needs doing once per symbol/range."/>
+                        <Button Content="Update candles"
+                                Command="{Binding UpdateCandlesCommand}"
+                                IsEnabled="{Binding !IsRunning}"
+                                ToolTip.Tip="Same as Fetch candles, but up to the current minute instead of the run's end date: adds every candle since the last fetch. Run it at least every three days on HyperLiquid, which only serves its newest 5000 candles."/>
                         <Border Width="1" Background="#606060" Margin="4,2"/>
                         <Button Content="Configure scanner..."
                                 Command="{Binding ConfigureScannerCommand}"

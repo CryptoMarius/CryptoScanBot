@@ -20,6 +20,7 @@ public class EntryConditionsData
     public decimal StochMinExtremeZScore { get; set; }
 
     public bool CheckIncreasingMacd { get; set; }
+    public int IncreasingMacdCandles { get; set; }
     public bool CheckFurtherPriceMove { get; set; }
     public bool CheckTrendPrimaryDirection { get; set; }
     public int TrendPrimaryDirectionCount { get; set; }
@@ -47,6 +48,7 @@ public class EntryConditionsData
         StochMinExtremeZScore = e.StochMinExtremeZScore;
 
         CheckIncreasingMacd = e.CheckIncreasingMacd;
+        IncreasingMacdCandles = e.IncreasingMacdCandles;
         CheckFurtherPriceMove = e.CheckFurtherPriceMove;
         CheckTrendPrimaryDirection = e.CheckTrendPrimaryDirection;
         TrendPrimaryDirectionCount = e.TrendPrimaryDirectionCount;
@@ -76,6 +78,7 @@ public class EntryConditionsData
         e.StochMinExtremeZScore = StochMinExtremeZScore;
 
         e.CheckIncreasingMacd = CheckIncreasingMacd;
+        e.IncreasingMacdCandles = Math.Max(0, IncreasingMacdCandles);
         e.CheckFurtherPriceMove = CheckFurtherPriceMove;
         e.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;
         e.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;

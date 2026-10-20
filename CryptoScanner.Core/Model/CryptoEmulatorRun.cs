@@ -144,6 +144,12 @@ public class CryptoEmulatorRun
     public decimal ProfitLong { get; set; }
     public decimal ProfitShort { get; set; }
 
+    // What the positions still open at the end of the run are worth per side, valued at the price of
+    // the last snapshot day (partial take profits of those positions included). Added to ProfitLong /
+    // ProfitShort it gives the total PnL per side. Null for runs written before the columns existed.
+    public decimal? UnrealizedPnlLong { get; set; }
+    public decimal? UnrealizedPnlShort { get; set; }
+
     // Mean result of a winning and of a losing closed position. Together with PositionsOpen they
     // give the best and worst case for the still-open positions, which is how a run with many of
     // them is read.

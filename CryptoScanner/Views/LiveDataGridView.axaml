@@ -11,7 +11,7 @@
 
 
 	<DataGrid x:Name="LiveDataDataGrid"
-			  ItemsSource="{Binding LiveDatas}"
+			  ItemsSource="{Binding LiveDatasView}"
 			  IsReadOnly="True"
 			  AutoGenerateColumns="False"
 			  SelectionMode="Extended"

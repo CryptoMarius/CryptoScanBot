@@ -105,6 +105,14 @@ public class SignalCreateBase
     /// </summary>
     public virtual decimal? OverrideProfitPercentage => null;
 
+    /// <summary>
+    /// Optional per-signal DCA ladder, near to far, each level a positive percentage from the entry
+    /// with its factor (100 = the entry amount again). When non-null the trader places these levels
+    /// instead of Settings.Trading.DcaList. Strategies that put their DCAs on their own price levels
+    /// (lines, bands) populate this; the percentages are measured from the entry like the SL.
+    /// </summary>
+    public virtual List<CryptoDcaEntry>? OverrideDcaList => null;
+
     public virtual int MacdRecoveryBarCount => 1;
 
     /// <summary>
@@ -462,7 +470,7 @@ public class SignalCreateBase
 
             if (settings.CheckIncreasingMacd)
             {
-                int barCount = MacdRecoveryBarCount;
+                int barCount = settings.IncreasingMacdCandles > 0 ? settings.IncreasingMacdCandles : MacdRecoveryBarCount;
 
                 switch (SignalSide)
                 {

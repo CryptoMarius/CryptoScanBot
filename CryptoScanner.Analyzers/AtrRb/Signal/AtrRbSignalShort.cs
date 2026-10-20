@@ -43,6 +43,16 @@ public class AtrRbSignalShort : SignalCreateBase
             return false;
         }
 
+        // The candle limits (Common.BandCandleLimits, the rule of dbr): skip a band break on a
+        // candle far taller or heavier than normal, or keep it with the entry further out.
+        var candleLimit = Common.BandCandleLimits.Check(SymbolInterval, CandleLast.Candle.OpenTime, isLong: false,
+            settings.MaxCandleSizeRatio, settings.MaxCandleVolumeRatio, settings.CandleAverageLength, settings.LargeCandleRetracementPart);
+        if (candleLimit.Blocked)
+        {
+            ExtraText = candleLimit.Reason;
+            return false;
+        }
+
         if (!AtrRbBandsHelper.IsUpperBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double upperBand, exactCandle: true))
         {
             ExtraText = "no upper band break";
@@ -93,6 +103,11 @@ public class AtrRbSignalShort : SignalCreateBase
         // falls back to its default percentage stop-loss.
         if (settings.UseStopLoss)
             _slPercentage = (decimal)pctDeviation;
+
+        // A signal on an oversized candle that was kept instead of dropped enters at the
+        // retracement price, so it only fills when price runs that much further.
+        if (candleLimit.EntryPrice is decimal retracementPrice)
+            _entryPrice = retracementPrice;
 
         ExtraText = $"hit upper band, stop distance {pctDeviation:N2}%";
         return true;

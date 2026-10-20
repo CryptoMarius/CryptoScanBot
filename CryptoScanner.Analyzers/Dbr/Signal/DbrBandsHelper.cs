@@ -239,75 +239,13 @@ public static class DbrBandsHelper
     /// </summary>
     public static DbrCandleLimit CheckCandleLimits(CryptoSymbolInterval symbolInterval, CandleTime openTime, bool isLong)
     {
+        // The rule itself is shared with vbs and atrrb since 17-10-2026 (Common.BandCandleLimits)
         var settings = DbrPlugin.Settings;
-        bool checkSize = settings.MaxCandleSizeRatio > 0;
-        bool checkVolume = settings.MaxCandleVolumeRatio > 0;
-        if (!checkSize && !checkVolume)
+        Common.BandCandleLimits.Verdict verdict = Common.BandCandleLimits.Check(symbolInterval, openTime, isLong,
+            settings.MaxCandleSizeRatio, settings.MaxCandleVolumeRatio, settings.CandleAverageLength, settings.LargeCandleRetracementPart);
+        if (!verdict.Blocked && verdict.EntryPrice == null)
             return DbrCandleLimit.Allowed;
-
-        int window = settings.CandleAverageLength;
-        if (window <= 0)
-            return DbrCandleLimit.Allowed;
-
-        // Thread-safe ascending snapshot; one more than the window, for the breaking candle itself.
-        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(window + 1, symbolInterval.Interval.Duration);
-        int idx = candles.FindIndex(c => c.OpenTime == openTime);
-        if (idx < 0)
-            idx = candles.Count - 1;
-        if (idx < window)
-            return DbrCandleLimit.Allowed;
-
-        CryptoCandle candle = candles[idx];
-
-        if (checkSize)
-        {
-            double sizeSum = 0;
-            for (int i = idx - window; i < idx; i++)
-                sizeSum += CandleSizePercentage(candles[i]);
-            double average = sizeSum / window;
-            if (average > 0)
-            {
-                double ratio = CandleSizePercentage(candle) / average;
-                if (ratio > settings.MaxCandleSizeRatio)
-                {
-                    if (settings.LargeCandleRetracementPart > 0)
-                    {
-                        // A part of the candle's own height beyond the close, in the direction the
-                        // candle was already going: further down for a long, further up for a short.
-                        decimal height = candle.High - candle.Low;
-                        decimal offset = height * (decimal)settings.LargeCandleRetracementPart;
-                        decimal price = isLong ? candle.Close - offset : candle.Close + offset;
-                        if (price > 0)
-                            return new DbrCandleLimit(false, "", price);
-                    }
-                    return new DbrCandleLimit(true, $"candle {ratio:N1}x the average size (max {settings.MaxCandleSizeRatio:N1})", null);
-                }
-            }
-        }
-
-        if (checkVolume)
-        {
-            double volumeSum = 0;
-            for (int i = idx - window; i < idx; i++)
-                volumeSum += (double)candles[i].Volume;
-            double average = volumeSum / window;
-            if (average > 0)
-            {
-                double ratio = (double)candle.Volume / average;
-                if (ratio > settings.MaxCandleVolumeRatio)
-                    return new DbrCandleLimit(true, $"candle {ratio:N1}x the average volume (max {settings.MaxCandleVolumeRatio:N1})", null);
-            }
-        }
-
-        return DbrCandleLimit.Allowed;
-    }
-
-    /// <summary>High minus low as a percentage of the close, 0 when the close is missing.</summary>
-    private static double CandleSizePercentage(CryptoCandle candle)
-    {
-        if (candle.Close == 0)
-            return 0;
-        return (double)(100m * (candle.High - candle.Low) / candle.Close);
+        return new DbrCandleLimit(verdict.Blocked, verdict.Reason, verdict.EntryPrice);
     }
 
     /// <summary>

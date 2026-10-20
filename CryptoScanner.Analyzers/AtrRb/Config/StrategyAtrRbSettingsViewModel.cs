@@ -34,6 +34,18 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _bandBreakConfirmationCount = 0;
 
+    [ObservableProperty]
+    private double _maxCandleSizeRatio = 0.0;
+
+    [ObservableProperty]
+    private double _maxCandleVolumeRatio = 0.0;
+
+    [ObservableProperty]
+    private int _candleAverageLength = 20;
+
+    [ObservableProperty]
+    private double _largeCandleRetracementPart = 0.0;
+
     public void LoadConfig(AtrRbSettings settings)
     {
         Length = settings.Length;
@@ -46,6 +58,10 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         RequireRsiOsOb = settings.RequireRsiOsOb;
         RequireStochOsOb = settings.RequireStochOsOb;
         BandBreakConfirmationCount = settings.BandBreakConfirmationCount;
+        MaxCandleSizeRatio = settings.MaxCandleSizeRatio;
+        MaxCandleVolumeRatio = settings.MaxCandleVolumeRatio;
+        CandleAverageLength = settings.CandleAverageLength;
+        LargeCandleRetracementPart = settings.LargeCandleRetracementPart;
     }
 
     public void SaveConfig(AtrRbSettings settings)
@@ -60,5 +76,9 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         settings.RequireRsiOsOb = RequireRsiOsOb;
         settings.RequireStochOsOb = RequireStochOsOb;
         settings.BandBreakConfirmationCount = BandBreakConfirmationCount;
+        settings.MaxCandleSizeRatio = MaxCandleSizeRatio;
+        settings.MaxCandleVolumeRatio = MaxCandleVolumeRatio;
+        settings.CandleAverageLength = CandleAverageLength;
+        settings.LargeCandleRetracementPart = LargeCandleRetracementPart;
     }
 }

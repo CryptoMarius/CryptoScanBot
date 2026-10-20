@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.Messaging;
+﻿using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -25,6 +25,10 @@ public class LiveDataService : IDisposable
     private readonly object _lock = new();
     private readonly ApplicationStateService _stateService;
     private List<LiveDataViewModel> _liveData = [];
+
+    // The symbol filter is only visual: _liveData keeps every row, LiveData hands out the ones
+    // that match, so clearing the filter brings all of them back.
+    private string _filter = string.Empty;
 
     // Pump lives in the service, not in LiveData.razor: GlobalData.LiveDataQueue used to grow
     // unbounded whenever the Live Data tab was closed.
@@ -55,8 +59,20 @@ public class LiveDataService : IDisposable
         get
         {
             lock (_lock)
-                return _liveData.ToList();
+            {
+                if (string.IsNullOrWhiteSpace(_filter))
+                    return _liveData.ToList();
+                return _liveData.Where(vm => vm.Object.Symbol.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
         }
+    }
+
+    public void SetFilter(string filter)
+    {
+        _filter = filter ?? string.Empty;
+        // Rows that are filtered away cannot be clicked, so they leave the selection as well.
+        Selection.Rebind(LiveData);
+        LiveDataChanged?.Invoke();
     }
 
     public void Start()

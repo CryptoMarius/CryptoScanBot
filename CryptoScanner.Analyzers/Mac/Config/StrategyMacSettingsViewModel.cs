@@ -126,6 +126,18 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
     private decimal _stopLevelMarginAtr = 0.5m;
 
     [ObservableProperty]
+    private bool _dcaOnLines = false;
+
+    [ObservableProperty]
+    private decimal _dcaLineMinimumPercentage = 0.5m;
+
+    [ObservableProperty]
+    private bool _stopOnLineBeyondDca = false;
+
+    [ObservableProperty]
+    private decimal _stopLineMarginPercentage = 0.5m;
+
+    [ObservableProperty]
     private decimal _takeProfitStopMultiple = 0m;
 
     /// <summary>The three prices a limit entry can wait at.</summary>
@@ -172,6 +184,10 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
         StopAtrMaximumPercentage = settings.StopAtrMaximumPercentage;
         StopBehindLevel = settings.StopBehindLevel;
         StopLevelMarginAtr = settings.StopLevelMarginAtr;
+        DcaOnLines = settings.DcaOnLines;
+        DcaLineMinimumPercentage = settings.DcaLineMinimumPercentage;
+        StopOnLineBeyondDca = settings.StopOnLineBeyondDca;
+        StopLineMarginPercentage = settings.StopLineMarginPercentage;
         TakeProfitStopMultiple = settings.TakeProfitStopMultiple;
         LimitEntryPrice = settings.LimitEntryPrice;
     }
@@ -213,6 +229,10 @@ public partial class StrategyMacSettingsViewModel : ObservableObject
         settings.StopAtrMaximumPercentage = StopAtrMaximumPercentage;
         settings.StopBehindLevel = StopBehindLevel;
         settings.StopLevelMarginAtr = StopLevelMarginAtr;
+        settings.DcaOnLines = DcaOnLines;
+        settings.DcaLineMinimumPercentage = Math.Max(0m, DcaLineMinimumPercentage);
+        settings.StopOnLineBeyondDca = StopOnLineBeyondDca;
+        settings.StopLineMarginPercentage = Math.Max(0m, StopLineMarginPercentage);
         settings.TakeProfitStopMultiple = TakeProfitStopMultiple;
         settings.LimitEntryPrice = LimitEntryPrice;
     }

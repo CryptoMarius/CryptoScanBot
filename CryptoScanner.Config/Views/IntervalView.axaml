@@ -7,8 +7,12 @@
              x:DataType="vm:IntervalViewModel"
              x:Class="CryptoScanner.Config.Views.IntervalView">
 
+    <UserControl.Styles>
+        <StyleInclude Source="avares://CryptoScanner.Config/Views/ChipStyles.axaml"/>
+    </UserControl.Styles>
+
     <StackPanel Spacing="10">
-        <HeaderedContentControl Classes="groupbox" Header="Intervals" Padding="10">
+        <HeaderedContentControl Classes="groupbox" Header="Intervals">
             <HeaderedContentControl.Tag>
                 <!-- On the frame of the groupbox at the right, opposite the caption. It sits in Tag
                      because the shared groupbox style renders the Header as a plain TextBlock and
@@ -50,52 +54,86 @@
                           IsChecked="{Binding UseCustom, Mode=TwoWay}"
                           IsVisible="{Binding ShowUseCustom}"
                           Content="Use custom intervals for this strategy"
-                          Margin="0,0,0,4"
+                          Margin="4,4,4,0"
                           FontSize="12"
                           ToolTip.Tip="Off: the strategy runs on the intervals that are ticked for its side on the Signals tab."/>
-            <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,*" IsEnabled="{Binding IntervalsEnabled}">
+            <!-- The ticked intervals as chips; a click on the box opens the three columns of
+                 checkboxes in a flyout. -->
+            <Border Classes="chipBox" Width="340" Margin="4"
+                    IsEnabled="{Binding IntervalsEnabled}"
+                    PointerPressed="ChipBox_PointerPressed"
+                    ToolTip.Tip="Click to choose the intervals; the x on a chip removes it.">
+                <FlyoutBase.AttachedFlyout>
+                    <Flyout Placement="BottomEdgeAlignedLeft" FlyoutPresenterClasses="chipFlyout">
+                        <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,*">
         
-                <!-- Column Headers -->
-                <TextBlock Grid.Column="0" Grid.Row="0" Text="Minutes" FontWeight="SemiBold" 
-                           Margin="0,4,24,10" HorizontalAlignment="Left"/>
+                            <!-- Column Headers -->
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Minutes" FontWeight="SemiBold" 
+                                       Margin="0,4,24,10" HorizontalAlignment="Left"/>
         
-                <TextBlock Grid.Column="1" Grid.Row="0" Text="Hours" FontWeight="SemiBold" 
-                           Margin="0,4,24,10" HorizontalAlignment="Left"/>
+                            <TextBlock Grid.Column="1" Grid.Row="0" Text="Hours" FontWeight="SemiBold" 
+                                       Margin="0,4,24,10" HorizontalAlignment="Left"/>
         
-                <TextBlock Grid.Column="2" Grid.Row="0" Text="Days/Weeks" FontWeight="SemiBold" 
-                           Margin="0,4,24,10" HorizontalAlignment="Left"/>
+                            <TextBlock Grid.Column="2" Grid.Row="0" Text="Days/Weeks" FontWeight="SemiBold" 
+                                       Margin="0,4,24,10" HorizontalAlignment="Left"/>
 
-                <!-- Column 1: Minutes -->
-                <ItemsControl Grid.Column="0" Grid.Row="1" ItemsSource="{Binding MinuteIntervals}" Margin="0,0,24,0">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsEnabled, Mode=TwoWay}"
-                                      Content="{Binding Name}" Margin="0,2" FontSize="12"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                            <!-- Column 1: Minutes -->
+                            <ItemsControl Grid.Column="0" Grid.Row="1" ItemsSource="{Binding MinuteIntervals}" Margin="0,0,24,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsEnabled, Mode=TwoWay}"
+                                                  Content="{Binding Name}" Margin="0,2" FontSize="12"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
-                <!-- Column 2: Hours -->
-                <ItemsControl Grid.Column="1" Grid.Row="1" ItemsSource="{Binding HourIntervals}" Margin="0,0,24,0"> 
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsEnabled, Mode=TwoWay}"
-                                      Content="{Binding Name}" Margin="0,2" FontSize="12"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                            <!-- Column 2: Hours -->
+                            <ItemsControl Grid.Column="1" Grid.Row="1" ItemsSource="{Binding HourIntervals}" Margin="0,0,24,0"> 
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsEnabled, Mode=TwoWay}"
+                                                  Content="{Binding Name}" Margin="0,2" FontSize="12"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
-                <!-- Column 3: Days/Weeks -->
-                <ItemsControl Grid.Column="2" Grid.Row="1" ItemsSource="{Binding DayIntervals}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsEnabled, Mode=TwoWay}"
-                                      Content="{Binding Name}" Margin="0,2" FontSize="12"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                            <!-- Column 3: Days/Weeks -->
+                            <ItemsControl Grid.Column="2" Grid.Row="1" ItemsSource="{Binding DayIntervals}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsEnabled, Mode=TwoWay}"
+                                                  Content="{Binding Name}" Margin="0,2" FontSize="12"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
-            </Grid>
+                        </Grid>
+                    </Flyout>
+                </FlyoutBase.AttachedFlyout>
+                <Grid ColumnDefinitions="*,Auto">
+                    <ItemsControl Grid.Column="0" ItemsSource="{Binding ChipIntervals}" IsVisible="{Binding ShowChips}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Classes="chip" IsVisible="{Binding IsChecked}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}"/>
+                                        <Button Classes="chipRemove" Content="&#x2715;" Command="{Binding RemoveCommand}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Grid.Column="0" Classes="chipPlaceholder"
+                               Text="{Binding PlaceholderText}"
+                               IsVisible="{Binding !ShowChips}"/>
+                    <TextBlock Grid.Column="1" Classes="chipArrow" Text="&#x25BC;"/>
+                </Grid>
+            </Border>
             </DockPanel>
         </HeaderedContentControl>
     </StackPanel>

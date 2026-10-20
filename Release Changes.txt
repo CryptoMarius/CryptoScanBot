@@ -1,6 +1,12 @@
 CryptoScanBot release historie:
 
-16-10-2026 2.6.8
+20-10-2026 2.6.8
+- Trader: Het instappercentage wordt nu over de hele accountwaarde genomen, dus de inzet groeit en krimpt mee; het vaste bedrag is de bodem eronder
+- Trader: Een strategie kan zijn eigen bijkoop-niveaus meegeven met het signaal; de trader en Altrady gebruiken die in plaats van de algemene lijst
+- Nieuw programma CandleSync werkt de candle-database van een beurs bij zonder dat de emulator open hoeft
+- Strategie vbs en atrrb: Dezelfde candle-grenzen als dbr - een bandbreuk op een veel te grote of te zware candle wordt overgeslagen
+- Instellingen: De lijsten met intervallen en strategieën staan nu als chips in een vakje in plaats van een kolom vinkjes
+- Signalen: Nieuwe voorwaarde op het aantal candles dat de MACD achter elkaar moet stijgen of dalen
 - Signalen: Vijf nieuwe instapvoorwaarden per zijde - de beweging van BTC over de laatste uren, de dagen van de week, de markt-RSI die net uit oversold of overbought komt, de RSI en EMA200 van de munt zelf op een hoger interval, en een maximum aantal nieuwe posities per uur
 - Papertrading: In het saldo-scherm is een munt te verwijderen en is het saldo terug te zetten naar de standaardlijst
 - Trader: Een prijs die buiten de prijsgrenzen van de munt valt wordt geweigerd in plaats van stil ergens anders geplaatst
@@ -55,6 +61,8 @@ CryptoScanBot release historie:
 - Fix: De voorafgaande beweging van een candle-patroon telt de omkeercandle zelf niet meer mee
 - Instellingen: De velden van de experimentele strategieen staan alleen nog in de debug-build
 - Releases: De workflow haalt de release-notitie uit dit bestand en ondertekent de bestanden
+- Emulator: Haalt desgewenst candles op tot de huidige minuut, voor een beurs die alleen zijn nieuwste candles uitlevert
+- Emulator: Het resultatenrooster toont de nog open posities en het totaalresultaat per zijde
 - Emulator: Het filtervak boven het resultatenrooster snapt ook voorwaarden op getallen, zoals return>5 of dd<20
 - Emulator: Het resultatenvenster toont per positie de markttoestand bij de instap
 - Emulator: Dezelfde run geeft weer dezelfde uitkomst; de beslissingen die om hetzelfde geld en dezelfde slots gaan lopen nu in vaste volgorde

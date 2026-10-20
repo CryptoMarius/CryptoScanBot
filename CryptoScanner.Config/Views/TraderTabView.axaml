@@ -26,10 +26,14 @@
 
         <TabItem Header="Trader long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="4">
+                <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="4">
                     <!-- Col 0: Strategies -->
-                    <settings:StrategyView Grid.Column="0"
-                        DataContext="{Binding TraderStrategyLongViewModel}" />
+                    <!-- Col 0: Strategies with the intervals underneath; both are chip boxes now,
+                         so they fit in one column and leave room for the barometer. -->
+                    <StackPanel Grid.Column="0" Spacing="8" VerticalAlignment="Top">
+                        <settings:StrategyView DataContext="{Binding TraderStrategyLongViewModel}" />
+                        <settings:IntervalView DataContext="{Binding TraderIntervalLongViewModel}" />
+                    </StackPanel>
                     <!-- Col 1: Trend interval filter + Symbol trend filter (primary + secondary) -->
                     <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
                         <settings:TrendIntervalFilterView DataContext="{Binding TraderTrendIntervalFilterLongViewModel}" />
@@ -41,11 +45,9 @@
                         <settings:MarketExitView DataContext="{Binding TraderMarketExitLongViewModel}" />
                     </StackPanel>
                     <!-- Col 2: Intervals -->
-                    <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">
-                        <settings:IntervalView DataContext="{Binding TraderIntervalLongViewModel}" />
-                    </StackPanel>
                     <!-- Col 3: Barometer -->
-                    <StackPanel Grid.Column="3" Spacing="8" VerticalAlignment="Top">
+                    <!-- The intervals moved under the strategies in col 0, so the barometer is col 2 now. -->
+                    <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">
                         <settings:BarometerFilterView DataContext="{Binding TraderBarometerFilterLongViewModel}" />
                     </StackPanel>
                 </Grid>
@@ -54,10 +56,14 @@
 
         <TabItem Header="Trader short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="4">
+                <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="4">
                     <!-- Col 0: Strategies -->
-                    <settings:StrategyView Grid.Column="0"
-                        DataContext="{Binding TraderStrategyShortViewModel}" />
+                    <!-- Col 0: Strategies with the intervals underneath; both are chip boxes now,
+                         so they fit in one column and leave room for the barometer. -->
+                    <StackPanel Grid.Column="0" Spacing="8" VerticalAlignment="Top">
+                        <settings:StrategyView DataContext="{Binding TraderStrategyShortViewModel}" />
+                        <settings:IntervalView DataContext="{Binding TraderIntervalShortViewModel}" />
+                    </StackPanel>
                     <!-- Col 1: Trend interval filter + Symbol trend filter (primary + secondary) -->
                     <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
                         <settings:TrendIntervalFilterView DataContext="{Binding TraderTrendIntervalFilterShortViewModel}" />
@@ -69,11 +75,9 @@
                         <settings:MarketExitView DataContext="{Binding TraderMarketExitShortViewModel}" />
                     </StackPanel>
                     <!-- Col 2: Intervals -->
-                    <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">
-                        <settings:IntervalView DataContext="{Binding TraderIntervalShortViewModel}" />
-                    </StackPanel>
                     <!-- Col 3: Barometer -->
-                    <StackPanel Grid.Column="3" Spacing="8" VerticalAlignment="Top">
+                    <!-- The intervals moved under the strategies in col 0, so the barometer is col 2 now. -->
+                    <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">
                         <settings:BarometerFilterView DataContext="{Binding TraderBarometerFilterShortViewModel}" />
                     </StackPanel>
                 </Grid>

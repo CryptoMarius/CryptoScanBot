@@ -208,7 +208,7 @@ public class AssetTools
         // the same money twice.
         decimal entryQuoteAsset;
         if (useAssetManagement)
-            entryQuoteAsset = TradeTools.GetEntryAmount(symbol, info.QuoteFree);
+            entryQuoteAsset = TradeTools.GetEntryAmount(symbol, activeExchange);
         else
         {
             // With it off there is no balance to take a percentage OF - the balance is allowed to run
@@ -227,6 +227,8 @@ public class AssetTools
         // A percentage of a shrinking balance produces ever smaller entries. The entry AMOUNT is the
         // floor under that: below it an entry is not worth taking any more. Only when both are filled
         // in - a percentage without an amount has no floor, which is how it always worked.
+        // Since 20-10-2026 GetEntryAmount lifts a percentage onto the amount itself, so this only
+        // still fires for a caller that sizes the entry some other way.
         if (symbol.QuoteData!.EntryPercentage > 0 && symbol.QuoteData.EntryAmount > 0 && entryQuoteAsset < symbol.QuoteData.EntryAmount)
             return (false, entryQuoteAsset, info, $"Not enough cash available entryamount {entryQuoteAsset} < minimum entry amount {symbol.QuoteData.EntryAmount}");
 

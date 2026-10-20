@@ -64,9 +64,12 @@
     </div>
 
     <div class="settings-group-body">
-        <div class="field">
+        <div class="field" title="Number of candles in a row the MACD histogram has to rise (fall, for a short). 0 = the strategy's own count (1 for most strategies).">
             <input type="checkbox" class="input-checkbox" @bind="Data.CheckIncreasingMacd" />
             <label>MACD must be increasing/decreasing</label>
+            <span class="field-unit @(Data.CheckIncreasingMacd ? "" : "unit-disabled")">Candles</span>
+            <input type="number" class="input-number" style="width: 60px;" min="0"
+                   @bind="Data.IncreasingMacdCandles" disabled="@(!Data.CheckIncreasingMacd)" />
         </div>
         <div class="field">
             <input type="checkbox" class="input-checkbox" @bind="Data.CheckFurtherPriceMove" />

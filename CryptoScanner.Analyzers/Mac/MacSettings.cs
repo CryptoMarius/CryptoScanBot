@@ -450,6 +450,43 @@ public class MacSettings : SettingsSignalStrategyBase
     public decimal StopLevelMarginAtr { get; set; } = 0.5m;
 
     /// <summary>
+    /// Place the DCA levels on the cloud lines behind the entry instead of at the fixed percentages
+    /// of the trader: for a long the lines under the entry, near to far, for a short the lines above
+    /// it. As many levels as the trader's DCA list has, with its factors; a line closer than
+    /// <see cref="DcaLineMinimumPercentage"/> to the entry or to the level before it is skipped. The
+    /// levels are fixed at the entry (the percentages travel with the signal to the trader and to
+    /// Altrady); they do not follow the lines afterwards. Without a line behind the entry the
+    /// trader's own DCA list applies.
+    /// </summary>
+    [SettingCaption("DCAs on the cloud lines", SeparatorBefore = true, SubHeader = "Levels on the cloud lines",
+        Tooltip = "Puts the DCA orders on the price of the cloud lines behind the entry (under it for a long), near to far, with the factors of the trader's DCA list. Fixed at the entry, also for Altrady. Without a line behind the entry the trader's DCA list applies.")]
+    public bool DcaOnLines { get; set; } = false;
+
+    /// <summary>
+    /// The smallest distance, in percent, of a DCA on a line from the entry and from the DCA before
+    /// it. Two lines close together then give one DCA, not two orders on almost the same price.
+    /// Also the smallest distance of the stop line beyond the last DCA.
+    /// </summary>
+    [SettingCaption("Minimum distance %", Indented = true,
+        Tooltip = "Higher spreads the levels further. A line closer than this percentage to the entry or to the level before it is skipped, for the DCAs as well as for the stop on the line.")]
+    public decimal DcaLineMinimumPercentage { get; set; } = 0.5m;
+
+    /// <summary>
+    /// Place the stop on the first cloud line beyond the deepest DCA (beyond the entry when there are
+    /// no DCAs), plus <see cref="StopLineMarginPercentage"/>. A close through that line means the
+    /// trend the entry bet on has broken. Takes precedence over the stop behind the level and the ATR
+    /// stop; without such a line those apply. The stop bounds above hold for it too.
+    /// </summary>
+    [SettingCaption("Stop on the line beyond the last DCA", Indented = true,
+        Tooltip = "Puts the stop on the first cloud line beyond the deepest DCA (under it for a long), plus the margin below. Fixed at the entry, also for Altrady. Without such a line the stop behind the level, the ATR stop or the trader's stop applies.")]
+    public bool StopOnLineBeyondDca { get; set; } = false;
+
+    /// <summary>How far beyond that line the stop lies, in percent of the entry. 0 puts it on the line.</summary>
+    [SettingCaption("Margin beyond the line %", Indented = true, EnabledWhen = nameof(StopOnLineBeyondDca),
+        Tooltip = "Higher is a wider stop. How many percent beyond the line the stop lies, so a wick that just touches the line does not stop the position out. 0 puts it exactly on the line.")]
+    public decimal StopLineMarginPercentage { get; set; } = 0.5m;
+
+    /// <summary>
     /// The take profit as a multiple of the stop of THIS signal (the ATR stop or the stop behind
     /// the level), 0 = off and the trader's take profit grid applies. Set, it replaces that grid by
     /// one target that closes the whole position. A signal without its own stop keeps the grid.

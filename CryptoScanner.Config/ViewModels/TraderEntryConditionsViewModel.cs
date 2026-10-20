@@ -13,6 +13,10 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     [ObservableProperty]
     private bool _checkIncreasingMacd = false;
 
+    // 0 = the strategy's own count of rising histogram candles
+    [ObservableProperty]
+    private int _increasingMacdCandles = 0;
+
     [ObservableProperty]
     private bool _checkIncreasingStoch = false;
 
@@ -81,6 +85,7 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     {
         CheckIncreasingRsi = ec.CheckIncreasingRsi;
         CheckIncreasingMacd = ec.CheckIncreasingMacd;
+        IncreasingMacdCandles = ec.IncreasingMacdCandles;
         CheckIncreasingStoch = ec.CheckIncreasingStoch;
         CheckFurtherPriceMove = ec.CheckFurtherPriceMove;
         CheckTrendPrimaryDirection = ec.CheckTrendPrimaryDirection;
@@ -112,6 +117,7 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     {
         ec.CheckIncreasingRsi = CheckIncreasingRsi;
         ec.CheckIncreasingMacd = CheckIncreasingMacd;
+        ec.IncreasingMacdCandles = Math.Max(0, IncreasingMacdCandles);
         ec.CheckIncreasingStoch = CheckIncreasingStoch;
         ec.CheckFurtherPriceMove = CheckFurtherPriceMove;
         ec.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;

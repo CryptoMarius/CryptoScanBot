@@ -151,27 +151,35 @@
 
                             @* Three columns of checkboxes, like the Avalonia IntervalView. It is not
                                a label/control pair, so it spans the whole group body. *@
-                            <fieldset class="interval-fieldset" disabled="@(!intervalsEnabled)">
-                            <div class="interval-grid">
-                                @foreach (var column in IntervalColumns)
-                                {
-                                    <div class="interval-column">
-                                        <div class="interval-column-header">@column.Header</div>
-                                        @foreach (var name in column.Names)
-                                        {
-                                            var intervalName = name;
-                                            <label class="interval-item">
-                                                <input type="checkbox" class="input-checkbox"
-                                                       disabled="@(!state.IsIntervalAllowed(intervalName))"
-                                                       checked="@field.ListValue.Contains(intervalName)"
-                                                       @onchange="@(e => field.ToggleListValue(intervalName, e.Value is bool on && on))" />
-                                                <span>@intervalName</span>
-                                            </label>
-                                        }
-                                    </div>
-                                }
+                            @* They sit in the popup of a chip box now, which shows the ticked
+                               intervals as chips and greys out while "Use custom intervals" is off. *@
+                            <div class="interval-fieldset">
+                            <ChipSelect Selected="IntervalColumns.SelectMany(c => c.Names).Where(n => field.ListValue.Contains(n))"
+                                        OnRemove="name => field.ToggleListValue(name, false)"
+                                        Disabled="!intervalsEnabled"
+                                        Placeholder="@(intervalsEnabled ? "None selected" : "Follows the intervals of its side")"
+                                        Width="340px" Title="Click to choose the intervals; the x on a chip removes it.">
+                                <div class="interval-grid">
+                                    @foreach (var column in IntervalColumns)
+                                    {
+                                        <div class="interval-column">
+                                            <div class="interval-column-header">@column.Header</div>
+                                            @foreach (var name in column.Names)
+                                            {
+                                                var intervalName = name;
+                                                <label class="interval-item">
+                                                    <input type="checkbox" class="input-checkbox"
+                                                           disabled="@(!state.IsIntervalAllowed(intervalName))"
+                                                           checked="@field.ListValue.Contains(intervalName)"
+                                                           @onchange="@(e => field.ToggleListValue(intervalName, e.Value is bool on && on))" />
+                                                    <span>@intervalName</span>
+                                                </label>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </ChipSelect>
                             </div>
-                            </fieldset>
                             continue;
                         }
 

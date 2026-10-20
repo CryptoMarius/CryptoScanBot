@@ -108,6 +108,8 @@ public static class PositionTools
         position.SlPercentage = signal.SlPercentage;
         // Forward any per-signal TP override to the position (single TP at this distance).
         position.TpPercentage = signal.TpPercentage;
+        // Forward any per-signal DCA ladder to the position (placed instead of Settings.Trading.DcaList).
+        position.DcaLevels = signal.DcaLevels;
     }
 
     /// <summary>

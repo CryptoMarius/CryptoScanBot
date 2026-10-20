@@ -428,6 +428,12 @@ public static class AssetSnapshotTools
         /// traded. Equal to <see cref="Value"/> until the first correction.
         /// </summary>
         public decimal ValueWithoutAdjustments => Value - Adjustment;
+
+        /// <summary>
+        /// The capital of right now instead of a stored snapshot (see LoadDailyTotalsWithNow); its
+        /// <see cref="Date"/> carries the time as well.
+        /// </summary>
+        public bool IsNow { get; set; }
     }
 
 
@@ -461,6 +467,73 @@ public static class AssetSnapshotTools
                 atFirstDay = running;
             days[i].Adjustment = running - atFirstDay;
         }
+    }
+
+
+    /// <summary>
+    /// What the whole account is worth right now, in <paramref name="coin"/>: every balance plus the
+    /// coins of open positions at the current price, minus what open shorts still owe - the same sum
+    /// as a snapshot and as the last point of the capital line. Null when it cannot be valued
+    /// (no balances, or no price to convert into <paramref name="coin"/>).
+    /// <para>
+    /// The base for an entry percentage (CryptoQuoteData.EntryPercentage): the stake grows and shrinks
+    /// with the account. The quote balance alone was the base until 20-10-2026, and that is the cash
+    /// that is NOT in a position, so it shrank exactly when many positions were open.
+    /// </para>
+    /// </summary>
+    public static decimal? AccountValue(Model.CryptoExchange activeExchange, string coin)
+    {
+        List<CryptoAssetSnapshot> rows = BuildRows(activeExchange, GlobalData.Clock.UtcNow.Date);
+        if (rows.Count == 0)
+            return null;
+
+        decimal total = rows.Sum(r => r.Value);
+        string referenceCoin = rows[0].ReferenceCoin;
+        if (coin == referenceCoin)
+            return total;
+
+        decimal price = ResolvePrice(activeExchange, coin, referenceCoin);
+        if (price <= 0)
+            return null;
+        return total / price;
+    }
+
+
+    /// <summary>
+    /// The capital per day of the live scanner, with the capital of right now as the last point.
+    /// <para>
+    /// A snapshot is taken at the start of a day, so without this the line ends on 00:00 of today
+    /// and lags the "virtual profit" above it by up to a day. On 20-10-2026 it read 100.061,90 while
+    /// the account stood at about 100.092: a position closed after midnight and the open ones had
+    /// recovered. The extra point is calculated exactly like a snapshot but not written away.
+    /// </para>
+    /// </summary>
+    public static List<AssetSnapshotDay> LoadDailyTotalsWithNow(Model.CryptoExchange? activeExchange)
+    {
+        List<AssetSnapshotDay> days = LoadDailyTotals(null);
+
+        // Only for the live series, and only once it has a starting point to be compared with
+        if (activeExchange == null || GlobalData.CurrentEmulatorRunId != null || days.Count == 0)
+            return days;
+
+        try
+        {
+            DateTime now = GlobalData.Clock.UtcNow;
+            List<CryptoAssetSnapshot> rows = BuildRows(activeExchange, now.Date);
+            if (rows.Count == 0)
+                return days;
+
+            days.Add(new AssetSnapshotDay { Date = now, Value = rows.Sum(r => r.Value), IsNow = true });
+            ApplyAdjustments(days, AssetAdjustmentTools.LoadDailyTotals(null));
+        }
+        catch (Exception error)
+        {
+            // The stored days are still worth showing without the live point
+            ScannerLog.Logger.Error(error, "AssetSnapshotTools.LoadDailyTotalsWithNow");
+            days.RemoveAll(d => d.IsNow);
+        }
+
+        return days;
     }
 
 
