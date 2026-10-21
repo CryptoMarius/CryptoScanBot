@@ -222,4 +222,63 @@ public class AltradyCloseSignalTests
         Assert.AreEqual(4, AltradyWebhook.TakeProfitsBelowMinimum(levels, 15m, 0m, "USDT", 1m, 10m, "ABC").Count);
         Assert.AreEqual(0, AltradyWebhook.TakeProfitsBelowMinimum(levels, 100m, 0m, "USDT", 1m, 10m, "ABC").Count);
     }
+
+
+    private static CryptoSymbol BuildSymbol(string baseName, string product) => new()
+    {
+        Base = baseName,
+        Quote = "USDC",
+        Name = $"{baseName}USDC.{product}",
+        Product = product,
+        Exchange = new Exchange { Id = 1, Name = "HyperLiquid Perpetual" },
+        ExchangeName = $"xyz:{baseName}",
+        QuoteData = new CryptoQuoteData { Name = "USDC" },
+    };
+
+
+    [TestMethod]
+    public void ADeployedXyzMarketIsSentWithItsDeployerBehindThePair()
+    {
+        // Altrady's own market list on 20-10-2026: HYPERLIQUIDF_USDC_SPCX_XYZ. Until then every XYZ
+        // entry was refused on our side and ended as a Cancelled paper position.
+        Assert.AreEqual("HYPERLIQUIDF_USDC_SPCX_XYZ", AltradyWebhook.WebhookSymbolOf(BuildSymbol("SPCX", "XYZ"), "HYPERLIQUIDF"));
+    }
+
+
+    [TestMethod]
+    public void ARegularPerpetualKeepsTheSymbolWithoutSuffix()
+    {
+        Assert.AreEqual("HYPERLIQUIDF_USDC_INJ", AltradyWebhook.WebhookSymbolOf(BuildSymbol("INJ", CryptoProduct.Perpetual), "HYPERLIQUIDF"));
+    }
+
+
+    [TestMethod]
+    public void AnUnverifiedProductIsStillRefused()
+    {
+        Assert.IsNull(AltradyWebhook.WebhookSymbolOf(BuildSymbol("AVGO", "PARA"), "HYPERLIQUIDF"));
+        Assert.IsNull(AltradyWebhook.WebhookSymbolOf(BuildSymbol("PLTR", "XPERP"), "OKEXF"));
+    }
+
+
+    [TestMethod]
+    public void TheTraderOnlyDelegatesWhatAltradyCarries()
+    {
+        // A Paragon market is scanned and signals, but the trader leaves it alone when Altrady executes
+        Assert.IsFalse(AltradyWebhook.CanDelegate(BuildSymbol("AVGO", "PARA")));
+        Assert.IsFalse(AltradyWebhook.CanDelegate(BuildSymbol("PLTR", "XPERP")));
+        Assert.IsTrue(AltradyWebhook.CanDelegate(BuildSymbol("SPCX", "XYZ")));
+        Assert.IsTrue(AltradyWebhook.CanDelegate(BuildSymbol("INJ", CryptoProduct.Perpetual)));
+    }
+
+
+    [TestMethod]
+    public void TheCloseOfAnXyzPositionAddressesTheSameMarket()
+    {
+        var position = BuildPosition(CryptoTradeSide.Short, "g-1");
+        position.Symbol = BuildSymbol("AMD", "XYZ");
+
+        var payload = AltradyWebhook.BuildClosePayload(position, "HYPERLIQUIDF", "key", "secret");
+
+        Assert.AreEqual("HYPERLIQUIDF_USDC_AMD_XYZ", (string?)payload["symbol"]);
+    }
 }

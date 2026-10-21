@@ -198,11 +198,44 @@ public class AltradyWebhook
     /// that setting Altrady keeps the initial stop and only our own administration moves.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The stop price the scanner places for this position, computed the way
+    /// PositionMonitor.CalculateSlPrices does: StopLossCalculator from the entry price, the global stop
+    /// beyond the deepest DCA that is sent, on the symbol's tick grid. Null without an entry price or
+    /// without a stop.
+    /// </summary>
+    internal static decimal? InitialStopPrice(CryptoPosition position, decimal deepestDcaPercentage)
+    {
+        if (!position.EntryPrice.HasValue || position.EntryPrice.Value <= 0)
+            return null;
+
+        var input = new Trader.StopLossCalculator.SlInput
+        {
+            Side = position.Side,
+            SlPercentage = position.SlPercentage,
+            EntryPrice = position.EntryPrice.Value,
+            DeepestDcaPercentage = deepestDcaPercentage > 0 ? deepestDcaPercentage : null,
+            GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
+            GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
+        };
+        var result = Trader.StopLossCalculator.Calculate(input);
+        return result.Stop?.ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+    }
+
+
     internal static JObject BuildStopLossBlock(decimal stopPercentage, bool moveSlToBreakEven,
-        CryptoProfitLockMethod method, decimal triggerPercentage, decimal trailPercentage, int takeProfitCount = 1)
+        CryptoProfitLockMethod method, decimal triggerPercentage, decimal trailPercentage, int takeProfitCount = 1,
+        decimal? stopPrice = null)
     {
         dynamic stop_loss = new JObject();
-        stop_loss.stop_percentage = stopPercentage;
+        //stop_loss.stop_percentage = stopPercentage;
+        // The scanner's own stop price when there is one (20-10-2026): Altrady measures
+        // stop_percentage from its own fill, which differs from ours. Either way the stop is fixed
+        // once placed, it does not follow the average entry.
+        if (stopPrice.HasValue && stopPrice.Value > 0)
+            stop_loss.stop_price = stopPrice.Value;
+        else
+            stop_loss.stop_percentage = stopPercentage;
 
         if (!moveSlToBreakEven)
             return stop_loss;
@@ -279,6 +312,42 @@ public class AltradyWebhook
 
 
     /// <summary>
+    /// The markets an outside party deployed that Altrady files with the deployer behind the pair,
+    /// Code_Quote_Base_Product. Only the ones verified against Altrady's own market list: on
+    /// 20-10-2026 HYPERLIQUIDF listed SPCX and AMD as HYPERLIQUIDF_USDC_SPCX_XYZ and
+    /// HYPERLIQUIDF_USDC_AMD_XYZ. Another deployer is added here once it is verified the same way.
+    /// </summary>
+    private static readonly HashSet<string> DeployedProductsWithSuffix = ["XYZ"];
+
+
+    /// <summary>
+    /// The symbol the webhook sends for this market. A spot or regular perpetual market is
+    /// Code_Quote_Base; a verified deployed market gets its deployer behind it. Null for any other
+    /// product (an X-Perp, an unverified deployer): Code_Quote_Base would address a different
+    /// contract at Altrady, so the caller must not send anything.
+    /// </summary>
+    internal static string? WebhookSymbolOf(CryptoSymbol symbol, string exchangeCode)
+    {
+        string product = symbol.Product;
+        if (product == "" || product == CryptoProduct.Spot || product == CryptoProduct.Perpetual)
+            return $"{exchangeCode}_{symbol.Quote}_{symbol.Base}";
+        if (DeployedProductsWithSuffix.Contains(product.ToUpperInvariant()))
+            return $"{exchangeCode}_{symbol.Quote}_{symbol.Base}_{product.ToUpperInvariant()}";
+        return null;
+    }
+
+
+    /// <summary>
+    /// Whether a position on this market can be handed to Altrady at all. False for a product the
+    /// webhook cannot address (an X-Perp, a deployer Altrady does not carry such as Paragon), so the
+    /// trader can leave the signal alone instead of opening a position Altrady is going to refuse.
+    /// The exchange code does not matter for the answer, only the product does.
+    /// </summary>
+    public static bool CanDelegate(CryptoSymbol symbol)
+        => WebhookSymbolOf(symbol, "") != null;
+
+
+    /// <summary>
     /// The body of a close signal, kept apart from the sending so it can be verified in a test.
     /// A price is deliberately absent: with `order_type` market Altrady refuses the combination.
     /// </summary>
@@ -289,7 +358,8 @@ public class AltradyWebhook
         request.api_key = apiKey;
         request.api_secret = apiSecret;
         request.exchange = exchangeCode;
-        request.symbol = $"{exchangeCode}_{position.Symbol.Quote}_{position.Symbol.Base}";
+        request.symbol = WebhookSymbolOf(position.Symbol, exchangeCode)
+            ?? $"{exchangeCode}_{position.Symbol.Quote}_{position.Symbol.Base}";
         if (position.Side == Enums.CryptoTradeSide.Long)
             request.side = "long";
         else
@@ -400,8 +470,10 @@ public class AltradyWebhook
             // regular perpetual market. An X-Perp (dated contract) or a deployed market shares its
             // base+quote with another instrument, so sending Code_Quote_Base would open the WRONG
             // contract at Altrady. Refuse loudly instead of trading the wrong market.
+            // Since 20-10-2026 a verified deployer (XYZ) is sent with its suffix, see WebhookSymbolOf.
             string product = position.Symbol.Product;
-            if (product != "" && product != CryptoProduct.Spot && product != CryptoProduct.Perpetual)
+            string? webhookSymbol = WebhookSymbolOf(position.Symbol, externalUrls.Altrady.Code!);
+            if (webhookSymbol == null)
             {
                 GlobalData.AddErrorToLogTab($"error webhook {position.Symbol.Name} {position.Interval!.Name} " +
                     $"product {product} cannot be expressed in the Altrady webhook symbol format, position not delegated");
@@ -409,7 +481,7 @@ public class AltradyWebhook
             }
 
             request.exchange = externalUrls.Altrady.Code;
-            request.symbol = $"{externalUrls.Altrady.Code}_{position.Symbol.Quote}_{position.Symbol.Base}";
+            request.symbol = webhookSymbol;
             request.adjust_fee = true; // Adjust the order size to ensure there is enough to pay the fee (problems when managing position from our side)
 
             if (GlobalData.Settings.Trading.EntryOrderType == Enums.CryptoOrderType.Market)
@@ -474,6 +546,7 @@ public class AltradyWebhook
             // otherwise the global one.
             List<CryptoDcaEntry> dcaList = Trader.TradeTools.EffectiveDcaList(position);
             decimal stopLossPercentage = 0;
+            decimal dcaAnchor = Trader.TradeTools.DcaGridAnchor(position);
             if (dcaList.Count > 0)
             {
                 dynamic dca_orders = new JArray();
@@ -492,8 +565,16 @@ public class AltradyWebhook
                     // A ladder of the strategy's own lies on its price levels (mac: the cloud lines) and
                     // goes as a fixed price: Altrady measures price_percentage from the AVERAGE entry,
                     // which would move the level off the line after a fill or an earlier DCA.
-                    if (position.DcaList != null && position.SignalPrice > 0)
-                        dca.price = Trader.PricePlacement.Adverse(position.Side, position.SignalPrice, dcaItem.Percentage)
+                    //if (position.DcaList != null && position.SignalPrice > 0)
+                    //    dca.price = Trader.PricePlacement.Adverse(position.Side, position.SignalPrice, dcaItem.Percentage)
+                    //        .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+                    //else
+                    //    dca.price_percentage = dcaItem.Percentage;
+                    // Every DCA goes as a fixed price on the scanner's own grid (20-10-2026). The same
+                    // price_percentage is measured by Altrady from its OWN fill, which differs from ours,
+                    // so a bottom between the two filled the DCA on one side only.
+                    if (dcaAnchor > 0)
+                        dca.price = Trader.PricePlacement.Adverse(position.Side, dcaAnchor, Math.Abs(dcaItem.Percentage))
                             .ClampPrice(position.Side, position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
                     else
                         dca.price_percentage = dcaItem.Percentage;
@@ -529,7 +610,8 @@ public class AltradyWebhook
                     GlobalData.Settings.Trading.MoveSlToBreakEvenMethod,
                     GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage,
                     GlobalData.Settings.Trading.MoveSlToBreakEvenTrailPercentage,
-                    tpList.Count);
+                    tpList.Count,
+                    InitialStopPrice(position, stopLossPercentage));
             }
 
             //// Expiration time in minutes

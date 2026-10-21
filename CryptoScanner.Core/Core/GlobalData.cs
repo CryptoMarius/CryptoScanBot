@@ -210,6 +210,7 @@ public static class GlobalData
         // Wrapped so a logging failure can never break a scan or a run
         try
         {
+            text = ToSingleLogLine(text);
             if (isError)
                 ScannerLog.Logger.Error(text);
             else
@@ -219,6 +220,15 @@ public static class GlobalData
         {
             // ignore - never let logging crash the caller
         }
+    }
+
+    /// <summary>
+    /// Replaces line breaks so text from outside (exchange replies, symbol names) cannot
+    /// forge extra lines in the log file (CodeQL cs/log-forging).
+    /// </summary>
+    public static string ToSingleLogLine(string text)
+    {
+        return text.Replace("\r\n", " | ").Replace("\r", " | ").Replace("\n", " | ");
     }
 
     // Events for refresing data
@@ -479,18 +489,17 @@ public static class GlobalData
     }
 
     /// <summary>
-    /// Products that start switched off when the settings meet them for the first time. Paragon
-    /// ("para") is not carried by Altrady, so every signal on one of its instruments was a signal
-    /// nobody could act on - reported by the testers on 04-09-2026. TradingView does chart them
-    /// (HIP3PARA), so this is a choice for the trading app the scanner is built around, not a
-    /// statement about the market. A default only: the user can switch it on in the settings.
-    /// </summary>
-    private static readonly string[] DefaultDisabledProducts = ["PARA"];
-
-    /// <summary>
     /// The settings of a product, added the first time it comes by - the same way
-    /// <see cref="AddQuoteData"/> handles a quote. A new product is active unless it is one of
-    /// <see cref="DefaultDisabledProducts"/>; what the user set afterwards is never overwritten.
+    /// <see cref="AddQuoteData"/> handles a quote. A new product is active; what the user set
+    /// afterwards is never overwritten.
+    /// <para>
+    /// Until 21-10-2026 a list DefaultDisabledProducts started Paragon ("para") switched off. Paragon
+    /// is not carried by Altrady, so every signal on one of its instruments was a signal nobody could
+    /// act on - reported by the testers on 04-09-2026. TradingView does chart them (HIP3PARA), so
+    /// this was a choice for the trading app the scanner is built around, not a statement about the
+    /// market. Since GitHub issue 15 Paragon is scanned like any other deployer, and the trader leaves
+    /// a market Altrady does not carry alone when Altrady executes (AltradyWebhook.CanDelegate).
+    /// </para>
     /// </summary>
     public static CryptoProductData AddProductData(string product)
     {
@@ -500,7 +509,7 @@ public static class GlobalData
             productData = new CryptoProductData
             {
                 Name = product,
-                Active = !DefaultDisabledProducts.Contains(product),
+                Active = true,
             };
             Settings.Products.Add(product, productData);
         }

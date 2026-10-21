@@ -57,12 +57,14 @@ public class ProductSettingsTests
     /// <summary>
     /// Paragon is not carried by Altrady, so it starts switched off - the default the hard coded
     /// exclusion turned into on 05-09-2026.
+    /// Since 21-10-2026 (GitHub issue 15) it starts switched on: it is scanned and signals, and the
+    /// trader leaves it alone when Altrady executes.
     /// </summary>
     [TestMethod]
-    public void ParagonStartsSwitchedOff()
+    public void ParagonStartsSwitchedOn()
     {
-        Assert.IsFalse(GlobalData.IsProductActive("para"));
-        Assert.IsFalse(GlobalData.Settings.Products["PARA"].Active);
+        Assert.IsTrue(GlobalData.IsProductActive("para"));
+        Assert.IsTrue(GlobalData.Settings.Products["PARA"].Active);
     }
 
 
@@ -78,6 +80,10 @@ public class ProductSettingsTests
 
         Assert.IsFalse(GlobalData.IsProductActive("XYZ"));
         Assert.IsTrue(GlobalData.IsProductActive("PARA"));
+
+        // An existing install that has Paragon switched off keeps it off under the new default
+        GlobalData.AddProductData("PARA").Active = false;
+        Assert.IsFalse(GlobalData.IsProductActive("PARA"));
     }
 
 

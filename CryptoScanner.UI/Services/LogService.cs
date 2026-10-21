@@ -127,7 +127,7 @@ public class LogService : IDisposable
         }
         catch (Exception error)
         {
-            ScannerLog.Logger.Error(error, "adding " + text);
+            ScannerLog.Logger.Error(error, "adding " + GlobalData.ToSingleLogLine(text));
         }
     }
 

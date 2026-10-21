@@ -242,12 +242,24 @@ public static class BinanceArchive
             : piece.Start.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         string result = status switch
         {
-            BinanceArchiveStatus.Found => $"{candles} candles {bytes / (1024.0 * 1024.0):0.0} MB",
+            BinanceArchiveStatus.Found => $"{candles} candles {FormatSize(bytes)}",
             BinanceArchiveStatus.NotFound => "not in archive",
             _ => "failed",
         };
         GlobalData.AddTextToLogTab($"{prefix} archive {date} ({number}/{total}) {result}");
         GlobalData.CandleFetchProgress?.Invoke($"{intervalName} archive {date} ({number}/{total})");
+    }
+
+
+    /// <summary>
+    /// The size of a downloaded file. A daily file of 1m candles is some tens of KB, which as MB
+    /// rounded to "0.0 MB" and read as if nothing came in; below a MB it is shown in KB.
+    /// </summary>
+    private static string FormatSize(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+            return (bytes / (1024.0 * 1024.0)).ToString("0.0", CultureInfo.InvariantCulture) + " MB";
+        return (bytes / 1024.0).ToString("0", CultureInfo.InvariantCulture) + " KB";
     }
 
 

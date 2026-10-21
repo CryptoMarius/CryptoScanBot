@@ -66,6 +66,35 @@ public class TradeTools
     public static List<CryptoDcaEntry> EffectiveDcaList(CryptoPosition position)
         => position.DcaList ?? GlobalData.Settings.Trading.DcaList;
 
+    /// <summary>
+    /// The price the fixed DCA grid is measured from. A ladder of the strategy's own is measured from
+    /// the signal price (mac: the cloud lines). The global ladder is measured from
+    /// position.TpGridBreakEvenPrice, the entry plus its fee and the predicted exit fee. Before the
+    /// entry has filled that value does not exist yet, so it is predicted from the entry price with
+    /// the same sum CalculateProfitAndBreakEvenPrice makes of it: price x (1 +/- 2 x fee).
+    /// <para>
+    /// The Altrady webhook goes out before the paper fill and sends the DCA's as fixed prices from
+    /// this anchor, so Altrady places them on the prices the scanner places them on. Sending
+    /// percentages let Altrady measure them from its own fill, and on 18-10-2026 INJUSDT bottomed
+    /// at 7.791: the scanner's DCA at 7.819 filled, Altrady's at 7.784 did not.
+    /// </para>
+    /// Zero when there is no price to measure from.
+    /// </summary>
+    public static decimal DcaGridAnchor(CryptoPosition position)
+    {
+        if (position.DcaList != null && position.SignalPrice > 0)
+            return position.SignalPrice;
+        if (position.TpGridBreakEvenPrice > 0)
+            return position.TpGridBreakEvenPrice;
+        if (!position.EntryPrice.HasValue || position.EntryPrice.Value <= 0)
+            return 0m;
+
+        decimal fees = 2m * position.Exchange.FeeRate / 100m;
+        return position.Side == CryptoTradeSide.Long
+            ? position.EntryPrice.Value * (1m + fees)
+            : position.EntryPrice.Value * (1m - fees);
+    }
+
     public static void CalculateProfitAndBreakEvenPrice(CryptoPosition position)
     {
         // We do not return early here: the step statuses already in memory (from the last DB sync) are

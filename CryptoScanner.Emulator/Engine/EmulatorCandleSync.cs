@@ -93,8 +93,13 @@ public static class EmulatorCandleSync
     /// tail goes to the exchange. Run that regularly on an exchange that only serves its newest
     /// candles: HyperLiquid hands out the newest 5000 per interval, 3.5 days of 1m.
     /// </para>
+    /// <para>
+    /// <paramref name="progress"/> receives the percentage done (0..100) after every interval of
+    /// every symbol; the emulator shows it in its progress bar, the console passes nothing.
+    /// </para>
     /// </summary>
-    public static async Task<CandleFetchResult> FetchCandlesAsync(DateTime? until, Action<string> status, CancellationToken cancellationToken)
+    public static async Task<CandleFetchResult> FetchCandlesAsync(DateTime? until, Action<string> status, CancellationToken cancellationToken,
+        Action<int>? progress = null)
     {
         if (GlobalData.ActiveExchange == null)
             return new CandleFetchResult(0, 0, false, "No active exchange — restart and pick one in the Setup dialog.");
@@ -121,7 +126,7 @@ public static class EmulatorCandleSync
             return new CandleFetchResult(0, 0, false, "Run config has no symbols — edit CryptoScanBot-Emulator.json first.");
 
         // The end of the window: the run config's ToDate, or the moment of an update
-        return await FetchCandlesForSymbolsAsync(config.Symbols, config.FromDate, until ?? config.ToDate, until.HasValue, status, cancellationToken);
+        return await FetchCandlesForSymbolsAsync(config.Symbols, config.FromDate, until ?? config.ToDate, until.HasValue, status, cancellationToken, progress);
     }
 
 
@@ -131,7 +136,8 @@ public static class EmulatorCandleSync
     /// it was given; <see cref="FetchCandlesAsync"/> with the run config.
     /// </summary>
     public static async Task<CandleFetchResult> FetchCandlesForSymbolsAsync(IReadOnlyList<string> symbolNames,
-        DateTime fromDate, DateTime fetchUntil, bool isUpdate, Action<string> status, CancellationToken cancellationToken)
+        DateTime fromDate, DateTime fetchUntil, bool isUpdate, Action<string> status, CancellationToken cancellationToken,
+        Action<int>? progress = null)
     {
         if (GlobalData.ActiveExchange == null)
             return new CandleFetchResult(0, 0, false, "No active exchange — restart and pick one in the Setup dialog.");
@@ -147,6 +153,19 @@ public static class EmulatorCandleSync
         bool cancelled = false;
 
         List<CryptoInterval> intervals = GlobalData.IntervalList;
+
+        // Counted in intervals rather than symbols, so the bar keeps moving during the twenty-odd
+        // seconds a single symbol can take. A skipped symbol counts as done in one go.
+        long stepsTotal = Math.Max(1L, (long)total * intervals.Count);
+        void ReportProgress(int symbolsDone, int intervalsDone)
+        {
+            if (progress == null)
+                return;
+            long stepsDone = (long)symbolsDone * intervals.Count + intervalsDone;
+            progress((int)(stepsDone * 100 / stepsTotal));
+        }
+        ReportProgress(0, 0);
+
         GlobalData.AddTextToLogTab(
             $"Fetch candles: {total} symbol(s), window {fromDate:yyyy-MM-dd HH:mm}..{fetchUntil:yyyy-MM-dd HH:mm} UTC" +
             (isUpdate ? " (update to now)" : "") + ", 1m from exchange + higher derived locally");
@@ -186,6 +205,7 @@ public static class EmulatorCandleSync
                     {
                         status($"Symbol '{symbolName}' not in exchange list — did you Fetch symbols first?");
                         GlobalData.AddTextToLogTab($"Fetch candles: SKIP {symbolName} — not in exchange list");
+                        ReportProgress(symbolIdx, 0);
                         continue;
                     }
 
@@ -227,6 +247,7 @@ public static class EmulatorCandleSync
                     // its ConstructFrom. IntervalList runs ascending, so by the time an interval is
                     // reached its source is complete — including the ones the exchange does not
                     // serve, which are produced here rather than fetched.
+                    int intervalsDone = 0;
                     foreach (CryptoInterval interval in intervals)
                     {
                         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -285,6 +306,11 @@ public static class EmulatorCandleSync
                         {
                             symbol.Data.CandleLock.Release();
                         }
+
+                        // The symbol itself only counts as complete once it is saved below
+                        intervalsDone++;
+                        if (intervalsDone < intervals.Count)
+                            ReportProgress(symbolIdx - 1, intervalsDone);
                     }
 
                     // ── Step 3: persist this symbol to {Exchange}.db and release its memory ──
@@ -302,6 +328,7 @@ public static class EmulatorCandleSync
                     symbol.ClearCandles();
 
                     GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done (saved, memory released)");
+                    ReportProgress(symbolIdx, 0);
                 }
             });
 

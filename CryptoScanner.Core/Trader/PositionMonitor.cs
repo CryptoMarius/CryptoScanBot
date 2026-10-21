@@ -526,6 +526,17 @@ public class PositionMonitor : IDisposable
                             // (inclusief de overhead van controles van de analyser)
                             // Deze code alleen uitvoeren voor de entry (niet een dca bijkoop)
 
+                            // A market Altrady does not carry (Paragon, an X-Perp) is still scanned and
+                            // still signals, but the trader does not open a position on it when Altrady
+                            // executes: the webhook would refuse it and leave a position without a
+                            // counterpart (Altrady) or an error per signal (PaperTradingAndAltrady).
+                            if (ProfitLockCalculator.UsesAltrady(GlobalData.Settings.Trading.TradeVia) && !AltradyWebhook.CanDelegate(Symbol))
+                            {
+                                GlobalData.AddTextToLogTab(text + $" product {Symbol.Product} is not carried by Altrady (removed)");
+                                Symbol.ClearSignals();
+                                return;
+                            }
+
                             // Is de barometer goed genoeg dat we willen traden?
                             if (!TradingRules.CheckBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, signal.Side, LastCandle1m.OpenTime, 60, out reaction))
                             {
@@ -1955,12 +1966,15 @@ public class PositionMonitor : IDisposable
         if (!position.EntryPrice.HasValue || position.TpGridBreakEvenPrice == 0 || position.Invested == 0)
             return prices;
 
-        decimal entryPrice = position.TpGridBreakEvenPrice;
+        //decimal entryPrice = position.TpGridBreakEvenPrice;
         // A ladder of the strategy's own is measured from the signal price instead: those levels lie
         // on the strategy's price levels (mac: the cloud lines) and Altrady gets them as fixed prices,
         // so the two administrations place them on the same price.
-        if (position.DcaList != null && position.SignalPrice > 0)
-            entryPrice = position.SignalPrice;
+        //if (position.DcaList != null && position.SignalPrice > 0)
+        //    entryPrice = position.SignalPrice;
+        // One anchor for the scanner and the Altrady webhook, which sends every DCA as a fixed price
+        // from it (20-10-2026)
+        decimal entryPrice = TradeTools.DcaGridAnchor(position);
         List<CryptoDcaEntry> dcaList = TradeTools.EffectiveDcaList(position);
         foreach (int i in MissingDcaLevelIndexes(position))
         {

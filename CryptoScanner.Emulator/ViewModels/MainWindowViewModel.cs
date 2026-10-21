@@ -245,6 +245,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         IsRunning = true;
+        ProgressValue = 0;
 
         // Same cancellation source the replay run uses, so the Stop button works during a fetch
         // too. Checked at the top of the per-symbol loop: a Stop finishes the symbol in progress
@@ -253,7 +254,9 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             // The work itself is shared with the console program CryptoScanBot.CandleSync
-            CandleFetchResult result = await EmulatorCandleSync.FetchCandlesAsync(until, SetStatus, _cts.Token);
+            // The progress bar is the one the replay run uses; the fetch reports from its worker thread
+            CandleFetchResult result = await EmulatorCandleSync.FetchCandlesAsync(until, SetStatus, _cts.Token,
+                percent => Dispatcher.UIThread.Post(() => ProgressValue = percent));
             if (result.Error != null)
                 Status = result.Error;
         }

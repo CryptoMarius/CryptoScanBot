@@ -324,6 +324,8 @@ public class Symbol() : SymbolBase(), ISymbol
     /// statement about the market, and since 05-09-2026 a choice the user makes per deployer. An
     /// instrument of a switched off deployer that is already in the database is deactivated by the
     /// caller like a delisted one, and its candles go with the next cleanup.
+    /// Since 21-10-2026 (GitHub issue 15) Paragon starts switched on like every other deployer; the
+    /// trader leaves it alone when Altrady executes (AltradyWebhook.CanDelegate).
     /// </summary>
     private async Task<int> AddDeployedMarketsAsync(
         Model.CryptoExchange exchange,

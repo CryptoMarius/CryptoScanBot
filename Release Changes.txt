@@ -1,6 +1,10 @@
 CryptoScanBot release historie:
 
-20-10-2026 2.6.8
+21-10-2026 2.6.8
+- Altrady: Een positie die via de takeprofit sluit krijgt geen sluit-opdracht meer; Altrady heeft zijn eigen takeprofit en verkocht anders tegen de marktprijs van dat moment
+- Altrady: De uitgerolde markten gaan met hun deployer naar de webhook, en een markt die Altrady niet heeft wordt wel gescand maar niet doorgegeven
+- Hyperliquid: Paragon staat voortaan gewoon aan, net als de andere uitgerolde markten
+- Log: Een antwoord van een beurs kan geen losse regels meer in het log maken
 - Trader: Het instappercentage wordt nu over de hele accountwaarde genomen, dus de inzet groeit en krimpt mee; het vaste bedrag is de bodem eronder
 - Trader: Een strategie kan zijn eigen bijkoop-niveaus meegeven met het signaal; de trader en Altrady gebruiken die in plaats van de algemene lijst
 - Nieuw programma CandleSync werkt de candle-database van een beurs bij zonder dat de emulator open hoeft
@@ -61,6 +65,7 @@ CryptoScanBot release historie:
 - Fix: De voorafgaande beweging van een candle-patroon telt de omkeercandle zelf niet meer mee
 - Instellingen: De velden van de experimentele strategieen staan alleen nog in de debug-build
 - Releases: De workflow haalt de release-notitie uit dit bestand en ondertekent de bestanden
+- Emulator: De voortgang van het ophalen van candles loopt per interval, zodat de balk blijft bewegen
 - Emulator: Haalt desgewenst candles op tot de huidige minuut, voor een beurs die alleen zijn nieuwste candles uitlevert
 - Emulator: Het resultatenrooster toont de nog open posities en het totaalresultaat per zijde
 - Emulator: Het filtervak boven het resultatenrooster snapt ook voorwaarden op getallen, zoals return>5 of dd<20

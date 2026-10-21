@@ -207,7 +207,8 @@ public class ThreadCheckFinishedPosition
                 && position.Symbol.Status != 0
                 && !string.IsNullOrEmpty(position.AltradyPositionId)
                 && (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady
-                 || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady))
+                 || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady)
+                && !ClosedOnTakeProfit(position, GlobalData.Clock.UtcNow))
             {
                 await AltradyWebhook.DelegateControlToAltradyAsync(position, command: "close");
             }
@@ -215,6 +216,46 @@ public class ThreadCheckFinishedPosition
             // Send the position to the closed positions ViewModel
             PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, true);
         }
+    }
+
+
+
+    /// <summary>
+    /// Whether the paper position left through its take profit: the last exit that filled was a
+    /// take profit order filled on its own limit price, or on the take profit trail. Altrady then has
+    /// its own take profit and closes by itself, so no close signal goes out. A close at the market
+    /// sold Altrady's position wherever it stood: on 19-10-2026 INJUSDT closed here with +1% after a
+    /// DCA that Altrady never got, and the close sold Altrady's single entry at -1.66%.
+    /// <para>
+    /// Not a take profit: a stop, a position past its maximum duration and an exit the strategy asked
+    /// for. The last two leave through a repriced take profit order too, which is why they are
+    /// checked first.
+    /// </para>
+    /// </summary>
+    internal static bool ClosedOnTakeProfit(CryptoPosition position, DateTime now)
+    {
+        if (PositionMonitor.IsPastMaxDuration(position, now) || position.ExitRequested)
+            return false;
+
+        CryptoOrderSide exitSide = position.GetTakeProfitOrderSide();
+        CryptoPositionStep? lastExit = position.PartList.Values
+            .Where(part => part.Purpose == CryptoPartPurpose.TakeProfit)
+            .SelectMany(part => part.StepList.Values)
+            // A paper fill is stored as PartiallyAndClosed (INJUSDT 19-10-2026), a real one as Filled
+            .Where(step => step.Side == exitSide && step.CloseTime.HasValue
+                && (step.Status == CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.PartiallyAndClosed)
+                && step.QuantityFilled > 0)
+            .OrderBy(step => step.CloseTime)
+            .LastOrDefault();
+        if (lastExit == null)
+            return false;
+
+        // Filled on its own limit price: the target (the same test as PaperTrading.IsStopFill)
+        if (lastExit.AveragePrice == lastExit.Price)
+            return true;
+
+        // Filled on its stop while the take profit trail was armed: the trail, not the stop loss
+        return lastExit.StopPrice.HasValue && position.TakeProfitTrailStopPrice > 0;
     }
 
 

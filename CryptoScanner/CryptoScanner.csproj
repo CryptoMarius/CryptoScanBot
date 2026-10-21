@@ -177,6 +177,11 @@
 	     ============================================================================ -->
 	<PropertyGroup>
 		<BundleEmulator Condition="'$(BundleEmulator)' == ''">true</BundleEmulator>
+		<!-- CryptoScanBot.CandleSync is an own tool for keeping the emulator candle databases up to
+		     date; it is not part of a delivered release. Only a Debug publish carries it along.
+		     Override with -p:BundleCandleSync=true or false. -->
+		<BundleCandleSync Condition="'$(BundleCandleSync)' == '' and '$(Configuration)' == 'Debug'">true</BundleCandleSync>
+		<BundleCandleSync Condition="'$(BundleCandleSync)' == ''">false</BundleCandleSync>
 	</PropertyGroup>
 
 	<Target Name="BundleEmulatorIntoPublish" AfterTargets="Publish" Condition="'$(BundleEmulator)' == 'true' and '$(RuntimeIdentifier)' != ''">
@@ -193,7 +198,13 @@
 		<!-- The console program that keeps the emulator candle databases up to date
 		     (CryptoScanBot.CandleSync) rides along in the same temp folder: it is built on the
 		     emulator, so it shares all of its files and only adds its own CryptoScanBot.CandleSync.*. -->
-		<Exec Command="dotnet publish &quot;$(MSBuildThisFileDirectory)..\CryptoScanner.CandleSync\CryptoScanner.CandleSync.csproj&quot; -c $(Configuration) -r $(RuntimeIdentifier) --self-contained true -p:BundleEmulator=false -o &quot;$(_EmulatorPublishDir)&quot;" />
+		<!-- The temp folder outlives a publish, so a CandleSync of an earlier publish would otherwise
+		     still be copied along below. -->
+		<ItemGroup Condition="'$(BundleCandleSync)' != 'true'">
+			<_StaleCandleSyncFiles Include="$(_EmulatorPublishDir)CryptoScanBot.CandleSync.*" />
+		</ItemGroup>
+		<Delete Condition="'$(BundleCandleSync)' != 'true'" Files="@(_StaleCandleSyncFiles)" />
+		<Exec Condition="'$(BundleCandleSync)' == 'true'" Command="dotnet publish &quot;$(MSBuildThisFileDirectory)..\CryptoScanner.CandleSync\CryptoScanner.CandleSync.csproj&quot; -c $(Configuration) -r $(RuntimeIdentifier) --self-contained true -p:BundleEmulator=false -o &quot;$(_EmulatorPublishDir)&quot;" />
 
 		<!-- Copy the emulator output over the scanner publish folder. Shared files are identical
 		     versions (overwrite is harmless); only the CryptoScanBot.Emulator.* files are really new. -->

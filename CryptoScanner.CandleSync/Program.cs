@@ -180,6 +180,18 @@ internal static class Program
         if (scannerCandleDb != null)
             CopyFromScanner(scannerCandleDb, symbols, fromDate);
 
+        // Every interval from the start date, not from where the previous sync stopped. The fetch
+        // starts at LastCandleSynchronized when there is one, so 1m candles that arrived later in
+        // older history - Altrady's fill, a scanner copy - were never turned into higher intervals.
+        // Without it each interval is read from disk over the whole window and derived again; the
+        // exchange is still only asked for what is missing and was never asked before
+        // (EmulatorHistoryAsked). It costs reading time, which a scheduled sync has.
+        foreach (CryptoSymbol symbol in symbols)
+        {
+            foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+                symbolInterval.LastCandleSynchronized = null;
+        }
+
         CandleFetchResult result = await EmulatorCandleSync.FetchCandlesForSymbolsAsync(
             symbols.Select(s => s.Name).ToList(), fromDate, DateTime.UtcNow, true, Status, cancellationToken);
         string elapsed = watch.Elapsed.ToString(@"hh\:mm\:ss");

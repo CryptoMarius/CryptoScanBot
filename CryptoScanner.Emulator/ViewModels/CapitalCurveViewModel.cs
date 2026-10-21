@@ -146,6 +146,13 @@ public partial class CapitalCurveViewModel : ObservableObject
             TextColor = Const.ChartTextColor,
         });
 
+        // Whole numbers only when the line moves by whole numbers: a run that ends at 2,000.46 has
+        // its gridlines a few cents apart, and with N0 every label read "2,000".
+        decimal lowest = days.Min(day => day.Value);
+        decimal highest = days.Max(day => day.Value);
+        decimal range = highest - lowest;
+        string valueFormat = range >= 100m ? "N0" : range >= 10m ? "N1" : "N2";
+
         model.Axes.Add(new LinearAxis
         {
             Position = AxisPosition.Left,
@@ -155,7 +162,7 @@ public partial class CapitalCurveViewModel : ObservableObject
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
             TextColor = Const.ChartTextColor,
-            StringFormat = "N0",
+            StringFormat = valueFormat,
         });
 
         var series = new LineSeries
