@@ -42,15 +42,6 @@ public partial class TpItemViewModel : ObservableObject
 
 public partial class TraderTakeProfitViewModel : ObservableObject
 {
-    private readonly Dictionary<string, CryptoTakeProfitStrategy> _strategyList = new()
-    {
-        //{ "Direct na het kopen", CryptoTakeProfitStrategy.Immediately },
-        { "Op het opgegeven percentage", CryptoTakeProfitStrategy.FixedPercentage },
-    };
-
-    [ObservableProperty]
-    private CryptoTakeProfitStrategy _takeProfitStrategy = CryptoTakeProfitStrategy.FixedPercentage; // enum (EXACT match)
-
     [ObservableProperty]
     private bool _addDustToTp = true; // bool (EXACT match)
 
@@ -60,11 +51,8 @@ public partial class TraderTakeProfitViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<TpItemViewModel> _tpItems = [];
 
-    public Dictionary<string, CryptoTakeProfitStrategy> StrategyList => _strategyList;
-
     public void LoadConfig(SettingsTrading settings)
     {
-        TakeProfitStrategy = settings.TakeProfitStrategy;
         AddDustToTp = settings.AddDustToTp;
         TakeProfitTrailPercentage = settings.TakeProfitTrailPercentage;
 
@@ -80,7 +68,6 @@ public partial class TraderTakeProfitViewModel : ObservableObject
 
     public void SaveConfig(SettingsTrading settings)
     {
-        settings.TakeProfitStrategy = TakeProfitStrategy;
         settings.AddDustToTp = AddDustToTp;
         settings.TakeProfitTrailPercentage = TakeProfitTrailPercentage;
 

@@ -90,6 +90,7 @@ internal static class Program
         {
             if (text.Contains("FAILED") || text.Contains("ERROR"))
                 WriteLine("    " + text);
+            CountProgress(text);
         };
 
         try
@@ -394,26 +395,82 @@ internal static class Program
     }
 
 
+    // Progress of the fetch, kept from the status texts and the log lines of EmulatorCandleSync. The
+    // console then looks like altrady_candles.py: a bar that moves, and a line per symbol that stays.
+    private static readonly Regex ApiRequest = new(@" fetch from .* received: (\d+)", RegexOptions.Compiled);
+    private static readonly Regex ArchiveFile = new(@" archive \S+ \(\d+/\d+\) (\d+) candles", RegexOptions.Compiled);
+    private static readonly Regex SymbolInParentheses = new(@"\s*\(\d+/\d+\)", RegexOptions.Compiled);
+    private static readonly Regex SymbolDone = new(@"^Fetch candles: (\S+) — done", RegexOptions.Compiled);
+    private static int _current;
+    private static int _total;
+    private static int _requests;
+    private static int _symbolRequests;
+    private static long _symbolCandles;
+    private static Stopwatch? _fetchWatch;
+
+
     /// <summary>
-    /// The status of the fetch, on one line that is rewritten in place, with a bar for the symbols
-    /// done. Redirected output (a log file of the task scheduler) gets plain lines.
+    /// Counts the requests (api calls and archive files) and the candles they brought, and writes the
+    /// line that stays when a symbol is done - in the same form as altrady_candles.py.
+    /// </summary>
+    private static void CountProgress(string text)
+    {
+        Match request = ApiRequest.Match(text);
+        if (!request.Success)
+            request = ArchiveFile.Match(text);
+        if (request.Success)
+        {
+            _requests++;
+            _symbolRequests++;
+            _symbolCandles += long.Parse(request.Groups[1].Value, CultureInfo.InvariantCulture);
+            return;
+        }
+
+        Match done = SymbolDone.Match(text);
+        if (done.Success && _total > 0)
+        {
+            double hours = (_fetchWatch?.Elapsed.TotalHours) ?? 0;
+            WriteLine($"{_current}/{_total} {done.Groups[1].Value}: {_symbolRequests} requests, {_symbolCandles:N0} candles received; " +
+                $"{_requests} requests in total, {100.0 * _current / _total:0.0}% done after {hours:0.0} h");
+            _symbolRequests = 0;
+            _symbolCandles = 0;
+        }
+    }
+
+
+    /// <summary>
+    /// The status of the fetch, on one line that is rewritten in place: a bar over all symbols, the
+    /// percentage, the symbol and what happens to it, the requests so far and the time left - the same
+    /// line altrady_candles.py shows. Redirected output (a log file of the task scheduler) gets plain lines.
     /// </summary>
     private static void Status(string text)
     {
-        string bar = "";
         Match match = SymbolProgress.Match(text);
-        if (match.Success && int.TryParse(match.Groups[1].Value, out int done) && int.TryParse(match.Groups[2].Value, out int total) && total > 0)
+        if (match.Success && int.TryParse(match.Groups[1].Value, out int current) && int.TryParse(match.Groups[2].Value, out int total) && total > 0)
         {
-            int filled = Math.Min(20, 20 * done / total);
-            bar = $"[{new string('#', filled)}{new string('-', 20 - filled)}] ";
+            _current = current;
+            _total = total;
+            if (text.StartsWith("Fetching candles") && _fetchWatch == null)
+                _fetchWatch = Stopwatch.StartNew();
         }
 
-        string line = bar + text;
+        string line = text;
+        if (match.Success && _total > 0)
+        {
+            double fraction = (_current - 1.0) / _total;
+            int filled = Math.Clamp((int)(30 * fraction), 0, 30);
+            string left = "";
+            if (_fetchWatch != null && _current > 1)
+                left = $"  ~{_fetchWatch.Elapsed.TotalHours / (_current - 1) * (_total - _current + 1):0.0} h left";
+            // The symbol's own (i/n) is in the "coin" part already
+            string what = SymbolInParentheses.Replace(text, "", 1).Replace("  ", " ").Trim();
+            line = $"[{new string('#', filled)}{new string('-', 30 - filled)}] {100 * fraction,5:0.0}%  coin {_current}/{_total}  {what}  {_requests} requests{left}";
+        }
         lock (SymbolProgress)
         {
             if (Console.IsOutputRedirected)
             {
-                Console.WriteLine($"{DateTime.Now:HH:mm:ss} {line}");
+                Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {line}");
                 return;
             }
             int width = ConsoleWidth();
@@ -433,7 +490,7 @@ internal static class Program
             if (_lineOpen && !Console.IsOutputRedirected)
                 Console.Write("\r" + new string(' ', ConsoleWidth() - 1) + "\r");
             _lineOpen = false;
-            Console.WriteLine($"{DateTime.Now:HH:mm:ss} {text}");
+            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {text}");
         }
     }
 

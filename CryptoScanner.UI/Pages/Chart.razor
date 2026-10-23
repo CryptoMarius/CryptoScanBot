@@ -1,6 +1,7 @@
 ﻿@page "/chart"
 @using CryptoScanner.Analyzers.Nwe
 @using CryptoScanner.Analyzers.Nwe.Signal
+@using CryptoScanner.Core.Barometer
 @using CryptoScanner.Core.Context
 @using CryptoScanner.Core.Contracts
 @using CryptoScanner.Core.Core
@@ -15,7 +16,10 @@
 @using CryptoScanner.UI.Services
 @using Skender.Stock.Indicators
 @using CryptoScanner.Core.Settings
+@using CryptoScanner.Core.Services
 @inject SymbolService SymbolService
+@inject ApplicationStateService StateService
+@inject DashboardService DashboardService
 @inject PositionService PositionService
 @inject IJSRuntime JS
 @implements IDisposable
@@ -283,6 +287,11 @@
     private bool _showLux;
     private bool _showCandles = true;
     private bool _showFibZigZag;
+    private bool _showBarometer;
+
+    // Figure and interval of the dashboard barometer graph that the line in the chart was last drawn
+    // for. A pick in the dashboard dropdown has to redraw the chart, see OnDashboardChanged.
+    private string _barometerDrawnFor = "";
 
     private TrendType _trendType = TrendType.Primary;
     private TrendType _fibTrendType = TrendType.Primary;
@@ -298,6 +307,7 @@
     private static readonly (string Key, string Label)[] StaticOverlays =
     [
         ("bb", "Bollinger Bands"),
+        (BarometerChartOverlay.OverlayKey, BarometerChartOverlay.OverlayLabel),
         ("dlz", "DLZ Zones"),
         ("dtb", "DTB"),
         ("fvg", "FVG Zones"),
@@ -338,6 +348,7 @@
         WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, (_, _) => OnThemeChanged());
 
         SymbolService.SelectedSymbolChanged += OnSelectedSymbolChanged;
+        DashboardService.DashboardChanged += OnDashboardChanged;
         if (SymbolService.SelectedSymbol != null)
         {
             _currentSymbol = SymbolService.SelectedSymbol;
@@ -381,6 +392,7 @@
     private bool IsOverlayEnabled(string key) => key switch
     {
         "bb" => _showBB,
+        BarometerChartOverlay.OverlayKey => _showBarometer,
         "dlz" => _showDlzZones,
         "dtb" => _showDtb,
         "fvg" => _showFvgZones,
@@ -402,6 +414,7 @@
         switch (key)
         {
             case "bb": _showBB = value; break;
+            case BarometerChartOverlay.OverlayKey: _showBarometer = value; break;
             case "dlz": _showDlzZones = value; break;
             case "dtb": _showDtb = value; break;
             case "fvg": _showFvgZones = value; break;
@@ -579,6 +592,7 @@
         _showStoch = _session.ShowStoch;
         _showLux = _session.ShowLux;
         _showMacd = _session.ShowMacd;
+        _showBarometer = _session.ShowBarometer;
     }
 
     private void SaveSession()
@@ -616,6 +630,7 @@
         _session.ShowStoch = _showStoch;
         _session.ShowLux = _showLux;
         _session.ShowMacd = _showMacd;
+        _session.ShowBarometer = _showBarometer;
 
         foreach (var kv in _pluginOverlayStates)
             _session.PluginOverlayStates[kv.Key] = kv.Value;
@@ -912,6 +927,21 @@
     }
 
 
+    /// <summary>
+    /// The dashboard reports every change it makes, most of which mean nothing to the chart (status,
+    /// prices). Only another barometer figure or interval does, and only while the barometer line is
+    /// on: then the chart is drawn again so the line follows the dashboard dropdown.
+    /// </summary>
+    private void OnDashboardChanged()
+    {
+        if (_disposed || !_showBarometer || BarometerKey() == _barometerDrawnFor)
+            return;
+        InvokeAsync(LoadChartAsync);
+    }
+
+    /// <summary>The dashboard choice the barometer line depends on.</summary>
+    private string BarometerKey() => $"{StateService.BarometerGraphValue}/{StateService.BarometerInterval}";
+
     private void OnSelectedSymbolChanged()
     {
         InvokeAsync(async () =>
@@ -1134,6 +1164,9 @@
             // Open time of the last candle actually drawn, running ones included. The position and
             // signal bounds below end there, not at the last finished candle.
             CandleTime lastDrawnOpen = rawCandles.Count > 0 ? rawCandles[^1].OpenTime : CandleTime.MinValue;
+            // Open times of every candle drawn, the running ones included: the barometer line gets a
+            // point on each of them
+            var drawnOpens = rawCandles.Select(c => c.OpenTime).ToList();
             if (rawCandles.Count > 0)
             {
                 foreach (CryptoCandle candle in CandleTools.BuildRunningCandles(_currentSymbol,
@@ -1141,6 +1174,7 @@
                 {
                     if (candle.OpenTime > lastDrawnOpen)
                         lastDrawnOpen = candle.OpenTime;
+                    drawnOpens.Add(candle.OpenTime);
 
                     candles.Add(new
                     {
@@ -1448,8 +1482,30 @@
             if (_srZones.Count > 0)
                 zones = zones.Concat(_srZones).ToList();
 
+            // The figure of the dashboard barometer graph as a line over the candles, on an axis of its
+            // own. Which figure and interval follow the dashboard, see BarometerChartOverlay.
+            object? barometer = null;
+            if (_showBarometer)
+            {
+                _barometerDrawnFor = BarometerKey();
+                var line = BarometerChartOverlay.Build(_currentSymbol.Quote, StateService.BarometerGraphValue,
+                    StateService.BarometerInterval, drawnOpens, (int)symbolInterval.Interval.Duration);
+                if (line != null && line.Points.Count > 0)
+                {
+                    barometer = new
+                    {
+                        label = line.Label,
+                        low = line.Low,
+                        high = line.High,
+                        reference = line.Reference,
+                        points = line.Points.Select(p => new { time = p.Time.ToUnixSeconds(), value = p.Value }).ToList(),
+                    };
+                }
+            }
+
             var extras = new
             {
+                barometer,
                 zones,
                 markers,
                 priceLines,
@@ -2072,6 +2128,7 @@
         try { SaveSession(); } catch { }
         WeakReferenceMessenger.Default.UnregisterAll(this);
         SymbolService.SelectedSymbolChanged -= OnSelectedSymbolChanged;
+        DashboardService.DashboardChanged -= OnDashboardChanged;
         try
         {
             _ = JS.InvokeVoidAsync("ChartWidget.dispose");

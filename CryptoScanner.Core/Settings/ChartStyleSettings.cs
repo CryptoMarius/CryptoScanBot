@@ -169,6 +169,10 @@ public class ChartStyleSettings
         // as long as the plugin is in the build - which is what went wrong before: atrrb colours stayed
         // behind in the settings of a release build that has no atrrb.
 
+        // The figure of the dashboard barometer graph, over the candles on an axis of its own
+        new("barometer", "Barometer", "barometer",          "Barometer line", new() { Color = "#FFc9a227", LineWidth = 2 }),
+        new("barometer", "Barometer", "barometerReference", "Neutral line",   new() { Color = "#99c9a227", LineStyle = 2 }),
+
         new("zigzag",    "Trend", "zigzag",    "ZigZag",     new() { Color = "#FFffffff" }),
         new("fibZigzag", "Trend", "fibZigzag", "FIB ZigZag", new() { Color = "#FFffeb3b", LineStyle = 2 }),
 

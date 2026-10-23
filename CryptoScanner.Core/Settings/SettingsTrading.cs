@@ -18,44 +18,6 @@ public class PauseTradingRule
     public int CoolDown { get; set; }
 }
 
-public class SettingsTradingBase
-{
-    // Is deze trade richting actief
-    public bool Active { get; set; } = true;
-
-    //***************************
-    // Barometer
-    // Geen nieuwe posities openen als de barometer onder een van deze getallen staat
-    public decimal Barometer15mBotMinimal { get; set; }
-    public decimal Barometer30mBotMinimal { get; set; }
-    public decimal Barometer01hBotMinimal { get; set; }
-    public decimal Barometer04hBotMinimal { get; set; }
-    public decimal Barometer24hBotMinimal { get; set; }
-}
-
-public class SettingsTradingLong : SettingsTradingBase
-{
-    public SettingsTradingLong()
-    {
-        Barometer15mBotMinimal = -0.5m;
-        Barometer30mBotMinimal = -0.5m;
-        Barometer01hBotMinimal = 0.3m;
-        Barometer04hBotMinimal = -1.0m;
-        Barometer24hBotMinimal = -99m;
-    }
-}
-
-public class SettingsTradingShort : SettingsTradingBase
-{
-    public SettingsTradingShort()
-    {
-        Barometer15mBotMinimal = +0.5m;
-        Barometer30mBotMinimal = +0.5m;
-        Barometer01hBotMinimal = -0.3m;
-        Barometer04hBotMinimal = +1.0m;
-        Barometer24hBotMinimal = +99m;
-    }
-}
 
 /// <summary>
 /// One balance a paper account starts with: a coin and the amount of it.
@@ -104,9 +66,6 @@ public class SettingsTrading
     // Is de BOT actief
     public bool Active { get; set; } = false;
 
-    [Computed]
-    public bool ActiveBackup { get; set; } = false;
-
     //***************************
     // Account - Positie gerelateerd
 
@@ -152,8 +111,6 @@ public class SettingsTrading
     /// </summary>
     public bool UseAssetManagement { get; set; } = true;
 
-    // Trade via exchange (instelling enkel omdat we nu keuze hebben)
-    public bool TradeViaExchange { get; set; } = false;
     // Geen nieuwe posities openen (wel bijkopen voor openstaande posities)
     public bool DisableNewPositions { get; set; } = false;
 
@@ -269,13 +226,6 @@ public class SettingsTrading
     // Fractional values are allowed, so sub-day deadlines can be measured too.
     public decimal MaxPositionDurationDays { get; set; } = 0m;
 
-
-    //***************************
-    // Take profit
-    // TakeProfitOrderType sat here until 01-09-2026. Both settings screens loaded and saved it,
-    // but nothing in the trader ever read it: a take profit order is always placed the same way.
-    // Old settings files keep the key until they are next saved - it is skipped on load.
-    public CryptoTakeProfitStrategy TakeProfitStrategy { get; set; } = CryptoTakeProfitStrategy.FixedPercentage;
 
     // Allow previous (small) dust to be added to the TP
     public bool AddDustToTp { get; set; } = true;

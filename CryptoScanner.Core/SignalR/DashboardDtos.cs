@@ -10,22 +10,6 @@ public class BarometerPointDto
 }
 
 /// <summary>
-/// Full barometer graph history returned by GetBarometerGraph().
-/// </summary>
-public class BarometerGraphDto
-{
-    public string Quote { get; set; } = "";
-    public string Interval { get; set; } = "";
-    public List<BarometerPointDto> Points { get; set; } = [];
-
-    /// <summary>True once the scanner has finished loading candles (ApplicationStatus == Running).</summary>
-    public bool Ready { get; set; }
-
-    /// <summary>Live "done / total (symbol)" candle-load progress while starting up; empty once ready.</summary>
-    public string Progress { get; set; } = "";
-}
-
-/// <summary>
 /// Current barometer summary values (1h, 4h, 1d) as shown on the info panel.
 /// </summary>
 public class BarometerValuesDto

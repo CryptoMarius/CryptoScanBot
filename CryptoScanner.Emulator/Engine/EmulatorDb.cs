@@ -810,8 +810,6 @@ public static class EmulatorDb
     }
 
 
-    public static void DeleteRun(int runId) => DeleteRuns([runId]);
-
 
     /// <summary>
     /// Deletes multiple emulator runs (and everything tagged with them — signals, positions and their

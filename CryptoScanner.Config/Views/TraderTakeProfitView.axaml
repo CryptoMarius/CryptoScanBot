@@ -10,19 +10,6 @@
     <HeaderedContentControl Classes="groupbox" Header="Take profit">
         <StackPanel Margin="8" Spacing="12">
 
-            <!-- Strategy -->
-            <Grid ColumnDefinitions="Auto,*,250" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="Strategy:"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0" FontSize="12"/>
-                <ComboBox Grid.Column="2"
-                          ItemsSource="{Binding StrategyList}"
-                          SelectedValue="{Binding TakeProfitStrategy, Mode=TwoWay}"
-                          DisplayMemberBinding="{Binding Key}"
-                          SelectedValueBinding="{Binding Value}"
-                          FontSize="12"/>
-            </Grid>
-
             <!-- Add Dust to TP -->
             <CheckBox IsChecked="{Binding AddDustToTp, Mode=TwoWay}"
                       Content="Add dust to TP"

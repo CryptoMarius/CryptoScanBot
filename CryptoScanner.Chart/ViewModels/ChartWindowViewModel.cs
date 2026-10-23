@@ -1,13 +1,16 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Chart.ViewModels.Chart;
+using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trend;
 using CryptoScanner.Core.Zones;
@@ -118,6 +121,9 @@ public partial class ChartWindowViewModel : ObservableObject
 
         foreach (var overlay in PluginManager.ChartOverlays)
             overlay.RequestRedraw += OnOverlayRequestRedraw;
+
+        // Another figure picked for the dashboard barometer graph redraws the barometer line
+        WeakReferenceMessenger.Default.Register<BarometerGraphChangedMessage>(this, (_, _) => OnBarometerGraphChanged());
 
         // NOTE: do NOT start RefreshCommand here. Starting it in the ctor causes a race
         // with Window.Show()'s ExecuteInitialLayoutPass — the async refresh mutates
@@ -865,6 +871,9 @@ public partial class ChartWindowViewModel : ObservableObject
             priceAxis.StartPosition = 0.0;
             priceAxis.EndPosition = 1.0;
         }
+
+        // The barometer line shares the height of the price panel
+        BarometerOverlay.AlignWithPrice(PlotModel);
     }
 
     /// <summary>
@@ -1085,12 +1094,6 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowNweRepainting))
             Nwe.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, true, group);
 
-        //// Draw NWE × BB crossover markers — recomputed from the windowed candles via NweBbDetector
-        //// (the live strategy's algorithm), so they also show in the emulator where no signals were stored.
-        //group = "nwe.bb";
-        //if (Toggle(model, group, Session.ShowNweBb))
-        //    NweBb.Draw(model, WindowCandleList, Session.MinDate, Session.MaxDate, group);
-
         // Draw Bollinger Bands
         group = "bb";
         if (Toggle(model, group, Session.ShowBollingerBand))
@@ -1176,6 +1179,20 @@ public partial class ChartWindowViewModel : ObservableObject
         group = "candles";
         if (Toggle(model, group, Session.ShowCandles, Session.IntervalName + lastCandleTime.Minutes.ToString()))
             lastCandleTime = Candles.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+
+        // The figure of the dashboard barometer graph over the candles, on an axis of its own on the
+        // left. Redrawn when a candle arrives and when another figure or interval is picked on the
+        // dashboard, see BarometerChartOverlay.
+        group = BarometerChartOverlay.OverlayKey;
+        ApplicationStateService? barometerState = GlobalData.GetService<ApplicationStateService>();
+        if (Toggle(model, group, Session.ShowBarometer,
+            $"{barometerState?.BarometerGraphValue}/{barometerState?.BarometerInterval}/{Session.SymbolQuote}/{Interval.Name}/{lastCandleTime.Minutes}"))
+        {
+            RemoveFromChart(model, group);
+            BarometerOverlay.Draw(model, WindowCandleList, Interval, Session.SymbolQuote, Session.MinDate, Session.MaxDate, group);
+        }
+        else if (!Session.ShowBarometer)
+            BarometerOverlay.RemoveAxis(model);
 
         // Draw pivots
         group = "pivots";
@@ -1520,7 +1537,24 @@ public partial class ChartWindowViewModel : ObservableObject
     {
         foreach (var overlay in PluginManager.ChartOverlays)
             overlay.RequestRedraw -= OnOverlayRequestRedraw;
+        WeakReferenceMessenger.Default.Unregister<BarometerGraphChangedMessage>(this);
         SaveSessionSettings();
+    }
+
+    /// <summary>
+    /// The dashboard barometer graph shows another figure or interval. Only the barometer line depends
+    /// on that: its Toggle key holds the dashboard choice, so the normal redraw of the display options
+    /// replaces just that line and leaves everything else as it is. Skipped while the chart is loading;
+    /// that load draws the line with the new choice anyway.
+    /// </summary>
+    private void OnBarometerGraphChanged()
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (Symbol == null || Interval == null || IsCalculating || !Session.ShowBarometer)
+                return;
+            DisplayOptionsChanged(this, null!);
+        });
     }
 
     // Fired (on a background thread) when an overlay has new data; RequestRefresh marshals

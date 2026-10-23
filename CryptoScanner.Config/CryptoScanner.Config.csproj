@@ -16,14 +16,10 @@
 	</PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="Avalonia" Version="11.3.20" />
-	  <PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
-	  <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
-	  <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
+	  <PackageReference Include="Avalonia" Version="11.3.22" />
+	  <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
 	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-	  <PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.20" />
-	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
-	  <PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.12" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+	  <PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.22" />
 	  <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
   </ItemGroup>
 

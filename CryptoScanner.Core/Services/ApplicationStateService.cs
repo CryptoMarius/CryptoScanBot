@@ -160,54 +160,6 @@ public class ApplicationStateService
     }
 
     /// <summary>
-    /// Clears all saved grid states from memory and disk
-    /// </summary>
-    public void ClearAllStates()
-    {
-        lock (_lock)
-        {
-            _states = new ApplicationState();
-
-            if (File.Exists(_filePath))
-            {
-                File.Delete(_filePath);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Clears the saved state for a specific grid
-    /// </summary>
-    /// <param name="gridName">Name of the grid to clear</param>
-    public void ClearGridState(string gridName)
-    {
-        lock (_lock)
-        {
-            var gridState = GetGridStateProperty(_states, gridName);
-
-            if (gridState != null)
-            {
-                gridState.SortColumn = null;
-                gridState.SortDirection = null;
-                gridState.Columns.Clear();
-
-                FlushToDisk();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Reloads all states from disk, discarding in-memory changes
-    /// </summary>
-    public void ReloadFromDisk()
-    {
-        lock (_lock)
-        {
-            _states = LoadFromFile();
-        }
-    }
-
-    /// <summary>
     /// Writes the current in-memory state to disk
     /// Should be called on application exit or when you want to ensure changes are persisted
     /// </summary>

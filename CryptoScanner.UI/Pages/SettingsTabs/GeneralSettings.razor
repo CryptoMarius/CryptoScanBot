@@ -4,8 +4,7 @@
 
 @* Groups, order and labels copied from the Avalonia ExchangeView / CommonView, which the
    ConfigurationWindow shows under the "Exchange" tab. The fields Avalonia does not show
-   (TradingAppInternExtern, DefaultInterval, HideSelectedRow, HideSymbolsOnTheLeft,
-   SoundTradeNotification) are kept in the code block so the settings keep loading and saving,
+   (TradingAppInternExtern, DefaultInterval, SoundTradeNotification) are kept in the code block so the settings keep loading and saving,
    but are not rendered — the same approach Avalonia itself uses with IsVisible="false". *@
 <div class="settings-wrap">
 
@@ -147,8 +146,6 @@
     private string _theme = ThemeHelper.Dark;
     private int _getCandleInterval;
     private int _hyperLiquidWeightPerMinute;
-    private bool _hideSelectedRow;
-    private bool _hideSymbolsOnTheLeft;
     private bool _soundTradeNotification;
     private int _soundHeartBeatMinutes;
     private bool _signalREnabled;
@@ -172,8 +169,6 @@
         _theme = ThemeHelper.Normalize(g.Theme);
         _getCandleInterval = g.GetCandleInterval;
         _hyperLiquidWeightPerMinute = g.HyperLiquidWeightPerMinute;
-        _hideSelectedRow = g.HideSelectedRow;
-        _hideSymbolsOnTheLeft = g.HideSymbolsOnTheLeft;
         _soundTradeNotification = g.SoundTradeNotification;
         _soundHeartBeatMinutes = g.SoundHeartBeatMinutes;
         _signalREnabled = g.SignalREnabled;
@@ -203,8 +198,6 @@
         g.GetCandleInterval = _getCandleInterval;
         g.HyperLiquidWeightPerMinute = Math.Clamp(_hyperLiquidWeightPerMinute,
             SettingsGeneral.HyperLiquidWeightPerMinuteMinimum, SettingsGeneral.HyperLiquidWeightPerMinuteMaximum);
-        g.HideSelectedRow = _hideSelectedRow;
-        g.HideSymbolsOnTheLeft = _hideSymbolsOnTheLeft;
         g.SoundTradeNotification = _soundTradeNotification;
         g.SoundHeartBeatMinutes = _soundHeartBeatMinutes;
         g.SignalREnabled = _signalREnabled;

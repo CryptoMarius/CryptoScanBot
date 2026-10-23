@@ -127,9 +127,7 @@ public class SettingsGeneral
     public const int HyperLiquidWeightPerMinuteMaximum = 3600;
 
     // Wil not be supported?
-    public bool HideSelectedRow { get; set; } = false;
     public bool ShowInvalidSignals { get; set; } = false;
-    public bool HideSymbolsOnTheLeft { get; set; } = false;
     /// <summary>Lower bound of <see cref="RemoveSignalAfterxCandles"/>.</summary>
     public const int RemoveSignalAfterxCandlesMinimum = 15;
 

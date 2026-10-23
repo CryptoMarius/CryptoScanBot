@@ -159,7 +159,6 @@ public class PaperAssetsTests : TestBase
         DateTime startTime = DateTime.UtcNow.AddHours(-48);
 
         GlobalData.Settings.Trading.GlobalBuyCooldownTime = 10;
-        GlobalData.Settings.Trading.TakeProfitStrategy = CryptoTakeProfitStrategy.FixedPercentage;
         GlobalData.Settings.Trading.TpList = [new CryptoTpEntry { Percentage = 1m, Factor = 100m }];
 
         CryptoPosition position = PositionTools.CreatePosition(symbol, "stobb",

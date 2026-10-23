@@ -790,27 +790,4 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
     }
 
 
-    public void DumpSubscriptionInfo()
-    {
-        GlobalData.AddTextToLogTab("");
-        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} Subscription info {TickerType}");
-
-        // Over a copy, same reason as in NeedsRestart: this is called from outside the lifecycle
-        // lock while the synchronisation can be rearranging the lists.
-        foreach (var bundle in SubscriptionBundleList.ToList())
-        {
-            foreach (var subscription in bundle.SubscriptionList.ToList())
-            {
-                GlobalData.AddTextToLogTab($"{TickerType} subscription {subscription.Name} " +
-                    $"ErrorDuringStartup={subscription.ErrorDuringStartup} " +
-                    $"ConnectionLostCount={subscription.ConnectionLostCount} " +
-                    $"ConnectionIsLost={subscription.ConnectionIsLost} " +
-                    $"TickerCount={subscription.TickerCount} " +
-                    $"TickerCountLast={subscription.TickerCountLast} " +
-                    $"NeedsRestart={subscription.NeedsRestart} " +
-                    $"{subscription.SymbolOverview}");
-            }
-        }
-    }
-
 }

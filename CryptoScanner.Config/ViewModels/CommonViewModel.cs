@@ -27,15 +27,6 @@ public partial class CommonViewModel : ObservableObject
     private List<KeyValuePair<string, string>> __themeList = [];
 
 
-    //public bool ShowInvalidSignals { get; set; } = false;         ?
-    //public bool HideSelectedRow { get; set; } = false;            vervalt
-    //public bool HideSymbolsOnTheLeft { get; set; } = false;       vervalt
-
-    //public string FontNameNew { get; set; } = "Segoe UI";         vervalt
-    //public float FontSizeNew { get; set; } = 9f;                  vervalt
-    //public bool BlackTheming { get; set; } = false;               vervalt
-
-
     public CommonViewModel()
     {
         BuildThemeList();

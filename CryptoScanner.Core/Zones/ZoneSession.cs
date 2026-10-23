@@ -58,6 +58,7 @@ public class ZoneSession
     public bool ShowLux { get; set; } = false; // RSI Multi Length [LuxAlgo], 5m
     public bool ShowMacd { get; set; } = false;
     public bool ShowVolume { get; set; } = false;
+    public bool ShowBarometer { get; set; } = false; // the dashboard barometer graph as a line over the candles
 
     // Plugin overlay toggles (keyed by IChartOverlay.GroupKey)
     public Dictionary<string, bool> PluginOverlayStates { get; set; } = [];

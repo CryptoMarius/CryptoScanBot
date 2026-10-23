@@ -2414,7 +2414,6 @@ public partial class TestForm : Form
         // TP
         GlobalData.Settings.Trading.TpList = [new CryptoTpEntry { Percentage = 0.75m, Factor = 100m }];
         //GlobalData.Settings.Trading.DynamicTpPercentage = 0.75m;
-        GlobalData.Settings.Trading.TakeProfitStrategy = CryptoTakeProfitStrategy.FixedPercentage;
         //GlobalData.Settings.Trading.LockProfits = true;
 
         StringBuilder samenvatting = new();

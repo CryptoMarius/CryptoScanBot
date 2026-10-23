@@ -24,9 +24,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="11.3.20" />
-		<PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
+		<PackageReference Include="Avalonia" Version="11.3.22" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<!-- Direct ref (also transitive via CryptoScanner.Chart) so the OxyPlot PlotView control theme
 		     (avares://OxyPlot.Avalonia/Themes/Default.axaml in App.axaml) resolves at startup. -->

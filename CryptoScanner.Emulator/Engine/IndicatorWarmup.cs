@@ -24,53 +24,6 @@ public static class IndicatorWarmup
     private const int SafetyExtraBars = 10;
 
     /// <summary>
-    /// Delegates to <see cref="SignalPrepare.GetActiveIntervals"/> so the emulator never has
-    /// to keep its own copy of Prepare's strategy / zone / forced-1m logic in sync. Prepare
-    /// itself is the single source of truth for "which intervals does the engine maintain"
-    /// — bootstrap calls SignalPrepare.Prepare(), and from there we just read the result.
-    /// </summary>
-    public static List<CryptoInterval> ResolveActiveIntervals()
-        => SignalPrepare.GetActiveIntervals();
-
-
-    /// <summary>
-    /// The full set of intervals the emulator must MAINTAIN in memory during a replay: the active
-    /// strategy + zone intervals from <see cref="ResolveActiveIntervals"/>, plus the intervals the
-    /// trading-pause rules read (<c>Settings.Trading.PauseTradingRules</c> — by default BTCUSDT on
-    /// 2m and 5m). Without the pause-rule intervals their reference symbol has no candles on those
-    /// timeframes and <c>TradingRules.CalculateTradingRules</c> logs "Missing candles for
-    /// tradingrules?" on every single tick.
-    ///
-    /// These extra intervals are synthesised from 1m by the warmup / TickRunner (never fetched), so
-    /// only 1m needs to be on disk. The pause-rule's reference symbol must of course be one of the
-    /// run symbols, otherwise it has no 1m candles to synthesise from in the first place.
-    /// </summary>
-    public static List<CryptoInterval> ResolveMaintainedIntervals()
-    {
-        var seen = new HashSet<CryptoIntervalPeriod>();
-        var result = new List<CryptoInterval>();
-
-        foreach (var interval in ResolveActiveIntervals())
-        {
-            if (seen.Add(interval.IntervalPeriod))
-                result.Add(interval);
-        }
-
-        foreach (var rule in GlobalData.Settings.Trading.PauseTradingRules)
-        {
-            if (GlobalData.IntervalListPeriod.TryGetValue(rule.Interval, out CryptoInterval? interval)
-                && seen.Add(interval.IntervalPeriod))
-            {
-                result.Add(interval);
-            }
-        }
-
-        result.Sort((a, b) => a.Duration.CompareTo(b.Duration));
-        return result;
-    }
-
-
-    /// <summary>
     /// How many candles of history to keep per interval, both for the warmup and for the pruning
     /// between chunks. The two MUST use the same number: pruning to less than the warmup loaded
     /// silently removes history that the engine assumed was there.
@@ -108,26 +61,6 @@ public static class IndicatorWarmup
     }
 
 
-    /// <summary>
-    /// How much history (in <em>that interval's own units, expressed in minutes</em>) the
-    /// fetch routine should ensure is available before the replay window starts. The fetcher
-    /// pulls candles per interval directly, so we no longer over-fetch 1m candles to cover
-    /// a 1w warmup — the 1w interval pulls 270 weekly bars (about 5 years) in 1w-resolution
-    /// instead of millions of 1m bars.
-    /// <list type="bullet">
-    ///   <item>1m gets a fixed-cap window (24 h) — typical 1m indicators reach back at most
-    ///         a few hundred bars; a day of history is comfortably enough.</item>
-    ///   <item>Every higher interval gets <see cref="MinCandlesPerInterval"/> + safety bars
-    ///         worth of its own duration. SMA200 on 1d → ≈ 270 days; on 1w → ≈ 5 years.</item>
-    /// </list>
-    /// </summary>
-    public static uint ComputeWarmupMinutes(CryptoInterval interval)
-    {
-        if (interval.Duration <= 1)
-            return 24 * 60;  // 24 hours of 1m history
-        return (uint)((MinCandlesPerInterval + SafetyExtraBars) * interval.Duration);
-    }
-
 
     ///// <summary>
     ///// Backward-compatible overload still used by <see cref="PrepareSymbol"/>: the warmup
@@ -145,28 +78,6 @@ public static class IndicatorWarmup
     //    return (uint)((MinCandlesPerInterval + SafetyExtraBars) * maxDuration);
     //}
 
-
-    /// <summary>
-    /// Warms a symbol up for the replay. For EVERY interval (1m and all higher ones) it loads the
-    /// last <see cref="MinCandlesPerInterval"/>+ candles ending just before <paramref name="replayFrom"/>
-    /// straight from the per-exchange candles.db into that interval's own CandleList. Reading is
-    /// almost free (the candles were already stored by "Fetch candles"), and loading each interval at
-    /// its OWN resolution avoids the absurd cost of rebuilding, say, a single 1w bar from ~2 million
-    /// 1m candles. Each interval therefore has real history for SMA200 (≥200 bars) and for the day/
-    /// week bars that rely on it.
-    ///
-    /// Only the 1m interval gets a replay list — the candles fed one minute at a time during the
-    /// replay. The higher intervals are EXTENDED during the replay by
-    /// <see cref="CandleTools.Process1mCandleAsync"/>, which appends each newly-closed higher bar
-    /// onto the DB-loaded history. No higher candle straddling replayFrom is loaded (only bars that
-    /// close at or before replayFrom), so the strategy never sees a future-containing bar.
-    /// </summary>
-    public static CryptoCandleList PrepareSymbol(CryptoSymbol symbol,
-        CandleTime replayFrom, CandleTime replayTo)
-    {
-        WarmupSymbol(symbol, replayFrom);
-        return LoadReplayCandles(symbol, replayFrom, replayTo);
-    }
 
 
     /// <summary>

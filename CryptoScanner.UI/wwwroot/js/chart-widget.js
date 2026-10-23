@@ -800,6 +800,12 @@ window.ChartWidget = {
                     visible: true,
                     scaleMargins: { top: m.top, bottom: m.bottom },
                 },
+                // The barometer line sits on the left scale. Zooming or panning vertically has to move
+                // it along with the candles, or the two drift apart on screen. Visible is left alone:
+                // that scale only shows while the line is on (see _applyBarometer).
+                leftPriceScale: {
+                    scaleMargins: { top: m.top, bottom: m.bottom },
+                },
             });
         }
         catch (e) { }
@@ -1379,6 +1385,76 @@ window.ChartWidget = {
 
         zigzag:         { color: '#ffffff', lineWidth: 1, lineStyle: 0 },
         fibZigzag:      { color: '#ffeb3b', lineWidth: 1, lineStyle: 2 },
+
+        // The dashboard barometer figure, see _applyBarometer
+        barometer:          { color: '#c9a227', lineWidth: 2, lineStyle: 0 },
+        barometerReference: { color: 'rgba(201,162,39,0.6)', lineWidth: 1, lineStyle: 2 },
+    },
+
+    // The figure of the dashboard barometer graph, drawn over the candles. It lives on the LEFT price
+    // scale, which nothing else uses, so the candles keep their own scale on the right and the line
+    // cannot squeeze them. Made anew on every setData, like the other overlays.
+    _barometerSeries: null,
+
+    _applyBarometer: function (barometer, inRange) {
+        var chart = this._charts.main.chart;
+        if (this._barometerSeries) {
+            try { chart.removeSeries(this._barometerSeries); } catch (e) { }
+            this._barometerSeries = null;
+        }
+
+        var points = (barometer && barometer.points) ? barometer.points.filter(function (p) { return inRange(p.time); }) : [];
+        if (points.length === 0) {
+            try { chart.applyOptions({ leftPriceScale: { visible: false } }); } catch (e) { }
+            return;
+        }
+
+        try {
+            var style = this._styleFor('barometer');
+            var options = {
+                priceScaleId: 'left',
+                color: style.color,
+                lineWidth: style.lineWidth || 2,
+                lineStyle: style.lineStyle,
+                crosshairMarkerVisible: false,
+                lastValueVisible: true,
+                priceLineVisible: false,
+                title: barometer.label || '',
+                priceFormat: { type: 'price', precision: 1, minMove: 0.1 },
+            };
+            // A figure with a fixed range on the dashboard (0..100, -100..+100) keeps it here, so the
+            // neutral line stays at the same height whatever the line does
+            if (barometer.low !== null && barometer.low !== undefined && barometer.high !== null && barometer.high !== undefined) {
+                var low = barometer.low, high = barometer.high;
+                options.autoscaleInfoProvider = function () {
+                    return { priceRange: { minValue: low, maxValue: high } };
+                };
+            }
+
+            var series = chart.addSeries(LightweightCharts.LineSeries, options);
+            series.setData(this._ordered(points));
+
+            if (barometer.reference !== null && barometer.reference !== undefined) {
+                var reference = this._styleFor('barometerReference');
+                series.createPriceLine({
+                    price: barometer.reference,
+                    color: reference.color,
+                    lineWidth: reference.lineWidth || 1,
+                    lineStyle: reference.lineStyle,
+                    axisLabelVisible: false,
+                    title: '',
+                });
+            }
+
+            var m = this._priceMargins;
+            chart.applyOptions({
+                leftPriceScale: { visible: true, borderVisible: false, scaleMargins: { top: m.top, bottom: m.bottom } },
+            });
+            this._barometerSeries = series;
+        } catch (e) {
+            // A line that cannot be drawn must never take the chart down with it
+            console.warn('barometer line failed: ' + e);
+        }
     },
 
     // User-configured styles, keyed the same way as _overlayStyles. Whatever is in here wins over
@@ -1828,6 +1904,8 @@ window.ChartWidget = {
 
         // Overlays were just recreated with the library default precision
         this._applyPriceFormat();
+
+        this._applyBarometer(extras && extras.barometer ? extras.barometer : null, inRange);
 
         // Zones as rectangles behind the candles
         this._applyZones(extras && extras.zones ? extras.zones : []);
@@ -2447,6 +2525,8 @@ window.ChartWidget = {
         // the Chart tab and coming back (or a theme change) the cloud was gone for good.
         this._bandSeries = [];
         this._bandVorm = null;
+        // Belonged to the chart just removed, like the cloud above
+        this._barometerSeries = null;
         this._lastCandles = null;
         this._loaded = false;
     }

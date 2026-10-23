@@ -12,7 +12,6 @@ using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.SignalR;
 using CryptoScanner.Core.Trader;
-//using CryptoScanner.Core.TradingView;
 using CryptoScanner.Core.Zones;
 
 using Dapper;
@@ -166,14 +165,11 @@ public static class GlobalData
     public static readonly SortedList<string, Model.CryptoExchange> ExchangeListName = [];
 
     public static readonly Queue<CryptoSignal> SignalQueue = new();
-    //public static readonly List<CryptoPosition> PositionsClosed = [];
     public static readonly Queue<CryptoLiveData> LiveDataQueue = [];
     public static readonly Dictionary<(string, CryptoIntervalPeriod), CryptoLiveData> LiveDataQueueAdded = [];
 
     public static event PlayMediaEvent? PlaySound;
-    public static event PlayMediaEvent? PlaySpeech;
     public static event AddTextEvent? LogToTelegram;
-
     public static event AddTextEvent? LogToLogTabEvent;
 
     /// <summary>
@@ -907,40 +903,6 @@ public static class GlobalData
     }
 
 
-    public static void DefaultConfiguration()
-    {
-        // Apply some defaults
-        if (Settings.QuoteCoins.Count == 0)
-        {
-            CryptoQuoteData quote = new()
-            {
-                Name = "ETH",
-                FetchCandles = false,
-                MinimalVolume = 6500000,
-                MinimalPrice = 0.00000001m
-            };
-            Settings.QuoteCoins.Add(quote.Name, quote);
-
-            quote = new CryptoQuoteData
-            {
-                Name = "USDT",
-                FetchCandles = true,
-                MinimalVolume = 6500000,
-                MinimalPrice = 0.00000001m
-            };
-            Settings.QuoteCoins.Add(quote.Name, quote);
-
-            quote = new CryptoQuoteData
-            {
-                Name = "BTC",
-                FetchCandles = false,
-                MinimalVolume = 250,
-                MinimalPrice = 0.00000001m
-            };
-            Settings.QuoteCoins.Add(quote.Name, quote);
-        }
-    }
-
     /// <summary>
     /// Write the configuration files. Logs and rethrows on failure: the caller has to know, because
     /// silently returning here is what made a failed save look like a successful one - the screen
@@ -1008,18 +970,6 @@ public static class GlobalData
         }
     }
 
-    public static void PlaySomeSpeech(string text, bool test = false)
-    {
-        try
-        {
-            PlaySpeech?.Invoke(text, test);
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            AddErrorToLogTab("Error playing speech " + error.ToString());
-        }
-    }
 
     public static void AddTextToTelegram(string text, CryptoTelegramCategory category)
     {

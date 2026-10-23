@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Zones;
 
@@ -44,6 +45,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showBollingerBand = false;
 
     [ObservableProperty]
+    private bool _showBarometer = false;
+
+    [ObservableProperty]
     private bool _showKeltnerChannel = false;
 
     [ObservableProperty]
@@ -79,6 +83,7 @@ public partial class ChartOptionsViewModel : ObservableObject
     private static readonly (string key, string label)[] StaticOverlays =
     [
         ("bb", "Bollinger Bands"),
+        (BarometerChartOverlay.OverlayKey, BarometerChartOverlay.OverlayLabel),
         ("dlz", "DLZ Zones"),
         ("dtb", "DTB"),
         ("fvg", "FVG Zones"),
@@ -95,6 +100,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         switch (key)
         {
             case "bb": ShowBollingerBand = value; break;
+            case BarometerChartOverlay.OverlayKey: ShowBarometer = value; break;
             case "dlz": ShowDlzZones = value; break;
             case "dtb": ShowDtb = value; break;
             case "fvg": ShowFvgZones = value; break;
@@ -110,6 +116,7 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool GetStaticOverlayValue(string key) => key switch
     {
         "bb" => ShowBollingerBand,
+        BarometerChartOverlay.OverlayKey => ShowBarometer,
         "dlz" => ShowDlzZones,
         "dtb" => ShowDtb,
         "fvg" => ShowFvgZones,
@@ -135,6 +142,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowNweRepainting = session.ShowNweRepainting;
         ShowPSar = session.ShowPSar;
         ShowBollingerBand = session.ShowBollingerBand;
+        ShowBarometer = session.ShowBarometer;
         ShowKeltnerChannel = session.ShowKeltnerChannel;
         ShowDlzZones = session.ShowDlzZones;
         ShowFvgZones = session.ShowFvgZones;
@@ -192,6 +200,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowNweRepainting = ShowNweRepainting;
         session.ShowPSar = ShowPSar;
         session.ShowBollingerBand = ShowBollingerBand;
+        session.ShowBarometer = ShowBarometer;
         session.ShowKeltnerChannel = ShowKeltnerChannel;
         session.ShowDlzZones = ShowDlzZones;
         session.ShowFvgZones = ShowFvgZones;

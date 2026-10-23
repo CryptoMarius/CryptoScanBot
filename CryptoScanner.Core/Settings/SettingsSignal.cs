@@ -64,7 +64,6 @@ public class SettingsSignal
     // Logging
     public bool LogMinimalVolume { get; set; } = false;
     public bool LogMinimalPrice { get; set; } = false;
-    public bool LogNotEnoughCandles { get; set; }
 
     // Fine tuning (later)
     public int AboveBollingerBandsSma { get; set; } = 1;

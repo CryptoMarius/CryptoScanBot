@@ -362,6 +362,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
         _applicationStateService.BarometerInterval = value;
         System.Diagnostics.Debug.WriteLine($"Interval changed to: {value}");
         Task.Run(CalculateBarometer);
+        // The barometer line in the chart follows this choice
+        WeakReferenceMessenger.Default.Send(new BarometerGraphChangedMessage());
 
         if (GlobalData.SignalRService != null)
             GlobalData.SignalRService.SelectedInterval = value;
@@ -375,6 +377,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
         _applicationStateService.BarometerGraphValue = value;
         IntervalSelectionEnabled = BarometerCandleFields.UsesInterval(BarometerCandleFields.Parse(value));
         Task.Run(CalculateBarometer);
+        // The barometer line in the chart follows this choice
+        WeakReferenceMessenger.Default.Send(new BarometerGraphChangedMessage());
     }
 
 

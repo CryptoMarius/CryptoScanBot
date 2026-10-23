@@ -26,11 +26,6 @@ public class SettingsBasic
     public SettingsTrading Trading { get; set; } = new();
 
     /// <summary>
-    /// Balance settings (a tool from the past)
-    /// </summary>
-    //public SettingsBalanceBot BalanceBot { get; set; } = new();
-
-    /// <summary>
     /// Base coins
     /// </summary>
     public SortedList<string, CryptoQuoteData> QuoteCoins { get; set; } = [];
