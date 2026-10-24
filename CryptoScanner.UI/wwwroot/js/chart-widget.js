@@ -803,6 +803,8 @@ window.ChartWidget = {
                 // The barometer line sits on the left scale. Zooming or panning vertically has to move
                 // it along with the candles, or the two drift apart on screen. Visible is left alone:
                 // that scale only shows while the line is on (see _applyBarometer).
+                // Since 23-10-2026 the line is in a sub-panel (_barometer) and the left scale stays
+                // hidden; these margins no longer move anything visible.
                 leftPriceScale: {
                     scaleMargins: { top: m.top, bottom: m.bottom },
                 },
@@ -1263,12 +1265,12 @@ window.ChartWidget = {
         var main = this._charts.main;
         if (!main) return;
 
-        var gewicht = { main: 4, volume: 1, oscillator: 1.4, macd: 1.4 };
+        var gewicht = { main: 4, barometer: 1.2, volume: 1, oscillator: 1.4, macd: 1.4 };
         try {
             var panes = main.chart.panes();
             panes[0].setStretchFactor(gewicht.main);
 
-            var namen = ['volume', 'oscillator', 'macd'];
+            var namen = ['barometer', 'volume', 'oscillator', 'macd'];
             for (var i = 0; i < namen.length; i++) {
                 // The live pane, not entry.paneIndex, which goes stale once a pane above it is dropped
                 var pane = this._paneOf(this._charts[namen[i]]);
@@ -1386,33 +1388,32 @@ window.ChartWidget = {
         zigzag:         { color: '#ffffff', lineWidth: 1, lineStyle: 0 },
         fibZigzag:      { color: '#ffeb3b', lineWidth: 1, lineStyle: 2 },
 
-        // The dashboard barometer figure, see _applyBarometer
+        // The dashboard barometer figure, see _applyBarometer (since 23-10-2026 _addBarometerSeries)
         barometer:          { color: '#c9a227', lineWidth: 2, lineStyle: 0 },
         barometerReference: { color: 'rgba(201,162,39,0.6)', lineWidth: 1, lineStyle: 2 },
     },
 
-    // The figure of the dashboard barometer graph, drawn over the candles. It lives on the LEFT price
-    // scale, which nothing else uses, so the candles keep their own scale on the right and the line
-    // cannot squeeze them. Made anew on every setData, like the other overlays.
-    _barometerSeries: null,
+    // The figure of the dashboard barometer graph, for this setData: label, the points inside the
+    // window, the fixed range (low/high, or null) and the neutral line. Null when there is nothing to
+    // draw. Until 23-10-2026 it was drawn over the candles on the left price scale; now a figure of
+    // 0..100 goes into the oscillator panel beside the RSI and the stochastic, and any other figure
+    // gets a panel of its own under the candles (see _verversPanelen).
+    _barometer: null,
 
-    _applyBarometer: function (barometer, inRange) {
-        var chart = this._charts.main.chart;
-        if (this._barometerSeries) {
-            try { chart.removeSeries(this._barometerSeries); } catch (e) { }
-            this._barometerSeries = null;
-        }
+    /// Whether the barometer figure shares the 0..100 scale of the RSI and the stochastic. Decided on
+    /// the range the C# side sends (BarometerChartOverlay.BelongsInOscillatorPanel gives the same
+    /// answer for the Avalonia chart), so both charts put the same figure in the same panel.
+    _barometerInOscillator: function (barometer) {
+        return !!barometer && barometer.low === 0 && barometer.high === 100;
+    },
 
-        var points = (barometer && barometer.points) ? barometer.points.filter(function (p) { return inRange(p.time); }) : [];
-        if (points.length === 0) {
-            try { chart.applyOptions({ leftPriceScale: { visible: false } }); } catch (e) { }
-            return;
-        }
-
+    /// The barometer line in a pane. In its own pane a figure with a fixed range on the dashboard
+    /// (-100..+100, -20..+20) keeps it, so the neutral line stays at the same height whatever the
+    /// line does; in the oscillator pane the range is the 0..100 the pane already has.
+    _addBarometerSeries: function (entry, barometer) {
         try {
             var style = this._styleFor('barometer');
             var options = {
-                priceScaleId: 'left',
                 color: style.color,
                 lineWidth: style.lineWidth || 2,
                 lineStyle: style.lineStyle,
@@ -1422,8 +1423,6 @@ window.ChartWidget = {
                 title: barometer.label || '',
                 priceFormat: { type: 'price', precision: 1, minMove: 0.1 },
             };
-            // A figure with a fixed range on the dashboard (0..100, -100..+100) keeps it here, so the
-            // neutral line stays at the same height whatever the line does
             if (barometer.low !== null && barometer.low !== undefined && barometer.high !== null && barometer.high !== undefined) {
                 var low = barometer.low, high = barometer.high;
                 options.autoscaleInfoProvider = function () {
@@ -1431,8 +1430,8 @@ window.ChartWidget = {
                 };
             }
 
-            var series = chart.addSeries(LightweightCharts.LineSeries, options);
-            series.setData(this._ordered(points));
+            var series = entry.chart.addSeries(LightweightCharts.LineSeries, options, entry.paneIndex);
+            series.setData(barometer.points);
 
             if (barometer.reference !== null && barometer.reference !== undefined) {
                 var reference = this._styleFor('barometerReference');
@@ -1445,16 +1444,25 @@ window.ChartWidget = {
                     title: '',
                 });
             }
-
-            var m = this._priceMargins;
-            chart.applyOptions({
-                leftPriceScale: { visible: true, borderVisible: false, scaleMargins: { top: m.top, bottom: m.bottom } },
-            });
-            this._barometerSeries = series;
+            entry.series.barometer = series;
         } catch (e) {
             // A line that cannot be drawn must never take the chart down with it
             console.warn('barometer line failed: ' + e);
         }
+    },
+
+    _createBarometerPanel: function (barometer) {
+        var entry = this._createPane();
+        if (!entry) return;
+        this._addBarometerSeries(entry, barometer);
+        this._attachVerticals(entry);
+        this._charts.barometer = entry;
+    },
+
+    _vulBarometer: function (entry, barometer) {
+        try {
+            if (barometer && entry.series.barometer) entry.series.barometer.setData(barometer.points);
+        } catch (e) { }
     },
 
     // User-configured styles, keyed the same way as _overlayStyles. Whatever is in here wins over
@@ -1905,7 +1913,22 @@ window.ChartWidget = {
         // Overlays were just recreated with the library default precision
         this._applyPriceFormat();
 
-        this._applyBarometer(extras && extras.barometer ? extras.barometer : null, inRange);
+        // The dashboard barometer figure is a sub-panel since 23-10-2026 (see _verversPanelen): kept
+        // here with only the points inside the window, like the overlays, until the panels are done
+        this._barometer = null;
+        if (extras && extras.barometer && extras.barometer.points) {
+            var baroPoints = this._ordered(extras.barometer.points.filter(function (p) { return inRange(p.time); }));
+            if (baroPoints.length > 0) {
+                this._barometer = {
+                    label: extras.barometer.label || '',
+                    points: baroPoints,
+                    low: extras.barometer.low,
+                    high: extras.barometer.high,
+                    reference: extras.barometer.reference,
+                };
+            }
+        }
+        try { mainEntry.chart.applyOptions({ leftPriceScale: { visible: false } }); } catch (e) { }
 
         // Zones as rectangles behind the candles
         this._applyZones(extras && extras.zones ? extras.zones : []);
@@ -2183,12 +2206,18 @@ window.ChartWidget = {
     /// worked out again.
     _verversPanelen: function (panels) {
         var styleKey = '|' + this._styleSignature;
+        // The barometer line: in the oscillator panel for a 0..100 figure, otherwise a panel of its own
+        var baro = this._barometer;
+        var baroInOsc = this._barometerInOscillator(baro);
+        var baroKey = baro ? 'baro:' + baro.label + ':' + baro.low + ':' + baro.high + ':' + baro.reference : '';
         var wil = {
+            barometer: baro && !baroInOsc ? baroKey + styleKey : null,
             volume: panels && panels.volume ? 'volume' + styleKey : null,
-            oscillator: panels && (panels.rsi || panels.stoch || panels.lux)
-                ? [panels.rsi ? 'rsi:' + panels.rsi.oversold + '-' + panels.rsi.overbought : '',
-                   panels.stoch ? 'stoch:' + panels.stoch.oversold + '-' + panels.stoch.overbought : '',
-                   panels.lux ? 'lux' : ''].join('|') + styleKey
+            oscillator: (panels && (panels.rsi || panels.stoch || panels.lux)) || baroInOsc
+                ? [panels && panels.rsi ? 'rsi:' + panels.rsi.oversold + '-' + panels.rsi.overbought : '',
+                   panels && panels.stoch ? 'stoch:' + panels.stoch.oversold + '-' + panels.stoch.overbought : '',
+                   panels && panels.lux ? 'lux' : '',
+                   baroInOsc ? baroKey : ''].join('|') + styleKey
                 : null,
             macd: panels && panels.macd ? 'macd' + styleKey : null,
         };
@@ -2200,7 +2229,8 @@ window.ChartWidget = {
         // at the BOTTOM, so a panel that changes takes every panel below it along: they are all
         // dropped and made again in order. Dropping only the changed one put its replacement
         // under the macd (lux, then macd, then rsi gave candles - macd - oscillator).
-        var volgorde = ['volume', 'oscillator', 'macd'];
+        // The barometer's own panel stands directly under the candles.
+        var volgorde = ['barometer', 'volume', 'oscillator', 'macd'];
         var eersteWijziging = volgorde.length;
         for (var v = 0; v < volgorde.length; v++) {
             var bestaand = this._charts[volgorde[v]];
@@ -2219,28 +2249,35 @@ window.ChartWidget = {
             }
         }
 
-        if (panels) {
-            if (wil.volume) {
-                if (this._charts.volume) this._vulVolume(this._charts.volume, panels.volume);
-                else { this._createVolumePanel(panels.volume); veranderd = true; }
-                if (this._charts.volume) this._charts.volume.vorm = wil.volume;
+        // Made in the order of volgorde, because a new pane is always added at the bottom
+        if (wil.barometer) {
+            if (this._charts.barometer) this._vulBarometer(this._charts.barometer, baro);
+            else { this._createBarometerPanel(baro); veranderd = true; }
+            if (this._charts.barometer) this._charts.barometer.vorm = wil.barometer;
+        }
+
+        // The barometer alone can ask for the oscillator panel, so the panels are not required here
+        var p = panels || {};
+        if (wil.volume) {
+            if (this._charts.volume) this._vulVolume(this._charts.volume, p.volume);
+            else { this._createVolumePanel(p.volume); veranderd = true; }
+            if (this._charts.volume) this._charts.volume.vorm = wil.volume;
+        }
+        // RSI, stochastic and Lux share one panel — they are all bounded oscillators,
+        // so a single pane saves a lot of vertical space
+        if (wil.oscillator !== null) {
+            if (this._charts.oscillator)
+                this._vulOscillator(this._charts.oscillator, p.rsi, p.stoch, p.lux, baroInOsc ? baro : null);
+            else {
+                this._createOscillatorPanel(p.rsi, p.stoch, p.lux, baroInOsc ? baro : null);
+                veranderd = true;
             }
-            // RSI, stochastic and Lux share one panel — they are all bounded oscillators,
-            // so a single pane saves a lot of vertical space
-            if (wil.oscillator !== null) {
-                if (this._charts.oscillator)
-                    this._vulOscillator(this._charts.oscillator, panels.rsi, panels.stoch, panels.lux);
-                else {
-                    this._createOscillatorPanel(panels.rsi, panels.stoch, panels.lux);
-                    veranderd = true;
-                }
-                if (this._charts.oscillator) this._charts.oscillator.vorm = wil.oscillator;
-            }
-            if (wil.macd) {
-                if (this._charts.macd) this._vulMacd(this._charts.macd, panels.macd);
-                else { this._createMacdPanel(panels.macd); veranderd = true; }
-                if (this._charts.macd) this._charts.macd.vorm = wil.macd;
-            }
+            if (this._charts.oscillator) this._charts.oscillator.vorm = wil.oscillator;
+        }
+        if (wil.macd) {
+            if (this._charts.macd) this._vulMacd(this._charts.macd, p.macd);
+            else { this._createMacdPanel(p.macd); veranderd = true; }
+            if (this._charts.macd) this._charts.macd.vorm = wil.macd;
         }
 
         return veranderd;
@@ -2290,8 +2327,9 @@ window.ChartWidget = {
         } catch (e) { }
     },
 
-    _vulOscillator: function (entry, rsiData, stochData, luxData) {
+    _vulOscillator: function (entry, rsiData, stochData, luxData, barometer) {
         try {
+            if (barometer && entry.series.barometer) entry.series.barometer.setData(barometer.points);
             if (rsiData && entry.series.rsi) entry.series.rsi.setData(rsiData.data);
             if (stochData && entry.series.k) entry.series.k.setData(stochData.k);
             if (stochData && entry.series.d) entry.series.d.setData(stochData.d);
@@ -2338,7 +2376,7 @@ window.ChartWidget = {
         this._charts.volume = entry;
     },
 
-    _createOscillatorPanel: function (rsiData, stochData, luxData) {
+    _createOscillatorPanel: function (rsiData, stochData, luxData, barometer) {
         var entry = this._createPane();
         if (!entry) return;
 
@@ -2463,6 +2501,10 @@ window.ChartWidget = {
             this._addPriceLine(obSeries, 100, luxLevel, 2, '', false);
         }
 
+        // A 0..100 barometer figure (market RSI, share above the EMA50) beside the RSI of the coin
+        if (barometer)
+            this._addBarometerSeries(entry, barometer);
+
         this._attachVerticals(entry);
         this._charts.oscillator = entry;
     },
@@ -2525,8 +2567,8 @@ window.ChartWidget = {
         // the Chart tab and coming back (or a theme change) the cloud was gone for good.
         this._bandSeries = [];
         this._bandVorm = null;
-        // Belonged to the chart just removed, like the cloud above
-        this._barometerSeries = null;
+        // Belonged to the chart just removed, like the cloud above; the panels themselves went with _charts
+        this._barometer = null;
         this._lastCandles = null;
         this._loaded = false;
     }

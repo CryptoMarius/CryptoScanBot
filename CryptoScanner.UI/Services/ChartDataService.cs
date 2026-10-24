@@ -309,14 +309,17 @@ public static class ChartDataService
             if (zone.Strength != CryptoZoneStrength.Strong)
                 alpha *= 0.6;
 
+            string fill = $"rgba({rgb},{alpha.ToString(System.Globalization.CultureInfo.InvariantCulture)})";
             target.Add(new ChartRect
             {
                 time1 = zone.OpenTime.ToUnixSeconds(),
                 time2 = zone.CloseTime?.ToUnixSeconds(),
                 price1 = (double)zone.Bottom,
                 price2 = (double)zone.Top,
-                fill = $"rgba({rgb},{alpha.ToString(System.Globalization.CultureInfo.InvariantCulture)})",
-                border = $"rgba({rgb},0.75)",
+                fill = fill,
+                // An FVG has its border in the colour of its fill, so the many small gaps do not
+                // draw a light outline each; the Avalonia chart draws no border on them at all.
+                border = zone.Kind == CryptoZoneKind.FairValueGap ? fill : $"rgba({rgb},0.75)",
                 text = zone.Description ?? "",
             });
         }

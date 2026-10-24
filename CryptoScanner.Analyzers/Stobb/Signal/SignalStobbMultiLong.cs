@@ -76,10 +76,13 @@ public class SignalStobbMultiLong : SignalStobbBase
 
         CandleTime openTime = CandleLast.Candle.OpenTime;
 
-        // Is it a signal valid over 4 intervals (multistorsi)
-        int okay = 4;
+        // Is it a signal valid over multiple intervals (multistorsi)
+        // The signal interval plus MultiHigherTimeframes higher intervals must match (default 3, so 4 in total).
+        // The search window is the signal interval plus 5 higher ones, widened when more are required.
+        int okay = 1 + Math.Max(1, settings.MultiHigherTimeframes);
+        int window = Math.Max(6, okay);
         CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
-        for (int count = 6; count > 0; count--)
+        for (int count = window; count > 0; count--)
         {
             var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, Interval, openTime, intervalPeriod);
             if (!result.success)
@@ -101,7 +104,7 @@ public class SignalStobbMultiLong : SignalStobbBase
             else
             {
                 // first interval needs to be a signal
-                if (count == 6)
+                if (count == window)
                     return false;
             }
 

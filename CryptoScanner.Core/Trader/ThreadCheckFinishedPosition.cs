@@ -70,7 +70,10 @@ public class ThreadCheckFinishedPosition
                 //var bla = Queue.Contains(position);
                 //var isPresent = Queue.Any(d => d.position == position);
                 //if (Queue.Any(d => d.position == position)) //Dupes.ContainsKey(position.Symbol.Name))
-                if (Queue.TryGetValue(position.Symbol.Name, out (CryptoPosition position, string? orderId, CryptoOrderStatus? status) foundPosition))
+                // Keyed like the position list (PositionTools.PositionListKey): the symbol name for an
+                // ordinary position, so a coin with parallel positions does not merge them into one
+                string queueKey = PositionTools.PositionListKey(position);
+                if (Queue.TryGetValue(queueKey, out (CryptoPosition position, string? orderId, CryptoOrderStatus? status) foundPosition))
                 {
                     if (status.HasValue)
                         foundPosition.status = status;
@@ -78,7 +81,7 @@ public class ThreadCheckFinishedPosition
                         foundPosition.orderId = orderId;
                     // ValueTuple is a struct: TryGetValue returned a copy, so write the merged
                     // orderId/status back into the queue or the update is silently lost.
-                    Queue[position.Symbol.Name] = foundPosition;
+                    Queue[queueKey] = foundPosition;
                     ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} duplicate {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {orderId} {status}");
                     return;
                 }
@@ -89,7 +92,7 @@ public class ThreadCheckFinishedPosition
                 //}
 
                 //Queue.Add((position, orderId, status));
-                _ = Queue.TryAdd(position.Symbol.Name, (position, orderId, status));
+                _ = Queue.TryAdd(queueKey, (position, orderId, status));
             }
             finally
             {
@@ -187,8 +190,7 @@ public class ThreadCheckFinishedPosition
         // here. The first pass removes it from the position list; the second one found nothing to
         // remove, but it did send the Altrady close a second time (measured 27-09-2026: every close
         // went out twice, ten seconds apart). Only the pass that still finds it in the list acts.
-        bool stillListed = GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? listed)
-            && ReferenceEquals(listed, position);
+        bool stillListed = PositionTools.IsListed(GlobalData.ActiveExchange!, position);
 
         if (removePosition && stillListed)
         {
@@ -472,8 +474,9 @@ public class ThreadCheckFinishedPosition
             {
                 if (Queue.Count > 0)
                 {
-                    item = Queue.First().Value;
-                    Queue.Remove(item.Value.position.Symbol.Name);
+                    var first = Queue.First();
+                    item = first.Value;
+                    Queue.Remove(first.Key);
                 }
             }
             finally

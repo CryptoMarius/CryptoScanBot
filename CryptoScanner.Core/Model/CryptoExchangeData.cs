@@ -60,6 +60,8 @@ public class CryptoExchangeData
     // threads never touch the same entry; the concurrent collection just keeps the structural
     // operations (TryAdd/TryRemove/enumerate) safe. No code relied on the sorted order (only the
     // Telegram ShowPositions display, which is cosmetic).
+    // Since 23-10-2026 a strategy with parallel positions files each of its positions under
+    // "symbol#id" instead (PositionTools.PositionListKey); PositionTools.PositionsOf finds them all.
     public ConcurrentDictionary<string, CryptoPosition> PositionList { get; } = new();
 
 

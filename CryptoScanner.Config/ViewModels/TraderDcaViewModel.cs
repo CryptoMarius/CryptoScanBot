@@ -43,26 +43,11 @@ public partial class DcaItemViewModel : ObservableObject
 
 public partial class TraderDcaViewModel : ObservableObject
 {
-    // Dropdown lists
-    private readonly Dictionary<string, CryptoOrderType> _orderTypeList = new()
-    {
-        { "Limit order", CryptoOrderType.Limit }
-    };
-
-    [ObservableProperty]
-    private CryptoOrderType _selectedOrderType = CryptoOrderType.Limit;
-
     [ObservableProperty]
     private ObservableCollection<DcaItemViewModel> _dcaItems = [];
 
-    public Dictionary<string, CryptoOrderType> OrderTypeList => _orderTypeList;
-
     public void LoadConfig(SettingsTrading settings)
     {
-        // An order type that is not in the list - a StopLimit or an Oco written by an older
-        // build - leaves the combobox empty and would be written back untouched on OK.
-        SelectedOrderType = _orderTypeList.ContainsValue(settings.DcaOrderType) ? settings.DcaOrderType : CryptoOrderType.Limit;
-
         DcaItems.Clear();
         int index = 1;
         foreach (var dca in settings.DcaList)
@@ -75,7 +60,8 @@ public partial class TraderDcaViewModel : ObservableObject
 
     public void SaveConfig(SettingsTrading settings)
     {
-        settings.DcaOrderType = SelectedOrderType;
+        // A DCA is always a limit order; this also repairs a StopLimit or an Oco written by an older build
+        settings.DcaOrderType = CryptoOrderType.Limit;
 
         settings.DcaList.Clear();
         foreach (var item in DcaItems)

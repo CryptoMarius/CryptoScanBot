@@ -51,16 +51,19 @@ public class StoRsiMultiLong : StoRsiBase
         }
         CandleTime openTime = CandleLast.Candle.OpenTime;
 
-        // Requires both Stoch AND RSI to be oversold simultaneously across 4 consecutive timeframes.
+        // Requires both Stoch AND RSI to be oversold simultaneously on the signal interval and MultiHigherTimeframes higher timeframes.
         // This is intentionally strict: signals only fire during broad market selloffs where
         // oversold conditions have propagated from low to high timeframes.
         // Compare with stobb.multi which uses IsBelowBollingerBands instead of RsiOversold —
         // a price condition that persists longer across timeframes, so that variant fires more often.
-        int okay = 4;
+        // The signal interval plus MultiHigherTimeframes higher intervals must match (default 3, so 4 in total).
+        // The search window is the signal interval plus 5 higher ones, widened when more are required.
         int addRsiAmount = 0;
         int addStochAmount = 0;
+        int okay = 1 + Math.Max(1, settings.MultiHigherTimeframes);
+        int higherIntervalCount = Math.Max(6, okay);
         CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
-        for (int count = 6; count > 0; count--)
+        for (int count = higherIntervalCount; count > 0; count--)
         {
             var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, Interval, openTime, intervalPeriod);
             if (!result.success)
@@ -82,7 +85,7 @@ public class StoRsiMultiLong : StoRsiBase
             else
             {
                 // first interval needs to be a signal
-                if (count == 6)
+                if (count == higherIntervalCount)
                     return false;
             }
 
@@ -93,8 +96,9 @@ public class StoRsiMultiLong : StoRsiBase
             // RsiOversold(corr) compares against (Oversold - corr); a negative correction
             // therefore relaxes the bar. Mirrors SignalStoRsiMultiShort which already runs
             // negative for the same "lighter on higher TFs" intent.
-            addRsiAmount -= 2;
-            addStochAmount -= 2;
+            // The step is MultiCorrectionStep (default 2, the value it always had).
+            addRsiAmount -= Math.Max(0, settings.MultiCorrectionStep);
+            addStochAmount -= Math.Max(0, settings.MultiCorrectionStep);
         }
 
 

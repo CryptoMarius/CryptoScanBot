@@ -57,6 +57,15 @@
                       Content="Only if a previous signal exists"
                       FontSize="12"/>
 
+            <!-- Multi: number of higher timeframes -->
+            <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto"
+                  ToolTip.Tip="stobb.multi only. Number of higher timeframes (above the signal interval) that must also be oversold/overbought. Default 3.">
+                <TextBlock Grid.Column="0" Text="Multi: number of higher timeframes:" VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" Text="{Binding MultiHigherTimeframes, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
 		</StackPanel>
     </HeaderedContentControl>
 

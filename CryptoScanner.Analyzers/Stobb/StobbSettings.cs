@@ -27,6 +27,12 @@ public class StobbSettings : SettingsSignalStrategyBase
 
     [SettingCaption("Only if a previous signal exists")]
     public bool OnlyIfPreviousStobb { get; set; } = false;
+
+    // stobb.multi only: how many higher timeframes (on top of the signal interval) must also be
+    // oversold/overbought. 3 is what the strategy always used (4 intervals including the signal one).
+    [SettingCaption("Multi: number of higher timeframes")]
+    public int MultiHigherTimeframes { get; set; } = 3;
+
     public StobbSettings() : base()
     {
         SoundFileLong = "sound-stobb-oversold.wav";

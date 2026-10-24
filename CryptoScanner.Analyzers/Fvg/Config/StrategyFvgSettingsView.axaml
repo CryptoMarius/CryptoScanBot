@@ -20,6 +20,14 @@
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
 
+                <!-- Any colour combination of the three candles (red, red, green...) instead of three of the zone's colour -->
+                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto">
+                    <TextBlock Grid.Column="0" Text="Allow mixed candle colours:" VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"/>
+                    <CheckBox Grid.Column="2" IsChecked="{Binding AllowMixedColours, Mode=TwoWay}"
+                              VerticalAlignment="Center"/>
+                </Grid>
+
             </StackPanel>
         </HeaderedContentControl>
 

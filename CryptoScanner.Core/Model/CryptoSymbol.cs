@@ -299,6 +299,8 @@ public partial class CryptoSymbol
 
     public bool IsTrading()
     {
-        return Exchange!.Data.PositionList.ContainsKey(Name);
+        //return Exchange!.Data.PositionList.ContainsKey(Name);
+        // A parallel position is filed under its own key, so ask for any position on this symbol
+        return Trader.PositionTools.HasAnyPosition(Exchange!, this);
     }
 }

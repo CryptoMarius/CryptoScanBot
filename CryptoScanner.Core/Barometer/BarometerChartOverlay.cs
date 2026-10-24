@@ -4,10 +4,11 @@ using CryptoScanner.Core.Model;
 namespace CryptoScanner.Core.Barometer;
 
 /// <summary>
-/// The figure the barometer graph of the dashboard shows, as a line over the price chart.
+/// The figure the barometer graph of the dashboard shows, as a line in a sub panel of the price chart.
 /// <para>
-/// Both charts draw it on an axis of its own on the left, so the price scale on the right is left
-/// alone. Which figure follows the dropdown of the dashboard (stored in ApplicationStateService), and
+/// Both charts draw a figure of 0..100 in the oscillator panel beside the RSI and the Stochastic, and
+/// any other figure in a panel of its own under the candles (see <see cref="BelongsInOscillatorPanel"/>);
+/// until 23-10-2026 it was drawn over the candles on an axis of its own on the left. Which figure follows the dropdown of the dashboard (stored in ApplicationStateService), and
 /// for a figure that depends on the interval, the interval chosen there too. The quote is the quote of
 /// the symbol in the chart: the market of that coin.
 /// </para>
@@ -47,6 +48,19 @@ public static class BarometerChartOverlay
     /// <param name="High">Fixed top of the axis, or null to follow the data.</param>
     /// <param name="Reference">Where the neutral line goes (50 for the share above the EMA50), or null.</param>
     public sealed record Line(string Label, List<(CandleTime Time, double Value)> Points, double? Low, double? High, double? Reference);
+
+
+    /// <summary>
+    /// Whether the figure runs from 0 to 100 like the RSI and the Stochastic (the market RSI and the
+    /// share above the EMA50). Both charts draw such a figure in the oscillator panel beside the RSI
+    /// of the coin itself; any other figure has no common scale with it and gets a panel of its own.
+    /// </summary>
+    /// <param name="graphValueName">The dropdown label from the dashboard; empty means the average.</param>
+    public static bool BelongsInOscillatorPanel(string? graphValueName)
+    {
+        BarometerGraphScale scale = BarometerCandleFields.GetScale(BarometerCandleFields.Parse(graphValueName ?? ""));
+        return !scale.CenteredOnZero && scale.Low == 0m && scale.High == 100m;
+    }
 
 
     /// <summary>

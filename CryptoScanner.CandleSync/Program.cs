@@ -193,6 +193,11 @@ internal static class Program
                 symbolInterval.LastCandleSynchronized = null;
         }
 
+        // A connection of its own to measure, per symbol, what really came in (see CountProgress)
+        using var countDb = new CandleDatabase(GlobalData.ActiveExchange!);
+        countDb.Open();
+        _countConnection = countDb.Connection;
+
         CandleFetchResult result = await EmulatorCandleSync.FetchCandlesForSymbolsAsync(
             symbols.Select(s => s.Name).ToList(), fromDate, DateTime.UtcNow, true, Status, cancellationToken);
         string elapsed = watch.Elapsed.ToString(@"hh\:mm\:ss");
@@ -407,6 +412,21 @@ internal static class Program
     private static int _symbolRequests;
     private static long _symbolCandles;
     private static Stopwatch? _fetchWatch;
+    private static SqliteConnection? _countConnection;
+    private static long _symbolBefore;
+
+
+    /// <summary>All candles of a symbol in the emulator candle database, every interval.</summary>
+    private static long CountSymbol(string symbolName)
+    {
+        if (_countConnection == null || GlobalData.ActiveExchange == null
+            || !GlobalData.ActiveExchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            return 0;
+        using var cmd = _countConnection.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM Candle WHERE SymbolId = (SELECT SymbolId FROM Symbol WHERE ExchangeName = $Key)";
+        cmd.Parameters.AddWithValue("$Key", symbol.ExchangeName);
+        return cmd.ExecuteScalar() is long count ? count : 0;
+    }
 
 
     /// <summary>
@@ -430,8 +450,10 @@ internal static class Program
         if (done.Success && _total > 0)
         {
             double hours = (_fetchWatch?.Elapsed.TotalHours) ?? 0;
-            WriteLine($"{_current}/{_total} {done.Groups[1].Value}: {_symbolRequests} requests, {_symbolCandles:N0} candles received; " +
-                $"{_requests} requests in total, {100.0 * _current / _total:0.0}% done after {hours:0.0} h");
+            long added = CountSymbol(done.Groups[1].Value) - _symbolBefore;
+            WriteLine($"{_current}/{_total} {done.Groups[1].Value}: {_symbolRequests} requests to the exchange, {_symbolCandles:N0} candles received, " +
+                $"{added:N0} added (all intervals, the derived ones included); " +
+                $"{100.0 * _current / _total:0.0}% done after {hours:0.0} h");
             _symbolRequests = 0;
             _symbolCandles = 0;
         }
@@ -450,6 +472,12 @@ internal static class Program
         {
             _current = current;
             _total = total;
+            // The count before this symbol, to tell afterwards how many candles really came in
+            if (text.StartsWith("Fetching candles for ") && _countConnection != null)
+            {
+                string name = text["Fetching candles for ".Length..].Split(' ')[0];
+                _symbolBefore = CountSymbol(name);
+            }
             if (text.StartsWith("Fetching candles") && _fetchWatch == null)
                 _fetchWatch = Stopwatch.StartNew();
         }
@@ -464,7 +492,7 @@ internal static class Program
                 left = $"  ~{_fetchWatch.Elapsed.TotalHours / (_current - 1) * (_total - _current + 1):0.0} h left";
             // The symbol's own (i/n) is in the "coin" part already
             string what = SymbolInParentheses.Replace(text, "", 1).Replace("  ", " ").Trim();
-            line = $"[{new string('#', filled)}{new string('-', 30 - filled)}] {100 * fraction,5:0.0}%  coin {_current}/{_total}  {what}  {_requests} requests{left}";
+            line = $"[{new string('#', filled)}{new string('-', 30 - filled)}] {100 * fraction,5:0.0}%  coin {_current}/{_total}  {what}{left}";
         }
         lock (SymbolProgress)
         {

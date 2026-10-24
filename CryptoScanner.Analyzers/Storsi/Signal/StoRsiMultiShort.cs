@@ -51,16 +51,19 @@ public class StoRsiMultiShort : StoRsiBase
         }
         CandleTime openTime = CandleLast.Candle.OpenTime;
 
-        // Requires both Stoch AND RSI to be overbought simultaneously across 4 consecutive timeframes.
+        // Requires both Stoch AND RSI to be overbought simultaneously on the signal interval and MultiHigherTimeframes higher timeframes.
         // This is intentionally strict: signals only fire during broad market rallies where
         // overbought conditions have propagated from low to high timeframes.
         // Compare with stobb.multi which uses IsAboveBollingerBands instead of RsiOverbought —
         // a price condition that persists longer across timeframes, so that variant fires more often.
-        int okay = 4;
+        // The signal interval plus MultiHigherTimeframes higher intervals must match (default 3, so 4 in total).
+        // The search window is the signal interval plus 5 higher ones, widened when more are required.
         int addRsiAmount = 0;
         int addStochAmount = 0;
+        int okay = 1 + Math.Max(1, settings.MultiHigherTimeframes);
+        int higherIntervalCount = Math.Max(6, okay);
         CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
-        for (int count = 6; count > 0; count--)
+        for (int count = higherIntervalCount; count > 0; count--)
         {
             var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, Interval, openTime, intervalPeriod);
             if (!result.success)
@@ -82,15 +85,16 @@ public class StoRsiMultiShort : StoRsiBase
             else
             {
                 // first interval needs to be a signal
-                if (count == 6)
+                if (count == window)
                     return false;
             }
 
             if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;
             intervalPeriod++;
-            addRsiAmount -= 2;
-            addStochAmount -= 2;
+            // Higher timeframes slightly LIGHTER on overbought, by MultiCorrectionStep (default 2)
+            addRsiAmount -= Math.Max(0, settings.MultiCorrectionStep);
+            addStochAmount -= Math.Max(0, settings.MultiCorrectionStep);
         }
 
 

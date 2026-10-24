@@ -63,6 +63,8 @@ public partial class ChartWindowViewModel : ObservableObject
     private LineAnnotation? CrossHairXStoch;
     // Vertical crosshair for the MACD sub-panel; null when that panel is hidden.
     private LineAnnotation? CrossHairXMacd;
+    // Vertical crosshair for the barometer's own sub-panel; null when that panel is hidden.
+    private LineAnnotation? CrossHairXBarometer;
     // Third vertical crosshair for the volume sub-panel; null when that panel is hidden.
     private LineAnnotation? CrossHairXVolume;
 
@@ -117,7 +119,16 @@ public partial class ChartWindowViewModel : ObservableObject
         SymbolSelector.PropertyChanged += OnSymbolChanged;
         TrendSettings.PropertyChanged += TrendSettingsChanged;
         FibSettings.PropertyChanged += FibSettingsChanged;
-        DisplayOptions.PropertyChanged += (sender, e) => DisplayOptionsChanged(sender, e);
+        DisplayOptions.PropertyChanged += (sender, e) =>
+        {
+            // Switching the DLZ or FVG zones on brings them up to date first (SymbolOrIntervalChangedAsync
+            // calculates and then draws), otherwise the chart would only show what the database held.
+            if ((e.PropertyName == nameof(ChartOptionsViewModel.ShowDlzZones) && DisplayOptions.ShowDlzZones)
+                || (e.PropertyName == nameof(ChartOptionsViewModel.ShowFvgZones) && DisplayOptions.ShowFvgZones))
+                _ = SymbolOrIntervalChangedAsync(false);
+            else
+                DisplayOptionsChanged(sender, e);
+        };
 
         foreach (var overlay in PluginManager.ChartOverlays)
             overlay.RequestRedraw += OnOverlayRequestRedraw;
@@ -576,11 +587,13 @@ public partial class ChartWindowViewModel : ObservableObject
     ///
     /// Sub-panels stack from the bottom of the chart upwards in fixed order:
     ///   volume (bottom) → MACD (middle) → Stoch/RSI (top sub-panel) → price.
+    /// The barometer line gets a panel of its own between Stoch/RSI and price, but only for a figure
+    /// that is not 0..100; a 0..100 figure goes into the Stoch/RSI panel (see BarometerOverlay).
     /// Heights are fixed; positions are computed from which combination is active so that any
     /// subset still leaves a sensible 1 % gap between sub-panels and a 2 % gap to the price
     /// panel.
     /// </summary>
-    private void AdjustPanels(bool showOscillator, bool showMacd, bool showVolume)
+    private void AdjustPanels(bool showOscillator, bool showMacd, bool showVolume, bool showBarometer = false)
     {
         var priceAxis = PlotModel.Axes.FirstOrDefault(a => a.Key == "price");
         if (priceAxis == null)
@@ -696,6 +709,76 @@ public partial class ChartWindowViewModel : ObservableObject
 
             // The annotation cleanup above already removed the crosshair; just null the field.
             CrossHairXStoch = null;
+        }
+
+        // ---------- Barometer sub-panel ----------
+        // Directly under the price panel, for a barometer figure that has no 0..100 scale to share
+        // with the oscillator panel. Title and range are set by BarometerOverlay.Draw per figure.
+        if (showBarometer)
+        {
+            if (cursor > 0)
+                cursor += subGap;
+            double barometerStart = cursor;
+            double barometerEnd = cursor + 0.12;
+            cursor = barometerEnd;
+
+            var existingBarometer = PlotModel.Axes.FirstOrDefault(a => a.Key == BarometerOverlay.AxisKey);
+            if (existingBarometer is LinearAxis barometerAxisLinear)
+            {
+                barometerAxisLinear.StartPosition = barometerStart;
+                barometerAxisLinear.EndPosition = barometerEnd;
+            }
+            else
+            {
+                PlotModel.Axes.Add(new LinearAxis
+                {
+                    Key = BarometerOverlay.AxisKey,
+                    Title = "Barometer",
+                    Font = Const.OxyFontName,
+                    FontSize = Const.OxyFontSize,
+                    TextColor = Const.ChartTextColor,
+                    Position = AxisPosition.Right,
+                    StartPosition = barometerStart,
+                    EndPosition = barometerEnd,
+                    IsZoomEnabled = false,
+                    IsPanEnabled = false,
+                    TicklineColor = OxyColors.Gray,
+                    TickStyle = OxyPlot.Axes.TickStyle.Inside,
+                    AxislineStyle = LineStyle.Solid,
+                    AxislineColor = OxyColors.Gray,
+                    AxislineThickness = 1,
+                    MajorGridlineStyle = LineStyle.Dot,
+                    MajorGridlineColor = OxyColor.FromAColor(80, OxyColors.Gray),
+                });
+            }
+
+            if (CrossHairXBarometer == null)
+            {
+                CrossHairXBarometer = new LineAnnotation
+                {
+                    Type = LineAnnotationType.Vertical,
+                    Color = OxyColors.White,
+                    LineStyle = LineStyle.None,
+                    StrokeThickness = 0.5,
+                    YAxisKey = BarometerOverlay.AxisKey,
+                    Tag = "crosshair",
+                };
+                PlotModel.Annotations.Add(CrossHairXBarometer);
+            }
+        }
+        else
+        {
+            // Same defensive cleanup as the other panels: nothing may point at the axis once it is gone
+            foreach (var s in PlotModel.Series.OfType<LineSeries>().Where(x => x.YAxisKey == BarometerOverlay.AxisKey).ToList())
+                PlotModel.Series.Remove(s);
+            foreach (var a in PlotModel.Annotations.OfType<LineAnnotation>().Where(x => x.YAxisKey == BarometerOverlay.AxisKey).ToList())
+                PlotModel.Annotations.Remove(a);
+
+            var barometerAxis = PlotModel.Axes.FirstOrDefault(a => a.Key == BarometerOverlay.AxisKey);
+            if (barometerAxis != null)
+                PlotModel.Axes.Remove(barometerAxis);
+
+            CrossHairXBarometer = null;
         }
 
         // ---------- MACD sub-panel ----------
@@ -871,9 +954,6 @@ public partial class ChartWindowViewModel : ObservableObject
             priceAxis.StartPosition = 0.0;
             priceAxis.EndPosition = 1.0;
         }
-
-        // The barometer line shares the height of the price panel
-        BarometerOverlay.AlignWithPrice(PlotModel);
     }
 
     /// <summary>
@@ -1025,7 +1105,10 @@ public partial class ChartWindowViewModel : ObservableObject
 
         // Keep panel proportions in sync — oscillator panel is active when stoch OR rsi is
         // enabled, MACD and volume panels each have their own toggle.
-        AdjustPanels(Session.ShowStoch || Session.ShowRsi || Session.ShowLux, Session.ShowMacd, Session.ShowVolume);
+        // The barometer line opens the oscillator panel for a 0..100 figure, otherwise a panel of its own.
+        bool barometerInOscillator = Session.ShowBarometer && BarometerOverlay.InOscillatorPanel();
+        AdjustPanels(Session.ShowStoch || Session.ShowRsi || Session.ShowLux || barometerInOscillator, Session.ShowMacd, Session.ShowVolume,
+            Session.ShowBarometer && !barometerInOscillator);
 
         SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
         var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
@@ -1180,9 +1263,9 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowCandles, Session.IntervalName + lastCandleTime.Minutes.ToString()))
             lastCandleTime = Candles.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
-        // The figure of the dashboard barometer graph over the candles, on an axis of its own on the
-        // left. Redrawn when a candle arrives and when another figure or interval is picked on the
-        // dashboard, see BarometerChartOverlay.
+        // The figure of the dashboard barometer graph, in the oscillator panel (0..100) or in a panel
+        // of its own (AdjustPanels above made the right one). Redrawn when a candle arrives and when
+        // another figure or interval is picked on the dashboard, see BarometerChartOverlay.
         group = BarometerChartOverlay.OverlayKey;
         ApplicationStateService? barometerState = GlobalData.GetService<ApplicationStateService>();
         if (Toggle(model, group, Session.ShowBarometer,
@@ -1191,8 +1274,6 @@ public partial class ChartWindowViewModel : ObservableObject
             RemoveFromChart(model, group);
             BarometerOverlay.Draw(model, WindowCandleList, Interval, Session.SymbolQuote, Session.MinDate, Session.MaxDate, group);
         }
-        else if (!Session.ShowBarometer)
-            BarometerOverlay.RemoveAxis(model);
 
         // Draw pivots
         group = "pivots";
@@ -1462,6 +1543,13 @@ public partial class ChartWindowViewModel : ObservableObject
                 {
                     CrossHairXVolume.X = unix.Minutes;
                     CrossHairXVolume.LineStyle = LineStyle.DashDot;
+                }
+
+                // Same for the barometer-panel crosshair.
+                if (CrossHairXBarometer != null)
+                {
+                    CrossHairXBarometer.X = unix.Minutes;
+                    CrossHairXBarometer.LineStyle = LineStyle.DashDot;
                 }
 
                 string subtitle;
@@ -1803,6 +1891,8 @@ public partial class ChartWindowViewModel : ObservableObject
             CrossHairXMacd.LineStyle = LineStyle.None;
         if (CrossHairXVolume != null)
             CrossHairXVolume.LineStyle = LineStyle.None;
+        if (CrossHairXBarometer != null)
+            CrossHairXBarometer.LineStyle = LineStyle.None;
     }
 
     private async Task SymbolOrIntervalChangedAsync(bool forceCalculation)
@@ -1849,28 +1939,45 @@ public partial class ChartWindowViewModel : ObservableObject
                 // Force DLZ and FVG zones to be calculated (they are calculated on other intervals).
                 // Skipped when viewing a historical position — recomputing zones over the whole history is
                 // expensive and not needed just to look at an old trade.
-                if (Session.ForceCalculation && !WindowStart.HasValue)
+                // Without the "Calculate" button the zones are still brought up to date when they are
+                // shown on a live chart: the scanner skips a zone kind that no enabled strategy reads
+                // (SignalPrepare), and the chart would otherwise only show whatever the database held.
+                // This uses the incremental cursors, so it is a full scan only the first time. Also on a
+                // chart opened from a position: it shows the live zones, and those should be current.
+                // Not for a chart of an emulator run, whose zones belong to that run and are complete.
+                bool forced = Session.ForceCalculation && !WindowStart.HasValue;
+                bool liveScope = !WindowEmulatorRunId.HasValue;
+                bool calculateDlz = forced || (liveScope && Session.ShowDlzZones);
+                bool calculateFvg = forced || (liveScope && Session.ShowFvgZones);
+                if (calculateDlz || calculateFvg)
                 {
                     // The "Calculate" button means a genuine forced recalculation (e.g. after tweaking
                     // zone-detection settings) — reset the incremental cursors so the calls below do a
                     // full historical rescan instead of only picking up candles since the last run.
-                    Symbol.Data.ResetZoneCalculationCursors();
+                    if (forced)
+                        Symbol.Data.ResetZoneCalculationCursors();
 
                     // Calculate the DLZ zones for the configured intervals
-                    foreach (var intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+                    if (calculateDlz)
                     {
-                        if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var intervalX))
+                        foreach (var intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
                         {
-                            await ZoneDlz.CalculateZonesAsync(ShowProgress, Symbol, intervalX, loadedCandlesInMemory);
+                            if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var intervalX))
+                            {
+                                await ZoneDlz.CalculateZonesAsync(ShowProgress, Symbol, intervalX, loadedCandlesInMemory);
+                            }
                         }
                     }
 
                     // Calculate the FVG zones for the configured intervals
-                    foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
+                    if (calculateFvg)
                     {
-                        if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var intervalX))
+                        foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
                         {
-                            await ZoneFvg.CalculateZonesAsync(ShowProgress, Symbol, intervalX, loadedCandlesInMemory);
+                            if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var intervalX))
+                            {
+                                await ZoneFvg.CalculateZonesAsync(ShowProgress, Symbol, intervalX, loadedCandlesInMemory, evenWithoutStrategy: true);
+                            }
                         }
                     }
 

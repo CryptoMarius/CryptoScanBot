@@ -99,7 +99,8 @@ public class FvgZones
     public static void Draw(PlotModel chart, CryptoSymbol symbol, CandleTime minDate, CandleTime maxDate, string group)
     {
         var symbolData = symbol.Data;
-        foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+        // The FVG intervals, not the DLZ ones: FVG zones on 4h/1d were never drawn otherwise
+        foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
         {
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
             {

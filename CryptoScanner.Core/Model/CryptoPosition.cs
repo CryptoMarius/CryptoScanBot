@@ -178,6 +178,13 @@ public partial class CryptoPosition : CryptoData2
     [Computed]
     public bool ExitRequested { get; set; } = false;
 
+    // The strategy took the standing entry of this WAITING position off the book (SignalCreateBase.WithdrawEntry).
+    // Kept apart from ExitRequested on purpose: an entry that fills before the cancel gets there is a
+    // normal trade, and must not be sold at the market straight away the way ExitRequested would.
+    // In memory only, like ExitRequested: the strategy is asked again on every candle.
+    [Computed]
+    public bool EntryWithdrawn { get; set; } = false;
+
     // Closed by DelistedPositions because the exchange no longer trades the symbol. The exchange
     // settled the position itself, so ThreadCheckFinishedPosition sends no close to Altrady.
     [Computed]

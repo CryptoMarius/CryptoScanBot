@@ -39,6 +39,24 @@
                       Content="Only if there is a previous storsi signal"
                       FontSize="12"/>
 
+            <!-- Multi: number of higher timeframes -->
+            <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto"
+                  ToolTip.Tip="storsi.multi only. Number of higher timeframes (above the signal interval) that must also be oversold/overbought. Default 3.">
+                <TextBlock Grid.Column="0" Text="Multi: number of higher timeframes:" VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" Text="{Binding MultiHigherTimeframes, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Multi: relaxation of the RSI/Stochastic levels per higher timeframe -->
+            <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto"
+                  ToolTip.Tip="storsi.multi only. How many points the RSI and Stochastic oversold/overbought levels are relaxed on each higher timeframe. Default 2; 0 asks every timeframe for the same level.">
+                <TextBlock Grid.Column="0" Text="Multi: relaxation per higher timeframe:" VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" Text="{Binding MultiCorrectionStep, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
         </StackPanel>
     </HeaderedContentControl>
 

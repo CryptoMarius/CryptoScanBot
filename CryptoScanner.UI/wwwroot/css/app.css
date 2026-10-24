@@ -2178,7 +2178,8 @@ code {
 
 .chart-legend {
     display: flex;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 2px 12px;
     font-size: 11px;
     color: var(--text-muted);
     margin-bottom: 4px;

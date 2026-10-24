@@ -274,6 +274,10 @@
     private bool _showDlzZones;
     private bool _showFvgZones;
     private bool _showSmcZones;
+    // Which symbol and zone kinds the chart last brought up to date (CalculateZonesForChartAsync),
+    // so the auto refresh does not recalculate on every pass. Emptied by the "Calc" button.
+    private string _zonesCalculatedFor = "";
+    private bool _zonesForceCalculation;
     private bool _showSignals = true;
     private bool _showPositions = true;
     private bool _showZigZag;
@@ -551,14 +555,47 @@
     {
         if (_currentSymbol != null)
         {
-            foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
-            {
-                if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? intervalX))
-                    GlobalData.ThreadZoneCalculate?.AddToQueue(_currentSymbol, intervalX);
-            }
-            GlobalData.AddTextToLogTab($"{_currentSymbol.Name} liquidity zone recalculation queued");
+            // Done by the chart itself now (see EnsureZonesCalculatedAsync): the queue skips a zone
+            // kind that no enabled strategy reads, and it never did the FVG zones.
+            _zonesCalculatedFor = "";
+            _zonesForceCalculation = true;
+            GlobalData.AddTextToLogTab($"{_currentSymbol.Name} liquidity zone recalculation started");
         }
         await LoadChartAsync();
+    }
+
+    /// <summary>
+    /// Brings the DLZ/FVG zones of the shown symbol up to date when they are switched on, the way the
+    /// Avalonia chart does on a symbol or interval change. Also on a chart opened from a position: it
+    /// shows the live zones, and those should be current. Once per symbol and set of toggles, see
+    /// _zonesCalculatedFor.
+    /// </summary>
+    private async Task EnsureZonesCalculatedAsync()
+    {
+        if (_currentSymbol == null || (!_showDlzZones && !_showFvgZones))
+            return;
+
+        string key = $"{_currentSymbol.Name}|{_showDlzZones}|{_showFvgZones}";
+        if (key == _zonesCalculatedFor)
+            return;
+        _zonesCalculatedFor = key;
+
+        // The "Calc" button on a position chart does not force a full rescan, same as Avalonia
+        bool force = _zonesForceCalculation && _windowStart == null;
+        _zonesForceCalculation = false;
+        CryptoSymbol symbol = _currentSymbol;
+        bool dlz = _showDlzZones;
+        bool fvg = _showFvgZones;
+        try
+        {
+            // Off the UI thread: the first pass over a symbol is a full historical scan
+            await Task.Run(() => ZoneThreadCalculate.CalculateZonesForChartAsync(symbol, dlz, fvg, force));
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Info($"ERROR chart zones {error}");
+            GlobalData.AddErrorToLogTab($"ERROR chart zones {error}");
+        }
     }
 
     private void ApplySessionToFields()
@@ -1466,6 +1503,7 @@
                 // the 1h chart and was not drawn until the hour closed.
                 CandleTime to = lastDrawnOpen + symbolInterval.Interval.Duration;
 
+                await EnsureZonesCalculatedAsync();
                 zones = ChartDataService.BuildZones(_currentSymbol,
                     _showDlzZones, _showFvgZones, _showSmcZones, from, to);
 
@@ -1484,6 +1522,8 @@
 
             // The figure of the dashboard barometer graph as a line over the candles, on an axis of its
             // own. Which figure and interval follow the dashboard, see BarometerChartOverlay.
+            // Since 23-10-2026 the chart widget puts it in a sub-panel: low 0 and high 100 send it into
+            // the oscillator panel, any other range into a panel of its own (chart-widget.js _barometer).
             object? barometer = null;
             if (_showBarometer)
             {

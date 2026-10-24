@@ -13,20 +13,8 @@
             <!-- DCA Method Settings -->
             <StackPanel Spacing="8">
                 
-                <!-- Order Type -->
-                <Grid ColumnDefinitions="Auto,*,250" RowDefinitions="Auto">
-                    <TextBlock Grid.Column="0" Text="Order Type:" VerticalAlignment="Center" 
-                               Margin="0,0,12,0" FontSize="12"/>
-                    <ComboBox Grid.Column="2" 
-                              ItemsSource="{Binding OrderTypeList}"
-                              SelectedValue="{Binding SelectedOrderType, Mode=TwoWay}"
-                              DisplayMemberBinding="{Binding Key}"
-                              SelectedValueBinding="{Binding Value}"
-                              FontSize="12"/>
-                </Grid>
-
-                <!-- Add/Remove Buttons -->
-                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
+                <!-- Add/Remove Buttons (a DCA is always a limit order, so no order type choice) -->
+                <StackPanel Orientation="Horizontal" Spacing="12">
                     <Button Content="Add DCA" 
                             Command="{Binding AddDcaCommand}"
                             Width="130"

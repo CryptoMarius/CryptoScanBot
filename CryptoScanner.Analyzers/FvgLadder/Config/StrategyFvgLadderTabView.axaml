@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
+             xmlns:vm="using:CryptoScanner.Analyzers.FvgLadder.Config"
+             xmlns:configviews="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyFvgLadderTabViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.FvgLadder.Config.StrategyFvgLadderTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
+                <TextBlock FontSize="13">
+                    <Run Text="FVGLADDER – FVG &amp; DCA (no stop-loss)" FontWeight="SemiBold"/>
+                    <Run Text=" — Buy limits on bullish gap tops above the day EMA200, DCA's on doubling sizes, take profit above break-even, several positions per coin" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                </TextBlock>
+            </StackPanel>
+            <!-- The interval box and the entry conditions are there for parity with the Photino tab;
+                 a zone strategy always runs on the minute candle, and the global entry conditions
+                 are not asked when stepping in (FvgLadderLong.AllowStepIn). -->
+            <WrapPanel>
+                <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyFvgLadderSettingsView DataContext="{Binding StrategyFvgLadderSettingsViewModel}" />
+                <configviews:IntervalView DataContext="{Binding IntervalViewModel}" />
+                <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

@@ -244,6 +244,8 @@
 
     @* Not derived from the positions like the charts above, but read from the AssetSnapshot table:
        the balances as they were on that day, so including what is still sitting in open positions. *@
+    @* Next to it a second, green line that IS built from the positions: the start capital plus the
+       profit of every closed position, see DashboardPositionService.RealizedData. *@
     <div class="dashboard-chart-box">
         <div class="chart-title">Capital per day (@AssetSnapshotTools.ReferenceCoin)</div>
         @if (PositionService.GrowthData.Count >= 2)
@@ -256,32 +258,42 @@
             // capital without anything having been earned, so the second line has it taken out again.
             decimal adjustment = growth[^1].Adjustment;
             bool hasAdjustments = growth.Any(d => d.Adjustment != 0);
+            // The capital as the closed positions built it up. The line above values the open
+            // positions at today's price as well, which is why it can drop on a day with nothing but
+            // winning trades; the gap between the two is what is still open.
+            var realized = PositionService.RealizedData;
+            bool hasRealized = realized.Count > 0;
+            decimal realizedValue = hasRealized ? realized[^1].Value : 0;
+            decimal realizedDifference = realizedValue - firstValue;
             <div class="chart-legend">
                 <span class="chart-legend-item">Start @firstValue.ToString("N2")</span>
-                <span class="chart-legend-item">@(growth[^1].IsNow ? "Now" : "Last") @lastValue.ToString("N2")</span>
-                <span class="chart-legend-item @ColorClassForValue(difference)">@(difference >= 0 ? "+" : "")@difference.ToString("N2")</span>
+                @if (hasRealized)
+                {
+                    <span class="chart-legend-item" title="Start plus the profit of every position closed since">
+                        <span class="chart-swatch chart-swatch-green"></span>Realized @realizedValue.ToString("N2")
+                        <span class="@ColorClassForValue(realizedDifference)">@(realizedDifference >= 0 ? "+" : "")@realizedDifference.ToString("N2")</span>
+                    </span>
+                    <span class="chart-legend-item" title="The balances, with the open positions at the current price">
+                        <span class="chart-swatch chart-swatch-blue"></span>@(growth[^1].IsNow ? "Now" : "Last") incl. open positions @lastValue.ToString("N2")
+                        <span class="@ColorClassForValue(difference)">@(difference >= 0 ? "+" : "")@difference.ToString("N2")</span>
+                    </span>
+                }
+                else
+                {
+                    <span class="chart-legend-item">@(growth[^1].IsNow ? "Now" : "Last") @lastValue.ToString("N2")</span>
+                    <span class="chart-legend-item @ColorClassForValue(difference)">@(difference >= 0 ? "+" : "")@difference.ToString("N2")</span>
+                }
                 @if (hasAdjustments)
                 {
-                    <span class="chart-legend-item"><span class="chart-swatch chart-swatch-blue"></span>Capital</span>
+                    @if (!hasRealized)
+                    {
+                        <span class="chart-legend-item"><span class="chart-swatch chart-swatch-blue"></span>Capital</span>
+                    }
                     <span class="chart-legend-item"><span class="chart-swatch chart-swatch-orange"></span>Without corrections @(lastValue - adjustment).ToString("N2")</span>
                     <span class="chart-legend-item">Booked by hand @(adjustment >= 0 ? "+" : "")@adjustment.ToString("N2")</span>
                 }
             </div>
-            @if (hasAdjustments)
-            {
-                @((MarkupString)RenderLineChart(growth, d => d.Date,
-                    [
-                        ("var(--blue, #4a9eff)", d => (double)d.Value),
-                        ("var(--orange, #ff9f43)", d => (double)d.ValueWithoutAdjustments),
-                    ]))
-            }
-            else
-            {
-                @((MarkupString)RenderLineChart(growth, d => d.Date,
-                    [
-                        ("var(--blue, #4a9eff)", d => (double)d.Value),
-                    ]))
-            }
+            @((MarkupString)RenderCapitalChart(growth, realized, hasAdjustments))
         }
         else
         {
@@ -472,6 +484,162 @@
         // First and last date label
         sb.Append($"<text x=\"{padLeft}\" y=\"{h - 4}\" font-size=\"9\" fill=\"var(--text-muted)\">{date(data[0]):dd-MM}</text>");
         sb.Append($"<text x=\"{w - 34}\" y=\"{h - 4}\" font-size=\"9\" fill=\"var(--text-muted)\">{date(data[^1]):dd-MM}</text>");
+
+        sb.Append("</svg>");
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// One point of <see cref="RenderTimeChart"/>, with an optional tooltip.
+    /// </summary>
+    private readonly record struct TimePoint(DateTime Date, double Value, string? Tip);
+
+    /// <summary>
+    /// One line of <see cref="RenderTimeChart"/>, its points in time order. A step line keeps its
+    /// value until the next point and only moves there, the way a balance changes when a position closes.
+    /// </summary>
+    private sealed record TimeSeries(string Color, bool Step, List<TimePoint> Points);
+
+    /// <summary>
+    /// The capital chart: the snapshots in blue (and in orange without the manual bookings, when there
+    /// are any) and the capital built from the closed positions in green, on one time axis.
+    /// </summary>
+    private static string RenderCapitalChart(List<AssetSnapshotTools.AssetSnapshotDay> growth,
+        List<RealizedCapitalPoint> realized, bool hasAdjustments)
+    {
+        List<TimeSeries> series =
+        [
+            new("var(--blue, #4a9eff)", false,
+                [.. growth.Select(d => new TimePoint(ToLocal(d.Date), (double)d.Value,
+                    $"{ToLocal(d.Date):dd-MM-yyyy HH:mm}\nIncl. open positions {d.Value:N2}"))]),
+        ];
+
+        if (hasAdjustments)
+        {
+            series.Add(new("var(--orange, #ff9f43)", false,
+                [.. growth.Select(d => new TimePoint(ToLocal(d.Date), (double)d.ValueWithoutAdjustments,
+                    $"{ToLocal(d.Date):dd-MM-yyyy HH:mm}\nWithout corrections {d.ValueWithoutAdjustments:N2}"))]));
+        }
+
+        // Last, so it is drawn on top: this is the line that follows the profit bars
+        if (realized.Count > 0)
+        {
+            series.Add(new("var(--green)", true,
+                [.. realized.Select(p => new TimePoint(ToLocal(p.Date), (double)p.Value,
+                    p.Symbol == "" ? null : $"{ToLocal(p.Date):dd-MM-yyyy HH:mm} {p.Symbol}\n{(p.Profit >= 0 ? "+" : "")}{p.Profit:N2} = {p.Value:N2}"))]));
+        }
+
+        return RenderTimeChart(series, (double)growth[0].Value);
+    }
+
+    /// <summary>
+    /// The snapshots and the positions are stored in UTC; the charts above group per local day.
+    /// </summary>
+    private static DateTime ToLocal(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime();
+
+    /// <summary>
+    /// Line chart as inline SVG on a real time axis, so lines with points at different moments - one
+    /// per closed position next to one per day - can share it. <see cref="RenderLineChart"/> spaces
+    /// its points evenly instead, which only works while every line has exactly one point per day.
+    /// </summary>
+    /// <param name="baseline">Value of a dashed horizontal line: the start capital, so a glance says
+    /// whether a line is above or below it (the Avalonia chart has the same line).</param>
+    private static string RenderTimeChart(List<TimeSeries> series, double baseline)
+    {
+        List<TimePoint> all = [.. series.SelectMany(s => s.Points)];
+        if (all.Count < 2)
+            return "<span class=\"text-muted\">Not enough data.</span>";
+
+        const int w = 420, h = 140, padLeft = 44, padBottom = 18, padTop = 8;
+        DateTime from = all.Min(p => p.Date);
+        DateTime to = all.Max(p => p.Date);
+        if (to <= from)
+            to = from.AddHours(1);
+        double min = Math.Min(baseline, all.Min(p => p.Value));
+        double max = Math.Max(baseline, all.Max(p => p.Value));
+        if (Math.Abs(max - min) < 0.0001)
+        {
+            max += 1;
+            min -= 1;
+        }
+
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
+        double plotW = w - padLeft;
+        double plotH = h - padBottom - padTop;
+
+        double X(DateTime d) => padLeft + (d - from).TotalSeconds / (to - from).TotalSeconds * plotW;
+        double Y(double v) => padTop + (max - v) / (max - min) * plotH;
+        string F(double v) => v.ToString("F1", ic);
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"<svg viewBox=\"0 0 {w} {h}\" xmlns=\"http://www.w3.org/2000/svg\" class=\"dashboard-line-chart\">");
+
+        // Horizontal grid + axis labels (3 lines), as in RenderLineChart
+        for (int g = 0; g <= 2; g++)
+        {
+            double value = min + (max - min) * g / 2.0;
+            double y = Y(value);
+            sb.Append($"<line x1=\"{padLeft}\" y1=\"{F(y)}\" x2=\"{w}\" y2=\"{F(y)}\" stroke=\"var(--text-muted)\" stroke-width=\"0.3\" opacity=\"0.4\"/>");
+            sb.Append($"<text x=\"2\" y=\"{F(y + 3)}\" font-size=\"9\" fill=\"var(--text-muted)\">{value.ToString("N2", ic)}</text>");
+        }
+
+        // A faint line on every midnight. The day number goes in the middle of the part of that day
+        // that is on the chart, like the labels under the bars; on a long range only every so many
+        // days get a line, and the number then sits on the line itself.
+        int dayStep = Math.Max(1, (int)Math.Ceiling((to - from).TotalDays / 10));
+        for (DateTime day = from.Date; day < to; day = day.AddDays(dayStep))
+        {
+            if (day > from)
+                sb.Append($"<line x1=\"{F(X(day))}\" y1=\"{padTop}\" x2=\"{F(X(day))}\" y2=\"{h - padBottom}\" stroke=\"var(--text-muted)\" stroke-width=\"0.3\" opacity=\"0.4\"/>");
+
+            double labelX;
+            if (dayStep == 1)
+            {
+                double x1 = X(day < from ? from : day);
+                double x2 = X(day.AddDays(1) > to ? to : day.AddDays(1));
+                // Too little of the day on the chart to carry its number without overlapping the next
+                if (x2 - x1 < 10)
+                    continue;
+                labelX = (x1 + x2) / 2;
+            }
+            else
+            {
+                if (day <= from)
+                    continue;
+                labelX = X(day);
+            }
+            sb.Append($"<text x=\"{F(labelX)}\" y=\"{h - 4}\" font-size=\"9\" text-anchor=\"middle\" fill=\"var(--text-muted)\">{day:dd}</text>");
+        }
+
+        double yBaseline = Y(baseline);
+        sb.Append($"<line x1=\"{padLeft}\" y1=\"{F(yBaseline)}\" x2=\"{w}\" y2=\"{F(yBaseline)}\" stroke=\"var(--text-muted)\" stroke-width=\"0.8\" stroke-dasharray=\"4,3\" opacity=\"0.8\"/>");
+
+        foreach (var s in series)
+        {
+            if (s.Points.Count == 0)
+                continue;
+
+            var points = new System.Text.StringBuilder();
+            double? previousY = null;
+            foreach (var p in s.Points)
+            {
+                double x = X(p.Date);
+                double y = Y(p.Value);
+                if (s.Step && previousY.HasValue)
+                    points.Append(F(x)).Append(',').Append(F(previousY.Value)).Append(' ');
+                points.Append(F(x)).Append(',').Append(F(y)).Append(' ');
+                previousY = y;
+            }
+            sb.Append($"<polyline fill=\"none\" stroke=\"{s.Color}\" stroke-width=\"1.4\" points=\"{points.ToString().TrimEnd()}\"/>");
+
+            // An invisible dot on every point with a tooltip, so hovering a step shows the position behind it
+            foreach (var p in s.Points)
+            {
+                if (p.Tip == null)
+                    continue;
+                sb.Append($"<circle cx=\"{F(X(p.Date))}\" cy=\"{F(Y(p.Value))}\" r=\"3\" fill=\"transparent\"><title>{System.Net.WebUtility.HtmlEncode(p.Tip)}</title></circle>");
+            }
+        }
 
         sb.Append("</svg>");
         return sb.ToString();

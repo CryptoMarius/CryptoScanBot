@@ -62,4 +62,11 @@ public interface IStrategyPlugin
 
     /// <summary>Optional settings UI tab for the config window.</summary>
     IConfigView? ConfigView => null;
+
+    /// <summary>
+    /// Forget whatever the plugin carries in memory from one candle to the next (a running average,
+    /// a cache per symbol). The emulator calls it at the start of every run, so a run never depends
+    /// on the one before it. A plugin without such state leaves it empty.
+    /// </summary>
+    void ResetRunState() { }
 }

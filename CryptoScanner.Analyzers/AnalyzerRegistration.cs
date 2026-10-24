@@ -24,6 +24,12 @@ public static class AnalyzerRegistration
 
         PluginManager.Register(new Dlz.DlzPlugin());
         PluginManager.Register(new Fvg.FvgPlugin());
+
+        // The FVG & DCA strategy for BTC (and the coins of its list): buy limits on gap tops, DCA's,
+        // take profit above break-even, no stop loss, several positions on one coin at once.
+        // Paper trading and the emulator only. The rules are in FvgLadder/FvgLadder.md.
+        PluginManager.Register(new FvgLadder.FvgLadderPlugin());
+
         PluginManager.Register(new Jump.JumpPlugin());
 
         PluginManager.Register(new Sbm.SbmPlugin());

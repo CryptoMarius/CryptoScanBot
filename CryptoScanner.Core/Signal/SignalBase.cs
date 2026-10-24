@@ -113,6 +113,12 @@ public class SignalCreateBase
     /// </summary>
     public virtual List<CryptoDcaEntry>? OverrideDcaList => null;
 
+    /// <summary>
+    /// True when this signal's position gets no DCA at all - neither a ladder of its own nor the
+    /// global Settings.Trading.DcaList. Stored as DcaLadder.None. Wins over OverrideDcaList.
+    /// </summary>
+    public virtual bool WithoutDca => false;
+
     public virtual int MacdRecoveryBarCount => 1;
 
     /// <summary>
@@ -135,6 +141,15 @@ public class SignalCreateBase
     /// </para>
     /// </summary>
     public virtual bool IsExitSignal() => false;
+
+    /// <summary>
+    /// Only for a strategy with a standing entry (StrategyRegistration.StandingEntry): whether the
+    /// entry order of this WAITING position has to come off the book, because the conditions it was
+    /// placed under no longer hold. Asked on every close of the position's own interval, with
+    /// CandleLast that candle. A yes cancels the order and closes the position as a timeout - nothing
+    /// was bought. Explain the reason in ExtraText, it goes into the log.
+    /// </summary>
+    public virtual bool WithdrawEntry(CryptoPosition position) => false;
 
 
     public virtual bool AdditionalChecks(MyData candle, out string response)

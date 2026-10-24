@@ -11,6 +11,15 @@ public class AlgorithmDefinition
 
     /// <summary>Fires on a zone touch (DLZ/FVG/SMC) — see StrategyRegistration.IsZoneStrategy.</summary>
     public bool IsZoneStrategy { get; set; }
+
+    /// <summary>Several positions per coin — see StrategyRegistration.ParallelPositions.</summary>
+    public bool ParallelPositions { get; set; }
+
+    /// <summary>A limit entry that waits until withdrawn — see StrategyRegistration.StandingEntry.</summary>
+    public bool StandingEntry { get; set; }
+
+    /// <summary>Never a stop loss of the global setting — see StrategyRegistration.WithoutStopLoss.</summary>
+    public bool WithoutStopLoss { get; set; }
 }
 
 public static class RegisterAlgorithms
@@ -43,6 +52,27 @@ public static class RegisterAlgorithms
     /// </summary>
     public static bool IsZoneStrategy(string? name)
         => name != null && GetAlgorithm(name, out AlgorithmDefinition? definition) && definition!.IsZoneStrategy;
+
+    /// <summary>
+    /// True when the strategy may hold several positions on one coin (StrategyRegistration.ParallelPositions).
+    /// Unknown strategies count as not, which keeps them at one position per coin.
+    /// </summary>
+    public static bool HasParallelPositions(string? name)
+        => name != null && GetAlgorithm(name, out AlgorithmDefinition? definition) && definition!.ParallelPositions;
+
+    /// <summary>
+    /// True when the strategy's entry waits on the book until it fills or is withdrawn
+    /// (StrategyRegistration.StandingEntry).
+    /// </summary>
+    public static bool HasStandingEntry(string? name)
+        => name != null && GetAlgorithm(name, out AlgorithmDefinition? definition) && definition!.StandingEntry;
+
+    /// <summary>
+    /// True when the global stop loss does not apply to the strategy's positions
+    /// (StrategyRegistration.WithoutStopLoss).
+    /// </summary>
+    public static bool HasNoStopLoss(string? name)
+        => name != null && GetAlgorithm(name, out AlgorithmDefinition? definition) && definition!.WithoutStopLoss;
 
 
     /// <summary>

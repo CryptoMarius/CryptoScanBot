@@ -1089,8 +1089,7 @@ public sealed class ReplayRunner
 
         var exchange = GlobalData.ActiveExchange!;
         bool descend = activeBaseInterval.Duration > 1
-            && exchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position)
-            && PositionMonitor.CandleCanMovePosition(position!, candle, closeTime);
+            && PositionTools.PositionsOf(exchange, symbol).Any(position => PositionMonitor.CandleCanMovePosition(position, candle, closeTime));
         if (descend)
             return null;
 
@@ -1129,8 +1128,7 @@ public sealed class ReplayRunner
         // trigger prices are those the position was left with.
         var exchange = GlobalData.ActiveExchange!;
         bool descend = activeBaseInterval.Duration > 1
-            && exchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position)
-            && PositionMonitor.CandleCanMovePosition(position!, candle, closeTime);
+            && PositionTools.PositionsOf(exchange, symbol).Any(position => PositionMonitor.CandleCanMovePosition(position, candle, closeTime));
 
         bool ordersHandledPerMinute = false;
         if (descend)
@@ -1233,6 +1231,10 @@ public sealed class ReplayRunner
 
         // The market RSI caches per quote: another run can replay the same hours with other coins
         MarketRsi.Reset();
+
+        // Whatever a strategy plugin carries from candle to candle (fvgladder: its day EMA per symbol)
+        foreach (var plugin in CryptoScanner.Core.Contracts.PluginManager.LoadedPlugins.Values.Distinct())
+            plugin.ResetRunState();
 
         // The same for the market state and the market move
         MarketState.Reset();

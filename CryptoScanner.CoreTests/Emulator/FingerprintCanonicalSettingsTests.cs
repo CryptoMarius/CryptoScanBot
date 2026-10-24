@@ -175,6 +175,30 @@ public class FingerprintCanonicalSettingsTests
 
 
     /// <summary>
+    /// A strategy registered under another name than its plugin still counts its plugin block:
+    /// storsi.multi reads the "storsi" block. Until 23-10-2026 that block was dropped as belonging to
+    /// a strategy the run does not use, so six storsi.multi runs that differed only in AddRsiAmount
+    /// were all taken for a repeat of the reference and not replayed.
+    /// </summary>
+    [TestMethod]
+    public void ChangedPluginSettingOfAStrategyWithAnotherName_ChangesTheChecksum()
+    {
+        TestBase.RegisterPlugin(new CryptoScanner.Analyzers.Storsi.StorsiPlugin());
+
+        var reference = JsonNode.Parse(JsonSerializer.Serialize(
+            new CryptoScanner.Core.Settings.Strategy.StoRsiSettings { AddRsiAmount = 8 }, JsonTools.JsonSerializerIndented))!.AsObject();
+        var changed = reference.DeepClone().AsObject();
+        changed[nameof(CryptoScanner.Core.Settings.Strategy.StoRsiSettings.AddRsiAmount)] = 5;
+
+        string a = Settings(s => { Runs(s, "storsi.multi"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["storsi"] = reference; });
+        string b = Settings(s => { Runs(s, "storsi.multi"); ((JsonObject)s["Signal"]!["AnalyzerSettings"]!)["storsi"] = changed; });
+
+        Assert.AreNotEqual(EmulatorRunFingerprint.Compute(Config, a),
+                           EmulatorRunFingerprint.Compute(Config, b));
+    }
+
+
+    /// <summary>
     /// The other half of the same rule: a setting of a strategy this run does NOT evaluate leaves the
     /// checksum alone. A dbr run is not a different measurement because candlepattern got a zone
     /// requirement - and on 03-09-2026 that class of difference replayed sixteen runs whose numbers

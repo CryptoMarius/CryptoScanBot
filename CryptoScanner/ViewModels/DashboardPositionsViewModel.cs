@@ -91,6 +91,24 @@ public partial class DashboardPositionsViewModel : ObservableObject
         public decimal Value { get; set; }
     }
 
+    /// <summary>
+    /// One point of the realized capital line, see <see cref="RealizedCapitalList"/>.
+    /// </summary>
+    public class RealizedCapitalPoint
+    {
+        /// <summary>When the position closed (UTC), or the start or end of the line.</summary>
+        public DateTime Date { get; set; }
+
+        /// <summary>The symbol of the position; empty for the start and end point.</summary>
+        public string Symbol { get; set; } = "";
+
+        /// <summary>The profit of that position.</summary>
+        public decimal Profit { get; set; }
+
+        /// <summary>The capital after that position: the start value plus every profit up to and including this one.</summary>
+        public decimal Value { get; set; }
+    }
+
     [ObservableProperty]
     private ObservableCollection<string> _quoteOptions = [];
 
@@ -183,6 +201,18 @@ public partial class DashboardPositionsViewModel : ObservableObject
         set => assetSnapshotDayList = value;
     }
 
+    // The capital as the closed positions built it up: the first day of AssetSnapshotDayList, then
+    // one point per position closed since, each one the previous plus the profit of that position,
+    // and a last point where AssetSnapshotDayList ends.
+    //
+    // The snapshots value the open positions at the price of that moment, so with many positions open
+    // that line follows the market more than the trading - on Binance Perpetual 24-10-2026 it stood
+    // 276 below what the closed positions had made, the virtual loss of the 39 that were still open.
+    // This line has only the realized part, so it rises by exactly the bars of "Profits per day". On a
+    // day without open positions both are equal (21-10: 100.107,32 against 100.107,33).
+    // Empty when the positions could not be read; the chart then leaves this line out.
+    private List<RealizedCapitalPoint> RealizedCapitalList = [];
+
     public DashboardPositionsViewModel()
     {
         RefreshCommand = new AsyncRelayCommand(RefreshInformationAsync);
@@ -244,6 +274,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         // Clear charts
         AssetSnapshotDayList.Clear();
+        RealizedCapitalList = [];
         ChartCapitalPerDay = null;
         ChartPositionsPerDay = null;
         ChartProfitsPerDay = null;
@@ -297,6 +328,14 @@ public partial class DashboardPositionsViewModel : ObservableObject
                 // AssetSnapshotTools.ReferenceCoin and therefore does not follow the quote above.
                 // The last point is the capital of right now, not the snapshot of 00:00 today.
                 AssetSnapshotDayList = AssetSnapshotTools.LoadDailyTotalsWithNow(GlobalData.ActiveExchange);
+                // The same capital built from the closed positions only, from the same starting point
+                // to the same end. In the coin the snapshots are valued in, so the profits of a second
+                // quote coin are left out instead of being added to a value in another coin.
+                if (AssetSnapshotDayList.Count > 0)
+                    RealizedCapitalList = GetQueryRealizedData(AssetSnapshotDayList[0].Date, AssetSnapshotDayList[0].Value,
+                        AssetSnapshotDayList[^1].Date, AssetSnapshotTools.ReferenceCoin);
+                else
+                    RealizedCapitalList = [];
                 DoAllCharts();
                 DoAdditionalData();
             });
@@ -443,7 +482,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         var series = new LineSeries
         {
-            Title = "Capital",
+            // The balances with the open positions at the price of that moment
+            Title = "Incl. open positions",
             Color = OxyColors.DodgerBlue,
             StrokeThickness = 2,
             MarkerType = MarkerType.Circle,
@@ -452,8 +492,10 @@ public partial class DashboardPositionsViewModel : ObservableObject
             TrackerFormatString = "{0}\n{2:dd-MM-yyyy HH:mm}\n{4:N2}",
         };
 
+        // In local time, like the per day charts and the realized line below. The snapshots are
+        // stored in UTC, so this puts a snapshot of 00:00 on the moment it was really taken.
         foreach (AssetSnapshotTools.AssetSnapshotDay day in AssetSnapshotDayList)
-            series.Points.Add(new DataPoint(DateTimeAxis.ToDouble(day.Date), (double)day.Value));
+            series.Points.Add(new DataPoint(DateTimeAxis.ToDouble(ToLocal(day.Date)), (double)day.Value));
 
         model.Series.Add(series);
 
@@ -472,9 +514,35 @@ public partial class DashboardPositionsViewModel : ObservableObject
             };
 
             foreach (AssetSnapshotTools.AssetSnapshotDay day in AssetSnapshotDayList)
-                withoutAdjustments.Points.Add(new DataPoint(DateTimeAxis.ToDouble(day.Date), (double)day.ValueWithoutAdjustments));
+                withoutAdjustments.Points.Add(new DataPoint(DateTimeAxis.ToDouble(ToLocal(day.Date)), (double)day.ValueWithoutAdjustments));
 
             model.Series.Add(withoutAdjustments);
+        }
+
+        // The capital as the closed positions built it up (see RealizedCapitalList). Steps, because
+        // the balance changes at the moment a position closes and stays put until the next one. Added
+        // last so it is drawn on top: this is the line that follows the profit bars.
+        if (RealizedCapitalList.Count > 0)
+        {
+            var realized = new StairStepSeries
+            {
+                Title = "Realized",
+                Color = OxyColors.LimeGreen,
+                StrokeThickness = 2,
+                ItemsSource = RealizedCapitalList,
+                Mapping = item =>
+                {
+                    var point = (RealizedCapitalPoint)item;
+                    return new DataPoint(DateTimeAxis.ToDouble(ToLocal(point.Date)), (double)point.Value);
+                },
+                // {Symbol} and {Profit} are read from the RealizedCapitalPoint under the cursor
+                TrackerFormatString = "{0}\n{2:dd-MM-yyyy HH:mm} {Symbol}\n{Profit:N2} = {4:N2}",
+            };
+            model.Series.Add(realized);
+        }
+
+        if (model.Series.Count > 1)
+        {
             model.Legends.Add(new Legend
             {
                 LegendPosition = LegendPosition.RightTop
@@ -495,6 +563,63 @@ public partial class DashboardPositionsViewModel : ObservableObject
         }
 
         return model;
+    }
+
+    /// <summary>
+    /// The snapshots and the positions are stored in UTC; the charts on this dashboard group per local day.
+    /// </summary>
+    private static DateTime ToLocal(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime();
+
+    /// <summary>
+    /// The points of <see cref="RealizedCapitalList"/>: <paramref name="startValue"/> on <paramref name="start"/>,
+    /// plus the profit of every position of <paramref name="quote"/> that closed after it.
+    /// </summary>
+    /// <remarks>
+    /// A snapshot only stores its day, not the moment it was taken, so a position that closed on the
+    /// first day before that moment is counted twice: once in the start value and once here. A series
+    /// normally starts when the scanner starts (or right after "Delete all positions"), when nothing
+    /// can have closed yet that day.
+    /// </remarks>
+    private static List<RealizedCapitalPoint> GetQueryRealizedData(DateTime start, decimal startValue, DateTime end, string quote)
+    {
+        List<RealizedCapitalPoint> points = [new RealizedCapitalPoint { Date = start, Value = startValue }];
+
+        try
+        {
+            // Same selection as the daily figures in GetQueryTradeData, per position instead of per day
+            StringBuilder builder = new();
+            builder.AppendLine("select position.CloseTime as Date, symbol.Name as Symbol, position.Profit as Profit");
+            builder.AppendLine("from Position");
+            builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
+            builder.AppendLine("where position.Invested > 0");
+            builder.AppendLine("and position.Status in (0,1,2,3)");
+            builder.AppendLine("and position.CloseTime is not null");
+            builder.AppendLine("and position.CloseTime >= @start");
+            builder.AppendLine("and symbol.quote = @quote");
+            builder.AppendLine("order by position.CloseTime");
+
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Open();
+
+            decimal value = startValue;
+            foreach (RealizedCapitalPoint point in databaseThread.Connection.Query<RealizedCapitalPoint>(builder.ToString(), new { start, quote }))
+            {
+                value += point.Profit;
+                point.Value = value;
+                points.Add(point);
+            }
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "DashboardPositionsViewModel.GetQueryRealizedData");
+            return [];
+        }
+
+        // Carried on to where the capital line ends (normally right now), so both lines stop together
+        if (end > points[^1].Date)
+            points.Add(new RealizedCapitalPoint { Date = end, Value = points[^1].Value });
+
+        return points;
     }
 
     private PlotModel CreateChartPositionsPerDay()

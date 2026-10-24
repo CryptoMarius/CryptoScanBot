@@ -156,14 +156,19 @@ public class SymbolTools
     }
 
 
-    public static bool CheckAvailableSlots(Model.CryptoExchange activeExchange, CryptoSymbol symbol, CryptoTradeSide side, out string reaction)
+    /// <param name="parallel">
+    /// True for a strategy with parallel positions (StrategyRegistration.ParallelPositions): the coin
+    /// may then hold more than one position, so only the long/short slots are counted. Each parallel
+    /// position takes a slot of its own there.
+    /// </param>
+    public static bool CheckAvailableSlots(Model.CryptoExchange activeExchange, CryptoSymbol symbol, CryptoTradeSide side, out string reaction, bool parallel = false)
     {
         //if (!CheckAvailableSlotsExchange(tradeAccount, GlobalData.Settings.Trading.SlotsMaximalExchange, out reaction))
         //    return false;
 
         //if (!CheckAvailableSlotsSymbol(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalSymbol, out reaction))
         //    return false;
-        if (!CheckAvailableSlotsSymbol(activeExchange, symbol, 1, out reaction))
+        if (!parallel && !CheckAvailableSlotsSymbol(activeExchange, symbol, 1, out reaction))
             return false;
 
         //if (!CheckAvailableSlotsBase(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalBase, out reaction))

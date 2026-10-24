@@ -13,8 +13,9 @@ public static class TradeHandler
     /// </summary>
     public static async Task HandleTradeAsync(CryptoSymbol symbol, CryptoOrderStatus orderStatus, CryptoOrder order)
     {
-        // Find the open position
-        if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
+        // Find the open position (the one the order belongs to: a coin can hold several parallel ones)
+        CryptoPosition? position = PositionTools.PositionOfOrder(GlobalData.ActiveExchange!, symbol, order.OrderId);
+        if (position != null)
         {
             // could also be done in ThreadDoubleCheckPosition
             if (!GlobalData.IsEmulatorMode && orderStatus.IsFilled() && GlobalData.Settings.General.SoundTradeNotification)

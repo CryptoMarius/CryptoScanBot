@@ -83,4 +83,22 @@ public class BarometerChartOverlayTests
         Assert.AreEqual(T(660), points[1].Time);
         Assert.AreEqual(T(840), points[2].Time);
     }
+
+
+    [TestMethod]
+    public void OnlyTheZeroToHundredFiguresGoIntoTheOscillatorPanel()
+    {
+        // arrange - every figure of the dashboard dropdown, by the label the dropdown stores
+        List<BarometerGraphValue> inOscillator = [];
+
+        // act
+        foreach (BarometerGraphValue value in Enum.GetValues<BarometerGraphValue>())
+        {
+            if (BarometerChartOverlay.BelongsInOscillatorPanel(BarometerCandleFields.GetName(value)))
+                inOscillator.Add(value);
+        }
+
+        // assert - the two that share the 0..100 scale of the RSI and the Stochastic, nothing else
+        CollectionAssert.AreEquivalent(new[] { BarometerGraphValue.MarketStateBreadth, BarometerGraphValue.MarketRsi }, inOscillator);
+    }
 }

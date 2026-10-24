@@ -199,7 +199,7 @@ public static class DelistedPositions
                 await positionMonitor.CheckThePosition(position);
 
             // A waiting entry was cancelled above and the position is gone already
-            if (position.CloseTime.HasValue || !exchange.Data.PositionList.ContainsKey(symbol.Name))
+            if (position.CloseTime.HasValue || !PositionTools.IsListed(exchange, position))
                 return;
 
             using PositionMonitor fillMonitor = new(symbol, fillCandle);

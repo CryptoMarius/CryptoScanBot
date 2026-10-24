@@ -72,6 +72,7 @@ These checks are configured in the STOBB settings and only apply when enabled:
 | `IncludeSoftSbm` | false | Additionally require SBM MA line conditions |
 | `IncludeSbmPercAndCrossing` | false | Additionally require SBM MA percentage distances and crossings |
 | `OnlyIfPreviousStobb` | false | Only fire when a previous STOBB signal occurred in the last 5–60 candles |
+| `MultiHigherTimeframes` | 3 | stobb.multi only: number of higher timeframes (above the signal interval) that must also match |
 
 ## Indicators used
 

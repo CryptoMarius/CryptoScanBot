@@ -27,8 +27,12 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _onlyIfPreviousStobb = false;
 
+    [ObservableProperty]
+    private int _multiHigherTimeframes = 3;
+
     public void LoadConfig(StobbSettings settings)
     {
+        MultiHigherTimeframes = settings.MultiHigherTimeframes;
         BbMinPercentage = settings.BBMinPercentage;
         BbMaxPercentage = settings.BBMaxPercentage;
         UseLowHigh = settings.UseLowHigh;
@@ -47,5 +51,6 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
         settings.IncludeSoftSbm = IncludeSbmMaLines;
         settings.IncludeSbmPercAndCrossing = IncludeSbmPercAndCrossing;
         settings.OnlyIfPreviousStobb = OnlyIfPreviousStobb;
+        settings.MultiHigherTimeframes = MultiHigherTimeframes;
     }
 }

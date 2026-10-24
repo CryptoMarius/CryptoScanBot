@@ -25,7 +25,7 @@ The BB width percentage must be within a configurable range. This is the same vo
 
 The conditions must hold across **4 out of 6 consecutive timeframes**, starting from the signal interval upward. The first (lowest) interval must always qualify.
 
-An important detail: on higher timeframes, the oversold/overbought thresholds are progressively **relaxed** (by −2 per step for both RSI and Stochastic). This is intentional — higher timeframes rarely reach the same extremes as lower ones, so the threshold is loosened to make the multi-TF check feasible.
+An important detail: on higher timeframes, the oversold/overbought thresholds are progressively **relaxed** (by −2 per step for both RSI and Stochastic). This is intentional — higher timeframes rarely reach the same extremes as lower ones, so the threshold is loosened to make the multi-TF check feasible. The step is the setting "Multi: relaxation per higher timeframe" (MultiCorrectionStep, default 2; 0 means every timeframe uses the same level).
 
 ### Give-up condition
 
@@ -66,6 +66,7 @@ Same as STOBB: the signal is abandoned when price crosses back past the SMA(20) 
 | `CheckBollingerBandsCondition` | false | Additionally require price to be near the BB edge |
 | `CheckMacdRecovery` | false | Reserved setting (not currently used in signal logic) |
 | `SkipFirstSignal` | false | Skip the first StoRsi and only signal on the second within 3 candles |
+| `MultiHigherTimeframes` | 3 | storsi.multi only: number of higher timeframes (above the signal interval) that must also match |
 
 ## Indicators used
 

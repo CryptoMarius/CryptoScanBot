@@ -12,14 +12,25 @@ using OxyPlot.Series;
 namespace CryptoScanner.Chart.ViewModels.Chart;
 
 /// <summary>
-/// The figure of the dashboard barometer graph as a line over the candles (see
-/// <see cref="BarometerChartOverlay"/>). It gets an axis of its own on the left, over the same height
-/// as the price axis, so the candles keep their own scale on the right.
+/// The figure of the dashboard barometer graph as a line in a sub panel (see
+/// <see cref="BarometerChartOverlay"/>). A figure of 0..100 goes into the oscillator panel beside the
+/// RSI and the Stochastic, any other figure into a panel of its own under the candles. The panels
+/// themselves are made by ChartWindowViewModel.AdjustPanels; this only draws the line into them.
 /// </summary>
 public static class BarometerOverlay
 {
-    /// <summary>Key of the left axis the line is drawn on.</summary>
+    /// <summary>Key of the axis of the barometer's own panel.</summary>
     public const string AxisKey = "barometer";
+
+    /// <summary>Key of the axis of the oscillator panel (Stoch / RSI).</summary>
+    public const string OscillatorAxisKey = "stoch";
+
+    /// <summary>Whether the figure chosen on the dashboard is drawn in the oscillator panel.</summary>
+    internal static bool InOscillatorPanel()
+    {
+        ApplicationStateService? state = GlobalData.GetService<ApplicationStateService>();
+        return BarometerChartOverlay.BelongsInOscillatorPanel(state?.BarometerGraphValue);
+    }
 
     internal static void Draw(PlotModel chart, List<CryptoCandle> candles, CryptoInterval interval, string quote,
         CandleTime minDate, CandleTime maxDate, string group)
@@ -33,12 +44,22 @@ public static class BarometerOverlay
         BarometerChartOverlay.Line? line = BarometerChartOverlay.Build(quote, state?.BarometerGraphValue,
             state?.BarometerInterval, opens, (int)interval.Duration);
         if (line == null || line.Points.Count == 0)
-        {
-            RemoveAxis(chart);
             return;
-        }
 
-        UpdateAxis(chart, line);
+        // The panel is there already (AdjustPanels runs before the drawers); without it there is
+        // nowhere to draw, and a series on a missing axis takes OxyPlot down
+        string axisKey = BarometerChartOverlay.BelongsInOscillatorPanel(state?.BarometerGraphValue) ? OscillatorAxisKey : AxisKey;
+        if (chart.Axes.FirstOrDefault(a => a.Key == axisKey) is not LinearAxis axis)
+            return;
+
+        // The own panel follows the figure: its name as the axis title, and a fixed range where the
+        // dashboard uses one. The oscillator panel keeps its 0..100 and its "Stoch / RSI" title.
+        if (axisKey == AxisKey)
+        {
+            axis.Title = line.Label;
+            axis.Minimum = line.Low ?? double.NaN;
+            axis.Maximum = line.High ?? double.NaN;
+        }
 
         var series = new LineSeries
         {
@@ -46,7 +67,7 @@ public static class BarometerOverlay
             Color = ChartStyleOxy.ColorFor(BarometerChartOverlay.OverlayKey, OxyColor.FromRgb(0xc9, 0xa2, 0x27)),
             StrokeThickness = ChartStyleOxy.ThicknessFor(BarometerChartOverlay.OverlayKey, 2),
             LineStyle = ChartStyleOxy.LineStyleFor(BarometerChartOverlay.OverlayKey, LineStyle.Solid),
-            YAxisKey = AxisKey,
+            YAxisKey = axisKey,
             Tag = group,
         };
         foreach ((CandleTime time, double value) in line.Points)
@@ -63,65 +84,9 @@ public static class BarometerOverlay
                 Color = ChartStyleOxy.ColorFor(referenceKey, OxyColor.FromAColor(150, OxyColor.FromRgb(0xc9, 0xa2, 0x27))),
                 StrokeThickness = ChartStyleOxy.ThicknessFor(referenceKey, 1),
                 LineStyle = ChartStyleOxy.LineStyleFor(referenceKey, LineStyle.Dash),
-                YAxisKey = AxisKey,
+                YAxisKey = axisKey,
                 Tag = group,
             });
         }
-    }
-
-
-    /// <summary>
-    /// The left axis, made when it is missing and otherwise brought up to date. It spans the same
-    /// height as the price axis; <see cref="AlignWithPrice"/> keeps it there when a sub panel is
-    /// switched on or off.
-    /// </summary>
-    private static void UpdateAxis(PlotModel chart, BarometerChartOverlay.Line line)
-    {
-        if (chart.Axes.FirstOrDefault(a => a.Key == AxisKey) is not LinearAxis axis)
-        {
-            axis = new LinearAxis
-            {
-                Key = AxisKey,
-                Position = AxisPosition.Left,
-                Font = Const.OxyFontName,
-                FontSize = Const.OxyFontSize,
-                TextColor = Const.ChartTextColor,
-                IsZoomEnabled = false,
-                IsPanEnabled = false,
-                TicklineColor = OxyColors.Gray,
-                TickStyle = TickStyle.Inside,
-                AxislineStyle = LineStyle.Solid,
-                AxislineColor = OxyColors.Gray,
-                AxislineThickness = 1,
-            };
-            chart.Axes.Add(axis);
-        }
-
-        axis.Title = line.Label;
-        // A figure with a fixed range on the dashboard keeps it here, otherwise the axis follows the data
-        axis.Minimum = line.Low ?? double.NaN;
-        axis.Maximum = line.High ?? double.NaN;
-        AlignWithPrice(chart);
-    }
-
-
-    /// <summary>Give the left axis the same height as the price axis, if both are there.</summary>
-    internal static void AlignWithPrice(PlotModel chart)
-    {
-        Axis? price = chart.Axes.FirstOrDefault(a => a.Key == "price");
-        Axis? axis = chart.Axes.FirstOrDefault(a => a.Key == AxisKey);
-        if (price == null || axis == null)
-            return;
-        axis.StartPosition = price.StartPosition;
-        axis.EndPosition = price.EndPosition;
-    }
-
-
-    /// <summary>Take the left axis away again; the series and the neutral line go by their group tag.</summary>
-    internal static void RemoveAxis(PlotModel chart)
-    {
-        Axis? axis = chart.Axes.FirstOrDefault(a => a.Key == AxisKey);
-        if (axis != null)
-            chart.Axes.Remove(axis);
     }
 }

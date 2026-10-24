@@ -151,6 +151,18 @@ public static class EmulatorRunFingerprint
                 foreach (string former in plugin.FormerStrategyNames)
                     active.Add(former);
             }
+
+            // The analyzer block is keyed by the PLUGIN name, and a plugin can register strategies
+            // under other names: storsi.multi belongs to the storsi plugin, stobb.multi to stobb.
+            // Without this the storsi block was dropped as inactive from every storsi.multi run, so
+            // runs that differed only in AddRsiAmount were taken for repeats and not replayed
+            // (R01..R06 on HyperLiquid Perpetual, 23-10-2026).
+            if (PluginManager.LoadedPlugins.TryGetValue(name, out IStrategyPlugin? owner))
+            {
+                active.Add(owner.StrategyName);
+                foreach (string former in owner.FormerStrategyNames)
+                    active.Add(former);
+            }
         }
         return active;
     }

@@ -1,6 +1,13 @@
 CryptoScanBot release historie:
 
 21-10-2026 2.6.8
+- Trader: Een strategie kan meerdere posities op dezelfde munt tegelijk hebben, elk met eigen instap, bijkopen en takeprofit; alleen bij papertrading, want Altrady houdt een positie per munt
+- Trader: Een strategie kan een instap-order laten staan tot hij vult, en kan zonder stop-loss werken
+- Nieuwe strategie fvgladder: koop-limieten op de bovenkant van bullish fair value gaps boven de EMA200 van de dag, bijkopen in verdubbelingen en een takeprofit 1% boven de break-evenprijs
+- Strategie stobb.multi en storsi.multi: Het aantal hogere intervallen dat moet meedoen en de versoepeling per interval zijn nu instelbaar
+- Zones: Nieuwe instelling om een fair value gap met gemengde candle-kleuren toe te staan, en de gaps worden ook voor de chart berekend
+- Chart: De barometer-lijn staat nu in een eigen paneel onder de koers, of naast de RSI als het cijfer van 0 tot 100 loopt
+- Chart: Het cijfer uit de barometer-grafiek van het dashboard is als lijn over de koers te leggen, op een eigen schaal links
 - Altrady: Een positie die via de takeprofit sluit krijgt geen sluit-opdracht meer; Altrady heeft zijn eigen takeprofit en verkocht anders tegen de marktprijs van dat moment
 - Altrady: De uitgerolde markten gaan met hun deployer naar de webhook, en een markt die Altrady niet heeft wordt wel gescand maar niet doorgegeven
 - Hyperliquid: Paragon staat voortaan gewoon aan, net als de andere uitgerolde markten

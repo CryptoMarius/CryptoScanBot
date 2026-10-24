@@ -12,7 +12,9 @@ public class ZoneFvg
     private static CryptoZone? ScanForLongFvg(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle prev2, CryptoCandle prev, CryptoCandle candle)
     {
         // 3 green candles in a row (only the strong fvg)..
-        if (candle.Close > candle.Open && prev.Close > prev.Open && prev2.Close > prev2.Open)
+        // unless any mix of colours is allowed (ZonesFvg.AllowMixedColours)
+        if (GlobalData.Settings.Signal.ZonesFvg.AllowMixedColours
+            || (candle.Close > candle.Open && prev.Close > prev.Open && prev2.Close > prev2.Open))
         {
             // with specific boundaries
             if (candle.Low > prev2.High && prev.Close > prev2.High)
@@ -47,7 +49,9 @@ public class ZoneFvg
     private static CryptoZone? ScanForShortFvg(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle prev2, CryptoCandle prev, CryptoCandle candle)
     {
         // 3 red candles in a row (only the strong fvg)..
-        if (candle.Open > candle.Close && prev.Open > prev.Close && prev2.Open > prev2.Close)
+        // unless any mix of colours is allowed (ZonesFvg.AllowMixedColours)
+        if (GlobalData.Settings.Signal.ZonesFvg.AllowMixedColours
+            || (candle.Open > candle.Close && prev.Open > prev.Close && prev2.Open > prev2.Close))
         {
             // with specific boundaries
             if (candle.High < prev2.Low && prev.Close < prev2.Low)
@@ -321,7 +325,7 @@ public class ZoneFvg
 
     private static void CreateFvgZones(CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate,
         CandleTime maxDate, CryptoSymbolInterval symbolIntervalData,
-        OrderedList<CryptoZone> longZones, OrderedList<CryptoZone> shortZones)
+        OrderedList<CryptoZone> longZones, OrderedList<CryptoZone> shortZones, bool active)
     {
 
         // Scan for long and short fvg (in memory)
@@ -346,7 +350,7 @@ public class ZoneFvg
         {
             if (prev2.OpenTime != 0 && prev.OpenTime != 0 && candle.OpenTime > minDate) // Need the last 3 candles
             {
-                if (SignalPrepare.ZoneFvgActive())
+                if (active)
                 {
                     // scan for long FVG
                     var zone = ScanForLongFvg(symbol, interval, prev2, prev, candle);
@@ -407,9 +411,9 @@ public class ZoneFvg
     /// </summary>
     private static void ProcessNewCandlesIncremental(CryptoSymbol symbol, CryptoInterval interval,
         CryptoSymbolInterval symbolIntervalData, CryptoSymbolIntervalZones zones,
-        CandleTime lastProcessed, CandleTime maxDate)
+        CandleTime lastProcessed, CandleTime maxDate, bool active)
     {
-        if (!SignalPrepare.ZoneFvgActive())
+        if (!active)
             return;
 
         // A gap needs three consecutive candles, so a missing one does not just skip a candle here -
@@ -462,10 +466,15 @@ public class ZoneFvg
     }
 
 
+    /// <param name="evenWithoutStrategy">
+    /// True for the chart: calculate the gaps also when no enabled strategy reads them, which is when
+    /// the scanner leaves them alone (SignalPrepare.ZoneFvgActive). Someone looking at them is reason enough.
+    /// </param>
     public static async Task CalculateZonesAsync(AddTextEvent? sender, CryptoSymbol symbol, CryptoInterval interval,
-        ZoneCandleWindows loadedCandlesInMemory)
+        ZoneCandleWindows loadedCandlesInMemory, bool evenWithoutStrategy = false)
     {
-        if (SignalPrepare.ZoneFvgActive())
+        bool active = evenWithoutStrategy || SignalPrepare.ZoneFvgActive();
+        if (active)
         {
             try
             {
@@ -482,7 +491,7 @@ public class ZoneFvg
                     // last call can contain a new gap. No DB diff needed — the live lists are already
                     // the authoritative state (see ZoneThreadCalculate's load-once guard).
                     ProcessNewCandlesIncremental(symbol, interval, symbolIntervalData, zones,
-                        symbolIntervalData.Fvg.ProcessedCandleMarker.Value, maxDate);
+                        symbolIntervalData.Fvg.ProcessedCandleMarker.Value, maxDate, active);
                 }
                 else
                 {
@@ -507,7 +516,7 @@ public class ZoneFvg
                     // Compute new zones into local lists (never visible to other threads)
                     OrderedList<CryptoZone> longZones = new(new CompareZoneDescending());
                     OrderedList<CryptoZone> shortZones = new(new CompareZoneAscending());
-                    CreateFvgZones(symbol, interval, minDate, maxDate, symbolIntervalData, longZones, shortZones);
+                    CreateFvgZones(symbol, interval, minDate, maxDate, symbolIntervalData, longZones, shortZones, active);
 
                     // Merge with DB state into a fresh object, then atomically replace the live reference.
                     // Other threads always see either the old complete object or the new complete one —

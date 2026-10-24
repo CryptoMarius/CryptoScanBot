@@ -56,6 +56,9 @@ public static class PluginManager
                 AnalyzeLongType = reg.AnalyzeLongType,
                 AnalyzeShortType = reg.AnalyzeShortType,
                 IsZoneStrategy = reg.IsZoneStrategy,
+                ParallelPositions = reg.ParallelPositions,
+                StandingEntry = reg.StandingEntry,
+                WithoutStopLoss = reg.WithoutStopLoss,
             });
 
             _plugins[reg.Name] = plugin;

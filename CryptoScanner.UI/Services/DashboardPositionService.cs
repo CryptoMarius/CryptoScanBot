@@ -53,6 +53,24 @@ public class DashboardPositionService
 
     /// <summary>Set once the snapshots could not be read, so the log gets one line and not one per refresh.</summary>
     private bool growthDataFailed;
+
+    /// <summary>
+    /// The capital as the closed positions built it up: the first day of <see cref="GrowthData"/>,
+    /// then one point per position closed since, each one the previous plus the profit of that
+    /// position, and a last point where <see cref="GrowthData"/> ends.
+    /// <para>
+    /// The snapshots value the open positions at the price of that moment, so with many positions
+    /// open the line of <see cref="GrowthData"/> follows the market more than the trading - on
+    /// Binance Perpetual 24-10-2026 it stood 276 below what the closed positions had made, the
+    /// virtual loss of the 39 that were still open. This line has only the realized part, so it rises
+    /// by exactly the bars of "Profits per day". On a day without open positions both are equal (21-10:
+    /// 100.107,32 against 100.107,33).
+    /// </para>
+    /// Empty when the positions could not be read; the chart then leaves this line out.
+    /// </summary>
+    public List<RealizedCapitalPoint> RealizedData { get; private set; } = [];
+
+
     public List<string> QuoteOptions { get; private set; } = ["USDT"];
 
     public event Action? DataChanged;
@@ -184,6 +202,66 @@ public class DashboardPositionService
     {
         // The last point is the capital of right now, not the snapshot of 00:00 today.
         growthData = AssetSnapshotTools.LoadDailyTotalsWithNow(GlobalData.ActiveExchange);
+
+        // The same capital built from the closed positions only, from the same starting point to the
+        // same end. In the coin the snapshots are valued in, so the profits of a second quote coin
+        // are left out instead of being added to a value in another coin.
+        if (growthData.Count > 0)
+            RealizedData = QueryRealizedData(growthData[0].Date, growthData[0].Value, growthData[^1].Date, AssetSnapshotTools.ReferenceCoin);
+        else
+            RealizedData = [];
+    }
+
+    /// <summary>
+    /// The points of <see cref="RealizedData"/>: <paramref name="startValue"/> on <paramref name="start"/>,
+    /// plus the profit of every position of <paramref name="quote"/> that closed after it.
+    /// </summary>
+    /// <remarks>
+    /// A snapshot only stores its day, not the moment it was taken, so a position that closed on the
+    /// first day before that moment is counted twice: once in the start value and once here. A series
+    /// normally starts when the scanner starts (or right after "Delete all positions"), when nothing
+    /// can have closed yet that day.
+    /// </remarks>
+    private static List<RealizedCapitalPoint> QueryRealizedData(DateTime start, decimal startValue, DateTime end, string quote)
+    {
+        List<RealizedCapitalPoint> points = [new RealizedCapitalPoint { Date = start, Value = startValue }];
+
+        try
+        {
+            // Same selection as the daily figures in QueryPositionData, per position instead of per day
+            StringBuilder builder = new();
+            builder.AppendLine("select position.CloseTime as Date, symbol.Name as Symbol, position.Profit as Profit");
+            builder.AppendLine("from Position");
+            builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
+            builder.AppendLine("where position.Invested > 0");
+            builder.AppendLine("and position.Status in (0,1,2,3)");
+            builder.AppendLine("and position.CloseTime is not null");
+            builder.AppendLine("and position.CloseTime >= @start");
+            builder.AppendLine("and symbol.quote = @quote");
+            builder.AppendLine("order by position.CloseTime");
+
+            using CryptoDatabase database = new();
+            database.Open();
+
+            decimal value = startValue;
+            foreach (var point in database.Connection.Query<RealizedCapitalPoint>(builder.ToString(), new { start, quote }))
+            {
+                value += point.Profit;
+                point.Value = value;
+                points.Add(point);
+            }
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "DashboardPositionService.QueryRealizedData");
+            return [];
+        }
+
+        // Carried on to where the capital line ends (normally right now), so both lines stop together
+        if (end > points[^1].Date)
+            points.Add(new RealizedCapitalPoint { Date = end, Value = points[^1].Value });
+
+        return points;
     }
 
     private static void QueryPositionData(string quote, out PositionStats openData, out PositionStats closedData, out List<DailyPositionData> dailyData)
@@ -309,4 +387,22 @@ public class DailyPositionData
     public double MinDuration { get; set; }
     public double AvgDuration { get; set; }
     public double MaxDuration { get; set; }
+}
+
+/// <summary>
+/// One point of the realized capital line, see <see cref="DashboardPositionService.RealizedData"/>.
+/// </summary>
+public class RealizedCapitalPoint
+{
+    /// <summary>When the position closed (UTC), or the start or end of the line.</summary>
+    public DateTime Date { get; set; }
+
+    /// <summary>The symbol of the position; empty for the start and end point.</summary>
+    public string Symbol { get; set; } = "";
+
+    /// <summary>The profit of that position.</summary>
+    public decimal Profit { get; set; }
+
+    /// <summary>The capital after that position: the start value plus every profit up to and including this one.</summary>
+    public decimal Value { get; set; }
 }

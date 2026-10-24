@@ -153,6 +153,64 @@ public class ZoneThreadCalculate
         }
     }
 
+
+    /// <summary>
+    /// Brings the DLZ and/or FVG zones of one symbol up to date for a chart that shows them. The
+    /// scanner leaves a zone kind alone when no enabled strategy reads it (SignalPrepare), and a chart
+    /// with the zones switched on would then only show whatever the database held. Uses the same
+    /// incremental cursors as the scanner, so after the first call it only looks at new candles.
+    /// <paramref name="force"/> is the chart's "Calculate" button: reset the cursors, a full rescan.
+    /// </summary>
+    public static async Task CalculateZonesForChartAsync(CryptoSymbol symbol, bool dlz, bool fvg, bool force)
+    {
+        if (!dlz && !fvg)
+            return;
+
+        ZoneCandleWindows loadedCandlesInMemory = symbol.Data.ZoneCandleWindows;
+        await symbol.Data.ZoneLock.WaitAsync();
+        try
+        {
+            // Same load-once guard as CalculateZones above
+            if (!symbol.Data.ZonesLoaded || symbol.Data.ZonesLoadedRunId != GlobalData.CurrentEmulatorRunId)
+            {
+                loadedCandlesInMemory.Clear();
+                ZoneDlz.LoadZonesForSymbol(symbol, GlobalData.CurrentEmulatorRunId);
+                symbol.Data.ZonesLoaded = true;
+                symbol.Data.ZonesLoadedRunId = GlobalData.CurrentEmulatorRunId;
+            }
+
+            if (force)
+                symbol.Data.ResetZoneCalculationCursors();
+
+            if (dlz)
+            {
+                foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+                {
+                    if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
+                        await ZoneDlz.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory);
+                }
+            }
+            if (fvg)
+            {
+                foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
+                {
+                    if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
+                        await ZoneFvg.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory, evenWithoutStrategy: true);
+                }
+            }
+
+            GlobalData.SendMvvmMessage(new ZonesCalculatedForSymbolMessage(symbol));
+        }
+        finally
+        {
+            // Same order as CalculateZones above: save before the prune
+            if (!GlobalData.IsEmulatorMode)
+                await ZoneCandleEngine.SaveCandleDataToDiskAsync(symbol, loadedCandlesInMemory);
+            await ZoneCandleEngine.CleanLoadedCandlesAsync(symbol);
+            symbol.Data.ZoneLock.Release();
+        }
+    }
+
     /// <summary>
     /// Synchronously processes everything currently in the queue and returns once it is empty.
     /// The live scanner runs <see cref="ExecuteAsync"/> on a background thread, but the emulator

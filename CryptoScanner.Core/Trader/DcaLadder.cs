@@ -17,6 +17,14 @@ namespace CryptoScanner.Core.Trader;
 /// </summary>
 public static class DcaLadder
 {
+    /// <summary>
+    /// The text of a ladder WITHOUT levels: the strategy wants no DCA at all, also not the ones of
+    /// Settings.Trading.DcaList (see SignalCreateBase.WithoutDca). Null text means something else:
+    /// no ladder of its own, so the global one applies.
+    /// </summary>
+    public const string None = "none";
+
+
     /// <summary>The ladder as text, null for no ladder (null or empty list).</summary>
     public static string? Format(IReadOnlyList<CryptoDcaEntry>? levels)
     {
@@ -36,11 +44,16 @@ public static class DcaLadder
     }
 
 
-    /// <summary>The ladder from its text, null when there is none or the text cannot be read.</summary>
+    /// <summary>
+    /// The ladder from its text, null when there is none or the text cannot be read, and an empty
+    /// list for <see cref="None"/> (no DCA at all).
+    /// </summary>
     public static List<CryptoDcaEntry>? Parse(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))
             return null;
+        if (text == None)
+            return [];
 
         List<CryptoDcaEntry> levels = [];
         foreach (string item in text.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))

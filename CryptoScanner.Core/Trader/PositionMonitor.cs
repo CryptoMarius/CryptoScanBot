@@ -469,6 +469,22 @@ public class PositionMonitor : IDisposable
                     // (kan aangeroepen worden op meerdere TF's)
                     //******************************************
 
+                    // A strategy with parallel positions keeps a book of its own on this coin
+                    if (RegisterAlgorithms.HasParallelPositions(signal.Strategy))
+                    {
+                        if (await TryOpenParallelPositionAsync(signal, symbolInterval, text))
+                            return;
+                        continue;
+                    }
+
+                    // And the ordinary strategies stay off a coin such a strategy holds positions on
+                    if (PositionTools.PositionsOf(GlobalData.ActiveExchange!, Symbol).Any(PositionTools.IsParallel))
+                    {
+                        GlobalData.AddTextToLogTab($"{text} the coin holds parallel positions of another strategy (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        continue;
+                    }
+
                     {
                         CryptoPosition? position = PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol);
 
@@ -513,316 +529,9 @@ public class PositionMonitor : IDisposable
 
                         if (position == null)
                         {
-                            if (GlobalData.Settings.Trading.DisableNewPositions)
-                            {
-                                reaction = "openen van nieuwe posities niet toegestaan";
-                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                Symbol.ClearSignals();
+                            if (await OpenNewPositionAsync(signal, symbolInterval, text, false))
                                 return;
-                            }
-
-
-                            // Controles die noodzakelijk zijn voor een entry
-                            // (inclusief de overhead van controles van de analyser)
-                            // Deze code alleen uitvoeren voor de entry (niet een dca bijkoop)
-
-                            // A market Altrady does not carry (Paragon, an X-Perp) is still scanned and
-                            // still signals, but the trader does not open a position on it when Altrady
-                            // executes: the webhook would refuse it and leave a position without a
-                            // counterpart (Altrady) or an error per signal (PaperTradingAndAltrady).
-                            if (ProfitLockCalculator.UsesAltrady(GlobalData.Settings.Trading.TradeVia) && !AltradyWebhook.CanDelegate(Symbol))
-                            {
-                                GlobalData.AddTextToLogTab(text + $" product {Symbol.Product} is not carried by Altrady (removed)");
-                                Symbol.ClearSignals();
-                                return;
-                            }
-
-                            // Is de barometer goed genoeg dat we willen traden?
-                            if (!TradingRules.CheckBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, signal.Side, LastCandle1m.OpenTime, 60, out reaction))
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                Symbol.ClearSignals();
-                                return;
-                            }
-
-                            // Staat op de whitelist (kan leeg zijn)
-                            if (!SymbolTools.CheckSymbolWhiteListOversold(Symbol, signal.Side, out reaction))
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                Symbol.ClearSignals();
-                                return;
-                            }
-
-                            // Staat niet in de blacklist
-                            if (!SymbolTools.CheckSymbolBlackListOversold(Symbol, signal.Side, out reaction))
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                Symbol.ClearSignals();
-                                return;
-                            }
-
-                            // Heeft de munt genoeg 24h volume
-                            if (!SymbolTools.CheckValidMinimalVolume(Symbol, LastCandle1m.OpenTime, BaseIntervalDuration, out reaction))
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                Symbol.ClearSignals();
-                                return;
-                            }
-
-                            // Heeft de munt een redelijke prijs
-                            if (!SymbolTools.CheckValidMinimalPrice(Symbol, out reaction))
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                Symbol.ClearSignals();
-                                return;
-                            }
-
-                            // Munten waarvan de ticksize perc nogal groot is (barcode charts)
-                            if (!SymbolTools.CheckMinimumTickPercentage(Symbol, out reaction))
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                Symbol.ClearSignals();
-                                return;
-                            }
-
-                            // Controle of bepaalde intervallen in een uptrend of in een downtrend zijn
-                            if (!PositionTools.ValidTrendConditions(signal.Symbol, signal.Interval, TrendType.Primary, TradingConfig.Trading[signal.Side].Trend, out reaction))
-                            {
-                                if (TradingConfig.Trading[signal.Side].TrendLog)
-                                    GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                symbolInterval.SignalList.Remove(signal);
-                                continue;
-                            }
-
-                            // Filter op de markettrend waarvan je wil dat die qua perc bullisch of bearisch zijn
-                            if (!PositionTools.ValidSymbolTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].SymbolTrend, out reaction))
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                symbolInterval.SignalList.Remove(signal);
-                                continue;
-                            }
-
-                            // Additional INTERSECT filter on the secondary market trend (lower-timeframe scope).
-                            // Allows catching divergences such as Primary +100 / Secondary -63 where the lower
-                            // timeframe has already rolled over.
-                            if (!PositionTools.ValidSymbolTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Trading[signal.Side].SymbolTrendSecondary, out reaction))
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                symbolInterval.SignalList.Remove(signal);
-                                continue;
-                            }
-
-                            // The market RSI band in which this side does not step in (reads every coin of the
-                            // quote, cached per minute, so after the cheap checks above)
-                            if (!PositionTools.ValidMarketRsiConditions(signal.Symbol, LastCandle1mCloseTime, TradingConfig.Trading[signal.Side], out reaction))
-                            {
-                                if (TradingConfig.Trading[signal.Side].MarketRsiLog)
-                                    GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                symbolInterval.SignalList.Remove(signal);
-                                continue;
-                            }
-
-                            // The entry filters of the market-regime study, same rule as the analyzer
-                            if (!EntryFilters.Valid(signal.Symbol, signal.Side, LastCandle1mCloseTime, TradingConfig.Trading[signal.Side], out reaction))
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                symbolInterval.SignalList.Remove(signal);
-                                continue;
-                            }
-
-                            // The market states in which this side steps in (reads every coin of the quote,
-                            // cached per hour)
-                            if (!PositionTools.ValidMarketStateConditions(signal.Symbol, LastCandle1mCloseTime, TradingConfig.Trading[signal.Side], out reaction))
-                            {
-                                if (TradingConfig.Trading[signal.Side].MarketStateLog)
-                                    GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                symbolInterval.SignalList.Remove(signal);
-                                continue;
-                            }
-
-                            // Alleen deze 2 ondersteunen we op dit moment (bool CanTrade introduceren ofzo)
-                            // Voorlopig alleen traden op Bybit Spot en Perpetual (alleen daar kan ik het testen)
-                            if (!GlobalData.ActiveExchange!.IsSupported)
-                            {
-                                GlobalData.AddTextToLogTab(text + $" trader not supported on {GlobalData.ActiveExchange.Name} (removed)");
-                                Symbol.ClearSignals();
-                                return;
-                            }
-
-
-                            // Locking omdat het aantal posities over de slot limits kunnen gaan
-                            // (er zijn x threads tegelijk met deze code aan de gang)
-                            await Semaphore.WaitAsync();
-                            try
-                            {
-                                // We willen 1 slot per symbol en x slots voor de long en shorts
-                                if (!SymbolTools.CheckAvailableSlots(GlobalData.ActiveExchange, Symbol, signal.Side, out reaction))
-                                {
-                                    GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-                                    Symbol.ClearSignals();
-                                    return;
-                                }
-
-                                // At most this many new positions on this side within an hour
-                                SettingsCompiled sideSettings = TradingConfig.Trading[signal.Side];
-                                if (sideSettings.EntryLimitActive
-                                    && EntryFilters.EntriesInLastHour(signal.Side, LastCandle1mCloseTimeDate) >= sideSettings.EntryLimitMaxPerHour)
-                                {
-                                    GlobalData.AddTextToLogTab($"{text} already {sideSettings.EntryLimitMaxPerHour} new {signal.Side} positions within the hour (removed)");
-                                    Symbol.ClearSignals();
-                                    return;
-                                }
-
-
-                                // GetSymbolData available assets from the exchange (as late as possible because of webcall)
-                                var resultFetchAssets = AssetTools.FetchAssets(GlobalData.ActiveExchange, true);
-                                if (!resultFetchAssets.success)
-                                {
-                                    GlobalData.AddTextToLogTab($"{text} {resultFetchAssets.reaction}");
-                                    Symbol.ClearSignals();
-                                    return;
-                                }
-
-                                // Enough stuff to take position? + entryAmount
-                                // reserveForDca: a new position commits the entry and every DCA level
-                                // behind it, because those are all placed as soon as the entry fills.
-                                var resultAvailableAssets = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange, Symbol, reserveForDca: true);
-                                if (!resultAvailableAssets.success)
-                                {
-                                    GlobalData.AddTextToLogTab($"{text} {resultAvailableAssets.reaction}");
-                                    Symbol.ClearSignals();
-                                    return;
-                                }
-                                var info = resultAvailableAssets.info; // short alias
-                                decimal entryQuote = resultAvailableAssets.entryQuoteAsset;
-
-                                // Check the assets, the symbol limits..
-
-                                // Bepaal het entry bedrag. Strategies that supplied an explicit entry
-                                // price (OverrideSignalPrice → signal.SignalPrice, e.g. vbs's band,
-                                // CHoCH/BOS break) enter at that level; otherwise at the current market price.
-                                decimal entryPrice = (signal.EntryPriceOverridden && signal.SignalPrice > 0
-                                    ? signal.SignalPrice
-                                    : Symbol.LastPrice.Value).ClampPrice(signal.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-                                decimal entryBase = entryQuote / entryPrice;
-                                entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
-                                entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
-
-                                // Its rounded towards zero
-                                if (entryBase <= 0)
-                                {
-                                    GlobalData.AddTextToLogTab(text + $" because of minimum quantity {Symbol.QuantityMinimum} and entry value {entryQuote} the buy is not possible");
-                                    Symbol.ClearSignals();
-                                    return;
-                                }
-
-                                // Below the minimum allowed value. Weighed on the quantity that is
-                                // actually going to be ordered and not on the amount that was meant to be
-                                // staked: the clamp above puts the quantity on the size grid, so a stake of
-                                // 12 on a symbol whose tick is a whole coin at a price of 9 leaves an order
-                                // worth 9 - which the exchange refuses while the stake itself was over the
-                                // minimum.
-                                //
-                                // This replaces a comparison against QuantityMinimum that stood here until
-                                // 31-08-2026. It caught the same case on most symbols by accident, because a
-                                // quantity that lands on the very first step of the grid is nearly always
-                                // worth less than the minimum order value anyway. Nearly: on a symbol where
-                                // one tick is already worth more than that minimum it refused a perfectly
-                                // legitimate order of exactly one tick. On HyperLiquid that is XAUT0, whose
-                                // tick of 0.01 is worth 44.62 against a minimum order value of 10, and TSLA
-                                // at 15.80.
-                                decimal entryValue = entryBase * entryPrice;
-                                if (Symbol.QuoteValueMinimum > 0 && entryValue < Symbol.QuoteValueMinimum)
-                                {
-                                    GlobalData.AddTextToLogTab(text + $" because of minimum value {entryValue} < {Symbol.QuoteValueMinimum} the buy is not possible (too little)");
-                                    Symbol.ClearSignals();
-                                    return;
-                                }
-
-                                // And the same question for every other order this position is going
-                                // to place: the DCA levels behind the entry and the exit orders that
-                                // have to get us back out again. All of it is decided here, because
-                                // the entry is the only moment at which refusing costs nothing.
-                                //
-                                // Before 31-08-2026 this was half answered afterwards, by the closing
-                                // check in TradeTools.CalculatePositionResultsViaOrders: it weighed
-                                // the remaining quantity against the minimum order value and closed
-                                // the position when it fell short. That reading cannot tell an entry
-                                // that was too small to begin with from a genuine unsellable
-                                // remainder, and on ZECUSDC.PERP it wrote off a whole position - 0.01
-                                // ZEC bought for 8.16 against a minimum order value of 10 - as a
-                                // total loss while every coin was still held. Straightening things
-                                // out afterwards is not the place to decide whether we should have
-                                // entered at all.
-                                if (!TradeTools.CheckOrderSetAgainstSymbolLimits(Symbol, signal.Side,
-                                    entryPrice, entryBase, signal.SlPercentage, out string limitReason, DcaLadder.Parse(signal.DcaLevels)))
-                                {
-                                    GlobalData.AddTextToLogTab(text + $" because {limitReason} the position is not opened");
-                                    Symbol.ClearSignals();
-                                    return;
-                                }
-
-                                // Enough money for the entry AND all of its DCA levels, weighed on
-                                // the entry value that is really going to be ordered. The check up in
-                                // CheckAvailableAssets asked this on the amount that was MEANT to be
-                                // staked, and putting the quantity onto the size grid has moved that
-                                // number since - in both directions.
-                                if (!AssetTools.CheckAssetsCoverEntryAndDca(GlobalData.ActiveExchange, Symbol,
-                                    entryValue, out string assetReason))
-                                {
-                                    GlobalData.AddTextToLogTab(text + $" not enough cash available {assetReason}");
-                                    Symbol.ClearSignals();
-                                    return;
-                                }
-
-                                if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading && GlobalData.ActiveExchange.TradingType == CryptoTradingType.Spot)
-                                {
-                                    if (info.QuoteFree == 0 || entryBase * entryPrice > info.QuoteTotal)
-                                    {
-                                        GlobalData.AddTextToLogTab($"{text} not enough assets available for trade entry {entryBase * entryPrice} > {info.QuoteTotal})");
-                                        Symbol.ClearSignals();
-                                        return;
-                                    }
-                                }
-
-
-                                // Create position + entry part
-                                position = PositionTools.CreatePosition(Symbol, signal.Strategy, signal.Side,
-                                    signal.EventText, symbolInterval, LastCandle1mCloseTimeDate);
-                                PositionTools.AddSignalProperties(position, signal);
-                                // Held back from the free balance until the entry order is on the book,
-                                // so a position created on another symbol in the meantime cannot spend it
-                                position.PlannedEntryAmount = entryValue;
-                                Database.Connection.Insert(position);
-                                PositionTools.AddPosition(position);
-                                EntryFilters.RecordEntry(signal.Side, LastCandle1mCloseTimeDate);
-                                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry,
-                                    signal.Interval, signal.Strategy, entryPrice, LastCandle1mCloseTimeDate);
-
-                                // Off-by-one diagnostic: compare the entry candle to the signal's trigger
-                                // candle. delayCandles == 1 means we entered at the trigger candle's close
-                                // (= next candle open, on time); == 2 means one candle too late.
-                                if (TraderTrace.TimingEnabled(Symbol))
-                                {
-                                    double delayCandles = signal.Interval.Duration > 0
-                                        ? (LastCandle1mCloseTimeDate - signal.OpenDate).TotalMinutes / signal.Interval.Duration
-                                        : 0;
-                                    TraderTrace.Timing(Symbol,
-                                        $"entry  {Symbol.Name} {signal.Interval.Name} {signal.Side} {signal.Strategy} " +
-                                        $"trigger.open={signal.OpenDate:yyyy-MM-dd HH:mm} trigger.close={signal.CloseDate:HH:mm} " +
-                                        $"entry={LastCandle1mCloseTimeDate:HH:mm} clock={GlobalData.Clock.UtcNow:HH:mm} " +
-                                        $"entryPrice={entryPrice} delayCandles={delayCandles:0.##}");
-                                }
-                            }
-                            finally
-                            {
-                                Semaphore.Release();
-                            }
-
-                            // Send the created position to the ViewModel
-                            GlobalData.SendMvvmMessage(new PositionIsCreatedMessage(position));
-                            GlobalData.PositionCreated?.Invoke(position);
-                            return;
+                            continue;
                         }
                         else
                         {
@@ -895,6 +604,371 @@ public class PositionMonitor : IDisposable
         }
     }
 
+
+    /// <summary>
+    /// Opens a new position on this signal, after every check an entry has to pass. Was the body of
+    /// the "no position yet" branch of <see cref="CreateOrExtendPositionAsync"/>; taken out unchanged
+    /// on 23-10-2026 so the parallel positions (<see cref="TryOpenParallelPositionAsync"/>) go through
+    /// exactly the same checks. Returns true when the caller has to stop looking at signals (the
+    /// position was opened, or a check removed all signals of the symbol), false when only this
+    /// signal was removed and the next one may be judged.
+    /// </summary>
+    /// <param name="parallel">The signal comes from a strategy with parallel positions: the coin may
+    /// already hold positions of it, so only the long/short slots are counted.</param>
+    private async Task<bool> OpenNewPositionAsync(CryptoSignal signal, CryptoSymbolInterval symbolInterval, string text, bool parallel)
+    {
+        string reaction;
+        CryptoPosition? position = null;
+
+        if (GlobalData.Settings.Trading.DisableNewPositions)
+        {
+            reaction = "openen van nieuwe posities niet toegestaan";
+            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            Symbol.ClearSignals();
+            return true;
+        }
+
+
+        // Controles die noodzakelijk zijn voor een entry
+        // (inclusief de overhead van controles van de analyser)
+        // Deze code alleen uitvoeren voor de entry (niet een dca bijkoop)
+
+        // A market Altrady does not carry (Paragon, an X-Perp) is still scanned and
+        // still signals, but the trader does not open a position on it when Altrady
+        // executes: the webhook would refuse it and leave a position without a
+        // counterpart (Altrady) or an error per signal (PaperTradingAndAltrady).
+        if (ProfitLockCalculator.UsesAltrady(GlobalData.Settings.Trading.TradeVia) && !AltradyWebhook.CanDelegate(Symbol))
+        {
+            GlobalData.AddTextToLogTab(text + $" product {Symbol.Product} is not carried by Altrady (removed)");
+            Symbol.ClearSignals();
+            return true;
+        }
+
+        // Is de barometer goed genoeg dat we willen traden?
+        if (!TradingRules.CheckBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, signal.Side, LastCandle1m.OpenTime, 60, out reaction))
+        {
+            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            Symbol.ClearSignals();
+            return true;
+        }
+
+        // Staat op de whitelist (kan leeg zijn)
+        if (!SymbolTools.CheckSymbolWhiteListOversold(Symbol, signal.Side, out reaction))
+        {
+            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            Symbol.ClearSignals();
+            return true;
+        }
+
+        // Staat niet in de blacklist
+        if (!SymbolTools.CheckSymbolBlackListOversold(Symbol, signal.Side, out reaction))
+        {
+            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            Symbol.ClearSignals();
+            return true;
+        }
+
+        // Heeft de munt genoeg 24h volume
+        if (!SymbolTools.CheckValidMinimalVolume(Symbol, LastCandle1m.OpenTime, BaseIntervalDuration, out reaction))
+        {
+            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            Symbol.ClearSignals();
+            return true;
+        }
+
+        // Heeft de munt een redelijke prijs
+        if (!SymbolTools.CheckValidMinimalPrice(Symbol, out reaction))
+        {
+            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            Symbol.ClearSignals();
+            return true;
+        }
+
+        // Munten waarvan de ticksize perc nogal groot is (barcode charts)
+        if (!SymbolTools.CheckMinimumTickPercentage(Symbol, out reaction))
+        {
+            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            Symbol.ClearSignals();
+            return true;
+        }
+
+        // Controle of bepaalde intervallen in een uptrend of in een downtrend zijn
+        if (!PositionTools.ValidTrendConditions(signal.Symbol, signal.Interval, TrendType.Primary, TradingConfig.Trading[signal.Side].Trend, out reaction))
+        {
+            if (TradingConfig.Trading[signal.Side].TrendLog)
+                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            symbolInterval.SignalList.Remove(signal);
+            return false;
+        }
+
+        // Filter op de markettrend waarvan je wil dat die qua perc bullisch of bearisch zijn
+        if (!PositionTools.ValidSymbolTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].SymbolTrend, out reaction))
+        {
+            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            symbolInterval.SignalList.Remove(signal);
+            return false;
+        }
+
+        // Additional INTERSECT filter on the secondary market trend (lower-timeframe scope).
+        // Allows catching divergences such as Primary +100 / Secondary -63 where the lower
+        // timeframe has already rolled over.
+        if (!PositionTools.ValidSymbolTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Trading[signal.Side].SymbolTrendSecondary, out reaction))
+        {
+            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            symbolInterval.SignalList.Remove(signal);
+            return false;
+        }
+
+        // The market RSI band in which this side does not step in (reads every coin of the
+        // quote, cached per minute, so after the cheap checks above)
+        if (!PositionTools.ValidMarketRsiConditions(signal.Symbol, LastCandle1mCloseTime, TradingConfig.Trading[signal.Side], out reaction))
+        {
+            if (TradingConfig.Trading[signal.Side].MarketRsiLog)
+                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            symbolInterval.SignalList.Remove(signal);
+            return false;
+        }
+
+        // The entry filters of the market-regime study, same rule as the analyzer
+        if (!EntryFilters.Valid(signal.Symbol, signal.Side, LastCandle1mCloseTime, TradingConfig.Trading[signal.Side], out reaction))
+        {
+            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            symbolInterval.SignalList.Remove(signal);
+            return false;
+        }
+
+        // The market states in which this side steps in (reads every coin of the quote,
+        // cached per hour)
+        if (!PositionTools.ValidMarketStateConditions(signal.Symbol, LastCandle1mCloseTime, TradingConfig.Trading[signal.Side], out reaction))
+        {
+            if (TradingConfig.Trading[signal.Side].MarketStateLog)
+                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+            symbolInterval.SignalList.Remove(signal);
+            return false;
+        }
+
+        // Alleen deze 2 ondersteunen we op dit moment (bool CanTrade introduceren ofzo)
+        // Voorlopig alleen traden op Bybit Spot en Perpetual (alleen daar kan ik het testen)
+        if (!GlobalData.ActiveExchange!.IsSupported)
+        {
+            GlobalData.AddTextToLogTab(text + $" trader not supported on {GlobalData.ActiveExchange.Name} (removed)");
+            Symbol.ClearSignals();
+            return true;
+        }
+
+
+        // Locking omdat het aantal posities over de slot limits kunnen gaan
+        // (er zijn x threads tegelijk met deze code aan de gang)
+        await Semaphore.WaitAsync();
+        try
+        {
+            // We willen 1 slot per symbol en x slots voor de long en shorts
+            if (!SymbolTools.CheckAvailableSlots(GlobalData.ActiveExchange, Symbol, signal.Side, out reaction, parallel))
+            {
+                GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
+                Symbol.ClearSignals();
+                return true;
+            }
+
+            // At most this many new positions on this side within an hour
+            SettingsCompiled sideSettings = TradingConfig.Trading[signal.Side];
+            if (sideSettings.EntryLimitActive
+                && EntryFilters.EntriesInLastHour(signal.Side, LastCandle1mCloseTimeDate) >= sideSettings.EntryLimitMaxPerHour)
+            {
+                GlobalData.AddTextToLogTab($"{text} already {sideSettings.EntryLimitMaxPerHour} new {signal.Side} positions within the hour (removed)");
+                Symbol.ClearSignals();
+                return true;
+            }
+
+
+            // GetSymbolData available assets from the exchange (as late as possible because of webcall)
+            var resultFetchAssets = AssetTools.FetchAssets(GlobalData.ActiveExchange, true);
+            if (!resultFetchAssets.success)
+            {
+                GlobalData.AddTextToLogTab($"{text} {resultFetchAssets.reaction}");
+                Symbol.ClearSignals();
+                return true;
+            }
+
+            // Enough stuff to take position? + entryAmount
+            // reserveForDca: a new position commits the entry and every DCA level
+            // behind it, because those are all placed as soon as the entry fills.
+            var resultAvailableAssets = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange, Symbol, reserveForDca: true);
+            if (!resultAvailableAssets.success)
+            {
+                GlobalData.AddTextToLogTab($"{text} {resultAvailableAssets.reaction}");
+                Symbol.ClearSignals();
+                return true;
+            }
+            var info = resultAvailableAssets.info; // short alias
+            decimal entryQuote = resultAvailableAssets.entryQuoteAsset;
+
+            // Check the assets, the symbol limits..
+
+            // Bepaal het entry bedrag. Strategies that supplied an explicit entry
+            // price (OverrideSignalPrice → signal.SignalPrice, e.g. vbs's band,
+            // CHoCH/BOS break) enter at that level; otherwise at the current market price.
+            decimal entryPrice = (signal.EntryPriceOverridden && signal.SignalPrice > 0
+                ? signal.SignalPrice
+                : Symbol.LastPrice.Value).ClampPrice(signal.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+            decimal entryBase = entryQuote / entryPrice;
+            entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
+            entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
+
+            // Its rounded towards zero
+            if (entryBase <= 0)
+            {
+                GlobalData.AddTextToLogTab(text + $" because of minimum quantity {Symbol.QuantityMinimum} and entry value {entryQuote} the buy is not possible");
+                Symbol.ClearSignals();
+                return true;
+            }
+
+            // Below the minimum allowed value. Weighed on the quantity that is
+            // actually going to be ordered and not on the amount that was meant to be
+            // staked: the clamp above puts the quantity on the size grid, so a stake of
+            // 12 on a symbol whose tick is a whole coin at a price of 9 leaves an order
+            // worth 9 - which the exchange refuses while the stake itself was over the
+            // minimum.
+            //
+            // This replaces a comparison against QuantityMinimum that stood here until
+            // 31-08-2026. It caught the same case on most symbols by accident, because a
+            // quantity that lands on the very first step of the grid is nearly always
+            // worth less than the minimum order value anyway. Nearly: on a symbol where
+            // one tick is already worth more than that minimum it refused a perfectly
+            // legitimate order of exactly one tick. On HyperLiquid that is XAUT0, whose
+            // tick of 0.01 is worth 44.62 against a minimum order value of 10, and TSLA
+            // at 15.80.
+            decimal entryValue = entryBase * entryPrice;
+            if (Symbol.QuoteValueMinimum > 0 && entryValue < Symbol.QuoteValueMinimum)
+            {
+                GlobalData.AddTextToLogTab(text + $" because of minimum value {entryValue} < {Symbol.QuoteValueMinimum} the buy is not possible (too little)");
+                Symbol.ClearSignals();
+                return true;
+            }
+
+            // And the same question for every other order this position is going
+            // to place: the DCA levels behind the entry and the exit orders that
+            // have to get us back out again. All of it is decided here, because
+            // the entry is the only moment at which refusing costs nothing.
+            //
+            // Before 31-08-2026 this was half answered afterwards, by the closing
+            // check in TradeTools.CalculatePositionResultsViaOrders: it weighed
+            // the remaining quantity against the minimum order value and closed
+            // the position when it fell short. That reading cannot tell an entry
+            // that was too small to begin with from a genuine unsellable
+            // remainder, and on ZECUSDC.PERP it wrote off a whole position - 0.01
+            // ZEC bought for 8.16 against a minimum order value of 10 - as a
+            // total loss while every coin was still held. Straightening things
+            // out afterwards is not the place to decide whether we should have
+            // entered at all.
+            if (!TradeTools.CheckOrderSetAgainstSymbolLimits(Symbol, signal.Side,
+                entryPrice, entryBase, signal.SlPercentage, out string limitReason, DcaLadder.Parse(signal.DcaLevels)))
+            {
+                GlobalData.AddTextToLogTab(text + $" because {limitReason} the position is not opened");
+                Symbol.ClearSignals();
+                return true;
+            }
+
+            // Enough money for the entry AND all of its DCA levels, weighed on
+            // the entry value that is really going to be ordered. The check up in
+            // CheckAvailableAssets asked this on the amount that was MEANT to be
+            // staked, and putting the quantity onto the size grid has moved that
+            // number since - in both directions.
+            if (!AssetTools.CheckAssetsCoverEntryAndDca(GlobalData.ActiveExchange, Symbol,
+                entryValue, out string assetReason))
+            {
+                GlobalData.AddTextToLogTab(text + $" not enough cash available {assetReason}");
+                Symbol.ClearSignals();
+                return true;
+            }
+
+            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading && GlobalData.ActiveExchange.TradingType == CryptoTradingType.Spot)
+            {
+                if (info.QuoteFree == 0 || entryBase * entryPrice > info.QuoteTotal)
+                {
+                    GlobalData.AddTextToLogTab($"{text} not enough assets available for trade entry {entryBase * entryPrice} > {info.QuoteTotal})");
+                    Symbol.ClearSignals();
+                    return true;
+                }
+            }
+
+
+            // Create position + entry part
+            position = PositionTools.CreatePosition(Symbol, signal.Strategy, signal.Side,
+                signal.EventText, symbolInterval, LastCandle1mCloseTimeDate);
+            PositionTools.AddSignalProperties(position, signal);
+            // Held back from the free balance until the entry order is on the book,
+            // so a position created on another symbol in the meantime cannot spend it
+            position.PlannedEntryAmount = entryValue;
+            Database.Connection.Insert(position);
+            PositionTools.AddPosition(position);
+            EntryFilters.RecordEntry(signal.Side, LastCandle1mCloseTimeDate);
+            PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry,
+                signal.Interval, signal.Strategy, entryPrice, LastCandle1mCloseTimeDate);
+
+            // Off-by-one diagnostic: compare the entry candle to the signal's trigger
+            // candle. delayCandles == 1 means we entered at the trigger candle's close
+            // (= next candle open, on time); == 2 means one candle too late.
+            if (TraderTrace.TimingEnabled(Symbol))
+            {
+                double delayCandles = signal.Interval.Duration > 0
+                    ? (LastCandle1mCloseTimeDate - signal.OpenDate).TotalMinutes / signal.Interval.Duration
+                    : 0;
+                TraderTrace.Timing(Symbol,
+                    $"entry  {Symbol.Name} {signal.Interval.Name} {signal.Side} {signal.Strategy} " +
+                    $"trigger.open={signal.OpenDate:yyyy-MM-dd HH:mm} trigger.close={signal.CloseDate:HH:mm} " +
+                    $"entry={LastCandle1mCloseTimeDate:HH:mm} clock={GlobalData.Clock.UtcNow:HH:mm} " +
+                    $"entryPrice={entryPrice} delayCandles={delayCandles:0.##}");
+            }
+        }
+        finally
+        {
+            Semaphore.Release();
+        }
+
+        // Send the created position to the ViewModel
+        GlobalData.SendMvvmMessage(new PositionIsCreatedMessage(position!));
+        GlobalData.PositionCreated?.Invoke(position!);
+        return true;
+    }
+
+
+    /// <summary>
+    /// A signal of a strategy with parallel positions (StrategyRegistration.ParallelPositions). Such
+    /// a signal never adds to a position that is already open: it opens a position of its own next
+    /// to the ones the strategy holds on this coin, with its own entry, DCA's and take profit. The
+    /// strategy decides in its signal whether another position is wanted; this only guards what the
+    /// trader cannot leave to it. Same return value as <see cref="OpenNewPositionAsync"/>.
+    /// </summary>
+    private async Task<bool> TryOpenParallelPositionAsync(CryptoSignal signal, CryptoSymbolInterval symbolInterval, string text)
+    {
+        // Altrady and the exchange know one position per coin, so several of them can only be
+        // administered by the paper trader (and so the emulator)
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.PaperTrade)
+        {
+            GlobalData.AddTextToLogTab($"{text} {signal.Strategy} holds parallel positions, which is only possible with paper trading (removed)");
+            Symbol.ClearSignals();
+            return true;
+        }
+
+        // Never next to a position of an ordinary strategy on the same coin
+        if (PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol) != null)
+        {
+            GlobalData.AddTextToLogTab($"{text} {signal.Strategy} not next to the open position of another strategy (removed)");
+            symbolInterval.SignalList.Remove(signal);
+            return false;
+        }
+
+        bool stop = await OpenNewPositionAsync(signal, symbolInterval, text, true);
+
+        // The signal is used up once it has been judged. An ordinary strategy can leave it in the
+        // list, because its next candle finds the position under the symbol name and goes the DCA
+        // way; here nothing does, so a signal left behind opened a position of its own on every
+        // candle until it expired (run 593: five positions on the same gap top within five minutes).
+        // The strategy signals again on the next candle if it still wants an entry.
+        symbolInterval.SignalList.Remove(signal);
+        return stop;
+    }
 
 
     /// <summary>
@@ -1018,7 +1092,8 @@ public class PositionMonitor : IDisposable
     internal static bool NeedsAttentionRegardlessOfPrice(CryptoPosition position, CandleTime closeTime)
         => IsPastMaxDuration(position, closeTime.ToDateTime())
         || KeltnerPsarStepDue(position, closeTime)
-        || position.ExitRequested;
+        || position.ExitRequested
+        || position.EntryWithdrawn;
 
 
     /// <summary>
@@ -1070,6 +1145,51 @@ public class PositionMonitor : IDisposable
         position.ForceCheckPosition = true;
         GlobalData.AddTextToLogTab($"{Symbol.Name} {position.SideText} position {position.Id} exit requested by {position.Strategy}: {algorithm.ExtraText}");
     }
+
+    /// <summary>
+    /// Asks the strategy of a WAITING position with a standing entry (StrategyRegistration.StandingEntry)
+    /// whether the entry order may stay on the book (SignalCreateBase.WithdrawEntry), on the close of
+    /// a candle of the position's own interval. A no sets EntryWithdrawn, after which
+    /// CancelOrdersIfClosedOrTimeoutOrReposition cancels the order and closes the position as a timeout.
+    /// </summary>
+    private void CheckEntryWithdrawal(CryptoPosition position)
+    {
+        if (position.EntryWithdrawn || position.ExitRequested || position.CloseTime.HasValue)
+            return;
+        if (position.Status != CryptoPositionStatus.Waiting || !RegisterAlgorithms.HasStandingEntry(position.Strategy))
+            return;
+
+        CryptoInterval? interval = position.Interval;
+        if (interval == null)
+            return;
+
+        // Only on the close of a candle of the position's interval, the rhythm the entry was made in.
+        if (LastCandle1mCloseTime % interval.Duration != 0)
+            return;
+
+        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(position.Side, position.Strategy);
+        if (algorithm == null)
+            return;
+
+        // The candle that just closed on that interval, with its indicators.
+        CandleTime openTime = LastCandle1mCloseTime - interval.Duration;
+        var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, interval, openTime, interval.IntervalPeriod);
+        if (!result.success || result.candle == null)
+            return;
+
+        algorithm.Symbol = Symbol;
+        algorithm.Interval = interval;
+        algorithm.SymbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
+        algorithm.CandleLast = result.candle;
+
+        if (!algorithm.WithdrawEntry(position))
+            return;
+
+        position.EntryWithdrawn = true;
+        position.ForceCheckPosition = true;
+        GlobalData.AddTextToLogTab($"{Symbol.Name} {position.SideText} position {position.Id} entry withdrawn by {position.Strategy}: {algorithm.ExtraText}");
+    }
+
 
     /// <summary>
     /// Closes the position when the whole market of the quote moved Trading.{Side}.MarketExit
@@ -1197,7 +1317,8 @@ public class PositionMonitor : IDisposable
             // The global stop lies this far beyond the farthest DCA, measured from the entry like Altrady
             DeepestDcaPercentage = extremeDcaPrice.HasValue
                 ? StopLossCalculator.DeepestDcaPercentage(TradeTools.EffectiveDcaList(position), position.SlPercentage) : null,
-            GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
+            // A strategy without a stop loss (StrategyRegistration.WithoutStopLoss) is not given the global one
+            GlobalStopLossPercentage = RegisterAlgorithms.HasNoStopLoss(position.Strategy) ? 0m : GlobalData.Settings.Trading.StopLossPercentage,
             GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
         };
         var result = StopLossCalculator.Calculate(input);
@@ -1645,8 +1766,9 @@ public class PositionMonitor : IDisposable
             switch (orderType)
             {
                 case CryptoOrderType.Limit:
+                    // A standing entry sits on the strategy's own price, without the offset
                     entryPrice = CorrectBuyOrDcaPrice(position, LimitEntryPrice(position.Side, part.SignalPrice,
-                        GlobalData.Settings.Trading.EntryLimitOffsetPercentage)
+                        RegisterAlgorithms.HasStandingEntry(position.Strategy) ? 0m : GlobalData.Settings.Trading.EntryLimitOffsetPercentage)
                         .ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize));
                     break;
                 case CryptoOrderType.Market:
@@ -2212,11 +2334,21 @@ public class PositionMonitor : IDisposable
                             cancelReason = "cancelling because the strategy withdrew the entry";
                         }
 
+                        // A standing entry the strategy took off the book (WithdrawEntry): the same way out
+                        else if (position.EntryWithdrawn && part.Purpose == CryptoPartPurpose.Entry && step.Trailing == CryptoTrailing.None)
+                        {
+                            timeOut = true;
+                            newStatus = CryptoOrderStatus.Timeout;
+                            cancelReason = "cancelling because the strategy withdrew the entry";
+                        }
+
                         // Een eventuele aan- of bijkoop kan worden geannuleerd indien de instap te lang duurt ("Remove Time")
                         // (een toekomstige gereserveerde DCA buy orders of actieve trailing orders moeten we niet annuleren)
                         // Verwijder openstaande buy orders die niet gevuld worden binnen zoveel X minuten/candles?
                         // En dan mag eventueel de positie gesloten worden (indien het uit 1 deelpositie bestaat)
-                        else if (part.Purpose == CryptoPartPurpose.Entry && step.Trailing == CryptoTrailing.None)
+                        // A standing entry has no time limit: it stays until it fills or the strategy withdraws it
+                        else if (part.Purpose == CryptoPartPurpose.Entry && step.Trailing == CryptoTrailing.None
+                            && !RegisterAlgorithms.HasStandingEntry(position.Strategy))
                         {
                             // Is de order ouder dan X minuten dan deze verwijderen
                             CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(part.Interval!.IntervalPeriod);
@@ -2452,8 +2584,10 @@ public class PositionMonitor : IDisposable
             if (!part.CloseTime.HasValue && part.Purpose != CryptoPartPurpose.TakeProfit)
             {
                 // Prepare checks if we have a valid candle in the interval (from the part or position)
+                // A standing entry is a limit order on the signal price by definition (StrategyRegistration.StandingEntry)
                 if (!PauseBecauseOfTradingRules && part.Purpose == CryptoPartPurpose.Entry)
-                    await HandleEntryPart(position, part, GlobalData.Settings.Trading.EntryOrderType);
+                    await HandleEntryPart(position, part, RegisterAlgorithms.HasStandingEntry(position.Strategy)
+                        ? CryptoOrderType.Limit : GlobalData.Settings.Trading.EntryOrderType);
 
                 // Check DCA - always allowed, even during a TradingRules pause (averaging into an
                 // existing position is not gated by the market-wide pause, see CheckThePosition)
@@ -2896,7 +3030,9 @@ public class PositionMonitor : IDisposable
         if (candle.High >= position.TriggerPriceTop.Value || candle.Low <= position.TriggerPriceBottom.Value)
             return true;
 
-        if (position.Status == CryptoPositionStatus.Waiting && position.Interval != null)
+        // (a standing entry has no time limit, see StrategyRegistration.StandingEntry)
+        if (position.Status == CryptoPositionStatus.Waiting && position.Interval != null
+            && !RegisterAlgorithms.HasStandingEntry(position.Strategy))
         {
             DateTime timeoutAt = position.CreateTime.AddMinutes(
                 GlobalData.Settings.Trading.EntryRemoveTime * position.Interval.Duration);
@@ -2919,6 +3055,10 @@ public class PositionMonitor : IDisposable
         if (position.ExitRequested)
             return true;
 
+        // And for a standing entry the strategy withdrew
+        if (position.EntryWithdrawn)
+            return true;
+
         return false;
     }
 
@@ -2936,15 +3076,15 @@ public class PositionMonitor : IDisposable
     public async Task ProcessOrdersAsync()
     {
         var exchange = GlobalData.ActiveExchange!;
-        if (!exchange.Data.PositionList.ContainsKey(Symbol.Name))
+        if (!PositionTools.HasAnyPosition(exchange, Symbol))
             return;
 
         if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
             await PaperTrading.PaperTradingCheckOrders(Database, exchange, Symbol, LastCandle1m, BaseIntervalDuration);
 
         // Re-lookup: the fill cascade may have closed or replaced the position.
-        if (exchange.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))
-            await GlobalData.ThreadCheckPosition!.AddToQueue(position!);
+        foreach (CryptoPosition position in PositionTools.PositionsOf(exchange, Symbol))
+            await GlobalData.ThreadCheckPosition!.AddToQueue(position);
     }
 
 
@@ -2960,6 +3100,8 @@ public class PositionMonitor : IDisposable
     // or failed, in which case the original single method did nothing more either.
     private bool tradeStepWanted;
     private bool canSkipPositionProcessing;
+    // The positions of the coin whose order handling this candle can skip (see PrepareCandleAsync)
+    private readonly HashSet<CryptoPosition> skippablePositions = [];
     private bool skipSignals;
     private long profPrepareStart;
     private long profExecuteStart;
@@ -3011,7 +3153,12 @@ public class PositionMonitor : IDisposable
             // Single lookup: reused for the signal skip and the trigger-price check below.
             CryptoPosition? existingPosition = null;
             bool hasPosition = GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out existingPosition);
-            if (!hasPosition)
+            // Every position on the coin: the ordinary one above first, then the parallel ones of a
+            // strategy that may hold several (see PositionTools.PositionListKey). For an ordinary
+            // strategy this is the one position above or nothing, and everything below that loops
+            // over it does exactly what it did for that single position.
+            List<CryptoPosition> positions = PositionTools.PositionsOf(GlobalData.ActiveExchange!, Symbol);
+            if (positions.Count == 0)
             {
                 // Is the Symbol a new one?
                 if (!SymbolTools.CheckNewCoin(Symbol, out string response))
@@ -3062,52 +3209,62 @@ public class PositionMonitor : IDisposable
 
             // The strategy's own way out, asked on every close of the position's interval. Before the
             // skip decision below, because a requested exit has to force the position through it.
-            if (hasPosition)
-                CheckStrategyExit(existingPosition!);
+            foreach (CryptoPosition position in positions)
+                CheckStrategyExit(position);
 
             // The same door when the whole market turned against the position since its entry
-            if (hasPosition)
-                CheckMarketExit(existingPosition!);
+            foreach (CryptoPosition position in positions)
+                CheckMarketExit(position);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
 
             // When a position exists and the candle stays inside the known TP/SL/DCA
             // boundaries, order simulation and position processing can be skipped entirely.
             canSkipPositionProcessing = false;
-            if (hasPosition)
+            skippablePositions.Clear();
+            foreach (CryptoPosition position in positions)
             {
+                bool canSkipThisPosition = false;
                 Interlocked.Increment(ref PipelineProfiler.SkipHasPosition);
-                if (existingPosition!.TriggerPriceTop == null || existingPosition.TriggerPriceBottom == null)
+                if (position.TriggerPriceTop == null || position.TriggerPriceBottom == null)
                     Interlocked.Increment(ref PipelineProfiler.SkipTriggersNull);
-                else if (existingPosition.ForceCheckPosition)
+                else if (position.ForceCheckPosition)
                     Interlocked.Increment(ref PipelineProfiler.SkipForceCheck);
-                else if (LastCandle1m.High >= existingPosition.TriggerPriceTop.Value
-                      || LastCandle1m.Low <= existingPosition.TriggerPriceBottom.Value)
+                else if (LastCandle1m.High >= position.TriggerPriceTop.Value
+                      || LastCandle1m.Low <= position.TriggerPriceBottom.Value)
                     Interlocked.Increment(ref PipelineProfiler.SkipPriceOutside);
                 // The reasons to look at a position that have nothing to do with price, the same ones
                 // CandleCanMovePosition and ShouldRunHandlePosition know. This gate did not, so on a 1m
                 // base the maximum duration never fired on a quiet candle: run 1765 (limit 14 days)
                 // kept positions open for 21.7 and 30 days without a single repricing.
-                else if (NeedsAttentionRegardlessOfPrice(existingPosition, LastCandle1mCloseTime))
+                else if (NeedsAttentionRegardlessOfPrice(position, LastCandle1mCloseTime))
                     Interlocked.Increment(ref PipelineProfiler.SkipForceCheck);
                 else
                 {
                     Interlocked.Increment(ref PipelineProfiler.SkipSuccess);
-                    canSkipPositionProcessing = true;
+                    canSkipThisPosition = true;
                 }
 
-                if (canSkipPositionProcessing && existingPosition!.Status == CryptoPositionStatus.Waiting)
+                // (a standing entry has no time limit, see StrategyRegistration.StandingEntry)
+                if (canSkipThisPosition && position.Status == CryptoPositionStatus.Waiting
+                    && !RegisterAlgorithms.HasStandingEntry(position.Strategy))
                 {
-                    var interval = existingPosition.Interval;
+                    var interval = position.Interval;
                     if (interval != null)
                     {
-                        var timeoutAt = existingPosition.CreateTime.AddMinutes(
+                        var timeoutAt = position.CreateTime.AddMinutes(
                             GlobalData.Settings.Trading.EntryRemoveTime * interval.Duration);
                         if (LastCandle1mCloseTimeDate >= timeoutAt)
-                            canSkipPositionProcessing = false;
+                            canSkipThisPosition = false;
                     }
                 }
+
+                if (canSkipThisPosition)
+                    skippablePositions.Add(position);
             }
+            // The order handling below is for the whole coin, so it can only be skipped when every
+            // position on it can (with a single position: exactly when that one can)
+            canSkipPositionProcessing = positions.Count > 0 && skippablePositions.Count == positions.Count;
 
             // Orders first, signals after. An order this candle fills changes the position (Waiting
             // becomes Trading), and that is what decides whether the signal work is needed at all -
@@ -3121,8 +3278,16 @@ public class PositionMonitor : IDisposable
                     await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m, BaseIntervalDuration);
             }
 
+            // A standing entry that is still waiting after the fills of this candle: does the strategy
+            // still want it on the book? After the fills on purpose - an entry that filled on this
+            // candle is a trade by now and is not the strategy's to withdraw any more.
+            foreach (CryptoPosition position in positions)
+                CheckEntryWithdrawal(position);
+
             // Only skip signal generation for filled positions (status >= Trading).
             // Waiting (unfilled) positions allow signals so a newer signal can replace them.
+            // Only the ordinary position counts here: a strategy with parallel positions has to keep
+            // judging the coin while it holds some, its next position comes from a new signal.
             skipSignals = hasPosition && existingPosition!.Status >= CryptoPositionStatus.Trading;
 
             // Also stay quiet for a short while after the last fill on this symbol. Closing a
@@ -3204,10 +3369,16 @@ public class PositionMonitor : IDisposable
             // to stay inside them the step above created the position and this line then refused to
             // place its order - which arrived a base candle later, at whatever the price was by
             // then. Two runs, same decision at the same minute, different entry price.
-            if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? currentPosition)
-                && (!canSkipPositionProcessing || currentPosition!.Status == CryptoPositionStatus.Waiting)
-                && (!OrdersAlreadyProcessed || currentPosition!.Status == CryptoPositionStatus.Waiting))
-                await GlobalData.ThreadCheckPosition!.AddToQueue(currentPosition!);
+            //
+            // Per position since parallel positions exist (23-10-2026): a coin can hold several, and
+            // only the ones that can move on this candle go on the queue. A position created just now
+            // is not among the skippable ones of PrepareCandleAsync and is waiting anyway.
+            foreach (CryptoPosition currentPosition in PositionTools.PositionsOf(GlobalData.ActiveExchange!, Symbol))
+            {
+                if ((!skippablePositions.Contains(currentPosition) || currentPosition.Status == CryptoPositionStatus.Waiting)
+                    && (!OrdersAlreadyProcessed || currentPosition.Status == CryptoPositionStatus.Waiting))
+                    await GlobalData.ThreadCheckPosition!.AddToQueue(currentPosition);
+            }
             PipelineProfiler.RecordAddToQueue(Stopwatch.GetTimestamp() - profAddToQueueStart);
 
             // The execute bucket is SignalExecute.ExecuteAsync and nothing else. It used to run from

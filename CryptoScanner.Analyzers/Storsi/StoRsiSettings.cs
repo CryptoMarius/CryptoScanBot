@@ -22,6 +22,18 @@ public class StoRsiSettings : SettingsSignalStrategyBase
     [SettingCaption("Only if there is a previous storsi signal")]
     public bool SkipFirstSignal { get; set; } = false;
 
+    // storsi.multi only: how many higher timeframes (on top of the signal interval) must also be
+    // oversold/overbought. 3 is what the strategy always used (4 intervals including the signal one).
+    [SettingCaption("Multi: number of higher timeframes")]
+    public int MultiHigherTimeframes { get; set; } = 3;
+
+    // storsi.multi only: by how much the RSI and Stochastic levels are relaxed on each higher
+    // timeframe. 2 is what the strategy always used: RSI oversold 30 - correction on the signal
+    // interval, then 2 points more room per higher interval (and the same for the Stochastic).
+    // 0 asks every interval for the same level.
+    [SettingCaption("Multi: relaxation per higher timeframe")]
+    public int MultiCorrectionStep { get; set; } = 2;
+
     // CheckMacdRecovery was removed on 26-09-2026 (open point 108): storsi never did a MACD
     // recovery test, see StoRsiBase. A settings file that still carries the key is read without it.
 

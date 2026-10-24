@@ -21,8 +21,16 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
     [ObservableProperty]
     private double _bbMaxPercentage = 100.0;
 
+    [ObservableProperty]
+    private int _multiHigherTimeframes = 3;
+
+    [ObservableProperty]
+    private int _multiCorrectionStep = 2;
+
     public void LoadConfig(StoRsiSettings settings)
     {
+        MultiHigherTimeframes = settings.MultiHigherTimeframes;
+        MultiCorrectionStep = settings.MultiCorrectionStep;
         BbMinPercentage = settings.BBMinPercentage;
         BbMaxPercentage = settings.BBMaxPercentage;
         SkipFirstSignal = settings.SkipFirstSignal;
@@ -37,5 +45,7 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         settings.SkipFirstSignal = SkipFirstSignal;
         settings.AddRsiAmount = AddRsiAmount;
         settings.CheckBollingerBandsCondition = CheckBollingerBandsCondition;
+        settings.MultiHigherTimeframes = MultiHigherTimeframes;
+        settings.MultiCorrectionStep = MultiCorrectionStep;
     }
 }

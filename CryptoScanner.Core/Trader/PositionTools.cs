@@ -6,6 +6,7 @@ using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Signal;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -235,10 +236,113 @@ public static class PositionTools
                 if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
                     position.Interval = interval;
 
-                return exchange.Data.PositionList.GetOrAdd(symbol.Name, position);
+                return exchange.Data.PositionList.GetOrAdd(PositionListKey(position), position);
             }
         }
         return position;
+    }
+
+
+    /// <summary>
+    /// The separator between the symbol name and the position id in the key of a parallel position.
+    /// Not a character a symbol name uses (a product sits behind a dot, see CryptoProduct.Separator).
+    /// </summary>
+    public const char ParallelKeySeparator = '#';
+
+
+    /// <summary>
+    /// Whether this position belongs to a strategy that may hold several positions on one coin
+    /// (StrategyRegistration.ParallelPositions).
+    /// </summary>
+    public static bool IsParallel(CryptoPosition position)
+        => RegisterAlgorithms.HasParallelPositions(position.Strategy);
+
+
+    /// <summary>
+    /// The key of the position in ExchangeData.PositionList. A position of an ordinary strategy is
+    /// filed under the symbol name, as it always was, so every lookup by symbol name keeps finding
+    /// it and nothing changes for those strategies. A position of a strategy with parallel positions
+    /// is filed under "symbol#id": a lookup by symbol name does not see it, which keeps the code that
+    /// assumes one position per coin away from it, while everything that walks the whole list (the
+    /// grids, the balance, the slots) still counts it. Code that has to see those positions asks
+    /// <see cref="PositionsOf"/>.
+    /// </summary>
+    public static string PositionListKey(CryptoPosition position)
+    {
+        if (IsParallel(position))
+            return $"{position.Symbol.Name}{ParallelKeySeparator}{position.Id}";
+        return position.Symbol.Name;
+    }
+
+
+    /// <summary>
+    /// Every open position on this symbol: the ordinary one (filed under the symbol name) first, then
+    /// the parallel ones in the order of their id. Empty when there is none.
+    /// </summary>
+    public static List<CryptoPosition> PositionsOf(Model.CryptoExchange exchange, CryptoSymbol symbol)
+    {
+        List<CryptoPosition> list = [];
+        if (exchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
+            list.Add(position);
+        List<CryptoPosition>? parallel = null;
+        foreach (var item in exchange.Data.PositionList)
+        {
+            if (ReferenceEquals(item.Value.Symbol, symbol) && item.Key != symbol.Name)
+                (parallel ??= []).Add(item.Value);
+        }
+        if (parallel != null)
+            list.AddRange(parallel.OrderBy(p => p.Id));
+        return list;
+    }
+
+
+    /// <summary>
+    /// The open parallel positions of one strategy on this symbol (see <see cref="PositionsOf"/>).
+    /// </summary>
+    public static List<CryptoPosition> ParallelPositionsOf(Model.CryptoExchange exchange, CryptoSymbol symbol, string strategy)
+        => [.. PositionsOf(exchange, symbol).Where(p => p.Strategy == strategy && IsParallel(p))];
+
+
+    /// <summary>
+    /// Whether any position is open on this symbol, an ordinary or a parallel one.
+    /// </summary>
+    public static bool HasAnyPosition(Model.CryptoExchange exchange, CryptoSymbol symbol)
+    {
+        if (exchange.Data.PositionList.ContainsKey(symbol.Name))
+            return true;
+        foreach (var item in exchange.Data.PositionList)
+        {
+            if (ReferenceEquals(item.Value.Symbol, symbol))
+                return true;
+        }
+        return false;
+    }
+
+
+    /// <summary>
+    /// Whether this very position (not just one on the same symbol) is still in the position list.
+    /// </summary>
+    public static bool IsListed(Model.CryptoExchange exchange, CryptoPosition position)
+        => exchange.Data.PositionList.TryGetValue(PositionListKey(position), out CryptoPosition? listed)
+        && ReferenceEquals(listed, position);
+
+
+    /// <summary>
+    /// The open position an order belongs to. The ordinary position of the symbol answers first,
+    /// exactly as before; only when there is none are the parallel positions searched for the order id.
+    /// </summary>
+    public static CryptoPosition? PositionOfOrder(Model.CryptoExchange exchange, CryptoSymbol symbol, string? orderId)
+    {
+        if (exchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
+            return position;
+        if (string.IsNullOrEmpty(orderId))
+            return null;
+        foreach (var item in exchange.Data.PositionList)
+        {
+            if (ReferenceEquals(item.Value.Symbol, symbol) && item.Value.StepOrderList.ContainsKey(orderId))
+                return item.Value;
+        }
+        return null;
     }
 
 
@@ -265,10 +369,11 @@ public static class PositionTools
 
     public static void RemovePosition(Model.CryptoExchange activeExchange, CryptoPosition position, bool addToClosed)
     {
-        if (activeExchange.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? positionFound))
+        string key = PositionListKey(position);
+        if (activeExchange.Data.PositionList.TryGetValue(key, out CryptoPosition? positionFound))
         {
             position.Symbol.ClearSignals();
-            activeExchange.Data.PositionList.TryRemove(positionFound.Symbol.Name, out _);
+            activeExchange.Data.PositionList.TryRemove(key, out _);
 
             if (addToClosed)
             {

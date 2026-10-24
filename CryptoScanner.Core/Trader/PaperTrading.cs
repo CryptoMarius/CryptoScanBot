@@ -424,7 +424,7 @@ public class PaperTrading
     private static async Task CheckStopsPlacedInCandle(CryptoDatabase database, CryptoPosition position,
         CryptoCandle candle, uint candleDuration)
     {
-        if (!GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? current) || current != position)
+        if (!PositionTools.IsListed(GlobalData.ActiveExchange!, position))
             return;
 
         CryptoOrderSide exitSide = position.GetTakeProfitOrderSide();
@@ -460,7 +460,10 @@ public class PaperTrading
         // Is er iets gekocht of verkocht?
         // Zoja dan de HandleTrade aanroepen.
 
-        if (activeExchange.Data.PositionList.TryGetValue(symbol.Name, out var position))
+        // Every position on the coin: the ordinary one, or the parallel ones of a strategy that may
+        // hold several (see PositionTools.PositionListKey). Each has its own orders, so each is
+        // checked on its own, exactly the way the single position always was.
+        foreach (CryptoPosition position in PositionTools.PositionsOf(activeExchange, symbol))
         {
             // At most one level touched -> the sequence cannot matter, so the candle we already have
             // is precise enough. This is the overwhelmingly common case (and always the case at a 1m
@@ -480,7 +483,7 @@ public class PaperTrading
                 // stop price before the limit price: the pessimistic reading, deliberately.
                 foreach (CryptoCandle subCandle in finerCandles)
                     await CheckAllSteps(database, position, subCandle, finerDuration);
-                return;
+                continue;
             }
 
             await CheckAllSteps(database, position, lastCandle1m, candleDuration);

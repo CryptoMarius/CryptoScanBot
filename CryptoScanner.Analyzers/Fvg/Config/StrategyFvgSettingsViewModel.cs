@@ -10,6 +10,9 @@ public partial class StrategyFvgSettingsViewModel : ObservableObject
     [ObservableProperty]
     private double _minimumPercentage = 0.25;
 
+    [ObservableProperty]
+    private bool _allowMixedColours = false;
+
     /// <summary>The values the touch level ComboBox offers; see CryptoZoneTouchLevel.</summary>
     public static CryptoZoneTouchLevel[] TouchLevels { get; } = Enum.GetValues<CryptoZoneTouchLevel>();
 
@@ -26,6 +29,7 @@ public partial class StrategyFvgSettingsViewModel : ObservableObject
     public void LoadConfig(SettingsSignalStrategyFvg settings)
     {
         MinimumPercentage = settings.MinimumPercentage;
+        AllowMixedColours = settings.AllowMixedColours;
         MaxTouches = settings.MaxTouches;
         TouchLevel = settings.TouchLevel;
         CloseZonesPastMidpoint = settings.CloseZonesPastMidpoint;
@@ -34,6 +38,7 @@ public partial class StrategyFvgSettingsViewModel : ObservableObject
     public void SaveConfig(SettingsSignalStrategyFvg settings)
     {
         settings.MinimumPercentage = MinimumPercentage;
+        settings.AllowMixedColours = AllowMixedColours;
         settings.MaxTouches = MaxTouches;
         settings.TouchLevel = TouchLevel;
         settings.CloseZonesPastMidpoint = CloseZonesPastMidpoint;
