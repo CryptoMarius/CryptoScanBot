@@ -271,8 +271,8 @@ public class PositionMonitor : IDisposable
         {
             // Bypass cooldown when an unfilled position exists — no actual trade took place yet,
             // so a newer signal should be allowed to replace the waiting entry order.
-            if (!GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out var cooldownPos)
-                || cooldownPos.Status != CryptoPositionStatus.Waiting)
+            if (!PositionTools.OrdinaryPositionsOf(GlobalData.ActiveExchange!, Symbol)
+                .Exists(p => p.Status == CryptoPositionStatus.Waiting))
             {
                 reaction = inLossCooldown ? "is in cooldown after a loss" : "is in cooldown";
                 return true;
@@ -486,7 +486,26 @@ public class PositionMonitor : IDisposable
                     }
 
                     {
-                        CryptoPosition? position = PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol);
+                        // Room for another position on this coin (Trading.MaxPositionsPerCoin): the signal
+                        // opens one of its own next to the open ones, long or short. With the default of 1
+                        // there is never room once a position is open, and everything below is unchanged.
+                        List<CryptoPosition> coinPositions = PositionTools.OrdinaryPositionsOf(GlobalData.ActiveExchange!, Symbol);
+                        if (coinPositions.Count > 0 && coinPositions.Count < PositionTools.MaxPositionsPerCoin)
+                        {
+                            bool stop = await OpenNewPositionAsync(signal, symbolInterval, text, false);
+                            // Used up once judged: a signal left behind would open another position on every
+                            // candle until the coin is full (the same as TryOpenParallelPositionAsync).
+                            symbolInterval.SignalList.Remove(signal);
+                            if (stop)
+                                return;
+                            continue;
+                        }
+
+                        // The coin is full (or empty): the oldest waiting position may be replaced, otherwise
+                        // the oldest position on the signal's side (DCA path below), otherwise the oldest one
+                        CryptoPosition? position = coinPositions.Find(p => p.Status == CryptoPositionStatus.Waiting)
+                            ?? coinPositions.Find(p => p.Side == signal.Side)
+                            ?? (coinPositions.Count > 0 ? coinPositions[0] : null);
 
                         // Replace a Waiting (unfilled) position with the newer signal
                         if (position != null && position.Status == CryptoPositionStatus.Waiting)
@@ -515,7 +534,7 @@ public class PositionMonitor : IDisposable
                                 Database.Connection.Update(position);
 
                                 // Remove without ClearSignals — signals are needed for the replacement position
-                                GlobalData.ActiveExchange!.Data.PositionList.TryRemove(position.Symbol.Name, out _);
+                                GlobalData.ActiveExchange!.Data.PositionList.TryRemove(PositionTools.ListedKey(GlobalData.ActiveExchange!, position) ?? PositionTools.PositionListKey(position), out _);
                                 GlobalData.SendMvvmMessage(new PositionIsClosedMessage(position));
                                 GlobalData.PositionClosed?.Invoke(position);
                                 position = null;
@@ -942,11 +961,13 @@ public class PositionMonitor : IDisposable
     /// </summary>
     private async Task<bool> TryOpenParallelPositionAsync(CryptoSignal signal, CryptoSymbolInterval symbolInterval, string text)
     {
-        // Altrady and the exchange know one position per coin, so several of them can only be
-        // administered by the paper trader (and so the emulator)
-        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.PaperTrade)
+        // The exchange's own order routes carry no position id, so several positions on one coin cannot
+        // be told apart there. Altrady can (its signal bot setting "Positions per market", a close
+        // addresses one position by signal_id, see AltradyWebhook.BuildClosePayload), so since
+        // 24-10-2026 only real trading is refused; that used to be everything but paper trading.
+        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading)
         {
-            GlobalData.AddTextToLogTab($"{text} {signal.Strategy} holds parallel positions, which is only possible with paper trading (removed)");
+            GlobalData.AddTextToLogTab($"{text} {signal.Strategy} holds parallel positions, which is not possible with real trading (removed)");
             Symbol.ClearSignals();
             return true;
         }
@@ -1054,7 +1075,10 @@ public class PositionMonitor : IDisposable
         decimal breakEven = position.TpGridBreakEvenPrice;
         // Through PricePlacement since 26-09-2026 (open point 27): a short's target used to be
         // breakEven * (1 - p), which is further away in log terms than the long's breakEven * (1 + p).
-        decimal price = PricePlacement.Favorable(position.Side, breakEven, percentage);
+        //decimal price = PricePlacement.Favorable(position.Side, breakEven, percentage);
+        // Placed the way Altrady places a take profit since 24-10-2026: a short's target is
+        // breakEven / (1 + p), see PricePlacement.TakeProfit.
+        decimal price = PricePlacement.TakeProfit(position.Side, breakEven, percentage);
         return price.ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
     }
 
@@ -2591,8 +2615,9 @@ public class PositionMonitor : IDisposable
 
                 // Check DCA - always allowed, even during a TradingRules pause (averaging into an
                 // existing position is not gated by the market-wide pause, see CheckThePosition)
+                // A DCA is always a limit order
                 if (part.Purpose == CryptoPartPurpose.Dca)
-                    await HandleEntryPart(position, part, GlobalData.Settings.Trading.DcaOrderType);
+                    await HandleEntryPart(position, part, CryptoOrderType.Limit);
             }
         }
 
@@ -3151,8 +3176,7 @@ public class PositionMonitor : IDisposable
             //ScannerLog.Logger.Trace($"NewCandleArrivedAsync.Signals " + traceText);
 
             // Single lookup: reused for the signal skip and the trigger-price check below.
-            CryptoPosition? existingPosition = null;
-            bool hasPosition = GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out existingPosition);
+            List<CryptoPosition> ordinaryPositions = PositionTools.OrdinaryPositionsOf(GlobalData.ActiveExchange!, Symbol);
             // Every position on the coin: the ordinary one above first, then the parallel ones of a
             // strategy that may hold several (see PositionTools.PositionListKey). For an ordinary
             // strategy this is the one position above or nothing, and everything below that loops
@@ -3288,7 +3312,10 @@ public class PositionMonitor : IDisposable
             // Waiting (unfilled) positions allow signals so a newer signal can replace them.
             // Only the ordinary position counts here: a strategy with parallel positions has to keep
             // judging the coin while it holds some, its next position comes from a new signal.
-            skipSignals = hasPosition && existingPosition!.Status >= CryptoPositionStatus.Trading;
+            // Since Trading.MaxPositionsPerCoin: skip only once the coin is full and none of its
+            // positions is still waiting. With the default of 1 that is the old rule exactly.
+            skipSignals = ordinaryPositions.Count >= PositionTools.MaxPositionsPerCoin
+                && !ordinaryPositions.Exists(p => p.Status < CryptoPositionStatus.Trading);
 
             // Also stay quiet for a short while after the last fill on this symbol. Closing a
             // position IS a fill (take profit or stop loss), so this covers the case where the

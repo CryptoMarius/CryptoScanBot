@@ -226,8 +226,12 @@ public class SignalCreateBase
             return true;
 
         // Avoid duplicate signals — but allow a newer signal to replace a Waiting (unfilled) position
-        var position = PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol);
-        if (position != null && position.Status >= CryptoPositionStatus.Trading)
+        // Since Trading.MaxPositionsPerCoin only once the coin is full and none of its positions waits
+        // (with the default of 1 the old rule exactly)
+        var positions = PositionTools.OrdinaryPositionsOf(GlobalData.ActiveExchange!, Symbol);
+        var position = positions.Count > 0 ? positions[0] : null;
+        if (position != null && positions.Count >= PositionTools.MaxPositionsPerCoin
+            && !positions.Exists(p => p.Status < CryptoPositionStatus.Trading))
         {
             ExtraText = $"Position open {position.Id} on interval {position.Interval.Name}";
             return true;

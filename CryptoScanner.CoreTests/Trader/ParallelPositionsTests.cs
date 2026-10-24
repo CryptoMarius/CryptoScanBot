@@ -115,13 +115,36 @@ public class ParallelPositionsTests : TestBase
 
 
     [TestMethod]
-    public void AnOrdinaryPosition_IsStillFiledUnderTheSymbolName()
+    public void AnOrdinaryPosition_IsFiledUnderSymbolAndId_AndStillFoundBySymbol()
     {
         var (_, symbol) = Setup();
         CryptoPosition position = AddPosition(symbol, Ordinary);
 
-        Assert.AreEqual(symbol.Name, PositionTools.PositionListKey(position));
+        // Since Trading.MaxPositionsPerCoin (24-10-2026) every position has a key of its own
+        Assert.AreEqual($"{symbol.Name}#{position.Id}", PositionTools.PositionListKey(position));
         Assert.AreSame(position, PositionTools.HasPosition(GlobalData.ActiveExchange!, symbol));
+    }
+
+
+    [TestMethod]
+    public void SeveralOrdinaryPositions_AreAllSeen_AndAFillGoesToItsOwn()
+    {
+        var (db, symbol) = Setup();
+        var exchange = GlobalData.ActiveExchange!;
+        CryptoPosition first = AddPosition(symbol, Ordinary);
+        CryptoPosition second = AddPosition(symbol, Ordinary);
+        AddBuy(db, first, AddPart(first, CryptoPartPurpose.Entry, 0), 100m, 1m);
+        CryptoPositionStep secondBuy = AddBuy(db, second, AddPart(second, CryptoPartPurpose.Entry, 0), 98m, 1m);
+
+        CollectionAssert.AreEqual(new[] { first, second }, PositionTools.OrdinaryPositionsOf(exchange, symbol));
+        Assert.AreSame(first, PositionTools.HasPosition(exchange, symbol), "the oldest one");
+        Assert.AreSame(second, PositionTools.PositionOfOrder(exchange, symbol, secondBuy.OrderId));
+        Assert.IsNull(PositionTools.PositionOfOrder(exchange, symbol, "unknown"), "two candidates, no guess");
+
+        PositionTools.RemovePosition(exchange, first, false);
+        CollectionAssert.AreEqual(new[] { second }, PositionTools.OrdinaryPositionsOf(exchange, symbol));
+        // With one left, an order the position does not know still lands on it, as before
+        Assert.AreSame(second, PositionTools.PositionOfOrder(exchange, symbol, "unknown"));
     }
 
 
@@ -197,8 +220,11 @@ public class ParallelPositionsTests : TestBase
             GlobalData.Settings.Trading.SlotsMaximalLong = 5;
             AddPosition(symbol, Ordinary);
 
-            // An ordinary strategy: one position per coin, as always
+            // An ordinary strategy: one position per coin with the default MaxPositionsPerCoin of 1
             Assert.IsFalse(SymbolTools.CheckAvailableSlots(exchange, symbol, CryptoTradeSide.Long, out _));
+            GlobalData.Settings.Trading.MaxPositionsPerCoin = 2;
+            Assert.IsTrue(SymbolTools.CheckAvailableSlots(exchange, symbol, CryptoTradeSide.Long, out _), "room for a second one");
+            GlobalData.Settings.Trading.MaxPositionsPerCoin = 1;
             // A parallel one only counts the long slots
             Assert.IsTrue(SymbolTools.CheckAvailableSlots(exchange, symbol, CryptoTradeSide.Long, out _, parallel: true));
 
@@ -209,6 +235,7 @@ public class ParallelPositionsTests : TestBase
         finally
         {
             GlobalData.Settings.Trading.SlotsMaximalLong = slots;
+            GlobalData.Settings.Trading.MaxPositionsPerCoin = 1;
         }
     }
 
@@ -269,7 +296,7 @@ public class ParallelPositionsTests : TestBase
         Assert.AreEqual(100m, trade.FirstBuyPrice);
         Assert.AreEqual(98.5m, trade.LastBuyPrice);
         Assert.IsFalse(trade.DcasDone);
-        Assert.IsFalse(FvgLadderRules.NewTradeAllowed([trade], 1.5m, out _));
+        Assert.IsFalse(FvgLadderRules.NewTradeAllowed([trade], 0, true, 1.5m, out _));
 
         // Both bought: done, and the next position goes 1.5% under the last buy
         secondDca.Status = CryptoOrderStatus.Filled;
@@ -277,7 +304,7 @@ public class ParallelPositionsTests : TestBase
         Assert.IsTrue(FvgLadderLong.TryGetTrade(position, out trade));
         Assert.AreEqual(97.0225m, trade.LastBuyPrice);
         Assert.IsTrue(trade.DcasDone);
-        Assert.IsTrue(FvgLadderRules.NewTradeAllowed([trade], 1.5m, out decimal? limit));
+        Assert.IsTrue(FvgLadderRules.NewTradeAllowed([trade], 0, true, 1.5m, out decimal? limit));
         Assert.AreEqual(95.5671625m, limit);
 
         // A position that bought nothing yet does not count

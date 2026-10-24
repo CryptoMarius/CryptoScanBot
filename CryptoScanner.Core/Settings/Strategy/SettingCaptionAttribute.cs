@@ -109,4 +109,14 @@ public sealed class SettingCaptionAttribute(string caption) : Attribute
     /// property always was.
     /// </summary>
     public bool Expand { get; init; }
+
+    /// <summary>
+    /// Lowest value a numeric setting is saved with, mirroring the Math.Max the Avalonia view model
+    /// applies in its SaveConfig. NaN (the default) means no lower bound; an attribute argument
+    /// cannot be a nullable.
+    /// </summary>
+    public double Minimum { get; init; } = double.NaN;
+
+    /// <summary>Trim a text setting on save, mirroring the Trim() in the Avalonia view model.</summary>
+    public bool Trim { get; init; }
 }

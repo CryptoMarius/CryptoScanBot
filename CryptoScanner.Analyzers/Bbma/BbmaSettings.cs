@@ -65,7 +65,7 @@ public class BbmaSettings : SettingsSignalStrategyBase
     [SettingCaption("Rejected LTF triggers", Group = GroupReentry, Indented = true,
         Tooltip = "Trigger letters that do not count as a setup, as one string: E Extreme, T Tpw, "
             + "H Mhv, J RejectedEma50, G GapBbEma50, 2 Csak2, A Csaa, X Cross, D Csd, M Csm. "
-            + "Empty accepts every trigger.")]
+            + "Empty accepts every trigger.", Trim = true)]
     public string RejectedLtfTriggers { get; set; } = "";
 
     /// <summary>
@@ -77,7 +77,7 @@ public class BbmaSettings : SettingsSignalStrategyBase
     [SettingCaption("Rejected MTF states", Group = GroupReentry, Indented = true,
         Tooltip = "Letters of the middle (MTF) position of the code that do not give a signal, as one "
             + "string: E Extreme, T Tpw, H Mhv, J RejectedEma50, G GapBbEma50, 2 Csak2, A Csaa, "
-            + "X Cross, D Csd, M Csm, R Reentry, - nothing. Empty accepts every MTF state.")]
+            + "X Cross, D Csd, M Csm, R Reentry, - nothing. Empty accepts every MTF state.", Trim = true)]
     public string RejectedMtfStates { get; set; } = "";
 
     /// <summary>
@@ -88,7 +88,7 @@ public class BbmaSettings : SettingsSignalStrategyBase
     [SettingCaption("Rejected HTF setups", Group = GroupHtfSetup, Indented = true,
         Tooltip = "HTF setups that do not give a signal, comma separated, exactly as the signal shows "
             + "them between brackets: CSD, CSM, TPW>CSD, TPW>CSM, MHV>CSD, MHV>CSM. Empty accepts "
-            + "every setup.")]
+            + "every setup.", Trim = true)]
     public string RejectedHtfSetups { get; set; } = "";
 
     /// <summary>

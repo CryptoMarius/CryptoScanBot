@@ -383,6 +383,10 @@ public class PluginSettingField
     /// <see cref="PluginFieldKind.EnumList"/>.
     /// </summary>
     public List<string> ListValue { get; } = [];
+    /// <summary>Lowest value saved (SettingCaption.Minimum), NaN for no bound.</summary>
+    private readonly double _minimum;
+    /// <summary>Trim the text on save (SettingCaption.Trim).</summary>
+    private readonly bool _trim;
 
     public PluginSettingField(PropertyInfo property, PropertyInfo? owner = null)
     {
@@ -408,7 +412,10 @@ public class PluginSettingField
         SpaceBefore = caption?.SpaceBefore ?? false;
         ColumnBreak = caption?.ColumnBreak ?? false;
         EnabledWhen = caption?.EnabledWhen;
-        Hidden = caption?.Hidden ?? false;
+        // An expanded block that is hidden hides all of its children (DLZ's Zone calculation)
+        Hidden = (caption?.Hidden ?? false) || (owner?.GetCustomAttribute<SettingCaptionAttribute>()?.Hidden ?? false);
+        _minimum = caption?.Minimum ?? double.NaN;
+        _trim = caption?.Trim ?? false;
 
         Type type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
         if (IsIntervalList(property))
@@ -500,7 +507,15 @@ public class PluginSettingField
         {
             ListValue.Clear();
             if (value is List<string> list)
-                ListValue.AddRange(list);
+            {
+                // Case-insensitive for an enum list, as in the Avalonia tabs (CandlePatternListViewModel):
+                // the list can be typed by hand in the settings file or in the emulator queue, and the
+                // scanner parses those names case-insensitively too. Keeps the canonical spelling.
+                if (Kind == PluginFieldKind.EnumList)
+                    ListValue.AddRange(EnumOptions.FindAll(option => list.Exists(name => name.Equals(option, StringComparison.OrdinalIgnoreCase))));
+                else
+                    ListValue.AddRange(list);
+            }
         }
         else if (Kind == PluginFieldKind.Bool)
             BoolValue = value is bool b && b;
@@ -549,9 +564,15 @@ public class PluginSettingField
                 return;
             }
 
+            string text = _trim ? TextValue.Trim() : TextValue;
             object converted = type.IsEnum
-                ? Enum.Parse(type, TextValue)
-                : Convert.ChangeType(TextValue, type, System.Globalization.CultureInfo.InvariantCulture);
+                ? Enum.Parse(type, text)
+                : Convert.ChangeType(text, type, System.Globalization.CultureInfo.InvariantCulture);
+
+            // The lower bound the Avalonia view model applies with Math.Max in its SaveConfig
+            if (!double.IsNaN(_minimum) && Kind == PluginFieldKind.Number
+                && Convert.ToDouble(converted, System.Globalization.CultureInfo.InvariantCulture) < _minimum)
+                converted = Convert.ChangeType(_minimum, type, System.Globalization.CultureInfo.InvariantCulture);
             _property.SetValue(target, converted);
         }
         catch (Exception)

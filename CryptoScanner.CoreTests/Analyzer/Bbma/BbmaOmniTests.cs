@@ -812,7 +812,12 @@ public class BbmaOmniTests : TestBase
     public void TakeProfitOrder_DistanceToTheBand()
     {
         Assert.AreEqual(5.0m, SignalBbmaOmniBase.TakeProfitPercentageToBand(100, 105, 95, CryptoTradeSide.Long));
-        Assert.AreEqual(5.0m, SignalBbmaOmniBase.TakeProfitPercentageToBand(100, 105, 95, CryptoTradeSide.Short));
+        //Assert.AreEqual(5.0m, SignalBbmaOmniBase.TakeProfitPercentageToBand(100, 105, 95, CryptoTradeSide.Short));
+        // Since 24-10-2026 a short's take profit is divided (100 / (1 + p)), so the distance is
+        // measured from the band: 5 / 95 = 5.26%, and 100 / 1.0526 lands on 95 again
+        decimal shortPercentage = SignalBbmaOmniBase.TakeProfitPercentageToBand(100, 105, 95, CryptoTradeSide.Short)!.Value;
+        Assert.AreEqual(100m * 5m / 95m, shortPercentage);
+        Assert.AreEqual(95m, Math.Round(CryptoScanner.Core.Trader.PricePlacement.TakeProfit(CryptoTradeSide.Short, 100m, shortPercentage), 10));
     }
 
 

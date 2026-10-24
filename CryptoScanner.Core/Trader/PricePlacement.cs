@@ -30,8 +30,38 @@ namespace CryptoScanner.Core.Trader;
 /// 80,65). The small built-in handicap of a short described above is real live, so the emulator now
 /// shows it again. Every DCA, take profit, stop, trail and lock price goes through this one class.
 /// </para>
+/// <para>
+/// Changed on 24-10-2026 for the take profit only: Altrady does NOT place the take profit of a short
+/// with the plain percentage. Every short it closed on HyperLiquid between 22 and 24-10-2026 had its
+/// 7.5% take profit at <c>offsetPrice / 1.075</c>, its offsetPrice being our TpGridBreakEvenPrice
+/// (WLFI: 0.0569127324 / 1.075 = 0.0529420767; ETHFI, LINK, JUP, STX, FIL, S, DOGE, CHIP, PENDLE,
+/// AERO and ZEC the same way), and closed with 7.00% net while the scanner still waited for its
+/// target 7.5% below the anchor. The stop of those same shorts does use the plain percentage (WLFI:
+/// 0.056964 * 1.08 = 0.06152112). So every take profit price goes through <see cref="TakeProfit"/>,
+/// which divides for a short, and <see cref="Favorable"/> keeps the plain percentage for the profit
+/// lock, whose trigger has not been compared with Altrady.
+/// </para>
 public static class PricePlacement
 {
+    /// <summary>
+    /// The price of a take profit <paramref name="percentage"/> away from the anchor, placed the way
+    /// Altrady places the price_percentage of a take profit: <c>anchor * (1 + p)</c> for a long and
+    /// <c>anchor / (1 + p)</c> for a short. For a short the anchor lies p above the take profit, not
+    /// the take profit p below the anchor. A level of 100% or more stays a positive price the market
+    /// never reaches, which is how such a level is used ("never").
+    /// </summary>
+    public static decimal TakeProfit(CryptoTradeSide side, decimal anchor, decimal percentage)
+    {
+        decimal factor = 1m + percentage / 100m;
+        if (side == CryptoTradeSide.Long)
+            return anchor * factor;
+        // A percentage of -100 or less has nothing to divide by; it falls back to the plain form,
+        // which is what Favorable returned for it, instead of throwing or going negative.
+        if (factor <= 0)
+            return anchor * (1m - percentage / 100m);
+        return anchor / factor;
+    }
+
     /// <summary>
     /// The price <paramref name="percentage"/> in the PROFITABLE direction from the anchor: up
     /// for a long, down for a short.

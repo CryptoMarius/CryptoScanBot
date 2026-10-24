@@ -28,7 +28,7 @@ public class SrFlipSettings : SettingsSignalStrategyBase
 
     /// <summary>How many pivots a horizontal level needs before its flip counts. Two is the minimum a level has.</summary>
     [SettingCaption("Minimum touches", Group = GroupFlip, Indented = true, EnabledWhen = nameof(UseHorizontal),
-        Tooltip = "How many pivots a horizontal level must have before its flip counts. Since 28-09-2026 a level needs three before it breaks at all; four or more are the stronger levels.")]
+        Tooltip = "How many pivots a horizontal level must have before its flip counts. Since 28-09-2026 a level needs three before it breaks at all; four or more are the stronger levels.", Minimum = 2)]
     public int MinimumTouches { get; set; } = 3;
 
     /// <summary>Report a flip on a sloped line (through two lower highs or two higher lows).</summary>
@@ -42,7 +42,7 @@ public class SrFlipSettings : SettingsSignalStrategyBase
     /// a higher cost per candle.
     /// </summary>
     [SettingCaption("History candles", Group = GroupFlip,
-        Tooltip = "How many candles of the signal interval are scanned for levels and lines. The levels come from the last 300; the rest lets the scan settle.")]
+        Tooltip = "How many candles of the signal interval are scanned for levels and lines. The levels come from the last 300; the rest lets the scan settle.", Minimum = 60)]
     public int HistoryCandles { get; set; } = 500;
 
     /// <summary>
@@ -56,12 +56,12 @@ public class SrFlipSettings : SettingsSignalStrategyBase
 
     /// <summary>How many candles after the retest the confirmation may take; later and the flip is dropped.</summary>
     [SettingCaption("Within candles", Group = GroupConfirmation, Indented = true, EnabledWhen = nameof(WaitForConfirmation),
-        Tooltip = "How many candles after the retest the confirmation candle may come. A close back through the level before that drops the flip.")]
+        Tooltip = "How many candles after the retest the confirmation candle may come. A close back through the level before that drops the flip.", Minimum = 1)]
     public int ConfirmationCandles { get; set; } = 3;
 
     /// <summary>The entry candle's volume against the average of the 20 candles before it. Zero is off.</summary>
     [SettingCaption("Volume (x the average)", Group = GroupConfirmation,
-        Tooltip = "The entry candle must trade at least this many times the average volume of the 20 candles before it. 1.5 means half again as much. Zero is off.")]
+        Tooltip = "The entry candle must trade at least this many times the average volume of the 20 candles before it. 1.5 means half again as much. Zero is off.", Minimum = 0)]
     public decimal VolumeFactor { get; set; } = 1.5m;
 
     /// <summary>The stop just beyond the level (half an average candle past it), handed to the trader.</summary>
@@ -71,7 +71,7 @@ public class SrFlipSettings : SettingsSignalStrategyBase
 
     /// <summary>The take profit as a multiple of that stop distance. Zero leaves the trader's own take profit.</summary>
     [SettingCaption("Take profit (x the stop)", Group = GroupExit, Indented = true, EnabledWhen = nameof(StopBeyondLevel),
-        Tooltip = "The take profit as a multiple of the stop distance, 2 means twice as far as the stop. Zero leaves the trader's own take profit.")]
+        Tooltip = "The take profit as a multiple of the stop distance, 2 means twice as far as the stop. Zero leaves the trader's own take profit.", Minimum = 0)]
     public decimal RiskRewardRatio { get; set; } = 2m;
 
     public SrFlipSettings() : base()

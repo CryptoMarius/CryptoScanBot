@@ -72,6 +72,10 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _slotsMaximalShort = 1;
 
+    // Positions on one coin, long and short together (1..n)
+    [ObservableProperty]
+    private int _maxPositionsPerCoin = 1;
+
     public Dictionary<string, CryptoTradeVia> TradeViaList => _tradeViaList;
 
     /// <summary>
@@ -135,6 +139,7 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
 
         SlotsMaximalLong = settings.SlotsMaximalLong;
         SlotsMaximalShort = settings.SlotsMaximalShort;
+        MaxPositionsPerCoin = settings.MaxPositionsPerCoin;
     }
 
     public void SaveConfig(SettingsTrading settings, SettingsGeneral general)
@@ -156,5 +161,6 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
 
         settings.SlotsMaximalLong = SlotsMaximalLong;
         settings.SlotsMaximalShort = SlotsMaximalShort;
+        settings.MaxPositionsPerCoin = Math.Max(1, MaxPositionsPerCoin);
     }
 }

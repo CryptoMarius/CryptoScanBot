@@ -32,7 +32,9 @@ public partial class StrategyFvgLadderTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyFvgLadderSettingsViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadStrategyConfig(settings.IntervalList);
+        // A zone strategy: no "Use custom intervals" switch, the same as dlz/fvg/smc and the Photino
+        // tab (HasIntervalSwitch). The list holds the interval of the Kalman trend, not the side's.
+        IntervalViewModel.LoadConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
@@ -40,7 +42,7 @@ public partial class StrategyFvgLadderTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyFvgLadderSettingsViewModel.SaveConfig(settings);
-        IntervalViewModel.SaveStrategyConfig(settings.IntervalList);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
         StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

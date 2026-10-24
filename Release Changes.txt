@@ -1,6 +1,9 @@
 CryptoScanBot release historie:
 
-21-10-2026 2.6.8
+24-10-2026 2.6.8
+- Trader: De takeprofit van een short ligt nu waar Altrady hem legt; de scanner wachtte op een doel dat Altrady al 0,5 procentpunt eerder haalde
+- Trader: Het aantal posities per munt is een instelling geworden (1 is zoals het altijd was), en elke positie neemt een slot
+- Instellingen: Het order type van een bijkoop is weg - een bijkoop is altijd een limit order
 - Trader: Een strategie kan meerdere posities op dezelfde munt tegelijk hebben, elk met eigen instap, bijkopen en takeprofit; alleen bij papertrading, want Altrady houdt een positie per munt
 - Trader: Een strategie kan een instap-order laten staan tot hij vult, en kan zonder stop-loss werken
 - Nieuwe strategie fvgladder: koop-limieten op de bovenkant van bullish fair value gaps boven de EMA200 van de dag, bijkopen in verdubbelingen en een takeprofit 1% boven de break-evenprijs

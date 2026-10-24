@@ -114,6 +114,17 @@
                                      Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                         </Grid>
 
+                        <!-- Positions per coin -->
+                        <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
+                              ToolTip.Tip="How many positions may be open on one coin at the same time, long and short together, a waiting entry included. 1 is one position per coin.">
+                            <TextBlock Grid.Column="0" Text="Max positions per coin:"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,12,0" FontSize="12"/>
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding MaxPositionsPerCoin, Mode=TwoWay}"
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                        </Grid>
+
                     </StackPanel>
                 </HeaderedContentControl>
 

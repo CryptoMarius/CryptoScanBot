@@ -14,6 +14,12 @@ public readonly record struct FvgLadderTrade(decimal FirstBuyPrice, decimal Last
 /// <summary>One DCA level: the price of the buy limit and its size as a factor of the entry (100 = the entry again).</summary>
 public readonly record struct FvgLadderLevel(decimal Price, decimal Factor);
 
+/// <summary>
+/// The state of the Kalman trend filter: the estimated level and slope of the log price, and the
+/// covariance of that estimate.
+/// </summary>
+public record struct FvgLadderKalman(double Level, double Slope, double P00, double P01, double P11);
+
 
 /// <summary>
 /// The rules of "BTC FVG DCA - Regels ter afstemming" as plain calculations, without candles, zones
@@ -32,13 +38,12 @@ public static class FvgLadderRules
 
     /// <summary>
     /// Rules 2.1 - 2.5: the gaps that count, as their tops from high to low. Gaps narrower than the
-    /// minimum are dropped, and a 1h gap that overlaps a 4h gap gives way to that 4h gap. With
-    /// <paramref name="use4h"/> off only the 1h gaps count (the Grid preset).
+    /// minimum are dropped, and a 1h gap that overlaps a 4h gap gives way to that 4h gap.
     /// </summary>
-    public static List<decimal> UsableTops(IEnumerable<FvgLadderZone> zones, decimal minimumPercentage, bool use4h)
+    public static List<decimal> UsableTops(IEnumerable<FvgLadderZone> zones, decimal minimumPercentage)
     {
         List<FvgLadderZone> wide = [.. zones.Where(z => IsWideEnough(z.Top, z.Bottom, minimumPercentage))];
-        List<FvgLadderZone> zones4h = use4h ? [.. wide.Where(z => z.Is4h)] : [];
+        List<FvgLadderZone> zones4h = [.. wide.Where(z => z.Is4h)];
         List<decimal> tops = [.. zones4h.Select(z => z.Top)];
         foreach (FvgLadderZone zone in wide.Where(z => !z.Is4h))
         {
@@ -52,13 +57,13 @@ public static class FvgLadderRules
 
     /// <summary>
     /// Rules 3.1 / 3.2 / 6.2: where the buy limit of a new position goes. Only the
-    /// <paramref name="orderZones"/> nearest gap tops under the price carry orders; of those the
-    /// highest one at or under <paramref name="limit"/> (no limit: any) is the one the price reaches
-    /// first, and therefore the one the entry goes on. Null when there is none.
+    /// <paramref name="gapsInView"/> nearest gap tops under the price take part; of those the highest
+    /// one at or under <paramref name="limit"/> (no limit: any) is the one the price reaches first,
+    /// and therefore the one the entry goes on. Null when there is none.
     /// </summary>
-    public static decimal? EntryTarget(IReadOnlyList<decimal> topsDescending, decimal price, int orderZones, decimal? limit)
+    public static decimal? EntryTarget(IReadOnlyList<decimal> topsDescending, decimal price, int gapsInView, decimal? limit)
     {
-        foreach (decimal top in topsDescending.Where(t => t < price).Take(Math.Max(0, orderZones)))
+        foreach (decimal top in topsDescending.Where(t => t < price).Take(Math.Max(0, gapsInView)))
         {
             if (limit == null || top <= limit.Value)
                 return top;
@@ -68,44 +73,26 @@ public static class FvgLadderRules
 
 
     /// <summary>
-    /// The Grid preset: the highest of the <paramref name="orderZones"/> nearest gap tops under the
-    /// price that lies at least <paramref name="spacingPercentage"/> away from the first buy of every
-    /// open position. Null when there is none.
+    /// Rules 6.1 / 6.2: may a new position be started next to the open ones, and under which price?
+    /// <list type="bullet">
+    /// <item>Not when <paramref name="maxPositions"/> positions are open already (0 = no limit).</item>
+    /// <item>With no open position: yes, anywhere (<paramref name="limit"/> null).</item>
+    /// <item>Otherwise only under the lowest open position (lowest last buy), at least
+    /// <paramref name="stepPercentage"/> under its last buy - never above it or in between - and
+    /// with DCA only once that position has bought all of its DCA's.</item>
+    /// </list>
     /// </summary>
-    public static decimal? GridEntryTarget(IReadOnlyList<decimal> topsDescending, decimal price, int orderZones,
-        IReadOnlyList<FvgLadderTrade> openTrades, decimal spacingPercentage)
-    {
-        foreach (decimal top in topsDescending.Where(t => t < price).Take(Math.Max(0, orderZones)))
-        {
-            if (FarEnoughFromAll(top, openTrades, spacingPercentage))
-                return top;
-        }
-        return null;
-    }
-
-
-    /// <summary>
-    /// The Grid preset: a new position has to be at least this far (either side) from the first buy
-    /// of every open position.
-    /// </summary>
-    public static bool FarEnoughFromAll(decimal price, IReadOnlyList<FvgLadderTrade> openTrades, decimal spacingPercentage)
-        => openTrades.All(t => t.FirstBuyPrice > 0 && 100m * Math.Abs(price / t.FirstBuyPrice - 1m) >= spacingPercentage);
-
-
-    /// <summary>
-    /// Rules 6.1 / 6.2: may a new (parallel) position be started, and under which price? With no
-    /// open position: yes, anywhere (<paramref name="limit"/> null). Otherwise only once the DCA's of
-    /// the lowest open position (lowest last buy) have all been bought, and then at least
-    /// <paramref name="stepPercentage"/> under that last buy.
-    /// </summary>
-    public static bool NewTradeAllowed(IReadOnlyList<FvgLadderTrade> openTrades, decimal stepPercentage, out decimal? limit)
+    public static bool NewTradeAllowed(IReadOnlyList<FvgLadderTrade> openTrades, int maxPositions, bool useDca,
+        decimal stepPercentage, out decimal? limit)
     {
         limit = null;
+        if (maxPositions > 0 && openTrades.Count >= maxPositions)
+            return false;
         if (openTrades.Count == 0)
             return true;
 
         FvgLadderTrade lowest = openTrades.MinBy(t => t.LastBuyPrice);
-        if (!lowest.DcasDone)
+        if (useDca && !lowest.DcasDone)
             return false;
 
         limit = lowest.LastBuyPrice * (1m - stepPercentage / 100m);
@@ -158,17 +145,6 @@ public static class FvgLadderRules
 
 
     /// <summary>
-    /// Rule 5.1 (Grid preset): the take profit lies a percentage above the ENTRY, while the trader
-    /// measures it from the break-even price including the fees of the buy and the predicted sell
-    /// (TradeTools: entry x (1 + 2 x fee)). This is the percentage from that break-even price that
-    /// lands on entry + <paramref name="takeProfitPercentage"/>. The Ladder preset measures from the
-    /// break-even price directly and do not need this.
-    /// </summary>
-    public static decimal TakeProfitFromBreakEven(decimal takeProfitPercentage, decimal feeRatePercentage)
-        => 100m * ((1m + takeProfitPercentage / 100m) / (1m + 2m * feeRatePercentage / 100m) - 1m);
-
-
-    /// <summary>
     /// The EMA of the closes with a weight of 2 / (length + 1), started on the first close.
     /// </summary>
     public static decimal Ema(IEnumerable<decimal> closes, int length)
@@ -187,4 +163,57 @@ public static class FvgLadderRules
         decimal alpha = 2m / (length + 1);
         return alpha * close + (1m - alpha) * previousEma;
     }
+
+
+    // The Kalman trend filter: the common constant-velocity model on the log of the close, so the
+    // same settings mean the same on a coin at 80 000 and one at 0.5. The state is the level and the
+    // slope (the change per candle); a candle moves the level by the slope, both drift a little
+    // (process noise), and the close is the level plus noise (measurement noise). The trend is up
+    // while the estimated slope is above zero.
+    //
+    // Fixed on purpose, not settings: measurement noise as 1% of the price, level drift 0.1% and
+    // slope drift 0.01% per candle. That reacts within a few candles to a turn and ignores a single
+    // spike.
+    private const double KalmanMeasurementNoise = 0.01 * 0.01;
+    private const double KalmanLevelNoise = 0.001 * 0.001;
+    private const double KalmanSlopeNoise = 0.0001 * 0.0001;
+
+    /// <summary>The filter started on its first close: level at that close, no slope, a wide uncertainty.</summary>
+    public static FvgLadderKalman KalmanStart(decimal close)
+        => new(Math.Log((double)close), 0, 1, 0, 1);
+
+    /// <summary>One candle of the Kalman filter: predict with the slope, then correct on the close.</summary>
+    public static FvgLadderKalman KalmanStep(FvgLadderKalman state, decimal close)
+    {
+        // Predict: level += slope, covariance F P F' + Q with F = [[1, 1], [0, 1]]
+        double level = state.Level + state.Slope;
+        double slope = state.Slope;
+        double p00 = state.P00 + 2 * state.P01 + state.P11 + KalmanLevelNoise;
+        double p01 = state.P01 + state.P11;
+        double p11 = state.P11 + KalmanSlopeNoise;
+
+        // Correct on the measured log close
+        double residual = Math.Log((double)close) - level;
+        double s = p00 + KalmanMeasurementNoise;
+        double k0 = p00 / s;
+        double k1 = p01 / s;
+        level += k0 * residual;
+        slope += k1 * residual;
+        double n00 = (1 - k0) * p00;
+        double n01 = (1 - k0) * p01;
+        double n11 = p11 - k1 * p01;
+        return new FvgLadderKalman(level, slope, n00, n01, n11);
+    }
+
+    /// <summary>The Kalman filter over a row of closes, oldest first.</summary>
+    public static FvgLadderKalman Kalman(IEnumerable<decimal> closes)
+    {
+        FvgLadderKalman? state = null;
+        foreach (decimal close in closes)
+            state = state == null ? KalmanStart(close) : KalmanStep(state.Value, close);
+        return state ?? default;
+    }
+
+    /// <summary>The Kalman trend points up: the estimated slope is above zero.</summary>
+    public static bool KalmanIsUp(FvgLadderKalman state) => state.Slope > 0;
 }

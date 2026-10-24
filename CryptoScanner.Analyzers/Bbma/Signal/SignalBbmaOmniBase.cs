@@ -664,6 +664,15 @@ public class SignalBbmaOmniBase : SignalBbmaBase
 
         if (distance <= 0)
             return null;
+        //return 100m * distance / close;
+        // Since 24-10-2026 a short's take profit is placed at anchor / (1 + p), the way Altrady places
+        // it (PricePlacement.TakeProfit), so its distance is measured from the band to land on the band
+        if (side == CryptoTradeSide.Short)
+        {
+            if (lower <= 0)
+                return null;
+            return 100m * distance / lower;
+        }
         return 100m * distance / close;
     }
 

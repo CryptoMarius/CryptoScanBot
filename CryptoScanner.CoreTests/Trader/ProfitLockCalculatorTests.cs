@@ -283,7 +283,10 @@ public class ProfitLockCalculatorTests
     [TestMethod]
     public void TakeProfitStop_Follow_Short_AfterTp2_SitsOnTp1()
         // TP1 of a short at 5%: 100 * (1 - 0.05) = 95, the plain percentage as Altrady places it
-        => Assert.AreEqual(95m, ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Short, CryptoProfitLockMethod.FollowTakeProfit, 100m, 2, Levels));
+        // Since 24-10-2026 the take profit of a short is divided, the way Altrady really places it:
+        // 100 / 1.05 = 95.238, and the stop goes on that same price
+        //=> Assert.AreEqual(95m, ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Short, CryptoProfitLockMethod.FollowTakeProfit, 100m, 2, Levels));
+        => Assert.AreEqual(100m / 1.05m, ProfitLockCalculator.TakeProfitStop(CryptoTradeSide.Short, CryptoProfitLockMethod.FollowTakeProfit, 100m, 2, Levels));
 
     [TestMethod]
     public void TakeProfitStop_BreakEven_StaysOnBreakEvenAfterLaterFills()

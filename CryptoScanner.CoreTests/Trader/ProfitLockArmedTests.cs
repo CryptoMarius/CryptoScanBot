@@ -226,4 +226,38 @@ public class ProfitLockArmedTests
         decimal price = PricePlacement.Favorable(CryptoTradeSide.Short, 100m, 200m);
         Assert.IsTrue(price > 0 && price < 50m);
     }
+
+    // ── Take profit placement: divided for a short, the way Altrady places it (24-10-2026) ──
+
+    [TestMethod]
+    public void TakeProfit_Short_Divided_LongPlain()
+    {
+        Assert.AreEqual(100m / 1.24m, PricePlacement.TakeProfit(CryptoTradeSide.Short, 100m, 24m));
+        Assert.AreEqual(124m, PricePlacement.TakeProfit(CryptoTradeSide.Long, 100m, 24m));
+    }
+
+    [TestMethod]
+    public void TakeProfit_Short_MatchesAltradyWlfi()
+    {
+        // WLFI short of 19-10-2026: offsetPrice 0.0569127324 (our TpGridBreakEvenPrice), a 7.5% take
+        // profit, and Altrady placed its exit order at 0.052942076651162790697674418604651
+        decimal price = PricePlacement.TakeProfit(CryptoTradeSide.Short, 0.0569127324m, 7.5m);
+        Assert.AreEqual(0.052942076651m, Math.Round(price, 12));
+    }
+
+    [TestMethod]
+    public void TakeProfit_Short_ProfitLockTriggerKeepsPlainPercentage()
+    {
+        // Only the take profit follows Altrady's division; the profit lock still uses Favorable
+        Assert.AreEqual(97m, ProfitLockCalculator.TriggerPrice(CryptoTradeSide.Short, 100m, 3m));
+        Assert.AreNotEqual(PricePlacement.Favorable(CryptoTradeSide.Short, 100m, 7.5m),
+            PricePlacement.TakeProfit(CryptoTradeSide.Short, 100m, 7.5m));
+    }
+
+    [TestMethod]
+    public void TakeProfit_Short_TargetOf200Percent_StaysAboveZero()
+    {
+        decimal price = PricePlacement.TakeProfit(CryptoTradeSide.Short, 100m, 200m);
+        Assert.IsTrue(price > 0 && price < 50m);
+    }
 }

@@ -207,8 +207,9 @@ public static class PositionTools
         string sql = "select * from position where exchangeid=@exchangeid and closetime is null and status < 2";
         foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
         {
-            // Skip positions already in memory (e.g. loaded by the UI tab before this call)
-            if (GlobalData.ActiveExchange.Data.PositionList.ContainsKey(position.Symbol?.Name ?? ""))
+            // Skip positions already in memory (e.g. loaded by the UI tab before this call). By id:
+            // a coin can hold several positions (Trading.MaxPositionsPerCoin).
+            if (GlobalData.ActiveExchange.Data.PositionList.Values.Any(p => p.Id == position.Id))
                 continue;
 
             AddPosition(position);
@@ -259,35 +260,52 @@ public static class PositionTools
 
 
     /// <summary>
-    /// The key of the position in ExchangeData.PositionList. A position of an ordinary strategy is
-    /// filed under the symbol name, as it always was, so every lookup by symbol name keeps finding
-    /// it and nothing changes for those strategies. A position of a strategy with parallel positions
-    /// is filed under "symbol#id": a lookup by symbol name does not see it, which keeps the code that
-    /// assumes one position per coin away from it, while everything that walks the whole list (the
-    /// grids, the balance, the slots) still counts it. Code that has to see those positions asks
-    /// <see cref="PositionsOf"/>.
+    /// The key of the position in ExchangeData.PositionList: "symbol#id" for every position. Until
+    /// 24-10-2026 a position of an ordinary strategy was filed under the bare symbol name, which left
+    /// room for one per coin; since Trading.MaxPositionsPerCoin a coin can hold several, so nothing
+    /// looks a position up by its key any more. Code that wants the positions of a coin asks
+    /// <see cref="PositionsOf"/>, <see cref="OrdinaryPositionsOf"/> or <see cref="HasPosition(Model.CryptoExchange, CryptoSymbol)"/>.
     /// </summary>
     public static string PositionListKey(CryptoPosition position)
+        => $"{position.Symbol.Name}{ParallelKeySeparator}{position.Id}";
+
+
+    /// <summary>
+    /// How many positions may be open on one coin (Trading.MaxPositionsPerCoin, never below 1).
+    /// </summary>
+    public static int MaxPositionsPerCoin => Math.Max(1, GlobalData.Settings.Trading.MaxPositionsPerCoin);
+
+
+    /// <summary>
+    /// The open positions of the ordinary strategies on this symbol (not those of a strategy with
+    /// parallel positions), oldest first. With Trading.MaxPositionsPerCoin at 1 this is the one
+    /// position the coin has, or nothing.
+    /// </summary>
+    public static List<CryptoPosition> OrdinaryPositionsOf(Model.CryptoExchange exchange, CryptoSymbol symbol)
     {
-        if (IsParallel(position))
-            return $"{position.Symbol.Name}{ParallelKeySeparator}{position.Id}";
-        return position.Symbol.Name;
+        List<CryptoPosition> list = [];
+        foreach (var item in exchange.Data.PositionList)
+        {
+            if (ReferenceEquals(item.Value.Symbol, symbol) && !IsParallel(item.Value))
+                list.Add(item.Value);
+        }
+        if (list.Count > 1)
+            list.Sort((a, b) => a.Id.CompareTo(b.Id));
+        return list;
     }
 
 
     /// <summary>
-    /// Every open position on this symbol: the ordinary one (filed under the symbol name) first, then
-    /// the parallel ones in the order of their id. Empty when there is none.
+    /// Every open position on this symbol: those of the ordinary strategies first, then the parallel
+    /// ones, both in the order of their id. Empty when there is none.
     /// </summary>
     public static List<CryptoPosition> PositionsOf(Model.CryptoExchange exchange, CryptoSymbol symbol)
     {
-        List<CryptoPosition> list = [];
-        if (exchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
-            list.Add(position);
+        List<CryptoPosition> list = OrdinaryPositionsOf(exchange, symbol);
         List<CryptoPosition>? parallel = null;
         foreach (var item in exchange.Data.PositionList)
         {
-            if (ReferenceEquals(item.Value.Symbol, symbol) && item.Key != symbol.Name)
+            if (ReferenceEquals(item.Value.Symbol, symbol) && IsParallel(item.Value))
                 (parallel ??= []).Add(item.Value);
         }
         if (parallel != null)
@@ -308,8 +326,6 @@ public static class PositionTools
     /// </summary>
     public static bool HasAnyPosition(Model.CryptoExchange exchange, CryptoSymbol symbol)
     {
-        if (exchange.Data.PositionList.ContainsKey(symbol.Name))
-            return true;
         foreach (var item in exchange.Data.PositionList)
         {
             if (ReferenceEquals(item.Value.Symbol, symbol))
@@ -323,26 +339,44 @@ public static class PositionTools
     /// Whether this very position (not just one on the same symbol) is still in the position list.
     /// </summary>
     public static bool IsListed(Model.CryptoExchange exchange, CryptoPosition position)
-        => exchange.Data.PositionList.TryGetValue(PositionListKey(position), out CryptoPosition? listed)
-        && ReferenceEquals(listed, position);
+        => ListedKey(exchange, position) != null;
 
 
     /// <summary>
-    /// The open position an order belongs to. The ordinary position of the symbol answers first,
-    /// exactly as before; only when there is none are the parallel positions searched for the order id.
+    /// The key this very position is listed under, or null. Searched by reference rather than
+    /// computed, so a position that was put in the list some other way (a test) is found as well.
+    /// </summary>
+    public static string? ListedKey(Model.CryptoExchange exchange, CryptoPosition position)
+    {
+        if (exchange.Data.PositionList.TryGetValue(PositionListKey(position), out CryptoPosition? listed)
+            && ReferenceEquals(listed, position))
+            return PositionListKey(position);
+        foreach (var item in exchange.Data.PositionList)
+        {
+            if (ReferenceEquals(item.Value, position))
+                return item.Key;
+        }
+        return null;
+    }
+
+
+    /// <summary>
+    /// The open position an order belongs to. The position holding the order id answers first.
+    /// Without one, a coin with a single ordinary position answers with that position, exactly as
+    /// before Trading.MaxPositionsPerCoin; with several, only the order id can tell them apart.
     /// </summary>
     public static CryptoPosition? PositionOfOrder(Model.CryptoExchange exchange, CryptoSymbol symbol, string? orderId)
     {
-        if (exchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
-            return position;
-        if (string.IsNullOrEmpty(orderId))
-            return null;
-        foreach (var item in exchange.Data.PositionList)
+        if (!string.IsNullOrEmpty(orderId))
         {
-            if (ReferenceEquals(item.Value.Symbol, symbol) && item.Value.StepOrderList.ContainsKey(orderId))
-                return item.Value;
+            foreach (var item in exchange.Data.PositionList)
+            {
+                if (ReferenceEquals(item.Value.Symbol, symbol) && item.Value.StepOrderList.ContainsKey(orderId))
+                    return item.Value;
+            }
         }
-        return null;
+        List<CryptoPosition> ordinary = OrdinaryPositionsOf(exchange, symbol);
+        return ordinary.Count == 1 ? ordinary[0] : null;
     }
 
 
@@ -369,8 +403,8 @@ public static class PositionTools
 
     public static void RemovePosition(Model.CryptoExchange activeExchange, CryptoPosition position, bool addToClosed)
     {
-        string key = PositionListKey(position);
-        if (activeExchange.Data.PositionList.TryGetValue(key, out CryptoPosition? positionFound))
+        string? key = ListedKey(activeExchange, position);
+        if (key != null)
         {
             position.Symbol.ClearSignals();
             activeExchange.Data.PositionList.TryRemove(key, out _);
@@ -461,13 +495,14 @@ public static class PositionTools
     }
 
 
+    /// <summary>
+    /// The oldest open position of an ordinary strategy on this symbol (see <see cref="OrdinaryPositionsOf"/>),
+    /// or null. With Trading.MaxPositionsPerCoin at 1 the only one there is.
+    /// </summary>
     public static CryptoPosition? HasPosition(Model.CryptoExchange activeExchange, CryptoSymbol symbol)
     {
-        if (activeExchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
-        {
-            return position;
-        }
-        return null;
+        List<CryptoPosition> positions = OrdinaryPositionsOf(activeExchange, symbol);
+        return positions.Count > 0 ? positions[0] : null;
     }
 
 
@@ -475,11 +510,7 @@ public static class PositionTools
     /// Is er een positie open (dan wel signalen maken voor deze munt)
     /// </summary>
     public static bool HasPosition(CryptoSymbol symbol)
-    {
-        if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(symbol.Name, out var _))
-            return true;
-        return false;
-    }
+        => HasPosition(GlobalData.ActiveExchange!, symbol) != null;
 
 
     /// <summary>

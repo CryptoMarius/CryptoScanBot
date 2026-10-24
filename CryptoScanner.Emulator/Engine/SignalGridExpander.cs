@@ -60,7 +60,7 @@ public static class SignalGridExpander
             // Without this those can only be changed in the settings file, not per queue entry.
             if (sectionName.Equals("Signal", StringComparison.OrdinalIgnoreCase))
             {
-                ApplyProps(GlobalData.Settings.Signal, props, saved);
+                ApplyProps(GlobalData.Settings.Signal, props, saved, RemovedSignalProperties);
                 continue;
             }
 
@@ -69,7 +69,7 @@ public static class SignalGridExpander
             if (field != null)
             {
                 object sectionObj = field.GetValue(GlobalData.Settings.Signal)!;
-                ApplyProps(sectionObj, props, saved);
+                ApplyProps(sectionObj, props, saved, RemovedSignalProperties);
                 continue;
             }
 
@@ -77,14 +77,14 @@ public static class SignalGridExpander
             IStrategyPlugin? plugin = PluginManager.FindByName(sectionName);
             if (plugin != null)
             {
-                ApplyProps(plugin.SettingsBase, props, saved);
+                ApplyProps(plugin.SettingsBase, props, saved, RemovedSignalProperties);
                 continue;
             }
         }
 
         object tradingObj = GlobalData.Settings.Trading;
         foreach (var (propPath, jsonVal) in entry.TradingOverrides)
-            ApplyDottedProperty(tradingObj, propPath, jsonVal, saved);
+            ApplyDottedProperty(tradingObj, propPath, jsonVal, saved, RemovedTradingProperties);
 
         ApplyEntryAmount(entry, saved);
         ApplyEntryPercentage(entry, saved);
@@ -145,17 +145,19 @@ public static class SignalGridExpander
         }
     }
 
-    private static void ApplyProps(object target, Dictionary<string, JsonElement> props, List<Override> saved)
+    private static void ApplyProps(object target, Dictionary<string, JsonElement> props, List<Override> saved,
+        Dictionary<string, (decimal Fixed, string Reason)> removed)
     {
         foreach (var (propPath, jsonVal) in props)
-            ApplyDottedProperty(target, propPath, jsonVal, saved);
+            ApplyDottedProperty(target, propPath, jsonVal, saved, removed);
     }
 
     /// <summary>
     /// Resolves a dotted property path (e.g. "EntryConditions.Ma200MinDistancePercentage")
     /// and sets the leaf value. Intermediate segments are navigated via reflection.
     /// </summary>
-    private static void ApplyDottedProperty(object root, string propPath, JsonElement jsonVal, List<Override> saved)
+    private static void ApplyDottedProperty(object root, string propPath, JsonElement jsonVal, List<Override> saved,
+        Dictionary<string, (decimal Fixed, string Reason)> removed)
     {
         RejectRetiredProperty(propPath, jsonVal);
 
@@ -182,6 +184,17 @@ public static class SignalGridExpander
         PropertyInfo? leaf = current.GetType().GetProperty(parts[^1]);
         if (leaf == null)
         {
+            // A removed setting whose behaviour is now fixed: the value it is fixed at passes silently,
+            // anything else is refused - asked BEFORE "switched off", because 0 can mean something
+            // there (fvgladder's MaxPositionsPerCoin 0 was "no limit").
+            if (removed.ContainsKey(propPath))
+            {
+                string? removedReason = DescribeRemovedProperty(removed, propPath, jsonVal);
+                if (removedReason != null)
+                    throw new NotSupportedException(removedReason);
+                return;
+            }
+
             // A name that does not exist is not a harmless typo: the run goes ahead with the
             // DEFAULT in its place and its label claims a setting that was never applied. That is
             // how a queue written for a newer build gets measured on an older one and the numbers
@@ -215,6 +228,41 @@ public static class SignalGridExpander
             + "instead, which trades the shape itself",
         ["EntryConditions.EntryPatternShape"] = "the shape thresholds went with EntryWaitForPatterns",
     };
+
+    /// <summary>
+    /// Settings removed from the code because their behaviour is fixed now, with the one value that
+    /// still describes it. Older queue entries spell them out (every entry the emulator writes dumps
+    /// the whole trading block): that value passes without a word, so those files keep working,
+    /// while any other value would be measured as something it is not and is refused.
+    /// </summary>
+    private static readonly Dictionary<string, (decimal Fixed, string Reason)> RemovedTradingProperties = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["DcaOrderType"] = (1m, "the DCA order type was removed on 24-10-2026: a DCA is always a limit order "
+            + "(1), so only \"DcaOrderType\": 1 can be left in an entry"),
+    };
+
+    /// <summary>The same for the signal overrides (plugin sections and the Signal fields).</summary>
+    private static readonly Dictionary<string, (decimal Fixed, string Reason)> RemovedSignalProperties = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["MaxPositionsPerCoin"] = (1m, "fvgladder's MaxPositionsPerCoin became the trader setting on 24-10-2026. "
+            + "Use \"TradingOverrides\": {\"MaxPositionsPerCoin\": n} with n of 1 or more; there is no "
+            + "0 = no limit any more"),
+    };
+
+    /// <summary>
+    /// Why a removed setting cannot be left in this entry, or null when it holds the value its
+    /// behaviour is fixed at (or is not a removed setting at all).
+    /// </summary>
+    private static string? DescribeRemovedProperty(Dictionary<string, (decimal Fixed, string Reason)> removed,
+        string propPath, JsonElement jsonVal)
+    {
+        if (!removed.TryGetValue(propPath, out var fixedValue))
+            return null;
+        if (jsonVal.ValueKind == JsonValueKind.Number && jsonVal.TryGetDecimal(out decimal d) && d == fixedValue.Fixed)
+            return null;
+        return $"Queue entry sets \"{propPath}\" to {jsonVal.GetRawText()}, but {fixedValue.Reason}.";
+    }
+
 
     /// <summary>
     /// Stops the run when a queue entry sets a retired setting to anything but "off". Off is an
@@ -338,7 +386,8 @@ public static class SignalGridExpander
         {
             foreach (var (propPath, jsonVal) in props)
             {
-                string? reason = DescribeRetiredProperty(propPath, jsonVal);
+                string? reason = DescribeRetiredProperty(propPath, jsonVal)
+                    ?? DescribeRemovedProperty(RemovedSignalProperties, propPath, jsonVal);
                 if (reason != null)
                     return reason;
             }
@@ -346,7 +395,8 @@ public static class SignalGridExpander
 
         foreach (var (propPath, jsonVal) in entry.TradingOverrides)
         {
-            string? reason = DescribeRetiredProperty(propPath, jsonVal);
+            string? reason = DescribeRetiredProperty(propPath, jsonVal)
+                ?? DescribeRemovedProperty(RemovedTradingProperties, propPath, jsonVal);
             if (reason != null)
                 return reason;
         }

@@ -98,6 +98,10 @@
                         <label>Short</label>
                         <input type="number" class="input-number" min="0" @bind="_slotsShort" />
                     </div>
+                    <div class="field" title="How many positions may be open on one coin at the same time, long and short together, a waiting entry included. 1 is one position per coin.">
+                        <label>Max positions per coin</label>
+                        <input type="number" class="input-number" min="1" @bind="_maxPositionsPerCoin" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -207,20 +211,10 @@
     <div class="settings-group">
         <div class="settings-group-header">DCA</div>
         <div class="settings-group-body">
-            @* Avalonia has the order type, then the two buttons, then the DCA entries. No pullback
+            @* Avalonia has the two buttons, then the DCA entries. No pullback
                and no buy cooldown — that last one lives in Common as "Cool down time (m)". *@
-            @* The captions and the choices come from TraderDcaViewModel.OrderTypeList, which holds
-               the limit order alone: a DCA is always a limit order (the trailing variant switches to
+            @* No order type choice: a DCA is always a limit order (the trailing variant switches to
                a stoplimit in code, not through this setting). *@
-            <div class="field">
-                <label>Order Type</label>
-                <select class="input-select" @bind="_dcaOrderType">
-                    @foreach (var (caption, value) in DcaOrderTypeList)
-                    {
-                        <option value="@value">@caption</option>
-                    }
-                </select>
-            </div>
             @* One row per DCA level with the buttons above it, instead of a labelled block of two
                fields per level. With five levels that block ran off the bottom of the tab. *@
             <div class="field settings-table-buttons">
@@ -472,10 +466,10 @@
     private bool _soundTradeNotification;
     private int _slotsLong;
     private int _slotsShort;
+    private int _maxPositionsPerCoin;
     private CryptoOrderType _entryOrderType;
     private int _entryRemoveTime;
     private decimal _entryLimitOffsetPct;
-    private CryptoOrderType _dcaOrderType;
     private int _buyCooldown;
     private int _signalCooldownAfterTrade;
     private int _lossCooldown;
@@ -513,16 +507,6 @@
     private static readonly (string Caption, CryptoOrderType Value)[] EntryOrderTypeList =
     [
         ("Market order", CryptoOrderType.Market),
-        ("Limit order", CryptoOrderType.Limit),
-    ];
-
-    /// <summary>
-    /// The choices of the DCA order type dropdown, identical to TraderDcaViewModel.OrderTypeList.
-    /// A DCA is always a limit order; a trailing DCA becomes a stoplimit in code, not through this
-    /// setting, so the limit order is the only choice there is.
-    /// </summary>
-    private static readonly (string Caption, CryptoOrderType Value)[] DcaOrderTypeList =
-    [
         ("Limit order", CryptoOrderType.Limit),
     ];
 
@@ -666,10 +650,10 @@
         _soundTradeNotification = settings.General.SoundTradeNotification;
         _slotsLong = t.SlotsMaximalLong;
         _slotsShort = t.SlotsMaximalShort;
+        _maxPositionsPerCoin = t.MaxPositionsPerCoin;
         _entryOrderType = Supported(t.EntryOrderType, EntryOrderTypeList);
         _entryRemoveTime = t.EntryRemoveTime;
         _entryLimitOffsetPct = t.EntryLimitOffsetPercentage;
-        _dcaOrderType = Supported(t.DcaOrderType, DcaOrderTypeList);
         _buyCooldown = t.GlobalBuyCooldownTime;
         _signalCooldownAfterTrade = t.SignalCooldownAfterTradeTime;
         _lossCooldown = t.LossCooldownTime;
@@ -719,10 +703,10 @@
         settings.General.SoundTradeNotification = _soundTradeNotification;
         t.SlotsMaximalLong = _slotsLong;
         t.SlotsMaximalShort = _slotsShort;
+        t.MaxPositionsPerCoin = Math.Max(1, _maxPositionsPerCoin);
         t.EntryOrderType = _entryOrderType;
         t.EntryRemoveTime = _entryRemoveTime;
         t.EntryLimitOffsetPercentage = _entryLimitOffsetPct;
-        t.DcaOrderType = _dcaOrderType;
         t.GlobalBuyCooldownTime = _buyCooldown;
         t.SignalCooldownAfterTradeTime = _signalCooldownAfterTrade;
         t.LossCooldownTime = _lossCooldown;

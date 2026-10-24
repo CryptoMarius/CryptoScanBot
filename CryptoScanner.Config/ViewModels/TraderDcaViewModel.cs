@@ -60,9 +60,6 @@ public partial class TraderDcaViewModel : ObservableObject
 
     public void SaveConfig(SettingsTrading settings)
     {
-        // A DCA is always a limit order; this also repairs a StopLimit or an Oco written by an older build
-        settings.DcaOrderType = CryptoOrderType.Limit;
-
         settings.DcaList.Clear();
         foreach (var item in DcaItems)
         {

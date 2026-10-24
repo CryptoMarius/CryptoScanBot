@@ -163,12 +163,21 @@ public class SmallEntryAmountTests : TestBase
     [TestMethod]
     public void AShortIsLimitedByItsDeepestTakeProfit()
     {
-        bool fits30 = Fits(Symbol("USDT", 5m), CryptoTradeSide.Short, 30m, out string reason30);
-        bool fits34 = Fits(Symbol("USDT", 5m), CryptoTradeSide.Short, 34m, out string reason34);
+        //bool fits30 = Fits(Symbol("USDT", 5m), CryptoTradeSide.Short, 30m, out string reason30);
+        //bool fits34 = Fits(Symbol("USDT", 5m), CryptoTradeSide.Short, 34m, out string reason34);
+        //
+        //Assert.IsFalse(fits30, "a quarter of 30 at -40% is 4.50");
+        //StringAssert.Contains(reason30, "take profit 4");
+        //Assert.IsTrue(fits34, reason34);
 
-        Assert.IsFalse(fits30, "a quarter of 30 at -40% is 4.50");
-        StringAssert.Contains(reason30, "take profit 4");
-        Assert.IsTrue(fits34, reason34);
+        // Since 24-10-2026 a short's take profit is divided the way Altrady places it: the fourth level
+        // at 40% lies at 1 / 1.40 of the entry, so a quarter needs 5 * 1.40 = 7.00, an entry of 28 USDT
+        bool fits27 = Fits(Symbol("USDT", 5m), CryptoTradeSide.Short, 27m, out string reason27);
+        bool fits29 = Fits(Symbol("USDT", 5m), CryptoTradeSide.Short, 29m, out string reason29);
+
+        Assert.IsFalse(fits27, "a quarter of 27 at 1 / 1.40 is 4.82");
+        StringAssert.Contains(reason27, "take profit 4");
+        Assert.IsTrue(fits29, reason29);
     }
 
     /// <summary>

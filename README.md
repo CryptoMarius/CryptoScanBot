@@ -55,21 +55,22 @@ original Pine scripts. The comments name the source so the origin of the idea st
 
 ## Code signing policy
 
-> Status: the application for free code signing by the SignPath Foundation was submitted on
-> 18-09-2026 and is waiting to be reviewed. Nothing is signed yet: releases up to and including
-> 2.6.7 carry no signature. Remove this line once the certificate is in use.
+> Status: releases up to and including 2.6.7 carry no signature. From 2.6.8 on, the Windows
+> package is signed.
 
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
-[SignPath Foundation](https://signpath.org).
+Code signing certificate by [Certum](https://www.certum.eu) (Open Source Code Signing), issued to
+"Open Source Developer Marius Ellen". Only the files of the application itself are signed
+(`CryptoScanBot*.exe`, `CryptoScanBot*.dll` and `CryptoScanner*.dll` in the Windows package); third
+party assemblies keep the signature of their publisher. The macOS and Linux packages are not signed.
 
 ### Team roles
 
 - Committers and reviewers: Marius Ellen ([CryptoMarius](https://github.com/CryptoMarius))
-- Approvers (who approves a signing request): Marius Ellen ([CryptoMarius](https://github.com/CryptoMarius))
+- Signing: Marius Ellen ([CryptoMarius](https://github.com/CryptoMarius))
 
-The project is maintained by one person. Every release is built by the GitHub Actions workflow in
-`.github/workflows/release.yml` from a tagged commit of this repository, and every signing request
-is approved by hand.
+The project is maintained by one person. The Windows package is built and signed on the maintainer's
+own machine from a commit of this repository. The signing key stays in Certum's cloud and can only be
+used after signing in to Certum, and every signature carries a timestamp from Certum.
 
 ### Privacy policy
 

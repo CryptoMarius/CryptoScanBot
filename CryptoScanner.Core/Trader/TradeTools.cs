@@ -1423,7 +1423,8 @@ public class TradeTools
                 allocated += tpQuantity;
             }
 
-            decimal tpPrice = PricePlacement.Favorable(side, entryPrice, tpList[i].Percentage);
+            //decimal tpPrice = PricePlacement.Favorable(side, entryPrice, tpList[i].Percentage);
+            decimal tpPrice = PricePlacement.TakeProfit(side, entryPrice, tpList[i].Percentage);
             if (!CheckPrice($"take profit {i + 1} ({tpList[i].Percentage}%)", tpPrice, out tpPrice, out reason))
                 return false;
             if (!CheckOrder($"take profit {i + 1} ({tpList[i].Percentage}%)", tpQuantity, tpPrice, out reason))

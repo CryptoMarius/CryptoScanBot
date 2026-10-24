@@ -586,16 +586,26 @@
         CryptoSymbol symbol = _currentSymbol;
         bool dlz = _showDlzZones;
         bool fvg = _showFvgZones;
-        try
+        // Not awaited: the chart is drawn with the zones it has, and drawn again once they are up to
+        // date. Waiting made opening a chart slow, the first pass over a symbol is a full historical scan.
+        _ = Task.Run(async () =>
         {
-            // Off the UI thread: the first pass over a symbol is a full historical scan
-            await Task.Run(() => ZoneThreadCalculate.CalculateZonesForChartAsync(symbol, dlz, fvg, force));
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Info($"ERROR chart zones {error}");
-            GlobalData.AddErrorToLogTab($"ERROR chart zones {error}");
-        }
+            try
+            {
+                await ZoneThreadCalculate.CalculateZonesForChartAsync(symbol, dlz, fvg, force);
+                await InvokeAsync(async () =>
+                {
+                    if (_currentSymbol == symbol)
+                        await LoadChartAsync();
+                });
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Info($"ERROR chart zones {error}");
+                GlobalData.AddErrorToLogTab($"ERROR chart zones {error}");
+            }
+        });
+        await Task.CompletedTask;
     }
 
     private void ApplySessionToFields()

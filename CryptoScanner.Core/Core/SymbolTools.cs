@@ -117,11 +117,8 @@ public class SymbolTools
     {
         // Zijn er slots beschikbaar?
 
-        int slotsOccupied = 0;
-        if (activeExchange.Data.PositionList.TryGetValue(symbol.Name, out _))
-        {
-            slotsOccupied++;
-        }
+        // The positions of the ordinary strategies; a strategy with parallel positions counts its own
+        int slotsOccupied = PositionTools.OrdinaryPositionsOf(activeExchange, symbol).Count;
 
         if (slotsOccupied >= slotLimit)
         {
@@ -168,7 +165,7 @@ public class SymbolTools
 
         //if (!CheckAvailableSlotsSymbol(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalSymbol, out reaction))
         //    return false;
-        if (!parallel && !CheckAvailableSlotsSymbol(activeExchange, symbol, 1, out reaction))
+        if (!parallel && !CheckAvailableSlotsSymbol(activeExchange, symbol, PositionTools.MaxPositionsPerCoin, out reaction))
             return false;
 
         //if (!CheckAvailableSlotsBase(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalBase, out reaction))

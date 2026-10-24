@@ -1895,6 +1895,45 @@ public partial class ChartWindowViewModel : ObservableObject
             CrossHairXBarometer.LineStyle = LineStyle.None;
     }
 
+    // Set by SymbolOrIntervalChangedAsync: which zone kinds are brought up to date once the chart is drawn
+    private bool calculateDlzAfterDraw;
+    private bool calculateFvgAfterDraw;
+
+    /// <summary>
+    /// Brings the DLZ/FVG zones up to date after the chart has been drawn, and redraws only those
+    /// zones. Waiting for it before the first paint made opening a chart slow: for a symbol the scanner
+    /// does not calculate (no enabled strategy reads the zones) the first pass is a full historical scan.
+    /// </summary>
+    private async Task CalculateZonesAfterDrawAsync(CryptoSymbol symbol, bool dlz, bool fvg)
+    {
+        try
+        {
+            await Task.Run(() => ZoneThreadCalculate.CalculateZonesForChartAsync(symbol, dlz, fvg, false));
+
+            // Back on the UI thread. Another symbol may have been picked in the meantime.
+            if (Symbol != symbol)
+                return;
+
+            var model = PlotModel;
+            if (dlz)
+            {
+                RemoveFromChart(model, "dlz.zones");
+                optionsInChart["dlz.zones"] = "";
+            }
+            if (fvg)
+            {
+                RemoveFromChart(model, "fvg.zones");
+                optionsInChart["fvg.zones"] = "";
+            }
+            DisplayOptionsChanged(null, null!);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "Chart zone calculation error");
+            GlobalData.AddErrorToLogTab($"ERROR chart zones {error}");
+        }
+    }
+
     private async Task SymbolOrIntervalChangedAsync(bool forceCalculation)
     {
         if (IsCalculating)
@@ -1945,10 +1984,14 @@ public partial class ChartWindowViewModel : ObservableObject
                 // This uses the incremental cursors, so it is a full scan only the first time. Also on a
                 // chart opened from a position: it shows the live zones, and those should be current.
                 // Not for a chart of an emulator run, whose zones belong to that run and are complete.
+                // Only the "Calculate" button waits for it here; the routine update runs after the chart
+                // is drawn (CalculateZonesAfterDrawAsync), the first one for a symbol can take a while.
                 bool forced = Session.ForceCalculation && !WindowStart.HasValue;
                 bool liveScope = !WindowEmulatorRunId.HasValue;
-                bool calculateDlz = forced || (liveScope && Session.ShowDlzZones);
-                bool calculateFvg = forced || (liveScope && Session.ShowFvgZones);
+                bool calculateDlz = forced;
+                bool calculateFvg = forced;
+                calculateDlzAfterDraw = !forced && liveScope && Session.ShowDlzZones;
+                calculateFvgAfterDraw = !forced && liveScope && Session.ShowFvgZones;
                 if (calculateDlz || calculateFvg)
                 {
                     // The "Calculate" button means a genuine forced recalculation (e.g. after tweaking
@@ -2022,6 +2065,9 @@ public partial class ChartWindowViewModel : ObservableObject
                 $"range {Session.MinDate.ToDateTime():yyyy-MM-dd HH:mm}..{Session.MaxDate.ToDateTime():yyyy-MM-dd HH:mm}");
 
             WindowTitle = $"{Symbol?.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName}";
+
+            if (calculateDlzAfterDraw || calculateFvgAfterDraw)
+                _ = CalculateZonesAfterDrawAsync(Symbol!, calculateDlzAfterDraw, calculateFvgAfterDraw);
         }
         catch (Exception error)
         {

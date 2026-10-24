@@ -107,6 +107,7 @@ public partial class AnalyzerCommonViewModel : ObservableObject
 
         CandlesWithFlatPriceCheck = settings.CandlesWithFlatPriceCheck;
         CandlesWithFlatPrice = settings.CandlesWithFlatPrice;
+        CandlesWithZeroVolumeCheck = settings.CandlesWithZeroVolumeCheck;
         CandlesWithZeroVolume = settings.CandlesWithZeroVolume;
         AboveBollingerBandsSmaCheck = settings.AboveBollingerBandsSmaCheck;
         AboveBollingerBandsSma = settings.AboveBollingerBandsSma;
@@ -138,6 +139,7 @@ public partial class AnalyzerCommonViewModel : ObservableObject
 
         settings.CandlesWithFlatPriceCheck = CandlesWithFlatPriceCheck;
         settings.CandlesWithFlatPrice = CandlesWithFlatPrice;
+        settings.CandlesWithZeroVolumeCheck = CandlesWithZeroVolumeCheck;
         settings.CandlesWithZeroVolume = CandlesWithZeroVolume;
         settings.AboveBollingerBandsSmaCheck = AboveBollingerBandsSmaCheck;
         settings.AboveBollingerBandsSma = AboveBollingerBandsSma;

@@ -468,7 +468,7 @@ public class MacSettings : SettingsSignalStrategyBase
     /// Also the smallest distance of the stop line beyond the last DCA.
     /// </summary>
     [SettingCaption("Minimum distance %", Indented = true,
-        Tooltip = "Higher spreads the levels further. A line closer than this percentage to the entry or to the level before it is skipped, for the DCAs as well as for the stop on the line.")]
+        Tooltip = "Higher spreads the levels further. A line closer than this percentage to the entry or to the level before it is skipped, for the DCAs as well as for the stop on the line.", Minimum = 0)]
     public decimal DcaLineMinimumPercentage { get; set; } = 0.5m;
 
     /// <summary>
@@ -483,7 +483,7 @@ public class MacSettings : SettingsSignalStrategyBase
 
     /// <summary>How far beyond that line the stop lies, in percent of the entry. 0 puts it on the line.</summary>
     [SettingCaption("Margin beyond the line %", Indented = true, EnabledWhen = nameof(StopOnLineBeyondDca),
-        Tooltip = "Higher is a wider stop. How many percent beyond the line the stop lies, so a wick that just touches the line does not stop the position out. 0 puts it exactly on the line.")]
+        Tooltip = "Higher is a wider stop. How many percent beyond the line the stop lies, so a wick that just touches the line does not stop the position out. 0 puts it exactly on the line.", Minimum = 0)]
     public decimal StopLineMarginPercentage { get; set; } = 0.5m;
 
     /// <summary>

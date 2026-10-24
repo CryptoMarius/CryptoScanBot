@@ -190,8 +190,9 @@ public class TextualSideData
         textual.Barometer.List.Clear();
         foreach (var baro in BarometerRanges)
         {
+            // Ensure min < max, as in the Avalonia view model (BarometerFilterViewModel.SaveInterval)
             if (baro.IsActive)
-                textual.Barometer.List[baro.Name] = (baro.Min, baro.Max);
+                textual.Barometer.List[baro.Name] = (Math.Min(baro.Min, baro.Max), Math.Max(baro.Min, baro.Max));
         }
         textual.Barometer.ConsensusActive = BarometerConsensusActive;
         textual.Barometer.MinConsensus = BarometerMinConsensus;

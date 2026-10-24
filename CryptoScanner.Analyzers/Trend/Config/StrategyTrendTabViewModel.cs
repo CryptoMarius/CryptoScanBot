@@ -31,7 +31,8 @@ public partial class StrategyTrendTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(settings);
         StrategyTrendSettingsViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadStrategyConfig(settings.IntervalList);
+        // Intervals below MinimumInterval grey out, as on the Photino tab
+        IntervalViewModel.LoadStrategyConfig(settings.IntervalList, settings.MinimumInterval);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 

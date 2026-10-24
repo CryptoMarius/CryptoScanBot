@@ -70,8 +70,8 @@ public class ThreadCheckFinishedPosition
                 //var bla = Queue.Contains(position);
                 //var isPresent = Queue.Any(d => d.position == position);
                 //if (Queue.Any(d => d.position == position)) //Dupes.ContainsKey(position.Symbol.Name))
-                // Keyed like the position list (PositionTools.PositionListKey): the symbol name for an
-                // ordinary position, so a coin with parallel positions does not merge them into one
+                // Keyed like the position list (PositionTools.PositionListKey): symbol#id for every
+                // position since 24-10-2026, so a coin with several positions does not merge them into one
                 string queueKey = PositionTools.PositionListKey(position);
                 if (Queue.TryGetValue(queueKey, out (CryptoPosition position, string? orderId, CryptoOrderStatus? status) foundPosition))
                 {

@@ -8,12 +8,13 @@ using CryptoScanner.Core.Trader;
 namespace CryptoScanner.Analyzers.FvgLadder.Signal;
 
 /// <summary>
-/// FVG &amp; DCA, long only. Runs on every minute candle and keeps ONE buy limit on the book: on the
+/// FVG ladder, long only. Runs on every minute candle and keeps ONE buy limit on the book: on the
 /// top of the gap the price will reach first, placed once the price comes within
-/// PlaceOrderDistancePercentage of it. The signal is that order; the trader keeps it as a waiting
+/// PlaceOrderWithinPercentage of it. The signal is that order; the trader keeps it as a waiting
 /// position (StrategyRegistration.StandingEntry) and asks <see cref="WithdrawEntry"/> on every minute
 /// whether it may stay. The strategy may hold several positions on the coin at once
-/// (StrategyRegistration.ParallelPositions); a new one only comes when the rules allow it.
+/// (StrategyRegistration.ParallelPositions, limited by Trading.MaxPositionsPerCoin); a new one only comes
+/// when the rules allow it.
 /// <para>
 /// The rules themselves are in FvgLadderRules; this class collects the gaps, the trend and the open
 /// positions, and hands the entry price, the DCA ladder and the take profit over with the signal.
@@ -54,10 +55,10 @@ public class FvgLadderLong : SignalCreateBase
         if (positions.Any(p => p.Status == CryptoPositionStatus.Waiting))
             return false;
 
-        // Rule 1.1, only for starting a position
-        if (!FvgLadderTrend.IsUp(Symbol, CandleLast.Candle.OpenTime + Interval.Duration, out decimal dayClose, out decimal ema))
+        // Rule 1, only for starting a position
+        if (!FvgLadderTrend.IsUp(Symbol, CandleLast.Candle.OpenTime + Interval.Duration, settings, out string trendText))
         {
-            ExtraText = $"day close {dayClose} not above EMA{FvgLadderTrend.EmaLength} {ema:N2}";
+            ExtraText = trendText;
             return false;
         }
 
@@ -69,30 +70,22 @@ public class FvgLadderLong : SignalCreateBase
 
         // The order only has to be there once the price comes near
         decimal distance = 100m * (price - target) / target;
-        if (distance > settings.PlaceOrderDistancePercentage)
+        if (distance > settings.PlaceOrderWithinPercentage)
             return false;
 
         EntryPrice = target;
-        List<FvgLadderLevel> levels = [];
-        if (settings.Preset == FvgLadderPreset.Grid)
-        {
+        List<FvgLadderLevel> levels = settings.UseDca
+            ? FvgLadderRules.DcaLevels(target, tops, settings.MaxDca, settings.DcaStepPercentage, settings.DcaFvgMaxPercentage, settings.DcaFactor)
+            : [];
+        if (levels.Count == 0)
             NoDca = true;
-            TakeProfit = FvgLadderRules.TakeProfitFromBreakEven(settings.TakeProfitPercentage, Symbol.Exchange.FeeRate);
-        }
         else
-        {
-            levels = FvgLadderRules.DcaLevels(target, tops, settings.MaxDca,
-                settings.StepPercentage, settings.DcaFvgMaxPercentage, settings.DcaFactor);
-            if (levels.Count == 0)
-                NoDca = true;
-            else
-                DcaList = FvgLadderRules.ToDcaList(target, levels);
-            TakeProfit = settings.TakeProfitPercentage;
-        }
+            DcaList = FvgLadderRules.ToDcaList(target, levels);
+        // Rule 5.1: always above the break-even price of the whole position, fees included
+        TakeProfit = settings.TakeProfitPercentage;
 
         string dcaText = NoDca ? "no dca" : "dca " + string.Join("/", levels.Select(l => $"{l.Price:0.########}"));
-        ExtraText = $"{settings.Preset} buy limit {target} ({distance:N2}% under the price), {dcaText}, " +
-            $"{positions.Count} open position(s)";
+        ExtraText = $"buy limit {target} ({distance:N2}% under the price), {dcaText}, {positions.Count} open position(s)";
         return true;
     }
 
@@ -104,6 +97,12 @@ public class FvgLadderLong : SignalCreateBase
     public override bool AllowStepIn(CryptoSignal signal) => true;
 
 
+    /// <summary>
+    /// The waiting buy limit stays until it fills, unless the coin left the list, the trend went, or
+    /// the target changed: the gap is no longer valid, another (higher) gap became the target, or no
+    /// new position is allowed any more. The distance of the price does not withdraw it, so a wick
+    /// into the gap is still caught.
+    /// </summary>
     public override bool WithdrawEntry(CryptoPosition position)
     {
         ExtraText = "";
@@ -116,9 +115,9 @@ public class FvgLadderLong : SignalCreateBase
             return true;
         }
 
-        if (!FvgLadderTrend.IsUp(Symbol, CandleLast.Candle.OpenTime + Interval.Duration, out decimal dayClose, out decimal ema))
+        if (!FvgLadderTrend.IsUp(Symbol, CandleLast.Candle.OpenTime + Interval.Duration, settings, out string trendText))
         {
-            ExtraText = $"trend gone, day close {dayClose} not above EMA{FvgLadderTrend.EmaLength} {ema:N2}";
+            ExtraText = $"trend gone, {trendText}";
             return true;
         }
 
@@ -137,13 +136,6 @@ public class FvgLadderLong : SignalCreateBase
             return true;
         }
 
-        decimal distance = 100m * (price - target) / target;
-        if (distance > settings.WithdrawOrderDistancePercentage)
-        {
-            ExtraText = $"price {distance:N2}% above the gap top";
-            return true;
-        }
-
         return false;
     }
 
@@ -157,8 +149,7 @@ public class FvgLadderLong : SignalCreateBase
     {
         target = 0m;
         reason = "";
-        bool ladder = settings.Preset == FvgLadderPreset.Ladder;
-        tops = FvgLadderRules.UsableTops(CollectZones(), settings.MinimumGapPercentage, use4h: ladder);
+        tops = FvgLadderRules.UsableTops(CollectZones(), settings.MinimumGapPercentage);
 
         List<FvgLadderTrade> trades = [];
         foreach (CryptoPosition position in positions)
@@ -167,19 +158,17 @@ public class FvgLadderLong : SignalCreateBase
                 trades.Add(trade);
         }
 
-        decimal? found;
-        if (ladder)
+        // The maximum is the trader's since 24-10-2026 (Trading.MaxPositionsPerCoin)
+        int maxPositions = PositionTools.MaxPositionsPerCoin;
+        if (!FvgLadderRules.NewTradeAllowed(trades, maxPositions, settings.UseDca, settings.DcaStepPercentage, out decimal? limit))
         {
-            if (!FvgLadderRules.NewTradeAllowed(trades, settings.StepPercentage, out decimal? limit))
-            {
-                reason = "the lowest position has not bought all of its DCA's yet";
-                return false;
-            }
-            found = FvgLadderRules.EntryTarget(tops, price, settings.OrderZones, limit);
+            reason = trades.Count >= maxPositions
+                ? $"already {trades.Count} position(s) on the coin, the maximum"
+                : "the lowest position has not bought all of its DCA's yet";
+            return false;
         }
-        else
-            found = FvgLadderRules.GridEntryTarget(tops, price, settings.OrderZones, trades, settings.StepPercentage);
 
+        decimal? found = FvgLadderRules.EntryTarget(tops, price, settings.GapsInView, limit);
         if (found == null)
         {
             reason = $"no usable gap under the price ({tops.Count} gap(s), {trades.Count} open position(s))";

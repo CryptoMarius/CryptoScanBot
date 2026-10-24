@@ -179,7 +179,8 @@ public static class SignalStatistics
             decimal tpPercentage = levels[index].Percentage;
             if (tpPercentage <= 0)
                 break;
-            decimal tpPrice = PricePlacement.Favorable(signal.Side, signal.SignalPrice, tpPercentage);
+            //decimal tpPrice = PricePlacement.Favorable(signal.Side, signal.SignalPrice, tpPercentage);
+            decimal tpPrice = PricePlacement.TakeProfit(signal.Side, signal.SignalPrice, tpPercentage);
             bool levelReached = isLong ? signal.PriceMax >= tpPrice : signal.PriceMin <= tpPrice;
             if (!levelReached)
                 break;

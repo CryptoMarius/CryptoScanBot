@@ -8,94 +8,72 @@
              x:CompileBindings="True"
              x:Class="CryptoScanner.Analyzers.FvgLadder.Config.StrategyFvgLadderSettingsView">
 
-    <StackPanel Orientation="Horizontal" Spacing="5">
+    <!-- The groups and captions of FvgLadderSettings, in the same order (the Photino tab is built from that class). -->
+    <WrapPanel>
 
-        <!-- The rules of "BTC FVG DCA - Regels ter afstemming"; the Grid preset uses the same values
-             for the gap, the step and the take profit. -->
-        <HeaderedContentControl Classes="groupbox" Header="Rules">
+        <HeaderedContentControl Classes="groupbox" Header="General">
             <StackPanel Margin="4" Spacing="4">
-
                 <Grid ColumnDefinitions="180,110,*" RowDefinitions="Auto"
-                      ToolTip.Tip="The base assets the strategy trades, separated by a comma, e.g. BTC, ETH. Empty means every coin the strategy is switched on for.">
+                      ToolTip.Tip="The coins the strategy trades (base asset), separated by a comma, e.g. BTC, ETH. Empty means every coin the strategy is switched on for.">
                     <TextBlock Grid.Column="0" Text="Coins:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1" Text="{Binding Coins, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
+                <!-- Max positions per coin is a Trader setting since 24-10-2026 (Trading.MaxPositionsPerCoin) -->
+            </StackPanel>
+        </HeaderedContentControl>
 
-                <Grid ColumnDefinitions="180,110,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Ladder: 1h + 4h gaps, DCA's, take profit on the break-even price, parallel positions after the DCA's. Grid: every 1h gap a position of its own, no DCA, take profit on the entry.">
-                    <TextBlock Grid.Column="0" Text="Preset:" VerticalAlignment="Center" FontSize="12"/>
-                    <ComboBox Grid.Column="1" ItemsSource="{Binding Presets}"
-                              SelectedItem="{Binding Preset, Mode=TwoWay}"
-                              Height="26" FontSize="12" HorizontalAlignment="Stretch"/>
-                </Grid>
+        <HeaderedContentControl Classes="groupbox" Header="Trend">
+            <StackPanel Margin="4" Spacing="4">
+                <CheckBox IsChecked="{Binding UseKalmanFilter, Mode=TwoWay}" Content="Use Kalman filter" FontSize="12"
+                          ToolTip.Tip="Off: a new position only while the day close is above the EMA200 (1d). On: only while the Kalman filter on the strategy's interval (normally 1h) points up."/>
+            </StackPanel>
+        </HeaderedContentControl>
 
+        <HeaderedContentControl Classes="groupbox" Header="Entry">
+            <StackPanel Margin="4" Spacing="4">
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="The minimum width of a gap, (top - bottom) / bottom. The scanner zones have to be calculated with a minimum at or below this (Signal.ZonesFvg).">
+                      ToolTip.Tip="Gaps narrower than this, (top - bottom) / bottom, are ignored. The scanner zones have to be calculated with a minimum at or below this (FVG configuration).">
                     <TextBlock Grid.Column="0" Text="Minimum gap %:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1" Text="{Binding MinimumGapPercentage, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
-
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="A DCA lies at least this far under the previous buy, a new parallel position this far under the last buy of the lowest open position. Grid: the distance to every open position.">
-                    <TextBlock Grid.Column="0" Text="Step %:" VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding StepPercentage, Mode=TwoWay}"
+                      ToolTip.Tip="Only the nearest this many gaps below the price can get the entry order, the rest is ignored.">
+                    <TextBlock Grid.Column="0" Text="Gaps in view:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding GapsInView, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
-
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Above the break-even price of the whole position including fees. Grid: above the entry.">
-                    <TextBlock Grid.Column="0" Text="Take profit %:" VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding TakeProfitPercentage, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-            </StackPanel>
-        </HeaderedContentControl>
-
-        <!-- One buy limit at a time, on the gap the price reaches first, and only when the price is near -->
-        <HeaderedContentControl Classes="groupbox" Header="Orders">
-            <StackPanel Margin="4" Spacing="4">
-
-                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Only the nearest this many gaps under the price can carry the entry order.">
-                    <TextBlock Grid.Column="0" Text="Order zones:" VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding OrderZones, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="The buy limit on the gap top is placed once the price is at most this far above it.">
+                      ToolTip.Tip="The buy limit on the gap top is placed once the price is at most this far above it. It stays until it fills, the trend goes, the gap closes or a higher gap becomes the target.">
                     <TextBlock Grid.Column="0" Text="Place order within %:" VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding PlaceOrderDistancePercentage, Mode=TwoWay}"
-                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
-                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="The waiting buy limit is cancelled once the price is further than this above the gap top. Keep it above 'Place order within %'.">
-                    <TextBlock Grid.Column="0" Text="Withdraw order beyond %:" VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding WithdrawOrderDistancePercentage, Mode=TwoWay}"
+                    <TextBox Grid.Column="1" Text="{Binding PlaceOrderWithinPercentage, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
             </StackPanel>
         </HeaderedContentControl>
 
-        <HeaderedContentControl Classes="groupbox" Header="DCA (Ladder only)">
+        <HeaderedContentControl Classes="groupbox" Header="DCA">
             <StackPanel Margin="4" Spacing="4">
-
+                <CheckBox IsChecked="{Binding UseDca, Mode=TwoWay}" Content="Use DCA" FontSize="12"
+                          ToolTip.Tip="Buy more when the price falls further. Off: every position is one buy."/>
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto">
-                    <TextBlock Grid.Column="0" Text="Maximum DCA's:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBlock Grid.Column="0" Text="Number of DCA's:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1" Text="{Binding MaxDca, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
-
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="A DCA lies at least this far under the previous buy. A new position lies at least this far under the last buy of the lowest open position (also without DCA).">
+                    <TextBlock Grid.Column="0" Text="DCA step %:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding DcaStepPercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
                       ToolTip.Tip="When a gap top lies between the step and this far under the previous buy, the DCA goes on that top.">
                     <TextBlock Grid.Column="0" Text="DCA on a gap up to %:" VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="1" Text="{Binding DcaFvgMaxPercentage, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
-
                 <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
                       ToolTip.Tip="Each DCA is this many times the previous buy: 2 gives 100 / 200 / 400.">
                     <TextBlock Grid.Column="0" Text="DCA size factor:" VerticalAlignment="Center" FontSize="12"/>
@@ -105,5 +83,16 @@
             </StackPanel>
         </HeaderedContentControl>
 
-    </StackPanel>
+        <HeaderedContentControl Classes="groupbox" Header="Take profit">
+            <StackPanel Margin="4" Spacing="4">
+                <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Above the break-even price of the whole position, fees included. Moves with every DCA.">
+                    <TextBlock Grid.Column="0" Text="Take profit %:" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding TakeProfitPercentage, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+            </StackPanel>
+        </HeaderedContentControl>
+
+    </WrapPanel>
 </UserControl>

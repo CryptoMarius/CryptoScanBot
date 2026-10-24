@@ -632,10 +632,12 @@ public class AltradyWebhook
             if (position.EntryPrice.HasValue && expiryTpList.Count > 0)
             {
                 decimal tpPercentage = expiryTpList[0].Percentage;
-                if (position.Side == Enums.CryptoTradeSide.Long)
-                    expiryPrice = position.EntryPrice.Value * (1 + tpPercentage / 100m);
-                else
-                    expiryPrice = position.EntryPrice.Value * (1 - tpPercentage / 100m);
+                //if (position.Side == Enums.CryptoTradeSide.Long)
+                //    expiryPrice = position.EntryPrice.Value * (1 + tpPercentage / 100m);
+                //else
+                //    expiryPrice = position.EntryPrice.Value * (1 - tpPercentage / 100m);
+                // The first take profit as Altrady places it (24-10-2026): a short's level is divided
+                expiryPrice = Trader.PricePlacement.TakeProfit(position.Side, position.EntryPrice.Value, tpPercentage);
 
                 // Put it on the tick grid the same way every other price we calculate is put there,
                 // so the level in Altrady is the level in our own administration. Measured 25-09-2026:

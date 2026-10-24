@@ -155,6 +155,16 @@ public class SettingsTrading
     public int SlotsMaximalLong { get; set; } = 1;
     public int SlotsMaximalShort { get; set; } = 1;
 
+    /// <summary>
+    /// How many positions may be open on one coin at the same time, long and short together, a waiting
+    /// entry included. 1 (the default) is the one position per coin the trader always had. With more,
+    /// a new signal opens a position of its own next to the ones already open; only when the coin is
+    /// full does it replace a waiting (unfilled) entry, as before. Each position takes a long or short
+    /// slot. Per emulator run it goes in a queue entry as "TradingOverrides": {"MaxPositionsPerCoin": 2}.
+    /// Was a setting of the fvgladder strategy until 24-10-2026.
+    /// </summary>
+    public int MaxPositionsPerCoin { get; set; } = 1;
+
 
     //***************************
     // Entry conditions
@@ -177,7 +187,9 @@ public class SettingsTrading
 
     //***************************
     // Dca
-    public CryptoOrderType DcaOrderType { get; set; } = CryptoOrderType.Limit; // Alway's! but stoplimit when trailing
+    // DcaOrderType sat here until 24-10-2026. A DCA is always a limit order (PositionMonitor places
+    // it as such), so the setting only offered that one choice. Old settings files keep the key
+    // until they are next saved - it is skipped on load.
     // EntryPullbackPercentage and DcaPullbackPercentage sat here until 28-08-2026. The mechanism
     // behind them went out in d6fc08e3 (03-06-2026, "Removed EntryPullbackPercentage + UI") and
     // 2acb3b2e (01-08-2026, "Removed CryptoEntryOrDcaPricing"); the two values stayed behind, still

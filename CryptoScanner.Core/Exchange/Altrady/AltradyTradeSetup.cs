@@ -186,7 +186,8 @@ public static class AltradyTradeSetup
             expiration["expiresAt"] = new DateTimeOffset(DateTime.SpecifyKind(expiresAt, DateTimeKind.Utc)).ToUnixTimeSeconds();
         }
         if (tpList.Count > 0)
-            expiration["price"] = ClampPrice(symbol, side, PricePlacement.Favorable(side, entryPrice, tpList[0].Percentage));
+            //expiration["price"] = ClampPrice(symbol, side, PricePlacement.Favorable(side, entryPrice, tpList[0].Percentage));
+            expiration["price"] = ClampPrice(symbol, side, PricePlacement.TakeProfit(side, entryPrice, tpList[0].Percentage));
         if (expiration.Count > 0)
             setup["entryExpiration"] = expiration;
 

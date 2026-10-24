@@ -16,7 +16,8 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
     private const string GroupZoomedBox = "Settings zoomed box";
 
     // Defaults for zigzag calculation
-    [SettingCaption("Zone calculation", Group = "Zone calculation", Expand = true)]
+    // Hidden, as in StrategyDlzTabView.axaml (IsVisible="false"); the values still load and save
+    [SettingCaption("Zone calculation", Group = "Zone calculation", Expand = true, Hidden = true)]
     public SettingsZigZag ZigZag { get; set; } = new(false, TrendType.Primary);
 
     // The zones are built on these intervals; anything shorter is not offered.

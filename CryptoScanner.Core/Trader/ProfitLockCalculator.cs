@@ -153,7 +153,10 @@ public static class ProfitLockCalculator
             return anchor;
 
         int previous = Math.Min(filledLevels - 1, tpPercentages.Count);
-        return PricePlacement.Favorable(side, anchor, tpPercentages[previous - 1]);
+        //return PricePlacement.Favorable(side, anchor, tpPercentages[previous - 1]);
+        // The stop goes on the price of that take profit level, so it is placed the same way as the
+        // take profit itself (24-10-2026).
+        return PricePlacement.TakeProfit(side, anchor, tpPercentages[previous - 1]);
     }
 
     /// <summary>

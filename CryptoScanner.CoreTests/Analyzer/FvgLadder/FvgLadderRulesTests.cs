@@ -13,7 +13,7 @@ namespace CryptoScanner.CoreTests.Analyzer.FvgLadder;
 [TestClass]
 public class FvgLadderRulesTests
 {
-    // ─── 0 coins ─────────────────────────────────────────────────────────────
+    // ─── coins ───────────────────────────────────────────────────────────────
 
     [TestMethod]
     public void Coins_MatchOnTheBaseAsset()
@@ -73,7 +73,7 @@ public class FvgLadderRulesTests
         [
             new FvgLadderZone(100.25m, 100m, false),  // 0.25%
             new FvgLadderZone(95.5m, 95m, false),     // 0.53%
-        ], 0.4m, use4h: true);
+        ], 0.4m);
 
         CollectionAssert.AreEqual(new List<decimal> { 95.5m }, tops);
     }
@@ -89,22 +89,9 @@ public class FvgLadderRulesTests
             new FvgLadderZone(101m, 100m, true),     // 4h
             new FvgLadderZone(100.5m, 99.5m, false), // 1h, overlaps the 4h gap
             new FvgLadderZone(98m, 97m, false),      // 1h, on its own
-        ], 0.4m, use4h: true);
+        ], 0.4m);
 
         CollectionAssert.AreEqual(new List<decimal> { 101m, 98m }, tops);
-    }
-
-    [TestMethod]
-    public void Overlap_WithoutThe4hGaps_The1hGapStays()
-    {
-        // The Grid preset reads the 1h gaps only, so nothing overrules them
-        List<decimal> tops = FvgLadderRules.UsableTops(
-        [
-            new FvgLadderZone(101m, 100m, true),
-            new FvgLadderZone(100.5m, 99.5m, false),
-        ], 0.4m, use4h: false);
-
-        CollectionAssert.AreEqual(new List<decimal> { 100.5m }, tops);
     }
 
 
@@ -119,13 +106,13 @@ public class FvgLadderRulesTests
     }
 
     [TestMethod]
-    public void Entry_UnderTheLimitOfTheParallelRule()
+    public void Entry_UnderTheLimitOfTheNextPositionRule()
     {
         Assert.AreEqual(97m, FvgLadderRules.EntryTarget(Tops, 100m, 4, 97.5m));
     }
 
     [TestMethod]
-    public void Entry_OnlyTheFourNearestTopsCarryAnOrder()
+    public void Entry_OnlyTheGapsInViewTakePart()
     {
         // Under 95.5 only 95 is left, and that is the fifth top under the price
         Assert.IsNull(FvgLadderRules.EntryTarget(Tops, 100m, 4, 95.5m));
@@ -208,31 +195,28 @@ public class FvgLadderRulesTests
     }
 
 
-    // ─── 5.1 take profit ─────────────────────────────────────────────────────
+    // ─── 6.1 / 6.2 a new position next to the open ones ─────────────────────
 
     [TestMethod]
-    public void TakeProfit_GridOnTheEntry_LandsOnEntryPlusOnePercent()
+    public void NewPosition_WithoutPositions_AnywhereGoes()
     {
-        // The trader measures from entry x (1 + 2 x fee) (TradeTools.DcaGridAnchor); with a fee of
-        // 0.1% that is 100.2. The handed over percentage has to bring that back to 101.
-        decimal percentage = FvgLadderRules.TakeProfitFromBreakEven(1m, 0.1m);
-        decimal target = PricePlacement.Favorable(CryptoTradeSide.Long, 100m * (1m + 2m * 0.1m / 100m), percentage);
-
-        Assert.AreEqual(101m, Math.Round(target, 10));
-    }
-
-
-    // ─── 6.1 / 6.2 parallel positions ───────────────────────────────────────
-
-    [TestMethod]
-    public void Parallel_WithoutPositions_AnythingGoes()
-    {
-        Assert.IsTrue(FvgLadderRules.NewTradeAllowed([], 1.5m, out decimal? limit));
+        Assert.IsTrue(FvgLadderRules.NewTradeAllowed([], 0, true, 1.5m, out decimal? limit));
         Assert.IsNull(limit);
     }
 
     [TestMethod]
-    public void Parallel_NotWhileTheLowestPositionStillHasDcasToGo()
+    public void NewPosition_TheMaximumPerCoinStopsIt()
+    {
+        List<FvgLadderTrade> one = [new FvgLadderTrade(100m, 97.0225m, DcasDone: true)];
+
+        // The default is one position per coin
+        Assert.IsFalse(FvgLadderRules.NewTradeAllowed(one, 1, true, 1.5m, out _));
+        Assert.IsTrue(FvgLadderRules.NewTradeAllowed(one, 2, true, 1.5m, out _));
+        Assert.IsTrue(FvgLadderRules.NewTradeAllowed(one, 0, true, 1.5m, out _), "0 = no limit");
+    }
+
+    [TestMethod]
+    public void NewPosition_NotWhileTheLowestPositionStillHasDcasToGo()
     {
         // The lowest is the one with the lowest LAST buy: 95, and its DCA's are not done
         List<FvgLadderTrade> trades =
@@ -241,36 +225,33 @@ public class FvgLadderRulesTests
             new FvgLadderTrade(95m, 95m, DcasDone: false),
         ];
 
-        Assert.IsFalse(FvgLadderRules.NewTradeAllowed(trades, 1.5m, out _));
+        Assert.IsFalse(FvgLadderRules.NewTradeAllowed(trades, 0, true, 1.5m, out _));
     }
 
     [TestMethod]
-    public void Parallel_OnceTheDcasAreDone_OneAndAHalfPercentUnderTheLastBuy()
+    public void NewPosition_OnceTheDcasAreDone_OnlyAStepUnderTheLowestLastBuy()
     {
         List<FvgLadderTrade> trades = [new FvgLadderTrade(100m, 97.0225m, DcasDone: true)];
 
-        Assert.IsTrue(FvgLadderRules.NewTradeAllowed(trades, 1.5m, out decimal? limit));
+        Assert.IsTrue(FvgLadderRules.NewTradeAllowed(trades, 0, true, 1.5m, out decimal? limit));
         Assert.AreEqual(95.5671625m, limit);  // 97.0225 x 0.985
 
-        // A gap top just above that limit is not taken, the next one under it is
+        // A gap top just above that limit is not taken (never inside the range), the next one under it is
         Assert.AreEqual(95m, FvgLadderRules.EntryTarget([96m, 95.6m, 95m], 97m, 4, limit));
     }
 
     [TestMethod]
-    public void Grid_EveryPositionAtLeastTheStepFromEveryOther()
+    public void NewPosition_WithoutDca_TheSameRuleUnderTheLowestPosition()
     {
-        List<FvgLadderTrade> open = [new FvgLadderTrade(100m, 100m, DcasDone: true)];
+        // Without DCA a position is one buy: there are no DCA's to wait for, the step still holds
+        List<FvgLadderTrade> trades = [new FvgLadderTrade(100m, 100m, DcasDone: false)];
 
-        Assert.IsFalse(FvgLadderRules.FarEnoughFromAll(98.6m, open, 1.5m));  // 1.4%
-        Assert.IsTrue(FvgLadderRules.FarEnoughFromAll(98.5m, open, 1.5m));   // 1.5%
-        Assert.IsTrue(FvgLadderRules.FarEnoughFromAll(101.5m, open, 1.5m));  // above counts too
-
-        // 99.5 and 99 are too close to the open position at 100, so the entry goes on 98.5
-        Assert.AreEqual(98.5m, FvgLadderRules.GridEntryTarget([99.5m, 99m, 98.5m, 97m], 100m, 4, open, 1.5m));
+        Assert.IsTrue(FvgLadderRules.NewTradeAllowed(trades, 0, false, 1.5m, out decimal? limit));
+        Assert.AreEqual(98.5m, limit);
     }
 
 
-    // ─── 1.1 trend ───────────────────────────────────────────────────────────
+    // ─── 1 trend ─────────────────────────────────────────────────────────────
 
     [TestMethod]
     public void Ema_StartsOnTheFirstClose()
@@ -278,6 +259,46 @@ public class FvgLadderRulesTests
         // span 3: weight 0.5, so 1, 2, 3 gives 1, 1.5, 2.25
         Assert.AreEqual(2.25m, FvgLadderRules.Ema([1m, 2m, 3m], 3));
         Assert.AreEqual(2.25m, FvgLadderRules.NextEma(1.5m, 3m, 3));
+    }
+
+    [TestMethod]
+    public void Kalman_PointsUpOnARisingPrice()
+    {
+        // 0.2% up per candle
+        List<decimal> closes = [.. Enumerable.Range(0, 100).Select(i => 100m * (decimal)Math.Pow(1.002, i))];
+
+        FvgLadderKalman state = FvgLadderRules.Kalman(closes);
+
+        Assert.IsTrue(FvgLadderRules.KalmanIsUp(state));
+        Assert.AreEqual(0.002, state.Slope, 0.0005, "the slope is the change per candle in log price");
+    }
+
+    [TestMethod]
+    public void Kalman_PointsDownOnAFallingPrice()
+    {
+        List<decimal> closes = [.. Enumerable.Range(0, 100).Select(i => 100m * (decimal)Math.Pow(0.998, i))];
+
+        Assert.IsFalse(FvgLadderRules.KalmanIsUp(FvgLadderRules.Kalman(closes)));
+    }
+
+    [TestMethod]
+    public void Kalman_ASingleSpikeDoesNotTurnAFallingTrend()
+    {
+        List<decimal> closes = [.. Enumerable.Range(0, 100).Select(i => 100m * (decimal)Math.Pow(0.998, i))];
+        closes.Add(closes[^1] * 1.01m);  // one candle 1% up
+
+        Assert.IsFalse(FvgLadderRules.KalmanIsUp(FvgLadderRules.Kalman(closes)));
+    }
+
+    [TestMethod]
+    public void Kalman_StepByStepIsTheSameAsAllAtOnce()
+    {
+        List<decimal> closes = [100m, 101m, 100.5m, 102m, 103m];
+        FvgLadderKalman stepwise = FvgLadderRules.KalmanStart(closes[0]);
+        foreach (decimal close in closes.Skip(1))
+            stepwise = FvgLadderRules.KalmanStep(stepwise, close);
+
+        Assert.AreEqual(FvgLadderRules.Kalman(closes), stepwise);
     }
 
 
@@ -289,14 +310,17 @@ public class FvgLadderRulesTests
         FvgLadderSettings settings = new();
 
         Assert.AreEqual("BTC", settings.Coins);
-        Assert.AreEqual(FvgLadderPreset.Ladder, settings.Preset);
+        Assert.IsFalse(settings.UseKalmanFilter);
         Assert.AreEqual(0.4m, settings.MinimumGapPercentage);
-        Assert.AreEqual(1.5m, settings.StepPercentage);
-        Assert.AreEqual(1.0m, settings.TakeProfitPercentage);
-        Assert.AreEqual(4, settings.OrderZones);
+        Assert.AreEqual(4, settings.GapsInView);
+        Assert.AreEqual(5.0m, settings.PlaceOrderWithinPercentage);
+        Assert.IsTrue(settings.UseDca);
         Assert.AreEqual(2, settings.MaxDca);
+        Assert.AreEqual(1.5m, settings.DcaStepPercentage);
         Assert.AreEqual(3.0m, settings.DcaFvgMaxPercentage);
         Assert.AreEqual(2.0m, settings.DcaFactor);
+        Assert.AreEqual(1.0m, settings.TakeProfitPercentage);
+        CollectionAssert.AreEqual(new[] { "1h" }, settings.IntervalList);
         CollectionAssert.AreEqual(new[] { "fvg" }, settings.RequiredZoneKinds.ToArray());
     }
 
@@ -307,31 +331,31 @@ public class FvgLadderRulesTests
         model.LoadConfig(new FvgLadderSettings
         {
             Coins = "BTC, ETH",
-            Preset = FvgLadderPreset.Grid,
+            UseKalmanFilter = true,
             MinimumGapPercentage = 0.5m,
-            StepPercentage = 2m,
-            TakeProfitPercentage = 1.5m,
-            OrderZones = 3,
-            PlaceOrderDistancePercentage = 0.8m,
-            WithdrawOrderDistancePercentage = 2.5m,
+            GapsInView = 3,
+            PlaceOrderWithinPercentage = 4m,
+            UseDca = false,
             MaxDca = 3,
+            DcaStepPercentage = 2m,
             DcaFvgMaxPercentage = 4m,
             DcaFactor = 1.5m,
+            TakeProfitPercentage = 1.5m,
         });
 
         var settings = new FvgLadderSettings();
         model.SaveConfig(settings);
 
         Assert.AreEqual("BTC, ETH", settings.Coins);
-        Assert.AreEqual(FvgLadderPreset.Grid, settings.Preset);
+        Assert.IsTrue(settings.UseKalmanFilter);
         Assert.AreEqual(0.5m, settings.MinimumGapPercentage);
-        Assert.AreEqual(2m, settings.StepPercentage);
-        Assert.AreEqual(1.5m, settings.TakeProfitPercentage);
-        Assert.AreEqual(3, settings.OrderZones);
-        Assert.AreEqual(0.8m, settings.PlaceOrderDistancePercentage);
-        Assert.AreEqual(2.5m, settings.WithdrawOrderDistancePercentage);
+        Assert.AreEqual(3, settings.GapsInView);
+        Assert.AreEqual(4m, settings.PlaceOrderWithinPercentage);
+        Assert.IsFalse(settings.UseDca);
         Assert.AreEqual(3, settings.MaxDca);
+        Assert.AreEqual(2m, settings.DcaStepPercentage);
         Assert.AreEqual(4m, settings.DcaFvgMaxPercentage);
         Assert.AreEqual(1.5m, settings.DcaFactor);
+        Assert.AreEqual(1.5m, settings.TakeProfitPercentage);
     }
 }

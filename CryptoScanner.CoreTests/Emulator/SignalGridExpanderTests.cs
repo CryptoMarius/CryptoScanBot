@@ -128,6 +128,28 @@ public class SignalGridExpanderTests : TestBase
 
 
     /// <summary>
+    /// DcaOrderType was removed on 24-10-2026 (a DCA is always a limit order). Every queue entry the
+    /// emulator ever wrote carries "DcaOrderType": 1, so that value must pass, both up front and when
+    /// the run applies it; any other value asks for something that no longer exists.
+    /// </summary>
+    [TestMethod]
+    public void TheRemovedDcaOrderType_PassesAtLimit_AndIsRefusedOtherwise()
+    {
+        InitTestSession();
+
+        var limit = EntryWithTradingOverride("DcaOrderType", "1");
+        Assert.IsNull(SignalGridExpander.Validate(limit));
+        SignalGridExpander.Revert(SignalGridExpander.Apply(limit));
+
+        string? reason = SignalGridExpander.Validate(EntryWithTradingOverride("DcaOrderType", "2"));
+        Assert.IsNotNull(reason);
+        StringAssert.Contains(reason, "DcaOrderType");
+        // 0 (market) is not "switched off" here: it asks for a market DCA
+        Assert.IsNotNull(SignalGridExpander.Validate(EntryWithTradingOverride("DcaOrderType", "0")));
+    }
+
+
+    /// <summary>
     /// A signal-section override is checked too, not just the trading ones - the loop that reads
     /// them is a different one.
     /// </summary>

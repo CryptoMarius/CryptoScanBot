@@ -31,7 +31,9 @@
         @* The heading every Avalonia strategy tab starts with, from the plugin's config view. *@
         @if (!string.IsNullOrEmpty(state.Title))
         {
-            <div style="margin: 2px 0 4px 6px; font-size: 13px;">
+            @* A full line of its own (flex-basis 100%): inside the wrap panel a short block would
+               otherwise sit next to the first group box instead of above the boxes. *@
+            <div style="margin: 2px 0 4px 6px; font-size: 13px; flex-basis: 100%;">
                 <span style="font-weight: 600;">@state.Title</span>
                 <span style="opacity: 0.7;"> — @state.SubTitle</span>
             </div>
@@ -39,7 +41,7 @@
 
         @if (!string.IsNullOrEmpty(state.WikiUrl))
         {
-            <div style="margin: 2px 0 4px 6px;">
+            <div style="margin: 2px 0 4px 6px; flex-basis: 100%;">
                 <a href="@state.WikiUrl" target="_blank" rel="noopener"
                    style="font-size: 12px; color: dodgerblue;">Wiki ↗</a>
             </div>

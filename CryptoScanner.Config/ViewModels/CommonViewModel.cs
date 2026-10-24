@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
 
@@ -37,9 +38,10 @@ public partial class CommonViewModel : ObservableObject
     private void BuildThemeList()
     {
         ThemeList.Clear();
-        ThemeList.Add(new(string.Empty, "Follow system"));
-        ThemeList.Add(new("Dark", "Dark mode"));
-        ThemeList.Add(new("Light", "Light mode"));
+        // The ThemeHelper spellings, the same keys as the Photino tab: both hosts read one settings file
+        ThemeList.Add(new(ThemeHelper.Default, "Follow system"));
+        ThemeList.Add(new(ThemeHelper.Dark, "Dark mode"));
+        ThemeList.Add(new(ThemeHelper.Light, "Light mode"));
     }
 
     private void BuildDoubleClickActionList()
@@ -63,7 +65,8 @@ public partial class CommonViewModel : ObservableObject
         TradingApp = general.TradingApp;
         DoubleClickAction = general.DoubleClickAction;
         SoundHeartBeatMinutes = general.SoundHeartBeatMinutes;
-        Theme = general.Theme;
+        // An empty value (older Avalonia builds) or a lower case one maps onto a key of the list
+        Theme = ThemeHelper.Normalize(general.Theme);
     }
 
     internal void SaveConfig(SettingsGeneral general)
@@ -71,6 +74,6 @@ public partial class CommonViewModel : ObservableObject
         general.TradingApp = TradingApp;
         general.DoubleClickAction = DoubleClickAction;
         general.SoundHeartBeatMinutes = SoundHeartBeatMinutes;
-        general.Theme = Theme;
+        general.Theme = ThemeHelper.Normalize(Theme);
     }
 }

@@ -210,8 +210,9 @@ public class TraderMechanismTests
     /// </summary>
     private static decimal CalculateTpPrice(CryptoPosition position, decimal percentage)
     {
-        int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
-        return position.TpGridBreakEvenPrice + (multiplier * position.TpGridBreakEvenPrice * (percentage / 100m));
+        //int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
+        //return position.TpGridBreakEvenPrice + (multiplier * position.TpGridBreakEvenPrice * (percentage / 100m));
+        return PricePlacement.TakeProfit(position.Side, position.TpGridBreakEvenPrice, percentage);
     }
 
     /// <summary>
@@ -627,7 +628,9 @@ public class TraderMechanismTests
         TradeTools.CalculateProfitAndBreakEvenPrice(position);
 
         decimal tpPrice = CalculateTpPrice(position, 1.5m);
-        decimal expected = position.TpGridBreakEvenPrice * (1 - 1.5m / 100m);
+        //decimal expected = position.TpGridBreakEvenPrice * (1 - 1.5m / 100m);
+        // As Altrady places it since 24-10-2026: the anchor lies 1.5% above the take profit
+        decimal expected = position.TpGridBreakEvenPrice / (1 + 1.5m / 100m);
 
         Assert.AreEqual(expected, tpPrice, "Short TP at 1.5% below anchor");
         Assert.IsTrue(tpPrice < position.TpGridBreakEvenPrice);

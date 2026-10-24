@@ -42,7 +42,6 @@ public class WickFillsDcaAndStopLossTests : TestBase
     private decimal _savedStopLossLimit;
     private bool _savedMoveSlToBreakEven;
     private bool _savedAddDustToTp;
-    private CryptoOrderType _savedDcaOrderType;
     private decimal _savedMaxPositionDurationDays;
     private ThreadCheckFinishedPosition? _savedThread;
 
@@ -59,7 +58,6 @@ public class WickFillsDcaAndStopLossTests : TestBase
         _savedStopLossLimit = t.StopLossLimitPercentage;
         _savedMoveSlToBreakEven = t.MoveSlToBreakEven;
         _savedAddDustToTp = t.AddDustToTp;
-        _savedDcaOrderType = t.DcaOrderType;
         _savedMaxPositionDurationDays = t.MaxPositionDurationDays;
         _savedThread = GlobalData.ThreadCheckPosition;
     }
@@ -75,7 +73,6 @@ public class WickFillsDcaAndStopLossTests : TestBase
         t.StopLossLimitPercentage = _savedStopLossLimit;
         t.MoveSlToBreakEven = _savedMoveSlToBreakEven;
         t.AddDustToTp = _savedAddDustToTp;
-        t.DcaOrderType = _savedDcaOrderType;
         t.MaxPositionDurationDays = _savedMaxPositionDurationDays;
         GlobalData.ThreadCheckPosition = _savedThread;
     }
@@ -99,7 +96,6 @@ public class WickFillsDcaAndStopLossTests : TestBase
         t.StopLossLimitPercentage = 5m;
         t.MoveSlToBreakEven = false;
         t.AddDustToTp = false;
-        t.DcaOrderType = CryptoOrderType.Limit;
         t.MaxPositionDurationDays = 0;
     }
 
