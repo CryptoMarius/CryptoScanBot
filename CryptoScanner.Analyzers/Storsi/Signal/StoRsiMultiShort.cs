@@ -85,7 +85,7 @@ public class StoRsiMultiShort : StoRsiBase
             else
             {
                 // first interval needs to be a signal
-                if (count == window)
+                if (count == higherIntervalCount)
                     return false;
             }
 
