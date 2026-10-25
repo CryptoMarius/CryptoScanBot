@@ -78,6 +78,8 @@ CryptoScanBot release historie:
 - Fix: De voorafgaande beweging van een candle-patroon telt de omkeercandle zelf niet meer mee
 - Instellingen: De velden van de experimentele strategieen staan alleen nog in de debug-build
 - Releases: De workflow haalt de release-notitie uit dit bestand en ondertekent de bestanden
+- Emulator: De barometer van een run wordt pas als volledig gemarkeerd als de run afliep en alle candles bewaard zijn; na een Stop bleef er een halve meting staan die volgende runs als volledig inlazen
+- Emulator: Ontbrekende minuten in een hergebruikte barometer-serie worden nu echt weggeschreven, zodat het gat zich sluit in plaats van elke run opnieuw gemeten te worden
 - Emulator: Per run hoeveel van het account gemiddeld in trades zat en wat de winst op dat geld was, met uitleg per kolom in het resultatenrooster
 - Emulator: De runs uit het resultatenrooster zijn naar Excel te exporteren, als getallen
 - Emulator: De voortgang van het ophalen van candles loopt per interval, zodat de balk blijft bewegen

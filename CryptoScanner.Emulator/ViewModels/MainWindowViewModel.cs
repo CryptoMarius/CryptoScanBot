@@ -1338,6 +1338,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         _cts = new CancellationTokenSource();
         CryptoEmulatorRun? run = null;
+        ReplayRunner? runner = null;
         bool completed = false;
 
         try
@@ -1389,7 +1390,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             // RunParallel deliberately not set here: TickRunner owns the default, so it can be changed
             // in one place. Setting it here as well meant the default was silently overruled.
-            var runner = new ReplayRunner
+            runner = new ReplayRunner
             {
                 Progress = new Progress<ReplayProgress>(OnTickProgress),
             };
@@ -1442,7 +1443,13 @@ public partial class MainWindowViewModel : ObservableObject
             try
             {
                 GlobalData.AddTextToLogTab("Run: persisting fetched candles to database");
-                await CandleDatabase.SaveCandlesAsync();
+                bool candlesSaved = await CandleDatabase.SaveCandlesAsync();
+
+                // The barometer marker last, and only for a completed run whose candles are all on
+                // disk: it tells the next run the stored series is whole. Written at the start of the
+                // run until 25-10-2026, which let a stopped run vouch for a series it left half done.
+                if (completed)
+                    runner?.CommitBarometerSeries(candlesSaved);
             }
             catch (Exception sx)
             {

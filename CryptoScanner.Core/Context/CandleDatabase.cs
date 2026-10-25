@@ -130,6 +130,22 @@ public class CandleDatabase : IDisposable
     }
 
 
+    /// <summary>Remove one value from the Meta table, when it is there. See <see cref="ReadMeta"/>.</summary>
+    public static void DeleteMeta(Model.CryptoExchange exchange, string key)
+    {
+        try
+        {
+            using CandleDatabase database = new(exchange);
+            database.Open();
+            database.Connection.Execute("DELETE FROM Meta WHERE Key = $Key", new { Key = key });
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, $"CandleDatabase.DeleteMeta({key})");
+        }
+    }
+
+
     /// <summary>
     /// Open (or create) the candle DB for the given exchange. The DB file lives at
     /// {CandleDataFolder}/{exchange.Name}.db (or {AppDataFolder} when no separate candle folder
@@ -1636,8 +1652,12 @@ public class CandleDatabase : IDisposable
     /// Each worker opens its own connection. Writes serialise on the SQLite write-lock
     /// (one writer at a time, even in WAL); the SemaphoreSlim below makes that
     /// serialisation explicit so we don't rely on busy_timeout races for large symbols.
+    ///
+    /// Returns true when every symbol was written. The emulator only marks a barometer series as
+    /// whole after that (BarometerReplay.WriteMarkers); a symbol that failed is logged and skipped
+    /// here, which is fine for a scanner that saves again within the hour but not for a marker.
     /// </summary>
-    public static async Task SaveCandlesAsync()
+    public static async Task<bool> SaveCandlesAsync()
     {
         await Semaphore.WaitAsync();
         try
@@ -1646,7 +1666,7 @@ public class CandleDatabase : IDisposable
             if (exchange == null)
             {
                 GlobalData.AddTextToLogTab("candles.db save: no active exchange — skipped");
-                return;
+                return false;
             }
 
             // Name the exchange in the message: the candles.db is per exchange, so after switching
@@ -1663,7 +1683,7 @@ public class CandleDatabase : IDisposable
             catch (CandleDatabaseSchemaException error)
             {
                 GlobalData.AddErrorToLogTab($"candles.db save {exchange.Name}: SKIPPED — {error.Message}");
-                return;
+                return false;
             }
 
             // Snapshot to avoid enumerating a live collection from parallel workers
@@ -1726,6 +1746,7 @@ public class CandleDatabase : IDisposable
             GlobalData.AddTextToLogTab(
                 $"candles.db save {exchange.Name}: done saved={saved} failed={failed} in {swTotal.ElapsedMilliseconds} ms");
             ScannerLog.Logger.Trace("candles.db saved");
+            return failed == 0;
         }
         finally
         {

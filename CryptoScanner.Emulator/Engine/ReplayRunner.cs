@@ -107,6 +107,10 @@ public sealed class ReplayRunner
     // few coins to measure one). See BarometerReplay.
     private BarometerReplay? barometer;
 
+    // The barometer of a replay that ran to the end, kept for CommitBarometerSeries: its marker may
+    // only be written once the candles of the run are on disk, which happens after RunAsync.
+    private BarometerReplay? completedBarometer;
+
 
     /// <summary>
     /// Per-symbol replay data for one chunk: the already-stored candles of EVERY interval, plus a
@@ -564,14 +568,39 @@ public sealed class ReplayRunner
 
             if (lastDecile >= 0)
                 decileWallTicks[lastDecile] += Stopwatch.GetTimestamp() - decileStart;
+
+            // A Stop breaks out of the loops above instead of throwing, so it ends up here as well
+            if (!ct.IsCancellationRequested)
+                completedBarometer = barometer;
         }
         finally
         {
             GlobalData.AnalyzeSignalCreated = null;
+            barometer?.LogMeasuredAgain();
             barometer = null;
             LogPhaseTimings();
             PipelineProfiler.Enabled = false;
         }
+    }
+
+
+    /// <summary>
+    /// Mark the barometer series this run measured as whole, so later runs over the same coins read
+    /// it back. Called after a COMPLETED run, once its candles were saved; <paramref name="candlesSaved"/>
+    /// false means a symbol failed to write, and then the series is left unmarked. Does nothing after
+    /// a Stop, or when the run reused an existing series.
+    /// </summary>
+    public void CommitBarometerSeries(bool candlesSaved)
+    {
+        BarometerReplay? measured = completedBarometer;
+        completedBarometer = null;
+        if (measured == null || !measured.HasMarkersToWrite)
+            return;
+
+        if (candlesSaved)
+            measured.WriteMarkers();
+        else
+            GlobalData.AddTextToLogTab("Barometer: not every candle was saved, so the series is not marked as whole and the next run measures it again");
     }
 
 

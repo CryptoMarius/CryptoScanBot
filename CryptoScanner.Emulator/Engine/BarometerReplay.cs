@@ -90,6 +90,28 @@ internal sealed class BarometerReplay
     /// </summary>
     private readonly bool reuse;
 
+    /// <summary>
+    /// The markers a measuring run writes once it has completed (see <see cref="WriteMarkers"/>).
+    /// Empty when the series is reused.
+    /// </summary>
+    private readonly List<(string Key, string Value)> markersToWrite = [];
+
+    /// <summary>
+    /// Per quote coin and interval, the minutes of a reused series that had no stored candle and
+    /// were measured by this run. <see cref="LoadStoredSeries"/> keeps them in memory, so the save
+    /// at the end of the run writes them away and the next run finds them. Until 25-10-2026 they were
+    /// pruned with the chunk they belonged to: only the last chunk survived to the save, and a series
+    /// with a hole was measured again by every run without the hole ever closing.
+    /// </summary>
+    private readonly Dictionary<(string Quote, CryptoIntervalPeriod Interval), HashSet<CandleTime>> measuredAgain = [];
+
+    // What the end-of-run line reports about a reused series: the replayed minutes, the minutes at
+    // least one interval had to be measured again, and the first and last of those.
+    private int minutesReplayed;
+    private int minutesMeasuredAgain;
+    private CandleTime? firstMeasuredAgain;
+    private CandleTime? lastMeasuredAgain;
+
     /// <summary>The Meta key that says which coin list a quote coin's barometer series belongs to.</summary>
     internal static string MarkerKey(string quoteName) => "Barometer:" + Constants.SymbolNameBarometerPrice + quoteName;
 
@@ -142,10 +164,40 @@ internal sealed class BarometerReplay
             GlobalData.AddTextToLogTab("Barometer: reading the series measured by an earlier run over the same coins");
         else
         {
+            // The new marker is held back until the run has completed and its candles are saved
+            // (WriteMarkers). It used to be written right here, at the start: run 118 on HyperLiquid
+            // was stopped at 29% on 25-10-2026, the marker already vouched for the whole series, and
+            // every run after it found nothing from 17-03 on, measured it again and never kept it.
+            // The OLD marker goes now: this run overwrites the stored candles - the save after a Stop
+            // writes them as well - so it would vouch for a series that is no longer the one it
+            // describes, half this coin list and half the previous one.
             foreach ((CryptoQuoteData quoteData, List<CryptoSymbol> quoteSymbols) in perQuote)
-                CandleDatabase.WriteMeta(exchange, MarkerKey(quoteData.Name), MarkerFor(quoteData, quoteSymbols));
-            GlobalData.AddTextToLogTab("Barometer: measuring it for this coin list, later runs read it back");
+            {
+                CandleDatabase.DeleteMeta(exchange, MarkerKey(quoteData.Name));
+                markersToWrite.Add((MarkerKey(quoteData.Name), MarkerFor(quoteData, quoteSymbols)));
+            }
+            GlobalData.AddTextToLogTab("Barometer: measuring it for this coin list, later runs read it back once this run has completed");
         }
+    }
+
+
+    /// <summary>True when this run measured its own series and has a marker to write once it completed.</summary>
+    public bool HasMarkersToWrite => markersToWrite.Count > 0;
+
+
+    /// <summary>
+    /// Write the markers of a run that measured its own series, so later runs over the same coins
+    /// read it back. Only for a run that COMPLETED and whose candles were saved: the marker says the
+    /// stored series is whole, and a stopped run leaves it half measured. Nothing to write when the
+    /// series was reused - its marker is already there.
+    /// </summary>
+    public void WriteMarkers()
+    {
+        foreach ((string key, string value) in markersToWrite)
+            CandleDatabase.WriteMeta(exchange, key, value);
+        if (markersToWrite.Count > 0)
+            GlobalData.AddTextToLogTab("Barometer: series stored, later runs over the same coins read it back");
+        markersToWrite.Clear();
     }
 
 
@@ -201,6 +253,8 @@ internal sealed class BarometerReplay
     public void Execute(CandleTime lastClosedMinute)
     {
         bool traderReadsTrend = TraderReadsCachedTrend();
+        bool measuredThisMinuteAgain = false;
+        minutesReplayed++;
 
         foreach ((CryptoQuoteData quoteData, List<CryptoSymbol> symbols) in perQuote)
         {
@@ -239,7 +293,53 @@ internal sealed class BarometerReplay
                 BarometerTools.CalculateForSymbols(exchange, quoteData, symbols, interval, lastClosedMinute, MinimumSymbols, result);
                 StoreCandles(quoteData.Name, interval);
             }
+
+            if (reuse && toMeasure.Count > 0)
+                measuredThisMinuteAgain = true;
         }
+
+        if (measuredThisMinuteAgain)
+        {
+            minutesMeasuredAgain++;
+            firstMeasuredAgain ??= lastClosedMinute;
+            lastMeasuredAgain = lastClosedMinute;
+        }
+    }
+
+
+    /// <summary>
+    /// Log how much of a reused series this run had to measure again: "reading the series" at the
+    /// start says nothing about the minutes that turn out to be missing. Run 119 on HyperLiquid read
+    /// for 29% and measured the rest, 2.399s of a 6.001s run, under a log that said it was reading.
+    /// Nothing to say for a run that measured the whole series itself.
+    /// </summary>
+    public void LogMeasuredAgain()
+    {
+        if (!reuse)
+            return;
+        GlobalData.AddTextToLogTab(MeasuredAgainText(minutesMeasuredAgain, minutesReplayed, firstMeasuredAgain, lastMeasuredAgain));
+    }
+
+
+    /// <summary>The end-of-run line of <see cref="LogMeasuredAgain"/>.</summary>
+    internal static string MeasuredAgainText(int measuredAgain, int replayed, CandleTime? first, CandleTime? last)
+    {
+        if (measuredAgain == 0 || first == null || last == null)
+            return $"Barometer: all {replayed} minute(s) read from the stored series";
+
+        return $"Barometer: {measuredAgain} of {replayed} minute(s) were missing from the stored series and were measured again " +
+            $"({first.Value.ToDateTime():yyyy-MM-dd HH:mm} .. {last.Value.ToDateTime():yyyy-MM-dd HH:mm}), the result is saved with the candles of this run";
+    }
+
+
+    /// <summary>
+    /// Whether a barometer candle in memory may go when the next chunk is loaded: one before the
+    /// chunk that came from the store, which is still on disk. A minute this run measured because the
+    /// store had nothing for it stays, so the save at the end of the run writes it away.
+    /// </summary>
+    internal static bool MayBePruned(CandleTime openTime, CandleTime chunkFrom, HashSet<CandleTime>? measuredAgain)
+    {
+        return openTime < chunkFrom && (measuredAgain == null || !measuredAgain.Contains(openTime));
     }
 
 
@@ -253,6 +353,11 @@ internal sealed class BarometerReplay
     /// trend were calculated again while the log said "reading the series measured by an earlier
     /// run". The previous chunk is dropped first, the same way the replay prunes the candles of its
     /// own coins, so memory stays at one chunk instead of growing with the length of the run.
+    /// </para>
+    /// <para>
+    /// Except the minutes this run measured itself because the store had nothing for them: those
+    /// stay until the save at the end of the run (see measuredAgain). A series with a hole therefore
+    /// costs at most the memory a measuring run already uses.
     /// </para>
     /// </summary>
     public void LoadStoredSeries(CandleTime from, CandleTime to)
@@ -271,9 +376,12 @@ internal sealed class BarometerReplay
                 {
                     List<CryptoCandle> stored = CandleSource.Load(symbol, interval, from, to);
                     CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+                    measuredAgain.TryGetValue((quoteData.Name, interval.IntervalPeriod), out HashSet<CandleTime>? keep);
                     lock (candles)
                     {
-                        foreach (CandleTime old in candles.Keys.Where(k => k < from).ToList())
+                        // What this run measured itself stays until the save at the end of the run,
+                        // see measuredAgain.
+                        foreach (CandleTime old in candles.Keys.Where(k => MayBePruned(k, from, keep)).ToList())
                             candles.Remove(old);
 
                         // A minute this run already measured itself keeps its own value.
@@ -464,6 +572,18 @@ internal sealed class BarometerReplay
         CandleTime at = data.PriceDateTime.Value;
         StoreOne(Constants.SymbolNameBarometerPrice + quoteName, interval, at, data, extra: false);
         StoreOne(Constants.SymbolNameBarometerExtra + quoteName, interval, at, data, extra: true);
+
+        // A reused series that had no candle here: remember the minute, so the pruning between
+        // chunks leaves it for the save at the end of the run. A measuring run prunes nothing.
+        if (reuse)
+        {
+            if (!measuredAgain.TryGetValue((quoteName, interval.IntervalPeriod), out HashSet<CandleTime>? minutes))
+            {
+                minutes = [];
+                measuredAgain[(quoteName, interval.IntervalPeriod)] = minutes;
+            }
+            minutes.Add(at);
+        }
     }
 
 
