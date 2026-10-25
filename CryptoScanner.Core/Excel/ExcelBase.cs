@@ -155,7 +155,9 @@ public abstract class ExcelBase
         for (int i = 0; i < columns; i++)
         {
             sheet.AutoSizeColumn(i);
-            sheet.SetColumnWidth(i, (int)(1.1 * sheet.GetColumnWidth(i)));
+            // Excel refuses a column wider than 255 characters (width in 1/256 of a character), and a
+            // long text such as an emulator run label goes past that once the 10% is added
+            sheet.SetColumnWidth(i, Math.Min(255 * 256, (int)(1.1 * sheet.GetColumnWidth(i))));
         }
     }
 
