@@ -30,15 +30,24 @@ namespace CryptoScanner.CandleSync;
 /// is derived from 1m - the emulator's own routine (<see cref="EmulatorCandleSync"/>), the same as
 /// the "Update candles" button.</item>
 /// </list>
-/// The symbols are the ones the emulator database already holds plus the ones the scanner has
-/// candles of. On HyperLiquid that is also what keeps the history whole: the exchange serves only its
-/// newest 5000 candles per interval (3.5 days of 1m), so run this at least every three days.
+/// The symbols are the ones the emulator database already holds 1m of, plus every symbol of the
+/// exchange whose daily volume reached --min-volume (default 250,000 in the quote) on at least one day
+/// since --from. So a missing database is created and filled without a scanner, and a coin that was
+/// liquid in January but is quiet now is not left out. On HyperLiquid it is also what keeps the history
+/// whole: the exchange serves only its newest 5000 candles per interval (3.5 days of 1m), so run this
+/// at least every three days.
 /// </summary>
 internal static class Program
 {
     private static readonly Regex SymbolProgress = new(@"(\d+)/(\d+)", RegexOptions.Compiled);
     private static bool _lineOpen;
+    // "HyperLiquid.Spot " in front of every console line: the batch file runs one exchange after another
+    private static string _exchangeLabel = "";
     private static Dictionary<string, string> Options = [];
+
+    /// <summary>The daily volume a symbol must reach on one day to be brought along (--min-volume)</summary>
+    private const decimal DefaultMinimalDailyVolume = 250_000;
+    private static decimal MinimalDailyVolume = DefaultMinimalDailyVolume;
 
 
     public static async Task<int> Main(string[] args)
@@ -57,9 +66,20 @@ internal static class Program
             Console.WriteLine("  --from      the first day the emulator needs");
             Console.WriteLine("  --scanner   optional: the data folder of a scanner of this exchange, its newest candles are copied first");
             Console.WriteLine("  --symbols   optional, for a trial: only these symbols (comma separated scanner names)");
+            Console.WriteLine("  --min-volume optional: the daily volume (in the quote) a new symbol must reach on one day, default 250000");
             return 2;
         }
         Options.TryGetValue("scanner", out string? scannerFolder);
+        MinimalDailyVolume = DefaultMinimalDailyVolume;
+        if (Options.TryGetValue("min-volume", out string? volumeText))
+        {
+            if (!decimal.TryParse(volumeText, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal volume) || volume < 0)
+            {
+                Console.WriteLine($"--min-volume {volumeText} is not a number");
+                return 2;
+            }
+            MinimalDailyVolume = volume;
+        }
 
         // The scanner's own command line parser is never fed these arguments (it does not know them)
         ApplicationParams.Options = new ApplicationParams();
@@ -114,6 +134,7 @@ internal static class Program
         CancellationToken cancellationToken)
     {
         Stopwatch watch = Stopwatch.StartNew();
+        _exchangeLabel = exchangeName.Replace(' ', '.') + " ";
         WriteLine($"CryptoScanBot.CandleSync {GlobalData.AppVersion} - {exchangeName}, candles in {candleFolder}, from {fromDate:yyyy-MM-dd}" +
             (string.IsNullOrEmpty(scannerFolder) ? ", no scanner" : $", scanner {scannerFolder}"));
 
@@ -159,22 +180,49 @@ internal static class Program
             return 1;
         }
 
+        // Without a scanner there are no settings to copy, and in the fresh ones no quote fetches
+        // candles, so not a single symbol would pass. The scanner switches the exchange's default quote
+        // on at its start (ScannerSession); the emulator's bootstrap does not, so it is done here. Not
+        // on "the quote is unknown" as the scanner tests: loading the symbols already adds every quote
+        // of the exchange, switched off. Only when no quote at all fetches candles, so settings copied
+        // from a scanner are left as they are.
+        string? defaultQuote = ExchangeBase.ExchangeOptions.DefaultQuote;
+        if (!string.IsNullOrEmpty(defaultQuote) && !GlobalData.Settings.QuoteCoins.Values.Any(quote => quote.FetchCandles))
+        {
+            CryptoQuoteData defaultQuoteData = GlobalData.AddQuoteData(defaultQuote);
+            defaultQuoteData.FetchCandles = true;
+            defaultQuoteData.MinimalVolume = ExchangeBase.ExchangeOptions.MinimalVolume;
+            WriteLine($"No quote in the settings: the exchange's default quote {defaultQuote} is used");
+        }
+
         await EmulatorCandleSync.FetchSymbolsAsync(Status);
 
-        // Which symbols: what the emulator database holds plus what the scanner has candles of
-        List<CryptoSymbol> symbols = CollectSymbols(scannerCandleDb, out int unknown);
+        // Which symbols: what the emulator database holds 1m of, and of the others of the exchange the
+        // ones whose daily volume reached the minimum on at least one day of the period
+        List<CryptoSymbol> symbols = CollectSymbols(out List<CryptoSymbol> candidates, out int unknown);
 
-        // --symbols narrows it down (for a trial on a few coins)
+        // --symbols narrows it down (for a trial on a few coins), before the volume check asks the
+        // exchange anything
         if (Options.TryGetValue("symbols", out string? only))
         {
             HashSet<string> wanted = new(only.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries), StringComparer.OrdinalIgnoreCase);
             symbols = symbols.Where(s => wanted.Contains(s.Name)).ToList();
+            candidates = candidates.Where(s => wanted.Contains(s.Name)).ToList();
         }
-        WriteLine($"{symbols.Count} symbol(s) to bring up to date" +
-            (unknown > 0 ? $" ({unknown} in the databases are left out: delisted, or a product or quote that is switched off)" : ""));
+        int present = symbols.Count;
+        List<CryptoSymbol> added = await SelectByDailyVolumeAsync(candidates, fromDate, cancellationToken);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            WriteLine($"{exchangeName} stopped during the volume check");
+            return 0;
+        }
+        symbols.AddRange(added);
+        WriteLine($"{symbols.Count} symbol(s) to bring up to date: {present} already in the emulator database, " +
+            $"{added.Count} of {candidates.Count} others reached {MinimalDailyVolume:N0} on at least one day since {fromDate:yyyy-MM-dd}" +
+            (unknown > 0 ? $" ({unknown} in the database are left out: delisted, or a product or quote that is switched off)" : ""));
         if (symbols.Count == 0)
         {
-            WriteLine("Nothing to do: the emulator database is empty and there is no scanner to take the symbols from");
+            WriteLine("Nothing to do: no symbol in the emulator database and none reached the minimum volume");
             return 0;
         }
 
@@ -239,24 +287,26 @@ internal static class Program
 
 
     /// <summary>
-    /// The symbols of the emulator candle database and of the scanner's, as the exchange knows them
-    /// now. The databases are keyed on the exchange instrument (Symbol.ExchangeName), so that is what
-    /// is matched; a symbol the exchange no longer lists is counted in <paramref name="unknown"/>.
-    /// The barometer symbols are left out without being counted: they are in the databases, but the
-    /// emulator measures their candles itself.
+    /// The symbols the emulator candle database holds 1m of, as the exchange knows them now, and in
+    /// <paramref name="candidates"/> the other symbols the settings allow. The database is keyed on the
+    /// exchange instrument (Symbol.ExchangeName), so that is what is matched; a symbol the exchange no
+    /// longer lists is counted in <paramref name="unknown"/>. The barometer symbols are left out without
+    /// being counted: they are in the database, but the emulator measures their candles itself.
+    /// <para>
+    /// Until 25-10-2026 the Symbol table of the scanner's candle database was read here as well. That
+    /// table holds nearly every market the exchange lists (Bybit Perpetual 815, of which the scanner had
+    /// 1m of 135), so a new emulator database would have been filled with all of them, and without a
+    /// scanner it stayed empty. The Symbol table of the emulator database is no measure either: it
+    /// holds every symbol the emulator ever registered (Binance Perpetual 922, with 1m of 534).
+    /// </para>
     /// </summary>
-    private static List<CryptoSymbol> CollectSymbols(string? scannerCandleDb, out int unknown)
+    private static List<CryptoSymbol> CollectSymbols(out List<CryptoSymbol> candidates, out int unknown)
     {
         HashSet<string> instruments = [];
         using (var candleDb = new CandleDatabase(GlobalData.ActiveExchange!))
         {
             candleDb.Open();
             ReadInstruments(candleDb.Connection, instruments);
-        }
-        if (scannerCandleDb != null)
-        {
-            using var scanner = OpenReadOnly(scannerCandleDb);
-            ReadInstruments(scanner, instruments);
         }
 
         // Only what the settings let the scanner work with: an active product (HyperLiquid's PERP,
@@ -295,6 +345,81 @@ internal static class Program
             else if (!barometers.Contains(instrument))
                 unknown++;
         }
+        candidates = byInstrument.Where(pair => !instruments.Contains(pair.Key)).OrderBy(pair => pair.Key).Select(pair => pair.Value).ToList();
+        return result;
+    }
+
+
+    /// <summary>
+    /// The symbols of <paramref name="candidates"/> that traded at least <see cref="MinimalDailyVolume"/>
+    /// on one day from <paramref name="fromDate"/> up to now. Today's ticker counts first (no request);
+    /// otherwise the daily candles of the period are asked, one or two requests per symbol, and the
+    /// highest daily volume decides. Those candles are only looked at: they are dropped again, the sync
+    /// derives 1d from 1m like every other interval.
+    /// <para>
+    /// The daily candle carries the quote volume, the same unit as the ticker (see EmulatorVolume),
+    /// and the same value the emulator compares with MinimalVolume per replayed day. A symbol that
+    /// never reached the minimum on any day could never take part in a run with that minimum either.
+    /// Symbols the exchange has delisted are not in its list and cannot be found this way.
+    /// </para>
+    /// </summary>
+    private static async Task<List<CryptoSymbol>> SelectByDailyVolumeAsync(List<CryptoSymbol> candidates, DateTime fromDate,
+        CancellationToken cancellationToken)
+    {
+        List<CryptoSymbol> result = [];
+        if (candidates.Count == 0)
+            return result;
+
+        CryptoInterval interval1d = GlobalData.IntervalListPeriod[Core.Enums.CryptoIntervalPeriod.interval1d];
+        bool dailySupported = GlobalData.ActiveExchange!.IsIntervalSupported(interval1d.IntervalPeriod);
+        CandleTime from = IntervalTools.StartOfIntervalCandle(CandleTime.AlignFromDateTime(fromDate, interval1d.Duration), interval1d.Duration);
+        // Only whole days; today is covered by the ticker
+        CandleTime until = IntervalTools.StartOfIntervalCandle(CandleTime.AlignFromDateTime(DateTime.UtcNow, interval1d.Duration), interval1d.Duration);
+        if (!dailySupported)
+            WriteLine($"{GlobalData.ActiveExchange!.Name} serves no daily candles: the new symbols are chosen on today's ticker volume only");
+
+        int number = 0;
+        int byTicker = 0;
+        foreach (CryptoSymbol symbol in candidates)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                break;
+            number++;
+
+            if ((decimal)symbol.Volume >= MinimalDailyVolume)
+            {
+                byTicker++;
+                result.Add(symbol);
+                continue;
+            }
+            if (!dailySupported)
+                continue;
+
+            Status($"Checking the daily volume of {symbol.Name} ({number}/{candidates.Count}), {result.Count} reached {MinimalDailyVolume:N0} so far…");
+            try
+            {
+                await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval1d, from, until);
+                decimal highest = 0;
+                foreach (CryptoCandle candle in symbol.GetSymbolInterval(interval1d.IntervalPeriod).CandleList.Values)
+                {
+                    if (candle.OpenTime >= from && candle.Volume > highest)
+                        highest = candle.Volume;
+                }
+                if (highest >= MinimalDailyVolume)
+                    result.Add(symbol);
+                GlobalData.AddTextToLogTab($"CandleSync: volume check {symbol.Name} highest daily volume {highest:N0}" +
+                    (highest >= MinimalDailyVolume ? " - taken" : ""));
+            }
+            catch (Exception ex)
+            {
+                GlobalData.AddTextToLogTab($"CandleSync: volume check {symbol.Name} FAILED ({ex.Message})");
+            }
+            finally
+            {
+                symbol.ClearCandles();
+            }
+        }
+        GlobalData.AddTextToLogTab($"CandleSync: volume check {number}/{candidates.Count} symbol(s), {result.Count} taken, {byTicker} of them on the ticker");
         return result;
     }
 
@@ -343,8 +468,11 @@ internal static class Program
 
     private static void ReadInstruments(SqliteConnection connection, HashSet<string> instruments)
     {
+        // Only the symbols with at least one 1m candle (the primary key makes the EXISTS a single seek)
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "SELECT ExchangeName FROM Symbol WHERE ExchangeName IS NOT NULL";
+        cmd.CommandText = "SELECT s.ExchangeName FROM Symbol s WHERE s.ExchangeName IS NOT NULL " +
+            "AND EXISTS (SELECT 1 FROM Candle c WHERE c.SymbolId = s.SymbolId AND c.IntervalId = $IntervalId)";
+        cmd.Parameters.AddWithValue("$IntervalId", GlobalData.IntervalList[0].Id);
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
             instruments.Add(reader.GetString(0));
@@ -583,6 +711,7 @@ internal static class Program
             string what = SymbolInParentheses.Replace(text, "", 1).Replace("  ", " ").Trim();
             line = $"[{new string('#', filled)}{new string('-', 30 - filled)}] {100 * fraction,5:0.0}%  coin {_current}/{_total}  {what}{left}";
         }
+        line = _exchangeLabel + line;
         lock (SymbolProgress)
         {
             if (Console.IsOutputRedirected)
@@ -607,7 +736,7 @@ internal static class Program
             if (_lineOpen && !Console.IsOutputRedirected)
                 Console.Write("\r" + new string(' ', ConsoleWidth() - 1) + "\r");
             _lineOpen = false;
-            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {text}");
+            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {_exchangeLabel}{text}");
         }
     }
 
