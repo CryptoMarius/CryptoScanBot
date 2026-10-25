@@ -470,6 +470,21 @@ public partial class RunResultsView : UserControl
     }
 
 
+    private void OnExportSelectedToExcelClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is RunResultsViewModel viewModel)
+            viewModel.ExportToExcel(RunsGrid.SelectedItems.OfType<RunRow>().ToList());
+    }
+
+
+    // All rows the grid shows, so after the label filter and in the order the grid is sorted on
+    private void OnExportAllToExcelClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is RunResultsViewModel viewModel)
+            viewModel.ExportToExcel(RunsGrid.ItemsSource?.OfType<RunRow>().ToList() ?? []);
+    }
+
+
     private void CopyRowsToClipboard(List<RunRow> rows)
     {
         if (DataContext is not RunResultsViewModel viewModel)
@@ -484,7 +499,7 @@ public partial class RunResultsView : UserControl
 
         // Header row — same order and names as the grid columns.
         sb.AppendLine("Id\tLabel\tPeriod\tStarted\tBuild\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tWin%\tProfit\tUnrealized PnL\tTotal PnL\tTotal PnL Long\tTotal PnL Short\tProfit%\tInvested\t" +
-            "Peak cap.\tPeak pos\tPeak %\tDrawdown %\tStart cap.\tEnd cap.\tReturn %\tLong\tProfit long\tShort\tProfit short\tBest case\tWorst case\tAvg dur.\tMin dur.\tMax dur.");
+            "Peak cap.\tPeak pos\tPeak %\tDrawdown %\tStart cap.\tEnd cap.\tReturn %\tRecovery factor\tCounts\tWithout best 10\tExposure %\tRAR %\tLong\tProfit long\tShort\tProfit short\tBest case\tWorst case\tAvg dur.\tMin dur.\tMax dur.");
 
         foreach (RunRow r in rows)
         {
@@ -517,6 +532,12 @@ public partial class RunResultsView : UserControl
             sb.Append(r.StartCapitalText).Append('\t');
             sb.Append(r.EndCapitalText).Append('\t');
             sb.Append(r.CapitalReturnPercentageText).Append('\t');
+            sb.Append(r.RecoveryFactorText).Append('\t');
+            // The greyed-out mark of the grid does not survive a paste, so it goes along as a column.
+            sb.Append(r.RecoveryFactorCounts ? "yes" : "no").Append('\t');
+            sb.Append(r.ProfitWithoutBestTenText).Append('\t');
+            sb.Append(r.ExposurePercentageText).Append('\t');
+            sb.Append(r.RiskAdjustedReturnText).Append('\t');
             sb.Append(r.PositionsLong).Append('\t');
             sb.Append(r.ProfitLong).Append('\t');
             sb.Append(r.PositionsShort).Append('\t');

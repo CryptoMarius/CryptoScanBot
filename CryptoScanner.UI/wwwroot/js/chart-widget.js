@@ -680,6 +680,92 @@ function createVerticalPrimitive() {
     return VerticalPrimitive;
 }
 
+
+// The time axis on the local clock, while every series keeps its UTC timestamps.
+//
+// lightweight-charts knows no time zones: it draws every UTCTimestamp in UTC. Up to 25-10-2026 the
+// widget shifted each timestamp into local time on the way in (_toLocalTime). That put the labels
+// and the day separators right, but on the night the clocks go back the hour from 02:00 to 03:00
+// then occurs twice - two candles on one time, which the library cannot take: an hour of candles
+// dropped and an empty volume pane. Now the timestamps stay UTC and unique, and only what the axis
+// SHOWS is local. The library's own fillWeightsForPoints decides in UTC where the hour and day
+// separators go (that would put the "25" on 02:00 in summer); this one does the same walk on the
+// local clock. The labels themselves come from _formatTickLocal and _formatTimeLocal.
+function createLocalTimeBehavior() {
+    var Base = LightweightCharts.defaultHorzScaleBehavior();
+
+    // TickMarkWeight in lightweight-charts: the kind of boundary a point is the first one after
+    var YEAR = 70, MONTH = 60, DAY = 50;
+    var SPANS = [
+        { ms: 1000, weight: 10 },
+        { ms: 60 * 1000, weight: 20 },
+        { ms: 5 * 60 * 1000, weight: 21 },
+        { ms: 30 * 60 * 1000, weight: 22 },
+        { ms: 60 * 60 * 1000, weight: 30 },
+        { ms: 3 * 60 * 60 * 1000, weight: 31 },
+        { ms: 6 * 60 * 60 * 1000, weight: 32 },
+        { ms: 12 * 60 * 60 * 1000, weight: 33 },
+    ];
+
+    // Milliseconds on the wall clock: UTC plus the offset that applied at that moment
+    function wallClock(date) {
+        return date.getTime() - date.getTimezoneOffset() * 60000;
+    }
+
+    function weight(current, previous) {
+        if (current.getFullYear() !== previous.getFullYear())
+            return YEAR;
+        if (current.getMonth() !== previous.getMonth())
+            return MONTH;
+        if (current.getDate() !== previous.getDate())
+            return DAY;
+
+        var now = wallClock(current);
+        var before = wallClock(previous);
+        for (var i = SPANS.length - 1; i >= 0; i--) {
+            if (Math.floor(now / SPANS[i].ms) !== Math.floor(before / SPANS[i].ms))
+                return SPANS[i].weight;
+        }
+        return 0;
+    }
+
+    class LocalTimeBehavior extends Base {
+        // The library's walk, on the local clock. originalTime is the UTC timestamp the series got.
+        fillWeightsForPoints(points, startIndex) {
+            startIndex = startIndex || 0;
+            if (points.length === 0)
+                return;
+
+            // Anything but plain UTC seconds (a business day, a date string) is left to the library
+            if (typeof points[startIndex === 0 ? 0 : startIndex - 1].originalTime !== 'number') {
+                super.fillWeightsForPoints(points, startIndex);
+                return;
+            }
+
+            var previous = startIndex === 0 ? null : new Date(points[startIndex - 1].originalTime * 1000);
+            var totalSpan = 0;
+            for (var i = startIndex; i < points.length; i++) {
+                var current = new Date(points[i].originalTime * 1000);
+                if (previous !== null) {
+                    points[i].timeWeight = weight(current, previous);
+                    totalSpan += current.getTime() - previous.getTime();
+                }
+                previous = current;
+            }
+
+            // The first point has nothing before it: it is measured against a point one average
+            // step earlier, as the library does
+            if (startIndex === 0 && points.length > 1) {
+                var step = Math.ceil(totalSpan / (points.length - 1));
+                var first = new Date(points[0].originalTime * 1000);
+                points[0].timeWeight = weight(first, new Date(first.getTime() - step));
+            }
+        }
+    }
+
+    return LocalTimeBehavior;
+}
+
 window.ChartWidget = {
     _charts: {},
     _isDark: true,
@@ -691,6 +777,7 @@ window.ChartWidget = {
     _SegmentPrimitive: null,
     _MeasurePrimitive: null,
     _VerticalPrimitive: null,
+    _LocalTimeBehavior: null,
 
     // Times the position markers stand at, carried down into the sub-panels. Held here because the
     // panels are rebuilt on every setData and have to be able to ask for them again.
@@ -740,6 +827,7 @@ window.ChartWidget = {
         this._SegmentPrimitive = createSegmentPrimitive();
         this._MeasurePrimitive = createMeasurePrimitive();
         this._VerticalPrimitive = createVerticalPrimitive();
+        this._LocalTimeBehavior = createLocalTimeBehavior();
         this.dispose();
         this._createMainChart();
         this._attachVerticalControl();
@@ -1035,7 +1123,15 @@ window.ChartWidget = {
 
     _chartOptions: function (hideTimeScale) {
         var d = this._isDark;
+        var self = this;
         return {
+            // The times stay UTC inside the chart; the axis labels and the crosshair label are put
+            // on the local clock here (see createLocalTimeBehavior). dateFormat is what
+            // LightweightCharts.createChart sets by itself, which createChartEx does not.
+            localization: {
+                dateFormat: "dd MMM 'yy",
+                timeFormatter: function (time) { return self._formatTimeLocal(time); },
+            },
             layout: {
                 background: { type: 'solid', color: d ? '#131316' : '#f0f0f5' },
                 textColor: d ? '#e0e0e0' : '#232323',
@@ -1056,6 +1152,9 @@ window.ChartWidget = {
                 timeVisible: true,
                 secondsVisible: false,
                 visible: !hideTimeScale,
+                tickMarkFormatter: function (time, tickMarkType, locale) {
+                    return self._formatTickLocal(time, tickMarkType, locale);
+                },
             },
             rightPriceScale: {
                 borderColor: d ? '#333' : '#ccc',
@@ -1085,7 +1184,12 @@ window.ChartWidget = {
         var container = document.getElementById('chart-main');
         if (!container) return;
 
-        var chart = LightweightCharts.createChart(container, Object.assign(
+        //var chart = LightweightCharts.createChart(container, Object.assign(
+        //    this._chartOptions(false),
+        //    { width: container.clientWidth, height: container.clientHeight }
+        //));
+        // createChartEx with a time scale of our own: the axis separators on the local clock
+        var chart = LightweightCharts.createChartEx(container, new this._LocalTimeBehavior(), Object.assign(
             this._chartOptions(false),
             { width: container.clientWidth, height: container.clientHeight }
         ));
@@ -1214,13 +1318,17 @@ window.ChartWidget = {
         // Avalonia subtitle: "ddd yyyy-MM-dd HH:mm, price: x (O: .. H: .. L: .. C: .. V: ..)"
         // The times in the widget are already shifted to local time (_toLocalTime), so the UTC
         // getters give the wall clock time.
+        // Since 25-10-2026 the times are UTC again (see createLocalTimeBehavior), so the local
+        // getters give the wall clock time.
         var html = '';
         if (typeof candle.time === 'number') {
             var t = new Date(candle.time * 1000);
             var pad = function (n) { return (n < 10 ? '0' : '') + n; };
             var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            html += '<span class="ohlcv-value">' + days[t.getUTCDay()] + ' ' + t.getUTCFullYear() + '-' + pad(t.getUTCMonth() + 1)
-                  + '-' + pad(t.getUTCDate()) + ' ' + pad(t.getUTCHours()) + ':' + pad(t.getUTCMinutes()) + '</span>';
+            //html += '<span class="ohlcv-value">' + days[t.getUTCDay()] + ' ' + t.getUTCFullYear() + '-' + pad(t.getUTCMonth() + 1)
+            //      + '-' + pad(t.getUTCDate()) + ' ' + pad(t.getUTCHours()) + ':' + pad(t.getUTCMinutes()) + '</span>';
+            html += '<span class="ohlcv-value">' + days[t.getDay()] + ' ' + t.getFullYear() + '-' + pad(t.getMonth() + 1)
+                  + '-' + pad(t.getDate()) + ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes()) + '</span>';
         }
         if (typeof price === 'number' && isFinite(price)) {
             html += '<span class="ohlcv-key">price</span>'
@@ -1680,8 +1788,56 @@ window.ChartWidget = {
     //
     // The offset is read per timestamp rather than once for the whole chart, so a range that spans
     // a daylight saving change keeps every candle on the wall clock time it actually had.
+    //
+    // No longer called since 25-10-2026: the timestamps stay UTC and only the labels are local,
+    // see createLocalTimeBehavior, _formatTickLocal and _formatTimeLocal.
     _toLocalTime: function (time) {
         return time - new Date(time * 1000).getTimezoneOffset() * 60;
+    },
+
+    // An axis label on the local clock. tickMarkType as lightweight-charts passes it: 0 year,
+    // 1 month, 2 day of the month, 3 time, 4 time with seconds. The same formatting the library
+    // uses by default, which reads the UTC clock instead.
+    _formatTickLocal: function (time, tickMarkType, locale) {
+        if (typeof time !== 'number')
+            return null;
+
+        var options = {};
+        switch (tickMarkType) {
+            case 0:
+                options.year = 'numeric';
+                break;
+            case 1:
+                options.month = 'short';
+                break;
+            case 2:
+                options.day = 'numeric';
+                break;
+            case 3:
+                options.hour12 = false;
+                options.hour = '2-digit';
+                options.minute = '2-digit';
+                break;
+            case 4:
+                options.hour12 = false;
+                options.hour = '2-digit';
+                options.minute = '2-digit';
+                options.second = '2-digit';
+                break;
+        }
+        return new Date(time * 1000).toLocaleString(locale, options);
+    },
+
+    // The crosshair label on the time axis, on the local clock, in the library's own format
+    // ("24 Oct '26   14:30")
+    _formatTimeLocal: function (time) {
+        if (typeof time !== 'number')
+            return '';
+
+        var t = new Date(time * 1000);
+        var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+        return pad(t.getDate()) + ' ' + t.toLocaleString(undefined, { month: 'short' })
+            + " '" + pad(t.getFullYear() % 100) + '   ' + pad(t.getHours()) + ':' + pad(t.getMinutes());
     },
 
     // A series in strictly ascending time, one point per time, the last one winning. The production
@@ -1719,6 +1875,36 @@ window.ChartWidget = {
         return result;
     },
 
+    // The sub-panel series through _ordered as well, the same way the candles are. After
+    // _localizeTimes they are not always ascending: when the clocks go back (last Sunday of October,
+    // 03:00 -> 02:00) the hour from 02:00 to 03:00 occurs twice, so on 1h and shorter two candles land
+    // on the same local time. The candles were deduplicated, the panels were not - and the volume
+    // pane then stayed empty while its axis still scaled to the data. From 2h up no candle opens in
+    // the repeated hour, which is why the volume did show there. Same last-one-wins rule as the
+    // candles, so every bar keeps standing under its own candle.
+    // Since the chart runs on UTC (createLocalTimeBehavior) that hour no longer occurs twice; this
+    // stays as the same guard the candles and overlays have.
+    _orderPanels: function (panels) {
+        if (!panels || typeof panels !== 'object')
+            return;
+
+        for (var key in panels) {
+            if (!Object.prototype.hasOwnProperty.call(panels, key)) continue;
+
+            var panel = panels[key];
+            if (Array.isArray(panel)) {
+                panels[key] = this._ordered(panel);
+            }
+            else if (panel && typeof panel === 'object') {
+                // rsi.data, stoch.k/d, macd.macdLine/signal/histogram
+                for (var sub in panel) {
+                    if (Object.prototype.hasOwnProperty.call(panel, sub) && Array.isArray(panel[sub]))
+                        panel[sub] = this._ordered(panel[sub]);
+                }
+            }
+        }
+    },
+
     _localizeTimes: function (node) {
         if (!node || typeof node !== 'object')
             return node;
@@ -1750,11 +1936,14 @@ window.ChartWidget = {
         // 02:00 en dat stond ook op de as. Die wijziging maakte de as slechter in plaats van beter
         // (er bleef vrijwel geen enkel label over), en ik kon het niet nameten voordat het bij de
         // gebruiker stond. Eerst een manier om dit te ZIEN, dan pas opnieuw proberen.
-        this._localizeTimes(candles);
-        this._localizeTimes(overlays);
-        this._localizeTimes(panels);
-        this._localizeTimes(extras);
-        this._localizeTimes(this._bands);
+        // Since 25-10-2026 the times stay UTC: the chart puts them on the local clock itself
+        // (createLocalTimeBehavior, _formatTickLocal, _formatTimeLocal). Shifting them here made
+        // the hour from 02:00 to 03:00 occur twice on the night the clocks go back.
+        //this._localizeTimes(candles);
+        //this._localizeTimes(overlays);
+        //this._localizeTimes(panels);
+        //this._localizeTimes(extras);
+        //this._localizeTimes(this._bands);
 
         var self = this;
         var mainEntry = this._charts.main;
@@ -1973,6 +2162,7 @@ window.ChartWidget = {
 
         // Panels: kept where they can be, rebuilt only where they must. The layout is only
         // disturbed when one actually came or went.
+        this._orderPanels(panels);
         var veranderd = this._verversPanelen(panels);
         this._verdeelPanelen(veranderd);
 
@@ -2132,7 +2322,9 @@ window.ChartWidget = {
             this._pendingWindow = null;
             return;
         }
-        this._pendingWindow = this._localizeTimes({ time1: window.time1, time2: window.time2 });
+        //this._pendingWindow = this._localizeTimes({ time1: window.time1, time2: window.time2 });
+        // UTC like the candles since 25-10-2026, see setData
+        this._pendingWindow = { time1: window.time1, time2: window.time2 };
     },
 
     _pendingWindow: null,

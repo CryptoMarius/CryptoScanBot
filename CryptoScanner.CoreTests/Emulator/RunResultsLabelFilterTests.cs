@@ -45,12 +45,12 @@ public class RunResultsLabelFilterTests
     public void NumericConditionsTestTheColumns()
     {
         RunRow row = Row();
-        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "bbm return>5 dd<20"));
-        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "profit>=250 profit%>2,4 win>59.9"));
-        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "dd>5 dd<20"));
-        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "dd>15"));
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "bbm return%>5 drawdown%<20"));
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "profit>=250 profit%>2,4 win%>59.9"));
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "drawdown%>5 drawdown%<20"));
+        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "drawdown%>15"));
         Assert.IsFalse(RunResultsViewModel.RowMatches(row, "profit<-100"));
-        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "mac return>5"));
+        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "mac return%>5"));
     }
 
 
@@ -58,9 +58,9 @@ public class RunResultsLabelFilterTests
     public void SpacesAroundTheOperatorAreAllowed()
     {
         RunRow row = Row();
-        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "return > 1.0"));
-        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "bbm  dd <= 12   win >50"));
-        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "return > 30"));
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "return% > 1.0"));
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "bbm  drawdown% <= 12   win% >50"));
+        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "return% > 30"));
     }
 
 
@@ -69,15 +69,76 @@ public class RunResultsLabelFilterTests
     {
         RunRow row = Row();
         row.UseAssetManagement = false;
-        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "return>-1000"));
+        Assert.IsFalse(RunResultsViewModel.RowMatches(row, "return%>-1000"));
     }
 
 
     [TestMethod]
     public void UnfinishedOrUnknownConditionsDoNotFilter()
     {
-        RunResultsViewModel.ParseFilter("bbm dd< foo>3", out List<string> unknown);
+        RunResultsViewModel.ParseFilter("bbm drawdown%< foo>3", out List<string> unknown);
         CollectionAssert.AreEqual(new[] { "foo" }, unknown);
-        Assert.IsTrue(RunResultsViewModel.RowMatches(Row(), "bbm dd<"));
+        Assert.IsTrue(RunResultsViewModel.RowMatches(Row(), "bbm drawdown%<"));
+    }
+
+
+    [TestMethod]
+    public void FilterNameIsTheHeaderWithoutSpacesAndDots()
+    {
+        Assert.AreEqual("recoveryfactor", RunResultsViewModel.FilterName("Recovery factor"));
+        Assert.AreEqual("totalpnl", RunResultsViewModel.FilterName("Total PnL"));
+        Assert.AreEqual("peakcap", RunResultsViewModel.FilterName("Peak cap."));
+        Assert.AreEqual("win%", RunResultsViewModel.FilterName("Win %"));
+
+        RunRow row = Row();
+        Assert.IsTrue(RunResultsViewModel.RowMatches(row, "Win%>=60 PEAKCAP.>=0"), "hoofdletters en de punt van de kop maken niet uit");
+    }
+
+
+    [TestMethod]
+    public void InventedShortNamesAreGone()
+    {
+        // Replaced on 25-10-2026 by the header names; only counts stays, it has no column.
+        RunResultsViewModel.ParseFilter("rf>2 dd<20 w10>0 total>0 win>50 return>5 long>0 counts=1", out List<string> unknown);
+        CollectionAssert.AreEqual(new[] { "rf", "dd", "w10", "total", "win", "return", "long" }, unknown);
+    }
+
+
+    /// <summary>
+    /// Every number column of the grid can be filtered on by the name of its header, so a new column
+    /// cannot be added without one. Reads the column headers from the view itself.
+    /// </summary>
+    [TestMethod]
+    public void EveryNumberColumnHasItsHeaderAsFilterName()
+    {
+        string? view = FindView();
+        if (view == null)
+        {
+            Assert.Inconclusive("RunResultsView.axaml not found from the test folder.");
+            return;
+        }
+
+        // Text columns: the label is the word filter, the rest are dates, names and durations of the run itself.
+        string[] textColumns = ["Started", "Build", "Label", "Period", "Finished", "Duration", "Result"];
+        List<string> missing = [];
+        foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(
+            File.ReadAllText(view), "<DataGrid(?:Text|Template)Column Header=\"([^\"]+)\""))
+        {
+            string header = match.Groups[1].Value;
+            if (!textColumns.Contains(header) && !RunResultsViewModel.FilterFields.ContainsKey(RunResultsViewModel.FilterName(header)))
+                missing.Add(header);
+        }
+        CollectionAssert.AreEqual(new string[0], missing, "kolommen zonder filternaam: " + string.Join(", ", missing));
+    }
+
+    private static string? FindView()
+    {
+        for (DirectoryInfo? folder = new(AppContext.BaseDirectory); folder != null; folder = folder.Parent)
+        {
+            string candidate = Path.Combine(folder.FullName, "CryptoScanner.Emulator", "Views", "RunResultsView.axaml");
+            if (File.Exists(candidate))
+                return candidate;
+        }
+        return null;
     }
 }

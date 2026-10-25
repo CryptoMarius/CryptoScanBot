@@ -75,6 +75,22 @@ public class RunRow
     public int PeakPositions { get; set; }
     // Deepest fall of the capital from an earlier high, in percent (open point 47).
     public decimal MaxDrawdownPercentage { get; set; }
+
+    // The same fall in USDT, open positions valued at the price of the day (database version 103).
+    // Null for older runs, whose daily values are gone.
+    public decimal? OpenDrawdown { get; set; }
+
+    // The closed profit without the ten best trades (database version 104, RunRiskMetrics): how many
+    // trades the result rests on. Null when the run had no closed trades or no position digest.
+    public decimal? ProfitWithoutBestTen { get; set; }
+
+    // How much of the account was at work in trades (database version 110, RunCapitalUse). Null for a
+    // run without an equity curve or a position digest. CapitalUseEstimated marks the digest estimate
+    // of an older run, which runs high because it counts every DCA from the entry on.
+    public decimal? AvgInvested { get; set; }
+    public decimal? ExposurePercentage { get; set; }
+    public bool? CapitalUseEstimated { get; set; }
+
     public int PositionsLong { get; set; }
     public int PositionsShort { get; set; }
     public decimal ProfitLong { get; set; }
@@ -151,6 +167,50 @@ public class RunRow
     /// </summary>
     public decimal CapitalReturnPercentage => HasCapitalReturn ? 100m * Profit / TotalStartCapital!.Value : 0m;
 
+    /// <summary>Closed trades a run needs before its recovery factor counts (MIN_RANKED_TRADES in emulator_report.py).</summary>
+    public const int MinRankedTrades = 30;
+
+    /// <summary>
+    /// The one figure the runs are ranked on (decided 03-10-2026, emulator_report.py rank_run and
+    /// beste-runs.sql): the result including the open positions (<see cref="TotalPnl"/>) divided by the
+    /// deepest fall including the open positions (<see cref="OpenDrawdown"/>) - how many times the run
+    /// earned back its worst dip. Both are amounts in USDT, so unlike Return % and Drawdown % it does
+    /// not move with the start capital. Null when no fall in USDT is known (runs from before database
+    /// version 103, or a run that never fell): ranking those on profit instead is what it replaced.
+    /// Like the report, a run without an equity curve falls back on its closed profit as the result.
+    /// </summary>
+    public decimal? RecoveryFactor => OpenDrawdown > 0 ? (TotalPnl ?? Profit) / OpenDrawdown.Value : null;
+
+    /// <summary>
+    /// Whether the recovery factor counts in the ranking. Two thresholds keep chance out: at least
+    /// <see cref="MinRankedTrades"/> closed trades, and still a profit without the ten best trades.
+    /// A run that does not count stays in the grid; its recovery factor is shown greyed out.
+    /// </summary>
+    public bool RecoveryFactorCounts => RecoveryFactor.HasValue
+        && PositionsWon + PositionsLost >= MinRankedTrades
+        && ProfitWithoutBestTen > 0;
+
+    /// <summary>Why the recovery factor does not count, for the hint on its cell; null when it counts.</summary>
+    public string? RecoveryFactorReason
+    {
+        get
+        {
+            List<string> reasons = [];
+            if (PositionsWon + PositionsLost < MinRankedTrades)
+                reasons.Add($"fewer than {MinRankedTrades} closed trades");
+            if (ProfitWithoutBestTen == null)
+                reasons.Add("the positions are no longer known");
+            else if (ProfitWithoutBestTen <= 0)
+                reasons.Add("the result rests on the best 10 trades");
+            if (RecoveryFactor == null)
+                reasons.Add("no fall in USDT known");
+            return reasons.Count == 0 ? null : "Does not count: " + string.Join(", ", reasons) + ".";
+        }
+    }
+
+    /// <summary>Greys out the recovery factor of a run that does not count.</summary>
+    public double RecoveryFactorOpacity => RecoveryFactorCounts ? 1.0 : 0.4;
+
     /// <summary>
     /// Return over the capital that was actually tied up: 100 * Profit / PeakInvested. This is the
     /// percentage that means something — <see cref="ProfitPercentage"/> divides by the summed stake,
@@ -158,6 +218,23 @@ public class RunRow
     /// Zero for legacy runs written before the column existed.
     /// </summary>
     public decimal PeakProfitPercentage => PeakInvested > 0 ? 100m * Profit / PeakInvested : 0m;
+
+    /// <summary>
+    /// Risk Adjusted Return (AmiBroker): the result against the capital that was on average in
+    /// trades, 100 * Total PnL / <see cref="AvgInvested"/> - what the run would have made had the money
+    /// been at work all the time. It inflates for a run that is rarely in the market, so it is read
+    /// next to Peak cap.: scaling up asks that much more at the busiest moment. Like the recovery
+    /// factor, a run without an equity curve falls back on its closed profit. Null without a capital use.
+    /// </summary>
+    public decimal? RiskAdjustedReturn => AvgInvested > 0 ? 100m * (TotalPnl ?? Profit) / AvgInvested.Value : null;
+
+    /// <summary>Greys out Exposure % and RAR % when they are the digest estimate of an older run.</summary>
+    public double CapitalUseOpacity => CapitalUseEstimated == true ? 0.4 : 1.0;
+
+    /// <summary>The hint on an estimated Exposure % or RAR % cell; null for exact figures.</summary>
+    public string? CapitalUseReason => CapitalUseEstimated == true
+        ? "Estimate from the position digest (run from before database version 110): every DCA counts from the entry on, so the capital runs high - on storsi about 27% - and RAR % low."
+        : null;
 
     /// <summary>
     /// What the run ends on if every still-open position closes as the average winner. The open
@@ -212,6 +289,18 @@ public class RunRow
     public string StartCapitalText => TotalStartCapital.HasValue ? TotalStartCapital.Value.ToString("N2") : "—";
     public string EndCapitalText => HasCapitalReturn ? EndCapital.ToString("N2") : "—";
     public string CapitalReturnPercentageText => HasCapitalReturn ? CapitalReturnPercentage.ToString("N2") + "%" : "—";
+    public string RecoveryFactorText => RecoveryFactor.HasValue ? RecoveryFactor.Value.ToString("N2") : "—";
+    public string ProfitWithoutBestTenText => ProfitWithoutBestTen.HasValue ? ProfitWithoutBestTen.Value.ToString("N2") : "—";
+    public string ExposurePercentageText => CapitalUseText(ExposurePercentage);
+    public string RiskAdjustedReturnText => CapitalUseText(RiskAdjustedReturn);
+
+    // An estimate carries "ca." so it still reads as one once it is pasted elsewhere.
+    private string CapitalUseText(decimal? value)
+    {
+        if (!value.HasValue)
+            return "—";
+        return (CapitalUseEstimated == true ? "ca. " : "") + value.Value.ToString("N2") + "%";
+    }
 
     public string AvgDurationText => FormatDuration(AvgDurationSec);
     public string MinDurationText => FormatDuration(MinDurationSec);
@@ -300,7 +389,7 @@ public partial class RunResultsViewModel : ObservableObject
     /// <summary>
     /// Text to filter the grid on: a run stays visible when its label contains every word of it,
     /// in any order and case. "mac open 1d" keeps the Open-marker runs of mac on 1d. Empty shows all.
-    /// A word with an operator is a condition on a number column instead: "bbm return>5 dd<20" keeps
+    /// A word with an operator is a condition on a number column instead: "bbm return%>5 drawdown%<20" keeps
     /// the bbm runs with more than 5% return and less than 20% drawdown (see <see cref="FilterFields"/>).
     /// </summary>
     [ObservableProperty]
@@ -413,7 +502,8 @@ public partial class RunResultsViewModel : ObservableObject
         "SELECT r.Id, r.StartedAt, r.FinishedAt, r.BuildStamp, r.Label, r.FromDate, r.ToDate, r.Result, " +
         "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.Profit, r.Invested, " +
         "       r.PeakInvested, r.PeakPositions, r.MaxDrawdownPercentage, r.PositionsLong, r.PositionsShort, r.ProfitLong, r.ProfitShort, " +
-        "       r.UnrealizedPnlLong, r.UnrealizedPnlShort, " +
+        "       r.UnrealizedPnlLong, r.UnrealizedPnlShort, r.OpenDrawdown, r.ProfitWithoutBestTen, " +
+        "       r.AvgInvested, r.ExposurePercentage, r.CapitalUseEstimated, " +
         "       r.AverageWin, r.AverageLoss, r.AvgDurationSec, r.MinDurationSec, r.MaxDurationSec, " +
         // First and last value of the equity curve, for the unrealised and total PnL columns. CAST
         // because json_extract returns an integer for a round value (100000) and a real otherwise,
@@ -454,39 +544,59 @@ public partial class RunResultsViewModel : ObservableObject
 
 
     /// <summary>
-    /// The numeric columns a filter word can test, by the short names typed in the filter box.
+    /// The filter name of a grid column: its header without spaces and dots, in any case - "Recovery
+    /// factor" is recoveryfactor, "Peak cap." is peakcap, "Win %" is win%. One rule and no invented
+    /// short names (25-10-2026: rf, dd, w10 and the like could not be guessed from the grid).
+    /// </summary>
+    internal static string FilterName(string header) => header.Replace(" ", "").Replace(".", "").ToLowerInvariant();
+
+    /// <summary>
+    /// The numeric columns a filter word can test, each by <see cref="FilterName"/> of its header.
+    /// The one name without a column is counts (1 = the recovery factor counts in the ranking), which
+    /// the hint of the Recovery factor column mentions. The durations are tested in days.
     /// A null value (a run without a capital return, for instance) never passes a condition.
     /// </summary>
     internal static readonly Dictionary<string, Func<RunRow, decimal?>> FilterFields =
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["id"] = r => r.Id,
-            ["return"] = r => r.HasCapitalReturn ? r.CapitalReturnPercentage : null,
-            ["return%"] = r => r.HasCapitalReturn ? r.CapitalReturnPercentage : null,
-            ["dd"] = r => r.MaxDrawdownPercentage,
-            ["drawdown"] = r => r.MaxDrawdownPercentage,
-            ["drawdown%"] = r => r.MaxDrawdownPercentage,
-            ["profit"] = r => r.Profit,
-            ["profit%"] = r => r.ProfitPercentage,
-            ["unrealized"] = r => r.UnrealizedPnl,
-            ["unrealizedpnl"] = r => r.UnrealizedPnl,
-            ["total"] = r => r.TotalPnl,
-            ["totalpnl"] = r => r.TotalPnl,
-            ["totallong"] = r => r.TotalPnlLong,
-            ["totalshort"] = r => r.TotalPnlShort,
-            ["win"] = r => r.WinPercentage,
-            ["win%"] = r => r.WinPercentage,
-            ["peak%"] = r => r.PeakProfitPercentage,
-            ["peakcap"] = r => r.PeakInvested,
-            ["invested"] = r => r.Invested,
             ["signals"] = r => r.SignalCount,
             ["pos"] = r => r.PositionCount,
             ["open"] = r => r.PositionsOpen,
             ["won"] = r => r.PositionsWon,
             ["lost"] = r => r.PositionsLost,
-            ["long"] = r => r.ProfitLong,
-            ["short"] = r => r.ProfitShort,
+            ["timeout"] = r => r.PositionsTimeout,
+            ["win%"] = r => r.WinPercentage,
+            ["profit"] = r => r.Profit,
+            ["unrealizedpnl"] = r => r.UnrealizedPnl,
+            ["totalpnl"] = r => r.TotalPnl,
+            ["totalpnllong"] = r => r.TotalPnlLong,
+            ["totalpnlshort"] = r => r.TotalPnlShort,
+            ["profit%"] = r => r.ProfitPercentage,
+            ["invested"] = r => r.Invested,
+            ["peakcap"] = r => r.PeakInvested,
+            ["peakpos"] = r => r.PeakPositions,
+            ["peak%"] = r => r.PeakProfitPercentage,
+            ["drawdown%"] = r => r.MaxDrawdownPercentage,
+            ["startcap"] = r => r.TotalStartCapital,
+            ["endcap"] = r => r.HasCapitalReturn ? r.EndCapital : null,
+            ["return%"] = r => r.HasCapitalReturn ? r.CapitalReturnPercentage : null,
+            ["recoveryfactor"] = r => r.RecoveryFactor,
+            // 1 for a run whose recovery factor counts in the ranking, 0 otherwise: "counts=1 recoveryfactor>2".
+            ["counts"] = r => r.RecoveryFactorCounts ? 1 : 0,
+            ["withoutbest10"] = r => r.ProfitWithoutBestTen,
+            ["exposure%"] = r => r.ExposurePercentage,
+            ["rar%"] = r => r.RiskAdjustedReturn,
+            ["profitlong"] = r => r.ProfitLong,
+            ["profitshort"] = r => r.ProfitShort,
+            ["bestcase"] = r => r.BestCase,
+            ["worstcase"] = r => r.WorstCase,
+            ["avgdur"] = r => Days(r.AvgDurationSec),
+            ["mindur"] = r => Days(r.MinDurationSec),
+            ["maxdur"] = r => Days(r.MaxDurationSec),
         };
+
+    private static decimal? Days(double? seconds) => seconds == null ? null : (decimal)(seconds.Value / 86400.0);
 
 
     // Longest first, so ">=" is not read as ">" followed by "=5".
@@ -556,7 +666,8 @@ public partial class RunResultsViewModel : ObservableObject
 
             string name = word[..at];
             string number = word[(at + op.Length)..].Replace(',', '.');
-            if (!FilterFields.TryGetValue(name, out Func<RunRow, decimal?>? field))
+            // Through FilterName as well, so a name typed with the dot of its header ("peakcap.") still works.
+            if (!FilterFields.TryGetValue(FilterName(name), out Func<RunRow, decimal?>? field))
             {
                 unknown.Add(name);
                 continue;
@@ -777,6 +888,10 @@ public partial class RunResultsViewModel : ObservableObject
             "TotalStartCapital" => r => r.TotalStartCapital,
             "EndCapital" => r => r.HasCapitalReturn ? r.EndCapital : null,
             "CapitalReturnPercentage" => r => r.HasCapitalReturn ? r.CapitalReturnPercentage : null,
+            "RecoveryFactor" => r => r.RecoveryFactor,
+            "ProfitWithoutBestTen" => r => r.ProfitWithoutBestTen,
+            "ExposurePercentage" => r => r.ExposurePercentage,
+            "RiskAdjustedReturn" => r => r.RiskAdjustedReturn,
             "ProfitLong" => r => r.ProfitLong,
             "ProfitShort" => r => r.ProfitShort,
             "BestCase" => r => r.BestCase,
@@ -878,6 +993,36 @@ public partial class RunResultsViewModel : ObservableObject
         catch (Exception ex)
         {
             Status = $"Failed to export settings: {ex.Message}";
+        }
+    }
+
+
+    /// <summary>
+    /// Writes the given runs to an Excel sheet in the Excel folder of the data folder and opens it
+    /// (Services.ExcelRunsDump). The result goes to Status.
+    /// </summary>
+    public void ExportToExcel(IReadOnlyList<RunRow> rows)
+    {
+        if (rows.Count == 0)
+        {
+            Status = "Nothing selected to export.";
+            return;
+        }
+
+        try
+        {
+            string path = new Services.ExcelRunsDump().ExportToExcel(rows);
+            Status = $"{rows.Count} run(s) exported to {path}";
+        }
+        catch (IOException ex)
+        {
+            // The usual cause: the previous export is still open in Excel, which locks the file
+            Status = $"Failed to export to Excel (is the file still open in Excel?): {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            ScannerLog.Logger.Error(ex, "");
+            Status = $"Failed to export to Excel: {ex.Message}";
         }
     }
 }

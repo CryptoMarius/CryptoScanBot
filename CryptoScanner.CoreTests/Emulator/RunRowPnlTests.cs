@@ -35,8 +35,8 @@ public class RunRowPnlTests
     {
         RunRow row = new() { Profit = 100m, EquityStart = 1000m, EquityEnd = 1050m };
 
-        Assert.AreEqual(-50m, RunResultsViewModel.FilterFields["unrealized"](row));
-        Assert.AreEqual(50m, RunResultsViewModel.FilterFields["total"](row));
+        Assert.AreEqual(-50m, RunResultsViewModel.FilterFields["unrealizedpnl"](row));
+        Assert.AreEqual(50m, RunResultsViewModel.FilterFields["totalpnl"](row));
     }
 
     [TestMethod]
@@ -47,7 +47,7 @@ public class RunRowPnlTests
 
         Assert.AreEqual(-400m, row.TotalPnlLong);
         Assert.AreEqual(-150m, row.TotalPnlShort);
-        Assert.AreEqual(-400m, RunResultsViewModel.FilterFields["totallong"](row));
+        Assert.AreEqual(-400m, RunResultsViewModel.FilterFields["totalpnllong"](row));
         Assert.AreEqual((-150m).ToString("N2"), row.TotalPnlShortText);
     }
 
@@ -59,5 +59,50 @@ public class RunRowPnlTests
         Assert.IsNull(row.TotalPnlLong);
         Assert.AreEqual("—", row.TotalPnlLongText);
         Assert.AreEqual("—", row.TotalPnlShortText);
+    }
+
+    [TestMethod]
+    public void RecoveryFactor_IsTotalPnlOverTheFallInUsdt()
+    {
+        // Run 112 of the HyperLiquid Session1: start 2000, Return % 24.6, but the dip was larger than the result
+        RunRow row = new()
+        {
+            Profit = 400m, EquityStart = 2000m, EquityEnd = 2501.65m, OpenDrawdown = 519.66m,
+            PositionsWon = 2000, PositionsLost = 432, ProfitWithoutBestTen = 374.95m,
+        };
+
+        Assert.AreEqual(0.97m, Math.Round(row.RecoveryFactor!.Value, 2));
+        Assert.IsTrue(row.RecoveryFactorCounts);
+        Assert.IsNull(row.RecoveryFactorReason);
+        Assert.AreEqual(0.97m, Math.Round(RunResultsViewModel.FilterFields["recoveryfactor"](row)!.Value, 2));
+        Assert.AreEqual(1m, RunResultsViewModel.FilterFields["counts"](row));
+    }
+
+    [TestMethod]
+    public void RecoveryFactor_EmptyWithoutAFallInUsdt()
+    {
+        // Runs from before database version 103 have no OpenDrawdown; a run that never fell has 0
+        RunRow old = new() { Profit = 500m, PositionsWon = 40, ProfitWithoutBestTen = 100m };
+        RunRow neverFell = new() { Profit = 500m, EquityStart = 1000m, EquityEnd = 1500m, OpenDrawdown = 0m, PositionsWon = 40, ProfitWithoutBestTen = 100m };
+
+        Assert.IsNull(old.RecoveryFactor);
+        Assert.AreEqual("—", old.RecoveryFactorText);
+        Assert.IsFalse(old.RecoveryFactorCounts);
+        Assert.IsNull(neverFell.RecoveryFactor);
+        Assert.IsFalse(neverFell.RecoveryFactorCounts);
+    }
+
+    [TestMethod]
+    public void RecoveryFactor_DoesNotCountWithFewTradesOrOnTheBestTen()
+    {
+        RunRow fewTrades = new() { EquityStart = 1000m, EquityEnd = 1200m, OpenDrawdown = 20m, PositionsWon = 20, PositionsLost = 9, ProfitWithoutBestTen = 50m };
+        RunRow restsOnBestTen = new() { EquityStart = 1000m, EquityEnd = 1200m, OpenDrawdown = 20m, PositionsWon = 50, PositionsLost = 10, ProfitWithoutBestTen = -5m };
+
+        Assert.AreEqual(10m, fewTrades.RecoveryFactor);
+        Assert.IsFalse(fewTrades.RecoveryFactorCounts);
+        Assert.IsTrue(fewTrades.RecoveryFactorReason!.Contains("fewer than 30"));
+        Assert.IsFalse(restsOnBestTen.RecoveryFactorCounts);
+        Assert.IsTrue(restsOnBestTen.RecoveryFactorReason!.Contains("best 10"));
+        Assert.IsTrue(restsOnBestTen.RecoveryFactorOpacity < 1.0);
     }
 }

@@ -317,6 +317,7 @@ public class CandleDatabase : IDisposable
 
         VerifySchemaVersion(db.Connection, exchange);
         VerifyExchangeName(db.Connection, exchange);
+        RepairOffGridCandlesOnce(db.Connection, exchange);
     }
 
 
@@ -753,6 +754,107 @@ public class CandleDatabase : IDisposable
                 new { row.SymbolId }, transaction: tx);
         }
         return (candles, symbols);
+    }
+
+
+    /// <summary>
+    /// Meta key that says <see cref="RepairOffGridCandles"/> has run on this file. A key of its own
+    /// rather than a schema version: the layout does not change, and a higher version would make an
+    /// older build refuse a file that CryptoScanBot.CandleSync or a newer scanner opened first.
+    /// </summary>
+    private const string OffGridRepairKey = "OffGridRepair";
+
+
+    /// <summary>
+    /// Runs <see cref="RepairOffGridCandles"/> once per file. Until 25-10-2026 the scanner took 1w from
+    /// HyperLiquid, Kraken, Kucoin Spot and Mexc Spot, whose week starts on Thursday or Sunday, and
+    /// 6h, 12h, 1d and 1w from Okx in UTC+8, while it builds its own candles on its grid (Monday
+    /// 00:00 UTC for 1w). Both kinds were stored side by side - on HyperLiquid Perpetual 17501 Thursday
+    /// weeks beside 8012 Monday weeks, 467 of those filled flat. Those intervals are now derived or
+    /// asked in UTC (see the Interval classes); this removes what the old way left behind.
+    /// </summary>
+    private static void RepairOffGridCandlesOnce(SqliteConnection connection, Model.CryptoExchange exchange)
+    {
+        if (connection.QueryFirstOrDefault<string>("SELECT Value FROM Meta WHERE Key = $Key", new { Key = OffGridRepairKey }) != null)
+            return;
+        // Without the intervals there is nothing to judge, and stamping the file would skip it for good
+        if (GlobalData.IntervalList.Count == 0)
+            return;
+
+        using var tx = connection.BeginTransaction();
+        (int candles, int series) = RepairOffGridCandles(connection, tx);
+        connection.Execute("INSERT OR REPLACE INTO Meta (Key, Value) VALUES ($Key, '1')",
+            new { Key = OffGridRepairKey }, transaction: tx);
+        tx.Commit();
+
+        if (candles > 0)
+            GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: {candles} candle(s) of {series} symbol interval(s) " +
+                "were not on the scanner's grid and are removed, they are fetched or derived again");
+        else
+            GlobalData.AddTextToLogTab($"candles.db {exchange.Name}: all candles on the scanner's grid, nothing to repair");
+    }
+
+
+    /// <summary>
+    /// For every symbol and every interval of 6h and up: when one of its candles does not start on the
+    /// scanner's grid (OpenTime a multiple of the duration), the whole series of that interval goes,
+    /// with its sync pointer. The whole series and not only the stray candles: the candles on the grid
+    /// beside them were often filled flat in between, so they are no better. The dlz marker stays: the
+    /// zones it vouches for are in the main database, which this file cannot clear along with it.
+    /// <para>
+    /// Only 6h and up, because only those were ever measured off the grid (25-10-2026, every candle
+    /// store of the scanners), and a check per symbol stays cheap there. The barometer symbols are left
+    /// alone: they hold a candle per minute in every interval on purpose.
+    /// </para>
+    /// <para>
+    /// In an emulator candle store two tables of the emulator side are cleared along with it, when
+    /// they exist: what was asked from the exchange for that interval (EmulatorHistoryAsked, otherwise
+    /// it is never asked again) and how far CryptoScanBot.CandleSync derived (CandleSyncState,
+    /// otherwise it only derives the last week again). Returns the candles removed and the number of
+    /// symbol intervals.
+    /// </para>
+    /// </summary>
+    internal static (int Candles, int Series) RepairOffGridCandles(SqliteConnection connection, SqliteTransaction tx)
+    {
+        bool historyAsked = connection.ExecuteScalar<long>(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'EmulatorHistoryAsked'", transaction: tx) > 0;
+        bool syncState = connection.ExecuteScalar<long>(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'CandleSyncState'", transaction: tx) > 0;
+
+        List<LocalInstrumentNameRow> rows = [.. connection.Query<LocalInstrumentNameRow>(
+            "SELECT SymbolId, ExchangeName, Name FROM Symbol", transaction: tx)];
+        List<CryptoInterval> intervals = [.. GlobalData.IntervalList.Where(i => i.Duration >= 360)];
+
+        int candles = 0;
+        int series = 0;
+        foreach (LocalInstrumentNameRow row in rows)
+        {
+            if (row.ExchangeName.StartsWith('$'))
+                continue;
+
+            foreach (CryptoInterval interval in intervals)
+            {
+                bool offGrid = connection.ExecuteScalar<long>(
+                    "SELECT COUNT(*) FROM (SELECT 1 FROM Candle WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId " +
+                    "AND OpenTime % $Duration != 0 LIMIT 1)",
+                    new { row.SymbolId, IntervalId = interval.Id, Duration = (long)interval.Duration }, transaction: tx) > 0;
+                if (!offGrid)
+                    continue;
+
+                candles += connection.Execute("DELETE FROM Candle WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId",
+                    new { row.SymbolId, IntervalId = interval.Id }, transaction: tx);
+                connection.Execute("UPDATE SymbolInterval SET LastSync = NULL " +
+                    "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId",
+                    new { row.SymbolId, IntervalId = interval.Id }, transaction: tx);
+                if (historyAsked)
+                    connection.Execute("DELETE FROM EmulatorHistoryAsked WHERE SymbolName = $Name AND IntervalId = $IntervalId",
+                        new { row.Name, IntervalId = interval.Id }, transaction: tx);
+                if (syncState)
+                    connection.Execute("DELETE FROM CandleSyncState WHERE SymbolId = $SymbolId", new { row.SymbolId }, transaction: tx);
+                series++;
+            }
+        }
+        return (candles, series);
     }
 
 

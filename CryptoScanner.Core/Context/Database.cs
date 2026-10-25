@@ -1041,6 +1041,10 @@ public class CryptoDatabase : IDisposable
                 "LongestLoserDays TEXT NULL," +
                 "WorstPositionPercentage TEXT NULL," +
                 "ProfitWithoutBestTen TEXT NULL," +
+                "AvgInvested TEXT NULL," +
+                "ExposurePercentage TEXT NULL," +
+                "TimeInMarketPercentage TEXT NULL," +
+                "CapitalUseEstimated INTEGER NULL," +
                 "EquityCurveJson TEXT NULL," +
                 "PositionsLong INTEGER NOT NULL DEFAULT 0," +
                 "PositionsShort INTEGER NOT NULL DEFAULT 0," +

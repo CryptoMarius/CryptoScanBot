@@ -69,7 +69,7 @@
                     {
                         <tr>
                             <td><input type="checkbox" class="input-checkbox" @bind="item.IsEnabled"
-                                       title="Fetch the symbols of this product. Switched off: the symbols go inactive on the next symbol refresh" /></td>
+                                       title="Which kind of markets of this exchange the scanner fetches. PERP = the perpetuals the exchange runs itself. HyperLiquid also has markets set up by other parties (such as XYZ and PARA), which mostly follow shares, indices or commodities instead of coins. Switched off: the coins of that product are no longer fetched and become inactive at the next refresh of the coin list." /></td>
                             <td>@item.Name</td>
                             <td class="text-right">@item.SymbolCount</td>
                         </tr>

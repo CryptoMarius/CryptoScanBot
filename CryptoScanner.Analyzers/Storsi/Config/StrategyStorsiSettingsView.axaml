@@ -22,7 +22,7 @@
 
 			<!-- Correction RSI -->
             <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto"
-                  ToolTip.Tip="Range 0..10. Higher values tighten the RSI filter, producing fewer but stricter signals. 0 = no extra correction.">
+                  ToolTip.Tip="Makes the RSI condition stricter, so a signal only comes on a deeper dip (long) or a higher peak (short). 0 = the normal RSI levels of the general settings (default: RSI 30 or lower for long, 70 or higher for short). Every point moves that level one further: 8 = RSI 22 or lower for long, 78 or higher for short. Higher = fewer signals, but on deeper moves.">
                 <TextBlock Grid.Column="0" Text="Correction RSI:" VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>
                 <TextBox Grid.Column="2" Text="{Binding AddRsiAmount, Mode=TwoWay}"

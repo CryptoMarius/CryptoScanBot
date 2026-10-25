@@ -530,6 +530,22 @@ public static class EmulatorDb
         string? digest = PositionDigest.Build(database, id);
         ApplyRiskMetrics(run, RunRiskMetrics.FromDigest(digest, run.FromDate, run.ToDate));
         run.PositionDigestJson = PositionDigest.Pack(digest);
+
+        // How much of the account was at work in trades (database version 110), exact from the fills
+        // while they are still there. Against the average account value of the equity curve - the one
+        // already stored when this recalculation found no snapshots.
+        decimal? accountValue = days.Count > 0 ? days.Average(d => d.Value) : RunCapitalUse.AverageAccountValue(run.EquityCurveJson);
+        ApplyCapitalUse(run, RunCapitalUse.FromFills(database.Connection, id, run.FromDate, run.ToDate, accountValue));
+    }
+
+
+    /// <summary>Copy the capital use onto the run row; all four stay empty when the period was empty.</summary>
+    public static void ApplyCapitalUse(CryptoEmulatorRun run, RunCapitalUse? capitalUse)
+    {
+        run.AvgInvested = capitalUse?.AvgInvested;
+        run.ExposurePercentage = capitalUse?.ExposurePercentage;
+        run.TimeInMarketPercentage = capitalUse?.TimeInMarketPercentage;
+        run.CapitalUseEstimated = capitalUse?.Estimated;
     }
 
 

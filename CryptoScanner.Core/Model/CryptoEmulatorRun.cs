@@ -129,6 +129,21 @@ public class CryptoEmulatorRun
     /// <summary>The closed profit without the ten best trades: negative means the result rests on a handful of trades.</summary>
     public decimal? ProfitWithoutBestTen { get; set; }
 
+    // How much of the account was at work in trades (see RunCapitalUse), worked out at run end since
+    // database version 110. Null for a run without an equity curve or a digest.
+
+    /// <summary>The capital in trades averaged over the run period, each fill counted from the moment it filled until its position closed.</summary>
+    public decimal? AvgInvested { get; set; }
+
+    /// <summary>Exposure: <see cref="AvgInvested"/> as a percentage of the average account value (0..100 scale).</summary>
+    public decimal? ExposurePercentage { get; set; }
+
+    /// <summary>The part of the run period with at least one position open (0..100 scale).</summary>
+    public decimal? TimeInMarketPercentage { get; set; }
+
+    /// <summary>True when the three figures above are an estimate from the position digest (runs from before version 110), which runs high.</summary>
+    public bool? CapitalUseEstimated { get; set; }
+
     /// <summary>
     /// The account value per replayed day, open positions included, so the course of a run can still
     /// be drawn after its AssetSnapshot rows are dropped:

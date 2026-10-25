@@ -188,12 +188,20 @@ public class SignalPrepare
         // A configured kind that no enabled strategy reads is not calculated (open point 32). Said
         // once, here, so a queue line or a settings file with a forgotten interval list is not a
         // silent hour of dominant-level work.
-        foreach (var (kindEnum, kindName) in new[] { (SignalPrepareKind.Dlz, "dlz"), (SignalPrepareKind.Fvg, "fvg"), (SignalPrepareKind.Smc, "smc") })
+        //
+        // Emulator only. The live scanner calculates a configured interval list whether or not an
+        // enabled strategy reads it: the zones are then already there, and kept up to date, by the
+        // time somebody opens the chart, instead of the chart starting a full DLZ calculation of
+        // its own. In a replay nobody opens a chart, so there it is only wasted work.
+        if (GlobalData.IsEmulatorMode)
         {
-            if (Preparing.TryGetValue(kindEnum, out var bucket) && bucket.Count > 0 && !AnyEnabledStrategyUsesZones(kindName))
+            foreach (var (kindEnum, kindName) in new[] { (SignalPrepareKind.Dlz, "dlz"), (SignalPrepareKind.Fvg, "fvg"), (SignalPrepareKind.Smc, "smc") })
             {
-                GlobalData.AddTextToLogTab($"Zones {kindName}: interval list {string.Join(",", bucket.Keys)} is set but no enabled strategy reads these zones, not calculated");
-                Preparing.Remove(kindEnum);
+                if (Preparing.TryGetValue(kindEnum, out var bucket) && bucket.Count > 0 && !AnyEnabledStrategyUsesZones(kindName))
+                {
+                    GlobalData.AddTextToLogTab($"Zones {kindName}: interval list {string.Join(",", bucket.Keys)} is set but no enabled strategy reads these zones, not calculated");
+                    Preparing.Remove(kindEnum);
+                }
             }
         }
 

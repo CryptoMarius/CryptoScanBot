@@ -8,20 +8,24 @@
              x:Class="CryptoScanner.Config.Views.EntryFiltersView">
 
     <HeaderedContentControl Classes="groupbox" Header="{Binding Header}"
-                            ToolTip.Tip="Conditions from the market-regime study, all off by default. Each one only lets a signal of this side through when it holds.">
+                            ToolTip.Tip="Extra conditions for stepping in, all off by default. A signal of this side only leads to a trade when every condition that is switched on is met; otherwise the signal is skipped.">
         <StackPanel Margin="8" Spacing="10">
 
             <!-- BTC move -->
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding BtcMoveActive}" Content="BTC move" FontSize="12"
-                          ToolTip.Tip="Only step in while the change of BTC over the last hours lies between the two values (%). Long: e.g. -3 .. 100 skips longs after BTC fell more than 3%."/>
+                          ToolTip.Tip="Only step in when Bitcoin moved by an amount you choose over the last hours. Set how many hours to look back and the lowest and highest BTC change in %.&#10;&#10;Examples for long:&#10;-3 to 100 = no new long after BTC fell more than 3% (wait until the fall is over).&#10;-100 to -1 = only a long after BTC fell at least 1% (buy the dip).&#10;&#10;When the BTC price is not known yet, the signal is not blocked."/>
                 <StackPanel Orientation="Horizontal" Spacing="6" IsEnabled="{Binding BtcMoveActive}">
-                    <TextBlock Text="hours" VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Text="{Binding BtcMoveHours}" Width="60" Height="26" FontSize="12" Padding="6,2"/>
+                    <TextBlock Text="last" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Text="{Binding BtcMoveHours}" Width="60" Height="26" FontSize="12" Padding="6,2"
+                             ToolTip.Tip="How many hours back the BTC change is measured, e.g. 24."/>
+                    <TextBlock Text="hours, between" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Text="{Binding BtcMoveMinimum}" Width="70" Height="26" FontSize="12" Padding="6,2"
+                             ToolTip.Tip="Lowest allowed BTC change in %, e.g. -3. Use -100 for no lower limit."/>
+                    <TextBlock Text="% and" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox Text="{Binding BtcMoveMaximum}" Width="70" Height="26" FontSize="12" Padding="6,2"
+                             ToolTip.Tip="Highest allowed BTC change in %, e.g. -1. Use 100 for no upper limit."/>
                     <TextBlock Text="%" VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Text="{Binding BtcMoveMinimum}" Width="70" Height="26" FontSize="12" Padding="6,2"/>
-                    <TextBlock Text=".." VerticalAlignment="Center" FontSize="12"/>
-                    <TextBox Text="{Binding BtcMoveMaximum}" Width="70" Height="26" FontSize="12" Padding="6,2"/>
                 </StackPanel>
             </StackPanel>
 

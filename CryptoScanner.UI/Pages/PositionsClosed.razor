@@ -325,8 +325,15 @@
     {
         if (_disposed)
             return;
-        _positions = PositionService.ClosedPositions.ToList();
-        _ = InvokeAsync(StateHasChanged);
+        // Swap the list on the renderer's thread, see Signals.OnSignalsChanged: a list swapped in
+        // halfway through the row loop gives a duplicate @key and a broken renderer.
+        _ = InvokeAsync(() =>
+        {
+            if (_disposed)
+                return;
+            _positions = PositionService.ClosedPositions.ToList();
+            StateHasChanged();
+        });
     }
 
     private void OnSort(PositionColumnEnum column)

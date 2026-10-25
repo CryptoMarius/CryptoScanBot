@@ -178,28 +178,55 @@ internal static class Program
             return 0;
         }
 
-        if (scannerCandleDb != null)
-            CopyFromScanner(scannerCandleDb, symbols, fromDate);
+        Dictionary<string, long> firstCopied = scannerCandleDb != null
+            ? CopyFromScanner(scannerCandleDb, symbols, fromDate)
+            : [];
 
-        // Every interval from the start date, not from where the previous sync stopped. The fetch
-        // starts at LastCandleSynchronized when there is one, so 1m candles that arrived later in
-        // older history - Altrady's fill, a scanner copy - were never turned into higher intervals.
-        // Without it each interval is read from disk over the whole window and derived again; the
-        // exchange is still only asked for what is missing and was never asked before
-        // (EmulatorHistoryAsked). It costs reading time, which a scheduled sync has.
-        foreach (CryptoSymbol symbol in symbols)
-        {
-            foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
-                symbolInterval.LastCandleSynchronized = null;
-        }
-
-        // A connection of its own to measure, per symbol, what really came in (see CountProgress)
+        // A connection of its own to measure, per symbol, what really came in (see CountProgress),
+        // and to keep CandleSyncState
         using var countDb = new CandleDatabase(GlobalData.ActiveExchange!);
         countDb.Open();
         _countConnection = countDb.Connection;
 
+        // Where the derivation of the higher intervals starts, per symbol. Until 25-10-2026 every
+        // LastCandleSynchronized was cleared here, so that 1m arriving later in older history (Altrady's
+        // fill, a scanner copy) would be turned into higher intervals as well - and every run read the
+        // whole year from disk and derived it again, ~12 s per symbol. The stored pointers cannot be
+        // used instead: for a symbol listed after the start of the window they stay at that start for
+        // good, because the walk forward stops at the first candle that does not exist.
+        //
+        // CandleSyncState says how far the previous run derived (DerivedUpTo) and from where
+        // altrady_candles.py added 1m since (DeriveFrom). The earliest of those two and the first
+        // minute copied from the scanner, back to the start of its week (the largest interval needs
+        // its whole week of 1m), is where this run starts. No row: everything from the start date.
+        DateTime fetchUntil = DateTime.UtcNow;
+        Dictionary<string, (long? DerivedUpTo, long? DeriveFrom)> state = ReadSyncState(countDb.Connection);
+        CryptoInterval largest = GlobalData.IntervalList[^1];
+        int fromScratch = 0;
+        foreach (CryptoSymbol symbol in symbols)
+        {
+            CandleTime? deriveFrom = null;
+            if (state.TryGetValue(symbol.ExchangeName, out var row) && row.DerivedUpTo.HasValue)
+            {
+                long minutes = row.DerivedUpTo.Value;
+                if (row.DeriveFrom.HasValue && row.DeriveFrom.Value < minutes)
+                    minutes = row.DeriveFrom.Value;
+                if (firstCopied.TryGetValue(symbol.ExchangeName, out long copied) && copied < minutes)
+                    minutes = copied;
+                deriveFrom = IntervalTools.StartOfIntervalCandle(new CandleTime((uint)minutes), largest.Duration);
+            }
+            else
+                fromScratch++;
+
+            foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+                symbolInterval.LastCandleSynchronized = deriveFrom;
+        }
+        if (fromScratch > 0)
+            WriteLine($"{fromScratch} symbol(s) without an earlier sync: derived from {fromDate:yyyy-MM-dd} on, once");
+
         CandleFetchResult result = await EmulatorCandleSync.FetchCandlesForSymbolsAsync(
-            symbols.Select(s => s.Name).ToList(), fromDate, DateTime.UtcNow, true, Status, cancellationToken);
+            symbols.Select(s => s.Name).ToList(), fromDate, fetchUntil, true, Status, cancellationToken,
+            oneMinuteOnly: true, symbolSaved: symbol => WriteSyncState(countDb.Connection, symbol, fetchUntil));
         string elapsed = watch.Elapsed.ToString(@"hh\:mm\:ss");
         if (result.Error != null)
         {
@@ -215,6 +242,8 @@ internal static class Program
     /// The symbols of the emulator candle database and of the scanner's, as the exchange knows them
     /// now. The databases are keyed on the exchange instrument (Symbol.ExchangeName), so that is what
     /// is matched; a symbol the exchange no longer lists is counted in <paramref name="unknown"/>.
+    /// The barometer symbols are left out without being counted: they are in the databases, but the
+    /// emulator measures their candles itself.
     /// </summary>
     private static List<CryptoSymbol> CollectSymbols(string? scannerCandleDb, out int unknown)
     {
@@ -234,9 +263,21 @@ internal static class Program
         // not its switched off deployers) and a quote with FetchCandles on. The scanner's database
         // still holds candles of markets that were switched off later; those are not brought along.
         Dictionary<string, CryptoSymbol> byInstrument = [];
+        HashSet<string> barometers = [];
         foreach (CryptoSymbol symbol in GlobalData.ActiveExchange!.SymbolListName.Values)
         {
-            if (symbol.Status != 1 || string.IsNullOrEmpty(symbol.ExchangeName))
+            if (string.IsNullOrEmpty(symbol.ExchangeName))
+                continue;
+            // $BMP, $BMX and $BMS are no instruments of the exchange: the emulator measures their
+            // candles itself (BarometerReplay). Until 25-10-2026 they were fetched like a coin, which
+            // failed with "Symbol not found", after which the derivation of the higher intervals
+            // overwrote the stored barometer series at every whole 30m, 1h, 4h and 1d.
+            if (symbol.IsBarometerSymbol())
+            {
+                barometers.Add(symbol.ExchangeName);
+                continue;
+            }
+            if (symbol.Status != 1)
                 continue;
             if (!GlobalData.IsProductActive(symbol.Product))
                 continue;
@@ -251,10 +292,52 @@ internal static class Program
         {
             if (byInstrument.TryGetValue(instrument, out CryptoSymbol? symbol))
                 result.Add(symbol);
-            else
+            else if (!barometers.Contains(instrument))
                 unknown++;
         }
         return result;
+    }
+
+
+    /// <summary>
+    /// The table CandleSync and altrady_candles.py share, per symbol: up to where the higher intervals
+    /// were derived (DerivedUpTo, written here) and from where 1m was added since (DeriveFrom, written
+    /// by altrady_candles.py and cleared here). Both in minutes, like Candle.OpenTime. No foreign key:
+    /// the emulator's own tables never notice this one.
+    /// </summary>
+    private const string SyncStateTable =
+        "CREATE TABLE IF NOT EXISTS CandleSyncState (SymbolId INTEGER PRIMARY KEY, DerivedUpTo INTEGER, DeriveFrom INTEGER)";
+
+
+    private static Dictionary<string, (long? DerivedUpTo, long? DeriveFrom)> ReadSyncState(SqliteConnection connection)
+    {
+        using (var create = connection.CreateCommand())
+        {
+            create.CommandText = SyncStateTable;
+            create.ExecuteNonQuery();
+        }
+
+        Dictionary<string, (long?, long?)> state = [];
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "SELECT s.ExchangeName, c.DerivedUpTo, c.DeriveFrom FROM CandleSyncState c " +
+            "JOIN Symbol s ON s.SymbolId = c.SymbolId WHERE s.ExchangeName IS NOT NULL";
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+            state[reader.GetString(0)] = (reader.IsDBNull(1) ? null : reader.GetInt64(1), reader.IsDBNull(2) ? null : reader.GetInt64(2));
+        return state;
+    }
+
+
+    /// <summary>The symbol is derived up to <paramref name="fetchUntil"/>; what altrady_candles.py added is done.</summary>
+    private static void WriteSyncState(SqliteConnection connection, CryptoSymbol symbol, DateTime fetchUntil)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "INSERT INTO CandleSyncState (SymbolId, DerivedUpTo, DeriveFrom) " +
+            "SELECT SymbolId, $Until, NULL FROM Symbol WHERE ExchangeName = $Key " +
+            "ON CONFLICT(SymbolId) DO UPDATE SET DerivedUpTo = excluded.DerivedUpTo, DeriveFrom = NULL";
+        cmd.Parameters.AddWithValue("$Until", (long)CandleTime.AlignFromDateTime(fetchUntil, 1).Minutes);
+        cmd.Parameters.AddWithValue("$Key", symbol.ExchangeName);
+        cmd.ExecuteNonQuery();
     }
 
 
@@ -282,12 +365,14 @@ internal static class Program
     /// emulator database are never touched, and the higher intervals are derived by the fetch that
     /// follows, from the same 1m. The scanner's candles come from the exchange itself, so they are
     /// stored as they are - the same rows the emulator's own fetch would have written.
+    /// Returns per instrument the first minute that was copied, so the derivation starts there.
     /// </summary>
-    private static void CopyFromScanner(string scannerCandleDb, List<CryptoSymbol> symbols, DateTime fromDate)
+    private static Dictionary<string, long> CopyFromScanner(string scannerCandleDb, List<CryptoSymbol> symbols, DateTime fromDate)
     {
         long fromMinutes = CandleTime.AlignFromDateTime(fromDate, 1).Minutes;
         long copiedTotal = 0;
         int copiedSymbols = 0;
+        Dictionary<string, long> firstCopied = [];
 
         using var scanner = OpenReadOnly(scannerCandleDb);
         using var candleDb = new CandleDatabase(GlobalData.ActiveExchange!);
@@ -357,7 +442,10 @@ internal static class Program
                     pL.Value = reader.GetInt64(4);
                     pC.Value = reader.GetInt64(5);
                     pV.Value = reader.GetDouble(6);
-                    copied += write.ExecuteNonQuery();
+                    int inserted = write.ExecuteNonQuery();
+                    if (inserted > 0 && copied == 0)
+                        firstCopied[symbol.ExchangeName] = reader.GetInt64(0);
+                    copied += inserted;
                 }
             }
             tx.Commit();
@@ -371,6 +459,7 @@ internal static class Program
 
         WriteLine($"Copied from the scanner: {copiedTotal:N0} candle(s) of 1m for {copiedSymbols} symbol(s)");
         GlobalData.AddTextToLogTab($"CandleSync: copied {copiedTotal} 1m candles of {copiedSymbols} symbols from {scannerCandleDb}");
+        return firstCopied;
     }
 
 

@@ -13,8 +13,8 @@
             <!-- Refresh and "Delete all runs" moved into the context menu of the grid (04-10-2026). -->
             <TextBlock Text="Filter:" VerticalAlignment="Center"/>
             <TextBox Width="420" Text="{Binding LabelFilter}"
-                     Watermark="label words and conditions, e.g. bbm return&gt;5 dd&lt;20 win&gt;=50"
-                     ToolTip.Tip="Shows only the runs whose label contains every word, in any order and case.&#10;A word with an operator (&gt; &lt; &gt;= &lt;= = !=) is a condition on a number column:&#10;  return&gt;5  dd&lt;20  profit&gt;100  total&gt;0  profit%&gt;2  win&gt;=50  (two on one field give a range: dd&gt;5 dd&lt;20)&#10;Fields: return, dd, profit, total (Total PnL), unrealized (Unrealized PnL), profit%, win, peak%, peakcap, invested, signals, pos, open, won, lost, long, short, id.&#10;Empty shows all runs."/>
+                     Watermark="label words and conditions, e.g. dbr counts=1 recoveryfactor&gt;2 totalpnl&gt;0"
+                     ToolTip.Tip="Shows only the runs whose label contains every word, in any order and case.&#10;A word with an operator (&gt; &lt; &gt;= &lt;= = !=) is a condition on a number column. Its name is the column header without spaces and dots, in any case:&#10;  recoveryfactor&gt;2  totalpnl&gt;0  drawdown%&lt;20  win%&gt;=50  peakcap&lt;5000  (two on one field give a range: drawdown%&gt;5 drawdown%&lt;20)&#10;One name without a column: counts=1 keeps the runs whose recovery factor counts in the ranking (not greyed).&#10;Avg dur., Min dur. and Max dur. are tested in days: avgdur&gt;2.&#10;An unknown name is reported in the status line under the grid.&#10;Empty shows all runs."/>
         </StackPanel>
 
         <!-- HorizontalScrollBarVisibility is forced to Visible: on Auto the grid never showed its
@@ -54,6 +54,8 @@
                     <Separator/>
                     <MenuItem Header="Copy selected rows (for Excel)" Click="OnCopyRowsClick"/>
                     <MenuItem Header="Copy all rows (for Excel)"      Click="OnCopyAllRowsClick"/>
+                    <MenuItem Header="Export selected rows to Excel" Click="OnExportSelectedToExcelClick"/>
+                    <MenuItem Header="Export all rows to Excel"      Click="OnExportAllToExcelClick"/>
                     <Separator/>
                     <MenuItem Header="Delete run(s)…" Click="OnDeleteRunClick"/>
                     <MenuItem Header="Delete all runs…" Click="OnDeleteAllRunsClick"/>
@@ -237,6 +239,45 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding CapitalReturnPercentageText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- The one figure the runs are ranked on (decided 03-10-2026, as in emulator_report.py
+                     and beste-runs.sql): Total PnL / the fall including open positions in USDT. Return %
+                     and Drawdown % move with the start capital, this does not. A run that does not count
+                     (too few trades, or no profit without its best 10) stays in, greyed, with the reason
+                     on the cell. -->
+                <DataGridTemplateColumn Header="Recovery factor" Width="105" SortMemberPath="RecoveryFactor">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding RecoveryFactorText}"
+                                       Opacity="{Binding RecoveryFactorOpacity}" ToolTip.Tip="{Binding RecoveryFactorReason}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Without best 10" Width="105" SortMemberPath="ProfitWithoutBestTen">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ProfitWithoutBestTenText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- How much of the account was at work in trades (AmiBroker's Exposure and Risk Adjusted
+                     Return, database version 110). Exact from the fills since that version; an older run
+                     shows the digest estimate, greyed and marked "ca.", with the reason on the cell. -->
+                <DataGridTemplateColumn Header="Exposure %" Width="95" SortMemberPath="ExposurePercentage">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ExposurePercentageText}"
+                                       Opacity="{Binding CapitalUseOpacity}" ToolTip.Tip="{Binding CapitalUseReason}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="RAR %" Width="95" SortMemberPath="RiskAdjustedReturn">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding RiskAdjustedReturnText}"
+                                       Opacity="{Binding CapitalUseOpacity}" ToolTip.Tip="{Binding CapitalUseReason}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

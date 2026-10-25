@@ -159,7 +159,8 @@ public abstract class ExcelBase
         }
     }
 
-    protected void StartExcell(string title, string symbolName)
+    /// <summary>Writes the book to the Excel folder of the data folder, opens it and returns its path.</summary>
+    protected string StartExcell(string title, string symbolName)
     {
         GlobalData.AddTextToLogTab($"Information dump {title} {symbolName}");
 
@@ -171,5 +172,6 @@ public abstract class ExcelBase
         Book.Write(fs);
 
         Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
+        return filename;
     }
 }

@@ -508,7 +508,15 @@ public class PositionMonitor : IDisposable
                             ?? (coinPositions.Count > 0 ? coinPositions[0] : null);
 
                         // Replace a Waiting (unfilled) position with the newer signal
-                        if (position != null && position.Status == CryptoPositionStatus.Waiting)
+                        // Not while its entry may have filled (EntryMayHaveFilled): then it goes the way
+                        // of a cancel that failed, below
+                        if (position != null && position.Status == CryptoPositionStatus.Waiting
+                            && EntryMayHaveFilled(position, LastCandle1m, GlobalData.Clock.UtcNow))
+                        {
+                            GlobalData.AddTextToLogTab($"{text} not replacing {position.Side} position {position.Id}, its entry may have filled");
+                            position.ForceCheckPosition = true;
+                        }
+                        else if (position != null && position.Status == CryptoPositionStatus.Waiting)
                         {
                             GlobalData.AddTextToLogTab($"{text} replacing unfilled {position.Side} position {position.Id} with new signal");
 
@@ -829,7 +837,7 @@ public class PositionMonitor : IDisposable
             // CHoCH/BOS break) enter at that level; otherwise at the current market price.
             decimal entryPrice = (signal.EntryPriceOverridden && signal.SignalPrice > 0
                 ? signal.SignalPrice
-                : Symbol.LastPrice.Value).ClampPrice(signal.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                : Symbol.LastPrice!.Value).ClampPrice(signal.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
             decimal entryBase = entryQuote / entryPrice;
             entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
             entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
@@ -1117,7 +1125,73 @@ public class PositionMonitor : IDisposable
         => IsPastMaxDuration(position, closeTime.ToDateTime())
         || KeltnerPsarStepDue(position, closeTime)
         || position.ExitRequested
-        || position.EntryWithdrawn;
+        || IsEntryWithdrawn(position);
+
+
+    /// <summary>
+    /// The strategy withdrew the standing entry and the position is still waiting. The flag means
+    /// nothing any more once the entry filled: what is withdrawn is the order on the book, not the
+    /// trade (see CheckEntryWithdrawal, which also clears it).
+    /// </summary>
+    internal static bool IsEntryWithdrawn(CryptoPosition position)
+        => position.EntryWithdrawn && position.Status == CryptoPositionStatus.Waiting;
+
+
+    /// <summary>
+    /// Whether the entry of a waiting position may already have filled, in full or in part, while
+    /// the position still says Waiting. A fill takes a while to become a trade here: live, the order
+    /// update is handled ten seconds later (TradeHandler, DelayUntil), a real exchange reports it
+    /// seconds after the fact, and a large order can fill in several steps. Withdrawing or cancelling
+    /// the entry in that window acts on an order that may be a trade by now: ETHEUR on 25-10-2026
+    /// 06:40 was "withdrawn" a millisecond after its paper fill and ten seconds before that fill was
+    /// booked. Any one of these is enough:
+    /// <list type="bullet">
+    /// <item>an entry order is no longer New (partly filled, or filled but not booked yet);</item>
+    /// <item>the order list holds a fill of an entry order;</item>
+    /// <item>an order update of the position is still being handled (DelayUntil; not in the emulator,
+    /// which handles a fill on the spot, the same exception ThreadCheckPosition makes);</item>
+    /// <item>with real trading only, the candle reached the order: the exchange decides whether a
+    /// touch fills and tells us later. A paper fill is decided here on the candle, and is in the
+    /// order list by now when it happened.</item>
+    /// </list>
+    /// A yes is never final: the question comes back on the next candle.
+    /// </summary>
+    internal static bool EntryMayHaveFilled(CryptoPosition position, CryptoCandle candle, DateTime now)
+    {
+        if (!GlobalData.IsEmulatorMode && position.DelayUntil.HasValue && position.DelayUntil.Value >= now)
+            return true;
+
+        bool realTrading = GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading;
+        bool isLong = position.Side == CryptoTradeSide.Long;
+        CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+        {
+            if (part.Purpose != CryptoPartPurpose.Entry)
+                continue;
+
+            foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+            {
+                if (step.Side != entryOrderSide)
+                    continue;
+
+                if (step.Status == CryptoOrderStatus.PartiallyFilled || step.Status.IsFilled() || step.QuantityFilled > 0)
+                    return true;
+
+                // Only a fill counts: an earlier entry order that was cancelled can be in the list as well
+                CryptoOrder? order = step.OrderId == null ? null : position.OrderList.Find(step.OrderId);
+                if (order != null && (order.Status == CryptoOrderStatus.PartiallyFilled || order.Status.IsFilled() || order.QuantityFilled > 0))
+                    return true;
+
+                // A limit order fills at its price or better, a market order at once (an entry is
+                // never a stop order, HandleEntryPart refuses those)
+                if (realTrading && step.Status == CryptoOrderStatus.New
+                    && (step.OrderType == CryptoOrderType.Market
+                     || (step.OrderType == CryptoOrderType.Limit && (isLong ? candle.Low <= step.Price : candle.High >= step.Price))))
+                    return true;
+            }
+        }
+        return false;
+    }
 
 
     /// <summary>
@@ -1175,9 +1249,17 @@ public class PositionMonitor : IDisposable
     /// whether the entry order may stay on the book (SignalCreateBase.WithdrawEntry), on the close of
     /// a candle of the position's own interval. A no sets EntryWithdrawn, after which
     /// CancelOrdersIfClosedOrTimeoutOrReposition cancels the order and closes the position as a timeout.
+    /// Not while the order may have filled already (EntryMayHaveFilled): the question then waits
+    /// for the next candle, and by then the fill is a trade or it did not happen.
     /// </summary>
     private void CheckEntryWithdrawal(CryptoPosition position)
     {
+        // The entry filled after all (before the cancel got there, or while the fill was on its way):
+        // a trade is not the strategy's to withdraw, and a flag left standing would keep forcing the
+        // position through the candle gates for the rest of its life
+        if (position.EntryWithdrawn && position.Status != CryptoPositionStatus.Waiting)
+            position.EntryWithdrawn = false;
+
         if (position.EntryWithdrawn || position.ExitRequested || position.CloseTime.HasValue)
             return;
         if (position.Status != CryptoPositionStatus.Waiting || !RegisterAlgorithms.HasStandingEntry(position.Strategy))
@@ -1208,6 +1290,13 @@ public class PositionMonitor : IDisposable
 
         if (!algorithm.WithdrawEntry(position))
             return;
+
+        // Asked after the strategy on purpose: the common answer is "stays", and that needs no check
+        if (EntryMayHaveFilled(position, LastCandle1m, GlobalData.Clock.UtcNow))
+        {
+            ScannerLog.Logger.Trace($"{Symbol.Name} {position.SideText} position {position.Id} entry withdrawal postponed, the order may have filled: {algorithm.ExtraText}");
+            return;
+        }
 
         position.EntryWithdrawn = true;
         position.ForceCheckPosition = true;
@@ -2312,11 +2401,93 @@ public class PositionMonitor : IDisposable
     }
 
 
+    /// <summary>
+    /// Closes a position whose entry never filled as a timeout.
+    /// </summary>
+    private void CloseUnfilledEntryAsTimeout(CryptoPosition position, CryptoOrderStatus cancelStatus)
+    {
+        position.Status = CryptoPositionStatus.Timeout;
+        position.UpdateTime = LastCandle1mCloseTimeDate;
+        position.CloseTime = LastCandle1mCloseTimeDate;
+        Database.Connection.Update<CryptoPosition>(position);
+
+        // Nothing was bought: the entry never filled. LastTradeDate was
+        // stamped when the part was PLACED (PositionTools.CreatePositionPart),
+        // so without this the symbol would sit out the full buy cooldown
+        // after a timeout, discarding signals as "is in cooldown" although
+        // no trade took place. The short wait after a tradingrules or
+        // barometer cancel (set right after the cancel) is deliberate and stays.
+        if (cancelStatus != CryptoOrderStatus.TradingRules && cancelStatus != CryptoOrderStatus.BarameterToLow)
+            Symbol.LastTradeDate = null;
+    }
+
+
+    /// <summary>
+    /// The second half of cancelling an entry with real trading. The cancel takes only what had not
+    /// filled yet and the report of what did comes seconds later, so the cancel left the position
+    /// open: waiting with its entry part closed, or trading on a partly filled entry whose fill was
+    /// not booked yet. A fill that comes in is booked as one (TradeTools.CalculatePositionResultsViaOrders)
+    /// and the position trades with what it got. Once the report had its chance
+    /// (TradeTools.AwaitsCancelReport) and nothing was bought, the position closes as the timeout it
+    /// would have been at once. With paper trading the close follows the cancel directly and this
+    /// finds nothing to do.
+    /// </summary>
+    private void CloseEntryAfterCancelReport(CryptoPosition position)
+    {
+        if (position.CloseTime.HasValue || position.Invested != 0)
+            return;
+        if (position.Status != CryptoPositionStatus.Waiting && position.Status != CryptoPositionStatus.Trading)
+            return;
+
+        CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+        CryptoPositionStep? cancelled = null;
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+        {
+            if (part.Purpose != CryptoPartPurpose.Entry)
+                continue;
+            // A waiting position is only left open with its entry part closed by the cancel
+            if (position.Status == CryptoPositionStatus.Waiting && !part.CloseTime.HasValue)
+                return;
+
+            foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+            {
+                if (step.Side != entryOrderSide)
+                    continue;
+                // Still on the book, or (partly) filled: then it is not a cancelled entry
+                if (step.Status < CryptoOrderStatus.Canceled || step.QuantityFilled > 0)
+                    return;
+                if (step.CancelInProgress && step.CloseTime.HasValue && (cancelled == null || step.CloseTime > cancelled.CloseTime))
+                    cancelled = step;
+            }
+        }
+        if (cancelled == null)
+            return;
+
+        DateTime now = GlobalData.Clock.UtcNow;
+        if (TradeTools.AwaitsCancelReport(position, now) || EntryMayHaveFilled(position, LastCandle1m, now))
+            return;
+
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+        {
+            if (part.Purpose == CryptoPartPurpose.Entry && !part.CloseTime.HasValue)
+            {
+                part.CloseTime = LastCandle1mCloseTimeDate;
+                Database.Connection.Update<CryptoPositionPart>(part);
+            }
+        }
+        CloseUnfilledEntryAsTimeout(position, cancelled.Status);
+        GlobalData.AddTextToLogTab($"{Symbol.Name} {position.SideText} position {position.Id} closed as a timeout, no fill of the cancelled entry was reported");
+    }
+
+
     public async Task CancelOrdersIfClosedOrTimeoutOrReposition(CryptoPosition position)
     {
         // Voor ondersteuning van long/short
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
         CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+
+        // An entry cancelled earlier whose fill report (real trading) had its chance by now
+        CloseEntryAfterCancelReport(position);
 
 
         foreach (CryptoPositionPart part in position.PartList.Values.ToList())
@@ -2325,7 +2496,15 @@ public class PositionMonitor : IDisposable
             {
                 foreach (CryptoPositionStep step in part.StepList.Values.ToList())
                 {
-                    if (step.Status != CryptoOrderStatus.New)
+                    // A partly filled entry still has its remainder on the book, and the reasons below
+                    // to take an entry away apply to that remainder as well. What filled stays: it is
+                    // booked once the exchange reports the final state of the order, and that opens
+                    // the part again (TradeTools.CalculatePositionResultsViaOrders). Until then the
+                    // part is closed like any entry that timed out, or HandleEntryPart would place a
+                    // second entry order in it.
+                    bool partlyFilledEntry = step.Status == CryptoOrderStatus.PartiallyFilled
+                        && step.Side == entryOrderSide && part.Purpose == CryptoPartPurpose.Entry;
+                    if (step.Status != CryptoOrderStatus.New && !partlyFilledEntry)
                         continue;
 
                     bool timeOut = false;
@@ -2351,19 +2530,27 @@ public class PositionMonitor : IDisposable
                         // The strategy withdrew the signal before the entry filled: its exit rule fired
                         // while the position was still waiting. Treated as a timeout, so the order goes
                         // and, being the only part, the position with it.
+                        // Not while the order may have filled (EntryMayHaveFilled): that is a trade by
+                        // now, which the exit takes care of. Asked again on the next candle.
                         else if (position.ExitRequested && part.Purpose == CryptoPartPurpose.Entry && step.Trailing == CryptoTrailing.None)
                         {
-                            timeOut = true;
-                            newStatus = CryptoOrderStatus.Timeout;
-                            cancelReason = "cancelling because the strategy withdrew the entry";
+                            if (partlyFilledEntry || !EntryMayHaveFilled(position, LastCandle1m, GlobalData.Clock.UtcNow))
+                            {
+                                timeOut = true;
+                                newStatus = CryptoOrderStatus.Timeout;
+                                cancelReason = "cancelling because the strategy withdrew the entry";
+                            }
                         }
 
                         // A standing entry the strategy took off the book (WithdrawEntry): the same way out
-                        else if (position.EntryWithdrawn && part.Purpose == CryptoPartPurpose.Entry && step.Trailing == CryptoTrailing.None)
+                        else if (IsEntryWithdrawn(position) && part.Purpose == CryptoPartPurpose.Entry && step.Trailing == CryptoTrailing.None)
                         {
-                            timeOut = true;
-                            newStatus = CryptoOrderStatus.Timeout;
-                            cancelReason = "cancelling because the strategy withdrew the entry";
+                            if (partlyFilledEntry || !EntryMayHaveFilled(position, LastCandle1m, GlobalData.Clock.UtcNow))
+                            {
+                                timeOut = true;
+                                newStatus = CryptoOrderStatus.Timeout;
+                                cancelReason = "cancelling because the strategy withdrew the entry";
+                            }
                         }
 
                         // Een eventuele aan- of bijkoop kan worden geannuleerd indien de instap te lang duurt ("Remove Time")
@@ -2390,7 +2577,10 @@ public class PositionMonitor : IDisposable
                                 await TradeTools.CalculatePositionResultsViaOrders(Database, position, forceCalculation: true);
 
                                 // Check the orders, if its still not filled than timeout
-                                if (step.Status == CryptoOrderStatus.New)
+                                // (a partly filled one loses its remainder; an order that may have
+                                // filled while the report is on its way waits for the next candle)
+                                if ((step.Status == CryptoOrderStatus.New && !EntryMayHaveFilled(position, LastCandle1m, GlobalData.Clock.UtcNow))
+                                    || step.Status == CryptoOrderStatus.PartiallyFilled)
                                 {
                                     timeOut = true;
                                     newStatus = CryptoOrderStatus.Timeout;
@@ -2439,22 +2629,13 @@ public class PositionMonitor : IDisposable
                                     Database.Connection.Update<CryptoPositionPart>(part);
 
                                     // Als de entry niet lukt dan mag de positie gesloten worden
-                                    if (part.Purpose == CryptoPartPurpose.Entry && position.Status == CryptoPositionStatus.Waiting)
-                                    {
-                                        position.Status = CryptoPositionStatus.Timeout;
-                                        position.UpdateTime = LastCandle1mCloseTimeDate;
-                                        position.CloseTime = LastCandle1mCloseTimeDate;
-                                        Database.Connection.Update<CryptoPosition>(position);
-
-                                        // Nothing was bought: the entry never filled. LastTradeDate was
-                                        // stamped when the part was PLACED (PositionTools.CreatePositionPart),
-                                        // so without this the symbol would sit out the full buy cooldown
-                                        // after a timeout, discarding signals as "is in cooldown" although
-                                        // no trade took place. The short wait after a tradingrules or
-                                        // barometer cancel (set a few lines up) is deliberate and stays.
-                                        if (newStatus != CryptoOrderStatus.TradingRules && newStatus != CryptoOrderStatus.BarameterToLow)
-                                            Symbol.LastTradeDate = null;
-                                    }
+                                    // With real trading not yet: the cancel only takes what had not
+                                    // filled, and the report of what did may still be on its way. The
+                                    // position stays waiting meanwhile (its entry part is closed, so no
+                                    // new entry order is placed) and CloseEntryAfterCancelReport decides.
+                                    if (part.Purpose == CryptoPartPurpose.Entry && position.Status == CryptoPositionStatus.Waiting
+                                        && !TradeTools.AwaitsCancelReport(position, GlobalData.Clock.UtcNow))
+                                        CloseUnfilledEntryAsTimeout(position, newStatus);
                                 }
 
 
@@ -3081,7 +3262,7 @@ public class PositionMonitor : IDisposable
             return true;
 
         // And for a standing entry the strategy withdrew
-        if (position.EntryWithdrawn)
+        if (IsEntryWithdrawn(position))
             return true;
 
         return false;

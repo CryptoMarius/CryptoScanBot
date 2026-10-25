@@ -118,7 +118,7 @@
 
                             <!-- Checkbox -->
                             <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" Margin="0,0,8,0"
-                                      ToolTip.Tip="Fetch the symbols of this product. Switched off: the symbols go inactive on the next symbol refresh"/>
+                                      ToolTip.Tip="Which kind of markets of this exchange the scanner fetches. PERP = the perpetuals the exchange runs itself. HyperLiquid also has markets set up by other parties (such as XYZ and PARA), which mostly follow shares, indices or commodities instead of coins. Switched off: the coins of that product are no longer fetched and become inactive at the next refresh of the coin list."/>
 
                             <!-- Product name -->
                             <TextBlock Grid.Column="1" Text="{Binding Product}" FontSize="12"

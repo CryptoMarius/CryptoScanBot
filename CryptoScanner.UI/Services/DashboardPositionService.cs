@@ -233,7 +233,7 @@ public class DashboardPositionService
             builder.AppendLine("select position.CloseTime as Date, symbol.Name as Symbol, position.Profit as Profit");
             builder.AppendLine("from Position");
             builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
-            builder.AppendLine("where position.Invested > 0");
+            builder.AppendLine("where CAST(position.Invested as REAL) > 0");
             builder.AppendLine("and position.Status in (0,1,2,3)");
             builder.AppendLine("and position.CloseTime is not null");
             builder.AppendLine("and position.CloseTime >= @start");
@@ -289,7 +289,9 @@ public class DashboardPositionService
             builder.AppendLine("sum(position.Profit) as TotalProfit");
             builder.AppendLine("from Position");
             builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
-            builder.AppendLine("where position.Invested > 0");
+            // The decimals are stored as TEXT, so a plain "Invested > 0" compares strings and '0.0' > '0'
+            // holds: a timeout whose entry never filled was counted as a closed position.
+            builder.AppendLine("where CAST(position.Invested as REAL) > 0");
             builder.AppendLine("and position.Status in (0,1,2,3)");
             builder.AppendLine($"and symbol.quote = @quote");
             builder.AppendLine("group by date(position.CloseTime,'localtime'), symbol.quote");

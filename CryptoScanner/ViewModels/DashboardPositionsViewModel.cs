@@ -355,7 +355,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2)");
-        builder.AppendLine("and position.Invested > 0");
+        builder.AppendLine("and CAST(position.Invested as REAL) > 0");
         builder.AppendLine("and position.Status in (0,1,2,3)");
         builder.AppendLine("group by symbol.quote");
         builder.AppendLine("order by count(symbol.quote) desc");
@@ -390,7 +390,9 @@ public partial class DashboardPositionsViewModel : ObservableObject
         builder.AppendLine("max(position.Percentage) as MaxPerc");
         builder.AppendLine("from Position");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
-        builder.AppendLine("where position.Invested > 0");
+        // The decimals are stored as TEXT, so a plain "Invested > 0" compares strings and '0.0' > '0'
+        // holds: a timeout whose entry never filled was counted as a closed position.
+        builder.AppendLine("where CAST(position.Invested as REAL) > 0");
         builder.AppendLine("and position.Status in (0,1,2,3)");
         builder.AppendLine($"and symbol.quote = '{QuoteData!.Name}'");
         builder.AppendLine("group by date(position.CloseTime,'localtime'), symbol.quote");
@@ -591,7 +593,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             builder.AppendLine("select position.CloseTime as Date, symbol.Name as Symbol, position.Profit as Profit");
             builder.AppendLine("from Position");
             builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
-            builder.AppendLine("where position.Invested > 0");
+            builder.AppendLine("where CAST(position.Invested as REAL) > 0");
             builder.AppendLine("and position.Status in (0,1,2,3)");
             builder.AppendLine("and position.CloseTime is not null");
             builder.AppendLine("and position.CloseTime >= @start");
@@ -950,7 +952,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 0");
-        builder.AppendLine("and position.Invested > 0");
+        builder.AppendLine("and CAST(position.Invested as REAL) > 0");
         builder.AppendLine("and position.Status in (1,2)");
         builder.AppendLine($"and symbol.quote = '{QuoteData!.Name}'");
         builder.AppendLine("group by date(PositionStep.CloseTime,'localtime'), PositionStep.Status, symbol.quote");
@@ -977,7 +979,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 1");
-        builder.AppendLine("and position.Invested > 0");
+        builder.AppendLine("and CAST(position.Invested as REAL) > 0");
         builder.AppendLine("and position.Status in (1,2)");
         builder.AppendLine($"and symbol.quote = '{QuoteData!.Name}'");
         builder.AppendLine("group by date(PositionStep.CloseTime,'localtime'), PositionStep.Status, symbol.quote");

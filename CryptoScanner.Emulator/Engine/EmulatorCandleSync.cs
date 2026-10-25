@@ -134,10 +134,20 @@ public static class EmulatorCandleSync
     /// The fetch itself, for a given list of symbols and a given window instead of the run config's.
     /// CryptoScanBot.CandleSync calls it with the symbols of a candle database and the start date
     /// it was given; <see cref="FetchCandlesAsync"/> with the run config.
+    /// <para>
+    /// <paramref name="oneMinuteOnly"/>: from the start of the 1m window on, only 1m is asked from the
+    /// exchange and every higher interval is derived from it. A higher interval is still asked for the
+    /// part before that start (its warmup, which 1m does not reach). Without it every interval the
+    /// exchange serves is asked for its own missing tail - one request each, also for a coin without a
+    /// trade, where all of them come back empty.
+    /// </para>
+    /// <para>
+    /// <paramref name="symbolSaved"/> is called after a symbol has been written to the database.
+    /// </para>
     /// </summary>
     public static async Task<CandleFetchResult> FetchCandlesForSymbolsAsync(IReadOnlyList<string> symbolNames,
         DateTime fromDate, DateTime fetchUntil, bool isUpdate, Action<string> status, CancellationToken cancellationToken,
-        Action<int>? progress = null)
+        Action<int>? progress = null, bool oneMinuteOnly = false, Action<CryptoSymbol>? symbolSaved = null)
     {
         if (GlobalData.ActiveExchange == null)
             return new CandleFetchResult(0, 0, false, "No active exchange — restart and pick one in the Setup dialog.");
@@ -209,6 +219,19 @@ public static class EmulatorCandleSync
                         continue;
                     }
 
+                    // A barometer symbol is measured by the emulator itself (BarometerReplay), one
+                    // candle per minute in every barometer interval. The exchange does not know it, and
+                    // step 2 would build 30m from those 15m minutes, 1h from 30m and so on: CreateCandle
+                    // then overwrites the measured value at every whole 30m, 1h, 4h and 1d with an
+                    // aggregate that reaches into later minutes. CryptoScanBot.CandleSync did exactly
+                    // that until 25-10-2026.
+                    if (symbol.IsBarometerSymbol())
+                    {
+                        GlobalData.AddTextToLogTab($"Fetch candles: SKIP {symbol.Name} — barometer symbol, measured by the emulator itself");
+                        ReportProgress(symbolIdx, 0);
+                        continue;
+                    }
+
                     string symbolStatus = $"Fetching candles for {symbol.Name} ({symbolIdx}/{total})…";
                     status(symbolStatus);
                     // The archive download reports per file; shown behind the symbol so the status moves
@@ -241,6 +264,10 @@ public static class EmulatorCandleSync
                     CandleTime fetchEnd = IntervalTools.StartOfIntervalCandle(
                         CandleTime.AlignFromDateTime(fetchUntil, interval1m.Duration), interval1m.Duration);
 
+                    // Where the 1m window begins; with oneMinuteOnly a higher interval is only asked
+                    // from the exchange before this moment, after it it is derived from 1m
+                    CandleTime oneMinuteStart = symbol.GetSymbolInterval(interval1m.IntervalPeriod).LastCandleSynchronized ?? fetchEnd;
+
                     // ── Step 2: fetch + derive, interval by interval ─────────────────────────
                     // Mirrors CandleBase.GetCandlesForIntervalAsync: fetch the interval when the
                     // exchange serves it, then fill gaps and bulk-calculate the NEXT interval from
@@ -255,11 +282,15 @@ public static class EmulatorCandleSync
                             ?? IntervalTools.StartOfIntervalCandle(
                                 CandleTools.GetCandleFetchStart(symbol, interval, fromDate), interval.Duration);
 
-                        if (symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod) && fetchEnd > fetchStart)
+                        CandleTime intervalFetchEnd = fetchEnd;
+                        if (oneMinuteOnly && interval.IntervalPeriod != interval1m.IntervalPeriod && oneMinuteStart < intervalFetchEnd)
+                            intervalFetchEnd = oneMinuteStart;
+
+                        if (symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod) && intervalFetchEnd > fetchStart)
                         {
-                            int candleFetchCount = (int)((fetchEnd.Minutes - fetchStart.Minutes) / interval.Duration);
+                            int candleFetchCount = (int)((intervalFetchEnd.Minutes - fetchStart.Minutes) / interval.Duration);
                             GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — " +
-                                $"want {fetchStart.ToDateTime():yyyy-MM-dd HH:mm}..{fetchEnd.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount} bars)");
+                                $"want {fetchStart.ToDateTime():yyyy-MM-dd HH:mm}..{intervalFetchEnd.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount} bars)");
                             try
                             {
                                 await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, fetchStart, candleFetchCount);
@@ -326,6 +357,7 @@ public static class EmulatorCandleSync
                     CandleDatabase.SaveCandlesForSymbol(candleDb.Connection, symbol);
                     EmulatorHistoryAskedStore.Save(candleDb.Connection, symbol);
                     symbol.ClearCandles();
+                    symbolSaved?.Invoke(symbol);
 
                     GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done (saved, memory released)");
                     ReportProgress(symbolIdx, 0);

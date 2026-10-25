@@ -13,7 +13,7 @@ public class StoRsiSettings : SettingsSignalStrategyBase
     [SettingCaption("", SameRowAs = nameof(BBMinPercentage))]
     public double BBMaxPercentage { get; set; } = 100.0;
 
-    [SettingCaption("Correction RSI")]
+    [SettingCaption("Correction RSI", Tooltip = "Makes the RSI condition stricter, so a signal only comes on a deeper dip (long) or a higher peak (short). 0 = the normal RSI levels of the general settings (default: RSI 30 or lower for long, 70 or higher for short). Every point moves that level one further: 8 = RSI 22 or lower for long, 78 or higher for short. Higher = fewer signals, but on deeper moves.")]
     public int AddRsiAmount { get; set; } = 0;
 
     [SettingCaption("Check if price is near the BB band")]

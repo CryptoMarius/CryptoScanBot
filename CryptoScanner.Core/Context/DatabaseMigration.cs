@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 109;
+    public readonly static int CurrentDatabaseVersion = 110;
 
 
     /// <summary>
@@ -2559,6 +2559,78 @@ public class DatabaseMigration
 
             if (todo.Count > 0)
                 GlobalData.AddTextToLogTab($"Database version 109: unrealised PnL per side filled in for {filled} of {todo.Count} emulator run(s)");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 25-10-2026 How much of the account was at work in trades per emulator run: the average capital
+        // in trades, the exposure (that average against the average account value) and the time in
+        // market, see RunCapitalUse. A run that still has its positions gets the exact figures from its
+        // fills; the others an estimate from the position digest, marked as such because it runs high.
+        // Read first and written in one transaction afterwards: the calculation queries the connection
+        // itself and cannot run inside the transaction.
+        if (CurrentVersion > version.Version && version.Version == 109)
+        {
+            try { database.Connection.Execute("alter table EmulatorRun add AvgInvested TEXT NULL"); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add ExposurePercentage TEXT NULL"); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add TimeInMarketPercentage TEXT NULL"); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add CapitalUseEstimated INTEGER NULL"); } catch { } // ignore
+
+            HashSet<int> withPositions = [.. database.Connection.Query<int>(
+                "select distinct EmulatorRunId from Position where EmulatorRunId is not null")];
+            List<(int Id, DateTime FromDate, DateTime ToDate)> todo = database.Connection.Query<(int, DateTime, DateTime)>(
+                "select Id, FromDate, ToDate from EmulatorRun " +
+                "where CapitalUseEstimated is null and FromDate is not null and ToDate is not null").AsList();
+
+            if (todo.Count > 0)
+                GlobalData.AddTextToLogTab($"Database version 110: working out the capital use of {todo.Count} emulator run(s)...");
+
+            List<(int Id, RunCapitalUse CapitalUse)> found = [];
+            foreach ((int runId, DateTime fromDate, DateTime toDate) in todo)
+            {
+                RunCapitalUse? capitalUse = null;
+                try
+                {
+                    string? curve = database.Connection.ExecuteScalar<string?>(
+                        "select EquityCurveJson from EmulatorRun where Id = @id", new { id = runId });
+                    decimal? accountValue = RunCapitalUse.AverageAccountValue(curve);
+                    if (withPositions.Contains(runId))
+                        capitalUse = RunCapitalUse.FromFills(database.Connection, runId, fromDate, toDate, accountValue);
+                    else
+                    {
+                        string? digest = database.Connection.ExecuteScalar<string?>(
+                            "select PositionDigestJson from EmulatorRun where Id = @id", new { id = runId });
+                        capitalUse = RunCapitalUse.FromDigest(PositionDigest.Unpack(digest), fromDate, toDate, accountValue);
+                    }
+                }
+                catch { } // a damaged digest or curve stays empty
+                if (capitalUse != null)
+                    found.Add((runId, capitalUse.Value));
+            }
+
+            using var transaction = database.BeginTransaction();
+
+            foreach ((int runId, RunCapitalUse capitalUse) in found)
+                database.Connection.Execute(
+                    "update EmulatorRun set AvgInvested = @avgInvested, ExposurePercentage = @exposure, " +
+                    "TimeInMarketPercentage = @timeInMarket, CapitalUseEstimated = @estimated where Id = @id",
+                    new
+                    {
+                        avgInvested = capitalUse.AvgInvested,
+                        exposure = capitalUse.ExposurePercentage,
+                        timeInMarket = capitalUse.TimeInMarketPercentage,
+                        estimated = capitalUse.Estimated,
+                        id = runId,
+                    }, transaction);
+
+            if (todo.Count > 0)
+                GlobalData.AddTextToLogTab($"Database version 110: capital use filled in for {found.Count} of {todo.Count} emulator run(s), " +
+                    $"{found.Count(f => !f.CapitalUse.Estimated)} exactly from the fills");
 
             // update version
             version.Version += 1;

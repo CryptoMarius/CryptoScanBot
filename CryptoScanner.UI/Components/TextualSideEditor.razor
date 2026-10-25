@@ -259,17 +259,18 @@
     }
 
     @* Entry filters from the market-regime study *@
-    <div class="settings-group" style="min-width: 200px;" title="Conditions from the market-regime study, all off by default. Each one only lets a signal of this side through when it holds.">
+    <div class="settings-group" style="min-width: 200px;" title="Extra conditions for stepping in, all off by default. A signal of this side only leads to a trade when every condition that is switched on is met; otherwise the signal is skipped.">
         <div class="settings-group-header">Entry filters (@SideLabel)</div>
         <div class="settings-group-body">
-            <div class="field" style="margin: 4px 0;" title="Only step in while the change of BTC over the last hours lies between the two values (%). Long: e.g. -3 .. 100 skips longs after BTC fell more than 3%.">
+            <div class="field" style="margin: 4px 0;" title="Only step in when Bitcoin moved by an amount you choose over the last hours. Set how many hours to look back and the lowest and highest BTC change in %.&#10;&#10;Examples for long:&#10;-3 to 100 = no new long after BTC fell more than 3% (wait until the fall is over).&#10;-100 to -1 = only a long after BTC fell at least 1% (buy the dip).&#10;&#10;When the BTC price is not known yet, the signal is not blocked.">
                 <input type="checkbox" class="input-checkbox" @bind="Side.BtcMoveActive" />
-                <label style="margin: 0 6px 0 4px;">BTC move, hours</label>
-                <input type="number" class="input-number" step="1" min="1" @bind="Side.BtcMoveHours" style="width: 55px;" disabled="@(!Side.BtcMoveActive)" />
-                <label style="margin: 0 4px;">%</label>
-                <input type="number" class="input-number" step="0.5" @bind="Side.BtcMoveMin" style="width: 65px;" disabled="@(!Side.BtcMoveActive)" />
-                <span style="margin: 0 4px;">..</span>
-                <input type="number" class="input-number" step="0.5" @bind="Side.BtcMoveMax" style="width: 65px;" disabled="@(!Side.BtcMoveActive)" />
+                <label style="margin: 0 6px 0 4px;">BTC move, last</label>
+                <input type="number" class="input-number" step="1" min="1" @bind="Side.BtcMoveHours" style="width: 55px;" disabled="@(!Side.BtcMoveActive)" title="How many hours back the BTC change is measured, e.g. 24." />
+                <label style="margin: 0 4px;">hours, between</label>
+                <input type="number" class="input-number" step="0.5" @bind="Side.BtcMoveMin" style="width: 65px;" disabled="@(!Side.BtcMoveActive)" title="Lowest allowed BTC change in %, e.g. -3. Use -100 for no lower limit." />
+                <span style="margin: 0 4px;">% and</span>
+                <input type="number" class="input-number" step="0.5" @bind="Side.BtcMoveMax" style="width: 65px;" disabled="@(!Side.BtcMoveActive)" title="Highest allowed BTC change in %, e.g. -1. Use 100 for no upper limit." />
+                <span style="margin: 0 4px;">%</span>
             </div>
             <div class="field" style="margin: 4px 0;" title="Only step in on the ticked days of the week, in UTC.">
                 <input type="checkbox" class="input-checkbox" @bind="Side.WeekdaysActive" />

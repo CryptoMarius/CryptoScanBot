@@ -294,14 +294,19 @@ public class TradeTools
         //}
 
         // Reset status if there is a timeout (status Trading should not have been set) - nothing wil happen otherwise
-        if (position.Quantity == 0 && position.Reserved == 0 && steps > 0 && steps == stepCanceled && position.Status == CryptoPositionStatus.Trading)
+        // Both not while the report of a fill behind our cancel may still come (AwaitsCancelReport): the
+        // position has to stay listed for that report to find it, PositionMonitor.CloseEntryAfterCancelReport
+        // closes it afterwards
+        if (position.Quantity == 0 && position.Reserved == 0 && steps > 0 && steps == stepCanceled && position.Status == CryptoPositionStatus.Trading
+            && !AwaitsCancelReport(position, GlobalData.Clock.UtcNow))
         {
             position.Status = CryptoPositionStatus.Timeout; // or timeout?
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} open position takes up a slot (debug, fixing position?)");
         }
 
         // Reset status if there is a timeout (status Trading should not have been set) - nothing wil happen otherwise
-        if (position.Quantity == 0 && position.Reserved == 0 && steps > 0 && steps == stepCanceled && position.Status == CryptoPositionStatus.Waiting)
+        if (position.Quantity == 0 && position.Reserved == 0 && steps > 0 && steps == stepCanceled && position.Status == CryptoPositionStatus.Waiting
+            && !AwaitsCancelReport(position, GlobalData.Clock.UtcNow))
         {
             position.Status = CryptoPositionStatus.Timeout; // or timeout?
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} waiting position takes up a slot (debug, fixing position?)");
@@ -478,6 +483,88 @@ public class TradeTools
 
 
     /// <summary>
+    /// The status a fill is booked under: the order's own, except for an order we cancelled ourselves
+    /// that filled in part before the cancel got there. That is a closed fill of what filled
+    /// (PartiallyAndClosed), see CalculatePositionResultsViaOrders.
+    /// </summary>
+    internal static CryptoOrderStatus OrderStatusToBook(CryptoPositionStep step, CryptoOrder order)
+    {
+        if (step.CancelInProgress && order.QuantityFilled > 0
+            && (order.Status == CryptoOrderStatus.Canceled || order.Status == CryptoOrderStatus.Expired))
+            return CryptoOrderStatus.PartiallyAndClosed;
+        return order.Status;
+    }
+
+
+    /// <summary>
+    /// How long a real exchange gets to report a fill of an entry order we cancelled: the report comes
+    /// seconds after the cancel, and is handled ten seconds after that (TradeHandler). Counted from the
+    /// cancel time on the step, which is the close of the candle the cancel was decided on
+    /// (CancelOrder); the cancel itself can go out up to a minute and ten seconds later. Three minutes
+    /// leaves room for all of it.
+    /// </summary>
+    internal static readonly TimeSpan CancelReportGrace = TimeSpan.FromMinutes(3);
+
+
+    /// <summary>
+    /// Whether an entry order of the position that we cancelled may still turn out to have filled in
+    /// part: with real trading, a cancelled entry order without a booked fill, cancelled less than
+    /// <see cref="CancelReportGrace"/> ago. A paper order fills whole or not at all, and a filled one
+    /// cannot be cancelled any more (CancelOrder), so there the answer is always no.
+    /// </summary>
+    internal static bool AwaitsCancelReport(CryptoPosition position, DateTime now)
+    {
+        if (GlobalData.IsEmulatorMode || GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+            return false;
+
+        CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+        {
+            if (part.Purpose != CryptoPartPurpose.Entry)
+                continue;
+
+            foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+            {
+                if (step.Side == entryOrderSide && step.CancelInProgress && step.Status >= CryptoOrderStatus.Canceled
+                    && step.QuantityFilled == 0 && step.CloseTime.HasValue && step.CloseTime.Value + CancelReportGrace > now)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+
+    /// <summary>
+    /// Nothing bought YET is not nothing bought. A trading position that holds nothing while its entry
+    /// order is still on the book or filling (a partial fill is booked once the order is done, see
+    /// CalculateProfitAndBreakEvenPrice; the first report of a fill in steps makes the position
+    /// trading before anything is booked), or while the report of what filled before our cancel may
+    /// still come (AwaitsCancelReport), is not finished: closing it would cancel the rest of the order
+    /// and drop a position that holds coins on the exchange. A paper position only trades once its
+    /// fill is booked, so there this is always false.
+    /// </summary>
+    internal static bool EntryUndecided(CryptoPosition position, DateTime now)
+    {
+        if (position.Invested != 0)
+            return false;
+
+        CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+        {
+            if (part.Purpose != CryptoPartPurpose.Entry)
+                continue;
+
+            foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+            {
+                if (step.Side == entryOrderSide && (step.Status == CryptoOrderStatus.New || step.Status == CryptoOrderStatus.PartiallyFilled))
+                    return true;
+            }
+        }
+        return AwaitsCancelReport(position, now);
+    }
+
+
+    /// <summary>
     /// Na het opstarten is er behoefte om openstaande orders en trades te synchroniseren
     /// (dependency: de trades en steps moeten hiervoor ingelezen zijn)
     /// </summary>
@@ -527,14 +614,21 @@ public class TradeTools
                 if (lastDateTime == null || order.UpdateTime > lastDateTime)
                     lastDateTime = order.UpdateTime;
 
-                if (step.Status != order.Status || step.QuoteQuantityFilled != order.QuoteQuantityFilled || forceCalculation)
+                // An order we cancelled ourselves can have filled in part before the cancel got there.
+                // Binance reports that as Canceled with the filled quantity (Bybit and Mexc as
+                // PartiallyAndClosed, which needs nothing extra). What filled is bought or sold all the
+                // same, so it is booked as a fill of that quantity; the reason of the cancel stays on
+                // the step until the fill replaces it (see the IsFilled branch).
+                CryptoOrderStatus orderStatus = OrderStatusToBook(step, order);
+
+                if (step.Status != orderStatus || step.QuoteQuantityFilled != order.QuoteQuantityFilled || forceCalculation)
                 {
                     orderStatusChanged = true;
                     //ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} {order.Side}");
 
                     CryptoPositionPart part = PositionTools.FindPositionPart(position, step.PositionPartId) ?? throw new Exception("Problem finding parent part");
                     string msgInfo = $"{position.Symbol.Name} " +
-                        $"{order.Status.ToText().ToLower()} " + // ToText = PartiallyAndClosed -> Filled
+                        $"{orderStatus.ToText().ToLower()} " + // ToText = PartiallyAndClosed -> Filled
                         $"{part.Purpose.ToString().ToLower()} " +
                         $"{order.Side.ToString().ToLower()} " +
                         $"{order.Type.ToString().ToLower()} " +
@@ -546,10 +640,11 @@ public class TradeTools
                     CalculateOrderFeeFromTrades(position, step);
 
                     // Avoid messages to the user if already closed
-                    bool isOrderClosed = step.CloseTime.HasValue;
+                    // (the first report of a fill behind our cancel is news, although the cancel closed the step)
+                    bool isOrderClosed = step.CloseTime.HasValue && !(orderStatus != order.Status && step.QuantityFilled == 0);
 
                     // Hebben wij de order geannuleerd? (we gebruiken tenslotte ook een cancel order om orders weg te halen)
-                    if (order.Status == CryptoOrderStatus.Canceled)
+                    if (orderStatus == CryptoOrderStatus.Canceled)
                     {
                         if (step.CancelInProgress)
                         {
@@ -603,7 +698,7 @@ public class TradeTools
                             ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} {order.Side} -> Canceled by user");
                         }
                     }
-                    else if (order.Status.IsFilled())
+                    else if (orderStatus.IsFilled())
                     {
                         ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} {order.Side} -> IsFilled");
 
@@ -615,7 +710,7 @@ public class TradeTools
 
 
                         // Bybit Spot Market order, niet alles kan gevuld worden vanwege tick sizes enz.
-                        if (order.Status == CryptoOrderStatus.PartiallyAndClosed && order.Type == CryptoOrderType.Market)
+                        if (orderStatus == CryptoOrderStatus.PartiallyAndClosed && order.Type == CryptoOrderType.Market)
                         {
                             if (!isOrderClosed)
                             {
@@ -712,7 +807,7 @@ public class TradeTools
                     // De reden van annuleren niet overschrijven
                     if (step.Status < CryptoOrderStatus.Canceled)
                     {
-                        step.Status = order.Status;
+                        step.Status = orderStatus;
                         //ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} -> set status to {order.Status}");
                     }
                 }
@@ -788,8 +883,9 @@ public class TradeTools
             {
                 // Close if q=0 or less than the minimum amount we can sell
                 // (not weighed against QuoteValueMinimum - see the note on the Timeout branch above)
+                // Not while the entry is undecided (EntryUndecided), which only real trading knows
                 decimal remaining = position.Quantity - position.RemainingDust;
-                if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum)
+                if ((remaining <= 0 || remaining < position.Symbol.QuantityMinimum) && !EntryUndecided(position, GlobalData.Clock.UtcNow))
                 {
                     markedAsReady = true;
                     orderStatusChanged = true;

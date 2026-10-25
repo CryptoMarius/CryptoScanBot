@@ -1,6 +1,9 @@
 CryptoScanBot release historie:
 
-24-10-2026 2.6.8
+25-10-2026 2.6.8
+- Candles: De intervallen van 6h en hoger staan nu altijd op onze eigen UTC-indeling; beurzen die de week op donderdag of zondag laten beginnen leverden candles naast de onze, en die worden eenmalig opgeruimd
+- Trader: Een instap-order die blijft staan kan weer ingetrokken worden, maar niet terwijl hij misschien al gevuld is
+- Posities: De lijsten met open en gesloten posities vergeleken het ingelegde bedrag als tekst, waardoor een positie kon ontbreken
 - Trader: De takeprofit van een short ligt nu waar Altrady hem legt; de scanner wachtte op een doel dat Altrady al 0,5 procentpunt eerder haalde
 - Trader: Het aantal posities per munt is een instelling geworden (1 is zoals het altijd was), en elke positie neemt een slot
 - Instellingen: Het order type van een bijkoop is weg - een bijkoop is altijd een limit order
@@ -75,6 +78,8 @@ CryptoScanBot release historie:
 - Fix: De voorafgaande beweging van een candle-patroon telt de omkeercandle zelf niet meer mee
 - Instellingen: De velden van de experimentele strategieen staan alleen nog in de debug-build
 - Releases: De workflow haalt de release-notitie uit dit bestand en ondertekent de bestanden
+- Emulator: Per run hoeveel van het account gemiddeld in trades zat en wat de winst op dat geld was, met uitleg per kolom in het resultatenrooster
+- Emulator: De runs uit het resultatenrooster zijn naar Excel te exporteren, als getallen
 - Emulator: De voortgang van het ophalen van candles loopt per interval, zodat de balk blijft bewegen
 - Emulator: Haalt desgewenst candles op tot de huidige minuut, voor een beurs die alleen zijn nieuwste candles uitlevert
 - Emulator: Het resultatenrooster toont de nog open posities en het totaalresultaat per zijde

@@ -295,8 +295,17 @@
     {
         if (_disposed)
             return;
-        _signals = SignalService.Signals.ToList();
-        _ = InvokeAsync(StateHasChanged);
+        // Raised from the pump timer too, so swap the list on the renderer's thread. The row loop
+        // reads _signals on every pass: a list swapped in halfway through a render put a row of the
+        // old list next to the same row of the new one, Blazor refused that as a duplicate @key and
+        // the renderer stayed broken until a restart.
+        _ = InvokeAsync(() =>
+        {
+            if (_disposed)
+                return;
+            _signals = SignalService.Signals.ToList();
+            StateHasChanged();
+        });
     }
 
     private void OnSort(SignalColumnEnum column)
