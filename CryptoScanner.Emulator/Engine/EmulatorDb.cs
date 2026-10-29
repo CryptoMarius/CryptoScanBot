@@ -6,6 +6,7 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trader;
 
 
@@ -192,6 +193,29 @@ public static class EmulatorDb
 
 
     /// <summary>
+    /// Writes the interim aggregates of the active run to its row, so the Results grid can show them
+    /// while the run is going. Called by the replay loop itself (ReplayRunner), between two minutes,
+    /// when that minute has been flushed - the loop is the only writer of the row during a run and
+    /// FinishRun comes after the loop, so the two can never overwrite each other. That used to be a
+    /// timer in the Results grid on another thread, and its stale copy of the row cleared the
+    /// FinishedAt and Result of run 726 on 26-10-2026.
+    /// </summary>
+    public static void SaveRunningStats()
+    {
+        int? runId = GlobalData.CurrentEmulatorRunId;
+        if (runId == null)
+            return;
+
+        using var database = new CryptoDatabase();
+        database.Open();
+
+        var run = database.Connection.Get<CryptoEmulatorRun>(runId.Value);
+        if (run != null && run.FinishedAt == null && ComputeRunStats(database, run))
+            database.Connection.Update(run);
+    }
+
+
+    /// <summary>
     /// Moves the write-ahead log into the database file and empties it, and says in the log what
     /// that cost and how much was folded back.
     /// <para>
@@ -244,12 +268,21 @@ public static class EmulatorDb
     {
         try
         {
-            using JsonDocument config = JsonDocument.Parse(string.IsNullOrWhiteSpace(run.ConfigJson) ? "{}" : run.ConfigJson);
-            JsonElement root = config.RootElement;
-            if (!root.TryGetProperty("UseAssetManagement", out JsonElement useAssets) || useAssets.ValueKind != JsonValueKind.True)
+            //using JsonDocument config = JsonDocument.Parse(string.IsNullOrWhiteSpace(run.ConfigJson) ? "{}" : run.ConfigJson);
+            //JsonElement root = config.RootElement;
+            //if (!root.TryGetProperty("UseAssetManagement", out JsonElement useAssets) || useAssets.ValueKind != JsonValueKind.True)
+            //    return;
+            //decimal startCapital = root.TryGetProperty("StartCapital", out JsonElement capital) && capital.TryGetDecimal(out decimal value) && value > 0
+            //    ? value : PaperAssets.DefaultStartCapital;
+
+            // Since 26-10-2026 the switch and the start capital are settings, so both are read from the
+            // settings snapshot of the run (the switch was always copied in there as well). The start
+            // capital may differ per quote coin: it is the Default column of Paper assets.
+            SettingsBasic? settings = string.IsNullOrWhiteSpace(run.SettingsJson) ? null
+                : JsonSerializer.Deserialize<SettingsBasic>(run.SettingsJson, Core.Json.JsonTools.DeSerializerOptions);
+            if (settings == null || !settings.Trading.UseAssetManagement)
                 return;
-            decimal startCapital = root.TryGetProperty("StartCapital", out JsonElement capital) && capital.TryGetDecimal(out decimal value) && value > 0
-                ? value : PaperAssets.DefaultStartCapital;
+            Func<string, decimal> startCapital = EmulatorStartCapital.PerQuote(run.ConfigJson, settings);
 
             var positions = database.Connection.Query<CapitalRow>(
                 "select s.Quote as Quote, p.CreateTime as Open, p.CloseTime as Close, " +
@@ -261,7 +294,7 @@ public static class EmulatorDb
             List<CapitalCheck.Breach> breaches = CapitalCheck.Find(positions, startCapital);
             if (breaches.Count == 0)
             {
-                GlobalData.AddTextToLogTab($"Capital check run #{run.Id}: every quote coin stayed within its capital of {startCapital.ToString0()}");
+                GlobalData.AddTextToLogTab($"Capital check run #{run.Id}: every quote coin stayed within its capital (Paper assets, column Default)");
                 return;
             }
             foreach (CapitalCheck.Breach b in breaches)
@@ -651,6 +684,9 @@ public static class EmulatorDb
     /// Returns how many were updated and how many were skipped for that reason, so the caller can say
     /// so rather than reporting a smaller number without explanation.
     /// </para>
+    /// <para>
+    /// Runs that have not finished yet (no FinishedAt) are skipped as well: their row is FinishRun's.
+    /// </para>
     /// </summary>
     public static (int Updated, int Skipped) RecalculateRuns(IEnumerable<int> runIds,
         IProgress<(int Done, int Total)>? progress = null)
@@ -669,7 +705,16 @@ public static class EmulatorDb
         foreach (int id in ids)
         {
             var run = database.Connection.Get<CryptoEmulatorRun>(id);
-            if (run != null)
+            // A run without FinishedAt is still running and belongs to the replay loop
+            // (SaveRunningStats) and FinishRun alone. Update writes
+            // the whole row back, so a recalculation that read the row before FinishRun and wrote it
+            // after put FinishedAt and Result back to null - run 726 on 26-10-2026 (121 symbols,
+            // 2.6 million signals, seconds of counting) finished and still showed no result.
+            if (run != null && run.FinishedAt == null)
+            {
+                skipped++;
+            }
+            else if (run != null)
             {
                 if (ComputeRunStats(database, run))
                 {

@@ -61,6 +61,11 @@
                 <input type="checkbox" class="input-checkbox" @bind="_logCanceledOrders" />
                 <label>Log cancelled orders</label>
             </div>
+            @* The balances themselves (and what a reset hands out) are in Tools -> Paper assets *@
+            <div class="field" title="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode.">
+                <input type="checkbox" class="input-checkbox" @bind="_useAssetManagement" />
+                <label>Use asset management</label>
+            </div>
             <div class="field" title="Minutes after the last fill on a symbol (entry, DCA, take profit or stop loss) in which no NEW position may be opened on it. Stops laddering into the same coin. A position that is still waiting for its entry to fill is exempt, so a newer signal can replace it.">
                 <label>Cool down time (m)</label>
                 <input type="number" class="input-number" min="0" @bind="_buyCooldown" />
@@ -102,72 +107,6 @@
                         <label>Max positions per coin</label>
                         <input type="number" class="input-number" min="1" @bind="_maxPositionsPerCoin" />
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    @* Asset management and the balances it works with sit in a groupbox of their own instead of
-       halfway down Common: they belong together and Common was long enough without them. *@
-    <!-- Asset management -->
-    <div class="settings-group">
-        <div class="settings-group-header">Asset management</div>
-        <div class="settings-group-body">
-            <div class="field" title="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode.">
-                <input type="checkbox" class="input-checkbox" @bind="_useAssetManagement" />
-                <label>Asset management</label>
-            </div>
-            @* The balances a paper account starts with - see SettingsTrading.PaperAssetDefaults. *@
-            <div class="settings-group settings-group-nested"
-                 title="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Empty means nothing is handed out, and a filled list also overrules the start capital of an emulator run.">
-                <div class="settings-group-header">Default paper assets</div>
-                <div class="settings-group-body">
-                    <div class="field settings-table-buttons">
-                        <button class="btn btn-secondary" @onclick="AddPaperAssetDefault">Add asset</button>
-                        <button class="btn btn-secondary" @onclick="RemovePaperAssetDefault">Remove asset</button>
-                    </div>
-
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 100px;">Asset</th>
-                                <th style="width: 120px;">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (int i = 0; i < _paperAssetDefaults.Count; i++)
-                            {
-                                int index = i;
-                                <tr>
-                                    <td>
-                                        <input type="text" class="input-number" placeholder="BTC"
-                                               @bind="_paperAssetDefaults[index].Name" />
-                                    </td>
-                                    <td>
-                                        <input type="number" class="input-number" step="any" min="0"
-                                               value="@_paperAssetDefaults[index].Total"
-                                               @onchange="e => _paperAssetDefaults[index].Total = ParseDecimal(e.Value)" />
-                                    </td>
-                                </tr>
-                            }
-                            @if (_paperAssetDefaults.Count == 0)
-                            {
-                                <tr><td colspan="2" class="empty-state">No default assets</td></tr>
-                            }
-                        </tbody>
-                    </table>
-
-                    @* Start over with the list above, the same reset as Tools -> Paper assets. The web
-                       scanner has no emulator mode, but the check keeps it equal to the Avalonia view. *@
-                    @if (!GlobalData.IsEmulatorMode)
-                    {
-                        <div class="field settings-table-buttons">
-                            <button class="btn btn-secondary" @onclick="() => _confirmResetPaperAssetsVisible = true"
-                                    title="Throw every paper balance away right now and hand out the default asset list above, as it stands on screen - also when it has not been saved yet. Empty hands out 10.000 per traded quote coin. The same reset as Tools -> Paper assets.">
-                                Reset paper assets
-                            </button>
-                        </div>
-                    }
                 </div>
             </div>
         </div>
@@ -435,12 +374,6 @@
 
 </div>
 
-@* Deliberately behind a confirmation: this wipes the balances of a running paper session. *@
-<ConfirmDialog @bind-Visible="_confirmResetPaperAssetsVisible"
-               Title="Reset paper assets"
-               Message="Throw every paper balance away and hand out the default paper assets again?"
-               OnConfirmed="OnResetPaperAssetsConfirmed" />
-
 @code {
     private int _subTab;
     private TextualSideData _longSide = new();
@@ -520,8 +453,6 @@
 
     private readonly List<CryptoDcaEntry> _dcaList = [];
 
-    // The balances a paper account starts with. Filled in, this list replaces the start capital.
-    private readonly List<CryptoPaperAssetDefault> _paperAssetDefaults = [];
     private readonly List<CryptoTpEntry> _tpList = [];
 
     private readonly EntryConditionsData _entryConditions = new();
@@ -546,41 +477,6 @@
             Percentage = previous != null ? previous.Percentage * 2m : FirstDcaPercentage,
             Factor = previous != null ? previous.Factor * 2m : FirstDcaFactor,
         });
-    }
-
-    private void AddPaperAssetDefault()
-    {
-        _paperAssetDefaults.Add(new CryptoPaperAssetDefault());
-    }
-
-    private void RemovePaperAssetDefault()
-    {
-        if (_paperAssetDefaults.Count > 0)
-            _paperAssetDefaults.RemoveAt(_paperAssetDefaults.Count - 1);
-    }
-
-    private bool _confirmResetPaperAssetsVisible;
-
-    /// <summary>
-    /// Throw every paper balance away and hand out the default asset list as this screen shows it -
-    /// also when it has not been saved yet. See PaperAssetsEditor.ResetToDefaults.
-    /// </summary>
-    private void OnResetPaperAssetsConfirmed()
-    {
-        PaperAssetsEditor.ResetToDefaults(GlobalData.ActiveExchange, CollectPaperAssetDefaults());
-    }
-
-    /// <summary>The rows of the default asset list as settings; a row without a coin is left out.</summary>
-    private List<CryptoPaperAssetDefault> CollectPaperAssetDefaults()
-    {
-        List<CryptoPaperAssetDefault> list = [];
-        foreach (var entry in _paperAssetDefaults)
-        {
-            string name = (entry.Name ?? "").Trim().ToUpperInvariant();
-            if (name.Length > 0)
-                list.Add(new CryptoPaperAssetDefault { Name = name, Total = entry.Total });
-        }
-        return list;
     }
 
     private void RemoveDca()
@@ -674,10 +570,6 @@
         foreach (var dca in t.DcaList)
             _dcaList.Add(new CryptoDcaEntry { Percentage = dca.Percentage, Factor = dca.Factor });
 
-        _paperAssetDefaults.Clear();
-        foreach (var entry in t.PaperAssetDefaults)
-            _paperAssetDefaults.Add(new CryptoPaperAssetDefault { Name = entry.Name, Total = entry.Total });
-
         _tpList.Clear();
         foreach (var tp in t.TpList)
             _tpList.Add(new CryptoTpEntry { Percentage = tp.Percentage, Factor = tp.Factor });
@@ -725,15 +617,6 @@
         t.DcaList.Clear();
         foreach (var dca in _dcaList)
             t.DcaList.Add(new CryptoDcaEntry { Percentage = dca.Percentage, Factor = dca.Factor });
-
-        // A row without a coin is an empty row somebody added and left alone, not a setting.
-        t.PaperAssetDefaults.Clear();
-        foreach (var entry in _paperAssetDefaults)
-        {
-            string name = entry.Name.Trim().ToUpperInvariant();
-            if (name.Length > 0)
-                t.PaperAssetDefaults.Add(new CryptoPaperAssetDefault { Name = name, Total = entry.Total });
-        }
 
         t.TpList.Clear();
         foreach (var tp in _tpList)

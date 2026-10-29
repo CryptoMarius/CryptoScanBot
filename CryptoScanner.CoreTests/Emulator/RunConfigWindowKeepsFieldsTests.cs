@@ -88,15 +88,64 @@ public class RunConfigWindowKeepsFieldsTests : TestBase
         {
             Label = "nieuwe-run",
             SelectedBaseInterval = "5m",
-            StartCapital = 25_000m,
-            UseAssetManagement = false,
         };
         Assert.IsTrue(viewModel.TryBuild(out EmulatorRunConfig config), viewModel.ValidationMessage);
 
         Assert.AreEqual("nieuwe-run", config.Label);
         Assert.AreEqual("5m", config.BaseInterval);
-        Assert.AreEqual(25_000m, config.StartCapital);
-        Assert.IsFalse(config.UseAssetManagement);
+        // The start capital and asset management are settings since 26-10-2026, not fields of the run
+        Assert.IsNull(config.StartCapital);
+        Assert.IsNull(config.UseAssetManagement);
         CollectionAssert.Contains(config.Symbols, "TESTUSDT", "het symbool uit de opgeslagen keuze blijft aangevinkt");
+    }
+
+
+    /// <summary>
+    /// A file from before 26-10-2026 with the retired StartCapital and UseAssetManagement. Loading it
+    /// moves those to the settings and saves the file again - and that save ran while the file was
+    /// still open for reading, so Load fell back on the one-coin placeholder and the run-config window
+    /// saved that over the 178 coins of HyperLiquid Session1.
+    /// </summary>
+    [TestMethod]
+    public void LoadingAFileWithTheRetiredFields_KeepsItsCoins()
+    {
+        if (!GlobalData.Settings.QuoteCoins.ContainsKey("USDT"))
+            GlobalData.Settings.QuoteCoins.Add("USDT", new CryptoScanner.Core.Model.CryptoQuoteData { Name = "USDT" });
+        GlobalData.Settings.QuoteCoins["USDT"].FetchCandles = true;
+        var savedDefaults = GlobalData.Settings.Trading.PaperAssetDefaults;
+        GlobalData.Settings.Trading.PaperAssetDefaults = [];
+        Action savedSave = RunConfigFile.SaveSettings;
+        RunConfigFile.SaveSettings = () => { };
+        try
+        {
+            File.WriteAllText(RunConfigFile.FilePath, """
+                {
+                  "ExchangeName": "Binance Perpetual",
+                  "Symbols": ["AAAUSDT.PERP", "BBBUSDT.PERP", "CCCUSDT.PERP"],
+                  "FromDate": "2026-01-01",
+                  "ToDate": "2026-10-01",
+                  "Label": "",
+                  "BaseInterval": "1m",
+                  "StartCapital": 100000,
+                  "UseAssetManagement": true
+                }
+                """);
+
+            EmulatorRunConfig config = RunConfigFile.Load();
+
+            Assert.AreEqual(3, config.Symbols.Count, "the coins of the file, not the placeholder");
+            Assert.IsNull(config.StartCapital);
+            Assert.IsTrue(GlobalData.Settings.Trading.PaperAssetDefaults.Any(d => d.Name == "USDT" && d.Total == 100000m),
+                "the start capital moved to the settings");
+
+            string written = File.ReadAllText(RunConfigFile.FilePath);
+            StringAssert.Contains(written, "CCCUSDT.PERP");
+            Assert.IsFalse(written.Contains("StartCapital"), "the retired field is gone from the file");
+        }
+        finally
+        {
+            GlobalData.Settings.Trading.PaperAssetDefaults = savedDefaults;
+            RunConfigFile.SaveSettings = savedSave;
+        }
     }
 }

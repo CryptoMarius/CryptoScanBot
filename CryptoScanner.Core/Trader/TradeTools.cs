@@ -205,7 +205,11 @@ public class TradeTools
                     if (step.Side == entryOrderSide)
                         part.Reserved += value;
                 }
-                part.RemainingDust += step.RemainingDust;
+                // Only the dust of a filled order is real. Every replaced take profit order carries the
+                // same expected dust, so counting the canceled ones added it again for each
+                // replacement (ETHEUR.SPOT Bitvavo, 27-10-2026: 31 replacements, 33x the real dust)
+                if (step.Status.IsFilled())
+                    part.RemainingDust += step.RemainingDust;
 
                 //string s = string.Format("{0} CalculateProfit bought position={1} part={2} name={3} step={4} {5} price={6} stopprice={7} quantityfilled={8} QuoteQuantityFilled={9}",
                 //   position.Symbol.Name, position.Id, part.Id, part.Purpose, step.Id, step.Name, step.Price, step.StopPrice, step.QuantityFilled, step.QuoteQuantityFilled);
@@ -343,9 +347,13 @@ public class TradeTools
             if (position.Quantity > 0 && position.Status == CryptoPositionStatus.Trading)
                 position.BreakEvenPrice = (position.Invested - position.Returned + position.Commission + predictedCommission) / position.Quantity;
 
+            // The dust is valued at the average entry price, which is what it cost. The break-even
+            // price is not usable here: with only dust left it is divided by that tiny quantity and
+            // runs into millions (ETHEUR.SPOT Bitvavo, 27-10-2026: BE -60,690,178, logged as a
+            // loss of -15.72 EUR on a trade that made +0.49 EUR)
             decimal invested = position.Invested;
             if (position.RemainingDust > 0)
-                invested -= position.RemainingDust * position.BreakEvenPrice;
+                invested -= position.RemainingDust * avgPrice;
 
             position.Profit = position.Returned - invested - position.Commission;
             position.Percentage = 0m;
@@ -360,9 +368,10 @@ public class TradeTools
             if (position.Quantity > 0 && position.Status == CryptoPositionStatus.Trading)
                 position.BreakEvenPrice = (position.Invested - position.Returned - position.Commission - predictedCommission) / position.Quantity;
 
+            // Valued at the average entry price, same reason as for a long
             decimal invested = position.Invested;
             if (position.RemainingDust > 0)
-                invested -= position.RemainingDust * position.BreakEvenPrice;
+                invested -= position.RemainingDust * avgPrice;
 
             position.Profit = invested - position.Returned - position.Commission;
             position.Percentage = 0m;

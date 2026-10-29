@@ -3,6 +3,7 @@ using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Json;
+using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Trader;
@@ -156,6 +157,9 @@ public static class RunSettingsApplier
             return false;
         }
 
+        if (GlobalData.ActiveExchange != null)
+            RelinkSymbolsToQuoteCoins(GlobalData.ActiveExchange);
+
         PluginManager.RestoreSettings(GlobalData.Settings.Signal.AnalyzerSettings);
         GlobalData.IndexStrategySettings();
         TradingConfig.IndexStrategyInternally();
@@ -167,5 +171,26 @@ public static class RunSettingsApplier
         message = $"Settings of run #{runId} are now the current settings (previous file kept as {Path.GetFileName(backupName)}).";
         GlobalData.AddTextToLogTab(message);
         return true;
+    }
+
+
+    /// <summary>
+    /// Points every symbol of <paramref name="exchange"/> at the quote coin of the settings that were
+    /// just loaded, and rebuilds the per-quote symbol index - the linking EmulatorBootstrap does at
+    /// startup.
+    /// <para>
+    /// Loading the settings puts a new settings object in place, and with it a new CryptoQuoteData
+    /// per quote coin with an empty SymbolList. Without this the symbols kept pointing at the old
+    /// ones, so the trader went on with the old entry amounts, and the capital snapshots saw no
+    /// symbols under USDC on HyperLiquid Perpetual: the reference coin fell back on USDT, there is
+    /// no USDT pair there, and every day of run 327 was valued at zero (29-10-2026).
+    /// </para>
+    /// </summary>
+    internal static void RelinkSymbolsToQuoteCoins(CryptoScanner.Core.Model.CryptoExchange exchange)
+    {
+        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+            symbol.QuoteData = GlobalData.AddQuoteData(symbol.Quote);
+
+        ThreadLoadData.IndexQuoteDataSymbols(exchange);
     }
 }

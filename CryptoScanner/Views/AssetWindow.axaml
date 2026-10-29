@@ -8,7 +8,7 @@
 		x:DataType="vm:AssetWindowViewModel"
 		x:CompileBindings="False"
 		Title="Paper assets"
-		Width="600" Height="440" MinWidth="500" MinHeight="320"
+		Width="720" Height="440" MinWidth="600" MinHeight="320"
 		WindowStartupLocation="CenterOwner" CanResize="True" ShowInTaskbar="False">
 
 	<!-- Border around entire content -->
@@ -34,6 +34,25 @@
 					<!-- Template columns because amounts belong on the right, and a DataGridTextColumn
 						 cannot align its contents. Total shows the rounded text and is edited as text,
 						 so what is typed is what the cell showed. -->
+					<!-- What a reset hands out for this coin: the default paper assets, edited here and saved
+						 in the settings of the exchange. Next to Total so the start and the balance are seen
+						 together. 0 means the coin gets nothing on a reset. -->
+					<DataGridTemplateColumn Header="Default" Width="120">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate x:DataType="vm:AssetRowViewModel">
+								<TextBlock Text="{Binding DefaultText}" VerticalAlignment="Center"
+										   HorizontalAlignment="Right" Margin="0,0,4,0"
+										   ToolTip.Tip="What a reset hands out for this coin. Edit it and press Apply; it is saved in the settings."/>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+						<DataGridTemplateColumn.CellEditingTemplate>
+							<DataTemplate x:DataType="vm:AssetRowViewModel">
+								<TextBox Text="{Binding DefaultText, Mode=TwoWay}" VerticalAlignment="Center"
+										 HorizontalContentAlignment="Right"/>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellEditingTemplate>
+					</DataGridTemplateColumn>
+
 					<DataGridTemplateColumn Header="Total" Width="130">
 						<DataGridTemplateColumn.CellTemplate>
 							<DataTemplate x:DataType="vm:AssetRowViewModel">
@@ -85,14 +104,17 @@
 
 		<!-- Book a balance by hand. The only way to get a coin into the list that is not in it: a
 			 balance that reaches zero is dropped, so it cannot be corrected in the grid either. -->
-		<Grid Grid.Row="2" ColumnDefinitions="Auto,90,Auto,120,*">
+		<Grid Grid.Row="2" ColumnDefinitions="Auto,90,Auto,120,Auto,120,*">
 			<TextBlock Grid.Column="0" Text="Add asset:" VerticalAlignment="Center" Margin="0,0,8,0"/>
 			<TextBox Grid.Column="1" Text="{Binding NewAssetName}" Watermark="BTC"
 					 ToolTip.Tip="The coin to book a balance for. A coin that is already in the list is set to this amount."/>
 			<TextBlock Grid.Column="2" Text="Amount:" VerticalAlignment="Center" Margin="12,0,8,0"/>
 			<TextBox Grid.Column="3" Text="{Binding NewAssetAmount}" HorizontalContentAlignment="Right"
-					 ToolTip.Tip="The balance in the coin itself, above zero."/>
-			<Button Grid.Column="4" Content="Add" Margin="8,0,0,0" HorizontalAlignment="Left" Click="OnAddClick"
+					 ToolTip.Tip="The balance in the coin itself. May be left empty when only a default is added."/>
+			<TextBlock Grid.Column="4" Text="Default:" VerticalAlignment="Center" Margin="12,0,8,0"/>
+			<TextBox Grid.Column="5" Text="{Binding NewAssetDefault}" HorizontalContentAlignment="Right"
+					 ToolTip.Tip="What a reset hands out for this coin, saved in the settings. May be left empty; a coin with only a default is fine too."/>
+			<Button Grid.Column="6" Content="Add" Margin="8,0,0,0" HorizontalAlignment="Left" Click="OnAddClick"
 					ToolTip.Tip="Book this balance. It is recorded as a manual correction, so the capital line does not read it as profit."/>
 		</Grid>
 
@@ -101,12 +123,12 @@
 			 window has no amount of its own any more. -->
 		<Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto">
 			<Button Grid.Column="0" Content="Reset to defaults" HorizontalContentAlignment="Center" Click="OnResetClick"
-					ToolTip.Tip="Throw every paper balance away and hand out the default assets from the settings (trader, asset management) again."/>
+					ToolTip.Tip="Throw every paper balance away and hand out the amounts of the Default column again."/>
 			<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
 				<Button Content="Refresh" HorizontalContentAlignment="Center" Click="OnRefreshClick" Width="90"
 						ToolTip.Tip="Read the balances again. The trader keeps changing them while this window is open; unapplied edits in the list are discarded."/>
 				<Button Content="Apply" HorizontalContentAlignment="Center" Click="OnApplyClick" Width="90"
-						ToolTip.Tip="Save the amounts changed in the Total column. Rows that were not changed are left alone."/>
+						ToolTip.Tip="Save the amounts changed in the Total and Default columns. Rows that were not changed are left alone."/>
 				<Button Content="Close" HorizontalContentAlignment="Center" Click="OnCloseClick" Width="90"/>
 			</StackPanel>
 		</Grid>

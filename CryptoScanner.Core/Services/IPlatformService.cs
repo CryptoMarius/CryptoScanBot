@@ -26,4 +26,24 @@ public interface IPlatformService
     {
         Console.WriteLine($"{title}: {message}");
     }
+
+    /// <summary>
+    /// Run the current process below the normal priority, for batch work that should only get the
+    /// processor time nobody else needs. The live scanners keep the normal priority, so whenever one
+    /// of them (or its user interface) has work to do it goes first instead of queueing behind the
+    /// batch threads. The default works on every platform .NET runs on (a priority class on Windows,
+    /// a nice value on Linux and macOS); lowering is always allowed, so a failure is only reported.
+    /// </summary>
+    void LowerProcessPriority()
+    {
+        try
+        {
+            using var process = System.Diagnostics.Process.GetCurrentProcess();
+            process.PriorityClass = System.Diagnostics.ProcessPriorityClass.BelowNormal;
+        }
+        catch (Exception error)
+        {
+            Console.WriteLine($"LowerProcessPriority: {error.Message}");
+        }
+    }
 }

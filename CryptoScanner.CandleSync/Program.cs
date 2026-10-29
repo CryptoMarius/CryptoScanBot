@@ -282,6 +282,17 @@ internal static class Program
             return 1;
         }
         WriteLine($"{exchangeName} {(result.Cancelled ? "stopped" : "done")}: {result.Done}/{result.Total} symbol(s) up to now in {elapsed}");
+
+        // Once a week the candle file is rewritten in key order (see CandleDatabase.VacuumIfDue).
+        // The vacuum needs the file to itself, so the counting connection goes first.
+        if (!result.Cancelled)
+        {
+            countDb.Close();
+            _countConnection = null;
+            string? line = CandleDatabase.VacuumIfDue(GlobalData.ActiveExchange!, CandleDatabase.VacuumInterval);
+            if (line != null)
+                WriteLine(line);
+        }
         return 0;
     }
 

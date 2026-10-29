@@ -141,6 +141,17 @@ public class AssetSnapshotReferenceCoinTests : TestBase
 
 
     [TestMethod]
+    public void Nothing_in_use_falls_back_on_the_main_coin_the_api_states()
+    {
+        // HyperLiquid Perpetual after the emulator took over the settings of a run: for a moment no
+        // symbols hung under USDC, and the fallback on USDT valued every day of run 327 at zero
+        ExchangeBase.ExchangeOptions.DefaultQuote = "USDC";
+
+        Assert.AreEqual("USDC", AssetSnapshotTools.ResolveReferenceCoin());
+    }
+
+
+    [TestMethod]
     public void The_cash_of_a_usdc_market_is_worth_one_of_itself()
     {
         ExchangeBase.ExchangeOptions.DefaultQuote = "USDC";

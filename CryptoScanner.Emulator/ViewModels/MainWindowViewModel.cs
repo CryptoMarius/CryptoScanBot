@@ -259,6 +259,20 @@ public partial class MainWindowViewModel : ObservableObject
                 percent => Dispatcher.UIThread.Post(() => ProgressValue = percent));
             if (result.Error != null)
                 Status = result.Error;
+            else if (!result.Cancelled)
+            {
+                // Once a week the candle file is rewritten in key order (see CandleDatabase.VacuumIfDue)
+                var exchange = GlobalData.ActiveExchange;
+                SetStatus($"Fetch candles: completed, vacuum of {exchange.Name}.db when due…");
+                string? line = await Task.Run(() => CandleDatabase.VacuumIfDue(exchange, CandleDatabase.VacuumInterval));
+                if (line != null)
+                {
+                    GlobalData.AddTextToLogTab(line);
+                    SetStatus(line);
+                }
+                else
+                    SetStatus($"Fetch candles: completed for {result.Total} symbol(s).");
+            }
         }
         finally
         {
@@ -451,8 +465,7 @@ public partial class MainWindowViewModel : ObservableObject
                     FromDate = baseConfig.FromDate,
                     ToDate = baseConfig.ToDate,
                     BaseInterval = baseConfig.BaseInterval,
-                    StartCapital = baseConfig.StartCapital,
-                    Label = labelRest.Length > 0 ? $"{algorithm.Name} {labelRest}" : algorithm.Name,
+                    Label =labelRest.Length > 0 ? $"{algorithm.Name} {labelRest}" : algorithm.Name,
                 };
 
                 // force: same reason as the single run above — this batch is started by hand.
@@ -1031,15 +1044,9 @@ public partial class MainWindowViewModel : ObservableObject
                         string baseInterval = !string.IsNullOrWhiteSpace(entry.BaseInterval)
                             ? entry.BaseInterval! : baseConfig.BaseInterval;
 
-                        // Same for the start capital; without one the run config decides.
-                        var (startCapital, startCapitalOverridden) =
-                            ResolveStartCapital(entry.StartCapital, baseConfig.StartCapital);
-
-                        // And for the paper balances. Note this also repairs the run configuration's
-                        // own checkbox: until 03-09-2026 the queue never set this field, so every
-                        // queue run silently used the class default (true) no matter what the
-                        // run-config window said. Only single runs honoured it.
-                        bool useAssetManagement = entry.UseAssetManagement ?? baseConfig.UseAssetManagement;
+                        // The start capital and the asset-management switch are scanner settings since
+                        // 26-10-2026, given per entry in TradingOverrides; an entry with the old keys
+                        // is refused by SignalGridExpander.Validate.
 
                         // And for the replay window; without one the run config decides. A window
                         // that is empty or backwards costs this entry only, like an override that
@@ -1066,7 +1073,7 @@ public partial class MainWindowViewModel : ObservableObject
 
                         string runLabel = BuildRunLabel(algoName, entryLabel,
                             !string.IsNullOrWhiteSpace(entry.BaseInterval) ? baseInterval : null,
-                            startCapitalOverridden ? startCapital : null,
+                            null,
                             periodOverridden ? FormatPeriod(fromDate, toDate) : null);
 
                         // Symbols the entry leaves out. The filtered list goes into the run
@@ -1089,14 +1096,12 @@ public partial class MainWindowViewModel : ObservableObject
                             FromDate = fromDate,
                             ToDate = toDate,
                             BaseInterval = baseInterval,
-                            StartCapital = startCapital,
-                            UseAssetManagement = useAssetManagement,
                             // Same rule as the three above: the entry decides, and without an
                             // opinion the run configuration does - not the class default. On the
                             // barometer that difference is a measurement, and the duplicate window
                             // decides whether this entry is replayed at all.
                             CalculateBarometer = entry.CalculateBarometer ?? baseConfig.CalculateBarometer,
-                            SerialTradeHalf = entry.SerialTradeHalf ?? baseConfig.SerialTradeHalf,
+                            //SerialTradeHalf = entry.SerialTradeHalf ?? baseConfig.SerialTradeHalf,
                             DuplicateCheckDays = baseConfig.DuplicateCheckDays,
                             Label = runLabel,
                         };
@@ -1267,22 +1272,6 @@ public partial class MainWindowViewModel : ObservableObject
     /// machine - and "5.000" versus "5,000" means the opposite thing depending on the locale.
     /// </para>
     /// </summary>
-    /// <summary>
-    /// The paper-trading start capital a queue entry runs on, and whether the entry chose it itself.
-    /// <para>
-    /// A value of 0 or less counts as "not set" and falls back to the run configuration. Without that
-    /// rule a typo in the hand-edited queue file - an omitted digit, a stray minus - would start a run
-    /// with no money at all, and since the balances really constrain trading that run would produce
-    /// zero trades and look like a strategy that never signals.
-    /// </para>
-    /// </summary>
-    internal static (decimal value, bool overridden) ResolveStartCapital(decimal? entryStartCapital, decimal configStartCapital)
-    {
-        if (entryStartCapital is decimal value && value > 0)
-            return (value, true);
-        return (configStartCapital, false);
-    }
-
 
     /// <summary>
     /// The replay window of a queue entry: its own dates where it gives them, the run configuration's
@@ -1555,7 +1544,10 @@ public partial class MainWindowViewModel : ObservableObject
         // in the settings snapshot that is written just after this call, so a finished run says
         // whether the balances constrained it - reading that back from the label alone has burned us
         // before. The start capital itself is in the run config, which is stored with the run.
-        GlobalData.Settings.Trading.UseAssetManagement = config.UseAssetManagement;
+        // Since 26-10-2026 both are settings of their own (Trading.UseAssetManagement and the Default
+        // column of Paper assets), so the run follows them as they are - a queue entry changes them
+        // through TradingOverrides - and they reach the snapshot without help.
+        //GlobalData.Settings.Trading.UseAssetManagement = config.UseAssetManagement;
 
         // Start from a clean IN-MEMORY zone slate. Stored zones are now tagged per run (EmulatorRunId)
         // and loaded per run, so a fresh run already starts with no zones of its own — no DB wipe and no

@@ -187,15 +187,19 @@ public class RunLabelTests
     /// as a choice. An omitted digit or a stray minus must not start a run with no money - since the
     /// balances really constrain trading, such a run makes zero trades and reads as a strategy that
     /// never signals.
+    /// <para>
+    /// Since 26-10-2026 the key is refused: the start capital is given in
+    /// TradingOverrides.PaperAssetDefaults (SignalGridExpanderTests.RetiredAssetKeys_AreRefused).
+    /// </para>
     /// </summary>
-    [TestMethod]
-    public void StartCapital_OnlyAPositiveAmountOverridesTheRunConfig()
-    {
-        Assert.AreEqual((5000m, true), MainWindowViewModel.ResolveStartCapital(5000m, 10000m));
-        Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(null, 10000m));
-        Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(0m, 10000m));
-        Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(-5000m, 10000m));
-    }
+    //[TestMethod]
+    //public void StartCapital_OnlyAPositiveAmountOverridesTheRunConfig()
+    //{
+    //    Assert.AreEqual((5000m, true), MainWindowViewModel.ResolveStartCapital(5000m, 10000m));
+    //    Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(null, 10000m));
+    //    Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(0m, 10000m));
+    //    Assert.AreEqual((10000m, false), MainWindowViewModel.ResolveStartCapital(-5000m, 10000m));
+    //}
 
 
     /// <summary>
@@ -244,6 +248,7 @@ public class RunLabelTests
 
         Assert.AreEqual(false, parallel!.SerialTradeHalf);
         Assert.IsNull(omitted!.SerialTradeHalf, "omitted has to fall back to the run configuration");
-        Assert.IsTrue(new EmulatorRunConfig().SerialTradeHalf, "serial is the default");
+        // Since 26-10-2026 a run is always serial and the run configuration has no switch any more
+        //Assert.IsTrue(new EmulatorRunConfig().SerialTradeHalf, "serial is the default");
     }
 }

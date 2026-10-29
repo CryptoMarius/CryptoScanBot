@@ -2778,6 +2778,35 @@ public class PositionMonitor : IDisposable
     }
 
 
+    /// <summary>
+    /// Whether a take profit order has to be cancelled and placed again because its quantity no
+    /// longer matches what the calculation asks for. On spot the wanted quantity is first rounded
+    /// down onto the quantity step, so the dust below one step does not count as a change.
+    /// <para>
+    /// Only the step, deliberately not the minimum and maximum quantity: dust is what is left below
+    /// one step, it has nothing to do with the limits. A minimum that is filled in wrongly would
+    /// otherwise be lifted into the wanted quantity and turn it into an absurd number.
+    /// </para>
+    /// <para>
+    /// A spot buy pays its fee in the coin itself, so the position quantity is the filled quantity
+    /// minus that fee and has more decimals than the quantity step (ETHEUR.SPOT on Bitvavo,
+    /// 25-10-2026: 0.0078024 bought, 0.25% fee, 0.0077828940 held, order placed for 0.00778289).
+    /// The last take profit level takes that unrounded remainder, never equalled its own order and
+    /// was cancelled and placed again at the same price on every pass, announced as "cancel because
+    /// of change BE" while the break-even price had not moved.
+    /// </para>
+    /// <para>
+    /// Futures places the quantity as it is (contracts, no dust), so there the comparison stays exact.
+    /// </para>
+    /// </summary>
+    internal static bool TakeProfitQuantityMoved(decimal current, decimal wanted, CryptoTradingType tradingType, decimal quantityTickSize)
+    {
+        if (tradingType == CryptoTradingType.Spot && quantityTickSize > 0)
+            wanted -= wanted % quantityTickSize;
+        return current != wanted;
+    }
+
+
     public async Task HandlePosition(CryptoPosition position)
     {
         //GlobalData.Logger.Info($"position:" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
@@ -2912,7 +2941,8 @@ public class PositionMonitor : IDisposable
                     CryptoPositionStep? order = PositionTools.FindPositionPartStep(t.Part, takeProfitOrderSide, false);
                     hadExistingOrder[t.Level] = order != null;
                     (decimal? levelStop, decimal? levelLimit) = StopFor(t.Level);
-                    if (order == null || order.Quantity != t.Quantity
+                    if (order == null
+                        || TakeProfitQuantityMoved(order.Quantity, t.Quantity, Symbol.Exchange.TradingType, Symbol.QuantityTickSize)
                         || PriceMoved(order.Price, t.Price, tickSize)
                         || PriceMoved(order.StopPrice, levelStop, tickSize)
                         || PriceMoved(order.StopLimitPrice, levelLimit, tickSize))

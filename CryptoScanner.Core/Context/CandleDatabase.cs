@@ -5,6 +5,8 @@ using Dapper;
 
 using Microsoft.Data.Sqlite;
 
+using System.Globalization;
+
 namespace CryptoScanner.Core.Context;
 
 /// <summary>
@@ -142,6 +144,98 @@ public class CandleDatabase : IDisposable
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, $"CandleDatabase.DeleteMeta({key})");
+        }
+    }
+
+
+    /// <summary>The Meta key with the moment (UTC, round-trip format) of the last full VACUUM</summary>
+    public const string LastVacuumMetaKey = "LastVacuum";
+
+    /// <summary>How long a candle file goes without a full VACUUM, see <see cref="VacuumIfDue"/></summary>
+    public static readonly TimeSpan VacuumInterval = TimeSpan.FromDays(7);
+
+
+    /// <summary>
+    /// Rewrites the candle file of this exchange with a full VACUUM when the last one is
+    /// <paramref name="minimalAge"/> or longer ago (or never happened).
+    /// <para>
+    /// Why: appending candles splits full pages and puts the new half at the end of the file, and the
+    /// hourly cleanup plus incremental_vacuum moves the last pages into the holes. Measured 27-10-2026
+    /// on a copy of the live Binance Spot file: only 61% of the Candle pages followed each other in key
+    /// order, and a VACUUM took it to 99% and from 868 to 510 MB in 9 seconds. The emulator file of
+    /// Bitvavo Spot, filled per symbol, was at 98% already and went from 1613 to 1470 MB.
+    /// </para>
+    /// <para>
+    /// The VACUUM runs with the rollback journal instead of WAL: in WAL the whole rewritten file would
+    /// pass through the WAL first. The page size stays as it is (4096 in the files, although
+    /// <see cref="InitializeSchema"/> asks for 8192): 8192 saved 5 of 1470 MB on the same copy.
+    /// Leaving WAL needs the file to itself, so that doubles as the check that no other process has
+    /// it open: when an emulator, a scanner or CandleSync still uses it, the VACUUM is skipped and
+    /// tried again the next time, without writing the date.
+    /// </para>
+    /// </summary>
+    /// <returns>A line for the log, or null when the VACUUM was not due</returns>
+    public static string? VacuumIfDue(Model.CryptoExchange exchange, TimeSpan minimalAge)
+    {
+        string dbFile = Path.Combine(ResolveCandleFolder(), exchange.Name + ".db");
+        if (!File.Exists(dbFile))
+            return null;
+
+        string? lastText = ReadMeta(exchange, LastVacuumMetaKey);
+        if (DateTime.TryParse(lastText, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime last)
+            && DateTime.UtcNow - last < minimalAge)
+            return null;
+
+        Semaphore.Wait();
+        try
+        {
+            // Idle connections of this process stay open in the pool and would keep WAL in place
+            SqliteConnection.ClearAllPools();
+
+            long sizeBefore = new FileInfo(dbFile).Length;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            using SqliteConnection connection = new($"Filename={dbFile};Mode=ReadWrite;Pooling=False;");
+            connection.Open();
+            connection.Execute("PRAGMA busy_timeout = 2000;");
+
+            string? mode;
+            try
+            {
+                // Its own timeout: Microsoft.Data.Sqlite repeats a busy statement for the command timeout,
+                // and Dapper's global one (180 s, CryptoDatabase) would make the in-use check wait minutes
+                mode = connection.ExecuteScalar<string>("PRAGMA journal_mode = DELETE;", commandTimeout: 2);
+            }
+            catch (SqliteException)
+            {
+                mode = null;
+            }
+            if (!string.Equals(mode, "delete", StringComparison.OrdinalIgnoreCase))
+                return $"candles.db vacuum {exchange.Name}: skipped, the file is in use by another connection";
+
+            try
+            {
+                connection.Execute("VACUUM;");
+                connection.Execute("INSERT OR REPLACE INTO Meta (Key, Value) VALUES ($Key, $Value)",
+                    new { Key = LastVacuumMetaKey, Value = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture) });
+            }
+            finally
+            {
+                connection.Execute("PRAGMA journal_mode = WAL;");
+            }
+            sw.Stop();
+
+            long sizeAfter = new FileInfo(dbFile).Length;
+            return $"candles.db vacuum {exchange.Name}: {sizeBefore / 1048576} MB -> {sizeAfter / 1048576} MB " +
+                $"in {sw.Elapsed.TotalSeconds:N0} s";
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, $"CandleDatabase.VacuumIfDue({exchange.Name})");
+            return $"candles.db vacuum {exchange.Name}: FAILED - {error.Message}";
+        }
+        finally
+        {
+            Semaphore.Release();
         }
     }
 

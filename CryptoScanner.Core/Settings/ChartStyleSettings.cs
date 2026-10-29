@@ -211,13 +211,13 @@ public class ChartStyleSettings
         // Dots = true on the fills: only their colour is used, so width and line style are greyed
         // out in the editor.
         new("positions", "Positions", "positionBuy",       "Buy order (entry / DCA / take profit)",  new() { Color = "#FF006400", LineWidth = 2, LineStyle = 2 }),
-        new("positions", "Positions", "positionSell",      "Sell order (entry / DCA / take profit)", new() { Color = "#FF8B0000", LineWidth = 2, LineStyle = 2 }),
+        new("positions", "Positions", "positionSell",      "Sell order (entry / DCA / take profit)", new() { Color = "#FFE53935", LineWidth = 2, LineStyle = 2 }),
         new("positions", "Positions", "positionStopPrice", "Stop trigger",      new() { Color = "#FFef5350", LineWidth = 2, LineStyle = 2 }),
         // No row for the stop limit: it is off the chart since 03-09-2026, so there is nothing
         // left to colour. See the remark in ChartDataService.BuildPositionOverlays.
         new("positions", "Positions", "positionBreakEven", "Break-even",        new() { Color = "#FF4da3ff", LineWidth = 2, LineStyle = 2 }),
         new("positions", "Positions", "positionOpenLong",  "Open marker long",  new() { Color = "#FF006400", LineWidth = 2, LineStyle = 1 }),
-        new("positions", "Positions", "positionOpenShort", "Open marker short", new() { Color = "#FF8B0000", LineWidth = 2, LineStyle = 1 }),
+        new("positions", "Positions", "positionOpenShort", "Open marker short", new() { Color = "#FFE53935", LineWidth = 2, LineStyle = 1 }),
         new("positions", "Positions", "positionFillBuy",   "Buy filled",        new() { Color = "#FFffeb3b", Dots = true }),
         new("positions", "Positions", "positionFillSell",  "Sell filled",       new() { Color = "#FFffffff", Dots = true }),
 

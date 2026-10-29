@@ -79,8 +79,8 @@ public class PaperAssets
             {
                 foreach (string missing in TradedQuotesMissing(GlobalData.Settings.QuoteCoins.Values, defaults))
                     GlobalData.AddTextToLogTab($"Warning: the default paper assets hold no {missing}, the coin this exchange " +
-                        $"trades in - no position can be opened until {missing} is booked under Paper assets or added to the " +
-                        "default paper assets (settings, trader)");
+                        $"trades in - no position can be opened until {missing} is booked or given a default " +
+                        "under Paper assets (column Default)");
             }
             return;
         }
@@ -89,7 +89,7 @@ public class PaperAssets
         {
             if (logToTab)
                 GlobalData.AddTextToLogTab("No default paper assets configured, the paper account starts empty " +
-                    "(settings, trader, Default paper assets)");
+                    "(Tools -> Paper assets, column Default)");
             return;
         }
 

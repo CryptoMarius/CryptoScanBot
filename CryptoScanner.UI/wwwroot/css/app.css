@@ -2510,7 +2510,9 @@ code {
 
 /* Paper assets dialog (matches the Avalonia AssetWindow, 520x440) */
 .assets-dialog {
-    width: 600px;
+    /* Same width as the Avalonia window: the fixed columns plus the Default column need it, at
+       600px the Free column was cut off. */
+    width: 720px;
     max-width: 90vw;
 }
 
@@ -2541,6 +2543,7 @@ code {
 
 .assets-total-input {
     width: 100%;
+    box-sizing: border-box;
     text-align: right;
 }
 

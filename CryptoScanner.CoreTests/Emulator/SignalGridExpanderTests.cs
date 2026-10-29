@@ -363,4 +363,57 @@ public class SignalGridExpanderTests : TestBase
         Assert.IsNull(SignalGridExpander.Validate(EntryWithOverride("ZonesDlz", "IntervalList", """["1h"]""")));
         Assert.IsNull(SignalGridExpander.Validate(EntryWithOverride("sbm", "BBMinPercentage", "1.5")));
     }
+
+
+    /// <summary>
+    /// "StartCapital" and "UseAssetManagement" left the queue entry on 26-10-2026. An entry that still
+    /// has them is refused, not read: reading them as well is two places for one setting.
+    /// </summary>
+    [TestMethod]
+    public void RetiredAssetKeys_AreRefused()
+    {
+        StringAssert.Contains(SignalGridExpander.Validate(new EmulatorQueueEntry { StartCapital = 100000m }), "PaperAssetDefaults");
+        StringAssert.Contains(SignalGridExpander.Validate(new EmulatorQueueEntry { UseAssetManagement = true }), "TradingOverrides");
+        StringAssert.Contains(SignalGridExpander.Validate(new EmulatorQueueEntry { SerialTradeHalf = true }), "always serial");
+
+        var entry = new EmulatorQueueEntry
+        {
+            TradingOverrides = new()
+            {
+                ["PaperAssetDefaults"] = JsonDocument.Parse("""[ { "Name": "USDC", "Total": 100000 } ]""").RootElement,
+                ["UseAssetManagement"] = JsonDocument.Parse("true").RootElement,
+            },
+        };
+        Assert.IsNull(SignalGridExpander.Validate(entry));
+    }
+
+
+    /// <summary>The start balances of a queue entry, given in TradingOverrides, reach the settings and go back.</summary>
+    [TestMethod]
+    public void PaperAssetDefaultsOverrideIsAppliedAndReverted()
+    {
+        InitTestSession();
+        var original = GlobalData.Settings.Trading.PaperAssetDefaults;
+        var entry = new EmulatorQueueEntry
+        {
+            TradingOverrides = new()
+            {
+                ["PaperAssetDefaults"] = JsonDocument.Parse("""[ { "Name": "USDC", "Total": 100000 } ]""").RootElement,
+            },
+        };
+
+        var overrides = SignalGridExpander.Apply(entry);
+        try
+        {
+            Assert.AreEqual(1, GlobalData.Settings.Trading.PaperAssetDefaults.Count);
+            Assert.AreEqual("USDC", GlobalData.Settings.Trading.PaperAssetDefaults[0].Name);
+            Assert.AreEqual(100000m, GlobalData.Settings.Trading.PaperAssetDefaults[0].Total);
+        }
+        finally
+        {
+            SignalGridExpander.Revert(overrides);
+        }
+
+        Assert.AreSame(original, GlobalData.Settings.Trading.PaperAssetDefaults);
+    }
 }

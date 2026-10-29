@@ -60,7 +60,7 @@ public static class EmulatorRunFingerprint
     public static string Compute(string configJson, string? settingsJson)
     {
         string canonicalConfig = StripFieldsOutsideTheReplay(configJson);
-        string canonicalSettings = Canonicalise(settingsJson ?? "");
+        string canonicalSettings = Canonicalise(settingsJson ?? "", EmulatorStartCapital.LegacyStartCapital(configJson));
         byte[] bytes = Encoding.UTF8.GetBytes(canonicalConfig + "\n" + canonicalSettings);
         return Convert.ToHexString(SHA256.HashData(bytes));
     }
@@ -93,7 +93,7 @@ public static class EmulatorRunFingerprint
     /// the other bought nothing.
     /// </para>
     /// </summary>
-    internal static string Canonicalise(string settingsJson)
+    internal static string Canonicalise(string settingsJson, decimal? legacyStartCapital = null)
     {
         try
         {
@@ -113,6 +113,7 @@ public static class EmulatorRunFingerprint
 
             RenameStrategiesToTheirCurrentName(settings);
             StripThingsThatCannotChangeAReplay(settings);
+            WriteTheStartBalancesAsTheDefaultList(settings, legacyStartCapital);
 
             return JsonSerializer.Serialize(settings, Core.Json.JsonTools.JsonSerializerIndented);
         }
@@ -266,6 +267,25 @@ public static class EmulatorRunFingerprint
     }
 
 
+    /// <summary>
+    /// The money the run started with, written as the default list of Paper assets - the one place
+    /// it lives since 26-10-2026.
+    /// <para>
+    /// A run from before that date carried a "StartCapital" in its configuration, handed out to every
+    /// traded quote coin when the default list was empty. Written as the list it amounts to, so the
+    /// same run with that amount in the Default column now is recognised as the same measurement. A
+    /// filled list won from the start capital back then, so it is left as it is.
+    /// </para>
+    /// </summary>
+    private static void WriteTheStartBalancesAsTheDefaultList(SettingsBasic settings, decimal? legacyStartCapital)
+    {
+        List<CryptoPaperAssetDefault> defaults = EmulatorStartCapital.Normalise(settings.Trading.PaperAssetDefaults);
+        if (defaults.Count == 0 && legacyStartCapital is decimal amount)
+            defaults = EmulatorStartCapital.FromLegacy(amount, settings.QuoteCoins.Values);
+        settings.Trading.PaperAssetDefaults = defaults;
+    }
+
+
     private static void StripThingsThatCannotChangeAReplay(SettingsBasic settings)
     {
         settings.General.DebugSymbol = "";
@@ -396,6 +416,11 @@ public static class EmulatorRunFingerprint
             // carries the list and a queue run leaves it empty, so keeping it in meant the two could
             // never look like the same measurement even when they replayed exactly the same thing.
             obj.Remove("SelectedAlgorithms");
+            // Gone from the run configuration since 26-10-2026. The start capital is folded into the
+            // default list of the settings (see WriteTheStartBalancesAsTheDefaultList), and the
+            // asset-management switch was always copied into the settings snapshot as well.
+            obj.Remove("StartCapital");
+            obj.Remove("UseAssetManagement");
             // The serial trade half at its default (on) is what every run since 13-10-2026 did before
             // the switch existed, so it is left out and those checksums keep matching. Off stays in:
             // once money or slots run out, that run replays differently.

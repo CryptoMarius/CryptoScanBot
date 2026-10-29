@@ -95,7 +95,16 @@ public static class AssetSnapshotTools
             }
         }
 
-        return largest ?? FallbackReferenceCoin;
+        if (largest != null)
+            return largest;
+
+        // Nothing in use at all: the coin the exchange states for itself is still a better guess than
+        // a dollar tether it may not even list. HyperLiquid Perpetual has no USDT pair, and USDT here
+        // valued every day of emulator run 327 at zero (29-10-2026).
+        if (!string.IsNullOrEmpty(defaultQuote))
+            return defaultQuote;
+
+        return FallbackReferenceCoin;
     }
 
 

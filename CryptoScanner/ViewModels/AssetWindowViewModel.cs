@@ -50,6 +50,26 @@ public partial class AssetRowViewModel(PaperAssetRow asset) : ObservableObject
 
     /// <summary>The amount this row started with, so Apply only writes what the user really changed.</summary>
     public decimal OriginalTotal { get; } = asset.Total;
+
+    /// <summary>What a reset hands out for this coin, editable like Total and saved in the settings.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DefaultText))]
+    private decimal _default = asset.Default;
+
+    /// <summary>The default as text, read back the same careful way as <see cref="TotalText"/>.</summary>
+    public string DefaultText
+    {
+        get => PaperAssetsEditor.FormatAmount(Name, Default);
+        set
+        {
+            if (value != DefaultText && PaperAssetsEditor.TryParseAmount(value, out decimal parsed) && parsed >= 0)
+                Default = parsed;
+            else
+                OnPropertyChanged(); // unreadable, so put the amount back the way it was
+        }
+    }
+
+    public decimal OriginalDefault { get; } = asset.Default;
 }
 
 
@@ -67,6 +87,9 @@ public partial class AssetWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private string _newAssetAmount = "";
+
+    [ObservableProperty]
+    private string _newAssetDefault = "";
 
     public AssetWindowViewModel()
     {
@@ -90,6 +113,8 @@ public partial class AssetWindowViewModel : ObservableObject
             Name = row.Name,
             OriginalTotal = row.OriginalTotal,
             NewTotal = row.Total,
+            OriginalDefault = row.OriginalDefault,
+            NewDefault = row.Default,
         }));
         Reload();
     }
@@ -101,11 +126,13 @@ public partial class AssetWindowViewModel : ObservableObject
     public void Add()
     {
         PaperAssetsEditor.TryParseAmount(NewAssetAmount, out decimal amount);
-        if (!PaperAssetsEditor.Add(GlobalData.ActiveExchange, NewAssetName, amount))
+        PaperAssetsEditor.TryParseAmount(NewAssetDefault, out decimal defaultAmount);
+        if (!PaperAssetsEditor.Add(GlobalData.ActiveExchange, NewAssetName, amount, defaultAmount))
             return;
 
         NewAssetName = "";
         NewAssetAmount = "";
+        NewAssetDefault = "";
         Reload();
     }
 

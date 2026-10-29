@@ -1,5 +1,7 @@
 CryptoScanBot release historie:
 
+TODO: Migratie testen 2.1.8 naar de laatste versie
+
 25-10-2026 2.6.8
 - Candles: De intervallen van 6h en hoger staan nu altijd op onze eigen UTC-indeling; beurzen die de week op donderdag of zondag laten beginnen leverden candles naast de onze, en die worden eenmalig opgeruimd
 - Trader: Een instap-order die blijft staan kan weer ingetrokken worden, maar niet terwijl hij misschien al gevuld is

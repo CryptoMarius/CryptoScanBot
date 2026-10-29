@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -175,12 +175,12 @@ public class PaperAssetsStartCapitalTests : TestBase
 
 
     /// <summary>
-    /// The reset of the trader settings screen hands out the list as that screen shows it, not the
-    /// saved one - the rows next to the button may not have been saved yet. The saved list stays
-    /// as it was.
+    /// The emulator passes an empty list: a run starts with its own start capital per traded quote
+    /// coin, whatever the default paper assets of the settings say. A filled list once put every
+    /// HyperLiquid run on 2.000 USDC while the run said 100.000 (26-10-2026). The saved list stays.
     /// </summary>
     [TestMethod]
-    public void TheSettingsScreenResetUsesTheListOnScreen()
+    public void AnEmptyListInsteadOfTheSavedOneHandsOutTheStartCapital()
     {
         using CryptoDatabase database = new();
         database.Open();
@@ -191,20 +191,17 @@ public class PaperAssetsStartCapitalTests : TestBase
 
         GlobalData.Settings.Trading.PaperAssetDefaults =
         [
-            new CryptoPaperAssetDefault { Name = quoteUsdt.Name, Total = 250m },
+            new CryptoPaperAssetDefault { Name = quoteUsdt.Name, Total = 2000m },
+            new CryptoPaperAssetDefault { Name = "ADA", Total = 1000m },
         ];
 
-        PaperAssetsEditor.ResetToDefaults(GlobalData.ActiveExchange,
-        [
-            new CryptoPaperAssetDefault { Name = quoteUsdt.Name, Total = 900m },
-            new CryptoPaperAssetDefault { Name = "BTC", Total = 0.2m },
-        ]);
+        PaperAssets.ResetAssets(GlobalData.ActiveExchange!, 100000m, []);
 
-        Assert.AreEqual(900m, GlobalData.ActiveExchange!.Data.AssetList[quoteUsdt.Name].Total,
-            "the amount on screen, not the saved 250");
-        Assert.AreEqual(0.2m, GlobalData.ActiveExchange!.Data.AssetList["BTC"].Total);
-        Assert.AreEqual(1, GlobalData.Settings.Trading.PaperAssetDefaults.Count, "the saved list is not touched");
-        Assert.AreEqual(250m, GlobalData.Settings.Trading.PaperAssetDefaults[0].Total);
+        Assert.AreEqual(100000m, GlobalData.ActiveExchange!.Data.AssetList[quoteUsdt.Name].Total,
+            "the start capital of the run, not the 2.000 of the settings");
+        Assert.AreEqual(100000m, GlobalData.ActiveExchange!.Data.AssetList["BTC"].Total);
+        Assert.IsFalse(GlobalData.ActiveExchange!.Data.AssetList.ContainsKey("ADA"), "nothing of the saved list");
+        Assert.AreEqual(2, GlobalData.Settings.Trading.PaperAssetDefaults.Count, "the saved list is not touched");
     }
 
 

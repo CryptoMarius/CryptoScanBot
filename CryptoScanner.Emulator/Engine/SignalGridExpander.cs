@@ -378,6 +378,10 @@ public static class SignalGridExpander
     /// </summary>
     public static string? Validate(EmulatorQueueEntry entry)
     {
+        string? retiredKey = DescribeRetiredAssetKeys(entry);
+        if (retiredKey != null)
+            return retiredKey;
+
         string? unknownSection = DescribeUnknownSections(entry);
         if (unknownSection != null)
             return unknownSection;
@@ -402,6 +406,29 @@ public static class SignalGridExpander
         }
 
         return DescribeUnreachableEntryCondition(entry);
+    }
+
+
+    /// <summary>
+    /// The two keys a queue entry used for its money until 26-10-2026. They are refused, not read:
+    /// the start capital and asset management are scanner settings and an entry gives them in
+    /// TradingOverrides. Reading the old keys as well is two places for one setting again, which is
+    /// what put the HyperLiquid runs of Session1 on 2.000 USDC while they said 100.000.
+    /// <para>
+    /// SerialTradeHalf went the same day: a run is always serial, there is nothing left to choose.
+    /// </para>
+    /// </summary>
+    private static string? DescribeRetiredAssetKeys(EmulatorQueueEntry entry)
+    {
+        if (entry.StartCapital != null)
+            return "\"StartCapital\" is no longer a queue key (26-10-2026) - give the start balances in TradingOverrides: "
+                + "\"PaperAssetDefaults\": [{\"Name\": \"USDT\", \"Total\": 100000}]";
+        if (entry.UseAssetManagement != null)
+            return "\"UseAssetManagement\" is no longer a top-level queue key (26-10-2026) - give it in TradingOverrides: "
+                + "\"UseAssetManagement\": true";
+        if (entry.SerialTradeHalf != null)
+            return "\"SerialTradeHalf\" is no longer a queue key (26-10-2026) - a run is always serial, leave it out";
+        return null;
     }
 
 

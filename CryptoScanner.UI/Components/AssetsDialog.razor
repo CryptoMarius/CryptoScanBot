@@ -24,6 +24,7 @@
                     <thead>
                         <tr>
                             <th style="width: 120px;">Asset</th>
+                            <th style="width: 120px;" title="What a reset hands out for this coin. Edit it and press Apply; it is saved in the settings.">Default</th>
                             <th style="width: 130px;">Total</th>
                             <th style="width: 120px;">Locked</th>
                             <th>Free</th>
@@ -36,6 +37,13 @@
                             int index = i;
                             <tr>
                                 <td>@_rows[index].Name</td>
+                                @* What a reset hands out for this coin, saved in the settings of the
+                                   exchange; next to Total so the start and the balance are seen together. *@
+                                <td>
+                                    <input type="text" class="input-number assets-total-input"
+                                           value="@_rows[index].DefaultText"
+                                           @onchange="e => SetDefault(index, e.Value)" />
+                                </td>
                                 @* Text and not a number field: the cell shows the rounded amount the
                                    Avalonia grid shows, and "9,954.12" is not a number a browser field
                                    accepts. *@
@@ -58,7 +66,7 @@
                         }
                         @if (_rows.Count == 0)
                         {
-                            <tr><td colspan="5" class="empty-state">No assets</td></tr>
+                            <tr><td colspan="6" class="empty-state">No assets</td></tr>
                         }
                     </tbody>
                 </table>
@@ -74,7 +82,11 @@
                 <span>Amount:</span>
                 <input type="text" class="input-number assets-add-amount"
                        @bind="_newAssetAmount"
-                       title="The balance in the coin itself, above zero." />
+                       title="The balance in the coin itself. May be left empty when only a default is added." />
+                <span>Default:</span>
+                <input type="text" class="input-number assets-add-amount"
+                       @bind="_newAssetDefault"
+                       title="What a reset hands out for this coin, saved in the settings. May be left empty; a coin with only a default is fine too." />
                 <button class="btn" @onclick="OnAddClick"
                         title="Book this balance. It is recorded as a manual correction, so the capital line does not read it as profit.">
                     Add
@@ -87,7 +99,7 @@
            of its own any more. *@
         <div class="modal-footer">
             <button class="btn assets-reset-button" @onclick="OnResetClick"
-                    title="Throw every paper balance away and hand out the default assets from the settings (trader, asset management) again.">
+                    title="Throw every paper balance away and hand out the amounts of the Default column again.">
                 Reset to defaults
             </button>
             <button class="btn" @onclick="Reload"
@@ -95,7 +107,7 @@
                 Refresh
             </button>
             <button class="btn btn-primary" @onclick="OnApply"
-                    title="Save the amounts changed in the Total column. Rows that were not changed are left alone.">
+                    title="Save the amounts changed in the Total and Default columns. Rows that were not changed are left alone.">
                 Apply
             </button>
             <button class="btn btn-secondary" @onclick="OnClose">Close</button>
@@ -125,6 +137,11 @@
 
         /// <summary>The amount this row started with, so Apply only writes what the user really changed.</summary>
         public decimal OriginalTotal { get; init; }
+
+        /// <summary>What a reset hands out for this coin, editable like Total.</summary>
+        public decimal Default { get; set; }
+        public string DefaultText => PaperAssetsEditor.FormatAmount(Name, Default);
+        public decimal OriginalDefault { get; init; }
     }
 
     [Parameter] public bool Visible { get; set; }
@@ -135,6 +152,7 @@
     /// <summary>The coin and the amount of the add row, as typed - both are read as text.</summary>
     private string _newAssetName = "";
     private string _newAssetAmount = "";
+    private string _newAssetDefault = "";
 
     private string _summary = "";
     private bool _confirmResetVisible;
@@ -164,6 +182,8 @@
             LockedText = row.LockedText,
             FreeText = row.FreeText,
             OriginalTotal = row.Total,
+            Default = row.Default,
+            OriginalDefault = row.Default,
         })];
         _summary = PaperAssetsEditor.Describe(exchange, _rows.Count);
     }
@@ -176,6 +196,8 @@
             Name = row.Name,
             OriginalTotal = row.OriginalTotal,
             NewTotal = row.Total,
+            OriginalDefault = row.OriginalDefault,
+            NewDefault = row.Default,
         }));
         Reload();
     }
@@ -187,11 +209,13 @@
     private void OnAddClick()
     {
         PaperAssetsEditor.TryParseAmount(_newAssetAmount, out decimal amount);
-        if (!PaperAssetsEditor.Add(GlobalData.ActiveExchange, _newAssetName, amount))
+        PaperAssetsEditor.TryParseAmount(_newAssetDefault, out decimal defaultAmount);
+        if (!PaperAssetsEditor.Add(GlobalData.ActiveExchange, _newAssetName, amount, defaultAmount))
             return;
 
         _newAssetName = "";
         _newAssetAmount = "";
+        _newAssetDefault = "";
         Reload();
     }
 
@@ -232,5 +256,12 @@
     {
         if (PaperAssetsEditor.TryParseAmount(value?.ToString(), out decimal amount))
             _rows[index].Total = amount;
+    }
+
+    /// <summary>The default of a row, taken over the same way as <see cref="SetTotal"/>; a negative amount is ignored.</summary>
+    private void SetDefault(int index, object? value)
+    {
+        if (PaperAssetsEditor.TryParseAmount(value?.ToString(), out decimal amount) && amount >= 0)
+            _rows[index].Default = amount;
     }
 }

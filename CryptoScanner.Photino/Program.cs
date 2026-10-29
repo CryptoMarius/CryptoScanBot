@@ -292,6 +292,18 @@ class Program
             .SetUseOsDefaultSize(false)
             .SetUseOsDefaultLocation(false);
 
+        // WebView2 is Chromium, and Chromium drops the renderer of a window it considers hidden -
+        // minimized, or covered by other windows - to the Idle priority class. On a machine kept
+        // busy by emulator runs an Idle process gets almost no processor time, so after coming back
+        // to the window every click (a tab, a context menu, a menu item) waited seconds for the
+        // renderer, until Chromium noticed the window was visible again and raised it (seen on
+        // 28-10-2026: the renderer of a covered scanner at Idle, the others at Normal). A scanner
+        // is a monitor that is meant to stay live, so keep its renderer at the normal priority.
+        // These are Chromium switches; on Linux the same Photino setting takes WebKit JSON instead.
+        if (OperatingSystem.IsWindows())
+            app.MainWindow.SetBrowserControlInitParameters(
+                "--disable-renderer-backgrounding --disable-backgrounding-occluded-windows");
+
         // The title bar is drawn by the operating system and stays white until it is told otherwise,
         // which looks broken under the dark theme. It needs the native window handle, so it can only
         // be done once the window exists - and again on every theme switch.

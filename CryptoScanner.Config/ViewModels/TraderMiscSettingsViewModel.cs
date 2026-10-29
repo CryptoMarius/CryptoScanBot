@@ -10,17 +10,6 @@ using System.Collections.ObjectModel;
 
 namespace CryptoScanner.Config.ViewModels;
 
-/// <summary>One balance a paper account starts with - see SettingsTrading.PaperAssetDefaults.</summary>
-public partial class PaperAssetDefaultItemViewModel : ObservableObject
-{
-    [ObservableProperty]
-    private string _name = "";
-
-    [ObservableProperty]
-    private decimal _total;
-}
-
-
 public partial class TraderMiscSettingsViewModel : ObservableObject
 {
     private readonly Dictionary<string, CryptoTradeVia> _tradeViaList = new()
@@ -38,11 +27,6 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _useAssetManagement = true; // bool (EXACT match)
-
-    // The balances a paper account starts with, coin by coin - the only place a paper account reads
-    // its starting balances from.
-    [ObservableProperty]
-    private ObservableCollection<PaperAssetDefaultItemViewModel> _paperAssetDefaults = [];
 
     [ObservableProperty]
     private bool _soundTradeNotification = false; // bool (stored in SettingsGeneral!)
@@ -78,48 +62,6 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
 
     public Dictionary<string, CryptoTradeVia> TradeViaList => _tradeViaList;
 
-    /// <summary>
-    /// The reset button is only offered in the scanner: the emulator hands out the start capital at
-    /// the start of every run itself, and shows this screen for the settings of a run, not of a
-    /// running paper account.
-    /// </summary>
-    public bool CanResetPaperAssets => !GlobalData.IsEmulatorMode;
-
-    [RelayCommand]
-    private void AddPaperAssetDefault()
-    {
-        PaperAssetDefaults.Add(new PaperAssetDefaultItemViewModel());
-    }
-
-    [RelayCommand]
-    private void RemovePaperAssetDefault()
-    {
-        if (PaperAssetDefaults.Count > 0)
-            PaperAssetDefaults.RemoveAt(PaperAssetDefaults.Count - 1);
-    }
-
-    /// <summary>
-    /// Throw every paper balance away and hand out the default asset list as this screen shows it -
-    /// also when it has not been saved yet. See PaperAssetsEditor.ResetToDefaults.
-    /// </summary>
-    public void ResetPaperAssets()
-    {
-        PaperAssetsEditor.ResetToDefaults(GlobalData.ActiveExchange, CollectPaperAssetDefaults());
-    }
-
-    /// <summary>The rows of the default asset list as settings; a row without a coin is left out.</summary>
-    private List<CryptoPaperAssetDefault> CollectPaperAssetDefaults()
-    {
-        List<CryptoPaperAssetDefault> list = [];
-        foreach (PaperAssetDefaultItemViewModel item in PaperAssetDefaults)
-        {
-            string name = item.Name.Trim().ToUpperInvariant();
-            if (name.Length > 0)
-                list.Add(new CryptoPaperAssetDefault { Name = name, Total = item.Total });
-        }
-        return list;
-    }
-
     public void LoadConfig(SettingsTrading settings, SettingsGeneral general)
     {
         TradeVia = settings.TradeVia;
@@ -127,9 +69,6 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         UseAssetManagement = settings.UseAssetManagement;
         LogCanceledOrders = settings.LogCanceledOrders;
 
-        PaperAssetDefaults.Clear();
-        foreach (CryptoPaperAssetDefault entry in settings.PaperAssetDefaults)
-            PaperAssetDefaults.Add(new PaperAssetDefaultItemViewModel { Name = entry.Name, Total = entry.Total });
         GlobalBuyCooldownTime = settings.GlobalBuyCooldownTime;
         SignalCooldownAfterTradeTime = settings.SignalCooldownAfterTradeTime;
         LossCooldownTime = settings.LossCooldownTime;
@@ -149,9 +88,6 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         settings.UseAssetManagement = UseAssetManagement;
         settings.LogCanceledOrders = LogCanceledOrders;
 
-        // A row without a coin is an empty row somebody added and left alone, not a setting.
-        settings.PaperAssetDefaults.Clear();
-        settings.PaperAssetDefaults.AddRange(CollectPaperAssetDefaults());
         settings.GlobalBuyCooldownTime = GlobalBuyCooldownTime;
         settings.SignalCooldownAfterTradeTime = SignalCooldownAfterTradeTime;
         settings.LossCooldownTime = LossCooldownTime;

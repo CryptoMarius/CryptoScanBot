@@ -262,4 +262,46 @@ public class FingerprintCanonicalSettingsTests
     // declares a former name any more, so there was nothing left for them to measure.
     // IStrategyPlugin.FormerStrategyNames and the canonicalisation that honours it are still there;
     // they get their tests back along with the next rename that needs them.
+
+
+    /// <summary>The snapshot of a session that trades in USDT, with the given default paper assets.</summary>
+    private static string SettingsWithDefaults(params (string Name, decimal Total)[] defaults)
+    {
+        var settings = new SettingsBasic();
+        settings.QuoteCoins.Add("USDT", new CryptoScanner.Core.Model.CryptoQuoteData { Name = "USDT", FetchCandles = true });
+        settings.Trading.PaperAssetDefaults = [.. defaults.Select(d => new CryptoPaperAssetDefault { Name = d.Name, Total = d.Total })];
+        return JsonSerializer.Serialize(settings, JsonTools.JsonSerializerIndented);
+    }
+
+    private const string LegacyConfig = """{"Label":"x","FromDate":"2026-01-01","ToDate":"2026-07-30","StartCapital":100000,"UseAssetManagement":true}""";
+
+
+    /// <summary>
+    /// A run from before 26-10-2026 got its start capital from the run configuration; the same run now
+    /// gets it from the Default column. Both handed out 100.000 USDT, so both are the same measurement
+    /// - otherwise every old queue entry would be replayed after the change.
+    /// </summary>
+    [TestMethod]
+    public void LegacyStartCapital_MatchesTheSameAmountInTheDefaultColumn()
+    {
+        Assert.AreEqual(EmulatorRunFingerprint.Compute(LegacyConfig, SettingsWithDefaults()),
+                        EmulatorRunFingerprint.Compute(Config, SettingsWithDefaults(("USDT", 100000m))));
+    }
+
+
+    [TestMethod]
+    public void LegacyStartCapital_DiffersFromAnotherAmount()
+    {
+        Assert.AreNotEqual(EmulatorRunFingerprint.Compute(LegacyConfig, SettingsWithDefaults()),
+                           EmulatorRunFingerprint.Compute(Config, SettingsWithDefaults(("USDT", 10000m))));
+    }
+
+
+    /// <summary>A filled default list won from the old start capital, so that list is what the run had.</summary>
+    [TestMethod]
+    public void LegacyStartCapital_UnderAFilledList_CountsAsThatList()
+    {
+        Assert.AreEqual(EmulatorRunFingerprint.Compute(LegacyConfig, SettingsWithDefaults(("USDC", 2000m))),
+                        EmulatorRunFingerprint.Compute(Config, SettingsWithDefaults(("usdc", 2000m))));
+    }
 }

@@ -60,28 +60,15 @@ public partial class RunConfigViewModel : ObservableObject
     private string _selectedBaseInterval = "1m";
 
     /// <summary>
-    /// Paper-trading start capital per traded quote coin. The balances are wiped and handed out again
-    /// at the start of every run, so two runs over the same period start with the same amount of money.
-    /// </summary>
-    [ObservableProperty]
-    private decimal _startCapital = 10000m;
-
-    /// <summary>
-    /// Whether the balances constrain this run. On: an entry is paid out of the free balance and a
-    /// position is only opened when the entry and its DCA levels fit, so the run can run out of
-    /// money. Off: the balances are still booked, but nothing is refused for lack of money and every
-    /// entry is the plain entry amount of the quote coin.
-    /// </summary>
-    [ObservableProperty]
-    private bool _useAssetManagement = true;
-
-    /// <summary>
     /// Whether the trade half of every minute runs one symbol at a time, so identical runs give
     /// identical results. Off: everything in parallel, faster, but no longer repeatable once the
     /// money or the slots run out (see EmulatorRunConfig.SerialTradeHalf).
+    /// <para>
+    /// Removed on 26-10-2026: a run is always serial (ReplayRunner.SerialTradeHalf).
+    /// </para>
     /// </summary>
-    [ObservableProperty]
-    private bool _serialTradeHalf = true;
+    //[ObservableProperty]
+    //private bool _serialTradeHalf = true;
 
     /// <summary>Live text filter over the symbol list (substring, case-insensitive).</summary>
     [ObservableProperty]
@@ -113,9 +100,9 @@ public partial class RunConfigViewModel : ObservableObject
         FromDate = config.FromDate == default ? DateTime.UtcNow.Date.AddDays(-7) : config.FromDate;
         ToDate = config.ToDate == default ? DateTime.UtcNow.Date : config.ToDate;
         SelectedBaseInterval = BaseIntervals.Contains(config.BaseInterval) ? config.BaseInterval : "1m";
-        StartCapital = config.StartCapital > 0 ? config.StartCapital : PaperAssets.DefaultStartCapital;
-        UseAssetManagement = config.UseAssetManagement;
-        SerialTradeHalf = config.SerialTradeHalf;
+        // The start capital and asset management are scanner settings since 26-10-2026, given per
+        // queue entry in TradingOverrides. This window no longer has fields for them.
+        //SerialTradeHalf = config.SerialTradeHalf;
 
         // Pre-check the symbols already in the run config. Build the full list from the active
         // exchange's known symbols; any config symbol not (yet) on the exchange is still added so
@@ -250,9 +237,7 @@ public partial class RunConfigViewModel : ObservableObject
         config.ToDate = DateTime.SpecifyKind(ToDate.Value.Date, DateTimeKind.Utc);
         config.Label = Label ?? "";
         config.BaseInterval = SelectedBaseInterval ?? "1m";
-        config.StartCapital = StartCapital > 0 ? StartCapital : PaperAssets.DefaultStartCapital;
-        config.UseAssetManagement = UseAssetManagement;
-        config.SerialTradeHalf = SerialTradeHalf;
+        //config.SerialTradeHalf = SerialTradeHalf;
         return true;
     }
 }

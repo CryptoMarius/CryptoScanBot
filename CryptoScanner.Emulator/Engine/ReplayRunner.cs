@@ -2,6 +2,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
 
@@ -82,6 +83,23 @@ public sealed class ReplayRunner
     // Wall-clock of phase A2, the serial trade half of every minute (see the replay loop). Part of
     // the pipeline bucket; logged on its own so the price of running it serially stays visible.
     private long elapsedSerialTrade;
+
+    // Whether the trade half of every minute runs one symbol at a time. Always on since 26-10-2026, so
+    // every run is repeatable; it was a switch of the run configuration (EmulatorRunConfig.SerialTradeHalf)
+    // and the parallel branch below is kept for measuring what it costs. Not const, or the compiler
+    // calls that branch unreachable.
+    private static readonly bool SerialTradeHalf = true;
+
+    // The interim aggregates of the run, written to its row between two minutes so the Results grid
+    // shows live numbers (EmulatorDb.SaveRunningStats). The replay waits while they are computed, so
+    // the pause between two saves grows with what one costs: at least RunningStatsMinimumInterval, and
+    // at least RunningStatsCostFactor times the previous save - about 5% of the run at most. On a run
+    // of 121 coins and 2.6 million signals one save takes seconds, on a small run milliseconds.
+    private static readonly TimeSpan RunningStatsMinimumInterval = TimeSpan.FromSeconds(15);
+    private const int RunningStatsCostFactor = 20;
+    private long nextRunningStats;
+    private long elapsedRunningStats;
+    private int runningStatsCount;
 
     // Per-decile (0-9% .. 90-99%) wall-clock buckets to pinpoint where the run slows down.
     private readonly long[] decileWallTicks = new long[10];
@@ -245,15 +263,32 @@ public sealed class ReplayRunner
             // After the clean-state assert on purpose: the assert wants an empty asset list, and the
             // seeding is what fills it. Every run therefore starts with exactly the same amount of
             // money, so two runs over the same period stay comparable.
-            decimal startCapital = config.StartCapital > 0 ? config.StartCapital : PaperAssets.DefaultStartCapital;
-            PaperAssets.ResetAssets(exchange, startCapital);
+            //decimal startCapital = config.StartCapital > 0 ? config.StartCapital : PaperAssets.DefaultStartCapital;
+            // The default paper assets of the settings are passed as an empty list: they are the start
+            // of a paper account in the scanner, not of a run. Letting a filled list win here put every
+            // HyperLiquid run of Session1 on 2.000 USDC while the run row and the label said 100.000
+            // (26-10-2026). The run row stores this amount, so it is the amount the run started with.
+            //PaperAssets.ResetAssets(exchange, startCapital, []);
+            // Later on 26-10-2026 the other way round: the run configuration has no start capital any
+            // more and the Default column of Paper assets (Settings.Trading.PaperAssetDefaults, of this
+            // session, after the TradingOverrides of a queue entry) IS the start, the same list the
+            // scanner resets with. One place, so the amount on screen cannot differ from the amount
+            // the run got. No fallback: an empty list starts the run with nothing and says so.
+            PaperAssets.ResetAssets(exchange, 0m);
             // A filled default asset list is the starting point of the run, and then this amount is
             // not used at all - worth saying, because the run label still carries it.
-            int assetDefaults = GlobalData.Settings.Trading.PaperAssetDefaults.Count;
-            if (assetDefaults > 0)
-                GlobalData.AddTextToLogTab($"Start capital: the {assetDefaults} default asset(s) of the settings");
+            //int assetDefaults = GlobalData.Settings.Trading.PaperAssetDefaults.Count;
+            //if (assetDefaults > 0)
+            //    GlobalData.AddTextToLogTab($"Start capital: the {assetDefaults} default asset(s) of the settings");
+            //else
+            //GlobalData.AddTextToLogTab($"Start capital: {startCapital:N2} per quote coin");
+            List<CryptoPaperAssetDefault> startBalances = EmulatorStartCapital.Normalise(GlobalData.Settings.Trading.PaperAssetDefaults);
+            if (startBalances.Count > 0)
+                GlobalData.AddTextToLogTab("Start capital (Trading.PaperAssetDefaults, settings or queue entry): " +
+                    string.Join(", ", startBalances.Select(d => $"{d.Name} {d.Total:N2}")));
             else
-                GlobalData.AddTextToLogTab($"Start capital: {startCapital:N2} per quote coin");
+                GlobalData.AddErrorToLogTab("Start capital: nothing - Trading.PaperAssetDefaults is empty in the settings and the queue " +
+                    "entry gives none in TradingOverrides, so this run cannot open a position that needs money");
 
             // The first point of the capital line: the start capital, stamped with the first day of
             // the run. The date is handed in because the clock is parked on the END of the replay
@@ -425,7 +460,7 @@ public sealed class ReplayRunner
 
                     long iterStart = Stopwatch.GetTimestamp();
 
-                    if (!config.SerialTradeHalf && RunParallel && ticksThisMinute.Count > 1)
+                    if (!SerialTradeHalf && RunParallel && ticksThisMinute.Count > 1)
                     {
                         // ── Phase A, unsplit: the whole pipeline of every symbol in parallel ─────
                         // The behaviour before 13-10-2026, by choice (EmulatorRunConfig.SerialTradeHalf).
@@ -488,6 +523,10 @@ public sealed class ReplayRunner
                         barometer.Execute(closeTime - 1u);
                         elapsedBarometer += Stopwatch.GetTimestamp() - barometerStart;
                     }
+
+                    // The interim numbers for the Results grid. Here, after phase B: this minute is on
+                    // disk, and nothing else writes the run row while the loop is going.
+                    SaveRunningStatsIfDue();
 
                     processedBars += ticksThisMinute.Count;
                     // In long: 100 x processedBars passes int.MaxValue from 21,5 million bars on, which
@@ -751,6 +790,40 @@ public sealed class ReplayRunner
 
 
     /// <summary>
+    /// Writes the interim aggregates of the run when the pause since the previous save has passed
+    /// (see RunningStatsMinimumInterval). A failure is logged and does not stop the run: the numbers
+    /// are only for the Results grid, FinishRun writes the real ones.
+    /// </summary>
+    private void SaveRunningStatsIfDue()
+    {
+        long now = Stopwatch.GetTimestamp();
+        long minimumTicks = (long)(RunningStatsMinimumInterval.TotalSeconds * Stopwatch.Frequency);
+        if (nextRunningStats == 0)
+        {
+            nextRunningStats = now + minimumTicks;
+            return;
+        }
+        if (now < nextRunningStats)
+            return;
+
+        try
+        {
+            EmulatorDb.SaveRunningStats();
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddTextToLogTab($"Running stats could not be saved: {ex.Message}");
+        }
+
+        long done = Stopwatch.GetTimestamp();
+        long cost = done - now;
+        elapsedRunningStats += cost;
+        runningStatsCount++;
+        nextRunningStats = done + Math.Max(minimumTicks, RunningStatsCostFactor * cost);
+    }
+
+
+    /// <summary>
     /// Writes the per-phase profiling totals (candle synthesis / signal+trade pipeline / zone
     /// calculation / DB flush) collected during the run to the log, so a run reveals where its
     /// time actually went before any optimisation is attempted. Raw Stopwatch ticks are converted
@@ -797,6 +870,9 @@ public sealed class ReplayRunner
             $"barometer {barometerTime:F1}s ({barometerTime / total:P0})");
         GlobalData.AddTextToLogTab(
             $"Serial trade (phase A2, part of pipeline) — {Seconds(elapsedSerialTrade):F1}s wall-clock");
+        GlobalData.AddTextToLogTab(
+            $"Running stats (Results grid) — {runningStatsCount} save(s), {Seconds(elapsedRunningStats):F1}s wall-clock " +
+            $"({(wall > 0 ? Seconds(elapsedRunningStats) / wall : 0):P1} of the run)");
 
         // Sub-breakdown of the "pipeline" phase from the PipelineProfiler (NewCandleArrivedAsync).
         // Percentages are of the pipeline total so they line up with the line above. Only emitted

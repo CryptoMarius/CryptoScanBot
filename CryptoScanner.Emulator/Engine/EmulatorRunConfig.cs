@@ -56,8 +56,16 @@ public class EmulatorRunConfig
     /// handed out again at the start of every run, so two runs of the same period start with exactly
     /// the same amount of money and stay comparable. 0 falls back to PaperAssets.DefaultStartCapital.
     /// A filled Settings.Trading.PaperAssetDefaults overrules this amount altogether.
+    /// Since 26-10-2026 it no longer does: the run always starts with this amount, see ReplayRunner.
+    /// <para>
+    /// Later on 26-10-2026 the field itself was retired: the start capital is the Default column of
+    /// Paper assets (Settings.Trading.PaperAssetDefaults) and nothing else. It is only read from a
+    /// file written before that, which RunConfigFile.Load translates into the default list once and
+    /// then clears; null is never written. See <see cref="EmulatorStartCapital"/>.
+    /// </para>
     /// </summary>
-    public decimal StartCapital { get; set; } = 10000m;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? StartCapital { get; set; }
 
     /// <summary>
     /// Whether the paper balances constrain this run (Settings.Trading.UseAssetManagement for the
@@ -65,8 +73,14 @@ public class EmulatorRunConfig
     /// opened when the entry and its DCA levels fit, so the run can run out of money. Off: the
     /// balances are still booked - so the equity curve stays available - but nothing is refused for
     /// lack of money and every entry is the plain entry amount of the quote coin.
+    /// <para>
+    /// Retired on 26-10-2026 like <see cref="StartCapital"/>: the run follows the setting
+    /// Settings.Trading.UseAssetManagement. Only read from an older file, which RunConfigFile.Load
+    /// copies into the settings once and then clears.
+    /// </para>
     /// </summary>
-    public bool UseAssetManagement { get; set; } = true;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? UseAssetManagement { get; set; }
 
     /// <summary>
     /// Whether the trade half of every replayed minute (PositionMonitor.TradeCandleAsync: the entry,
@@ -83,8 +97,13 @@ public class EmulatorRunConfig
     /// Asset management off does not make this redundant: it only takes the money out of the race,
     /// the slots (SlotsMaximalLong/Short) are still shared.
     /// </para>
+    /// <para>
+    /// Removed as a setting on 26-10-2026: a run is always serial, so it is always repeatable (see
+    /// ReplayRunner.SerialTradeHalf). An older file that still has the field loads fine, the field is
+    /// ignored and not written again.
+    /// </para>
     /// </summary>
-    public bool SerialTradeHalf { get; set; } = true;
+    //public bool SerialTradeHalf { get; set; } = true;
 
     /// <summary>
     /// Whether this run measures the market barometer while it replays.

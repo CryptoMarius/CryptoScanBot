@@ -179,7 +179,7 @@ public class AssetTools
         CryptoTradeVia via = GlobalData.Settings.Trading.TradeVia;
         if (via == CryptoTradeVia.PaperTrade || via == CryptoTradeVia.PaperTradingAndAltrady)
             return $"No assets available for {quote}: the paper balance holds no {quote}. "
-                + $"Book it under Paper assets, or add {quote} to the default paper assets (settings, trader) and reset";
+                + $"Book it under Paper assets, or give {quote} a default under Paper assets and reset";
         return $"No assets available for {quote}";
     }
 

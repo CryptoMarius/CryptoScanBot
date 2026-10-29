@@ -59,16 +59,12 @@
             <ComboBox Grid.Column="1" ItemsSource="{Binding BaseIntervals}"
                       SelectedItem="{Binding SelectedBaseInterval}"
                       ToolTip.Tip="Replay resolution: 1m = full precision, 5m = ~5× faster (less precise order-fill timing)"/>
-            <TextBlock Grid.Column="2" Text="Start capital:" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-            <NumericUpDown Grid.Column="3" Value="{Binding StartCapital}"
-                           Minimum="0" Increment="1000" FormatString="N2"
-                           ToolTip.Tip="Paper-trading capital per traded quote coin. The balances are wiped and handed out again at the start of every run, so two runs over the same period start with the same amount of money."/>
-            <CheckBox Grid.Column="4" Content="Asset management" IsChecked="{Binding UseAssetManagement}"
-                      Margin="8,0,0,0" VerticalAlignment="Center"
-                      ToolTip.Tip="On: entries are paid out of the free balance and a position is only opened when the entry and its DCA levels fit, so the run can run out of money. Off: the balances are still booked (the equity curve keeps working) but nothing is refused for lack of money, and every entry is the plain entry amount of the quote coin - a percentage needs a balance to be a percentage of."/>
-            <CheckBox Grid.Column="5" Content="Serial trade" IsChecked="{Binding SerialTradeHalf}"
-                      Margin="8,0,0,0" VerticalAlignment="Center"
-                      ToolTip.Tip="On: the entry, DCA and slot decisions of every minute run one coin at a time in a fixed order, so the same run always gives the same result. Off: everything runs in parallel - faster, but once the money or the slots run out, which coin gets them depends on the thread order and the run is no longer repeatable."/>
+            <!-- The start capital and the asset-management switch were fields of this window until
+                 26-10-2026. The emulator has no place of its own for them any more: they are scanner
+                 settings (Trading.PaperAssetDefaults and Trading.UseAssetManagement of this session's
+                 settings.json), and a queue entry gives its own in TradingOverrides. -->
+            <!-- The Serial trade checkbox went on 26-10-2026: a run is always serial, so it is always
+                 repeatable. One knob less. -->
         </Grid>
 
         <!-- Symbols header + filter -->

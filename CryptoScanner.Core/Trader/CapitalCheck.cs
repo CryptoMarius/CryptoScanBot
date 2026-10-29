@@ -29,6 +29,14 @@ public static class CapitalCheck
     /// of the available money is tolerated, for the same reason as PaperAssets.WarnWhenOvercommitted.
     /// </summary>
     public static List<Breach> Find(IEnumerable<Position> positions, decimal startCapitalPerQuote)
+        => Find(positions, _ => startCapitalPerQuote);
+
+
+    /// <summary>
+    /// The same check with a start capital per quote coin, for a run whose paper assets hand out a
+    /// different amount per coin (the Default column of Paper assets).
+    /// </summary>
+    public static List<Breach> Find(IEnumerable<Position> positions, Func<string, decimal> startCapitalOf)
     {
         List<Breach> breaches = [];
         foreach (var quote in positions.Where(p => p.Invested > 0).GroupBy(p => p.Quote))
@@ -42,6 +50,7 @@ public static class CapitalCheck
                     events.Add((p.Close.Value, 0, -p.Invested, p.Profit));
             }
 
+            decimal startCapitalPerQuote = startCapitalOf(quote.Key);
             decimal committed = 0m;
             decimal realised = 0m;
             Breach? worst = null;

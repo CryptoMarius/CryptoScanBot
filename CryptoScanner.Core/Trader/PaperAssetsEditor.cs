@@ -20,6 +20,12 @@ public class PaperAssetRow
     public decimal Free { get; init; }
 
     /// <summary>
+    /// What a reset hands out for this coin - its entry in the default paper assets, 0 when it has
+    /// none. Shown next to the balance so the start and the current amount are seen together.
+    /// </summary>
+    public decimal Default { get; init; }
+
+    /// <summary>
     /// The three amounts the way both screens show them, so the Avalonia window and the Photino
     /// dialog round identically - see <see cref="PaperAssetsEditor.FormatAmount"/>.
     /// </summary>
@@ -28,6 +34,8 @@ public class PaperAssetRow
     public string LockedText => PaperAssetsEditor.FormatAmount(Name, Locked);
 
     public string FreeText => PaperAssetsEditor.FormatAmount(Name, Free);
+
+    public string DefaultText => PaperAssetsEditor.FormatAmount(Name, Default);
 }
 
 
@@ -40,6 +48,10 @@ public class PaperAssetEdit
     public string Name { get; init; } = "";
     public decimal OriginalTotal { get; init; }
     public decimal NewTotal { get; init; }
+
+    // The default amount of the coin as the row was loaded and as it was left
+    public decimal OriginalDefault { get; init; }
+    public decimal NewDefault { get; init; }
 }
 
 
@@ -65,22 +77,73 @@ public static class PaperAssetsEditor
         // Refresh the reservations first, so what the screen shows matches the open orders.
         PaperAssets.RefreshLocked(activeExchange);
 
+        Dictionary<string, decimal> defaults = SavedDefaults();
+
         activeExchange.Data.AssetListSemaphore.Wait();
         try
         {
-            // OrderBy: a ConcurrentDictionary has no guaranteed order, sort for a stable list.
-            return [.. activeExchange.Data.AssetList.Values.OrderBy(a => a.Name).Select(a => new PaperAssetRow
+            List<PaperAssetRow> rows = [.. activeExchange.Data.AssetList.Values.Select(a => new PaperAssetRow
             {
                 Name = a.Name,
                 Total = a.Total,
                 Locked = a.Locked,
                 Free = a.Free,
+                Default = defaults.TryGetValue(a.Name, out decimal amount) ? amount : 0,
             })];
+
+            // A coin with only a default amount gets a row as well: the reset will hand it out, so it
+            // belongs in the list a reset is judged by.
+            foreach (KeyValuePair<string, decimal> entry in defaults)
+            {
+                if (!activeExchange.Data.AssetList.ContainsKey(entry.Key))
+                    rows.Add(new PaperAssetRow { Name = entry.Key, Default = entry.Value });
+            }
+
+            // OrderBy: a ConcurrentDictionary has no guaranteed order, sort for a stable list.
+            return [.. rows.OrderBy(r => r.Name, StringComparer.Ordinal)];
         }
         finally
         {
             activeExchange.Data.AssetListSemaphore.Release();
         }
+    }
+
+
+    /// <summary>
+    /// The saved default paper assets per coin, in capitals. A row without a coin or without an amount
+    /// hands out nothing (see PaperAssets.SeedStartBalances), so it is left out here too.
+    /// </summary>
+    private static Dictionary<string, decimal> SavedDefaults()
+    {
+        Dictionary<string, decimal> defaults = [];
+        foreach (CryptoPaperAssetDefault entry in GlobalData.Settings.Trading.PaperAssetDefaults)
+        {
+            if (string.IsNullOrWhiteSpace(entry.Name) || entry.Total <= 0)
+                continue;
+            defaults[entry.Name.Trim().ToUpperInvariant()] = entry.Total;
+        }
+        return defaults;
+    }
+
+
+    /// <summary>
+    /// Writes the settings file after the default paper assets changed. A property so the tests can
+    /// keep their hands off the real settings file.
+    /// </summary>
+    internal static Action SaveSettings { get; set; } = GlobalData.SaveConfiguration;
+
+
+    /// <summary>
+    /// Set the default amount of one coin in the settings; zero takes the coin out of the list. Does
+    /// not write the settings file, the caller does that once for all its changes.
+    /// </summary>
+    private static void SetDefault(string name, decimal total)
+    {
+        List<CryptoPaperAssetDefault> list = GlobalData.Settings.Trading.PaperAssetDefaults;
+        list.RemoveAll(d => string.Equals(d.Name?.Trim(), name, StringComparison.OrdinalIgnoreCase));
+        if (total > 0)
+            list.Add(new CryptoPaperAssetDefault { Name = name, Total = total });
+        list.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
     }
 
 
@@ -136,8 +199,16 @@ public static class PaperAssetsEditor
             return 0;
 
         int changed = 0;
+        int defaultsChanged = 0;
         foreach (PaperAssetEdit edit in edits)
         {
+            if (edit.NewDefault != edit.OriginalDefault && edit.NewDefault >= 0)
+            {
+                SetDefault(edit.Name, edit.NewDefault);
+                GlobalData.AddTextToLogTab($"Paper asset {edit.Name} default changed from {edit.OriginalDefault.ToString0()} to {edit.NewDefault.ToString0()}");
+                defaultsChanged++;
+            }
+
             if (edit.NewTotal == edit.OriginalTotal)
                 continue;
             PaperAssets.SetAsset(activeExchange, edit.Name, edit.NewTotal);
@@ -145,11 +216,14 @@ public static class PaperAssetsEditor
             changed++;
         }
 
-        if (changed == 0)
+        if (defaultsChanged > 0)
+            SaveSettings();
+
+        if (changed == 0 && defaultsChanged == 0)
             GlobalData.AddTextToLogTab("Paper assets unchanged");
-        else
+        else if (changed > 0)
             CaptureToday(activeExchange);
-        return changed;
+        return changed + defaultsChanged;
     }
 
 
@@ -166,7 +240,7 @@ public static class PaperAssetsEditor
     /// Returns false when the name or the amount cannot be used - nothing is booked then.
     /// </para>
     /// </summary>
-    public static bool Add(Model.CryptoExchange? activeExchange, string? name, decimal total)
+    public static bool Add(Model.CryptoExchange? activeExchange, string? name, decimal total, decimal defaultTotal = 0)
     {
         if (activeExchange == null)
             return false;
@@ -174,15 +248,26 @@ public static class PaperAssetsEditor
         // Coins are administered in capitals everywhere else (the exchange delivers them that way),
         // so "btc" typed in the screen has to become BTC or it lands next to the real balance.
         name = name?.Trim().ToUpperInvariant() ?? "";
-        if (name.Length == 0 || total <= 0)
+        // A default alone is a valid row too: the coin is not held now, but a reset hands it out
+        if (name.Length == 0 || total < 0 || defaultTotal < 0 || (total == 0 && defaultTotal == 0))
         {
-            GlobalData.AddTextToLogTab("Paper asset not booked: fill in a coin and an amount above zero");
+            GlobalData.AddTextToLogTab("Paper asset not booked: fill in a coin and an amount or a default above zero");
             return false;
         }
 
-        PaperAssets.SetAsset(activeExchange, name, total);
-        GlobalData.AddTextToLogTab($"Paper asset {name} booked at {FormatAmount(name, total)}");
-        CaptureToday(activeExchange);
+        if (defaultTotal > 0)
+        {
+            SetDefault(name, defaultTotal);
+            SaveSettings();
+            GlobalData.AddTextToLogTab($"Paper asset {name} default set to {FormatAmount(name, defaultTotal)}");
+        }
+
+        if (total > 0)
+        {
+            PaperAssets.SetAsset(activeExchange, name, total);
+            GlobalData.AddTextToLogTab($"Paper asset {name} booked at {FormatAmount(name, total)}");
+            CaptureToday(activeExchange);
+        }
         return true;
     }
 
@@ -221,6 +306,18 @@ public static class PaperAssetsEditor
     {
         if (activeExchange == null || string.IsNullOrWhiteSpace(name))
             return false;
+
+        // The row shows the balance and the default together, so removing it removes both - a
+        // default left behind would bring the row straight back.
+        if (SavedDefaults().ContainsKey(name.Trim().ToUpperInvariant()))
+        {
+            SetDefault(name.Trim().ToUpperInvariant(), 0);
+            SaveSettings();
+            GlobalData.AddTextToLogTab($"Paper asset {name} default removed");
+        }
+
+        if (!activeExchange.Data.AssetList.ContainsKey(name))
+            return true;
 
         PaperAssets.SetAsset(activeExchange, name, 0);
         if (activeExchange.Data.AssetList.ContainsKey(name))
@@ -264,20 +361,7 @@ public static class PaperAssetsEditor
         if (quotes.Count == 0)
             return "nothing (no default assets and no traded quote coin)";
         return $"{PaperAssets.DefaultStartCapital.ToString0()} per traded quote coin ({string.Join(", ", quotes)}), " +
-            "because the default asset list in the settings is empty";
-    }
-
-
-    /// <summary>
-    /// The reset of the trader settings screen: start over with the default asset list as that screen
-    /// shows it, which may not have been saved yet - the button sits right next to that list, so
-    /// what is on screen is what the user expects to get. An empty list falls back to
-    /// <see cref="PaperAssets.DefaultStartCapital"/> per traded quote coin, the same amount deleting
-    /// all positions hands out.
-    /// </summary>
-    public static void ResetToDefaults(Model.CryptoExchange? activeExchange, List<CryptoPaperAssetDefault> defaultAssets)
-    {
-        Reset(activeExchange, PaperAssets.DefaultStartCapital, defaultAssets);
+            "because no coin has a default under Paper assets";
     }
 
 

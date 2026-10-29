@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Emulator.Engine;
 
 using System.Text.Json;
@@ -33,23 +34,90 @@ public static class RunConfigFile
             return defaults;
         }
 
+        EmulatorRunConfig? loaded;
         try
         {
-            using FileStream stream = File.OpenRead(path);
-            EmulatorRunConfig? loaded = JsonSerializer.Deserialize<EmulatorRunConfig>(stream, ReadOptions);
+            // Read in a block of its own so the file is closed again before anything writes it: the
+            // move of the retired fields below saves this same file, and with the stream still open
+            // that failed and Load handed out the placeholder, which the run-config window then saved
+            // over the 178 coins of HyperLiquid Session1 (26-10-2026).
+            using (FileStream stream = File.OpenRead(path))
+                loaded = JsonSerializer.Deserialize<EmulatorRunConfig>(stream, ReadOptions);
             if (loaded == null)
                 return BuildPlaceholder();
 
             // A file written before 27-08-2026 still says "<exchange> Futures"
             loaded.ExchangeName = GlobalData.FixLegacyExchangeName(loaded.ExchangeName);
-            return loaded;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"RunConfigFile.Load: {ex.Message} — falling back to placeholder");
             return BuildPlaceholder();
         }
+
+        // Outside the try above: the configuration that was read is good, whatever happens here
+        try
+        {
+            MoveRetiredAssetFieldsToTheSettings(loaded);
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddErrorToLogTab($"Run configuration: moving the start capital to the settings failed - {ex.Message}");
+        }
+        return loaded;
     }
+
+
+    /// <summary>
+    /// A file from before 26-10-2026 still holds the run's own start capital and asset-management
+    /// switch. Both moved to the settings of the session: the start capital into the Default column of
+    /// Paper assets, for every traded quote coin - but only when that column is still empty, because a
+    /// filled list already won from the start capital back then - and the switch into
+    /// Settings.Trading.UseAssetManagement. Done once: the fields are cleared and the file is saved.
+    /// <para>
+    /// Without settings that know their quote coins there is nothing to hand the amount to, so the
+    /// fields are left in the file for the next load.
+    /// </para>
+    /// </summary>
+    private static void MoveRetiredAssetFieldsToTheSettings(EmulatorRunConfig config)
+    {
+        if (config.StartCapital == null && config.UseAssetManagement == null)
+            return;
+        if (GlobalData.Settings.QuoteCoins.Count == 0)
+            return;
+
+        bool settingsChanged = false;
+        if (config.StartCapital is decimal startCapital && GlobalData.Settings.Trading.PaperAssetDefaults.Count == 0)
+        {
+            List<CryptoPaperAssetDefault> defaults = EmulatorStartCapital.FromLegacy(startCapital, GlobalData.Settings.QuoteCoins.Values);
+            if (defaults.Count > 0)
+            {
+                GlobalData.Settings.Trading.PaperAssetDefaults = defaults;
+                settingsChanged = true;
+                GlobalData.AddTextToLogTab("Start capital of the run configuration moved to the settings (Trading.PaperAssetDefaults): " +
+                    string.Join(", ", defaults.Select(d => $"{d.Name} {d.Total.ToString0()}")));
+            }
+        }
+        if (config.UseAssetManagement is bool useAssetManagement && GlobalData.Settings.Trading.UseAssetManagement != useAssetManagement)
+        {
+            GlobalData.Settings.Trading.UseAssetManagement = useAssetManagement;
+            settingsChanged = true;
+            GlobalData.AddTextToLogTab($"Asset management of the run configuration moved to the settings: {(useAssetManagement ? "on" : "off")}");
+        }
+
+        if (settingsChanged)
+            SaveSettings();
+        config.StartCapital = null;
+        config.UseAssetManagement = null;
+        Save(config);
+    }
+
+
+    /// <summary>
+    /// Writes the settings file after the retired fields moved into it. A property so the tests can
+    /// keep their hands off the real settings file, the same way PaperAssetsEditor.SaveSettings does.
+    /// </summary>
+    internal static Action SaveSettings { get; set; } = GlobalData.SaveConfiguration;
 
 
     public static void Save(EmulatorRunConfig config)

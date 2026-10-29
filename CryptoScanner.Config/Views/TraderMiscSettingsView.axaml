@@ -40,6 +40,12 @@
                           Content="Log cancelled orders"
                           FontSize="12"/>
 
+                <!-- The balances themselves (and what a reset hands out) are in Tools -> Paper assets -->
+                <CheckBox IsChecked="{Binding UseAssetManagement, Mode=TwoWay}"
+                          Content="Use asset management"
+                          FontSize="12"
+                          ToolTip.Tip="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode."/>
+
                 <!-- Cool Down Time -->
                 <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
                       ToolTip.Tip="Minutes after the last fill on a symbol (entry, DCA, take profit or stop loss) in which no NEW position may be opened on it. Stops laddering into the same coin. A position that is still waiting for its entry to fill is exempt, so a newer signal can replace it.">
@@ -124,62 +130,6 @@
                                      Text="{Binding MaxPositionsPerCoin, Mode=TwoWay}"
                                      Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                         </Grid>
-
-                    </StackPanel>
-                </HeaderedContentControl>
-
-            </StackPanel>
-        </HeaderedContentControl>
-
-        <!-- Asset management: the switch and the balances it works with, in a groupbox of their own -->
-        <HeaderedContentControl Classes="groupbox" Header="Asset management" Margin="0,8,0,0">
-            <StackPanel Spacing="4" Margin="6">
-
-                <!-- Asset management -->
-                <CheckBox IsChecked="{Binding UseAssetManagement, Mode=TwoWay}"
-                          Content="Asset management"
-                          FontSize="12"
-                          ToolTip.Tip="On: an entry is paid out of the free balance and a position is only opened when the entry AND every DCA level behind it fit, so paper trading can run out of money just like a real account. Off: the balances are still booked (so the assets screen keeps working and may go negative) but nothing is refused for lack of money, and the entry is the plain entry amount - there is no balance left to take a percentage of, so a quote coin with only a percentage cannot trade in this mode."/>
-
-                <!-- Default paper assets: the balances a paper account starts with -->
-                <HeaderedContentControl Classes="groupbox" Header="Default paper assets" Margin="0,2,0,0"
-                      ToolTip.Tip="The balances a paper account starts with, one row per coin, in the coin itself - handed out on an empty database and on every reset. Any coin may be in here, also one that is never traded as a quote coin. An existing balance is never topped up: starting over goes through Tools -> Paper assets. Empty means nothing is handed out, and a filled list also overrules the start capital of an emulator run.">
-                    <StackPanel Margin="6" Spacing="4">
-
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <Button Content="Add asset" Command="{Binding AddPaperAssetDefaultCommand}"
-                                    Width="130" FontSize="12"/>
-                            <Button Content="Remove asset" Command="{Binding RemovePaperAssetDefaultCommand}"
-                                    Width="130" FontSize="12"/>
-                        </StackPanel>
-
-                        <ItemsControl ItemsSource="{Binding PaperAssetDefaults}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Spacing="4"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:PaperAssetDefaultItemViewModel">
-                                    <Grid ColumnDefinitions="Auto,90,Auto,*" RowDefinitions="Auto">
-                                        <TextBlock Grid.Column="0" Text="Asset:"
-                                                   VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"/>
-                                        <TextBox Grid.Column="1" Text="{Binding Name, Mode=TwoWay}" Watermark="BTC"
-                                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                                        <TextBlock Grid.Column="2" Text="Amount:"
-                                                   VerticalAlignment="Center" Margin="12,0,8,0" FontSize="12"/>
-                                        <TextBox Grid.Column="3" Text="{Binding Total, Mode=TwoWay}"
-                                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <!-- Start over with the list above, the same reset as Tools -> Paper assets -->
-                        <Button Content="Reset paper assets" Click="OnResetPaperAssetsClick"
-                                IsVisible="{Binding CanResetPaperAssets}"
-                                FontSize="12" Margin="0,4,0,0"
-                                ToolTip.Tip="Throw every paper balance away right now and hand out the default asset list above, as it stands on screen - also when it has not been saved yet. Empty hands out 10.000 per traded quote coin. The same reset as Tools -> Paper assets."/>
 
                     </StackPanel>
                 </HeaderedContentControl>

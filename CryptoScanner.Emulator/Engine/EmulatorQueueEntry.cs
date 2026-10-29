@@ -461,6 +461,10 @@ public class EmulatorQueueEntry
     /// <summary>
     /// Runs the trade half of every minute serially (true) or the whole pipeline in parallel (false),
     /// see EmulatorRunConfig.SerialTradeHalf. Null or omitted keeps whatever the run configuration says.
+    /// <para>
+    /// Retired on 26-10-2026: a run is always serial. Only here so an entry that still has the key is
+    /// refused (SignalGridExpander.Validate); the open queue files were converted the same day.
+    /// </para>
     /// </summary>
     public bool? SerialTradeHalf { get; set; }
 
@@ -538,6 +542,13 @@ public class EmulatorQueueEntry
     /// run on 100.000 are two different measurements, not a small variation. A value of 0 or less is
     /// ignored, so a typo cannot silently start a run with no money.
     /// </para>
+    /// <para>
+    /// Retired on 26-10-2026: the start capital is a scanner setting and a queue entry gives it in
+    /// TradingOverrides (<c>"PaperAssetDefaults": [ { "Name": "USDT", "Total": 100000 } ]</c>). The
+    /// property is only here so an entry that still has the key is refused with that message
+    /// (SignalGridExpander.Validate) instead of being run on whatever the settings say; the open
+    /// queue files were converted the same day.
+    /// </para>
     /// </summary>
     public decimal? StartCapital { get; set; }
 
@@ -556,6 +567,11 @@ public class EmulatorQueueEntry
     /// <para>
     /// The reason to measure it: the live HyperLiquid scanner runs with it OFF while every emulator
     /// run so far ran with it ON, and nobody knows what that difference is worth.
+    /// </para>
+    /// <para>
+    /// Retired on 26-10-2026 together with the run configuration's own switch: ApplyRunOverrides no
+    /// longer touches the setting, so TradingOverrides.UseAssetManagement works like any other
+    /// override. Like <see cref="StartCapital"/> the key is refused, not read.
     /// </para>
     /// </summary>
     public bool? UseAssetManagement { get; set; }

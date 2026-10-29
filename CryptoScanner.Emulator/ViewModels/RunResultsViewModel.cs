@@ -118,8 +118,13 @@ public class RunRow
     /// (PaperAssets.SeedStartBalances), so a run over USDT and USDC symbols had twice that amount -
     /// and dividing the profit by one of them doubled the return. Falls back to the plain start
     /// capital when the quote coins cannot be counted, which is how it was read before.
+    /// <para>
+    /// A run from 26-10-2026 on has no start capital in its configuration: it started with the
+    /// Default column of Paper assets, which may differ per coin. Its start is the first point of its
+    /// capital line, which is that money counted together.
+    /// </para>
     /// </summary>
-    public decimal? TotalStartCapital => StartCapital * Math.Max(1, QuoteCoinCount);
+    public decimal? TotalStartCapital => StartCapital.HasValue ? StartCapital * Math.Max(1, QuoteCoinCount) : EquityStart;
 
     /// <summary>
     /// Whether the return on the start capital means anything for this run. It only does when the
@@ -127,7 +132,7 @@ public class RunRow
     /// of money, so the start capital never bounded what was traded and a percentage of it says
     /// nothing. Legacy runs without the two fields fall out here as well.
     /// </summary>
-    public bool HasCapitalReturn => UseAssetManagement == true && StartCapital > 0;
+    public bool HasCapitalReturn => UseAssetManagement == true && TotalStartCapital > 0;
 
     /// <summary>
     /// The first and last value of the run's equity curve (EmulatorDb.EquityCurveJson): cash plus the
@@ -436,6 +441,10 @@ public partial class RunResultsViewModel : ObservableObject
     /// a run instead of only the progress bar — without rebuilding the whole grid (other rows keep their
     /// selection/scroll). No-op when no run is active. The DB work runs off the UI thread; a transient
     /// lock while the engine is writing is ridden out by the 5s busy-timeout, or skipped until next tick.
+    /// <para>
+    /// Since 26-10-2026 it no longer recomputes anything: it reloads the row the replay loop keeps up
+    /// to date (see the comment in the body).
+    /// </para>
     /// </summary>
     private async void RefreshActiveRun()
     {
@@ -456,7 +465,10 @@ public partial class RunResultsViewModel : ObservableObject
             int id = targetId.Value;
             RunRow? fresh = await Task.Run(() =>
             {
-                EmulatorDb.RecalculateRuns([id]); // persist live aggregates from current positions
+                // Read only since 26-10-2026. The replay loop writes the interim numbers itself
+                // (EmulatorDb.SaveRunningStats) and FinishRun the final ones; this timer writing the
+                // row as well, from another thread, cleared the FinishedAt and Result of run 726.
+                //EmulatorDb.RecalculateRuns([id]); // persist live aggregates from current positions
                 return LoadRun(id);
             });
             if (fresh == null)
@@ -514,7 +526,9 @@ public partial class RunResultsViewModel : ObservableObject
         // json_extract reads them in the query, which keeps the grid fast (parsing ConfigJson per row
         // in C# is what once made this tab take ten seconds to open) and needs no new column.
         "       json_extract(r.ConfigJson, '$.StartCapital') AS StartCapital, " +
-        "       json_extract(r.ConfigJson, '$.UseAssetManagement') AS UseAssetManagement, " +
+        // The switch moved to the settings on 26-10-2026; it was always in the settings snapshot too.
+        "       COALESCE(json_extract(r.ConfigJson, '$.UseAssetManagement'), " +
+        "                json_extract(r.SettingsJson, '$.Trading.UseAssetManagement')) AS UseAssetManagement, " +
         // The start capital is handed out per quote coin, so the return needs to know how many the
         // run traded in. Through the Symbol.Name index this costs about 50 ms over 1.300 runs.
         "       (SELECT COUNT(DISTINCT s.Quote) FROM json_each(r.ConfigJson, '$.Symbols') j " +
