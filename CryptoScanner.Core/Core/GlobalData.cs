@@ -94,12 +94,36 @@ public static class GlobalData
     public static Action<string>? SetTitle { get; set; }
 
     /// <summary>
+    /// Give the main window the icon of the current exchange (<see cref="AppIconBuilder.BuildCurrent"/>).
+    /// Called next to <see cref="SetTitle"/>, so a switch to another exchange shows in the task bar.
+    /// </summary>
+    public static Action? SetIcon { get; set; }
+
+    /// <summary>
     /// The window caption: application, version, exchange and the user's own extra caption. Every
     /// host builds its title from this, so a machine running several instances stays readable in
     /// the taskbar and in the task manager (which shows the window title per process).
+    /// <para>
+    /// Since 29-10-2026 the user writes the whole title (Settings.General.WindowTitle), so the
+    /// application name can be replaced as well; {version} and {exchange} are filled in here.
+    /// </para>
     /// </summary>
-    public static string ApplicationTitle =>
-        $"{Constants.AppName} {AppVersion} {Settings.General.ExchangeName} {Settings.General.ExtraCaption}".Trim();
+    public static string ApplicationTitle => FormatTitle(Settings.General.WindowTitle);
+
+    /// <summary>
+    /// Fill in a title template. Empty means <see cref="SettingsGeneral.DefaultWindowTitle"/>. The
+    /// placeholders ignore case, because they are typed by hand.
+    /// </summary>
+    public static string FormatTitle(string? template)
+    {
+        if (string.IsNullOrWhiteSpace(template))
+            template = SettingsGeneral.DefaultWindowTitle;
+
+        return template
+            .Replace("{version}", AppVersion, StringComparison.OrdinalIgnoreCase)
+            .Replace("{exchange}", Settings.General.ExchangeName, StringComparison.OrdinalIgnoreCase)
+            .Trim();
+    }
 
     public static Action? RequestShutdown { get; set; }
 
@@ -610,6 +634,15 @@ public static class GlobalData
     public static bool SettingsLoadFailed { get; private set; }
 
     /// <summary>
+    /// Set at startup when the data folder has no settings file yet and no -e names the exchange: a
+    /// new installation (or a new folder given with -f) that still has to pick its exchange, see
+    /// ScannerSession.AfterStartup. The exchange in SettingsGeneral is only a default until then. While
+    /// this is set, <see cref="SaveConfiguration"/> leaves the folder alone: closing the application
+    /// without a choice would otherwise store that default, and the next start would not ask again.
+    /// </summary>
+    public static bool ExchangeChoicePending { get; set; }
+
+    /// <summary>
     /// Write a configuration file without ever leaving a half-written one behind: serialise to a
     /// temporary file next to it, then swap them in one step. File.Replace also keeps the previous
     /// version as .backup, which is what LoadJsonFile falls back on.
@@ -723,6 +756,10 @@ public static class GlobalData
             if (!Enum.IsDefined(Settings.General.TradingApp))
                 Settings.General.TradingApp = CryptoTradingApp.Altrady;
 
+            // A settings file written before 29-10-2026 only had a caption to put after the fixed
+            // title. It becomes part of the title template, so the title stays what it was.
+            MoveExtraCaptionIntoWindowTitle(Settings.General);
+
             // A settings file written before 27-08-2026 names a market that no longer exists
             Settings.General.ExchangeName = FixLegacyExchangeName(Settings.General.ExchangeName);
             Settings.General.ActivateExchangeName = FixLegacyExchangeName(Settings.General.ActivateExchangeName);
@@ -738,6 +775,19 @@ public static class GlobalData
         }
     }
 
+
+    /// <summary>
+    /// Before 29-10-2026 the title was fixed and the user could only add a caption behind it. Turn
+    /// that caption into a title template that produces the same title. The caption is cleared
+    /// afterwards; otherwise emptying the title later (to go back to the default) would bring it
+    /// back on the next start.
+    /// </summary>
+    internal static void MoveExtraCaptionIntoWindowTitle(SettingsGeneral general)
+    {
+        if (!string.IsNullOrWhiteSpace(general.ExtraCaption) && string.IsNullOrWhiteSpace(general.WindowTitle))
+            general.WindowTitle = $"{SettingsGeneral.DefaultWindowTitle} {general.ExtraCaption.Trim()}";
+        general.ExtraCaption = "";
+    }
 
     /// <summary>
     /// Translates a market name from before 27-08-2026, when every derivatives market was called
@@ -914,6 +964,12 @@ public static class GlobalData
         {
             AddTextToLogTab("Not saving: the settings could not be read at startup, so what is in "
                 + "memory are the defaults. Repair or remove the settings file first.");
+            return;
+        }
+
+        if (ExchangeChoicePending)
+        {
+            AddTextToLogTab("Not saving: no exchange has been chosen for this new installation yet.");
             return;
         }
 

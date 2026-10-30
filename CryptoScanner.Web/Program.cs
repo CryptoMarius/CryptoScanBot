@@ -85,6 +85,7 @@ class Program
         builder.Services.AddSingleton<DashboardPositionService>();
         builder.Services.AddSingleton<MarketIndicatorService>();
         builder.Services.AddSingleton<InternalBrowserService>();
+        builder.Services.AddSingleton<ExchangeChoiceService>();
         builder.Services.AddScoped<GridCommandService>();
 
         builder.Services.AddRazorComponents()
@@ -143,12 +144,15 @@ class Program
         // Start the scanner engine (same sequence as Avalonia App.InitializeGlobalDataAsync)
         var scannerSession = app.Services.GetRequiredService<IScannerSession>();
         scannerSession.AfterStartup();
-        _ = scannerSession.ApplyConfigurationAsync(true);
-        scannerSession.Start(0);
 
-        // Start SignalR
-        GlobalData.SignalRService = new SignalRService();
-        _ = GlobalData.SignalRService.StartAsync();
+        // A new installation first asks which exchange to scan (ExchangeChoiceDialog in the main
+        // layout), and the scanner starts once it has been chosen. The services below can start
+        // either way: they wait for the scanner's messages and cope with no active exchange.
+        bool exchangeChoicePending = GlobalData.ExchangeChoicePending;
+        if (exchangeChoicePending)
+            app.Services.GetRequiredService<ExchangeChoiceService>().Request(() => StartScanner(scannerSession));
+        else
+            StartScanner(scannerSession);
 
         // Start symbol service (subscribes to SymbolsHaveChangedMessage)
         var symbolService = app.Services.GetRequiredService<SymbolService>();
@@ -232,10 +236,23 @@ class Program
         foreach (string address in GetReachableAddresses())
             Console.WriteLine($"Open http://{address}:{webPort} in your browser");
         Console.WriteLine("Anyone on this network can open it, there is no login yet");
+        if (exchangeChoicePending)
+            Console.WriteLine("New installation: the scanner starts after an exchange has been chosen in the browser");
 
         // The endpoint is configured on the host above, so no url here: passing one would add a
         // second endpoint instead of replacing the first.
         app.Run();
+    }
+
+
+    private static void StartScanner(IScannerSession scannerSession)
+    {
+        _ = scannerSession.ApplyConfigurationAsync(true);
+        scannerSession.Start(0);
+
+        // Start SignalR
+        GlobalData.SignalRService = new SignalRService();
+        _ = GlobalData.SignalRService.StartAsync();
     }
 
 

@@ -2421,6 +2421,36 @@ code {
     font-weight: 600;
 }
 
+/* Exchange choice of a new installation (matches the Avalonia ExchangeChoiceWindow) */
+.exchange-choice-dialog {
+    width: 380px;
+}
+
+.exchange-choice-list {
+    height: 300px;
+    overflow-y: auto;
+    margin-top: 8px;
+    border: 1px solid var(--border-low);
+    border-radius: 3px;
+    background: var(--bg-secondary);
+    user-select: none;
+}
+
+.exchange-choice-item {
+    padding: 3px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.exchange-choice-item:hover {
+    background: var(--bg-hover);
+}
+
+.exchange-choice-item.selected {
+    background: var(--accent);
+    color: #fff;
+}
+
 /* About dialog */
 .about-dialog {
     max-width: 400px;

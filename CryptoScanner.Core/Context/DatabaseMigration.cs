@@ -2252,8 +2252,11 @@ public class DatabaseMigration
             // emulator runs from a working copy and the change was committed, which on this machine
             // is 65 of 1473 runs and none of the MAC ones. The write time of the emulator's own
             // assembly changes with every build and costs no tracked file.
-            database.Connection.Execute("alter table EmulatorRun add column BuildStamp text",
-                transaction);
+            //
+            // Guarded like every other EmulatorRun column: a database from before the emulator has no
+            // EmulatorRun table, so CreateTables builds it with BuildStamp already in it before the
+            // migration runs, and the alter then failed with "duplicate column name: BuildStamp".
+            try { database.Connection.Execute("alter table EmulatorRun add column BuildStamp text", transaction); } catch { } // ignore
             GlobalData.AddTextToLogTab("Database version 99: EmulatorRun records the build date of "
                 + "the binary that made the run");
 

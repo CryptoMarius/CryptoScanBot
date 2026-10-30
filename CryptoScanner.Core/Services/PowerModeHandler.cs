@@ -48,6 +48,11 @@ public static class PowerModeHandler
         if (mode != PowerMode.Suspend && mode != PowerMode.Resume)
             return;
 
+        // A new installation that is still asking for its exchange has not started anything to stop,
+        // and a resume must not start the scanner on the default exchange behind the question's back
+        if (GlobalData.ExchangeChoicePending)
+            return;
+
         bool acquired = false;
         try
         {

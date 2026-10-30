@@ -15,6 +15,25 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = new MainWindowViewModel();
         Closing += OnClosing;
+        ApplyExchangeIcon();
+    }
+
+    /// <summary>
+    /// The purple emulator icon with the logo of the exchange chosen in the setup dialog. That is
+    /// the exchange active now: the bootstrap runs before this window is created, and a different
+    /// choice later creates a new main window. A run on another exchange switches the active
+    /// exchange only for its duration, so the icon deliberately stays with the setup choice.
+    /// </summary>
+    private void ApplyExchangeIcon()
+    {
+        try
+        {
+            Icon = new WindowIcon(new MemoryStream(AppIconBuilder.BuildCurrent()));
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "ApplyExchangeIcon");
+        }
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)

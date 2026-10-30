@@ -1,4 +1,5 @@
 ﻿using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
@@ -101,12 +102,20 @@ public class ScannerSession : IScannerSession
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
 
+        // A data folder without a settings file is a new installation (or a new folder given with -f).
+        // Nobody has chosen its exchange yet: the one in SettingsGeneral is only a default.
+        bool newInstallation = !File.Exists(Path.Combine(GlobalData.AppDataFolder, $"{Constants.AppName}-settings.json"));
+
         // Load settings and combine with the application parameters (-e ExchangeName)
         GlobalData.LoadConfiguration();
-        PickupExchangeFromParameter();
+        PickupExchangeFromParameter(newInstallation);
+
+        // Without -e the user picks the exchange; the host asks before it starts anything
+        // (ApplyConfigurationAsync, Start), see ChooseExchange.
+        GlobalData.ExchangeChoicePending = newInstallation && ApplicationParams.Options!.ExchangeName == null;
     }
 
-    private static void PickupExchangeFromParameter()
+    private static void PickupExchangeFromParameter(bool newInstallation)
     {
         // Pick the exchange from the application parameters (-e exchangename) if present
         // Initialize the exchange name, otherwise we take the exchange from the settings
@@ -133,6 +142,39 @@ public class ScannerSession : IScannerSession
             }
 
             GlobalData.Settings.General.ExchangeName = found;
+
+            // LoadConfiguration filled the exchange the trading app opens on with the default exchange.
+            // On a new installation nobody chose that one, so it follows the -e as well. An existing
+            // installation keeps its own choice.
+            if (newInstallation)
+                GlobalData.Settings.General.ActivateExchangeName = found;
+        }
+    }
+
+    public void ChooseExchange(string exchangeName)
+    {
+        if (!GlobalData.ExchangeListName.TryGetValue(exchangeName, out Model.CryptoExchange? exchange))
+        {
+            string known = string.Join(", ", GlobalData.ExchangeListName.Values.Select(x => x.Name).Order());
+            throw new ArgumentException($"Exchange \"{exchangeName}\" does not exist. Known exchanges: {known}");
+        }
+
+        // The scanned exchange and the exchange the trading app opens on, the same pair the
+        // configuration screen keeps together (ExchangeViewModel.OnActiveExchangeChanged)
+        GlobalData.Settings.General.ExchangeName = exchange.Name;
+        GlobalData.Settings.General.ActivateExchangeName = exchange.Name;
+        GlobalData.ExchangeChoicePending = false;
+        GlobalData.AddTextToLogTab($"New installation, exchange {exchange.Name} chosen");
+
+        // Written right away and not only at the shutdown: a scanner that never gets that far would
+        // otherwise ask the same question again on its next start
+        try
+        {
+            GlobalData.SaveConfiguration();
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "ChooseExchange(SaveConfiguration)");
         }
     }
 
@@ -196,6 +238,7 @@ public class ScannerSession : IScannerSession
         GlobalData.SetTheme?.Invoke(GlobalData.Settings.General.Theme ?? "Default");
 
         SetApplicationTitle();
+        GlobalData.SetIcon?.Invoke();
 
         if (loadSymbols)
         {

@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="CryptoScanner.Views.ExchangeChoiceWindow"
+        Title="CryptoScanBot - choose an exchange"
+        SizeToContent="Height" Width="380"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False">
+
+    <!-- The first window of a new installation: nothing is loaded before an exchange is chosen -->
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock Text="Welcome to CryptoScanBot" FontSize="16" FontWeight="SemiBold"/>
+        <TextBlock TextWrapping="Wrap" FontSize="13"
+                   Text="Which exchange do you want to scan? It can be changed later in the scanner configuration."/>
+
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                BorderThickness="1" CornerRadius="4" Height="300">
+            <ListBox x:Name="ExchangeList" Background="Transparent" BorderThickness="0"
+                     SelectionMode="Single"
+                     SelectionChanged="OnSelectionChanged"
+                     DoubleTapped="OnDoubleTapped">
+                <ListBox.Styles>
+                    <!-- Reduce item spacing -->
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="Padding" Value="6,3"/>
+                        <Setter Property="MinHeight" Value="0"/>
+                    </Style>
+                </ListBox.Styles>
+            </ListBox>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+            <Button x:Name="StartButton" Content="Start" Click="OnStartClick" Width="80"
+                    IsEnabled="False" IsDefault="True"/>
+            <Button Content="Exit" Click="OnExitClick" Width="80" IsCancel="True"/>
+        </StackPanel>
+    </StackPanel>
+    </Border>
+</Window>

@@ -109,6 +109,7 @@ public partial class MainWindow : Window
         // is the bare application name. Whichever of the two ran last decided what the task manager
         // showed, which is why some instances did not mention their exchange at all.
         viewModel.Title = GlobalData.ApplicationTitle;
+        App.ApplyExchangeIcon(this);
         CreateMenuItems();
 
         _signalView = new SignalGridView { DataContext = viewModel.SignalGridViewModel };

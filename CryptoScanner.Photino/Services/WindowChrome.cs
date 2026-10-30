@@ -43,11 +43,12 @@ public static class WindowChrome
     /// </summary>
     public static PhotinoWindow ApplyIcon(this PhotinoWindow window)
     {
-        if (IconFile.Length > 0)
+        string iconFile = ExchangeIconFile();
+        if (iconFile.Length > 0)
         {
             try
             {
-                window.SetIconFile(IconFile);
+                window.SetIconFile(iconFile);
             }
             catch (Exception error)
             {
@@ -55,6 +56,31 @@ public static class WindowChrome
             }
         }
         return window;
+    }
+
+    /// <summary>
+    /// Follow a switch to another exchange. Once the native window exists Photino hands SetIconFile
+    /// straight to it (Photino_SetIconFile), so this works at any time; before that it only
+    /// replaces the icon the window will be created with.
+    /// </summary>
+    public static void UpdateIcon(PhotinoWindow? window)
+    {
+        if (window == null)
+            return;
+
+        window.ApplyIcon();
+    }
+
+    /// <summary>
+    /// The application icon with the logo of the exchange on it (AppIconBuilder), written into the
+    /// data folder because Photino only takes an icon by file name. Every exchange gets a file of its
+    /// own: Windows caches an icon loaded from a file by that name, so overwriting one file would keep
+    /// showing the old logo. Falls back to the plain icon next to the executable.
+    /// </summary>
+    private static string ExchangeIconFile()
+    {
+        string path = AppIconBuilder.WriteCurrent(Path.Combine(GlobalData.AppDataFolder, "Icons"));
+        return path.Length > 0 ? path : IconFile;
     }
 
     /// <summary>

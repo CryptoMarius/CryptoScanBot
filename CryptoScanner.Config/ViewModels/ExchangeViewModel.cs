@@ -8,7 +8,7 @@ namespace CryptoScanner.Config.ViewModels;
 public partial class ExchangeViewModel : ObservableObject
 {
     [ObservableProperty]
-    private string _extraCaption = string.Empty;
+    private string _windowTitle = string.Empty;
 
     [ObservableProperty]
     private int _activeExchange;
@@ -77,7 +77,7 @@ public partial class ExchangeViewModel : ObservableObject
         _loadingConfig = true;
         try
         {
-            ExtraCaption = general.ExtraCaption;
+            WindowTitle = general.WindowTitle;
             if (GlobalData.ExchangeListName.TryGetValue(general.ExchangeName, out Core.Model.CryptoExchange? exchange))
                 ActiveExchange = exchange.Id;
             else
@@ -101,7 +101,7 @@ public partial class ExchangeViewModel : ObservableObject
 
     internal void SaveConfig(SettingsGeneral general)
     {
-        general.ExtraCaption = ExtraCaption;
+        general.WindowTitle = WindowTitle;
         if (GlobalData.ExchangeListId.TryGetValue(ActiveExchange, out Core.Model.CryptoExchange? exchange))
             general.ExchangeName = exchange.Name;
         if (GlobalData.ExchangeListId.TryGetValue(ActivateExchange, out exchange))

@@ -9,9 +9,15 @@
 <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="5" RowSpacing="5">
         
         <!-- Extra application title -->
-        <TextBlock Grid.Row="0" Grid.Column="0" Text="Extra application caption:" VerticalAlignment="Center" Margin="0,0,12,0"/>
-        <TextBox Grid.Row="0" Grid.Column="1"  Text="{Binding ExtraCaption, Mode=TwoWay}" 
-                 Width="150" Height="22" MinHeight="26" 
+        <!-- Since 29-10-2026 the whole title instead of an addition to it; empty gives the default
+             shown as watermark. The texts must not start with a brace, XAML would read a markup
+             extension. -->
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Window title:" VerticalAlignment="Center" Margin="0,0,12,0"
+                   ToolTip.Tip="The title of the window and of its button in the task bar. Placeholders: {version} and {exchange}. Leave empty for the default."/>
+        <TextBox Grid.Row="0" Grid.Column="1"  Text="{Binding WindowTitle, Mode=TwoWay}"
+                 Watermark="CryptoScanBot {version} {exchange}"
+                 ToolTip.Tip="Placeholders: {version} and {exchange}. Leave empty for the default."
+                 Width="300" Height="22" MinHeight="26"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
 
         <!-- Active exchange -->

@@ -20,7 +20,10 @@
 
 		<!-- Same application/exe icon as the scanner. Referenced directly from the scanner's
 		     Assets folder so the two stay identical (no duplicated .ico file). -->
-		<ApplicationIcon>..\CryptoScanner\Assets\AppIcon.ico</ApplicationIcon>
+		<!-- Since 29-10-2026 the emulator has an icon of its own: the same coin, but purple, so it
+		     is never mistaken for a live scanner in Explorer, a shortcut or the task bar. It sits
+		     next to AppIcon.ico in the scanner's Assets folder. -->
+		<ApplicationIcon>..\CryptoScanner\Assets\EmulatorIcon.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>

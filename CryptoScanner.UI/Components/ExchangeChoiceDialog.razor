@@ -1,0 +1,71 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.UI.Services
+@inject ExchangeChoiceService ExchangeChoice
+@implements IDisposable
+
+@* The first question of a new installation, see ExchangeChoiceService. Matches the Avalonia
+   ExchangeChoiceWindow. The overlay does not close it on a click: the scanner only starts once an
+   exchange has been chosen. *@
+@if (ExchangeChoice.IsPending)
+{
+    <div class="modal-overlay" @oncontextmenu:preventDefault="true">
+    </div>
+    <div class="modal-dialog exchange-choice-dialog" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <span class="modal-title">Welcome to CryptoScanBot</span>
+        </div>
+        <div class="modal-body">
+            <p>Which exchange do you want to scan? It can be changed later in the scanner configuration.</p>
+            <div class="exchange-choice-list">
+                @foreach (string name in _exchangeNames)
+                {
+                    <div class="exchange-choice-item @(name == _selected ? "selected" : "")"
+                         @onclick="() => _selected = name"
+                         @ondblclick="() => Choose(name)">@name</div>
+                }
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" disabled="@(_selected == null)" @onclick="() => Choose(_selected)">Start</button>
+            <button class="btn btn-secondary" @onclick="OnExit">Exit</button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<string> _exchangeNames = [];
+    private string? _selected;
+
+    protected override void OnInitialized()
+    {
+        _exchangeNames = GlobalData.ExchangeListName.Values.Select(x => x.Name).Order().ToList();
+        ExchangeChoice.Changed += OnChanged;
+    }
+
+    private void OnChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void Choose(string? exchangeName)
+    {
+        if (exchangeName == null)
+            return;
+        ExchangeChoice.Choose(exchangeName);
+    }
+
+    private void OnExit()
+    {
+        // Nothing has been started and the settings are not written while the choice is open
+        // (GlobalData.ExchangeChoicePending), so the next start asks again
+        if (GlobalData.RequestShutdown != null)
+            GlobalData.RequestShutdown();
+        else
+            Environment.Exit(0);
+    }
+
+    public void Dispose()
+    {
+        ExchangeChoice.Changed -= OnChanged;
+    }
+}

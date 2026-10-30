@@ -109,27 +109,91 @@ public partial class App : Application
                 }
             }
         };
+        // The main window takes its first icon itself (MainWindow constructor); this follows a switch
+        // to another exchange. ApplyConfigurationAsync does not run on the UI thread.
+        GlobalData.SetIcon = () => Dispatcher.UIThread.Post(() =>
+        {
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
+                ApplyExchangeIcon(desktop.MainWindow);
+        });
 
         // Basicly start the whole scanner
-        InitializeGlobalDataAsync(); // Needs the DI services
+        bool exchangeChoicePending = InitializeGlobalDataAsync(); // Needs the DI services
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Only close when requested
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-            // Get MainView from DI container
-            desktop.MainWindow = GlobalData.Services.GetRequiredService<MainWindow>();
-
-            // Save states on application exit
-            desktop.ShutdownRequested += DoWhenShutdownRequested;
+            if (exchangeChoicePending)
+                desktop.MainWindow = CreateExchangeChoiceWindow(desktop);
+            else
+                CreateMainWindow(desktop);
         }
 
         base.OnFrameworkInitializationCompleted();
     }
 
 
-    private static void InitializeGlobalDataAsync()
+    /// <summary>
+    /// The application icon with the logo of the exchange on it, so several scanners side by side can
+    /// be told apart in the task bar. A failure leaves the icon of the executable in place.
+    /// </summary>
+    public static void ApplyExchangeIcon(Window window)
+    {
+        try
+        {
+            window.Icon = new WindowIcon(new MemoryStream(AppIconBuilder.BuildCurrent()));
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "ApplyExchangeIcon");
+        }
+    }
+
+
+    private void CreateMainWindow(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        // Get MainView from DI container
+        desktop.MainWindow = GlobalData.Services.GetRequiredService<MainWindow>();
+
+        // Save states on application exit
+        desktop.ShutdownRequested += DoWhenShutdownRequested;
+    }
+
+
+    /// <summary>
+    /// A new installation first asks which exchange to scan. The main window is only built after the
+    /// choice, because its grids load from the active exchange the moment they are created.
+    /// </summary>
+    private ExchangeChoiceWindow CreateExchangeChoiceWindow(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var dialog = new ExchangeChoiceWindow(GlobalData.ExchangeListName.Values.Select(x => x.Name).Order());
+        dialog.Closed += (_, _) =>
+        {
+            // Closed without a choice. Nothing was started, and the shutdown handler that saves the
+            // settings is not attached yet, so the next start asks again.
+            if (dialog.ChosenExchange == null)
+            {
+                desktop.Shutdown();
+                return;
+            }
+
+            var scannerSession = GlobalData.GetService<IScannerSession>()
+                ?? throw new InvalidOperationException("ScannerSession not registered");
+            scannerSession.ChooseExchange(dialog.ChosenExchange);
+            StartScanner(scannerSession);
+
+            CreateMainWindow(desktop);
+            desktop.MainWindow!.Show();
+        };
+        return dialog;
+    }
+
+
+    /// <returns>True when a new installation still has to choose its exchange. The scanner is not
+    /// started then; that waits for the choice, see CreateExchangeChoiceWindow.</returns>
+    private static bool InitializeGlobalDataAsync()
     {
         System.Diagnostics.Debug.WriteLine($"App.InitializeGlobalData");
 
@@ -195,22 +259,33 @@ public partial class App : Application
                 ?? throw new InvalidOperationException("ScannerSession not registered");
             scannerSession.AfterStartup();
 
-            // Apply the theme BEFORE the main window and its grids are built. ApplyConfigurationAsync
-            // sets it too, but it runs fire-and-forget, so the rows the signal, live data and position
-            // grids load from the database at startup resolved their colours against a theme that was
-            // still Default - and kept the light green and red for the rest of the session. The symbol
-            // grid is filled from ApplyConfigurationAsync itself (after the theme is set), which is why
-            // only that one, and the information dashboard, showed the right colours.
-            GlobalData.SetTheme?.Invoke(GlobalData.Settings.General.Theme ?? "Default");
+            // A new installation asks which exchange to scan before anything is loaded
+            if (GlobalData.ExchangeChoicePending)
+                return true;
 
-            _ = scannerSession.ApplyConfigurationAsync(true);
-            scannerSession.Start(0);
-
-            GlobalData.SignalRService = new SignalRService();
-            _ = GlobalData.SignalRService.StartAsync();
+            StartScanner(scannerSession);
         }
 
         System.Diagnostics.Debug.WriteLine($"GlobalData initialized - Symbols: {GlobalData.ActiveExchange?.SymbolListName.Count ?? 0}, Signals: {GlobalData.SignalQueue.Count}");
+        return false;
+    }
+
+
+    private static void StartScanner(IScannerSession scannerSession)
+    {
+        // Apply the theme BEFORE the main window and its grids are built. ApplyConfigurationAsync
+        // sets it too, but it runs fire-and-forget, so the rows the signal, live data and position
+        // grids load from the database at startup resolved their colours against a theme that was
+        // still Default - and kept the light green and red for the rest of the session. The symbol
+        // grid is filled from ApplyConfigurationAsync itself (after the theme is set), which is why
+        // only that one, and the information dashboard, showed the right colours.
+        GlobalData.SetTheme?.Invoke(GlobalData.Settings.General.Theme ?? "Default");
+
+        _ = scannerSession.ApplyConfigurationAsync(true);
+        scannerSession.Start(0);
+
+        GlobalData.SignalRService = new SignalRService();
+        _ = GlobalData.SignalRService.StartAsync();
     }
 
     private void DoWhenShutdownRequested(object? sender, ShutdownRequestedEventArgs e)

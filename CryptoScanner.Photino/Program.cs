@@ -105,6 +105,7 @@ class Program
         builder.Services.AddSingleton<DashboardPositionService>();
         builder.Services.AddSingleton<MarketIndicatorService>();
         builder.Services.AddSingleton<InternalBrowserService>();
+        builder.Services.AddSingleton<ExchangeChoiceService>();
         // Native open-file dialog for the components that need a real path (sound files). Registered
         // as a factory over the static _app because the application is only built further down.
         builder.Services.AddSingleton<IFileDialogService>(
@@ -154,6 +155,7 @@ class Program
             }
         };
         GlobalData.SetTitle = title => { try { app.MainWindow.SetTitle(title); } catch { } };
+        GlobalData.SetIcon = () => WindowChrome.UpdateIcon(app.MainWindow);
         // Normalize the spelling so a settings file written here stays valid for the Avalonia host
         // (which switches on "Light"/"Dark"). Broadcasting the change lets the layout repaint at
         // once; relying on its poll timer made a theme switch look like the application had hung.
@@ -235,12 +237,14 @@ class Program
         // Start the scanner engine (same sequence as Avalonia App.InitializeGlobalDataAsync)
         _scannerSession = app.Services.GetRequiredService<IScannerSession>();
         _scannerSession.AfterStartup();
-        _ = _scannerSession.ApplyConfigurationAsync(true);
-        _scannerSession.Start(0);
 
-        // Start SignalR
-        GlobalData.SignalRService = new SignalRService();
-        _ = GlobalData.SignalRService.StartAsync();
+        // A new installation first asks which exchange to scan (ExchangeChoiceDialog in the main
+        // layout), and the scanner starts once it has been chosen. The services below can start
+        // either way: they wait for the scanner's messages and cope with no active exchange.
+        if (GlobalData.ExchangeChoicePending)
+            app.Services.GetRequiredService<ExchangeChoiceService>().Request(StartScanner);
+        else
+            StartScanner();
 
         // Start symbol service (subscribes to SymbolsHaveChangedMessage)
         _symbolService = app.Services.GetRequiredService<SymbolService>();
@@ -395,6 +399,16 @@ class Program
         };
 
         app.Run();
+    }
+
+    private static void StartScanner()
+    {
+        _ = _scannerSession!.ApplyConfigurationAsync(true);
+        _scannerSession.Start(0);
+
+        // Start SignalR
+        GlobalData.SignalRService = new SignalRService();
+        _ = GlobalData.SignalRService.StartAsync();
     }
 
     private static bool _windowGeometrySaved;

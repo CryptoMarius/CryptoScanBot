@@ -12,8 +12,9 @@
         <div class="settings-group-header">Exchange parameters</div>
         <div class="settings-group-body">
             <div class="field">
-                <label>Extra application caption</label>
-                <input type="text" class="input-text" @bind="_extraCaption" />
+                <label title="The title of the window and of its button in the task bar. Placeholders: {version} and {exchange}. Leave empty for the default.">Window title</label>
+                <input type="text" class="input-text" style="width: 300px;" placeholder="@SettingsGeneral.DefaultWindowTitle"
+                       title="Placeholders: {version} and {exchange}. Leave empty for the default." @bind="_windowTitle" />
             </div>
             <div class="field">
                 <label>Active exchange</label>
@@ -142,7 +143,7 @@
     private CryptoExternalUrlType _tradingAppInternExtern;
     private CryptoDoubleClickAction _doubleClickAction;
     private CryptoIntervalPeriod _defaultInterval;
-    private string _extraCaption = "";
+    private string _windowTitle = "";
     private string _theme = ThemeHelper.Dark;
     private int _getCandleInterval;
     private int _hyperLiquidWeightPerMinute;
@@ -165,7 +166,7 @@
         _tradingAppInternExtern = g.TradingAppInternExtern;
         _doubleClickAction = g.DoubleClickAction;
         _defaultInterval = g.DefaultInterval;
-        _extraCaption = g.ExtraCaption;
+        _windowTitle = g.WindowTitle;
         _theme = ThemeHelper.Normalize(g.Theme);
         _getCandleInterval = g.GetCandleInterval;
         _hyperLiquidWeightPerMinute = g.HyperLiquidWeightPerMinute;
@@ -193,7 +194,7 @@
         g.TradingAppInternExtern = _tradingAppInternExtern;
         g.DoubleClickAction = _doubleClickAction;
         g.DefaultInterval = _defaultInterval;
-        g.ExtraCaption = _extraCaption;
+        g.WindowTitle = _windowTitle;
         g.Theme = ThemeHelper.Normalize(_theme);
         g.GetCandleInterval = _getCandleInterval;
         g.HyperLiquidWeightPerMinute = Math.Clamp(_hyperLiquidWeightPerMinute,

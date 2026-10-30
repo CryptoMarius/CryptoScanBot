@@ -1,8 +1,12 @@
 CryptoScanBot release historie:
 
-TODO: Migratie testen 2.1.8 naar de laatste versie
-
-25-10-2026 2.6.8
+29-10-2026 2.6.8
+- Scanner: Het venster-icoon draagt het logo van de beurs, zodat de scanners in de taakbalk van elkaar te onderscheiden zijn; de emulator heeft een eigen paars icoon
+- Scanner: Bij een nieuwe datamap wordt eerst gevraagd welke beurs gescand moet worden, in plaats van de standaard te gebruiken
+- Instellingen: De venstertitel is nu helemaal zelf te schrijven, met {version} en {exchange} erin; de oude extra tekst wordt eenmalig omgezet
+- Papertrading: De referentiemunt valt terug op de munt die de beurs zelf noemt in plaats van USDT; op Hyperliquid stond daardoor elke dag op nul
+- Trader: De takeprofit wordt opnieuw geplaatst als de hoeveelheid niet meer klopt; op spot bleef het laatste niveau met een restje zitten dat nooit paste
+- Candles: De candle-database wordt eens per week opgeruimd; dat scheelde op Bitvavo Spot ruim 140 MB
 - Candles: De intervallen van 6h en hoger staan nu altijd op onze eigen UTC-indeling; beurzen die de week op donderdag of zondag laten beginnen leverden candles naast de onze, en die worden eenmalig opgeruimd
 - Trader: Een instap-order die blijft staan kan weer ingetrokken worden, maar niet terwijl hij misschien al gevuld is
 - Posities: De lijsten met open en gesloten posities vergeleken het ingelegde bedrag als tekst, waardoor een positie kon ontbreken
@@ -80,6 +84,7 @@ TODO: Migratie testen 2.1.8 naar de laatste versie
 - Fix: De voorafgaande beweging van een candle-patroon telt de omkeercandle zelf niet meer mee
 - Instellingen: De velden van de experimentele strategieen staan alleen nog in de debug-build
 - Releases: De workflow haalt de release-notitie uit dit bestand en ondertekent de bestanden
+- Emulator: Het startkapitaal komt alleen nog uit de Default-kolom van Paper assets; de run-configuratie en de wachtrij hadden hun eigen bedrag, en twee plekken voor één instelling liet runs op 2.000 draaien terwijl ze 100.000 zeiden
 - Emulator: De barometer van een run wordt pas als volledig gemarkeerd als de run afliep en alle candles bewaard zijn; na een Stop bleef er een halve meting staan die volgende runs als volledig inlazen
 - Emulator: Ontbrekende minuten in een hergebruikte barometer-serie worden nu echt weggeschreven, zodat het gat zich sluit in plaats van elke run opnieuw gemeten te worden
 - Emulator: Per run hoeveel van het account gemiddeld in trades zat en wat de winst op dat geld was, met uitleg per kolom in het resultatenrooster

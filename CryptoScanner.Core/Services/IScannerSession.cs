@@ -3,6 +3,12 @@
 public interface IScannerSession
 {
     void AfterStartup();
+    /// <summary>
+    /// The exchange the user picked on a new installation (GlobalData.ExchangeChoicePending). Sets
+    /// both the scanned exchange and the exchange the trading app opens on, and saves the settings.
+    /// Call it before ApplyConfigurationAsync and Start.
+    /// </summary>
+    void ChooseExchange(string exchangeName);
     Task ApplyConfigurationAsync(bool loadSymbols);
     void ConnectionWasLost(string text);
     void ConnectionWasRestored(string text, TimeSpan downtime);

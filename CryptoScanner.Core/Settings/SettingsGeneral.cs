@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Const;
+using CryptoScanner.Core.Enums;
 
 namespace CryptoScanner.Core.Settings;
 
@@ -68,6 +69,22 @@ public class SettingsGeneralStoch
 [Serializable]
 public class SettingsGeneral
 {
+    /// <summary>
+    /// The title used when <see cref="WindowTitle"/> is left empty: the title every scanner had
+    /// before the user could set it.
+    /// </summary>
+    public const string DefaultWindowTitle = $"{Constants.AppName} {{version}} {{exchange}}";
+
+    /// <summary>
+    /// The window title as the user wants it, with {version} and {exchange} filled in by
+    /// GlobalData.ApplicationTitle. Empty means <see cref="DefaultWindowTitle"/>.
+    /// </summary>
+    public string WindowTitle { get; set; } = "";
+
+    /// <summary>
+    /// Text that used to go after the fixed title. Only read from settings files written before
+    /// 29-10-2026: loading moves it into <see cref="WindowTitle"/> and clears it.
+    /// </summary>
     public string ExtraCaption { get; set; } = "";
     public string ExchangeName { get; set; } = "Bybit Spot";
     public string ActivateExchangeName { get; set; } = "";

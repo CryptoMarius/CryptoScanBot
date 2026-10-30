@@ -287,6 +287,11 @@
          this because their native packages come from SkiaSharp itself and follow it to 3.119.2.
          Pinning the Linux native asset to the same version keeps managed and native in step. -->
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.4" />
+    <!-- AppIconBuilder draws with Skia. NPOI only brings SkiaSharp along to compile against (its
+         dependency excludes the runtime assets), and the Avalonia hosts get it through Avalonia.Skia,
+         but Photino, Web and CandleSync have neither: without this reference SkiaSharp.dll is missing
+         from their deps.json and the icon cannot be built there. Same version as NPOI asks for. -->
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
     <PackageReference Include="Skender.Stock.Indicators" Version="3.0.0-preview.3.1" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.13" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
@@ -313,6 +318,15 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <!-- Window icons (see AppIconBuilder): the application and emulator icons, and the exchange logos
+       that go on them as a badge. Embedded so the scanners and the emulator share one copy; the two
+       .ico files are linked from the scanner's Assets folder, where the exe icons come from too. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Exchanges\*.png" LogicalName="CryptoScanner.Core.Assets.Exchanges.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\CryptoScanner\Assets\AppIcon.ico" Link="Assets\AppIcon.ico" LogicalName="CryptoScanner.Core.Assets.AppIcon.ico" />
+    <EmbeddedResource Include="..\CryptoScanner\Assets\EmulatorIcon.ico" Link="Assets\EmulatorIcon.ico" LogicalName="CryptoScanner.Core.Assets.EmulatorIcon.ico" />
   </ItemGroup>
 
 </Project>
