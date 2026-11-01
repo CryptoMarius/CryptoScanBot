@@ -93,6 +93,10 @@ public class ApplicationStateService
         // Since 27-09-2026 the file sits next to CryptoScanBot-settings.json in the data folder (-f).
         // The shared location meant every instance, test runs included, wrote into the standard data
         // folder whatever -f said, and all of them overwrote each other's window positions.
+        // Note 31-10-2026: in the emulator "the data folder" is the one of GetDataDirectory() above
+        // (-f, or the scanner's standard folder), not the data folder picked in its setup dialog
+        // (GlobalData.AppDataFolder). Without -f the emulator writes its layout and window position
+        // into the scanner's standard folder, and a "Change database" keeps the same files.
         _windowStatePath = Path.Combine(directory, "CryptoScanBot-window.json");
 
         // Load states on initialization

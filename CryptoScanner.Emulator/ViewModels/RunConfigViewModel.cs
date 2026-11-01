@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Emulator.Engine;
 
@@ -70,6 +71,23 @@ public partial class RunConfigViewModel : ObservableObject
     //[ObservableProperty]
     //private bool _serialTradeHalf = true;
 
+    /// <summary>
+    /// Trading.UseAssetManagement of this session's settings, shown here again since 31-10-2026: Start
+    /// and Run algorithms follow the settings as they are, and what a queue entry last put in them
+    /// could otherwise only be seen and changed through the scanner settings. Written back on OK.
+    /// </summary>
+    [ObservableProperty]
+    private bool _useAssetManagement;
+
+    /// <summary>
+    /// Working copy of Trading.PaperAssetDefaults (the Default column of Paper assets), the money a
+    /// run starts with. Edited through the Assets dialog, written back on OK.
+    /// </summary>
+    public List<CryptoPaperAssetDefault> PaperAssetDefaults { get; private set; } = [];
+
+    [ObservableProperty]
+    private string _paperAssetSummary = "";
+
     /// <summary>Live text filter over the symbol list (substring, case-insensitive).</summary>
     [ObservableProperty]
     private string _symbolFilter = "";
@@ -103,6 +121,8 @@ public partial class RunConfigViewModel : ObservableObject
         // The start capital and asset management are scanner settings since 26-10-2026, given per
         // queue entry in TradingOverrides. This window no longer has fields for them.
         //SerialTradeHalf = config.SerialTradeHalf;
+        UseAssetManagement = GlobalData.Settings.Trading.UseAssetManagement;
+        SetPaperAssetDefaults(GlobalData.Settings.Trading.PaperAssetDefaults);
 
         // Pre-check the symbols already in the run config. Build the full list from the active
         // exchange's known symbols; any config symbol not (yet) on the exchange is still added so
@@ -238,6 +258,37 @@ public partial class RunConfigViewModel : ObservableObject
         config.Label = Label ?? "";
         config.BaseInterval = SelectedBaseInterval ?? "1m";
         //config.SerialTradeHalf = SerialTradeHalf;
+        return true;
+    }
+
+
+    /// <summary>Take a (new) start asset list over and show it next to the Assets button.</summary>
+    public void SetPaperAssetDefaults(IEnumerable<CryptoPaperAssetDefault> defaults)
+    {
+        PaperAssetDefaults = EmulatorStartCapital.Normalise(defaults);
+        if (PaperAssetDefaults.Count == 0)
+            PaperAssetSummary = $"{PaperAssets.DefaultStartCapital.ToString0()} per traded quote coin";
+        else
+            PaperAssetSummary = string.Join(", ", PaperAssetDefaults.Select(d => $"{d.Name} {PaperAssetsEditor.FormatAmount(d.Name, d.Total)}"));
+    }
+
+
+    /// <summary>
+    /// Write the asset choice back into the settings. Returns whether anything changed, so the caller
+    /// only saves the settings file when it has to.
+    /// </summary>
+    public bool ApplyAssetSettings()
+    {
+        SettingsTrading trading = GlobalData.Settings.Trading;
+        bool changed = trading.UseAssetManagement != UseAssetManagement
+            || !EmulatorStartCapital.Normalise(trading.PaperAssetDefaults)
+                .Select(d => (d.Name, d.Total))
+                .SequenceEqual(PaperAssetDefaults.Select(d => (d.Name, d.Total)));
+        if (!changed)
+            return false;
+
+        trading.UseAssetManagement = UseAssetManagement;
+        trading.PaperAssetDefaults = [.. PaperAssetDefaults.Select(d => new CryptoPaperAssetDefault { Name = d.Name, Total = d.Total })];
         return true;
     }
 }

@@ -78,6 +78,10 @@ public static class RunSettingsApplier
         // the current object itself.
         JsonNode? exchangeName = current["General"]?["ExchangeName"]?.DeepClone();
         JsonNode? activateExchangeName = current["General"]?["ActivateExchangeName"]?.DeepClone();
+        // The same for the window title: it names this emulator, not the run (30-10-2026). The old
+        // caption goes along, or a run from before that date would bring its caption back into it.
+        JsonNode? windowTitle = current["General"]?["WindowTitle"]?.DeepClone();
+        JsonNode? extraCaption = current["General"]?["ExtraCaption"]?.DeepClone();
 
         JsonNode merged = Overlay(current, snapshot);
 
@@ -85,6 +89,8 @@ public static class RunSettingsApplier
         {
             mergedGeneral["ExchangeName"] = exchangeName;
             mergedGeneral["ActivateExchangeName"] = activateExchangeName;
+            mergedGeneral["WindowTitle"] = windowTitle;
+            mergedGeneral["ExtraCaption"] = extraCaption;
         }
 
         string text = merged.ToJsonString(JsonTools.JsonSerializerIndented);
@@ -157,8 +163,14 @@ public static class RunSettingsApplier
             return false;
         }
 
+        // The quotes and the default paper assets of the run were in the merged file. They live in the
+        // database per exchange since 31-10-2026: the file just read hands them over as the lists of
+        // an old file, and activating the exchange moves them into its rows and loads them back.
         if (GlobalData.ActiveExchange != null)
+        {
+            ExchangeSettingsStore.Activate(GlobalData.ActiveExchange);
             RelinkSymbolsToQuoteCoins(GlobalData.ActiveExchange);
+        }
 
         PluginManager.RestoreSettings(GlobalData.Settings.Signal.AnalyzerSettings);
         GlobalData.IndexStrategySettings();

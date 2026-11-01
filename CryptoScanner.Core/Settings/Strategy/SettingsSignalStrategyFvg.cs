@@ -26,8 +26,11 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
     // Off: only three candles of the zone's colour make a gap (three green for a long, three red
     // for a short), the "strong" FVG this always was. On: the colours do not matter (red, red,
     // green is fine too), only the gap between the first and the third candle does.
-    [SettingCaption("Allow mixed candle colours", Group = GroupSettings)]
-    public bool AllowMixedColours { get; set; } = false;
+    //[SettingCaption("Allow mixed candle colours", Group = GroupSettings)]
+    //public bool AllowMixedColours { get; set; } = false;
+    // AllowMixedColours was removed on 31-10-2026: the colours of the three candles never matter
+    // any more, only the gap does (what "on" used to do). A settings file that still carries the
+    // key is read without it.
 
     // NearZonePercentage and RejectionLookback were removed on 26-09-2026 (open point 108): the
     // combined Stobb/StoRsi+FVG signals that read the first no longer exist, and an fvg.rejection

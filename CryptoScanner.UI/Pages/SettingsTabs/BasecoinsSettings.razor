@@ -7,6 +7,9 @@
     <div class="settings-group" style="max-width: none; width: 100%;">
         <div class="settings-group-header">Basecoins (Quote currencies)</div>
         <div class="settings-group-body">
+            @* Every exchange has quotes of its own since 31-10-2026; the list is that of the running
+               exchange, the same line as the Avalonia QuoteTabView shows *@
+            <div style="margin-bottom: 8px;">@ExchangeText</div>
             @* No width:100% — that stretched the columns apart and left the "Symbols" count sitting
                a long way behind the colour. .data-table is width:auto, so the table is exactly as
                wide as its columns, just like an Avalonia DataGrid. *@
@@ -21,6 +24,7 @@
                         <th style="width: 80px;" title="Entry as a percentage of the whole account (cash plus open positions at the current price), so the stake grows and shrinks with the account. The amount is the minimum entry. Only used with asset management on; without it the amount is the entry.">Percentage</th>
                         <th style="width: 120px;">Color</th>
                         <th style="width: 70px;">Symbols</th>
+                        <th style="width: 90px;" title="How many coins the exchange has with this quote, switched on or off. Symbols is how many of them the scanner fetches now.">At exchange</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -43,6 +47,7 @@
                                 <ColorPickerCell @bind-Value="item.ColorArgb" Title="@item.Name" />
                             </td>
                             <td class="text-right">@item.SymbolCount</td>
+                            <td class="text-right">@item.OfferedCount</td>
                         </tr>
                     }
                 </tbody>
@@ -62,6 +67,7 @@
                         <th style="width: 50px;">Active</th>
                         <th style="width: 100px;">Product</th>
                         <th style="width: 70px;">Symbols</th>
+                        <th style="width: 90px;" title="How many coins the exchange has in this product, also when the product is switched off. Symbols is how many of them the scanner fetches now.">At exchange</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,6 +78,7 @@
                                        title="Which kind of markets of this exchange the scanner fetches. PERP = the perpetuals the exchange runs itself. HyperLiquid also has markets set up by other parties (such as XYZ and PARA), which mostly follow shares, indices or commodities instead of coins. Switched off: the coins of that product are no longer fetched and become inactive at the next refresh of the coin list." /></td>
                             <td>@item.Name</td>
                             <td class="text-right">@item.SymbolCount</td>
+                            <td class="text-right">@item.OfferedCount</td>
                         </tr>
                     }
                 </tbody>
@@ -83,6 +90,10 @@
 
 @code {
     private List<QuoteItem> _quoteItems = [];
+
+    private static string ExchangeText => ExchangeSettingsStore.LoadedExchange?.Name is string exchangeName
+        ? $"Quotes and products of {exchangeName}. Every exchange has its own; after choosing another exchange and saving, its lists are shown here."
+        : "Quotes";
     private List<ProductItem> _productItems = [];
 
     protected override void OnInitialized()
@@ -105,6 +116,7 @@
                 Percentage = qd.EntryPercentage,
                 ColorArgb = qd.DisplayColor.ToString(),
                 SymbolCount = qd.SymbolList.Count,
+                OfferedCount = GlobalData.OfferedForQuote(qd.Name),
                 Source = qd,
             });
         }
@@ -123,6 +135,7 @@
                 Name = pd.Name,
                 IsEnabled = pd.Active,
                 SymbolCount = count,
+                OfferedCount = GlobalData.OfferedForProduct(pd.Name),
                 Source = pd,
             });
         }
@@ -156,6 +169,7 @@
         public string Name { get; set; } = "";
         public bool IsEnabled { get; set; }
         public int SymbolCount { get; set; }
+        public int OfferedCount { get; set; }
         public CryptoProductData Source { get; set; } = null!;
     }
 
@@ -169,6 +183,7 @@
         public decimal MinPrice { get; set; }
         public decimal Amount { get; set; }
         public float Percentage { get; set; }
+        public int OfferedCount { get; set; }
         /// <summary>
         /// The colour in the same #AARRGGBB notation the settings file uses, so what you type here
         /// is what ends up on disk. The leading pair is the transparency.

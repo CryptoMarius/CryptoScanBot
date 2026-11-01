@@ -35,7 +35,17 @@ public static class BarometerHelper
             // it from that subset would be meaningless (a few coins do not represent "the market").
             // Treat the missing barometer as neutral (pass) in emulator mode so it does not block
             // every signal/position; the live scanner still requires a real barometer value.
-            if (GlobalData.IsEmulatorMode)
+            // No longer true since 31-08-2026: the emulator measures the barometer itself over the
+            // coins of the run (BarometerReplay), and a run with a barometer condition it cannot
+            // measure refuses to start. So since 31-10-2026 a missing value refuses here as well, the
+            // same as live. A quote coin with too few coins in the run is marked with its coin count
+            // (BarometerReplay.BeginRun) and is neutral, the same as live (open point 40).
+            //if (GlobalData.IsEmulatorMode)
+            //{
+            //    reaction = "";
+            //    return true;
+            //}
+            if (TooFewSymbols(barometerData))
             {
                 reaction = "";
                 return true;
@@ -87,13 +97,20 @@ public static class BarometerHelper
     /// The market breadth condition (open point 11, phase 3): the percentage of the coins of the quote
     /// that rose over the last hour must lie between minimum and maximum. Missing breadth is handled
     /// as a missing barometer: neutral in the emulator, a refusal in the live scanner.
+    /// Since 31-10-2026 a refusal in the emulator as well, see <see cref="CheckValidBarometer"/>; too few
+    /// coins is neutral in both.
     /// </summary>
     public static bool CheckBreadth(Model.CryptoExchange activeExchange, string quoteName, decimal minimum, decimal maximum, out string reaction)
     {
         CryptoBarometerData? barometerData = activeExchange.Data.GetBarometer(quoteName, CryptoIntervalPeriod.interval1h);
         if (!barometerData.PricePercentageRising.HasValue)
         {
-            if (GlobalData.IsEmulatorMode)
+            //if (GlobalData.IsEmulatorMode)
+            //{
+            //    reaction = "";
+            //    return true;
+            //}
+            if (TooFewSymbols(barometerData))
             {
                 reaction = "";
                 return true;

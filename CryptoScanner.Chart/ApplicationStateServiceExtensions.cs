@@ -78,6 +78,8 @@ public static class ApplicationStateServiceExtensions
             double fillsScreenFactor = 1.0;
             if (IsPositionOnScreen(window, state.X, state.Y, out targetScreen))
             {
+                // Manual, otherwise a CenterScreen from the xaml (the emulator) moves it away again
+                window.WindowStartupLocation = WindowStartupLocation.Manual;
                 window.Position = new PixelPoint((int)state.X, (int)state.Y);
             }
             else

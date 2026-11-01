@@ -3,6 +3,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 
 using System.Collections.ObjectModel;
 
@@ -29,6 +30,8 @@ public partial class QuoteItem : ObservableObject
     private Color backgroundColor;
     [ObservableProperty]
     private int symbolCount;
+    [ObservableProperty]
+    private int offeredCount;
 
     public QuoteItem(CryptoQuoteData quoteData)
     {
@@ -41,6 +44,7 @@ public partial class QuoteItem : ObservableObject
         Percentage = (decimal)quoteData.EntryPercentage;
         BackgroundColor = quoteData.DisplayColor.ToAvaloniaColor();
         SymbolCount = quoteData.SymbolList.Count;
+        OfferedCount = Core.Core.GlobalData.OfferedForQuote(quoteData.Name);
     }
 }
 
@@ -59,6 +63,8 @@ public partial class ProductItem : ObservableObject
     private string product = string.Empty;
     [ObservableProperty]
     private int symbolCount;
+    [ObservableProperty]
+    private int offeredCount;
 
     public ProductItem(CryptoProductData productData, int symbolCount)
     {
@@ -66,6 +72,7 @@ public partial class ProductItem : ObservableObject
         Product = productData.Name;
         IsEnabled = productData.Active;
         SymbolCount = symbolCount;
+        OfferedCount = Core.Core.GlobalData.OfferedForProduct(productData.Name);
     }
 }
 
@@ -77,8 +84,21 @@ public partial class QuoteTabViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<ProductItem> _products = [];
 
+    /// <summary>
+    /// The line above the list: every exchange has quotes of its own since 31-10-2026, and the list
+    /// shown is that of the exchange the scanner is running on. Choosing another exchange on the first
+    /// tab does not change it; that exchange's own quotes are there after saving.
+    /// </summary>
+    [ObservableProperty]
+    private string _exchangeText = "";
+
     internal void LoadConfig(SortedList<string, CryptoQuoteData> quoteCoins)
     {
+        string? exchangeName = ExchangeSettingsStore.LoadedExchange?.Name;
+        ExchangeText = exchangeName == null
+            ? "Quotes"
+            : $"Quotes and products of {exchangeName}. Every exchange has its own; after choosing another exchange and saving, its lists are shown here.";
+
         foreach (var quote in quoteCoins.Values)
         {
             Quotes.Add(new QuoteItem(quoteData: quote));

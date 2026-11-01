@@ -501,6 +501,9 @@ public class BarometerTools
     /// calculation writes, ages out on wall-clock time and reads back for that graph - are pure cost
     /// there. What a replay does need is the value the signal checks read, and that is
     /// <see cref="CryptoBarometerData"/>. This method fills exactly that.
+    /// Correction 31-10-2026: this method itself still writes no candles, but the replay does - the
+    /// emulator's BarometerReplay.StoreCandles puts every measurement into the $BMP/$BMX candles, one
+    /// per replayed minute per interval, so a later run over the same coins can read it back.
     /// </para>
     /// <para>
     /// A measurement that fails, or one carried by fewer than <paramref name="minimumSymbolCount"/>

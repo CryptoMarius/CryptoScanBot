@@ -7,6 +7,7 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Emulator;
 using CryptoScanner.Emulator.Engine;
 
@@ -180,6 +181,44 @@ internal static class Program
             return 1;
         }
 
+        // The quotes of the scanner. They left its settings file on 31-10-2026 for its database (table
+        // Quote, per exchange), so the copy of the file above no longer brings them along. A scanner
+        // from before that date has no Quote table yet, and then the copied file still holds them.
+        if (!string.IsNullOrEmpty(scannerFolder))
+        {
+            try
+            {
+                SortedList<string, CryptoQuoteData>? scannerQuotes = ExchangeSettingsStore.LoadQuotesOfDataFolder(scannerFolder, exchangeName);
+                if (scannerQuotes != null && scannerQuotes.Count > 0)
+                {
+                    GlobalData.Settings.QuoteCoins = scannerQuotes;
+                    foreach (CryptoSymbol symbol in GlobalData.ActiveExchange!.SymbolListName.Values)
+                        symbol.QuoteData = GlobalData.AddQuoteData(symbol.Quote);
+                    ThreadLoadData.IndexQuoteDataSymbols(GlobalData.ActiveExchange!);
+                    WriteLine($"Quotes of the scanner: {string.Join(", ", scannerQuotes.Values.Where(q => q.FetchCandles).Select(q => q.Name))}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"The quotes of the scanner could not be read ({ex.Message}), the copied settings are used");
+            }
+
+            // The products went the same way (table Product)
+            try
+            {
+                SortedList<string, CryptoProductData>? scannerProducts = ExchangeSettingsStore.LoadProductsOfDataFolder(scannerFolder, exchangeName);
+                if (scannerProducts != null && scannerProducts.Count > 0)
+                {
+                    GlobalData.Settings.Products = scannerProducts;
+                    WriteLine($"Products of the scanner switched off: {string.Join(", ", scannerProducts.Values.Where(p => !p.Active).Select(p => p.Name).DefaultIfEmpty("none"))}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"The products of the scanner could not be read ({ex.Message}), the copied settings are used");
+            }
+        }
+
         // Without a scanner there are no settings to copy, and in the fresh ones no quote fetches
         // candles, so not a single symbol would pass. The scanner switches the exchange's default quote
         // on at its start (ScannerSession); the emulator's bootstrap does not, so it is done here. Not
@@ -289,7 +328,27 @@ internal static class Program
         {
             countDb.Close();
             _countConnection = null;
-            string? line = CandleDatabase.VacuumIfDue(GlobalData.ActiveExchange!, CandleDatabase.VacuumInterval);
+
+            // The VACUUM itself reports nothing while it runs, and on a large file it takes minutes
+            // (Binance Spot, 15 GB: 8 minutes on 01-11-2026) - which looked like a sync that would not
+            // end. So a line when it starts and a running clock on the status line.
+            Stopwatch vacuumWatch = new();
+            long vacuumMegabytes = 0;
+            string? line;
+            using (Timer clock = new(_ =>
+            {
+                if (vacuumWatch.IsRunning)
+                    Status($"Vacuum of {exchangeName}.db ({vacuumMegabytes:N0} MB) busy for {vacuumWatch.Elapsed:mm\\:ss}…");
+            }, null, 1000, 1000))
+            {
+                line = CandleDatabase.VacuumIfDue(GlobalData.ActiveExchange!, CandleDatabase.VacuumInterval, size =>
+                {
+                    vacuumMegabytes = size / 1048576;
+                    WriteLine($"Vacuum of {exchangeName}.db ({vacuumMegabytes:N0} MB): once a week the whole file is rewritten, this can take minutes");
+                    vacuumWatch.Start();
+                });
+                vacuumWatch.Stop();
+            }
             if (line != null)
                 WriteLine(line);
         }

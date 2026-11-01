@@ -174,8 +174,10 @@ public class CandleDatabase : IDisposable
     /// tried again the next time, without writing the date.
     /// </para>
     /// </summary>
+    /// <param name="starting">Called with the file size (bytes) right before the VACUUM itself begins,
+    /// so a caller can show that minutes of work are coming (a 15 GB file took 8 minutes)</param>
     /// <returns>A line for the log, or null when the VACUUM was not due</returns>
-    public static string? VacuumIfDue(Model.CryptoExchange exchange, TimeSpan minimalAge)
+    public static string? VacuumIfDue(Model.CryptoExchange exchange, TimeSpan minimalAge, Action<long>? starting = null)
     {
         string dbFile = Path.Combine(ResolveCandleFolder(), exchange.Name + ".db");
         if (!File.Exists(dbFile))
@@ -212,6 +214,7 @@ public class CandleDatabase : IDisposable
             if (!string.Equals(mode, "delete", StringComparison.OrdinalIgnoreCase))
                 return $"candles.db vacuum {exchange.Name}: skipped, the file is in use by another connection";
 
+            starting?.Invoke(sizeBefore);
             try
             {
                 connection.Execute("VACUUM;");

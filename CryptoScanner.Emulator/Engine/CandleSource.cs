@@ -32,25 +32,6 @@ public static class CandleSource
         return CandleDatabase.LoadCandlesInRange(db.Connection, symbol, interval, from.Minutes, to.Minutes);
     }
 
-    /// <summary>
-    /// Splits a load into a warmup prefix (candles strictly before <paramref name="replayFrom"/>)
-    /// and the replay window ([replayFrom, replayTo]) in one DB pass. The warmup list is what
-    /// the caller pre-loads into the symbol's CandleList; the replay list feeds the TickRunner.
-    /// </summary>
-    public static (List<CryptoCandle> Warmup, List<CryptoCandle> Replay) LoadSplit(
-        CryptoSymbol symbol, CryptoInterval interval,
-        CandleTime warmupFrom, CandleTime replayFrom, CandleTime replayTo)
-    {
-        var all = Load(symbol, interval, warmupFrom, replayTo);
-        var warmup = new List<CryptoCandle>(all.Count);
-        var replay = new List<CryptoCandle>();
-        foreach (var c in all)
-        {
-            if (c.OpenTime.Minutes < replayFrom.Minutes)
-                warmup.Add(c);
-            else
-                replay.Add(c);
-        }
-        return (warmup, replay);
-    }
+    // LoadSplit (warmup prefix plus replay window in one pass) was removed on 31-10-2026: nothing
+    // called it any more, the warmup and the chunked replay each load their own window.
 }

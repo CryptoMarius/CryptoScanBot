@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 110;
+    public readonly static int CurrentDatabaseVersion = 112;
 
 
     /// <summary>
@@ -84,6 +84,30 @@ public class DatabaseMigration
         //database.Connection.Execute("update Exchange set LastTimeFetched=null", transaction);
 
         transaction.Commit();
+    }
+
+
+    /// <summary>
+    /// Merges the rows of table Asset that hold the same coin for the same exchange into the oldest
+    /// one: the balances added up, the highest default kept. In practice one of the two is empty.
+    /// </summary>
+    internal static void MergeDuplicateAssets(CryptoDatabase database, Microsoft.Data.Sqlite.SqliteTransaction transaction)
+    {
+        List<Model.CryptoAsset> rows = [.. database.Connection.Query<Model.CryptoAsset>(
+            "select * from Asset where ExchangeId is not null order by Id", transaction: transaction)];
+        foreach (var group in rows.GroupBy(r => (r.ExchangeId, r.Name)).Where(g => g.Count() > 1))
+        {
+            Model.CryptoAsset keep = group.First();
+            foreach (Model.CryptoAsset other in group.Skip(1))
+            {
+                keep.Total += other.Total;
+                keep.Free += other.Free;
+                keep.Locked += other.Locked;
+                keep.DefaultTotal = Math.Max(keep.DefaultTotal, other.DefaultTotal);
+                database.Connection.Delete(other, transaction);
+            }
+            database.Connection.Update(keep, transaction);
+        }
     }
 
 
@@ -2634,6 +2658,48 @@ public class DatabaseMigration
             if (todo.Count > 0)
                 GlobalData.AddTextToLogTab($"Database version 110: capital use filled in for {found.Count} of {todo.Count} emulator run(s), " +
                     $"{found.Count(f => !f.CapitalUse.Estimated)} exactly from the fills");
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 31-10-2026 The paper account and the quote coins per exchange. The balances, the capital line
+        // and its ledger get the exchange they belong to, and the Default column of Paper assets moves
+        // from the settings file into the asset row. The rows already there get no exchange here: the
+        // migration runs before the settings are read, so it does not know which exchange that is. The
+        // first exchange that is activated claims them (ExchangeSettingsStore.ClaimUnassignedRows), and
+        // that is the exchange they were made on. The Quote table itself is made by CreateTables.
+        if (CurrentVersion > version.Version && version.Version == 110)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Asset add ExchangeId INTEGER NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Asset add DefaultTotal TEXT NOT NULL DEFAULT '0'", transaction); } catch { } // ignore
+            try { database.Connection.Execute("CREATE INDEX IdxAssetExchangeId ON Asset(ExchangeId)", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table AssetSnapshot add ExchangeId INTEGER NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table AssetAdjustment add ExchangeId INTEGER NULL", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // Version 112 (31-10-2026): one balance per coin per exchange. The emulator could leave a second
+        // row for a coin with a default (an empty row with the default, and one with the balance), see
+        // PaperAssets.ResetAssets. Such pairs are merged into the oldest row before the unique index
+        // can be made.
+        if (CurrentVersion > version.Version && version.Version == 111)
+        {
+            using var transaction = database.BeginTransaction();
+
+            MergeDuplicateAssets(database, transaction);
+            try { database.Connection.Execute("CREATE UNIQUE INDEX IdxAssetExchangeIdName ON Asset(ExchangeId, Name)", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

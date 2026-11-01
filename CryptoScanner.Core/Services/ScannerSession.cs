@@ -8,6 +8,7 @@ using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Helpers;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Telegram;
 using CryptoScanner.Core.Trader;
@@ -193,21 +194,28 @@ public class ScannerSession : IScannerSession
         if (currentExchange != GlobalData.ActiveExchange)
         {
             GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
+
+            // The quotes and the default paper assets of this exchange (since 31-10-2026 kept per
+            // exchange in the database). An exchange without any quote gets its default quote, as an
+            // active one - "no quote rows", not "no active quote": switching every quote off on purpose
+            // has to stay that way.
+            if (ExchangeSettingsStore.Activate(GlobalData.ActiveExchange!))
+                ExchangeSettingsStore.AddDefaultQuote();
         }
 
 
-        // Add a default quote if needed
-        string? defaultQuote = ExchangeBase.ExchangeOptions.DefaultQuote;
-        // strange default //if (string.IsNullOrEmpty(defaultQuote)) //    defaultQuote = "USDT";
-        if (!string.IsNullOrEmpty(defaultQuote) && !GlobalData.Settings.QuoteCoins.ContainsKey(defaultQuote))
-        {
-            CryptoQuoteData defaultQuoteData = GlobalData.AddQuoteData(defaultQuote);
-            defaultQuoteData.FetchCandles = true;
-            // The boundary comes from the exchange itself: what counts as a tradable 24 hour volume on
-            // Binance leaves nothing at all on a small exchange like HyperLiquid. Only applies to a quote
-            // the settings have never seen, so an existing (user adjusted) value is never overwritten.
-            defaultQuoteData.MinimalVolume = ExchangeBase.ExchangeOptions.MinimalVolume;
-        }
+        //// Add a default quote if needed
+        //string? defaultQuote = ExchangeBase.ExchangeOptions.DefaultQuote;
+        //// strange default //if (string.IsNullOrEmpty(defaultQuote)) //    defaultQuote = "USDT";
+        //if (!string.IsNullOrEmpty(defaultQuote) && !GlobalData.Settings.QuoteCoins.ContainsKey(defaultQuote))
+        //{
+        //    CryptoQuoteData defaultQuoteData = GlobalData.AddQuoteData(defaultQuote);
+        //    defaultQuoteData.FetchCandles = true;
+        //    // The boundary comes from the exchange itself: what counts as a tradable 24 hour volume on
+        //    // Binance leaves nothing at all on a small exchange like HyperLiquid. Only applies to a quote
+        //    // the settings have never seen, so an existing (user adjusted) value is never overwritten.
+        //    defaultQuoteData.MinimalVolume = ExchangeBase.ExchangeOptions.MinimalVolume;
+        //}
         //if (GlobalData.ActiveExchange!.SymbolListName.Count == 0)
         //    GlobalData.LoadSymbols(); // need this for the information dashboard (needs refactoring, todo)
 

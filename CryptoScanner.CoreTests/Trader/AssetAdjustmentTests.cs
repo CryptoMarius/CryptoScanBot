@@ -2,6 +2,7 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.CoreTests;
 
 using Dapper;
@@ -23,6 +24,28 @@ namespace CryptoScanner.Core.Trader.Tests;
 public class AssetAdjustmentTests : TestBase
 {
     private static readonly DateTime Day = new(2026, 8, 20, 0, 0, 0, DateTimeKind.Utc);
+
+    private List<CryptoPaperAssetDefault> _savedDefaults = [];
+
+    /// <summary>
+    /// These tests are about the start capital handed to the traded quote coins, which only happens
+    /// without default paper assets. The settings file of the TestData folder can hold a default
+    /// list (it is the data folder of every test run, and not in git), so the list is emptied here.
+    /// </summary>
+    [TestInitialize]
+    public void EmptyTheDefaults()
+    {
+        InitTestSession();
+        _savedDefaults = GlobalData.Settings.Trading.PaperAssetDefaults;
+        GlobalData.Settings.Trading.PaperAssetDefaults = [];
+    }
+
+    [TestCleanup]
+    public void RestoreTheDefaults()
+    {
+        GlobalData.Settings.Trading.PaperAssetDefaults = _savedDefaults;
+    }
+
 
     private static CryptoDatabase Arrange(out CryptoSymbol symbol)
     {

@@ -77,12 +77,17 @@ public partial class RunSignalsViewModel : ObservableObject
     public RunSignalsViewModel(RunRow run)
     {
         RunId = run.Id;
-        Header = $"Signals for run #{run.Id}  ({run.Label}, started {run.StartedAt:yyyy-MM-dd HH:mm})";
-        Load(run.Id);
+        // Local time like the Started column of the results grid (StartedAt is stored in UTC), since 31-10-2026
+        //Header = $"Signals for run #{run.Id}  ({run.Label}, started {run.StartedAt:yyyy-MM-dd HH:mm})";
+        Header = $"Signals for run #{run.Id}  ({run.Label}, started {run.StartedLocal})";
+        //Load(run.Id);
+        Load(run.Id, run.SignalCount);
     }
 
 
-    private void Load(int runId)
+    // signalCount: the number of signals stored on the run row, to tell a run without signals from one
+    // whose signals were cleared (31-10-2026).
+    private void Load(int runId, int signalCount)
     {
         try
         {
@@ -121,9 +126,18 @@ public partial class RunSignalsViewModel : ObservableObject
                 if (r.PositionId.HasValue)
                     withPosition++;
 
-            Status = Signals.Count == 0
-                ? "This run produced no signals."
-                : $"{Signals.Count} signal(s), {withPosition} became a position.";
+            //Status = Signals.Count == 0
+            //    ? "This run produced no signals."
+            //    : $"{Signals.Count} signal(s), {withPosition} became a position.";
+            // The Signal table only holds the signals of the latest run: it is emptied at the start of
+            // every run (EmulatorDb.PurgeBeforeRun), on purpose, to keep the database the size of one
+            // run. An older run with a SignalCount did have signals; they are no longer stored.
+            if (Signals.Count > 0)
+                Status = $"{Signals.Count} signal(s), {withPosition} became a position.";
+            else if (signalCount > 0)
+                Status = $"This run had {signalCount} signal(s), but they are no longer stored: the signals of a run are cleared when a later run starts. Only the latest run keeps its signals.";
+            else
+                Status = "This run produced no signals.";
         }
         catch (Exception ex)
         {

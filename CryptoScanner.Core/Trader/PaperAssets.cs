@@ -130,7 +130,11 @@ public class PaperAssets
 
             activeExchange.Data.AssetList.Clear();
 
-            foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
+            //foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
+            // Only the balances of this exchange (since 31-10-2026). Reading them all put the paper
+            // account of the previous exchange on the new one after a switch.
+            foreach (CryptoAsset asset in database.Connection.Query<CryptoAsset>(
+                "select * from Asset where ExchangeId = @id", new { id = activeExchange.Id }))
             {
                 activeExchange.Data.AssetList.TryAdd(asset.Name, asset);
             }
@@ -141,7 +145,9 @@ public class PaperAssets
             // Starting over on purpose goes through ResetAssets (Tools -> Paper assets, or the
             // emulator at the start of a run). No fallback amount here: the scanner reads its starting
             // balances from the default asset list and nowhere else.
-            if (activeExchange.Data.AssetList.IsEmpty)
+            // A row that only carries a default (DefaultTotal, no balance) does not count as a balance:
+            // before 31-10-2026 such a coin had no row at all, and the account counted as empty.
+            if (activeExchange.Data.AssetList.Values.All(a => a.Total == 0 && a.Locked == 0))
             {
                 SeedStartBalances(activeExchange, 0m, logToTab: true);
             }
@@ -160,6 +166,7 @@ public class PaperAssets
         {
             asset = new()
             {
+                ExchangeId = activeExchange.Id,
                 Name = name,
                 Locked = 0,
                 Free = defaultTotal,
@@ -180,6 +187,25 @@ public class PaperAssets
             AssetAdjustmentTools.Record(activeExchange, asset.Name, 0, defaultTotal,
                 CryptoAssetAdjustmentReason.StartCapital);
         }
+        else if (asset.Total == 0 && asset.Locked == 0 && defaultTotal != 0)
+        {
+            // A row that only held its default (see ResetAssets): the start capital goes into it,
+            // a second row for the same coin would be read back as two balances
+            asset.ExchangeId = activeExchange.Id;
+            asset.Total = defaultTotal;
+            asset.Free = defaultTotal;
+
+            using CryptoDatabase database = new();
+            database.Open();
+
+            if (asset.Id == 0)
+                database.Connection.Insert(asset);
+            else
+                database.Connection.Update(asset);
+
+            AssetAdjustmentTools.Record(activeExchange, asset.Name, 0, defaultTotal,
+                CryptoAssetAdjustmentReason.StartCapital);
+        }
         return asset;
     }
 
@@ -189,6 +215,7 @@ public class PaperAssets
         {
             assetBase = new()
             {
+                ExchangeId = activeExchange.Id,
                 Name = name,
                 Free = 0,
                 Total = 0,
@@ -217,7 +244,13 @@ public class PaperAssets
             using (CryptoDatabase database = new())
             {
                 database.Open();
-                database.Connection.Execute("delete from Asset");
+                //database.Connection.Execute("delete from Asset");
+                // Only this exchange, and the Default column stays: it is a setting, not a balance
+                // (since 31-10-2026). A row with a default keeps its place with nothing in it.
+                database.Connection.Execute("delete from Asset where ExchangeId = @id and cast(DefaultTotal as REAL) = 0",
+                    new { id = activeExchange.Id });
+                database.Connection.Execute("update Asset set Total = '0', Free = '0', Locked = '0' where ExchangeId = @id",
+                    new { id = activeExchange.Id });
             }
 
             // Everything that is thrown away here leaves the account, so it belongs in the ledger -
@@ -227,6 +260,20 @@ public class PaperAssets
                     CryptoAssetAdjustmentReason.Reset);
 
             activeExchange.Data.AssetList.Clear();
+
+            // The rows that are left are the ones with a default, now empty. They go back into the
+            // list, so the start capital below lands in them instead of in a second row per coin. The
+            // list in memory cannot be trusted for that: the emulator clears it before every run
+            // (ReplayRunner.ResetRunState), and that left two rows per default coin (31-10-2026).
+            using (CryptoDatabase database = new())
+            {
+                database.Open();
+                foreach (CryptoAsset asset in database.Connection.Query<CryptoAsset>(
+                    "select * from Asset where ExchangeId = @id", new { id = activeExchange.Id }))
+                {
+                    activeExchange.Data.AssetList.TryAdd(asset.Name, asset);
+                }
+            }
             Overcommitted.Clear();
 
             // Silent: the emulator resets at the start of every run, and a line per coin per run
@@ -571,7 +618,9 @@ public class PaperAssets
 
         // Only drop an asset once it is really gone: nothing left AND nothing reserved for an open
         // order. Deleting it while orders were still on the book threw their reservation away.
-        if (asset.Total == 0 && asset.Locked == 0)
+        // Nor while it carries a default: that is the setting of the next reset (since 31-10-2026).
+        asset.ExchangeId = activeExchange.Id;
+        if (asset.Total == 0 && asset.Locked == 0 && asset.DefaultTotal == 0)
         {
             activeExchange.Data.AssetList.TryRemove(asset.Name, out _);
             if (asset.Id > 0)

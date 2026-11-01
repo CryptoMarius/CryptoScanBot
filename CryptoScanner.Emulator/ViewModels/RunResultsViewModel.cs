@@ -23,9 +23,37 @@ namespace CryptoScanner.Emulator.ViewModels;
 /// Lightweight projection of one row in the EmulatorRun table — only the columns the runs
 /// grid shows. Avoids pulling all the Symbol/Exchange Computed-properties that the full
 /// CryptoEmulatorRun model would not have anyway.
+/// <para>
+/// Raises PropertyChanged since 31-10-2026 so the live refresh can update the running row in place
+/// (<see cref="CopyFrom"/>): replacing the object in the collection took the selection away from it.
+/// </para>
 /// </summary>
-public class RunRow
+public class RunRow : System.ComponentModel.INotifyPropertyChanged
 {
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
+    // The columns Dapper fills (read and write) and every property the grid can bind (the computed
+    // ones included), both resolved once.
+    private static readonly System.Reflection.PropertyInfo[] StoredProperties =
+        typeof(RunRow).GetProperties().Where(p => p.CanRead && p.CanWrite).ToArray();
+    private static readonly System.Reflection.PropertyInfo[] AllProperties = typeof(RunRow).GetProperties();
+
+    /// <summary>
+    /// Takes over every stored value of <paramref name="fresh"/> (the same run, read again) and tells
+    /// the grid that all properties changed. The row object stays the same, so a selected row stays
+    /// selected and a context-menu action still works on it.
+    /// </summary>
+    public void CopyFrom(RunRow fresh)
+    {
+        foreach (System.Reflection.PropertyInfo property in StoredProperties)
+            property.SetValue(this, property.GetValue(fresh));
+
+        if (PropertyChanged == null)
+            return;
+        foreach (System.Reflection.PropertyInfo property in AllProperties)
+            PropertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(property.Name));
+    }
+
     public int Id { get; set; }
     public DateTime StartedAt { get; set; }
 
@@ -54,6 +82,10 @@ public class RunRow
     public int PositionsWon { get; set; }
     public int PositionsLost { get; set; }
     public int PositionsTimeout { get; set; }
+
+    // Positions replaced by a newer signal before their entry filled (status Cancelled). Counted in
+    // PositionCount but in none of Open, Won, Lost and Timeout, so without this column Pos did not add up.
+    public int PositionsCancelled { get; set; }
     public decimal Profit { get; set; }
 
     // Summed invested capital of the run's closed positions. Nullable in the DB for legacy runs
@@ -351,6 +383,19 @@ public class RunRow
         }
     }
 
+    /// <summary>
+    /// The same length as <see cref="Duration"/>, as a TimeSpan: the sort key of the Duration column.
+    /// Sorting on the text put "1.00:00:00" before "23:00:00" (31-10-2026).
+    /// </summary>
+    public TimeSpan DurationSpan
+    {
+        get
+        {
+            TimeSpan span = (FinishedAt ?? DateTime.UtcNow) - StartedAt;
+            return span < TimeSpan.Zero ? TimeSpan.Zero : span;
+        }
+    }
+
     /// <summary>The replay window as "from → to", plus the length in days — the period length is
     /// what makes two runs comparable. Blank for legacy runs without a stored period.</summary>
     public string Period
@@ -436,6 +481,17 @@ public partial class RunResultsViewModel : ObservableObject
 
 
     /// <summary>
+    /// Stops the live refresh for good. Called when the main window that owns this view model closes,
+    /// in particular after "Change database": the old window's timer kept querying every 20 seconds,
+    /// and against the new database, because the connection follows GlobalData.AppDataFolder.
+    /// </summary>
+    public void StopLiveRefresh()
+    {
+        _liveTimer.Stop();
+    }
+
+
+    /// <summary>
     /// Recomputes the currently-running emulator run's aggregates from its (still growing) signals and
     /// positions and updates only that one row in the grid, so the Results tab shows live numbers during
     /// a run instead of only the progress bar — without rebuilding the whole grid (other rows keep their
@@ -477,7 +533,15 @@ public partial class RunResultsViewModel : ObservableObject
             // Back on the UI thread (await resumed on the dispatcher context).
             RunRow? existing = Runs.FirstOrDefault(r => r.Id == fresh.Id);
             if (existing != null && MatchesFilter(existing))
-                Runs[Runs.IndexOf(existing)] = fresh;  // in-place: only this row re-renders
+            {
+                //Runs[Runs.IndexOf(existing)] = fresh;  // in-place: only this row re-renders
+                // Since 31-10-2026 the row object itself takes the new values: a Replace in the
+                // collection took the selection away from the running row every 20 seconds, so a
+                // context-menu action on it did nothing or hit another row.
+                existing.CopyFrom(fresh);
+                if (!MatchesFilter(existing))
+                    RunsView.Refresh();
+            }
             else if (existing != null)
             {
                 // The row is filtered out of the view. A Replace (or Remove) of an item the view does
@@ -512,7 +576,7 @@ public partial class RunResultsViewModel : ObservableObject
     /// </summary>
     private const string RunSelect =
         "SELECT r.Id, r.StartedAt, r.FinishedAt, r.BuildStamp, r.Label, r.FromDate, r.ToDate, r.Result, " +
-        "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.Profit, r.Invested, " +
+        "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.PositionsCancelled, r.Profit, r.Invested, " +
         "       r.PeakInvested, r.PeakPositions, r.MaxDrawdownPercentage, r.PositionsLong, r.PositionsShort, r.ProfitLong, r.ProfitShort, " +
         "       r.UnrealizedPnlLong, r.UnrealizedPnlShort, r.OpenDrawdown, r.ProfitWithoutBestTen, " +
         "       r.AvgInvested, r.ExposurePercentage, r.CapitalUseEstimated, " +
@@ -580,6 +644,7 @@ public partial class RunResultsViewModel : ObservableObject
             ["won"] = r => r.PositionsWon,
             ["lost"] = r => r.PositionsLost,
             ["timeout"] = r => r.PositionsTimeout,
+            ["cancelled"] = r => r.PositionsCancelled,
             ["win%"] = r => r.WinPercentage,
             ["profit"] = r => r.Profit,
             ["unrealizedpnl"] = r => r.UnrealizedPnl,
@@ -775,6 +840,10 @@ public partial class RunResultsViewModel : ObservableObject
     }
 
 
+    /// <summary>The message when a delete is refused because the emulator is busy.</summary>
+    public const string RunningRefusal = "The emulator is busy (a run or the queue is going) - delete runs once it has stopped. Nothing was deleted.";
+
+
     /// <summary>
     /// Deletes one emulator run and everything tagged with it (signals, positions and their
     /// parts/steps) from the database, then reloads the grid so the row disappears. The caller
@@ -785,6 +854,15 @@ public partial class RunResultsViewModel : ObservableObject
     {
         if (rows.Count == 0)
             return;
+
+        // The view refuses this while the emulator is busy; this is the last line for a run that
+        // started while the confirmation was open (31-10-2026). Deleting the running run made its
+        // signal and position inserts fail on the foreign key.
+        if (GlobalData.CurrentEmulatorRunId != null)
+        {
+            Status = RunningRefusal;
+            return;
+        }
 
         try
         {
@@ -813,6 +891,14 @@ public partial class RunResultsViewModel : ObservableObject
         int count = Runs.Count;
         if (count == 0)
             return;
+
+        // Same last line as DeleteRuns: after "delete all" the running run is gone and the next run
+        // can get Id 1 again.
+        if (GlobalData.CurrentEmulatorRunId != null)
+        {
+            Status = RunningRefusal;
+            return;
+        }
 
         try
         {
@@ -886,6 +972,7 @@ public partial class RunResultsViewModel : ObservableObject
             "PositionsWon" => r => r.PositionsWon,
             "PositionsLost" => r => r.PositionsLost,
             "PositionsTimeout" => r => r.PositionsTimeout,
+            "PositionsCancelled" => r => r.PositionsCancelled,
             "WinPercentage" => r => r.WinPercentage,
             "Profit" => r => r.Profit,
             "ProfitPercentage" => r => r.ProfitPercentage,
@@ -913,6 +1000,13 @@ public partial class RunResultsViewModel : ObservableObject
             "AvgDurationText" => r => r.AvgDurationSec,
             "MinDurationText" => r => r.MinDurationSec,
             "MaxDurationText" => r => r.MaxDurationSec,
+            // The sort member paths of the duration columns since 31-10-2026 (the raw values, so the
+            // grid's own sort is no longer on the text); the text names above stay for an older
+            // SortColumn in the run configuration file.
+            "DurationSpan" => r => r.DurationSpan,
+            "AvgDurationSec" => r => r.AvgDurationSec,
+            "MinDurationSec" => r => r.MinDurationSec,
+            "MaxDurationSec" => r => r.MaxDurationSec,
             _ => r => r.StartedAt,
         };
 

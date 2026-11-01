@@ -41,6 +41,13 @@ public sealed class ReplayRunner
     /// is independent). The shared DB flush + zone drain still run serially after the parallel phase,
     /// per minute, so the outcome is deterministic. Set to false for a single-threaded baseline (to
     /// confirm parallel and serial produce the same signals/positions).
+    /// <para>
+    /// Correction 31-10-2026: since <see cref="SerialTradeHalf"/> is always on, only the COMPUTE half
+    /// (phase A: indicators, order fills, signals) runs in parallel when this is true. The trade half
+    /// (phase A2) always runs one symbol at a time in symbol order, and the branch that ran the whole
+    /// pipeline in parallel (ProcessPerMinuteAsync inside Parallel.ForEachAsync) is never taken - the
+    /// serial trade half is the only path in use. False makes phase A serial as well.
+    /// </para>
     /// </summary>
     public bool RunParallel { get; init; } = true;
 
@@ -204,6 +211,17 @@ public sealed class ReplayRunner
         var exchange = GlobalData.ActiveExchange!;
         GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
 
+        // The replay always runs on the active exchange; config.ExchangeName does not choose it. When
+        // the two differ (after an exchange switch in Setup, or a run configuration copied from
+        // another session) the run row and its checksum named an exchange that was never replayed.
+        // Say so, and put the exchange that is replayed on the run row (31-10-2026).
+        if (!string.IsNullOrEmpty(config.ExchangeName) && !string.Equals(config.ExchangeName, exchange.Name, StringComparison.Ordinal))
+        {
+            GlobalData.AddErrorToLogTab($"Run configuration names exchange \"{config.ExchangeName}\", but the replay runs on the active " +
+                $"exchange \"{exchange.Name}\"; the run is stored with \"{exchange.Name}\"");
+            EmulatorDb.CorrectRunExchangeName(exchange.Name);
+        }
+
         // Enable the per-candle pipeline profiler for this run (off in the live scanner). It breaks
         // NewCandleArrivedAsync down into indicators / algorithms / trade handling / position check,
         // so the LogPhaseTimings summary can show where the dominant "pipeline" time actually goes.
@@ -227,6 +245,11 @@ public sealed class ReplayRunner
 
             CandleTime replayFrom = CandleTime.AlignFromDateTime(config.FromDate, baseInterval.Duration);
             CandleTime replayTo = CandleTime.AlignFromDateTime(config.ToDate, baseInterval.Duration);
+            // The end is exclusive (see EmulatorRunConfig.ToDate): the last base candle closes at
+            // replayTo, so the day ToDate itself is not replayed. Said once, because the run label
+            // ("from..to") reads as if that day were included.
+            GlobalData.AddTextToLogTab($"Replay window: {replayFrom.ToDateTime():yyyy-MM-dd HH:mm} up to {replayTo.ToDateTime():yyyy-MM-dd HH:mm} UTC " +
+                $"(the end is exclusive, {replayTo.ToDateTime():yyyy-MM-dd} itself is not replayed)");
 
             // Advance the emulator clock to the END of the replay window before loading candles.
             // LoadCandlesInRange applies an "OpenTime <= Clock.UtcNow" filter when
@@ -245,7 +268,9 @@ public sealed class ReplayRunner
                 // Configs and the hand-edited queue JSON hold bare pairs ("BTCUSDT") from before
                 // the product moved into the name; TryGetSymbolByPair accepts both spellings.
                 if (!exchange.TryGetSymbolByPair(symbolName, out CryptoSymbol? symbol))
-                    throw new InvalidOperationException($"Symbol '{symbolName}' not found on exchange '{config.ExchangeName}'.");
+                    //throw new InvalidOperationException($"Symbol '{symbolName}' not found on exchange '{config.ExchangeName}'.");
+                    // The exchange that was searched, not the name in the configuration (31-10-2026)
+                    throw new InvalidOperationException($"Symbol '{symbolName}' not found on exchange '{exchange.Name}'.");
                 symbols.Add(symbol);
             }
 
@@ -294,7 +319,10 @@ public sealed class ReplayRunner
             // the run. The date is handed in because the clock is parked on the END of the replay
             // window at this moment (see the preClock above), and a snapshot stamped there would put
             // the start capital behind the result of the run.
-            AssetSnapshotTools.Capture(exchange, replayFrom.ToDateTime());
+            //AssetSnapshotTools.Capture(exchange, replayFrom.ToDateTime());
+            // Moved below the warmup on 31-10-2026 (CaptureStartCapital): here every LastPrice had just
+            // been reset, so a default in another coin than the reference coin ("0,1 BTC") counted as 0
+            // on the first day of the capital line.
 
             // ───── Warmup all symbols up-front ──────────────────────────────────────
             long warmupStart = Stopwatch.GetTimestamp();
@@ -309,6 +337,9 @@ public sealed class ReplayRunner
                 $"{(double)elapsedWarmup / Stopwatch.Frequency:F1}s " +
                 $"[base interval: {baseInterval.Name}]");
 
+            // The first point of the capital line, after the warmup since 31-10-2026 (see above)
+            CaptureStartCapital(exchange, symbols, replayFrom);
+
             // The volume follows the replayed day from here on, so say so - the minimum-volume check
             // is the symbol selection in practice, and a silent switch of what feeds it would make
             // this run incomparable with every earlier one without a trace in the log.
@@ -316,6 +347,25 @@ public sealed class ReplayRunner
                 (EmulatorVolume.SymbolsWithoutDailyVolume > 0
                     ? $" ({EmulatorVolume.SymbolsWithoutDailyVolume} symbol(s) start at zero, no daily candle in the warmup)"
                     : ""));
+
+
+            // ───── Filters that read BTC ────────────────────────────────────────────
+            // The same rule as the barometer below (31-10-2026). Only the coins of the run get candles,
+            // so a BTC filter (BtcMove, the BTC part of the market state, the market exit on BTC) on a
+            // run without BTC of that quote coin reads nothing, and a missing value lets everything
+            // through without a word. Refuse to start instead. A quote coin whose BTC pair does not
+            // exist on the exchange at all is left alone: the live scanner has no value there either.
+            // Before the barometer on purpose: a run that stops here must not touch the stored series.
+            List<string> btcConditions = ActiveBtcConditions();
+            if (btcConditions.Count > 0)
+            {
+                List<string> missingBtc = MissingBtcSymbols(exchange, symbols);
+                if (missingBtc.Count > 0)
+                    throw new InvalidOperationException(
+                        $"This run does not replay {string.Join(", ", missingBtc)} while {btcConditions.Count} condition(s) read BTC: " +
+                        $"{string.Join(", ", btcConditions)}. Without its candles those conditions let everything through. " +
+                        "Add the BTC pair to the symbols of the run, or switch the conditions off.");
+            }
 
 
             // ───── Market barometer ─────────────────────────────────────────────────
@@ -344,6 +394,16 @@ public sealed class ReplayRunner
                 {
                     GlobalData.AddTextToLogTab($"Barometer: {barometer.SymbolCountText} coin(s), intervals {barometer.IntervalText}" +
                         (barometerConditions.Count > 0 ? $", conditions: {string.Join(", ", barometerConditions)}" : ", no conditions"));
+
+                    // Only now that the barometer is kept: the marker of a series this run overwrites
+                    // goes, and the quote coins with too few coins are marked neutral (31-10-2026).
+                    barometer.BeginRun();
+
+                    // A barometer for the first replayed minute as well. The loop measures after each
+                    // minute, so the first one had none, and since 31-10-2026 a missing barometer
+                    // refuses (BarometerHelper) - in the trader it even removes the signal and pauses
+                    // the side for five minutes. Measured over the warmup, at the minute before the start.
+                    barometer.MeasureBeforeStart(replayFrom - 1u);
                 }
             }
             else if (barometerConditions.Count > 0)
@@ -589,6 +649,10 @@ public sealed class ReplayRunner
                     foreach (var symbol in symbols)
                         pruned += await CandleTools.CleanCandleDataAsync(symbol, null, CutoffFor);
                     GlobalData.AddTextToLogTab($"Chunk {chunkIndex}: pruned {pruned} old candles from memory");
+
+                    // The $BMP/$BMX candles a measuring barometer wrote in this chunk: to disk, and out
+                    // of memory (31-10-2026, see BarometerReplay.SaveAndPruneMeasured).
+                    barometer?.SaveAndPruneMeasured(chunk.End);
                 }
 
                 // Per-chunk delta report — the "where does it slow down" measurement.
@@ -636,7 +700,9 @@ public sealed class ReplayRunner
         if (measured == null || !measured.HasMarkersToWrite)
             return;
 
-        if (candlesSaved)
+        //if (candlesSaved)
+        // A chunk that could not be written between two chunks counts as well (31-10-2026)
+        if (candlesSaved && measured.ChunksSaved)
             measured.WriteMarkers();
         else
             GlobalData.AddTextToLogTab("Barometer: not every candle was saved, so the series is not marked as whole and the next run measures it again");
@@ -1291,6 +1357,12 @@ public sealed class ReplayRunner
     /// all in-memory zones and reloads them from the DB, so the queued diffs must be flushed BEFORE
     /// the drain, and the drain's own diffs flushed after. Serial + deterministic order, so the
     /// persisted result does not depend on the (parallel) compute order.
+    /// <para>
+    /// Correction 31-10-2026: in the emulator nothing reaches the DLZ queue any more. SignalPrepare
+    /// calls ZoneThreadCalculate.CalculateZones directly in emulator mode (phase A, per symbol), so the
+    /// drain below is always empty (the "zones" bucket of the timing report stays at 0.0) and only the
+    /// first flush does work. The drain and the second flush are kept as a harmless safety net.
+    /// </para>
     /// </summary>
     private async Task PersistAndCalculateZonesAsync()
     {
@@ -1306,6 +1378,88 @@ public sealed class ReplayRunner
 
         GlobalData.ThreadSaveObjects?.Flush();
         elapsedFlush += Stopwatch.GetTimestamp() - t2;
+    }
+
+
+    /// <summary>
+    /// Every condition that reads the candles of BTC of the quote coin, whichever side and whichever
+    /// half (analysis or trader) it is on: the BTC move entry filter, the market state (its BTC part,
+    /// see MarketState.CalculateBtcPart) and the market exit on BTC. Used by the guard in RunAsync.
+    /// </summary>
+    private static List<string> ActiveBtcConditions()
+    {
+        List<string> names = [];
+        foreach (CryptoTradeSide side in new[] { CryptoTradeSide.Long, CryptoTradeSide.Short })
+        {
+            if (TradingConfig.Signals.TryGetValue(side, out SettingsCompiled? signals))
+            {
+                if (signals.BtcMoveActive)
+                    names.Add($"analyze {side} BTC move");
+                if (signals.MarketStateActive)
+                    names.Add($"analyze {side} market state");
+            }
+            if (TradingConfig.Trading.TryGetValue(side, out SettingsCompiled? trading))
+            {
+                if (trading.BtcMoveActive)
+                    names.Add($"trader {side} BTC move");
+                if (trading.MarketStateActive)
+                    names.Add($"trader {side} market state");
+                if (trading.MarketExitActive && trading.MarketExitUseBtc)
+                    names.Add($"trader {side} market exit on BTC");
+            }
+        }
+        return names;
+    }
+
+
+    /// <summary>
+    /// The BTC pairs of the quote coins of this run that exist on the exchange but are not replayed.
+    /// Their candle lists stay empty during the replay, so every BTC condition reads nothing.
+    /// </summary>
+    private static List<string> MissingBtcSymbols(CryptoScanner.Core.Model.CryptoExchange exchange, List<CryptoSymbol> symbols)
+    {
+        List<string> missing = [];
+        HashSet<string> quotes = [];
+        foreach (CryptoSymbol symbol in symbols)
+        {
+            if (symbol.QuoteData == null || symbol.IsBarometerSymbol() || !quotes.Add(symbol.QuoteData.Name))
+                continue;
+            if (exchange.TryGetSymbolByPair("BTC" + symbol.QuoteData.Name, out CryptoSymbol? btc) && !symbols.Contains(btc))
+                missing.Add(btc.Name);
+        }
+        return missing;
+    }
+
+
+    /// <summary>
+    /// The first point of the capital line: the start capital, stamped with the first day of the run.
+    /// After the warmup, with the close of the last warmup 1m candle as the price of every symbol of
+    /// the run, so a default in another coin than the reference coin is valued like on every later
+    /// day instead of at 0 (31-10-2026). The prices are put back to null afterwards: the replay
+    /// starts with LastPrice empty (ResetRunState / AssertCleanState), and the first base candle
+    /// sets it as before. A coin without a pair in the run has no price on any day, the same as before.
+    /// </summary>
+    private void CaptureStartCapital(CryptoScanner.Core.Model.CryptoExchange exchange, List<CryptoSymbol> symbols, CandleTime replayFrom)
+    {
+        try
+        {
+            foreach (CryptoSymbol symbol in symbols)
+            {
+                // The base interval when the run has no 1m candles (a 5m or 15m base without descent)
+                if (symbol.GetSymbolInterval(oneMinuteInterval.IntervalPeriod).CandleList.TryGetLastCandle(out CryptoCandle last)
+                    || symbol.GetSymbolInterval(activeBaseInterval.IntervalPeriod).CandleList.TryGetLastCandle(out last))
+                    symbol.LastPrice = last.Close;
+            }
+
+            // The date is handed in because the clock is parked on the END of the replay window at
+            // this moment (see the preClock in RunAsync).
+            AssetSnapshotTools.Capture(exchange, replayFrom.ToDateTime());
+        }
+        finally
+        {
+            foreach (CryptoSymbol symbol in symbols)
+                symbol.LastPrice = null;
+        }
     }
 
 
@@ -1429,6 +1583,19 @@ public sealed class ReplayRunner
         if (exchange.Data.AssetList.Count > 0)
             throw new InvalidOperationException(
                 $"AssetList not empty at run start: {exchange.Data.AssetList.Count} leftover asset(s).");
+
+        // What the per-symbol checks below cannot catch: ApplyRunOverrides makes every symbol object
+        // anew, so those fields are fresh by construction. The per-quote index (quoteData.SymbolList,
+        // read by the market RSI, the market state and the market move) is NOT remade with them,
+        // and until 31-10-2026 it kept pointing at the objects of the bootstrap.
+        foreach (var symbol in symbols)
+        {
+            if (symbol.QuoteData != null && symbol.Status == 1 && !symbol.IsBarometerSymbol()
+                && !symbol.QuoteData.SymbolList.Contains(symbol))
+                throw new InvalidOperationException(
+                    $"{symbol.Name}: not in the symbol index of {symbol.QuoteData.Name} at run start - " +
+                    "quoteData.SymbolList is stale (IndexQuoteDataSymbols was not called after LoadSymbols).");
+        }
 
         foreach (var symbol in symbols)
         {

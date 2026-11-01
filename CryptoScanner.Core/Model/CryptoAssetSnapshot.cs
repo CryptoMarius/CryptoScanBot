@@ -25,6 +25,10 @@ public class CryptoAssetSnapshot
     // run stay separated from the live ones and from those of other runs - same as Position/Signal/Zone.
     public int? EmulatorRunId { get; set; }
 
+    // The exchange whose balances these are (since 31-10-2026), so the capital line of the live
+    // scanner does not run on over two exchanges after a switch.
+    public int? ExchangeId { get; set; }
+
     // The moment the balances were read, taken from GlobalData.Clock so a replay is stamped with
     // emulator time. There is at most one snapshot per calendar day (per run), see AssetSnapshotTools.
     public DateTime SnapshotDate { get; set; }

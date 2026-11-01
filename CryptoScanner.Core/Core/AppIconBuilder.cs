@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Services;
 
 using SkiaSharp;
 
@@ -28,6 +29,26 @@ public static class AppIconBuilder
 
     /// <summary>Badge diameter as a fraction of the icon.</summary>
     private const float BadgeFraction = 0.56f;
+
+    /// <summary>
+    /// Badge diameter as a fraction of the icon in the sizes up to <see cref="SmallIconSize"/>. With
+    /// small task bar buttons Windows shows the 16 pixel picture (24 on the normal buttons, 20 and
+    /// 24 at 125% and 150%), where the normal badge left a logo of 7 pixels. A bigger one (75%) took
+    /// the coin away, so it is a compromise: the artwork is drawn to the edges there as well (see
+    /// <see cref="Render"/>) and the badge takes a little over half of it.
+    /// </summary>
+    private const float SmallBadgeFraction = 0.62f;
+    private const int SmallIconSize = 24;
+
+    /// <summary>Pixels with less alpha than this count as empty when measuring the artwork.</summary>
+    private const byte EmptyAlpha = 20;
+
+    /// <summary>
+    /// Only this size is stored as a PNG, like AppIcon.ico itself does; every smaller one is a bitmap.
+    /// GTK, which Photino uses on Linux, cannot read a PNG inside an .ico ("Compressed icons are not
+    /// supported") and then leaves the window without any icon at all.
+    /// </summary>
+    private const int PngSize = 256;
 
     /// <summary>
     /// Every settings save passes through ApplyConfigurationAsync and asks for the icon again; the
@@ -66,14 +87,44 @@ public static class AppIconBuilder
     public static byte[] Build(CryptoExchangeType? exchangeType, bool emulator)
         => Cache.GetOrAdd((exchangeType, emulator), key => Draw(key.Item1, key.Item2));
 
+    /// <summary>
+    /// The 256 pixel picture of the icon as a PNG, for a platform that takes a picture instead of an
+    /// .ico (the Dock on macOS).
+    /// </summary>
+    public static byte[] BuildPng(CryptoExchangeType? exchangeType, bool emulator)
+        => LargestPng(Build(exchangeType, emulator))
+            ?? throw new InvalidOperationException("The icon holds no PNG picture");
+
+    /// <summary>
+    /// Hand the icon of the running application to the platform as the icon of the application as a
+    /// whole. Only macOS needs it: its Dock never shows the icon of a window. Called next to every
+    /// place that sets the window icon.
+    /// </summary>
+    public static void ApplyApplicationIcon()
+    {
+        try
+        {
+            GlobalData.GetService<IPlatformService>()?.ApplyApplicationIcon(BuildPng(CurrentExchangeType(), GlobalData.IsEmulatorMode));
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "AppIconBuilder.ApplyApplicationIcon");
+        }
+    }
+
     private static byte[] Draw(CryptoExchangeType? exchangeType, bool emulator)
     {
         using SKImage baseImage = LoadBaseImage(emulator);
         using SKImage? logo = exchangeType.HasValue ? LoadLogo(exchangeType.Value) : null;
 
-        List<(int Size, byte[] Png)> entries = [];
+        SKRect artwork = ArtworkBounds(baseImage);
+
+        List<(int Size, byte[] Data)> entries = [];
         foreach (int size in IconSizes)
-            entries.Add((size, RenderPng(baseImage, logo, size)));
+        {
+            using SKImage picture = Render(baseImage, artwork, logo, size);
+            entries.Add((size, size >= PngSize ? EncodePng(picture) : EncodeBitmap(picture)));
+        }
         return WriteIco(entries);
     }
 
@@ -131,6 +182,16 @@ public static class AppIconBuilder
 
         // An .ico is a small directory of images. The 256 pixel one is stored as a PNG, which Skia
         // decodes directly; every smaller size is drawn from it.
+        byte[]? bestPng = LargestPng(ico);
+
+        // No PNG inside: let Skia's own .ico decoder pick an image.
+        return SKImage.FromEncodedData(bestPng ?? ico)
+            ?? throw new InvalidOperationException("The application icon cannot be decoded");
+    }
+
+    /// <summary>The largest picture inside an .ico that is stored as a PNG, or null when there is none.</summary>
+    private static byte[]? LargestPng(byte[] ico)
+    {
         int count = BitConverter.ToUInt16(ico, 4);
         int bestSize = 0;
         byte[]? bestPng = null;
@@ -147,10 +208,7 @@ public static class AppIconBuilder
                 bestPng = ico.AsSpan(offset, length).ToArray();
             }
         }
-
-        // No PNG inside: let Skia's own .ico decoder pick an image.
-        return SKImage.FromEncodedData(bestPng ?? ico)
-            ?? throw new InvalidOperationException("The application icon cannot be decoded");
+        return bestPng;
     }
 
     private static SKImage? LoadLogo(CryptoExchangeType exchangeType)
@@ -169,7 +227,41 @@ public static class AppIconBuilder
         return memory.ToArray();
     }
 
-    private static byte[] RenderPng(SKImage baseImage, SKImage? logo, int size)
+    /// <summary>
+    /// The part of the base icon that is not empty. The artwork leaves a margin of about a fifth of
+    /// the picture (the coin with its magnifying glass fills 79% by 84%), which is a lot when only
+    /// 16 pixels are available; the other icons in a task bar fill theirs.
+    /// </summary>
+    private static SKRect ArtworkBounds(SKImage baseImage)
+    {
+        using SKBitmap bitmap = SKBitmap.FromImage(baseImage);
+        int left = bitmap.Width, top = bitmap.Height, right = -1, bottom = -1;
+        for (int y = 0; y < bitmap.Height; y++)
+        {
+            for (int x = 0; x < bitmap.Width; x++)
+            {
+                if (bitmap.GetPixel(x, y).Alpha <= EmptyAlpha)
+                    continue;
+                left = Math.Min(left, x);
+                right = Math.Max(right, x);
+                top = Math.Min(top, y);
+                bottom = Math.Max(bottom, y);
+            }
+        }
+
+        // An empty or missing picture: use all of it
+        if (right < left || bottom < top)
+            return new SKRect(0, 0, bitmap.Width, bitmap.Height);
+        return new SKRect(left, top, right + 1, bottom + 1);
+    }
+
+    /// <summary>
+    /// One size of the icon. Up to <see cref="SmallIconSize"/> the artwork is cropped to what it
+    /// holds and drawn as large as the picture allows, in the top left corner so the badge in the
+    /// bottom left corner sits over as little of it as possible; larger sizes show the whole picture
+    /// with its margin, as the artwork was drawn.
+    /// </summary>
+    private static SKImage Render(SKImage baseImage, SKRect artwork, SKImage? logo, int size)
     {
         using SKSurface surface = SKSurface.Create(new SKImageInfo(size, size, SKColorType.Rgba8888, SKAlphaType.Premul));
         SKCanvas canvas = surface.Canvas;
@@ -177,11 +269,19 @@ public static class AppIconBuilder
 
         // Mipmaps keep the large pictures sharp at 16 pixels instead of aliased.
         SKSamplingOptions sampling = new(SKFilterMode.Linear, SKMipmapMode.Linear);
-        canvas.DrawImage(baseImage, new SKRect(0, 0, size, size), sampling);
+        if (size <= SmallIconSize)
+        {
+            float scale = size / MathF.Max(artwork.Width, artwork.Height);
+            canvas.DrawImage(baseImage, artwork, new SKRect(0, 0, artwork.Width * scale, artwork.Height * scale), sampling);
+        }
+        else
+        {
+            canvas.DrawImage(baseImage, new SKRect(0, 0, size, size), sampling);
+        }
 
         if (logo != null)
         {
-            float diameter = MathF.Max(8, MathF.Round(size * BadgeFraction));
+            float diameter = BadgeDiameter(size);
             float radius = diameter / 2;
             float centerX = radius;
             float centerY = size - radius;
@@ -201,16 +301,79 @@ public static class AppIconBuilder
             canvas.Restore();
         }
 
-        using SKImage image = surface.Snapshot();
-        using SKData data = image.Encode(SKEncodedImageFormat.Png, 100);
+        return surface.Snapshot();
+    }
+
+    private static byte[] EncodePng(SKImage picture)
+    {
+        using SKData data = picture.Encode(SKEncodedImageFormat.Png, 100);
         return data.ToArray();
+    }
+
+    /// <summary>
+    /// A picture as the bitmap an .ico has always held: 32 bit BGRA rows stored bottom-up, a height
+    /// in the header of twice the picture, and behind it a 1 bit mask of the transparent pixels for
+    /// readers that ignore the alpha channel.
+    /// </summary>
+    private static byte[] EncodeBitmap(SKImage picture)
+    {
+        int size = picture.Width;
+        using SKBitmap pixels = new(new SKImageInfo(size, size, SKColorType.Bgra8888, SKAlphaType.Unpremul));
+        if (!picture.ReadPixels(pixels.Info, pixels.GetPixels(), pixels.RowBytes, 0, 0))
+            throw new InvalidOperationException("The icon picture cannot be read back");
+        ReadOnlySpan<byte> bgra = pixels.GetPixelSpan();
+
+        int rowBytes = size * 4;
+        int maskRowBytes = (size + 31) / 32 * 4; // every mask row is padded to 32 bits
+        using MemoryStream stream = new();
+        using BinaryWriter writer = new(stream);
+        writer.Write(40); // header size
+        writer.Write(size); // width
+        writer.Write(size * 2); // height: picture and mask
+        writer.Write((ushort)1); // colour planes
+        writer.Write((ushort)32); // bits per pixel
+        writer.Write(0); // no compression
+        writer.Write(size * (rowBytes + maskRowBytes));
+        writer.Write(0); // horizontal resolution
+        writer.Write(0); // vertical resolution
+        writer.Write(0); // colours used
+        writer.Write(0); // important colours
+
+        for (int y = size - 1; y >= 0; y--)
+            writer.Write(bgra.Slice(y * pixels.RowBytes, rowBytes));
+
+        byte[] maskRow = new byte[maskRowBytes];
+        for (int y = size - 1; y >= 0; y--)
+        {
+            Array.Clear(maskRow);
+            for (int x = 0; x < size; x++)
+            {
+                if (bgra[y * pixels.RowBytes + x * 4 + 3] == 0)
+                    maskRow[x / 8] |= (byte)(0x80 >> (x % 8));
+            }
+            writer.Write(maskRow);
+        }
+
+        writer.Flush();
+        return stream.ToArray();
+    }
+
+    /// <summary>The diameter of the badge, ring included, in an icon of <paramref name="size"/> pixels.</summary>
+    internal static float BadgeDiameter(int size)
+    {
+        float fraction = size <= SmallIconSize ? SmallBadgeFraction : BadgeFraction;
+        return MathF.Max(8, MathF.Round(size * fraction));
     }
 
     /// <summary>
     /// An .ico with PNG images, which Windows understands since Vista (and Avalonia and Photino
     /// hand the file to Windows as is).
+    /// <para>
+    /// Since 30-10-2026 only the largest picture is a PNG and the others are bitmaps (see
+    /// <see cref="PngSize"/>); the directory is the same for both.
+    /// </para>
     /// </summary>
-    private static byte[] WriteIco(List<(int Size, byte[] Png)> entries)
+    private static byte[] WriteIco(List<(int Size, byte[] Data)> entries)
     {
         using MemoryStream stream = new();
         using BinaryWriter writer = new(stream);
@@ -219,7 +382,7 @@ public static class AppIconBuilder
         writer.Write((ushort)entries.Count);
 
         int offset = 6 + 16 * entries.Count;
-        foreach (var (size, png) in entries)
+        foreach (var (size, data) in entries)
         {
             writer.Write((byte)(size >= 256 ? 0 : size)); // 0 means 256
             writer.Write((byte)(size >= 256 ? 0 : size));
@@ -227,12 +390,12 @@ public static class AppIconBuilder
             writer.Write((byte)0); // reserved
             writer.Write((ushort)1); // colour planes
             writer.Write((ushort)32); // bits per pixel
-            writer.Write(png.Length);
+            writer.Write(data.Length);
             writer.Write(offset);
-            offset += png.Length;
+            offset += data.Length;
         }
-        foreach (var (_, png) in entries)
-            writer.Write(png);
+        foreach (var (_, data) in entries)
+            writer.Write(data);
 
         writer.Flush();
         return stream.ToArray();

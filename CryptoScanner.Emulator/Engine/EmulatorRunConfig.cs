@@ -12,6 +12,11 @@ namespace CryptoScanner.Emulator.Engine;
 public class EmulatorRunConfig
 {
     /// <summary>Exchange to source candles from (display name, e.g. "Binance Spot").</summary>
+    /// <remarks>
+    /// Note 31-10-2026: the replay does not choose its exchange from this name, it always runs on the
+    /// active exchange (GlobalData.ActiveExchange, from Setup). When the two differ, ReplayRunner logs
+    /// it and stores the active exchange's name on the run (EmulatorDb.CorrectRunExchangeName).
+    /// </remarks>
     public string ExchangeName { get; set; } = "";
 
     /// <summary>Symbol names to replay (e.g. ["BTCUSDT", "ETHUSDT"]). Order is irrelevant.</summary>
@@ -21,11 +26,23 @@ public class EmulatorRunConfig
     /// Inclusive UTC start of the replay window. Higher-interval candles are aggregated from
     /// the 1m driving interval; enough 1m history is loaded before this date to fill the
     /// longest indicator lookback on the longest active interval.
+    /// <para>
+    /// Correction 31-10-2026: nothing is aggregated any more. The candle fetch stores every interval
+    /// and the replay hands the stored candles over as they close (ReplayRunner.SymbolReplay); the
+    /// warmup loads the stored candles of every interval as well (IndicatorWarmup.WarmupDepth).
+    /// </para>
     /// </summary>
     [JsonConverter(typeof(DateOnlyJsonConverter))]
     public DateTime FromDate { get; set; }
 
     /// <summary>Inclusive UTC end of the replay window.</summary>
+    /// <remarks>
+    /// Correction 31-10-2026: the end is EXCLUSIVE. The replay stops at 00:00 UTC of this date (the
+    /// last base candle closes there), so the day ToDate itself is not replayed; the risk metrics and
+    /// the candle sync count the same way. Kept like that on purpose: a period split as
+    /// 01-01..01-04 and 01-04..01-07 joins up without a gap and without a day replayed twice.
+    /// To include a day, set ToDate to the day after it.
+    /// </remarks>
     [JsonConverter(typeof(DateOnlyJsonConverter))]
     public DateTime ToDate { get; set; }
 
@@ -48,6 +65,13 @@ public class EmulatorRunConfig
     /// interval runs proportionally faster (5m → 5× fewer iterations) at the cost of less
     /// precise order-fill timing. Intervals below the base are unavailable during the run.
     /// Default is "1m" (full precision, identical to the live scanner).
+    /// <para>
+    /// Correction 31-10-2026: higher timeframes are not synthesised from the base any more, and the
+    /// intervals below the base are not unavailable. The replay hands over the stored candles of
+    /// EVERY interval at the moment they close (ReplayRunner.SymbolReplay.AdvanceTo), so 2m..10m
+    /// keep up on a 15m run as well. The base interval only sets how often the analysis runs; the
+    /// order handling drops to 1m whenever an open position can be moved (ReplayRunner.ProcessPerMinuteAsync).
+    /// </para>
     /// </summary>
     public string BaseInterval { get; set; } = "1m";
 

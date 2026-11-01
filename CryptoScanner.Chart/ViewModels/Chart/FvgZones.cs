@@ -50,6 +50,12 @@ public class FvgZones
             }
             else col = OxyColor.FromArgb(128, boxColor.R, boxColor.G, boxColor.B);
 
+            // The FVG blocks are coloured per side now (green bull, red bear) and many of them overlap,
+            // so they stay quite transparent whatever the strength setting says: the text on them and
+            // the candles behind them must stay readable. 96 of 255 is the 0.38 the Photino chart uses.
+            if (zone.Kind == CryptoZoneKind.FairValueGap)
+                col = OxyColor.FromArgb(96, boxColor.R, boxColor.G, boxColor.B);
+
 
             int stroke = 0;
             //if (zone.CloseTime != null)

@@ -11,6 +11,13 @@ namespace CryptoScanner.Emulator.Services;
 /// for its grids. A copy of the grid half of the scanner's ApplicationStateServiceExtensions,
 /// because the emulator cannot reference the scanner project. The sort order is not in here: the
 /// runs grid keeps that in the run configuration, where it already was.
+/// <para>
+/// Note 31-10-2026: "in the data folder" is not right for the emulator. ApplicationStateService takes
+/// its folder from IPlatformService.GetDataDirectory(): the -f folder, or without -f the user's
+/// application folder of the scanner ({AppData}\CryptoScanBot) - not the data folder chosen in the
+/// setup dialog (GlobalData.AppDataFolder). The service is one instance per application session, so a
+/// "Change database" keeps writing to the same file.
+/// </para>
 /// </summary>
 public static class GridStateExtensions
 {
@@ -30,13 +37,30 @@ public static class GridStateExtensions
     }
 
 
-    public static void RestoreGridLayout(this ApplicationStateService service, string gridName, DataGrid dataGrid)
+    /// <param name="renamedPaths">
+    /// Old sort member path to new one, for a column whose SortMemberPath changed, so its saved width,
+    /// visibility and place are still found. Null when nothing was renamed.
+    /// </param>
+    public static void RestoreGridLayout(this ApplicationStateService service, string gridName, DataGrid dataGrid,
+        IReadOnlyDictionary<string, string>? renamedPaths = null)
     {
         ArgumentNullException.ThrowIfNull(dataGrid);
 
         var columns = service.RestoreGridColumnState(gridName);
         if (columns == null || columns.Count == 0)
             return;
+
+        if (renamedPaths != null)
+        {
+            // On a copy, so the stored state is only changed by the next save
+            columns = columns.Select(c => new GridColumn
+            {
+                SortMemberPath = renamedPaths.TryGetValue(c.SortMemberPath, out string? renamed) ? renamed : c.SortMemberPath,
+                Width = c.Width,
+                DisplayIndex = c.DisplayIndex,
+                IsVisible = c.IsVisible,
+            }).ToList();
+        }
 
         foreach (var colSetting in columns)
         {

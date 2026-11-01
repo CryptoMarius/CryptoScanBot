@@ -291,6 +291,10 @@ public static class EmulatorRunFingerprint
         settings.General.DebugSymbol = "";
         settings.General.SoundHeartBeatMinutes = 0;
         settings.Signal.SoundsActive = false;
+        // The caption of the window (30-10-2026): naming an emulator must not make every run on it
+        // look like one that was never measured.
+        settings.General.WindowTitle = "";
+        settings.General.ExtraCaption = "";
 
         foreach (PropertyInfo property in typeof(SettingsSignal).GetProperties())
         {
@@ -426,12 +430,37 @@ public static class EmulatorRunFingerprint
             // once money or slots run out, that run replays differently.
             if (obj["SerialTradeHalf"] is JsonValue serial && serial.TryGetValue(out bool serialOn) && serialOn)
                 obj.Remove("SerialTradeHalf");
+            // The symbol list in ordinal order (since 31-10-2026). ReplayRunner sorts the symbols the
+            // same way before it replays them, so reordering the list in the run configuration does not
+            // change the run - and must not make it look like a run that was never measured.
+            SortSymbols(obj);
             return obj.ToJsonString();
         }
         catch (JsonException)
         {
             return configJson;
         }
+    }
+
+
+    /// <summary>
+    /// Puts the "Symbols" array of a run configuration in ordinal order, the order ReplayRunner
+    /// processes them in. Left as it is when an element is not a string.
+    /// </summary>
+    private static void SortSymbols(JsonObject obj)
+    {
+        if (obj["Symbols"] is not JsonArray symbols)
+            return;
+
+        List<string> names = new(symbols.Count);
+        foreach (JsonNode? node in symbols)
+        {
+            if (node is not JsonValue value || !value.TryGetValue(out string? name) || name == null)
+                return;
+            names.Add(name);
+        }
+        names.Sort(StringComparer.Ordinal);
+        obj["Symbols"] = new JsonArray(names.Select(name => (JsonNode?)JsonValue.Create(name)).ToArray());
     }
 
 

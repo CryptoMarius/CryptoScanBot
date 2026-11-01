@@ -361,8 +361,13 @@ public class Symbol() : SymbolBase(), ISymbol
             // request, so a deployer that is off costs no weight on the address either. Registering
             // the deployer here is also what puts it in the settings list, so the user can see and
             // switch every deployer HyperLiquid carries, not only the ones with instruments.
-            if (!GlobalData.IsProductActive(dex.Name))
-                continue;
+            //if (!GlobalData.IsProductActive(dex.Name))
+            //    continue;
+            // Since 31-10-2026 a deployer that is off is requested as well: the settings screen shows
+            // how many instruments it has, and a 0 there read as "nothing to trade". One request per
+            // deployer per refresh. IsSymbolAccepted counts its instruments and then refuses them, so
+            // nothing of it is fetched or stored.
+            GlobalData.AddProductData(dex.Name);
 
             var (success, markets, rawJson) = await PerpDexClient.GetMarketsAsync(dex.Name);
 

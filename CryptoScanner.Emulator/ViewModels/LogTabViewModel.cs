@@ -23,6 +23,8 @@ namespace CryptoScanner.Emulator.ViewModels;
 /// so you can see how far the run has progressed straight from the log. Outside a run the
 /// EmulatorClock is uninitialised (reads as a year-0001 time), so we fall back to the real
 /// wall-clock there. The NLog files use their own wall-clock layout, same as the scanner.
+/// Note 31-10-2026: no longer true, the stamping is commented out in <see cref="OnLog"/>; the tab
+/// shows the lines as they come, without a time.
 ///
 /// Older entries are pruned at <see cref="MaxLines"/> to stop the list from growing without bound
 /// during long runs. The deliberate simplification vs the scanner version: no DataGrid sort, no
@@ -42,6 +44,17 @@ public partial class LogTabViewModel : ObservableObject
     }
 
 
+    /// <summary>
+    /// Unsubscribes from the log event for good. Called when the main window that owns this tab
+    /// closes, in particular after "Change database": the static event kept the old tab alive and fed
+    /// it every line of the new session (31-10-2026).
+    /// </summary>
+    public void Detach()
+    {
+        GlobalData.LogToLogTabEvent -= OnLog;
+    }
+
+
     private void OnLog(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -49,6 +62,8 @@ public partial class LogTabViewModel : ObservableObject
 
         // NLog file forwarding intentionally lives in EmulatorLogBridge, not here — see the class
         // summary. This handler only feeds the in-app tab.
+        // Note 31-10-2026: EmulatorLogBridge no longer exists; GlobalData.AddTextToLogTab writes to
+        // NLog itself (see the class summary and App.OnSetupClosed).
 
         //DateTime stamp = GlobalData.CurrentEmulatorRunId != null
         //    ? GlobalData.Clock.UtcNow   // virtual replay date — shows how far the run has progressed

@@ -481,6 +481,31 @@ public static class PositionTools
     /// earlier deletes orphaned, back when the two tables were not cleaned up at all.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The question both scanners ask before "Position delete from database" removes the selected
+    /// position(s), worded like "Delete run(s)" in the emulator.
+    /// </summary>
+    public static string DeleteConfirmationText(IReadOnlyList<CryptoPosition> positions)
+    {
+        if (positions.Count == 1)
+        {
+            CryptoPosition position = positions[0];
+            return $"Delete position #{position.Id} {position.Symbol.Name} {position.Side} from the database, " +
+                "together with its orders and trades?\n\nThis cannot be undone.";
+        }
+        return $"Delete {positions.Count} positions from the database, together with their orders and trades?\n\nThis cannot be undone.";
+    }
+
+    /// <summary>
+    /// How many positions <see cref="DeleteAllFromDatabase"/> would delete. The "Delete all positions"
+    /// command asks the user to type this number, so it has to count the table itself and not the
+    /// positions the grids happen to show.
+    /// </summary>
+    public static int CountAllInDatabase(CryptoDatabase database)
+    {
+        return database.Connection.ExecuteScalar<int>("select count(*) from Position");
+    }
+
     public static void DeleteAllFromDatabase(CryptoDatabase database)
     {
         using var transaction = database.BeginTransaction();

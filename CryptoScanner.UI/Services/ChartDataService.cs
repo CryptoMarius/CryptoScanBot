@@ -22,8 +22,9 @@ public static class ChartDataService
     {
         [(CryptoZoneKind.DominantLevel, CryptoTradeSide.Long)] = "0,100,0",
         [(CryptoZoneKind.DominantLevel, CryptoTradeSide.Short)] = "139,0,0",
-        [(CryptoZoneKind.FairValueGap, CryptoTradeSide.Long)] = "169,169,169",
-        [(CryptoZoneKind.FairValueGap, CryptoTradeSide.Short)] = "169,169,169",
+        // FVG: bull blocks (Long) dark green, bear blocks (Short) dark red, see Const.ColorList
+        [(CryptoZoneKind.FairValueGap, CryptoTradeSide.Long)] = "0,100,0",
+        [(CryptoZoneKind.FairValueGap, CryptoTradeSide.Short)] = "139,0,0",
         [(CryptoZoneKind.OrderBlock, CryptoTradeSide.Long)] = "70,130,180",
         [(CryptoZoneKind.OrderBlock, CryptoTradeSide.Short)] = "147,112,219",
     };
@@ -308,6 +309,10 @@ public static class ChartDataService
             double alpha = zone.CloseTime.HasValue ? 0.20 : 0.32;
             if (zone.Strength != CryptoZoneStrength.Strong)
                 alpha *= 0.6;
+            // An FVG has no strength, and its dark green or dark red at the faded alpha above was hardly
+            // visible against the dark surface. Fixed and still quite transparent, so the text stays readable.
+            if (zone.Kind == CryptoZoneKind.FairValueGap)
+                alpha = zone.CloseTime.HasValue ? 0.25 : 0.38;
 
             string fill = $"rgba({rgb},{alpha.ToString(System.Globalization.CultureInfo.InvariantCulture)})";
             target.Add(new ChartRect

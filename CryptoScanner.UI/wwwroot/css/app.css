@@ -386,8 +386,9 @@ select.dashboard-combo {
     /* flex:none so the panel can never stretch or squeeze the 400x100 chart — Avalonia draws a
        fixed-size bitmap there and the surrounding grid does not resize it either. */
     flex: none;
-    width: 404px;
-    min-width: 404px;
+    /* 436 = the 400px plot plus the value scale beside it (BarometerAxisWidth), plus the padding. */
+    width: 440px;
+    min-width: 440px;
     padding: 2px 2px;
 }
 
@@ -395,7 +396,7 @@ select.dashboard-combo {
    and the CandleProgressText in one centred StackPanel. The text used to sit in the Tickers panel,
    far away from the animation it belongs to. */
 .dashboard-chart-placeholder {
-    width: 400px;
+    width: 436px;
     /* Must equal BarometerChartHeight in MainLayout — the SVG viewBox is in the same pixels. */
     height: 124px;
     display: flex;
@@ -425,7 +426,8 @@ select.dashboard-combo {
 
 .barometer-chart {
     display: block;
-    width: 400px;
+    /* Plot (BarometerChartWidth) plus the value scale (BarometerAxisWidth), 1:1 with the viewBox. */
+    width: 436px;
     /* Must equal BarometerChartHeight in MainLayout. */
     height: 124px;
     background: var(--bg-base);

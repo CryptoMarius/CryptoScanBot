@@ -207,6 +207,13 @@
     /// </summary>
     private const int ValueLabelWidth = 30;
 
+    /// <summary>
+    /// Width of the value scale RIGHT of the plot: the label plus the tick and a little air. The plot
+    /// keeps its BarometerChartWidth, the SVG is this much wider. Must match .barometer-chart and
+    /// .dashboard-chart-placeholder in app.css (400 + 36) and BarometerAxisWidth in Avalonia.
+    /// </summary>
+    private const int BarometerAxisWidth = ValueLabelWidth + 6;
+
     private bool _disposed;
 
     protected override void OnInitialized()
@@ -373,7 +380,11 @@
 
         var ic = System.Globalization.CultureInfo.InvariantCulture;
         var sb = new System.Text.StringBuilder();
-        sb.Append($"<svg viewBox=\"0 0 {w} {h}\" xmlns=\"http://www.w3.org/2000/svg\" class=\"barometer-chart\">");
+        // The plot keeps its w pixels; the value scale gets a column of its own to the right of it,
+        // so the figures no longer sit on top of the barometer line.
+        const int totalW = w + BarometerAxisWidth;
+        sb.Append($"<svg viewBox=\"0 0 {totalW} {h}\" xmlns=\"http://www.w3.org/2000/svg\" class=\"barometer-chart\">");
+        sb.Append($"<line x1=\"{w}\" y1=\"0\" x2=\"{w}\" y2=\"{h}\" stroke=\"#808080\" stroke-width=\"1\"/>");
 
         // Horizontal lines, red on the reference line. Solid grey/red at full strength — Avalonia
         // uses SKColors.Gray and SKColors.Red, so no CSS variables and no opacity here.
@@ -396,21 +407,20 @@
                 // offer differ by exactly that order of magnitude. Every other line carries a label,
                 // so they do not pile up on a fine grid, and the zero line is always one of them
                 // because the grid is built in whole steps around it.
-                // Skipped for a line in the bottom strip: the hours live there, and the two would
-                // sit on top of each other in the right hand corner.
-                if (i % 2 == 0 && y <= h - 12)
+                // The labels live in their own column right of the plot, so the hours along the
+                // bottom of the plot can no longer collide with them and no line has to be skipped.
+                if (i % 2 == 0)
                 {
-                    // Against the RIGHT edge, the way a price chart carries its scale. The left is
-                    // taken: the timestamp sits in the top corner and the hour labels run along the
-                    // bottom, so a value label there would land on one of the two at the extremes of
-                    // the scale - which are exactly the labels that say how far the picture reaches.
-                    // Just above its own line, and below it for the topmost one so it stays inside.
-                    decimal textY = y - 2;
-                    if (textY < 9) textY = y + 9;
+                    // In the column RIGHT of the plot, the way a price chart carries its scale.
+                    // Inside the plot they ran straight through the barometer line. Centred on its
+                    // own line (the font is 9px, the baseline sits 3px below the middle), pushed
+                    // back inside at the top and bottom edge. A short tick ties it to its line.
+                    decimal textY = y + 3;
+                    if (textY < 9) textY = 9;
                     if (textY > h - 2) textY = h - 2;
                     string label = line.ToString("N" + scale.Decimals, ic);
-                    sb.Append($"<rect x=\"{w - 2 - ValueLabelWidth}\" y=\"{(textY - 8).ToString("F1", ic)}\" width=\"{ValueLabelWidth}\" height=\"10\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
-                    sb.Append($"<text x=\"{w - 4}\" y=\"{textY.ToString("F1", ic)}\" font-size=\"9\" text-anchor=\"end\" fill=\"var(--text-primary)\">{label}</text>");
+                    sb.Append($"<line x1=\"{w}\" y1=\"{y.ToString("F1", ic)}\" x2=\"{w + 3}\" y2=\"{y.ToString("F1", ic)}\" stroke=\"#808080\" stroke-width=\"1\"/>");
+                    sb.Append($"<text x=\"{w + 5}\" y=\"{textY.ToString("F1", ic)}\" font-size=\"9\" text-anchor=\"start\" fill=\"var(--text-primary)\">{label}</text>");
                 }
             }
         }

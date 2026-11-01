@@ -69,7 +69,7 @@ public static class TradingRules
                         {
                             // TODO: het percentage wordt echt niet negatief als je met de high en low werkt..
                             double percentage = (double)(100m * (high / low - 1m));
-                            if (percentage >= rule.Percentage || percentage <= -rule.Percentage)
+                            if (percentage >= rule.Percentage)
                             {
                                 CandleTime pauseUntil = candleUnixDate + candleDuration * rule.CoolDown; // * 60;
                                 DateTime pauseUntilDate = pauseUntil.ToDateTime();

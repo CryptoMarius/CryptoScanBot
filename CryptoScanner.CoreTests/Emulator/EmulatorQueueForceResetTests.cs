@@ -113,6 +113,31 @@ public class EmulatorQueueForceResetTests
 
 
     [TestMethod]
+    public void ResetForce_FindsTheTwinWithForceWhenTwoEntriesShareALabel()
+    {
+        // Two entries with the same label, only the second has a Force. Until 31-10-2026 the first
+        // one ended the search and the Force of the second stayed on, so it ran after every restart.
+        string path = Put("[{\"Label\": \"twin\"}, {\"Label\": \"twin\", \"Force\": true}]", bom: false);
+
+        Assert.IsTrue(EmulatorQueueFile.ResetForce(path, "twin", 1));
+
+        Assert.AreEqual("[{\"Label\": \"twin\"}, {\"Label\": \"twin\", \"Force\": false}]", File.ReadAllText(path));
+    }
+
+
+    [TestMethod]
+    public void ResetForce_PrefersTheTwinAtTheIndexThatRan()
+    {
+        // Both twins have a Force: the one at the index that just ran is the one that is done.
+        string path = Put("[{\"Label\": \"twin\", \"Force\": true}, {\"Label\": \"twin\", \"Force\": true}]", bom: false);
+
+        Assert.IsTrue(EmulatorQueueFile.ResetForce(path, "twin", 1));
+
+        Assert.AreEqual("[{\"Label\": \"twin\", \"Force\": true}, {\"Label\": \"twin\", \"Force\": false}]", File.ReadAllText(path));
+    }
+
+
+    [TestMethod]
     public void ResetForce_ReturnsFalseOnAFileThatIsNotJson()
     {
         string path = Put("this is not a queue", bom: false);

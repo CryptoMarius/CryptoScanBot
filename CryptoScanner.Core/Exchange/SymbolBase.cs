@@ -215,6 +215,12 @@ public class SymbolBase()
             return false;
         }
 
+        // Counted before the product filter below, so the settings screen shows per quote and per
+        // product how many instruments the exchange has, also for a product that is switched off
+        GlobalData.AddQuoteData(info.Quote).NoteOffered(info.ExchangeName);
+        if (info.Product.Length > 0)
+            GlobalData.AddProductData(info.Product).NoteOffered(info.ExchangeName);
+
         // A product the user switched off in the settings (GOLDUSDC.XYZ with XYZ off) is not
         // accepted, so the instrument does not land in the caller's active list and its
         // deactivation loop puts an existing symbol on status 0 - the same route a delisted

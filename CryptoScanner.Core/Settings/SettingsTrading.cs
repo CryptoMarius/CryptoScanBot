@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Settings;
 
 
 [Serializable]
-/// Controle hoe een munt zich gedraagt
+/// Watches how one coin behaves and pauses trading after a big move
 public class PauseTradingRule
 {
     public string Symbol { get; set; } = "";
@@ -14,7 +14,9 @@ public class PauseTradingRule
     public int Candles { get; set; }
     public CryptoIntervalPeriod Interval { get; set; }
 
-    // de wachttijd gemeten in minuten
+    // The cooldown is counted in candles of the BASE interval, not in minutes and not in candles of the
+    // rule's own interval. Live the base interval is 1m, so it equals minutes there; an emulator run on a
+    // 5m/15m base multiplies it accordingly.
     public int CoolDown { get; set; }
 }
 
@@ -77,6 +79,11 @@ public class SettingsTrading
     /// of a paper account: it is handed out on an empty database and on every reset, and it is the
     /// only place the scanner reads a starting balance from.
     /// <para>
+    /// Since 31-10-2026 this is the list of the active exchange, kept in the Asset table (column
+    /// DefaultTotal) and filled from there by ExchangeSettingsStore. The settings file no longer holds
+    /// it; an emulator run still stores it in its settings snapshot.
+    /// </para>
+    /// <para>
     /// Empty means the scanner hands out nothing at all - a paper account then starts at zero and
     /// says so in the log tab. Keep it empty in a data folder used for emulator runs, because a run
     /// carries its own start capital and a filled list overrules that one as well.
@@ -91,12 +98,12 @@ public class SettingsTrading
     /// <summary>
     /// Whether the balances actually constrain the trader (paper trading and the emulator only).
     /// <para>
-    /// On (the default): an entry is paid for out of the free balance, and a position is only opened
+    /// On: an entry is paid for out of the free balance, and a position is only opened
     /// when the entry AND every DCA level behind it fit in what is free. A run can therefore run out
     /// of money, which is what a real account does.
     /// </para>
     /// <para>
-    /// Off: the balances are still booked on every fill - so the assets screen and any chart built on
+    /// Off (the default since 31-10-2026, it was on): the balances are still booked on every fill - so the assets screen and any chart built on
     /// it keep working, and the balance is allowed to go negative - but nothing is refused for lack of
     /// money. The entry is then the plain <c>EntryAmount</c> of the quote coin: with a balance that may
     /// run negative there is nothing left to take a percentage OF, so a quote coin configured with only
@@ -109,7 +116,8 @@ public class SettingsTrading
     /// never books against it, so there "on" measures against a balance that does not move.
     /// </para>
     /// </summary>
-    public bool UseAssetManagement { get; set; } = true;
+    //public bool UseAssetManagement { get; set; } = true;
+    public bool UseAssetManagement { get; set; } = false;
 
     // Geen nieuwe posities openen (wel bijkopen voor openstaande posities)
     public bool DisableNewPositions { get; set; } = false;

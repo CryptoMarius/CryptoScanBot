@@ -87,6 +87,14 @@ public static class EmulatorCandleSync
     /// derived in ascending-duration order — IntervalList is already sorted that way — so a 4h
     /// candle built from 1h finds the 1h list already populated when its turn comes.
     /// <para>
+    /// Correction 31-10-2026: the two paragraphs above are older than the code. Every interval the
+    /// exchange serves is fetched on its own (step 2 below), and after that every interval is also
+    /// built up from its ConstructFrom, which is how the intervals the exchange does not serve are
+    /// produced; the fetch start per interval comes from
+    /// CandleTools.DetermineFetchStartDate / GetCandleFetchStart, not from
+    /// IndicatorWarmup.ComputeWarmupMinutes, which is commented out.
+    /// </para>
+    /// <para>
     /// The window ends at <paramref name="until"/>, or at the run config's ToDate when that is null.
     /// An update passes the current moment: it adds every candle that appeared since the last fetch.
     /// What is in the candle database already is read from disk and not asked again, so only the new

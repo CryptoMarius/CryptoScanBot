@@ -115,6 +115,8 @@ public class BarometerSeriesCommitTests : TestBase
     /// The marker of another coin list goes as soon as a run starts measuring over this one: the run
     /// overwrites the stored candles, also when it is stopped, and the old marker would then vouch for
     /// a mixture of two coin lists. That is the 121 coins after the 5-coin queue on Binance.
+    /// Since 31-10-2026 "the start" is BeginRun, which the runner calls once it keeps the barometer;
+    /// the constructor alone leaves the marker alone (see the next test).
     /// </summary>
     [TestMethod]
     public void AMeasuringRunRemovesTheMarkerOfAnotherCoinListAtTheStart()
@@ -123,9 +125,31 @@ public class BarometerSeriesCommitTests : TestBase
         var now = Coins("AAA", "BBB", "CCC", "DDD", "EEE", "FFF");
         CandleDatabase.WriteMeta(exchange, BarometerReplay.MarkerKey(QuoteName), BarometerReplay.MarkerFor(before.Quote, before.Coins));
 
-        _ = new BarometerReplay(exchange, now.Coins);
+        //_ = new BarometerReplay(exchange, now.Coins);
+        BarometerReplay barometer = new(exchange, now.Coins);
+        barometer.BeginRun();
 
         Assert.IsNull(StoredMarker());
+    }
+
+
+    /// <summary>
+    /// A barometer the runner drops again (too few coins, HasEnoughSymbols) measures nothing and
+    /// overwrites nothing, so building it must not invalidate the stored series of another coin list
+    /// (31-10-2026).
+    /// </summary>
+    [TestMethod]
+    public void BuildingABarometerDoesNotTouchTheStoredMarker()
+    {
+        var before = Coins("AAA", "BBB", "CCC", "DDD", "EEE");
+        var now = Coins("AAA", "BBB");
+        string marker = BarometerReplay.MarkerFor(before.Quote, before.Coins);
+        CandleDatabase.WriteMeta(exchange, BarometerReplay.MarkerKey(QuoteName), marker);
+
+        BarometerReplay barometer = new(exchange, now.Coins);
+
+        Assert.IsFalse(barometer.HasEnoughSymbols);
+        Assert.AreEqual(marker, StoredMarker());
     }
 
 

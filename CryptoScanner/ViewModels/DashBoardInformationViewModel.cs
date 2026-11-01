@@ -539,6 +539,13 @@ public partial class DashBoardInformationViewModel : ObservableObject
     /// </summary>
     private const byte PlateAlpha = 191;
 
+    /// <summary>
+    /// Width of the value scale right of the plot. Holds the longest label the scales produce
+    /// ("-12.50", "100") at 9px plus the tick, and must match the Image width in
+    /// DashBoardInformationView.axaml (plot 400 + this).
+    /// </summary>
+    private const int BarometerAxisWidth = 36;
+
     private static SKColor GetThemeColor(string themeColor)
     {
         var app = Application.Current;
@@ -580,7 +587,11 @@ public partial class DashBoardInformationViewModel : ObservableObject
     private void CreateBarometerBitmap(CryptoSymbolInterval symbolPeriod)
     {
         // Dimensions
-        int intWidth = 400;
+        // The plot keeps its 400 pixels; the value scale gets a column of its own to the right of
+        // it, so the figures no longer sit on top of the barometer line.
+        int plotWidth = 400;
+        int axisWidth = BarometerAxisWidth;
+        int intWidth = plotWidth + axisWidth;
         int intHeight = 100;
 
         // Get theme colors.
@@ -700,7 +711,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         }
 
         // factor to keep points within picture
-        float scaleX = intWidth / screenX;
+        float scaleX = plotWidth / screenX;
 
         // ofset to first point
         float offsetX = 0; // start in the left of the picture
@@ -749,7 +760,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
                     continue; // outside the scale
 
                 SKPoint p1 = new(0, screenLineY);
-                SKPoint p2 = new(intWidth, screenLineY);
+                SKPoint p2 = new(plotWidth, screenLineY);
                 // Within half a step rather than exactly equal: y is built up in floats, so the line
                 // on zero can miss an exact comparison by an ulp and silently lose its red colour.
                 if (referenceLine.HasValue && MathF.Abs(y - referenceLine.Value) < gridStep * 0.5f)
@@ -772,31 +783,37 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 // differ by exactly that order of magnitude. Every other line carries a label, so
                 // they do not pile up on a fine grid, and the zero line is always one of them
                 // because the grid is built in whole steps around it.
-                // Skipped for a line in the bottom strip: the hours live there, and the two would
-                // sit on top of each other in the right hand corner.
-                if (i % 2 == 0 && screenLineY <= intHeight - 12)
+                // The labels live in their own column right of the plot, so the hours along the
+                // bottom of the plot can no longer collide with them and no line has to be skipped.
+                if (i % 2 == 0)
                 {
                     string valueText = y.ToString("N" + graphScale.Decimals, System.Globalization.CultureInfo.InvariantCulture);
-                    float valueWidth = axisFont.MeasureText(valueText);
 
-                    // Against the RIGHT edge, the way a price chart carries its scale. The left is
-                    // taken: the timestamp sits in the top corner and the hour labels run along the
-                    // bottom, so a value label there would land on one of the two at the extremes of
-                    // the scale - which are exactly the labels that say how far the picture reaches.
-                    // Just above its own line, and below it for the topmost one so it stays inside.
-                    float valueY = screenLineY - 2;
+                    // In the column RIGHT of the plot, the way a price chart carries its scale.
+                    // Inside the plot they ran straight through the barometer line. Centred on its
+                    // own line (the font is 9px, the baseline sits 3px below the middle), pushed
+                    // back inside at the top and bottom edge.
+                    float valueY = screenLineY + 3;
                     if (valueY < 9)
-                        valueY = screenLineY + 9;
+                        valueY = 9;
                     if (valueY > intHeight - 2)
                         valueY = intHeight - 2;
 
-                    paint.Color = bgColor.WithAlpha(PlateAlpha);
-                    paint.Style = SKPaintStyle.Fill;
-                    canvas.DrawRect(intWidth - 4 - valueWidth, valueY - 9, valueWidth + 4, 11, paint);
-                    canvas.DrawText(valueText, intWidth - 2, valueY, SKTextAlign.Right, axisFont, axisPaint);
+                    // A short tick ties the label to its line across the axis.
+                    paint.Color = SKColors.Gray;
+                    paint.StrokeWidth = 1;
+                    paint.Style = SKPaintStyle.Stroke;
+                    canvas.DrawLine(plotWidth, screenLineY, plotWidth + 3, screenLineY, paint);
+                    canvas.DrawText(valueText, plotWidth + 5, valueY, SKTextAlign.Left, axisFont, axisPaint);
                 }
             }
         }
+
+        // The edge between the plot and its value scale.
+        paint.Color = SKColors.Gray;
+        paint.StrokeWidth = 1;
+        paint.Style = SKPaintStyle.Stroke;
+        canvas.DrawLine(plotWidth, 0, plotWidth, intHeight, paint);
 
         // Vertical lines (show the hours, or the days for the slow figures)
         //Pen pen = new Pen(Color.Gray, 0.5F);
@@ -828,8 +845,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
             float hourX = p1.X - hourWidth / 2;
             if (hourX < 2)
                 hourX = 2;
-            if (hourX + hourWidth > intWidth - 2)
-                hourX = intWidth - 2 - hourWidth;
+            if (hourX + hourWidth > plotWidth - 2)
+                hourX = plotWidth - 2 - hourWidth;
 
             paint.Color = bgColor.WithAlpha(PlateAlpha);
             paint.Style = SKPaintStyle.Fill;

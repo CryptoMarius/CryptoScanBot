@@ -42,7 +42,8 @@
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Created"     Binding="{Binding CreatedText}" Width="140"/>
                 <DataGridTextColumn Header="Closed"      Binding="{Binding ClosedText}" Width="140"/>
-                <DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="90"/>
+                <!-- Sorted on the TimeSpan, not the text (31-10-2026) -->
+                <DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" SortMemberPath="DurationSpan" Width="90"/>
                 <DataGridTextColumn Header="Symbol"      Binding="{Binding Symbol}" Width="100"/>
                 <DataGridTextColumn Header="Interval"    Binding="{Binding Interval}" Width="80"/>
                 <DataGridTextColumn Header="Side"        Binding="{Binding SideText}" Width="70"/>

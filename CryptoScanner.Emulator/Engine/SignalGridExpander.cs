@@ -508,17 +508,22 @@ public static class SignalGridExpander
                 return Enum.Parse(underlying, element.GetString()!, ignoreCase: true);
         }
 
+        // Objects and lists with the options settings.json itself is read with (JsonTools: fields,
+        // the colour and CandleTime converters, trailing commas), so an override reads the same as
+        // that setting in the settings file. Until 31-10-2026 these used bare options.
         if (element.ValueKind == JsonValueKind.Object)
-            return JsonSerializer.Deserialize(element.GetRawText(), underlying,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            //return JsonSerializer.Deserialize(element.GetRawText(), underlying,
+            //    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return JsonSerializer.Deserialize(element.GetRawText(), underlying, Core.Json.JsonTools.DeSerializerOptions);
 
         // A list-valued setting, such as the interval list of a zone strategy
         // (ZonesDlz/ZonesFvg/ZonesSmc.IntervalList). Without this an array in the queue file
         // ends in the NotSupportedException below, so those settings could only be changed in
         // the settings file - which is exactly what left the zone strategies without intervals.
         if (element.ValueKind == JsonValueKind.Array)
-            return JsonSerializer.Deserialize(element.GetRawText(), underlying,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            //return JsonSerializer.Deserialize(element.GetRawText(), underlying,
+            //    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return JsonSerializer.Deserialize(element.GetRawText(), underlying, Core.Json.JsonTools.DeSerializerOptions);
 
         return underlying switch
         {

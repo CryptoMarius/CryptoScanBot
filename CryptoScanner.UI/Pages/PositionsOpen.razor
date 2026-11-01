@@ -133,6 +133,17 @@
     Message="Are you sure you want to delete all positions from the database, hand out the start capital again and start the capital per day over?"
     OnConfirmed="OnConfirmDeleteAll" />
 
+<CryptoScanner.UI.Components.TypeToConfirmDialog @bind-Visible="_confirmDeleteAllTypedVisible"
+    Title="Delete all positions - second confirmation"
+    Message="@_confirmDeleteAllTypedMessage"
+    ExpectedText="@_deleteAllCount"
+    OnConfirmed="OnConfirmDeleteAllTyped" />
+
+<CryptoScanner.UI.Components.ConfirmDialog @bind-Visible="_confirmDeleteVisible"
+    Title="@_confirmDeleteTitle"
+    Message="@_confirmDeleteMessage"
+    OnConfirmed="OnConfirmDelete" />
+
 <CryptoScanner.UI.Components.ConfirmDialog @bind-Visible="_confirmCloseVisible"
     Title="Close position"
     Message="@_confirmCloseMessage"
@@ -171,6 +182,13 @@
     private ElementReference _contextMenuRef;
     private bool _contextMenuPositioned;
     private bool _confirmDeleteAllVisible;
+    private bool _confirmDeleteAllTypedVisible;
+    private string _confirmDeleteAllTypedMessage = "";
+    private string _deleteAllCount = "";
+    private bool _confirmDeleteVisible;
+    private string _confirmDeleteTitle = "";
+    private string _confirmDeleteMessage = "";
+    private List<CryptoPosition> _positionsToDelete = [];
     private bool _confirmCloseVisible;
     private string _confirmCloseMessage = "";
     private CryptoPosition? _positionToClose;
@@ -504,8 +522,30 @@
     private void OnMenuPositionDelete()
     {
         if (_contextMenuPosition?.Object != null)
-            GridCommandService.PositionDelete(_contextMenuPosition.Object);
+            AskDeletePositions(_contextMenuPosition);
         CloseContextMenu();
+    }
+
+    /// <summary>
+    /// "Position delete from database" works on the whole selection, the clicked row alone when the
+    /// selection does not contain it, and asks first (like "Delete run(s)" in the emulator). The
+    /// positions are remembered because the menu and its row are gone by the time the dialog answers.
+    /// </summary>
+    private void AskDeletePositions(PositionViewModel clicked)
+    {
+        _positionsToDelete = SelectedPositions.Contains(clicked)
+            ? _positions.Where(SelectedPositions.Contains).Select(vm => vm.Object).ToList()
+            : [clicked.Object];
+        _confirmDeleteTitle = _positionsToDelete.Count == 1 ? "Delete position" : "Delete positions";
+        _confirmDeleteMessage = PositionTools.DeleteConfirmationText(_positionsToDelete);
+        _confirmDeleteVisible = true;
+    }
+
+    private void OnConfirmDelete()
+    {
+        if (_positionsToDelete.Count > 0)
+            GridCommandService.PositionDelete(_positionsToDelete);
+        _positionsToDelete = [];
     }
 
     private void OnMenuPositionAddDca()
@@ -593,6 +633,15 @@
     }
 
     private void OnConfirmDeleteAll()
+    {
+        // A second, deliberate step, the same as "Delete all runs" in the emulator: one wrong click
+        // plus one Yes must not be enough to throw away every position and the capital history.
+        _deleteAllCount = GridCommandService.PositionCountAll().ToString(System.Globalization.CultureInfo.InvariantCulture);
+        _confirmDeleteAllTypedMessage = $"To really delete all {_deleteAllCount} positions, type the number {_deleteAllCount} and press OK.";
+        _confirmDeleteAllTypedVisible = true;
+    }
+
+    private void OnConfirmDeleteAllTyped()
     {
         GridCommandService.PositionDeleteAll();
     }

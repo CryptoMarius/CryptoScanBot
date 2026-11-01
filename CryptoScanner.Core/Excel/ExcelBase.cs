@@ -1,4 +1,5 @@
 ﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
 
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
@@ -173,7 +174,14 @@ public abstract class ExcelBase
         using var fs = new FileStream(filename, FileMode.Create);
         Book.Write(fs);
 
-        Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
+        //Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
+        // Through IPlatformService since 31-10-2026: opening a file is platform work (macOS: open,
+        // Linux: xdg-open), and CLAUDE.md keeps that in the platform service.
+        IPlatformService? platformService = GlobalData.GetService<IPlatformService>();
+        if (platformService != null)
+            platformService.OpenFile(filename);
+        else
+            GlobalData.AddTextToLogTab($"Excel file written to {filename} (no platform service to open it)");
         return filename;
     }
 }

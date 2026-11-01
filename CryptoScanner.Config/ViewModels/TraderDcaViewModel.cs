@@ -69,17 +69,23 @@ public partial class TraderDcaViewModel : ObservableObject
         }
     }
 
+    // First DCA starts at 3% with a full-size order; every next level doubles both the distance
+    // and the order size, so each step down costs twice what the one before it did.
+    private const decimal FirstDcaPercentage = 3m;
+    private const decimal FirstDcaFactor = 100m;
+
     [RelayCommand]
     private void AddDca()
     {
-        decimal newPercentage = 6m;
-        decimal newFactor = 200m;
+        decimal newPercentage = FirstDcaPercentage;
+        decimal newFactor = FirstDcaFactor;
 
         // Use last item's values + increment
+        // (every next level doubles both the percentage and the factor of the previous one)
         if (DcaItems.Count > 0)
         {
             var last = DcaItems[^1];
-            newPercentage = last.Percentage + 6m;
+            newPercentage = last.Percentage * 2m;
             newFactor = last.Factor * 2m;
         }
 

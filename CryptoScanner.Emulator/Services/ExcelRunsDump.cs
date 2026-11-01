@@ -49,7 +49,7 @@ public class ExcelRunsDump : ExcelBase
         string[] headers =
         [
             "Id", "Label", "From", "To", "Days", "Started", "Finished", "Duration", "Build", "Result",
-            "Signals", "Positions", "Open", "Won", "Lost", "Timeout", "Win %",
+            "Signals", "Positions", "Open", "Won", "Lost", "Timeout", "Cancelled", "Win %",
             "Profit", "Unrealized PnL", "Total PnL", "Total PnL Long", "Total PnL Short", "Profit %",
             "Invested", "Peak cap.", "Peak pos", "Peak %", "Drawdown %", "Drawdown USDT",
             "Start cap.", "End cap.", "Return %", "Recovery factor", "Counts", "Without best 10",
@@ -83,6 +83,8 @@ public class ExcelRunsDump : ExcelBase
             WriteCell(sheet, column++, row, r.PositionsWon);
             WriteCell(sheet, column++, row, r.PositionsLost);
             WriteCell(sheet, column++, row, r.PositionsTimeout);
+            // Part of Positions next to Open, Won, Lost and Timeout (31-10-2026)
+            WriteCell(sheet, column++, row, r.PositionsCancelled);
             WriteCell(sheet, column++, row, r.WinPercentage, CellStyleAmount);
 
             WriteCell(sheet, column++, row, r.Profit, CellStyleAmount);

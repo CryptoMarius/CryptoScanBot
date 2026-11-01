@@ -29,6 +29,9 @@ public class CryptoAssetAdjustment
     // FK to EmulatorRun (null on live adjustments; populated by the emulator).
     public int? EmulatorRunId { get; set; }
 
+    // The exchange whose account this happened to (since 31-10-2026), see CryptoAssetSnapshot.ExchangeId
+    public int? ExchangeId { get; set; }
+
     // When it happened, on GlobalData.Clock - emulator time during a replay.
     public DateTime EventTime { get; set; }
 

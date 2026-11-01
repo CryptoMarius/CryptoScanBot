@@ -13,8 +13,9 @@ public class ZoneFvg
     {
         // 3 green candles in a row (only the strong fvg)..
         // unless any mix of colours is allowed (ZonesFvg.AllowMixedColours)
-        if (GlobalData.Settings.Signal.ZonesFvg.AllowMixedColours
-            || (candle.Close > candle.Open && prev.Close > prev.Open && prev2.Close > prev2.Open))
+        //if (GlobalData.Settings.Signal.ZonesFvg.AllowMixedColours
+        //    || (candle.Close > candle.Open && prev.Close > prev.Open && prev2.Close > prev2.Open))
+        // Since 31-10-2026 the colours never matter (AllowMixedColours is gone), only the gap does.
         {
             // with specific boundaries
             if (candle.Low > prev2.High && prev.Close > prev2.High)
@@ -50,8 +51,9 @@ public class ZoneFvg
     {
         // 3 red candles in a row (only the strong fvg)..
         // unless any mix of colours is allowed (ZonesFvg.AllowMixedColours)
-        if (GlobalData.Settings.Signal.ZonesFvg.AllowMixedColours
-            || (candle.Open > candle.Close && prev.Open > prev.Close && prev2.Open > prev2.Close))
+        //if (GlobalData.Settings.Signal.ZonesFvg.AllowMixedColours
+        //    || (candle.Open > candle.Close && prev.Open > prev.Close && prev2.Open > prev2.Close))
+        // Since 31-10-2026 the colours never matter (AllowMixedColours is gone), only the gap does.
         {
             // with specific boundaries
             if (candle.High < prev2.Low && prev.Close < prev2.Low)

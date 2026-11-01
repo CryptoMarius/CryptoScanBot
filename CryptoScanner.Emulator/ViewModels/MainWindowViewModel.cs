@@ -36,9 +36,28 @@ public partial class MainWindowViewModel : ObservableObject
     /// Window title, same shape as the live scanner's (AppName + version + exchange). Bound to the
     /// custom title bar's title text and the Window.Title. Built once at construction; the active
     /// exchange is already known by the time the MainWindow is created (bootstrap runs first).
+    /// <para>
+    /// Since 30-10-2026 it follows the Window title of the settings (see <see cref="BuildTitle"/>)
+    /// and is built again when the settings dialog closes with OK.
+    /// </para>
     /// </summary>
     [ObservableProperty]
-    private string _title = $"{Constants.AppName} {GlobalData.AppVersion} {GlobalData.ActiveExchange?.Name} — Emulator".Trim();
+    private string _title = BuildTitle(GlobalData.ActiveExchange?.Name);
+
+    /// <summary>
+    /// The exchange chosen in the setup dialog. A run switches the active exchange and the one in
+    /// the settings for its own duration, so the title cannot read them later on.
+    /// </summary>
+    private readonly string? _setupExchangeName = GlobalData.ActiveExchange?.Name;
+
+    /// <summary>
+    /// The Window title of the settings, which every emulator keeps in its own data folder, so two
+    /// emulators side by side can be told apart in the task bar - {folder} does that without any
+    /// typing. Exactly as the scanner does it: nothing is added, the purple icon already tells the
+    /// emulator from a live scanner.
+    /// </summary>
+    internal static string BuildTitle(string? setupExchangeName)
+        => GlobalData.FormatTitle(GlobalData.Settings.General.WindowTitle, setupExchangeName);
 
     [ObservableProperty]
     private string _dataFolder = GlobalData.AppDataFolder;
@@ -167,6 +186,9 @@ public partial class MainWindowViewModel : ObservableObject
         // The user may have changed the dark/light theme in the dialog; apply it right away so the
         // emulator reflects the new choice without needing a restart.
         App.ApplyThemeFromSettings();
+
+        // And the Window title, which lives on the Exchange tab of the same dialog
+        Title = BuildTitle(_setupExchangeName);
     }
 
 
@@ -184,6 +206,9 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
+        // "Stop after this run" has no run to wait for here; a press during the fetch must not end
+        // the next batch after its first run (31-10-2026).
+        _stopAfterRun = false;
         IsRunning = true;
         try
         {
@@ -244,6 +269,7 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
+        _stopAfterRun = false;
         IsRunning = true;
         ProgressValue = 0;
 
@@ -344,11 +370,16 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         GlobalData.ActiveExchange = exchange;
-        GlobalData.Settings.General.ExchangeName = config.ExchangeName;
+        //GlobalData.Settings.General.ExchangeName = config.ExchangeName;
 
-        GlobalData.ActiveExchange = exchange;
-        GlobalData.Settings.General.ActivateExchangeName = config.ExchangeName;
+        //GlobalData.ActiveExchange = exchange;
+        //GlobalData.Settings.General.ActivateExchangeName = config.ExchangeName;
+        // The exchange of the settings is the one the run plays on (that is the lookup above). Until
+        // 31-10-2026 the name from the run configuration was written over it here, so a run played
+        // on one exchange under the name of another, and a later Configure -> OK saved that name.
+        BindRunExchange(exchange, config.ExchangeName);
 
+        _stopAfterRun = false;
         IsRunning = true;
         try
         {
@@ -360,6 +391,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
         finally
         {
+            _stopAfterRun = false;
             IsRunning = false;
         }
     }
@@ -428,8 +460,9 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         GlobalData.ActiveExchange = exchange;
-        GlobalData.Settings.General.ExchangeName = baseConfig.ExchangeName;
-        GlobalData.Settings.General.ActivateExchangeName = baseConfig.ExchangeName;
+        //GlobalData.Settings.General.ExchangeName = baseConfig.ExchangeName;
+        //GlobalData.Settings.General.ActivateExchangeName = baseConfig.ExchangeName;
+        BindRunExchange(exchange, baseConfig.ExchangeName);
 
         // The configured label's first word is replaced per-algorithm below; anything after the
         // first word (extra notes the user typed) is kept and appended to every algorithm's label.
@@ -445,6 +478,9 @@ public partial class MainWindowViewModel : ObservableObject
         List<string> savedTradingLongStrategy = GlobalData.Settings.Trading.Long.Strategy;
         List<string> savedTradingShortStrategy = GlobalData.Settings.Trading.Short.Strategy;
 
+        // A "Stop after this run" left behind by an earlier batch must not end this one after its
+        // first algorithm (31-10-2026); the flag belongs to one batch.
+        _stopAfterRun = false;
         IsRunning = true;
         try
         {
@@ -465,6 +501,11 @@ public partial class MainWindowViewModel : ObservableObject
                     FromDate = baseConfig.FromDate,
                     ToDate = baseConfig.ToDate,
                     BaseInterval = baseConfig.BaseInterval,
+                    // The run configuration decides these too, like Start and the queue do; until
+                    // 31-10-2026 they fell back to the class defaults here, so "Run algorithms…"
+                    // measured the barometer where Start did not, and the fingerprints differed.
+                    CalculateBarometer = baseConfig.CalculateBarometer,
+                    DuplicateCheckDays = baseConfig.DuplicateCheckDays,
                     Label =labelRest.Length > 0 ? $"{algorithm.Name} {labelRest}" : algorithm.Name,
                 };
 
@@ -486,8 +527,27 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Signal.Short.Strategy = savedSignalShortStrategy;
             GlobalData.Settings.Trading.Long.Strategy = savedTradingLongStrategy;
             GlobalData.Settings.Trading.Short.Strategy = savedTradingShortStrategy;
+            _stopAfterRun = false;
             IsRunning = false;
         }
+    }
+
+
+    /// <summary>
+    /// The exchange a run plays on is the one of the settings (chosen in the Setup dialog), not the
+    /// name in the run configuration: that name is only remembered there. When the two differ the
+    /// run would otherwise be stored under one name and replayed on another, so it is said out loud.
+    /// The trading exchange is forced to the same exchange: the emulator trades on paper, on the
+    /// exchange it replays.
+    /// </summary>
+    private static void BindRunExchange(Core.Model.CryptoExchange exchange, string configExchangeName)
+    {
+        if (!string.IsNullOrWhiteSpace(configExchangeName)
+            && !configExchangeName.Equals(exchange.Name, StringComparison.OrdinalIgnoreCase))
+            GlobalData.AddErrorToLogTab(
+                $"Run: the run configuration names exchange \"{configExchangeName}\", the settings \"{exchange.Name}\" "
+                + "- the run plays on the exchange of the settings; fix the run configuration or pick the other exchange in Setup");
+        GlobalData.Settings.General.ActivateExchangeName = exchange.Name;
     }
 
 
@@ -792,15 +852,19 @@ public partial class MainWindowViewModel : ObservableObject
             return false;
         }
 
-        baseConfig.SelectedAlgorithms = selectedNames;
-        try
-        {
-            RunConfigFile.Save(baseConfig);
-        }
-        catch (Exception ex)
-        {
-            Status = $"Failed to save run config: {ex.Message}";
-        }
+        // Not written to the run configuration file any more (31-10-2026): SelectedAlgorithms is the
+        // tick list of the "Run algorithms…" dialog, and the queue has its own algorithms per entry.
+        // Writing them here also put back a copy of the file read when this queue file began, over
+        // whatever was saved since (the grid's sort column, for one).
+        //baseConfig.SelectedAlgorithms = selectedNames;
+        //try
+        //{
+        //    RunConfigFile.Save(baseConfig);
+        //}
+        //catch (Exception ex)
+        //{
+        //    Status = $"Failed to save run config: {ex.Message}";
+        //}
 
         var selectedAlgorithms = selectedNames
             .Select(name => RegisterAlgorithms.AlgorithmDefinitionList.Values.FirstOrDefault(a => a.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
@@ -833,8 +897,9 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         GlobalData.ActiveExchange = exchange;
-        GlobalData.Settings.General.ExchangeName = baseConfig.ExchangeName;
-        GlobalData.Settings.General.ActivateExchangeName = baseConfig.ExchangeName;
+        //GlobalData.Settings.General.ExchangeName = baseConfig.ExchangeName;
+        //GlobalData.Settings.General.ActivateExchangeName = baseConfig.ExchangeName;
+        BindRunExchange(exchange, baseConfig.ExchangeName);
 
         List<string> savedSignalLongStrategy = GlobalData.Settings.Signal.Long.Strategy;
         List<string> savedSignalShortStrategy = GlobalData.Settings.Signal.Short.Strategy;
@@ -971,20 +1036,32 @@ public partial class MainWindowViewModel : ObservableObject
                     GlobalData.Settings.Signal.Long.HigherInterval = savedSignalLongHigherInterval;
                     GlobalData.Settings.Signal.Short.HigherInterval = savedSignalShortHigherInterval;
 
-                    decimal effectiveSL = entry.Trading?.StopLossPercentage ?? entry.StopLossPercentage;
-                    GlobalData.Settings.Trading.StopLossPercentage = effectiveSL;
-                    GlobalData.Settings.Trading.StopLossLimitPercentage = effectiveSL + 1m;
+                    // Omitted = the settings decide, like every other key of an entry (31-10-2026).
+                    // Until then a missing StopLossPercentage ran on a default of 2%, and the limit
+                    // was always rebuilt from it, even when the settings had another distance.
+                    decimal? effectiveSL = entry.Trading?.StopLossPercentage ?? entry.StopLossPercentage;
+                    if (effectiveSL.HasValue)
+                    {
+                        GlobalData.Settings.Trading.StopLossPercentage = effectiveSL.Value;
+                        GlobalData.Settings.Trading.StopLossLimitPercentage = effectiveSL.Value + 1m;
+                    }
 
-                    List<CryptoTpEntry>? effectiveTP = entry.Trading?.TpList ?? (entry.TpList.Count > 0 ? entry.TpList : null);
+                    // An empty TP list is treated as "the settings decide" too: a run without a
+                    // take profit has no way out but the stop, nobody asks for that by leaving a
+                    // list empty.
+                    List<CryptoTpEntry>? effectiveTP = entry.Trading?.TpList ?? entry.TpList;
                     if (effectiveTP is { Count: > 0 })
                         GlobalData.Settings.Trading.TpList = effectiveTP
                             .Select(e => new CryptoTpEntry { Factor = e.Factor, Percentage = e.Percentage })
                             .ToList();
 
-                    List<CryptoDcaEntry> effectiveDCA = entry.Trading?.DcaList ?? entry.DcaList;
-                    GlobalData.Settings.Trading.DcaList = effectiveDCA
-                        .Select(e => new CryptoDcaEntry { Factor = e.Factor, Percentage = e.Percentage })
-                        .ToList();
+                    // The DCA list is the one key where an EMPTY list means something: no DCA at
+                    // all (the queue files rely on "DcaList": []). Omitted = the settings decide.
+                    List<CryptoDcaEntry>? effectiveDCA = entry.Trading?.DcaList ?? entry.DcaList;
+                    if (effectiveDCA != null)
+                        GlobalData.Settings.Trading.DcaList = effectiveDCA
+                            .Select(e => new CryptoDcaEntry { Factor = e.Factor, Percentage = e.Percentage })
+                            .ToList();
 
                     bool hasPerSideConfig = entry.Long != null || entry.Short != null || entry.MirrorFrom != null;
 
@@ -1026,6 +1103,18 @@ public partial class MainWindowViewModel : ObservableObject
                     try
                     {
                         overrides = SignalGridExpander.Apply(entry);
+
+                        // A stop given in TradingOverrides arrives AFTER the limit above was derived,
+                        // so "StopLossPercentage": 5 in the overrides ran with a limit of 3, on the
+                        // wrong side of the stop (31-10-2026). The limit follows the stop here, unless
+                        // the overrides set the limit themselves. Put back with the saved value in the
+                        // finally of this batch, like the stop.
+                        bool stopOverridden = overrides.Any(o => ReferenceEquals(o.Target, GlobalData.Settings.Trading)
+                            && o.Property.Name == nameof(SettingsTrading.StopLossPercentage));
+                        bool limitOverridden = overrides.Any(o => ReferenceEquals(o.Target, GlobalData.Settings.Trading)
+                            && o.Property.Name == nameof(SettingsTrading.StopLossLimitPercentage));
+                        if (stopOverridden && !limitOverridden)
+                            GlobalData.Settings.Trading.StopLossLimitPercentage = GlobalData.Settings.Trading.StopLossPercentage + 1m;
                     }
                     catch (Exception ax)
                     {
@@ -1240,14 +1329,6 @@ public partial class MainWindowViewModel : ObservableObject
 
 
     /// <summary>
-    /// Drives a single replay end-to-end: applies the run overrides, opens an EmulatorRun row,
-    /// runs the TickRunner and records the outcome. Shared by <see cref="StartAsync"/> (one run)
-    /// and <see cref="RunAllAlgorithmsAsync"/> (one run per algorithm) — neither touches
-    /// <see cref="IsRunning"/> here, that's the caller's responsibility since the batch commands
-    /// keep it true across multiple calls.
-    /// </summary>
-    /// <returns>True if the run completed normally; false if it was cancelled or failed.</returns>
-    /// <summary>
     /// The label a run is stored and shown under: "&lt;algorithm&gt; &lt;entry label&gt; [&lt;base interval&gt;]".
     /// <para>
     /// The algorithm is only put in front when the entry label does not already name it. Writing the
@@ -1265,6 +1346,9 @@ public partial class MainWindowViewModel : ObservableObject
     /// The start capital follows the same rule and is appended as "[start 5000]". It is worth naming
     /// for the same reason: since the balances really constrain trading, it decides how many
     /// positions can be open at the same time.
+    /// Since 26-10-2026 the start capital is a setting (the Default column of Paper assets), so the
+    /// queue passes none here and no label carries it any more; the parameter stays for the tests
+    /// and for a caller that wants it.
     /// </para>
     /// <para>
     /// Written without a thousands separator and in the invariant culture on purpose. The label is
@@ -1288,7 +1372,12 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
 
-    /// <summary>The period as it appears in a run label: "2026-01-01..2026-04-30".</summary>
+    /// <summary>
+    /// The period as it appears in a run label: "2026-01-01..2026-04-30". The dates are the ones of
+    /// the entry or the run configuration, and the end is exclusive (the replay stops at 00:00 of that
+    /// day): the label is kept as typed so runs stay comparable by label with the ones before
+    /// 31-10-2026, when this was written down.
+    /// </summary>
     internal static string FormatPeriod(DateTime fromDate, DateTime toDate)
         => $"{fromDate:yyyy-MM-dd}..{toDate:yyyy-MM-dd}";
 
@@ -1313,10 +1402,25 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
 
+    /// <summary>
+    /// Drives a single replay end-to-end: applies the run overrides, opens an EmulatorRun row,
+    /// runs the TickRunner and records the outcome. Shared by <see cref="StartAsync"/> (one run)
+    /// and <see cref="RunAllAlgorithmsAsync"/> (one run per algorithm) — neither touches
+    /// <see cref="IsRunning"/> here, that's the caller's responsibility since the batch commands
+    /// keep it true across multiple calls.
+    /// </summary>
+    /// <returns>True if the run completed normally; false if it was cancelled or failed.</returns>
     private async Task<bool> RunOnceAsync(EmulatorRunConfig config, bool force = false)
     {
         ProgressValue = 0;
         Status = $"Starting run \"{config.Label}\"";
+
+        // ApplyRunOverrides switches FetchCandles on for the quote coin of every run symbol, on the
+        // shared quote objects of the settings. Put back after the run (31-10-2026): left on, the
+        // settings snapshot and the fingerprint of every later run in this session depended on the
+        // runs before it, and so did the coin selection of the market measures.
+        Dictionary<string, bool> savedFetchCandles =
+            GlobalData.Settings.QuoteCoins.Values.ToDictionary(q => q.Name, q => q.FetchCandles);
 
         ApplyRunOverrides(config);
 
@@ -1450,6 +1554,12 @@ public partial class MainWindowViewModel : ObservableObject
             RunResults.Refresh();
             CapitalCurve.ShowLatest();
 
+            foreach (CryptoQuoteData quote in GlobalData.Settings.QuoteCoins.Values)
+            {
+                if (savedFetchCandles.TryGetValue(quote.Name, out bool fetchCandles))
+                    quote.FetchCandles = fetchCandles;
+            }
+
             _cts?.Dispose();
             _cts = null;
         }
@@ -1507,6 +1617,9 @@ public partial class MainWindowViewModel : ObservableObject
         //     (DrainQueueAsync) so zone calculation stays on the deterministic replay thread.
         //     Without this instance the AddToQueue null-conditional silently drops every DLZ
         //     recalculation and no DLZ zones would ever form during a run.
+        //     Correction 31-10-2026: in the emulator SignalPrepare calls ZoneThreadCalculate.CalculateZones
+        //     directly, so nothing is queued and the drain is always empty; the instance is kept
+        //     for the code paths that still null-check it.
         GlobalData.ThreadZoneCalculate ??= new ZoneThreadCalculate();
 
         // 1c. Wire a ThreadSaveObjects instance. Signal/position/zone persistence all go through
@@ -1533,6 +1646,11 @@ public partial class MainWindowViewModel : ObservableObject
         // Clear symbols and refresh
         exchange.Clear();
         GlobalData.LoadSymbols();
+        // LoadSymbols makes new symbol objects; the per-quote index (quoteData.SymbolList) still
+        // pointed at the objects of the bootstrap, so the market RSI, the market state and the
+        // market move measured over symbols the replay never filled (31-10-2026). Rebuilt here, the
+        // way the bootstrap, the candle sync and the settings applier do.
+        ThreadLoadData.IndexQuoteDataSymbols(exchange, notifyUserInterface: false);
 
         // Force paper-trading. The user's settings.json is otherwise authoritative;
         // overriding here protects against accidental RealTrading after a Configure edit.
@@ -1576,7 +1694,11 @@ public partial class MainWindowViewModel : ObservableObject
         SignalPrepare.Prepare();
         SignalExecute.Prepare();
 
-        GlobalData.LoadAssets(); // not sure if we need this (papertrading perhaps?)    
+        //GlobalData.LoadAssets(); // not sure if we need this (papertrading perhaps?)
+        // Not needed, and harmful (31-10-2026): on a fresh database it seeded the start capital
+        // before the run row existed, so the ledger got StartCapital lines without a run id, and
+        // ReplayRunner.RunAsync seeded again through PaperAssets.ResetAssets - which also reloads
+        // the balances from the database itself.
     }
 
 
@@ -1605,7 +1727,10 @@ public partial class MainWindowViewModel : ObservableObject
                 path = Environment.ProcessPath ?? "";
             if (string.IsNullOrEmpty(path) || !File.Exists(path))
                 return null;
-            return File.GetLastWriteTime(path);
+            // UTC, like StartedAt and FinishedAt: the grid converts it to local time for display
+            // (RunResultsViewModel). Stored as local time until 31-10-2026, which the grid then
+            // shifted once more - rows from before that date show their build an hour or two late.
+            return File.GetLastWriteTimeUtc(path);
         }
         catch
         {

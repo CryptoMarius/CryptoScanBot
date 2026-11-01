@@ -30,6 +30,25 @@ public class LinuxPlatformService : IPlatformService
     }
 
     /// <summary>
+    /// Opens the file with its associated application through xdg-open, the desktop-independent
+    /// way to do what a double click in the file manager does.
+    /// </summary>
+    public void OpenFile(string path)
+    {
+        try
+        {
+            var startInfo = new System.Diagnostics.ProcessStartInfo("xdg-open") { UseShellExecute = false };
+            startInfo.ArgumentList.Add(path);
+            using var process = System.Diagnostics.Process.Start(startInfo);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "OpenFile");
+            GlobalData.AddErrorToLogTab($"Cannot open {path}: {error.Message}");
+        }
+    }
+
+    /// <summary>
     /// There is no single message box on Linux, so the two dialog helpers that are almost always
     /// present are tried in turn (zenity on GNOME, kdialog on KDE). When neither is installed the
     /// message still reaches the console.

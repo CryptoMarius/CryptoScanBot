@@ -12,7 +12,8 @@
     <Grid RowDefinitions="Auto,*" RowSpacing="4">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
             <TextBlock Grid.Column="0" Text="{Binding Caption}" FontSize="14" VerticalAlignment="Center"/>
-            <Button Grid.Column="1" Content="Refresh" Command="{Binding ShowLatestCommand}"/>
+            <!-- Refreshes the selected run since 31-10-2026; ShowLatestCommand jumped to the latest run -->
+            <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshCommand}"/>
         </Grid>
         <oxy:PlotView Grid.Row="1" Model="{Binding Model}" Background="Transparent"/>
     </Grid>

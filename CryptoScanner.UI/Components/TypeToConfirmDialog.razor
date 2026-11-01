@@ -1,0 +1,83 @@
+@* The second, deliberate step of a destructive command: OK only goes through when the user typed
+   ExpectedText (the number of things that will be deleted). Typing a number cannot be done on
+   autopilot the way a second Yes can. Same as "Delete all runs" in the emulator and the Avalonia
+   TypeToConfirmDialog. *@
+@if (Visible)
+{
+    <div class="modal-overlay" @onclick="OnCancel" @oncontextmenu:preventDefault="true">
+    </div>
+    <div class="modal-dialog confirm-dialog" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <span class="modal-title">@Title</span>
+        </div>
+        <div class="modal-body">
+            <p style="white-space: pre-line;">@Message</p>
+            <input type="text" class="input-text" style="width: 100%;" @ref="_inputRef"
+                   @bind="_typed" @bind:event="oninput" @onkeydown="OnKeyDown" />
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" @onclick="OnConfirm">OK</button>
+            <button class="btn btn-secondary" @onclick="OnCancel">Cancel</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public string Title { get; set; } = "Confirm";
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public string ExpectedText { get; set; } = "";
+    [Parameter] public EventCallback OnConfirmed { get; set; }
+
+    private string _typed = "";
+    private ElementReference _inputRef;
+    private bool _wasVisible;
+
+    protected override void OnParametersSet()
+    {
+        // Every time the dialog opens it starts empty
+        if (Visible && !_wasVisible)
+            _typed = "";
+        _wasVisible = Visible;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible && _typed.Length == 0)
+        {
+            try
+            {
+                await _inputRef.FocusAsync();
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await OnConfirm();
+        else if (e.Key == "Escape")
+            await OnCancel();
+    }
+
+    private async Task OnConfirm()
+    {
+        bool confirmed = _typed.Trim() == ExpectedText;
+        Visible = false;
+        _wasVisible = false;
+        await VisibleChanged.InvokeAsync(false);
+        if (confirmed)
+            await OnConfirmed.InvokeAsync();
+    }
+
+    private async Task OnCancel()
+    {
+        Visible = false;
+        _wasVisible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+}

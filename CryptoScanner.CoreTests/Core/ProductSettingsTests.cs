@@ -133,6 +133,34 @@ public class ProductSettingsTests
 
 
     /// <summary>
+    /// The settings screen shows per quote and per product how many instruments the exchange has. An
+    /// instrument of a product that is switched off is refused but counted: a 0 there read as "this
+    /// product has nothing to trade" (31-10-2026). A second refresh does not count it twice.
+    /// </summary>
+    [TestMethod]
+    public void AnInstrumentOfASwitchedOffProductIsStillCounted()
+    {
+        TestExchange exchange = CreateExchange();
+        SymbolBase.SymbolInfo gold = SymbolBase.ParseSymbol("xyz:GOLD", "GOLD", "USDC", "xyz");
+        SymbolBase.SymbolInfo tesla = SymbolBase.ParseSymbol("xyz:TSLA", "TSLA", "USDC", "xyz");
+        SymbolBase.SymbolInfo btc = SymbolBase.ParseSymbol("BTC", "BTC", "USDC", CryptoProduct.Perpetual);
+        GlobalData.AddProductData("XYZ").Active = false;
+
+        for (int refresh = 0; refresh < 2; refresh++)
+        {
+            Assert.IsFalse(SymbolBase.IsSymbolAccepted(exchange, gold, null!, TradingMode.PerpetualLinear, out _));
+            Assert.IsFalse(SymbolBase.IsSymbolAccepted(exchange, tesla, null!, TradingMode.PerpetualLinear, out _));
+            Assert.IsTrue(SymbolBase.IsSymbolAccepted(exchange, btc, null!, TradingMode.PerpetualLinear, out _));
+        }
+
+        Assert.AreEqual(2, GlobalData.OfferedForProduct("XYZ"), "switched off, still counted");
+        Assert.AreEqual(1, GlobalData.OfferedForProduct(CryptoProduct.Perpetual));
+        Assert.AreEqual(3, GlobalData.OfferedForQuote("USDC"), "every instrument with this quote");
+        Assert.AreEqual(0, GlobalData.OfferedForProduct("PARA"), "unknown");
+    }
+
+
+    /// <summary>
     /// Registers a symbol the way the refresh does: in the exchange indexes, on the quote of the
     /// settings, active.
     /// </summary>

@@ -44,15 +44,25 @@ public static class RunConfigFile
             using (FileStream stream = File.OpenRead(path))
                 loaded = JsonSerializer.Deserialize<EmulatorRunConfig>(stream, ReadOptions);
             if (loaded == null)
-                return BuildPlaceholder();
+            {
+                //return BuildPlaceholder();
+                // Marked so it is never saved over the file (31-10-2026), see UnreadPlaceholders
+                GlobalData.AddErrorToLogTab($"Run configuration: {path} holds no configuration - a placeholder is used and the file is not overwritten");
+                return BuildUnreadPlaceholder();
+            }
 
             // A file written before 27-08-2026 still says "<exchange> Futures"
             loaded.ExchangeName = GlobalData.FixLegacyExchangeName(loaded.ExchangeName);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"RunConfigFile.Load: {ex.Message} — falling back to placeholder");
-            return BuildPlaceholder();
+            //Console.WriteLine($"RunConfigFile.Load: {ex.Message} — falling back to placeholder");
+            //return BuildPlaceholder();
+            // Since 31-10-2026 in the log (an Avalonia application has no console), and the placeholder
+            // is marked: a sort click, "Run algorithms..." or OK in Run parameters loads, changes one
+            // field and saves, and an unmarked placeholder then replaced the coin list and the period.
+            GlobalData.AddErrorToLogTab($"Run configuration: {path} cannot be read - {ex.Message}. A placeholder is used and the file is not overwritten until it is repaired.");
+            return BuildUnreadPlaceholder();
         }
 
         // Outside the try above: the configuration that was read is good, whatever happens here
@@ -120,11 +130,48 @@ public static class RunConfigFile
     internal static Action SaveSettings { get; set; } = GlobalData.SaveConfiguration;
 
 
-    public static void Save(EmulatorRunConfig config)
+    /// <summary>
+    /// Writes <paramref name="config"/> to the file. Returns false, writes nothing and logs the reason
+    /// when the configuration is the placeholder of a file that could not be read (since 31-10-2026):
+    /// saving it would replace the coin list and the period of the real file.
+    /// </summary>
+    public static bool Save(EmulatorRunConfig config)
     {
         string path = FilePath;
+        if (IsUnreadPlaceholder(config))
+        {
+            GlobalData.AddErrorToLogTab($"Run configuration: not saved - {path} could not be read, and saving the placeholder would overwrite it. Repair or remove the file first.");
+            return false;
+        }
+
         string json = JsonSerializer.Serialize(config, WriteOptions);
-        File.WriteAllText(path, json);
+        //File.WriteAllText(path, json);
+        // Through a temporary file, like RunSettingsApplier: a write that breaks off halfway left a
+        // file that could not be read back, and the next Load handed out the placeholder.
+        string temporary = path + ".tmp";
+        File.WriteAllText(temporary, json);
+        File.Move(temporary, path, overwrite: true);
+        return true;
+    }
+
+
+    /// <summary>
+    /// The placeholders handed out for a file that exists but could not be read. Kept by reference,
+    /// so a caller that loads, changes a field and saves is refused, while a configuration built from
+    /// scratch is not. Weak, so a forgotten placeholder does not stay alive.
+    /// </summary>
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<EmulatorRunConfig, object> UnreadPlaceholders = new();
+
+
+    /// <summary>True when <paramref name="config"/> is the placeholder of a file that could not be read.</summary>
+    public static bool IsUnreadPlaceholder(EmulatorRunConfig config) => UnreadPlaceholders.TryGetValue(config, out _);
+
+
+    private static EmulatorRunConfig BuildUnreadPlaceholder()
+    {
+        EmulatorRunConfig placeholder = BuildPlaceholder();
+        UnreadPlaceholders.AddOrUpdate(placeholder, new object());
+        return placeholder;
     }
 
 

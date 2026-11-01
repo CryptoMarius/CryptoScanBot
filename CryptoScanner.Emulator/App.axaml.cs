@@ -149,6 +149,11 @@ public partial class App : Application
 
         // The claim on the new folder was taken by the dialog itself; the old one is released only
         // when that succeeded, so a refused folder never gets this far.
+        // The old window's shutdown checkpoint while AppDataFolder still points at its database: it is
+        // closed only after the new window is shown below, when the folder already changed (31-10-2026).
+        if (currentMainWindow is MainWindow oldMain)
+            oldMain.CheckpointBeforeDatabaseSwitch();
+
         // Apply the new folder + exchange exactly like the first-time startup path.
         GlobalData.AppDataFolder = setup.ViewModel.DataFolder;
         Directory.CreateDirectory(GlobalData.AppDataFolder);

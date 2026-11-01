@@ -17,9 +17,12 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
+
+            <!-- Which exchange these quotes belong to: every exchange has its own since 31-10-2026 -->
+            <TextBlock Text="{Binding ExchangeText}" Margin="0,0,0,8" TextWrapping="Wrap"/>
             
             <!-- Header Row -->
-            <Grid ColumnDefinitions="30,70,100,100,100,100,100,100" Margin="0,0,0,8"
+            <Grid ColumnDefinitions="30,70,100,100,100,100,100,100,100" Margin="0,0,0,8"
                   Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
                 
                 <TextBlock Grid.Column="0" Text="" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -31,6 +34,8 @@
                            ToolTip.Tip="Entry as a percentage of the whole account (cash plus open positions at the current price), so the stake grows and shrinks with the account. The amount is the minimum entry. Only used with asset management on; without it the amount is the entry."/>
                 <TextBlock Grid.Column="6" Text="Color" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
                 <TextBlock Grid.Column="7" Text="Symbols" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="8" Text="At exchange" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"
+                           ToolTip.Tip="How many coins the exchange has with this quote, switched on or off. Symbols is how many of them the scanner fetches now."/>
             </Grid>
 
             <!-- Items -->
@@ -46,7 +51,7 @@
                 <!-- Individual quote item template -->
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Grid ColumnDefinitions="30,70,100,100,100,100,100,100" RowDefinitions="Auto" Margin="0,0,0,8">
+                        <Grid ColumnDefinitions="30,70,100,100,100,100,100,100,100" RowDefinitions="Auto" Margin="0,0,0,8">
                             
                             <!-- Checkbox -->
                             <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -84,6 +89,11 @@
                             <TextBlock Grid.Column="7" Text="{Binding SymbolCount, StringFormat='{}{0} symbols'}"
                                        FontWeight="SemiBold" FontSize="12" 
                                        HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
+
+                            <!-- What the exchange has with this quote, fetched or not -->
+                            <TextBlock Grid.Column="8" Text="{Binding OfferedCount}"
+                                       FontSize="12"
+                                       HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -96,11 +106,13 @@
             <TextBlock Text="Products" FontWeight="SemiBold" FontSize="13" Margin="0,16,0,8"/>
 
             <!-- Header Row -->
-            <Grid ColumnDefinitions="30,100,100" Margin="0,0,0,8"
+            <Grid ColumnDefinitions="30,100,100,100" Margin="0,0,0,8"
                   Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
                 <TextBlock Grid.Column="0" Text="" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 <TextBlock Grid.Column="1" Text="Product" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4" HorizontalAlignment="Center"/>
                 <TextBlock Grid.Column="2" Text="Symbols" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="3" Text="At exchange" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"
+                           ToolTip.Tip="How many coins the exchange has in this product, also when the product is switched off. Symbols is how many of them the scanner fetches now."/>
             </Grid>
 
             <!-- Items -->
@@ -114,7 +126,7 @@
 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Grid ColumnDefinitions="30,100,100" RowDefinitions="Auto" Margin="0,0,0,8">
+                        <Grid ColumnDefinitions="30,100,100,100" RowDefinitions="Auto" Margin="0,0,0,8">
 
                             <!-- Checkbox -->
                             <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" Margin="0,0,8,0"
@@ -127,6 +139,11 @@
                             <!-- Symbol count -->
                             <TextBlock Grid.Column="2" Text="{Binding SymbolCount, StringFormat='{}{0} symbols'}"
                                        FontWeight="SemiBold" FontSize="12"
+                                       HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
+
+                            <!-- What the exchange has in this product, also when it is switched off -->
+                            <TextBlock Grid.Column="3" Text="{Binding OfferedCount}"
+                                       FontSize="12"
                                        HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
                         </Grid>
                     </DataTemplate>

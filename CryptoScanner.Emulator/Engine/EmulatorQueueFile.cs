@@ -127,6 +127,13 @@ public static class EmulatorQueueFile
         int bom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF ? 3 : 0;
         bool matchByLabel = !string.IsNullOrWhiteSpace(label);
 
+        // Several entries can carry the same label. Since 31-10-2026 the search does not stop at the
+        // first of them: an entry with that label and a Force wins when it sits at index (the one that
+        // just ran), otherwise the first one with that label and a Force. Before, the first entry with
+        // the label ended the search, and when that one had no Force the Force of a later twin stayed
+        // on - that entry was then replayed after every restart.
+        long firstLabelMatch = -1;
+
         try
         {
             var reader = new Utf8JsonReader(bytes.AsSpan(bom), new JsonReaderOptions
@@ -153,11 +160,23 @@ public static class EmulatorQueueFile
 
                 if (reader.TokenType == JsonTokenType.EndObject && reader.CurrentDepth == 1)
                 {
-                    bool matches = matchByLabel
-                        ? string.Equals(entryLabel, label, StringComparison.Ordinal)
-                        : entryIndex == index;
-                    if (matches)
-                        return forceTrueAt < 0 ? -1 : forceTrueAt + bom;
+                    //bool matches = matchByLabel
+                    //    ? string.Equals(entryLabel, label, StringComparison.Ordinal)
+                    //    : entryIndex == index;
+                    //if (matches)
+                    //    return forceTrueAt < 0 ? -1 : forceTrueAt + bom;
+                    if (!matchByLabel)
+                    {
+                        if (entryIndex == index)
+                            return forceTrueAt < 0 ? -1 : forceTrueAt + bom;
+                    }
+                    else if (forceTrueAt >= 0 && string.Equals(entryLabel, label, StringComparison.Ordinal))
+                    {
+                        if (entryIndex == index)
+                            return forceTrueAt + bom;
+                        if (firstLabelMatch < 0)
+                            firstLabelMatch = forceTrueAt + bom;
+                    }
                     continue;
                 }
 
@@ -181,9 +200,12 @@ public static class EmulatorQueueFile
         catch (JsonException ex)
         {
             GlobalData.AddTextToLogTab($"EmulatorQueueFile.ResetForce: file cannot be parsed - {ex.Message}");
+            // A file that cannot be parsed is not edited, whatever was found before the error
+            return -1;
         }
 
-        return -1;
+        //return -1;
+        return firstLabelMatch;
     }
 
 

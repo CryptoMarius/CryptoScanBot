@@ -43,6 +43,7 @@ public static class AssetAdjustmentTools
             CryptoAssetAdjustment adjustment = new()
             {
                 EmulatorRunId = GlobalData.CurrentEmulatorRunId,
+                ExchangeId = activeExchange.Id,
                 EventTime = GlobalData.Clock.UtcNow,
                 Name = name,
                 Reason = reason,
@@ -82,8 +83,8 @@ public static class AssetAdjustmentTools
             // knows days.
             return [.. database.Connection.Query<AdjustmentDay>(
                 "select date(EventTime) as Date, sum(cast(Value as REAL)) as Value " +
-                "from AssetAdjustment where EmulatorRunId is @runId " +
-                "group by date(EventTime) order by date(EventTime)", new { runId = emulatorRunId })];
+                "from AssetAdjustment where EmulatorRunId is @runId " + AssetSnapshotTools.LiveSeriesOfExchange +
+                "group by date(EventTime) order by date(EventTime)", new { runId = emulatorRunId, exchangeId = GlobalData.ActiveExchange?.Id })];
         }
         catch (Exception error)
         {

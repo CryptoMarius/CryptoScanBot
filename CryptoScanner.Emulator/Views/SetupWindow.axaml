@@ -18,7 +18,7 @@
         <TextBlock Grid.Row="0" FontSize="18" FontWeight="Bold" Text="Emulator setup"/>
 
         <TextBlock Grid.Row="1" FontSize="11" Foreground="Gray" TextWrapping="Wrap"
-                   Text="Choose where the emulator stores its data (database, settings, cached candles) and which exchange to work against. These are remembered in the chosen folder."/>
+                   Text="Choose where the emulator stores its data (database, settings, cached candles) and which exchange to work against. These choices are remembered in the folder given with -f, or else in your application data folder of CryptoScanBot (not in the chosen folder), so they survive a switch of data folder."/>
 
         <!-- Data folder row -->
         <Grid Grid.Row="2" ColumnDefinitions="100,*,Auto" ColumnSpacing="8">

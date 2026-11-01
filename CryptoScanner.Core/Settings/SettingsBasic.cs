@@ -27,12 +27,21 @@ public class SettingsBasic
 
     /// <summary>
     /// Base coins
+    /// <para>
+    /// Since 31-10-2026 the quotes of the active exchange, kept per exchange in the Quote table and
+    /// filled from there by ExchangeSettingsStore. The settings file no longer holds them; an emulator
+    /// run still stores them in its settings snapshot.
+    /// </para>
     /// </summary>
     public SortedList<string, CryptoQuoteData> QuoteCoins { get; set; } = [];
 
     /// <summary>
     /// Products (the code behind the dot in a symbol name), each of which can be switched off as a
     /// whole. Filled as products come by, like the quote coins - see <see cref="CryptoProductData"/>.
+    /// <para>
+    /// Since 31-10-2026 the products of the active exchange, kept per exchange in the Product table
+    /// (ExchangeSettingsStore), like the quote coins.
+    /// </para>
     /// </summary>
     public SortedList<string, CryptoProductData> Products { get; set; } = [];
 

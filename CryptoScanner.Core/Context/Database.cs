@@ -821,12 +821,71 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE TABLE [Asset] (" +
                 "Id INTEGER primary key autoincrement not null," +
 
+                // Null only on rows from before version 111, until the first exchange that is
+                // activated claims them (ExchangeSettingsStore.ClaimUnassignedRows)
+                "ExchangeId INTEGER NULL," +
                 "Name TEXT NOT NULL," +
                 "Total TEXT NOT NULL," +
                 "Free TEXT NOT NULL," +
-                "Locked TEXT NOT NULL" +
+                "Locked TEXT NOT NULL," +
+                "DefaultTotal TEXT NOT NULL DEFAULT '0'" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxAssetId ON Asset(Id)");
+            connection.Connection.Execute("CREATE INDEX IdxAssetExchangeId ON Asset(ExchangeId)");
+            // One balance per coin per exchange (since version 112). Rows without an exchange are not
+            // held to it, NULL never equals NULL.
+            connection.Connection.Execute("CREATE UNIQUE INDEX IdxAssetExchangeIdName ON Asset(ExchangeId, Name)");
+        }
+    }
+
+
+    /// <summary>
+    /// The quote coins per exchange (since 31-10-2026). Before that they were one list in the settings
+    /// file that every exchange shared, so a switch kept the quotes of the previous exchange active.
+    /// </summary>
+    private static void CreateTableQuote(CryptoDatabase connection)
+    {
+        if (MissingTable(connection, "Quote"))
+        {
+            connection.Connection.Execute("CREATE TABLE [Quote] (" +
+                "Id INTEGER primary key autoincrement not null," +
+
+                "ExchangeId INTEGER NOT NULL," +
+                "Name TEXT NOT NULL," +
+                "DisplayFormat TEXT NOT NULL," +
+                "FetchCandles INTEGER NOT NULL," +
+                "MinimalVolume REAL NOT NULL," +
+                "MinimalPrice TEXT NOT NULL," +
+                "EntryAmount TEXT NOT NULL," +
+                "EntryPercentage REAL NOT NULL," +
+                "DisplayColor TEXT NOT NULL," +
+                "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
+            ")");
+            connection.Connection.Execute("CREATE INDEX IdxQuoteId ON Quote(Id)");
+            connection.Connection.Execute("CREATE UNIQUE INDEX IdxQuoteExchangeIdName ON Quote(ExchangeId, Name)");
+        }
+    }
+
+
+    /// <summary>
+    /// The products per exchange, whether the symbols of each are fetched (since 31-10-2026). Before
+    /// that they were one list in the settings file, so switching PERP off on one exchange switched it
+    /// off on every exchange that trades perpetuals.
+    /// </summary>
+    private static void CreateTableProduct(CryptoDatabase connection)
+    {
+        if (MissingTable(connection, "Product"))
+        {
+            connection.Connection.Execute("CREATE TABLE [Product] (" +
+                "Id INTEGER primary key autoincrement not null," +
+
+                "ExchangeId INTEGER NOT NULL," +
+                "Name TEXT NOT NULL," +
+                "Active INTEGER NOT NULL," +
+                "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
+            ")");
+            connection.Connection.Execute("CREATE INDEX IdxProductId ON Product(Id)");
+            connection.Connection.Execute("CREATE UNIQUE INDEX IdxProductExchangeIdName ON Product(ExchangeId, Name)");
         }
     }
 
@@ -839,6 +898,7 @@ public class CryptoDatabase : IDisposable
                 "Id INTEGER primary key autoincrement not null," +
 
                 "EmulatorRunId INTEGER NULL," +
+                "ExchangeId INTEGER NULL," +
                 "SnapshotDate TEXT NOT NULL," +
 
                 "Name TEXT NOT NULL," +
@@ -868,6 +928,7 @@ public class CryptoDatabase : IDisposable
                 "Id INTEGER primary key autoincrement not null," +
 
                 "EmulatorRunId INTEGER NULL," +
+                "ExchangeId INTEGER NULL," +
                 "EventTime TEXT NOT NULL," +
 
                 "Name TEXT NOT NULL," +
@@ -1082,6 +1143,8 @@ public class CryptoDatabase : IDisposable
         CreateTableAsset(connection);
         CreateTableAssetSnapshot(connection); // after EmulatorRun/Asset (FK target)
         CreateTableAssetAdjustment(connection); // idem
+        CreateTableQuote(connection); // after Exchange (FK target)
+        CreateTableProduct(connection); // after Exchange (FK target)
 
         CreateTableZone(connection);
 

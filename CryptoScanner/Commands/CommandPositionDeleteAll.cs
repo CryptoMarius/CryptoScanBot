@@ -36,6 +36,14 @@ public class CommandPositionDeleteAll : CommandBase
             using CryptoDatabase databaseThread = new();
             databaseThread.Connection.Open();
 
+            // A second, deliberate step, the same as "Delete all runs" in the emulator: one wrong click
+            // plus one Yes must not be enough to throw away every position and the capital history.
+            int count = PositionTools.CountAllInDatabase(databaseThread);
+            string countText = count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if (!await TypeToConfirmDialog.ShowAsync(dto.parentWindow, "Delete all positions - second confirmation",
+                $"To really delete all {countText} positions, type the number {countText} and press OK.", countText))
+                return;
+
             // Steps, parts, the positions themselves AND the orders and trades that hang off them
             PositionTools.DeleteAllFromDatabase(databaseThread);
 

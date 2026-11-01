@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 
+using CryptoScanner.Core.Core;
 using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Emulator.ViewModels;
 
@@ -34,8 +35,30 @@ public partial class RunConfigWindow : Window
         if (!ViewModel.TryBuild(out EmulatorRunConfig config))
             return;
 
-        RunConfigFile.Save(config);
+        //RunConfigFile.Save(config);
+        // Refused when the file on disk could not be read (31-10-2026): the dialog stays open and
+        // says so, instead of saving the placeholder over the real coin list and period.
+        if (!RunConfigFile.Save(config))
+        {
+            ViewModel.ValidationMessage = $"{RunConfigFile.FileName} could not be read, so it was not overwritten (see the log). Repair or remove the file first.";
+            return;
+        }
+
+        // The asset choice is a scanner setting, not part of the run config
+        if (ViewModel.ApplyAssetSettings())
+        {
+            GlobalData.SaveConfiguration();
+            GlobalData.AddTextToLogTab($"Start assets {ViewModel.PaperAssetSummary}, asset management {(ViewModel.UseAssetManagement ? "on" : "off")} - settings saved");
+        }
         Close(true);
+    }
+
+
+    private async void OnAssets(object? sender, RoutedEventArgs e)
+    {
+        PaperAssetDefaultsWindow window = new(ViewModel.PaperAssetDefaults);
+        if (await window.ShowDialog<bool>(this))
+            ViewModel.SetPaperAssetDefaults(window.ViewModel.Result);
     }
 
 

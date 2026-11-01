@@ -30,10 +30,12 @@ public class Const
         { (CryptoZoneKind.DominantLevel, CryptoTradeSide.Long, true), (OxyColors.DarkGreen, OxyColors.White) },
         { (CryptoZoneKind.DominantLevel, CryptoTradeSide.Short, true), (OxyColors.DarkRed, OxyColors.White) },
 
-        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Long, false), (OxyColors.DarkGray, OxyColors.White) },
-        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Short, false), (OxyColors.DarkGray, OxyColors.White) },
-        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Long, true), (OxyColors.DarkGray, OxyColors.White) },
-        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Short, true), (OxyColors.DarkGray, OxyColors.White) },
+        // FVG: the bull blocks (Long, under the price) dark green, the bear blocks (Short, above the
+        // price) dark red; FvgZones draws them faint enough to read the text through. Were all DarkGray.
+        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Long, false), (OxyColors.DarkGreen, OxyColors.White) },
+        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Short, false), (OxyColors.DarkRed, OxyColors.White) },
+        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Long, true), (OxyColors.DarkGreen, OxyColors.White) },
+        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Short, true), (OxyColors.DarkRed, OxyColors.White) },
 
         // SMC Order Blocks — distinct from DLZ/FVG so they're visually identifiable on the chart.
         // Long  = bullish OB (demand): the last bearish candle before an up-impulse → soft teal.

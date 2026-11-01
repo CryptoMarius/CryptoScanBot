@@ -59,6 +59,10 @@
                                       Command="{Binding RunAllAlgorithmsCommand}"
                                       CommandParameter="{Binding $parent[Window]}"
                                       IsEnabled="{Binding !IsRunning}"/>
+                            <!-- Was missing from the menu until 31-10-2026 -->
+                            <MenuItem Header="Run queue folder"
+                                      Command="{Binding RunQueueFolderCommand}"
+                                      IsEnabled="{Binding !IsRunning}"/>
                             <MenuItem Header="Stop after this run"
                                       Command="{Binding StopAfterRunCommand}"
                                       IsEnabled="{Binding IsRunning}"/>
@@ -81,7 +85,7 @@
             <!-- ─── Main content ────────────────────────────────────────────────────────── -->
             <Grid Margin="8" RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="8">
 
-                <!-- ─── Command bar (knoppen) ─────────────────────────────────────────────── -->
+                <!-- ─── Command bar (buttons) ─────────────────────────────────────────────── -->
                 <Border Grid.Row="0" Padding="8" BorderBrush="#606060" BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button Content="Change database..."
@@ -137,7 +141,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ─── Header (titel + hint) ─────────────────────────────────────────────── -->
+                <!-- ─── Header (title + hint) ─────────────────────────────────────────────── -->
                 <StackPanel Grid.Row="1" Margin="4,0,0,0" IsVisible="false">
                     <TextBlock FontSize="20" FontWeight="Bold" Text="CryptoScanBot Emulator"/>
                     <TextBlock FontSize="11" Foreground="Gray"

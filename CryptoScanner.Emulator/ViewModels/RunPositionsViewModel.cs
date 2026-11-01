@@ -56,9 +56,25 @@ public class PositionRow
         ? DateTime.SpecifyKind(CloseTime.Value, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm")
         : "—";
 
-    public string Duration => CloseTime.HasValue
-        ? (CloseTime.Value - CreateTime).ToString(@"hh\:mm\:ss")
-        : "—";
+    //public string Duration => CloseTime.HasValue
+    //    ? (CloseTime.Value - CreateTime).ToString(@"hh\:mm\:ss")
+    //    : "—";
+    // "hh" is only the hours part (0-23), so a position of 3 days and 2 hours read 02:00:00. Since
+    // 31-10-2026 the days are shown the way the results grid shows its durations (d.hh:mm:ss).
+    public string Duration
+    {
+        get
+        {
+            if (DurationSpan is not TimeSpan span)
+                return "—";
+            return span.Days > 0
+                ? span.ToString(@"d\.hh\:mm\:ss")
+                : span.ToString(@"hh\:mm\:ss");
+        }
+    }
+
+    // The sort key of the Duration column: sorting on the text put 1.00:00:00 before 23:00:00.
+    public TimeSpan? DurationSpan => CloseTime.HasValue ? CloseTime.Value - CreateTime : null;
 
     // Side is stored as the CryptoTradeSide enum value (Long = 0, Short = 1) — show its name.
     public string SideText => ((CryptoTradeSide)Side).ToString();
@@ -81,7 +97,12 @@ public class PositionRow
     public string InvestedText => Invested.ToString("N2");
 
     // Per-signal stop-loss distance (% from entry) carried over from the signal; blank when not set.
-    public string SignalPriceText => SignalPrice.HasValue ? SignalPrice.Value.ToString("N2") : "—";
+    // Note 31-10-2026: the line above is a copy of the stop-loss comment; this is the signal price the
+    // position was opened on, a dash when not stored.
+    // Formatted with the quote's display format since 31-10-2026, like the Signals window: with "N2" a
+    // coin of 0.0000123 read 0.00.
+    //public string SignalPriceText => SignalPrice.HasValue ? SignalPrice.Value.ToString("N2") : "—";
+    public string SignalPriceText => SignalPrice.HasValue ? SignalPrice.Value.ToString(QuoteDisplayFormat) : "—";
 
 
 
@@ -123,7 +144,9 @@ public partial class RunPositionsViewModel : ObservableObject
     public RunPositionsViewModel(RunRow run)
     {
         RunId = run.Id;
-        Header = $"Positions for run #{run.Id}  ({run.Label}, started {run.StartedAt:yyyy-MM-dd HH:mm})";
+        // Local time like the Started column of the results grid (StartedAt is stored in UTC), since 31-10-2026
+        //Header = $"Positions for run #{run.Id}  ({run.Label}, started {run.StartedAt:yyyy-MM-dd HH:mm})";
+        Header = $"Positions for run #{run.Id}  ({run.Label}, started {run.StartedLocal})";
         Load(run.Id);
     }
 
@@ -175,7 +198,7 @@ public partial class RunPositionsViewModel : ObservableObject
                 ? "This run produced no positions."
                 : fromDigest
                     ? $"{Positions.Count} position(s), read from the digest of this run (it is not the latest run): " +
-                      "price, stop and orders are not stored there, the percentage is the profit on what was invested."
+                      "price, stop and orders are not stored there, the percentage is worked out from profit and invested (100 = break-even)."
                     : $"{Positions.Count} position(s).";
         }
         catch (Exception ex)
@@ -241,8 +264,12 @@ public partial class RunPositionsViewModel : ObservableObject
                 position.CreateTime = DateTime.SpecifyKind(CandleTime.Epoch.AddMinutes(row[open].GetInt64()), DateTimeKind.Unspecified);
             if (Has(row, close))
                 position.CloseTime = DateTime.SpecifyKind(CandleTime.Epoch.AddMinutes(row[close].GetInt64()), DateTimeKind.Unspecified);
+            //if (position.Invested > 0)
+            //    position.Percentage = position.Profit / position.Invested * 100m;
+            // On the scale of the Position column since 31-10-2026 (TradeTools: 100 = break-even, the
+            // hint of the column says so): the digest gave 0 = break-even, so 1.50 read as a loss of 98.5%.
             if (position.Invested > 0)
-                position.Percentage = position.Profit / position.Invested * 100m;
+                position.Percentage = 100m + (100m * position.Profit / position.Invested);
             result.Add(position);
         }
         return result;

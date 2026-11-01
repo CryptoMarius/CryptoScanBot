@@ -3,6 +3,7 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Trader;
 
@@ -26,6 +27,11 @@ public static class EmulatorBootstrap
         // ─── ScannerSession.AfterStartup equivalent ─────────────────────────────────
         Directory.CreateDirectory(GlobalData.AppDataFolder);
         CryptoDatabase.SetDatabaseDefaults();    // DB file, tables, seed exchanges
+
+        // A run an earlier process left without FinishedAt (a crash, a kill) would stay "running" for
+        // ever and could block the purge before a run. Closed here, before this process starts one
+        // (31-10-2026). Only while this process holds the data folder, see the method.
+        Engine.EmulatorDb.MarkInterruptedRuns();
         GlobalData.LoadExchanges();              // ExchangeListName / ExchangeListId
         GlobalData.LoadIntervals();              // IntervalListPeriodName / IntervalListId
         GlobalData.LoadConfiguration();          // settings.json + telegram + altrady + weblinks
@@ -59,6 +65,13 @@ public static class EmulatorBootstrap
         {
             GlobalData.ActiveExchange = activeExchange;
             activeExchange.GetApiInstance().ExchangeDefaults();
+
+            // The quotes and the default paper assets of this exchange, which live in the database
+            // since 31-10-2026 - before LoadSymbols, which links every symbol to its quote. The same
+            // safety net as the live scanner: an exchange without any quote gets its default quote.
+            if (ExchangeSettingsStore.Activate(activeExchange))
+                ExchangeSettingsStore.AddDefaultQuote();
+
             GlobalData.LoadSymbols();
 
             // Wire symbols into their quote-side index. The Configure dialog reads

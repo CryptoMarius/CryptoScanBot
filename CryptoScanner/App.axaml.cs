@@ -149,6 +149,9 @@ public partial class App : Application
         {
             ScannerLog.Logger.Error(error, "ApplyExchangeIcon");
         }
+
+        // The Dock on macOS shows the application, not the window
+        AppIconBuilder.ApplyApplicationIcon();
     }
 
 

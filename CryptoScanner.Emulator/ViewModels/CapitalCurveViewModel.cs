@@ -32,6 +32,25 @@ public partial class CapitalCurveViewModel : ObservableObject
     [ObservableProperty]
     private string _caption = "";
 
+    // The run last chosen in the Results grid; null until a row is selected. Refresh shows this run
+    // again, also after the main window jumped to the latest run when a run finished.
+    private int? _selectedRunId;
+
+
+    /// <summary>
+    /// The Refresh button: the run selected in the Results grid, or the latest finished run when none
+    /// is selected yet. It was bound to <see cref="ShowLatest"/> until 31-10-2026 and so jumped away
+    /// from the selected run.
+    /// </summary>
+    [RelayCommand]
+    public void Refresh()
+    {
+        if (_selectedRunId is int runId)
+            ShowRun(runId);
+        else
+            ShowLatest();
+    }
+
 
     /// <summary>Load the curve of the most recently started run that has finished.</summary>
     [RelayCommand]
@@ -62,6 +81,7 @@ public partial class CapitalCurveViewModel : ObservableObject
     /// <summary>Load the curve of the run selected in the Results grid.</summary>
     public void ShowRun(int runId)
     {
+        _selectedRunId = runId;
         try
         {
             using var database = new CryptoDatabase();
@@ -123,7 +143,12 @@ public partial class CapitalCurveViewModel : ObservableObject
         decimal start = days[0].Value;
         decimal end = days[^1].Value;
         decimal change = start != 0 ? 100m * (end - start) / start : 0m;
-        Caption = $"Run #{runId} {label}: {start:N2} to {end:N2} ({change:+0.00;-0.00}%) over {days.Count} day(s)";
+        //Caption = $"Run #{runId} {label}: {start:N2} to {end:N2} ({change:+0.00;-0.00}%) over {days.Count} day(s)";
+        // Says what the change is since 31-10-2026: the capital line values the open positions at the
+        // price of the day, so end - start is the Total PnL column of the grid, and the percentage is
+        // NOT the Return % column (realised profit only, and only with asset management on).
+        Caption = $"Run #{runId} {label}: {start:N2} to {end:N2} over {days.Count} day(s): Total PnL {end - start:+#,##0.00;-#,##0.00}, " +
+            $"{change:+0.00;-0.00}% of the start, open positions included";
 
         // Larger fonts than the OxyPlot default: this is read at a glance from across the desk.
         var model = new PlotModel

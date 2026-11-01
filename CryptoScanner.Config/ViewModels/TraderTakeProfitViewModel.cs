@@ -80,29 +80,33 @@ public partial class TraderTakeProfitViewModel : ObservableObject
         }
     }
 
+    // First take profit sits at 0.75%; every next level doubles the distance. The quantities are
+    // shared out over all levels because the position can only be sold once.
+    private const decimal FirstTpPercentage = 0.75m;
+
     [RelayCommand]
     private void AddTp()
     {
-        decimal newFactor = 33m;
-        decimal newPercentage = 1m;
+        decimal newPercentage = FirstTpPercentage;
 
         // Use last item's values + increment
+        // (every next level doubles the percentage of the previous one)
         if (TpItems.Count > 0)
         {
             var last = TpItems[^1];
-            newFactor = last.Factor;
-            newPercentage = last.Percentage + 1m;
+            newPercentage = last.Percentage * 2m;
         }
 
         var item = new TpItemViewModel
         {
             Index = TpItems.Count + 1,
-            Factor = newFactor,
+            Factor = 100m,
             Percentage = newPercentage,
         };
 
         TpItems.Add(item);
         UpdateIndices();
+        SpreadTpFactors();
     }
 
     [RelayCommand]
@@ -112,7 +116,29 @@ public partial class TraderTakeProfitViewModel : ObservableObject
         {
             TpItems.RemoveAt(TpItems.Count - 1);
             UpdateIndices();
+            SpreadTpFactors();
         }
+    }
+
+    /// <summary>
+    /// Divide the quantity evenly over the take profit levels, keeping the total at exactly 100%:
+    /// selling more than the whole position is not possible. The last level takes the rounding
+    /// remainder, so three levels become 33.33 / 33.33 / 33.34 instead of falling short.
+    /// </summary>
+    private void SpreadTpFactors()
+    {
+        if (TpItems.Count == 0)
+            return;
+
+        decimal share = Math.Round(100m / TpItems.Count, 2, MidpointRounding.AwayFromZero);
+        decimal assigned = 0m;
+
+        for (int i = 0; i < TpItems.Count - 1; i++)
+        {
+            TpItems[i].Factor = share;
+            assigned += share;
+        }
+        TpItems[^1].Factor = 100m - assigned;
     }
 
     private void UpdateIndices()

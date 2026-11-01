@@ -52,6 +52,9 @@ public partial class RunResultsView : UserControl
         // Which columns are shown, how wide and in what order, as the user left them last time. Read
         // from CryptoScanBot-user.json in the data folder, the same way the scanner does for its
         // grids. Saved again when the column dialog closes and when the window closes.
+        // Note 31-10-2026: the file is not in the data folder of the emulator but in the folder of
+        // IPlatformService.GetDataDirectory() (the -f folder, or the scanner's standard folder); see
+        // the note on GridStateExtensions.
         RestoreGridLayout();
 
         // Wire the double-click drill-down. Done in code-behind because the handler needs the
@@ -151,11 +154,24 @@ public partial class RunResultsView : UserControl
     private static ApplicationStateService? StateService => GlobalData.GetService<ApplicationStateService>();
 
 
+    /// <summary>
+    /// The duration columns sorted on their text until 31-10-2026; their sort member paths now name
+    /// the raw values. A layout or sort saved under the old name is translated through this list.
+    /// </summary>
+    private static readonly Dictionary<string, string> RenamedSortPaths = new()
+    {
+        ["Duration"] = "DurationSpan",
+        ["AvgDurationText"] = "AvgDurationSec",
+        ["MinDurationText"] = "MinDurationSec",
+        ["MaxDurationText"] = "MaxDurationSec",
+    };
+
+
     private void RestoreGridLayout()
     {
         try
         {
-            StateService?.RestoreGridLayout(GridName, RunsGrid);
+            StateService?.RestoreGridLayout(GridName, RunsGrid, RenamedSortPaths);
         }
         catch (Exception ex)
         {
@@ -211,6 +227,10 @@ public partial class RunResultsView : UserControl
             EmulatorRunConfig config = RunConfigFile.Load();
             if (string.IsNullOrEmpty(config.SortColumn))
                 return;
+
+            // A sort saved on the old text path of a duration column
+            if (RenamedSortPaths.TryGetValue(config.SortColumn, out string? renamed))
+                config.SortColumn = renamed;
 
             _currentSortColumn = config.SortColumn;
             _currentSortDirection = config.SortDescending
@@ -439,14 +459,30 @@ public partial class RunResultsView : UserControl
             return;
         }
 
+        // RunSettingsApplier only refuses while a run is active (CurrentEmulatorRunId). Between two runs
+        // of a queue that is null while the queue still goes, and the end of the queue then put part of
+        // the old settings back over the new ones (31-10-2026). The main window knows the whole span.
+        if (IsEmulatorBusy())
+        {
+            viewModel.Status = "The emulator is busy (a run or the queue is going) - take over settings once it has stopped.";
+            return;
+        }
+
         RunRow row = rows[0];
         string label = string.IsNullOrWhiteSpace(row.Label) ? "" : $" \"{row.Label}\"";
         string message = $"Make the settings of run #{row.Id}{label} the current settings?\n\n"
             + "They are written over the settings file of this data folder and loaded right away. "
             + "Settings the run did not store keep their current value, and the exchange stays as it is. "
             + "The current file is kept as a dated backup next to it.";
-        if (!await ConfirmAsync(owner, "Take over settings", message))
+        if (!await ConfirmAsync(owner, "Take over settings", message, "Take over"))
             return;
+
+        // A queue may have been started while the confirmation was open
+        if (IsEmulatorBusy())
+        {
+            viewModel.Status = "The emulator is busy (a run or the queue is going) - take over settings once it has stopped.";
+            return;
+        }
 
         RunSettingsApplier.Apply(row.Id, out string result);
         viewModel.Status = result;
@@ -498,9 +534,15 @@ public partial class RunResultsView : UserControl
         var sb = new System.Text.StringBuilder();
 
         // Header row — same order and names as the grid columns.
-        sb.AppendLine("Id\tLabel\tPeriod\tStarted\tBuild\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tWin%\tProfit\tUnrealized PnL\tTotal PnL\tTotal PnL Long\tTotal PnL Short\tProfit%\tInvested\t" +
-            "Peak cap.\tPeak pos\tPeak %\tDrawdown %\tStart cap.\tEnd cap.\tReturn %\tRecovery factor\tCounts\tWithout best 10\tExposure %\tRAR %\tLong\tProfit long\tShort\tProfit short\tBest case\tWorst case\tAvg dur.\tMin dur.\tMax dur.");
+        // Since 31-10-2026 also Cancelled (after Timeout) and Capital use estimated (after RAR %): the
+        // "ca." mark of the grid no longer goes along inside the cells.
+        sb.AppendLine("Id\tLabel\tPeriod\tStarted\tBuild\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tCancelled\tWin%\tProfit\tUnrealized PnL\tTotal PnL\tTotal PnL Long\tTotal PnL Short\tProfit%\tInvested\t" +
+            "Peak cap.\tPeak pos\tPeak %\tDrawdown %\tStart cap.\tEnd cap.\tReturn %\tRecovery factor\tCounts\tWithout best 10\tExposure %\tRAR %\tCapital use estimated\tLong\tProfit long\tShort\tProfit short\tBest case\tWorst case\tAvg dur.\tMin dur.\tMax dur.");
 
+        // The cells the way the Excel export writes them (31-10-2026): figures as plain numbers on
+        // 0..100 with two decimals, no "%" or "ca." in the cell, empty instead of a dash, durations in
+        // hours the way Excel reads them ([h]:mm:ss). Before, raw decimals with up to 28 decimals stood
+        // next to "5,23%" text, which Excel turned into 0,0523.
         foreach (RunRow r in rows)
         {
             sb.Append(r.Id).Append('\t');
@@ -508,8 +550,8 @@ public partial class RunResultsView : UserControl
             sb.Append(r.Period).Append('\t');
             sb.Append(r.StartedLocal).Append('\t');
             sb.Append(r.BuildStampText).Append('\t');
-            sb.Append(r.FinishedLocal).Append('\t');
-            sb.Append(r.Duration).Append('\t');
+            sb.Append(r.FinishedAt.HasValue ? r.FinishedLocal : "").Append('\t');
+            sb.Append(CopyDuration(r.DurationSpan.TotalSeconds)).Append('\t');
             sb.Append(r.Result).Append('\t');
             sb.Append(r.SignalCount).Append('\t');
             sb.Append(r.PositionCount).Append('\t');
@@ -517,36 +559,39 @@ public partial class RunResultsView : UserControl
             sb.Append(r.PositionsWon).Append('\t');
             sb.Append(r.PositionsLost).Append('\t');
             sb.Append(r.PositionsTimeout).Append('\t');
-            sb.Append(r.WinPercentage).Append('\t');
-            sb.Append(r.Profit).Append('\t');
-            sb.Append(r.UnrealizedPnl).Append('\t');
-            sb.Append(r.TotalPnl).Append('\t');
-            sb.Append(r.TotalPnlLong).Append('\t');
-            sb.Append(r.TotalPnlShort).Append('\t');
-            sb.Append(r.ProfitPercentage).Append('\t');
-            sb.Append(r.Invested).Append('\t');
-            sb.Append(r.PeakInvested).Append('\t');
+            sb.Append(r.PositionsCancelled).Append('\t');
+            sb.Append(CopyNumber(r.WinPercentage)).Append('\t');
+            sb.Append(CopyNumber(r.Profit)).Append('\t');
+            sb.Append(CopyNumber(r.UnrealizedPnl)).Append('\t');
+            sb.Append(CopyNumber(r.TotalPnl)).Append('\t');
+            sb.Append(CopyNumber(r.TotalPnlLong)).Append('\t');
+            sb.Append(CopyNumber(r.TotalPnlShort)).Append('\t');
+            sb.Append(CopyNumber(r.ProfitPercentage)).Append('\t');
+            sb.Append(CopyNumber(r.Invested)).Append('\t');
+            sb.Append(CopyNumber(r.PeakInvested)).Append('\t');
             sb.Append(r.PeakPositions).Append('\t');
-            sb.Append(r.PeakProfitPercentage).Append('\t');
-            sb.Append(r.MaxDrawdownPercentage).Append('\t');
-            sb.Append(r.StartCapitalText).Append('\t');
-            sb.Append(r.EndCapitalText).Append('\t');
-            sb.Append(r.CapitalReturnPercentageText).Append('\t');
-            sb.Append(r.RecoveryFactorText).Append('\t');
+            sb.Append(CopyNumber(r.PeakProfitPercentage)).Append('\t');
+            sb.Append(CopyNumber(r.MaxDrawdownPercentage)).Append('\t');
+            // Same rule as the grid and the Excel export: end capital and return only with asset management on
+            sb.Append(CopyNumber(r.TotalStartCapital)).Append('\t');
+            sb.Append(CopyNumber(r.HasCapitalReturn ? r.EndCapital : null)).Append('\t');
+            sb.Append(CopyNumber(r.HasCapitalReturn ? r.CapitalReturnPercentage : null)).Append('\t');
+            sb.Append(CopyNumber(r.RecoveryFactor)).Append('\t');
             // The greyed-out mark of the grid does not survive a paste, so it goes along as a column.
             sb.Append(r.RecoveryFactorCounts ? "yes" : "no").Append('\t');
-            sb.Append(r.ProfitWithoutBestTenText).Append('\t');
-            sb.Append(r.ExposurePercentageText).Append('\t');
-            sb.Append(r.RiskAdjustedReturnText).Append('\t');
+            sb.Append(CopyNumber(r.ProfitWithoutBestTen)).Append('\t');
+            sb.Append(CopyNumber(r.ExposurePercentage)).Append('\t');
+            sb.Append(CopyNumber(r.RiskAdjustedReturn)).Append('\t');
+            sb.Append(r.CapitalUseEstimated == true ? "yes" : "").Append('\t');
             sb.Append(r.PositionsLong).Append('\t');
-            sb.Append(r.ProfitLong).Append('\t');
+            sb.Append(CopyNumber(r.ProfitLong)).Append('\t');
             sb.Append(r.PositionsShort).Append('\t');
-            sb.Append(r.ProfitShort).Append('\t');
-            sb.Append(r.BestCase).Append('\t');
-            sb.Append(r.WorstCase).Append('\t');
-            sb.Append(r.AvgDurationText).Append('\t');
-            sb.Append(r.MinDurationText).Append('\t');
-            sb.AppendLine(r.MaxDurationText);
+            sb.Append(CopyNumber(r.ProfitShort)).Append('\t');
+            sb.Append(CopyNumber(r.BestCase)).Append('\t');
+            sb.Append(CopyNumber(r.WorstCase)).Append('\t');
+            sb.Append(CopyDuration(r.AvgDurationSec)).Append('\t');
+            sb.Append(CopyDuration(r.MinDurationSec)).Append('\t');
+            sb.AppendLine(CopyDuration(r.MaxDurationSec));
         }
 
         if (TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)
@@ -563,6 +608,27 @@ public partial class RunResultsView : UserControl
     }
 
 
+    /// <summary>
+    /// A figure for the clipboard: two decimals in the culture Excel pastes with, no thousands
+    /// separator, and empty when there is no value.
+    /// </summary>
+    private static string CopyNumber(decimal? value)
+        => value.HasValue ? value.Value.ToString("F2", System.Globalization.CultureInfo.CurrentCulture) : "";
+
+
+    /// <summary>
+    /// A duration for the clipboard as hours:minutes:seconds ("26:00:00" for a day and two hours),
+    /// which Excel reads as a time like the [h]:mm:ss cells of the export; empty when there is none.
+    /// </summary>
+    private static string CopyDuration(double? seconds)
+    {
+        if (seconds == null)
+            return "";
+        TimeSpan span = TimeSpan.FromSeconds(Math.Round(seconds.Value));
+        return $"{(long)span.TotalHours}:{span.Minutes:00}:{span.Seconds:00}";
+    }
+
+
     private async void OnDeleteRunClick(object? sender, RoutedEventArgs e)
     {
         List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
@@ -572,6 +638,14 @@ public partial class RunResultsView : UserControl
             return;
         if (DataContext is not RunResultsViewModel viewModel)
             return;
+
+        // Refused while the emulator is busy (31-10-2026): the running run itself could be deleted,
+        // after which its inserts failed on the foreign key and FinishRun wrote to a missing row.
+        if (IsEmulatorBusy())
+        {
+            viewModel.Status = RunResultsViewModel.RunningRefusal;
+            return;
+        }
 
         string message;
         if (rows.Count == 1)
@@ -584,9 +658,16 @@ public partial class RunResultsView : UserControl
             message = $"Delete {rows.Count} runs and all of their signals and positions?\n\nThis cannot be undone.";
         }
 
-        bool confirmed = await ConfirmAsync(owner, "Delete runs", message);
+        bool confirmed = await ConfirmAsync(owner, "Delete runs", message, "Delete");
         if (!confirmed)
             return;
+
+        // A run may have been started while the confirmation was open
+        if (IsEmulatorBusy())
+        {
+            viewModel.Status = RunResultsViewModel.RunningRefusal;
+            return;
+        }
 
         viewModel.DeleteRuns(rows);
     }
@@ -603,9 +684,16 @@ public partial class RunResultsView : UserControl
         if (count == 0)
             return;
 
+        // Refused while the emulator is busy, like "Delete run(s)" (31-10-2026)
+        if (IsEmulatorBusy())
+        {
+            viewModel.Status = RunResultsViewModel.RunningRefusal;
+            return;
+        }
+
         bool confirmed = await ConfirmAsync(owner, "Delete all runs",
             $"Delete ALL {count} run(s) and all of their signals and positions?\n\n" +
-            "This deletes every run in the database, also the ones the label filter hides.\n\nThis cannot be undone.");
+            "This deletes every run in the database, also the ones the label filter hides.\n\nThis cannot be undone.", "Delete");
         if (!confirmed)
             return;
 
@@ -617,7 +705,29 @@ public partial class RunResultsView : UserControl
         if (typed?.Trim() != count.ToString(System.Globalization.CultureInfo.InvariantCulture))
             return;
 
+        // A run may have been started while the two confirmations were open
+        if (IsEmulatorBusy())
+        {
+            viewModel.Status = RunResultsViewModel.RunningRefusal;
+            return;
+        }
+
         viewModel.DeleteAllRuns();
+    }
+
+
+    /// <summary>
+    /// True while the emulator is busy: a run is active, or the main window has work going (a queue
+    /// between two runs, the duplicate check, the purge, waiting for the next queue file, fetching
+    /// candles). <see cref="GlobalData.CurrentEmulatorRunId"/> alone is null between two runs of a
+    /// queue; <see cref="MainWindowViewModel.IsRunning"/> covers the whole span, and this view lives
+    /// inside that main window.
+    /// </summary>
+    private bool IsEmulatorBusy()
+    {
+        if (GlobalData.CurrentEmulatorRunId != null)
+            return true;
+        return TopLevel.GetTopLevel(this)?.DataContext is MainWindowViewModel { IsRunning: true };
     }
 
 
@@ -698,12 +808,16 @@ public partial class RunResultsView : UserControl
     /// Minimal modal yes/no confirmation built in code so the emulator needs no extra message-box
     /// dependency. Returns true only when the user explicitly confirms; closing the window or
     /// pressing Escape (the Cancel button) returns false.
+    /// <para>
+    /// <paramref name="confirmText"/> is the text of the confirming button (since 31-10-2026): it was
+    /// always "Delete", also when the question was to take over the settings of a run.
+    /// </para>
     /// </summary>
-    private static async Task<bool> ConfirmAsync(Window owner, string title, string message)
+    private static async Task<bool> ConfirmAsync(Window owner, string title, string message, string confirmText)
     {
         bool result = false;
 
-        var deleteButton = new Button { Content = "Delete", MinWidth = 80 };
+        var deleteButton = new Button { Content = confirmText, MinWidth = 80 };
         var cancelButton = new Button { Content = "Cancel", MinWidth = 80, IsCancel = true };
 
         var dialog = new Window

@@ -55,6 +55,9 @@ public static class WindowChrome
                 ScannerLog.Logger.Error(error, "WindowChrome.ApplyIcon");
             }
         }
+
+        // The Dock on macOS shows the application, not the window
+        AppIconBuilder.ApplyApplicationIcon();
         return window;
     }
 

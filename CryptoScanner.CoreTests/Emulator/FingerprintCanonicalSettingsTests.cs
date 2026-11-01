@@ -55,6 +55,22 @@ public class FingerprintCanonicalSettingsTests
     }
 
 
+    /// <summary>Giving an emulator a title of its own changes no replay.</summary>
+    [TestMethod]
+    public void TheWindowTitle_KeepsTheChecksum()
+    {
+        string untitled = Settings(_ => { });
+        string titled = Settings(s =>
+        {
+            s["General"]!["WindowTitle"] = "Session2 {exchange} {folder}";
+            s["General"]!["ExtraCaption"] = "old caption";
+        });
+
+        Assert.AreEqual(EmulatorRunFingerprint.Compute(Config, untitled),
+                        EmulatorRunFingerprint.Compute(Config, titled));
+    }
+
+
     [TestMethod]
     public void RemovedSettingThatSatAtItsDefault_KeepsTheChecksum()
     {

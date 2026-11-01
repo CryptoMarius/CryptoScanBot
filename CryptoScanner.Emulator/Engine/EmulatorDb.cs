@@ -27,20 +27,8 @@ namespace CryptoScanner.Emulator.Engine;
 /// </summary>
 public static class EmulatorDb
 {
-    /// <summary>
-    /// Drops the emulator's main CryptoScanBot.db file and rebuilds it from scratch via the
-    /// regular migration flow. Idempotent. Per-exchange candle DBs are intentionally left
-    /// alone (they hold the historical candles the run replays).
-    /// </summary>
-    public static void Reset()
-    {
-        string dbFile = Path.Combine(GlobalData.AppDataFolder, Constants.AppName + ".db");
-        if (File.Exists(dbFile))
-            File.Delete(dbFile);
-
-        // Recreate via the standard schema bootstrap.
-        CryptoDatabase.SetDatabaseDefaults();
-    }
+    // Reset() - delete CryptoScanBot.db and rebuild it - was removed on 31-10-2026: nothing called it,
+    // and an unused entry that deletes the whole run database is a risk without a purpose.
 
     /// <summary>
     /// Clears the in-memory zone state (DLZ/FVG/SMC lists + DLZ swing-point admin) for the given
@@ -53,6 +41,12 @@ public static class EmulatorDb
     /// exactly what lets the chart show a finished run's zones afterwards. The in-memory reset is still
     /// required: without it the first inline FVG/SMC scan (before the first DLZ reload) would still see
     /// last run's leftover in-memory zones from the same app session.
+    /// <para>
+    /// Correction 31-10-2026: the zones of earlier runs do not stay in the database in practice.
+    /// <see cref="PurgeBeforeRun"/> drops the Zone table before every queue entry (the size of the
+    /// database is the point of that purge), so after a queue only the zones of the last run are left
+    /// for the chart. Not clearing them HERE is still right: per run they are told apart by EmulatorRunId.
+    /// </para>
     /// </summary>
     public static void ClearZonesForSymbols(CryptoScanner.Core.Model.CryptoExchange exchange, IEnumerable<string> symbolNames)
     {
@@ -176,6 +170,7 @@ public static class EmulatorDb
 
         // Release the position-check handler's reused DB connection so the file is not left locked
         // (a Reset deletes it, which fails on Windows while a handle is open). Reopened next run.
+        // (Reset itself was removed on 31-10-2026; releasing the connection still keeps the file free.)
         GlobalData.ThreadCheckPosition?.CloseEmulatorConnection();
 
         // Fold the write-ahead log back into the database, now that this run's connections are
@@ -189,6 +184,116 @@ public static class EmulatorDb
 
         // Close the per-run log file opened in StartRun; subsequent lines go only to the shared logs.
         ScannerLog.StopRunLog();
+    }
+
+
+    /// <summary>
+    /// The result a run gets when the emulator found it unfinished at startup, see <see cref="MarkInterruptedRuns"/>.
+    /// </summary>
+    public const string InterruptedResult = "failed: emulator was restarted";
+
+
+    /// <summary>
+    /// Closes the runs that an earlier emulator process left without FinishedAt (31-10-2026). Called
+    /// once at startup, before any run of this process can exist.
+    /// <para>
+    /// Only <see cref="FinishRun"/> ever sets FinishedAt, so a run whose process crashed or was killed
+    /// stayed "running" for ever: the Results grid showed an ever longer duration, RecalculateRuns and
+    /// SaveRunningStats skip such a row, and when it had positions but no digest yet (a crash within
+    /// the first 15 seconds) <see cref="PurgeBeforeRun"/> refused to clear anything again.
+    /// </para>
+    /// <para>
+    /// The run gets FinishedAt (now) and <see cref="InterruptedResult"/>, and its aggregates and position
+    /// digest are computed from whatever it left in the tables, which also ends the purge refusal.
+    /// Nothing is deleted. Only done while this process holds the data folder (DataFolderLock): then no
+    /// other emulator can be running a run in this database.
+    /// </para>
+    /// </summary>
+    public static int MarkInterruptedRuns()
+    {
+        try
+        {
+            if (!DataFolderLock.TryAcquire(GlobalData.AppDataFolder))
+            {
+                GlobalData.AddTextToLogTab("Unfinished runs: not checked, the data folder is in use by another process");
+                return 0;
+            }
+
+            using var database = new CryptoDatabase();
+            database.Open();
+
+            List<int> ids = database.Connection.Query<int>("select Id from EmulatorRun where FinishedAt is null").AsList();
+            int marked = 0;
+            foreach (int id in ids)
+            {
+                var run = database.Connection.Get<CryptoEmulatorRun>(id);
+                if (run == null || run.FinishedAt != null)
+                    continue;
+
+                run.FinishedAt = DateTime.UtcNow;
+                run.Result = InterruptedResult;
+                try
+                {
+                    ComputeRunStats(database, run);
+                }
+                catch (Exception error)
+                {
+                    // The numbers are a bonus here, closing the run is the point
+                    GlobalData.AddTextToLogTab($"Unfinished run #{id}: computing its numbers failed ({error.Message})");
+                }
+                database.Connection.Update(run);
+                marked++;
+                GlobalData.AddTextToLogTab($"Unfinished run #{id} \"{run.Label}\" (started {run.StartedAt:yyyy-MM-dd HH:mm} UTC) " +
+                    $"marked as \"{InterruptedResult}\"");
+            }
+            return marked;
+        }
+        catch (Exception error)
+        {
+            // Never a reason to stop the emulator from starting
+            GlobalData.AddTextToLogTab($"Unfinished runs: check failed ({error.Message})");
+            return 0;
+        }
+    }
+
+
+    // Written back without escaping every non-ASCII character, so a label like "1m → 5m" stays readable
+    private static readonly JsonSerializerOptions RelaxedJson = new()
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
+
+    /// <summary>
+    /// Puts <paramref name="exchangeName"/> in the stored run configuration (ConfigJson) of the active
+    /// run. ReplayRunner calls it when the run configuration names another exchange than the active
+    /// one it replays on (31-10-2026), so the run row and its checksum name the exchange that was
+    /// really replayed. Never throws: a run is not stopped for this.
+    /// </summary>
+    public static void CorrectRunExchangeName(string exchangeName)
+    {
+        int? runId = GlobalData.CurrentEmulatorRunId;
+        if (runId == null)
+            return;
+
+        try
+        {
+            using var database = new CryptoDatabase();
+            database.Open();
+
+            string? configJson = database.Connection.ExecuteScalar<string?>(
+                "select ConfigJson from EmulatorRun where Id = @id", new { id = runId.Value });
+            if (string.IsNullOrWhiteSpace(configJson) || System.Text.Json.Nodes.JsonNode.Parse(configJson) is not System.Text.Json.Nodes.JsonObject config)
+                return;
+
+            config["ExchangeName"] = exchangeName;
+            database.Connection.Execute("update EmulatorRun set ConfigJson = @configJson where Id = @id",
+                new { configJson = config.ToJsonString(RelaxedJson), id = runId.Value });
+        }
+        catch (Exception error)
+        {
+            GlobalData.AddTextToLogTab($"Run #{runId}: storing the exchange name failed ({error.Message})");
+        }
     }
 
 
@@ -614,6 +719,17 @@ public static class EmulatorDb
     /// conservative reading, and it is what makes the answer stable when many positions open on the
     /// same candle.
     /// </para>
+    /// <para>
+    /// Note 31-10-2026: this is a different basis than the capital use next to it
+    /// (<see cref="RunCapitalUse.FromFills"/>: AvgInvested, Exposure, TimeInMarket), so the two do not
+    /// add up. Here a position counts with its FINAL Invested (every DCA it ever bought) from its
+    /// CreateTime (the moment the entry was placed, before the fill), and only CLOSED positions count
+    /// (<see cref="TradedPositions"/>). The capital use counts each filled entry and DCA from its own
+    /// fill, and a position still open at the end until the end of the period. So the peak can be too
+    /// high (a DCA counted before it was bought) and too low (a run that ends with large open DCA
+    /// positions). Not aligned: the tests in RunSummaryPeakTests pin this basis down, including that an
+    /// open position is left out, and moving it onto the fills is a decision of its own.
+    /// </para>
     /// </summary>
     internal const string PeakExposureSql =
         "select max(Money) as Money, max(Positions) as Positions from (" +
@@ -757,6 +873,14 @@ public static class EmulatorDb
     /// digest are on the EmulatorRun row, which is not touched. Asset is rebuilt at the start of
     /// every replay anyway (ReplayRunner calls PaperAssets.ResetAssets).
     /// </para>
+    /// <para>
+    /// Asset is NOT dropped any more (since 31-10-2026): its DefaultTotal column is the Default
+    /// column of Paper assets, the start capital of every run, a setting rather than a balance.
+    /// Dropping the table took that setting with it, and after a restart of the emulator (before
+    /// anything had saved the settings) every run started with nothing. The balances themselves are
+    /// still wiped per run by PaperAssets.ResetAssets, which keeps the rows with a default and
+    /// empties them; the table holds a row per coin, so size is no reason to touch it here.
+    /// </para>
     /// </summary>
     public static PurgeResult PurgeBeforeRun()
     {
@@ -791,9 +915,13 @@ public static class EmulatorDb
             // per day, so it never shrank while everything else was being cleared. It had reached
             // 922.673 rows over 175 runs. (BarometerSnapshot was the other one and is gone entirely -
             // the barometer now lives in the $BMP/$BMX candles, see BarometerReplay.)
+            // "[Asset]" left out since 31-10-2026, see the summary: it carries the Default column.
+            // AssetAdjustment added on 31-10-2026, for the same reason AssetSnapshot was: the ledger of
+            // the start capital and corrections gets rows every run (and rows without a run id from the
+            // seeding before StartRun), and nothing ever removed them.
             foreach (string table in new[]
-                     { "[Asset]", "[Trade]", "[Order]", "PositionStep", "PositionPart", "Position", "Signal", "Zone",
-                       "AssetSnapshot" })
+                     { "[Trade]", "[Order]", "PositionStep", "PositionPart", "Position", "Signal", "Zone",
+                       "AssetSnapshot", "AssetAdjustment" })
             {
                 database.Connection.Execute($"DROP TABLE IF EXISTS {table}");
             }
@@ -960,6 +1088,11 @@ public static class EmulatorDb
                 "delete from AssetSnapshot where EmulatorRunId is not null", transaction: transaction);
             database.Connection.Execute(
                 "delete from AssetAdjustment where EmulatorRunId is not null", transaction: transaction);
+            // ...and the rows without a run id (31-10-2026). In the emulator's database they all come
+            // from seeding the start capital before StartRun set the run id, so they belong to a run
+            // all the same - and nothing else would ever remove them.
+            database.Connection.Execute(
+                "delete from AssetAdjustment where EmulatorRunId is null", transaction: transaction);
             database.Connection.Execute("delete from EmulatorRun", transaction: transaction);
 
             // Reset the auto-increment counters so the next run starts at id 1 again.

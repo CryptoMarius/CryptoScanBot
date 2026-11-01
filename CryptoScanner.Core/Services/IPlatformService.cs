@@ -17,6 +17,17 @@ public interface IPlatformService
     }
 
     /// <summary>
+    /// Show a picture as the icon of the running application, for platforms whose task bar shows
+    /// the application rather than its windows: the Dock on macOS ignores the icon of a window.
+    /// Windows and Linux take the icon from the window itself, so the default does nothing. May be
+    /// called from any thread.
+    /// </summary>
+    /// <param name="png">The picture as a PNG.</param>
+    void ApplyApplicationIcon(byte[] png)
+    {
+    }
+
+    /// <summary>
     /// Show a blocking message box using whatever the platform provides. Meant for the startup
     /// path, where the application refuses to continue and there is no window yet to hang a
     /// dialog on. The fallback below writes to the console, which is all a host without a
@@ -25,6 +36,25 @@ public interface IPlatformService
     void ShowMessage(string title, string message)
     {
         Console.WriteLine($"{title}: {message}");
+    }
+
+    /// <summary>
+    /// Open a file with the application the platform associates with it (an .xls in Excel or
+    /// LibreOffice, for instance), the way a double click in the file manager would. The default
+    /// leaves it to .NET's shell execute; the platforms that need their own way override it.
+    /// Failures are reported, not thrown: the file itself is already written.
+    /// </summary>
+    /// <param name="path">The full path of the file.</param>
+    void OpenFile(string path)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch (Exception error)
+        {
+            Console.WriteLine($"OpenFile {path}: {error.Message}");
+        }
     }
 
     /// <summary>

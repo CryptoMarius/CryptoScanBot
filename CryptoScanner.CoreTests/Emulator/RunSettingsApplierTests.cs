@@ -105,6 +105,22 @@ public class RunSettingsApplierTests
         Assert.AreEqual("Binance Perpetual", result.General.ActivateExchangeName);
     }
 
+    /// <summary>
+    /// The window title names this emulator, so a run - possibly measured in another emulator, or
+    /// before 30-10-2026 with an old caption - does not rename it.
+    /// </summary>
+    [TestMethod]
+    public void TheWindowTitle_StaysTheCurrentOne()
+    {
+        SettingsBasic result = Merge(s =>
+        {
+            s["General"]!["WindowTitle"] = "Other emulator {folder}";
+            s["General"]!["ExtraCaption"] = "old caption";
+        });
+        Assert.AreEqual("", result.General.WindowTitle);
+        Assert.AreEqual("", result.General.ExtraCaption);
+    }
+
 
     [TestMethod]
     public void ASnapshotThatIsNotJson_IsRefused()

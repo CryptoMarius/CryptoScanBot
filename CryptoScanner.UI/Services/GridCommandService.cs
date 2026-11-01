@@ -213,43 +213,60 @@ public class GridCommandService
         });
     }
 
-    public void PositionDelete(CryptoPosition position)
+    /// <summary>
+    /// Deletes the given position(s) one after the other on one connection, so a multi selection does
+    /// not start a database writer per row. The confirmation is the page's job.
+    /// </summary>
+    public void PositionDelete(IReadOnlyList<CryptoPosition> positions)
     {
         Task.Run(async () =>
         {
-            try
+            using CryptoDatabase db = new();
+            db.Connection.Open();
+            foreach (CryptoPosition position in positions)
             {
-                using CryptoDatabase db = new();
-                db.Connection.Open();
-                PositionTools.LoadPosition(db, position);
+                try
+                {
+                    PositionTools.LoadPosition(db, position);
 
-                // Steps, parts, the position itself AND the orders and trades that hang off it
-                PositionTools.DeleteFromDatabase(db, position);
+                    // Steps, parts, the position itself AND the orders and trades that hang off it
+                    PositionTools.DeleteFromDatabase(db, position);
 
-                position.Symbol.LastTradeDate = null;
-                position.Symbol.LastLossDate = null;
-                GlobalData.ThreadSaveObjects!.AddToQueue(position.Symbol);
+                    position.Symbol.LastTradeDate = null;
+                    position.Symbol.LastLossDate = null;
+                    GlobalData.ThreadSaveObjects!.AddToQueue(position.Symbol);
 
-                // Tell the grids the position is gone (the Avalonia CommandPositionDelete does the
-                // same); without this the row stayed visible until a manual reload.
-                GlobalData.SendMvvmMessage(new PositionIsDeletedMessage(position));
-                GlobalData.PositionDeleted?.Invoke(position);
+                    // Tell the grids the position is gone (the Avalonia CommandPositionDelete does the
+                    // same); without this the row stayed visible until a manual reload.
+                    GlobalData.SendMvvmMessage(new PositionIsDeletedMessage(position));
+                    GlobalData.PositionDeleted?.Invoke(position);
 
-                PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, false);
+                    PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, false);
 
-                // The position is gone, so what it did to the balances has to go with it. After
-                // RemovePosition on purpose: the reservation of its open orders is then already
-                // released, so the free balance comes out right in one go.
-                PaperAssets.ReversePosition(GlobalData.ActiveExchange!, position);
+                    // The position is gone, so what it did to the balances has to go with it. After
+                    // RemovePosition on purpose: the reservation of its open orders is then already
+                    // released, so the free balance comes out right in one go.
+                    PaperAssets.ReversePosition(GlobalData.ActiveExchange!, position);
 
-                GlobalData.AddTextToLogTab($"{position.Symbol.Name} manually deleted position {position.Id} from the database");
-            }
-            catch (Exception ex)
-            {
-                ScannerLog.Logger.Error(ex, "");
-                GlobalData.AddTextToLogTab($"Error deleting position {position.Id}: {ex.Message}");
+                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} manually deleted position {position.Id} from the database");
+                }
+                catch (Exception ex)
+                {
+                    ScannerLog.Logger.Error(ex, "");
+                    GlobalData.AddTextToLogTab($"Error deleting position {position.Id}: {ex.Message}");
+                }
             }
         });
+    }
+
+    /// <summary>
+    /// The number of positions "Delete all positions" would delete, which the user has to type.
+    /// </summary>
+    public int PositionCountAll()
+    {
+        using CryptoDatabase db = new();
+        db.Connection.Open();
+        return PositionTools.CountAllInDatabase(db);
     }
 
     public void PositionAddDca(CryptoPosition position)

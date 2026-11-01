@@ -13,11 +13,13 @@ namespace CryptoScanner.CoreTests.Settings;
 public class WindowTitleTests
 {
     private string _exchangeName = "";
+    private string _windowTitle = "";
 
     [TestInitialize]
     public void Setup()
     {
         _exchangeName = GlobalData.Settings.General.ExchangeName;
+        _windowTitle = GlobalData.Settings.General.WindowTitle;
         GlobalData.Settings.General.ExchangeName = "Bybit Spot";
     }
 
@@ -25,6 +27,32 @@ public class WindowTitleTests
     public void Cleanup()
     {
         GlobalData.Settings.General.ExchangeName = _exchangeName;
+        GlobalData.Settings.General.WindowTitle = _windowTitle;
+    }
+
+    /// <summary>The name of the data folder, which tells two instances on one exchange apart.</summary>
+    [TestMethod]
+    public void TheFolderPlaceholder_IsTheNameOfTheDataFolder()
+    {
+        string folder = Path.GetFileName(GlobalData.AppDataFolder.TrimEnd('\\', '/'));
+        Assert.IsFalse(string.IsNullOrEmpty(folder), "the test assembly sets a data folder");
+        Assert.AreEqual($"Scanner {folder}", GlobalData.FormatTitle("Scanner {Folder}"));
+    }
+
+    /// <summary>
+    /// The emulator puts the exchange from its setup dialog in, not the one a run has just switched
+    /// the settings to, and adds nothing: the title is the setting, as in the scanner.
+    /// </summary>
+    [TestMethod]
+    public void TheEmulatorTitle_KeepsItsExchange_AndIsTheSetting()
+    {
+        GlobalData.Settings.General.WindowTitle = "";
+        Assert.AreEqual($"CryptoScanBot {GlobalData.AppVersion} Binance Perpetual",
+            CryptoScanner.Emulator.ViewModels.MainWindowViewModel.BuildTitle("Binance Perpetual"));
+
+        GlobalData.Settings.General.WindowTitle = "Session2 {exchange}";
+        Assert.AreEqual("Session2 Binance Perpetual",
+            CryptoScanner.Emulator.ViewModels.MainWindowViewModel.BuildTitle("Binance Perpetual"));
     }
 
     [TestMethod]

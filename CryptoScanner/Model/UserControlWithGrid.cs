@@ -8,6 +8,7 @@ using CryptoScanner.Commands;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Services;
+using CryptoScanner.Core.Trader;
 using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
@@ -367,25 +368,31 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
             return;
         }
 
-        flyout.Items.Add(new MenuItem { Header = "Open symbol Chart", Command = new CommandShowChart(), CommandParameter = parameter });
+        // Captions and order are the same as the context menus of the Blazor grids (PositionsOpen.razor,
+        // PositionsClosed.razor, Signals.razor ...); change them in both places.
+        flyout.Items.Add(new MenuItem { Header = "Open symbol chart", Command = new CommandShowChart(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open trading app", Command = new CommandLaunchTradingAppStandard(), CommandParameter = parameter });
-        flyout.Items.Add(new MenuItem { Header = "Open Tradingview internal", Command = new CommandLaunchTradingViewInternal(), CommandParameter = parameter });
-        flyout.Items.Add(new MenuItem { Header = "Open Tradingview External", Command = new CommandLaunchTradingViewExternal(), CommandParameter = parameter });
+        flyout.Items.Add(new MenuItem { Header = "Open TradingView internal", Command = new CommandLaunchTradingViewInternal(), CommandParameter = parameter });
+        flyout.Items.Add(new MenuItem { Header = "Open TradingView external", Command = new CommandLaunchTradingViewExternal(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open the exchange", Command = new CommandLaunchExchange(), CommandParameter = parameter });
         if (_targetMenu == TargetMenu.Signal)
             flyout.Items.Add(new MenuItem { Header = "Send to Altrady as trade setup", Command = new CommandAltradyTradeSetup(), CommandParameter = parameter });
 
         if (_targetMenu == TargetMenu.Position)
         {
+            // A closed position has no DCA to add or cancel, and can only still be closed at Altrady
+            bool isClosedGrid = _gridName == GridNames.PositionClosed;
             flyout.Items.Add(new MenuItem { Header = "-" });
             flyout.Items.Add(new MenuItem { Header = "Position recalculate", Command = new CommandPositionCalculate(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Position delete from database", Command = new CommandPositionDelete(), CommandParameter = parameter });
-            flyout.Items.Add(new MenuItem { Header = "Position add additional DCA", Command = new CommandPositionCreateAdditionalDca(), CommandParameter = parameter });
-            flyout.Items.Add(new MenuItem { Header = "Position cancel open DCA", Command = new CommandPositionRemoveAdditionalDca(), CommandParameter = parameter });
-            flyout.Items.Add(new MenuItem { Header = "Position close (take profit or loss)", Command = new CommandPositionClose(), CommandParameter = parameter });
-            flyout.Items.Add(new MenuItem { Header = "Export position information to Excel", Command = new CommandExcelPositionInformation(), CommandParameter = parameter });
-            flyout.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = parameter });
-            flyout.Items.Add(new MenuItem { Header = "Delete all positions", Command = new CommandPositionDeleteAll(), CommandParameter = parameter });
+            if (!isClosedGrid)
+            {
+                flyout.Items.Add(new MenuItem { Header = "Position add additional DCA", Command = new CommandPositionCreateAdditionalDca(), CommandParameter = parameter });
+                flyout.Items.Add(new MenuItem { Header = "Position cancel open DCA", Command = new CommandPositionRemoveAdditionalDca(), CommandParameter = parameter });
+                flyout.Items.Add(new MenuItem { Header = "Position close (take profit or loss)", Command = new CommandPositionClose(), CommandParameter = parameter });
+            }
+            else if (_dataGrid.SelectedItem is PositionViewModel closedPosition && ManualExit.CanCloseAtAltrady(closedPosition.Object))
+                flyout.Items.Add(new MenuItem { Header = "Position close at Altrady", Command = new CommandPositionClose(), CommandParameter = parameter });
         }
 
 
@@ -403,6 +410,15 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         flyout.Items.Add(new MenuItem { Header = "Export barometer information to Excel", Command = new CommandExcelBarometerInformation(), CommandParameter = parameter });
         if (_targetMenu == TargetMenu.Signal)
             flyout.Items.Add(new MenuItem { Header = "Delete all signals", Command = new CommandSignalDeleteAll(), CommandParameter = parameter });
+
+        if (_targetMenu == TargetMenu.Position)
+        {
+            flyout.Items.Add(new MenuItem { Header = "-" });
+            flyout.Items.Add(new MenuItem { Header = "Export position information to Excel", Command = new CommandExcelPositionInformation(), CommandParameter = parameter });
+            flyout.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = parameter });
+            flyout.Items.Add(new MenuItem { Header = "-" });
+            flyout.Items.Add(new MenuItem { Header = "Delete all positions", Command = new CommandPositionDeleteAll(), CommandParameter = parameter });
+        }
 
         flyout.Items.Add(new MenuItem { Header = "-" });
         flyout.Items.Add(new MenuItem { Header = "Hide grid selection", Command = new CommandDatagridHideSelection(), CommandParameter = parameter });

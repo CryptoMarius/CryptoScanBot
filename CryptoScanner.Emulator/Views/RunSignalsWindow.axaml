@@ -32,19 +32,20 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
+                <!-- The number columns sort on the raw value (SortMemberPath), not on the formatted text (31-10-2026) -->
                 <DataGridTextColumn Header="Signal time"  Binding="{Binding SignalLocal}" Width="130"/>
                 <DataGridTextColumn Header="Symbol"       Binding="{Binding Symbol}" Width="100"/>
                 <DataGridTextColumn Header="Interval"     Binding="{Binding Interval}" Width="70"/>
                 <DataGridTextColumn Header="Side"         Binding="{Binding SideText}" Width="60"/>
                 <DataGridTextColumn Header="Strategy"     Binding="{Binding StrategyText}" Width="100"/>
-                <DataGridTextColumn Header="Signal price" Binding="{Binding SignalPriceText}" Width="100"/>
-                <DataGridTextColumn Header="SL %"         Binding="{Binding SlPercentageText}" Width="70"/>
+                <DataGridTextColumn Header="Signal price" Binding="{Binding SignalPriceText}" SortMemberPath="SignalPrice" Width="100"/>
+                <DataGridTextColumn Header="SL %"         Binding="{Binding SlPercentageText}" SortMemberPath="SlPercentage" Width="70"/>
                 <DataGridTextColumn Header="Valid"        Binding="{Binding ValidText}" Width="60"/>
-                <DataGridTextColumn Header="Position"     Binding="{Binding PositionText}" Width="70"/>
+                <DataGridTextColumn Header="Position"     Binding="{Binding PositionText}" SortMemberPath="PositionId" Width="70"/>
                 <DataGridTextColumn Header="Pos. created" Binding="{Binding PositionCreatedLocal}" Width="130"/>
                 <DataGridTextColumn Header="Pos. status"  Binding="{Binding PositionStatusText}" Width="90"/>
-                <DataGridTextColumn Header="Profit"       Binding="{Binding ProfitText}" Width="100"/>
-                <DataGridTextColumn Header="%"            Binding="{Binding PercentageText}" Width="70"/>
+                <DataGridTextColumn Header="Profit"       Binding="{Binding ProfitText}" SortMemberPath="Profit" Width="100"/>
+                <DataGridTextColumn Header="%"            Binding="{Binding PercentageText}" SortMemberPath="Percentage" Width="70"/>
                 <DataGridTextColumn Header="EventText"    Binding="{Binding EventText}" Width="*"/>
             </DataGrid.Columns>
         </DataGrid>

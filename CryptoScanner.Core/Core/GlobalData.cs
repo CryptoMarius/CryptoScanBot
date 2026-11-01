@@ -105,25 +105,38 @@ public static class GlobalData
     /// the taskbar and in the task manager (which shows the window title per process).
     /// <para>
     /// Since 29-10-2026 the user writes the whole title (Settings.General.WindowTitle), so the
-    /// application name can be replaced as well; {version} and {exchange} are filled in here.
+    /// application name can be replaced as well; {version}, {exchange} and {folder} are filled in
+    /// here.
     /// </para>
     /// </summary>
     public static string ApplicationTitle => FormatTitle(Settings.General.WindowTitle);
 
     /// <summary>
     /// Fill in a title template. Empty means <see cref="SettingsGeneral.DefaultWindowTitle"/>. The
-    /// placeholders ignore case, because they are typed by hand.
+    /// placeholders ignore case, because they are typed by hand. <paramref name="exchangeName"/>
+    /// replaces the exchange of the settings, for the emulator: a run there switches the exchange
+    /// in the settings for its own duration, while the title stays with the exchange chosen at the
+    /// start.
     /// </summary>
-    public static string FormatTitle(string? template)
+    public static string FormatTitle(string? template, string? exchangeName = null)
     {
         if (string.IsNullOrWhiteSpace(template))
             template = SettingsGeneral.DefaultWindowTitle;
 
         return template
             .Replace("{version}", AppVersion, StringComparison.OrdinalIgnoreCase)
-            .Replace("{exchange}", Settings.General.ExchangeName, StringComparison.OrdinalIgnoreCase)
+            .Replace("{exchange}", exchangeName ?? Settings.General.ExchangeName, StringComparison.OrdinalIgnoreCase)
+            .Replace("{folder}", DataFolderName(), StringComparison.OrdinalIgnoreCase)
             .Trim();
     }
+
+    /// <summary>
+    /// The name of the data folder (the last part of <see cref="AppDataFolder"/>). Every instance
+    /// runs in a folder of its own (-f), usually named after what it is for, so this tells two
+    /// instances on the same exchange apart without the user typing anything.
+    /// </summary>
+    private static string DataFolderName()
+        => Path.GetFileName(AppDataFolder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
 
     public static Action? RequestShutdown { get; set; }
 
@@ -547,6 +560,17 @@ public static class GlobalData
         return AddProductData(product).Active;
     }
 
+    /// <summary>
+    /// How many instruments the exchange offers for this quote, switched off or not - read from the
+    /// live list by name, so a settings screen that works on a copy shows it as well.
+    /// </summary>
+    public static int OfferedForQuote(string quote)
+        => Settings.QuoteCoins.TryGetValue(quote, out CryptoQuoteData? quoteData) ? quoteData.OfferedCount : 0;
+
+    /// <summary>How many instruments the exchange offers for this product, see <see cref="OfferedForQuote"/>.</summary>
+    public static int OfferedForProduct(string product)
+        => Settings.Products.TryGetValue(product, out CryptoProductData? productData) ? productData.OfferedCount : 0;
+
     public static void AddSymbol(CryptoSymbol symbol)
     {
         if (ApplicationParams.Options != null && !string.IsNullOrEmpty(ApplicationParams.Options.AppLimitSymbols))
@@ -735,6 +759,10 @@ public static class GlobalData
                         + "settings file will NOT be overwritten - repair or remove it first.");
                 }
             }
+
+            // The quotes and the default paper assets live in the database per exchange since
+            // 31-10-2026; what a file from before that date still carries waits for its exchange
+            ExchangeSettingsStore.SettingsWereRead(Settings!);
 
             // Fix, sometimes people set this at 1 and that is not what I expected
             if (Settings!.General.GetCandleInterval < 30)
@@ -954,6 +982,26 @@ public static class GlobalData
 
 
     /// <summary>
+    /// What goes into the settings file: the settings without the quotes and the default paper assets.
+    /// Those belong to one exchange and are kept in the database since 31-10-2026
+    /// (ExchangeSettingsStore). Only while no exchange has been activated yet do they stay in the file:
+    /// they are then the lists of a file from before that date, still waiting to be moved.
+    /// </summary>
+    internal static System.Text.Json.Nodes.JsonNode SettingsFileContent()
+    {
+        System.Text.Json.Nodes.JsonNode node = JsonSerializer.SerializeToNode(Settings, JsonTools.JsonSerializerIndented)!;
+        if (ExchangeSettingsStore.LoadedExchange != null)
+        {
+            node.AsObject().Remove(nameof(SettingsBasic.QuoteCoins));
+            node.AsObject().Remove(nameof(SettingsBasic.Products));
+            if (node[nameof(SettingsBasic.Trading)] is System.Text.Json.Nodes.JsonObject trading)
+                trading.Remove(nameof(SettingsTrading.PaperAssetDefaults));
+        }
+        return node;
+    }
+
+
+    /// <summary>
     /// Write the configuration files. Logs and rethrows on failure: the caller has to know, because
     /// silently returning here is what made a failed save look like a successful one - the screen
     /// closed, and at the next start the previous values were back.
@@ -982,11 +1030,15 @@ public static class GlobalData
 
                 Contracts.PluginManager.CollectSettings(Settings.Signal.AnalyzerSettings);
 
-                WriteJsonFile(baseFolder, $"{Constants.AppName}-settings.json", Settings);
+                //WriteJsonFile(baseFolder, $"{Constants.AppName}-settings.json", Settings);
+                WriteJsonFile(baseFolder, $"{Constants.AppName}-settings.json", SettingsFileContent());
                 WriteJsonFile(baseFolder, $"{Constants.AppName}-telegram.json", Telegram);
                 WriteJsonFile(baseFolder, $"{Constants.AppName}-exchange.json", TradingApi);
                 WriteJsonFile(baseFolder, $"{Constants.AppName}-altrady.json", AltradyApi);
                 WriteJsonFile(baseFolder, $"{Constants.AppName}-alpaca.json", AlpacaApi);
+
+                // The quotes and the default paper assets of the active exchange, see SettingsFileContent
+                ExchangeSettingsStore.Save();
             }
             catch (Exception error)
             {

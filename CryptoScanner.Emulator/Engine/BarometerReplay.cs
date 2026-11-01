@@ -125,7 +125,28 @@ internal sealed class BarometerReplay
     {
         List<string> names = [.. symbols.Select(s => s.Name)];
         names.Sort(StringComparer.Ordinal);
-        return $"volume={quoteData.MinimalVolume};coins={string.Join(",", names)}";
+        //return $"volume={quoteData.MinimalVolume};coins={string.Join(",", names)}";
+        // The $BMX candles also carry the market trend (MarketTrendPrimary/Secondary), and that
+        // depends on the zigzag settings of Settings.Trend. Without them in the marker a run with
+        // other trend settings read back the market trend of an earlier setting (31-10-2026). Only
+        // added when the settings differ from the defaults, so the series measured so far - all on
+        // the defaults, as far as known - stay valid instead of all being measured again.
+        return $"volume={quoteData.MinimalVolume};{TrendMarkerPart()}coins={string.Join(",", names)}";
+    }
+
+
+    /// <summary>
+    /// The trend settings part of <see cref="MarkerFor"/>: empty on the default zigzag settings,
+    /// "trend=...;" otherwise.
+    /// </summary>
+    internal static string TrendMarkerPart()
+    {
+        Core.Settings.SettingsTrend trend = GlobalData.Settings.Trend;
+        Core.Settings.SettingsTrend defaults = new();
+        if (trend.Primary.UseHighLow == defaults.Primary.UseHighLow && trend.Primary.TrendType == defaults.Primary.TrendType
+            && trend.Secondary.UseHighLow == defaults.Secondary.UseHighLow && trend.Secondary.TrendType == defaults.Secondary.TrendType)
+            return "";
+        return $"trend={trend.Primary.UseHighLow}/{trend.Primary.TrendType},{trend.Secondary.UseHighLow}/{trend.Secondary.TrendType};";
     }
 
     public BarometerReplay(Core.Model.CryptoExchange exchange, IEnumerable<CryptoSymbol> symbols)
@@ -160,9 +181,10 @@ internal sealed class BarometerReplay
         reuse = perQuote.Count > 0 && perQuote.TrueForAll(q =>
             CandleDatabase.ReadMeta(exchange, MarkerKey(q.QuoteData.Name)) == MarkerFor(q.QuoteData, q.Symbols));
 
-        if (reuse)
-            GlobalData.AddTextToLogTab("Barometer: reading the series measured by an earlier run over the same coins");
-        else
+        //if (reuse)
+        //    GlobalData.AddTextToLogTab("Barometer: reading the series measured by an earlier run over the same coins");
+        //else
+        if (!reuse)
         {
             // The new marker is held back until the run has completed and its candles are saved
             // (WriteMarkers). It used to be written right here, at the start: run 118 on HyperLiquid
@@ -171,12 +193,71 @@ internal sealed class BarometerReplay
             // The OLD marker goes now: this run overwrites the stored candles - the save after a Stop
             // writes them as well - so it would vouch for a series that is no longer the one it
             // describes, half this coin list and half the previous one.
+            // Since 31-10-2026 the old marker goes in BeginRun, not here: the runner can still drop
+            // this barometer (too few coins, HasEnoughSymbols), and a run that measures nothing and
+            // overwrites nothing must not invalidate a good stored series.
             foreach ((CryptoQuoteData quoteData, List<CryptoSymbol> quoteSymbols) in perQuote)
             {
-                CandleDatabase.DeleteMeta(exchange, MarkerKey(quoteData.Name));
+                //CandleDatabase.DeleteMeta(exchange, MarkerKey(quoteData.Name));
                 markersToWrite.Add((MarkerKey(quoteData.Name), MarkerFor(quoteData, quoteSymbols)));
             }
+            //GlobalData.AddTextToLogTab("Barometer: measuring it for this coin list, later runs read it back once this run has completed");
+        }
+    }
+
+
+    /// <summary>
+    /// Called by the runner once it has decided to keep this barometer for the run (after the
+    /// HasEnoughSymbols check), before the first measurement. Says in the log whether the stored
+    /// series is read back or measured again, removes the marker of a series this run is going to
+    /// overwrite (see the constructor), and marks the quote coins with too few coins of their own.
+    /// <para>
+    /// That last part since 31-10-2026: a quote coin of the run with fewer than
+    /// <see cref="MinimumSymbols"/> coins never gets a barometer value. The live scanner measures such
+    /// a quote coin anyway and treats the result as neutral because it rests on too few coins (open
+    /// point 40, BarometerHelper.TooFewSymbols). The coin count is stored here so the emulator reaches
+    /// the same neutral answer, now that a barometer that was simply not calculated refuses instead
+    /// of passing (BarometerHelper.CheckValidBarometer).
+    /// </para>
+    /// </summary>
+    public void BeginRun()
+    {
+        if (reuse)
+            GlobalData.AddTextToLogTab("Barometer: reading the series measured by an earlier run over the same coins");
+        else
+        {
+            foreach ((CryptoQuoteData quoteData, _) in perQuote)
+                CandleDatabase.DeleteMeta(exchange, MarkerKey(quoteData.Name));
             GlobalData.AddTextToLogTab("Barometer: measuring it for this coin list, later runs read it back once this run has completed");
+        }
+
+        foreach ((CryptoQuoteData quoteData, List<CryptoSymbol> quoteSymbols) in perQuote)
+        {
+            if (quoteSymbols.Count >= MinimumSymbols)
+                continue;
+            foreach (CryptoInterval interval in intervals)
+                exchange.Data.GetBarometer(quoteData.Name, interval.IntervalPeriod).PriceSymbolCount = quoteSymbols.Count;
+            GlobalData.AddTextToLogTab($"Barometer: {quoteData.Name} has {quoteSymbols.Count} coin(s) in this run, " +
+                $"fewer than {MinimumSymbols}, so its barometer conditions count as neutral (as in the live scanner)");
+        }
+    }
+
+
+    /// <summary>
+    /// Measure every interval of every quote coin once at <paramref name="lastClosedMinute"/>, the
+    /// minute before the replay starts, so the first replayed minute reads a barometer like the live
+    /// scanner always has one (31-10-2026). Before that the first minute had none, because the values
+    /// are reset per run and the loop measures after each minute, and a missing barometer let every
+    /// condition pass in the emulator. Measured over the warmup candles and not stored: the candles
+    /// of the series start at the first replayed minute, as before. The market trend is left out:
+    /// no condition reads it, it only travels into the $BMX candles.
+    /// </summary>
+    public void MeasureBeforeStart(CandleTime lastClosedMinute)
+    {
+        foreach ((CryptoQuoteData quoteData, List<CryptoSymbol> symbols) in perQuote)
+        {
+            foreach (CryptoInterval interval in intervals)
+                BarometerTools.CalculateForSymbols(exchange, quoteData, symbols, interval, lastClosedMinute, MinimumSymbols, result);
         }
     }
 
@@ -241,6 +322,13 @@ internal sealed class BarometerReplay
                 names.Add($"trader {side} {period}");
             if (TradingConfig.Signals[side].BarometerConsensusActive && TradingConfig.Signals[side].BarometerMinConsensus > 0)
                 names.Add($"analyze {side} consensus");
+            // The market breadth reads the 1h barometer as well (BarometerHelper.CheckBreadth), and
+            // since 31-10-2026 a breadth that was not calculated refuses in the emulator too, so a run
+            // without a barometer must not start with it set (it would refuse every signal).
+            if (TradingConfig.Signals[side].BarometerBreadthActive)
+                names.Add($"analyze {side} breadth");
+            if (TradingConfig.Trading[side].BarometerBreadthActive)
+                names.Add($"trader {side} breadth");
         }
         return names;
     }
@@ -389,6 +477,60 @@ internal sealed class BarometerReplay
                             candles.TryAdd(candle.OpenTime, candle);
                     }
                 }
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// False once a chunk of a measuring run could not be written to the candle store; the series
+    /// then has a hole and may not be marked as whole (see <see cref="SaveAndPruneMeasured"/>).
+    /// </summary>
+    public bool ChunksSaved { get; private set; } = true;
+
+
+    /// <summary>
+    /// For a run that MEASURES its series: write the $BMP/$BMX candles measured so far to the candle
+    /// store and drop the ones before <paramref name="before"/> from memory. Called between two
+    /// chunks, like the pruning of the run's own coins.
+    /// <para>
+    /// Added 31-10-2026. A measuring run stores a candle per minute per interval for both barometer
+    /// symbols (the reuse reads them back per minute, see <see cref="ReadCandles"/>, so the spacing has
+    /// to stay per minute) and nothing ever pruned them: <see cref="LoadStoredSeries"/>, the only
+    /// pruning, returns at once when the series is not reused. On 273 days that is 5 intervals x 2
+    /// symbols x ~393.000 minutes in memory, all written in one go by the save at the end of the run.
+    /// Now each chunk is written when it is done and memory stays at one chunk. A chunk that cannot be
+    /// written stays in memory for the save at the end, and the series is then not marked as whole.
+    /// </para>
+    /// </summary>
+    public void SaveAndPruneMeasured(CandleTime before)
+    {
+        if (reuse)
+            return;
+
+        foreach ((CryptoQuoteData quoteData, _) in perQuote)
+        {
+            foreach (string prefix in new[] { Constants.SymbolNameBarometerPrice, Constants.SymbolNameBarometerExtra })
+            {
+                if (!exchange.TryGetSymbolByPair(prefix + quoteData.Name, out CryptoSymbol? symbol) || symbol == null)
+                    continue;
+
+                try
+                {
+                    using CandleDatabase database = new(exchange);
+                    database.Open();
+                    CandleDatabase.SaveCandlesForSymbol(database.Connection, symbol);
+                }
+                catch (Exception error)
+                {
+                    ChunksSaved = false;
+                    GlobalData.AddTextToLogTab($"Barometer: writing {symbol.Name} between two chunks failed ({error.Message}), " +
+                        "kept in memory for the save at the end of the run; the series will not be marked as whole");
+                    continue;
+                }
+
+                foreach (CryptoInterval interval in intervals)
+                    symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.RemoveBefore(before);
             }
         }
     }
@@ -556,6 +698,10 @@ internal sealed class BarometerReplay
     /// on that rate would be 1,5 million candles for a figure that moves slowly on the intervals it
     /// is measured over. The series therefore has hourly spacing - it is read as points, not as
     /// candlesticks, the same way the graph already treats these symbols.
+    /// Correction 31-10-2026: the paragraph above no longer describes the code. A candle is written
+    /// for every replayed minute (at = the minute just measured), because the reuse reads the series
+    /// back minute by minute (ReadCandles). A measuring run writes them away and drops them from
+    /// memory per chunk (SaveAndPruneMeasured).
     /// </para>
     /// <para>
     /// There are no rows per position any more either. A position already carries the average per
@@ -575,6 +721,7 @@ internal sealed class BarometerReplay
 
         // A reused series that had no candle here: remember the minute, so the pruning between
         // chunks leaves it for the save at the end of the run. A measuring run prunes nothing.
+        // (Since 31-10-2026 a measuring run writes and prunes per chunk, see SaveAndPruneMeasured.)
         if (reuse)
         {
             if (!measuredAgain.TryGetValue((quoteName, interval.IntervalPeriod), out HashSet<CandleTime>? minutes))

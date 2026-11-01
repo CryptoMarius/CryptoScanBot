@@ -118,4 +118,20 @@ public class WindowsPlatformService : IPlatformService
         }
     }
 
+    /// <summary>
+    /// Opens the file with its associated application through the Windows shell (ShellExecute).
+    /// </summary>
+    public void OpenFile(string path)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "OpenFile");
+            GlobalData.AddErrorToLogTab($"Cannot open {path}: {error.Message}");
+        }
+    }
+
 }

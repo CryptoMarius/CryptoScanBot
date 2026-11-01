@@ -15,6 +15,13 @@ namespace CryptoScanner.Emulator.Engine;
 /// indicator lookback (typically SMA200) on the longest active interval has at least 260 candles
 /// of its own resolution — for a higher interval that necessarily means many more than 260 1m
 /// candles (e.g. SMA200 on 1h needs ~200×60 = 12 000 1m candles to build the 200 hourly bars).
+/// <para>
+/// Correction 31-10-2026: the two paragraphs above describe an older design. <see cref="WarmupSymbol"/>
+/// loads the STORED candles of every interval straight into the CandleList (<see cref="WarmupDepth"/>
+/// candles of each interval's own resolution, only bars that closed at or before the replay start);
+/// nothing is synthesised from 1m and nothing goes through Process1mCandleAsync. The replay after it
+/// hands over the stored candles of every interval as they close (ReplayRunner.SymbolReplay).
+/// </para>
 /// </summary>
 public static class IndicatorWarmup
 {

@@ -76,8 +76,9 @@ public class SettingsGeneral
     public const string DefaultWindowTitle = $"{Constants.AppName} {{version}} {{exchange}}";
 
     /// <summary>
-    /// The window title as the user wants it, with {version} and {exchange} filled in by
-    /// GlobalData.ApplicationTitle. Empty means <see cref="DefaultWindowTitle"/>.
+    /// The window title as the user wants it, with {version}, {exchange} and {folder} (the name of
+    /// the data folder) filled in by GlobalData.FormatTitle. Empty means <see cref="DefaultWindowTitle"/>.
+    /// The emulator reads it from its own data folder and uses it the same way.
     /// </summary>
     public string WindowTitle { get; set; } = "";
 

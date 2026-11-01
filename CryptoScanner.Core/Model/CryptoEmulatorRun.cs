@@ -36,6 +36,11 @@ public class CryptoEmulatorRun
     public string? SettingsJson { get; set; }
 
     // Build identification (git short SHA, optional).
+    // Note 31-10-2026: not taken from the build. The emulator runs "git rev-parse --short HEAD" in the
+    // current directory of its process when the run STARTS (null when that is not inside a git working
+    // copy, as in a copied bin folder), so it names the commit checked out at that moment: changes
+    // that were not committed, and commits made after the build, are not visible in it, and it can
+    // name a code state that never ran. BuildStamp is the field that says which binary ran.
     public string? GitSha { get; set; }
 
     // When the binary that ran this was built, as the write time of its own assembly file.

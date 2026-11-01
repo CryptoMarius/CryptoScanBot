@@ -65,6 +65,17 @@
                  settings.json), and a queue entry gives its own in TradingOverrides. -->
             <!-- The Serial trade checkbox went on 26-10-2026: a run is always serial, so it is always
                  repeatable. One knob less. -->
+            <!-- Back on 31-10-2026, but as a view on those same settings and not as fields of the run:
+                 without them the start assets a queue entry left behind could not be seen or changed
+                 from the emulator. OK writes them to settings.json. -->
+            <Button Grid.Column="2" Content="Assets…" Margin="8,0,0,0" Click="OnAssets"
+                    ToolTip.Tip="The balances every run starts with (the Default column of Paper assets in the scanner)"/>
+            <TextBlock Grid.Column="3" Text="{Binding PaperAssetSummary}" Margin="8,0,0,0"
+                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       ToolTip.Tip="{Binding PaperAssetSummary}"/>
+            <CheckBox Grid.Column="4" Content="Use asset management" IsChecked="{Binding UseAssetManagement}"
+                      Margin="8,0,0,0" VerticalAlignment="Center"
+                      ToolTip.Tip="On: entries are paid out of the free balance and a position is only opened when the entry and its DCA levels fit, so the run can run out of money. Off: the balances are still booked (the equity curve keeps working) but nothing is refused for lack of money, and every entry is the plain entry amount of the quote coin - a percentage needs a balance to be a percentage of."/>
         </Grid>
 
         <!-- Symbols header + filter -->

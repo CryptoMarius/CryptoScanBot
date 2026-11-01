@@ -404,14 +404,21 @@ public class EmulatorQueueEntry
     /// </summary>
     public string? Algorithm { get; set; }
 
-    /// <summary>Stop-loss percentage for this run (e.g. 2.5).</summary>
-    public decimal StopLossPercentage { get; set; } = 2m;
+    /// <summary>
+    /// Stop-loss percentage for this run (e.g. 2.5). Omitted = the settings decide (since
+    /// 31-10-2026; before that a missing key ran on 2%). The stop limit follows it at one percent
+    /// further, unless TradingOverrides set StopLossLimitPercentage.
+    /// </summary>
+    public decimal? StopLossPercentage { get; set; }
 
-    /// <summary>Take-profit levels for this run. Empty list = use the scanner's default.</summary>
-    public List<CryptoTpEntry> TpList { get; set; } = [];
+    /// <summary>Take-profit levels for this run. Omitted or empty list = use the scanner's default.</summary>
+    public List<CryptoTpEntry>? TpList { get; set; }
 
-    /// <summary>DCA ladder for this run. Empty list = no DCA.</summary>
-    public List<CryptoDcaEntry> DcaList { get; set; } = [];
+    /// <summary>
+    /// DCA ladder for this run. Empty list = no DCA. Omitted = the settings decide (since 31-10-2026;
+    /// before that an omitted list also meant no DCA).
+    /// </summary>
+    public List<CryptoDcaEntry>? DcaList { get; set; }
 
     /// <summary>
     /// Signal parameter overrides for this run. Outer key = settings section name on
@@ -528,6 +535,9 @@ public class EmulatorQueueEntry
     /// <summary>
     /// The last day of the replay window for this run, inclusive, UTC. Null or omitted keeps the
     /// date from the run configuration. See <see cref="FromDate"/>.
+    /// Correction 31-10-2026: the end is EXCLUSIVE, like EmulatorRunConfig.ToDate - the replay stops
+    /// at 00:00 of this day, so "2026-04-30" plays up to and including 29 April. Two periods that
+    /// meet on one date therefore join without a gap or an overlap.
     /// </summary>
     [JsonConverter(typeof(DateOnlyJsonConverter))]
     public DateTime? ToDate { get; set; }

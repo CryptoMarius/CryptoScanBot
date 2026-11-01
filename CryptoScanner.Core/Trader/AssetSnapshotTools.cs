@@ -29,6 +29,12 @@ namespace CryptoScanner.Core.Trader;
 public static class AssetSnapshotTools
 {
     /// <summary>
+    /// The extra condition on a query by EmulatorRunId (parameters @runId and @exchangeId): the live
+    /// series (no run) is the series of one exchange since 31-10-2026, a run is a series on its own.
+    /// </summary>
+    internal const string LiveSeriesOfExchange = "and (@runId is not null or ExchangeId is @exchangeId) ";
+
+    /// <summary>
     /// The coin the snapshots fall back on when the exchange says nothing usable about the coin it
     /// trades in. It used to be the only answer, hardcoded, which put four of the nineteen markets
     /// at a flat zero - see <see cref="ResolveReferenceCoin"/>.
@@ -155,8 +161,15 @@ public static class AssetSnapshotTools
                 database.Open();
                 using var transaction = database.BeginTransaction();
 
-                database.Connection.Execute("delete from AssetSnapshot where EmulatorRunId is null", transaction: transaction);
-                database.Connection.Execute("delete from AssetAdjustment where EmulatorRunId is null", transaction: transaction);
+                //database.Connection.Execute("delete from AssetSnapshot where EmulatorRunId is null", transaction: transaction);
+                //database.Connection.Execute("delete from AssetAdjustment where EmulatorRunId is null", transaction: transaction);
+                // The history of the active exchange only (since 31-10-2026): the positions that were
+                // deleted are of this exchange, the history of the others is still theirs.
+                int? exchangeId = GlobalData.ActiveExchange?.Id;
+                database.Connection.Execute("delete from AssetSnapshot where EmulatorRunId is null and ExchangeId is @exchangeId",
+                    new { exchangeId }, transaction);
+                database.Connection.Execute("delete from AssetAdjustment where EmulatorRunId is null and ExchangeId is @exchangeId",
+                    new { exchangeId }, transaction);
 
                 transaction.Commit();
             }
@@ -235,8 +248,8 @@ public static class AssetSnapshotTools
                 using var transaction = database.BeginTransaction();
 
                 database.Connection.Execute(
-                    "delete from AssetSnapshot where SnapshotDate = @day and EmulatorRunId is @runId",
-                    new { day, runId = rows[0].EmulatorRunId }, transaction);
+                    "delete from AssetSnapshot where SnapshotDate = @day and EmulatorRunId is @runId " + LiveSeriesOfExchange,
+                    new { day, runId = rows[0].EmulatorRunId, exchangeId = rows[0].ExchangeId }, transaction);
 
                 foreach (CryptoAssetSnapshot row in rows)
                     database.Connection.Insert(row, transaction);
@@ -277,6 +290,9 @@ public static class AssetSnapshotTools
 
             foreach (CryptoAsset asset in activeExchange.Data.AssetList.Values)
             {
+                // A row that only carries its default (since 31-10-2026) holds nothing on this day
+                if (asset.Total == 0 && asset.Locked == 0 && !shortPerBase.ContainsKey(asset.Name))
+                    continue;
                 shortPerBase.Remove(asset.Name, out decimal shortQuantity);
                 rows.Add(CreateRow(activeExchange, day, runId, referenceCoin, asset.Name,
                     asset.Total, asset.Free, asset.Locked, shortQuantity, priceHints));
@@ -306,6 +322,7 @@ public static class AssetSnapshotTools
         return new CryptoAssetSnapshot
         {
             EmulatorRunId = runId,
+            ExchangeId = activeExchange.Id,
             SnapshotDate = day,
             Name = name,
             Total = total,
@@ -404,7 +421,8 @@ public static class AssetSnapshotTools
             using CryptoDatabase database = new();
             database.Open();
             return database.Connection.ExecuteScalar<DateTime?>(
-                "select max(SnapshotDate) from AssetSnapshot where EmulatorRunId is @runId", new { runId });
+                "select max(SnapshotDate) from AssetSnapshot where EmulatorRunId is @runId " + LiveSeriesOfExchange,
+                new { runId, exchangeId = GlobalData.ActiveExchange?.Id });
         }
         catch (Exception error)
         {
@@ -561,8 +579,8 @@ public static class AssetSnapshotTools
             // CAST before it can be summed.
             List<AssetSnapshotDay> days = [.. database.Connection.Query<AssetSnapshotDay>(
                 "select SnapshotDate as Date, sum(cast(Value as REAL)) as Value " +
-                "from AssetSnapshot where EmulatorRunId is @runId " +
-                "group by SnapshotDate order by SnapshotDate", new { runId = emulatorRunId })];
+                "from AssetSnapshot where EmulatorRunId is @runId " + LiveSeriesOfExchange +
+                "group by SnapshotDate order by SnapshotDate", new { runId = emulatorRunId, exchangeId = GlobalData.ActiveExchange?.Id })];
 
             ApplyAdjustments(days, AssetAdjustmentTools.LoadDailyTotals(emulatorRunId));
             return days;

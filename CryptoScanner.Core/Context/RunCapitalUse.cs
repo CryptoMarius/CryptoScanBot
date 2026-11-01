@@ -26,6 +26,12 @@ namespace CryptoScanner.Core.Context;
 /// invested amount and the moment the entry order was PLACED, so it counts every DCA from the entry
 /// on and lands too high - on HL run 117 3.036 against 2.396 exactly, 27% over.
 /// </para>
+/// <para>
+/// Note 31-10-2026: the peak capital and peak position count on the same run row (PeakInvested,
+/// PeakPositions; EmulatorDb.PeakExposureSql in the emulator) are NOT computed on this basis. They
+/// count the final Invested of a position from its CreateTime and leave positions still open at the
+/// end out, so a peak and an average from this type cannot be compared one to one.
+/// </para>
 /// </summary>
 public readonly record struct RunCapitalUse(decimal AvgInvested, decimal? ExposurePercentage, decimal TimeInMarketPercentage, bool Estimated)
 {
