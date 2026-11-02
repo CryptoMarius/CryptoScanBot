@@ -592,7 +592,10 @@ public partial class DashBoardInformationViewModel : ObservableObject
         int plotWidth = 400;
         int axisWidth = BarometerAxisWidth;
         int intWidth = plotWidth + axisWidth;
-        int intHeight = 100;
+        // The full height of the 125 pixel dashboard row less the 2 pixel top margin of the image
+        // (see DashBoardInformationView), like the Photino chart that runs down to the last row.
+        //int intHeight = 100;
+        int intHeight = 122;
 
         // Get theme colors.
         //
@@ -921,8 +924,13 @@ public partial class DashBoardInformationViewModel : ObservableObject
         float timeWidth = timeFont.MeasureText(timeText);
         paint.Color = bgColor.WithAlpha(PlateAlpha);
         paint.Style = SKPaintStyle.Fill;
-        canvas.DrawRect(1, 1, timeWidth + 4, 13, paint);
-        canvas.DrawText(timeText, 3, 11, SKTextAlign.Left, timeFont, timePaint);
+        // Top-right since the graph selection in the view lies over the top-left corner: the newest
+        // point is on the right, so the moment of the measurement sits above it, against the value
+        // scale. The plate stops one pixel short of the scale line at plotWidth.
+        //canvas.DrawRect(1, 1, timeWidth + 4, 13, paint);
+        //canvas.DrawText(timeText, 3, 11, SKTextAlign.Left, timeFont, timePaint);
+        canvas.DrawRect(plotWidth - timeWidth - 5, 1, timeWidth + 4, 13, paint);
+        canvas.DrawText(timeText, plotWidth - 3, 11, SKTextAlign.Right, timeFont, timePaint);
         //??????? dead code..
         //}
         //else

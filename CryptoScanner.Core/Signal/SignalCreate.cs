@@ -242,6 +242,11 @@ public class SignalCreate
         // Might be different?
         signal.Interval = algorithm.Interval;
         signal.IntervalId = algorithm.Interval.Id;
+        // 02-11-2026: CreateSignal computed the expiration while the strategy was still empty and the
+        // interval was the one of the run, so a zone strategy missed its longer life. Avalonia computes
+        // it again when it shows the signal, Photino, the database cleanup and the startup query use the
+        // stored value: zone signals expired after minutes there and only after hours in Avalonia.
+        signal.ExpirationDate = signal.GetExpirationDate(signal.Interval);
 
         // Algorithms that detect events on an earlier candle (e.g. BOS/CHoCH swing break)
         // can report the actual event price here so SignalPrice reflects the break, not

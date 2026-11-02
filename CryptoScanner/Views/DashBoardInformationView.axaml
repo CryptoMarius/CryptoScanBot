@@ -84,25 +84,11 @@
         <StackPanel Grid.Column="2" Orientation="Vertical" MinWidth="125" Margin="0,0,2,0">
             <!-- The graph selection sits next to the heading: there is room beside the title, and
                  as a row of its own below the values it took a line the grid cannot spare. -->
+            <!-- The graph selection has since moved over the chart: beside the title it
+                 was as wide as the chosen label (up to "Market state: above EMA50") and set the
+                 width of this whole column, which pushed the chart to the right. -->
             <StackPanel Orientation="Horizontal" Spacing="6">
                 <TextBlock Text="Barometer" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" Margin="0,0,0,2"/>
-                <!-- ComboBox: which figure of the measurement the graph draws. The rows below can
-                     only show two of the six; this is where the rest becomes visible. -->
-                <!-- The labels are short, so every item explains itself in a tooltip, and the closed
-                     box explains the figure that is drawn - see BarometerCandleFields.GetDescription,
-                     which the Photino dashboard shows as well. -->
-                <ComboBox FontSize="13" BorderThickness="0" Margin="0,0,0,0"
-                            SelectedItem="{Binding SelectedGraphValue}" VerticalAlignment="Center" HorizontalAlignment="Left"
-                            ItemsSource="{Binding GraphValues}" IsDropDownOpen="False"
-                            ToolTip.Tip="{Binding SelectedGraphValue, Converter={StaticResource BarometerGraphValueDescriptionConverter}}">
-                    <ComboBox.Styles>
-                        <!-- On the whole row of the item, not only on its text -->
-                        <Style Selector="ComboBoxItem">
-                            <Setter Property="ToolTip.Tip"
-                                    Value="{ReflectionBinding Converter={StaticResource BarometerGraphValueDescriptionConverter}}"/>
-                        </Style>
-                    </ComboBox.Styles>
-                </ComboBox>
             </StackPanel>
 
             <!-- The market breadth (the share of coins that rose) used to have a column of its own
@@ -150,11 +136,17 @@
                             ToolTip.Tip="{Binding Barometer1dTooltip}"/>
             </Grid>
         </StackPanel>
-        <Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="0" Margin="1,0"/>
+        <!-- Visible again: since the graph selection lies over the chart, the line between the
+             values and the chart is the only thing that keeps them apart, like the other columns. -->
+        <!--<Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="0" Margin="1,0"/>-->
+        <Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="10,0"/>
 
         <!-- Column=2, Barometer chart -->
         <!-- 436 = the 400 pixel plot plus the value scale beside it (BarometerAxisWidth) -->
-        <Border Grid.Column="4" MinWidth="436" MinHeight="100" Margin="0,2,2,0"
+        <!-- No margin on the right: the value scale already ends in empty space after its
+             labels (36 pixels for "-0.60", far less used by "100"). -->
+        <!-- Left margin 10: together with the separator's own 10 the same 20 pixels as the other columns. -->
+        <Border Grid.Column="4" MinWidth="436" MinHeight="100" Margin="10,2,0,0"
                 BorderThickness="0">
             <Grid>
                 <!-- Loading animation: visible while ChartImage is null -->
@@ -166,8 +158,50 @@
                                IsVisible="{Binding CandleProgressText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                 </StackPanel>
                 <!-- Chart bitmap: visible once loaded -->
-                <Image Source="{Binding ChartImage}" Width="436" Height="100" Stretch="Fill"
+                <!-- 122 high and at the top: the full row less the 2 pixel margin above, the same
+                     height as intHeight in CreateBarometerBitmap. Centred at 100 it sat lower than
+                     the headings and left the bottom of the row empty. -->
+                <Image Source="{Binding ChartImage}" Width="436" Height="122" Stretch="Fill"
+                       VerticalAlignment="Top"
                        IsVisible="{Binding ChartImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                <!-- ComboBox: which figure of the measurement the graph draws. The rows below can
+                     only show two of the six; this is where the rest becomes visible. -->
+                <!-- The labels are short, so every item explains itself in a tooltip, and the closed
+                     box explains the figure that is drawn - see BarometerCandleFields.GetDescription,
+                     which the Photino dashboard shows as well. -->
+                <!-- Laid over the top-left corner of the chart, on the same see-through plate as the
+                     labels drawn in the bitmap (PlateAlpha 191 = 0.75), so it takes no height of its
+                     own. As wide as the chosen label so the arrow stays next to the text; the closed
+                     box is bold like the headings, the opened list keeps the normal weight. The time
+                     of the measurement moved to the top-right corner for it. -->
+                <!-- -3 on top undoes the 2 pixel top margin of this border and the 1 pixel the text
+                     sits lower in the 22 pixel box, so the text lines up with the other headings,
+                     which start at the top of their column (measured: both at y 0). -->
+                <Panel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1,-3,0,0">
+                    <!-- Half see-through, lighter than the plates in the bitmap: the chart stays
+                         visible under the label. The closed box uses the heading font (16, bold). -->
+                    <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Opacity="0.5" CornerRadius="2"/>
+                    <ComboBox FontSize="13" BorderThickness="0" Margin="0,0,0,0" Height="22" MinHeight="0" Padding="3,0,0,0"
+                                Background="Transparent"
+                                SelectedItem="{Binding SelectedGraphValue}" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                VerticalContentAlignment="Center"
+                                ItemsSource="{Binding GraphValues}" IsDropDownOpen="False"
+                                ToolTip.Tip="{Binding SelectedGraphValue, Converter={StaticResource BarometerGraphValueDescriptionConverter}}">
+                        <ComboBox.SelectionBoxItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{ReflectionBinding}" FontWeight="Bold" FontSize="16"/>
+                            </DataTemplate>
+                        </ComboBox.SelectionBoxItemTemplate>
+                        <ComboBox.Styles>
+                            <!-- On the whole row of the item, not only on its text -->
+                            <Style Selector="ComboBoxItem">
+                                <Setter Property="ToolTip.Tip"
+                                        Value="{ReflectionBinding Converter={StaticResource BarometerGraphValueDescriptionConverter}}"/>
+                            </Style>
+                        </ComboBox.Styles>
+                    </ComboBox>
+                </Panel>
             </Grid>
         </Border>
 
@@ -289,7 +323,9 @@
 
         
         <!-- Tickers -->
-        <StackPanel Grid.Column="10" Margin="10,0,2,0" MinWidth="180">
+        <!-- No MinWidth: the counters took about 134 of the 180 pixels and left a gap before
+             the closing line. This is the last column, so a growing count moves nothing else. -->
+        <StackPanel Grid.Column="10" Margin="10,0,2,0">
             <TextBlock Text="Tickers" FontWeight="Bold" FontSize="16" Margin="0,0,0,2"/>
             
             <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">

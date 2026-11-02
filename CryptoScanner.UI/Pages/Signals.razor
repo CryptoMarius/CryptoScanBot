@@ -238,7 +238,8 @@
         // The price change moved on while this tab was away, so put the rows back in the order the
         // user sorted them in before reading them.
         SignalService.Resort();
-        _signals = SignalService.Signals.ToList();
+        //_signals = SignalService.Signals.ToList();
+        _signals = UniqueRows(SignalService.Signals);
         // The queue pump and the expiration cleanup run in SignalService itself so they keep
         // going while this tab is closed (same as the Avalonia DispatcherTimers).
     }
@@ -303,9 +304,31 @@
         {
             if (_disposed)
                 return;
-            _signals = SignalService.Signals.ToList();
+            //_signals = SignalService.Signals.ToList();
+            _signals = UniqueRows(SignalService.Signals);
             StateHasChanged();
         });
+    }
+
+    /// <summary>
+    /// The rows of the table, every view model once. Added 02-11-2026: on 25-10-2026 (HyperLiquid
+    /// Perpetual, 198 signals in one second after the daily close) the list still held one row twice,
+    /// although it is copied on the renderer's thread. Blazor refused the duplicate @key and every later
+    /// render of the table failed until a restart, 7.5 hours without new signals on screen. The source
+    /// was not found, so the duplicate is dropped here and logged to help find it.
+    /// </summary>
+    private static List<SignalViewModel> UniqueRows(IReadOnlyList<SignalViewModel> source)
+    {
+        List<SignalViewModel> rows = new(source.Count);
+        HashSet<SignalViewModel> seen = new();
+        foreach (SignalViewModel vm in source)
+        {
+            if (seen.Add(vm))
+                rows.Add(vm);
+            else
+                GlobalData.AddTextToLogTab($"Signals grid: duplicate row {vm.Object.Symbol.Name} dropped");
+        }
+        return rows;
     }
 
     private void OnSort(SignalColumnEnum column)

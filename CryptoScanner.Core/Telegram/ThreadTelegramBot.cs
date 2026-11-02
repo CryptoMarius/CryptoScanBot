@@ -401,6 +401,11 @@ public class ThreadTelegramBotInstance
 
                     foreach (TelegramUpdate update in updates)
                     {
+                        // 02-11-2026: confirm every update, also the ones without a message (edited_message,
+                        // channel_post, my_chat_member). The offset moved on for ordinary messages only, so
+                        // Telegram handed such an update back on every call and long polling answered at once.
+                        offset = update.Id + 1;
+
                         //// Only process Message updates: https://core.telegram.org/bots/api#message
                         if (update.Message == null)
                             continue;
@@ -414,7 +419,13 @@ public class ThreadTelegramBotInstance
                         //    continue;
 
                         //teleGramCount++;
-                        offset = update.Id + 1;
+                        //offset = update.Id + 1; (02-11-2026: moved above, before the skip of an update without a message)
+
+                        // 02-11-2026: only the configured chat may give commands. Anyone who knew the bot's
+                        // name could stop the trader, change the slots or reset the scanner, and got the
+                        // positions and assets back. CHATID stays open so a new chat can find its id.
+                        // Trimmed because the Photino settings screen saves the chat id as typed
+                        bool ownChat = ThreadTelegramBot.ChatId.Trim() != "" && update.Message.Chat.Id.ToString() == ThreadTelegramBot.ChatId.Trim();
                         try
                         {
                             switch (update.Message.Type)
@@ -431,6 +442,12 @@ public class ThreadTelegramBotInstance
                                         string[] parameters = arguments.Split(' ');
                                         if (parameters.Length > 0)
                                             command = parameters[0].Trim().ToUpper();
+
+                                        if (!ownChat && command != "CHATID")
+                                        {
+                                            GlobalData.AddTextToLogTab($"Telegram command {command} ignored, chat {update.Message.Chat.Id} is not the configured chat");
+                                            break;
+                                        }
 
                                         if (command == ".")
                                         {

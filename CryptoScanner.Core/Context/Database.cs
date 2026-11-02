@@ -230,7 +230,7 @@ public class CryptoDatabase : IDisposable
 
             // The spot side is small: the exchange offers 65 pairs here, of which 32 are quoted in USDT
             new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot, FeeRate = 0.25m }, // taker, lowest tier
-            new() { Name = "BitMart Perpetual", IsSupported = true, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.06m }, // taker, LV1
+            new() { Name = "BitMart Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Perpetual, FeeRate = 0.06m }, // taker, LV1
             new() { Name = "Bitvavo Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Spot, FeeRate = 0.25m }, // taker, lowest tier, EUR markets
             new() { Name = "Bitvavo Perpetual", IsSupported = false, ExchangeType = CryptoExchangeType.Bitvavo, TradingType=CryptoTradingType.Perpetual},
 

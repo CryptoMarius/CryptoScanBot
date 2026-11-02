@@ -1,14 +1,16 @@
 CryptoScanBot release historie:
 
-todo:
--Fable: Zaterdagavond de scanner en/of emulator met de laatste tokens laten doorlichten(voor zover mogelijk, kost wel wat!)
-
-testen
--uitzetten van producten (verdwijnt het product of komt het erin)
--wisselen van exchange, blijft quote en asset bewaard?
--fvg kleurjes aanpassen
-
-30-10-2026 2.6.8
+02-11-2026 2.6.8
+- Nieuwe strategie PsarCross: Instap als de parabolic SAR naar de andere kant van de koers draait, uitstap als hij terugdraait
+- Altrady: Een strategie zonder stop-loss (fvgladder) stuurt de algemene stop-loss niet meer mee
+- Altrady: Een wachtende positie die door een nieuw signaal wordt vervangen wordt nu ook bij Altrady gesloten, er stonden twee posities
+- Altrady: Een bijkoop staat op het exacte niveau, zonder de offset van de instap
+- Signalen: De vervaltijd van een zone-signaal klopt nu ook in Photino en bij het opruimen (liep na minuten af in plaats van uren)
+- Telegram: Alleen de ingestelde chat mag commando's geven
+- Zones: Bij het wisselen van beurs komen de zones niet meer dubbel in het geheugen
+- Excel: De Winst/Verlies van een gesloten positie in de positie-export is nu die van de trader
+- Signalen: Photino toont geen kapotte tabel meer bij een dubbele rij
+- Chart: De keuze van de barometer-grafiek staat over de grafiek en de tijd rechtsboven
 - Instellingen: De basecoins, de producten en de standaard-saldi (Default-kolom van Paper assets) horen nu bij één beurs; wisselen van beurs nam eerder de lijst van de vorige mee
 - Posities: Verwijderen van één of meer posities vraagt een tweede bevestiging waarbij je het aantal intypt, net als "Delete all positions"; de orders, trades en het effect op de saldi gaan mee weg
 - Emulator: Een run die bij het opstarten onafgemaakt blijkt te zijn wordt afgesloten als mislukt, zonder iets te verwijderen

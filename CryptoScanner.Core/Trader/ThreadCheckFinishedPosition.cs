@@ -204,12 +204,16 @@ public class ThreadCheckFinishedPosition
             // Not for a delisted symbol either: the exchange settled that position, Altrady would
             // only refuse the close (DelistedPositions). The status covers a restart in between,
             // when the in-memory flag is gone but the symbol is still on status 0.
-            if (!GlobalData.IsEmulatorMode
-                && !position.Delisted
-                && position.Symbol.Status != 0
-                && !string.IsNullOrEmpty(position.AltradyPositionId)
-                && (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady
-                 || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady)
+            //if (!GlobalData.IsEmulatorMode
+            //    && !position.Delisted
+            //    && position.Symbol.Status != 0
+            //    && !string.IsNullOrEmpty(position.AltradyPositionId)
+            //    && (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady
+            //     || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady)
+            //    && !ClosedOnTakeProfit(position, GlobalData.Clock.UtcNow))
+            // 02-11-2026: the first five conditions moved to MustCloseAtAltrady, so the replacement of a
+            // waiting position by a new signal (PositionMonitor) sends the same close
+            if (MustCloseAtAltrady(position)
                 && !ClosedOnTakeProfit(position, GlobalData.Clock.UtcNow))
             {
                 await AltradyWebhook.DelegateControlToAltradyAsync(position, command: "close");
@@ -221,6 +225,19 @@ public class ThreadCheckFinishedPosition
     }
 
 
+
+    /// <summary>
+    /// True when the position has an Altrady counterpart that has to be closed together with ours:
+    /// not in the emulator, not for a delisted symbol, only when the opening signal was accepted
+    /// (AltradyPositionId) and only when the trades go via Altrady.
+    /// </summary>
+    internal static bool MustCloseAtAltrady(CryptoPosition position)
+        => !GlobalData.IsEmulatorMode
+            && !position.Delisted
+            && position.Symbol.Status != 0
+            && !string.IsNullOrEmpty(position.AltradyPositionId)
+            && (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady
+             || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady);
 
     /// <summary>
     /// Whether the paper position left through its take profit: the last exit that filled was a

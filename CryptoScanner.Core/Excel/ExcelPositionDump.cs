@@ -378,7 +378,14 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, row, column++, position.Reserved, CellStyleDecimalNormal);
 
         decimal investedInTrades = position.Invested - position.Returned - position.Commission;
-        WriteCell(sheet, row, column++, investedInTrades, CellStyleDecimalNormal);
+        //WriteCell(sheet, row, column++, investedInTrades, CellStyleDecimalNormal);
+        // 02-11-2026: under "Winst/Verlies" the formula above had the wrong sign for a long and counted
+        // the commission the wrong way (a winning long of 100 in, 110 back and 0.2 fees showed -10.2).
+        // A closed position shows the profit the trader computed, the same number as the grid.
+        if (position.Status == CryptoPositionStatus.Ready)
+            WriteCell(sheet, row, column++, position.Profit, CellStyleDecimalNormal);
+        else
+            WriteCell(sheet, row, column++, investedInTrades, CellStyleDecimalNormal);
         WriteCell(sheet, row, column++, position.Commission, CellStyleDecimalNormal);
         WriteCell(sheet, row, column++, position.CurrentProfit(), CellStyleDecimalNormal);
 

@@ -541,6 +541,12 @@ public class PositionMonitor : IDisposable
                                 position.CloseTime = LastCandle1mCloseTimeDate;
                                 Database.Connection.Update(position);
 
+                                // 02-11-2026: this path does not pass ThreadCheckFinishedPosition, so the close
+                                // for Altrady went missing: their entry stayed until its own expiration and the
+                                // new signal below sent a second open, two positions there against one here.
+                                if (ThreadCheckFinishedPosition.MustCloseAtAltrady(position))
+                                    await AltradyWebhook.DelegateControlToAltradyAsync(position, command: "close");
+
                                 // Remove without ClearSignals — signals are needed for the replacement position
                                 GlobalData.ActiveExchange!.Data.PositionList.TryRemove(PositionTools.ListedKey(GlobalData.ActiveExchange!, position) ?? PositionTools.PositionListKey(position), out _);
                                 GlobalData.SendMvvmMessage(new PositionIsClosedMessage(position));
@@ -889,7 +895,7 @@ public class PositionMonitor : IDisposable
             // out afterwards is not the place to decide whether we should have
             // entered at all.
             if (!TradeTools.CheckOrderSetAgainstSymbolLimits(Symbol, signal.Side,
-                entryPrice, entryBase, signal.SlPercentage, out string limitReason, DcaLadder.Parse(signal.DcaLevels)))
+                entryPrice, entryBase, signal.SlPercentage, out string limitReason, DcaLadder.Parse(signal.DcaLevels), signal.Strategy))
             {
                 GlobalData.AddTextToLogTab(text + $" because {limitReason} the position is not opened");
                 Symbol.ClearSignals();
@@ -1880,8 +1886,15 @@ public class PositionMonitor : IDisposable
             {
                 case CryptoOrderType.Limit:
                     // A standing entry sits on the strategy's own price, without the offset
-                    entryPrice = CorrectBuyOrDcaPrice(position, LimitEntryPrice(position.Side, part.SignalPrice,
-                        RegisterAlgorithms.HasStandingEntry(position.Strategy) ? 0m : GlobalData.Settings.Trading.EntryLimitOffsetPercentage)
+                    //entryPrice = CorrectBuyOrDcaPrice(position, LimitEntryPrice(position.Side, part.SignalPrice,
+                    //    RegisterAlgorithms.HasStandingEntry(position.Strategy) ? 0m : GlobalData.Settings.Trading.EntryLimitOffsetPercentage)
+                    //    .ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize));
+                    // 01-11-2026: the offset is for the entry only. A DCA part also arrives here as a limit,
+                    // but its SignalPrice is already the exact DCA level, the same price Altrady gets
+                    // (AltradyWebhook sends the DCA levels without the offset).
+                    decimal entryOffset = part.Purpose == CryptoPartPurpose.Entry && !RegisterAlgorithms.HasStandingEntry(position.Strategy)
+                        ? GlobalData.Settings.Trading.EntryLimitOffsetPercentage : 0m;
+                    entryPrice = CorrectBuyOrDcaPrice(position, LimitEntryPrice(position.Side, part.SignalPrice, entryOffset)
                         .ClampPrice(position.Side, Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize));
                     break;
                 case CryptoOrderType.Market:
@@ -2018,7 +2031,7 @@ public class PositionMonitor : IDisposable
             // the usual Entry Remove Time rule.
             if (part.Purpose == CryptoPartPurpose.Entry && position.Invested == 0 &&
                 !TradeTools.CheckOrderSetAgainstSymbolLimits(Symbol, position.Side, price, entryQuantity,
-                    position.SlPercentage, out string entryLimitReason, position.DcaList))
+                    position.SlPercentage, out string entryLimitReason, position.DcaList, position.Strategy))
             {
                 GlobalData.AddTextToLogTab($"{position.Symbol.Name} entry order not placed because {entryLimitReason}");
                 return;

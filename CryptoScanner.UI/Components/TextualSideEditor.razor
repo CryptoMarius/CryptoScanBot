@@ -136,7 +136,8 @@
                 {
                     <div class="field" style="margin: 2px 0;">
                         <input type="checkbox" class="input-checkbox" @bind="t.IsEnabled" />
-                        <label style="margin-left: 4px;">@t.Name interval=bullish</label>
+                        @* 02-11-2026: the short side showed "bullish" as well; bearish there, as in Avalonia (TrendIntervalFilterViewModel) *@
+                        <label style="margin-left: 4px;">@t.Name interval=@(SideLabel == "Short" ? "bearish" : "bullish")</label>
                     </div>
                 }
             </div>

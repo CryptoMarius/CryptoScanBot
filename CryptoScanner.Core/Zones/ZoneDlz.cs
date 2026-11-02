@@ -28,7 +28,11 @@ public class ZoneDlz
         using var database = new CryptoDatabase();
         // Startup load is for the live scanner: only live zones (EmulatorRunId IS NULL). Emulator
         // zones belong to a specific run and are loaded per run by LoadZonesForSymbol instead.
-        string sql = "select * from zone where exchangeid=exchangeid and CloseTime is null and EmulatorRunId is null order by OpenTime";
+        //string sql = "select * from zone where exchangeid=exchangeid and CloseTime is null and EmulatorRunId is null order by OpenTime";
+        // 01-11-2026: "exchangeid=exchangeid" compared the column with itself, so the open zones of every
+        // exchange were loaded. PutZoneInMemory puts them on the symbols of their own exchange, which are
+        // not reset above, so every switch back to an exchange added its zones a second time.
+        string sql = "select * from zone where exchangeid=@exchangeid and CloseTime is null and EmulatorRunId is null order by OpenTime";
         foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
         {
             PutZoneInMemory(zone);

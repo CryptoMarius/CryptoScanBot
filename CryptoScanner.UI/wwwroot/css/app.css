@@ -259,6 +259,44 @@ html, body {
     font-weight: 400;
 }
 
+/* The graph dropdown gets a fixed width. A select is as wide as its longest option ("Market state:
+   above EMA50"), which made the whole barometer section that wide and pushed the chart to the
+   right. The closed box cuts a long label off with an ellipsis; the opened list is as wide as its
+   longest option, so every label stays readable there. */
+/* Two classes: select.dashboard-combo further down would otherwise win with its 11px and 20px. */
+select.dashboard-combo.dashboard-combo-graph {
+    field-sizing: content;
+    padding: 0 2px;
+    font-weight: 600;
+    /* The font of the headings (.dashboard-heading) */
+    font-size: 14px;
+    height: 22px;
+}
+
+/* The options keep the normal weight and size; only the closed box reads as a heading. */
+select.dashboard-combo-graph option {
+    font-weight: 400;
+    font-size: 11px;
+}
+
+/* The graph selection lies over the top-left corner of the barometer chart, on the same
+   see-through plate as the time and hour labels in the chart, so it takes no height of its own.
+   The time of the measurement moved to the top-right corner for it. */
+.dashboard-chart-section {
+    position: relative;
+}
+
+.dashboard-chart-caption {
+    position: absolute;
+    top: 3px;
+    /* 11 = the section's left padding of 10 plus 1, so the caption stays on the chart's corner. */
+    left: 11px;
+    z-index: 1;
+    border-radius: 2px;
+    /* Half see-through, lighter than the plates in the chart: the chart stays visible under it. */
+    background: color-mix(in srgb, var(--bg-base) 50%, transparent);
+}
+
 .dashboard-row {
     display: flex;
     justify-content: space-between;
@@ -387,9 +425,10 @@ select.dashboard-combo {
        fixed-size bitmap there and the surrounding grid does not resize it either. */
     flex: none;
     /* 436 = the 400px plot plus the value scale beside it (BarometerAxisWidth), plus the padding. */
-    width: 440px;
-    min-width: 440px;
-    padding: 2px 2px;
+    /* Left padding 10 like .dashboard-section, so the gap to the separator matches the other columns. */
+    width: 448px;
+    min-width: 448px;
+    padding: 2px 2px 2px 10px;
 }
 
 /* Animation with the progress line underneath it, the way Avalonia stacks LoadingCandlesticksView

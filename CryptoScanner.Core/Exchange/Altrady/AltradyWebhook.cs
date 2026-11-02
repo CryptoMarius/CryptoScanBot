@@ -3,6 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Signal;
 
 using Newtonsoft.Json.Linq;
 
@@ -215,7 +216,9 @@ public class AltradyWebhook
             SlPercentage = position.SlPercentage,
             EntryPrice = position.EntryPrice.Value,
             DeepestDcaPercentage = deepestDcaPercentage > 0 ? deepestDcaPercentage : null,
-            GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
+            //GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
+            // 02-11-2026: no global stop for a strategy without a stop loss, as in PositionMonitor
+            GlobalStopLossPercentage = RegisterAlgorithms.HasNoStopLoss(position.Strategy) ? 0m : GlobalData.Settings.Trading.StopLossPercentage,
             GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
         };
         var result = Trader.StopLossCalculator.Calculate(input);
@@ -593,7 +596,9 @@ public class AltradyWebhook
             {
                 initialStopPercentage = slPercentage;
             }
-            else if (GlobalData.Settings.Trading.StopLossPercentage > 0)
+            // 02-11-2026: a strategy without a stop loss (fvgladder) sent the global stop to Altrady,
+            // which then closed positions on a stop that paper trading does not have
+            else if (!RegisterAlgorithms.HasNoStopLoss(position.Strategy) && GlobalData.Settings.Trading.StopLossPercentage > 0)
             {
                 //dynamic stop_loss = new JObject();
                 //request.stop_loss = stop_loss;

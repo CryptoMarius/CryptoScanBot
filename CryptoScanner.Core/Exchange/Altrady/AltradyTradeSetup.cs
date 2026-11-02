@@ -3,6 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Helpers;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Trader;
 
 using System.Text.Json.Nodes;
@@ -168,7 +169,8 @@ public static class AltradyTradeSetup
         decimal? stopPercentage = null;
         if (signal.SlPercentage is decimal slPercentage)
             stopPercentage = slPercentage;
-        else if (trading.StopLossPercentage > 0)
+        // 02-11-2026: not for a strategy without a stop loss (fvgladder), the same as the webhook
+        else if (!RegisterAlgorithms.HasNoStopLoss(signal.Strategy) && trading.StopLossPercentage > 0)
             stopPercentage = (dcaList.Count > 0 ? dcaList.Max(dca => dca.Percentage) : 0m) + trading.StopLossPercentage;
         if (stopPercentage.HasValue)
         {

@@ -4,6 +4,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Signal;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -1383,7 +1384,7 @@ public class TradeTools
     /// <param name="reason">Filled with the first limit that is broken, empty when everything fits.</param>
     public static bool CheckOrderSetAgainstSymbolLimits(CryptoSymbol symbol, CryptoTradeSide side,
         decimal entryPrice, decimal entryQuantity, decimal? signalSlPercentage, out string reason,
-        List<CryptoDcaEntry>? signalDcaList = null)
+        List<CryptoDcaEntry>? signalDcaList = null, string? strategy = null)
     {
         // The ladder the strategy handed over with the signal, otherwise the global one
         List<CryptoDcaEntry> dcaList = signalDcaList ?? GlobalData.Settings.Trading.DcaList;
@@ -1502,7 +1503,10 @@ public class TradeTools
                 ExtremeDcaPrice = extremeDcaPrice,
                 DeepestDcaPercentage = extremeDcaPrice.HasValue
                     ? StopLossCalculator.DeepestDcaPercentage(dcaList, signalSlPercentage) : null,
-                GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
+                //GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
+                // 02-11-2026: the same exception as PositionMonitor.CalculateSlPrices, a strategy
+                // without a stop loss (fvgladder) never gets the global stop, so it is not weighed here
+                GlobalStopLossPercentage = RegisterAlgorithms.HasNoStopLoss(strategy) ? 0m : GlobalData.Settings.Trading.StopLossPercentage,
                 GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
             };
             slResult = StopLossCalculator.Calculate(slInput);

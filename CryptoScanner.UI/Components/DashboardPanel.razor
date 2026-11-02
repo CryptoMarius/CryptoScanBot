@@ -48,20 +48,11 @@
     <div class="dashboard-section" style="min-width:125px;">
         @* The graph selection sits next to the heading: there is room beside the title, and as a
            row of its own below the values it took a line the panel cannot spare. *@
+        @* The graph selection has since moved over the chart: a select is as wide as its longest
+           option ("Market state: above EMA50"), and beside the title it set the width of this whole
+           section, which pushed the chart to the right. *@
         <div class="dashboard-heading dashboard-heading-row">
             <span>Barometer</span>
-            @* Which figure of the measurement the graph draws. Every measurement holds six of them
-               (see BarometerCandleFields) and the rows below can only show two. *@
-            @* The labels are short, so every option explains itself in a tooltip, and the closed box
-               explains the figure that is drawn - see BarometerCandleFields.GetDescription, which the
-               Avalonia dashboard shows as well. *@
-            <select class="input-select dashboard-combo" value="@DashboardService.GraphValueName"
-                    @onchange="OnBarometerGraphValueChanged" title="@BarometerCandleFields.GetDescription(DashboardService.GraphValue)">
-                @foreach (var gv in DashboardService.GraphValueOptions)
-                {
-                    <option value="@gv" title="@BarometerCandleFields.GetDescription(gv)">@gv</option>
-                }
-            </select>
         </div>
         <div class="dashboard-row dashboard-combo-row">
             <select class="input-select dashboard-combo dashboard-combo-quote" value="@DashboardService.QuoteName"
@@ -97,6 +88,24 @@
 
     <!-- Section 3: Barometer chart (400x100) -->
     <div class="dashboard-section dashboard-chart-section">
+        @* Which figure of the measurement the graph draws. Every measurement holds six of them
+           (see BarometerCandleFields) and the rows below can only show two. *@
+        @* The labels are short, so every option explains itself in a tooltip, and the closed box
+           explains the figure that is drawn - see BarometerCandleFields.GetDescription, which the
+           Avalonia dashboard shows as well. *@
+        @* Laid over the top-left corner of the chart, on the same see-through plate as the labels in
+           the chart, so it takes no height of its own. The select is sized to the chosen label
+           (field-sizing) so the arrow stays next to the text; the opened list shows every label in
+           full. The time of the measurement moved to the top-right corner for it. *@
+        <div class="dashboard-chart-caption">
+            <select class="input-select dashboard-combo dashboard-combo-graph" value="@DashboardService.GraphValueName"
+                    @onchange="OnBarometerGraphValueChanged" title="@BarometerCandleFields.GetDescription(DashboardService.GraphValue)">
+                @foreach (var gv in DashboardService.GraphValueOptions)
+                {
+                    <option value="@gv" title="@BarometerCandleFields.GetDescription(gv)">@gv</option>
+                }
+            </select>
+        </div>
         @* Not on the points alone: the barometer symbols already hold the candles of the
            previous run while this session is still fetching, and drawing those hid the progress
            text underneath. See DashboardService.BarometerChartReady. *@
@@ -155,7 +164,9 @@
     <div class="dashboard-separator"></div>
 
     <!-- Section 6: Tickers — 4 counters -->
-    <div class="dashboard-section" style="min-width:180px;">
+    @* No min-width: the counters took far less than 180px and left a gap before the closing line;
+       it is the last section, so a growing count moves nothing else. *@
+    <div class="dashboard-section">
         <div class="dashboard-heading">Tickers</div>
         <div class="dashboard-row"><span>Kline Ticker Count</span><span class="dashboard-value">@DashboardService.KlineTickerCount</span></div>
         <div class="dashboard-row"><span>Scanner analyze Count</span><span class="dashboard-value">@DashboardService.ScannerExecuteCount</span></div>
@@ -481,10 +492,12 @@
         // measurement was taken, and stacking both along the same edge made them read as one scale.
         // In the muted grey it disappeared against the grid lines, so it gets the normal text
         // colour, a readable size and a dark plate underneath to lift it off the line behind it.
+        // Top-right since the graph selection lies over the top-left corner: the newest point is on
+        // the right, so the moment of the measurement sits above it, against the value scale.
         if (!string.IsNullOrEmpty(DashboardService.BarometerTime))
         {
-            sb.Append($"<rect x=\"1\" y=\"1\" width=\"34\" height=\"13\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
-            sb.Append($"<text x=\"3\" y=\"11\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-primary)\">{DashboardService.BarometerTime}</text>");
+            sb.Append($"<rect x=\"{w - 35}\" y=\"1\" width=\"34\" height=\"13\" rx=\"2\" fill=\"var(--bg-base)\" fill-opacity=\"0.75\"/>");
+            sb.Append($"<text x=\"{w - 3}\" y=\"11\" font-size=\"11\" font-weight=\"600\" text-anchor=\"end\" fill=\"var(--text-primary)\">{DashboardService.BarometerTime}</text>");
         }
 
         sb.Append("</svg>");

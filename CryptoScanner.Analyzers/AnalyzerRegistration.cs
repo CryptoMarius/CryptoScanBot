@@ -92,5 +92,9 @@ public static class AnalyzerRegistration
         // inside it - the break of a pivot level, the crossing of the two EMAs, or a pullback to
         // the fast line. Not measured yet.
         PluginManager.Register(new Mac.MacPlugin());
+
+        // The parabolic SAR flip: in when the SAR flips to the other side of the price, out on the
+        // flip back. Not measured yet.
+        PluginManager.Register(new PsarCross.PsarCrossPlugin());
     }
 }

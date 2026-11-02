@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="420"
+             xmlns:vm="using:CryptoScanner.Analyzers.PsarCross.Config"
+             x:DataType="vm:StrategyPsarCrossSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.PsarCross.Config.StrategyPsarCrossSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- The entry: the parabolic SAR flipping to the other side of the price. Every setting
+                 here makes the bare flip stricter and is off by default. -->
+            <TextBlock Text="Entry" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How many closed candles the SAR has to stay on the new side after the flip before the signal fires. Zero fires on the flip candle itself. A few candles sit out the flips of a flat market, at the price of a later entry.">
+                <TextBlock Grid.Column="0" Text="Confirmation candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ConfirmationCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="How far the SAR has to be from the close at the signal candle, as a percentage of the price. Zero accepts any distance.">
+                <TextBlock Grid.Column="0" Text="Minimum distance %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding MinimumDistancePercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- Is the coin trading at more than its usual pace? Recent average against the baseline. -->
+            <TextBlock Text="Volume" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The average volume of the recent candles has to be at least this many times the average of the candles before them. Two means twice the usual pace. Zero switches the check off.">
+                <TextBlock Grid.Column="0" Text="Minimum relative volume:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding RelativeVolumeMinimum, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                  ToolTip.Tip="The recent window, counted back from and including the signal candle.">
+                <TextBlock Grid.Column="0" Text="Recent candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding RelativeVolumeCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                  ToolTip.Tip="How many candles before the recent window the usual volume is averaged over. The recent candles are left out of it.">
+                <TextBlock Grid.Column="0" Text="Average over candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding RelativeVolumeAverageCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- The exit the idea comes with. Stop loss and take profit keep working next to it. -->
+            <TextBlock Text="Exit" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <CheckBox IsChecked="{Binding ExitOnFlipBack, Mode=TwoWay}"
+                      Content="Exit on flip back" FontSize="12"
+                      ToolTip.Tip="Leave when the SAR flips back against the position. Stop loss and take profit keep working next to it; set those wide to measure the pure flip exit."/>
+
+            <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                  IsEnabled="{Binding ExitOnFlipBack}"
+                  ToolTip.Tip="How many closed candles the SAR has to be against the position before it leaves. Zero leaves on the first candle it flips back.">
+                <TextBlock Grid.Column="0" Text="Exit confirmation candles:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ExitConfirmationCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>
