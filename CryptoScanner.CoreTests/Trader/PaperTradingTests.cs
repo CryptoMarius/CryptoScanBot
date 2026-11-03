@@ -631,4 +631,117 @@ public class PaperTradingTests : TestBase
 
         Assert.AreEqual(3, position.OrderList.Count);
     }
+
+    // ─── Maker or taker rate (03-11-2026) ────────────────────────────────────
+
+    /// <summary>
+    /// Runs a fill with a maker rate that differs from the taker rate, and puts the exchange back
+    /// afterwards: it is the shared exchange object of the whole test session.
+    /// </summary>
+    // A candle opens on a whole minute; a step created later in that minute cannot fill in it
+    private static DateTime MinuteAligned(DateTime time) => new(time.Ticks - time.Ticks % TimeSpan.TicksPerMinute, DateTimeKind.Utc);
+
+    private static async Task<decimal> FillAndReadCommission(CryptoOrderType orderType, decimal open, DateTime stepCreateTime, DateTime candleOpenTime)
+    {
+        var (db, symbol) = SetupTestEnvironment();
+        var position = CreateTestPosition(db, symbol, CryptoTradeSide.Long);
+        var part = CreateTestPart(position);
+        var step = CreateTestStep(db, position, part,
+            CryptoOrderSide.Buy, orderType, price: 100m, quantity: 10m);
+        step.CreateTime = stepCreateTime;
+
+        decimal takerFeeRate = position.Exchange.TakerFeeRate;
+        decimal makerFeeRate = position.Exchange.MakerFeeRate;
+        try
+        {
+            position.Exchange.TakerFeeRate = 0.045m;
+            position.Exchange.MakerFeeRate = 0.015m;
+            var candle = MakeCandle(open: open, high: Math.Max(open, 101m), low: 99m, close: 100m, openTime: candleOpenTime);
+            await PaperTrading.PaperTradingCheckStep(db, position, part, step, candle);
+        }
+        finally
+        {
+            position.Exchange.TakerFeeRate = takerFeeRate;
+            position.Exchange.MakerFeeRate = makerFeeRate;
+        }
+
+        Assert.AreEqual(1, position.TradeList.Count, "The order should have filled");
+        return position.TradeList.Values[0].Commission;
+    }
+
+    [TestMethod]
+    public async Task Fee_LimitThatRested_PaysMaker()
+    {
+        // Placed an hour before the candle, so it was waiting in the order book
+        DateTime candleTime = MinuteAligned(DateTime.UtcNow.AddMinutes(-5));
+        decimal fee = await FillAndReadCommission(CryptoOrderType.Limit, open: 100.5m, candleTime.AddHours(-1), candleTime);
+
+        // Spot long entry: fee in base, 10 * 0.015 / 100
+        Assert.AreEqual(10m * 0.015m / 100m, fee, 0.0000001m);
+    }
+
+    [TestMethod]
+    public async Task Fee_LimitThatRestedAndGappedThrough_StillPaysMaker()
+    {
+        // A resting order the price gaps through stays a maker: it was in the book first
+        DateTime candleTime = MinuteAligned(DateTime.UtcNow.AddMinutes(-5));
+        decimal fee = await FillAndReadCommission(CryptoOrderType.Limit, open: 98m, candleTime.AddHours(-1), candleTime);
+
+        Assert.AreEqual(10m * 0.015m / 100m, fee, 0.0000001m);
+    }
+
+    [TestMethod]
+    public async Task Fee_BuyLimitAbovePriceWhenPlaced_PaysTaker()
+    {
+        // The first candle after placing opens at 98, under the buy limit of 100: the order took the
+        // offer at once, like a market order (Altrady, CRV 28-10-2026)
+        DateTime candleTime = MinuteAligned(DateTime.UtcNow.AddMinutes(-5));
+        decimal fee = await FillAndReadCommission(CryptoOrderType.Limit, open: 98m, candleTime, candleTime);
+
+        Assert.AreEqual(10m * 0.045m / 100m, fee, 0.0000001m);
+    }
+
+    [TestMethod]
+    public async Task Fee_BuyLimitBelowPriceWhenPlaced_PaysMaker()
+    {
+        DateTime candleTime = MinuteAligned(DateTime.UtcNow.AddMinutes(-5));
+        decimal fee = await FillAndReadCommission(CryptoOrderType.Limit, open: 100.5m, candleTime, candleTime);
+
+        Assert.AreEqual(10m * 0.015m / 100m, fee, 0.0000001m);
+    }
+
+    [TestMethod]
+    public async Task Fee_Market_PaysTaker()
+    {
+        DateTime candleTime = MinuteAligned(DateTime.UtcNow.AddMinutes(-5));
+        decimal fee = await FillAndReadCommission(CryptoOrderType.Market, open: 100.5m, candleTime.AddHours(-1), candleTime);
+
+        Assert.AreEqual(10m * 0.045m / 100m, fee, 0.0000001m);
+    }
+
+    [TestMethod]
+    public void IsMakerFill_SellLimitBelowPriceWhenPlaced_IsTaker()
+    {
+        DateTime candleTime = MinuteAligned(DateTime.UtcNow.AddMinutes(-5));
+        CryptoPositionStep step = new() { Side = CryptoOrderSide.Sell, OrderType = CryptoOrderType.Limit, Price = 100m, CreateTime = candleTime };
+
+        Assert.IsFalse(PaperTrading.IsMakerFill(step, MakeCandle(open: 101m, high: 102m, low: 99m, close: 100m, openTime: candleTime), 1));
+        Assert.IsTrue(PaperTrading.IsMakerFill(step, MakeCandle(open: 99m, high: 102m, low: 98m, close: 100m, openTime: candleTime), 1));
+        // A later candle: the order was resting
+        Assert.IsTrue(PaperTrading.IsMakerFill(step, MakeCandle(open: 101m, high: 102m, low: 99m, close: 100m, openTime: candleTime.AddMinutes(1)), 1));
+    }
+
+    [TestMethod]
+    public void PredictedExitFeeRate_IsTheAverageRatePaid()
+    {
+        var (db, symbol) = SetupTestEnvironment();
+        var position = CreateTestPosition(db, symbol, CryptoTradeSide.Long);
+
+        // Entry of 100 at the taker rate 0.045 (fee 0.045) and a DCA of 200 at the maker rate 0.015
+        // (fee 0.03): Altrady counts on 0.075 / 300 = 0.025% for the exit (NEAR, 03-11-2026)
+        Assert.AreEqual(0.025m, TradeTools.PredictedExitFeeRate(position, 300m, 0.075m), 0.0000001m);
+
+        // Nothing filled yet: the taker rate
+        Assert.AreEqual(position.Exchange.TakerFeeRate, TradeTools.PredictedExitFeeRate(position, 0m, 0m));
+    }
 }

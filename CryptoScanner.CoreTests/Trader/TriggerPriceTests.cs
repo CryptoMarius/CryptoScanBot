@@ -21,7 +21,7 @@ public class TriggerPriceTests
     {
         Id = 1,
         Name = "TestExchange",
-        FeeRate = 0.1m,
+        TakerFeeRate = 0.1m, MakerFeeRate = 0.1m,
     };
 
     private static CryptoSymbol MakeSymbol(ExchangeModel exchange) => new()

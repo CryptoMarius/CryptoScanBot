@@ -668,7 +668,11 @@ public class AltradyWebhook
 
 
             // Send request using HttpClient
-            (_, string result) = await PostSignalAsync(position, url, (JObject)request);
+            //(_, string result) = await PostSignalAsync(position, url, (JObject)request);
+            // 02-11-2026: the http status goes into the log as well. Altrady answers a signal its bot
+            // filters refuse afterwards ("Max per market") with an ordinary position in status "new";
+            // that refusal only shows in the bot's error log, so the status is the one extra fact we have.
+            (int statusCode, string result) = await PostSignalAsync(position, url, (JObject)request);
             //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook response {result}");
             //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook");
 
@@ -695,8 +699,10 @@ public class AltradyWebhook
             }
 
             // log response
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook result {result} {info}");
-            ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name}Altrady webhook result {result} {info}");
+            //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook result {result} {info}");
+            //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name}Altrady webhook result {result} {info}");
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook result status={statusCode} {result} {info}");
+            ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook result status={statusCode} {result} {info}");
             GlobalData.AddTextToTelegram($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook {position.Side} price={position.EntryPrice}", position, CryptoTelegramCategory.OrderPlaced);
 
             // The signal id is the only proof that Altrady really opened the position. An answer like

@@ -126,7 +126,8 @@ public class VbsTakeProfitTests : TestBase
         // must LOWER in price after a DCA fills. The TP is anchored on TpGridBreakEvenPrice, which is the
         // cost basis of filled Entry+DCA fills, so this test proves the anchor (and thus the TP) drops.
         CryptoPosition position = CreateVbsPosition(tpPercentage: 3.0m);
-        position.Exchange.FeeRate = 0m;                 // no fees -> clean averages
+        position.Exchange.TakerFeeRate = 0m;                 // no fees -> clean averages
+        position.Exchange.MakerFeeRate = 0m;
         position.Status = CryptoPositionStatus.Trading;
         position.TpPercentage = 3.0m;
         const decimal tpFactor = 1.03m;                 // long: TP = anchor * (1 + 3%)

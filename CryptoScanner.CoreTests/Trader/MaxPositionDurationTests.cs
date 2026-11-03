@@ -25,7 +25,7 @@ public class MaxPositionDurationTests
 
     private static CryptoPosition MakePosition(DateTime createTime)
     {
-        var exchange = new Exchange { Id = 1, Name = "TestExchange", FeeRate = 0.1m };
+        var exchange = new Exchange { Id = 1, Name = "TestExchange", TakerFeeRate = 0.1m, MakerFeeRate = 0.1m };
         var symbol = new CryptoSymbol
         {
             Id = 1,

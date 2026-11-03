@@ -18,7 +18,11 @@ public class CryptoExchange
     // Datum dat de laatste keer de exchange informatie is opgehaald
     public DateTime? LastTimeFetched { get; set; }
 
-    public decimal FeeRate { get; set; } = 0.1m;
+    // The fee rates of the lowest tier, in percent (0.05 = 0.05%). A market order (and a stop, which
+    // becomes one) pays the taker rate, a limit order that rests in the order book the maker rate.
+    // Until 03-11-2026 there was only FeeRate, which held the taker rate and was used for every order.
+    public decimal TakerFeeRate { get; set; } = 0.1m;
+    public decimal MakerFeeRate { get; set; } = 0.1m;
 
     public CryptoExchangeType ExchangeType { get; set; }
     public CryptoTradingType TradingType { get; set; }

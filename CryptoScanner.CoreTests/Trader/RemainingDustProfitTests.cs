@@ -26,7 +26,8 @@ public class RemainingDustProfitTests : TestBase
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
         CryptoPosition position = PositionTools.CreatePosition(symbol, "fvgladder",
             CryptoTradeSide.Long, "Test", symbolInterval, DateTime.UtcNow);
-        position.Exchange.FeeRate = 0.25m;
+        position.Exchange.TakerFeeRate = 0.25m;
+        position.Exchange.MakerFeeRate = 0.25m;
         // Still Trading: the profit is calculated before the position is marked Ready
         position.Status = CryptoPositionStatus.Trading;
         return position;

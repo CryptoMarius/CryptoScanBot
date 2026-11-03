@@ -90,11 +90,29 @@ public class TradeTools
         if (!position.EntryPrice.HasValue || position.EntryPrice.Value <= 0)
             return 0m;
 
-        decimal fees = 2m * position.Exchange.FeeRate / 100m;
+        //decimal fees = 2m * position.Exchange.FeeRate / 100m;
+        decimal fees = 2m * position.Exchange.TakerFeeRate / 100m;
         return position.Side == CryptoTradeSide.Long
             ? position.EntryPrice.Value * (1m + fees)
             : position.EntryPrice.Value * (1m - fees);
     }
+
+    /// <summary>
+    /// The fee rate (in percent) the break-even price counts on for the exit that is still to come. Which
+    /// exit it will be is not known yet - a take profit pays the maker rate, a stop or a close the taker
+    /// rate - so this is an estimate, and it is Altrady's: the average rate paid on the entry and DCA
+    /// fills so far (measured 03-11-2026 on HyperLiquid 2Z, NEAR and LINK: a market entry estimates the
+    /// taker rate, a market entry with a DCA that rested the average of the two). The take profit is
+    /// measured from this break-even price on both sides, so the same estimate puts both TP's on the same
+    /// price. Before the first fill there is nothing to average and the taker rate is used.
+    /// </summary>
+    internal static decimal PredictedExitFeeRate(CryptoPosition position, decimal entryDcaValue, decimal entryDcaCommission)
+    {
+        if (entryDcaValue <= 0)
+            return position.Exchange.TakerFeeRate;
+        return 100m * entryDcaCommission / entryDcaValue;
+    }
+
 
     public static void CalculateProfitAndBreakEvenPrice(CryptoPosition position)
     {
@@ -325,7 +343,9 @@ public class TradeTools
         decimal avgPrice = 0;
         if (totalQuantity > 0)
             avgPrice = totalValue / totalQuantity;
-        decimal predictedCommission = avgPrice * (decimal)position.Exchange.FeeRate * position.Quantity / 100m;
+        //decimal predictedCommission = avgPrice * (decimal)position.Exchange.FeeRate * position.Quantity / 100m;
+        decimal exitFeeRate = PredictedExitFeeRate(position, totalValue, entryDcaCommission);
+        decimal predictedCommission = avgPrice * exitFeeRate * position.Quantity / 100m;
 
         // Fixed TP/DCA grid anchor: same shape as BreakEvenPrice below, but built from totalValue/
         // totalQuantity/entryDcaCommission - which only include Entry+Dca fills (Returned is
@@ -334,7 +354,8 @@ public class TradeTools
         // grid in PositionMonitor.GetMissingFixedPercentageDcaPrices already assumes.
         if (totalQuantity > 0 && position.Status == CryptoPositionStatus.Trading)
         {
-            decimal entryPredictedCommission = avgPrice * (decimal)position.Exchange.FeeRate * totalQuantity / 100m;
+            //decimal entryPredictedCommission = avgPrice * (decimal)position.Exchange.FeeRate * totalQuantity / 100m;
+            decimal entryPredictedCommission = avgPrice * exitFeeRate * totalQuantity / 100m;
             position.TpGridBreakEvenPrice = position.Side == CryptoTradeSide.Long
                 ? (totalValue + entryDcaCommission + entryPredictedCommission) / totalQuantity
                 : (totalValue - entryDcaCommission - entryPredictedCommission) / totalQuantity;

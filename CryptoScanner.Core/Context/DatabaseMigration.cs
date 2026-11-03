@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 112;
+    public readonly static int CurrentDatabaseVersion = 113;
 
 
     /// <summary>
@@ -68,12 +68,13 @@ public class DatabaseMigration
             int count = database.Connection.Execute(sql, transaction);
             if (count == 0)
             {
-                sql = $"insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported)" +
+                sql = $"insert into exchange(ExchangeType, TradingType, Name, TakerFeeRate, MakerFeeRate, IsSupported)" +
                 "Values(" +
                 $"{(int)e.ExchangeType}, " +
                 $"{(int)e.TradingType}, " +
                 $"\'{e.Name}\', " +
-                $"{e.FeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                $"{e.TakerFeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                $"{e.MakerFeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
                 $"{e.IsSupported}" +
                 $")";
                 database.Connection.Execute(sql, transaction);
@@ -2506,7 +2507,7 @@ public class DatabaseMigration
 
             foreach (var e in CryptoDatabase.CreateExchangeList())
                 database.Connection.Execute("update Exchange set FeeRate=@feeRate where Name=@name",
-                    new { feeRate = e.FeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture), name = e.Name }, transaction);
+                    new { feeRate = e.TakerFeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture), name = e.Name }, transaction);
 
             // update version
             version.Version += 1;
@@ -2700,6 +2701,33 @@ public class DatabaseMigration
 
             MergeDuplicateAssets(database, transaction);
             try { database.Connection.Execute("CREATE UNIQUE INDEX IdxAssetExchangeIdName ON Asset(ExchangeId, Name)", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // Version 113 (03-11-2026): a maker and a taker rate per exchange. FeeRate held the taker rate and was
+        // charged on every order; Altrady charges a filled limit order the maker rate (HyperLiquid 0.015
+        // against 0.045 taker), so the paper administration ended up with higher fees and a higher TP.
+        // The column keeps its place under its proper name; both rates are then set to the defaults of
+        // CryptoDatabase.CreateExchangeList (Coinbase changed its tiers on 16-09-2026).
+        if (CurrentVersion > version.Version && version.Version == 112)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Exchange rename column FeeRate to TakerFeeRate", transaction);
+            database.Connection.Execute("alter table Exchange add MakerFeeRate TEXT not NULL default 0.1", transaction);
+            foreach (var e in CryptoDatabase.CreateExchangeList())
+                database.Connection.Execute("update Exchange set TakerFeeRate=@takerFeeRate, MakerFeeRate=@makerFeeRate where Name=@name",
+                    new
+                    {
+                        takerFeeRate = e.TakerFeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        makerFeeRate = e.MakerFeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        name = e.Name
+                    }, transaction);
 
             // update version
             version.Version += 1;

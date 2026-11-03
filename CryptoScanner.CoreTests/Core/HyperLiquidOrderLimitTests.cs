@@ -80,7 +80,7 @@ public class HyperLiquidOrderLimitTests : TestBase
     /// <summary>The minimum entry of a symbol filled the way both HyperLiquid markets fill it.</summary>
     private static decimal MinEntry(decimal quantityTick, decimal price)
     {
-        var exchange = new Exchange { Id = 1, Name = "HyperLiquid", FeeRate = 0.045m };
+        var exchange = new Exchange { Id = 1, Name = "HyperLiquid", TakerFeeRate = 0.045m, MakerFeeRate = 0.045m };
         CryptoSymbol symbol = new()
         {
             Id = 1,

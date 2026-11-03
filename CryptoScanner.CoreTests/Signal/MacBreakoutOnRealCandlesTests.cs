@@ -706,7 +706,7 @@ public class MacBreakoutOnRealCandlesTests : TestBase
     /// <summary>The dates the overlay puts a breakout marker on, for one stretch of candles.</summary>
     private static HashSet<string> Breakouts(string block)
     {
-        Exchange exchange = new() { Id = 1, Name = "TestExchange", FeeRate = 0.1m };
+        Exchange exchange = new() { Id = 1, Name = "TestExchange", TakerFeeRate = 0.1m, MakerFeeRate = 0.1m };
         CryptoSymbol symbol = new()
         {
             Id = 1,
@@ -848,7 +848,7 @@ public class MacBreakoutOnRealCandlesTests : TestBase
 
     private static CryptoSymbol MakeSymbol()
     {
-        Exchange exchange = new() { Id = 1, Name = "TestExchange", FeeRate = 0.1m };
+        Exchange exchange = new() { Id = 1, Name = "TestExchange", TakerFeeRate = 0.1m, MakerFeeRate = 0.1m };
         return new CryptoSymbol
         {
             Id = 1,
@@ -880,7 +880,7 @@ public class MacBreakoutOnRealCandlesTests : TestBase
     public void TheMarkerSitsUnderTheCandle()
     {
         var candles = Parse(Autumn2024);
-        Exchange exchange = new() { Id = 1, Name = "TestExchange", FeeRate = 0.1m };
+        Exchange exchange = new() { Id = 1, Name = "TestExchange", TakerFeeRate = 0.1m, MakerFeeRate = 0.1m };
         CryptoSymbol symbol = new()
         {
             Id = 1,

@@ -25,7 +25,7 @@ public class AltradyDcaAndCloseTests
 {
     private static CryptoPosition MakePosition(CryptoTradeSide side = CryptoTradeSide.Long)
     {
-        var exchange = new Exchange { Id = 1, Name = "Binance Perpetual", FeeRate = 0.05m };
+        var exchange = new Exchange { Id = 1, Name = "Binance Perpetual", TakerFeeRate = 0.05m, MakerFeeRate = 0.05m };
         var symbol = new CryptoSymbol
         {
             Id = 1,

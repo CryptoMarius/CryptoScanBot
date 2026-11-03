@@ -38,7 +38,7 @@ public class TraderMechanismTests
     {
         Id = 1,
         Name = "TestExchange",
-        FeeRate = FeeRate,
+        TakerFeeRate = FeeRate, MakerFeeRate = FeeRate,
     };
 
     private static CryptoSymbol MakeSymbol(ExchangeModel exchange) => new()

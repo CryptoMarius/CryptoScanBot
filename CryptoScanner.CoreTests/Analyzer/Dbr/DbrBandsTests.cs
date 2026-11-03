@@ -315,7 +315,7 @@ public class DbrBandsTests
     /// </summary>
     private static CryptoSymbolInterval LoadSymbolInterval(List<CryptoCandle> candles)
     {
-        Exchange exchange = new() { Id = 1, Name = "TestExchange", FeeRate = 0.1m };
+        Exchange exchange = new() { Id = 1, Name = "TestExchange", TakerFeeRate = 0.1m, MakerFeeRate = 0.1m };
         CryptoSymbol symbol = new()
         {
             Id = 1,

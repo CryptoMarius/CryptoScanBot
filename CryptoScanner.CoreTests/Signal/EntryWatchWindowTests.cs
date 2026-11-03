@@ -38,7 +38,7 @@ public class EntryWatchWindowTests : TestBase
 
     private static CryptoSymbol MakeSymbol()
     {
-        var exchange = new Exchange { Id = 1, Name = "TestExchange", FeeRate = 0.1m };
+        var exchange = new Exchange { Id = 1, Name = "TestExchange", TakerFeeRate = 0.1m, MakerFeeRate = 0.1m };
         return new CryptoSymbol
         {
             Id = 1,

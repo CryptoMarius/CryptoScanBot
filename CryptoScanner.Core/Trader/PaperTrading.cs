@@ -13,9 +13,9 @@ public class PaperTrading
 
     public static async Task CreatePaperTrade(
         CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
-        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime, uint candleDuration = 1)
+        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime, uint candleDuration = 1, bool maker = false)
     {
-        CryptoOrder? order = CreatePaperTradeOrder(database, position, part, step, price, lastCandle1mOpenTime, candleDuration);
+        CryptoOrder? order = CreatePaperTradeOrder(database, position, part, step, price, lastCandle1mOpenTime, candleDuration, maker);
         if (order != null)
             await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
     }
@@ -24,10 +24,12 @@ public class PaperTrading
     /// <summary>
     /// Create the order+trade records without triggering the HandleTradeAsync cascade.
     /// Returns the order so the caller can decide when to call HandleTradeAsync.
+    /// <paramref name="maker"/> charges the maker rate of the exchange instead of the taker rate: a limit
+    /// order that rested in the order book (see <see cref="IsMakerFill"/>).
     /// </summary>
     internal static CryptoOrder? CreatePaperTradeOrder(
         CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
-        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime, uint candleDuration = 1)
+        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime, uint candleDuration = 1, bool maker = false)
     {
         // We have a stupid bug which adds duplicate orders (and trades)
         // This leads to all kind of troubles, balances and wrong fees
@@ -95,7 +97,8 @@ public class PaperTrading
         };
 
         // full commission = 0.1%, met BNB korting = 0.075% (zonder kickback, anders 0.065%)
-        decimal feeRate = position.Exchange.FeeRate;
+        //decimal feeRate = position.Exchange.FeeRate;
+        decimal feeRate = maker ? position.Exchange.MakerFeeRate : position.Exchange.TakerFeeRate;
 
         // Everything that is not spot trades in contracts (perpetuals, X-Perps)
         if (position.Exchange.TradingType != CryptoTradingType.Spot)
@@ -267,7 +270,7 @@ public class PaperTrading
             // it - on a real exchange a touch leaves you at the back of the order book. The stop
             // orders above do fill on a touch, which is the pessimistic side for them too.
             if (candle.Low < step.Price)
-                return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime, candleDuration);
+                return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime, candleDuration, IsMakerFill(step, candle, candleDuration));
         }
         else if (step.Side == CryptoOrderSide.Sell)
         {
@@ -277,10 +280,31 @@ public class PaperTrading
                 return CreatePaperTradeOrder(database, position, part, step, StopFillPrice(step.Side, step.StopPrice.Value, candle), candle.OpenTime, candleDuration);
             // Strict > on purpose: see the buy side above.
             if (candle.High > step.Price)
-                return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime, candleDuration);
+                return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime, candleDuration, IsMakerFill(step, candle, candleDuration));
         }
 
         return null;
+    }
+
+
+    /// <summary>
+    /// Whether a limit order that fills in this candle pays the maker rate. An order that rested in the
+    /// order book is a maker, also when the price later gaps through it. Only a limit order that was
+    /// already past the price when it was placed takes liquidity at once and pays the taker rate, like a
+    /// market order: a buy limit above the price, a sell limit below it. That shows in the first candle
+    /// after the order was placed, which opens at the price of that moment (Altrady charged a limit
+    /// entry that filled within seconds as a taker, CRV 28-10-2026, and one that waited as a maker).
+    /// Market orders and triggered stops do not come here; they always pay the taker rate.
+    /// </summary>
+    internal static bool IsMakerFill(CryptoPositionStep step, CryptoCandle candle, uint candleDuration)
+    {
+        bool firstCandle = candle.Date < step.CreateTime.AddMinutes(candleDuration);
+        if (!firstCandle)
+            return true;
+        if (step.Side == CryptoOrderSide.Buy)
+            return candle.Open > step.Price;
+        else
+            return candle.Open < step.Price;
     }
 
 
