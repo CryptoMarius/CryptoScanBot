@@ -482,7 +482,60 @@ public static class PositionTools
     /// </para>
     /// </summary>
     /// <summary>
-    /// The question both scanners ask before "Position delete from database" removes the selected
+    /// Whether a take profit order sits at the parked price of a trailing last take profit: ten
+    /// times the target for a long, a tenth of it for a short, so it can never fill and the trail's
+    /// stop does the exit (PositionMonitor.ApplyTakeProfitTrail). That price is not a level anybody
+    /// aims for, so the charts leave it out and draw the real target instead. Display only: the
+    /// trader never asks this. Measured against the entry price with a factor 5, well clear of any
+    /// real take profit and of the parked price itself.
+    /// </summary>
+    public static bool IsParkedTakeProfit(CryptoPosition position, CryptoPositionStep step)
+    {
+        decimal entry = position.EntryPrice ?? 0m;
+        if (entry <= 0 || step.Price <= 0)
+            return false;
+        if (position.Side == CryptoTradeSide.Long)
+            return step.Price >= 5m * entry;
+        else
+            return step.Price <= entry / 5m;
+    }
+
+    /// <summary>
+    /// The trailing last take profit that has not been reached yet, for the charts: its real
+    /// target (ProfitPrice, where Altrady draws its TP line) and the moment the parked order was
+    /// placed. Null when the position is closed, has no parked take profit or the trail is already
+    /// armed - from then on the trail is the stop of that order, which the charts draw as the
+    /// stop price. Display only.
+    /// </summary>
+    public static (decimal TargetPrice, DateTime Since)? PendingTakeProfitTrail(CryptoPosition position)
+    {
+        if (position.CloseTime != null || position.TakeProfitTrailStopPrice > 0)
+            return null;
+        decimal target = position.ProfitPrice ?? 0m;
+        if (target <= 0)
+            return null;
+
+        DateTime? since = null;
+        foreach (CryptoPositionPart part in position.PartList.Values)
+        {
+            if (part.Purpose != CryptoPartPurpose.TakeProfit)
+                continue;
+            foreach (CryptoPositionStep step in part.StepList.Values)
+            {
+                if (step.CloseTime == null && IsParkedTakeProfit(position, step))
+                {
+                    if (since == null || step.CreateTime > since)
+                        since = step.CreateTime;
+                }
+            }
+        }
+        if (since == null)
+            return null;
+        return (target, since.Value);
+    }
+
+    /// <summary>
+    /// The question both scanners ask before "Delete position" removes the selected
     /// position(s), worded like "Delete run(s)" in the emulator.
     /// </summary>
     public static string DeleteConfirmationText(IReadOnlyList<CryptoPosition> positions)

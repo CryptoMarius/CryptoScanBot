@@ -7,7 +7,7 @@ public class StobbConfigView : IConfigView
 {
     private readonly StrategyStobbTabViewModel _viewModel = new();
 
-    public string TabHeader => StobbPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => StobbPlugin.StrategyInternal;
     public string StrategyName => StobbPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyStobbTabView.axaml shows.

@@ -7,7 +7,7 @@ public class StorsiConfigView : IConfigView
 {
     private readonly StrategyStorsiTabViewModel _viewModel = new();
 
-    public string TabHeader => StorsiPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => StorsiPlugin.StrategyInternal;
     public string StrategyName => StorsiPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyStorsiTabView.axaml shows.

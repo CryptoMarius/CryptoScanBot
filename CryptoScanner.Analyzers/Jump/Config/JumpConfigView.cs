@@ -7,7 +7,7 @@ public class JumpConfigView : IConfigView
 {
     private readonly StrategyJumpTabViewModel _viewModel = new();
 
-    public string TabHeader => JumpPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => JumpPlugin.StrategyInternal;
     public string StrategyName => JumpPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyJumpTabView.axaml shows.

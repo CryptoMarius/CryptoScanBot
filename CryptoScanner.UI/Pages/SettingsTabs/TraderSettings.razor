@@ -204,7 +204,7 @@
                 <input type="checkbox" class="input-checkbox" @bind="_addDustToTp" />
                 <label>Add dust to TP</label>
             </div>
-            <div class="field" title="Trailing on the last take profit level, 0 = off. Once the price reaches the last level it is not sold there: a stop follows the best price at this distance and only moves towards more profit. Sent to Altrady as trailing_distance on the last take profit.">
+            <div class="field" title="Trailing on the last take profit level, 0 = off. Once the price reaches the last level it is not sold there: a stop follows the best price at this distance and only moves towards more profit. Sent to Altrady as trailing_distance on the last take profit. Not the same as the profit lock 'Trailing behind the price' in the Stop loss group: that one starts below the take profit and leaves the take profit in place, this one starts at the last take profit and replaces it. Keep the distance at or below the % of the last level, otherwise the stop starts below break-even.">
                 <label>Trailing on last take profit %</label>
                 <span class="field-control">
                     <input type="number" class="input-number" step="0.1" min="0" @bind="_tpTrailPct" />
@@ -223,7 +223,7 @@
                     <tr>
                         <th style="width: 70px;">Level</th>
                         <th style="width: 100px;">Profit %</th>
-                        <th style="width: 100px;">Quantity %</th>
+                        <th style="width: 100px;" title="Share of the position closed at this level, as a weight against the other levels: 50 and 100 close one third and the rest, 100 and 100 close half each. The last level always closes what is left.">Quantity %</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -273,7 +273,7 @@
                     <span class="field-unit">%</span>
                 </span>
             </div>
-            <div class="field" title="Once the position reaches the trigger % below, the SL moves to the stop loss % above break-even to lock in profit. Open DCA orders are cancelled at that point.">
+            <div class="field" title="Once the position reaches the trigger % below, the SL moves to the stop loss % above break-even to lock in profit. Open DCA orders are cancelled at that point. To let a winner run past the take profit use 'Trailing on last take profit %' in the Take profit group instead.">
                 <input type="checkbox" class="input-checkbox" @bind="_moveSlBe" />
                 <label>Profit lock</label>
             </div>
@@ -309,7 +309,7 @@
                 </div>
                 @if (AltradyOn && !ProfitLockCalculator.IsSupportedByAltrady(_moveSlBeMethod))
                 {
-                    <div class="field" style="color:#d0021b">Altrady does not support this method: while trading through Altrady the stop is not moved. Choose trailing, break even after TP1 or follow take profit.</div>
+                    <div class="settings-warning">Altrady does not support this method: while trading through Altrady the stop is not moved. Choose trailing, break even after TP1 or follow take profit.</div>
                 }
                 @* The Keltner/PSAR trail uses the fixed level as its floor, so it shows the same field *@
                 @if (ProfitLockCalculator.IsArmedByTakeProfit(_moveSlBeMethod))
@@ -328,7 +328,7 @@
                 }
                 else
                 {
-                    <div class="field" title="How far behind the price the SL follows once the trigger is reached: below the highest price for a long, above the lowest for a short. It only moves towards the take profit, so a pullback leaves it where it was.">
+                    <div class="field" title="How far behind the price the SL follows once the trigger is reached: below the highest price for a long, above the lowest for a short. It only moves towards the take profit, so a pullback leaves it where it was. It starts at the trigger %, so a distance larger than the trigger places the stop below break-even. Not the same as 'Trailing on last take profit %' in the Take profit group, which only starts at the last take profit.">
                         <label>Profit lock trailing %</label>
                         <span class="field-control">
                             <input type="number" class="input-number" step="0.1" min="0" @bind="_moveSlBeTrailPct" />

@@ -8,7 +8,7 @@ public class BbmaConfigView : IConfigView
 {
     private readonly StrategyBbmaTabViewModel _viewModel = new();
 
-    public string TabHeader => "BBMA";
+    public string TabHeader => BbmaPlugin.StrategyInternal;
     public string StrategyName => BbmaPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyBbmaTabView.axaml shows.

@@ -7,17 +7,12 @@ using System.Collections.Concurrent;
 namespace CryptoScanner.Analyzers.FvgLadder.Signal;
 
 /// <summary>
-/// Rule 1: a new position is only started while the trend is up. Two ways to tell, chosen with
-/// FvgLadderSettings.UseKalmanFilter:
-/// <list type="bullet">
-/// <item>EMA (default): the last closed day candle closed above the EMA200 of the day closes. (Rule
-/// 1.2, "the EMA200 at or above yesterday's", follows from that and is left out: with the close
-/// above the EMA, the EMA can only have gone up.)</item>
-/// <item>Kalman: the Kalman filter over the closes of the strategy's own interval (the first of its
-/// Intervals, normally 1h) has a slope above zero (FvgLadderRules.KalmanStep).</item>
-/// </list>
+/// Rule 1: a new position is only started while the trend is up: the last closed day candle closed
+/// above the EMA200 of the day closes. (Rule 1.2, "the EMA200 at or above yesterday's", follows from
+/// that and is left out: with the close above the EMA, the EMA can only have gone up.) The Kalman
+/// filter that could be chosen instead was removed on 05-11-2026.
 /// <para>
-/// Both are kept per symbol and carried forward one closed candle at a time, because the candle list
+/// The EMA is kept per symbol and carried forward one closed candle at a time, because the candle list
 /// only holds a limited number of candles (the emulator warms up about 270 per interval and prunes
 /// back to that). They start on the first candle that is there, so in the first part of a run they
 /// can differ a little from a calculation over the whole history.
@@ -29,12 +24,10 @@ public static class FvgLadderTrend
 
     private sealed class State
     {
-        public bool Kalman;
         public uint Duration;
         public CandleTime LastCandle;
         public decimal Close;
         public decimal Ema;
-        public FvgLadderKalman Filter;
         // What the log was last told, so a flip of the trend is reported once and not every minute
         public bool? Reported;
     }
@@ -48,8 +41,7 @@ public static class FvgLadderTrend
     /// </summary>
     public static bool IsUp(CryptoSymbol symbol, CandleTime now, FvgLadderSettings settings, out string text)
     {
-        bool kalman = settings.UseKalmanFilter;
-        CryptoInterval interval = TrendInterval(settings);
+        CryptoInterval interval = TrendInterval();
         uint duration = interval.Duration;
         CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
 
@@ -65,7 +57,7 @@ public static class FvgLadderTrend
         lock (symbol)
         {
             State? state = States.GetValueOrDefault(symbol);
-            if (state == null || state.Kalman != kalman || state.Duration != duration || state.LastCandle > last
+            if (state == null || state.Duration != duration || state.LastCandle > last
                 || !CarryForward(candles, state, last))
             {
                 // Start again on the candles that are there, oldest first
@@ -81,21 +73,17 @@ public static class FvgLadderTrend
                 closes.Reverse();
                 state = new State
                 {
-                    Kalman = kalman,
                     Duration = duration,
                     LastCandle = last,
                     Close = lastCandle.Close,
-                    Ema = kalman ? 0m : FvgLadderRules.Ema(closes, EmaLength),
-                    Filter = kalman ? FvgLadderRules.Kalman(closes) : default,
+                    Ema = FvgLadderRules.Ema(closes, EmaLength),
                     Reported = state?.Reported,
                 };
                 States[symbol] = state;
             }
 
-            up = kalman ? FvgLadderRules.KalmanIsUp(state.Filter) : state.Close > state.Ema;
-            text = kalman
-                ? $"Kalman {interval.Name} slope {state.Filter.Slope * 100:N3}% per candle"
-                : $"day close {state.Close} {(up ? "above" : "not above")} EMA{EmaLength} {state.Ema:N2}";
+            up = state.Close > state.Ema;
+            text = $"day close {state.Close} {(up ? "above" : "not above")} EMA{EmaLength} {state.Ema:N2}";
 
             // Without this a run in a falling market shows nothing at all for months, and that looks
             // exactly like a strategy that does not work
@@ -110,10 +98,10 @@ public static class FvgLadderTrend
     }
 
 
-    /// <summary>The interval the trend is measured on: 1d for the EMA, the strategy's own for Kalman (1h when none).</summary>
-    private static CryptoInterval TrendInterval(FvgLadderSettings settings)
+    /// <summary>The interval the trend is measured on: 1d for the EMA.</summary>
+    private static CryptoInterval TrendInterval()
     {
-        string name = !settings.UseKalmanFilter ? "1d" : settings.IntervalList.FirstOrDefault() ?? "1h";
+        string name = "1d";
         if (GlobalData.IntervalListPeriodName.TryGetValue(name, out CryptoInterval? interval))
             return interval;
         return GlobalData.IntervalListPeriodName["1h"];
@@ -130,21 +118,16 @@ public static class FvgLadderTrend
             return true;
 
         decimal ema = state.Ema;
-        FvgLadderKalman filter = state.Filter;
         decimal close = state.Close;
         for (CandleTime time = state.LastCandle + state.Duration; time <= last; time += state.Duration)
         {
             if (!candles.TryGetValue(time, out CryptoCandle candle))
                 return false;
-            if (state.Kalman)
-                filter = FvgLadderRules.KalmanStep(filter, candle.Close);
-            else
-                ema = FvgLadderRules.NextEma(ema, candle.Close, EmaLength);
+            ema = FvgLadderRules.NextEma(ema, candle.Close, EmaLength);
             close = candle.Close;
         }
         state.LastCandle = last;
         state.Ema = ema;
-        state.Filter = filter;
         state.Close = close;
         return true;
     }

@@ -7,7 +7,7 @@ public class MacdCrossBandConfigView : IConfigView
 {
     private readonly StrategyMacdCrossBandTabViewModel _viewModel = new();
 
-    public string TabHeader => MacdCrossBandPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => MacdCrossBandPlugin.StrategyInternal;
     public string StrategyName => MacdCrossBandPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyMacdCrossBandTabView.axaml shows.

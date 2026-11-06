@@ -247,6 +247,8 @@ public static class SignalGridExpander
         ["MaxPositionsPerCoin"] = (1m, "fvgladder's MaxPositionsPerCoin became the trader setting on 24-10-2026. "
             + "Use \"TradingOverrides\": {\"MaxPositionsPerCoin\": n} with n of 1 or more; there is no "
             + "0 = no limit any more"),
+        ["UseKalmanFilter"] = (0m, "fvgladder's Kalman trend was removed on 05-11-2026: the trend is always the "
+            + "day close above the EMA200, so only \"UseKalmanFilter\": false can be left in an entry"),
     };
 
     /// <summary>
@@ -259,6 +261,9 @@ public static class SignalGridExpander
         if (!removed.TryGetValue(propPath, out var fixedValue))
             return null;
         if (jsonVal.ValueKind == JsonValueKind.Number && jsonVal.TryGetDecimal(out decimal d) && d == fixedValue.Fixed)
+            return null;
+        // A removed switch: false counts as 0, true as 1
+        if (jsonVal.ValueKind is JsonValueKind.True or JsonValueKind.False && (jsonVal.ValueKind == JsonValueKind.True ? 1m : 0m) == fixedValue.Fixed)
             return null;
         return $"Queue entry sets \"{propPath}\" to {jsonVal.GetRawText()}, but {fixedValue.Reason}.";
     }

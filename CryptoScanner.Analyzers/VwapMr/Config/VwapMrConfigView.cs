@@ -7,7 +7,7 @@ public class VwapMrConfigView : IConfigView
 {
     private readonly StrategyVwapMrTabViewModel _viewModel = new();
 
-    public string TabHeader => VwapMrPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => VwapMrPlugin.StrategyInternal;
     public string StrategyName => VwapMrPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyVwapMrTabView.axaml shows.

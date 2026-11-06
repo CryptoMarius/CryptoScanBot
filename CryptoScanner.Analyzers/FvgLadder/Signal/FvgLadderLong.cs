@@ -149,7 +149,9 @@ public class FvgLadderLong : SignalCreateBase
     {
         target = 0m;
         reason = "";
-        tops = FvgLadderRules.UsableTops(CollectZones(), settings.MinimumGapPercentage);
+        List<FvgLadderZone> zones = CollectZones();
+        tops = FvgLadderRules.UsableTops(zones, settings.MinimumGapPercentage);
+        List<decimal> entryTops = FvgLadderRules.EntryTops(zones, settings.MinimumGapPercentage);
 
         List<FvgLadderTrade> trades = [];
         foreach (CryptoPosition position in positions)
@@ -168,10 +170,10 @@ public class FvgLadderLong : SignalCreateBase
             return false;
         }
 
-        decimal? found = FvgLadderRules.EntryTarget(tops, price, settings.GapsInView, limit);
+        decimal? found = FvgLadderRules.EntryTarget(entryTops, price, settings.GapsInView, limit);
         if (found == null)
         {
-            reason = $"no usable gap under the price ({tops.Count} gap(s), {trades.Count} open position(s))";
+            reason = $"no usable gap under the price ({tops.Count} gap(s), {entryTops.Count} with a close above, {trades.Count} open position(s))";
             return false;
         }
         target = found.Value;
@@ -179,20 +181,32 @@ public class FvgLadderLong : SignalCreateBase
     }
 
 
-    /// <summary>The open bullish fvg zones of the scanner on 1h and 4h that exist at this candle.</summary>
+    /// <summary>
+    /// The open bullish fvg zones of the scanner on 1h and 4h that exist at this candle, each with
+    /// whether the last closed candle of its interval closed above its top.
+    /// </summary>
     private List<FvgLadderZone> CollectZones()
     {
         List<FvgLadderZone> zones = [];
         CandleTime now = CandleLast.Candle.OpenTime;
         foreach (CryptoIntervalPeriod period in (CryptoIntervalPeriod[])[CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h])
         {
+            // The candle of this interval that closed at or before this minute, the same moment a
+            // zone becomes visible (zone.OpenTime <= now). Missing means no close above yet.
+            CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(period);
+            uint duration = symbolInterval.Interval.Duration;
+            bool hasClosed = symbolInterval.CandleList.TryGetValue(now.AlignToIntervalMinutes(duration) - duration, out CryptoCandle closed);
+
             // Capture the reference so a concurrent swap of the zone list cannot pull it away mid-loop
             var longOpen = Symbol.Data.Get(period).Fvg.Zones.LongOpen;
             for (int index = 0; index < longOpen.Count; index++)
             {
                 CryptoZone zone = longOpen[index];
                 if (zone.CloseTime == null && zone.OpenTime <= now)
-                    zones.Add(new FvgLadderZone(zone.Top, zone.Bottom, period == CryptoIntervalPeriod.interval4h));
+                {
+                    bool closedAbove = hasClosed && closed.Close > zone.Top;
+                    zones.Add(new FvgLadderZone(zone.Top, zone.Bottom, period == CryptoIntervalPeriod.interval4h, closedAbove));
+                }
             }
         }
         return zones;

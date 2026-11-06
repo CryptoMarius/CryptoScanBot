@@ -1,5 +1,7 @@
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trader;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -216,6 +218,11 @@ public class Positions
                     //OxyColor StepColor(CryptoPositionStep step) =>
                     OxyColor stepColor = step.Side == CryptoOrderSide.Buy ? OxyColors.DarkGreen : OxyColors.DarkRed;
 
+                    // The parked order of a trailing last take profit (ten times the target) is
+                    // not a level: left out here, the real target is drawn below as "tp trigger"
+                    bool parkedTakeProfit = positionPart.Purpose == CryptoPartPurpose.TakeProfit
+                        && PositionTools.IsParkedTakeProfit(position, step);
+
                     switch (positionPart.Purpose)
                     {
                         case CryptoPartPurpose.Entry:
@@ -231,7 +238,8 @@ public class Positions
                         case CryptoPartPurpose.TakeProfit:
                             double x1 = CandleTime.FromDateTime(step.CreateTime).Minutes;
                             double xEndTp = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
-                            AddPiece($"tp-{positionPart.PartNumber}", $"take profit-{positionPart.PartNumber}", stepColor, x1, xEndTp, step.Price);
+                            if (!parkedTakeProfit)
+                                AddPiece($"tp-{positionPart.PartNumber}", $"take profit-{positionPart.PartNumber}", stepColor, x1, xEndTp, step.Price);
 
                             //if (step.CloseTime.HasValue && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice)
                             //    stepColor = OxyColors.Yellow; // just to see for now (orange ain't much different then red)
@@ -259,6 +267,9 @@ public class Positions
                     }
 
                     // Extend the vertical line if needed
+                    // (not to a parked price, that would stretch the marker to ten times the entry)
+                    if (parkedTakeProfit)
+                        continue;
                     if (position.Side == CryptoTradeSide.Long)
                     {
                         if (step.Price > yTop)
@@ -316,6 +327,18 @@ public class Positions
             {
                 if (position.BreakEvenPrice > 0)
                     DrawHorizontalLine(chart, firstEntry, xEnd, position.BreakEvenPrice, OxyColors.Gray, "breakeven", xLabelOffset, group);
+
+                // A trailing last take profit that has not been reached: its target, the trigger
+                // Altrady draws as its TP line. Display only. Once it is reached the trail is the
+                // stop of the take profit order, which is already drawn as "stop price".
+                var pendingTrail = PositionTools.PendingTakeProfitTrail(position);
+                if (pendingTrail.HasValue)
+                {
+                    double xTrigger = CandleTime.FromDateTime(pendingTrail.Value.Since).Minutes;
+                    OxyColor triggerColor = position.Side == CryptoTradeSide.Long ? OxyColors.DarkRed : OxyColors.DarkGreen;
+                    string caption = $"tp trigger (trail {GlobalData.Settings.Trading.TakeProfitTrailPercentage:N2}%)";
+                    DrawHorizontalLine(chart, xTrigger, xEnd, pendingTrail.Value.TargetPrice, triggerColor, caption, xLabelOffset, group);
+                }
             }
 
         }

@@ -10,7 +10,7 @@ namespace CryptoScanner.Analyzers.KumoSqueeze;
 /// </summary>
 public class KumoSqueezePlugin : IStrategyPlugin
 {
-    private const string StrategyInternal = "KumoSqueeze";
+    public const string StrategyInternal = "KumoSqueeze";
     public string StrategyName => StrategyInternal.ToLower();
     public string StrategyNameCamelCase => StrategyInternal;
 

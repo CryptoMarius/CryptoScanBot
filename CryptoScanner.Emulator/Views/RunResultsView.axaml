@@ -38,7 +38,9 @@
                   GridLinesVisibility="Horizontal"
                   HorizontalScrollBarVisibility="Visible">
             <DataGrid.ContextMenu>
-                <ContextMenu>
+                <!-- Items tagged DisabledWhileBusy are greyed out while a run or the queue is going
+                     (OnRunsContextMenuOpening): they are refused then, so they should not tempt -->
+                <ContextMenu Opening="OnRunsContextMenuOpening">
                     <MenuItem Header="Refresh" Click="OnRefreshClick"/>
                     <Separator/>
                     <MenuItem Header="Adjust columns…" Click="OnAdjustColumnsClick"/>
@@ -50,15 +52,15 @@
                     <MenuItem Header="Show settings JSON" Click="OnShowJsonClick"/>
                     <MenuItem Header="Show emulator config" Click="OnShowEmulatorConfigClick"/>
                     <MenuItem Header="Export scanner settings…" Click="OnExportSettingsClick"/>
-                    <MenuItem Header="Take over these settings…" Click="OnTakeOverSettingsClick"/>
+                    <MenuItem Header="Take over these settings…" Click="OnTakeOverSettingsClick" Tag="DisabledWhileBusy"/>
                     <Separator/>
                     <MenuItem Header="Copy selected rows (for Excel)" Click="OnCopyRowsClick"/>
                     <MenuItem Header="Copy all rows (for Excel)"      Click="OnCopyAllRowsClick"/>
                     <MenuItem Header="Export selected rows to Excel" Click="OnExportSelectedToExcelClick"/>
                     <MenuItem Header="Export all rows to Excel"      Click="OnExportAllToExcelClick"/>
                     <Separator/>
-                    <MenuItem Header="Delete run(s)…" Click="OnDeleteRunClick"/>
-                    <MenuItem Header="Delete all runs…" Click="OnDeleteAllRunsClick"/>
+                    <MenuItem Header="Delete run(s)…" Click="OnDeleteRunClick" Tag="DisabledWhileBusy"/>
+                    <MenuItem Header="Delete all runs…" Click="OnDeleteAllRunsClick" Tag="DisabledWhileBusy"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>

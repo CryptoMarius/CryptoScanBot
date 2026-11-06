@@ -7,7 +7,7 @@ public class MacConfigView : IConfigView
 {
     private readonly StrategyMacTabViewModel _viewModel = new();
 
-    public string TabHeader => MacPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => MacPlugin.StrategyInternal;
     public string StrategyName => MacPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyMacTabView.axaml shows.

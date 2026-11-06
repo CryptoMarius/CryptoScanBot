@@ -7,7 +7,7 @@ public class FailedBreakoutConfigView : IConfigView
 {
     private readonly StrategyFailedBreakoutTabViewModel _viewModel = new();
 
-    public string TabHeader => FailedBreakoutPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => FailedBreakoutPlugin.StrategyInternal;
     public string StrategyName => FailedBreakoutPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyFailedBreakoutTabView.axaml shows.

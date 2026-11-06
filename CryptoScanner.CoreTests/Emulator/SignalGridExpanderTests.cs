@@ -150,6 +150,23 @@ public class SignalGridExpanderTests : TestBase
 
 
     /// <summary>
+    /// fvgladder's UseKalmanFilter was removed on 05-11-2026 (the trend is always the day EMA200).
+    /// A switch, so the value it is fixed at is false; true asks for a trend that no longer exists.
+    /// </summary>
+    [TestMethod]
+    public void TheRemovedKalmanSwitch_PassesWhenOff_AndIsRefusedWhenOn()
+    {
+        InitTestSession();
+
+        Assert.IsNull(SignalGridExpander.Validate(EntryWithOverride("fvgladder", "UseKalmanFilter", "false")));
+
+        string? reason = SignalGridExpander.Validate(EntryWithOverride("fvgladder", "UseKalmanFilter", "true"));
+        Assert.IsNotNull(reason);
+        StringAssert.Contains(reason, "UseKalmanFilter");
+    }
+
+
+    /// <summary>
     /// A signal-section override is checked too, not just the trading ones - the loop that reads
     /// them is a different one.
     /// </summary>

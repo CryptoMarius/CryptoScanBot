@@ -8,9 +8,6 @@ public partial class StrategyFvgLadderSettingsViewModel : ObservableObject
     private string _coins = "BTC";
 
     [ObservableProperty]
-    private bool _useKalmanFilter = false;
-
-    [ObservableProperty]
     private decimal _minimumGapPercentage = 0.4m;
 
     [ObservableProperty]
@@ -41,7 +38,6 @@ public partial class StrategyFvgLadderSettingsViewModel : ObservableObject
     public void LoadConfig(FvgLadderSettings settings)
     {
         Coins = settings.Coins;
-        UseKalmanFilter = settings.UseKalmanFilter;
         MinimumGapPercentage = settings.MinimumGapPercentage;
         GapsInView = settings.GapsInView;
         PlaceOrderWithinPercentage = settings.PlaceOrderWithinPercentage;
@@ -56,7 +52,6 @@ public partial class StrategyFvgLadderSettingsViewModel : ObservableObject
     public void SaveConfig(FvgLadderSettings settings)
     {
         settings.Coins = Coins;
-        settings.UseKalmanFilter = UseKalmanFilter;
         settings.MinimumGapPercentage = MinimumGapPercentage;
         settings.GapsInView = GapsInView;
         settings.PlaceOrderWithinPercentage = PlaceOrderWithinPercentage;

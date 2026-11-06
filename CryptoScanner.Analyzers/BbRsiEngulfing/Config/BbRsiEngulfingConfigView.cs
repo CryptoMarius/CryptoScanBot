@@ -7,7 +7,7 @@ public class BbRsiEngulfingConfigView : IConfigView
 {
     private readonly StrategyBbRsiEngulfingTabViewModel _viewModel = new();
 
-    public string TabHeader => BbRsiEngulfingPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => BbRsiEngulfingPlugin.StrategyInternal;
     public string StrategyName => BbRsiEngulfingPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyBbRsiEngulfingTabView.axaml shows.

@@ -7,7 +7,7 @@ public class BbSqueezeConfigView : IConfigView
 {
     private readonly StrategyBbSqueezeTabViewModel _viewModel = new();
 
-    public string TabHeader => BbSqueezePlugin.StrategyInternal.ToUpper();
+    public string TabHeader => BbSqueezePlugin.StrategyInternal;
     public string StrategyName => BbSqueezePlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyBbSqueezeTabView.axaml shows.

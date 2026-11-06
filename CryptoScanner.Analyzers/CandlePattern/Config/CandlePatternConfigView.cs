@@ -7,7 +7,7 @@ public class CandlePatternConfigView : IConfigView
 {
     private readonly StrategyCandlePatternTabViewModel _viewModel = new();
 
-    public string TabHeader => CandlePatternPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => CandlePatternPlugin.StrategyInternal;
     public string StrategyName => CandlePatternPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyCandlePatternTabView.axaml shows.

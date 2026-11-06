@@ -7,7 +7,7 @@ public class ChochConfigView : IConfigView
 {
     private readonly StrategyChochTabViewModel _viewModel = new();
 
-    public string TabHeader => ChochPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => ChochPlugin.StrategyInternal;
     public string StrategyName => ChochPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyChochTabView.axaml shows.

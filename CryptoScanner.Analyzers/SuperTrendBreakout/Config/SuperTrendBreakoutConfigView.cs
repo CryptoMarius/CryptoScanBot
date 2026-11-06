@@ -7,7 +7,7 @@ public class SuperTrendBreakoutConfigView : IConfigView
 {
     private readonly StrategySuperTrendBreakoutTabViewModel _viewModel = new();
 
-    public string TabHeader => SuperTrendBreakoutPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => SuperTrendBreakoutPlugin.StrategyInternal;
     public string StrategyName => SuperTrendBreakoutPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategySuperTrendBreakoutTabView.axaml shows.

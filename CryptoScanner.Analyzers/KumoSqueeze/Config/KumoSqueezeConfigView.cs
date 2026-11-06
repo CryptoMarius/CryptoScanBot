@@ -7,7 +7,7 @@ public class KumoSqueezeConfigView : IConfigView
 {
     private readonly StrategyKumoSqueezeTabViewModel _viewModel = new();
 
-    public string TabHeader => "KUMOSQUEEZE";
+    public string TabHeader => KumoSqueezePlugin.StrategyInternal;
     public string StrategyName => "kumosqueeze";
 
     // The same two strings the header of StrategyKumoSqueezeTabView.axaml shows.

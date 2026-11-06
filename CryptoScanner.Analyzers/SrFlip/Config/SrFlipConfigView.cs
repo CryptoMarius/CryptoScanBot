@@ -7,7 +7,7 @@ public class SrFlipConfigView : IConfigView
 {
     private readonly StrategySrFlipTabViewModel _viewModel = new();
 
-    public string TabHeader => SrFlipPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => SrFlipPlugin.StrategyInternal;
     public string StrategyName => SrFlipPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategySrFlipTabView.axaml shows.

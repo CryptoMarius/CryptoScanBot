@@ -3,7 +3,7 @@ CryptoScanBot release historie:
 03-11-2026 2.6.8
 - Trader: Een limit-order die in het orderboek wachtte betaalt nu het maker-tarief, een market-order en een stop het taker-tarief, zoals bij Altrady
 - Trader: De break-even prijs en daarmee de takeprofit rekent voor de uitstap met het gemiddelde tarief van de instap en de bijkopen
-- Nieuwe strategie PsarCross: Instap als de parabolic SAR naar de andere kant van de koers draait, uitstap als hij terugdraait
+- Nieuwe strategie PsarCross: Instap als de parabolic SAR naar de andere kant van de koers draait, uitstap als hij terugdraait (voor hogere intervallen)
 - Altrady: De http-status van het antwoord staat nu in het log
 - Altrady: Een strategie zonder stop-loss (fvgladder) stuurt de algemene stop-loss niet meer mee
 - Altrady: Een wachtende positie die door een nieuw signaal wordt vervangen wordt nu ook bij Altrady gesloten, er stonden twee posities

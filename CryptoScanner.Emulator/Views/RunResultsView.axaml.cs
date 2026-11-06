@@ -91,6 +91,25 @@ public partial class RunResultsView : UserControl
     }
 
 
+    /// <summary>
+    /// Greys out the context-menu items that are refused while the emulator is busy (tagged
+    /// DisabledWhileBusy in the XAML), so they do not tempt during a run. Evaluated each time the
+    /// menu opens; the refusal inside each handler stays for a run that starts while a dialog is open.
+    /// </summary>
+    private void OnRunsContextMenuOpening(object? sender, CancelEventArgs e)
+    {
+        if (sender is not ContextMenu menu)
+            return;
+
+        bool busy = IsEmulatorBusy();
+        foreach (MenuItem item in menu.Items.OfType<MenuItem>())
+        {
+            if (item.Tag is "DisabledWhileBusy")
+                item.IsEnabled = !busy;
+        }
+    }
+
+
     private void OnRunsGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (RunsGrid.SelectedItem is RunRow row && DataContext is RunResultsViewModel viewModel)

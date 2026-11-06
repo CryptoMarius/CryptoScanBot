@@ -38,7 +38,7 @@
             <CheckBox IsChecked="{Binding MoveSlToBreakEven, Mode=TwoWay}"
                       Content="Profit lock"
                       FontSize="12"
-                      ToolTip.Tip="Once the position reaches the trigger % below, the SL moves to the stop loss % above break-even to lock in profit. Open DCA orders are cancelled at that point."/>
+                      ToolTip.Tip="Once the position reaches the trigger % below, the SL moves to the stop loss % above break-even to lock in profit. Open DCA orders are cancelled at that point. To let a winner run past the take profit use 'Trailing on last take profit %' in the Take profit group instead."/>
 
             <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
                   IsVisible="{Binding ShowProfitLockTrigger}">
@@ -67,7 +67,10 @@
                           FontSize="12"/>
             </Grid>
 
+            <!-- MaxWidth: in the horizontal WrapPanel of the tab a wrapping TextBlock gets the whole
+                 window width and would stretch the group; keep it to the width of the rows above -->
             <TextBlock IsVisible="{Binding ShowAltradyLockWarning}" Foreground="#D0021B" FontSize="12" TextWrapping="Wrap"
+                       MaxWidth="330" HorizontalAlignment="Left"
                        Text="Altrady does not support this method: while trading through Altrady the stop is not moved. Choose trailing, break even after TP1 or follow take profit."/>
 
             <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
@@ -88,7 +91,7 @@
                 <TextBlock Grid.Column="0" Text="Profit lock trailing %:"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"
-                           ToolTip.Tip="How far behind the price the SL follows once the trigger is reached: below the highest price for a long, above the lowest for a short. It only moves towards the take profit, so a pullback leaves it where it was."/>
+                           ToolTip.Tip="How far behind the price the SL follows once the trigger is reached: below the highest price for a long, above the lowest for a short. It only moves towards the take profit, so a pullback leaves it where it was. It starts at the trigger %, so a distance larger than the trigger places the stop below break-even. Not the same as 'Trailing on last take profit %' in the Take profit group, which only starts at the last take profit."/>
                 <TextBox Grid.Column="2"
                          Text="{Binding MoveSlToBreakEvenTrailPercentage, Mode=TwoWay, StringFormat=N2}"
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"

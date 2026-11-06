@@ -7,7 +7,7 @@ public class DlzConfigView : IConfigView
 {
     private readonly StrategyDlzTabViewModel _viewModel = new();
 
-    public string TabHeader => DlzPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => DlzPlugin.StrategyInternal;
     public string StrategyName => DlzPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyDlzTabView.axaml shows.

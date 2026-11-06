@@ -383,8 +383,8 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
             // A closed position has no DCA to add or cancel, and can only still be closed at Altrady
             bool isClosedGrid = _gridName == GridNames.PositionClosed;
             flyout.Items.Add(new MenuItem { Header = "-" });
-            flyout.Items.Add(new MenuItem { Header = "Position recalculate", Command = new CommandPositionCalculate(), CommandParameter = parameter });
-            flyout.Items.Add(new MenuItem { Header = "Position delete from database", Command = new CommandPositionDelete(), CommandParameter = parameter });
+            flyout.Items.Add(new MenuItem { Header = "Recalculate position", Command = new CommandPositionCalculate(), CommandParameter = parameter });
+            flyout.Items.Add(new MenuItem { Header = "Delete position", Command = new CommandPositionDelete(), CommandParameter = parameter });
             if (!isClosedGrid)
             {
                 flyout.Items.Add(new MenuItem { Header = "Position add additional DCA", Command = new CommandPositionCreateAdditionalDca(), CommandParameter = parameter });

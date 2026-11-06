@@ -7,7 +7,7 @@ public class IChimokuKumoBreakoutConfigView : IConfigView
 {
     private readonly StrategyIChimokuKumoBreakoutTabViewModel _viewModel = new();
 
-    public string TabHeader => IChimokuKumoBreakoutPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => IChimokuKumoBreakoutPlugin.StrategyInternal;
     public string StrategyName => IChimokuKumoBreakoutPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyIChimokuKumoBreakoutTabView.axaml shows.

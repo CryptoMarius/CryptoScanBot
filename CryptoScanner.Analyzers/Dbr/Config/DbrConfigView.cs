@@ -7,7 +7,7 @@ public class DbrConfigView : IConfigView
 {
     private readonly StrategyDbrTabViewModel _viewModel = new();
 
-    public string TabHeader => DbrPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => DbrPlugin.StrategyInternal;
     public string StrategyName => DbrPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyDbrTabView.axaml shows.

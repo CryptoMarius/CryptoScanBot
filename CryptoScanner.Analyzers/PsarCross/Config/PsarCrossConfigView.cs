@@ -7,7 +7,7 @@ public class PsarCrossConfigView : IConfigView
 {
     private readonly StrategyPsarCrossTabViewModel _viewModel = new();
 
-    public string TabHeader => PsarCrossPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => PsarCrossPlugin.StrategyInternal;
     public string StrategyName => PsarCrossPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyPsarCrossTabView.axaml shows.

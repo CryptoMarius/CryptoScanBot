@@ -7,7 +7,7 @@ public class SbmConfigView : IConfigView
 {
     private readonly StrategySbmTabViewModel _viewModel = new();
 
-    public string TabHeader => SbmPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => SbmPlugin.StrategyInternal;
     public string StrategyName => SbmPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategySbmTabView.axaml shows.

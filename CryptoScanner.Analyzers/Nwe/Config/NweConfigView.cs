@@ -7,7 +7,7 @@ public class NweConfigView : IConfigView
 {
     private readonly StrategyNweTabViewModel _viewModel = new();
 
-    public string TabHeader => NwePlugin.StrategyInternal.ToUpper();
+    public string TabHeader => NwePlugin.StrategyInternal;
     public string StrategyName => NwePlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyNweTabView.axaml shows.

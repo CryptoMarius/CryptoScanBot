@@ -963,6 +963,19 @@ input[type="checkbox"]:focus-visible {
     grid-column: 1 / -1;
 }
 
+/* A red warning line under a setting. As a .field (display:contents) its text became the grid's
+   first column and pushed every caption of the group to the right. Spanning both columns is not
+   enough on its own: the long text still widens the group, so width 0 with min-width 100% keeps it
+   out of the sizing and lets it wrap inside the width the captions and controls already need. */
+.settings-group-body > .settings-warning {
+    color: #d0021b;
+    font-size: 12px;
+    padding: 2px 5px;
+    width: 0;
+    min-width: 100%;
+    box-sizing: border-box;
+}
+
 /* A grid item stretches by default, and a stretched table with table-layout:fixed hands the extra
    width out over all its columns — which is what pushed the basecoins "Symbols" count far away
    from the colour. Keep the table at the width of its own columns. */

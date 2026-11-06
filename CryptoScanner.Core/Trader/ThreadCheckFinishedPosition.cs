@@ -461,6 +461,23 @@ public class ThreadCheckFinishedPosition
 
 
 
+    /// <summary>
+    /// The key of the first queued position that is due: no DelayUntil, or a DelayUntil that has passed
+    /// (the same test as the delay check in ProcessPosition, which requeues while DelayUntil >= now).
+    /// Returns null when every queued position is still waiting.
+    /// </summary>
+    public static string? NextDueKey(IEnumerable<KeyValuePair<string, (CryptoPosition position, string? orderId, CryptoOrderStatus? status)>> queue, DateTime now)
+    {
+        foreach (var entry in queue)
+        {
+            DateTime? delayUntil = entry.Value.position.DelayUntil;
+            if (!delayUntil.HasValue || delayUntil.Value < now)
+                return entry.Key;
+        }
+        return null;
+    }
+
+
     public async Task ExecuteAsync()
     {
         //GlobalData.AddTextToLogTab("ThreadCheckFinishedPosition thread start");
@@ -491,9 +508,16 @@ public class ThreadCheckFinishedPosition
             {
                 if (Queue.Count > 0)
                 {
-                    var first = Queue.First();
-                    item = first.Value;
-                    Queue.Remove(first.Key);
+                    // Take the first position that is due. A position waiting for its DelayUntil (10s after
+                    // a fill) stays in the queue without blocking the others; taking Queue.First() made the
+                    // thread spin on that one position for the whole delay, so new entries behind it waited
+                    // about 10 seconds per position in front of them (05-11-2026: 12 entries over 2 minutes).
+                    string? dueKey = NextDueKey(Queue, GlobalData.Clock.UtcNow);
+                    if (dueKey != null)
+                    {
+                        item = Queue[dueKey];
+                        Queue.Remove(dueKey);
+                    }
                 }
             }
             finally
@@ -503,6 +527,18 @@ public class ThreadCheckFinishedPosition
 
             if (item != null)
                 await ProcessPosition(database, item.Value.position, item.Value.orderId, item.Value.status);
+            else
+            {
+                // Every queued position is still waiting for its DelayUntil
+                try
+                {
+                    await Task.Delay(100, cancellationToken.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
         }
 
         //GlobalData.AddTextToLogTab("ThreadCheckFinishedPosition thread exit");

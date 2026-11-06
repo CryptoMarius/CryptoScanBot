@@ -35,6 +35,9 @@ public class PluginSettingsEditState
 
     public IStrategyPlugin Plugin { get; }
     public string Name => Plugin.StrategyName;
+
+    /// <summary>The caption of the tab, the same one the Avalonia tab shows (the name the strategy is registered with).</summary>
+    public string TabHeader => Plugin.ConfigView?.TabHeader ?? Plugin.StrategyName;
     public string? WikiUrl => Plugin.ConfigView?.WikiUrl;
 
     /// <summary>The heading and the sentence behind it, the same two the Avalonia tab shows.</summary>

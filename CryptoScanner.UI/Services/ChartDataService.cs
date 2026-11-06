@@ -502,6 +502,12 @@ public static class ChartDataService
                         // orders they hang under.
                         ChartLineStyle sideStyle = step.Side == CryptoOrderSide.Buy ? buyStyle : sellStyle;
 
+                        // The parked order of a trailing last take profit (ten times the target)
+                        // is not a level: left out here, the real target is drawn below as
+                        // "tp trigger"
+                        bool parkedTakeProfit = part.Purpose == CryptoPartPurpose.TakeProfit
+                            && PositionTools.IsParkedTakeProfit(position, step);
+
                         // CloseTime alone is not enough: it is also set when an order is cancelled
                         // or replaced. Only the status says whether anything was actually bought
                         // or sold.
@@ -528,8 +534,9 @@ public static class ChartDataService
                                 break;
 
                             case CryptoPartPurpose.TakeProfit:
-                                AddPiece($"tp-{part.PartNumber}", $"take profit-{part.PartNumber}", sideStyle,
-                                    stepStart, stepEnd, step.Price);
+                                if (!parkedTakeProfit)
+                                    AddPiece($"tp-{part.PartNumber}", $"take profit-{part.PartNumber}", sideStyle,
+                                        stepStart, stepEnd, step.Price);
 
                                 // Both stop legs are shared by every take profit level, so they are
                                 // chained per position and not per part - a two level take profit
@@ -564,6 +571,9 @@ public static class ChartDataService
                         }
 
                         // Keeps the vertical marker long enough to span every level of the position.
+                        // (not a parked price, that would stretch the marker to ten times the entry)
+                        if (parkedTakeProfit)
+                            continue;
                         if (step.Price > yTop)
                             yTop = step.Price;
                         if (step.Price < yBottom)
@@ -621,6 +631,18 @@ public static class ChartDataService
                 // very close to the entry line, and two labels on top of each other read as noise.
                 if (position.CloseTime == null && position.BreakEvenPrice > 0)
                     segments.Add(Horizontal(firstEntry, xEnd, position.BreakEvenPrice, breakEvenStyle, ""));
+
+                // A trailing last take profit that has not been reached: its target, the trigger
+                // Altrady draws as its TP line. Display only. Once it is reached the trail is the
+                // stop of the take profit order, which is already drawn as "stop price".
+                var pendingTrail = PositionTools.PendingTakeProfitTrail(position);
+                if (pendingTrail.HasValue)
+                {
+                    long xTrigger = CandleContaining(pendingTrail.Value.Since, interval.Duration).ToUnixSeconds();
+                    ChartLineStyle triggerStyle = position.Side == CryptoTradeSide.Long ? sellStyle : buyStyle;
+                    string caption = $"tp trigger (trail {GlobalData.Settings.Trading.TakeProfitTrailPercentage:N2}%)";
+                    segments.Add(Horizontal(xTrigger, xEnd, pendingTrail.Value.TargetPrice, triggerStyle, caption));
+                }
             }
         }
         catch (Exception ex)

@@ -13,6 +13,7 @@ namespace CryptoScanner.Analyzers.FvgLadder;
 /// stake from Trading (EntryAmount/percentage), the trailing take profit from
 /// Trading.TakeProfitTrailPercentage. There is no stop loss: the strategy is registered without one.
 /// The interval list of the base class is the interval the Kalman trend is measured on.
+/// (Since 05-11-2026 the Kalman trend is gone and the trend no longer reads the interval list.)
 /// </para>
 /// </summary>
 [Serializable]
@@ -23,7 +24,6 @@ public class FvgLadderSettings : SettingsSignalStrategyBase
     public override IEnumerable<string> RequiredZoneKinds => ["fvg"];
 
     private const string GroupGeneral = "General";
-    private const string GroupTrend = "Trend";
     private const string GroupEntry = "Entry";
     private const string GroupDca = "DCA";
     private const string GroupTakeProfit = "Take profit";
@@ -45,15 +45,8 @@ public class FvgLadderSettings : SettingsSignalStrategyBase
     // skipped on load.
 
 
-    /// <summary>
-    /// Off: a new position only while the last closed day candle closed above the EMA200 of the day
-    /// closes. On: only while the Kalman filter on the strategy's own interval (Intervals, normally
-    /// 1h) points up. The trend is only asked for a new position, never for a DCA.
-    /// </summary>
-    [SettingCaption("Use Kalman filter", Group = GroupTrend,
-        Tooltip = "Off: a new position only while the day close is above the EMA200 (1d). "
-            + "On: only while the Kalman filter on the strategy's interval (normally 1h) points up.")]
-    public bool UseKalmanFilter { get; set; } = false;
+    // UseKalmanFilter sat here until 05-11-2026; the trend is always the day close above the EMA200
+    // now. Old settings files keep the key until they are next saved - it is skipped on load.
 
 
     /// <summary>Rule 2.3: the minimum width of a gap, (top - bottom) / bottom; narrower gaps are ignored.</summary>
@@ -126,6 +119,7 @@ public class FvgLadderSettings : SettingsSignalStrategyBase
     {
         // The interval of the Kalman trend; the strategy itself always runs on the minute candle
         // (zone strategy) and reads its gaps from the 1h and 4h fvg zones
+        // Since 05-11-2026 the Kalman trend is gone; the list is kept so older settings stay the same.
         IntervalList.Add("1h");
     }
 }

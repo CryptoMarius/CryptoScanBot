@@ -7,7 +7,7 @@ public class SmcConfigView : IConfigView
 {
     private readonly StrategySmcTabViewModel _viewModel = new();
 
-    public string TabHeader => SmcPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => SmcPlugin.StrategyInternal;
     public string StrategyName => SmcPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategySmcTabView.axaml shows.

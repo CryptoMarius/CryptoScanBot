@@ -7,7 +7,7 @@ public class FvgConfigView : IConfigView
 {
     private readonly StrategyFvgTabViewModel _viewModel = new();
 
-    public string TabHeader => FvgPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => FvgPlugin.StrategyInternal;
     public string StrategyName => FvgPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyFvgTabView.axaml shows.

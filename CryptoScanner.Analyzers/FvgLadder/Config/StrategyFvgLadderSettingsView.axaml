@@ -23,12 +23,7 @@
             </StackPanel>
         </HeaderedContentControl>
 
-        <HeaderedContentControl Classes="groupbox" Header="Trend">
-            <StackPanel Margin="4" Spacing="4">
-                <CheckBox IsChecked="{Binding UseKalmanFilter, Mode=TwoWay}" Content="Use Kalman filter" FontSize="12"
-                          ToolTip.Tip="Off: a new position only while the day close is above the EMA200 (1d). On: only while the Kalman filter on the strategy's interval (normally 1h) points up."/>
-            </StackPanel>
-        </HeaderedContentControl>
+        <!-- The Trend group held "Use Kalman filter" until 05-11-2026; the trend is always the day close above the EMA200 now -->
 
         <HeaderedContentControl Classes="groupbox" Header="Entry">
             <StackPanel Margin="4" Spacing="4">

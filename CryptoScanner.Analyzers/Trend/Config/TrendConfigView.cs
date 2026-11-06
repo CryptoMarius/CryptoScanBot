@@ -7,7 +7,7 @@ public class TrendConfigView : IConfigView
 {
     private readonly StrategyTrendTabViewModel _viewModel = new();
 
-    public string TabHeader => TrendPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => TrendPlugin.StrategyInternal;
     public string StrategyName => TrendPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyTrendTabView.axaml shows.

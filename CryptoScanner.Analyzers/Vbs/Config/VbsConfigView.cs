@@ -7,7 +7,7 @@ public class VbsConfigView : IConfigView
 {
     private readonly StrategyVbsTabViewModel _viewModel = new();
 
-    public string TabHeader => VbsPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => VbsPlugin.StrategyInternal;
     public string StrategyName => VbsPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyVbsTabView.axaml shows.

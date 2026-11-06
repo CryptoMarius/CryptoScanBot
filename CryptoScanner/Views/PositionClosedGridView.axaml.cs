@@ -36,7 +36,7 @@ public partial class PositionClosedGridView : UserControlWithGrid<PositionViewMo
         // Register a custom comparer for each column based on its SortMemberPath
         InitializeGrid<PositionColumnEnum, PositionColumnComparer>("CloseTime", ListSortDirection.Descending);
 
-        // Delete key removes the selected position from the database (same as the "Position delete from database" context menu item)
+        // Delete key removes the selected position from the database (same as the "Delete position" context menu item)
         _dataGrid.AddHandler(KeyDownEvent, OnDataGridKeyDown, Avalonia.Interactivity.RoutingStrategies.Tunnel);
     }
 

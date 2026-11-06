@@ -95,8 +95,8 @@
             <div class="context-menu-item" @onclick="OnMenuOpenTradingViewExternal">Open TradingView external</div>
             <div class="context-menu-item" @onclick="OnMenuOpenExchange">Open the exchange</div>
             <div class="context-menu-separator"></div>
-            <div class="context-menu-item" @onclick="OnMenuPositionRecalculate">Position recalculate</div>
-            <div class="context-menu-item" @onclick="OnMenuPositionDelete">Position delete from database</div>
+            <div class="context-menu-item" @onclick="OnMenuPositionRecalculate">Recalculate position</div>
+            <div class="context-menu-item" @onclick="OnMenuPositionDelete">Delete position</div>
             @if (ManualExit.CanCloseAtAltrady(_contextMenuPosition.Object))
             {
                 <div class="context-menu-item" @onclick="OnMenuPositionClose">Position close at Altrady</div>
@@ -529,7 +529,7 @@
     }
 
     /// <summary>
-    /// "Position delete from database" works on the whole selection, the clicked row alone when the
+    /// "Delete position" works on the whole selection, the clicked row alone when the
     /// selection does not contain it, and asks first (like "Delete run(s)" in the emulator). The
     /// positions are remembered because the menu and its row are gone by the time the dialog answers.
     /// </summary>

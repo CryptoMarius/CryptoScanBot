@@ -120,6 +120,49 @@ public class FvgLadderRulesTests
     }
 
 
+    // ─── 3 entry only after a close above the gap on its own interval ───────
+
+    [TestMethod]
+    public void EntryTops_AGapWithoutACloseAboveIsNoEntry()
+    {
+        // HYPE 03-11-2026: the price crossed the 1h gap 77.256 - 78.347 in a few minute candles, the
+        // last closed 1h candle (77.962) was still under its top
+        List<FvgLadderZone> zones =
+        [
+            new FvgLadderZone(78.347m, 77.256m, false, false),
+            new FvgLadderZone(75.237m, 74.967m, true, true),
+        ];
+
+        CollectionAssert.AreEqual(new List<decimal> { 75.237m }, FvgLadderRules.EntryTops(zones, 0.3m));
+        Assert.AreEqual(75.237m, FvgLadderRules.EntryTarget(FvgLadderRules.EntryTops(zones, 0.3m), 78.403m, 4, null));
+    }
+
+    [TestMethod]
+    public void EntryTops_TheDcaLadderStillSeesEveryGap()
+    {
+        List<FvgLadderZone> zones =
+        [
+            new FvgLadderZone(78.347m, 77.256m, false, false),
+            new FvgLadderZone(75.237m, 74.967m, true, true),
+        ];
+
+        CollectionAssert.AreEqual(new List<decimal> { 78.347m, 75.237m }, FvgLadderRules.UsableTops(zones, 0.3m));
+    }
+
+    [TestMethod]
+    public void EntryTops_AnUnconfirmed4hGapStillPushesAnOverlapping1hGapAside()
+    {
+        // The overlap rule is applied before the close: the 1h gap does not take the place of the 4h gap
+        List<FvgLadderZone> zones =
+        [
+            new FvgLadderZone(101m, 100m, true, false),
+            new FvgLadderZone(100.5m, 99.5m, false, true),
+        ];
+
+        Assert.AreEqual(0, FvgLadderRules.EntryTops(zones, 0.4m).Count);
+    }
+
+
     // ─── 4.1 - 4.4 DCA levels ────────────────────────────────────────────────
 
     [TestMethod]
@@ -261,46 +304,6 @@ public class FvgLadderRulesTests
         Assert.AreEqual(2.25m, FvgLadderRules.NextEma(1.5m, 3m, 3));
     }
 
-    [TestMethod]
-    public void Kalman_PointsUpOnARisingPrice()
-    {
-        // 0.2% up per candle
-        List<decimal> closes = [.. Enumerable.Range(0, 100).Select(i => 100m * (decimal)Math.Pow(1.002, i))];
-
-        FvgLadderKalman state = FvgLadderRules.Kalman(closes);
-
-        Assert.IsTrue(FvgLadderRules.KalmanIsUp(state));
-        Assert.AreEqual(0.002, state.Slope, 0.0005, "the slope is the change per candle in log price");
-    }
-
-    [TestMethod]
-    public void Kalman_PointsDownOnAFallingPrice()
-    {
-        List<decimal> closes = [.. Enumerable.Range(0, 100).Select(i => 100m * (decimal)Math.Pow(0.998, i))];
-
-        Assert.IsFalse(FvgLadderRules.KalmanIsUp(FvgLadderRules.Kalman(closes)));
-    }
-
-    [TestMethod]
-    public void Kalman_ASingleSpikeDoesNotTurnAFallingTrend()
-    {
-        List<decimal> closes = [.. Enumerable.Range(0, 100).Select(i => 100m * (decimal)Math.Pow(0.998, i))];
-        closes.Add(closes[^1] * 1.01m);  // one candle 1% up
-
-        Assert.IsFalse(FvgLadderRules.KalmanIsUp(FvgLadderRules.Kalman(closes)));
-    }
-
-    [TestMethod]
-    public void Kalman_StepByStepIsTheSameAsAllAtOnce()
-    {
-        List<decimal> closes = [100m, 101m, 100.5m, 102m, 103m];
-        FvgLadderKalman stepwise = FvgLadderRules.KalmanStart(closes[0]);
-        foreach (decimal close in closes.Skip(1))
-            stepwise = FvgLadderRules.KalmanStep(stepwise, close);
-
-        Assert.AreEqual(FvgLadderRules.Kalman(closes), stepwise);
-    }
-
 
     // ─── settings ────────────────────────────────────────────────────────────
 
@@ -310,7 +313,6 @@ public class FvgLadderRulesTests
         FvgLadderSettings settings = new();
 
         Assert.AreEqual("BTC", settings.Coins);
-        Assert.IsFalse(settings.UseKalmanFilter);
         Assert.AreEqual(0.4m, settings.MinimumGapPercentage);
         Assert.AreEqual(4, settings.GapsInView);
         Assert.AreEqual(5.0m, settings.PlaceOrderWithinPercentage);
@@ -331,7 +333,6 @@ public class FvgLadderRulesTests
         model.LoadConfig(new FvgLadderSettings
         {
             Coins = "BTC, ETH",
-            UseKalmanFilter = true,
             MinimumGapPercentage = 0.5m,
             GapsInView = 3,
             PlaceOrderWithinPercentage = 4m,
@@ -347,7 +348,6 @@ public class FvgLadderRulesTests
         model.SaveConfig(settings);
 
         Assert.AreEqual("BTC, ETH", settings.Coins);
-        Assert.IsTrue(settings.UseKalmanFilter);
         Assert.AreEqual(0.5m, settings.MinimumGapPercentage);
         Assert.AreEqual(3, settings.GapsInView);
         Assert.AreEqual(4m, settings.PlaceOrderWithinPercentage);

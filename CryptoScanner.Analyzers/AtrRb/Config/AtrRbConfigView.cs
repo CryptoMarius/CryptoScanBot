@@ -7,7 +7,7 @@ public class AtrRbConfigView : IConfigView
 {
     private readonly StrategyAtrRbTabViewModel _viewModel = new();
 
-    public string TabHeader => AtrRbPlugin.StrategyInternal.ToUpper();
+    public string TabHeader => AtrRbPlugin.StrategyInternal;
     public string StrategyName => AtrRbPlugin.StrategyInternal.ToLower();
 
     // The same two strings the header of StrategyAtrRbTabView.axaml shows.

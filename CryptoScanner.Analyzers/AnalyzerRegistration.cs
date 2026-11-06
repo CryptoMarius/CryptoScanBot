@@ -20,7 +20,8 @@ public static class AnalyzerRegistration
         PluginManager.Register(new FailedBreakout.FailedBreakoutPlugin());
 
         // The support/resistance flip (open point 46): a broken level retested from the other side
-        PluginManager.Register(new SrFlip.SrFlipPlugin());
+        // Moved to the #if DEBUG block on 05-11-2026: it did not perform well.
+        //PluginManager.Register(new SrFlip.SrFlipPlugin());
 
         PluginManager.Register(new Dlz.DlzPlugin());
         PluginManager.Register(new Fvg.FvgPlugin());
@@ -74,6 +75,9 @@ public static class AnalyzerRegistration
 
         // Large breakous with large profits and large losses
         PluginManager.Register(new Nwe.NwePlugin());
+
+        // The support/resistance flip (open point 46), it did not perform well
+        PluginManager.Register(new SrFlip.SrFlipPlugin());
 
         PluginManager.Register(new SuperTrendBreakout.SuperTrendBreakoutPlugin());
 
