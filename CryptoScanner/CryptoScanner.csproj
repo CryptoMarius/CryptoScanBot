@@ -136,6 +136,13 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 	  </Content>
+	  <!-- The list of changes per version travels with the binaries as well, so a user can read what
+	       changed in the release that was unpacked. It also lives in the root; the publish of the scanner
+	       is the base of all three packages (win-x64, osx-arm64, linux-x64), so it lands in each. -->
+	  <Content Include="..\Release Changes.txt" Link="Release Changes.txt">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
 	</ItemGroup>
 
 

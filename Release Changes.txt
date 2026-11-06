@@ -1,6 +1,10 @@
 CryptoScanBot release historie:
 
-03-11-2026 2.6.8
+06-11-2026 2.6.8
+- Trader: Nieuwe instappen wachtten ongeveer 10 seconden per positie die nog op zijn vertraging na een vulling wachtte; ze komen nu meteen aan de beurt
+- Chart: Een takeprofit met trailing laat de chart niet meer tien keer zo hoog worden; het doel staat als "tp trigger" in de chart, zoals Altrady het tekent
+- Posities: In het menu heten de keuzes nu "Recalculate position" en "Delete position"
+- Instellingen: De tabs van de strategieën heten in Photino hetzelfde als in Avalonia
 - Trader: Een limit-order die in het orderboek wachtte betaalt nu het maker-tarief, een market-order en een stop het taker-tarief, zoals bij Altrady
 - Trader: De break-even prijs en daarmee de takeprofit rekent voor de uitstap met het gemiddelde tarief van de instap en de bijkopen
 - Nieuwe strategie PsarCross: Instap als de parabolic SAR naar de andere kant van de koers draait, uitstap als hij terugdraait (voor hogere intervallen)
@@ -103,6 +107,7 @@ CryptoScanBot release historie:
 - Fix: De voorafgaande beweging van een candle-patroon telt de omkeercandle zelf niet meer mee
 - Instellingen: De velden van de experimentele strategieen staan alleen nog in de debug-build
 - Releases: De workflow haalt de release-notitie uit dit bestand en ondertekent de bestanden
+- Emulator: Opties die tijdens een run geweigerd worden (instellingen overnemen, runs verwijderen) staan dan grijs
 - Emulator: Een barometer die niet te meten is weigert een instap nu ook in de emulator, zoals live; een quote met te weinig munten blijft neutraal
 - Emulator: Een weggelaten sleutel in een wachtrij-regel betekent "de instellingen bepalen"; een ontbrekende stop-loss liep eerder op een standaard van 2%
 - Emulator: Venster voor de standaard-saldi, en de beurs uit de instellingen is die waarop een run speelt
