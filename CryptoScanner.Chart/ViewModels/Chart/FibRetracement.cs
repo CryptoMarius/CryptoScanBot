@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
+using CryptoScanner.Analyzers.Chart;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -13,14 +14,27 @@ public class FibRetracement
 
     private static List<(decimal value, decimal percent, OxyColor color)> RetracementX(CryptoTradeSide side, decimal low, decimal high)
     {
+        //List<(decimal value, OxyColor color)> levels = [
+        //    (0.000m, OxyColors.Gray),
+        //    (0.236m, OxyColors.White),
+        //    (0.382m, OxyColors.White),
+        //    (0.500m, OxyColors.Yellow),
+        //    (0.618m, OxyColors.Yellow),
+        //    (0.786m, OxyColors.White),
+        //    (1.000m, OxyColors.Gray)
+        // ];
+        // The colours of the FIB retracement gear since 07-11-2026, in the same three groups
+        OxyColor outer = ChartStyleOxy.ColorFor("fibOuter", OxyColors.Gray);
+        OxyColor inner = ChartStyleOxy.ColorFor("fibInner", OxyColors.White);
+        OxyColor golden = ChartStyleOxy.ColorFor("fibGolden", OxyColors.Yellow);
         List<(decimal value, OxyColor color)> levels = [
-            (0.000m, OxyColors.Gray),
-            (0.236m, OxyColors.White),
-            (0.382m, OxyColors.White),
-            (0.500m, OxyColors.Yellow),
-            (0.618m, OxyColors.Yellow),
-            (0.786m, OxyColors.White),
-            (1.000m, OxyColors.Gray)
+            (0.000m, outer),
+            (0.236m, inner),
+            (0.382m, inner),
+            (0.500m, golden),
+            (0.618m, golden),
+            (0.786m, inner),
+            (1.000m, outer)
          ];
 
         List<(decimal, decimal, OxyColor color)> retracements = [];
@@ -35,6 +49,14 @@ public class FibRetracement
         return retracements;
     }
 
+    /// <summary>The style key of the colour group a fib level belongs to.</summary>
+    private static string FibStyleKey(decimal level) => level switch
+    {
+        0.000m or 1.000m => "fibOuter",
+        0.500m or 0.618m => "fibGolden",
+        _ => "fibInner",
+    };
+
     public static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, ZigZagIndicator indicator, string group)
     {
         //// Mhh, fib levels proberen te zetten
@@ -48,7 +70,9 @@ public class FibRetracement
             //ZigZagResult first;
             ZigZagResult last;
             CryptoTradeSide side;
-            if (indicator.LastSwingHigh.Candle.OpenTime > indicator.LastSwingLow.Candle.OpenTime)
+            //if (indicator.LastSwingHigh.Candle.OpenTime > indicator.LastSwingLow.Candle.OpenTime)
+            // ">=" as in the Photino chart: both swings on one candle count as a move up
+            if (indicator.LastSwingHigh.Candle.OpenTime >= indicator.LastSwingLow.Candle.OpenTime)
             {
                 //first = indicator.LastSwingLow;
                 side = CryptoTradeSide.Long;
@@ -64,35 +88,56 @@ public class FibRetracement
             }
             fibRetracement = RetracementX(side, (decimal)indicator.LastSwingLow.Value, (decimal)indicator.LastSwingHigh.Value);
 
-            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            CandleTime start = last.Candle.OpenTime + interval.Duration;
-            var lastCandle = symbolInterval.CandleList.Values.Last();
-            CandleTime stop = lastCandle.OpenTime + 10 * interval.Duration;
+            //CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            //CandleTime start = last.Candle.OpenTime + interval.Duration;
+            //var lastCandle = symbolInterval.CandleList.Values.Last();
+            //CandleTime stop = lastCandle.OpenTime + 10 * interval.Duration;
 
+            //foreach (var (value, percent, color) in fibRetracement)
+            //{
+            //    var fibLevel = new LineSeries
+            //    {
+            //        Title = "fib",
+            //        Color = color,
+            //        LineStyle = LineStyle.Dot,
+            //        Font = Const.OxyFontName,
+            //        YAxisKey = "price",
+            //        Tag = group,
+            //    };
+            //    fibLevel.Points.Add(new DataPoint(start.Minutes, (double)value));
+            //    fibLevel.Points.Add(new DataPoint(stop.Minutes, (double)value));
+            //    chart.Series.Add(fibLevel);
+
+            //    chart.Annotations.Add(new TextAnnotation
+            //    {
+            //        TextColor = OxyColors.White,
+            //        TextPosition = new DataPoint((stop + interval.Duration * 4).Minutes, (double)value),
+            //        TextVerticalAlignment = VerticalAlignment.Middle,
+            //        Text = $"{percent:N3}%",
+            //        Font = Const.OxyFontName,
+            //        //FontSize = OxyFontSize,
+            //        //FontWeight = FontWeights.Bold,
+            //        Tag = group,
+            //    });
+            //}
+
+            // Over the full width with the level written as a fraction ("0.236", not "0.236%",
+            // which read as a percentage), the way the Photino chart draws its price lines.
             foreach (var (value, percent, color) in fibRetracement)
             {
-                var fibLevel = new LineSeries
+                chart.Annotations.Add(new LineAnnotation
                 {
-                    Title = "fib",
+                    Type = LineAnnotationType.Horizontal,
+                    Y = (double)value,
                     Color = color,
-                    LineStyle = LineStyle.Dot,
+                    //LineStyle = LineStyle.Dot,
+                    // The line style and width of the group the level belongs to
+                    LineStyle = ChartStyleOxy.LineStyleFor(FibStyleKey(percent), LineStyle.Dot),
+                    StrokeThickness = ChartStyleOxy.ThicknessFor(FibStyleKey(percent), 1),
+                    Text = percent.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture),
+                    TextColor = OxyColors.White,
                     Font = Const.OxyFontName,
                     YAxisKey = "price",
-                    Tag = group,
-                };
-                fibLevel.Points.Add(new DataPoint(start.Minutes, (double)value));
-                fibLevel.Points.Add(new DataPoint(stop.Minutes, (double)value));
-                chart.Series.Add(fibLevel);
-
-                chart.Annotations.Add(new TextAnnotation
-                {
-                    TextColor = OxyColors.White,
-                    TextPosition = new DataPoint((stop + interval.Duration * 4).Minutes, (double)value),
-                    TextVerticalAlignment = VerticalAlignment.Middle,
-                    Text = $"{percent:N3}%",
-                    Font = Const.OxyFontName,
-                    //FontSize = OxyFontSize,
-                    //FontWeight = FontWeights.Bold,
                     Tag = group,
                 });
             }

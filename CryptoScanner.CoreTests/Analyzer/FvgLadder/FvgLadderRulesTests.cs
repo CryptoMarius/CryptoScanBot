@@ -43,6 +43,34 @@ public class FvgLadderRulesTests
     }
 
 
+    // ─── interval of the target gap (chart and TradingView) ──────────────────
+
+    [TestMethod]
+    public void TopIs4h_TellsTheIntervalOfTheGap()
+    {
+        List<FvgLadderZone> zones =
+        [
+            new(Top: 100m, Bottom: 98m, Is4h: true),
+            new(Top: 90m, Bottom: 88m, Is4h: false),
+        ];
+
+        Assert.IsTrue(FvgLadderRules.TopIs4h(zones, 0.4m, 100m));
+        Assert.IsFalse(FvgLadderRules.TopIs4h(zones, 0.4m, 90m));
+    }
+
+    [TestMethod]
+    public void TopIs4h_TheSameTopOnBothIntervalsIs4h()
+    {
+        List<FvgLadderZone> zones =
+        [
+            new(Top: 100m, Bottom: 99m, Is4h: false),
+            new(Top: 100m, Bottom: 98m, Is4h: true),
+        ];
+
+        Assert.IsTrue(FvgLadderRules.TopIs4h(zones, 0.4m, 100m));
+    }
+
+
     // ─── 2.3 minimum gap ─────────────────────────────────────────────────────
 
     [TestMethod]

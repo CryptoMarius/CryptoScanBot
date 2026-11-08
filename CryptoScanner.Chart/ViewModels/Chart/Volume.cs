@@ -1,5 +1,7 @@
 using CryptoScanner.Core.Model;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -42,7 +44,9 @@ public class Volume
         var seriesUp = new RectangleBarSeries
         {
             Title = "Volume up",
-            FillColor = OxyColor.FromAColor(180, OxyColors.LimeGreen),
+            //FillColor = OxyColor.FromAColor(180, OxyColors.LimeGreen),
+            // Colour from Settings / Chart styles, the same as the Photino chart
+            FillColor = ChartStyleOxy.ColorFor("volumeUp", OxyColor.FromAColor(180, OxyColors.LimeGreen)),
             StrokeColor = OxyColors.Transparent,
             StrokeThickness = 0,
             YAxisKey = AxisKey,
@@ -53,7 +57,8 @@ public class Volume
         var seriesDown = new RectangleBarSeries
         {
             Title = "Volume down",
-            FillColor = OxyColor.FromAColor(180, OxyColors.Tomato),
+            //FillColor = OxyColor.FromAColor(180, OxyColors.Tomato),
+            FillColor = ChartStyleOxy.ColorFor("volumeDown", OxyColor.FromAColor(180, OxyColors.Tomato)),
             StrokeColor = OxyColors.Transparent,
             StrokeThickness = 0,
             YAxisKey = AxisKey,

@@ -29,6 +29,28 @@ public class WindowsPlatformService : IPlatformService
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetWindowPos(nint hwnd, nint hwndInsertAfter, int x, int y, int cx, int cy, uint flags);
 
+    [SupportedOSPlatform("windows")]
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsIconic(nint hwnd);
+
+    [SupportedOSPlatform("windows")]
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindow(nint hwnd, int command);
+
+    [SupportedOSPlatform("windows")]
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetForegroundWindow(nint hwnd);
+
+    [SupportedOSPlatform("windows")]
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool BringWindowToTop(nint hwnd);
+
+    private const int SwRestore = 9;
+
     // MessageBox flags: a single OK button with the warning icon, brought to the front and kept on
     // top - it is shown while the application is still starting, so it must not end up behind it.
     private const uint MbOk = 0x00000000;
@@ -70,6 +92,29 @@ public class WindowsPlatformService : IPlatformService
         {
             // Cosmetic only - never let a missing or refusing dwmapi take the window down
             ScannerLog.Logger.Error(error, "ApplyWindowTheme");
+        }
+    }
+
+    /// <summary>
+    /// Restore a minimized window and make it the active one. Windows only lets the process that has
+    /// the foreground hand it on, which is the case here: the request comes from a click in the main
+    /// window of this same process.
+    /// </summary>
+    public void BringWindowToFront(nint windowHandle)
+    {
+        if (windowHandle == 0 || !OperatingSystem.IsWindows())
+            return;
+
+        try
+        {
+            if (IsIconic(windowHandle))
+                ShowWindow(windowHandle, SwRestore);
+            BringWindowToTop(windowHandle);
+            SetForegroundWindow(windowHandle);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "BringWindowToFront");
         }
     }
 

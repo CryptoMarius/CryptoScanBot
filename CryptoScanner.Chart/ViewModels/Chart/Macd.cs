@@ -1,5 +1,7 @@
 using CryptoScanner.Core.Model;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Series;
@@ -48,8 +50,12 @@ public class Macd
         var macdLine = new LineSeries
         {
             Title = "MACD",
-            Color = OxyColors.CornflowerBlue,
-            StrokeThickness = 1.0,
+            //Color = OxyColors.CornflowerBlue,
+            //StrokeThickness = 1.0,
+            // Colour, width and dash from Settings / Chart styles, the same as the Photino chart
+            Color = ChartStyleOxy.ColorFor("macdLine", OxyColors.CornflowerBlue),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("macdLine", 1.0),
+            LineStyle = ChartStyleOxy.LineStyleFor("macdLine", LineStyle.Solid),
             YAxisKey = AxisKey,
             Tag = tag,
         };
@@ -58,8 +64,11 @@ public class Macd
         var signalLine = new LineSeries
         {
             Title = "Signal",
-            Color = OxyColors.Orange,
-            StrokeThickness = 1.0,
+            //Color = OxyColors.Orange,
+            //StrokeThickness = 1.0,
+            Color = ChartStyleOxy.ColorFor("macdSignal", OxyColors.Orange),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("macdSignal", 1.0),
+            LineStyle = ChartStyleOxy.LineStyleFor("macdSignal", LineStyle.Solid),
             YAxisKey = AxisKey,
             Tag = tag,
         };
@@ -73,7 +82,8 @@ public class Macd
         var histUpStrong = new RectangleBarSeries
         {
             Title = "Hist+ strong",
-            FillColor = OxyColor.FromAColor(200, OxyColors.LimeGreen),
+            //FillColor = OxyColor.FromAColor(200, OxyColors.LimeGreen),
+            FillColor = ChartStyleOxy.ColorFor("macdHistUp", OxyColor.FromAColor(200, OxyColors.LimeGreen)),
             StrokeColor = OxyColors.Transparent,
             StrokeThickness = 0,
             YAxisKey = AxisKey,
@@ -82,7 +92,8 @@ public class Macd
         var histUpWeak = new RectangleBarSeries
         {
             Title = "Hist+ weak",
-            FillColor = OxyColor.FromAColor(200, OxyColors.PaleGreen),
+            //FillColor = OxyColor.FromAColor(200, OxyColors.PaleGreen),
+            FillColor = ChartStyleOxy.ColorFor("macdHistUpFading", OxyColor.FromAColor(200, OxyColors.PaleGreen)),
             StrokeColor = OxyColors.Transparent,
             StrokeThickness = 0,
             YAxisKey = AxisKey,
@@ -91,7 +102,8 @@ public class Macd
         var histDownStrong = new RectangleBarSeries
         {
             Title = "Hist- strong",
-            FillColor = OxyColor.FromAColor(200, OxyColors.Red),
+            //FillColor = OxyColor.FromAColor(200, OxyColors.Red),
+            FillColor = ChartStyleOxy.ColorFor("macdHistDown", OxyColor.FromAColor(200, OxyColors.Red)),
             StrokeColor = OxyColors.Transparent,
             StrokeThickness = 0,
             YAxisKey = AxisKey,
@@ -100,7 +112,8 @@ public class Macd
         var histDownWeak = new RectangleBarSeries
         {
             Title = "Hist- weak",
-            FillColor = OxyColor.FromAColor(200, OxyColors.LightPink),
+            //FillColor = OxyColor.FromAColor(200, OxyColors.LightPink),
+            FillColor = ChartStyleOxy.ColorFor("macdHistDownFading", OxyColor.FromAColor(200, OxyColors.LightPink)),
             StrokeColor = OxyColors.Transparent,
             StrokeThickness = 0,
             YAxisKey = AxisKey,

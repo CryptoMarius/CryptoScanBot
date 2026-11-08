@@ -52,10 +52,16 @@ public class AtrRbChartOverlay : IChartOverlay
     public IReadOnlyList<ChartOverlaySeries> GetSeries(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        //if (symbolInterval.CandleList.Count == 0)
+        //    return [];
+        if (candles.Count == 0 && symbolInterval.CandleList.Count == 0)
             return [];
 
-        var allCandles = symbolInterval.CandleList.Values.ToList();
+        //var allCandles = symbolInterval.CandleList.Values.ToList();
+        // The candles the chart hands over: in a Photino position window those are the window's
+        // own candles from candles.db, which the live list does not hold. The live list is the
+        // fallback when nothing is handed over.
+        var allCandles = candles.Count > 0 ? candles : symbolInterval.CandleList.Values.ToList();
 
         var atrrb = AtrRbPlugin.Settings;
         IReadOnlyList<IQuote> quotes = allCandles.AsQuotes();
@@ -181,11 +187,17 @@ public class AtrRbChartOverlay : IChartOverlay
     public IReadOnlyList<ChartOverlayLabel> GetLabels(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        //if (symbolInterval.CandleList.Count == 0)
+        //    return [];
+        if (candles.Count == 0 && symbolInterval.CandleList.Count == 0)
             return [];
 
         // Same break conditions as Draw, so the labels land on the very same candles
-        var allCandles = symbolInterval.CandleList.Values.ToList();
+        //var allCandles = symbolInterval.CandleList.Values.ToList();
+        // The candles the chart hands over: in a Photino position window those are the window's
+        // own candles from candles.db, which the live list does not hold. The live list is the
+        // fallback when nothing is handed over.
+        var allCandles = candles.Count > 0 ? candles : symbolInterval.CandleList.Values.ToList();
         var atrrb = AtrRbPlugin.Settings;
 
         IReadOnlyList<IQuote> quotes = allCandles.AsQuotes();
@@ -224,13 +236,19 @@ public class AtrRbChartOverlay : IChartOverlay
             if (!upperBreak && !lowerBreak)
                 continue;
 
-            labels.Add(new ChartOverlayLabel
-            {
-                Time = CandleTime.AlignFromDateTime(candle.Date, interval.Duration).ToUnixSeconds(),
-                Above = upperBreak,
-                Price = upperBreak ? high : low,
-                Text = "SL " + slPct.ToString("0.##") + "%",
-            });
+            //labels.Add(new ChartOverlayLabel
+            //{
+            //    Time = CandleTime.AlignFromDateTime(candle.Date, interval.Duration).ToUnixSeconds(),
+            //    Above = upperBreak,
+            //    Price = upperBreak ? high : low,
+            //    Text = "SL " + slPct.ToString("0.##") + "%",
+            //});
+            // One label per break, as Draw does: a candle that breaks both bands gets both
+            long time = CandleTime.AlignFromDateTime(candle.Date, interval.Duration).ToUnixSeconds();
+            if (upperBreak)
+                labels.Add(new ChartOverlayLabel { Time = time, Above = true, Price = high, Text = "SL " + slPct.ToString("0.##") + "%" });
+            if (lowerBreak)
+                labels.Add(new ChartOverlayLabel { Time = time, Above = false, Price = low, Text = "SL " + slPct.ToString("0.##") + "%" });
         }
 
         return labels;
@@ -243,7 +261,9 @@ public class AtrRbChartOverlay : IChartOverlay
 
         chart.Annotations.Add(new TextAnnotation
         {
-            Text = pct.ToString("0.##") + "%",
+            //Text = pct.ToString("0.##") + "%",
+            // The same text as the Photino chart (GetLabels)
+            Text = "SL " + pct.ToString("0.##") + "%",
             TextPosition = new DataPoint(x, y),
             Offset = new ScreenVector(0, offsetY),
             TextHorizontalAlignment = HorizontalAlignment.Center,

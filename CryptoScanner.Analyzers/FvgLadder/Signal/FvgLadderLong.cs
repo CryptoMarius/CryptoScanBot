@@ -34,6 +34,11 @@ public class FvgLadderLong : SignalCreateBase
     private decimal? TakeProfit;
     public override decimal? OverrideProfitPercentage => TakeProfit;
 
+    // The interval of the gap the buy limit is on (1h or 4h), so the chart and TradingView open there
+    // instead of on the 1m the signal runs on. Display only.
+    private CryptoInterval? TargetInterval;
+    public override CryptoInterval? ZoneInterval => TargetInterval;
+
 
     public override bool IsSignal()
     {
@@ -42,6 +47,7 @@ public class FvgLadderLong : SignalCreateBase
         DcaList = null;
         NoDca = false;
         TakeProfit = null;
+        TargetInterval = null;
 
         FvgLadderSettings settings = FvgLadderPlugin.Settings;
         // Only the coins of the list (BTC by default); the rest is not this strategy's business
@@ -62,7 +68,7 @@ public class FvgLadderLong : SignalCreateBase
             return false;
         }
 
-        if (!TryFindTarget(settings, price, positions, out decimal target, out List<decimal> tops, out string reason))
+        if (!TryFindTarget(settings, price, positions, out decimal target, out List<decimal> tops, out bool targetIs4h, out string reason))
         {
             ExtraText = reason;
             return false;
@@ -74,6 +80,7 @@ public class FvgLadderLong : SignalCreateBase
             return false;
 
         EntryPrice = target;
+        TargetInterval = GlobalData.IntervalListPeriod[targetIs4h ? CryptoIntervalPeriod.interval4h : CryptoIntervalPeriod.interval1h];
         List<FvgLadderLevel> levels = settings.UseDca
             ? FvgLadderRules.DcaLevels(target, tops, settings.MaxDca, settings.DcaStepPercentage, settings.DcaFvgMaxPercentage, settings.DcaFactor)
             : [];
@@ -124,7 +131,7 @@ public class FvgLadderLong : SignalCreateBase
         // The other positions of the strategy on this coin, without this waiting one
         List<CryptoPosition> others = [.. PositionTools.ParallelPositionsOf(GlobalData.ActiveExchange!, Symbol, SignalStrategy)
             .Where(p => !ReferenceEquals(p, position))];
-        if (!TryFindTarget(settings, price, others, out decimal target, out _, out string reason))
+        if (!TryFindTarget(settings, price, others, out decimal target, out _, out _, out string reason))
         {
             ExtraText = reason;
             return true;
@@ -142,12 +149,14 @@ public class FvgLadderLong : SignalCreateBase
 
     /// <summary>
     /// The gap top the next entry goes on, given the open positions of the strategy on this coin.
-    /// <paramref name="tops"/> are all usable gap tops, for the DCA ladder.
+    /// <paramref name="tops"/> are all usable gap tops, for the DCA ladder. <paramref name="targetIs4h"/>
+    /// tells whether the target is the top of a 4h gap (else a 1h gap).
     /// </summary>
     private bool TryFindTarget(FvgLadderSettings settings, decimal price, List<CryptoPosition> positions,
-        out decimal target, out List<decimal> tops, out string reason)
+        out decimal target, out List<decimal> tops, out bool targetIs4h, out string reason)
     {
         target = 0m;
+        targetIs4h = false;
         reason = "";
         List<FvgLadderZone> zones = CollectZones();
         tops = FvgLadderRules.UsableTops(zones, settings.MinimumGapPercentage);
@@ -177,6 +186,7 @@ public class FvgLadderLong : SignalCreateBase
             return false;
         }
         target = found.Value;
+        targetIs4h = FvgLadderRules.TopIs4h(zones, settings.MinimumGapPercentage, target);
         return true;
     }
 

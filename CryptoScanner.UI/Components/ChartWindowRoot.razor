@@ -1,0 +1,58 @@
+@using CryptoScanner.Core.Core
+@using CryptoScanner.Core.Messages
+@using CommunityToolkit.Mvvm.Messaging
+@implements IDisposable
+
+@* The root of the separate chart window of the Photino host. That window has a Blazor view of its
+   own, and this is all it renders: the chart page, without the menu, the symbol list and the tabs of
+   the main layout. The theme lives on .app-root here as well, so the window follows a theme switch
+   in the main window. *@
+<div class="app-root" data-theme="@_theme">
+    <div class="chart-window-content">
+        <ErrorBoundary @ref="_errorBoundary">
+            <ChildContent>
+                <CryptoScanner.UI.Pages.Chart />
+            </ChildContent>
+            <ErrorContent>
+                <div style="padding: 10px; color: var(--red);">
+                    An error occurred. <button class="btn btn-secondary" @onclick="ResetError">Retry</button>
+                </div>
+            </ErrorContent>
+        </ErrorBoundary>
+    </div>
+</div>
+
+@code {
+    private string _theme = "dark";
+    private ErrorBoundary? _errorBoundary;
+    private bool _disposed;
+
+    protected override void OnInitialized()
+    {
+        _theme = ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme);
+        WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, (_, _) => ApplyTheme());
+    }
+
+    /// <summary>Re-read the theme from the settings and repaint if it actually changed.</summary>
+    private void ApplyTheme()
+    {
+        if (_disposed)
+            return;
+        var current = ThemeHelper.ToCssTheme(GlobalData.Settings.General.Theme);
+        if (current == _theme)
+            return;
+        _theme = current;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ResetError()
+    {
+        _errorBoundary?.Recover();
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        WeakReferenceMessenger.Default.UnregisterAll(this);
+    }
+}

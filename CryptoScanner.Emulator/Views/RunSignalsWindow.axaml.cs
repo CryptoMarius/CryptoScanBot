@@ -73,7 +73,8 @@ public partial class RunSignalsWindow : Window
             // Shared launcher: reuses one window. Centre the chart on the signal's candle (no close time,
             // so a window around the signal ± a candle margin). Pass the run id so the chart only draws
             // THIS run's signals/positions.
-            ChartWindowLauncher.Show(symbol.Base, symbol.Quote, row.Interval, row.SignalTime, null, viewModel.RunId);
+            //ChartWindowLauncher.Show(symbol.Base, symbol.Quote, row.Interval, row.SignalTime, null, viewModel.RunId);
+            ChartWindowLauncher.Show(symbol.Base, symbol.Quote, row.ChartInterval ?? row.Interval, row.SignalTime, null, viewModel.RunId);
         }
         catch (Exception ex)
         {

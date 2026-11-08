@@ -36,6 +36,15 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showSmaLinesSbm = false;
 
     [ObservableProperty]
+    private bool _showSma20 = false;
+
+    [ObservableProperty]
+    private bool _showSma50 = false;
+
+    [ObservableProperty]
+    private bool _showSma200 = false;
+
+    [ObservableProperty]
     private bool _showNwe = false;
 
     [ObservableProperty]
@@ -92,6 +101,9 @@ public partial class ChartOptionsViewModel : ObservableObject
         ("nwe.r", "NWE (repainting)"),
         ("psar", "PSar"),
         ("sbm", "SBM SMA lines"),
+        ("sma20", "SMA 20"),
+        ("sma50", "SMA 50"),
+        ("sma200", "SMA 200"),
         ("smc", "SMC Zones"),
     ];
 
@@ -109,6 +121,9 @@ public partial class ChartOptionsViewModel : ObservableObject
             case "nwe.r": ShowNweRepainting = value; break;
             case "psar": ShowPSar = value; break;
             case "sbm": ShowSmaLinesSbm = value; break;
+            case "sma20": ShowSma20 = value; break;
+            case "sma50": ShowSma50 = value; break;
+            case "sma200": ShowSma200 = value; break;
             case "smc": ShowSmcZones = value; break;
         }
     }
@@ -125,6 +140,9 @@ public partial class ChartOptionsViewModel : ObservableObject
         "nwe.r" => ShowNweRepainting,
         "psar" => ShowPSar,
         "sbm" => ShowSmaLinesSbm,
+        "sma20" => ShowSma20,
+        "sma50" => ShowSma50,
+        "sma200" => ShowSma200,
         "smc" => ShowSmcZones,
         _ => false,
     };
@@ -138,6 +156,9 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowMacd = session.ShowMacd;
         ShowVolume = session.ShowVolume;
         ShowSmaLinesSbm = session.ShowSmaLinesSbm;
+        ShowSma20 = session.ShowSma20;
+        ShowSma50 = session.ShowSma50;
+        ShowSma200 = session.ShowSma200;
         ShowNwe = session.ShowNwe;
         ShowNweRepainting = session.ShowNweRepainting;
         ShowPSar = session.ShowPSar;
@@ -196,6 +217,9 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowMacd = ShowMacd;
         session.ShowVolume = ShowVolume;
         session.ShowSmaLinesSbm = ShowSmaLinesSbm;
+        session.ShowSma20 = ShowSma20;
+        session.ShowSma50 = ShowSma50;
+        session.ShowSma200 = ShowSma200;
         session.ShowNwe = ShowNwe;
         session.ShowNweRepainting = ShowNweRepainting;
         session.ShowPSar = ShowPSar;
@@ -226,6 +250,9 @@ public partial class PluginOverlayToggle : ObservableObject
 {
     public string GroupKey { get; }
     public string Label { get; }
+
+    /// <summary>The overlay has colours to set, so its row in the Indicators menu gets a gear.</summary>
+    public bool HasStyle => Core.Settings.ChartStyleSettings.DefinitionsForOverlay(GroupKey).Any();
 
     [ObservableProperty]
     private bool _isEnabled;

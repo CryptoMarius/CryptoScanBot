@@ -35,9 +35,20 @@ public partial class SignalGridView : UserControlWithGrid<SignalViewModel>
         InitializeGrid<SignalColumnEnum, SignalColumnComparer>("Date", ListSortDirection.Descending,
             resortWhenShown: true);
 
+        _dataGrid.SelectionChanged += OnDataGridSelectionChanged;
+
         // Note: hover suppression is handled via App.axaml styles (DataGridRow:pointerover),
         // so no PointerMovedEvent handler is needed here. Adding one would block the
         // DataGridColumnHeaderGripper from receiving PointerMoved, breaking column resize.
+    }
+
+    /// <summary>
+    /// An open chart follows the selected signal, on the symbol and interval of that signal.
+    /// </summary>
+    private void OnDataGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_dataGrid.SelectedItem is SignalViewModel row)
+            ChartWindowLauncher.FollowSelection(row.Object.Symbol.Base, row.Object.Symbol.Quote, row.Object.ChartInterval.Name);
     }
 
 }

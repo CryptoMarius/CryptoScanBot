@@ -263,6 +263,7 @@ public class SignalCreate
         signal.SlPercentage = algorithm.OverrideSlPercentage;
         signal.TpPercentage = algorithm.OverrideProfitPercentage;
         signal.DcaLevels = algorithm.WithoutDca ? DcaLadder.None : DcaLadder.Format(algorithm.OverrideDcaList);
+        signal.ZoneIntervalId = algorithm.ZoneInterval?.Id;
 
         List<string> eventText = [];
         if (algorithm.ExtraText != "")

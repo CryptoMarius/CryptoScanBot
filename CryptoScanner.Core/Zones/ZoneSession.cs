@@ -53,6 +53,9 @@ public class ZoneSession
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowKeltnerChannel { get; set; } = false;
     public bool ShowSmaLinesSbm { get; set; } = false;
+    public bool ShowSma20 { get; set; } = false; // single SMA lines, separate from the SBM set
+    public bool ShowSma50 { get; set; } = false;
+    public bool ShowSma200 { get; set; } = false;
     public bool ShowStoch { get; set; } = false;
     public bool ShowRsi { get; set; } = false;
     public bool ShowLux { get; set; } = false; // RSI Multi Length [LuxAlgo], 5m

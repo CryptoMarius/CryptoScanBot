@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
+using CryptoScanner.Analyzers.Chart;
 
 using OxyPlot;
 using OxyPlot.Series;
@@ -10,11 +11,14 @@ public class Points
 {
     internal static void Draw(PlotModel chart, List<ZigZagResult> pivotList, CandleTime minDate, CandleTime maxDate, string group)
     {
+        // The colours of the Pivot points gear since 07-11-2026
+        OxyColor high = ChartStyleOxy.ColorFor("pivotHigh", OxyColors.Red);
+        OxyColor low = ChartStyleOxy.ColorFor("pivotLow", OxyColors.Yellow);
         var seriesHigh = new ScatterSeries
         {
             Title = "p high",
             MarkerSize = 2,
-            MarkerFill = OxyColors.Red,
+            MarkerFill = high,
             MarkerType = MarkerType.Square,
             YAxisKey = "price",
             Tag = group
@@ -23,7 +27,7 @@ public class Points
         {
             Title = "p low",
             MarkerSize = 2,
-            MarkerFill = OxyColors.Yellow,
+            MarkerFill = low,
             MarkerType = MarkerType.Square,
             YAxisKey = "price",
             Tag = group
@@ -35,7 +39,7 @@ public class Points
             Title = "p high (provisional)",
             MarkerSize = 3,
             MarkerFill = OxyColors.Transparent,
-            MarkerStroke = OxyColors.Red,
+            MarkerStroke = high,
             MarkerStrokeThickness = 1,
             MarkerType = MarkerType.Square,
             YAxisKey = "price",
@@ -46,7 +50,7 @@ public class Points
             Title = "p low (provisional)",
             MarkerSize = 3,
             MarkerFill = OxyColors.Transparent,
-            MarkerStroke = OxyColors.Yellow,
+            MarkerStroke = low,
             MarkerStrokeThickness = 1,
             MarkerType = MarkerType.Square,
             YAxisKey = "price",

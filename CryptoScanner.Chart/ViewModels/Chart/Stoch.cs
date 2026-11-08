@@ -1,6 +1,8 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Series;
@@ -39,8 +41,12 @@ public class Stoch
         var seriesK = new LineSeries
         {
             Title = "Stoch %K",
-            Color = OxyColors.CornflowerBlue,
-            StrokeThickness = 1,
+            //Color = OxyColors.CornflowerBlue,
+            //StrokeThickness = 1,
+            // Colour, width and dash from Settings / Chart styles, the same as the Photino chart
+            Color = ChartStyleOxy.ColorFor("stochK", OxyColors.CornflowerBlue),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("stochK", 1),
+            LineStyle = ChartStyleOxy.LineStyleFor("stochK", LineStyle.Solid),
             YAxisKey = AxisKey,
             Tag = tag,
         };
@@ -49,9 +55,12 @@ public class Stoch
         var seriesD = new LineSeries
         {
             Title = "Stoch %D",
-            Color = OxyColors.Orange,
-            StrokeThickness = 1,
-            LineStyle = LineStyle.Solid,
+            //Color = OxyColors.Orange,
+            //StrokeThickness = 1,
+            //LineStyle = LineStyle.Solid,
+            Color = ChartStyleOxy.ColorFor("stochD", OxyColors.Orange),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("stochD", 1),
+            LineStyle = ChartStyleOxy.LineStyleFor("stochD", LineStyle.Solid),
             YAxisKey = AxisKey,
             Tag = tag,
         };
@@ -84,9 +93,12 @@ public class Stoch
         {
             Type = LineAnnotationType.Horizontal,
             Y = GlobalData.Settings.General.SettingsStoch.Overbought,
-            Color = OxyColor.FromAColor(140, OxyColors.Tomato),
-            StrokeThickness = 1,
-            LineStyle = LineStyle.Dash,
+            //Color = OxyColor.FromAColor(140, OxyColors.Tomato),
+            //StrokeThickness = 1,
+            //LineStyle = LineStyle.Dash,
+            Color = ChartStyleOxy.ColorFor("stochOverbought", OxyColor.FromAColor(140, OxyColors.Tomato)),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("stochOverbought", 1),
+            LineStyle = ChartStyleOxy.LineStyleFor("stochOverbought", LineStyle.Dash),
             YAxisKey = AxisKey,
             Tag = tag,
         });
@@ -96,9 +108,12 @@ public class Stoch
         {
             Type = LineAnnotationType.Horizontal,
             Y = 50,
-            Color = OxyColor.FromAColor(60, OxyColors.White),
-            StrokeThickness = 1,
-            LineStyle = LineStyle.Dash,
+            //Color = OxyColor.FromAColor(60, OxyColors.White),
+            //StrokeThickness = 1,
+            //LineStyle = LineStyle.Dash,
+            Color = ChartStyleOxy.ColorFor("stochMiddle", OxyColor.FromAColor(60, OxyColors.White)),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("stochMiddle", 1),
+            LineStyle = ChartStyleOxy.LineStyleFor("stochMiddle", LineStyle.Dash),
             YAxisKey = AxisKey,
             Tag = tag,
         });
@@ -108,9 +123,12 @@ public class Stoch
         {
             Type = LineAnnotationType.Horizontal,
             Y = GlobalData.Settings.General.SettingsStoch.Oversold,
-            Color = OxyColor.FromAColor(140, OxyColors.LimeGreen),
-            StrokeThickness = 1,
-            LineStyle = LineStyle.Dash,
+            //Color = OxyColor.FromAColor(140, OxyColors.LimeGreen),
+            //StrokeThickness = 1,
+            //LineStyle = LineStyle.Dash,
+            Color = ChartStyleOxy.ColorFor("stochOversold", OxyColor.FromAColor(140, OxyColors.LimeGreen)),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("stochOversold", 1),
+            LineStyle = ChartStyleOxy.LineStyleFor("stochOversold", LineStyle.Dash),
             YAxisKey = AxisKey,
             Tag = tag,
         });

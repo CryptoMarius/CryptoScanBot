@@ -17,6 +17,17 @@ public interface IPlatformService
     }
 
     /// <summary>
+    /// Bring a window of this application to the front: restore it when it is minimized and make it
+    /// the active window. Used for a secondary window that is already open somewhere behind other
+    /// windows when it is asked for again (the chart, TradingView). Hosts and platforms without a
+    /// way to do that inherit the empty implementation and do nothing.
+    /// </summary>
+    /// <param name="windowHandle">The native window handle (HWND on Windows).</param>
+    void BringWindowToFront(nint windowHandle)
+    {
+    }
+
+    /// <summary>
     /// Show a picture as the icon of the running application, for platforms whose task bar shows
     /// the application rather than its windows: the Dock on macOS ignores the icon of a window.
     /// Windows and Linux take the icon from the window itself, so the default does nothing. May be

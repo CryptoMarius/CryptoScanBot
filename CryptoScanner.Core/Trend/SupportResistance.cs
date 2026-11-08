@@ -55,14 +55,18 @@ public sealed class SupportResistanceLevel
 
     /// <summary>
     /// The bottom and top of the level as a zone: the lowest and highest pivot in it, at least
-    /// <see cref="SupportResistance.ZoneHeightAtr"/> * ATR apart (around <see cref="Price"/>), the
-    /// way traders draw their zones. Only for drawing; the breakouts and flips work with <see cref="Price"/>.
+    /// <see cref="SupportResistance.MinZoneHeightAtr"/> * ATR apart (until 08-11-2026
+    /// <see cref="SupportResistance.ZoneHeightAtr"/>, around <see cref="Price"/>), the way traders
+    /// draw their zones. Only for drawing; the breakouts and flips work with <see cref="Price"/>.
     /// </summary>
     public double Low { get; internal set; }
     public double High { get; internal set; }
 
     /// <summary>The candle of the oldest pivot in the level, where its zone starts.</summary>
     public int FirstIndex { get; internal set; }
+
+    /// <summary>The candle of the newest pivot in the level: how fresh it is (see <see cref="SupportResistance.ZonesAroundPrice"/>).</summary>
+    public int LastIndex { get; internal set; }
 
     // Walk state: which side of the level the price is on (+1 above, -1 under), and a running break
     internal int State;
@@ -128,7 +132,8 @@ public sealed class SupportResistanceLine
 /// A block drawn on the chart: one or more levels whose zones overlap, merged into one
 /// (see <see cref="SupportResistance.Zones"/>). Only for drawing.
 /// </summary>
-public readonly record struct SupportResistanceZone(double Low, double High, double Price, int Touches, int FirstIndex);
+public readonly record struct SupportResistanceZone(double Low, double High, double Price, int Touches, int FirstIndex,
+    bool IsSupport = false);
 
 
 public readonly record struct SupportResistanceEvent(
@@ -204,6 +209,18 @@ public static class SupportResistance
     /// traders draw (about one ATR on a BTC-EUR 8h chart). Only for drawing; a candidate setting.
     /// </summary>
     public const double ZoneHeightAtr = 1.0;
+
+    /// <summary>
+    /// The minimum height of a level's zone in ATRs since 08-11-2026. The zone itself runs from the
+    /// lowest to the highest pivot of the level; this only keeps a level whose pivots lie almost on
+    /// top of each other from becoming a hairline. <see cref="ZoneHeightAtr"/> (one ATR) made every
+    /// zone so high that neighbouring levels overlapped, and <see cref="Zones"/> then merged seven
+    /// of them on HBARUSDT 12h into one block of 22% labelled "38x".
+    /// </summary>
+    public const double MinZoneHeightAtr = 0.25;
+
+    /// <summary>How many zones <see cref="ZonesAroundPrice"/> keeps on each side of the price.</summary>
+    public const int ZonesPerSide = 2;
 
     private readonly record struct Pivot(int Confirm, int Index, double Price, int Kind);
 
@@ -393,6 +410,8 @@ public static class SupportResistance
     /// highest top, adds up the touches, starts at the oldest pivot, and its price is the average
     /// of the levels weighted by their touches. Sorted from low to high.
     /// </summary>
+    /// <remarks>No longer drawn since 08-11-2026, see <see cref="ZonesAroundPrice"/>: the merging
+    /// chained neighbouring levels into one block nobody could read.</remarks>
     public static List<SupportResistanceZone> Zones(IEnumerable<SupportResistanceLevel> levels)
     {
         List<SupportResistanceZone> result = [];
@@ -412,6 +431,51 @@ public static class SupportResistance
                 weighted = level.Price * level.Touches;
                 result.Add(new SupportResistanceZone(level.Low, level.High, level.Price, level.Touches, level.FirstIndex));
             }
+        }
+        return result;
+    }
+
+
+    /// <summary>
+    /// The zones for the chart since 08-11-2026: per side of <paramref name="price"/> the
+    /// <paramref name="perSide"/> strongest levels, each as its own zone, nothing merged.
+    /// <para>
+    /// A zone at or under the price (its bottom at or below it, so also one the price stands in) is
+    /// support, one above it is resistance. A level is built from tops and bottoms together: a broken
+    /// resistance under the price is support now (role reversal), so where it came from does not
+    /// decide the side, only where it lies.
+    /// </para>
+    /// <para>
+    /// Strength is the number of pivots times how fresh the level is: exp(-2 * age / LevelLookback),
+    /// with age the candles since its newest pivot. A level touched again recently counts fully, one
+    /// last touched at the edge of the lookback for about 14%. Both after Chung and Bellotti (2021):
+    /// more earlier bounces make a bounce more likely, and that likelihood fades with time. Of two
+    /// overlapping zones on one side only the stronger is kept.
+    /// </para>
+    /// </summary>
+    public static List<SupportResistanceZone> ZonesAroundPrice(IEnumerable<SupportResistanceLevel> levels, double price,
+        int lastIndex, int perSide = ZonesPerSide, Parameters? parameters = null)
+    {
+        Parameters p = parameters ?? Default;
+        double Score(SupportResistanceLevel level)
+            => level.Touches * Math.Exp(-2.0 * Math.Max(0, lastIndex - level.LastIndex) / Math.Max(1, p.LevelLookback));
+
+        List<SupportResistanceZone> result = [];
+        foreach (bool support in (bool[])[true, false])
+        {
+            List<SupportResistanceLevel> chosen = [];
+            foreach (SupportResistanceLevel level in levels
+                .Where(l => (l.Low <= price) == support)
+                .OrderByDescending(Score))
+            {
+                if (chosen.Count >= perSide)
+                    break;
+                if (chosen.Any(c => level.Low <= c.High && level.High >= c.Low))
+                    continue;
+                chosen.Add(level);
+            }
+            foreach (SupportResistanceLevel level in chosen.OrderBy(l => l.Price))
+                result.Add(new SupportResistanceZone(level.Low, level.High, level.Price, level.Touches, level.FirstIndex, support));
         }
         return result;
     }
@@ -540,17 +604,30 @@ public static class SupportResistance
                     continue;
                 double sum = 0;
                 int firstIndex = int.MaxValue;
+                int lastIndex = int.MinValue;
                 foreach (var x in cluster)
                 {
                     sum += x.Price;
                     firstIndex = Math.Min(firstIndex, x.Index);
+                    lastIndex = Math.Max(lastIndex, x.Index);
                 }
                 double price = sum / cluster.Count;
 
                 // Sorted on price, so the first and last pivot are the bottom and top of the zone
-                double zoneHalf = ZoneHeightAtr * atr[i] / 2;
-                double zoneLow = Math.Min(cluster[0].Price, price - zoneHalf);
-                double zoneHigh = Math.Max(cluster[^1].Price, price + zoneHalf);
+                //double zoneHalf = ZoneHeightAtr * atr[i] / 2;
+                //double zoneLow = Math.Min(cluster[0].Price, price - zoneHalf);
+                //double zoneHigh = Math.Max(cluster[^1].Price, price + zoneHalf);
+                // Since 08-11-2026 the zone is the spread of its own pivots, at least MinZoneHeightAtr
+                // high around the middle of that spread (see MinZoneHeightAtr)
+                double zoneLow = cluster[0].Price;
+                double zoneHigh = cluster[^1].Price;
+                double minimumHeight = MinZoneHeightAtr * atr[i];
+                if (zoneHigh - zoneLow < minimumHeight)
+                {
+                    double middle = (zoneLow + zoneHigh) / 2;
+                    zoneLow = middle - minimumHeight / 2;
+                    zoneHigh = middle + minimumHeight / 2;
+                }
 
                 // One cluster per level, see the Python version
                 SupportResistanceLevel? keep = null;
@@ -569,6 +646,7 @@ public static class SupportResistance
                     keep.Low = zoneLow;
                     keep.High = zoneHigh;
                     keep.FirstIndex = firstIndex;
+                    keep.LastIndex = lastIndex;
                     fresh.Add(keep);
                 }
                 else
@@ -580,6 +658,7 @@ public static class SupportResistance
                         Low = zoneLow,
                         High = zoneHigh,
                         FirstIndex = firstIndex,
+                        LastIndex = lastIndex,
                         State = close[i] > price ? 1 : -1,
                     });
                 }

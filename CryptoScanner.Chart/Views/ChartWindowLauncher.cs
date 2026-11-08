@@ -35,7 +35,10 @@ public static class ChartWindowLauncher
             {
                 CanResize = true,
                 Title = "Chart form",
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                // Not set here any more: an initializer runs after the constructor, so this put the
+                // window back in the centre after RestoreWindowState had placed it. The constructor
+                // now centres it only when there is no saved position.
+                //WindowStartupLocation = WindowStartupLocation.CenterOwner,
             };
             ApplySymbol(_chartWindow, symbolBase, symbolQuote, intervalName, windowStart, windowEnd, emulatorRunId);
             _chartWindow.Show();
@@ -58,6 +61,31 @@ public static class ChartWindowLauncher
                 _chartWindow.WindowState = WindowState.Normal;
             _chartWindow.Activate();
         }
+    }
+
+    /// <summary>
+    /// Follow a row selected in the symbol or signal grid, the way the Photino chart follows
+    /// SymbolService.SelectedSymbol: only when the chart is already open, without bringing it to the
+    /// front, and on the live chart (no position window). A null interval keeps the interval the
+    /// chart is on. Picking the symbol and interval the chart already shows does nothing, so the
+    /// grid restoring its selection after a refresh leaves a position window alone.
+    /// </summary>
+    public static void FollowSelection(string symbolBase, string symbolQuote, string? intervalName)
+    {
+        if (_chartWindow == null || !_chartWindow.IsVisible)
+            return;
+        if (_chartWindow.DataContext is not ChartWindowViewModel vm)
+            return;
+
+        var selector = vm.SymbolSelector;
+        string interval = string.IsNullOrEmpty(intervalName)
+            ? (string.IsNullOrEmpty(selector.SelectedInterval) ? DefaultInterval : selector.SelectedInterval)
+            : intervalName;
+        if (selector.SelectedBase == symbolBase && selector.SelectedQuote == symbolQuote
+            && selector.SelectedInterval == interval)
+            return;
+
+        ApplySymbol(_chartWindow, symbolBase, symbolQuote, interval, null, null, null);
     }
 
     private static void ApplySymbol(ChartWindow chartWindow, string symbolBase, string symbolQuote,

@@ -16,7 +16,15 @@ public class CommandShowChart : CommandBase
 
                 // Shared launcher: holds the single reusable window and the already-open handling
                 // (update symbol, restore if minimized, bring to front). Same path as the emulator.
-                ChartWindowLauncher.Show(dto.symbol.Base, dto.symbol.Quote, dto.interval?.Name);
+                //ChartWindowLauncher.Show(dto.symbol.Base, dto.symbol.Quote, dto.interval?.Name);
+                // Opened from a position: the chart shows that position's lifetime, as the Photino
+                // chart does (a closed position of last week is otherwise out of view). The window
+                // banner in the chart gives the way back to the live chart.
+                if (dto.position != null)
+                    ChartWindowLauncher.Show(dto.symbol.Base, dto.symbol.Quote, dto.interval?.Name,
+                        dto.position.CreateTime, dto.position.CloseTime);
+                else
+                    ChartWindowLauncher.Show(dto.symbol.Base, dto.symbol.Quote, dto.interval?.Name);
             }
             catch (Exception error)
             {

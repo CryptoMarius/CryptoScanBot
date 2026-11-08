@@ -2123,8 +2123,17 @@ public class CandleDatabase : IDisposable
             // Same for the in-memory "already asked the exchange for this period": with the candles
             // gone it would claim history that is no longer there, and nothing would ever fetch it
             // again. Whoever deletes candles shortens that period — see CryptoSymbolInterval.
+            //foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+            //    symbolInterval.ForgetHistory();
+            // The in-memory sync point as well (since 08-11-2026). Kept, a symbol that came back
+            // (HBARUSDC.PERP on HyperLiquid, removed 02-11 05:52 and added again 15:08) fetched only
+            // from that point onwards - 11 candles on 1h instead of 500 - and the deleted history was
+            // never fetched again: the chart showed six days and the zones read the rest as empty.
             foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+            {
                 symbolInterval.ForgetHistory();
+                symbolInterval.LastCandleSynchronized = null;
+            }
 
             tx.Commit();
 

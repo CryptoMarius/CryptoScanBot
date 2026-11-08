@@ -8,6 +8,7 @@
 @using CryptoScanner.Core.Services
 @inject SignalService SignalService
 @inject GridCommandService GridCommandService
+@inject SymbolService SymbolService
 @inject ApplicationStateService StateService
 @inject IJSRuntime JS
 @implements IDisposable
@@ -373,7 +374,17 @@
             SelectedSignals.Clear();
             SelectedSignals.Add(vm);
             SelectedSignal = vm;
+            FollowInChart(vm);
         }
+    }
+
+    /// <summary>
+    /// The chart follows the selected signal, on its symbol and interval, as it follows a click in
+    /// the symbol panel. The Avalonia signal grid does the same (ChartWindowLauncher.FollowSelection).
+    /// </summary>
+    private void FollowInChart(SignalViewModel vm)
+    {
+        SymbolService.SetSelectedSymbol(vm.Object.Symbol, vm.Object.ChartInterval);
     }
 
     private static string RowId(int index) => "signal-row-" + index;
@@ -393,6 +404,7 @@
         SelectedSignals.Clear();
         SelectedSignals.Add(match);
         SelectedSignal = match;
+        FollowInChart(match);
         StateHasChanged();
         await GridNavigation.ScrollRowIntoViewAsync(JS, RowId(target));
     }
@@ -401,7 +413,7 @@
     {
         SelectedSignal = vm;
         if (vm.Object.Symbol != null)
-            GridCommandService.HandleDoubleClick(vm.Object.Symbol, vm.Object.Interval);
+            GridCommandService.HandleDoubleClick(vm.Object.Symbol, vm.Object.ChartInterval);
     }
 
     private void OnRowContextMenu(MouseEventArgs e, SignalViewModel vm)
@@ -432,35 +444,35 @@
     private void OnMenuOpenChart()
     {
         if (_contextMenuSignal?.Object.Symbol != null)
-            GridCommandService.OpenChart(_contextMenuSignal.Object.Symbol, _contextMenuSignal.Object.Interval);
+            GridCommandService.OpenChart(_contextMenuSignal.Object.Symbol, _contextMenuSignal.Object.ChartInterval);
         CloseContextMenu();
     }
 
     private void OnMenuOpenTradingApp()
     {
         if (_contextMenuSignal?.Object.Symbol != null)
-            GridCommandService.OpenTradingApp(_contextMenuSignal.Object.Symbol, _contextMenuSignal.Object.Interval);
+            GridCommandService.OpenTradingApp(_contextMenuSignal.Object.Symbol, _contextMenuSignal.Object.ChartInterval);
         CloseContextMenu();
     }
 
     private void OnMenuOpenTradingViewInternal()
     {
         if (_contextMenuSignal?.Object.Symbol != null)
-            GridCommandService.OpenTradingViewInternal(_contextMenuSignal.Object.Symbol);
+            GridCommandService.OpenTradingViewInternal(_contextMenuSignal.Object.Symbol, _contextMenuSignal.Object.ChartInterval);
         CloseContextMenu();
     }
 
     private void OnMenuOpenTradingViewExternal()
     {
         if (_contextMenuSignal?.Object.Symbol != null)
-            GridCommandService.OpenTradingViewExternal(_contextMenuSignal.Object.Symbol, _contextMenuSignal.Object.Interval);
+            GridCommandService.OpenTradingViewExternal(_contextMenuSignal.Object.Symbol, _contextMenuSignal.Object.ChartInterval);
         CloseContextMenu();
     }
 
     private void OnMenuOpenExchange()
     {
         if (_contextMenuSignal?.Object.Symbol != null)
-            GridCommandService.OpenExchange(_contextMenuSignal.Object.Symbol, _contextMenuSignal.Object.Interval);
+            GridCommandService.OpenExchange(_contextMenuSignal.Object.Symbol, _contextMenuSignal.Object.ChartInterval);
         CloseContextMenu();
     }
 

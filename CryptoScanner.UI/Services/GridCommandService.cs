@@ -21,12 +21,27 @@ public class GridCommandService
     private readonly IJSRuntime _jsRuntime;
     private readonly SymbolService _symbolService;
     private readonly NavigationManager _navigationManager;
+    private readonly ChartWindowService _chartWindowService;
 
-    public GridCommandService(IJSRuntime jsRuntime, SymbolService symbolService, NavigationManager navigationManager)
+    public GridCommandService(IJSRuntime jsRuntime, SymbolService symbolService, NavigationManager navigationManager,
+        ChartWindowService chartWindowService)
     {
         _jsRuntime = jsRuntime;
         _symbolService = symbolService;
         _navigationManager = navigationManager;
+        _chartWindowService = chartWindowService;
+    }
+
+    /// <summary>
+    /// Put the chart on screen: in its own window when the host has one (Photino), otherwise on the
+    /// Chart tab (the web host). The symbol has been selected already, and the chart follows that.
+    /// </summary>
+    private void ShowChart()
+    {
+        if (_chartWindowService.HasWindow)
+            _chartWindowService.Open();
+        else
+            _navigationManager.NavigateTo("/chart");
     }
 
     /// <param name="interval">Interval of the row the chart was opened from, so the chart lands on
@@ -35,7 +50,7 @@ public class GridCommandService
     public void OpenChart(CryptoSymbol symbol, CryptoInterval? interval = null)
     {
         _symbolService.SetSelectedSymbol(symbol, interval);
-        _navigationManager.NavigateTo("/chart");
+        ShowChart();
     }
 
     /// <summary>
@@ -48,7 +63,7 @@ public class GridCommandService
     public void OpenChart(CryptoSymbol symbol, CryptoInterval? interval, DateTime createTime, DateTime? closeTime)
     {
         _symbolService.SetSelectedSymbol(symbol, interval, createTime, closeTime);
-        _navigationManager.NavigateTo("/chart");
+        ShowChart();
     }
 
     public void OpenTradingViewInternal(CryptoSymbol symbol, CryptoInterval? interval = null)

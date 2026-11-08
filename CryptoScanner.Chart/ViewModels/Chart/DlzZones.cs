@@ -1,6 +1,8 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Analyzers.Chart;
+using CryptoScanner.Core.Settings;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -20,7 +22,9 @@ public class DlzZones
         if (zone.OpenTime <= maxDate) // zone.OpenTime >= minDate && 
         {
             var colors = Const.ColorList[(zone.Kind, zone.Side, zone.CloseTime.HasValue)];
-            OxyColor boxColor = colors.boxColor;
+            //OxyColor boxColor = colors.boxColor;
+            // The colour of the zone gear since 07-11-2026 (dlzLong, fvgShort, ...); Const.ColorList is its default
+            OxyColor boxColor = ChartStyleOxy.ColorFor(ChartStyleSettings.ZoneStyleKey(zone.Kind, zone.Side), colors.boxColor);
             OxyColor textColor = colors.textColor;
 
 
@@ -44,11 +48,11 @@ public class DlzZones
             if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply)
             {
                 if (zone.Strength == CryptoZoneStrength.Strong)
-                    col = OxyColor.FromArgb(128, boxColor.R, boxColor.G, boxColor.B);
+                    col = ChartStyleOxy.WithAlpha(boxColor, 128);
                 else
-                    col = OxyColor.FromArgb(64, boxColor.R, boxColor.G, boxColor.B);
+                    col = ChartStyleOxy.WithAlpha(boxColor, 64);
             }
-            else col = OxyColor.FromArgb(128, boxColor.R, boxColor.G, boxColor.B);
+            else col = ChartStyleOxy.WithAlpha(boxColor, 128);
 
 
             int stroke = 0;
@@ -64,7 +68,7 @@ public class DlzZones
                 MaximumX = dateLast.Minutes,  // X-coordinate of the upper-right corner
                 MaximumY = (double)zone.Top,  // Y-coordinate of the upper-right corner
                 Fill = col, //OxyColor.FromArgb(128, boxColor.R, boxColor.G, boxColor.B),
-                Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, boxColor.R, boxColor.G, boxColor.B), // rectangle
+                Stroke = ChartStyleOxy.WithAlpha(boxColor, 128 + 64 + 32 + 16 + 8 + 4 + 2), // rectangle
                 StrokeThickness = stroke, // Border thickness
                 TextColor = textColor,
                 // Pin to the price axis explicitly — see SmcZones for the rationale.

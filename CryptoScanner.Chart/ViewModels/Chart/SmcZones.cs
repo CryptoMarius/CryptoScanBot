@@ -1,5 +1,8 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Zones;
+using CryptoScanner.Analyzers.Chart;
+using CryptoScanner.Core.Settings;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -30,7 +33,9 @@ public class SmcZones
             return;
 
         var colors = Const.ColorList[(zone.Kind, zone.Side, zone.CloseTime.HasValue)];
-        OxyColor boxColor = colors.boxColor;
+        //OxyColor boxColor = colors.boxColor;
+        // The colour of the zone gear since 07-11-2026 (smcLong / smcShort); Const.ColorList is its default
+        OxyColor boxColor = ChartStyleOxy.ColorFor(ChartStyleSettings.ZoneStyleKey(zone.Kind, zone.Side), colors.boxColor);
         OxyColor textColor = colors.textColor;
 
         // Left edge: clamp to the visible window so off-screen blocks still anchor at minDate.
@@ -45,8 +50,8 @@ public class SmcZones
         // Slightly more opaque when still active, dimmer when closed/invalidated — same
         // visual cue scheme as DLZ.
         byte alpha = zone.CloseTime.HasValue ? (byte)64 : (byte)128;
-        OxyColor fill = OxyColor.FromArgb(alpha, boxColor.R, boxColor.G, boxColor.B);
-        OxyColor stroke = OxyColor.FromArgb(220, boxColor.R, boxColor.G, boxColor.B);
+        OxyColor fill = ChartStyleOxy.WithAlpha(boxColor, alpha);
+        OxyColor stroke = ChartStyleOxy.WithAlpha(boxColor, 220);
 
         var rectangle = new RectangleAnnotation
         {
@@ -67,7 +72,9 @@ public class SmcZones
             YAxisKey = "price",
             // Interval + freshness: append the touch count (CE touches) so a quick glance tells
             // fresh (no number) from tested ("2x"). Colour already encodes demand vs supply.
-            Text = zone.TouchCount > 0 ? $"{zone.Interval.Name} {zone.TouchCount}x" : zone.Interval.Name,
+            //Text = zone.TouchCount > 0 ? $"{zone.Interval.Name} {zone.TouchCount}x" : zone.Interval.Name,
+            // Shared with the Photino chart (SmcChartSelection in Core)
+            Text = SmcChartSelection.Caption(zone),
             ToolTip = zone.Interval.Name,
             Tag = group,
         };
@@ -76,20 +83,25 @@ public class SmcZones
 
     public static void Draw(PlotModel chart, CryptoSymbol symbol, CandleTime minDate, CandleTime maxDate, string group)
     {
-        var symbolData = symbol.Data;
-        decimal? currentPrice = GetCurrentPrice(symbol);
+        //var symbolData = symbol.Data;
+        //decimal? currentPrice = GetCurrentPrice(symbol);
 
-        // SMC has its own interval list in Settings.Signal.ZonesSmc (appsettings.json).
-        foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
-        {
-            if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
-                continue;
+        //// SMC has its own interval list in Settings.Signal.ZonesSmc (appsettings.json).
+        //foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
+        //{
+        //    if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
+        //        continue;
 
-            var symbolDataInterval = symbolData.Get(interval.IntervalPeriod);
+        //    var symbolDataInterval = symbolData.Get(interval.IntervalPeriod);
 
-            foreach (var zone in SelectSurroundingZones(symbolDataInterval.Smc.Zones, currentPrice))
-                DrawZone(chart, zone, minDate, maxDate, group);
-        }
+        //    foreach (var zone in SelectSurroundingZones(symbolDataInterval.Smc.Zones, currentPrice))
+        //        DrawZone(chart, zone, minDate, maxDate, group);
+        //}
+
+        // The same selection as the Photino chart (SmcChartSelection in Core): per interval the zones
+        // around the current price. SMC has its own interval list in Settings.Signal.ZonesSmc.
+        foreach (var zone in SmcChartSelection.Select(symbol))
+            DrawZone(chart, zone, minDate, maxDate, group);
     }
 
     /// <summary>

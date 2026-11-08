@@ -66,6 +66,16 @@ public partial class CryptoSignal : CryptoData2
     // SlPercentage. Populated from OverrideDcaList and copied to the position at creation time.
     public string? DcaLevels { get; set; }
 
+    // Optional interval of the zone the signal is about, populated from SignalBase.ZoneInterval and
+    // copied to the position at creation time. Display only, see ChartInterval.
+    public int? ZoneIntervalId { get; set; }
+
+    // The interval the chart and TradingView open on: the zone interval when there is one, else the
+    // interval of the signal. The trader never uses this.
+    [Computed]
+    public CryptoInterval ChartInterval =>
+        ZoneIntervalId is int id && Core.GlobalData.IntervalListId.TryGetValue(id, out CryptoInterval? zoneInterval) ? zoneInterval : Interval;
+
     // In-memory only: set when the strategy supplied an explicit entry price via OverrideSignalPrice
     // (so SignalPrice is a deliberate entry level, not just the signal candle's close). The trader then
     // enters at SignalPrice instead of the current market price.

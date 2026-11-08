@@ -1,6 +1,8 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -21,7 +23,11 @@ public class Bollingerbands
             Title = "bb.upper",
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkBlue,
-            Color = OxyColors.DarkBlue,
+            //Color = OxyColors.DarkBlue,
+            // Colour, width and dash from Settings / Chart styles, the same as the Photino chart
+            Color = ChartStyleOxy.ColorFor("bbUpper", OxyColors.DarkBlue),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("bbUpper", 2),
+            LineStyle = ChartStyleOxy.LineStyleFor("bbUpper", LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };
@@ -30,7 +36,10 @@ public class Bollingerbands
             Title = "bb.middle",
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkBlue,
-            Color = OxyColors.DarkBlue,
+            //Color = OxyColors.DarkBlue,
+            Color = ChartStyleOxy.ColorFor("bbMiddle", OxyColors.DarkBlue),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("bbMiddle", 2),
+            LineStyle = ChartStyleOxy.LineStyleFor("bbMiddle", LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };
@@ -39,7 +48,10 @@ public class Bollingerbands
             Title = "bb.lower",
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkBlue,
-            Color = OxyColors.DarkBlue,
+            //Color = OxyColors.DarkBlue,
+            Color = ChartStyleOxy.ColorFor("bbLower", OxyColors.DarkBlue),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("bbLower", 2),
+            LineStyle = ChartStyleOxy.LineStyleFor("bbLower", LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };

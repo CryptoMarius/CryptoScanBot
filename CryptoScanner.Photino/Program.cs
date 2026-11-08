@@ -38,6 +38,7 @@ class Program
     private static SymbolService? _symbolService;
     private static InternalBrowserService? _internalBrowser;
     private static TradingViewWindow? _tradingViewWindow;
+    private static ChartWindow? _chartWindow;
 
     [STAThread]
     static void Main(string[] args)
@@ -53,6 +54,7 @@ class Program
             appVersion = appVersion[0..^2];
 
         GlobalData.AppVersion = appVersion;
+        GlobalData.AppVariant = "Photino";
         GlobalData.AppPath = Path.GetDirectoryName(AppContext.BaseDirectory)!;
 
         // WebView2 reads WEBVIEW2_USER_DATA_FOLDER at process level before any initialization,
@@ -106,6 +108,7 @@ class Program
         builder.Services.AddSingleton<MarketIndicatorService>();
         builder.Services.AddSingleton<InternalBrowserService>();
         builder.Services.AddSingleton<ExchangeChoiceService>();
+        builder.Services.AddSingleton<ChartWindowService>();
         // Native open-file dialog for the components that need a real path (sound files). Registered
         // as a factory over the static _app because the application is only built further down.
         builder.Services.AddSingleton<IFileDialogService>(
@@ -226,8 +229,15 @@ class Program
         // instead of the Tradingview tab. That tab was an iframe inside this same WebView, and
         // www.tradingview.com refuses to be framed - which is why it could only show the anonymous
         // embed widget, without a login and without the user's own indicators.
-        _tradingViewWindow = new TradingViewWindow(app.MainWindow);
+        var windowStateService = app.Services.GetRequiredService<ApplicationStateService>();
+        _tradingViewWindow = new TradingViewWindow(app.MainWindow, windowStateService);
         _internalBrowser.OpenBrowserWindow = url => _tradingViewWindow.Show(url);
+
+        // The chart opens in a window of its own as well, like the Avalonia chart window, so the
+        // scanner, TradingView and the chart can each have a screen. The Chart tab of the main
+        // window becomes the button that opens it.
+        _chartWindow = new ChartWindow(app, windowStateService);
+        app.Services.GetRequiredService<ChartWindowService>().OpenWindow = () => _chartWindow.Show();
 
         // The Altrady deep links used to get an invisible window with a browser of their own here
         // (HiddenBrowserWindow), so the trading application came up without the user first landing
@@ -304,9 +314,11 @@ class Program
         // 28-10-2026: the renderer of a covered scanner at Idle, the others at Normal). A scanner
         // is a monitor that is meant to stay live, so keep its renderer at the normal priority.
         // These are Chromium switches; on Linux the same Photino setting takes WebKit JSON instead.
-        if (OperatingSystem.IsWindows())
-            app.MainWindow.SetBrowserControlInitParameters(
-                "--disable-renderer-backgrounding --disable-backgrounding-occluded-windows");
+        //if (OperatingSystem.IsWindows())
+        //    app.MainWindow.SetBrowserControlInitParameters(
+        //        "--disable-renderer-backgrounding --disable-backgrounding-occluded-windows");
+        // One constant for every window: a second window with other switches gets no browser
+        app.MainWindow.ApplyBrowserArguments();
 
         // The title bar is drawn by the operating system and stays white until it is told otherwise,
         // which looks broken under the dark theme. It needs the native window handle, so it can only
@@ -565,6 +577,7 @@ class Program
         try { _logService?.Dispose(); } catch { }
         try { _symbolService?.Dispose(); } catch { }
         try { _tradingViewWindow?.Close(); } catch { }
+        try { _chartWindow?.Close(); } catch { }
         try { _internalBrowser?.Dispose(); } catch { }
 
         try

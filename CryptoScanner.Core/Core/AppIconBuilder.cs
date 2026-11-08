@@ -64,6 +64,13 @@ public static class AppIconBuilder
         => Build(CurrentExchangeType(), GlobalData.IsEmulatorMode);
 
     /// <summary>
+    /// The 256 pixel picture of the icon of the running application and its exchange as a PNG, for
+    /// the About screens.
+    /// </summary>
+    public static byte[] BuildCurrentPng()
+        => BuildPng(CurrentExchangeType(), GlobalData.IsEmulatorMode);
+
+    /// <summary>
     /// The exchange the icon should show. The window is created before ApplyConfigurationAsync has
     /// set the active exchange (Photino even has to have its icon before that), so fall back to the
     /// exchange in the settings. A new installation that still has to pick one shows no badge,

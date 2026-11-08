@@ -130,7 +130,9 @@ public partial class MainWindow : Window
 
         // Initialize the visible browser to the BTCUSDT (if it exists) (TODO: Other Quote perhaps)
         // Implementation moved to Core so the Blazor hosts do the same on startup.
-        CryptoScanner.Core.Helpers.ExternalLinkHelper.ActivateStartupSymbol(applicationStateService.BarometerQuote);
+        // Since 08-11-2026 no longer: TradingView opens in a window of its own on the first request
+        // (TradingViewWindow), so there is no tab left to fill and nothing has to load at startup.
+        //CryptoScanner.Core.Helpers.ExternalLinkHelper.ActivateStartupSymbol(applicationStateService.BarometerQuote);
     }
 
 
@@ -256,6 +258,9 @@ public partial class MainWindow : Window
         // Save window state
         _applicationStateService.SaveWindowState("MainWindow", this);
 
+        // The TradingView window saves its own placement when it closes
+        TradingViewWindow.Close();
+
         if (DataContext is MainWindowViewModel vm)
         {
             await vm.ExitApp();
@@ -348,23 +353,25 @@ public partial class MainWindow : Window
 
     }
 
+    // The browser of the Tradingview tab had to stay visible to keep working, so it was shrunk to one
+    // pixel instead of hidden. Not needed since 08-11-2026: TradingView has a window of its own.
     private void ManipulateBrowser(bool show)
     {
-        if (show)
-        {
-            BrowserViewHost.Width = double.NaN;   // Auto
-            BrowserViewHost.Height = double.NaN;  // Auto
-            BrowserViewHost.Opacity = 1;
-            BrowserViewHost.IsHitTestVisible = true;
-            return;
-        }
-        else
-        {
-            BrowserViewHost.Width = 1;
-            BrowserViewHost.Height = 1;
-            BrowserViewHost.Opacity = 0.01;
-            BrowserViewHost.IsHitTestVisible = false;
-        }
+        //if (show)
+        //{
+        //    BrowserViewHost.Width = double.NaN;   // Auto
+        //    BrowserViewHost.Height = double.NaN;  // Auto
+        //    BrowserViewHost.Opacity = 1;
+        //    BrowserViewHost.IsHitTestVisible = true;
+        //    return;
+        //}
+        //else
+        //{
+        //    BrowserViewHost.Width = 1;
+        //    BrowserViewHost.Height = 1;
+        //    BrowserViewHost.Opacity = 0.01;
+        //    BrowserViewHost.IsHitTestVisible = false;
+        //}
     }
 
     private void OnTabChanged(object? sender, SelectionChangedEventArgs e)

@@ -289,7 +289,7 @@
                     {
                         <span class="chart-legend-item"><span class="chart-swatch chart-swatch-blue"></span>Capital</span>
                     }
-                    <span class="chart-legend-item"><span class="chart-swatch chart-swatch-orange"></span>Without corrections @(lastValue - adjustment).ToString("N2")</span>
+                    <span class="chart-legend-item"><span class="chart-swatch chart-swatch-orange"></span>Without corrections @((lastValue - adjustment).ToString("N2"))</span>
                     <span class="chart-legend-item">Booked by hand @(adjustment >= 0 ? "+" : "")@adjustment.ToString("N2")</span>
                 }
             </div>

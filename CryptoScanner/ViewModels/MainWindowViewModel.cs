@@ -139,24 +139,27 @@ public partial class MainWindowViewModel : ObservableObject
 
     private void OnOpenInInternalBrowserRequested(string url, bool switchTab)
     {
+        // Since 08-11-2026 a window of its own instead of the Tradingview tab, as in the Photino host
+        CryptoScanner.Views.TradingViewWindow.Show(url, switchTab);
+
         //BrowserViewModel.NavigateToTradingView(url);
-        if (BrowserViewModel != null)
-        {
-            System.Diagnostics.Debug.WriteLine($"OpenInBrowser: {url}");
+        //if (BrowserViewModel != null)
+        //{
+            //System.Diagnostics.Debug.WriteLine($"OpenInBrowser: {url}");
 
             // Debug.WriteLine is compiled away in Release, so the line above proved nothing about
             // the build that is actually used. The log tab carries it in both.
-            GlobalData.AddTextToLogTab($"Tradingview tab navigates to: {url}");
+            //GlobalData.AddTextToLogTab($"Tradingview tab navigates to: {url}");
 
             // switch to the Tradingview tab with the browser
-            if (switchTab)
-                SelectedTabIndex = 1;
+            //if (switchTab)
+                //SelectedTabIndex = 1;
 
             // Navigate triggers initialization + tab switch automatically
-            BrowserViewModel.NavigateCommand.Execute(url);
-        }
-        else
-            GlobalData.AddErrorToLogTab($"Tradingview tab: it does not exist, {url} was not shown");
+            //BrowserViewModel.NavigateCommand.Execute(url);
+        //}
+        //else
+            //GlobalData.AddErrorToLogTab($"Tradingview tab: it does not exist, {url} was not shown");
     }
 
 

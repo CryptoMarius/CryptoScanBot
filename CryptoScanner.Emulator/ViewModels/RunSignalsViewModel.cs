@@ -20,6 +20,8 @@ public class SignalRow
     public DateTime SignalTime { get; set; }      // Signal.OpenDate (candle that triggered it)
     public string? Symbol { get; set; }
     public string? Interval { get; set; }
+    // The interval the chart opens on: the zone interval of the signal when it has one (fvgladder)
+    public string? ChartInterval { get; set; }
     public int Side { get; set; }
     public string? Strategy { get; set; }
     public decimal SignalPrice { get; set; }
@@ -95,13 +97,14 @@ public partial class RunSignalsViewModel : ObservableObject
             database.Open();
 
             var rows = database.Connection.Query<SignalRow>(
-                "SELECT s.OpenDate as SignalTime, sym.Name as Symbol, i.Name as Interval, " +
+                "SELECT s.OpenDate as SignalTime, sym.Name as Symbol, i.Name as Interval, coalesce(zi.Name, i.Name) as ChartInterval, " +
                 "       s.Side, s.Strategy, s.SignalPrice, s.SlPercentage, s.IsInvalid, s.EventText, " +
                 "       p.Id as PositionId, p.CreateTime as PositionCreateTime, p.Status as PositionStatus, " +
                 "       p.Profit, p.Percentage " +
                 "FROM Signal s " +
                 "inner JOIN Symbol sym ON sym.Id = s.SymbolId " +
                 "inner JOIN Interval i ON i.Id = s.IntervalId " +
+                "left JOIN Interval zi ON zi.Id = s.ZoneIntervalId " +
                 "left JOIN position p ON p.SignalId = s.Id " +
                 //"LEFT JOIN Position p ON p.SignalEventTime = s.CloseDate and P.IntervalId=s.IntervalId " +
                 //"       AND p.SymbolId = s.SymbolId AND p.EmulatorRunId = s.EmulatorRunId " +

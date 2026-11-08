@@ -82,7 +82,9 @@ public abstract class CommandBase : ICommand
             dto.SignalViewModel = signalViewModel;
             dto.exchange = signalViewModel.Object.Symbol.Exchange;
             dto.symbol = signalViewModel.Object.Symbol;
-            dto.interval = signalViewModel.Object.Interval;
+            //dto.interval = signalViewModel.Object.Interval;
+            // The zone interval for a strategy that trades a zone from a 1m signal (fvgladder)
+            dto.interval = signalViewModel.Object.ChartInterval;
             dto.signal = signalViewModel.Object;
             return true;
         }
@@ -116,7 +118,8 @@ public abstract class CommandBase : ICommand
             dto.PositionViewModel = positionViewModel;
             dto.exchange = positionViewModel.Object.Symbol.Exchange;
             dto.symbol = positionViewModel.Object.Symbol;
-            dto.interval = positionViewModel.Object.Interval;
+            //dto.interval = positionViewModel.Object.Interval;
+            dto.interval = positionViewModel.Object.ChartInterval;
             dto.position = positionViewModel.Object;
             return true;
         }

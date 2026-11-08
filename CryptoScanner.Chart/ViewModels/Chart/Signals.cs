@@ -1,6 +1,8 @@
 ﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -14,7 +16,9 @@ public class Signals
         {
             Title = "s high",
             MarkerSize = 2,
-            MarkerFill = OxyColors.Red,
+            //MarkerFill = OxyColors.Red,
+            // Colour from Settings / Chart styles, the same as the Photino chart
+            MarkerFill = ChartStyleOxy.ColorFor("signalShort", OxyColors.Red),
             MarkerType = MarkerType.Diamond,
             YAxisKey = "price",
             Tag = group
@@ -24,7 +28,8 @@ public class Signals
         {
             Title = "s low",
             MarkerSize = 2,
-            MarkerFill = OxyColors.Yellow,
+            //MarkerFill = OxyColors.Yellow,
+            MarkerFill = ChartStyleOxy.ColorFor("signalLong", OxyColors.Yellow),
             MarkerType = MarkerType.Diamond,
             YAxisKey = "price",
             Tag = group

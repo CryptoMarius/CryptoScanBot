@@ -1,6 +1,8 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Series;
@@ -23,8 +25,12 @@ public class Rsi
         var series = new LineSeries
         {
             Title = "RSI",
-            Color = OxyColors.White,
-            StrokeThickness = 1.0,
+            //Color = OxyColors.White,
+            //StrokeThickness = 1.0,
+            // Colour, width and dash from Settings / Chart styles, the same as the Photino chart
+            Color = ChartStyleOxy.ColorFor("rsi", OxyColors.White),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("rsi", 1.0),
+            LineStyle = ChartStyleOxy.LineStyleFor("rsi", LineStyle.Solid),
             YAxisKey = AxisKey,
             Tag = tag,
         };
@@ -50,9 +56,12 @@ public class Rsi
         {
             Type = LineAnnotationType.Horizontal,
             Y = GlobalData.Settings.General.SettingsRsi.Overbought,
-            Color = OxyColor.FromAColor(140, OxyColors.Tomato),
-            StrokeThickness = 1,
-            LineStyle = LineStyle.Solid,
+            //Color = OxyColor.FromAColor(140, OxyColors.Tomato),
+            //StrokeThickness = 1,
+            //LineStyle = LineStyle.Solid,
+            Color = ChartStyleOxy.ColorFor("rsiOverbought", OxyColor.FromAColor(140, OxyColors.Tomato)),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("rsiOverbought", 1),
+            LineStyle = ChartStyleOxy.LineStyleFor("rsiOverbought", LineStyle.Solid),
             YAxisKey = AxisKey,
             Tag = tag,
         });
@@ -62,9 +71,12 @@ public class Rsi
         {
             Type = LineAnnotationType.Horizontal,
             Y = 50,
-            Color = OxyColor.FromAColor(60, OxyColors.White),
-            StrokeThickness = 1,
-            LineStyle = LineStyle.Dash,
+            //Color = OxyColor.FromAColor(60, OxyColors.White),
+            //StrokeThickness = 1,
+            //LineStyle = LineStyle.Dash,
+            Color = ChartStyleOxy.ColorFor("rsiMiddle", OxyColor.FromAColor(60, OxyColors.White)),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("rsiMiddle", 1),
+            LineStyle = ChartStyleOxy.LineStyleFor("rsiMiddle", LineStyle.Dash),
             YAxisKey = AxisKey,
             Tag = tag,
         });
@@ -74,9 +86,12 @@ public class Rsi
         {
             Type = LineAnnotationType.Horizontal,
             Y = GlobalData.Settings.General.SettingsRsi.Oversold,
-            Color = OxyColor.FromAColor(140, OxyColors.LimeGreen),
-            StrokeThickness = 1,
-            LineStyle = LineStyle.Solid,
+            //Color = OxyColor.FromAColor(140, OxyColors.LimeGreen),
+            //StrokeThickness = 1,
+            //LineStyle = LineStyle.Solid,
+            Color = ChartStyleOxy.ColorFor("rsiOversold", OxyColor.FromAColor(140, OxyColors.LimeGreen)),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("rsiOversold", 1),
+            LineStyle = ChartStyleOxy.LineStyleFor("rsiOversold", LineStyle.Solid),
             YAxisKey = AxisKey,
             Tag = tag,
         });

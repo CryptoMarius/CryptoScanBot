@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
 
 using Photino.NET;
 
@@ -26,14 +27,20 @@ public sealed class TradingViewWindow
 {
     private const string DefaultUrl = "https://www.tradingview.com/chart/";
 
+    /// <summary>The entry in the window file that remembers position, size and screen.</summary>
+    private const string WindowName = "TradingViewWindow";
+
     private readonly PhotinoWindow _mainWindow;
+    private readonly ApplicationStateService _stateService;
 
     /// <summary>Only ever touched on the main window's thread.</summary>
     private PhotinoWindow? _window;
+    private WindowPlacement? _placement;
 
-    public TradingViewWindow(PhotinoWindow mainWindow)
+    public TradingViewWindow(PhotinoWindow mainWindow, ApplicationStateService stateService)
     {
         _mainWindow = mainWindow;
+        _stateService = stateService;
     }
 
     /// <summary>
@@ -85,6 +92,8 @@ public sealed class TradingViewWindow
                 GlobalData.AddTextToLogTab($"TradingView window navigates to: {url}");
                 _window.SetMinimized(false);
                 _window.Load(new Uri(url));
+                // Already open but behind another window: without this it looked as if nothing happened
+                WindowChrome.BringToFront(_window);
                 return;
             }
 
@@ -97,16 +106,21 @@ public sealed class TradingViewWindow
             var window = new PhotinoWindow()
                 .SetTitle($"TradingView ({GlobalData.Settings.General.ExchangeName})")
                 .ApplyIcon()
-                .SetUseOsDefaultSize(false)
-                .SetSize(1400, 900)
-                .SetUseOsDefaultLocation(true)
+                // The same browser switches as the main window, or this window gets no browser
+                .ApplyBrowserArguments()
                 .SetResizable(true)
                 .SetContextMenuEnabled(true)
                 .SetDevToolsEnabled(false)
                 .SetGrantBrowserPermissions(true);
 
+            // Position, size, screen and maximized state come back from the last time. Until
+            // 07-11-2026 the operating system picked a new place on every open.
+            _placement = new WindowPlacement(window, WindowName, _stateService, 1400, 900);
+
             window.RegisterWindowClosingHandler((sender, e) =>
             {
+                _placement?.Save();
+                _placement = null;
                 _window = null;
                 return false; // false = do not cancel, let it close
             });
@@ -120,10 +134,13 @@ public sealed class TradingViewWindow
 
             // The handle only exists once the window has been created, so this comes after it.
             WindowChrome.ApplyTitleBarTheme(window);
+            // Same for the list of monitors, which the check on the restored position needs
+            _placement?.AfterCreate();
         }
         catch (Exception error)
         {
             _window = null;
+            _placement = null;
             ScannerLog.Logger.Error(error, "TradingViewWindow");
             GlobalData.AddTextToLogTab("Could not open the TradingView window: " + error.Message);
         }

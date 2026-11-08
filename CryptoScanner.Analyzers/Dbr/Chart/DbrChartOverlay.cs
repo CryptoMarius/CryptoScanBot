@@ -49,10 +49,16 @@ public class DbrChartOverlay : IChartOverlay
     public IReadOnlyList<ChartOverlaySeries> GetSeries(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        //if (symbolInterval.CandleList.Count == 0)
+        //    return [];
+        if (candles.Count == 0 && symbolInterval.CandleList.Count == 0)
             return [];
 
-        var allCandles = symbolInterval.CandleList.Values.ToList();
+        //var allCandles = symbolInterval.CandleList.Values.ToList();
+        // The candles the chart hands over: in a Photino position window those are the window's
+        // own candles from candles.db, which the live list does not hold. The live list is the
+        // fallback when nothing is handed over.
+        var allCandles = candles.Count > 0 ? candles : symbolInterval.CandleList.Values.ToList();
         DbrBandValue[] bands = DbrBandsHelper.ComputeBands(allCandles);
 
         var upper = ((IChartOverlay)this).SeriesFor(KeyUpper);
@@ -139,11 +145,17 @@ public class DbrChartOverlay : IChartOverlay
     public IReadOnlyList<ChartOverlayLabel> GetLabels(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        //if (symbolInterval.CandleList.Count == 0)
+        //    return [];
+        if (candles.Count == 0 && symbolInterval.CandleList.Count == 0)
             return [];
 
         // Same break conditions as Draw, evaluated by the shared helper
-        var allCandles = symbolInterval.CandleList.Values.ToList();
+        //var allCandles = symbolInterval.CandleList.Values.ToList();
+        // The candles the chart hands over: in a Photino position window those are the window's
+        // own candles from candles.db, which the live list does not hold. The live list is the
+        // fallback when nothing is handed over.
+        var allCandles = candles.Count > 0 ? candles : symbolInterval.CandleList.Values.ToList();
         DbrBandValue[] bands = DbrBandsHelper.ComputeBands(allCandles);
 
         var labels = new List<ChartOverlayLabel>();

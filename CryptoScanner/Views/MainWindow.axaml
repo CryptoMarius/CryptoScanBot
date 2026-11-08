@@ -110,7 +110,8 @@
 						<!-- Tab headers -->
 						<TabControl x:Name="MainTabs" Grid.Row="0" TabStripPlacement="Top" SelectedIndex="{Binding SelectedTabIndex}">
 							<TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
-							<TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
+							<!-- Since 08-11-2026 TradingView opens in a window of its own, see TradingViewWindow -->
+							<!--<TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>-->
 							<TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
 							<TabItem Header="Dashboard" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
 							<TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
@@ -119,7 +120,8 @@
 						</TabControl>
 
 						<!-- Permanent browser (1×1 pixel, alway's visible) --> 
-						<views:BrowserView x:Name="BrowserViewHost" Grid.Row="2" DataContext="{Binding BrowserViewModel}" />
+						<!-- Gone since 08-11-2026 together with the Tradingview tab, see TradingViewWindow -->
+						<!--<views:BrowserView x:Name="BrowserViewHost" Grid.Row="2" DataContext="{Binding BrowserViewModel}" />-->
 
 						<!-- Content area -->
 						<ContentPresenter x:Name="MainContent" Grid.Row="2"/>

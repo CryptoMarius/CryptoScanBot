@@ -2,6 +2,8 @@
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -10,13 +12,29 @@ namespace CryptoScanner.Chart.ViewModels.Chart;
 public class ZigZag
 {
     internal static void Draw(PlotModel chart, List<ZigZagResult> zigZagList, string caption,
-        OxyColor color, CandleTime minDate, CandleTime maxDate, string tag)
+        OxyColor color, CandleTime minDate, CandleTime maxDate, string tag, string? styleKey = null)
     {
-        var seriesZigZag = new LineSeries { Title = tag + caption, Color = color, YAxisKey = "price", Tag = tag };
-        var seriesHigh = new ScatterSeries { Title = tag + "Markers high", MarkerSize = 3, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, YAxisKey = "price", Tag = tag };
-        var seriesLow = new ScatterSeries { Title = tag + "Markers low", MarkerSize = 3, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, YAxisKey = "price", Tag = tag };
-        var seriesDummyHigh = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, YAxisKey = "price", Tag = tag };
-        var seriesDummyLow = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, YAxisKey = "price", Tag = tag };
+        //var seriesZigZag = new LineSeries { Title = tag + caption, Color = color, YAxisKey = "price", Tag = tag };
+        // With a style key ("zigzag" / "fibZigzag") the line takes colour, width and dash from
+        // Settings / Chart styles, the same as the Photino chart
+        var seriesZigZag = styleKey == null
+            ? new LineSeries { Title = tag + caption, Color = color, YAxisKey = "price", Tag = tag }
+            : new LineSeries
+            {
+                Title = tag + caption,
+                Color = ChartStyleOxy.ColorFor(styleKey, color),
+                StrokeThickness = ChartStyleOxy.ThicknessFor(styleKey, 2),
+                LineStyle = ChartStyleOxy.LineStyleFor(styleKey, LineStyle.Solid),
+                YAxisKey = "price",
+                Tag = tag,
+            };
+        // The points take the colours of the ZigZag gear since 07-11-2026 (zigzagHigh / zigzagLow)
+        OxyColor high = ChartStyleOxy.ColorFor("zigzagHigh", OxyColors.Red);
+        OxyColor low = ChartStyleOxy.ColorFor("zigzagLow", OxyColors.Yellow);
+        var seriesHigh = new ScatterSeries { Title = tag + "Markers high", MarkerSize = 3, MarkerFill = high, MarkerType = MarkerType.Circle, YAxisKey = "price", Tag = tag };
+        var seriesLow = new ScatterSeries { Title = tag + "Markers low", MarkerSize = 3, MarkerFill = low, MarkerType = MarkerType.Circle, YAxisKey = "price", Tag = tag };
+        var seriesDummyHigh = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = high, MarkerType = MarkerType.Square, YAxisKey = "price", Tag = tag };
+        var seriesDummyLow = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = low, MarkerType = MarkerType.Square, YAxisKey = "price", Tag = tag };
 
         var linePoints = new List<(long minutes, double value)>();
 

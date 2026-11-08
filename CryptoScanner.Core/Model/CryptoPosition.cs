@@ -119,6 +119,16 @@ public partial class CryptoPosition : CryptoData2
     [Computed]
     public List<Settings.CryptoDcaEntry>? DcaList => Trader.DcaLadder.Parse(DcaLevels);
 
+    // Optional interval of the zone the signal was about (fvgladder trades 1h/4h gaps from a 1m signal),
+    // copied from CryptoSignal at position creation time. Display only, see ChartInterval.
+    public int? ZoneIntervalId { get; set; }
+
+    // The interval the chart and TradingView open on: the zone interval when there is one, else the
+    // interval of the position. The trader never uses this.
+    [Computed]
+    public CryptoInterval ChartInterval =>
+        ZoneIntervalId is int id && GlobalData.IntervalListId.TryGetValue(id, out CryptoInterval? zoneInterval) ? zoneInterval : Interval;
+
     // Sticky flag: set once the position reached the SL-protection profit threshold and
     // the stop was pulled to break-even, so CalculateSlPrices keeps it at BE and never loosens it again.
     public bool SlMovedToBreakEven { get; set; }

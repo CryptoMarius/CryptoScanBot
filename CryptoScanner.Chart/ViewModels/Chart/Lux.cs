@@ -2,6 +2,8 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Indicators;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Series;
@@ -67,7 +69,9 @@ public class Lux
         {
             Title = "Lux overbought",
             Color = OxyColors.Transparent,
-            Fill = OverBoughtFill,
+            //Fill = OverBoughtFill,
+            // Colour from Settings / Chart styles, the same as the Photino chart
+            Fill = ChartStyleOxy.ColorFor("luxOverbought", OverBoughtFill),
             StrokeThickness = 0,
             YAxisKey = AxisKey,
             Tag = tag,
@@ -78,7 +82,8 @@ public class Lux
         {
             Title = "Lux oversold",
             Color = OxyColors.Transparent,
-            Fill = OverSoldFill,
+            //Fill = OverSoldFill,
+            Fill = ChartStyleOxy.ColorFor("luxOversold", OverSoldFill),
             StrokeThickness = 0,
             YAxisKey = AxisKey,
             Tag = tag,

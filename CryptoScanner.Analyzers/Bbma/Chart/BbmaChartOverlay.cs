@@ -33,6 +33,8 @@ public class BbmaChartOverlay : IChartOverlay
     public const string KeyWma5Low = "bbmaWma5Low";
     public const string KeyWma10Low = "bbmaWma10Low";
     public const string KeyEma50 = "bbmaEma50";
+    public const string KeyBandHigh = "bbmaBandHigh";
+    public const string KeyBandLow = "bbmaBandLow";
 
     /// <summary>
     /// What this overlay draws and how it looks by default. The colour screen builds its section from
@@ -48,7 +50,247 @@ public class BbmaChartOverlay : IChartOverlay
         new() { Key = KeyWma5Low, Label = "WMA 5 low", Color = "#2e7d32" },
         new() { Key = KeyWma10Low, Label = "WMA 10 low", Color = "#2e7d32", LineStyle = 2 },
         new() { Key = KeyEma50, Label = "EMA 50", Color = "#ef6c00", LineWidth = 2 },
+        // The filled bands between WMA 5 and WMA 10, high and low (both charts since 06-11-2026)
+        new() { Key = KeyBandHigh, Label = "Band high (fill)", Color = "#788B0000", IsFill = true },
+        new() { Key = KeyBandLow, Label = "Band low (fill)", Color = "#78006400", IsFill = true },
     ];
+
+    /// <summary>
+    /// The filled bands for the web chart: WMA 5 to WMA 10 of the highs (dark red) and of the lows
+    /// (dark green), the two AreaSeries Draw paints on the Avalonia chart.
+    /// </summary>
+    public IReadOnlyList<ChartOverlayBand> GetBands(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
+    {
+        if (candles.Count == 0)
+            return [];
+
+        var quotes = candles.AsQuotes();
+        var wma05Low = quotes.Use(CandlePart.Low).ToWma(5).ToList();
+        var wma05High = quotes.Use(CandlePart.High).ToWma(5).ToList();
+        var wma10Low = quotes.Use(CandlePart.Low).ToWma(10).ToList();
+        var wma10High = quotes.Use(CandlePart.High).ToWma(10).ToList();
+
+        var bandHigh = new ChartOverlayBand
+        {
+            Key = "bbmaBandHigh",
+            StyleKeyUp = KeyBandHigh,
+            StyleKeyDown = KeyBandHigh,
+            FillColorUp = "rgba(139,0,0,0.47)",
+            FillColorDown = "rgba(139,0,0,0.47)",
+        };
+        var bandLow = new ChartOverlayBand
+        {
+            Key = "bbmaBandLow",
+            StyleKeyUp = KeyBandLow,
+            StyleKeyDown = KeyBandLow,
+            FillColorUp = "rgba(0,100,0,0.47)",
+            FillColorDown = "rgba(0,100,0,0.47)",
+        };
+
+        for (int i = 0; i < candles.Count; i++)
+        {
+            long time = CandleTime.AlignFromDateTime(candles[i].Date, interval.Duration).ToUnixSeconds();
+            double? h5 = i < wma05High.Count ? wma05High[i].Wma : null;
+            double? h10 = i < wma10High.Count ? wma10High[i].Wma : null;
+            double? l5 = i < wma05Low.Count ? wma05Low[i].Wma : null;
+            double? l10 = i < wma10Low.Count ? wma10Low[i].Wma : null;
+
+            // A candle without both lines becomes a point without values: the renderer lifts the pen
+            bandHigh.Points.Add(new ChartOverlayBandPoint
+            {
+                Time = time,
+                High = h5 == null || h10 == null ? null : Math.Max(h5.Value, h10.Value),
+                Low = h5 == null || h10 == null ? null : Math.Min(h5.Value, h10.Value),
+                Up = true,
+            });
+            bandLow.Points.Add(new ChartOverlayBandPoint
+            {
+                Time = time,
+                High = l5 == null || l10 == null ? null : Math.Max(l5.Value, l10.Value),
+                Low = l5 == null || l10 == null ? null : Math.Min(l5.Value, l10.Value),
+                Up = true,
+            });
+        }
+
+        return [bandHigh, bandLow];
+    }
+
+    /// <summary>
+    /// The OmniView states as labels for the web chart, the markers Draw puts on the Avalonia chart.
+    /// A label is text, so the shape becomes a character: ▲ extreme, ● TPW, ◆ MHV, ■ re-entry and a
+    /// small grey dot for the intermediate states. Green is buy (under the candle), red is sell.
+    /// </summary>
+    public IReadOnlyList<ChartOverlayLabel> GetLabels(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
+    {
+        if (candles.Count == 0)
+            return [];
+
+        CandleTime minDate = candles[0].OpenTime;
+        CandleTime maxDate = candles[^1].OpenTime;
+        var labels = new List<ChartOverlayLabel>();
+        foreach (var marker in ComputeOmniMarkers(symbol, interval, candles, minDate, maxDate))
+        {
+            string text = marker.Kind switch
+            {
+                OmniMarkerKind.Extreme => "▲",
+                OmniMarkerKind.Tpw => "●",
+                OmniMarkerKind.Mhv => "◆",
+                OmniMarkerKind.Reentry => "■",
+                _ => "·",
+            };
+            string color = marker.Kind == OmniMarkerKind.Intermediate
+                ? "#a0a0a0"
+                : marker.Buy ? "#32cd32" : "#ff0000";
+            labels.Add(new ChartOverlayLabel
+            {
+                Time = marker.Time.ToUnixSeconds(),
+                Above = !marker.Buy,
+                Price = marker.Price,
+                Text = text,
+                Color = color,
+            });
+        }
+        return labels;
+    }
+
+    /// <summary>The kinds of OmniView marker; see the legend in Draw.</summary>
+    private enum OmniMarkerKind { Extreme, Tpw, Mhv, Reentry, Intermediate }
+
+    /// <summary>One OmniView marker: where, which side, which kind, at which price.</summary>
+    private readonly record struct OmniMarker(CandleTime Time, bool Buy, OmniMarkerKind Kind, double Price);
+
+    /// <summary>Which intermediate states are drawn as a small grey dot.</summary>
+    private static bool IsIntermediate(SignalBbmaOmniBase.OmniState state) => state is
+        SignalBbmaOmniBase.OmniState.Csd or SignalBbmaOmniBase.OmniState.Csak2 or SignalBbmaOmniBase.OmniState.Csaa
+        or SignalBbmaOmniBase.OmniState.Csm or SignalBbmaOmniBase.OmniState.Cross
+        or SignalBbmaOmniBase.OmniState.GapBbEma50 or SignalBbmaOmniBase.OmniState.RejectedEma50;
+
+    /// <summary>
+    /// The OmniView classification of every candle in [minDate, maxDate], shared by Draw (Avalonia)
+    /// and GetLabels (Photino), so both charts mark the very same candles.
+    /// </summary>
+    private static List<OmniMarker> ComputeOmniMarkers(CryptoSymbol symbol, CryptoInterval interval,
+        List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate)
+    {
+        List<OmniMarker> result = [];
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+
+        // Build indicator data ending at maxDate.
+        // Add 200 extra bars beyond the view window so SMA200 (and all slower indicators) are
+        // fully warmed up for every displayed candle. Without the extra history, SMA200 is null
+        // for all displayed bars and the Sma200==null warmup gate skips all state calculations.
+        int count = (int)((maxDate.Minutes - minDate.Minutes + 1) / interval.Duration);
+        IndicatorEngine.PrepareIndicators(symbol, interval, maxDate, count + 200);
+
+        // Build OmniView classifiers for this symbol/interval. GetPrevCandle / BuildTpwCache read the
+        // per-interval indicator data from symbolInterval.Data (filled by PrepareIndicators above).
+        if (!symbolInterval.TryGetCandle(maxDate, out MyData? seedCandle) || seedCandle == null)
+            return result;
+
+        var longClassifier = new SignalBbmaOmniLong
+        {
+            Symbol = symbol,
+            Interval = interval,
+            SymbolInterval = symbolInterval,
+            SignalSide = CryptoTradeSide.Long,
+            SignalStrategy = BbmaPlugin.StrategyInternal.ToLower(),
+            CandleLast = seedCandle,
+        };
+        var shortClassifier = new SignalBbmaOmniShort
+        {
+            Symbol = symbol,
+            Interval = interval,
+            SymbolInterval = symbolInterval,
+            SignalSide = CryptoTradeSide.Short,
+            SignalStrategy = BbmaPlugin.StrategyInternal.ToLower(),
+            CandleLast = seedCandle,
+        };
+
+        // Build the forward-pass TPW caches (matches MQ5 tpwbuy/tpwsell exactly).
+        // Both classifiers are available here, so cross-reset delegates are wired.
+        longClassifier.BuildTpwCache(symbolInterval, d => shortClassifier.IsExtremeSellBar(d));
+        shortClassifier.BuildTpwCache(symbolInterval, d => longClassifier.IsExtremeBuyBar(d));
+
+        // Iterate ALL candles in chronological order (oldest → newest) so prevData is always
+        // the bar immediately before the current one — needed for MHV fractal confirmation.
+        // Points are only added for candles inside [minDate, maxDate].
+        MyData? prevData = null;
+        foreach (var candle in candles)
+        {
+            CandleTime openTime = candle.OpenTime;
+
+            if (!symbolInterval.TryGetCandle(candle.OpenTime, out MyData? newData) || newData == null)
+            {
+                prevData = null; // chain broken — no indicator data for this bar
+                continue;
+            }
+
+            if (newData.CandleData == null || newData.CandleData.Sma200 == null)
+            {
+                prevData = null; // indicator warmup not complete; reset the prev/next chain
+                continue;
+            }
+
+            try
+            {
+                // MHV fires at prevData (cursor) once newData (next) confirms the fractal.
+                // Plot the marker at prevData's position, only when it falls in [minDate, maxDate].
+                if (prevData != null
+                    && prevData.Candle.OpenTime >= minDate
+                    && prevData.Candle.OpenTime <= maxDate)
+                {
+                    CandleTime prevTime = prevData.Candle.OpenTime;
+                    double prevLow = (double)prevData.Candle.Low;
+                    double prevLB = prevData.CandleData.BollingerBandsLowerBand!.Value;
+                    double prevHigh = (double)prevData.Candle.High;
+                    double prevUB = prevData.CandleData.BollingerBandsUpperBand!.Value;
+
+                    if (longClassifier.IsMhvBuy(prevData, newData))
+                        result.Add(new OmniMarker(prevTime, true, OmniMarkerKind.Mhv, 0.993 * Math.Min(prevLB, prevLow)));
+
+                    if (shortClassifier.IsMhvSell(prevData, newData))
+                        result.Add(new OmniMarker(prevTime, false, OmniMarkerKind.Mhv, 1.007 * Math.Max(prevUB, prevHigh)));
+                }
+
+                // Classify all other states for the current bar (only when inside the view window)
+                if (openTime >= minDate && openTime <= maxDate)
+                {
+                    double minY = Math.Min(newData.CandleData.BollingerBandsLowerBand!.Value, (double)newData.Candle.Low);
+                    double maxY = Math.Max(newData.CandleData.BollingerBandsUpperBand!.Value, (double)newData.Candle.High);
+
+                    // --- Long (buy) states — marker placed below the candle ---
+                    var longState = longClassifier.GetOmniState(newData);
+                    if (longState == SignalBbmaOmniBase.OmniState.Extreme)
+                        result.Add(new OmniMarker(openTime, true, OmniMarkerKind.Extreme, 0.993 * minY));
+                    else if (longState == SignalBbmaOmniBase.OmniState.Tpw)
+                        result.Add(new OmniMarker(openTime, true, OmniMarkerKind.Tpw, 0.993 * minY));
+                    else if (longState == SignalBbmaOmniBase.OmniState.Reentry)
+                        result.Add(new OmniMarker(openTime, true, OmniMarkerKind.Reentry, 0.993 * minY));
+                    else if (IsIntermediate(longState))
+                        result.Add(new OmniMarker(openTime, true, OmniMarkerKind.Intermediate, 0.993 * minY));
+
+                    // --- Short (sell) states — marker placed above the candle ---
+                    var shortState = shortClassifier.GetOmniState(newData);
+                    if (shortState == SignalBbmaOmniBase.OmniState.Extreme)
+                        result.Add(new OmniMarker(openTime, false, OmniMarkerKind.Extreme, 1.007 * maxY));
+                    else if (shortState == SignalBbmaOmniBase.OmniState.Tpw)
+                        result.Add(new OmniMarker(openTime, false, OmniMarkerKind.Tpw, 1.007 * maxY));
+                    else if (shortState == SignalBbmaOmniBase.OmniState.Reentry)
+                        result.Add(new OmniMarker(openTime, false, OmniMarkerKind.Reentry, 1.007 * maxY));
+                    else if (IsIntermediate(shortState))
+                        result.Add(new OmniMarker(openTime, false, OmniMarkerKind.Intermediate, 1.007 * maxY));
+                }
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab($"error showing chart {error.Message}");
+            }
+
+            prevData = newData;
+        }
+        return result;
+    }
 
     public IReadOnlyList<ChartOverlaySeries> GetSeries(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles)
     {
@@ -162,7 +404,8 @@ public class BbmaChartOverlay : IChartOverlay
         var seriesBandHigh = new AreaSeries
         {
             Title = "wma high band",
-            Fill = OxyColor.FromArgb(120, 139, 0, 0),   // semi-transparent dark red
+            //Fill = OxyColor.FromArgb(120, 139, 0, 0),   // semi-transparent dark red
+            Fill = ChartStyleOxy.ColorFor(KeyBandHigh, OxyColor.FromArgb(120, 139, 0, 0)),   // semi-transparent dark red
             Color = OxyColors.Transparent,
             StrokeThickness = 0,
             YAxisKey = "price",
@@ -171,7 +414,8 @@ public class BbmaChartOverlay : IChartOverlay
         var seriesBandLow = new AreaSeries
         {
             Title = "wma low band",
-            Fill = OxyColor.FromArgb(120, 0, 100, 0),   // semi-transparent dark green
+            //Fill = OxyColor.FromArgb(120, 0, 100, 0),   // semi-transparent dark green
+            Fill = ChartStyleOxy.ColorFor(KeyBandLow, OxyColor.FromArgb(120, 0, 100, 0)),   // semi-transparent dark green
             Color = OxyColors.Transparent,
             StrokeThickness = 0,
             YAxisKey = "price",
@@ -390,161 +634,175 @@ public class BbmaChartOverlay : IChartOverlay
 
 
 #if DEBUG
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        //CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-        // Build indicator data ending at maxDate.
-        // Add 200 extra bars beyond the view window so SMA200 (and all slower indicators) are
-        // fully warmed up for every displayed candle. Without the extra history, SMA200 is null
-        // for all displayed bars and the Sma200==null warmup gate skips all state calculations.
-        int count = (int)((maxDate.Minutes - minDate.Minutes + 1) / interval.Duration);
-        IndicatorEngine.PrepareIndicators(symbol, interval, maxDate, count + 200);
+        //// Build indicator data ending at maxDate.
+        //// Add 200 extra bars beyond the view window so SMA200 (and all slower indicators) are
+        //// fully warmed up for every displayed candle. Without the extra history, SMA200 is null
+        //// for all displayed bars and the Sma200==null warmup gate skips all state calculations.
+        //int count = (int)((maxDate.Minutes - minDate.Minutes + 1) / interval.Duration);
+        //IndicatorEngine.PrepareIndicators(symbol, interval, maxDate, count + 200);
 
-        // Build OmniView classifiers for this symbol/interval. GetPrevCandle / BuildTpwCache read the
-        // per-interval indicator data from symbolInterval.Data (filled by PrepareIndicators above).
-        SignalBbmaOmniLong? longClassifier = null;
-        SignalBbmaOmniShort? shortClassifier = null;
+        //// Build OmniView classifiers for this symbol/interval. GetPrevCandle / BuildTpwCache read the
+        //// per-interval indicator data from symbolInterval.Data (filled by PrepareIndicators above).
+        //SignalBbmaOmniLong? longClassifier = null;
+        //SignalBbmaOmniShort? shortClassifier = null;
 
-        if (symbolInterval.TryGetCandle(maxDate, out MyData? seedCandle) && seedCandle != null)
+        //if (symbolInterval.TryGetCandle(maxDate, out MyData? seedCandle) && seedCandle != null)
+        //{
+        //    longClassifier = new SignalBbmaOmniLong
+        //    {
+        //        Symbol = symbol,
+        //        Interval = interval,
+        //        SymbolInterval = symbolInterval,
+        //        SignalSide = CryptoTradeSide.Long,
+        //        SignalStrategy = BbmaPlugin.StrategyInternal.ToLower(),
+        //        CandleLast = seedCandle,
+        //    };
+        //    shortClassifier = new SignalBbmaOmniShort
+        //    {
+        //        Symbol = symbol,
+        //        Interval = interval,
+        //        SymbolInterval = symbolInterval,
+        //        SignalSide = CryptoTradeSide.Short,
+        //        SignalStrategy = BbmaPlugin.StrategyInternal.ToLower(),
+        //        CandleLast = seedCandle,
+        //    };
+
+        //    // Build the forward-pass TPW caches (matches MQ5 tpwbuy/tpwsell exactly).
+        //    // Both classifiers are available here, so cross-reset delegates are wired.
+        //    longClassifier.BuildTpwCache(symbolInterval, d => shortClassifier.IsExtremeSellBar(d));
+        //    shortClassifier.BuildTpwCache(symbolInterval, d => longClassifier.IsExtremeBuyBar(d));
+        //}
+
+        //if (longClassifier != null && shortClassifier != null)
+        //{
+        //    // Iterate ALL candles in chronological order (oldest → newest) so prevData is always
+        //    // the bar immediately before the current one — needed for MHV fractal confirmation.
+        //    // Points are only added for candles inside [minDate, maxDate].
+        //    MyData? prevData = null;
+
+        //    foreach (var candle in candles)
+        //    {
+        //        CandleTime openTime = candle.OpenTime;
+
+        //        if (!symbolInterval.TryGetCandle(candle.OpenTime, out MyData? newData) || newData == null)
+        //        {
+        //            prevData = null; // chain broken — no indicator data for this bar
+        //            continue;
+        //        }
+
+        //        if (newData.CandleData == null || newData.CandleData.Sma200 == null)
+        //        {
+        //            prevData = null; // indicator warmup not complete; reset the prev/next chain
+        //            continue;
+        //        }
+
+        //        try
+        //        {
+        //            // MHV fires at prevData (cursor) once newData (next) confirms the fractal.
+        //            // Plot the marker at prevData's position, only when it falls in [minDate, maxDate].
+        //            if (prevData != null
+        //                && prevData.Candle.OpenTime >= minDate
+        //                && prevData.Candle.OpenTime <= maxDate)
+        //            {
+        //                CandleTime prevTime = prevData.Candle.OpenTime;
+        //                double prevLow = (double)prevData.Candle.Low;
+        //                double prevLB = prevData.CandleData.BollingerBandsLowerBand!.Value;
+        //                double prevHigh = (double)prevData.Candle.High;
+        //                double prevUB = prevData.CandleData.BollingerBandsUpperBand!.Value;
+
+        //                if (longClassifier.IsMhvBuy(prevData, newData))
+        //                    seriesOmniMhvBuy.Points.Add(new ScatterPoint(
+        //                        prevTime.Minutes, 0.993 * Math.Min(prevLB, prevLow)));
+
+        //                if (shortClassifier.IsMhvSell(prevData, newData))
+        //                    seriesOmniMhvSell.Points.Add(new ScatterPoint(
+        //                        prevTime.Minutes, 1.007 * Math.Max(prevUB, prevHigh)));
+        //            }
+
+        //            // Classify all other states for the current bar (only when inside the view window)
+        //            if (openTime >= minDate && openTime <= maxDate)
+        //            {
+        //                double low = (double)newData.Candle.Low;
+        //                double lowerB = newData.CandleData.BollingerBandsLowerBand!.Value;
+        //                double minY = Math.Min(lowerB, low);
+
+        //                double high = (double)newData.Candle.High;
+        //                double upperB = newData.CandleData.BollingerBandsUpperBand!.Value;
+        //                double maxY = Math.Max(upperB, high);
+
+        //                // --- Long (buy) states — marker placed below the candle ---
+        //                var longState = longClassifier.GetOmniState(newData);
+        //                switch (longState)
+        //                {
+        //                    case SignalBbmaOmniBase.OmniState.Extreme:
+        //                        seriesOmniExtremeBuy.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
+        //                        break;
+        //                    case SignalBbmaOmniBase.OmniState.Tpw:
+        //                        seriesOmniTpwBuy.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
+        //                        break;
+        //                    case SignalBbmaOmniBase.OmniState.Reentry:
+        //                        seriesOmniReentryBuy.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
+        //                        break;
+        //                    case SignalBbmaOmniBase.OmniState.Csd:
+        //                    case SignalBbmaOmniBase.OmniState.Csak2:
+        //                    case SignalBbmaOmniBase.OmniState.Csaa:
+        //                    case SignalBbmaOmniBase.OmniState.Csm:
+        //                    case SignalBbmaOmniBase.OmniState.Cross:
+        //                    case SignalBbmaOmniBase.OmniState.GapBbEma50:
+        //                    case SignalBbmaOmniBase.OmniState.RejectedEma50:
+        //                        seriesOmniIntermediateBuy.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
+        //                        break;
+        //                }
+
+        //                // --- Short (sell) states — marker placed above the candle ---
+        //                var shortState = shortClassifier.GetOmniState(newData);
+        //                switch (shortState)
+        //                {
+        //                    case SignalBbmaOmniBase.OmniState.Extreme:
+        //                        seriesOmniExtremeSell.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
+        //                        break;
+        //                    case SignalBbmaOmniBase.OmniState.Tpw:
+        //                        seriesOmniTpwSell.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
+        //                        break;
+        //                    case SignalBbmaOmniBase.OmniState.Reentry:
+        //                        seriesOmniReentrySell.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
+        //                        break;
+        //                    case SignalBbmaOmniBase.OmniState.Csd:
+        //                    case SignalBbmaOmniBase.OmniState.Csak2:
+        //                    case SignalBbmaOmniBase.OmniState.Csaa:
+        //                    case SignalBbmaOmniBase.OmniState.Csm:
+        //                    case SignalBbmaOmniBase.OmniState.Cross:
+        //                    case SignalBbmaOmniBase.OmniState.GapBbEma50:
+        //                    case SignalBbmaOmniBase.OmniState.RejectedEma50:
+        //                        seriesOmniIntermediateSell.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
+        //                        break;
+        //                }
+        //            }
+        //        }
+        //        catch (Exception error)
+        //        {
+        //            ScannerLog.Logger.Error(error, "");
+        //            GlobalData.AddTextToLogTab($"error showing chart {error.Message}");
+        //        }
+
+        //        prevData = newData;
+        //    }
+        //}
+
+        // The OmniView markers come from the same calculation as the web chart (GetLabels)
+        foreach (var marker in ComputeOmniMarkers(symbol, interval, candles, minDate, maxDate))
         {
-            longClassifier = new SignalBbmaOmniLong
+            ScatterSeries target = marker.Kind switch
             {
-                Symbol = symbol,
-                Interval = interval,
-                SymbolInterval = symbolInterval,
-                SignalSide = CryptoTradeSide.Long,
-                SignalStrategy = BbmaPlugin.StrategyInternal.ToLower(),
-                CandleLast = seedCandle,
+                OmniMarkerKind.Extreme => marker.Buy ? seriesOmniExtremeBuy : seriesOmniExtremeSell,
+                OmniMarkerKind.Tpw => marker.Buy ? seriesOmniTpwBuy : seriesOmniTpwSell,
+                OmniMarkerKind.Mhv => marker.Buy ? seriesOmniMhvBuy : seriesOmniMhvSell,
+                OmniMarkerKind.Reentry => marker.Buy ? seriesOmniReentryBuy : seriesOmniReentrySell,
+                _ => marker.Buy ? seriesOmniIntermediateBuy : seriesOmniIntermediateSell,
             };
-            shortClassifier = new SignalBbmaOmniShort
-            {
-                Symbol = symbol,
-                Interval = interval,
-                SymbolInterval = symbolInterval,
-                SignalSide = CryptoTradeSide.Short,
-                SignalStrategy = BbmaPlugin.StrategyInternal.ToLower(),
-                CandleLast = seedCandle,
-            };
-
-            // Build the forward-pass TPW caches (matches MQ5 tpwbuy/tpwsell exactly).
-            // Both classifiers are available here, so cross-reset delegates are wired.
-            longClassifier.BuildTpwCache(symbolInterval, d => shortClassifier.IsExtremeSellBar(d));
-            shortClassifier.BuildTpwCache(symbolInterval, d => longClassifier.IsExtremeBuyBar(d));
-        }
-
-        if (longClassifier != null && shortClassifier != null)
-        {
-            // Iterate ALL candles in chronological order (oldest → newest) so prevData is always
-            // the bar immediately before the current one — needed for MHV fractal confirmation.
-            // Points are only added for candles inside [minDate, maxDate].
-            MyData? prevData = null;
-
-            foreach (var candle in candles)
-            {
-                CandleTime openTime = candle.OpenTime;
-
-                if (!symbolInterval.TryGetCandle(candle.OpenTime, out MyData? newData) || newData == null)
-                {
-                    prevData = null; // chain broken — no indicator data for this bar
-                    continue;
-                }
-
-                if (newData.CandleData == null || newData.CandleData.Sma200 == null)
-                {
-                    prevData = null; // indicator warmup not complete; reset the prev/next chain
-                    continue;
-                }
-
-                try
-                {
-                    // MHV fires at prevData (cursor) once newData (next) confirms the fractal.
-                    // Plot the marker at prevData's position, only when it falls in [minDate, maxDate].
-                    if (prevData != null
-                        && prevData.Candle.OpenTime >= minDate
-                        && prevData.Candle.OpenTime <= maxDate)
-                    {
-                        CandleTime prevTime = prevData.Candle.OpenTime;
-                        double prevLow = (double)prevData.Candle.Low;
-                        double prevLB = prevData.CandleData.BollingerBandsLowerBand!.Value;
-                        double prevHigh = (double)prevData.Candle.High;
-                        double prevUB = prevData.CandleData.BollingerBandsUpperBand!.Value;
-
-                        if (longClassifier.IsMhvBuy(prevData, newData))
-                            seriesOmniMhvBuy.Points.Add(new ScatterPoint(
-                                prevTime.Minutes, 0.993 * Math.Min(prevLB, prevLow)));
-
-                        if (shortClassifier.IsMhvSell(prevData, newData))
-                            seriesOmniMhvSell.Points.Add(new ScatterPoint(
-                                prevTime.Minutes, 1.007 * Math.Max(prevUB, prevHigh)));
-                    }
-
-                    // Classify all other states for the current bar (only when inside the view window)
-                    if (openTime >= minDate && openTime <= maxDate)
-                    {
-                        double low = (double)newData.Candle.Low;
-                        double lowerB = newData.CandleData.BollingerBandsLowerBand!.Value;
-                        double minY = Math.Min(lowerB, low);
-
-                        double high = (double)newData.Candle.High;
-                        double upperB = newData.CandleData.BollingerBandsUpperBand!.Value;
-                        double maxY = Math.Max(upperB, high);
-
-                        // --- Long (buy) states — marker placed below the candle ---
-                        var longState = longClassifier.GetOmniState(newData);
-                        switch (longState)
-                        {
-                            case SignalBbmaOmniBase.OmniState.Extreme:
-                                seriesOmniExtremeBuy.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
-                                break;
-                            case SignalBbmaOmniBase.OmniState.Tpw:
-                                seriesOmniTpwBuy.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
-                                break;
-                            case SignalBbmaOmniBase.OmniState.Reentry:
-                                seriesOmniReentryBuy.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
-                                break;
-                            case SignalBbmaOmniBase.OmniState.Csd:
-                            case SignalBbmaOmniBase.OmniState.Csak2:
-                            case SignalBbmaOmniBase.OmniState.Csaa:
-                            case SignalBbmaOmniBase.OmniState.Csm:
-                            case SignalBbmaOmniBase.OmniState.Cross:
-                            case SignalBbmaOmniBase.OmniState.GapBbEma50:
-                            case SignalBbmaOmniBase.OmniState.RejectedEma50:
-                                seriesOmniIntermediateBuy.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
-                                break;
-                        }
-
-                        // --- Short (sell) states — marker placed above the candle ---
-                        var shortState = shortClassifier.GetOmniState(newData);
-                        switch (shortState)
-                        {
-                            case SignalBbmaOmniBase.OmniState.Extreme:
-                                seriesOmniExtremeSell.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
-                                break;
-                            case SignalBbmaOmniBase.OmniState.Tpw:
-                                seriesOmniTpwSell.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
-                                break;
-                            case SignalBbmaOmniBase.OmniState.Reentry:
-                                seriesOmniReentrySell.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
-                                break;
-                            case SignalBbmaOmniBase.OmniState.Csd:
-                            case SignalBbmaOmniBase.OmniState.Csak2:
-                            case SignalBbmaOmniBase.OmniState.Csaa:
-                            case SignalBbmaOmniBase.OmniState.Csm:
-                            case SignalBbmaOmniBase.OmniState.Cross:
-                            case SignalBbmaOmniBase.OmniState.GapBbEma50:
-                            case SignalBbmaOmniBase.OmniState.RejectedEma50:
-                                seriesOmniIntermediateSell.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
-                                break;
-                        }
-                    }
-                }
-                catch (Exception error)
-                {
-                    ScannerLog.Logger.Error(error, "");
-                    GlobalData.AddTextToLogTab($"error showing chart {error.Message}");
-                }
-
-                prevData = newData;
-            }
+            target.Points.Add(new ScatterPoint(marker.Time.Minutes, marker.Price));
         }
 #endif
 

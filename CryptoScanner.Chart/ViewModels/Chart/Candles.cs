@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Analyzers.Chart;
 
 using OxyPlot;
 using OxyPlot.Series;
@@ -20,10 +21,13 @@ public class Candles
         {
             Title = "Candles",
             //DecreasingColor = OxyColors.Red,
-            DecreasingColor = OxyColors.DarkOrange,
+            //DecreasingColor = OxyColors.DarkOrange,
+            // The colours of the Candles gear since 07-11-2026, the same as the Photino chart
+            DecreasingColor = ChartStyleOxy.ColorFor("candleDown", OxyColors.DarkOrange),
             Color = OxyColors.Black,
             //IncreasingColor = OxyColors.LightGreen,
-            IncreasingColor = OxyColors.DarkGreen,
+            //IncreasingColor = OxyColors.DarkGreen,
+            IncreasingColor = ChartStyleOxy.ColorFor("candleUp", OxyColors.DarkGreen),
             //TrackerFormatString = "Time: {0}\nHigh: {1}\nLow: {2}\nOpen: {3}\nClose: {4}"
             //The default format string for CandleStickSeries is "{0}\n{1}: {2}\nHigh: {3:0.###}\nLow: {4:0.###}\nOpen: {5:0.###}\nClose: {6:0.###}"
             //TrackerFormatString = "{0}\n {1}\n {2}\nOpen: {5:0.###}\nHigh: {3:0.###}\nLow: {4:0.###}\nClose: {6:0.###} {DateX}"

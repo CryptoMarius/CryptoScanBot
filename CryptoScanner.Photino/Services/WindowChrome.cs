@@ -18,6 +18,24 @@ namespace CryptoScanner.Photino.Services;
 public static class WindowChrome
 {
     /// <summary>
+    /// The Chromium switches every WebView of this process starts with (see Program.cs for why).
+    /// They have to be the same for EVERY window: all WebViews of one process share one WebView2
+    /// environment in one data folder, and a window that asks for other switches does not get a
+    /// browser at all - it stays empty without an error. That is what happened to the TradingView
+    /// and chart windows once the main window got these switches (29-10-2026).
+    /// </summary>
+    public const string BrowserArguments = "--disable-renderer-backgrounding --disable-backgrounding-occluded-windows";
+
+    /// <summary>Give a window the same browser start options as the main window. Windows only:
+    /// on Linux the same Photino setting takes WebKit JSON.</summary>
+    public static PhotinoWindow ApplyBrowserArguments(this PhotinoWindow window)
+    {
+        if (OperatingSystem.IsWindows())
+            window.SetBrowserControlInitParameters(BrowserArguments);
+        return window;
+    }
+
+    /// <summary>
     /// The application icon, copied next to the executable by the project file. Empty when it is
     /// missing, in which case the icon is simply not set - Photino throws on a path that is not
     /// there.
@@ -90,6 +108,25 @@ public static class WindowChrome
     /// Repaint the title bar in the colour of the current theme. Call this AFTER the native window
     /// exists (the handle is zero before that) and again whenever the theme changes.
     /// </summary>
+    /// <summary>
+    /// Bring an open window to the front (restored when minimized). Photino has no call for that;
+    /// toggling topmost did not lift a window that sat behind another one.
+    /// </summary>
+    public static void BringToFront(PhotinoWindow? window)
+    {
+        if (window == null)
+            return;
+
+        try
+        {
+            GlobalData.GetService<IPlatformService>()?.BringWindowToFront(window.WindowHandle);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "WindowChrome.BringToFront");
+        }
+    }
+
     public static void ApplyTitleBarTheme(PhotinoWindow? window)
     {
         if (window == null)

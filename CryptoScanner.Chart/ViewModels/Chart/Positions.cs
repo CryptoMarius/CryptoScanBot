@@ -3,6 +3,8 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Series;
@@ -17,10 +19,22 @@ public class Positions
     //private static OxyColor StepColor(CryptoPositionStep step) =>
     //    step.Side == CryptoOrderSide.Buy ? OxyColors.Green : OxyColors.Red;
 
+    // Colour, width and dash from Settings / Chart styles (group "Positions"), the same keys the
+    // Photino chart reads in ChartDataService.BuildPositionOverlays. Without a key the series keeps
+    // the colour, width and pattern it was given.
+    private static void ApplyStyle(LineSeries series, string? styleKey)
+    {
+        if (styleKey == null)
+            return;
+        series.Color = ChartStyleOxy.ColorFor(styleKey, series.Color);
+        series.StrokeThickness = ChartStyleOxy.ThicknessFor(styleKey, series.StrokeThickness);
+        series.LineStyle = ChartStyleOxy.LineStyleFor(styleKey, series.LineStyle);
+    }
+
     // Draws a vertical line at the open time of a position.
     // Long: grows up from y=0. Short: hangs down from y=yAxisTop.
     private static void DrawVerticalLine(PlotModel chart, DateTime time,
-        decimal atPrice, decimal yAxisTop, OxyColor color, string group)
+        decimal atPrice, decimal yAxisTop, OxyColor color, string group, string? styleKey = null)
     {
         var series = new LineSeries
         {
@@ -31,6 +45,7 @@ public class Positions
             YAxisKey = "price",
             Tag = group
         };
+        ApplyStyle(series, styleKey);
         double x = CandleTime.FromDateTime(time).Minutes;
         series.Points.Add(new DataPoint(x, (double)yAxisTop));
         series.Points.Add(new DataPoint(x, (double)atPrice));
@@ -40,7 +55,7 @@ public class Positions
     // Draws a labeled horizontal line between xStart and xEnd at the given price.
     // The caption is placed just right of xStart in white left-aligned text.
     private static void DrawHorizontalLine(PlotModel chart, double xStart, double xEnd,
-        decimal atPrice, OxyColor color, string caption, double xLabelOffset, string group)
+        decimal atPrice, OxyColor color, string caption, double xLabelOffset, string group, string? styleKey = null)
     {
         var series = new LineSeries
         {
@@ -51,6 +66,7 @@ public class Positions
             YAxisKey = "price",
             Tag = group
         };
+        ApplyStyle(series, styleKey);
         series.Points.Add(new DataPoint(xStart, (double)atPrice));
         series.Points.Add(new DataPoint(xEnd, (double)atPrice));
         chart.Series.Add(series);
@@ -76,7 +92,7 @@ public class Positions
     // pattern as DrawHorizontalLine: solid, it sat on the chart as a heavy bar next to the thin
     // levels it was only meant to tie together.
     private static void DrawConnectorLine(PlotModel chart, double x,
-        decimal priceFrom, decimal priceTo, OxyColor color, string group)
+        decimal priceFrom, decimal priceTo, OxyColor color, string group, string? styleKey = null)
     {
         var series = new LineSeries
         {
@@ -87,6 +103,7 @@ public class Positions
             YAxisKey = "price",
             Tag = group
         };
+        ApplyStyle(series, styleKey);
         series.Points.Add(new DataPoint(x, (double)priceFrom));
         series.Points.Add(new DataPoint(x, (double)priceTo));
         chart.Series.Add(series);
@@ -99,6 +116,7 @@ public class Positions
     {
         public string Caption = "";
         public OxyColor Color;
+        public string? StyleKey;
         public List<(double Start, double End, decimal Price)> Pieces = [];
     }
 
@@ -136,16 +154,16 @@ public class Positions
                 end = pieces[i + 1].Start;
 
             DrawHorizontalLine(chart, piece.Start, end, piece.Price, chain.Color,
-                i == 0 ? chain.Caption : "", xLabelOffset, group);
+                i == 0 ? chain.Caption : "", xLabelOffset, group, chain.StyleKey);
 
             if (i + 1 < pieces.Count && pieces[i + 1].Price != piece.Price)
-                DrawConnectorLine(chart, pieces[i + 1].Start, piece.Price, pieces[i + 1].Price, chain.Color, group);
+                DrawConnectorLine(chart, pieces[i + 1].Start, piece.Price, pieces[i + 1].Price, chain.Color, group, chain.StyleKey);
         }
     }
 
 
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, List<CryptoPosition> positionList, CryptoInterval interval,
-        CandleTime minDate, CandleTime maxDate, string group)
+        CandleTime minDate, CandleTime maxDate, string group, IReadOnlyList<string>? subPanelAxisKeys = null)
     {
         // Label offset: 1.5 candle-widths to the right of the line start
         double xLabelOffset = interval.Duration * 1.5;
@@ -154,7 +172,8 @@ public class Positions
         {
             Title = "buy",
             MarkerSize = 4,
-            MarkerFill = OxyColors.Yellow,
+            //MarkerFill = OxyColors.Yellow,
+            MarkerFill = ChartStyleOxy.ColorFor("positionFillBuy", OxyColors.Yellow),
             MarkerType = MarkerType.Diamond,
             YAxisKey = "price",
             Tag = group,
@@ -163,7 +182,8 @@ public class Positions
         {
             Title = "sell",
             MarkerSize = 4,
-            MarkerFill = OxyColors.White,
+            //MarkerFill = OxyColors.White,
+            MarkerFill = ChartStyleOxy.ColorFor("positionFillSell", OxyColors.White),
             MarkerType = MarkerType.Diamond,
             YAxisKey = "price",
             Tag = group
@@ -188,11 +208,11 @@ public class Positions
             // (DrawChain): horizontal where the level stood still, a vertical connector where it
             // moved, and the caption only on the very first piece.
             Dictionary<string, LevelChain> chains = [];
-            void AddPiece(string key, string caption, OxyColor color, double start, double end, decimal atPrice)
+            void AddPiece(string key, string caption, OxyColor color, double start, double end, decimal atPrice, string? styleKey = null)
             {
                 if (!chains.TryGetValue(key, out LevelChain? chain))
                 {
-                    chain = new LevelChain { Caption = caption, Color = color };
+                    chain = new LevelChain { Caption = caption, Color = color, StyleKey = styleKey };
                     chains[key] = chain;
                 }
                 chain.Pieces.Add((start, end, atPrice));
@@ -210,13 +230,16 @@ public class Positions
                         ? CandleTime.FromDateTime(step.CloseTime.Value)
                         : CandleTime.FromDateTime(step.CreateTime);
 
-                    if (stepTime < minDate) // || stepTime > maxDate
-                        continue;
+                    //if (stepTime < minDate) // || stepTime > maxDate
+                    //    continue;
+                    // Not skipped any more: a step placed before the window still stood during it,
+                    // and the Photino chart draws it from the left edge on. Both charts the same.
 
                     //bool isStopTriggered = isFilled && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice;
                     //OxyColor stepColor = isStopTriggered ? OxyColors.Orange : StepColor(step);
                     //OxyColor StepColor(CryptoPositionStep step) =>
                     OxyColor stepColor = step.Side == CryptoOrderSide.Buy ? OxyColors.DarkGreen : OxyColors.DarkRed;
+                    string sideStyle = step.Side == CryptoOrderSide.Buy ? "positionBuy" : "positionSell";
 
                     // The parked order of a trailing last take profit (ten times the target) is
                     // not a level: left out here, the real target is drawn below as "tp trigger"
@@ -226,20 +249,20 @@ public class Positions
                     switch (positionPart.Purpose)
                     {
                         case CryptoPartPurpose.Entry:
-                            AddPiece("entry", "entry", stepColor, xStart, xEnd, step.Price);
+                            AddPiece("entry", "entry", stepColor, xStart, xEnd, step.Price, sideStyle);
                             if (firstEntry == xStart && step.CloseTime.HasValue)
                                 firstEntry = CandleTime.FromDateTime(step.CloseTime.Value).Minutes;
                             break;
                         case CryptoPartPurpose.Dca:
                             double x2 = CandleTime.FromDateTime(step.CreateTime).Minutes;
                             double xEndDca = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
-                            AddPiece($"dca-{positionPart.PartNumber}", $"dca-{positionPart.PartNumber}", stepColor, x2, xEndDca, step.Price);
+                            AddPiece($"dca-{positionPart.PartNumber}", $"dca-{positionPart.PartNumber}", stepColor, x2, xEndDca, step.Price, sideStyle);
                             break;
                         case CryptoPartPurpose.TakeProfit:
                             double x1 = CandleTime.FromDateTime(step.CreateTime).Minutes;
                             double xEndTp = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
                             if (!parkedTakeProfit)
-                                AddPiece($"tp-{positionPart.PartNumber}", $"take profit-{positionPart.PartNumber}", stepColor, x1, xEndTp, step.Price);
+                                AddPiece($"tp-{positionPart.PartNumber}", $"take profit-{positionPart.PartNumber}", stepColor, x1, xEndTp, step.Price, sideStyle);
 
                             //if (step.CloseTime.HasValue && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice)
                             //    stepColor = OxyColors.Yellow; // just to see for now (orange ain't much different then red)
@@ -248,7 +271,7 @@ public class Positions
                             // chained per position and not per part - a two level take profit would
                             // otherwise draw the very same staircase twice.
                             if (step.StopPrice.HasValue)
-                                AddPiece("stop price", "stop price", stepColor, x1, xEndTp, step.StopPrice.Value);
+                                AddPiece("stop price", "stop price", stepColor, x1, xEndTp, step.StopPrice.Value, "positionStopPrice");
 
                             // Only the stop trigger. The stop limit is off the chart since
                             // 03-09-2026: the market never reaches it by itself, it is only the
@@ -259,31 +282,47 @@ public class Positions
                             break;
                     }
 
-                    if (step.CloseTime.HasValue)
+                    //if (step.CloseTime.HasValue)
+                    //{
+                    //    ScatterSeries scatter = step.Side == CryptoOrderSide.Buy ? seriesBuy : seriesSell;
+                    //    double x = CandleTime.FromDateTime(step.CloseTime.Value).Minutes;
+                    //    scatter?.Points.Add(new ScatterPoint(x, (double)step.AveragePrice));
+                    //}
+                    // CloseTime alone is not enough: it is also set when an order is cancelled or
+                    // replaced. Only a filled order gets a marker, as in the Photino chart.
+                    if (step.Status.IsFilled() && step.CloseTime.HasValue)
                     {
                         ScatterSeries scatter = step.Side == CryptoOrderSide.Buy ? seriesBuy : seriesSell;
                         double x = CandleTime.FromDateTime(step.CloseTime.Value).Minutes;
-                        scatter?.Points.Add(new ScatterPoint(x, (double)step.AveragePrice));
+                        decimal filledPrice = step.AveragePrice > 0 ? step.AveragePrice : step.Price;
+                        scatter?.Points.Add(new ScatterPoint(x, (double)filledPrice));
                     }
 
                     // Extend the vertical line if needed
                     // (not to a parked price, that would stretch the marker to ten times the entry)
                     if (parkedTakeProfit)
                         continue;
-                    if (position.Side == CryptoTradeSide.Long)
-                    {
-                        if (step.Price > yTop)
-                            yTop = step.Price;
-                        if (step.Price < yBottom)
-                            yBottom = step.Price;
-                    }
-                    else
-                    {
-                        if (step.Price < yTop)
-                            yTop = step.Price;
-                        if (step.Price < yBottom)
-                            yBottom = step.Price;
-                    }
+                    //if (position.Side == CryptoTradeSide.Long)
+                    //{
+                    //    if (step.Price > yTop)
+                    //        yTop = step.Price;
+                    //    if (step.Price < yBottom)
+                    //        yBottom = step.Price;
+                    //}
+                    //else
+                    //{
+                    //    if (step.Price < yTop)
+                    //        yTop = step.Price;
+                    //    if (step.Price < yBottom)
+                    //        yBottom = step.Price;
+                    //}
+                    // The highest and the lowest level for both sides, as in the Photino chart: the
+                    // short branch above kept the LOWEST price as top, so the upper marker of a
+                    // short never reached a take profit or stop above the entry.
+                    if (step.Price > yTop)
+                        yTop = step.Price;
+                    if (step.Price < yBottom)
+                        yBottom = step.Price;
                 }
             }
 
@@ -319,14 +358,58 @@ public class Positions
             if (boxBelow > yBottom)
                 boxBelow = yBottom;
 
-            DrawVerticalLine(chart, position.CreateTime, boxAbove, candleAbove, positionColor, group);
-            DrawVerticalLine(chart, position.CreateTime, boxBelow, candleBelow, positionColor, group);
+            //DrawVerticalLine(chart, position.CreateTime, boxAbove, candleAbove, positionColor, group);
+            //DrawVerticalLine(chart, position.CreateTime, boxBelow, candleBelow, positionColor, group);
+            string openStyle = position.Side == CryptoTradeSide.Long ? "positionOpenLong" : "positionOpenShort";
+            DrawVerticalLine(chart, position.CreateTime, boxAbove, candleAbove, positionColor, group, openStyle);
+            DrawVerticalLine(chart, position.CreateTime, boxBelow, candleBelow, positionColor, group, openStyle);
+
+            // The same moment through the sub-panels, the full height of each: volume, RSI/stochastic,
+            // MACD and the barometer at the open are exactly what you compare afterwards. The Photino
+            // chart draws the same lines (ChartDataService "verticals").
+            if (subPanelAxisKeys != null)
+            {
+                foreach (string axisKey in subPanelAxisKeys)
+                {
+                    chart.Annotations.Add(new LineAnnotation
+                    {
+                        Type = LineAnnotationType.Vertical,
+                        X = CandleTime.FromDateTime(position.CreateTime).Minutes,
+                        Color = ChartStyleOxy.ColorFor(openStyle, positionColor),
+                        StrokeThickness = 1,
+                        LineStyle = ChartStyleOxy.LineStyleFor(openStyle, LineStyle.Dot),
+                        YAxisKey = axisKey,
+                        Tag = group,
+                    });
+                }
+            }
+
+            // Strategy and the interval the position started on, 3% out from the entry on the
+            // PROFIT side: above for a long, below for a short. The same caption as the Photino
+            // chart; the DCA levels and the stop sit on the losing side, so their captions stay clear.
+            string strategyCaption = $"{position.StrategyText} {position.Interval?.Name}".Trim();
+            if (strategyCaption != "")
+            {
+                decimal captionPrice = position.Side == CryptoTradeSide.Long ? entry * 1.03m : entry * 0.97m;
+                chart.Annotations.Add(new TextAnnotation
+                {
+                    Text = strategyCaption,
+                    TextPosition = new DataPoint(CandleTime.FromDateTime(position.CreateTime).Minutes + xLabelOffset / 3, (double)captionPrice),
+                    TextHorizontalAlignment = HorizontalAlignment.Left,
+                    TextVerticalAlignment = VerticalAlignment.Bottom,
+                    TextColor = OxyColors.White,
+                    Background = OxyColors.Transparent,
+                    StrokeThickness = 0,
+                    FontSize = 9,
+                    Tag = group,
+                });
+            }
 
             // Break-even and take-profit levels, only while the position is open
             if (position.CloseTime == null)
             {
                 if (position.BreakEvenPrice > 0)
-                    DrawHorizontalLine(chart, firstEntry, xEnd, position.BreakEvenPrice, OxyColors.Gray, "breakeven", xLabelOffset, group);
+                    DrawHorizontalLine(chart, firstEntry, xEnd, position.BreakEvenPrice, OxyColors.Gray, "breakeven", xLabelOffset, group, "positionBreakEven");
 
                 // A trailing last take profit that has not been reached: its target, the trigger
                 // Altrady draws as its TP line. Display only. Once it is reached the trail is the
@@ -337,7 +420,8 @@ public class Positions
                     double xTrigger = CandleTime.FromDateTime(pendingTrail.Value.Since).Minutes;
                     OxyColor triggerColor = position.Side == CryptoTradeSide.Long ? OxyColors.DarkRed : OxyColors.DarkGreen;
                     string caption = $"tp trigger (trail {GlobalData.Settings.Trading.TakeProfitTrailPercentage:N2}%)";
-                    DrawHorizontalLine(chart, xTrigger, xEnd, pendingTrail.Value.TargetPrice, triggerColor, caption, xLabelOffset, group);
+                    DrawHorizontalLine(chart, xTrigger, xEnd, pendingTrail.Value.TargetPrice, triggerColor, caption, xLabelOffset, group,
+                        position.Side == CryptoTradeSide.Long ? "positionSell" : "positionBuy");
                 }
             }
 

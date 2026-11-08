@@ -1,5 +1,7 @@
 ﻿using CryptoScanner.Core.Model;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -15,7 +17,9 @@ public class PSar
         {
             Title = "psar",
             MarkerSize = 2,
-            MarkerFill = OxyColors.White,
+            //MarkerFill = OxyColors.White,
+            // Colour from Settings / Chart styles, the same as the Photino chart
+            MarkerFill = ChartStyleOxy.ColorFor("psar", OxyColors.White),
             MarkerType = MarkerType.Square,
             YAxisKey = "price",
             Tag = tag

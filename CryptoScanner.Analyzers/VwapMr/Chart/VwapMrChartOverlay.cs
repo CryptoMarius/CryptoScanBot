@@ -129,12 +129,25 @@ public class VwapMrChartOverlay : IChartOverlay
         var lower = ((IChartOverlay)this).SeriesFor(KeyLower);
         var vwap = ((IChartOverlay)this).SeriesFor(KeyVwap);
 
+        long previousDay = long.MinValue;
         for (int i = 0; i < candles.Count; i++)
         {
             if (!bands[i].HasValue)
                 continue;
 
             long time = CandleTime.AlignFromDateTime(candles[i].Date, interval.Duration).ToUnixSeconds();
+
+            // A break in the lines where a new day starts, as in Draw: the jump of the VWAP is not
+            // drawn as a slope. A NaN ends a stretch in the Photino chart.
+            long day = candles[i].Timestamp.Ticks / TimeSpan.TicksPerDay;
+            if (previousDay != long.MinValue && day != previousDay)
+            {
+                upper.Points.Add(new ChartOverlayPoint { Time = time, Value = double.NaN });
+                lower.Points.Add(new ChartOverlayPoint { Time = time, Value = double.NaN });
+                vwap.Points.Add(new ChartOverlayPoint { Time = time, Value = double.NaN });
+            }
+            previousDay = day;
+
             upper.Points.Add(new ChartOverlayPoint { Time = time, Value = bands[i].Upper });
             lower.Points.Add(new ChartOverlayPoint { Time = time, Value = bands[i].Lower });
             vwap.Points.Add(new ChartOverlayPoint { Time = time, Value = bands[i].Vwap });

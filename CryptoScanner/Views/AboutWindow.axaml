@@ -43,7 +43,9 @@
         <StackPanel Margin="10">
             
             <!-- Logo -->
-            <Image Source="/Assets/AppIcon.ico" Width="80" Height="80" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+            <!--<Image Source="/Assets/AppIcon.ico" Width="80" Height="80" HorizontalAlignment="Center" Margin="0,20,0,0"/>-->
+            <!-- The icon of the window itself, with the logo of the exchange (AppIconBuilder) -->
+            <Image Source="{Binding Icon}" Width="80" Height="80" HorizontalAlignment="Center" Margin="0,20,0,0"/>
             
             <!-- App Name -->
             <TextBlock Text="CryptoScanBot" Classes="title"/>

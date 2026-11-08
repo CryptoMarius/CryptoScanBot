@@ -21,6 +21,7 @@
 @inject ApplicationStateService StateService
 @inject DashboardService DashboardService
 @inject PositionService PositionService
+@inject GridCommandService GridCommandService
 @inject IJSRuntime JS
 @implements IDisposable
 
@@ -68,6 +69,9 @@
                 title="Reload the chart with the latest candles, signals and positions, and put the price axis back on the candles">&#10227;</button>
         <button class="chart-icon-button" @onclick="Calculate"
                 title="Force a full recalculation of the liquidity zones">&#8721;</button>
+        @* The rocket of the Avalonia chart window: open the symbol and interval in the trading app *@
+        <button class="chart-icon-button" @onclick="OpenTradingApp"
+                title="Open trading app">&#128640;</button>
 
         @* Opened from a position: say so, and give the way back. Without this the chart silently
            sits in the past — every refresh looks frozen and picking another coin is the only exit
@@ -115,6 +119,7 @@
                 <label class="chart-toggle" title="Horizontal support and resistance (at least two pivots close together), sloped lines through the last two lower highs or higher lows, and an arrow where a broken level was retested from the other side and held (a flip)">
                     <input type="checkbox" @bind="_showSupportResistance" @bind:after="LoadChart" /> Support/resistance
                 </label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("sr", "Support/resistance"))">&#9881;</button>
             </div>
 
             <div class="chart-indicator-heading">FIB</div>
@@ -126,6 +131,7 @@
             </div>
             <div class="chart-indicator-row">
                 <label class="chart-toggle"><input type="checkbox" @bind="_showFib" @bind:after="LoadChart" /> Show fib retracement</label>
+                <button class="chart-style-button" title="Colours and lines" @onclick="@(() => OpenStyleDialog("fib", "FIB retracement"))">&#9881;</button>
             </div>
             <div class="chart-indicator-row">
                 <label class="chart-toggle"><input type="checkbox" @bind="_showFibZigZag" @bind:after="LoadChart" /> Show zigzag</label>
@@ -175,9 +181,11 @@
             <div class="chart-indicator-heading">Display</div>
             <div class="chart-indicator-row">
                 <label class="chart-toggle"><input type="checkbox" @bind="_showCandles" @bind:after="LoadChart" /> Candles</label>
+                <button class="chart-style-button" title="Colours" @onclick="@(() => OpenStyleDialog("candles", "Candles"))">&#9881;</button>
             </div>
             <div class="chart-indicator-row">
                 <label class="chart-toggle"><input type="checkbox" @bind="_showPivots" @bind:after="LoadChart" /> Pivot points</label>
+                <button class="chart-style-button" title="Colours" @onclick="@(() => OpenStyleDialog("pivots", "Pivot points"))">&#9881;</button>
             </div>
             <div class="chart-indicator-row">
                 <label class="chart-toggle"><input type="checkbox" @bind="_showSignals" @bind:after="LoadChart" /> Signals</label>
@@ -197,7 +205,7 @@
     {
         <div class="chart-empty-overlay">
             <div class="chart-empty-box">
-                <div class="chart-empty-title">Nothing to draw here</div>
+                <div class="chart-empty-title">@ChartEmptyReason.Title</div>
                 <div class="chart-empty-text">@_emptyReason</div>
                 @if (_emptyWindow != null)
                 {
@@ -340,8 +348,15 @@
     private static Dictionary<string, string> _intervalOptions => GlobalData.IntervalList
         .ToDictionary(i => i.IntervalPeriod.ToString(), i => i.Name);
 
+    // Timing of the chart, written to the log once per load (see LoadChartCoreAsync). The first
+    // load also says how long the page had been alive by then: in the separate chart window that
+    // includes starting Blazor in a WebView of its own.
+    private readonly System.Diagnostics.Stopwatch _pageAge = System.Diagnostics.Stopwatch.StartNew();
+    private bool _firstLoadLogged;
+
     protected override void OnInitialized()
     {
+        ScannerLog.Logger.Info("Chart page created");
         // Restore the chart session (same file the Avalonia chart window uses), otherwise every
         // visit resets all overlay/panel toggles to their hardcoded defaults.
         _session = ZoneSessionStore.Load();
@@ -618,6 +633,9 @@
         _showNwe = _session.ShowNwe;
         _showNweRepainting = _session.ShowNweRepainting;
         _showSmaLinesSbm = _session.ShowSmaLinesSbm;
+        _showSma20 = _session.ShowSma20;
+        _showSma50 = _session.ShowSma50;
+        _showSma200 = _session.ShowSma200;
         _showDlzZones = _session.ShowDlzZones;
         _showFvgZones = _session.ShowFvgZones;
         _showSmcZones = _session.ShowSmcZones;
@@ -658,6 +676,9 @@
         _session.ShowNwe = _showNwe;
         _session.ShowNweRepainting = _showNweRepainting;
         _session.ShowSmaLinesSbm = _showSmaLinesSbm;
+        _session.ShowSma20 = _showSma20;
+        _session.ShowSma50 = _showSma50;
+        _session.ShowSma200 = _showSma200;
         _session.ShowDlzZones = _showDlzZones;
         _session.ShowFvgZones = _showFvgZones;
         _session.ShowSmcZones = _showSmcZones;
@@ -796,63 +817,69 @@
     /// </summary>
     private string BuildDataSignature()
     {
-        if (_currentSymbol == null)
-            return "";
+        // Since 06-11-2026 in Core (ChartDataSignature), so the Avalonia chart window polls exactly
+        // the same signature. The old body is kept below.
         if (!Enum.TryParse<CryptoIntervalPeriod>(_selectedInterval, out var period))
             return "";
+        return ChartDataSignature.Build(_currentSymbol, period, _windowStart, _windowEnd, _showPositions);
 
-        // A CLOSED position is finished history: no candle arriving now can change any of it, so
-        // the signature is constant and the timer never reloads it. An open one (_windowEnd null)
-        // still grows, and falls through to the live signature below.
-        if (_windowStart != null && _windowEnd != null)
-            return $"{_currentSymbol.Name}|{_selectedInterval}|{_windowStart:O}|{_windowEnd:O}";
+        //if (_currentSymbol == null)
+        //    return "";
+        //if (!Enum.TryParse<CryptoIntervalPeriod>(_selectedInterval, out var period))
+        //    return "";
 
-        var text = new System.Text.StringBuilder();
-        text.Append(_currentSymbol.Name).Append('|').Append(_selectedInterval).Append('|');
+        //// A CLOSED position is finished history: no candle arriving now can change any of it, so
+        //// the signature is constant and the timer never reloads it. An open one (_windowEnd null)
+        //// still grows, and falls through to the live signature below.
+        //if (_windowStart != null && _windowEnd != null)
+        //    return $"{_currentSymbol.Name}|{_selectedInterval}|{_windowStart:O}|{_windowEnd:O}";
 
-        var symbolInterval = _currentSymbol.GetSymbolInterval(period);
-        var candleList = symbolInterval.CandleList;
-        var last = candleList.LastCandle;
+        //var text = new System.Text.StringBuilder();
+        //text.Append(_currentSymbol.Name).Append('|').Append(_selectedInterval).Append('|');
 
-        // Count catches a new candle, close catches the running one moving, high/low catch a
-        // wick that grows without the close changing.
-        text.Append(candleList.Count).Append('|')
-            .Append(last.OpenTime).Append('|')
-            .Append(last.Close).Append('|')
-            .Append(last.High).Append('|')
-            .Append(last.Low).Append('|');
+        //var symbolInterval = _currentSymbol.GetSymbolInterval(period);
+        //var candleList = symbolInterval.CandleList;
+        //var last = candleList.LastCandle;
 
-        // And the same four for the 1m candle, because the running candle at the right edge is built
-        // from that list (CandleTools.BuildRunningCandles). Nothing above moves while a 30m interval
-        // is halfway through - the closed 30m candle those counters read stays exactly as it was - so
-        // without this the chart would only pick the running candle up once the interval closed,
-        // which is the very lag it exists to remove.
-        if (period != CryptoIntervalPeriod.interval1m && !GlobalData.IsEmulatorMode)
-        {
-            var last1m = _currentSymbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m).CandleList.LastCandle;
-            text.Append(last1m.OpenTime).Append('|')
-                .Append(last1m.Close).Append('|')
-                .Append(last1m.High).Append('|')
-                .Append(last1m.Low).Append('|');
-        }
+        //// Count catches a new candle, close catches the running one moving, high/low catch a
+        //// wick that grows without the close changing.
+        //text.Append(candleList.Count).Append('|')
+        //    .Append(last.OpenTime).Append('|')
+        //    .Append(last.Close).Append('|')
+        //    .Append(last.High).Append('|')
+        //    .Append(last.Low).Append('|');
 
-        // Positions are drawn from the database, but the open list in memory is what changes
-        // first: a fill updates UpdateTime, and a close moves the position out of this list.
-        if (_showPositions)
-        {
-            foreach (var position in PositionService.OpenPositions)
-            {
-                if (position.Object.Symbol != _currentSymbol)
-                    continue;
+        //// And the same four for the 1m candle, because the running candle at the right edge is built
+        //// from that list (CandleTools.BuildRunningCandles). Nothing above moves while a 30m interval
+        //// is halfway through - the closed 30m candle those counters read stays exactly as it was - so
+        //// without this the chart would only pick the running candle up once the interval closed,
+        //// which is the very lag it exists to remove.
+        //if (period != CryptoIntervalPeriod.interval1m && !GlobalData.IsEmulatorMode)
+        //{
+        //    var last1m = _currentSymbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m).CandleList.LastCandle;
+        //    text.Append(last1m.OpenTime).Append('|')
+        //        .Append(last1m.Close).Append('|')
+        //        .Append(last1m.High).Append('|')
+        //        .Append(last1m.Low).Append('|');
+        //}
 
-                text.Append(position.Object.Id).Append(':')
-                    .Append((int)position.Object.Status).Append(':')
-                    .Append(position.Object.Quantity).Append(':')
-                    .Append(position.Object.UpdateTime?.Ticks ?? 0).Append(',');
-            }
-        }
+        //// Positions are drawn from the database, but the open list in memory is what changes
+        //// first: a fill updates UpdateTime, and a close moves the position out of this list.
+        //if (_showPositions)
+        //{
+        //    foreach (var position in PositionService.OpenPositions)
+        //    {
+        //        if (position.Object.Symbol != _currentSymbol)
+        //            continue;
 
-        return text.ToString();
+        //        text.Append(position.Object.Id).Append(':')
+        //            .Append((int)position.Object.Status).Append(':')
+        //            .Append(position.Object.Quantity).Append(':')
+        //            .Append(position.Object.UpdateTime?.Ticks ?? 0).Append(',');
+        //    }
+        //}
+
+        //return text.ToString();
     }
 
     // Live working copy of every stylable series, edited by the small popups behind the overlays.
@@ -1059,6 +1086,19 @@
     private bool _loadingChart;
     private bool _loadPending;
 
+    /// <summary>Open the symbol on the chosen interval in the trading app, like the Avalonia chart window.</summary>
+    private void OpenTradingApp()
+    {
+        if (_currentSymbol == null)
+            return;
+
+        CryptoInterval? interval = null;
+        if (Enum.TryParse<CryptoIntervalPeriod>(_selectedInterval, out var period)
+            && GlobalData.IntervalListPeriod.TryGetValue(period, out var found))
+            interval = found;
+        GridCommandService.OpenTradingApp(_currentSymbol, interval);
+    }
+
     /// <summary>The length of one candle of the chosen interval, in seconds. The chart uses it to
     /// tell a candle that stands for a MOMENT from one that stands for a calendar day or week.</summary>
     private uint SelectedIntervalSeconds =>
@@ -1181,6 +1221,9 @@
                 runningTo = range.DrawTo;
             }
 
+            var timing = System.Diagnostics.Stopwatch.StartNew();
+            long msCandles = 0, msZigZag = 0, msPlugins = 0, msZones = 0;
+
             var snapshot = candleSource.GetSnapshot();
 
             var rawCandles = snapshot.Select(kv => kv.Value).ToList();
@@ -1235,6 +1278,8 @@
                 }
             }
 
+            msCandles = timing.ElapsedMilliseconds;
+
             // Overlays on main chart
             var overlays = new Dictionary<string, object>();
             var markers = new List<ChartDataService.ChartMarker>();
@@ -1279,15 +1324,17 @@
             }
 
             if (_showNwe)
-                AddNweOverlays(overlays, candleSource, smoothRepainting: false, prefix: "nwe");
+                AddNweOverlays(overlays, candleSource, smoothRepainting: false, prefix: "nwe", symbolInterval.Interval, markers);
             if (_showNweRepainting)
-                AddNweOverlays(overlays, candleSource, smoothRepainting: true, prefix: "nweRepaint");
+                AddNweOverlays(overlays, candleSource, smoothRepainting: true, prefix: "nweRepaint", symbolInterval.Interval, markers);
 
             if (_showZigZag || _showPivots || _showFib || _showDtb || _showFibZigZag)
             {
                 await BuildZigZagIndicatorsAsync(symbolInterval, candleSource);
-                AddZigZagOverlays(overlays, symbolInterval, priceLines, markers);
+                AddZigZagOverlays(overlays, symbolInterval, priceLines, markers, segments);
             }
+
+            msZigZag = timing.ElapsedMilliseconds;
 
             if (_showSupportResistance)
                 AddSupportResistanceOverlays(rawCandles, priceLines, segments, markers, _srZones);
@@ -1513,6 +1560,7 @@
                 // the 1h chart and was not drawn until the hour closed.
                 CandleTime to = lastDrawnOpen + symbolInterval.Interval.Duration;
 
+                msPlugins = timing.ElapsedMilliseconds;
                 await EnsureZonesCalculatedAsync();
                 zones = ChartDataService.BuildZones(_currentSymbol,
                     _showDlzZones, _showFvgZones, _showSmcZones, from, to);
@@ -1567,14 +1615,36 @@
                 // for a MOMENT, which is read on the local wall clock, or for a calendar day or
                 // week, which has no clock time at all.
                 intervalSeconds = SelectedIntervalSeconds,
+                // Candles switched off: drawn transparent, so the markers on them stay
+                hideCandles = !_showCandles,
             };
 
             // The Avalonia chart can hide the candles and only show the overlays
-            var mainCandles = _showCandles ? candles : new List<object>();
+            //var mainCandles = _showCandles ? candles : new List<object>();
+            // The candles are always sent: markers only land on a candle time, so an empty list
+            // also took the pivot points and flip arrows away. The widget makes them transparent.
+            var mainCandles = candles;
 
             await JS.InvokeVoidAsync("ChartWidget.setPluginStyles", pluginStyles);
             await JS.InvokeVoidAsync("ChartWidget.setBands", pluginBands);
+            msZones = timing.ElapsedMilliseconds;
             await JS.InvokeVoidAsync("ChartWidget.setData", mainCandles, overlays, panels, extras);
+
+            // Where the time of a load goes: cumulative milliseconds after each step
+            long msTotal = timing.ElapsedMilliseconds;
+            string first = "";
+            bool isFirst = !_firstLoadLogged;
+            if (!_firstLoadLogged)
+            {
+                _firstLoadLogged = true;
+                first = $", first load {_pageAge.ElapsedMilliseconds} ms after the page was created";
+            }
+            // Only the first load and a slow one: the auto refresh reloads every 15 seconds
+            if (isFirst || msTotal >= 1000)
+            ScannerLog.Logger.Info($"Chart timing {_currentSymbol.Name} {symbolInterval.Interval.Name}: "
+                + $"candles={rawCandles.Count}, prepared {msCandles} ms, overlays+zigzag {msZigZag} ms, "
+                + $"plugins/indicators {msPlugins} ms, zones/signals/positions {msZones} ms, "
+                + $"sent and drawn {msTotal} ms (overlays: {string.Join(",", overlays.Keys)}){first}");
         }
         catch (Exception ex)
         {
@@ -1590,61 +1660,72 @@
     /// </summary>
     private void UpdateEmptyReason(CryptoSymbol symbol, CryptoInterval interval, int candleCount)
     {
-        string? reason = null;
-        string? window = null;
-
-        if (candleCount == 0 && _windowStart != null)
+        // Since 06-11-2026 in Core (ChartEmptyReason), so the Avalonia chart window explains an
+        // empty chart with the very same words. The old body is kept below.
+        (CandleTime DrawFrom, CandleTime DrawTo)? positionWindow = null;
+        if (_windowStart != null)
         {
-            // In a position window the candles come from candles.db, not from memory, so none of
-            // the reasons below apply. Empty here means the file does not reach back that far —
-            // the cleanup keeps the standard window per interval plus the lifetime of every pivot
-            // zone, and this position falls outside both.
             var range = WindowRange(interval);
-            SetEmptyReason(
-                $"candles.db holds no {interval.Name} candles for {symbol.Name} around this position. "
-                + "The cleanup keeps recent history plus whatever a pivot zone still needs, and this "
-                + "stretch is older than both.",
-                $"Looked for {interval.Name} candles between "
-                + $"{range.DrawFrom.ToDateTime().ToLocalTime():dd-MM-yyyy HH:mm} and "
-                + $"{range.DrawTo.ToDateTime().ToLocalTime():dd-MM-yyyy HH:mm}.");
-            return;
+            positionWindow = (range.DrawFrom, range.DrawTo);
         }
+        var (emptyReason, emptyWindow) = ChartEmptyReason.Explain(symbol, interval, candleCount, positionWindow);
+        SetEmptyReason(emptyReason, emptyWindow);
 
-        if (candleCount == 0)
-        {
-            // Does the symbol have nothing at all, or only nothing on THIS interval? The two have
-            // different causes: released candles versus an interval not built up yet.
-            int total = 0;
-            foreach (var si in symbol.Data.SymbolIntervalList)
-                total += si.CandleList.Count;
+        //string? reason = null;
+        //string? window = null;
 
-            if (total > 0)
-                reason = $"{symbol.Name} has no {interval.Name} candles in memory yet, "
-                    + "while other intervals do. The scanner builds this one up from the interval below it.";
-            else if (symbol.QuoteData == null || !symbol.QuoteData.FetchCandles)
-                reason = $"Candles for the quote coin {symbol.Quote} are switched off, "
-                    + $"so the scanner never fetches any for {symbol.Name}.";
-            else if (symbol.Status != 1)
-                reason = $"{symbol.Name} is no longer trading on {symbol.Exchange?.Name}, "
-                    + "so the scanner released its candles.";
-            else if (!symbol.EnoughVolume() && !symbol.IsTrading())
-                reason = $"{symbol.Name} is below the minimum volume for {symbol.Quote} "
-                    + $"({symbol.Volume:N0} against {symbol.QuoteData.MinimalVolume:N0}), "
-                    + "so the scanner released its candles to save memory.";
-            else
-                reason = $"The scanner is holding no candles for {symbol.Name} — it may still be "
-                    + "starting up, or this symbol was only just added.";
+        //if (candleCount == 0 && _windowStart != null)
+        //{
+        //    // In a position window the candles come from candles.db, not from memory, so none of
+        //    // the reasons below apply. Empty here means the file does not reach back that far —
+        //    // the cleanup keeps the standard window per interval plus the lifetime of every pivot
+        //    // zone, and this position falls outside both.
+        //    var range = WindowRange(interval);
+        //    SetEmptyReason(
+        //        $"candles.db holds no {interval.Name} candles for {symbol.Name} around this position. "
+        //        + "The cleanup keeps recent history plus whatever a pivot zone still needs, and this "
+        //        + "stretch is older than both.",
+        //        $"Looked for {interval.Name} candles between "
+        //        + $"{range.DrawFrom.ToDateTime().ToLocalTime():dd-MM-yyyy HH:mm} and "
+        //        + $"{range.DrawTo.ToDateTime().ToLocalTime():dd-MM-yyyy HH:mm}.");
+        //    return;
+        //}
 
-            // The window itself is worth naming whatever the cause: it is also the answer to
-            // "why does my position from last week not show up", which is the same story one
-            // step further along.
-            CandleTime start = CandleTools.GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
-            window = $"The chart only draws what the scanner keeps in memory: "
-                + $"{interval.Name} candles from {start.ToDateTime().ToLocalTime():dd-MM-yyyy HH:mm} onwards. "
-                + "Anything older stays in candles.db and is not drawn here.";
-        }
+        //if (candleCount == 0)
+        //{
+        //    // Does the symbol have nothing at all, or only nothing on THIS interval? The two have
+        //    // different causes: released candles versus an interval not built up yet.
+        //    int total = 0;
+        //    foreach (var si in symbol.Data.SymbolIntervalList)
+        //        total += si.CandleList.Count;
 
-        SetEmptyReason(reason, window);
+        //    if (total > 0)
+        //        reason = $"{symbol.Name} has no {interval.Name} candles in memory yet, "
+        //            + "while other intervals do. The scanner builds this one up from the interval below it.";
+        //    else if (symbol.QuoteData == null || !symbol.QuoteData.FetchCandles)
+        //        reason = $"Candles for the quote coin {symbol.Quote} are switched off, "
+        //            + $"so the scanner never fetches any for {symbol.Name}.";
+        //    else if (symbol.Status != 1)
+        //        reason = $"{symbol.Name} is no longer trading on {symbol.Exchange?.Name}, "
+        //            + "so the scanner released its candles.";
+        //    else if (!symbol.EnoughVolume() && !symbol.IsTrading())
+        //        reason = $"{symbol.Name} is below the minimum volume for {symbol.Quote} "
+        //            + $"({symbol.Volume:N0} against {symbol.QuoteData.MinimalVolume:N0}), "
+        //            + "so the scanner released its candles to save memory.";
+        //    else
+        //        reason = $"The scanner is holding no candles for {symbol.Name} — it may still be "
+        //            + "starting up, or this symbol was only just added.";
+
+        //    // The window itself is worth naming whatever the cause: it is also the answer to
+        //    // "why does my position from last week not show up", which is the same story one
+        //    // step further along.
+        //    CandleTime start = CandleTools.GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
+        //    window = $"The chart only draws what the scanner keeps in memory: "
+        //        + $"{interval.Name} candles from {start.ToDateTime().ToLocalTime():dd-MM-yyyy HH:mm} onwards. "
+        //        + "Anything older stays in candles.db and is not drawn here.";
+        //}
+
+        //SetEmptyReason(reason, window);
     }
 
     /// <summary>
@@ -1749,7 +1830,7 @@
     }
 
     private void AddNweOverlays(Dictionary<string, object> overlays, CryptoCandleList candleSource,
-        bool smoothRepainting, string prefix)
+        bool smoothRepainting, string prefix, CryptoInterval interval, List<ChartDataService.ChartMarker> markers)
     {
         var settings = NwePlugin.Settings;
         var indicator = new NweIndicator(
@@ -1772,6 +1853,41 @@
                 middle.Add(new { time, value = (double)result.Center.Value });
             if (result.Lower.HasValue)
                 lower.Add(new { time, value = (double)result.Lower.Value });
+
+            // Buy and sell alerts, the same rule as the Avalonia chart (Nwe.Draw): the close
+            // pierces the band, a white square just below the low or above the high of that candle.
+            if (result.Lower == null || result.Center == null || result.Upper == null)
+                continue;
+            if (!candleSource.TryGetValue(result.OpenTime, out CryptoCandle candleLast)
+                || !candleSource.TryGetValue(result.OpenTime - interval.Duration, out CryptoCandle candlePrev))
+                continue;
+
+            decimal lowerband = result.Lower.Value;
+            decimal upperband = result.Upper.Value;
+            if (candlePrev.Close > lowerband && candleLast.Close <= lowerband)
+            {
+                markers.Add(new ChartDataService.ChartMarker
+                {
+                    time = time,
+                    position = "atPriceMiddle",
+                    price = (double)(candleLast.Low * 0.995m),
+                    color = "#ffffff",
+                    shape = "square",
+                    size = 1,
+                });
+            }
+            if (candlePrev.Close < upperband && candleLast.Close >= upperband)
+            {
+                markers.Add(new ChartDataService.ChartMarker
+                {
+                    time = time,
+                    position = "atPriceMiddle",
+                    price = (double)(candleLast.High * 1.005m),
+                    color = "#ffffff",
+                    shape = "square",
+                    size = 1,
+                });
+            }
         }
 
         if (upper.Count > 0)
@@ -1888,7 +2004,11 @@
         // top of that a dotted line WITH an axis label per level, so there were more numbers on
         // the axis than blocks on the chart. On a weekly bitcoin chart that came to thirteen rows
         // of labels in an unbroken column, and the price itself disappeared between them.
-        List<SupportResistanceZone> merged = SupportResistance.Zones(result.Levels);
+        //List<SupportResistanceZone> merged = SupportResistance.Zones(result.Levels);
+        // Since 08-11-2026 the strongest two levels on each side of the price, each its own zone and
+        // nothing merged: the merging chained neighbouring levels into one block of 22% (see
+        // SupportResistance.ZonesAroundPrice). The same call as the Avalonia chart.
+        List<SupportResistanceZone> merged = SupportResistance.ZonesAroundPrice(result.Levels, last, candles.Count - 1);
 
         // Two touches is the weakest thing the clustering can produce, and the scan itself does
         // not act on a level below MinEventTouches either - so drawing them adds noise and no
@@ -1898,7 +2018,9 @@
         SupportResistanceZone? nearestBelow = null;
         foreach (SupportResistanceZone zone in merged)
         {
-            if (zone.Price >= last)
+            //if (zone.Price >= last)
+            // The side is decided by ZonesAroundPrice: a zone the price stands in is support
+            if (!zone.IsSupport)
             {
                 if (nearestAbove == null || zone.Price < nearestAbove.Value.Price)
                     nearestAbove = zone;
@@ -1909,21 +2031,34 @@
             }
         }
 
+        // The colours of the Support/resistance gear
+        var styles = ChartStyleSettings.Current;
+        ChartLineStyle resistanceStyle = styles.Get("srResistance");
+        ChartLineStyle supportStyle = styles.Get("srSupport");
+        ChartLineStyle resistanceLineStyle = styles.Get("srResistanceLine");
+        ChartLineStyle supportLineStyle = styles.Get("srSupportLine");
+
         foreach (SupportResistanceZone zone in merged)
         {
             bool nearest = (nearestAbove != null && zone.Price == nearestAbove.Value.Price)
                 || (nearestBelow != null && zone.Price == nearestBelow.Value.Price);
-            if (zone.Touches < SupportResistanceDrawFrom && !nearest)
-                continue;
+            // No longer needed since 08-11-2026: ZonesAroundPrice already keeps only the strongest
+            // two per side, and a weak one is only chosen when there is nothing stronger on that side
+            //if (zone.Touches < SupportResistanceDrawFrom && !nearest)
+            //    continue;
 
-            bool above = zone.Price >= last;
+            //bool above = zone.Price >= last;
+            bool above = !zone.IsSupport;
+            ChartLineStyle blockStyle = above ? resistanceStyle : supportStyle;
 
             // Strength as WEIGHT instead of as a number: a band that has held six times is darker
             // and has a firmer edge than one that held three. The count stays, but only as the
             // small caption at the right-hand end of the block - not as a row on the axis.
-            string fill = above
-                ? zone.Touches >= 6 ? "rgba(239,83,80,0.22)" : zone.Touches >= 4 ? "rgba(239,83,80,0.14)" : "rgba(239,83,80,0.08)"
-                : zone.Touches >= 6 ? "rgba(38,166,154,0.22)" : zone.Touches >= 4 ? "rgba(38,166,154,0.14)" : "rgba(38,166,154,0.08)";
+            //string fill = above
+            //    ? zone.Touches >= 6 ? "rgba(239,83,80,0.22)" : zone.Touches >= 4 ? "rgba(239,83,80,0.14)" : "rgba(239,83,80,0.08)"
+            //    : zone.Touches >= 6 ? "rgba(38,166,154,0.22)" : zone.Touches >= 4 ? "rgba(38,166,154,0.14)" : "rgba(38,166,154,0.08)";
+            // The same three depths since 07-11-2026, of the colour picked in the style (srResistance/srSupport)
+            string fill = blockStyle.ToCssColor(zone.Touches >= 6 ? 0.22 : zone.Touches >= 4 ? 0.14 : 0.08);
 
             zones.Add(new ChartDataService.ChartRect
             {
@@ -1932,9 +2067,9 @@
                 price1 = zone.High,
                 price2 = zone.Low,
                 fill = fill,
-                border = above ? "rgba(239,83,80,0.50)" : "rgba(38,166,154,0.50)",
+                border = blockStyle.ToCssColor(0.50),
                 text = $"{zone.Touches}x",
-                textColor = above ? "#ef5350" : "#26a69a",
+                textColor = blockStyle.ToCssColor(),
             });
 
             // Only the two nearest levels keep a line, and only they claim a label on the axis.
@@ -1947,7 +2082,7 @@
             priceLines.Add(new ChartDataService.ChartPriceLine
             {
                 price = zone.Price,
-                color = above ? "#ef5350" : "#26a69a",
+                color = blockStyle.ToCssColor(),
                 lineStyle = 2,
                 // No "S/R 4x" any more: the colour says which side it is and the block carries the
                 // count, while the text took up half the width of the axis label.
@@ -1969,9 +2104,9 @@
                 price1 = line.Price1,
                 time2 = candles[endIndex].OpenTime.ToUnixSeconds(),
                 price2 = line.ValueAt(endIndex),
-                color = line.IsResistance ? "#ff7043" : "#66bb6a",
-                width = 1,
-                dash = 0,
+                color = (line.IsResistance ? resistanceLineStyle : supportLineStyle).ToCssColor(),
+                width = (line.IsResistance ? resistanceLineStyle : supportLineStyle).LineWidth,
+                dash = (line.IsResistance ? resistanceLineStyle : supportLineStyle).LineStyle,
                 text = line.IsResistance ? "resistance" : "support",
             });
         }
@@ -1990,7 +2125,7 @@
             {
                 time = candles[entry.Value].OpenTime.ToUnixSeconds(),
                 position = isLong ? "belowBar" : "aboveBar",
-                color = isLong ? "#26a69a" : "#ef5350",
+                color = (isLong ? supportStyle : resistanceStyle).ToCssColor(),
                 shape = isLong ? "arrowUp" : "arrowDown",
                 text = "flip",
             });
@@ -1998,7 +2133,8 @@
     }
 
     private void AddZigZagOverlays(Dictionary<string, object> overlays, CryptoSymbolInterval symbolInterval,
-        List<ChartDataService.ChartPriceLine> priceLines, List<ChartDataService.ChartMarker> markers)
+        List<ChartDataService.ChartPriceLine> priceLines, List<ChartDataService.ChartMarker> markers,
+        List<ChartDataService.ChartSegment> segments)
     {
         // The Trend and FIB groups can each point at the primary or the secondary trend.
         var trendSettings = _trendType == TrendType.Primary
@@ -2027,6 +2163,24 @@
                 .ToList();
             if (points.Count > 0)
                 overlays["zigzag"] = points;
+
+            // The points on the line, the way the Avalonia chart draws them (ZigZag.Draw): a circle
+            // at a confirmed point, a square at the provisional one at the right-hand edge, red for a
+            // high and yellow for a low.
+            foreach (var z in indicator.ZigZagList)
+            {
+                bool isHigh = z.PointType == 'H';
+                markers.Add(new ChartDataService.ChartMarker
+                {
+                    time = z.Candle.OpenTime.ToUnixSeconds(),
+                    position = "atPriceMiddle",
+                    price = (double)z.Value,
+                    color = ChartStyleSettings.Current.Get(isHigh ? "zigzagHigh" : "zigzagLow").ToCssColor(),
+                    shape = z.Dummy ? "square" : "circle",
+                    text = "",
+                    size = 1,
+                });
+            }
         }
 
         if (_showPivots)
@@ -2042,7 +2196,7 @@
                 {
                     time = pivot.Candle.OpenTime.ToUnixSeconds(),
                     position = isHigh ? "aboveBar" : "belowBar",
-                    color = isHigh ? "#e53935" : "#ffeb3b",
+                    color = ChartStyleSettings.Current.Get(isHigh ? "pivotHigh" : "pivotLow").ToCssColor(),
                     shape = pivot.Dummy ? "circle" : "square",
                     text = "",
                 });
@@ -2060,6 +2214,7 @@
                 double p2 = second.Value;
                 double p3 = (double)third.Value;
                 bool isBottom = first.PointType == 'L';
+                ChartLineStyle dtbStyle = ChartStyleSettings.Current.Get(isBottom ? "dtbBottom" : "dtbTop");
 
                 _dtbZones.Add(new ChartDataService.ChartRect
                 {
@@ -2067,10 +2222,28 @@
                     time2 = third.Candle.OpenTime.ToUnixSeconds(),
                     price1 = Math.Max(p1, Math.Max(p2, p3)),
                     price2 = Math.Min(p1, Math.Min(p2, p3)),
-                    fill = isBottom ? "rgba(0,128,0,0.29)" : "rgba(255,165,0,0.29)",
-                    border = isBottom ? "rgba(0,128,0,0.60)" : "rgba(255,165,0,0.60)",
+                    //fill = isBottom ? "rgba(0,128,0,0.29)" : "rgba(255,165,0,0.29)",
+                    //border = isBottom ? "rgba(0,128,0,0.60)" : "rgba(255,165,0,0.60)",
+                    fill = dtbStyle.ToCssColor(0.29),
+                    border = dtbStyle.ToCssColor(0.60),
                     text = isBottom ? "DB" : "DT",
                 });
+
+                // The triangle over the three zigzag points and the two short lines of five candles at
+                // the first two, as the Avalonia chart draws them (Dtb.Draw)
+                //string lineColor = isBottom ? "rgba(0,128,0,0.80)" : "rgba(255,165,0,0.80)";
+                string lineColor = dtbStyle.ToCssColor(0.80);
+                int lineWidth = dtbStyle.LineWidth;
+                int lineDash = dtbStyle.LineStyle;
+                long t1 = first.Candle.OpenTime.ToUnixSeconds();
+                long t2 = second.Candle.OpenTime.ToUnixSeconds();
+                long t3 = third.Candle.OpenTime.ToUnixSeconds();
+                long fiveCandles = 5L * symbolInterval.Interval.Duration * 60;
+                segments.Add(new ChartDataService.ChartSegment { time1 = t1, price1 = p1, time2 = t2, price2 = p2, color = lineColor, width = lineWidth, dash = lineDash });
+                segments.Add(new ChartDataService.ChartSegment { time1 = t2, price1 = p2, time2 = t3, price2 = p3, color = lineColor, width = lineWidth, dash = lineDash });
+                segments.Add(new ChartDataService.ChartSegment { time1 = t3, price1 = p3, time2 = t1, price2 = p1, color = lineColor, width = lineWidth, dash = lineDash });
+                segments.Add(new ChartDataService.ChartSegment { time1 = t1, price1 = p1, time2 = t1 + fiveCandles, price2 = p1, color = lineColor, width = lineWidth, dash = lineDash });
+                segments.Add(new ChartDataService.ChartSegment { time1 = t2, price1 = p2, time2 = t2 + fiveCandles, price2 = p2, color = lineColor, width = lineWidth, dash = lineDash });
             }
         }
 
@@ -2095,24 +2268,37 @@
             // FibRetracement.RetracementX does: for a move up, 0.000 sits at the high.
             bool isLong = fibIndicator.LastSwingHigh.Candle.OpenTime >= fibIndicator.LastSwingLow.Candle.OpenTime;
 
-            (double level, string color)[] fibLevels =
+            //(double level, string color)[] fibLevels =
+            //[
+            //    (0.000, "#9e9e9e"),
+            //    (0.236, "#ffffff"),
+            //    (0.382, "#ffffff"),
+            //    (0.500, "#ffeb3b"),
+            //    (0.618, "#ffeb3b"),
+            //    (0.786, "#ffffff"),
+            //    (1.000, "#9e9e9e"),
+            //];
+            // The same three colour groups since 07-11-2026, from the FIB retracement gear
+            (double level, string styleKey)[] fibLevels =
             [
-                (0.000, "#9e9e9e"),
-                (0.236, "#ffffff"),
-                (0.382, "#ffffff"),
-                (0.500, "#ffeb3b"),
-                (0.618, "#ffeb3b"),
-                (0.786, "#ffffff"),
-                (1.000, "#9e9e9e"),
+                (0.000, "fibOuter"),
+                (0.236, "fibInner"),
+                (0.382, "fibInner"),
+                (0.500, "fibGolden"),
+                (0.618, "fibGolden"),
+                (0.786, "fibInner"),
+                (1.000, "fibOuter"),
             ];
 
-            foreach (var (level, color) in fibLevels)
+            foreach (var (level, styleKey) in fibLevels)
             {
+                ChartLineStyle fibStyle = ChartStyleSettings.Current.Get(styleKey);
                 priceLines.Add(new ChartDataService.ChartPriceLine
                 {
                     price = isLong ? high - range * level : low + range * level,
-                    color = color,
-                    lineStyle = 1,
+                    color = fibStyle.ToCssColor(),
+                    lineStyle = fibStyle.LineStyle,
+                    lineWidth = fibStyle.LineWidth,
                     title = level.ToString("0.000"),
                 });
             }
@@ -2149,19 +2335,33 @@
         var stored = ChartStyleSettings.Current;
         string up = stored.Get("macdHistUp").ToCssColor();
         string down = stored.Get("macdHistDown").ToCssColor();
+        string upFading = stored.Get("macdHistUpFading").ToCssColor();
+        string downFading = stored.Get("macdHistDownFading").ToCssColor();
 
+        // The TradingView four colour scheme the Avalonia chart uses (Macd.Draw): each bar by its
+        // sign and by whether |histogram| grew against the bar before it. The first bar has no
+        // predecessor and counts as growing.
         var data = new List<object>();
+        double? previous = null;
         for (int i = 0; i < rawCandles.Count && i < results.Count; i++)
         {
             var val = results[i].Histogram;
             if (val.HasValue)
             {
+                double h = val.Value;
+                bool growing = !previous.HasValue || Math.Abs(h) >= Math.Abs(previous.Value);
+                string color;
+                if (h >= 0)
+                    color = growing ? up : upFading;
+                else
+                    color = growing ? down : downFading;
                 data.Add(new
                 {
                     time = rawCandles[i].OpenTime.ToUnixSeconds(),
-                    value = val.Value,
-                    color = val.Value >= 0 ? up : down,
+                    value = h,
+                    color,
                 });
+                previous = h;
             }
         }
         return data;

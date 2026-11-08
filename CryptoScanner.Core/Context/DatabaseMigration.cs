@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 113;
+    public readonly static int CurrentDatabaseVersion = 114;
 
 
     /// <summary>
@@ -2728,6 +2728,22 @@ public class DatabaseMigration
                         makerFeeRate = e.MakerFeeRate.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         name = e.Name
                     }, transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // Version 114 (07-11-2026): the interval of the zone a signal is about, so the chart and TradingView
+        // open a fvgladder signal or position (1m) on the 1h or 4h gap it trades. Display only.
+        if (CurrentVersion > version.Version && version.Version == 113)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Signal add ZoneIntervalId INTEGER null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add ZoneIntervalId INTEGER null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

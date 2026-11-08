@@ -912,6 +912,29 @@ window.ChartWidget = {
         try { this._charts.main.chart.priceScale('right').applyOptions({ autoScale: true }); } catch (e) { }
     },
 
+    /// True when the mouse event lies left of the price axis and above the time axis of the chart.
+    _isInPlotArea: function (event) {
+        var main = this._charts.main;
+        if (!main) return false;
+        try {
+            var rect = main.container.getBoundingClientRect();
+            var x = event.clientX - rect.left;
+            var y = event.clientY - rect.top;
+            var plotWidth = main.chart.timeScale().width();
+            var axisHeight = main.chart.timeScale().height();
+            return x >= 0 && x < plotWidth && y >= 0 && y < rect.height - axisHeight;
+        }
+        catch (e) { return false; }
+    },
+
+    /// Hide or show the indicator panes (barometer, oscillator, macd); the volume pane stays. The
+    /// panes are rebuilt from the panels of the last setData, so nothing has to be fetched again.
+    toggleIndicatorPanes: function () {
+        this._indicatorPanesHidden = !this._indicatorPanesHidden;
+        var veranderd = this._verversPanelen(this._lastPanels);
+        this._verdeelPanelen(veranderd);
+    },
+
     _attachVerticalControl: function () {
         var self = this;
         var main = this._charts.main;
@@ -970,9 +993,22 @@ window.ChartWidget = {
 
         // Ctrl+double click puts the price scale back the way it started
         var onDblClick = function (event) {
-            if (!event.ctrlKey) return;
-            event.preventDefault();
-            self.resetPriceScale();
+            //if (!event.ctrlKey) return;
+            //event.preventDefault();
+            //self.resetPriceScale();
+            if (event.ctrlKey) {
+                event.preventDefault();
+                self.resetPriceScale();
+                return;
+            }
+            // Since 08-11-2026 a plain double click in the plot area hides the indicator panes
+            // (barometer, oscillator, macd) so the candles get the height, and the next one brings
+            // them back. Volume stays. A double click on an axis is left to the chart, which resets
+            // that axis (axisDoubleClickReset).
+            if (self._isInPlotArea(event)) {
+                event.preventDefault();
+                self.toggleIndicatorPanes();
+            }
         };
 
         container.addEventListener('wheel', onWheel, { capture: true, passive: false });
@@ -1059,15 +1095,36 @@ window.ChartWidget = {
 
             moved = true;
 
-            var bars = 0;
-            if (self._lastCandles && start.time !== null && point.time !== null) {
-                var lo = Math.min(start.time, point.time);
-                var hi = Math.max(start.time, point.time);
-                for (var i = 0; i < self._lastCandles.length; i++) {
-                    var t = self._lastCandles[i].time;
-                    if (t >= lo && t <= hi) bars++;
-                }
-                if (bars > 0) bars -= 1; // spans between candles, not the candles themselves
+            //var bars = 0;
+            //if (self._lastCandles && start.time !== null && point.time !== null) {
+            //    var lo = Math.min(start.time, point.time);
+            //    var hi = Math.max(start.time, point.time);
+            //    for (var i = 0; i < self._lastCandles.length; i++) {
+            //        var t = self._lastCandles[i].time;
+            //        if (t >= lo && t <= hi) bars++;
+            //    }
+            //    if (bars > 0) bars -= 1; // spans between candles, not the candles themselves
+            //}
+
+            // Counted on the logical index of the time scale instead of on the candle times: the
+            // time of a point is null where there is no candle (right of the last one, left of the
+            // first one), and one such end made the count 0 and the span empty. The logical index
+            // also runs on through that empty space, the way TradingView counts it.
+            var timeScale = main.chart.timeScale();
+            var logical1 = timeScale.coordinateToLogical(start.x);
+            var logical2 = timeScale.coordinateToLogical(point.x);
+            var steps = (logical1 !== null && logical2 !== null)
+                ? Math.round(logical2) - Math.round(logical1) : 0;
+            var bars = Math.abs(steps); // spans between candles, not the candles themselves
+
+            var span = '';
+            if (start.time !== null && point.time !== null)
+                span = self._formatSpan(point.time - start.time);
+            else if (steps !== 0 && self._lastCandles && self._lastCandles.length > 1) {
+                var candles = self._lastCandles;
+                var step = candles[candles.length - 1].time - candles[candles.length - 2].time;
+                if (step > 0)
+                    span = self._formatSpan(steps * step);
             }
 
             self._measurePrimitive.setMeasure({
@@ -1075,8 +1132,7 @@ window.ChartWidget = {
                 x1: start.x, x2: point.x,
                 price1: start.price, price2: point.price,
                 bars: bars,
-                span: (start.time !== null && point.time !== null)
-                    ? self._formatSpan(point.time - start.time) : '',
+                span: span,
             });
 
             event.preventDefault();
@@ -1457,11 +1513,11 @@ window.ChartWidget = {
     /// live panel's handler ran, so the panels stopped following, and the main chart could be
     /// dragged off its own candles by a range that belonged to nothing. That is the chart going
     /// black after the third click on an overlay.
-    _addPriceLine: function (series, price, color, lineStyle, title, axisLabelVisible) {
+    _addPriceLine: function (series, price, color, lineStyle, title, axisLabelVisible, lineWidth) {
         return series.createPriceLine({
             price: price,
             color: color,
-            lineWidth: 1,
+            lineWidth: lineWidth || 1,
             lineStyle: lineStyle === undefined ? 2 : lineStyle,
             axisLabelVisible: axisLabelVisible === undefined ? true : axisLabelVisible,
             title: title || '',
@@ -1968,6 +2024,21 @@ window.ChartWidget = {
         mainEntry.series.candles.setData(candles);
         this._lastCandles = candles;
 
+        // Candles switched off: the series keeps its data, so markers that sit on a candle (pivot
+        // points, flip arrows) and the price axis stay, as in the Avalonia chart; only the bodies,
+        // wicks and the last-price line go transparent.
+        var hideCandles = !!(extras && extras.hideCandles);
+        var none = 'rgba(0,0,0,0)';
+        // The colours of the Candles gear (candleUp / candleDown), with the old fixed values as fallback
+        var up = (this._userStyles.candleUp && this._userStyles.candleUp.color) || '#22c55e';
+        var down = (this._userStyles.candleDown && this._userStyles.candleDown.color) || '#f0616d';
+        try {
+            mainEntry.series.candles.applyOptions(hideCandles
+                ? { upColor: none, downColor: none, borderUpColor: none, borderDownColor: none, wickUpColor: none, wickDownColor: none, lastValueVisible: false, priceLineVisible: false }
+                //: { upColor: '#22c55e', downColor: '#f0616d', borderUpColor: '#22c55e', borderDownColor: '#f0616d', wickUpColor: '#22c55e', wickDownColor: '#f0616d', lastValueVisible: true, priceLineVisible: true });
+                : { upColor: up, downColor: down, borderUpColor: up, borderDownColor: down, wickUpColor: up, wickDownColor: down, lastValueVisible: true, priceLineVisible: true });
+        } catch (e) { }
+
         // Show the newest candle until the mouse moves over the chart
         this._renderOhlcv(this._lastCandle());
 
@@ -2152,7 +2223,7 @@ window.ChartWidget = {
             extras.priceLines.forEach(function (pl) {
                 var line = self._addPriceLine(
                     mainEntry.series.candles, pl.price, pl.color, pl.lineStyle, pl.title,
-                    pl.axisLabelVisible);
+                    pl.axisLabelVisible, pl.lineWidth);
                 mainEntry.priceLines.push(line);
             });
         }
@@ -2163,6 +2234,8 @@ window.ChartWidget = {
         // Panels: kept where they can be, rebuilt only where they must. The layout is only
         // disturbed when one actually came or went.
         this._orderPanels(panels);
+        // Kept for toggleIndicatorPanes, which rebuilds the panes without a new setData
+        this._lastPanels = panels;
         var veranderd = this._verversPanelen(panels);
         this._verdeelPanelen(veranderd);
 
@@ -2414,6 +2487,13 @@ window.ChartWidget = {
             macd: panels && panels.macd ? 'macd' + styleKey : null,
         };
 
+        // Hidden by a double click in the plot area (toggleIndicatorPanes): only the volume stays
+        if (this._indicatorPanesHidden) {
+            wil.barometer = null;
+            wil.oscillator = null;
+            wil.macd = null;
+        }
+
         var veranderd = false;
         var self = this;
 
@@ -2588,6 +2668,10 @@ window.ChartWidget = {
             var rsiOb = this._styleFor('rsiOverbought');
             this._addPriceLine(rsiSeries, rsiData.oversold, rsiOs.color, rsiOs.lineStyle);
             this._addPriceLine(rsiSeries, rsiData.overbought, rsiOb.color, rsiOb.lineStyle);
+
+            // Mid-line at 50, as the Avalonia chart draws it (Rsi.DrawLines)
+            var rsiMid = this._styleFor('rsiMiddle');
+            this._addPriceLine(rsiSeries, 50, rsiMid.color, rsiMid.lineStyle);
         }
 
         if (stochData) {
@@ -2608,12 +2692,17 @@ window.ChartWidget = {
             entry.series.k = kSeries;
             entry.series.d = dSeries;
 
-            // Only draw the threshold lines once, RSI and stochastic share the 0..100 scale
+            // The stochastic levels are drawn next to the RSI levels, the way the Avalonia chart
+            // does (Stoch.DrawLines): both have their own oversold/overbought settings, so hiding
+            // one set behind the other left the stochastic without its own thresholds whenever
+            // RSI was on. The mid-line at 50 is shared and only drawn once.
+            var stochOs = this._styleFor('stochOversold');
+            var stochOb = this._styleFor('stochOverbought');
+            this._addPriceLine(kSeries, stochData.oversold, stochOs.color, stochOs.lineStyle);
+            this._addPriceLine(kSeries, stochData.overbought, stochOb.color, stochOb.lineStyle);
             if (!levelSeries) {
-                var stochOs = this._styleFor('stochOversold');
-                var stochOb = this._styleFor('stochOverbought');
-                this._addPriceLine(kSeries, stochData.oversold, stochOs.color, stochOs.lineStyle);
-                this._addPriceLine(kSeries, stochData.overbought, stochOb.color, stochOb.lineStyle);
+                var stochMid = this._styleFor('stochMiddle');
+                this._addPriceLine(kSeries, 50, stochMid.color, stochMid.lineStyle);
                 levelSeries = kSeries;
             }
         }

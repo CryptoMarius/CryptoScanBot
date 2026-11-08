@@ -488,6 +488,8 @@ public class CryptoDatabase : IDisposable
                 "TpPercentage TEXT NULL," +
                 // Optional per-signal DCA ladder, "percentage:factor;..." (see Trader.DcaLadder)
                 "DcaLevels TEXT NULL," +
+                // Optional interval of the zone the signal is about (chart and TradingView only)
+                "ZoneIntervalId INTEGER NULL," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
@@ -635,6 +637,8 @@ public class CryptoDatabase : IDisposable
                 "TpPercentage TEXT NULL," +
                 // Optional per-signal DCA ladder, "percentage:factor;..." (see Trader.DcaLadder)
                 "DcaLevels TEXT NULL," +
+                // Optional interval of the zone the signal is about (chart and TradingView only)
+                "ZoneIntervalId INTEGER NULL," +
                 "SlMovedToBreakEven INTEGER NOT NULL DEFAULT 0," +
                 "TrailingStopPrice TEXT NULL," +
                 "TakeProfitTrailStopPrice TEXT NULL," +

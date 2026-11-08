@@ -1,5 +1,17 @@
 CryptoScanBot release historie:
 
+08-11-2026 2.6.9
+- Scanner: TradingView opent ook in Avalonia in een eigen venster in plaats van een tabblad
+- Chart: In Photino opent de chart in een eigen venster, zoals in Avalonia, en volgt de munt die je in het signalen- of symbolenoverzicht kiest; het tabblad Chart is daar weg
+- Scanner: De chart- en TradingView-vensters onthouden plek, grootte en scherm en komen naar voren als ze al open achter een ander venster staan
+- Chart: De kleuren en lijnen staan achter een tandwiel naast elk onderdeel van het Indicators-menu, in beide charts; het tabblad Chart styles in de instellingen is weg
+- Chart: Beide charts tekenen nu hetzelfde: posities, markers, SMA 20/50/200 los, SMC-zones, en een dubbele klik verbergt de indicator-panelen
+- Chart: Een lege chart zegt waarom hij leeg is
+- Chart: Support en resistance toont per kant van de koers de twee sterkste zones, elk van zijn eigen pivots, in plaats van samengevoegde blokken
+- Strategie fvgladder: De chart en TradingView openen op de 1h- of 4h-gap waarop gehandeld wordt in plaats van op 1m
+- Candles: Een munt die op een beurs verdween en dezelfde dag terugkwam haalde maar een stukje historie op, zodat de chart zes dagen liet zien en de zones de rest als leeg zagen
+- Scanner: Het About-venster toont het icoon met het logo van de beurs, de volledige naam van de maker en welke applicatie het is (Avalonia, Photino of Web)
+
 06-11-2026 2.6.8
 - Trader: Nieuwe instappen wachtten ongeveer 10 seconden per positie die nog op zijn vertraging na een vulling wachtte; ze komen nu meteen aan de beurt
 - Chart: Een takeprofit met trailing laat de chart niet meer tien keer zo hoog worden; het doel staat als "tp trigger" in de chart, zoals Altrady het tekent

@@ -26,5 +26,9 @@ public static class Constants
     public const string License = "License: GNU General Public License v3";
     public const string LicenseUrl = "https://www.gnu.org/licenses/gpl-3.0.html";
 
+    // The full name of the author, the same as Authors/Copyright in Directory.Build.props and the
+    // code signing certificate. Shown in both About screens.
+    public const string Author = "Marius Ellen";
+
 
 }

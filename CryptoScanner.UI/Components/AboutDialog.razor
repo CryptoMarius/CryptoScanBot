@@ -9,9 +9,15 @@
             <span class="modal-title">About CryptoScanBot</span>
         </div>
         <div class="modal-body about-body">
-            <div class="about-icon">&#x1F4B0;</div>
+            @* The application icon with the logo of the exchange, the same picture the window and
+               the task bar show (since 08-11-2026; before that a money bag emoji) *@
+            @if (_icon != "")
+            {
+                <img class="about-icon-image" src="@_icon" width="80" height="80" alt="" />
+            }
             <div class="about-app-name">CryptoScanBot</div>
-            <div class="about-version">Version @GlobalData.AppVersion</div>
+            @* With the variant since 08-11-2026, so it is clear which of the three applications this is *@
+            <div class="about-version">Version @GlobalData.AppVersion (@GlobalData.AppVariant)</div>
             @* The commit this build was made from (see BuildInfo). Left out when the build carries
                no stamp, because an empty "Build" line reads as a missing value. *@
             @if (BuildInfo.Description != "")
@@ -19,7 +25,7 @@
                 <div class="about-copyright">Build @BuildInfo.Description</div>
             }
             <div class="about-copyright">@_copyright</div>
-            <div class="about-author">Author: Marius</div>
+            <div class="about-author">Author: @CryptoScanner.Core.Const.Constants.Author</div>
             @* The licence and where to read its full text. Both come from Constants so this dialog
                and the Avalonia About window always show the same wording. *@
             <div class="about-copyright">@CryptoScanner.Core.Const.Constants.License</div>
@@ -51,6 +57,7 @@
     [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
 
     private string _copyright = "";
+    private string _icon = "";
     private List<string> _exchanges = [];
 
     protected override void OnParametersSet()
@@ -58,7 +65,21 @@
         if (Visible && _exchanges.Count == 0)
         {
             _copyright = GetCopyright();
+            _icon = GetIcon();
             _exchanges = GlobalData.ExchangeListName.Keys.OrderBy(x => x).ToList();
+        }
+    }
+
+    private static string GetIcon()
+    {
+        try
+        {
+            return "data:image/png;base64," + Convert.ToBase64String(AppIconBuilder.BuildCurrentPng());
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "AboutDialog.GetIcon");
+            return "";
         }
     }
 

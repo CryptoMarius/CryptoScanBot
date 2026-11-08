@@ -1,5 +1,7 @@
 ﻿using CryptoScanner.Core.Model;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -17,7 +19,12 @@ public class Sma
             Title = $"sma{length}",
             MarkerSize = 1,
             MarkerFill = color,
-            Color = color,
+            //Color = color,
+            // Colour, width and dash from Settings / Chart styles (sma20/sma50/sma200), the same as
+            // the Photino chart; the colour passed in is only the fallback
+            Color = ChartStyleOxy.ColorFor($"sma{length}", color),
+            StrokeThickness = ChartStyleOxy.ThicknessFor($"sma{length}", 2),
+            LineStyle = ChartStyleOxy.LineStyleFor($"sma{length}", LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };

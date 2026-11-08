@@ -199,6 +199,46 @@ public class SupportResistanceTests : TestBase
     }
 
 
+    /// <summary>
+    /// The chart zones (08-11-2026): at most two per side, none overlapping on a side, support at or
+    /// under the price and resistance above it, each zone the spread of its own pivots. HBARUSDT 12h
+    /// (Binance Perpetual, 02-03-2026 .. 07-11-2026) is the chart where the old merging drew one block
+    /// of 0.0637 .. 0.0778 labelled "38x"; its bottom level is the zone a TradingView user drew by hand
+    /// at 0.0645 .. 0.0665.
+    /// </summary>
+    [TestMethod]
+    public void ZonesAroundPrice_TwoPerSideWithoutMerging()
+    {
+        List<CryptoCandle> candles = Load("HBARUSDT-12h.json");
+        SupportResistanceResult result = SupportResistance.Scan(candles);
+        double price = (double)candles[^1].Close;
+        double atr = SupportResistance.LastAtr(candles);
+
+        List<SupportResistanceZone> zones = SupportResistance.ZonesAroundPrice(result.Levels, price, candles.Count - 1);
+        foreach (string text in zones.Select(z => $"{(z.IsSupport ? "support" : "resistance")} {z.Low:0.00000}-{z.High:0.00000} {z.Touches}x"))
+            Console.WriteLine(text);
+
+        foreach (bool support in (bool[])[true, false])
+        {
+            List<SupportResistanceZone> side = [.. zones.Where(z => z.IsSupport == support)];
+            Assert.IsTrue(side.Count <= SupportResistance.ZonesPerSide, "at most two per side");
+            for (int a = 0; a < side.Count; a++)
+                for (int b = a + 1; b < side.Count; b++)
+                    Assert.IsTrue(side[a].High < side[b].Low || side[b].High < side[a].Low, "no overlap on one side");
+        }
+        foreach (SupportResistanceZone zone in zones)
+        {
+            Assert.AreEqual(zone.IsSupport, zone.Low <= price, "the side follows the price");
+            Assert.IsTrue(zone.High - zone.Low < 0.0035, "a zone is its own pivots, not a merged block (that one was 0.0141 high)");
+            Assert.IsTrue(zone.High - zone.Low >= SupportResistance.MinZoneHeightAtr * atr * 0.999, "at least a quarter ATR high");
+        }
+
+        // The bottom of the July-August range, the zone of the TradingView chart
+        Assert.IsTrue(zones.Any(z => z.IsSupport && z.Touches == 6 && Math.Abs(z.Low - 0.06423) < 0.00002 && Math.Abs(z.High - 0.06546) < 0.00002),
+            "the support of the range bottom, 0.06423 .. 0.06546 on six pivots");
+    }
+
+
     /// <summary>A decision at candle i may not depend on later candles.</summary>
     [TestMethod]
     public void NothingLooksIntoTheFuture()

@@ -1,5 +1,7 @@
 using CryptoScanner.Core.Model;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -16,7 +18,11 @@ public class KeltnerChannel
             Title = "kc.upper",
             MarkerSize = 1,
             MarkerFill = OxyColors.Gray,
-            Color = OxyColors.Gray,
+            //Color = OxyColors.Gray,
+            // Colour, width and dash from Settings / Chart styles, the same as the Photino chart
+            Color = ChartStyleOxy.ColorFor("keltnerUpper", OxyColors.Gray),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("keltnerUpper", 2),
+            LineStyle = ChartStyleOxy.LineStyleFor("keltnerUpper", LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };
@@ -25,7 +31,10 @@ public class KeltnerChannel
             Title = "kc.middle",
             MarkerSize = 1,
             MarkerFill = OxyColors.Gray,
-            Color = OxyColors.Gray,
+            //Color = OxyColors.Gray,
+            Color = ChartStyleOxy.ColorFor("keltnerMiddle", OxyColors.Gray),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("keltnerMiddle", 2),
+            LineStyle = ChartStyleOxy.LineStyleFor("keltnerMiddle", LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };
@@ -34,7 +43,10 @@ public class KeltnerChannel
             Title = "kc.lower",
             MarkerSize = 1,
             MarkerFill = OxyColors.Gray,
-            Color = OxyColors.Gray,
+            //Color = OxyColors.Gray,
+            Color = ChartStyleOxy.ColorFor("keltnerLower", OxyColors.Gray),
+            StrokeThickness = ChartStyleOxy.ThicknessFor("keltnerLower", 2),
+            LineStyle = ChartStyleOxy.LineStyleFor("keltnerLower", LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };

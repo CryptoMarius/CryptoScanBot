@@ -49,6 +49,7 @@ class Program
             appVersion = appVersion[0..^2];
 
         GlobalData.AppVersion = appVersion;
+        GlobalData.AppVariant = "Avalonia";
         //System.Diagnostics.Debug.WriteLine($"GlobalData.AppVersion =  {GlobalData.AppVersion}");
 
         // We need a folder for accessing the Sounds

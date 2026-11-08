@@ -38,6 +38,27 @@ public static class ChartStyleOxy
         return OxyColor.FromArgb(color.A, color.R, color.G, color.B);
     }
 
+    /// <summary>
+    /// The colour of a series at the transparency the overlay itself uses (a zone that is closed or
+    /// weak is fainter, a block that held more often is darker). The alpha the user picked is
+    /// applied on top of <paramref name="alpha"/>, so a colour left fully opaque draws as before.
+    /// </summary>
+    public static OxyColor ColorFor(string key, byte alpha)
+    {
+        CoreColor color = ColorTextHelper.Parse(ChartStyleSettings.Current.Get(key).Color,
+            CoreColor.FromArgb(0xFF, 0x88, 0x88, 0x88));
+        return OxyColor.FromArgb((byte)(alpha * color.A / 255), color.R, color.G, color.B);
+    }
+
+    /// <summary>
+    /// <paramref name="color"/> at the transparency an overlay asks for, with the alpha already in
+    /// the colour (the one the user picked) applied on top of it.
+    /// </summary>
+    public static OxyColor WithAlpha(OxyColor color, int alpha)
+    {
+        return OxyColor.FromArgb((byte)(Math.Clamp(alpha, 0, 255) * color.A / 255), color.R, color.G, color.B);
+    }
+
     /// <summary>The line thickness: the user's choice, otherwise <paramref name="fallback"/>.</summary>
     public static double ThicknessFor(string key, double fallback)
     {

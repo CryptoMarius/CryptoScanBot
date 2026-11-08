@@ -23,6 +23,7 @@
 @inject MarketIndicatorService MarketIndicatorService
 @inject LogService LogService
 @inject InternalBrowserService InternalBrowser
+@inject ChartWindowService ChartWindowService
 @inject IJSRuntime JS
 @implements IDisposable
 
@@ -204,7 +205,21 @@
         <div class="content-area">
             <div class="tab-bar">
                 <NavLink class="tab" href="" Match="NavLinkMatch.All">Signals</NavLink>
-                <NavLink class="tab" href="chart">Chart</NavLink>
+                @* A host that shows the chart in a window of its own (Photino) turns this tab into the
+                   button that opens that window; the web host keeps the tab *@
+                @* Since 07-11-2026 Photino shows no tab at all: the chart window opens from the grids
+                   (double click, context menu), and the tab added nothing to that. *@
+                @*
+                @if (ChartWindowService.HasWindow)
+                {
+                    <span class="tab" title="Open the chart in a window of its own" @onclick="ChartWindowService.Open">Chart</span>
+                }
+                else
+                *@
+                @if (!ChartWindowService.HasWindow)
+                {
+                    <NavLink class="tab" href="chart">Chart</NavLink>
+                }
                 <NavLink class="tab" href="livedata">Live Data</NavLink>
                 <NavLink class="tab" href="dashboard">Dashboard</NavLink>
                 <NavLink class="tab" href="positions/open">Open positions</NavLink>

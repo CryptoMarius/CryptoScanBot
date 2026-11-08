@@ -47,6 +47,9 @@ public static class GlobalData
     public static string AppPath { get; set; } = ""; // For sounds
     public static string LogName { get; set; } = "";
     public static string AppVersion { get; set; } = "";
+    // Which application is running: "Avalonia", "Photino" or "Web". Set by each host in its
+    // Program.cs, shown in the About screens so a screenshot says which of the three it came from.
+    public static string AppVariant { get; set; } = "";
     public static string AppDataFolder { get; set; } = ""; // depends on startup parameters (also in platformService)
     public static string CandleDataFolder { get; set; } = ""; // separate folder for per-exchange candle DBs (falls back to AppDataFolder when empty)
 

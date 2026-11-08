@@ -119,6 +119,14 @@ public class SignalCreateBase
     /// </summary>
     public virtual bool WithoutDca => false;
 
+    /// <summary>
+    /// Optional interval of the zone the signal is about, for a strategy that runs on 1m but trades a
+    /// zone of a higher interval and keeps the signal on 1m (fvgladder). Display only: the chart and
+    /// TradingView open on it (CryptoSignal.ChartInterval), the trader keeps using the signal interval.
+    /// The other zone strategies (fvg, dlz, smc) report the zone interval as the signal interval itself.
+    /// </summary>
+    public virtual CryptoInterval? ZoneInterval => null;
+
     public virtual int MacdRecoveryBarCount => 1;
 
     /// <summary>

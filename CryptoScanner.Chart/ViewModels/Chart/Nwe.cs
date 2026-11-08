@@ -1,6 +1,8 @@
 ﻿using CryptoScanner.Analyzers.Nwe;
 using CryptoScanner.Core.Model;
 
+using CryptoScanner.Analyzers.Chart;
+
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -13,12 +15,18 @@ public class Nwe
     {
         //TODO: Honour Min & Max Date!
 
+        string stylePrefix = smoothRepainting ? "nweRepaint" : "nwe";
+
         var seriesHigh = new LineSeries
         {
             Title = "n high",
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkGray,
-            Color = OxyColors.DarkGray,
+            //Color = OxyColors.DarkGray,
+            // Colour, width and dash from Settings / Chart styles (nwe* or nweRepaint*), the same as the Photino chart
+            Color = ChartStyleOxy.ColorFor(stylePrefix + "Upper", OxyColors.DarkGray),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(stylePrefix + "Upper", 2),
+            LineStyle = ChartStyleOxy.LineStyleFor(stylePrefix + "Upper", LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };
@@ -28,7 +36,10 @@ public class Nwe
             Title = "n middle",
             MarkerSize = 1,
             MarkerFill = OxyColors.Gray,
-            Color = OxyColors.Gray,
+            //Color = OxyColors.Gray,
+            Color = ChartStyleOxy.ColorFor(stylePrefix + "Middle", OxyColors.Gray),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(stylePrefix + "Middle", 2),
+            LineStyle = ChartStyleOxy.LineStyleFor(stylePrefix + "Middle", LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };
@@ -37,7 +48,10 @@ public class Nwe
             Title = "n low",
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkGray,
-            Color = OxyColors.DarkGray,
+            //Color = OxyColors.DarkGray,
+            Color = ChartStyleOxy.ColorFor(stylePrefix + "Lower", OxyColors.DarkGray),
+            StrokeThickness = ChartStyleOxy.ThicknessFor(stylePrefix + "Lower", 2),
+            LineStyle = ChartStyleOxy.LineStyleFor(stylePrefix + "Lower", LineStyle.Solid),
             YAxisKey = "price",
             Tag = group,
         };

@@ -23,6 +23,8 @@ public class PositionRow
     public DateTime? CloseTime { get; set; }
     public string? Symbol { get; set; }
     public string? Interval { get; set; }
+    // The interval the chart opens on: the zone interval of the position when it has one (fvgladder)
+    public string? ChartInterval { get; set; }
     public int Side { get; set; }
     public string? Strategy { get; set; }
     public int Status { get; set; }
@@ -159,13 +161,14 @@ public partial class RunPositionsViewModel : ObservableObject
             database.Open();
 
             var rows = database.Connection.Query<PositionRow>(
-                "SELECT p.Id, p.CreateTime, p.CloseTime, s.Name as Symbol, i.Name as Interval, " +
+                "SELECT p.Id, p.CreateTime, p.CloseTime, s.Name as Symbol, i.Name as Interval, coalesce(zi.Name, i.Name) as ChartInterval, " +
                 "       p.Side, p.Strategy, p.Status, p.Profit, p.Percentage, " +
                 "       p.SignalPrice, p.SlPercentage, p.EventText, " +
                 "       p.PartCount, p.ActiveDca, p.Invested " +
                 "FROM Position p " +
                 "LEFT JOIN Symbol s ON s.Id = p.SymbolId " +
                 "LEFT JOIN Interval i ON i.Id = p.IntervalId " +
+                "LEFT JOIN Interval zi ON zi.Id = p.ZoneIntervalId " +
                 "WHERE p.EmulatorRunId = @runId " +
                 "ORDER BY p.CreateTime",
                 new { runId });

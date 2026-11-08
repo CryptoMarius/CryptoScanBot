@@ -11,184 +11,354 @@
         x:Class="CryptoScanner.Views.ChartWindow"
         Title="{Binding WindowTitle}">
 
+    <Window.Styles>
+        <!-- The gear next to an item of the Indicators menu, as small as the one in the Photino chart -->
+        <Style Selector="Button.chart-style">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="MinHeight" Value="16"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Opacity" Value="0.55"/>
+            <Setter Property="ToolTip.Tip" Value="Colours and lines"/>
+        </Style>
+        <!-- Dimmed until you reach its row, as in the Photino menu -->
+        <Style Selector="Border.chart-menu-row:pointerover Button.chart-style">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <!-- The Photino headings: small, upper case, muted -->
+        <Style Selector="TextBlock.chart-menu-heading">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="LetterSpacing" Value="0.5"/>
+            <Setter Property="Margin" Value="10,4,10,2"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+        </Style>
+        <!-- One row of the menu: 10 pixels in from the sides and highlighted under the mouse -->
+        <Style Selector="Border.chart-menu-row">
+            <Setter Property="Padding" Value="10,1"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Border.chart-menu-row:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}"/>
+        </Style>
+        <!-- The Indicators menu itself, its rows run to the edge like the Photino one -->
+        <Style Selector="Border.chart-menu">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MaxHeight" Value="700"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+        </Style>
+        <!-- The bar above the chart, as compact as the Photino one: 24 pixels high, font 12 -->
+        <Style Selector="ComboBox.chart-header">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="MinHeight" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="8,0,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.chart-header">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="MinHeight" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <!-- Refresh, recalculate and the trading app: icon only, like the Photino bar -->
+        <Style Selector="Button.chart-icon">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="MinHeight" Value="24"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.chart-menu-row CheckBox">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="MinHeight" Value="20"/>
+            <Setter Property="Padding" Value="4,0,0,0"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseMediumHighBrush}"/>
+        </Style>
+        <!-- The Fluent box is 20 pixels on a 32 pixel row; the Photino one is about 13 -->
+        <Style Selector="Border.chart-menu-row CheckBox /template/ Border#NormalRectangle">
+            <Setter Property="Width" Value="13"/>
+            <Setter Property="Height" Value="13"/>
+        </Style>
+        <Style Selector="Border.chart-menu-row CheckBox /template/ Viewbox">
+            <Setter Property="Width" Value="13"/>
+            <Setter Property="Height" Value="13"/>
+        </Style>
+        <Style Selector="Border.chart-menu-row ComboBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="MinHeight" Value="22"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Padding" Value="8,0,0,0"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        </Style>
+    </Window.Styles>
+
     <!-- Border around entire content -->
     <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1">
-    <Grid ColumnDefinitions="220,*" RowDefinitions="*">
+    <!-- Since 07-11-2026 laid out like the Photino chart: no panel on the left any more, the symbol,
+         quote and interval pickers on one bar above the chart, everything that was a group in that
+         panel (Trend, FIB, Overlays, Indicators, Display) behind the one Indicators button, each with
+         a gear for its colours, and the actions as icons. That gives the 220 pixels of the panel back
+         to the chart itself. -->
+    <DockPanel>
 
-        <!-- Left Panel - Controls -->
-        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Width="220">
-            <StackPanel Margin="8,0,0,2" Spacing="2">
-                
-                <!-- Symbol Selector 
+        <!-- The bar above the chart -->
+        <Border DockPanel.Dock="Top" Padding="8,3" BorderThickness="0,0,0,1"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+
+                <!-- Symbol Selector
                 <views:SymbolSelectorView DataContext="{Binding SymbolSelector}"/>
                 -->
 
-                <HeaderedContentControl Classes="groupbox" Header="Symbol" Padding="4">
-                    <StackPanel >
-                        <Grid ColumnDefinitions="Auto,80" RowDefinitions="Auto,Auto,Auto" Margin="4" Grid.RowSpacing="2">
-                            <!-- Quote Base -->
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Base:" VerticalAlignment="Center" 
-                                        Margin="0,0,8,0" FontSize="12" Width="50"/>
-                            <ComboBox Grid.Row="0" Grid.Column="1" 
-                                        ItemsSource="{Binding SymbolSelector.BaseSymbols}"
-                                        SelectedItem="{Binding SymbolSelector.SelectedBase, Mode=TwoWay}"
-                                        FontSize="12" Width="80.0"/>
+                <ComboBox ItemsSource="{Binding SymbolSelector.BaseSymbols}"
+                          SelectedItem="{Binding SymbolSelector.SelectedBase, Mode=TwoWay}"
+                          ToolTip.Tip="Base"
+                          Classes="chart-header" MinWidth="110" FontWeight="SemiBold"/>
+                <ComboBox ItemsSource="{Binding SymbolSelector.QuoteSymbols}"
+                          SelectedItem="{Binding SymbolSelector.SelectedQuote, Mode=TwoWay}"
+                          ToolTip.Tip="Quote"
+                          Classes="chart-header" MinWidth="80"/>
+                <ComboBox ItemsSource="{Binding SymbolSelector.Intervals}"
+                          SelectedItem="{Binding SymbolSelector.SelectedInterval, Mode=TwoWay}"
+                          ToolTip.Tip="Interval"
+                          Classes="chart-header" MinWidth="80"/>
 
-                            <!-- Quote -->
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Quote:" VerticalAlignment="Center" 
-                                        Margin="0,0,8,0" FontSize="12" Width="50"/>
-                            <ComboBox Grid.Row="1" Grid.Column="1" 
-                                        ItemsSource="{Binding SymbolSelector.QuoteSymbols}"
-                                        SelectedItem="{Binding SymbolSelector.SelectedQuote, Mode=TwoWay}"
-                                        FontSize="12" Width="80.0"/>
+                <!-- Everything the side panel used to hold, behind one button, the way the Photino chart does it -->
+                <!-- Since 07-11-2026 a Popup instead of a Button.Flyout: a flyout closes as soon as the
+                     window loses focus for a moment, so the menu vanished while you were only reading it.
+                     Like the Photino menu it now closes on the button, a click next to it or Escape. -->
+                <Button x:Name="IndicatorsButton" Content="Indicators ▼" Classes="chart-header"
+                        Click="OnIndicatorsClick"
+                        ToolTip.Tip="Trend, FIB, overlays, indicators and what is displayed"/>
+                <Popup x:Name="IndicatorsPopup" PlacementTarget="{Binding #IndicatorsButton}"
+                       Placement="BottomEdgeAlignedLeft" VerticalOffset="2"
+                       IsLightDismissEnabled="False"
+                       Opened="OnIndicatorsPopupChanged" Closed="OnIndicatorsPopupChanged">
+                        <Border Classes="chart-menu" KeyDown="OnIndicatorsKeyDown">
+                            <ScrollViewer MaxHeight="680" VerticalScrollBarVisibility="Auto">
+                                <!-- The right margin keeps the gears clear of the scrollbar, which Fluent lays over the content -->
+                                <StackPanel MinWidth="210" Margin="0,6,14,6" x:DataType="vm:ChartWindowViewModel">
+                                    <StackPanel.Resources>
+                                        <!-- Also the height of the row inside the Fluent CheckBox template -->
+                                        <x:Double x:Key="CheckBoxMinHeight">20</x:Double>
+                                    </StackPanel.Resources>
 
-                            <!-- Interval -->
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Interval:" VerticalAlignment="Center" 
-                                        Margin="0,0,8,0" FontSize="12" Width="50"/>
-                            <ComboBox Grid.Row="2" Grid.Column="1" 
-                                        ItemsSource="{Binding SymbolSelector.Intervals}"
-                                        SelectedItem="{Binding SymbolSelector.SelectedInterval, Mode=TwoWay}"
-                                        FontSize="12" Width="80.0"/>
-                        </Grid>
+                                    <!-- Trend Settings -->
+                                    <TextBlock Classes="chart-menu-heading" Text="TREND"/>
+                                    <Border Classes="chart-menu-row">
+                                        <ComboBox SelectedIndex="{Binding TrendSettings.TrendType, Mode=TwoWay}">
+                                            <ComboBoxItem Content="Primary trend"/>
+                                            <ComboBoxItem Content="Secondary trend"/>
+                                        </ComboBox>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙"
+                                                    Tag="zigzag|ZigZag" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding TrendSettings.ShowZigZag, Mode=TwoWay}"
+                                                      Content="Show zigzag"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙"
+                                                    Tag="sr|Support/resistance" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding TrendSettings.ShowSupportResistance, Mode=TwoWay}"
+                                                      Content="Support/resistance"
+                                                      ToolTip.Tip="Horizontal support and resistance (at least two pivots close together), sloped lines through the last two lower highs or higher lows, and a triangle where a broken level was retested from the other side and held (a flip)"/>
+                                        </DockPanel>
+                                    </Border>
+
+                                    <!-- FIB Settings -->
+                                    <TextBlock Classes="chart-menu-heading" Text="FIB"/>
+                                    <Border Classes="chart-menu-row">
+                                        <ComboBox SelectedIndex="{Binding FibSettings.FibTrend, Mode=TwoWay}">
+                                            <ComboBoxItem Content="Primary trend"/>
+                                            <ComboBoxItem Content="Secondary trend"/>
+                                        </ComboBox>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙"
+                                                    Tag="fib|FIB retracement" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding FibSettings.ShowFibRetracement, Mode=TwoWay}"
+                                                      Content="Show fib retracement"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙"
+                                                    Tag="fibZigzag|FIB ZigZag" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding FibSettings.ShowZigZag, Mode=TwoWay}"
+                                                      Content="Show zigzag"/>
+                                        </DockPanel>
+                                    </Border>
+
+                                    <!-- Overlay Options (all items sorted alphabetically by label) -->
+                                    <TextBlock Classes="chart-menu-heading" Text="OVERLAYS"/>
+                                    <ItemsControl ItemsSource="{Binding DisplayOptions.AllOverlays}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:PluginOverlayToggle">
+                                                <Border Classes="chart-menu-row">
+                                                    <DockPanel>
+                                                        <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙"
+                                                                IsVisible="{Binding HasStyle}" Click="OnOverlayStyleClick"/>
+                                                        <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" Content="{Binding Label}"/>
+                                                    </DockPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Indicator sub-charts -->
+                                    <TextBlock Classes="chart-menu-heading" Text="INDICATORS"/>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙" Tag="lux|Lux" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding DisplayOptions.ShowLux, Mode=TwoWay}" Content="Lux"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙" Tag="macd|MACD" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding DisplayOptions.ShowMacd, Mode=TwoWay}" Content="MACD"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙" Tag="rsi|RSI" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding DisplayOptions.ShowRsi, Mode=TwoWay}" Content="RSI"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙" Tag="stoch|Stochastic" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding DisplayOptions.ShowStoch, Mode=TwoWay}" Content="Stochastic"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙" Tag="volume|Volume" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding DisplayOptions.ShowVolume, Mode=TwoWay}" Content="Volume"/>
+                                        </DockPanel>
+                                    </Border>
+
+                                    <!-- Display Options. At the bottom, as in the Photino chart: it switches whole
+                                         layers on and off rather than adding an indicator. -->
+                                    <TextBlock Classes="chart-menu-heading" Text="DISPLAY"/>
+                                    <!-- not working, turned off -->
+                                    <!--
+                                    <CheckBox IsChecked="{Binding DisplayOptions.Transparent, Mode=TwoWay}" Content="Transparent" FontSize="12"/>
+                                    -->
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙" Tag="candles|Candles" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding DisplayOptions.ShowCandles, Mode=TwoWay}" Content="Candles"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙" Tag="pivots|Pivot points" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding DisplayOptions.ShowPoints, Mode=TwoWay}" Content="Pivot points"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙" Tag="signals|Signals" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding DisplayOptions.ShowSignals, Mode=TwoWay}" Content="Signals"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <Border Classes="chart-menu-row">
+                                        <DockPanel>
+                                            <Button Classes="chart-style" DockPanel.Dock="Right" Content="⚙" Tag="positions|Positions" Click="OnStyleClick"/>
+                                            <CheckBox IsChecked="{Binding DisplayOptions.ShowPositions, Mode=TwoWay}" Content="Positions"/>
+                                        </DockPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                </Popup>
+
+                <!-- Action Buttons, as icons like on the Photino bar -->
+                <Button Classes="chart-icon" Content="⟳" Command="{Binding RefreshCommand}"
+                        ToolTip.Tip="Reload the chart with the latest candles, signals and positions"/>
+                <Button Classes="chart-icon" Content="∑" Command="{Binding CalculateCommand}"
+                        ToolTip.Tip="Force a full recalculation of the liquidity zones"/>
+                <!-- Open Trading App -->
+                <!-- The same rocket as on the Photino bar (the colour emoji), instead of the small drawn one -->
+                <Button Classes="chart-icon" Command="{Binding OpenTradingAppCommand}"
+                        ToolTip.Tip="Open trading app">
+                    <TextBlock Text="🚀" FontSize="14"
+                               FontFamily="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Button>
+                <!-- not working, turned off -->
+                <Button Content="Zoom last" Command="{Binding ZoomLastCommand}" HorizontalAlignment="Center" IsEnabled="false" IsVisible="false"/>
+
+                <!-- Opened from a position: say so, and give the way back to the live chart (as the Photino chart) -->
+                <Border IsVisible="{Binding HasWindow}" Padding="8,2" VerticalAlignment="Center"
+                        CornerRadius="4" BorderThickness="1"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        ToolTip.Tip="{Binding WindowBannerTooltip}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding WindowBannerText}" VerticalAlignment="Center"/>
+                        <Button Content="×" Padding="6,0" Command="{Binding LeaveWindowCommand}"
+                                ToolTip.Tip="Back to the live chart"/>
                     </StackPanel>
-                </HeaderedContentControl>
+                </Border>
+            </StackPanel>
+        </Border>
 
-                <!-- Trend Settings -->
-                <HeaderedContentControl Classes="groupbox" Header="Trend">
-                    <StackPanel Margin="4,8,0,2" >
-                        <ComboBox SelectedIndex="{Binding TrendSettings.TrendType, Mode=TwoWay}"
-                                  FontSize="12">
-                            <ComboBoxItem Content="Primary trend"/>
-                            <ComboBoxItem Content="Secondary trend"/>
-                        </ComboBox>
-                        <CheckBox IsChecked="{Binding TrendSettings.ShowZigZag, Mode=TwoWay}"
-                                  Content="Show zigzag"
-                                  FontSize="12"/>
-                        <CheckBox IsChecked="{Binding TrendSettings.ShowSupportResistance, Mode=TwoWay}"
-                                  Content="Support/resistance"
-                                  ToolTip.Tip="Horizontal support and resistance (at least two pivots close together), sloped lines through the last two lower highs or higher lows, and a triangle where a broken level was retested from the other side and held (a flip)"
-                                  FontSize="12"/>
-                    </StackPanel>
-                </HeaderedContentControl>
-
-                <!-- FIB Settings -->
-                <HeaderedContentControl Classes="groupbox" Header="FIB">
-                    <StackPanel Margin="4" >
-                        <ComboBox SelectedIndex="{Binding FibSettings.FibTrend, Mode=TwoWay}"
-                                  FontSize="12">
-                            <ComboBoxItem Content="Primary trend"/>
-                            <ComboBoxItem Content="Secondary trend"/>
-                        </ComboBox>
-                        <CheckBox IsChecked="{Binding FibSettings.ShowFibRetracement, Mode=TwoWay}"
-                                  Content="Show fib retracement"
-                                  FontSize="12"/>
-                        <CheckBox IsChecked="{Binding FibSettings.ShowZigZag, Mode=TwoWay}"
-                                  Content="Show zigzag"
-                                  FontSize="12"/>
-                    </StackPanel>
-                </HeaderedContentControl>
-
-
-                <!-- Display Options -->
-                <HeaderedContentControl Classes="groupbox" Header="Display">
-                    <StackPanel Margin="4" Spacing="-7">
-                        <!-- not working, turned off -->
-                        <!--
-                        <CheckBox IsChecked="{Binding DisplayOptions.Transparent, Mode=TwoWay}" Content="Transparent" FontSize="12"/>
-                        -->
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowCandles, Mode=TwoWay}" Content="Candles" FontSize="12"/>
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowPoints, Mode=TwoWay}" Content="Pivot points" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowSignals, Mode=TwoWay}" Content="Signals" FontSize="12"/>
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowPositions, Mode=TwoWay}" Content="Positions" FontSize="12"/>
-					</StackPanel>
-                </HeaderedContentControl>
-
-                <!-- Overlay Options (all items sorted alphabetically by label) -->
-                <HeaderedContentControl Classes="groupbox" Header="Overlays">
-                    <ItemsControl ItemsSource="{Binding DisplayOptions.AllOverlays}" Margin="4">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Spacing="-7"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" Content="{Binding Label}" FontSize="12"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </HeaderedContentControl>
-
-                <!-- Indicator sub-charts -->
-                <HeaderedContentControl Classes="groupbox" Header="Indicators">
-                    <StackPanel Margin="4" Spacing="-7">
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowLux, Mode=TwoWay}" Content="Lux" FontSize="12"/>
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowMacd, Mode=TwoWay}" Content="MACD" FontSize="12"/>
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowRsi, Mode=TwoWay}" Content="RSI" FontSize="12"/>
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowStoch, Mode=TwoWay}" Content="Stochastic" FontSize="12"/>
-						<CheckBox IsChecked="{Binding DisplayOptions.ShowVolume, Mode=TwoWay}" Content="Volume" FontSize="12"/>
-					</StackPanel>
-                </HeaderedContentControl>
-
-				<!-- Action Buttons -->
-				<Grid ColumnDefinitions="*,*,*" Margin="0,6,4,0" ColumnSpacing="4">
-					<Button Grid.Column="0" Content="Refresh"
-							Command="{Binding RefreshCommand}"
-							HorizontalAlignment="Stretch"
-							HorizontalContentAlignment="Center"
-							Padding="4,4"/>
-					<Button Grid.Column="1" Content="Calc"
-							Command="{Binding CalculateCommand}"
-							HorizontalAlignment="Stretch"
-							HorizontalContentAlignment="Center"
-							Padding="4,4"
-							ToolTip.Tip="Calculate"/>
-					<!-- Open Trading App -->
-					<Button Grid.Column="2"
-							Command="{Binding OpenTradingAppCommand}"
-							HorizontalAlignment="Stretch"
-							HorizontalContentAlignment="Center"
-							Padding="4,4"
-							ToolTip.Tip="Open trading app">
-						<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-							<Viewbox Width="14" Height="14" VerticalAlignment="Center">
-								<Canvas Width="24" Height="24">
-									<!-- Flame -->
-									<Path Data="M9,18 L12,23 L15,18 L13,17 L12,19 L11,17 Z" Fill="#FF6B35"/>
-									<!-- Fins -->
-									<Path Data="M8,14 L4,18 L8,18 Z" Fill="#E63946"/>
-									<Path Data="M16,14 L20,18 L16,18 Z" Fill="#E63946"/>
-									<!-- Body -->
-									<Path Data="M12,2 C14,4 16,7 16,12 L16,18 L8,18 L8,12 C8,7 10,4 12,2 Z"
-										  Fill="#F1FAEE" Stroke="#1D3557" StrokeThickness="0.8"/>
-									<!-- Window -->
-									<Ellipse Width="3" Height="3" Canvas.Left="10.5" Canvas.Top="8"
-											 Fill="#457B9D" Stroke="#1D3557" StrokeThickness="0.6"/>
-								</Canvas>
-							</Viewbox>
-							<TextBlock Text="" VerticalAlignment="Center"/>
-						</StackPanel>
-					</Button>
-				</Grid>
-				<!-- not working, turned off -->
-				<Button Content="Zoom last" Command="{Binding ZoomLastCommand}" HorizontalAlignment="Center" IsEnabled="false" IsVisible="false"/>
-
-
-
-			</StackPanel>
-        </ScrollViewer>
-
-        <!-- Right Panel - Chart -->
+        <!-- The chart -->
         <!-- Host the PlotView directly in XAML (like DashboardPositionsView) so OxyPlot's control
              theme is applied. Hosting a VM-created PlotView via <ContentControl Content="{Binding PlotView}"/>
              left it without a template → a completely blank panel. Model is bound to PlotModel; the
              code-behind hands this control + controller back to the VM. -->
-        <Border Grid.Column="1" Margin="8">
+        <Panel Margin="8">
             <oxy:PlotView x:Name="PlotViewControl"
                           Model="{Binding PlotModel}"
                           Background="Transparent" />
-        </Border>
-    </Grid>
+            <!-- An empty chart is explained instead of left blank, the same text as the Photino chart -->
+            <Border IsVisible="{Binding HasEmptyReason}" IsHitTestVisible="False"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520"
+                    Padding="20,16" CornerRadius="6" BorderThickness="1"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding EmptyTitle}" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding EmptyReason}" FontSize="13" TextWrapping="Wrap" TextAlignment="Center"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumHighBrush}"/>
+                    <Border IsVisible="{Binding HasEmptyWindow}" BorderThickness="0,1,0,0" Padding="0,10,0,0"
+                            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+                        <TextBlock Text="{Binding EmptyWindow}" FontSize="12" TextWrapping="Wrap" TextAlignment="Center"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+    </DockPanel>
     </Border>
 
 </Window>

@@ -1,0 +1,76 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:CryptoScanner.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="620" d:DesignHeight="300"
+        x:DataType="vm:ChartStyleDialogViewModel"
+        x:Class="CryptoScanner.Views.ChartStyleWindow"
+        Title="{Binding Title}"
+        SizeToContent="WidthAndHeight"
+        MaxHeight="700"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+    <!-- Colours and lines of one item of the Indicators menu, the same dialog as the gear in the
+         Photino chart. Every change is written and drawn at once; Close only closes. -->
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Spacing="8" Margin="0,12,0,0">
+            <Button Content="Reset to default" Command="{Binding ResetAllCommand}" FontSize="12"/>
+            <Button Content="Close" Click="OnCloseClick" IsDefault="True" FontSize="12"/>
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Rows}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ChartStyleRowViewModel">
+                        <Grid ColumnDefinitions="28,250,110,90,110,80" Margin="0,2">
+                            <!-- Only a series that may be left off the chart gets the checkbox;
+                                 the column stays so the rows keep lining up -->
+                            <CheckBox Grid.Column="0" IsVisible="{Binding CanHide}"
+                                      IsChecked="{Binding Visible, Mode=TwoWay}"
+                                      ToolTip.Tip="Show on the chart"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Label}" FontSize="12"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Label}"/>
+                            <ColorPicker Grid.Column="2" Color="{Binding Color, Mode=TwoWay}"
+                                         Height="24" Width="100" HorizontalAlignment="Left"/>
+                            <!-- A combobox like the line style next to it: the NumericUpDown's spinner
+                                 buttons (34 pixels each in Fluent) left no room for the number -->
+                            <!--
+                            <NumericUpDown Grid.Column="3" Value="{Binding LineWidth, Mode=TwoWay}"
+                                           Minimum="1" Maximum="4" Increment="1" FormatString="0"
+                                           IsEnabled="{Binding IsLineEditable}"
+                                           ToolTip.Tip="Line width"
+                                           Width="80" Height="26" FontSize="12" HorizontalAlignment="Left"/>
+                            -->
+                            <ComboBox Grid.Column="3" SelectedIndex="{Binding LineWidthIndex, Mode=TwoWay}"
+                                      IsEnabled="{Binding IsLineEditable}"
+                                      ToolTip.Tip="Line width"
+                                      Width="80" Height="26" FontSize="12" HorizontalAlignment="Left">
+                                <ComboBoxItem Content="1 px"/>
+                                <ComboBoxItem Content="2 px"/>
+                                <ComboBoxItem Content="3 px"/>
+                                <ComboBoxItem Content="4 px"/>
+                            </ComboBox>
+                            <ComboBox Grid.Column="4" SelectedIndex="{Binding LineStyle, Mode=TwoWay}"
+                                      IsEnabled="{Binding IsLineEditable}"
+                                      ToolTip.Tip="Line style"
+                                      Width="100" Height="26" FontSize="12">
+                                <ComboBoxItem Content="Solid"/>
+                                <ComboBoxItem Content="Dotted"/>
+                                <ComboBoxItem Content="Dashed"/>
+                            </ComboBox>
+                            <Button Grid.Column="5" Content="Default" Height="26" FontSize="12"
+                                    ToolTip.Tip="Back to the built-in look"
+                                    Command="{Binding ResetCommand}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

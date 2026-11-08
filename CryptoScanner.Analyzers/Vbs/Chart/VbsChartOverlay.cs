@@ -214,47 +214,78 @@ public class VbsChartOverlay : IChartOverlay
             if (!upperBreak && !lowerBreak)
                 continue;
 
-            // Two lines with the take-profit under the stop-loss. A marker holds one line of text,
-            // so they are emitted separately and the renderer stacks them outward from the candle:
-            // above the bar the first one ends up lowest, below the bar the first one ends up
-            // highest. Emitting them in the right order per side keeps TP under SL either way.
-            long time = CandleTime.AlignFromDateTime(candle.Date, interval.Duration).ToUnixSeconds();
-            double anchor = upperBreak ? high : low;
-            var stopLoss = new ChartOverlayLabel
-            {
-                Time = time,
-                Above = upperBreak,
-                Price = anchor,
-                Text = "SL " + slPct.ToString("0.##") + "%",
-            };
-            // Only when the take-profit is switched on, so the second line matches what the trader
-            // actually places - the same rule Draw already follows. With it off the signal hands no
-            // take-profit over at all, and at the default risk-reward ratio of 1.0 the line would
-            // repeat the stop-loss percentage word for word.
-            ChartOverlayLabel? takeProfit = null;
-            if (settings.UseTakeProfit)
-            {
-                takeProfit = new ChartOverlayLabel
-                {
-                    Time = time,
-                    Above = upperBreak,
-                    Price = anchor,
-                    Text = "TP " + tpPct.ToString("0.##") + "%",
-                };
-            }
+            //// Two lines with the take-profit under the stop-loss. A marker holds one line of text,
+            //// so they are emitted separately and the renderer stacks them outward from the candle:
+            //// above the bar the first one ends up lowest, below the bar the first one ends up
+            //// highest. Emitting them in the right order per side keeps TP under SL either way.
+            //long time = CandleTime.AlignFromDateTime(candle.Date, interval.Duration).ToUnixSeconds();
+            //double anchor = upperBreak ? high : low;
+            //var stopLoss = new ChartOverlayLabel
+            //{
+            //    Time = time,
+            //    Above = upperBreak,
+            //    Price = anchor,
+            //    Text = "SL " + slPct.ToString("0.##") + "%",
+            //};
+            //// Only when the take-profit is switched on, so the second line matches what the trader
+            //// actually places - the same rule Draw already follows. With it off the signal hands no
+            //// take-profit over at all, and at the default risk-reward ratio of 1.0 the line would
+            //// repeat the stop-loss percentage word for word.
+            //ChartOverlayLabel? takeProfit = null;
+            //if (settings.UseTakeProfit)
+            //{
+            //    takeProfit = new ChartOverlayLabel
+            //    {
+            //        Time = time,
+            //        Above = upperBreak,
+            //        Price = anchor,
+            //        Text = "TP " + tpPct.ToString("0.##") + "%",
+            //    };
+            //}
 
+            //if (upperBreak)
+            //{
+            //    if (takeProfit != null)
+            //        labels.Add(takeProfit);
+            //    labels.Add(stopLoss);
+            //}
+            //else
+            //{
+            //    labels.Add(stopLoss);
+            //    if (takeProfit != null)
+            //        labels.Add(takeProfit);
+            //}
+
+            // One set per break, as Draw does: a candle that breaks both bands gets both. Two lines
+            // with the take-profit under the stop-loss; a marker holds one line of text, so they are
+            // emitted separately and the renderer stacks them outward from the candle: above the bar
+            // the first one ends up lowest, below the bar the first one ends up highest. Emitting
+            // them in the right order per side keeps TP under SL either way. The take-profit only
+            // when it is switched on, so the second line matches what the trader actually places.
+            long time = CandleTime.AlignFromDateTime(candle.Date, interval.Duration).ToUnixSeconds();
+            void AddSide(bool above, double anchor)
+            {
+                var stopLoss = new ChartOverlayLabel { Time = time, Above = above, Price = anchor, Text = "SL " + slPct.ToString("0.##") + "%" };
+                ChartOverlayLabel? takeProfit = settings.UseTakeProfit
+                    ? new ChartOverlayLabel { Time = time, Above = above, Price = anchor, Text = "TP " + tpPct.ToString("0.##") + "%" }
+                    : null;
+                if (above)
+                {
+                    if (takeProfit != null)
+                        labels.Add(takeProfit);
+                    labels.Add(stopLoss);
+                }
+                else
+                {
+                    labels.Add(stopLoss);
+                    if (takeProfit != null)
+                        labels.Add(takeProfit);
+                }
+            }
             if (upperBreak)
-            {
-                if (takeProfit != null)
-                    labels.Add(takeProfit);
-                labels.Add(stopLoss);
-            }
-            else
-            {
-                labels.Add(stopLoss);
-                if (takeProfit != null)
-                    labels.Add(takeProfit);
-            }
+                AddSide(true, high);
+            if (lowerBreak)
+                AddSide(false, low);
         }
 
         return labels;
@@ -267,9 +298,13 @@ public class VbsChartOverlay : IChartOverlay
         double offsetY = vAlign == VerticalAlignment.Bottom ? -gapPixels : gapPixels;
 
         // Stop-loss on the first line; the take-profit (when enabled) on a second line. Words spelled out.
-        string text = "Stop-loss " + slPct.ToString("0.##") + "%";
+        //string text = "Stop-loss " + slPct.ToString("0.##") + "%";
+        //if (tpPct.HasValue)
+        //    text += "\nTake-profit " + tpPct.Value.ToString("0.##") + "%";
+        // The same words as the Photino chart (GetLabels)
+        string text = "SL " + slPct.ToString("0.##") + "%";
         if (tpPct.HasValue)
-            text += "\nTake-profit " + tpPct.Value.ToString("0.##") + "%";
+            text += "\nTP " + tpPct.Value.ToString("0.##") + "%";
 
         chart.Annotations.Add(new TextAnnotation
         {

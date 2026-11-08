@@ -174,18 +174,61 @@ public class ChartStyleSettings
         new("barometer", "Barometer", "barometerReference", "Neutral line",   new() { Color = "#99c9a227", LineStyle = 2 }),
 
         new("zigzag",    "Trend", "zigzag",    "ZigZag",     new() { Color = "#FFffffff" }),
+        // The points on the zigzag line. Dots = true on these and on every other entry below that
+        // only takes a colour: the editor then greys out the line width and the line style.
+        new("zigzag",    "Trend", "zigzagHigh", "ZigZag high point", new() { Color = "#FFe53935", Dots = true }),
+        new("zigzag",    "Trend", "zigzagLow",  "ZigZag low point",  new() { Color = "#FFffeb3b", Dots = true }),
         new("fibZigzag", "Trend", "fibZigzag", "FIB ZigZag", new() { Color = "#FFffeb3b", LineStyle = 2 }),
+
+        // Everything below up to the sub-panel indicators was drawn in fixed colours until
+        // 07-11-2026, in each chart on its own. The defaults are the colours the Photino chart used.
+
+        // The candles themselves; only the colour, the bodies, borders and wicks all take it
+        new("candles", "Candles", "candleUp",   "Rising candle",  new() { Color = "#FF22c55e", Dots = true }),
+        new("candles", "Candles", "candleDown", "Falling candle", new() { Color = "#FFf0616d", Dots = true }),
+
+        // The markers of the Pivot points option (the points of the zigzag above and below the candles)
+        new("pivots", "Pivot points", "pivotHigh", "Pivot high", new() { Color = "#FFe53935", Dots = true }),
+        new("pivots", "Pivot points", "pivotLow",  "Pivot low",  new() { Color = "#FFffeb3b", Dots = true }),
+
+        // Support/resistance: the blocks take their transparency from the number of touches, so
+        // only the colour is picked here. The flip arrows take the colour of the side they enter.
+        new("sr", "Support/resistance", "srResistance",     "Resistance block (above the price)", new() { Color = "#FFef5350", Dots = true }),
+        new("sr", "Support/resistance", "srSupport",        "Support block (below the price)",    new() { Color = "#FF26a69a", Dots = true }),
+        new("sr", "Support/resistance", "srResistanceLine", "Sloped resistance line",            new() { Color = "#FFff7043" }),
+        new("sr", "Support/resistance", "srSupportLine",    "Sloped support line",               new() { Color = "#FF66bb6a" }),
+
+        // The levels of the fib retracement, in the three colour groups both charts already used
+        new("fib", "FIB retracement", "fibOuter",  "Levels 0 and 1",                new() { Color = "#FF9e9e9e", LineStyle = 1 }),
+        new("fib", "FIB retracement", "fibInner",  "Levels 0.236, 0.382 and 0.786", new() { Color = "#FFffffff", LineStyle = 1 }),
+        new("fib", "FIB retracement", "fibGolden", "Levels 0.5 and 0.618",          new() { Color = "#FFffeb3b", LineStyle = 1 }),
+
+        // Double top / double bottom: the lines of the triangle; the box behind it is a lighter
+        // shade of the same colour
+        new("dtb", "DTB", "dtbBottom", "Double bottom", new() { Color = "#FF008000" }),
+        new("dtb", "DTB", "dtbTop",    "Double top",    new() { Color = "#FFFFA500" }),
+
+        // The zones. Each chart still makes closed and weak zones fainter on its own; the alpha
+        // picked here is applied on top of that.
+        new("dlz", "DLZ Zones", "dlzLong",  "Long zone",           new() { Color = "#FF006400", Dots = true }),
+        new("dlz", "DLZ Zones", "dlzShort", "Short zone",          new() { Color = "#FF8B0000", Dots = true }),
+        new("fvg", "FVG Zones", "fvgLong",  "Bullish gap",         new() { Color = "#FF006400", Dots = true }),
+        new("fvg", "FVG Zones", "fvgShort", "Bearish gap",         new() { Color = "#FF8B0000", Dots = true }),
+        new("smc", "SMC Zones", "smcLong",  "Bullish order block", new() { Color = "#FF4682B4", Dots = true }),
+        new("smc", "SMC Zones", "smcShort", "Bearish order block", new() { Color = "#FF9370DB", Dots = true }),
 
         // Sub-panel indicators. Line width and style apply to the lines; the histogram bars
         // (MACD, volume) only take the colour. Lux is drawn as a filled area and uses all three.
         new("rsi", "RSI", "rsi",           "RSI",        new() { Color = "#FFab47bc" }),
         new("rsi", "RSI", "rsiOversold",   "Oversold",   new() { Color = "#6622c55e", LineStyle = 2 }),
         new("rsi", "RSI", "rsiOverbought", "Overbought", new() { Color = "#66f0616d", LineStyle = 2 }),
+        new("rsi", "RSI", "rsiMiddle",     "Middle line (50)", new() { Color = "#66888888", LineStyle = 2 }),
 
         new("stoch", "Stochastic", "stochK",          "%K",         new() { Color = "#FF2196F3" }),
         new("stoch", "Stochastic", "stochD",          "%D",         new() { Color = "#FFff9800" }),
         new("stoch", "Stochastic", "stochOversold",   "Oversold",   new() { Color = "#6622c55e", LineStyle = 2 }),
         new("stoch", "Stochastic", "stochOverbought", "Overbought", new() { Color = "#66f0616d", LineStyle = 2 }),
+        new("stoch", "Stochastic", "stochMiddle",     "Middle line (50)", new() { Color = "#66888888", LineStyle = 2 }),
 
         // Overbought is GREEN and oversold is RED, matching the Avalonia chart and the LuxAlgo
         // original: this is a strength reading, not a reversal colouring. The two were the other way
@@ -198,6 +241,10 @@ public class ChartStyleSettings
         new("macd", "MACD", "macdSignal",    "Signal",         new() { Color = "#FFff9800" }),
         new("macd", "MACD", "macdHistUp",    "Histogram up",   new() { Color = "#9922c55e" }),
         new("macd", "MACD", "macdHistDown",  "Histogram down", new() { Color = "#99f0616d" }),
+        // The fading bars of the TradingView four colour histogram: above zero but shrinking, below
+        // zero but recovering (Avalonia Macd.Draw). The two keys above are the growing bars.
+        new("macd", "MACD", "macdHistUpFading",   "Histogram up, fading",   new() { Color = "#5598e6b0" }),
+        new("macd", "MACD", "macdHistDownFading", "Histogram down, fading", new() { Color = "#55f5b0b6" }),
 
         new("volume", "Volume", "volumeUp",   "Rising candle",  new() { Color = "#8022c55e" }),
         new("volume", "Volume", "volumeDown", "Falling candle", new() { Color = "#80f0616d" }),
@@ -235,6 +282,18 @@ public class ChartStyleSettings
             return Definitions.Where(d => d.Group == "Moving averages");
 
         return Definitions.Where(d => d.OverlayKey == overlayKey);
+    }
+
+    /// <summary>The style key of a zone, by its kind and its side (DLZ, FVG or SMC; long or short).</summary>
+    public static string ZoneStyleKey(Enums.CryptoZoneKind kind, Enums.CryptoTradeSide side)
+    {
+        string prefix = kind switch
+        {
+            Enums.CryptoZoneKind.FairValueGap => "fvg",
+            Enums.CryptoZoneKind.OrderBlock => "smc",
+            _ => "dlz",
+        };
+        return prefix + (side == Enums.CryptoTradeSide.Short ? "Short" : "Long");
     }
 
     /// <summary>Style for a series key, falling back to its built-in default.</summary>

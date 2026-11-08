@@ -84,6 +84,20 @@ public partial class ChartWindowViewModel : ObservableObject
     [ObservableProperty]
     private string _windowTitle = "Chart";
 
+    // Why the chart is empty, shown over the plot; null when there are candles. The same words as
+    // the Photino chart (ChartEmptyReason in Core).
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasEmptyReason))]
+    private string? _emptyReason;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasEmptyWindow))]
+    private string? _emptyWindow;
+
+    public bool HasEmptyReason => EmptyReason != null;
+    public bool HasEmptyWindow => EmptyWindow != null;
+    public string EmptyTitle => ChartEmptyReason.Title;
+
     // TODO: How to fix this?
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public ChartWindowViewModel()
@@ -103,6 +117,11 @@ public partial class ChartWindowViewModel : ObservableObject
         // placed in a ContentControl never gets its OxyPlot control theme applied and renders as a
         // completely blank panel (no axes, no candles) — even though the model is fully populated.
         PlotController = CreateController();
+        // A double click with the left button hides the indicator panels and the next one shows them
+        // again (since 08-11-2026, the same as the Photino chart). Click count 2, so the first click
+        // still pans as before.
+        ((PlotController)PlotController).BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.None, 2,
+            new DelegatePlotCommand<OxyMouseDownEventArgs>((_, _, _) => ToggleIndicatorPanels()));
 
         // Load session
         ClearOptions();
@@ -135,6 +154,11 @@ public partial class ChartWindowViewModel : ObservableObject
 
         // Another figure picked for the dashboard barometer graph redraws the barometer line
         WeakReferenceMessenger.Default.Register<BarometerGraphChangedMessage>(this, (_, _) => OnBarometerGraphChanged());
+
+        // Redraw by itself when the live data changed, as the Photino chart does
+        _autoRefreshTimer = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(AutoRefreshSeconds) };
+        _autoRefreshTimer.Tick += (_, _) => AutoRefreshTick();
+        _autoRefreshTimer.Start();
 
         // NOTE: do NOT start RefreshCommand here. Starting it in the ctor causes a race
         // with Window.Show()'s ExecuteInitialLayoutPass — the async refresh mutates
@@ -1030,7 +1054,7 @@ public partial class ChartWindowViewModel : ObservableObject
             SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
             var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
             ZigZag.Draw(model, mainIndicator.ZigZagList, "maintrend",
-                OxyColors.White, Session.MinDate, Session.MaxDate, group);
+                OxyColors.White, Session.MinDate, Session.MaxDate, group, "zigzag");
         }
 
         // Support/resistance (open point 46); redrawn when a candle arrives or the symbol changes
@@ -1039,7 +1063,13 @@ public partial class ChartWindowViewModel : ObservableObject
             $"{Session.SymbolBase}{Session.SymbolQuote}{Interval.Name}{lastCandleTime.Minutes}"))
         {
             RemoveFromChart(model, group);
-            SupportResistanceOverlay.Draw(model, WindowCandleList, group);
+            //SupportResistanceOverlay.Draw(model, WindowCandleList, group);
+            // The same input as the Photino chart: the whole live list, or the window of a
+            // position. The window plus warmup gave other pivots, so other levels.
+            List<CryptoCandle> srCandles = WindowStart == null && Symbol != null
+                ? [.. Symbol.GetSymbolInterval(Interval.IntervalPeriod).CandleList.GetSnapshot().Select(kv => kv.Value)]
+                : WindowCandleList;
+            SupportResistanceOverlay.Draw(model, srCandles, group);
         }
 
         if (_refreshChart && sender != null)
@@ -1072,7 +1102,7 @@ public partial class ChartWindowViewModel : ObservableObject
             RemoveFromChart(model, group);
             ZigZag.Draw(model,
                 TrendZigZagIndicatorList[(Session.FibTrend == 0 ? TrendType.Primary : TrendType.Secondary, true)].ZigZagList,
-                "fib", OxyColors.White, Session.MinDate, Session.MaxDate, group);
+                "fib", OxyColors.White, Session.MinDate, Session.MaxDate, group, "fibZigzag");
         }
 
         if (_refreshChart && sender != null)
@@ -1082,6 +1112,28 @@ public partial class ChartWindowViewModel : ObservableObject
             OnPropertyChanged(nameof(PlotView));
             _refreshChart = false;
         }
+    }
+
+    /// <summary>
+    /// True after a double click in the chart: the indicator panels (Stoch/RSI/Lux, MACD and the
+    /// barometer) are hidden so the candles get the height; the volume panel stays. Only for this
+    /// window and not saved, the display options themselves are untouched.
+    /// </summary>
+    private bool _indicatorPanelsHidden;
+
+    private bool ShowStochNow => Session.ShowStoch && !_indicatorPanelsHidden;
+    private bool ShowRsiNow => Session.ShowRsi && !_indicatorPanelsHidden;
+    private bool ShowLuxNow => Session.ShowLux && !_indicatorPanelsHidden;
+    private bool ShowMacdNow => Session.ShowMacd && !_indicatorPanelsHidden;
+    private bool ShowBarometerNow => Session.ShowBarometer && !_indicatorPanelsHidden;
+
+    /// <summary>Hide or show the indicator panels, see <see cref="_indicatorPanelsHidden"/>.</summary>
+    private void ToggleIndicatorPanels()
+    {
+        if (Symbol == null || Interval == null || IsCalculating)
+            return;
+        _indicatorPanelsHidden = !_indicatorPanelsHidden;
+        DisplayOptionsChanged(this, null!);
     }
 
     private CandleTime lastCandleTime = CandleTime.MinValue;
@@ -1106,9 +1158,13 @@ public partial class ChartWindowViewModel : ObservableObject
         // Keep panel proportions in sync — oscillator panel is active when stoch OR rsi is
         // enabled, MACD and volume panels each have their own toggle.
         // The barometer line opens the oscillator panel for a 0..100 figure, otherwise a panel of its own.
-        bool barometerInOscillator = Session.ShowBarometer && BarometerOverlay.InOscillatorPanel();
-        AdjustPanels(Session.ShowStoch || Session.ShowRsi || Session.ShowLux || barometerInOscillator, Session.ShowMacd, Session.ShowVolume,
-            Session.ShowBarometer && !barometerInOscillator);
+        //bool barometerInOscillator = Session.ShowBarometer && BarometerOverlay.InOscillatorPanel();
+        //AdjustPanels(Session.ShowStoch || Session.ShowRsi || Session.ShowLux || barometerInOscillator, Session.ShowMacd, Session.ShowVolume,
+        //    Session.ShowBarometer && !barometerInOscillator);
+        // The ...Now flags are false while a double click hid the indicator panels (ToggleIndicatorPanels)
+        bool barometerInOscillator = ShowBarometerNow && BarometerOverlay.InOscillatorPanel();
+        AdjustPanels(ShowStochNow || ShowRsiNow || ShowLuxNow || barometerInOscillator, ShowMacdNow, Session.ShowVolume,
+            ShowBarometerNow && !barometerInOscillator);
 
         SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
         var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
@@ -1147,23 +1203,25 @@ public partial class ChartWindowViewModel : ObservableObject
         group = "smc.zones";
         if (Toggle(model, group, Session.ShowSmcZones))
         {
-            bool tookLock = !zoneLockAlreadyHeld && Symbol.Data.ZoneLock.Wait(0);
-            if (zoneLockAlreadyHeld || tookLock)
-            {
-                try
-                {
-                    foreach (string smcIntervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
-                    {
-                        if (GlobalData.IntervalListPeriodName.TryGetValue(smcIntervalName, out CryptoInterval? smcInterval))
-                            Core.Zones.ZoneSmc.Detect(Symbol, smcInterval);
-                    }
-                }
-                finally
-                {
-                    if (tookLock)
-                        Symbol.Data.ZoneLock.Release();
-                }
-            }
+            //bool tookLock = !zoneLockAlreadyHeld && Symbol.Data.ZoneLock.Wait(0);
+            //if (zoneLockAlreadyHeld || tookLock)
+            //{
+            //    try
+            //    {
+            //        foreach (string smcIntervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
+            //        {
+            //            if (GlobalData.IntervalListPeriodName.TryGetValue(smcIntervalName, out CryptoInterval? smcInterval))
+            //                Core.Zones.ZoneSmc.Detect(Symbol, smcInterval);
+            //        }
+            //    }
+            //    finally
+            //    {
+            //        if (tookLock)
+            //            Symbol.Data.ZoneLock.Release();
+            //    }
+            //}
+            // The same detection as the Photino chart (SmcChartSelection in Core)
+            SmcChartSelection.Detect(Symbol, zoneLockAlreadyHeld);
             SmcZones.Draw(model, Symbol, Session.MinDate, Session.MaxDate, group);
         }
 
@@ -1202,39 +1260,50 @@ public partial class ChartWindowViewModel : ObservableObject
             PSar.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         // Draw SMA lines
-        group = "sma";
-        if (Toggle(model, group, Session.ShowSmaLinesSbm))
-        {
+        //group = "sma";
+        //if (Toggle(model, group, Session.ShowSmaLinesSbm))
+        //{
+        //    Sma.Draw(model, Symbol, Interval, WindowCandleList, 200, OxyColors.Red, Session.MinDate, Session.MaxDate, group);
+        //    Sma.Draw(model, Symbol, Interval, WindowCandleList, 50, OxyColors.Orange, Session.MinDate, Session.MaxDate, group);
+        //    Sma.Draw(model, Symbol, Interval, WindowCandleList, 20, OxyColors.Green, Session.MinDate, Session.MaxDate, group);
+        //}
+        // One group per line, as in the Photino chart: the SBM set switches all three on, and each
+        // line can also be switched on by itself (SMA 20 / SMA 50 / SMA 200 in the overlay list).
+        group = "sma200";
+        if (Toggle(model, group, Session.ShowSma200 || Session.ShowSmaLinesSbm))
             Sma.Draw(model, Symbol, Interval, WindowCandleList, 200, OxyColors.Red, Session.MinDate, Session.MaxDate, group);
+        group = "sma50";
+        if (Toggle(model, group, Session.ShowSma50 || Session.ShowSmaLinesSbm))
             Sma.Draw(model, Symbol, Interval, WindowCandleList, 50, OxyColors.Orange, Session.MinDate, Session.MaxDate, group);
+        group = "sma20";
+        if (Toggle(model, group, Session.ShowSma20 || Session.ShowSmaLinesSbm))
             Sma.Draw(model, Symbol, Interval, WindowCandleList, 20, OxyColors.Green, Session.MinDate, Session.MaxDate, group);
-        }
 
         // BBMA is now drawn dynamically via PluginManager.ChartOverlays below (Bbma plugin).
 
 
         // Draw Stochastic lines (%K / %D)
         group = "stoch";
-        if (Toggle(model, group, Session.ShowStoch))
+        if (Toggle(model, group, ShowStochNow))
             Stoch.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         group = "stoch.tresholds";
-        if (Toggle(model, group, Session.ShowStoch))
+        if (Toggle(model, group, ShowStochNow))
             Stoch.DrawLines(model, group);
 
 
         // Draw RSI(14) line
         group = "rsi";
-        if (Toggle(model, group, Session.ShowRsi))
+        if (Toggle(model, group, ShowRsiNow))
             Rsi.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         group = "rsi.tresholds";
-        if (Toggle(model, group, Session.ShowRsi))
+        if (Toggle(model, group, ShowRsiNow))
             Rsi.DrawLines(model, group);
 
         // Draw the Lux (RSI Multi Length [LuxAlgo], 5m) line in the shared oscillator panel
         group = "lux";
-        if (Toggle(model, group, Session.ShowLux))
+        if (Toggle(model, group, ShowLuxNow))
             Lux.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
         //// Draw Bollinger %B (pink) + band width (red widening / green narrowing) in the oscillator panel
@@ -1244,35 +1313,48 @@ public partial class ChartWindowViewModel : ObservableObject
 
         // Draw MACD (line + signal + histogram) in dedicated sub-panel (auto-range "macd" Y axis)
         group = "macd";
-        if (Toggle(model, group, Session.ShowMacd))
+        if (Toggle(model, group, ShowMacdNow))
             Macd.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         group = "macd.tresholds";
-        if (Toggle(model, group, Session.ShowMacd))
+        if (Toggle(model, group, ShowMacdNow))
             Macd.DrawLines(model, group);
 
         // Draw Volume bars in dedicated sub-panel (auto-range "volume" Y axis)
         group = "volume";
-        if (Toggle(model, group, Session.ShowVolume))
-            Volume.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+        //if (Toggle(model, group, Session.ShowVolume))
+        //    Volume.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+        // With the running candle, as the Photino chart: its volume so far is part of the picture.
+        // Keyed on the last candle as well, so a new candle redraws the bars.
+        if (Toggle(model, group, Session.ShowVolume, Session.IntervalName + lastCandleTime.Minutes.ToString()))
+        {
+            RemoveFromChart(model, group);
+            Volume.Draw(model, Symbol, Interval, WindowCandleListWithRunning(), Session.MinDate, Session.MaxDate, group);
+        }
 
 
         // Other options
         // Draw candles (note: we draw additional candles each minutes if needed)
         group = "candles";
         if (Toggle(model, group, Session.ShowCandles, Session.IntervalName + lastCandleTime.Minutes.ToString()))
+        {
+            // A new candle draws the series again; the old one goes first, or both stay on the chart
+            RemoveFromChart(model, group);
             lastCandleTime = Candles.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+        }
 
         // The figure of the dashboard barometer graph, in the oscillator panel (0..100) or in a panel
         // of its own (AdjustPanels above made the right one). Redrawn when a candle arrives and when
         // another figure or interval is picked on the dashboard, see BarometerChartOverlay.
         group = BarometerChartOverlay.OverlayKey;
         ApplicationStateService? barometerState = GlobalData.GetService<ApplicationStateService>();
-        if (Toggle(model, group, Session.ShowBarometer,
+        if (Toggle(model, group, ShowBarometerNow,
             $"{barometerState?.BarometerGraphValue}/{barometerState?.BarometerInterval}/{Session.SymbolQuote}/{Interval.Name}/{lastCandleTime.Minutes}"))
         {
             RemoveFromChart(model, group);
-            BarometerOverlay.Draw(model, WindowCandleList, Interval, Session.SymbolQuote, Session.MinDate, Session.MaxDate, group);
+            //BarometerOverlay.Draw(model, WindowCandleList, Interval, Session.SymbolQuote, Session.MinDate, Session.MaxDate, group);
+            // A point on the running candle too, as the Photino chart
+            BarometerOverlay.Draw(model, WindowCandleListWithRunning(), Interval, Session.SymbolQuote, Session.MinDate, Session.MaxDate, group);
         }
 
         // Draw pivots
@@ -1287,14 +1369,30 @@ public partial class ChartWindowViewModel : ObservableObject
         // Draw signals
         group = "signals";
         if (Toggle(model, group, Session.ShowSignals))
-            Signals.Draw(model, SignalList, Session.MinDate, Session.MaxDate, group);
+            //Signals.Draw(model, SignalList, Session.MinDate, Session.MaxDate, group);
+            // Up to the end of the running candle, as the positions and the Photino chart: a 5m
+            // signal inside the running hour belongs on the 1h chart now, not once the hour closed
+            Signals.Draw(model, SignalList, Session.MinDate, Session.MaxDate + Interval.Duration, group);
 
         // Draw signals
         group = "positions";
-        if (Toggle(model, group, Session.ShowPositions))
+        //if (Toggle(model, group, Session.ShowPositions))
+        //    // Same bound as the load: open levels run on to the end of the running candle, not to
+        //    // its start, or a position opened during that candle is drawn from right to left.
+        //    Positions.Draw(model, Symbol, PositionList, Interval, Session.MinDate, Session.MaxDate + Interval.Duration, group);
+        // The open moment also runs through the sub-panels, so the set of panels is part of the key:
+        // a panel switched on gets its line, and a line never outlives the axis it stands on.
+        List<string> subPanelAxisKeys = model.Axes
+            .Where(a => a.Key == "stoch" || a.Key == "macd" || a.Key == "volume" || a.Key == BarometerOverlay.AxisKey)
+            .Select(a => a.Key)
+            .ToList();
+        if (Toggle(model, group, Session.ShowPositions, string.Join(",", subPanelAxisKeys)))
+        {
+            RemoveFromChart(model, group);
             // Same bound as the load: open levels run on to the end of the running candle, not to
             // its start, or a position opened during that candle is drawn from right to left.
-            Positions.Draw(model, Symbol, PositionList, Interval, Session.MinDate, Session.MaxDate + Interval.Duration, group);
+            Positions.Draw(model, Symbol, PositionList, Interval, Session.MinDate, Session.MaxDate + Interval.Duration, group, subPanelAxisKeys);
+        }
 
 
         if (_refreshChart && sender != null)
@@ -1328,6 +1426,55 @@ public partial class ChartWindowViewModel : ObservableObject
     private async Task Refresh()
     {
         await SymbolOrIntervalChangedAsync(false);
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Auto refresh, the same as the Photino chart: every 15 seconds a cheap signature of the live
+    // data (ChartDataSignature in Core), and only when it changed a refresh. Without it the running
+    // candle never moved and a fill or a new signal only showed up after Refresh.
+    // ------------------------------------------------------------------------------------------
+    private const int AutoRefreshSeconds = 15;
+
+    // Set when the symbol, interval or window changed, cleared once ZoomLast fitted the chart on it.
+    // An overlay toggle, a colour change or the auto refresh keeps the zoom and position the user set.
+    private bool _zoomToLastPending = true;
+    private readonly Avalonia.Threading.DispatcherTimer _autoRefreshTimer;
+    private string _dataSignature = "";
+
+    private void AutoRefreshTick()
+    {
+        if (GlobalData.ApplicationIsClosing || Symbol == null || Interval == null || IsCalculating)
+            return;
+        try
+        {
+            string signature = ChartDataSignature.Build(Symbol, Interval.IntervalPeriod, WindowStart, WindowEnd, Session.ShowPositions);
+            if (signature == _dataSignature)
+                return;
+            bool first = _dataSignature == "";
+            _dataSignature = signature;
+            // The first tick only takes the signature of what the chart was just built from
+            if (first)
+                return;
+
+            // The layers that follow the live data are drawn again: the candles (the running one
+            // moves without a new key), the volume and the barometer line, and the signals and
+            // positions are read again.
+            var model = PlotModel;
+            foreach (string group in new[] { "candles", "volume", "signals", "positions" })
+            {
+                RemoveFromChart(model, group);
+                optionsInChart[group] = "";
+            }
+            optionsInChart[BarometerChartOverlay.OverlayKey] = "";
+            lastLoadedSignalsAndPositions = CandleTime.MinValue;
+
+            _ = SymbolOrIntervalChangedAsync(false);
+        }
+        catch (Exception error)
+        {
+            // A refresh that cannot even determine what changed must never take the timer down
+            ScannerLog.Logger.Error(error, "Chart auto refresh");
+        }
     }
 
     [RelayCommand]
@@ -1623,6 +1770,7 @@ public partial class ChartWindowViewModel : ObservableObject
 
     public void OnClosing()
     {
+        _autoRefreshTimer.Stop();
         foreach (var overlay in PluginManager.ChartOverlays)
             overlay.RequestRedraw -= OnOverlayRequestRedraw;
         WeakReferenceMessenger.Default.Unregister<BarometerGraphChangedMessage>(this);
@@ -1639,7 +1787,7 @@ public partial class ChartWindowViewModel : ObservableObject
     {
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            if (Symbol == null || Interval == null || IsCalculating || !Session.ShowBarometer)
+            if (Symbol == null || Interval == null || IsCalculating || !ShowBarometerNow)
                 return;
             DisplayOptionsChanged(this, null!);
         });
@@ -1673,13 +1821,100 @@ public partial class ChartWindowViewModel : ObservableObject
     private List<CryptoCandle> WindowCandleList { get; } = [];
 
     /// <summary>
+    /// <see cref="WindowCandleList"/> plus the candle(s) of the interval that is still running, built
+    /// from the 1m candles the same way the candle series draws them (CandleTools.BuildRunningCandles).
+    /// For the volume bars and the barometer line, which the Photino chart also carries up to the
+    /// right edge. The indicators keep running on finished candles only.
+    /// </summary>
+    private List<CryptoCandle> WindowCandleListWithRunning()
+    {
+        if (WindowCandleList.Count == 0 || Symbol == null || Interval == null)
+            return WindowCandleList;
+
+        List<CryptoCandle> result = [.. WindowCandleList];
+        CandleTime lastOpen = WindowCandleList[^1].OpenTime;
+        foreach (CryptoCandle candle in CandleTools.BuildRunningCandles(Symbol, Interval, lastOpen, Session.MinDate, Session.MaxDate))
+        {
+            if (candle.OpenTime > lastOpen)
+                result.Add(candle);
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Optional explicit window for the chart. Null (live scanner) → the chart follows the clock.
     /// Set (emulator, opening the chart from a position) → the chart shows WindowStart..WindowEnd (the
     /// position's CreateTime..CloseTime) plus a fixed candle margin on each side, instead of the whole
     /// multi-month run. WindowEnd null (still-open position) falls back to WindowStart.
     /// </summary>
-    public DateTime? WindowStart { get; set; }
-    public DateTime? WindowEnd { get; set; }
+    //public DateTime? WindowStart { get; set; }
+    //public DateTime? WindowEnd { get; set; }
+    // With change notification since 06-11-2026: the window banner above the chart follows them.
+    public DateTime? WindowStart
+    {
+        get => _windowStart;
+        set
+        {
+            _windowStart = value;
+            OnPropertyChanged(nameof(HasWindow));
+            OnPropertyChanged(nameof(WindowBannerText));
+        }
+    }
+    private DateTime? _windowStart;
+
+    public DateTime? WindowEnd
+    {
+        get => _windowEnd;
+        set
+        {
+            _windowEnd = value;
+            OnPropertyChanged(nameof(WindowBannerText));
+        }
+    }
+    private DateTime? _windowEnd;
+
+    /// <summary>Whether the chart sits on a position window instead of the live market.</summary>
+    public bool HasWindow => WindowStart != null;
+
+    /// <summary>Caption of the window banner, the same text as the Photino chart.</summary>
+    public string WindowBannerText
+    {
+        get
+        {
+            if (WindowStart == null)
+                return "";
+
+            DateTime start = WindowStart.Value.ToLocalTime();
+            if (WindowEnd == null)
+                return $"Position from {start:dd-MM HH:mm} (still open)";
+
+            DateTime end = WindowEnd.Value.ToLocalTime();
+
+            // Same day: the date once is enough, the rest is just the two times
+            return end.Date == start.Date
+                ? $"Position {start:dd-MM HH:mm} → {end:HH:mm}"
+                : $"Position {start:dd-MM HH:mm} → {end:dd-MM HH:mm}";
+        }
+    }
+
+    public string WindowBannerTooltip =>
+        "The chart is showing this position instead of the live market. Candles come straight from "
+        + "candles.db, so history older than the scanner keeps in memory is drawn too. "
+        + "Click × to go back to now.";
+
+    /// <summary>
+    /// The "back to now" button next to the window banner. In the emulator the run stays selected,
+    /// so its signals and positions remain on the chart.
+    /// </summary>
+    [RelayCommand]
+    private void LeaveWindow()
+    {
+        WindowStart = null;
+        WindowEnd = null;
+        if (!GlobalData.IsEmulatorMode)
+            WindowEmulatorRunId = null;
+        RequestRefresh();
+    }
 
     /// <summary>
     /// Which run's signals/positions to show. Set (emulator, opening the chart from a run's position
@@ -1754,6 +1989,9 @@ public partial class ChartWindowViewModel : ObservableObject
 
             UpdateAxisTicks(chart.Axes[0]);
             lastCandleTime = CandleTime.MinValue;
+
+            // Another symbol, interval or window: fit the chart on the candles again
+            _zoomToLastPending = true;
         }
 
         // Reset the min and maxdate so the refresh draws the new candles and attributes.
@@ -1764,7 +2002,11 @@ public partial class ChartWindowViewModel : ObservableObject
         if (WindowStart.HasValue)
         {
             CandleTime start = CandleTime.AlignFromDateTime(WindowStart.Value, interval.Duration);
-            CandleTime end = CandleTime.AlignFromDateTime(WindowEnd ?? WindowStart.Value, interval.Duration);
+            //CandleTime end = CandleTime.AlignFromDateTime(WindowEnd ?? WindowStart.Value, interval.Duration);
+            // A position that is still open runs up to now in the scanner, as in the Photino chart. The
+            // emulator keeps the start: its clock is the replay, not the moment of looking.
+            DateTime windowEnd = WindowEnd ?? (GlobalData.IsEmulatorMode ? WindowStart.Value : GlobalData.Clock.UtcNow);
+            CandleTime end = CandleTime.AlignFromDateTime(windowEnd, interval.Duration);
             Session.MinDate = start - WindowMarginCandles * interval.Duration;
             Session.MaxDate = end + WindowMarginCandles * interval.Duration;
         }
@@ -1790,15 +2032,20 @@ public partial class ChartWindowViewModel : ObservableObject
         if (lastLoadedSignalsAndPositions.Minutes != currentTime)
         {
             lastLoadedSignalsAndPositions = Session.MaxDate;
-            ExtraData.LoadSignalsForSymbol(symbol, Session.MinDate, Session.MaxDate, WindowEmulatorRunId, SignalList);
+            //ExtraData.LoadSignalsForSymbol(symbol, Session.MinDate, Session.MaxDate, WindowEmulatorRunId, SignalList);
+            // Up to the end of the RUNNING candle, the same bound as the positions below
+            ExtraData.LoadSignalsForSymbol(symbol, Session.MinDate, Session.MaxDate + Interval.Duration, WindowEmulatorRunId, SignalList);
             optionsInChart.TryAdd("signals", "");
             optionsInChart["signals"] = "";
+            // Read again, so drawn again: the old layer goes first, or the new one lands on top of it
+            RemoveFromChart(PlotView.Model, "signals");
             // Up to the end of the RUNNING candle. MaxDate is the start of the current interval, so a
             // 15m position opened during the current hour fell after it on the 1h chart and was not
             // drawn until the hour closed.
             ExtraData.LoadPositionsForSymbol(symbol, Session.MinDate, Session.MaxDate + Interval.Duration, WindowEmulatorRunId, PositionList);
             optionsInChart.TryAdd("positions", "");
             optionsInChart["positions"] = "";
+            RemoveFromChart(PlotView.Model, "positions");
         }
 
         _previousWindowStart = WindowStart;
@@ -2032,6 +2279,12 @@ public partial class ChartWindowViewModel : ObservableObject
                 // Must run AFTER all candle loading above so the window reflects the final CandleList.
                 BuildWindowCandleList();
 
+                // Explain an empty chart instead of leaving a blank plot (as the Photino chart does)
+                (CandleTime DrawFrom, CandleTime DrawTo)? positionWindow = WindowStart.HasValue
+                    ? (Session.MinDate, Session.MaxDate)
+                    : null;
+                (EmptyReason, EmptyWindow) = ChartEmptyReason.Explain(Symbol!, Interval!, WindowCandleList.Count, positionWindow);
+
                 // Draw the indicator layers and candles
                 DisplayOptionsChanged(null, null!, zoneLockAlreadyHeld: true);
                 FibSettingsChanged(null, null!);
@@ -2042,7 +2295,15 @@ public partial class ChartWindowViewModel : ObservableObject
                 // below. If ZoomLast ran after that (as it used to), the chart painted once at full
                 // auto-scaled range and then a second time zoomed — a visible double build. Running it
                 // here, while still synchronous, means that single first paint already has the zoomed range.
-                ZoomLast();
+                //ZoomLast();
+                // Only after another symbol, interval or window, as the Photino chart does
+                // (ChartWidget.resetView). Every refresh used to zoom back, and the auto refresh runs
+                // every 15 seconds while the running candle moves, so a zoom never lasted.
+                if (_zoomToLastPending)
+                {
+                    _zoomToLastPending = false;
+                    ZoomLast();
+                }
             }
             finally
             {

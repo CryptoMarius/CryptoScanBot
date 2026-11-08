@@ -3,6 +3,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
+using CryptoScanner.Core.Zones;
 using CryptoScanner.UI.Models;
 
 using Dapper;
@@ -18,16 +19,18 @@ namespace CryptoScanner.UI.Services;
 public static class ChartDataService
 {
     // Same colour convention as the Avalonia chart (Const.ColorList)
-    private static readonly Dictionary<(CryptoZoneKind, CryptoTradeSide), string> ZoneColors = new()
-    {
-        [(CryptoZoneKind.DominantLevel, CryptoTradeSide.Long)] = "0,100,0",
-        [(CryptoZoneKind.DominantLevel, CryptoTradeSide.Short)] = "139,0,0",
-        // FVG: bull blocks (Long) dark green, bear blocks (Short) dark red, see Const.ColorList
-        [(CryptoZoneKind.FairValueGap, CryptoTradeSide.Long)] = "0,100,0",
-        [(CryptoZoneKind.FairValueGap, CryptoTradeSide.Short)] = "139,0,0",
-        [(CryptoZoneKind.OrderBlock, CryptoTradeSide.Long)] = "70,130,180",
-        [(CryptoZoneKind.OrderBlock, CryptoTradeSide.Short)] = "147,112,219",
-    };
+    // Replaced on 07-11-2026 by the zone colours in ChartStyleSettings (dlzLong, fvgShort, ...), which
+    // the gear next to each zone overlay edits. These were the fixed values, and are its defaults now.
+    //private static readonly Dictionary<(CryptoZoneKind, CryptoTradeSide), string> ZoneColors = new()
+    //{
+    //    [(CryptoZoneKind.DominantLevel, CryptoTradeSide.Long)] = "0,100,0",
+    //    [(CryptoZoneKind.DominantLevel, CryptoTradeSide.Short)] = "139,0,0",
+    //    // FVG: bull blocks (Long) dark green, bear blocks (Short) dark red, see Const.ColorList
+    //    [(CryptoZoneKind.FairValueGap, CryptoTradeSide.Long)] = "0,100,0",
+    //    [(CryptoZoneKind.FairValueGap, CryptoTradeSide.Short)] = "139,0,0",
+    //    [(CryptoZoneKind.OrderBlock, CryptoTradeSide.Long)] = "70,130,180",
+    //    [(CryptoZoneKind.OrderBlock, CryptoTradeSide.Short)] = "147,112,219",
+    //};
 
     public sealed class ChartRect
     {
@@ -49,6 +52,12 @@ public static class ChartDataService
         public string shape { get; set; } = "circle";
         public string text { get; set; } = "";
         public int size { get; set; } = 1;
+
+        /// <summary>Only with position "atPriceMiddle" (or atPriceTop/Bottom): the price the marker
+        /// stands at, for a point that belongs on a line rather than above or below its candle.
+        /// Left out of the JSON when not set, the other positions do not take it.</summary>
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public double? price { get; set; }
     }
 
     public sealed class ChartPriceLine
@@ -56,6 +65,8 @@ public static class ChartDataService
         public double price { get; set; }
         public string color { get; set; } = "#888888";
         public int lineStyle { get; set; } = 2;
+        /// <summary>Line thickness in pixels; the FIB levels take it from their style.</summary>
+        public int lineWidth { get; set; } = 1;
         public string title { get; set; } = "";
 
         /// <summary>
@@ -281,16 +292,21 @@ public static class ChartDataService
                     continue;
 
                 // SMC order blocks live in a plain list, ZoneSmc mutates it in place
-                var dataInterval = symbolData.Get(interval.IntervalPeriod);
-                AddZones(result, dataInterval.Smc.Zones.ToList(), from, to);
+                //var dataInterval = symbolData.Get(interval.IntervalPeriod);
+                //AddZones(result, dataInterval.Smc.Zones.ToList(), from, to);
             }
+
+            // Since 06-11-2026 the same as the Avalonia chart (SmcChartSelection in Core): brought up
+            // to date first, only the zones around the current price, and "interval Nx" as caption.
+            SmcChartSelection.Detect(symbol, zoneLockAlreadyHeld: false);
+            AddZones(result, SmcChartSelection.Select(symbol), from, to, SmcChartSelection.Caption);
         }
 
         return result;
     }
 
     private static void AddZones(List<ChartRect> target, IEnumerable<CryptoZone> zones,
-        CandleTime from, CandleTime to)
+        CandleTime from, CandleTime to, Func<CryptoZone, string>? caption = null)
     {
         foreach (var zone in zones)
         {
@@ -302,8 +318,9 @@ public static class ChartDataService
             if (zone.CloseTime.HasValue && zone.CloseTime.Value < from)
                 continue;
 
-            if (!ZoneColors.TryGetValue((zone.Kind, zone.Side), out string? rgb))
-                rgb = "128,128,128";
+            //if (!ZoneColors.TryGetValue((zone.Kind, zone.Side), out string? rgb))
+            //    rgb = "128,128,128";
+            ChartLineStyle style = ChartStyleSettings.Current.Get(ChartStyleSettings.ZoneStyleKey(zone.Kind, zone.Side));
 
             // Closed and weak zones are drawn fainter, same as the Avalonia chart
             double alpha = zone.CloseTime.HasValue ? 0.20 : 0.32;
@@ -314,7 +331,8 @@ public static class ChartDataService
             if (zone.Kind == CryptoZoneKind.FairValueGap)
                 alpha = zone.CloseTime.HasValue ? 0.25 : 0.38;
 
-            string fill = $"rgba({rgb},{alpha.ToString(System.Globalization.CultureInfo.InvariantCulture)})";
+            // The alpha picked in the style comes on top of the one worked out above
+            string fill = style.ToCssColor(alpha);
             target.Add(new ChartRect
             {
                 time1 = zone.OpenTime.ToUnixSeconds(),
@@ -324,8 +342,9 @@ public static class ChartDataService
                 fill = fill,
                 // An FVG has its border in the colour of its fill, so the many small gaps do not
                 // draw a light outline each; the Avalonia chart draws no border on them at all.
-                border = zone.Kind == CryptoZoneKind.FairValueGap ? fill : $"rgba({rgb},0.75)",
-                text = zone.Description ?? "",
+                border = zone.Kind == CryptoZoneKind.FairValueGap ? fill : style.ToCssColor(0.75),
+                //text = zone.Description ?? "",
+                text = caption != null ? caption(zone) : zone.Description ?? "",
             });
         }
     }
@@ -629,8 +648,10 @@ public static class ChartDataService
 
                 // Break-even only while the position is open. Blue and without a caption: it sits
                 // very close to the entry line, and two labels on top of each other read as noise.
+                // Since 06-11-2026 it does carry "breakeven", the caption the Avalonia chart puts on
+                // the same line (Positions.Draw); both charts show the same things.
                 if (position.CloseTime == null && position.BreakEvenPrice > 0)
-                    segments.Add(Horizontal(firstEntry, xEnd, position.BreakEvenPrice, breakEvenStyle, ""));
+                    segments.Add(Horizontal(firstEntry, xEnd, position.BreakEvenPrice, breakEvenStyle, "breakeven"));
 
                 // A trailing last take profit that has not been reached: its target, the trigger
                 // Altrady draws as its TP line. Display only. Once it is reached the trail is the

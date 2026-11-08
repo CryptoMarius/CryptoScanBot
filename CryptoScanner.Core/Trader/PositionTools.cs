@@ -111,6 +111,8 @@ public static class PositionTools
         position.TpPercentage = signal.TpPercentage;
         // Forward any per-signal DCA ladder to the position (placed instead of Settings.Trading.DcaList).
         position.DcaLevels = signal.DcaLevels;
+        // The interval of the zone the signal was about, for the chart and TradingView only
+        position.ZoneIntervalId = signal.ZoneIntervalId;
     }
 
     /// <summary>

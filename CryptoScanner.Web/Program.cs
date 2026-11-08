@@ -28,6 +28,7 @@ class Program
             appVersion = appVersion[0..^2];
 
         GlobalData.AppVersion = appVersion;
+        GlobalData.AppVariant = "Web";
         GlobalData.AppPath = Path.GetDirectoryName(AppContext.BaseDirectory)!;
 
         var builder = WebApplication.CreateBuilder(args);
@@ -86,6 +87,8 @@ class Program
         builder.Services.AddSingleton<MarketIndicatorService>();
         builder.Services.AddSingleton<InternalBrowserService>();
         builder.Services.AddSingleton<ExchangeChoiceService>();
+        // Without a window to open (a browser page cannot open one) the chart stays on its tab
+        builder.Services.AddSingleton<ChartWindowService>();
         builder.Services.AddScoped<GridCommandService>();
 
         builder.Services.AddRazorComponents()

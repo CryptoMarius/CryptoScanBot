@@ -51,6 +51,14 @@ public static class FvgLadderRules
         => [.. UsableZones(zones, minimumPercentage).Where(z => z.ClosedAbove).Select(z => z.Top).Distinct().OrderByDescending(t => t)];
 
 
+    /// <summary>
+    /// Whether a usable gap top belongs to a 4h gap. A 1h gap overlapping a 4h gap is already dropped,
+    /// so a top only ties when a 1h and a 4h gap have exactly the same top; the 4h gap then wins.
+    /// </summary>
+    public static bool TopIs4h(IEnumerable<FvgLadderZone> zones, decimal minimumPercentage, decimal top)
+        => UsableZones(zones, minimumPercentage).Any(z => z.Is4h && z.Top == top);
+
+
     /// <summary>Rules 2.1 - 2.5 as zones: wide enough, and a 1h gap overlapping a 4h gap dropped.</summary>
     private static List<FvgLadderZone> UsableZones(IEnumerable<FvgLadderZone> zones, decimal minimumPercentage)
     {

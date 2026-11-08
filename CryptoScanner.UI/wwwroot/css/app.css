@@ -615,6 +615,15 @@ select.dashboard-combo {
     cursor: pointer;
 }
 
+/* The separate chart window of the Photino host: the chart page fills the whole window, with the
+   same side padding the tab content has */
+.chart-window-content {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0 6px;
+}
+
 .tab:hover { color: var(--text-primary); }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
@@ -2518,6 +2527,11 @@ code {
 .about-icon {
     font-size: 48px;
     margin-bottom: 10px;
+}
+
+.about-icon-image {
+    display: block;
+    margin: 0 auto 10px auto;
 }
 
 .about-app-name {

@@ -3,6 +3,7 @@ using CryptoScanner.Analyzers.SrFlip.Signal;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
+using CryptoScanner.Analyzers.Chart;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -22,13 +23,20 @@ namespace CryptoScanner.Chart.ViewModels.Chart;
 /// and a triangle at every flip - a broken level that was retested from the other side and held.
 /// Each level is also drawn as a block, from its lowest to its highest pivot (at least one ATR high),
 /// starting at its oldest pivot and running to the right edge; overlapping blocks merge.
+/// Since 08-11-2026: only the strongest two levels under and above the price, each as its own block
+/// from its lowest to its highest pivot (at least a quarter ATR high), see SupportResistance.ZonesAroundPrice.
 /// </summary>
 public static class SupportResistanceOverlay
 {
-    private static readonly OxyColor Above = OxyColor.FromRgb(0xef, 0x53, 0x50);
-    private static readonly OxyColor Below = OxyColor.FromRgb(0x26, 0xa6, 0x9a);
-    private static readonly OxyColor ResistanceLine = OxyColor.FromRgb(0xff, 0x70, 0x43);
-    private static readonly OxyColor SupportLine = OxyColor.FromRgb(0x66, 0xbb, 0x6a);
+    //private static readonly OxyColor Above = OxyColor.FromRgb(0xef, 0x53, 0x50);
+    //private static readonly OxyColor Below = OxyColor.FromRgb(0x26, 0xa6, 0x9a);
+    //private static readonly OxyColor ResistanceLine = OxyColor.FromRgb(0xff, 0x70, 0x43);
+    //private static readonly OxyColor SupportLine = OxyColor.FromRgb(0x66, 0xbb, 0x6a);
+    // The colours of the Support/resistance gear since 07-11-2026, with the values above as fallback
+    private static OxyColor Above => ChartStyleOxy.ColorFor("srResistance", OxyColor.FromRgb(0xef, 0x53, 0x50));
+    private static OxyColor Below => ChartStyleOxy.ColorFor("srSupport", OxyColor.FromRgb(0x26, 0xa6, 0x9a));
+    private static OxyColor ResistanceLine => ChartStyleOxy.ColorFor("srResistanceLine", OxyColor.FromRgb(0xff, 0x70, 0x43));
+    private static OxyColor SupportLine => ChartStyleOxy.ColorFor("srSupportLine", OxyColor.FromRgb(0x66, 0xbb, 0x6a));
 
     /// <summary>
     /// From how many touches a zone is worth drawing. Three, the same bar the scan itself uses
@@ -48,7 +56,11 @@ public static class SupportResistanceOverlay
         // top of that a dashed line WITH its own caption per level, so there were more captions on
         // the chart than blocks under them. On a weekly bitcoin chart that came to thirteen of
         // them stacked down the right-hand edge.
-        List<SupportResistanceZone> merged = CoreScan.Zones(result.Levels);
+        //List<SupportResistanceZone> merged = CoreScan.Zones(result.Levels);
+        // Since 08-11-2026 the strongest two levels on each side of the price, each its own zone and
+        // nothing merged: the merging chained neighbouring levels into one block of 22% (see
+        // SupportResistance.ZonesAroundPrice). The same call as the Photino chart.
+        List<SupportResistanceZone> merged = CoreScan.ZonesAroundPrice(result.Levels, last, candles.Count - 1);
 
         // Two touches is the weakest thing the clustering can produce, and the scan itself does
         // not act on a level below MinEventTouches either. The nearest level above and below
@@ -57,7 +69,9 @@ public static class SupportResistanceOverlay
         SupportResistanceZone? nearestBelow = null;
         foreach (SupportResistanceZone zone in merged)
         {
-            if (zone.Price >= last)
+            //if (zone.Price >= last)
+            // The side is decided by ZonesAroundPrice: a zone the price stands in is support
+            if (!zone.IsSupport)
             {
                 if (nearestAbove == null || zone.Price < nearestAbove.Value.Price)
                     nearestAbove = zone;
@@ -72,10 +86,13 @@ public static class SupportResistanceOverlay
         {
             bool nearest = (nearestAbove != null && zone.Price == nearestAbove.Value.Price)
                 || (nearestBelow != null && zone.Price == nearestBelow.Value.Price);
-            if (zone.Touches < DrawFrom && !nearest)
-                continue;
+            // No longer needed since 08-11-2026: ZonesAroundPrice already keeps only the strongest
+            // two per side, and a weak one is only chosen when there is nothing stronger on that side
+            //if (zone.Touches < DrawFrom && !nearest)
+            //    continue;
 
-            OxyColor color = zone.Price >= last ? Above : Below;
+            //OxyColor color = zone.Price >= last ? Above : Below;
+            OxyColor color = zone.IsSupport ? Below : Above;
 
             // Strength as WEIGHT instead of as a number: a band that has held six times is darker
             // and has a firmer edge than one that held three.
@@ -88,8 +105,8 @@ public static class SupportResistanceOverlay
                 // MaximumX left at its default: the block runs to the right edge
                 MinimumY = zone.Low,
                 MaximumY = zone.High,
-                Fill = OxyColor.FromAColor(fill, color),
-                Stroke = OxyColor.FromAColor(zone.Touches >= 6 ? (byte)160 : (byte)110, color),
+                Fill = ChartStyleOxy.WithAlpha(color, fill),
+                Stroke = ChartStyleOxy.WithAlpha(color, zone.Touches >= 6 ? 160 : 110),
                 StrokeThickness = zone.Touches >= 6 ? 2 : 1,
                 Text = $"{zone.Touches}x",
                 TextColor = color,
@@ -127,13 +144,30 @@ public static class SupportResistanceOverlay
             {
                 Title = tag + (line.IsResistance ? " resistance" : " support"),
                 Color = line.IsResistance ? ResistanceLine : SupportLine,
-                StrokeThickness = 1,
+                //StrokeThickness = 1,
+                StrokeThickness = ChartStyleOxy.ThicknessFor(line.IsResistance ? "srResistanceLine" : "srSupportLine", 1),
+                LineStyle = ChartStyleOxy.LineStyleFor(line.IsResistance ? "srResistanceLine" : "srSupportLine", LineStyle.Solid),
                 YAxisKey = "price",
                 Tag = tag,
             };
             series.Points.Add(new DataPoint(candles[line.Index1].OpenTime.Minutes, line.Price1));
             series.Points.Add(new DataPoint(candles[endIndex].OpenTime.Minutes, line.ValueAt(endIndex)));
             chart.Series.Add(series);
+
+            // Caption just right of the start of the line, as the Photino chart writes it
+            chart.Annotations.Add(new TextAnnotation
+            {
+                Text = line.IsResistance ? "resistance" : "support",
+                TextPosition = new DataPoint(candles[line.Index1].OpenTime.Minutes, line.Price1),
+                TextHorizontalAlignment = HorizontalAlignment.Left,
+                TextVerticalAlignment = VerticalAlignment.Bottom,
+                TextColor = OxyColors.White,
+                Background = OxyColors.Transparent,
+                StrokeThickness = 0,
+                FontSize = 9,
+                YAxisKey = "price",
+                Tag = tag,
+            });
         }
 
         var flipLong = new ScatterSeries { Title = tag + " flip long", MarkerSize = 5, MarkerFill = Below, MarkerType = MarkerType.Triangle, YAxisKey = "price", Tag = tag };
@@ -152,6 +186,22 @@ public static class SupportResistanceOverlay
                 flipLong.Points.Add(new ScatterPoint(candle.OpenTime.Minutes, (double)candle.Low * 0.998));
             else
                 flipShort.Points.Add(new ScatterPoint(candle.OpenTime.Minutes, (double)candle.High * 1.002));
+
+            // "flip" under a long marker and above a short one, as the Photino chart writes it
+            bool isLong = e.Side == CryptoTradeSide.Long;
+            chart.Annotations.Add(new TextAnnotation
+            {
+                Text = "flip",
+                TextPosition = new DataPoint(candle.OpenTime.Minutes, isLong ? (double)candle.Low * 0.996 : (double)candle.High * 1.004),
+                TextHorizontalAlignment = HorizontalAlignment.Center,
+                TextVerticalAlignment = isLong ? VerticalAlignment.Top : VerticalAlignment.Bottom,
+                TextColor = isLong ? Below : Above,
+                Background = OxyColors.Transparent,
+                StrokeThickness = 0,
+                FontSize = 9,
+                YAxisKey = "price",
+                Tag = tag,
+            });
         }
         chart.Series.Add(flipLong);
         chart.Series.Add(flipShort);

@@ -430,7 +430,7 @@
     {
         SelectedPosition = vm;
         if (vm.Object.Symbol != null)
-            GridCommandService.HandleDoubleClick(vm.Object.Symbol, vm.Object.Interval);
+            GridCommandService.HandleDoubleClick(vm.Object.Symbol, vm.Object.ChartInterval);
     }
 
     private void OnRowContextMenu(MouseEventArgs e, PositionViewModel vm)
@@ -466,7 +466,7 @@
         if (_contextMenuPosition?.Object.Symbol != null)
         {
             var position = _contextMenuPosition.Object;
-            GridCommandService.OpenChart(position.Symbol, position.Interval,
+            GridCommandService.OpenChart(position.Symbol, position.ChartInterval,
                 position.CreateTime, position.CloseTime);
         }
         CloseContextMenu();
@@ -475,28 +475,28 @@
     private void OnMenuOpenTradingApp()
     {
         if (_contextMenuPosition?.Object.Symbol != null)
-            GridCommandService.OpenTradingApp(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.Interval);
+            GridCommandService.OpenTradingApp(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.ChartInterval);
         CloseContextMenu();
     }
 
     private void OnMenuOpenTradingViewInternal()
     {
         if (_contextMenuPosition?.Object.Symbol != null)
-            GridCommandService.OpenTradingViewInternal(_contextMenuPosition.Object.Symbol);
+            GridCommandService.OpenTradingViewInternal(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.ChartInterval);
         CloseContextMenu();
     }
 
     private void OnMenuOpenTradingViewExternal()
     {
         if (_contextMenuPosition?.Object.Symbol != null)
-            GridCommandService.OpenTradingViewExternal(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.Interval);
+            GridCommandService.OpenTradingViewExternal(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.ChartInterval);
         CloseContextMenu();
     }
 
     private void OnMenuOpenExchange()
     {
         if (_contextMenuPosition?.Object.Symbol != null)
-            GridCommandService.OpenExchange(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.Interval);
+            GridCommandService.OpenExchange(_contextMenuPosition.Object.Symbol, _contextMenuPosition.Object.ChartInterval);
         CloseContextMenu();
     }
 

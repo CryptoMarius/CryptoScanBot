@@ -70,7 +70,8 @@ public partial class RunPositionsWindow : Window
             // lifetime (CreateTime..CloseTime) ± a candle margin, so the chart opens a bounded window
             // around the trade instead of the whole multi-month run (tens of thousands of candles).
             // Pass the run id so the chart only draws THIS run's signals/positions (not every run's).
-            ChartWindowLauncher.Show(symbol.Base, symbol.Quote, row.Interval, row.CreateTime, row.CloseTime, viewModel.RunId);
+            //ChartWindowLauncher.Show(symbol.Base, symbol.Quote, row.Interval, row.CreateTime, row.CloseTime, viewModel.RunId);
+            ChartWindowLauncher.Show(symbol.Base, symbol.Quote, row.ChartInterval ?? row.Interval, row.CreateTime, row.CloseTime, viewModel.RunId);
         }
         catch (Exception ex)
         {

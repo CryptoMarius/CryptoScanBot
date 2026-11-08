@@ -36,6 +36,17 @@ public partial class SymbolGridView : UserControlWithGrid<SymbolViewModel>
         InitializeGrid<SymbolColumnEnum, SymbolColumnComparer>("Symbol", ListSortDirection.Ascending);
 
         _dataGrid.KeyDown += OnDataGridKeyDown;
+        _dataGrid.SelectionChanged += OnDataGridSelectionChanged;
+    }
+
+    /// <summary>
+    /// An open chart follows the selected symbol, as in the Photino scanner. The interval stays
+    /// what the chart is on: a symbol row has none of its own.
+    /// </summary>
+    private void OnDataGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_dataGrid.SelectedItem is SymbolViewModel row)
+            ChartWindowLauncher.FollowSelection(row.Object.Base, row.Object.Quote, null);
     }
 
     private void OnDataGridKeyDown(object? sender, KeyEventArgs e)
