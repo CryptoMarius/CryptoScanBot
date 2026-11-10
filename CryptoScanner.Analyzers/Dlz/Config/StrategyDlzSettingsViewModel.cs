@@ -25,8 +25,22 @@ public partial class StrategyDlzSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _maxTouches = 2;
 
+    //[ObservableProperty]
+    //private bool _closeZonesPastMidpoint = false;
+
+    /// <summary>The values the "zone closes on" ComboBox offers; see CryptoZoneCloseRule.</summary>
+    public static CryptoZoneCloseRule[] CloseRules { get; } = Enum.GetValues<CryptoZoneCloseRule>();
+
     [ObservableProperty]
-    private bool _closeZonesPastMidpoint = false;
+    [NotifyPropertyChangedFor(nameof(UsesVisitCount))]
+    [NotifyPropertyChangedFor(nameof(UsesTouchLevel))]
+    private CryptoZoneCloseRule _closeRule = CryptoZoneCloseRule.Touches;
+
+    /// <summary>The number of visits only matters when visits can close the zone.</summary>
+    public bool UsesVisitCount => CloseRule != CryptoZoneCloseRule.BodyThrough;
+
+    /// <summary>The touch level only decides what a visit is under CryptoZoneCloseRule.Touches.</summary>
+    public bool UsesTouchLevel => CloseRule == CryptoZoneCloseRule.Touches;
 
     public void LoadConfig(SettingsSignalStrategyDlz settings)
     {
@@ -35,7 +49,7 @@ public partial class StrategyDlzSettingsViewModel : ObservableObject
         NearZonePercentage = settings.NearZonePercentage;
         MaxTouches = settings.MaxTouches;
         TouchLevel = settings.TouchLevel;
-        CloseZonesPastMidpoint = settings.CloseZonesPastMidpoint;
+        CloseRule = settings.CloseRule;
     }
 
     public void SaveConfig(SettingsSignalStrategyDlz settings)
@@ -45,6 +59,6 @@ public partial class StrategyDlzSettingsViewModel : ObservableObject
         settings.NearZonePercentage = NearZonePercentage;
         settings.MaxTouches = MaxTouches;
         settings.TouchLevel = TouchLevel;
-        settings.CloseZonesPastMidpoint = CloseZonesPastMidpoint;
+        settings.CloseRule = CloseRule;
     }
 }

@@ -105,6 +105,11 @@ public static class EmulatorBootstrap
         // defaults and IndexStrategySettings below indexes those defaults.
         PluginManager.RestoreSettings(GlobalData.Settings.Signal.AnalyzerSettings);
 
+        // During a queue entry the settings in memory are the defaults of that entry, not the file
+        GlobalData.SaveConfigurationBlocked = () => Engine.QueueBaseline.IsActive
+            ? "a queue entry is running on the default settings; the settings file is left as it is"
+            : null;
+
         // Build the per-strategy index, white/blacklist lookup, indicator/signal preparation —
         // exact same calls as the live ApplyConfigurationAsync. Cheap, no side effects.
         GlobalData.IndexStrategySettings();

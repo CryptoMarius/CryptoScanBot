@@ -81,7 +81,11 @@ public class SignalSuperTrendBreakoutBase : SignalCreateBase
             {
                 if (CheckZoneProximity(side, candle, side == CryptoTradeSide.Long ? zones.LongOpen : zones.ShortOpen,
                     warnPct, intervalName, "open", out zoneInfo))
+                {
+                    // The chart opens on the interval of the zone that was hit (SignalBase.ZoneInterval)
+                    TouchedZoneInterval = interval;
                     return true;
+                }
             }
 
             // Check recently closed zones
@@ -92,7 +96,10 @@ public class SignalSuperTrendBreakoutBase : SignalCreateBase
 
                 if (CheckZoneProximity(side, candle, closedZones, warnPct, intervalName, "closed",
                     out zoneInfo, minCloseTime: maxAge))
+                {
+                    TouchedZoneInterval = interval;
                     return true;
+                }
             }
         }
 

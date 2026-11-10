@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="320"
+             xmlns:vm="using:CryptoScanner.Analyzers.HeikinAshi.Config"
+             x:DataType="vm:StrategyHeikinAshiSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.HeikinAshi.Config.StrategyHeikinAshiSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- The entry: the colour change of the Heikin Ashi candle, with the higher interval on the same colour. -->
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The last closed Heikin Ashi candle of this interval has to have the colour of the trade: green for a long, red for a short. Empty switches the check off.">
+                <TextBlock Grid.Column="0" Text="Higher interval:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding HigherInterval, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- The exit the rule comes with. Stop loss and take profit keep working next to it. -->
+            <TextBlock Text="Exit" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <CheckBox IsChecked="{Binding ExitOnSignal, Mode=TwoWay}"
+                      Content="Exit on the Heikin Ashi candle" FontSize="12"
+                      ToolTip.Tip="Leave on the first closed Heikin Ashi candle of the other colour. Stop loss and take profit keep working next to it; set those wide to measure this exit alone."/>
+
+            <CheckBox IsChecked="{Binding ExitOnOppositeWick, Mode=TwoWay}" Margin="20,0,0,0"
+                      IsEnabled="{Binding ExitOnSignal}"
+                      Content="Also on a wick on the other side" FontSize="12"
+                      ToolTip.Tip="Also leave on a candle with a wick on the other side: under the body for a long, above it for a short. A strong trend has no wick on that side."/>
+
+            <Grid ColumnDefinitions="160,80,*" RowDefinitions="Auto" Margin="20,0,0,0"
+                  IsEnabled="{Binding ExitOnSignal}"
+                  ToolTip.Tip="How long a wick has to be to count, as a percentage of the candle's range from high to low.">
+                <TextBlock Grid.Column="0" Text="Minimum wick %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding WickMinimumPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- The stop of the rule, handed to the trader as a percentage. -->
+            <TextBlock Text="Stop" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <CheckBox IsChecked="{Binding StopBeyondSignalCandle, Mode=TwoWay}"
+                      Content="Stop beyond the signal candle" FontSize="12"
+                      ToolTip.Tip="Put the stop under the real low of the signal candle, above its real high for a short, in place of the stop of the trading settings."/>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

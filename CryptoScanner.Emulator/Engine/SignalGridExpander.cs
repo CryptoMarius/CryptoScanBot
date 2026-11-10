@@ -14,7 +14,15 @@ namespace CryptoScanner.Emulator.Engine;
 /// </summary>
 public static class SignalGridExpander
 {
-    public readonly record struct Override(object Target, PropertyInfo Property, object? SavedValue);
+    /// <summary>
+    /// One setting that was changed, with its value before. <see cref="Member"/> is a property or,
+    /// since 09-11-2026, a public field - the side filters (SettingsTextual.MarketRsiCross, Barometer,
+    /// ...) and the zone sections are fields, and a dotted path into them used to stop silently.
+    /// </summary>
+    public readonly record struct Override(object Target, MemberInfo Member, object? SavedValue)
+    {
+        public void Restore() => SetMember(Target, Member, SavedValue);
+    }
 
     /// <summary>
     /// Applies signal and trading overrides from a queue entry onto GlobalData.Settings.
@@ -166,22 +174,24 @@ public static class SignalGridExpander
 
         for (int i = 0; i < parts.Length - 1; i++)
         {
-            PropertyInfo? nav = current.GetType().GetProperty(parts[i]);
+            //PropertyInfo? nav = current.GetType().GetProperty(parts[i]);
+            MemberInfo? nav = FindMember(current.GetType(), parts[i]);
             if (nav == null)
                 return;
-            object? next = nav.GetValue(current);
+            object? next = GetMember(current, nav);
             if (next == null)
             {
-                next = Activator.CreateInstance(nav.PropertyType);
+                next = Activator.CreateInstance(MemberType(nav));
                 if (next == null)
                     return;
                 saved.Add(new Override(current, nav, null));
-                nav.SetValue(current, next);
+                SetMember(current, nav, next);
             }
             current = next;
         }
 
-        PropertyInfo? leaf = current.GetType().GetProperty(parts[^1]);
+        //PropertyInfo? leaf = current.GetType().GetProperty(parts[^1]);
+        MemberInfo? leaf = FindMember(current.GetType(), parts[^1]);
         if (leaf == null)
         {
             // A removed setting whose behaviour is now fixed: the value it is fixed at passes silently,
@@ -209,8 +219,33 @@ public static class SignalGridExpander
                 + "with the default in its place.");
         }
 
-        saved.Add(new Override(current, leaf, leaf.GetValue(current)));
-        leaf.SetValue(current, ConvertJsonElement(jsonVal, leaf.PropertyType));
+        saved.Add(new Override(current, leaf, GetMember(current, leaf)));
+        SetMember(current, leaf, ConvertJsonElement(jsonVal, MemberType(leaf)));
+    }
+
+
+    /// <summary>A public instance property, or else a public instance field, of this name.</summary>
+    private static MemberInfo? FindMember(Type type, string name)
+    {
+        return (MemberInfo?)type.GetProperty(name) ?? type.GetField(name);
+    }
+
+    private static Type MemberType(MemberInfo member)
+    {
+        return member is PropertyInfo property ? property.PropertyType : ((FieldInfo)member).FieldType;
+    }
+
+    private static object? GetMember(object target, MemberInfo member)
+    {
+        return member is PropertyInfo property ? property.GetValue(target) : ((FieldInfo)member).GetValue(target);
+    }
+
+    private static void SetMember(object target, MemberInfo member, object? value)
+    {
+        if (member is PropertyInfo property)
+            property.SetValue(target, value);
+        else
+            ((FieldInfo)member).SetValue(target, value);
     }
 
     /// <summary>
@@ -249,6 +284,10 @@ public static class SignalGridExpander
             + "0 = no limit any more"),
         ["UseKalmanFilter"] = (0m, "fvgladder's Kalman trend was removed on 05-11-2026: the trend is always the "
             + "day close above the EMA200, so only \"UseKalmanFilter\": false can be left in an entry"),
+        ["CloseZonesPastMidpoint"] = (0m, "the zone setting CloseZonesPastMidpoint was removed on 10-11-2026. "
+            + "Use \"CloseRule\": 1 (BodyPastMidpoint, a body close past the middle) with \"MaxTouches\" as the "
+            + "number of such visits, or \"CloseRule\": 2 with \"TouchLevel\": 1 and \"MaxTouches\": 1 for the old "
+            + "\"any wick at the middle closes it\", so only \"CloseZonesPastMidpoint\": false can be left in an entry"),
     };
 
     /// <summary>
@@ -497,7 +536,7 @@ public static class SignalGridExpander
         // percentage, EntryPercentage then sets it), the second save holds the value of the first
         // override, and only undoing them in reverse order ends on the original.
         for (int i = overrides.Count - 1; i >= 0; i--)
-            overrides[i].Property.SetValue(overrides[i].Target, overrides[i].SavedValue);
+            overrides[i].Restore();
     }
 
 

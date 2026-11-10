@@ -78,6 +78,8 @@ public static class ZoneRequirementHelper
                             tolerancePercentage))
                         continue;
                     reason = $"in {name} {interval.Name} {zone.Bottom} .. {zone.Top}";
+                    // The chart opens on the interval of the zone that was hit (SignalBase.ZoneInterval)
+                    myBase.TouchedZoneInterval = interval;
                     return true;
                 }
             }

@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -159,6 +159,15 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private async Task ConfigureScannerAsync(Window? owner)
     {
+        // During a queue entry the settings in memory are the defaults of that entry (QueueBaseline).
+        // Editing and saving them would write those defaults over the settings file of the session.
+        if (QueueBaseline.IsActive)
+        {
+            GlobalData.AddTextToLogTab("Settings cannot be edited while a queue entry runs: the settings in memory "
+                + "are the defaults of that entry. Open them again after the run.");
+            return;
+        }
+
         ConfigurationWindow window = new();
 
         // ConfigurationViewModel signals OK/Cancel through Window.Close(true|false); capture
@@ -993,131 +1002,29 @@ public partial class MainWindowViewModel : ObservableObject
                     runIndex++;
 
                     // Reset all side filters to saved values (clean slate per entry)
+                    // Since 09-11-2026 the clean slate is the defaults from the code, not the settings of the
+                    // session: whatever the entry does not spell out is the same for every run, whatever the
+                    // settings file holds at the moment (see QueueBaseline). Put back in the finally below.
+                    QueueBaseline.Install();
                     GlobalData.Settings.Signal.Long.Strategy = [algorithm.Name];
                     GlobalData.Settings.Signal.Short.Strategy = [algorithm.Name];
                     GlobalData.Settings.Trading.Long.Strategy = [algorithm.Name];
                     GlobalData.Settings.Trading.Short.Strategy = [algorithm.Name];
-                    GlobalData.Settings.Signal.Long.Interval = savedSignalLongInterval;
-                    GlobalData.Settings.Signal.Short.Interval = savedSignalShortInterval;
-                    GlobalData.Settings.Signal.Long.IntervalTrend.List = savedSignalLongIntervalTrend;
-                    GlobalData.Settings.Signal.Short.IntervalTrend.List = savedSignalShortIntervalTrend;
-                    GlobalData.Settings.Signal.Long.IntervalTrend.Inverted = savedSignalLongIntervalTrendInverted;
-                    GlobalData.Settings.Signal.Short.IntervalTrend.Inverted = savedSignalShortIntervalTrendInverted;
-                    GlobalData.Settings.Signal.Long.Barometer.List = savedSignalLongBarometer;
-                    GlobalData.Settings.Signal.Long.Barometer.ConsensusActive = savedSignalLongBarometerConsensus;
-                    GlobalData.Settings.Signal.Long.Barometer.MinConsensus = savedSignalLongBarometerMinConsensus;
-                    GlobalData.Settings.Signal.Short.Barometer.List = savedSignalShortBarometer;
-                    GlobalData.Settings.Signal.Short.Barometer.ConsensusActive = savedSignalShortBarometerConsensus;
-                    GlobalData.Settings.Signal.Short.Barometer.MinConsensus = savedSignalShortBarometerMinConsensus;
-                    GlobalData.Settings.Signal.Long.Barometer.BreadthActive = savedSignalLongBreadthActive;
-                    GlobalData.Settings.Signal.Long.Barometer.BreadthMinimum = savedSignalLongBreadthMinimum;
-                    GlobalData.Settings.Signal.Long.Barometer.BreadthMaximum = savedSignalLongBreadthMaximum;
-                    GlobalData.Settings.Signal.Short.Barometer.BreadthActive = savedSignalShortBreadthActive;
-                    GlobalData.Settings.Signal.Short.Barometer.BreadthMinimum = savedSignalShortBreadthMinimum;
-                    GlobalData.Settings.Signal.Short.Barometer.BreadthMaximum = savedSignalShortBreadthMaximum;
-                    GlobalData.Settings.Signal.Long.SymbolTrend.List = savedSignalLongSymbolTrend;
-                    GlobalData.Settings.Signal.Short.SymbolTrend.List = savedSignalShortSymbolTrend;
-                    GlobalData.Settings.Signal.Long.SymbolTrendSecondary.List = savedSignalLongSymbolTrendSecondary;
-                    GlobalData.Settings.Signal.Short.SymbolTrendSecondary.List = savedSignalShortSymbolTrendSecondary;
-                    GlobalData.Settings.Signal.Long.MarketRsi = savedSignalLongMarketRsi;
-                    GlobalData.Settings.Signal.Short.MarketRsi = savedSignalShortMarketRsi;
-                    GlobalData.Settings.Signal.Long.MarketState = savedSignalLongMarketState;
-                    GlobalData.Settings.Signal.Short.MarketState = savedSignalShortMarketState;
-                    GlobalData.Settings.Trading.Long.MarketExit = savedTradingLongMarketExit;
-                    GlobalData.Settings.Trading.Short.MarketExit = savedTradingShortMarketExit;
-                    GlobalData.Settings.Trading.Long.EntryLimit = savedTradingLongEntryLimit;
-                    GlobalData.Settings.Trading.Short.EntryLimit = savedTradingShortEntryLimit;
-                    GlobalData.Settings.Signal.Long.BtcMove = savedSignalLongBtcMove;
-                    GlobalData.Settings.Signal.Short.BtcMove = savedSignalShortBtcMove;
-                    GlobalData.Settings.Signal.Long.Weekdays = savedSignalLongWeekdays;
-                    GlobalData.Settings.Signal.Short.Weekdays = savedSignalShortWeekdays;
-                    GlobalData.Settings.Signal.Long.MarketRsiCross = savedSignalLongMarketRsiCross;
-                    GlobalData.Settings.Signal.Short.MarketRsiCross = savedSignalShortMarketRsiCross;
-                    GlobalData.Settings.Signal.Long.HigherInterval = savedSignalLongHigherInterval;
-                    GlobalData.Settings.Signal.Short.HigherInterval = savedSignalShortHigherInterval;
-
-                    // Omitted = the settings decide, like every other key of an entry (31-10-2026).
-                    // Until then a missing StopLossPercentage ran on a default of 2%, and the limit
-                    // was always rebuilt from it, even when the settings had another distance.
-                    decimal? effectiveSL = entry.Trading?.StopLossPercentage ?? entry.StopLossPercentage;
-                    if (effectiveSL.HasValue)
-                    {
-                        GlobalData.Settings.Trading.StopLossPercentage = effectiveSL.Value;
-                        GlobalData.Settings.Trading.StopLossLimitPercentage = effectiveSL.Value + 1m;
-                    }
-
-                    // An empty TP list is treated as "the settings decide" too: a run without a
-                    // take profit has no way out but the stop, nobody asks for that by leaving a
-                    // list empty.
-                    List<CryptoTpEntry>? effectiveTP = entry.Trading?.TpList ?? entry.TpList;
-                    if (effectiveTP is { Count: > 0 })
-                        GlobalData.Settings.Trading.TpList = effectiveTP
-                            .Select(e => new CryptoTpEntry { Factor = e.Factor, Percentage = e.Percentage })
-                            .ToList();
-
-                    // The DCA list is the one key where an EMPTY list means something: no DCA at
-                    // all (the queue files rely on "DcaList": []). Omitted = the settings decide.
-                    List<CryptoDcaEntry>? effectiveDCA = entry.Trading?.DcaList ?? entry.DcaList;
-                    if (effectiveDCA != null)
-                        GlobalData.Settings.Trading.DcaList = effectiveDCA
-                            .Select(e => new CryptoDcaEntry { Factor = e.Factor, Percentage = e.Percentage })
-                            .ToList();
-
-                    bool hasPerSideConfig = entry.Long != null || entry.Short != null || entry.MirrorFrom != null;
-
-                    if (hasPerSideConfig)
-                    {
-                        EmulatorSideConfig? mirrorForLong = "Short".Equals(entry.MirrorFrom, StringComparison.OrdinalIgnoreCase) ? entry.Short : null;
-                        EmulatorSideConfig? mirrorForShort = "Long".Equals(entry.MirrorFrom, StringComparison.OrdinalIgnoreCase) ? entry.Long : null;
-                        EmulatorSideConfig longConfig = EmulatorSideConfig.Resolve(entry.Long, mirrorForLong);
-                        EmulatorSideConfig shortConfig = EmulatorSideConfig.Resolve(entry.Short, mirrorForShort);
-
-                        EmulatorSideConfig.Apply(longConfig, GlobalData.Settings.Signal.Long, GlobalData.Settings.Trading.Long);
-                        EmulatorSideConfig.Apply(shortConfig, GlobalData.Settings.Signal.Short, GlobalData.Settings.Trading.Short);
-                    }
-                    else
-                    {
-                        if (entry.Intervals is { Count: > 0 })
-                        {
-                            GlobalData.Settings.Signal.Long.Interval = new List<string>(entry.Intervals);
-                            GlobalData.Settings.Signal.Short.Interval = new List<string>(entry.Intervals);
-                        }
-
-                        if ("Short".Equals(entry.Side, StringComparison.OrdinalIgnoreCase))
-                        {
-                            GlobalData.Settings.Signal.Long.Strategy = [];
-                            GlobalData.Settings.Trading.Long.Strategy = [];
-                        }
-                        else if ("Long".Equals(entry.Side, StringComparison.OrdinalIgnoreCase))
-                        {
-                            GlobalData.Settings.Signal.Short.Strategy = [];
-                            GlobalData.Settings.Trading.Short.Strategy = [];
-                        }
-                    }
 
                     // Applying the overrides must never end the batch. Validate() above catches the
                     // retired settings, but reflection over a hand-edited queue can fail in ways
                     // nobody listed yet - a type that will not convert, a path into a null section.
                     // One unusable entry costs one run, not the twenty behind it.
+                    // The per-side configuration is in here too since 09-11-2026 - an invalid MarketRsi or
+                    // BtcMove used to throw outside this try and end the batch.
                     List<SignalGridExpander.Override> overrides;
                     try
                     {
-                        overrides = SignalGridExpander.Apply(entry);
-
-                        // A stop given in TradingOverrides arrives AFTER the limit above was derived,
-                        // so "StopLossPercentage": 5 in the overrides ran with a limit of 3, on the
-                        // wrong side of the stop (31-10-2026). The limit follows the stop here, unless
-                        // the overrides set the limit themselves. Put back with the saved value in the
-                        // finally of this batch, like the stop.
-                        bool stopOverridden = overrides.Any(o => ReferenceEquals(o.Target, GlobalData.Settings.Trading)
-                            && o.Property.Name == nameof(SettingsTrading.StopLossPercentage));
-                        bool limitOverridden = overrides.Any(o => ReferenceEquals(o.Target, GlobalData.Settings.Trading)
-                            && o.Property.Name == nameof(SettingsTrading.StopLossLimitPercentage));
-                        if (stopOverridden && !limitOverridden)
-                            GlobalData.Settings.Trading.StopLossLimitPercentage = GlobalData.Settings.Trading.StopLossPercentage + 1m;
+                        overrides = QueueEntryApplier.Apply(entry);
                     }
                     catch (Exception ax)
                     {
+                        QueueBaseline.Restore();
                         failedRuns++;
                         GlobalData.AddErrorToLogTab(
                             $"Queue: entry {i + 1} \"{entry.Label}\" skipped — {ax.GetType().Name}: {ax.Message}");
@@ -1252,12 +1159,16 @@ public partial class MainWindowViewModel : ObservableObject
                     finally
                     {
                         SignalGridExpander.Revert(overrides);
+                        QueueBaseline.Restore();
                     }
                 }
             }
         }
         finally
         {
+            // A Stop or an exception between Install and the finally of the entry: the session
+            // settings come back before anything below writes into them.
+            QueueBaseline.Restore();
             GlobalData.Settings.Signal.Long.Strategy = savedSignalLongStrategy;
             GlobalData.Settings.Signal.Short.Strategy = savedSignalShortStrategy;
             GlobalData.Settings.Trading.Long.Strategy = savedTradingLongStrategy;

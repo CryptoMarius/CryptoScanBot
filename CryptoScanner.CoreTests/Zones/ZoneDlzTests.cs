@@ -608,7 +608,7 @@ public class ZoneDlzTests : TestBase
             Volume = 1000m,
         };
 
-        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, new(0, CryptoZoneTouchLevel.Edge, false));
+        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, new(0, CryptoZoneTouchLevel.Edge, CryptoZoneCloseRule.Touches));
 
         Assert.IsFalse(broken, "Close=91 > Bottom=90 -> not broken");
         Assert.AreEqual(1, zone.TouchCount, "Wick into zone counts as a touch");
@@ -636,7 +636,7 @@ public class ZoneDlzTests : TestBase
             Volume = 1000m,
         };
 
-        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, new(0, CryptoZoneTouchLevel.Edge, false));
+        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, new(0, CryptoZoneTouchLevel.Edge, CryptoZoneCloseRule.Touches));
 
         Assert.IsTrue(broken, "Close=89 < Bottom=90 -> broken");
         Assert.IsNotNull(zone.CloseTime);
@@ -664,7 +664,7 @@ public class ZoneDlzTests : TestBase
             Volume = 1000m,
         };
 
-        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, new(0, CryptoZoneTouchLevel.Edge, false));
+        bool broken = ZoneInvalidation.ApplyToCandle(zone, candle, interval, new(0, CryptoZoneTouchLevel.Edge, CryptoZoneCloseRule.Touches));
 
         Assert.IsTrue(broken, "Close=111 > Top=110 -> broken");
         Assert.IsNotNull(zone.CloseTime);

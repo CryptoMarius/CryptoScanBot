@@ -1,4 +1,5 @@
 ﻿using CryptoScanner.Analyzers.Dbr;
+using CryptoScanner.Analyzers.FvgLadder;
 using CryptoScanner.Analyzers.Sbm;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
@@ -157,6 +158,9 @@ public class SignalGridExpanderTests : TestBase
     public void TheRemovedKalmanSwitch_PassesWhenOff_AndIsRefusedWhenOn()
     {
         InitTestSession();
+        // The section only resolves when the plugin is registered; without it Validate stops at
+        // "matches no settings section" before it reaches the removed switch.
+        RegisterPlugin(new FvgLadderPlugin());
 
         Assert.IsNull(SignalGridExpander.Validate(EntryWithOverride("fvgladder", "UseKalmanFilter", "false")));
 

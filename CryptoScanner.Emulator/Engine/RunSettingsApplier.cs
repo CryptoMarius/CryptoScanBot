@@ -121,7 +121,7 @@ public static class RunSettingsApplier
     /// </summary>
     public static bool Apply(int runId, out string message)
     {
-        if (GlobalData.CurrentEmulatorRunId != null)
+        if (GlobalData.CurrentEmulatorRunId != null || QueueBaseline.IsActive)
         {
             message = "A run is active - take over settings once it has finished.";
             return false;

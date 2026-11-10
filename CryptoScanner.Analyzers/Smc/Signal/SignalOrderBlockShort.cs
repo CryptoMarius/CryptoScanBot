@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Zones;
 using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Analyzers.Smc.Signal;
@@ -49,7 +50,11 @@ public class SignalOrderBlockShort : SignalCreateBase
                 // the zone is done once the visits reach it. The old "> MaxTouches" read 0 as "only
                 // untouched zones", the opposite of the tooltip, and with the default 2 it was dead
                 // because the zone layer closes such a zone first (open point 104).
-                if (settings.MaxTouches > 0 && zone.TouchCount >= settings.MaxTouches)
+                //if (settings.MaxTouches > 0 && zone.TouchCount >= settings.MaxTouches)
+                //    continue;
+                // Since 10-11-2026 through the zone's own close rule, so "BodyThrough" (visits never
+                // close it) is not overruled here by a count the zone layer ignores.
+                if (ZoneInvalidation.RulesFor(CryptoZoneKind.OrderBlock).IsUsedUp(zone.TouchCount))
                     continue;
 
                 // Touch: price has entered the zone band (wick inside [Bottom, Top]).

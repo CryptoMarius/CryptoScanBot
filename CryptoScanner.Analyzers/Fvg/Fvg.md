@@ -1,4 +1,4 @@
-# Fair Value Gap (FVG)
+﻿# Fair Value Gap (FVG)
 
 ## Overview
 
@@ -50,9 +50,9 @@ This is an **alarm-only** strategy — zone closure is handled by `ZoneFvg` via 
 | `IntervalList` | ["1h", "4h", "1d"] | Timeframe intervals to monitor |
 | `MinimumPercentage` | 0.25 | Minimum FVG zone width percentage |
 | `NearZonePercentage` | 0.25 | Proximity percentage for combined strategy checks |
-| `MaxTouches` | 2 | Visits a zone survives; it closes after that. 0 = never used up, only a break closes it (see [Zone lifetime](#zone-lifetime)) |
-| `TouchLevel` | Edge | How far price must come in before a visit counts: Edge (wick reaches the near edge) or Midpoint (wick reaches the middle) |
-| `CloseZonesPastMidpoint` | false | Close the zone as soon as price has ever reached its middle, whatever the visit count (was `DisqualifyOnMitigation`) |
+| `CloseRule` | BodyThrough | What closes a zone besides the break that always does: BodyThrough (nothing else), BodyPastMidpoint (`MaxTouches` visits with a body close past the middle) or Touches (`MaxTouches` visits at the touch level). See [Zone lifetime](#zone-lifetime) |
+| `MaxTouches` | 2 | Number of visits for BodyPastMidpoint and Touches; the zone closes after that. 0 = never used up. Not used with BodyThrough |
+| `TouchLevel` | Edge | How far price must come in before a visit counts (Touches only): Edge (wick reaches the near edge) or Midpoint (wick reaches the middle) |
 | `RejectionLookback` | 2 | Candles to look back for zone rejection |
 
 ## Zone lifetime
@@ -64,8 +64,7 @@ Every closed candle of the zone interval is applied to every open zone, in this 
 1. **Broken** — the candle body closes through the far side (Long: Close < Bottom, Short: Close > Top). The zone closes. A wick through the zone does not count, only the close.
 2. **Entered** — the candle reaches the touch level (`TouchLevel`) while price was outside. That is one visit: `TouchCount` + 1. Reaching the middle also sets `ReachedMidpoint`.
 3. **Left** — price was inside and this candle no longer reaches the near edge. The zone is open for a next visit.
-4. **Used up** — `TouchCount` reaches `MaxTouches`. The zone closes. `MaxTouches = 0` disables this rule.
-5. **Past the midpoint** — optional (`CloseZonesPastMidpoint`, default off): the zone closes once price has ever reached its middle, whatever the visit count.
+4. **Used up** — `TouchCount` reaches `MaxTouches`. The zone closes. Only with `CloseRule` BodyPastMidpoint or Touches; `MaxTouches = 0` disables this rule. With BodyPastMidpoint a visit only counts once a candle body closes past the middle of the zone.
 
 `MaxTouches` counts **visits**, not candles: a visit is one continuous stay inside the zone, so three consecutive candles inside count as one touch. Whether price is inside is measured against the edge, even when the touch level is the midpoint.
 

@@ -1,5 +1,11 @@
 CryptoScanBot release historie:
 
+10-11-2026 2.7.0
+- Nieuwe strategie HeikinAshi: Instap op de eerste Heikin Ashi-candle van de andere kleur als het hogere interval (1w) dezelfde kleur heeft, uitstap op de eerste candle van de andere kleur of een lont aan de andere kant
+- Zones: "Max touches" en "Close zones past the midpoint" zijn één keuze geworden, "Zone closes on": Body through, Body past midpoint of Touches; een fair value gap sluit nu standaard alleen als een candle-body erdoor sluit (was na 2 touches)
+- Chart: Een strategie die alleen een zone vraagt (candlepatroon, failed breakout, supertrend breakout) opent de chart en TradingView op het interval van de geraakte zone
+- Emulator: Elke regel uit de wachtrij begint op de standaardinstellingen van de code in plaats van op de instellingen van de sessie
+
 08-11-2026 2.6.9
 - Scanner: TradingView opent ook in Avalonia in een eigen venster in plaats van een tabblad
 - Chart: In Photino opent de chart in een eigen venster, zoals in Avalonia, en volgt de munt die je in het signalen- of symbolenoverzicht kiest; het tabblad Chart is daar weg

@@ -86,6 +86,18 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
 
     // ---- Signal tuning (entry) ----
 
+    // What closes a zone besides the break that always does: nothing (BodyThrough), the given number
+    // of visits with a body close past the middle (BodyPastMidpoint), or the given number of visits
+    // at the touch level (Touches). Replaces the combination of "Max touches (0=off)" and "Close
+    // zones past the midpoint" (10-11-2026). See CryptoZoneCloseRule.
+    // Default: closed after MaxTouches visits at the touch level, the same behaviour as before
+    // 10-11-2026.
+    [SettingCaption("Zone closes on", Group = GroupSignal,
+        Tooltip = "Body through: only a candle body closing through the far side closes the zone. "
+            + "Body past midpoint: also after the given number of visits with a body close past the middle. "
+            + "Touches: also after the given number of visits at the touch level.")]
+    public CryptoZoneCloseRule CloseRule { get; set; } = CryptoZoneCloseRule.Touches;
+
     // Maximum number of visits before the zone is used up and closed - the same meaning as for the
     // DLZ and FVG zones since 24-08-2026, when the three grew one shared implementation
     // (ZoneInvalidation). It used to mean something narrower here: how many touches a zone could
@@ -93,13 +105,15 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
     // zone. The default moved from 1 to 2 because that is the value that keeps the old behaviour:
     // old "allow 0 and 1 touches" is new "used up at 2".
     // 0 disables touch-based closure entirely; a zone then only closes on a break.
-    [SettingCaption("Max touches (0=off)", Group = GroupSignal)]
+    [SettingCaption("Number of visits (0=off)", Group = GroupSignal,
+        Tooltip = "For Body past midpoint and Touches: after this many visits the zone is closed. Not used with Body through.")]
     public int MaxTouches { get; set; } = 2;
 
     // How far price has to come into the zone before it counts as one visit. The ONLY thing that
     // differs between the three zone kinds - everything else about counting, weakening and closing
     // is one implementation in ZoneInvalidation. See CryptoZoneTouchLevel.
-    [SettingCaption("Touch level", Group = GroupSignal)]
+    [SettingCaption("Touch level", Group = GroupSignal,
+        Tooltip = "For Touches: how far price has to come in before a visit counts.")]
     public CryptoZoneTouchLevel TouchLevel { get; set; } = CryptoZoneTouchLevel.Midpoint;
 
     // When true, a zone closes as soon as price has been at or past its middle - regardless of how
@@ -113,8 +127,11 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
     //
     // Note with TouchLevel = Midpoint: every counted visit reaches the midpoint there, so switching
     // this on is the same as setting MaxTouches to 1.
-    [SettingCaption("Close zones past the midpoint", Group = GroupSignal)]
-    public bool CloseZonesPastMidpoint { get; set; } = false;
+    //[SettingCaption("Close zones past the midpoint", Group = GroupSignal)]
+    //public bool CloseZonesPastMidpoint { get; set; } = false;
+    // CloseZonesPastMidpoint was removed on 10-11-2026: "past the middle" is now one of the choices
+    // of CloseRule, as a body close counted per visit. A settings file that still carries the key is
+    // read without it; a queue entry may only leave it at false.
 
     // RejectionLookback was removed on 26-09-2026 together with the smc.rejection classes it served
     // (open points 108 and 112). A settings file that still carries the key is read without it.

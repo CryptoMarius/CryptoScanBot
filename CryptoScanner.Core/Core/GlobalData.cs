@@ -670,6 +670,13 @@ public static class GlobalData
     public static bool ExchangeChoicePending { get; set; }
 
     /// <summary>
+    /// Asked by <see cref="SaveConfiguration"/> before it writes anything: a reason means the settings
+    /// in memory are not the ones of the file and must not be written over it. The emulator sets it,
+    /// because during a queue entry the settings in memory are the defaults of that entry (09-11-2026).
+    /// </summary>
+    public static Func<string?>? SaveConfigurationBlocked { get; set; }
+
+    /// <summary>
     /// Write a configuration file without ever leaving a half-written one behind: serialise to a
     /// temporary file next to it, then swap them in one step. File.Replace also keeps the previous
     /// version as .backup, which is what LoadJsonFile falls back on.
@@ -1021,6 +1028,12 @@ public static class GlobalData
         if (ExchangeChoicePending)
         {
             AddTextToLogTab("Not saving: no exchange has been chosen for this new installation yet.");
+            return;
+        }
+
+        if (SaveConfigurationBlocked?.Invoke() is string blockedReason)
+        {
+            AddTextToLogTab($"Not saving: {blockedReason}");
             return;
         }
 

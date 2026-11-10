@@ -25,6 +25,14 @@ namespace CryptoScanner.Core.Zones;
 ///         the zone is gone whatever the visit count says.</item>
 /// </list>
 /// <para>
+/// Since 10-11-2026 one choice per zone kind, <see cref="CryptoZoneCloseRule"/>, decides which of
+/// rules 2 to 4 can close the zone. <see cref="CryptoZoneCloseRule.BodyThrough"/> leaves only rule 1;
+/// <see cref="CryptoZoneCloseRule.Touches"/> is rules 2 to 4 as described above;
+/// <see cref="CryptoZoneCloseRule.BodyPastMidpoint"/> counts a visit only once a candle body closes
+/// past the middle, and is used up after MaxTouches of those. Rule 5 (any wick at the middle closes
+/// it) is gone with the old "Close zones past the midpoint" switch.
+/// </para>
+/// <para>
 /// Counting per VISIT and not per candle is the whole point of rules 2 and 3. A visit that lasts
 /// three candles is one test of the level, not three - and with MaxTouches at 2 the per-candle
 /// version killed a zone halfway through its first visit. That is how the order-block side counted
@@ -47,10 +55,18 @@ public static class ZoneInvalidation
     /// <param name="MaxTouches">How many visits the zone survives. 0 means it is never used up and
     /// only a break can close it.</param>
     /// <param name="TouchLevel">How far price has to come in before a visit counts.</param>
-    /// <param name="CloseAtMidpoint">Close the zone as soon as price has been at or past its middle,
-    /// whatever the visit count says.</param>
+    /// <param name="CloseRule">Which counted visits can close the zone, besides the break. See
+    /// <see cref="CryptoZoneCloseRule"/>.</param>
     public readonly record struct ZoneTouchRules(int MaxTouches, CryptoZoneTouchLevel TouchLevel,
-        bool CloseAtMidpoint);
+        CryptoZoneCloseRule CloseRule)
+    {
+        /// <summary>
+        /// Whether a zone with this many counted visits is used up. Never under
+        /// <see cref="CryptoZoneCloseRule.BodyThrough"/>, and never with MaxTouches at 0.
+        /// </summary>
+        public bool IsUsedUp(int touchCount)
+            => CloseRule != CryptoZoneCloseRule.BodyThrough && MaxTouches > 0 && touchCount >= MaxTouches;
+    }
 
 
     /// <summary>
@@ -63,13 +79,13 @@ public static class ZoneInvalidation
         {
             CryptoZoneKind.FairValueGap => new(GlobalData.Settings.Signal.ZonesFvg.MaxTouches,
                                                GlobalData.Settings.Signal.ZonesFvg.TouchLevel,
-                                               GlobalData.Settings.Signal.ZonesFvg.CloseZonesPastMidpoint),
+                                               GlobalData.Settings.Signal.ZonesFvg.CloseRule),
             CryptoZoneKind.OrderBlock => new(GlobalData.Settings.Signal.ZonesSmc.MaxTouches,
                                              GlobalData.Settings.Signal.ZonesSmc.TouchLevel,
-                                             GlobalData.Settings.Signal.ZonesSmc.CloseZonesPastMidpoint),
+                                             GlobalData.Settings.Signal.ZonesSmc.CloseRule),
             _ => new(GlobalData.Settings.Signal.ZonesDlz.MaxTouches,
                      GlobalData.Settings.Signal.ZonesDlz.TouchLevel,
-                     GlobalData.Settings.Signal.ZonesDlz.CloseZonesPastMidpoint),
+                     GlobalData.Settings.Signal.ZonesDlz.CloseRule),
         };
     }
 
@@ -108,8 +124,15 @@ public static class ZoneInvalidation
         // How deep this candle came in, expressed as two questions the rest of the method asks.
         bool reachedEdge = isLong ? candle.Low <= zone.Top : candle.High >= zone.Bottom;
         bool reachedMidpoint = isLong ? candle.Low <= midpoint : candle.High >= midpoint;
-        bool reachedTouchLevel = rules.TouchLevel == CryptoZoneTouchLevel.Midpoint
-            ? reachedMidpoint : reachedEdge;
+        //bool reachedTouchLevel = rules.TouchLevel == CryptoZoneTouchLevel.Midpoint
+        //    ? reachedMidpoint : reachedEdge;
+        // With BodyPastMidpoint a visit only counts once a body closes past the middle - a wick
+        // there, or a close between the edge and the middle, is not enough. The other two count at
+        // the touch level; under BodyThrough that count is information only and never closes.
+        bool closedPastMidpoint = isLong ? candle.Close <= midpoint : candle.Close >= midpoint;
+        bool reachedTouchLevel = rules.CloseRule == CryptoZoneCloseRule.BodyPastMidpoint
+            ? reachedEdge && closedPastMidpoint
+            : rules.TouchLevel == CryptoZoneTouchLevel.Midpoint ? reachedMidpoint : reachedEdge;
 
         // The midpoint flag is about how far price came, not about counting, so it is set whenever it
         // happens - also on a candle that does not open a new visit.
@@ -137,7 +160,7 @@ public static class ZoneInvalidation
             zone.VisitCounted = true;
 
             // 4. Used up.
-            if (rules.MaxTouches > 0 && zone.TouchCount >= rules.MaxTouches)
+            if (rules.IsUsedUp(zone.TouchCount))
             {
                 zone.CloseTime = candle.OpenTime + interval.Duration;
                 return true;
@@ -147,11 +170,13 @@ public static class ZoneInvalidation
         // 5. Halfway in - off by default. Price took half of what made the level hold, so what is
         // left is not worth waiting for. Independent of the visit count: this can close a zone on
         // its very first visit, and it also fires on a candle that only continues a visit.
-        if (rules.CloseAtMidpoint && zone.ReachedMidpoint)
-        {
-            zone.CloseTime = candle.OpenTime + interval.Duration;
-            return true;
-        }
+        // Removed on 10-11-2026 with CloseZonesPastMidpoint: "past the middle" is now a body close,
+        // counted per visit (CryptoZoneCloseRule.BodyPastMidpoint) instead of any wick.
+        //if (rules.CloseAtMidpoint && zone.ReachedMidpoint)
+        //{
+        //    zone.CloseTime = candle.OpenTime + interval.Duration;
+        //    return true;
+        //}
 
         return false;
     }

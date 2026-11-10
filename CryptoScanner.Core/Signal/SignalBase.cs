@@ -124,8 +124,18 @@ public class SignalCreateBase
     /// zone of a higher interval and keeps the signal on 1m (fvgladder). Display only: the chart and
     /// TradingView open on it (CryptoSignal.ChartInterval), the trader keeps using the signal interval.
     /// The other zone strategies (fvg, dlz, smc) report the zone interval as the signal interval itself.
+    /// By default it is the interval of the zone the candle touched (<see cref="TouchedZoneInterval"/>),
+    /// so a strategy that only requires a zone (candle pattern, failed breakout, supertrend breakout)
+    /// also opens the chart on the zone that was hit.
     /// </summary>
-    public virtual CryptoInterval? ZoneInterval => null;
+    public virtual CryptoInterval? ZoneInterval => TouchedZoneInterval;
+
+    /// <summary>
+    /// The interval of the zone the evaluated candle touched, set by the zone check that passed
+    /// (ZoneRequirementHelper.InsideARequiredZone or a strategy's own zone test). Null when no zone
+    /// was involved. An algorithm instance lives for one evaluation, so it never needs a reset.
+    /// </summary>
+    public CryptoInterval? TouchedZoneInterval { get; set; }
 
     public virtual int MacdRecoveryBarCount => 1;
 

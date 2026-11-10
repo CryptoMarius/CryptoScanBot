@@ -62,17 +62,31 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
     [SettingCaption("Near zone percentage", Group = GroupZoneStrength)]
     public decimal NearZonePercentage { get; set; } = 0.25m;
 
+    // What closes a zone besides the break that always does: nothing (BodyThrough), the given number
+    // of visits with a body close past the middle (BodyPastMidpoint), or the given number of visits
+    // at the touch level (Touches). Replaces the combination of "Max touches (0=off)" and "Close
+    // zones past the midpoint" (10-11-2026). See CryptoZoneCloseRule.
+    // Default: closed after MaxTouches visits at the touch level, the same behaviour as before
+    // 10-11-2026.
+    [SettingCaption("Zone closes on", Group = GroupZoneStrength,
+        Tooltip = "Body through: only a candle body closing through the far side closes the zone. "
+            + "Body past midpoint: also after the given number of visits with a body close past the middle. "
+            + "Touches: also after the given number of visits at the touch level.")]
+    public CryptoZoneCloseRule CloseRule { get; set; } = CryptoZoneCloseRule.Touches;
+
     // Maximum number of wick-touches before a zone is considered exhausted and closed.
     // Supply/demand theory: 0=fresh, 1=tested, 2=weakening, 3+=avoid. Default 2 keeps the
     // first retest signal but suppresses everything after that. Set to 0 to disable
     // touch-based closure (zones only close on body break through the far side).
-    [SettingCaption("Max touches (0=off)", Group = GroupZoneStrength)]
+    [SettingCaption("Number of visits (0=off)", Group = GroupZoneStrength,
+        Tooltip = "For Body past midpoint and Touches: after this many visits the zone is closed. Not used with Body through.")]
     public int MaxTouches { get; set; } = 2;
 
     // How far price has to come into the zone before it counts as one visit. The ONLY thing that
     // differs between the three zone kinds - everything else about counting, weakening and closing
     // is one implementation in ZoneInvalidation. See CryptoZoneTouchLevel.
-    [SettingCaption("Touch level", Group = GroupZoneStrength)]
+    [SettingCaption("Touch level", Group = GroupZoneStrength,
+        Tooltip = "For Touches: how far price has to come in before a visit counts.")]
     public CryptoZoneTouchLevel TouchLevel { get; set; } = CryptoZoneTouchLevel.Edge;
 
     // When true, a zone closes as soon as price has been at or past its middle - regardless of how
@@ -86,8 +100,11 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
     //
     // Note with TouchLevel = Midpoint: every counted visit reaches the midpoint there, so switching
     // this on is the same as setting MaxTouches to 1.
-    [SettingCaption("Close zones past the midpoint", Group = GroupZoneStrength)]
-    public bool CloseZonesPastMidpoint { get; set; } = false;
+    //[SettingCaption("Close zones past the midpoint", Group = GroupZoneStrength)]
+    //public bool CloseZonesPastMidpoint { get; set; } = false;
+    // CloseZonesPastMidpoint was removed on 10-11-2026: "past the middle" is now one of the choices
+    // of CloseRule, as a body close counted per visit. A settings file that still carries the key is
+    // read without it; a queue entry may only leave it at false.
 
     // --- Filter ---
 

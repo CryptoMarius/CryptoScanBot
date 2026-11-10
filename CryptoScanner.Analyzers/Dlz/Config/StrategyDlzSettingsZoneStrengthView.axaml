@@ -18,11 +18,21 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
+            <!-- What closes a zone besides the break that always does - see CryptoZoneCloseRule (10-11-2026) -->
+            <Grid ColumnDefinitions="Auto,*,140" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Zone closes on:" VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <ComboBox Grid.Column="2" ItemsSource="{Binding CloseRules}"
+                          SelectedItem="{Binding CloseRule, Mode=TwoWay}"
+                          Height="26" FontSize="12" HorizontalAlignment="Stretch"
+                          ToolTip.Tip="BodyThrough: only a candle body closing through the far side closes the zone. BodyPastMidpoint: also after the given number of visits with a body close past the middle. Touches: also after the given number of visits at the touch level."/>
+            </Grid>
+
             <!-- Max touches before zone is considered exhausted (0 = disabled) -->
             <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="Max touches (0=off):" VerticalAlignment="Center"
+                <TextBlock Grid.Column="0" Text="Number of visits (0=off):" VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="2" Text="{Binding MaxTouches, Mode=TwoWay}"
+                <TextBox Grid.Column="2" Text="{Binding MaxTouches, Mode=TwoWay}" IsEnabled="{Binding UsesVisitCount}"
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
@@ -32,17 +42,18 @@
                 <TextBlock Grid.Column="0" Text="Touch level:" VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>
                 <ComboBox Grid.Column="2" ItemsSource="{Binding TouchLevels}"
-                          SelectedItem="{Binding TouchLevel, Mode=TwoWay}"
+                          SelectedItem="{Binding TouchLevel, Mode=TwoWay}" IsEnabled="{Binding UsesTouchLevel}"
                           Height="26" FontSize="12" HorizontalAlignment="Stretch"/>
             </Grid>
 
             <!-- Disqualify zones after they crossed the 50% midpoint (ICT CE) -->
+            <!-- Removed on 10-11-2026: replaced by "Zone closes on" (CryptoZoneCloseRule.BodyPastMidpoint)
             <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto">
                 <TextBlock Grid.Column="0" Text="Close zones past the midpoint:" VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>
                 <CheckBox Grid.Column="2" IsChecked="{Binding CloseZonesPastMidpoint, Mode=TwoWay}"
                           VerticalAlignment="Center"/>
-            </Grid>
+            </Grid> -->
 
         </StackPanel>
     </HeaderedContentControl>

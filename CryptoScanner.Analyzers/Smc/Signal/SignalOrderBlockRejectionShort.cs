@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
@@ -59,7 +59,11 @@ public class SignalOrderBlockRejectionShort : SignalCreateBase
                 // Freshness / strength filters.
                 if (settings.OnlyStrong && zone.Strength != CryptoZoneStrength.Strong)
                     continue;
-                if (zone.TouchCount > settings.MaxTouches)
+                //if (zone.TouchCount > settings.MaxTouches)
+                //    continue;
+                // Only when visits can close the zone at all (10-11-2026); under BodyThrough the count
+                // is information and MaxTouches is not used.
+                if (settings.CloseRule != CryptoZoneCloseRule.BodyThrough && zone.TouchCount > settings.MaxTouches)
                     continue;
 
                 // Confirmation: the current candle must close back BELOW the proximal edge.

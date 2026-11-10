@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -24,8 +24,8 @@ public class ZoneInvalidationTests : TestBase
     private static CryptoInterval Hour => GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h];
 
     private static ZoneInvalidation.ZoneTouchRules Rules(int maxTouches, CryptoZoneTouchLevel level,
-        bool closeAtMidpoint = false)
-        => new(maxTouches, level, closeAtMidpoint);
+        CryptoZoneCloseRule closeRule = CryptoZoneCloseRule.Touches)
+        => new(maxTouches, level, closeRule);
 
     /// <summary>A zone needs a symbol and an exchange, so a session and a database it is.</summary>
     private static CryptoDatabase NewDatabase()
@@ -404,59 +404,101 @@ public class ZoneInvalidationTests : TestBase
     }
 
 
+    // The old "Close zones past the midpoint" switch (any wick at the middle closed the zone) was
+    // replaced on 10-11-2026 by CryptoZoneCloseRule.BodyPastMidpoint: a body close past the middle,
+    // counted per visit. And BodyThrough: visits never close the zone, only the break does.
+
     [TestMethod]
-    public void Halfway_ClosesTheZoneOnTheFirstVisitThatReachesTheMiddle()
+    public void BodyPastMidpoint_AWickPastTheMiddleDoesNotCount()
     {
         using CryptoDatabase database = NewDatabase();
         var zone = Demand(CreateTestSymbol(database));
+        // Low 91 is past the midpoint (92.5), the close 94 is not.
         bool closed = ZoneInvalidation.ApplyToCandle(zone, Candle(1, 96m, 97m, 91m, 94m), Hour,
-            Rules(0, CryptoZoneTouchLevel.Edge, closeAtMidpoint: true));
+            Rules(1, CryptoZoneTouchLevel.Edge, CryptoZoneCloseRule.BodyPastMidpoint));
+
+        Assert.IsFalse(closed);
+        Assert.AreEqual(0, zone.TouchCount);
+        Assert.IsTrue(zone.ReachedMidpoint, "How deep price came is still recorded");
+    }
+
+
+    [TestMethod]
+    public void BodyPastMidpoint_ABodyClosePastTheMiddleClosesAtOne()
+    {
+        using CryptoDatabase database = NewDatabase();
+        var zone = Demand(CreateTestSymbol(database));
+        bool closed = ZoneInvalidation.ApplyToCandle(zone, Candle(1, 96m, 97m, 91m, 92m), Hour,
+            Rules(1, CryptoZoneTouchLevel.Edge, CryptoZoneCloseRule.BodyPastMidpoint));
 
         Assert.IsTrue(closed);
-        Assert.AreEqual(1, zone.TouchCount, "It is still a visit, it is just the last one");
-        Assert.IsNotNull(zone.CloseTime);
-    }
-
-
-    [TestMethod]
-    public void Halfway_AWickThatStopsShortOfTheMiddleLeavesTheZoneAlone()
-    {
-        using CryptoDatabase database = NewDatabase();
-        var zone = Demand(CreateTestSymbol(database));
-        // Low 94 is inside the zone, midpoint is 92.5.
-        ZoneInvalidation.ApplyToCandle(zone, Candle(1, 96m, 97m, 94m, 96m), Hour,
-            Rules(0, CryptoZoneTouchLevel.Edge, closeAtMidpoint: true));
-
-        Assert.IsFalse(zone.ReachedMidpoint);
-        Assert.IsNull(zone.CloseTime);
-    }
-
-
-    [TestMethod]
-    public void Halfway_AlsoFiresOnACandleThatOnlyContinuesAVisit()
-    {
-        using CryptoDatabase database = NewDatabase();
-        var zone = Demand(CreateTestSymbol(database));
-        var rules = Rules(0, CryptoZoneTouchLevel.Edge, closeAtMidpoint: true);
-
-        ZoneInvalidation.ApplyToCandle(zone, Candle(1, 96m, 97m, 94m, 96m), Hour, rules);   // in, not halfway
-        Assert.IsNull(zone.CloseTime);
-
-        ZoneInvalidation.ApplyToCandle(zone, Candle(2, 96m, 96m, 91m, 95m), Hour, rules);   // deeper, same visit
-        Assert.IsNotNull(zone.CloseTime, "How deep price came does not wait for a new visit");
         Assert.AreEqual(1, zone.TouchCount);
     }
 
 
     [TestMethod]
-    public void Halfway_SupplyZoneMirrorsIt()
+    public void BodyPastMidpoint_CountsVisitsNotCandles()
+    {
+        using CryptoDatabase database = NewDatabase();
+        var zone = Demand(CreateTestSymbol(database));
+        var rules = Rules(2, CryptoZoneTouchLevel.Edge, CryptoZoneCloseRule.BodyPastMidpoint);
+
+        // Visit 1: two candles closing past the middle are one visit.
+        ZoneInvalidation.ApplyToCandle(zone, Candle(1, 96m, 97m, 91m, 92m), Hour, rules);
+        ZoneInvalidation.ApplyToCandle(zone, Candle(2, 92m, 93m, 91m, 92m), Hour, rules);
+        Assert.AreEqual(1, zone.TouchCount);
+        Assert.IsNull(zone.CloseTime);
+
+        // Visit 2, after price was away: the second body close past the middle uses it up.
+        bool closed = ZoneInvalidation.ApplyToCandle(zone, Candle(6, 96m, 97m, 91m, 92m), Hour, rules);
+        Assert.IsTrue(closed);
+        Assert.AreEqual(2, zone.TouchCount);
+    }
+
+
+    [TestMethod]
+    public void BodyPastMidpoint_AVisitCountsOnceItsBodyGetsPastTheMiddle()
+    {
+        using CryptoDatabase database = NewDatabase();
+        var zone = Demand(CreateTestSymbol(database));
+        var rules = Rules(1, CryptoZoneTouchLevel.Edge, CryptoZoneCloseRule.BodyPastMidpoint);
+
+        ZoneInvalidation.ApplyToCandle(zone, Candle(1, 96m, 97m, 94m, 95m), Hour, rules);   // in, close above the middle
+        Assert.IsNull(zone.CloseTime);
+
+        bool closed = ZoneInvalidation.ApplyToCandle(zone, Candle(2, 95m, 95m, 91m, 92m), Hour, rules); // same visit
+        Assert.IsTrue(closed);
+        Assert.AreEqual(1, zone.TouchCount);
+    }
+
+
+    [TestMethod]
+    public void BodyPastMidpoint_SupplyZoneMirrorsIt()
     {
         using CryptoDatabase database = NewDatabase();
         var zone = Supply(CreateTestSymbol(database));
-        bool closed = ZoneInvalidation.ApplyToCandle(zone, Candle(1, 88m, 94m, 87m, 89m), Hour,
-            Rules(0, CryptoZoneTouchLevel.Edge, closeAtMidpoint: true));
+        bool closed = ZoneInvalidation.ApplyToCandle(zone, Candle(1, 88m, 94m, 87m, 93m), Hour,
+            Rules(1, CryptoZoneTouchLevel.Edge, CryptoZoneCloseRule.BodyPastMidpoint));
 
         Assert.IsTrue(closed);
-        Assert.IsTrue(zone.ReachedMidpoint);
+    }
+
+
+    [TestMethod]
+    public void BodyThrough_VisitsNeverCloseTheZoneOnlyTheBreakDoes()
+    {
+        using CryptoDatabase database = NewDatabase();
+        var zone = Demand(CreateTestSymbol(database));
+        var rules = Rules(2, CryptoZoneTouchLevel.Edge, CryptoZoneCloseRule.BodyThrough);
+
+        // Three separate visits, each with a wick nearly through and a close past the middle.
+        ZoneInvalidation.ApplyToCandle(zone, Candle(1, 96m, 97m, 91m, 92m), Hour, rules);
+        ZoneInvalidation.ApplyToCandle(zone, Candle(5, 96m, 97m, 91m, 92m), Hour, rules);
+        ZoneInvalidation.ApplyToCandle(zone, Candle(9, 96m, 97m, 89m, 91m), Hour, rules);
+        Assert.IsNull(zone.CloseTime, "A wick below the zone is not a break");
+        Assert.AreEqual(3, zone.TouchCount, "The visits are still counted, as information");
+
+        bool closed = ZoneInvalidation.ApplyToCandle(zone, Candle(13, 96m, 97m, 88m, 89m), Hour, rules);
+        Assert.IsTrue(closed, "A body close below the bottom is");
     }
 }

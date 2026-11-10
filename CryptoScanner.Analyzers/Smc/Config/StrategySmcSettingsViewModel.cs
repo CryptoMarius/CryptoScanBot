@@ -44,8 +44,22 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
     /// <summary>The values the touch level ComboBox offers; see CryptoZoneTouchLevel.</summary>
     public static CryptoZoneTouchLevel[] TouchLevels { get; } = Enum.GetValues<CryptoZoneTouchLevel>();
 
+    //[ObservableProperty]
+    //private bool _closeZonesPastMidpoint = false;
+
+    /// <summary>The values the "zone closes on" ComboBox offers; see CryptoZoneCloseRule.</summary>
+    public static CryptoZoneCloseRule[] CloseRules { get; } = Enum.GetValues<CryptoZoneCloseRule>();
+
     [ObservableProperty]
-    private bool _closeZonesPastMidpoint = false;
+    [NotifyPropertyChangedFor(nameof(UsesVisitCount))]
+    [NotifyPropertyChangedFor(nameof(UsesTouchLevel))]
+    private CryptoZoneCloseRule _closeRule = CryptoZoneCloseRule.Touches;
+
+    /// <summary>The number of visits only matters when visits can close the zone.</summary>
+    public bool UsesVisitCount => CloseRule != CryptoZoneCloseRule.BodyThrough;
+
+    /// <summary>The touch level only decides what a visit is under CryptoZoneCloseRule.Touches.</summary>
+    public bool UsesTouchLevel => CloseRule == CryptoZoneCloseRule.Touches;
 
     [ObservableProperty]
     private CryptoZoneTouchLevel _touchLevel = CryptoZoneTouchLevel.Midpoint;
@@ -69,7 +83,7 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
         RejectionLookback = settings.RejectionLookback;
         MaxTouches = settings.MaxTouches;
         TouchLevel = settings.TouchLevel;
-        CloseZonesPastMidpoint = settings.CloseZonesPastMidpoint;
+        CloseRule = settings.CloseRule;
     }
 
     public void SaveConfig(SettingsSignalStrategySmc settings)
@@ -87,6 +101,6 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
         settings.RejectionLookback = RejectionLookback;
         settings.MaxTouches = MaxTouches;
         settings.TouchLevel = TouchLevel;
-        settings.CloseZonesPastMidpoint = CloseZonesPastMidpoint;
+        settings.CloseRule = CloseRule;
     }
 }
