@@ -42,7 +42,12 @@
     <!-- The dll is a Windows x64 build and the leak is in the Windows code path only (Linux and
          macOS run the message through their own web view APIs). So: win-x64 publishes and builds
          without a runtime identifier; a linux-x64 or osx-arm64 publish keeps the package files. -->
-    <UsePatchedPhotinoNative Condition="Exists('$(PatchedPhotinoNative)') And ('$(RuntimeIdentifier)' == '' Or '$(RuntimeIdentifier)' == 'win-x64')">true</UsePatchedPhotinoNative>
+    <!-- Test since 17-11-2026: back to the package's original dll, to see whether the coreclr
+         access violations of the Photino scanners (first one on 22-09, after the patched dll of
+         03-09; again on 09-11, 13-11 and 17-11) stop. The memory leak above comes back with it.
+         Set this to false (or pass -p:UseOriginalPhotinoNative=false) to use the patched dll again. -->
+    <UseOriginalPhotinoNative Condition="'$(UseOriginalPhotinoNative)' == ''">true</UseOriginalPhotinoNative>
+    <UsePatchedPhotinoNative Condition="'$(UseOriginalPhotinoNative)' != 'true' And Exists('$(PatchedPhotinoNative)') And ('$(RuntimeIdentifier)' == '' Or '$(RuntimeIdentifier)' == 'win-x64')">true</UsePatchedPhotinoNative>
   </PropertyGroup>
   <!-- A build without a runtime identifier keeps the native dll under runtimes\win-x64\native and
        the runtime loads it from there, so that copy is replaced as well when the folder exists. A

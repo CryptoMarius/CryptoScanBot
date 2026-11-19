@@ -11,6 +11,9 @@ rem  What differs from the release build:
 rem  - Everything is compiled with -c Debug, so code behind #if DEBUG (for example the debug-only
 rem    indicators) is included and the JIT does not optimise, which gives exact line numbers and
 rem    readable locals in a debugger or a stack trace.
+rem    Since 13-11-2026 that last part no longer holds: OptimizeDebug in Directory.Build.props lets
+rem    the compiler optimise every command-line Debug build, so the Debug emulator spends far less
+rem    CPU. #if DEBUG code stays in. Add -p:OptimizeDebug=false to a line below for exact line numbers.
 rem  - The emulator follows along: BundleEmulatorIntoPublish passes $(Configuration) on.
 rem  - Output goes to a Debug subfolder of the release output folder and every package name ends in
 rem    "-debug", so a debug zip can never be mistaken for a release zip or be picked up by the

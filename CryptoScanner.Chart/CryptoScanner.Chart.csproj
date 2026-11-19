@@ -11,9 +11,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="11.3.22" />
+		<PackageReference Include="Avalonia" Version="11.3.23" />
 		<!-- The colour pickers of the style dialog behind the gears of the Indicators menu -->
-		<PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.22" />
+		<PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.23" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-avalonia11" />
 	</ItemGroup>

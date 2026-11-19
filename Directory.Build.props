@@ -28,6 +28,26 @@
 
 
   <!--
+    Optimised Debug build (13-11-2026). The Debug emulator is the only one that runs the strategies
+    registered behind #if DEBUG, and a Debug build normally switches the JIT optimiser off, so those
+    emulator runs cost far more CPU than the same run in Release. OptimizeDebug keeps everything
+    that makes a Debug build a Debug build (the DEBUG constant, the debug-only strategies and
+    indicators, the .debug.json queue files) and only lets the compiler optimise.
+
+    On by default for command-line builds, which is how publish-debug.cmd builds the Debug
+    packages (emulator included). Off inside Visual Studio, so stepping through code and reading
+    locals there keeps working. Override either way with -p:OptimizeDebug=true or -p:OptimizeDebug=false.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(OptimizeDebug)' == ''">
+    <OptimizeDebug Condition="'$(BuildingInsideVisualStudio)' == 'true'">false</OptimizeDebug>
+    <OptimizeDebug Condition="'$(BuildingInsideVisualStudio)' != 'true'">true</OptimizeDebug>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(OptimizeDebug)' == 'true'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+
+  <!--
     Stamps the build with the commit it was made from. A version number alone does not identify a
     build: 2.6.2 covers weeks of commits, so a report about an overnight run cannot say which code
     produced it. The commit can.
