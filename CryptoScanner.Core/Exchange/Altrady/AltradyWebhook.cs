@@ -841,29 +841,31 @@ public class AltradyWebhook
             // reads it the other way round: tested on Binance Futures Paper, a long entry is cancelled as
             // soon as the price is at or below the limit. A limit on the first TP lies above the price, so
             // Altrady cancelled the resting entry within seconds (open point 140 d, 28-30 Oct 2026).
+            // 20-11-2026: Altrady fixed the direction of the price limit, so the first take profit is sent
+            // again as the price condition next to the time.
             // Use the first TP percentage to calculate the expiry price (ProfitPrice is not yet available at open time)
-            //decimal? expiryPrice = null;
-            //var expiryTpList = Trader.TradeTools.EffectiveTpList(position);
-            //if (position.EntryPrice.HasValue && expiryTpList.Count > 0)
-            //{
-            //    decimal tpPercentage = expiryTpList[0].Percentage;
-            //    //if (position.Side == Enums.CryptoTradeSide.Long)
-            //    //    expiryPrice = position.EntryPrice.Value * (1 + tpPercentage / 100m);
-            //    //else
-            //    //    expiryPrice = position.EntryPrice.Value * (1 - tpPercentage / 100m);
-            //    // The first take profit as Altrady places it (24-10-2026): a short's level is divided
-            //    expiryPrice = Trader.PricePlacement.TakeProfit(position.Side, position.EntryPrice.Value, tpPercentage);
-            //
-            //    // Put it on the tick grid the same way every other price we calculate is put there,
-            //    // so the level in Altrady is the level in our own administration. Measured 25-09-2026:
-            //    // without this the webhook sent 0.585015 for a symbol with a tick of 0.0001 and
-            //    // 133.07425 for one with a tick of 0.01. Altrady never places this as an order - it
-            //    // compares it to the price itself - so this changes the number, not the behaviour.
-            //    expiryPrice = expiryPrice.Value.ClampPrice(position.Side, position.Symbol.PriceMinimum,
-            //        position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-            //}
+            decimal? expiryPrice = null;
+            var expiryTpList = Trader.TradeTools.EffectiveTpList(position);
+            if (position.EntryPrice.HasValue && expiryTpList.Count > 0)
+            {
+                decimal tpPercentage = expiryTpList[0].Percentage;
+                //if (position.Side == Enums.CryptoTradeSide.Long)
+                //    expiryPrice = position.EntryPrice.Value * (1 + tpPercentage / 100m);
+                //else
+                //    expiryPrice = position.EntryPrice.Value * (1 - tpPercentage / 100m);
+                // The first take profit as Altrady places it (24-10-2026): a short's level is divided
+                expiryPrice = Trader.PricePlacement.TakeProfit(position.Side, position.EntryPrice.Value, tpPercentage);
 
-            if (GlobalData.Settings.Trading.EntryRemoveTime > 0)
+                // Put it on the tick grid the same way every other price we calculate is put there,
+                // so the level in Altrady is the level in our own administration. Measured 25-09-2026:
+                // without this the webhook sent 0.585015 for a symbol with a tick of 0.0001 and
+                // 133.07425 for one with a tick of 0.01. Altrady never places this as an order - it
+                // compares it to the price itself - so this changes the number, not the behaviour.
+                expiryPrice = expiryPrice.Value.ClampPrice(position.Side, position.Symbol.PriceMinimum,
+                    position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+            }
+
+            if (GlobalData.Settings.Trading.EntryRemoveTime > 0 || expiryPrice.HasValue)
             {
                 dynamic entry_expiration = new JObject();
                 request.entry_expiration = entry_expiration;
@@ -871,8 +873,8 @@ public class AltradyWebhook
                 if (GlobalData.Settings.Trading.EntryRemoveTime > 0)
                     entry_expiration.time = GlobalData.Settings.Trading.EntryRemoveTime * (int)position.Interval!.Duration;
 
-                //if (expiryPrice.HasValue)
-                //    entry_expiration.price = expiryPrice.Value;
+                if (expiryPrice.HasValue)
+                    entry_expiration.price = expiryPrice.Value;
             }
 
 

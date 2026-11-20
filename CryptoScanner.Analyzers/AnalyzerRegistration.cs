@@ -90,6 +90,12 @@ public static class AnalyzerRegistration
 
         // Very disapointing, expected more of this strategy
         PluginManager.Register(new Trend.TrendPlugin());
+
+        // The Heikin Ashi trend: in on the colour change of the Heikin Ashi candle with the higher
+        // interval (1w) on the same colour, out on the first candle of the other colour or with a
+        // wick on the other side. Measured offline on 1d (09-11-2026), not in the emulator yet.
+        // Moved to the #if DEBUG block on 20-11-2026.
+        PluginManager.Register(new HeikinAshi.HeikinAshiPlugin());
 #endif
 
         // A trending breakout: a cloud of four moving averages for the trend, with three entries
@@ -104,6 +110,7 @@ public static class AnalyzerRegistration
         // The Heikin Ashi trend: in on the colour change of the Heikin Ashi candle with the higher
         // interval (1w) on the same colour, out on the first candle of the other colour or with a
         // wick on the other side. Measured offline on 1d (09-11-2026), not in the emulator yet.
-        PluginManager.Register(new HeikinAshi.HeikinAshiPlugin());
+        // Moved to the #if DEBUG block on 20-11-2026.
+        //PluginManager.Register(new HeikinAshi.HeikinAshiPlugin());
     }
 }

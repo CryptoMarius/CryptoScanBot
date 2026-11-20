@@ -184,15 +184,16 @@ public static class AltradyTradeSetup
         // 11-11-2026: only the time, the same as the webhook. Altrady reads the price limit of a long
         // as "cancel when the price is at or below it", so a limit on the first take profit (above
         // the price) cancelled the entry within seconds (open point 140 d).
+        // 20-11-2026: Altrady fixed the direction of the price limit, the first take profit goes along again.
         JsonObject expiration = [];
         if (trading.EntryRemoveTime > 0)
         {
             DateTime expiresAt = utcNow.AddMinutes(trading.EntryRemoveTime * (int)signal.Interval.Duration);
             expiration["expiresAt"] = new DateTimeOffset(DateTime.SpecifyKind(expiresAt, DateTimeKind.Utc)).ToUnixTimeSeconds();
         }
-        //if (tpList.Count > 0)
-        //    //expiration["price"] = ClampPrice(symbol, side, PricePlacement.Favorable(side, entryPrice, tpList[0].Percentage));
-        //    expiration["price"] = ClampPrice(symbol, side, PricePlacement.TakeProfit(side, entryPrice, tpList[0].Percentage));
+        if (tpList.Count > 0)
+            //expiration["price"] = ClampPrice(symbol, side, PricePlacement.Favorable(side, entryPrice, tpList[0].Percentage));
+            expiration["price"] = ClampPrice(symbol, side, PricePlacement.TakeProfit(side, entryPrice, tpList[0].Percentage));
         if (expiration.Count > 0)
             setup["entryExpiration"] = expiration;
 
