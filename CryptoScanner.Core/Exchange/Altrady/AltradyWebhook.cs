@@ -351,6 +351,211 @@ public class AltradyWebhook
 
 
     /// <summary>
+    /// The body of the connection test: an open signal for bitcoin with Altrady's own test flag. With
+    /// `test` on, Altrady checks and processes the signal without placing an order ("Webhook Signals:
+    /// Testing and Errors" on help.altrady.com). No amount, price, take profit or stop: the test is
+    /// about the keys, the bot, the exchange and the market, and the bot settings fill in the rest.
+    /// </summary>
+    internal static JObject BuildTestPayload(string webhookSymbol, string exchangeCode, string apiKey, string apiSecret)
+    {
+        dynamic request = new JObject();
+        request.test = true;
+        request.action = "open";
+        request.side = "long";
+        request.api_key = apiKey;
+        request.api_secret = apiSecret;
+        request.exchange = exchangeCode;
+        request.symbol = webhookSymbol;
+        request.order_type = "market";
+        return request;
+    }
+
+
+    /// <summary>
+    /// The body that closes the position the connection test left behind. Despite the test flag
+    /// Altrady does create a signal bot position for the test signal, with a market entry that stays
+    /// pending and is never cleaned up (seen 13-11-2026: HYPERLIQUIDF_USDC_BTC, quantity 0, still
+    /// "open" five days later). The signal id addresses exactly that one position, so a real position
+    /// on the same market is not touched.
+    /// </summary>
+    internal static JObject BuildTestClosePayload(string webhookSymbol, string exchangeCode, string apiKey, string apiSecret, string signalId)
+    {
+        dynamic request = new JObject();
+        request.action = "close";
+        request.api_key = apiKey;
+        request.api_secret = apiSecret;
+        request.exchange = exchangeCode;
+        request.symbol = webhookSymbol;
+        request.side = "long";
+        request.order_type = "market";
+        request.signal_id = signalId;
+        return request;
+    }
+
+
+    /// <summary>
+    /// The signal id Altrady generated for the test signal (signalBotPositions.signalData.signalId),
+    /// or "" when the answer has none (a refusal, or not json).
+    /// </summary>
+    internal static string TestSignalIdOf(string body)
+    {
+        try
+        {
+            if (!body.TrimStart().StartsWith('{'))
+                return "";
+            JToken? token = JObject.Parse(body).SelectToken("signalBotPositions.signalData.signalId");
+            if (token == null || token.Type != JTokenType.String)
+                return "";
+            return token.ToString();
+        }
+        catch (Newtonsoft.Json.JsonException)
+        {
+            return "";
+        }
+    }
+
+
+    /// <summary>
+    /// Turn the answer on the test signal into one line for the screen. A 2xx without an error member
+    /// is a pass; otherwise the error text of Altrady ("Signal bot not found", "Invalid secret",
+    /// "Signal bot stopped", "Market not found ...") or, when there is none, the raw answer.
+    /// </summary>
+    internal static (bool ok, string message) InterpretTestAnswer(int statusCode, string body)
+    {
+        string error = "";
+        bool markedAsTest = false;
+        try
+        {
+            if (body.TrimStart().StartsWith('{'))
+            {
+                JObject answer = JObject.Parse(body);
+                JToken? token = answer["error"] ?? answer["errors"];
+                if (token != null && token.Type != JTokenType.Null)
+                    error = token.Type == JTokenType.String ? token.ToString() : token.ToString(Newtonsoft.Json.Formatting.None);
+                markedAsTest = answer.SelectToken("signalBotPositions.signalData.markAsTest")?.Type == JTokenType.Boolean
+                    && answer.SelectToken("signalBotPositions.signalData.markAsTest")!.Value<bool>();
+            }
+        }
+        catch (Newtonsoft.Json.JsonException)
+        {
+            // Not json, the raw text is shown below
+        }
+
+        if (statusCode >= 200 && statusCode <= 299 && error == "")
+            return (true, markedAsTest ? $"OK, marked as test (status {statusCode})" : $"OK (status {statusCode})");
+
+        if (error == "")
+            error = body.Length > 300 ? body[..300] + "..." : body;
+        if (error == "")
+            error = "no answer";
+        return (false, $"{error} (status {statusCode})");
+    }
+
+
+    /// <summary>
+    /// Check the connection and the credentials with a test signal to Altrady, on the bitcoin pair of
+    /// the exchange the scanner is set to. The key and secret are passed in so the values in the edit
+    /// fields can be tested before they are saved. Returns a pass/fail and one line for the screen; the
+    /// request (credentials masked) and the answer also go to the log tab.
+    /// </summary>
+    public static async Task<(bool ok, string message)> TestConnectionAsync(string apiKey, string apiSecret, string url = "")
+    {
+        apiKey = apiKey.Trim();
+        apiSecret = apiSecret.Trim();
+        if (apiKey == "" || apiSecret == "")
+            return (false, "API key and secret are required");
+
+        Model.CryptoExchange? exchange = GlobalData.ActiveExchange;
+        if (exchange == null)
+            return (false, "No active exchange");
+
+        if (!GlobalData.ExternalUrls.GetExternalRef(exchange, out CryptoExternalUrls? externalUrls)
+            || externalUrls?.Altrady == null || string.IsNullOrEmpty(externalUrls.Altrady.Code))
+            return (false, $"{exchange.Name} has no Altrady exchange code");
+        string exchangeCode = externalUrls.Altrady.Code!;
+
+        string pauseSymbol = ExchangeBase.ExchangeOptions.PauseSymbol;
+        if (pauseSymbol == "" || !exchange.TryGetSymbolByPair(pauseSymbol, out CryptoSymbol? btc))
+            return (false, $"Bitcoin pair {pauseSymbol} is not in the symbol list of {exchange.Name}");
+
+        string? webhookSymbol = WebhookSymbolOf(btc, exchangeCode);
+        if (webhookSymbol == null)
+            return (false, $"{btc.Name} cannot be expressed in the Altrady webhook symbol format");
+
+        if (url == "")
+            url = "https://api.altrady.com/v2/signal_bot_positions";
+
+        JObject request = BuildTestPayload(webhookSymbol, exchangeCode, apiKey, apiSecret);
+        string jsonFlat = request.ToString(Newtonsoft.Json.Formatting.None);
+        // The key and secret under test may differ from the saved ones that MaskSecrets knows
+        string jsonFlatMasked = MaskSecrets(jsonFlat.Replace(apiKey, new string('*', 8)).Replace(apiSecret, new string('*', 8)));
+        GlobalData.AddTextToLogTab($"Altrady connection test request {jsonFlatMasked}");
+
+        try
+        {
+            var content = new StringContent(request.ToString(), Encoding.UTF8, "application/json");
+            HttpResponseMessage response = await _httpClient.PostAsync(url, content);
+            int statusCode = (int)response.StatusCode;
+            string body = await response.Content.ReadAsStringAsync();
+            GlobalData.AddTextToLogTab($"Altrady connection test result status={statusCode} {body}");
+
+            (bool ok, string message) = InterpretTestAnswer(statusCode, body);
+            message = $"{webhookSymbol}: {message}";
+            if (!ok)
+                GlobalData.AddErrorToLogTab($"Altrady connection test failed {message}");
+            else
+            {
+                // Remove the position Altrady created for the test signal, otherwise it stays open there
+                string signalId = TestSignalIdOf(body);
+                if (signalId != "")
+                    await CloseTestPositionAsync(url, webhookSymbol, exchangeCode, apiKey, apiSecret, signalId);
+            }
+            return (ok, message);
+        }
+        catch (TaskCanceledException error)
+        {
+            GlobalData.AddErrorToLogTab($"Altrady connection test timeout: {error.Message}");
+            return (false, $"Timeout: {error.Message}");
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error);
+            GlobalData.AddErrorToLogTab($"Altrady connection test error: {error.Message}");
+            return (false, $"Error: {error.Message}");
+        }
+    }
+
+
+    /// <summary>
+    /// Send the close for the test position. A failure here does not change the outcome of the
+    /// connection test (the keys and the bot already proved to work); it only goes to the log tab so
+    /// the leftover position can be cancelled by hand in Altrady.
+    /// </summary>
+    private static async Task CloseTestPositionAsync(string url, string webhookSymbol, string exchangeCode, string apiKey, string apiSecret, string signalId)
+    {
+        JObject request = BuildTestClosePayload(webhookSymbol, exchangeCode, apiKey, apiSecret, signalId);
+        string jsonFlat = request.ToString(Newtonsoft.Json.Formatting.None);
+        string jsonFlatMasked = MaskSecrets(jsonFlat.Replace(apiKey, new string('*', 8)).Replace(apiSecret, new string('*', 8)));
+        GlobalData.AddTextToLogTab($"Altrady connection test close request {jsonFlatMasked}");
+        try
+        {
+            var content = new StringContent(request.ToString(), Encoding.UTF8, "application/json");
+            HttpResponseMessage response = await _httpClient.PostAsync(url, content);
+            int statusCode = (int)response.StatusCode;
+            string body = await response.Content.ReadAsStringAsync();
+            GlobalData.AddTextToLogTab($"Altrady connection test close result status={statusCode} {body}");
+            if (!IsCloseAccepted(statusCode, body))
+                GlobalData.AddErrorToLogTab($"Altrady connection test: the test position {signalId} ({webhookSymbol}) was not closed, cancel it in Altrady: status={statusCode} {body}");
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error);
+            GlobalData.AddErrorToLogTab($"Altrady connection test: closing the test position {signalId} ({webhookSymbol}) failed, cancel it in Altrady: {error.Message}");
+        }
+    }
+
+
+    /// <summary>
     /// The body of a close signal, kept apart from the sending so it can be verified in a test.
     /// A price is deliberately absent: with `order_type` market Altrady refuses the combination.
     /// </summary>
@@ -631,29 +836,34 @@ public class AltradyWebhook
 
 
             // Entry expiration: cancel unfilled entry when time OR price condition is met (whichever comes first)
+            // Only the time is sent (11-11-2026), the same rule the scanner itself uses for an unfilled entry
+            // (PositionMonitor: EntryRemoveTime, never a price). The price limit was removed because Altrady
+            // reads it the other way round: tested on Binance Futures Paper, a long entry is cancelled as
+            // soon as the price is at or below the limit. A limit on the first TP lies above the price, so
+            // Altrady cancelled the resting entry within seconds (open point 140 d, 28-30 Oct 2026).
             // Use the first TP percentage to calculate the expiry price (ProfitPrice is not yet available at open time)
-            decimal? expiryPrice = null;
-            var expiryTpList = Trader.TradeTools.EffectiveTpList(position);
-            if (position.EntryPrice.HasValue && expiryTpList.Count > 0)
-            {
-                decimal tpPercentage = expiryTpList[0].Percentage;
-                //if (position.Side == Enums.CryptoTradeSide.Long)
-                //    expiryPrice = position.EntryPrice.Value * (1 + tpPercentage / 100m);
-                //else
-                //    expiryPrice = position.EntryPrice.Value * (1 - tpPercentage / 100m);
-                // The first take profit as Altrady places it (24-10-2026): a short's level is divided
-                expiryPrice = Trader.PricePlacement.TakeProfit(position.Side, position.EntryPrice.Value, tpPercentage);
+            //decimal? expiryPrice = null;
+            //var expiryTpList = Trader.TradeTools.EffectiveTpList(position);
+            //if (position.EntryPrice.HasValue && expiryTpList.Count > 0)
+            //{
+            //    decimal tpPercentage = expiryTpList[0].Percentage;
+            //    //if (position.Side == Enums.CryptoTradeSide.Long)
+            //    //    expiryPrice = position.EntryPrice.Value * (1 + tpPercentage / 100m);
+            //    //else
+            //    //    expiryPrice = position.EntryPrice.Value * (1 - tpPercentage / 100m);
+            //    // The first take profit as Altrady places it (24-10-2026): a short's level is divided
+            //    expiryPrice = Trader.PricePlacement.TakeProfit(position.Side, position.EntryPrice.Value, tpPercentage);
+            //
+            //    // Put it on the tick grid the same way every other price we calculate is put there,
+            //    // so the level in Altrady is the level in our own administration. Measured 25-09-2026:
+            //    // without this the webhook sent 0.585015 for a symbol with a tick of 0.0001 and
+            //    // 133.07425 for one with a tick of 0.01. Altrady never places this as an order - it
+            //    // compares it to the price itself - so this changes the number, not the behaviour.
+            //    expiryPrice = expiryPrice.Value.ClampPrice(position.Side, position.Symbol.PriceMinimum,
+            //        position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+            //}
 
-                // Put it on the tick grid the same way every other price we calculate is put there,
-                // so the level in Altrady is the level in our own administration. Measured 25-09-2026:
-                // without this the webhook sent 0.585015 for a symbol with a tick of 0.0001 and
-                // 133.07425 for one with a tick of 0.01. Altrady never places this as an order - it
-                // compares it to the price itself - so this changes the number, not the behaviour.
-                expiryPrice = expiryPrice.Value.ClampPrice(position.Side, position.Symbol.PriceMinimum,
-                    position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-            }
-
-            if (GlobalData.Settings.Trading.EntryRemoveTime > 0 || expiryPrice.HasValue)
+            if (GlobalData.Settings.Trading.EntryRemoveTime > 0)
             {
                 dynamic entry_expiration = new JObject();
                 request.entry_expiration = entry_expiration;
@@ -661,8 +871,8 @@ public class AltradyWebhook
                 if (GlobalData.Settings.Trading.EntryRemoveTime > 0)
                     entry_expiration.time = GlobalData.Settings.Trading.EntryRemoveTime * (int)position.Interval!.Duration;
 
-                if (expiryPrice.HasValue)
-                    entry_expiration.price = expiryPrice.Value;
+                //if (expiryPrice.HasValue)
+                //    entry_expiration.price = expiryPrice.Value;
             }
 
 

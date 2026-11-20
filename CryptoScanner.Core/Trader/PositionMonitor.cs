@@ -3225,7 +3225,9 @@ public class PositionMonitor : IDisposable
             if (!position.CloseTime.HasValue)
             {
                 // Statistics for the grid: the lowest and highest price since the signal
-                SignalStatistics.UpdatePosition(position, LastCandle1m.Low, LastCandle1m.High);
+                // Moved on 18-11-2026 to UpdatePositionStatistics: this method only runs on a candle
+                // that can move the position, and not at all once the take profit filled
+                //SignalStatistics.UpdatePosition(position, LastCandle1m.Low, LastCandle1m.High);
 
                 // Process any signal-based DCA that the candle thread queued up
                 ProcessPendingDcaSignal(position);
@@ -3328,12 +3330,43 @@ public class PositionMonitor : IDisposable
         if (!PositionTools.HasAnyPosition(exchange, Symbol))
             return;
 
+        // The price statistics of this minute, around the fills (see UpdatePositionStatistics)
+        List<CryptoPosition> notFilledYet = UpdatePositionStatistics(PositionTools.PositionsOf(exchange, Symbol), LastCandle1m);
+
         if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
             await PaperTrading.PaperTradingCheckOrders(Database, exchange, Symbol, LastCandle1m, BaseIntervalDuration);
+
+        UpdatePositionStatistics(notFilledYet, LastCandle1m);
 
         // Re-lookup: the fill cascade may have closed or replaced the position.
         foreach (CryptoPosition position in PositionTools.PositionsOf(exchange, Symbol))
             await GlobalData.ThreadCheckPosition!.AddToQueue(position);
+    }
+
+
+    /// <summary>
+    /// The lowest and highest price of a position since its entry filled (PriceMin/PriceMax and
+    /// their percentages of the signal price), fed with one candle. Called twice per candle, around
+    /// the fills: first for every position, before the orders fill, so the candle that fills the
+    /// take profit and closes the position still counts; then again with the positions that had
+    /// not filled anything before, so the candle that fills the entry counts too. A position whose
+    /// entry has not filled is skipped by SignalStatistics.UpdatePosition itself.
+    ///
+    /// Before 18-11-2026 this ran inside CheckThePosition, only on candles that reached a trigger
+    /// price and never on the take-profit candle, so a position closed at +1% could show a
+    /// maximum of 0%. Returns the positions that had not filled their entry yet.
+    /// </summary>
+    internal static List<CryptoPosition> UpdatePositionStatistics(IEnumerable<CryptoPosition> positions, CryptoCandle candle)
+    {
+        List<CryptoPosition> notFilledYet = [];
+        foreach (CryptoPosition position in positions)
+        {
+            if (position.Invested > 0)
+                SignalStatistics.UpdatePosition(position, candle.Low, candle.High);
+            else
+                notFilledYet.Add(position);
+        }
+        return notFilledYet;
     }
 
 
@@ -3514,6 +3547,11 @@ public class PositionMonitor : IDisposable
             // position on it can (with a single position: exactly when that one can)
             canSkipPositionProcessing = positions.Count > 0 && skippablePositions.Count == positions.Count;
 
+            // The price statistics of every position on every candle, quiet ones included, and
+            // before the fills so the candle that fills the take profit counts. When the replay
+            // already handled this base candle per minute, ProcessOrdersAsync did it per minute.
+            List<CryptoPosition> notFilledYet = OrdersAlreadyProcessed ? [] : UpdatePositionStatistics(positions, LastCandle1m);
+
             // Orders first, signals after. An order this candle fills changes the position (Waiting
             // becomes Trading), and that is what decides whether the signal work is needed at all -
             // so it has to have happened before we ask. No second lookup needed: the fill mutates
@@ -3525,6 +3563,9 @@ public class PositionMonitor : IDisposable
                 if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading && !OrdersAlreadyProcessed)
                     await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m, BaseIntervalDuration);
             }
+
+            // An entry this candle filled: the fill candle counts as well
+            UpdatePositionStatistics(notFilledYet, LastCandle1m);
 
             // A standing entry that is still waiting after the fills of this candle: does the strategy
             // still want it on the book? After the fills on purpose - an entry that filled on this

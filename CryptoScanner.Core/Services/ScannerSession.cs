@@ -143,12 +143,6 @@ public class ScannerSession : IScannerSession
             }
 
             GlobalData.Settings.General.ExchangeName = found;
-
-            // LoadConfiguration filled the exchange the trading app opens on with the default exchange.
-            // On a new installation nobody chose that one, so it follows the -e as well. An existing
-            // installation keeps its own choice.
-            if (newInstallation)
-                GlobalData.Settings.General.ActivateExchangeName = found;
         }
     }
 
@@ -160,10 +154,7 @@ public class ScannerSession : IScannerSession
             throw new ArgumentException($"Exchange \"{exchangeName}\" does not exist. Known exchanges: {known}");
         }
 
-        // The scanned exchange and the exchange the trading app opens on, the same pair the
-        // configuration screen keeps together (ExchangeViewModel.OnActiveExchangeChanged)
         GlobalData.Settings.General.ExchangeName = exchange.Name;
-        GlobalData.Settings.General.ActivateExchangeName = exchange.Name;
         GlobalData.ExchangeChoicePending = false;
         GlobalData.AddTextToLogTab($"New installation, exchange {exchange.Name} chosen");
 

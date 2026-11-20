@@ -22,7 +22,7 @@ public class CommandLaunchTradingAppHidden : CommandBase
             {
                 // Was a silent nothing, the same blind spot ExternalLinkHelper.ActivateTradingApp had
                 GlobalData.AddErrorToLogTab($"Linktools: no URL configured for tradingApp={GlobalData.Settings.General.TradingApp} " +
-                    $"exchange={GlobalData.Settings.General.ActivateExchangeName} symbol={dto.symbol.Name}");
+                    $"exchange={dto.symbol.Exchange?.Name} symbol={dto.symbol.Name}");
             }
             if (Url != "")
             {

@@ -1,4 +1,4 @@
-namespace CryptoScanner.Core.Settings.Strategy;
+﻿namespace CryptoScanner.Core.Settings.Strategy;
 
 /// <summary>
 /// The caption a plugin setting carries on screen, plus the explanation behind it.
@@ -83,6 +83,14 @@ public sealed class SettingCaptionAttribute(string caption) : Attribute
     /// screen but greys out, mirroring an IsEnabled binding in the Avalonia view.
     /// </summary>
     public string? EnabledWhen { get; init; }
+
+    /// <summary>
+    /// With <see cref="EnabledWhen"/> naming an ENUM property instead of a bool: the member names
+    /// for which this setting is editable. Any other value greys it out. Mirrors an IsEnabled binding
+    /// on a ComboBox choice in the Avalonia view (the zone close rule: the number of visits only
+    /// matters when visits can close the zone). Use nameof() on the enum members.
+    /// </summary>
+    public string[]? EnabledWhenValues { get; init; }
 
     /// <summary>
     /// Not shown at all, for a setting the Avalonia view leaves out. The value keeps loading and

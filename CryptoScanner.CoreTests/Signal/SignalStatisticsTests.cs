@@ -3,6 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Trader;
 
 using Exchange = CryptoScanner.Core.Model.CryptoExchange;
 
@@ -270,6 +271,7 @@ public class SignalStatisticsTests : TestBase
             SignalPrice = 100m,
             PriceMin = 100m,
             PriceMax = 100m,
+            Invested = 100m,
         };
 
         Assert.IsTrue(SignalStatistics.UpdatePosition(position, low: 99m, high: 101m));
@@ -284,6 +286,84 @@ public class SignalStatisticsTests : TestBase
         // An empty candle (no trades) is ignored
         Assert.IsFalse(SignalStatistics.UpdatePosition(position, low: 0m, high: 0m));
         Assert.AreEqual(99m, position.PriceMin);
+    }
+
+    private static CryptoPosition MakePosition(decimal invested)
+    {
+        var symbol = MakeSymbol();
+        return new CryptoPosition
+        {
+            Exchange = symbol.Exchange,
+            ExchangeId = symbol.ExchangeId,
+            Symbol = symbol,
+            SymbolId = symbol.Id,
+            Interval = MakeInterval(),
+            Side = CryptoTradeSide.Long,
+            SignalPrice = 100m,
+            // Not measured yet, as PositionTools.AddSignalProperties leaves it since 18-11-2026
+            PriceMin = 0m,
+            PriceMax = 0m,
+            Invested = invested,
+        };
+    }
+
+    private static CryptoCandle MakeCandle(decimal low, decimal high)
+    {
+        return new CryptoCandle { TickDecimals = 2, Open = low, High = high, Low = low, Close = high, Volume = 1 };
+    }
+
+    [TestMethod]
+    public void Position_IsNotMeasured_BeforeTheEntryFilled()
+    {
+        CryptoPosition position = MakePosition(invested: 0m);
+
+        // The move between the signal and the fill is not something the position sat through
+        Assert.IsFalse(SignalStatistics.UpdatePosition(position, low: 95m, high: 105m));
+        Assert.AreEqual(0m, position.PriceMin);
+        Assert.AreEqual(0m, position.PriceMax);
+        Assert.AreEqual(0f, position.PriceMinPerc);
+        Assert.AreEqual(0f, position.PriceMaxPerc);
+    }
+
+    [TestMethod]
+    public void Position_FirstCandleAfterTheFill_SetsBothExtremes()
+    {
+        CryptoPosition position = MakePosition(invested: 100m);
+
+        // Both above the signal price: the minimum is that candle's low, not the signal price
+        Assert.IsTrue(SignalStatistics.UpdatePosition(position, low: 100.5m, high: 101m));
+        Assert.AreEqual(100.5m, position.PriceMin);
+        Assert.AreEqual(101m, position.PriceMax);
+        Assert.AreEqual(0.5f, position.PriceMinPerc, 0.001f);
+        Assert.AreEqual(1f, position.PriceMaxPerc, 0.001f);
+    }
+
+    [TestMethod]
+    public void Statistics_AroundTheFills_CountTheEntryCandleAndTheTakeProfitCandle()
+    {
+        CryptoPosition position = MakePosition(invested: 0m);
+
+        // Candle 1: the entry fills on it. Before the fills nothing is measured and the position
+        // comes back as not filled; after the fill the same candle counts.
+        CryptoCandle entryCandle = MakeCandle(low: 99.8m, high: 100.2m);
+        List<CryptoPosition> notFilledYet = PositionMonitor.UpdatePositionStatistics([position], entryCandle);
+        Assert.AreEqual(1, notFilledYet.Count);
+        Assert.AreEqual(0m, position.PriceMax);
+        position.Invested = 100m; // the fill
+        PositionMonitor.UpdatePositionStatistics(notFilledYet, entryCandle);
+        Assert.AreEqual(99.8m, position.PriceMin);
+        Assert.AreEqual(100.2m, position.PriceMax);
+
+        // Candle 2: a quiet candle against the position, it counts although no trigger is touched
+        Assert.AreEqual(0, PositionMonitor.UpdatePositionStatistics([position], MakeCandle(low: 99.5m, high: 100m)).Count);
+        Assert.AreEqual(99.5m, position.PriceMin);
+
+        // Candle 3: the take profit at +1% fills on it. Measured before the fill closes the position,
+        // so the maximum shows the move to the take profit.
+        PositionMonitor.UpdatePositionStatistics([position], MakeCandle(low: 100m, high: 101.1m));
+        Assert.AreEqual(101.1m, position.PriceMax);
+        Assert.AreEqual(1.1f, position.PriceMaxPerc, 0.001f);
+        Assert.AreEqual(-0.5f, position.PriceMinPerc, 0.001f);
     }
 
     [TestMethod]

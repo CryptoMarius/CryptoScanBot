@@ -19,7 +19,6 @@ public class RunSettingsApplierTests
     {
         SettingsBasic settings = new();
         settings.General.ExchangeName = "Binance Perpetual";
-        settings.General.ActivateExchangeName = "Binance Perpetual";
         settings.Trading.StopLossPercentage = 4m;
         settings.Trading.MaxPositionDurationDays = 21m;
         settings.Trading.DcaList =
@@ -99,10 +98,8 @@ public class RunSettingsApplierTests
         SettingsBasic result = Merge(s =>
         {
             s["General"]!["ExchangeName"] = "Bybit Perpetual";
-            s["General"]!["ActivateExchangeName"] = "Bybit Perpetual";
         });
         Assert.AreEqual("Binance Perpetual", result.General.ExchangeName);
-        Assert.AreEqual("Binance Perpetual", result.General.ActivateExchangeName);
     }
 
     /// <summary>

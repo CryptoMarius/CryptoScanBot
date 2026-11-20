@@ -91,6 +91,34 @@ public static class ZoneInvalidation
 
 
     /// <summary>
+    /// How strongly a zone is drawn in the charts, 1.0 = its full colour. Since 11-11-2026 a zone fades
+    /// with every visit, but ONLY under <see cref="CryptoZoneCloseRule.Touches"/> with MaxTouches above
+    /// 0: that is the one choice where every visit weakens the zone. A fresh zone keeps its colour, a
+    /// zone at MaxTouches visits (used up, so closed) is at <see cref="MinimumFade"/>; in between it
+    /// fades in equal steps. Under the other choices a visit does not weaken anything, so nothing fades.
+    /// <para>
+    /// The whole block takes the current count, also the part before the visits: the visit times are
+    /// not kept, only how many there were.
+    /// </para>
+    /// </summary>
+    public static double FadeFactor(CryptoZone zone)
+    {
+        ZoneTouchRules rules = RulesFor(zone.Kind);
+        if (rules.CloseRule != CryptoZoneCloseRule.Touches || rules.MaxTouches <= 0)
+            return 1.0;
+
+        double used = Math.Min(zone.TouchCount, rules.MaxTouches) / (double)rules.MaxTouches;
+        return 1.0 - (1.0 - MinimumFade) * used;
+    }
+
+    /// <summary>
+    /// The faintest a zone gets from <see cref="FadeFactor"/>. Not lower: a zone that disappears is
+    /// what the too dark colours did on 10-11-2026, and a used-up zone is still worth seeing.
+    /// </summary>
+    public const double MinimumFade = 0.3;
+
+
+    /// <summary>
     /// Apply one candle to one zone. Returns true when the zone is closed afterwards - either
     /// because this candle closed it, or because it was already closed on entry.
     /// </summary>

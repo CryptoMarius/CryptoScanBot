@@ -1,5 +1,6 @@
 @using CryptoScanner.Core.Core
 @using CryptoScanner.Core.Enums
+@using CryptoScanner.Core.Exchange.Altrady
 @using CryptoScanner.Core.Settings
 @using CryptoScanner.Core.Telegram
 
@@ -79,6 +80,14 @@
                     <span class="key-hint">@Hint(_altradySecret)</span>
                 </span>
             </div>
+            @* Connection test: a test signal on the bitcoin pair of the active exchange *@
+            <div class="field">
+                <label></label>
+                <span class="field-control">
+                    <button class="btn btn-secondary" disabled="@_altradyTesting" @onclick="TestAltrady">Test</button>
+                    <span class="key-hint">@_altradyTestResult</span>
+                </span>
+            </div>
         </div>
     </div>
 
@@ -146,6 +155,8 @@
     private string _apiSecret = "";
     private string _altradyKey = "";
     private string _altradySecret = "";
+    private bool _altradyTesting;
+    private string _altradyTestResult = "";
     private string _alpacaKey = "";
     private string _alpacaSecret = "";
 
@@ -188,6 +199,27 @@
             return;
         }
         GlobalData.AddTextToTelegram("This is a test message", CryptoTelegramCategory.Test);
+    }
+
+    /// <summary>
+    /// Send a test signal to Altrady with the key and secret as they are typed in the screen (saved or
+    /// not), on the bitcoin pair of the active exchange. Same as TestAltrady in ApiAltradyViewModel.
+    /// </summary>
+    private async Task TestAltrady()
+    {
+        if (_altradyTesting)
+            return;
+        _altradyTesting = true;
+        _altradyTestResult = "Testing...";
+        try
+        {
+            (bool ok, string message) = await AltradyWebhook.TestConnectionAsync(_altradyKey, _altradySecret);
+            _altradyTestResult = (ok ? "" : "Failed: ") + message;
+        }
+        finally
+        {
+            _altradyTesting = false;
+        }
     }
 
     protected override void OnInitialized()

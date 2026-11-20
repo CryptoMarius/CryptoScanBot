@@ -78,14 +78,16 @@ public class SettingsSignalStrategyDlz : SettingsSignalStrategyBase
     // Supply/demand theory: 0=fresh, 1=tested, 2=weakening, 3+=avoid. Default 2 keeps the
     // first retest signal but suppresses everything after that. Set to 0 to disable
     // touch-based closure (zones only close on body break through the far side).
-    [SettingCaption("Number of visits (0=off)", Group = GroupZoneStrength,
+    [SettingCaption("Number of visits (0=off)", Group = GroupZoneStrength, EnabledWhen = nameof(CloseRule),
+        EnabledWhenValues = [nameof(CryptoZoneCloseRule.BodyPastMidpoint), nameof(CryptoZoneCloseRule.Touches)],
         Tooltip = "For Body past midpoint and Touches: after this many visits the zone is closed. Not used with Body through.")]
     public int MaxTouches { get; set; } = 2;
 
     // How far price has to come into the zone before it counts as one visit. The ONLY thing that
     // differs between the three zone kinds - everything else about counting, weakening and closing
     // is one implementation in ZoneInvalidation. See CryptoZoneTouchLevel.
-    [SettingCaption("Touch level", Group = GroupZoneStrength,
+    [SettingCaption("Touch level", Group = GroupZoneStrength, EnabledWhen = nameof(CloseRule),
+        EnabledWhenValues = [nameof(CryptoZoneCloseRule.Touches)],
         Tooltip = "For Touches: how far price has to come in before a visit counts.")]
     public CryptoZoneTouchLevel TouchLevel { get; set; } = CryptoZoneTouchLevel.Edge;
 

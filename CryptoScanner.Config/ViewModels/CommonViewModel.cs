@@ -49,6 +49,9 @@ public partial class CommonViewModel : ObservableObject
         DoubleClickActionList.Clear();
         DoubleClickActionList.Add(new(CryptoDoubleClickAction.ActivateTradingApp, "Activate trading app"));
         DoubleClickActionList.Add(new(CryptoDoubleClickAction.ActivateChartForm, "Show chart form"));
+        DoubleClickActionList.Add(new(CryptoDoubleClickAction.TradingViewInternal, "TradingView internal"));
+        DoubleClickActionList.Add(new(CryptoDoubleClickAction.TradingViewExternal, "TradingView external"));
+        DoubleClickActionList.Add(new(CryptoDoubleClickAction.ExchangeUrl, "Open exchange"));
     }
 
     private void BuildTradingAppList()

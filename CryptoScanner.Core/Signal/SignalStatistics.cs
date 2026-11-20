@@ -66,9 +66,21 @@ public static class SignalStatistics
     /// here: the values ride along with the next save of the position, at the latest when it
     /// closes. Only the extremes, a position has a real outcome of its own instead of a status.
     /// </summary>
+    /// <remarks>
+    /// Since 18-11-2026 the range starts at the fill of the entry, not at the signal: a position
+    /// that has not invested anything yet is left alone (PriceMin/PriceMax stay 0). The trader
+    /// feeds every candle of the position, quiet ones included, BEFORE the orders of that candle
+    /// are filled, so the candle that fills the take profit counts as well; the candle that fills
+    /// the entry is fed once more after the fills (see PositionMonitor.UpdatePositionStatistics).
+    /// Within one candle the order of the high and the low is unknown, so the candle that fills
+    /// the entry and the one that closes the position count as a whole.
+    /// </remarks>
     public static bool UpdatePosition(CryptoPosition position, decimal low, decimal high)
     {
         if (position.SignalPrice <= 0 || low <= 0 || high <= 0)
+            return false;
+        // Nothing filled yet: the move before the entry is not something the position sat through
+        if (position.Invested <= 0)
             return false;
         return UpdateExtremes(position, low, high);
     }

@@ -105,14 +105,16 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
     // zone. The default moved from 1 to 2 because that is the value that keeps the old behaviour:
     // old "allow 0 and 1 touches" is new "used up at 2".
     // 0 disables touch-based closure entirely; a zone then only closes on a break.
-    [SettingCaption("Number of visits (0=off)", Group = GroupSignal,
+    [SettingCaption("Number of visits (0=off)", Group = GroupSignal, EnabledWhen = nameof(CloseRule),
+        EnabledWhenValues = [nameof(CryptoZoneCloseRule.BodyPastMidpoint), nameof(CryptoZoneCloseRule.Touches)],
         Tooltip = "For Body past midpoint and Touches: after this many visits the zone is closed. Not used with Body through.")]
     public int MaxTouches { get; set; } = 2;
 
     // How far price has to come into the zone before it counts as one visit. The ONLY thing that
     // differs between the three zone kinds - everything else about counting, weakening and closing
     // is one implementation in ZoneInvalidation. See CryptoZoneTouchLevel.
-    [SettingCaption("Touch level", Group = GroupSignal,
+    [SettingCaption("Touch level", Group = GroupSignal, EnabledWhen = nameof(CloseRule),
+        EnabledWhenValues = [nameof(CryptoZoneCloseRule.Touches)],
         Tooltip = "For Touches: how far price has to come in before a visit counts.")]
     public CryptoZoneTouchLevel TouchLevel { get; set; } = CryptoZoneTouchLevel.Midpoint;
 

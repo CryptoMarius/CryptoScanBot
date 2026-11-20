@@ -257,18 +257,16 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         if (_dataGrid.SelectedItem != null)
         {
             var parentWindow = this.FindAncestorOfType<Window>();
-            if (GlobalData.Settings.General.DoubleClickAction == CryptoDoubleClickAction.ActivateChartForm)
+            CommandBase command = GlobalData.Settings.General.DoubleClickAction switch
             {
-                var command = new CommandShowChart();
-                command.Execute((_dataGrid, _dataGrid.SelectedItem, parentWindow));
-                e.Handled = true;
-            }
-            else
-            {
-                var command = new CommandLaunchTradingAppStandard();
-                command.Execute((_dataGrid, _dataGrid.SelectedItem, parentWindow));
-                e.Handled = true;
-            }
+                CryptoDoubleClickAction.ActivateChartForm => new CommandShowChart(),
+                CryptoDoubleClickAction.TradingViewInternal => new CommandLaunchTradingViewInternal(),
+                CryptoDoubleClickAction.TradingViewExternal => new CommandLaunchTradingViewExternal(),
+                CryptoDoubleClickAction.ExchangeUrl => new CommandLaunchExchange(),
+                _ => new CommandLaunchTradingAppStandard(),
+            };
+            command.Execute((_dataGrid, _dataGrid.SelectedItem, parentWindow));
+            e.Handled = true;
         }
     }
 

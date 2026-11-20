@@ -88,7 +88,6 @@ public class SettingsGeneral
     /// </summary>
     public string ExtraCaption { get; set; } = "";
     public string ExchangeName { get; set; } = "Bybit Spot";
-    public string ActivateExchangeName { get; set; } = "";
 
     // will be replaced by Theme
     //public bool BlackTheming { get; set; } = false;

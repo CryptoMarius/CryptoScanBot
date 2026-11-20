@@ -405,6 +405,27 @@ public class EmulatorQueueEntry
     public string? Algorithm { get; set; }
 
     /// <summary>
+    /// The run this entry repeats, as "Session1/1951" (a session folder next to this one) or "1951"
+    /// (a run of this session). When set, the emulator compares the settings this entry produces with
+    /// the stored settings of that run before the batch starts, and refuses the entry when they differ
+    /// in anything that is not listed in <see cref="AcceptedSourceDifferences"/>
+    /// (<see cref="QueueSourceCheck"/>). A repeat without it is not checked at all.
+    /// <para>
+    /// Added on 13-11-2026: the repeats of Session0 had been written and converted without such a
+    /// check, and 1.885 of their 3.808 entries carried another MA200 than the run they repeated.
+    /// </para>
+    /// </summary>
+    public string? SourceRun { get; set; }
+
+    /// <summary>
+    /// Paths that may differ from <see cref="SourceRun"/> on purpose: the change a variant is about,
+    /// or a setting of the source run that cannot be carried over. A path covers everything below it.
+    /// The names are the ones the source check reports, for example "Trading.DcaList",
+    /// "EntryConditions.CheckPriceAboveMa200", "Plugin.DidoLength" or "Signal.Long.Interval".
+    /// </summary>
+    public List<string>? AcceptedSourceDifferences { get; set; }
+
+    /// <summary>
     /// Stop-loss percentage for this run (e.g. 2.5). Omitted = the settings decide (since
     /// 31-10-2026; before that a missing key ran on 2%). The stop limit follows it at one percent
     /// further, unless TradingOverrides set StopLossLimitPercentage.

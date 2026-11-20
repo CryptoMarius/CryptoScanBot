@@ -331,6 +331,10 @@ public static class ChartDataService
             if (zone.Kind == CryptoZoneKind.FairValueGap)
                 alpha = zone.CloseTime.HasValue ? 0.25 : 0.38;
 
+            // Fainter with every visit, only under the Touches close rule; the same factor as the
+            // Avalonia chart (ZoneInvalidation.FadeFactor, 11-11-2026)
+            alpha *= ZoneInvalidation.FadeFactor(zone);
+
             // The alpha picked in the style comes on top of the one worked out above
             string fill = style.ToCssColor(alpha);
             target.Add(new ChartRect

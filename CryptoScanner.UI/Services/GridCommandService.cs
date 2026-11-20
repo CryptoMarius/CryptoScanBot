@@ -466,15 +466,25 @@ public class GridCommandService
 
     public void HandleDoubleClick(CryptoSymbol symbol, CryptoInterval? interval)
     {
-        if (GlobalData.Settings.General.DoubleClickAction == CryptoDoubleClickAction.ActivateChartForm)
+        switch (GlobalData.Settings.General.DoubleClickAction)
         {
-            // This host has its own chart page now, so "Show chart form" shows that chart instead of
-            // the old TradingView-in-an-external-browser fallback (same as Avalonia CommandShowChart).
-            OpenChart(symbol, interval);
-        }
-        else
-        {
-            OpenTradingApp(symbol, interval);
+            case CryptoDoubleClickAction.ActivateChartForm:
+                // This host has its own chart page now, so "Show chart form" shows that chart instead of
+                // the old TradingView-in-an-external-browser fallback (same as Avalonia CommandShowChart).
+                OpenChart(symbol, interval);
+                break;
+            case CryptoDoubleClickAction.TradingViewInternal:
+                OpenTradingViewInternal(symbol, interval);
+                break;
+            case CryptoDoubleClickAction.TradingViewExternal:
+                OpenTradingViewExternal(symbol, interval);
+                break;
+            case CryptoDoubleClickAction.ExchangeUrl:
+                OpenExchange(symbol, interval);
+                break;
+            default:
+                OpenTradingApp(symbol, interval);
+                break;
         }
     }
 

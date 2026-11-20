@@ -800,11 +800,6 @@ public static class GlobalData
 
             // A settings file written before 27-08-2026 names a market that no longer exists
             Settings.General.ExchangeName = FixLegacyExchangeName(Settings.General.ExchangeName);
-            Settings.General.ActivateExchangeName = FixLegacyExchangeName(Settings.General.ActivateExchangeName);
-
-            // Fill in empty activate exchange
-            if (Settings.General.ActivateExchangeName == "")
-                Settings.General.ActivateExchangeName = Settings.General.ExchangeName;
         }
         catch (Exception error)
         {

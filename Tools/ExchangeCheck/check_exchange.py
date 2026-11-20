@@ -877,8 +877,6 @@ def check_settings(report, folder):
         "| Instelling | Waarde |",
         "|---|---|",
         "| Exchange | {} |".format(general.get("ExchangeName", "?")),
-        "| Exchange waarop gehandeld wordt | {} |".format(
-            general.get("ActivateExchangeName") or "(dezelfde)"),
         "| Signaalanalyse actief | {} |".format(signal.get("Active", "?")),
         "| Handel actief | **{}** |".format("JA" if active else "nee"),
         "| Handel via | {} |".format(trade_via),

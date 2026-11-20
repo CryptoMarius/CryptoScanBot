@@ -77,7 +77,6 @@ public static class RunSettingsApplier
         // Keep the exchange the emulator was started on. Read before the overlay, which merges into
         // the current object itself.
         JsonNode? exchangeName = current["General"]?["ExchangeName"]?.DeepClone();
-        JsonNode? activateExchangeName = current["General"]?["ActivateExchangeName"]?.DeepClone();
         // The same for the window title: it names this emulator, not the run (30-10-2026). The old
         // caption goes along, or a run from before that date would bring its caption back into it.
         JsonNode? windowTitle = current["General"]?["WindowTitle"]?.DeepClone();
@@ -88,7 +87,8 @@ public static class RunSettingsApplier
         if (merged["General"] is JsonObject mergedGeneral)
         {
             mergedGeneral["ExchangeName"] = exchangeName;
-            mergedGeneral["ActivateExchangeName"] = activateExchangeName;
+            // Removed setting (20-11-2026); an older snapshot still carries it
+            mergedGeneral.Remove("ActivateExchangeName");
             mergedGeneral["WindowTitle"] = windowTitle;
             mergedGeneral["ExtraCaption"] = extraCaption;
         }

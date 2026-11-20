@@ -141,7 +141,7 @@ public class Api : ExchangeBase
             // connection; that is the cheaper of the two.
             options.RequestTimeout = TimeSpan.FromSeconds(90); // standard=20 seconds
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new HyperLiquidCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = HyperLiquidApiCredentials.Create(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         HyperLiquidSocketClient.SetDefaultOptions(options =>
@@ -170,7 +170,7 @@ public class Api : ExchangeBase
             // minute, so that trade is cheap here - but it is the number to watch in the next check.
             options.SocketSubscriptionsCombineTarget = 30;
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new HyperLiquidCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = HyperLiquidApiCredentials.Create(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         //PriceTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);

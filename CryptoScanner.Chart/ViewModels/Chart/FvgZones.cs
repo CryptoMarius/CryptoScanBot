@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Zones;
 using CryptoScanner.Analyzers.Chart;
 using CryptoScanner.Core.Settings;
 
@@ -60,6 +61,9 @@ public class FvgZones
             // the candles behind them must stay readable. 96 of 255 is the 0.38 the Photino chart uses.
             if (zone.Kind == CryptoZoneKind.FairValueGap)
                 col = ChartStyleOxy.WithAlpha(boxColor, 96);
+
+            // Fainter with every visit, only under the Touches close rule (ZoneInvalidation.FadeFactor)
+            col = ChartStyleOxy.WithAlpha(col, (int)Math.Round(255 * ZoneInvalidation.FadeFactor(zone)));
 
 
             int stroke = 0;

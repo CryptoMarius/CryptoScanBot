@@ -138,7 +138,7 @@ public class Api : ExchangeBase
             options.RequestTimeout = TimeSpan.FromSeconds(90); // standard=20 seconds
             //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new HyperLiquidCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = HyperLiquidApiCredentials.Create(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         HyperLiquidSocketClient.SetDefaultOptions(options =>
@@ -161,7 +161,7 @@ public class Api : ExchangeBase
             // buys nothing. See the fuller note in Perpetual/Api.cs.
             options.SocketSubscriptionsCombineTarget = 30;
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new HyperLiquidCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = HyperLiquidApiCredentials.Create(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         //PriceTicker = new SubscriptionManager(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);

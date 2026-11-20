@@ -26,6 +26,13 @@
                 <TextBlock Grid.Column="2" Text="{Binding SecretDisplay}" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"/>
             </Grid>
 
+            <!-- Connection test: a test signal on the bitcoin pair of the active exchange -->
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                <Button Content="Test" Command="{Binding TestAltradyCommand}" IsEnabled="{Binding !IsTesting}"
+                        Width="75" FontSize="12"/>
+                <TextBlock Text="{Binding TestResult}" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap" MaxWidth="420"/>
+            </StackPanel>
+
         </StackPanel>
     </HeaderedContentControl>
 

@@ -501,4 +501,64 @@ public class ZoneInvalidationTests : TestBase
         bool closed = ZoneInvalidation.ApplyToCandle(zone, Candle(13, 96m, 97m, 88m, 89m), Hour, rules);
         Assert.IsTrue(closed, "A body close below the bottom is");
     }
+
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Fading in the charts (11-11-2026) - only under the Touches close rule
+    // ────────────────────────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void Fade_UnderTouches_StepsDownWithEveryVisitToTheMinimum()
+    {
+        using CryptoDatabase database = NewDatabase();
+        var settings = GlobalData.Settings.Signal.ZonesDlz;
+        var (rule, max) = (settings.CloseRule, settings.MaxTouches);
+        try
+        {
+            settings.CloseRule = CryptoZoneCloseRule.Touches;
+            settings.MaxTouches = 2;
+            var zone = Demand(CreateTestSymbol(database));
+
+            Assert.AreEqual(1.0, ZoneInvalidation.FadeFactor(zone), 1e-9, "A fresh zone keeps its colour");
+            zone.TouchCount = 1;
+            Assert.AreEqual(0.65, ZoneInvalidation.FadeFactor(zone), 1e-9);
+            zone.TouchCount = 2;
+            Assert.AreEqual(ZoneInvalidation.MinimumFade, ZoneInvalidation.FadeFactor(zone), 1e-9);
+            zone.TouchCount = 5;
+            Assert.AreEqual(ZoneInvalidation.MinimumFade, ZoneInvalidation.FadeFactor(zone), 1e-9, "Never fainter than the minimum");
+        }
+        finally
+        {
+            settings.CloseRule = rule;
+            settings.MaxTouches = max;
+        }
+    }
+
+
+    [TestMethod]
+    public void Fade_OnlyUnderTouchesWithACount()
+    {
+        using CryptoDatabase database = NewDatabase();
+        var settings = GlobalData.Settings.Signal.ZonesDlz;
+        var (rule, max) = (settings.CloseRule, settings.MaxTouches);
+        try
+        {
+            var zone = Demand(CreateTestSymbol(database));
+            zone.TouchCount = 1;
+
+            settings.MaxTouches = 2;
+            settings.CloseRule = CryptoZoneCloseRule.BodyThrough;
+            Assert.AreEqual(1.0, ZoneInvalidation.FadeFactor(zone), 1e-9);
+            settings.CloseRule = CryptoZoneCloseRule.BodyPastMidpoint;
+            Assert.AreEqual(1.0, ZoneInvalidation.FadeFactor(zone), 1e-9);
+            settings.CloseRule = CryptoZoneCloseRule.Touches;
+            settings.MaxTouches = 0;
+            Assert.AreEqual(1.0, ZoneInvalidation.FadeFactor(zone), 1e-9, "Touches without a count weakens nothing");
+        }
+        finally
+        {
+            settings.CloseRule = rule;
+            settings.MaxTouches = max;
+        }
+    }
 }

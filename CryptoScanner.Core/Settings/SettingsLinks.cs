@@ -43,8 +43,9 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 
     public (string Url, CryptoExternalUrlType Execute) GetExternalRef(CryptoTradingApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)
     {
-        if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ActivateExchangeName, out Model.CryptoExchange? exchange))
-            exchange = GlobalData.ActiveExchange;
+        // The trading app opens on the exchange of the symbol itself. There used to be a separate
+        // "activate exchange" setting for that; with more exchanges supported it was removed (20-11-2026).
+        Model.CryptoExchange? exchange = symbol.Exchange ?? GlobalData.ActiveExchange;
         return GetExternalRef(exchange!, externalApp, telegram, symbol, interval);
     }
 

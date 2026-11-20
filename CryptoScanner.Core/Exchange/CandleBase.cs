@@ -658,6 +658,16 @@ public class CandleBase(ExchangeBase api)
     internal static bool CheckFutureCandleReceived(DateTime openTime, CryptoSymbol symbol, CryptoInterval interval,
         decimal closePrice)
     {
+        // A kline without a time (DateTime.MinValue) cannot be stored and made the conversion to
+        // CandleTime throw, which aborted the whole fetch of that symbol and interval. Kraken Spot
+        // sends such a kline for some stablecoin pairs (USDPTUSDC, USDPTUSDT, EUROPUSDC, seen in the
+        // nightly candle sync of 14/15-11-2026). Skip the one kline, keep the rest of the batch.
+        if (openTime < CandleTime.Epoch)
+        {
+            ScannerLog.Logger.Debug($"Debug: candle without a valid open time {symbol.Name} {interval.Name} {openTime:yyyy-MM-dd HH:mm}");
+            return true;
+        }
+
         CandleTime candleTime = CandleTime.AlignFromDateTime(openTime, interval.Duration);
         CandleTime currentTime = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, interval.Duration);
         if (candleTime + interval.Duration > currentTime)

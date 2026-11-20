@@ -113,7 +113,7 @@ public static class ExternalLinkHelper
             // because of the browser launch itself (e.g. WebView2 init in Release).
             // At error level, so a click that cannot go anywhere also lands in the error log
             // instead of only scrolling past in the log tab.
-            GlobalData.AddErrorToLogTab($"Linktools: no URL configured for tradingApp={tradingApp} exchange={GlobalData.Settings.General.ActivateExchangeName} symbol={symbol.Name}");
+            GlobalData.AddErrorToLogTab($"Linktools: no URL configured for tradingApp={tradingApp} exchange={symbol.Exchange?.Name} symbol={symbol.Name}");
         }
         if (Url != "")
         {

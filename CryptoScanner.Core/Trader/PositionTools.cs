@@ -102,8 +102,12 @@ public static class PositionTools
         // Reset the statistics (AssignValues copied those of the signal, the position starts its own)
         position.PriceMinPerc = 0;
         position.PriceMaxPerc = 0;
-        position.PriceMin = signal.SignalPrice;
-        position.PriceMax = signal.SignalPrice;
+        //position.PriceMin = signal.SignalPrice;
+        //position.PriceMax = signal.SignalPrice;
+        // Since 18-11-2026 measured from the fill of the entry: 0 means "not measured yet", the
+        // first candle after the fill sets both (SignalStatistics.UpdatePosition)
+        position.PriceMin = 0;
+        position.PriceMax = 0;
 
         // Forward any per-signal SL override to the position (persisted; see CryptoPosition).
         position.SlPercentage = signal.SlPercentage;

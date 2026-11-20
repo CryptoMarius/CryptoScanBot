@@ -556,7 +556,6 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.AddErrorToLogTab(
                 $"Run: the run configuration names exchange \"{configExchangeName}\", the settings \"{exchange.Name}\" "
                 + "- the run plays on the exchange of the settings; fix the run configuration or pick the other exchange in Setup");
-        GlobalData.Settings.General.ActivateExchangeName = exchange.Name;
     }
 
 
@@ -813,6 +812,19 @@ public partial class MainWindowViewModel : ObservableObject
         for (int i = 0; i < queue.Count; i++)
         {
             string? reason = SignalGridExpander.Validate(queue[i]);
+
+            // An entry that repeats an earlier run must produce that run's settings (13-11-2026)
+            if (reason == null)
+            {
+                try
+                {
+                    reason = QueueSourceCheck.CheckEntry(queue[i]);
+                }
+                catch (Exception sx)
+                {
+                    reason = $"source check failed: {sx.GetType().Name}: {sx.Message}";
+                }
+            }
             if (reason == null)
                 continue;
 
@@ -1355,9 +1367,9 @@ public partial class MainWindowViewModel : ObservableObject
             string configJson = System.Text.Json.JsonSerializer.Serialize(config);
             // Sync the analyzer plugin settings into the AnalyzerSettings blocks first (same as
             // SaveConfiguration does) so the snapshot contains the plugin values of THIS run.
-            Core.Contracts.PluginManager.CollectSettings(GlobalData.Settings.Signal.AnalyzerSettings);
-            string settingsJson = System.Text.Json.JsonSerializer.Serialize(
-                GlobalData.Settings, Core.Json.JsonTools.JsonSerializerIndented);
+            // The source check of the queue (QueueSourceCheck) takes the same snapshot, so it compares
+            // exactly what is stored on the run row.
+            string settingsJson = QueueSourceCheck.CaptureSettingsJson();
 
             // Both blobs are complete now, which is the first moment the run can be recognised as
             // one that has already been measured. Checked here rather than in the queue loop so the

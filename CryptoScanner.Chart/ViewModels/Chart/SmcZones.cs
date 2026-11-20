@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Zones;
 using CryptoScanner.Analyzers.Chart;
@@ -51,6 +51,8 @@ public class SmcZones
         // visual cue scheme as DLZ.
         byte alpha = zone.CloseTime.HasValue ? (byte)64 : (byte)128;
         OxyColor fill = ChartStyleOxy.WithAlpha(boxColor, alpha);
+        // Fainter with every visit, only under the Touches close rule (ZoneInvalidation.FadeFactor)
+        fill = ChartStyleOxy.WithAlpha(fill, (int)Math.Round(255 * ZoneInvalidation.FadeFactor(zone)));
         OxyColor stroke = ChartStyleOxy.WithAlpha(boxColor, 220);
 
         var rectangle = new RectangleAnnotation

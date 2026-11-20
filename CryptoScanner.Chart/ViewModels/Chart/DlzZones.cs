@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Zones;
 using CryptoScanner.Analyzers.Chart;
 using CryptoScanner.Core.Settings;
 
@@ -53,6 +54,9 @@ public class DlzZones
                     col = ChartStyleOxy.WithAlpha(boxColor, 64);
             }
             else col = ChartStyleOxy.WithAlpha(boxColor, 128);
+
+            // Fainter with every visit, only under the Touches close rule (ZoneInvalidation.FadeFactor)
+            col = ChartStyleOxy.WithAlpha(col, (int)Math.Round(255 * ZoneInvalidation.FadeFactor(zone)));
 
 
             int stroke = 0;

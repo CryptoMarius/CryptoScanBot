@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -214,7 +214,13 @@ public class PluginSettingsEditState
             return true;
 
         var owner = Fields.Find(f => f.Name == field.EnabledWhen);
-        return owner == null || owner.BoolValue;
+        //return owner == null || owner.BoolValue;
+        if (owner == null)
+            return true;
+        // An enum switch: editable only for the listed choices (SettingCaption.EnabledWhenValues)
+        if (owner.Kind == PluginFieldKind.Enum && field.EnabledWhenValues is { Length: > 0 } values)
+            return Array.Exists(values, v => v.Equals(owner.TextValue, StringComparison.OrdinalIgnoreCase));
+        return owner.BoolValue;
     }
 
     public void Load()
@@ -373,6 +379,8 @@ public class PluginSettingField
     public bool ColumnBreak { get; }
     /// <summary>Name of the bool setting that has to be on for this one to be editable.</summary>
     public string? EnabledWhen { get; }
+    /// <summary>The choices of an enum <see cref="EnabledWhen"/> for which this one is editable.</summary>
+    public string[]? EnabledWhenValues { get; }
     /// <summary>Not drawn at all; the value still loads and saves.</summary>
     public bool Hidden { get; }
     /// <summary>Settings drawn on this one's row, without a caption of their own.</summary>
@@ -415,6 +423,7 @@ public class PluginSettingField
         SpaceBefore = caption?.SpaceBefore ?? false;
         ColumnBreak = caption?.ColumnBreak ?? false;
         EnabledWhen = caption?.EnabledWhen;
+        EnabledWhenValues = caption?.EnabledWhenValues;
         // An expanded block that is hidden hides all of its children (DLZ's Zone calculation)
         Hidden = (caption?.Hidden ?? false) || (owner?.GetCustomAttribute<SettingCaptionAttribute>()?.Hidden ?? false);
         _minimum = caption?.Minimum ?? double.NaN;
