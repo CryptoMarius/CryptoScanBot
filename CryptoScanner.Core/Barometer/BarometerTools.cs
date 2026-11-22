@@ -459,7 +459,7 @@ public class BarometerTools
     /// MarketTrendBackfill fills in has to be written to exactly these ones - an interval that is
     /// calculated but not filled would show a hole in the graph that no other interval has.
     /// </summary>
-    private static readonly CryptoIntervalPeriod[] BarometerIntervals =
+    internal static readonly CryptoIntervalPeriod[] BarometerIntervals =
     [
         CryptoIntervalPeriod.interval10m,
         CryptoIntervalPeriod.interval15m,

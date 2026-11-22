@@ -334,6 +334,25 @@ public class TelegramApiClient
     }
 
 
+    /// <summary>
+    /// setMyCommands, the list behind the "Menu" button of the chat. Names are 1 to 32 characters
+    /// a-z, 0-9 and underscore, descriptions 1 to 256 characters.
+    /// </summary>
+    public async Task<bool> SetMyCommandsAsync(IEnumerable<(string command, string description)> commands,
+        CancellationToken cancellationToken = default)
+    {
+        List<Dictionary<string, object?>> list = [];
+        foreach ((string command, string description) in commands)
+            list.Add(new() { { "command", command }, { "description", description } });
+
+        Dictionary<string, object?> parameters = new()
+        {
+            { "commands", list },
+        };
+        return await SendRequestAsync<bool>("setMyCommands", parameters, cancellationToken);
+    }
+
+
     private static string ParseModeText(TelegramParseMode parseMode)
     {
         if (parseMode == TelegramParseMode.Html)

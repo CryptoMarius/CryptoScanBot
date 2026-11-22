@@ -546,7 +546,7 @@ public static class Helper
                                     valueBtc += asset.Total / (decimal)symbol.LastPrice;
                             }
                         }
-                        stringBuilder.AppendLine(string.Format("Totaal USDT=${0} BTC=₿{1}", valueUsdt.ToString0("N2"), valueBtc.ToString0("N8")));
+                        stringBuilder.AppendLine(string.Format("Total USDT=${0} BTC=₿{1}", valueUsdt.ToString0("N2"), valueBtc.ToString0("N8")));
                     }
                     catch (Exception error)
                     {
