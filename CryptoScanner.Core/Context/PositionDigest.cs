@@ -20,12 +20,42 @@ namespace CryptoScanner.Core.Context;
 /// </summary>
 public static class PositionDigest
 {
+    //private const string SelectColumns =
+    //    "select SymbolId, Side, CreateTime, CloseTime, Profit, Invested, PartCount, Status, " +
+    //    "       Strategy, IntervalId, TrendPercentagePrimary, TrendPercentageSecondary, " +
+    //    "       StochOscillator, StochSignal, Rsi, BollingerBandsPercentage, MacdHistogram, " +
+    //    "       Barometer1h, Trend1h, EventText, PriceMinPerc, PriceMaxPerc, Funding " +
+    //    "from position where EmulatorRunId = @id order by Id";
+    // Since 26-11-2026 also the signal price, the stop-loss distance and the value of a position still
+    // open at the end. That value is the per-position form of EmulatorDb.OpenPositionValueSql (keep
+    // the two the same): what was taken back plus the remaining quantity at the price of the run's
+    // last snapshot day, minus the money put in and the costs, the other way round for a short,
+    // plus the funding. Without a snapshot (a migration backfill, a run cleared of its snapshots) the
+    // join finds no price and the value stays null. The prices of the last day are grouped per coin
+    // first, so a second snapshot row for the same coin can never put a position in the digest twice
+    // (a correlated subquery per position did the same but took 5 seconds on 3.800 positions, this 0.02).
     private const string SelectColumns =
-        "select SymbolId, Side, CreateTime, CloseTime, Profit, Invested, PartCount, Status, " +
-        "       Strategy, IntervalId, TrendPercentagePrimary, TrendPercentageSecondary, " +
-        "       StochOscillator, StochSignal, Rsi, BollingerBandsPercentage, MacdHistogram, " +
-        "       Barometer1h, Trend1h, EventText, PriceMinPerc, PriceMaxPerc " +
-        "from position where EmulatorRunId = @id order by Id";
+        "select q.*, " +
+        "       case when q.CloseTime is null and CAST(q.Invested as REAL) > 0 and q.EndPrice is not null then " +
+        "         (case when q.Side = @longSide " +
+        "            then CAST(q.Returned as REAL) + CAST(q.Quantity as REAL) * q.EndPrice - CAST(q.Invested as REAL) - CAST(q.Commission as REAL) " +
+        "            else CAST(q.Invested as REAL) - CAST(q.Returned as REAL) - CAST(q.Commission as REAL) - CAST(q.Quantity as REAL) * q.EndPrice " +
+        "          end) + coalesce(CAST(q.Funding as REAL), 0) " +
+        "       end as OpenPnl " +
+        "from (" +
+        "  select p.Id, p.SymbolId, p.Side, p.CreateTime, p.CloseTime, p.Profit, p.Invested, p.PartCount, p.Status, " +
+        "         p.Strategy, p.IntervalId, p.TrendPercentagePrimary, p.TrendPercentageSecondary, " +
+        "         p.StochOscillator, p.StochSignal, p.Rsi, p.BollingerBandsPercentage, p.MacdHistogram, " +
+        "         p.Barometer1h, p.Trend1h, p.EventText, p.PriceMinPerc, p.PriceMaxPerc, p.Funding, " +
+        "         p.SignalPrice, p.SlPercentage, p.Returned, p.Quantity, p.Commission, a.Price as EndPrice " +
+        "  from position p " +
+        "  left join symbol s on s.Id = p.SymbolId " +
+        "  left join (select Name, max(CAST(Price as REAL)) as Price from AssetSnapshot " +
+        "             where EmulatorRunId = @id " +
+        "               and SnapshotDate = (select max(SnapshotDate) from AssetSnapshot where EmulatorRunId = @id) " +
+        "             group by Name) a on a.Name = s.Base " +
+        "  where p.EmulatorRunId = @id" +
+        ") q order by q.Id";
 
 
     /// <summary>
@@ -41,7 +71,9 @@ public static class PositionDigest
     /// </summary>
     public static string? Build(CryptoDatabase database, int runId)
     {
-        var rows = database.Connection.Query<DigestRow>(SelectColumns, new { id = runId }).AsList();
+        //var rows = database.Connection.Query<DigestRow>(SelectColumns, new { id = runId }).AsList();
+        var rows = database.Connection.Query<DigestRow>(SelectColumns,
+            new { id = runId, longSide = (int)Enums.CryptoTradeSide.Long }).AsList();
         if (rows.Count == 0)
             return null;
 
@@ -51,7 +83,11 @@ public static class PositionDigest
             values.Add(
             [
                 r.SymbolId, r.Side, Minutes(r.CreateTime), Minutes(r.CloseTime),
-                Number(r.Profit, 4), Number(r.Invested, 2), r.PartCount, r.Status,
+                //Number(r.Profit, 4), Number(r.Invested, 2), r.PartCount, r.Status,
+                // No profit for a position still open: the stored value is its cash flow so far
+                // (Returned - Invested for a long, about minus the stake; the other way round for a
+                // short, about plus the stake), not a result (23-11-2026)
+                r.CloseTime == null ? null : Number(r.Profit, 4), Number(r.Invested, 2), r.PartCount, r.Status,
                 r.Strategy, r.IntervalId,
                 Number(r.TrendPercentagePrimary, 3), Number(r.TrendPercentageSecondary, 3),
                 Number(r.StochOscillator, 3), Number(r.StochSignal, 3), Number(r.Rsi, 3),
@@ -59,6 +95,12 @@ public static class PositionDigest
                 Number(r.Barometer1h, 3), Number(r.Trend1h, 3),
                 string.IsNullOrEmpty(r.EventText) ? null : r.EventText,
                 Adverse(r),
+                Number(r.Funding, 4) is double funding && funding != 0 ? funding : null,
+                // Full precision for the price: a coin of 0.0000123 would round to nothing on a fixed
+                // number of decimals.
+                Number(r.SignalPrice, 12),
+                Number(r.SlPercentage, 2),
+                r.OpenPnl is double openPnl ? Math.Round(openPnl, 4) : null,
             ]);
         }
 
@@ -68,6 +110,25 @@ public static class PositionDigest
             cols = CryptoPositionDigest.Columns,
             rows = values,
         });
+    }
+
+
+    /// <summary>
+    /// The value at the end of the run of every position still open, by position id - the "openPnl"
+    /// of the digest, for the Run positions window of the latest run, whose positions are still in
+    /// the Position table. Same query as <see cref="Build"/>, so the window and the digest of an older
+    /// run can never disagree. Empty when the run has no snapshots to take an end price from.
+    /// </summary>
+    public static Dictionary<int, decimal> OpenPnlByPosition(CryptoDatabase database, int runId)
+    {
+        Dictionary<int, decimal> result = [];
+        foreach (DigestRow r in database.Connection.Query<DigestRow>(SelectColumns,
+            new { id = runId, longSide = (int)Enums.CryptoTradeSide.Long }))
+        {
+            if (r.OpenPnl is double openPnl)
+                result[r.Id] = (decimal)openPnl;
+        }
+        return result;
     }
 
 
@@ -149,6 +210,8 @@ public static class PositionDigest
 
     internal sealed class DigestRow
     {
+        // Only read by OpenPnlByPosition; the digest keeps no position id
+        public int Id { get; set; }
         public int SymbolId { get; set; }
         public int Side { get; set; }
         public DateTime? CreateTime { get; set; }
@@ -171,5 +234,10 @@ public static class PositionDigest
         public string? EventText { get; set; }
         public string? PriceMinPerc { get; set; }
         public string? PriceMaxPerc { get; set; }
+        public string? Funding { get; set; }
+        public string? SignalPrice { get; set; }
+        public string? SlPercentage { get; set; }
+        // Computed by the query, a REAL; null when the position is closed or no end price was found
+        public double? OpenPnl { get; set; }
     }
 }

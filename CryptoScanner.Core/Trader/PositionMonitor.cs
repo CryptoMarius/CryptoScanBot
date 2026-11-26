@@ -1420,6 +1420,11 @@ public class PositionMonitor : IDisposable
 
     private (decimal? stop, decimal? limit) CalculateSlPrices(CryptoPosition position)
     {
+        // Manual override from the "Position remove stop loss" menu item: no stop/limit at all,
+        // regardless of strategy or global settings, until the position is closed.
+        if (position.StopLossDisabled)
+            return (null, null);
+
         // Only paper-trade mode supports SL orders (real trading would need OCO, not yet implemented).
         if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.PaperTrade && GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.PaperTradingAndAltrady)
             return (null, null);

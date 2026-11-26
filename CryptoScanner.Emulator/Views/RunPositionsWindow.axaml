@@ -62,10 +62,17 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="Profit" Width="100" SortMemberPath="Profit">
+                <DataGridTemplateColumn Header="Profit" Width="100" SortMemberPath="ProfitSort">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ProfitText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Funding" Width="90" SortMemberPath="Funding">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding FundingText}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -76,7 +83,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="Percentage" Width="90" SortMemberPath="Percentage">
+                <DataGridTemplateColumn Header="Percentage" Width="90" SortMemberPath="PercentageSort">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PercentageText}"/>

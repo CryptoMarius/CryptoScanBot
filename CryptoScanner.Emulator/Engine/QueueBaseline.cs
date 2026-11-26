@@ -1,8 +1,11 @@
-using CryptoScanner.Core.Contracts;
+﻿using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Core.Json;
+
+using System.Text.Json;
 
 namespace CryptoScanner.Emulator.Engine;
 
@@ -33,7 +36,7 @@ public static class QueueBaseline
         public required SettingsSignal Signal { get; init; }
         public required SettingsTrading Trading { get; init; }
         public required List<(IStrategyPlugin Plugin, SettingsSignalStrategyBase Settings)> Plugins { get; init; }
-        public required List<(CryptoQuoteData Quote, decimal EntryAmount, float EntryPercentage)> Quotes { get; init; }
+        public required List<(CryptoQuoteData Quote, decimal EntryAmount, float EntryPercentage, double MinimalVolume)> Quotes { get; init; }
     }
 
     private static Saved? _saved;
@@ -48,9 +51,23 @@ public static class QueueBaseline
     /// back. Calling it while already active first restores, so the session settings can never be
     /// lost by a missed <see cref="Restore"/>.
     /// </summary>
-    public static void Install()
+    public static void Install() => Install(null);
+
+
+    /// <summary>
+    /// The same as <see cref="Install()"/>, but with the settings stored on a run as the starting
+    /// point instead of the defaults (<see cref="EmulatorQueueEntry.SettingsFromRun"/>). The snapshot
+    /// is read as a whole settings file is read, so whatever it does not name keeps the default of
+    /// the code. Null or empty is the same as <see cref="Install()"/>.
+    /// </summary>
+    public static void Install(string? snapshotJson)
     {
         Restore();
+
+        SettingsBasic? snapshot = null;
+        if (!string.IsNullOrWhiteSpace(snapshotJson))
+            snapshot = JsonSerializer.Deserialize<SettingsBasic>(snapshotJson, JsonTools.DeSerializerOptions)
+                ?? throw new InvalidOperationException("the stored settings of the run cannot be read");
 
         SettingsBasic settings = GlobalData.Settings;
         Saved saved = new()
@@ -58,7 +75,7 @@ public static class QueueBaseline
             Signal = settings.Signal,
             Trading = settings.Trading,
             Plugins = [.. PluginManager.LoadedPlugins.Values.Distinct().Select(p => (p, p.SettingsBase))],
-            Quotes = [.. settings.QuoteCoins.Values.Select(q => (q, q.EntryAmount, q.EntryPercentage))],
+            Quotes = [.. settings.QuoteCoins.Values.Select(q => (q, q.EntryAmount, q.EntryPercentage, q.MinimalVolume))],
         };
 
         SettingsTrading trading = new()
@@ -69,7 +86,16 @@ public static class QueueBaseline
             // Data of the exchange (database, per exchange), not a choice of the session
             PaperAssetDefaults = [.. saved.Trading.PaperAssetDefaults],
         };
-        settings.Signal = new SettingsSignal();
+        if (snapshot != null)
+        {
+            // The run decides, the bot switch excepted (same reason as above). Its paper assets are
+            // taken when it stored them: the default column is the start capital of the run.
+            trading = snapshot.Trading;
+            trading.Active = true;
+            if (trading.PaperAssetDefaults == null || trading.PaperAssetDefaults.Count == 0)
+                trading.PaperAssetDefaults = [.. saved.Trading.PaperAssetDefaults];
+        }
+        settings.Signal = snapshot?.Signal ?? new SettingsSignal();
         settings.Trading = trading;
 
         foreach (var (plugin, current) in saved.Plugins)
@@ -77,12 +103,24 @@ public static class QueueBaseline
             if (Activator.CreateInstance(current.GetType()) is SettingsSignalStrategyBase fresh)
                 plugin.SettingsBase = fresh;
         }
+        // The plugin blocks of the run over the fresh defaults; a plugin the run did not know keeps them
+        if (snapshot != null)
+            PluginManager.RestoreSettings(snapshot.Signal.AnalyzerSettings);
 
         CryptoQuoteData defaultQuote = new() { Name = "" };
-        foreach (var (quote, _, _) in saved.Quotes)
+        foreach (var (quote, _, _, _) in saved.Quotes)
         {
-            quote.EntryAmount = defaultQuote.EntryAmount;
-            quote.EntryPercentage = defaultQuote.EntryPercentage;
+            CryptoQuoteData source = defaultQuote;
+            if (snapshot?.QuoteCoins != null && snapshot.QuoteCoins.TryGetValue(quote.Name, out CryptoQuoteData? stored))
+            {
+                source = stored;
+                // The volume filter the run had (EmulatorQueueEntry.MinimalVolume), so a repeat of a
+                // run without it does not fall back on the filter of the session. Without a snapshot
+                // the session value stays: it is not a strategy setting and has no default to go to.
+                quote.MinimalVolume = stored.MinimalVolume;
+            }
+            quote.EntryAmount = source.EntryAmount;
+            quote.EntryPercentage = source.EntryPercentage;
         }
 
         _saved = saved;
@@ -100,10 +138,11 @@ public static class QueueBaseline
         GlobalData.Settings.Trading = saved.Trading;
         foreach (var (plugin, settings) in saved.Plugins)
             plugin.SettingsBase = settings;
-        foreach (var (quote, entryAmount, entryPercentage) in saved.Quotes)
+        foreach (var (quote, entryAmount, entryPercentage, minimalVolume) in saved.Quotes)
         {
             quote.EntryAmount = entryAmount;
             quote.EntryPercentage = entryPercentage;
+            quote.MinimalVolume = minimalVolume;
         }
 
         _saved = null;

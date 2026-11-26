@@ -129,14 +129,15 @@
                 </select>
             </div>
             @* Avalonia has "Remove time:" with the unit behind the field, and no pullback at all. *@
-            <div class="field">
-                <label>Remove time</label>
+            @* Renamed 22-11-2026 to "Entry valid for": one setting with two effects (waiting signal and unfilled limit entry). *@
+            <div class="field" title="Candles of the signal's own interval the entry stays valid. A signal that waits for its entry conditions or for a free slot is dropped after this many candles, counted from the signal candle's open - also with a market order. An unfilled limit entry order is cancelled after this many candles from the moment it was placed, and Altrady gets the same expiry. With a limit entry the two add up, so the whole window can last up to twice this value.">
+                <label>Entry valid for</label>
                 <span class="field-control">
                     <input type="number" class="input-number" min="0" @bind="_entryRemoveTime" />
                     <span class="field-unit">candles</span>
                 </span>
             </div>
-            <div class="field" title="Only for a limit entry: place the order this percentage better than the signal price - below it for a long, above it for a short - so the entry waits for a pullback. 0 places it at the signal price. A pullback that does not come within the remove time cancels the entry.">
+            <div class="field" title="Only for a limit entry: place the order this percentage better than the signal price - below it for a long, above it for a short - so the entry waits for a pullback. 0 places it at the signal price. A pullback that does not come within 'Entry valid for' cancels the entry.">
                 <label>Limit below signal price</label>
                 <span class="field-control">
                     <input type="number" class="input-number" step="0.1" min="0" @bind="_entryLimitOffsetPct" />

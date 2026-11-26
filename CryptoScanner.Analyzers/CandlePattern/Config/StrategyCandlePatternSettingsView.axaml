@@ -43,6 +43,46 @@
 
             <Separator Margin="0,4"/>
 
+            <!-- How large the decisive candle is against the candles before it, and the trend EMA -->
+            <TextBlock Text="Size and trend" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The body of the decisive candle at least this many times the average body of the 20 candles before it. For three methods the first and the last candle both. Zero switches it off.">
+                <TextBlock Grid.Column="0" Text="Min size vs average:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding MinSizeFactor, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                <TextBlock Grid.Column="2" Text="x average body" VerticalAlignment="Center" FontSize="12" Margin="6,0,0,0"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Only fire when the close is above an EMA of this length (long) or below it (short). Zero switches it off. Meant for continuation shapes such as three methods.">
+                <TextBlock Grid.Column="0" Text="Trend EMA length:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding TrendEmaLength, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- A stop-loss beyond the pattern, with the take profit at a multiple of its distance -->
+            <TextBlock Text="Exit" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <CheckBox IsChecked="{Binding StopBeyondPattern, Mode=TwoWay}" Content="Stop-loss beyond the pattern" FontSize="12"
+                      ToolTip.Tip="Hand the trader a stop-loss beyond the pattern: under its lowest low (long) or above its highest high (short); for three methods beyond the first candle. Off keeps the stop-loss and take profit of the trader settings."/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  IsEnabled="{Binding StopBeyondPattern}"
+                  ToolTip.Tip="The take profit at this many times the stop-loss distance. Zero keeps the take profit of the trader settings.">
+                <TextBlock Grid.Column="0" Text="Risk/reward:" VerticalAlignment="Center" FontSize="12" Margin="20,0,0,0"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding RiskReward, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                <TextBlock Grid.Column="2" Text="x the stop distance" VerticalAlignment="Center" FontSize="12" Margin="6,0,0,0"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
             <!-- Only fire when the pattern candle touches a zone. Ticking several is an OR, so the
                  boxes sit on one row: three of them do not need a column of their own. -->
             <TextBlock Text="Zone" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>

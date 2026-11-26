@@ -164,7 +164,7 @@
                     <TextBox Grid.Column="2"
                              Text="{Binding EntryWaitCandles, Mode=TwoWay}"
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-                             ToolTip.Tip="Candles of the signal's own interval to watch before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below EntryRemoveTime, otherwise the signal expires before the wait is over and nothing is ever entered."/>
+                             ToolTip.Tip="Candles of the signal's own interval to watch before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below 'Entry valid for' (Trader, Entry), otherwise the signal expires before the wait is over and nothing is ever entered."/>
                     <TextBlock Grid.Column="4" Text="Max against %"
                                VerticalAlignment="Center" FontSize="12"/>
                     <TextBox Grid.Column="6"

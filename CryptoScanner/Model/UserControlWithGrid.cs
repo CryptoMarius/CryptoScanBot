@@ -387,6 +387,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
             {
                 flyout.Items.Add(new MenuItem { Header = "Position add additional DCA", Command = new CommandPositionCreateAdditionalDca(), CommandParameter = parameter });
                 flyout.Items.Add(new MenuItem { Header = "Position cancel open DCA", Command = new CommandPositionRemoveAdditionalDca(), CommandParameter = parameter });
+                flyout.Items.Add(new MenuItem { Header = "Position remove stop loss", Command = new CommandPositionRemoveStopLoss(), CommandParameter = parameter });
                 flyout.Items.Add(new MenuItem { Header = "Position close (take profit or loss)", Command = new CommandPositionClose(), CommandParameter = parameter });
             }
             else if (_dataGrid.SelectedItem is PositionViewModel closedPosition && ManualExit.CanCloseAtAltrady(closedPosition.Object))

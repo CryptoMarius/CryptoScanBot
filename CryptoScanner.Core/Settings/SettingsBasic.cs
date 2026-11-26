@@ -17,8 +17,13 @@ public class SettingsBasic
 
     /// <summary>
     /// Trend settings
+    /// <para>
+    /// Fixed values, not part of the settings file since 20-11-2026: an old "Trend" block in a file
+    /// is ignored, see <see cref="SettingsTrend"/>.
+    /// </para>
     /// </summary>
-    public SettingsTrend Trend { get; set; } = new();
+    [System.Text.Json.Serialization.JsonIgnore]
+    public SettingsTrend Trend { get; } = new();
 
     /// <summary>
     /// Trading settings

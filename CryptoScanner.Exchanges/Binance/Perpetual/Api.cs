@@ -23,6 +23,7 @@ public class Api : ExchangeBase
         //Asset = new Asset();
         Candle = new Candle(this);
         Symbol = new Symbol();
+        Funding = new Funding();
         //Order = new Order();
         //Trade = new Trade();
     }

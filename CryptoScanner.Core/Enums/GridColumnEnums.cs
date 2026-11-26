@@ -94,6 +94,7 @@ public enum PositionColumnEnum
     Invested,
     Returned,
     Commission,
+    Funding,
     BreakEvenPrice,
     BreakEvenPercent,
     Quantity,

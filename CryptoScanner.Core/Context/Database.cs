@@ -642,6 +642,10 @@ public class CryptoDatabase : IDisposable
                 "SlMovedToBreakEven INTEGER NOT NULL DEFAULT 0," +
                 "TrailingStopPrice TEXT NULL," +
                 "TakeProfitTrailStopPrice TEXT NULL," +
+                // Manual "Position remove stop loss" override (migration 115)
+                "StopLossDisabled INTEGER NOT NULL DEFAULT 0," +
+                // The funding settled on the position, received positive, paid negative (migration 116)
+                "Funding TEXT NULL," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +

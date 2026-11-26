@@ -79,6 +79,14 @@ public static class QueueEntryApplier
             }
         }
 
+        // The volume filter of the session, replaced for this run on every quote coin. Put back by
+        // QueueBaseline.Restore, which keeps the session value of every quote.
+        if (entry.MinimalVolume.HasValue)
+        {
+            foreach (CryptoQuoteData quote in GlobalData.Settings.QuoteCoins.Values)
+                quote.MinimalVolume = entry.MinimalVolume.Value;
+        }
+
         List<SignalGridExpander.Override> overrides = SignalGridExpander.Apply(entry);
 
         // A stop given in TradingOverrides arrives AFTER the limit above was derived,

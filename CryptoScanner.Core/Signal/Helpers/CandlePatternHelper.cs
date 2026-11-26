@@ -59,10 +59,13 @@ public static class CandlePatternHelper
     /// Whether the candles ending at <paramref name="last"/> form the given pattern, read for the
     /// given side. <paramref name="previous"/> is the candle before it and <paramref name="before"/>
     /// the one before that; a pattern that needs fewer candles ignores what it does not use, and one
-    /// that needs more than was supplied returns false.
+    /// that needs more than was supplied returns false. <paramref name="earlier"/> holds the candles
+    /// before <paramref name="before"/>, newest first; only <see cref="CryptoCandlePattern.ThreeMethods"/>
+    /// reads them.
     /// </summary>
     public static bool Matches(CryptoCandlePattern pattern, CryptoTradeSide side,
-        in CryptoCandle last, CryptoCandle? previous, CryptoCandle? before, CandlePatternSettings settings)
+        in CryptoCandle last, CryptoCandle? previous, CryptoCandle? before, CandlePatternSettings settings,
+        IReadOnlyList<CryptoCandle>? earlier = null)
         => pattern switch
         {
             CryptoCandlePattern.Hammer => IsHammer(last, settings),
@@ -73,8 +76,81 @@ public static class CandlePatternHelper
             CryptoCandlePattern.MorningStar => previous is not null && before is not null
                 && IsMorningStar(last, previous.Value, before.Value, side, settings),
             CryptoCandlePattern.Tweezer => previous is not null && IsTweezer(last, previous.Value, side, settings),
+            CryptoCandlePattern.ThreeMethods => previous is not null && before is not null
+                && ThreeMethodsLength(side, last, previous.Value, before.Value, earlier, settings) > 0,
             _ => false,
         };
+
+
+    /// <summary>
+    /// How many candles the matched pattern spans, the last one included: one for the hammers, two
+    /// for engulfing, harami, piercing line and tweezer, three for the morning star, and four to six
+    /// for three methods. The caller uses it to find the candles a stop under the pattern and the
+    /// size check have to look at. Zero when the candles do not form the pattern.
+    /// </summary>
+    public static int PatternLength(CryptoCandlePattern pattern, CryptoTradeSide side,
+        in CryptoCandle last, CryptoCandle? previous, CryptoCandle? before, CandlePatternSettings settings,
+        IReadOnlyList<CryptoCandle>? earlier = null)
+    {
+        if (pattern == CryptoCandlePattern.ThreeMethods)
+        {
+            return previous is not null && before is not null
+                ? ThreeMethodsLength(side, last, previous.Value, before.Value, earlier, settings)
+                : 0;
+        }
+
+        if (!Matches(pattern, side, last, previous, before, settings, earlier))
+            return 0;
+
+        return pattern switch
+        {
+            CryptoCandlePattern.Hammer or CryptoCandlePattern.InvertedHammer => 1,
+            CryptoCandlePattern.MorningStar => 3,
+            _ => 2,
+        };
+    }
+
+
+    /// <summary>
+    /// Whether the pattern continues the move that was already going instead of reversing it. The
+    /// requirement that price first ran against the trade belongs to the reversals only.
+    /// </summary>
+    public static bool IsContinuation(CryptoCandlePattern pattern)
+        => pattern == CryptoCandlePattern.ThreeMethods;
+
+
+    /// <summary>
+    /// The price a stop under the pattern goes to, on candles given newest first with at least
+    /// <paramref name="length"/> of them: the lowest low of the pattern for a long, the highest high
+    /// for a short. Three methods is the exception: the stop goes beyond the FIRST candle, the
+    /// decisive one the small candles stayed inside of, not beyond the closing candle.
+    /// </summary>
+    public static decimal PatternStop(CryptoCandlePattern pattern, CryptoTradeSide side,
+        IReadOnlyList<CryptoCandle> newestFirst, int length)
+    {
+        if (pattern == CryptoCandlePattern.ThreeMethods)
+        {
+            CryptoCandle first = newestFirst[length - 1];
+            return side == CryptoTradeSide.Long ? first.Low : first.High;
+        }
+
+        decimal stop = side == CryptoTradeSide.Long ? decimal.MaxValue : decimal.MinValue;
+        for (int i = 0; i < length; i++)
+        {
+            stop = side == CryptoTradeSide.Long
+                ? Math.Min(stop, newestFirst[i].Low)
+                : Math.Max(stop, newestFirst[i].High);
+        }
+        return stop;
+    }
+
+
+    /// <summary>
+    /// The candles of the pattern whose body has to be large compared with the candles before it:
+    /// the last one, and for three methods also the first one. Indexes into the newest-first list.
+    /// </summary>
+    public static int[] DecisiveCandles(CryptoCandlePattern pattern, int length)
+        => pattern == CryptoCandlePattern.ThreeMethods ? [0, length - 1] : [0];
 
 
     /// <summary>
@@ -92,7 +168,7 @@ public static class CandlePatternHelper
     /// </summary>
     public static bool MatchesAny(List<string> names, CryptoTradeSide side,
         in CryptoCandle last, CryptoCandle? previous, CryptoCandle? before, CandlePatternSettings settings,
-        string setting, out CryptoCandlePattern matched)
+        string setting, out CryptoCandlePattern matched, IReadOnlyList<CryptoCandle>? earlier = null)
     {
         matched = default;
         foreach (string name in names)
@@ -103,7 +179,7 @@ public static class CandlePatternHelper
                     $"{setting} contains '{name}', which is not a CryptoCandlePattern");
             }
 
-            if (Matches(pattern, side, last, previous, before, settings))
+            if (Matches(pattern, side, last, previous, before, settings, earlier))
             {
                 matched = pattern;
                 return true;
@@ -222,6 +298,66 @@ public static class CandlePatternHelper
         return side == CryptoTradeSide.Long
             ? IsBearish(previous) && IsBullish(last) && Math.Abs(last.Low - previous.Low) <= tolerance
             : IsBullish(previous) && IsBearish(last) && Math.Abs(last.High - previous.High) <= tolerance;
+    }
+
+    /// <summary>The fewest and the most small candles between the two decisive ones of three methods.</summary>
+    public const int ThreeMethodsMinInside = 2;
+    public const int ThreeMethodsMaxInside = 4;
+
+    /// <summary>
+    /// Three methods: a decisive candle with the trade, two to four small candles that stay inside its
+    /// high and low with a smaller body each, and a candle with the trade that closes beyond the
+    /// first one - above its high going up, below its low going down. The colour of the small candles
+    /// is free. The fewest small candles that fit win, so the shortest reading is the one reported.
+    /// Returns how many candles the pattern spans, last one included, or zero.
+    /// </summary>
+    private static int ThreeMethodsLength(CryptoTradeSide side, in CryptoCandle last, in CryptoCandle previous,
+        in CryptoCandle before, IReadOnlyList<CryptoCandle>? earlier, CandlePatternSettings settings)
+    {
+        bool isLong = side == CryptoTradeSide.Long;
+        if (isLong ? !IsBullish(last) : !IsBearish(last))
+            return 0;
+
+        // Newest first: the last candle, then the ones before it. Copied, because a local function
+        // cannot capture an in-parameter.
+        CryptoCandle c0 = last, c1 = previous, c2 = before;
+        int available = 3 + (earlier?.Count ?? 0);
+        CryptoCandle At(int index) => index switch
+        {
+            0 => c0,
+            1 => c1,
+            2 => c2,
+            _ => earlier![index - 3],
+        };
+
+        for (int inside = ThreeMethodsMinInside; inside <= ThreeMethodsMaxInside; inside++)
+        {
+            int firstIndex = inside + 1;
+            if (firstIndex >= available)
+                break;
+
+            CryptoCandle first = At(firstIndex);
+            if (isLong ? !IsBullish(first) : !IsBearish(first))
+                continue;
+            if (BodyPercentage(first) < settings.MinBodyPercentage)
+                continue;
+
+            decimal firstBody = Math.Abs(first.Close - first.Open);
+            bool contained = true;
+            for (int i = 1; i <= inside && contained; i++)
+            {
+                CryptoCandle small = At(i);
+                contained = small.High <= first.High && small.Low >= first.Low
+                    && Math.Abs(small.Close - small.Open) < firstBody;
+            }
+            if (!contained)
+                continue;
+
+            if (isLong ? last.Close > first.High : last.Close < first.Low)
+                return firstIndex + 1;
+        }
+
+        return 0;
     }
 }
 

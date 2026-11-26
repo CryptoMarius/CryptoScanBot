@@ -304,6 +304,29 @@ public partial class PositionViewModel : BaseConvertersViewModel
     }
 
 
+    // The funding settled on the position (received +, paid -)
+    private string? _FundingText;
+    public string Funding
+    {
+        get
+        {
+            if (_FundingText == null)
+            {
+                if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
+                    _FundingText = "-";
+                else
+                    _FundingText = Object.Funding.ToString(Object.Symbol.QuoteData.DisplayFormat);
+            }
+            return _FundingText!;
+        }
+        set
+        {
+            _FundingText = null;
+            OnPropertyChanged(nameof(Funding));
+        }
+    }
+
+
     //public decimal TotalProfit => Object.Profit;
     private string? _TotalProfitText;
     public string TotalProfit

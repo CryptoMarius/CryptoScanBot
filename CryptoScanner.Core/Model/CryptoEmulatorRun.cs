@@ -276,5 +276,18 @@ public static class CryptoPositionDigest
         // the signal price, not from the averaged-down entry, so it is the move the position sat
         // through. Null in digests written before that day.
         "adverse",
+        // Appended 24-11-2026: the funding settled on the position (Position.Funding), received
+        // positive, paid negative, in the quote. Already part of "profit". Null in digests written
+        // before that day and for a position that never had any.
+        "funding",
+        // Appended 26-11-2026, so the Run positions window of an older run shows what the Position
+        // table showed: "price" is the signal price (Position.SignalPrice) and "sl" the stop-loss
+        // distance in percent (Position.SlPercentage). "openPnl" is the result of a position still open
+        // at the end of the run, valued at the price of the run's last snapshot day (ReplayRunner takes
+        // that one again on the last replayed minute when the run ends) - the same
+        // valuation as the run's Unrealized PnL (EmulatorDb.OpenPositionValueSql), funding included.
+        // Null for a closed position (its result is "profit"), for an entry that never filled, and
+        // in digests written before that day.
+        "price", "sl", "openPnl",
     ];
 }

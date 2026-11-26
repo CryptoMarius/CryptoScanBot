@@ -7,32 +7,6 @@ using System.Windows.Input;
 
 namespace CryptoScanner.Commands;
 
-public enum CommandEnum
-{
-    None,
-    ActivateTradingApp,
-    ActivateActiveExchange,
-    ActivateTradingviewIntern,
-    ActivateTradingviewExtern,
-    ShowTrendInformation,
-    ExcelSignalInformation,
-    ExcelSignalsInformation,
-    ExcelSymbolInformation,
-    ExcelExchangeInformation,
-    ExcelPositionInformation,
-    ExcelPositionsInformation,
-    CopyDataGridCells,
-    CopySymbolInformation,
-    ScannerSessionDebug,
-    PositionCalculate,
-    TradingViewImportList,
-    ShowSymbolGraph,
-    About,
-    CalculateAllLiquidityZones,
-    CalculateSymbolLiquidityZones,
-    CommandActivateTradingAppAndTv,
-}
-
 public abstract class CommandBase : ICommand
 {
     public event EventHandler? CanExecuteChanged;

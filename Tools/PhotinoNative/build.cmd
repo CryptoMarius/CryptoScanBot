@@ -3,7 +3,7 @@ setlocal
 
 rem ==========================================================================
 rem  Builds a patched Photino.Native.dll (x64, Release) with the web message
-rem  leak fixed, and drops it next to this file. CryptoScanner.Photino.csproj
+rem  leak and the Invoke race fixed, and drops it next to this file. CryptoScanner.Photino.csproj
 rem  copies that dll over the one from the Photino.Native package on every
 rem  build and publish, as long as it is here.
 rem
@@ -15,10 +15,11 @@ rem            --installPath "F:\Microsoft Visual Studio\18\Community"
 rem            --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended --passive
 rem    - git on the path (the source is cloned into %TEMP%).
 rem
-rem  Change VS_ROOT if Visual Studio lives somewhere else.
+rem  Change VS_ROOT if Visual Studio lives somewhere else. Set SRC beforehand to clone
+rem  somewhere other than %TEMP%.
 rem ==========================================================================
 set "VS_ROOT=F:\Microsoft Visual Studio\18\Community"
-set "SRC=%TEMP%\photino.Native"
+if not defined SRC set "SRC=%TEMP%\photino.Native"
 set "HERE=%~dp0"
 
 call "%VS_ROOT%\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64 >nul
@@ -35,6 +36,7 @@ if not exist "%SRC%\.git" (
 pushd "%SRC%"
 git checkout -q -- .
 git apply --whitespace=nowarn "%HERE%photino-native-webmessage-leak.patch" || (echo Patch did not apply - upstream changed? & popd & exit /b 1)
+git apply --whitespace=nowarn "%HERE%photino-native-invoke-race.patch" || (echo Invoke race patch did not apply - upstream changed? & popd & exit /b 1)
 
 rem packages.config restore (WebView2 SDK and WIL). MSBuild downloads them into the global
 rem packages folder, but the project looks for them in ..\packages next to the solution in the

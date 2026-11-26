@@ -7,7 +7,7 @@ using CryptoScanner.Core.Signal.Indicators;
 namespace CryptoScanner.Analyzers.Bbma.Signal;
 
 // DEBUG only, like the rest of BBMA Omni (see SignalBbmaOmniBase).
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
 
 /// <summary>
 /// The running TPW forward pass of one side (the MQ5 tpwbuy or tpwsell counter plus what it

@@ -14,6 +14,7 @@ using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Sounds;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
 using CryptoScanner.Emulator.Engine;
@@ -121,6 +122,10 @@ public partial class MainWindowViewModel : ObservableObject
 
 
     private CancellationTokenSource? _cts;
+
+    // The run row the last RunOnceAsync created, or null when it created none (a duplicate that was
+    // not replayed). The queue needs it to tell a real repeat from a skipped one (ReplacesRun).
+    private int? _lastStartedRunId;
 
     // The pause of the folder queue between two looks into the Queue folder; cancelled by Stop.
     private CancellationTokenSource? _waitCts;
@@ -400,6 +405,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
         finally
         {
+            PlayStoppedAfterRunSound();
             _stopAfterRun = false;
             IsRunning = false;
         }
@@ -514,6 +520,7 @@ public partial class MainWindowViewModel : ObservableObject
                     // 31-10-2026 they fell back to the class defaults here, so "Run algorithms…"
                     // measured the barometer where Start did not, and the fingerprints differed.
                     CalculateBarometer = baseConfig.CalculateBarometer,
+                    BookFunding = baseConfig.BookFunding,
                     DuplicateCheckDays = baseConfig.DuplicateCheckDays,
                     Label =labelRest.Length > 0 ? $"{algorithm.Name} {labelRest}" : algorithm.Name,
                 };
@@ -536,6 +543,7 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Signal.Short.Strategy = savedSignalShortStrategy;
             GlobalData.Settings.Trading.Long.Strategy = savedTradingLongStrategy;
             GlobalData.Settings.Trading.Short.Strategy = savedTradingShortStrategy;
+            PlayStoppedAfterRunSound();
             _stopAfterRun = false;
             IsRunning = false;
         }
@@ -656,7 +664,10 @@ public partial class MainWindowViewModel : ObservableObject
                 }
 
                 GlobalData.AddTextToLogTab($"Queue folder: starting {name} with {queue.Count} entries");
-                bool finished = await RunQueueEntriesAsync(queue, baseConfig, name, file);
+                // A priority file is started between two entries of an ordinary file, never of another
+                // priority file (they simply follow each other in name order).
+                bool yieldToPriority = !EmulatorQueueFolder.IsPriority(file);
+                bool finished = await RunQueueEntriesAsync(queue, baseConfig, name, file, yieldToPriority, stuck);
 
                 // A file can GROW while its entries are running. The queue is read once when the
                 // file is picked up, so entries added after that never ran and travelled to Done
@@ -688,7 +699,7 @@ public partial class MainWindowViewModel : ObservableObject
                     GlobalData.AddTextToLogTab(
                         $"Queue folder: {name} grew from {processed} to {reread.Count} entries while it was "
                         + $"running; starting the {added.Count} that were added");
-                    finished = await RunQueueEntriesAsync(added, baseConfig, name, file);
+                    finished = await RunQueueEntriesAsync(added, baseConfig, name, file, yieldToPriority, stuck);
                     processed = reread.Count;
                 }
 
@@ -712,7 +723,57 @@ public partial class MainWindowViewModel : ObservableObject
             IsRunning = false;
             Status = _stopAfterRun ? "Queue folder stopped after the run in progress." : "Queue folder stopped.";
             GlobalData.AddTextToLogTab(_stopAfterRun ? "Queue folder: stopped after the run in progress" : "Queue folder: stopped watching");
+            PlayStoppedAfterRunSound();
             _stopAfterRun = false;
+        }
+    }
+
+
+    /// <summary>
+    /// Runs the priority files (<see cref="EmulatorQueueFolder.PriorityPrefix"/>) that are waiting in the
+    /// Queue folder, between two entries of <paramref name="waitingFile"/>. That file stays where it
+    /// is and goes on with its next entry afterwards. A priority file that is done moves to Done (or
+    /// Failed) as in the main loop; one that was stopped stays, and is the first file of the next start.
+    /// </summary>
+    private async Task RunPriorityFilesAsync(EmulatorRunConfig baseConfig, HashSet<string> stuck, string waitingFile)
+    {
+        while (!_stopRequested && !_stopAfterRun)
+        {
+            string? file = EmulatorQueueFolder.PickNextPriority(EmulatorQueueFolder.Folder, DateTime.UtcNow,
+                EmulatorQueueFolder.SettleTime, stuck);
+            if (file == null)
+                return;
+
+            string name = Path.GetFileName(file);
+            GlobalData.AddTextToLogTab(
+                $"Queue folder: priority file {name} goes first; {waitingFile} waits and continues with its next entry afterwards");
+
+            List<EmulatorQueueEntry> queue;
+            try
+            {
+                queue = EmulatorQueueFile.LoadFrom(file);
+            }
+            catch (Exception ex)
+            {
+                string? failed = TryMoveQueueFile(file, EmulatorQueueFolder.FailedFolder, stuck);
+                GlobalData.AddErrorToLogTab(
+                    $"Queue folder: {name} cannot be read — {ex.GetType().Name}: {ex.Message}"
+                    + (failed != null ? $"; moved to {failed}" : ""));
+                continue;
+            }
+
+            bool finished = queue.Count == 0 || await RunQueueEntriesAsync(queue, baseConfig, name, file);
+            if (_stopRequested)
+            {
+                GlobalData.AddTextToLogTab($"Queue folder: stopped during priority file {name} — the file stays in the folder");
+                return;
+            }
+
+            string? target = TryMoveQueueFile(file,
+                finished ? EmulatorQueueFolder.DoneFolder : EmulatorQueueFolder.FailedFolder, stuck);
+            GlobalData.AddTextToLogTab(
+                $"Queue folder: priority file {name} {(finished ? "finished" : "could not run, see the lines above")}"
+                + (target != null ? $"; moved to {target}" : "") + $"; going on with {waitingFile}");
         }
     }
 
@@ -799,8 +860,11 @@ public partial class MainWindowViewModel : ObservableObject
     /// Force can have that flag turned off in it afterwards; null when there is no file to edit.</param>
     /// <returns>True when the batch ran to its end (failed runs included); false when it could not
     /// start or was stopped.</returns>
+    /// <param name="yieldToPriority">True to start the waiting priority files of the Queue folder
+    /// between two entries (<see cref="RunPriorityFilesAsync"/>).</param>
+    /// <param name="stuck">The files the folder loop could not move away, for the priority files.</param>
     private async Task<bool> RunQueueEntriesAsync(List<EmulatorQueueEntry> queue, EmulatorRunConfig baseConfig,
-        string source, string? queueFilePath = null)
+        string source, string? queueFilePath = null, bool yieldToPriority = false, HashSet<string>? stuck = null)
     {
         // Check EVERY entry before the first run instead of discovering a bad one hours later. An
         // entry that asks for a setting the code no longer has cannot run, and until 03-09-2026 that
@@ -809,9 +873,27 @@ public partial class MainWindowViewModel : ObservableObject
         // never ran. Now the batch says so at the start - when someone is still watching - and runs
         // everything that CAN run.
         HashSet<int> blockedEntries = [];
+        // The stored settings of the run an entry starts from (SettingsFromRun), by entry index
+        Dictionary<int, string> runSnapshots = [];
         for (int i = 0; i < queue.Count; i++)
         {
             string? reason = SignalGridExpander.Validate(queue[i]);
+
+            if (reason == null && !string.IsNullOrWhiteSpace(queue[i].SettingsFromRun))
+            {
+                try
+                {
+                    var (snapshotJson, loadError) = QueueSourceCheck.LoadSourceSettings(queue[i].SettingsFromRun!);
+                    if (snapshotJson != null)
+                        runSnapshots[i] = snapshotJson;
+                    else
+                        reason = $"settings from run {queue[i].SettingsFromRun}: {loadError}";
+                }
+                catch (Exception lx)
+                {
+                    reason = $"settings from run {queue[i].SettingsFromRun}: {lx.GetType().Name}: {lx.Message}";
+                }
+            }
 
             // An entry that repeats an earlier run must produce that run's settings (13-11-2026)
             if (reason == null)
@@ -1011,13 +1093,35 @@ public partial class MainWindowViewModel : ObservableObject
                         && !entry.Algorithm.Equals(algorithm.Name, StringComparison.OrdinalIgnoreCase))
                         continue;
 
+                    // A priority file that was put in the folder meanwhile goes first; this file
+                    // waits and goes on with this entry afterwards.
+                    if (yieldToPriority && queueFilePath != null)
+                    {
+                        await RunPriorityFilesAsync(baseConfig, stuck ?? [], Path.GetFileName(queueFilePath));
+                        if (_stopRequested || _stopAfterRun)
+                            return false;
+                    }
+
                     runIndex++;
 
                     // Reset all side filters to saved values (clean slate per entry)
                     // Since 09-11-2026 the clean slate is the defaults from the code, not the settings of the
                     // session: whatever the entry does not spell out is the same for every run, whatever the
                     // settings file holds at the moment (see QueueBaseline). Put back in the finally below.
-                    QueueBaseline.Install();
+                    // An entry with SettingsFromRun starts from the settings stored on that run instead
+                    try
+                    {
+                        QueueBaseline.Install(runSnapshots.GetValueOrDefault(i));
+                    }
+                    catch (Exception bx)
+                    {
+                        QueueBaseline.Restore();
+                        failedRuns++;
+                        GlobalData.AddErrorToLogTab(
+                            $"Queue: entry {i + 1} \"{entry.Label}\" skipped — settings from run {entry.SettingsFromRun}: "
+                            + $"{bx.GetType().Name}: {bx.Message}");
+                        continue;
+                    }
                     GlobalData.Settings.Signal.Long.Strategy = [algorithm.Name];
                     GlobalData.Settings.Signal.Short.Strategy = [algorithm.Name];
                     GlobalData.Settings.Trading.Long.Strategy = [algorithm.Name];
@@ -1087,14 +1191,16 @@ public partial class MainWindowViewModel : ObservableObject
                         // Symbols the entry leaves out. The filtered list goes into the run
                         // configuration, so it also reaches the checksum of the duplicate check and
                         // a run without those coins is never mistaken for the run with them.
-                        List<string> runSymbols = baseConfig.Symbols;
+                        // An entry can name its own symbols (a repeated run keeps the coins it had).
+                        List<string> entrySymbols = entry.Symbols is { Count: > 0 } ? entry.Symbols : baseConfig.Symbols;
+                        List<string> runSymbols = entrySymbols;
                         if (entry.ExcludeSymbols is { Count: > 0 })
                         {
                             HashSet<string> excluded = new(entry.ExcludeSymbols, StringComparer.OrdinalIgnoreCase);
-                            runSymbols = [.. baseConfig.Symbols.Where(s => !excluded.Contains(s))];
+                            runSymbols = [.. entrySymbols.Where(s => !excluded.Contains(s))];
                             GlobalData.AddTextToLogTab(
                                 $"Queue: entry {i + 1} \"{entry.Label}\" replays {runSymbols.Count} of "
-                                + $"{baseConfig.Symbols.Count} symbols, {baseConfig.Symbols.Count - runSymbols.Count} left out");
+                                + $"{entrySymbols.Count} symbols, {entrySymbols.Count - runSymbols.Count} left out");
                         }
 
                         EmulatorRunConfig runConfig = new()
@@ -1109,6 +1215,7 @@ public partial class MainWindowViewModel : ObservableObject
                             // barometer that difference is a measurement, and the duplicate window
                             // decides whether this entry is replayed at all.
                             CalculateBarometer = entry.CalculateBarometer ?? baseConfig.CalculateBarometer,
+                            BookFunding = entry.Funding ?? baseConfig.BookFunding,
                             //SerialTradeHalf = entry.SerialTradeHalf ?? baseConfig.SerialTradeHalf,
                             DuplicateCheckDays = baseConfig.DuplicateCheckDays,
                             Label = runLabel,
@@ -1147,6 +1254,26 @@ public partial class MainWindowViewModel : ObservableObject
                             GlobalData.AddTextToLogTab(
                                 $"Queue: entry {i + 1} \"{entry.Label}\" ran with Force - the flag is turned off in "
                                 + $"{Path.GetFileName(queueFilePath)}, so a restart skips it as a duplicate");
+
+                        // A repeat from "Run again" replaces the run it repeats: the original goes once
+                        // the repeat is in the database, so the Results tab holds one row per experiment.
+                        // Only after a run that really ran - a duplicate that was skipped created no row.
+                        if (completed && entry.ReplacesRun is int replacedRunId
+                            && _lastStartedRunId is int newRunId && newRunId != replacedRunId)
+                        {
+                            try
+                            {
+                                EmulatorDb.DeleteRuns([replacedRunId]);
+                                RunResults.Refresh();
+                                GlobalData.AddTextToLogTab(
+                                    $"Queue: run #{newRunId} repeats run #{replacedRunId} - the original run is deleted");
+                            }
+                            catch (Exception dx)
+                            {
+                                GlobalData.AddErrorToLogTab(
+                                    $"Queue: deleting the original run #{replacedRunId} failed — {dx.Message}");
+                            }
+                        }
 
                         if (!completed)
                         {
@@ -1337,6 +1464,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         ProgressValue = 0;
         Status = $"Starting run \"{config.Label}\"";
+        _lastStartedRunId = null;
 
         // ApplyRunOverrides switches FetchCandles on for the quote coin of every run symbol, on the
         // shared quote objects of the settings. Put back after the run (31-10-2026): left on, the
@@ -1402,6 +1530,7 @@ public partial class MainWindowViewModel : ObservableObject
             string? gitSha = GetGitShortSha();
             run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label,
                 settingsJson, gitSha, GetBuildStamp());
+            _lastStartedRunId = run.Id;
             GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
 
             // RunParallel deliberately not set here: TickRunner owns the default, so it can be changed
@@ -1495,6 +1624,27 @@ public partial class MainWindowViewModel : ObservableObject
     /// Lets the run in progress finish and starts nothing after it - no cancelled, half-measured run.
     /// When the folder queue is only waiting for a new file it stops right away.
     /// </summary>
+    /// <summary>
+    /// Plays a sound when a batch ended because "Stop after this run" was pressed, so whoever pressed
+    /// it hears that the run in progress has finished and the emulator is free. Played as a test
+    /// sound: it does not depend on the sound switch of the scanner settings, which the queue puts
+    /// on its defaults, and it is not held back by the repeat filter of the sound player.
+    /// </summary>
+    private void PlayStoppedAfterRunSound()
+    {
+        if (!_stopAfterRun)
+            return;
+        try
+        {
+            ThreadSoundPlayer.AddToQueue("sound-trade-notification.wav", true);
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddTextToLogTab($"Stop after this run: the sound could not be played — {ex.Message}");
+        }
+    }
+
+
     [RelayCommand]
     private void StopAfterRun()
     {

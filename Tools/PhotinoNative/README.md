@@ -80,3 +80,42 @@ reset and the whole table repaints. `MainLayout.razor` now skips that when the s
 collapsed or the Distance column is hidden. The small ones are the dashboard tick (2 s), the log
 pump (2 s) and the live data pump (3 s), the same intervals the Avalonia scanner uses; they were
 left alone.
+
+## The second patch: the Invoke race
+
+`photino-native-invoke-race.patch` fixes a crash, not a leak. `Photino::Invoke` (called by
+`PhotinoWindow.Invoke` from any thread other than the UI thread) puts its wait record, a mutex
+protected flag plus a `std::condition_variable`, on the stack of the calling thread, posts
+`WM_USER_INVOKE` and waits. The window procedure runs the callback, sets the flag under the lock,
+releases the lock and only then calls `notify_one`. In that gap the calling thread can see the
+flag, return and reuse its stack, so `notify_one` reads and writes whatever lives there by then.
+The patch moves `notify_one` inside the lock (Windows and Linux code paths both had it).
+
+How it was found: the crash dump of HyperLiquid Perpetual of 21-11-2026 has the UI thread in
+`ntdll!RtlpWakeConditionVariable` called from `WM_USER_INVOKE`, on a condition variable address in
+the stack of a thread that had already started its next `Photino_Invoke`; the slot held a coreclr
+code address. The coreclr frames on top are only the failing exception handling.
+
+Proof: `E:\Claude\claudeTestPhotinoInvoke` (not part of the repository) is a small Photino window
+with eight threads calling `Invoke` with an empty callback as fast as they can, each scribbling over
+its own stack after every call. With the package dll it dies with an access violation on the UI
+thread; see the results below.
+
+Results on 21-11-2026 (8 threads, stack scribbling on):
+
+| Dll | Run | Invokes | Outcome |
+|---|---|---|---|
+| package 4.0.22 | 1 | 4.7 million | access violation after 20 s |
+| package 4.0.22 | 2 | 11.2 million | no crash in 120 s |
+| package 4.0.22 | 3 | 10.3 million | access violation after 105 s |
+| package 4.0.22 | 4 | 0.5 million | access violation after 5 s |
+| Invoke race patch only | 1 | 24.2 million | no crash in 300 s |
+| both patches (the dll next to this file) | 1 | 25.1 million | no crash in 300 s |
+
+The package dll crashed about once per 9 million calls; at that rate 24 million calls without a
+crash happens by luck in about 7 percent of runs, so two clean runs in a row is about 0.5 percent.
+Without the stack scribbling the package dll survived 11.8 million calls: the crash needs the freed
+stack slot to hold a nonzero value, which in the scanner is whatever code ran on that thread next.
+
+The patched dll built on 21-11-2026 has md5 039ed4d8509e8e86cce9c331262dfa06 (the leak-only build
+of 03-09-2026 was 06963d84f168bca6663a723912f631d2).

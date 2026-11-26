@@ -46,7 +46,12 @@
          access violations of the Photino scanners (first one on 22-09, after the patched dll of
          03-09; again on 09-11, 13-11 and 17-11) stop. The memory leak above comes back with it.
          Set this to false (or pass -p:UseOriginalPhotinoNative=false) to use the patched dll again. -->
-    <UseOriginalPhotinoNative Condition="'$(UseOriginalPhotinoNative)' == ''">true</UseOriginalPhotinoNative>
+    <!-- 21-11-2026: the original dll crashed too (HyperLiquid Perpetual, 21-11). The cause is a race
+         in Photino::Invoke (notify_one after the lock is released, on a wait record that lives on the
+         stack of the calling thread); see Tools\PhotinoNative\README.md. The patched dll now carries
+         that fix as well, so it is the default again. Pass -p:UseOriginalPhotinoNative=true for the
+         package's dll. -->
+    <UseOriginalPhotinoNative Condition="'$(UseOriginalPhotinoNative)' == ''">false</UseOriginalPhotinoNative>
     <UsePatchedPhotinoNative Condition="'$(UseOriginalPhotinoNative)' != 'true' And Exists('$(PatchedPhotinoNative)') And ('$(RuntimeIdentifier)' == '' Or '$(RuntimeIdentifier)' == 'win-x64')">true</UsePatchedPhotinoNative>
   </PropertyGroup>
   <!-- A build without a runtime identifier keeps the native dll under runtimes\win-x64\native and

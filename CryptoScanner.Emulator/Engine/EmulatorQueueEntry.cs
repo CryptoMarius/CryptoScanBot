@@ -426,6 +426,36 @@ public class EmulatorQueueEntry
     public List<string>? AcceptedSourceDifferences { get; set; }
 
     /// <summary>
+    /// The run whose stored settings are the starting point of this entry, as "Session1/1951" (a
+    /// session folder next to this one) or "1951" (a run of this session). Without it an entry starts
+    /// from the defaults of the code (<see cref="QueueBaseline"/>); with it the signal and trading
+    /// settings, the plugin settings, the paper assets and the entry amounts of the quote coins come
+    /// from the snapshot stored on that run, and the keys of the entry are laid over them as usual.
+    /// A setting the run did not know yet (added by a later build) keeps its default.
+    /// <para>
+    /// Written by the "Run again" choice of the Results tab (24-11-2026), which repeats a run without
+    /// spelling out every setting as an override.
+    /// </para>
+    /// </summary>
+    public string? SettingsFromRun { get; set; }
+
+    /// <summary>
+    /// The run of this session that this entry repeats. Once the repeat has completed as a new run,
+    /// that original run is deleted, so the Results tab does not show the same experiment twice
+    /// (25-11-2026). Nothing is deleted when the repeat was stopped, failed, or was skipped as a
+    /// duplicate. Written by the "Run again" choice of the Results tab; a hand-written entry with
+    /// only <see cref="SettingsFromRun"/> leaves its source run alone.
+    /// </summary>
+    public int? ReplacesRun { get; set; }
+
+    /// <summary>
+    /// The symbols this run replays, in place of the symbol list of the run configuration. Null or
+    /// empty keeps the list of the run configuration. <see cref="ExcludeSymbols"/> still applies on
+    /// top. A symbol without candles in the database simply produces nothing.
+    /// </summary>
+    public List<string>? Symbols { get; set; }
+
+    /// <summary>
     /// Stop-loss percentage for this run (e.g. 2.5). Omitted = the settings decide (since
     /// 31-10-2026; before that a missing key ran on 2%). The stop limit follows it at one percent
     /// further, unless TradingOverrides set StopLossLimitPercentage.
@@ -485,6 +515,27 @@ public class EmulatorQueueEntry
     /// Null or omitted keeps it on. A run with barometer conditions refuses to start when it is off.
     /// </summary>
     public bool? CalculateBarometer { get; set; }
+
+    /// <summary>
+    /// Books the funding of the perpetuals on the open positions of this run (see
+    /// EmulatorRunConfig.BookFunding). Null or omitted follows the run configuration, which has it
+    /// off: a series stays comparable with the runs measured before the funding was fetched, and a
+    /// strategy that holds positions for days (xsmom) switches it on.
+    /// </summary>
+    public bool? Funding { get; set; }
+
+    /// <summary>
+    /// The minimal 24 hour quote volume of a symbol for this run, on every quote coin, in place of the
+    /// MinimalVolume of the session (e.g. 0 = no volume filter). Null or omitted keeps the session
+    /// value. Meant for a strategy that picks its coins on volume itself (xsmom), where the filter of
+    /// the session would refuse coins the strategy selected.
+    /// <para>
+    /// The value is part of the stored settings of the run (QuoteCoins), so it reaches the duplicate
+    /// check and the run shows what it ran with. The barometer also reads it, so a run with another
+    /// value measures the barometer over another set of coins.
+    /// </para>
+    /// </summary>
+    public double? MinimalVolume { get; set; }
 
     /// <summary>
     /// Runs the trade half of every minute serially (true) or the whole pipeline in parallel (false),

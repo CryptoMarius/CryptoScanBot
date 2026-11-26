@@ -122,6 +122,8 @@ public partial class MainWindowViewModel : ObservableObject
         FilterTextChanged += SymbolGridViewModel.OnFilterTextChanged;
         FilterTextChanged += SignalGridViewModel.OnFilterTextChanged;
         FilterTextChanged += LiveDataGridViewModel.OnFilterTextChanged;
+        FilterTextChanged += PositionOpenGridViewModel.OnFilterTextChanged;
+        FilterTextChanged += PositionClosedGridViewModel.OnFilterTextChanged;
 
         App.EventOpenInInternalBrowser += OnOpenInInternalBrowserRequested;
 

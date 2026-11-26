@@ -6,7 +6,7 @@ namespace CryptoScanner.Analyzers.SuperTrendBreakout.Signal;
 // DEBUG only: everything below reads CryptoData.SuperTrend / SuperTrendUpperBand /
 // SuperTrendLowerBand, and those three fields only exist in a Debug build. See
 // CryptoData.SuperTrend and SuperTrendBreakoutPlugin.Strategies.
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
 
 public class SignalSuperTrendBreakoutShort : SignalSuperTrendBreakoutBase
 {

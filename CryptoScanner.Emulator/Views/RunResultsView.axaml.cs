@@ -464,6 +464,69 @@ public partial class RunResultsView : UserControl
     // itself and is not affected.
 
 
+    /// <summary>
+    /// Repeats the selected runs: a priority queue file with one entry per run, on the settings and the
+    /// run configuration stored on that run (EmulatorRerunQueue). It goes before every other queue file,
+    /// also between two entries of a file that is running. When the emulator is idle the queue folder
+    /// is started, so the repeats begin right away.
+    /// </summary>
+    private async void OnRunAgainClick(object? sender, RoutedEventArgs e)
+    {
+        List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+        if (DataContext is not RunResultsViewModel viewModel)
+            return;
+        if (rows.Count == 0)
+        {
+            viewModel.Status = "Select one or more runs to run again.";
+            return;
+        }
+
+        bool busy = IsEmulatorBusy();
+        string which = rows.Count == 1 ? $"run #{rows[0].Id}" : $"these {rows.Count} runs";
+        string message = $"Run {which} again?\n\n"
+            + "A queue file is written that goes before every other queue file, with the settings, coins and period "
+            + "stored on each run. "
+            + "Once a repeat has completed, the original run is deleted. "
+            + (busy
+                ? "The queue that is going picks it up after the run in progress."
+                : "The queue folder is started right away; after these runs it goes on with the other queue files.");
+        if (!await ConfirmAsync(owner, "Run again", message, "Run again"))
+            return;
+
+        EmulatorRerunQueue.Result result;
+        try
+        {
+            result = EmulatorRerunQueue.Write([.. rows.Select(r => r.Id)]);
+        }
+        catch (Exception ex)
+        {
+            viewModel.Status = $"Run again failed: {ex.Message}";
+            GlobalData.AddErrorToLogTab($"Run again: the queue file could not be written — {ex.GetType().Name}: {ex.Message}");
+            return;
+        }
+
+        foreach (string skipped in result.Skipped)
+            GlobalData.AddErrorToLogTab($"Run again: {skipped}");
+        if (result.FilePath == null)
+        {
+            viewModel.Status = "Run again: none of the selected runs can be repeated — see the log.";
+            return;
+        }
+
+        string name = Path.GetFileName(result.FilePath);
+        GlobalData.AddTextToLogTab($"Run again: {result.Queued.Count} run(s) in {name} ({string.Join(", ", result.Queued.Select(id => "#" + id))})");
+        viewModel.Status = $"Run again: {result.Queued.Count} run(s) queued first in {name}"
+            + (result.Skipped.Count > 0 ? $", {result.Skipped.Count} skipped (see the log)" : "");
+
+        // Idle: start the queue folder. A queue that is going picks the file up by itself.
+        if (!IsEmulatorBusy() && TopLevel.GetTopLevel(this)?.DataContext is MainWindowViewModel main
+            && main.RunQueueFolderCommand.CanExecute(null))
+            main.RunQueueFolderCommand.Execute(null);
+    }
+
+
     private async void OnTakeOverSettingsClick(object? sender, RoutedEventArgs e)
     {
         List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();

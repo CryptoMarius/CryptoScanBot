@@ -1,0 +1,38 @@
+diff --git a/Photino.Native/Photino.Linux.cpp b/Photino.Native/Photino.Linux.cpp
+index fff9257..24fe87c 100644
+--- a/Photino.Native/Photino.Linux.cpp
++++ b/Photino.Native/Photino.Linux.cpp
+@@ -741,10 +741,12 @@ static gboolean invokeCallback(gpointer data)
+ 	InvokeWaitInfo *waitInfo = (InvokeWaitInfo *)data;
+ 	waitInfo->callback();
+ 	{
++		// Notify while still holding the lock: waitInfo lives on the stack of the thread in
++		// Photino::Invoke, which may return and reuse that stack as soon as the lock is released.
+ 		std::lock_guard<std::mutex> guard(invokeLockMutex);
+ 		waitInfo->isCompleted = true;
++		waitInfo->completionNotifier.notify_one();
+ 	}
+-	waitInfo->completionNotifier.notify_one();
+ 	return false;
+ }
+ 
+diff --git a/Photino.Native/Photino.Windows.cpp b/Photino.Native/Photino.Windows.cpp
+index 8e51e6f..3a4c911 100644
+--- a/Photino.Native/Photino.Windows.cpp
++++ b/Photino.Native/Photino.Windows.cpp
+@@ -420,10 +420,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+ 		callback();
+ 		InvokeWaitInfo* waitInfo = (InvokeWaitInfo*)lParam;
+ 		{
++			// Notify while still holding the lock. waitInfo lives on the stack of the thread in
++			// Photino::Invoke; once the lock is released that thread can see isCompleted, return and
++			// reuse its stack, and a notify_one after the lock then writes into whatever is there now.
++			// That crashed the process with an access violation in RtlpWakeConditionVariable.
+ 			std::lock_guard<std::mutex> guard(invokeLockMutex);
+ 			waitInfo->isCompleted = true;
++			waitInfo->completionNotifier.notify_one();
+ 		}
+-		waitInfo->completionNotifier.notify_one();
+ 		//delete waitInfo; ?
+ 		return 0;
+ 	}

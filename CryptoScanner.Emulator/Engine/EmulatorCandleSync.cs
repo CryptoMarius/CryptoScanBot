@@ -133,8 +133,63 @@ public static class EmulatorCandleSync
         if (config.Symbols.Count == 0)
             return new CandleFetchResult(0, 0, false, "Run config has no symbols — edit CryptoScanBot-Emulator.json first.");
 
+        // The coins queue entries name themselves (EmulatorQueueEntry.Symbols) come along, so a run on
+        // its own coin list finds its candles and funding without editing the run configuration
+        List<string> symbols = [.. config.Symbols];
+        List<string> fromQueue = QueueSymbolsOutside(config.Symbols, EmulatorQueueFolder.Folder);
+        if (fromQueue.Count > 0)
+        {
+            symbols.AddRange(fromQueue);
+            GlobalData.AddTextToLogTab($"Fetch candles: {fromQueue.Count} symbol(s) from the queue files on top of the "
+                + $"{config.Symbols.Count} of the run configuration");
+        }
+
         // The end of the window: the run config's ToDate, or the moment of an update
-        return await FetchCandlesForSymbolsAsync(config.Symbols, config.FromDate, until ?? config.ToDate, until.HasValue, status, cancellationToken, progress);
+        return await FetchCandlesForSymbolsAsync(symbols, config.FromDate, until ?? config.ToDate, until.HasValue, status, cancellationToken, progress);
+    }
+
+
+    /// <summary>
+    /// The symbols named by the queue entries in <paramref name="queueFolder"/> that are not in
+    /// <paramref name="known"/>, in the order they are first named. Every file in the folder itself
+    /// counts, parked ones (".json.na-nieuwe-build") included, so the candles can be fetched before a
+    /// file is released; Done and Failed do not. A file that cannot be read is skipped: fetching is
+    /// not the place to judge a queue file, the queue itself reports it.
+    /// </summary>
+    internal static List<string> QueueSymbolsOutside(IReadOnlyCollection<string> known, string queueFolder)
+    {
+        List<string> extra = [];
+        if (!Directory.Exists(queueFolder))
+            return extra;
+
+        HashSet<string> seen = new(known, StringComparer.OrdinalIgnoreCase);
+        foreach (string file in Directory.GetFiles(queueFolder).Order(StringComparer.Ordinal))
+        {
+            if (!Path.GetFileName(file).Contains(".json", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            List<EmulatorQueueEntry> entries;
+            try
+            {
+                entries = EmulatorQueueFile.LoadFrom(file);
+            }
+            catch (Exception)
+            {
+                continue;
+            }
+
+            foreach (EmulatorQueueEntry entry in entries)
+            {
+                if (entry.Symbols == null)
+                    continue;
+                foreach (string symbol in entry.Symbols)
+                {
+                    if (!string.IsNullOrWhiteSpace(symbol) && seen.Add(symbol))
+                        extra.Add(symbol);
+                }
+            }
+        }
+        return extra;
     }
 
 
@@ -365,6 +420,10 @@ public static class EmulatorCandleSync
                     CandleDatabase.SaveCandlesForSymbol(candleDb.Connection, symbol);
                     EmulatorHistoryAskedStore.Save(candleDb.Connection, symbol);
                     symbol.ClearCandles();
+
+                    // The funding settlements of the same window, for the exchanges that expose them
+                    await FetchFundingAsync(candleDb.Connection, symbol, fromDate, fetchUntil, cancellationToken);
+
                     symbolSaved?.Invoke(symbol);
 
                     GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done (saved, memory released)");
@@ -394,6 +453,42 @@ public static class EmulatorCandleSync
         finally
         {
             GlobalData.CandleFetchProgress = null;
+        }
+    }
+
+
+    /// <summary>
+    /// Fetch the funding settlements of one symbol for the replay window and store them next to its
+    /// candles (CandleDatabase.SaveFunding). Only the part after the newest stored settlement is asked,
+    /// so a repeated fetch costs one call per symbol. Does nothing for an exchange without funding
+    /// history (ExchangeBase.Funding is null). The replay books them on the open positions
+    /// (FundingReplay).
+    /// </summary>
+    private static async Task FetchFundingAsync(Microsoft.Data.Sqlite.SqliteConnection connection, CryptoSymbol symbol,
+        DateTime fromDate, DateTime fetchUntil, CancellationToken cancellationToken)
+    {
+        IFunding? funding = symbol.Exchange.GetApiInstance().Funding;
+        if (funding == null || cancellationToken.IsCancellationRequested)
+            return;
+
+        try
+        {
+            CandleDatabase.EnsureFundingTable(connection);
+            DateTime until = fetchUntil < DateTime.UtcNow ? fetchUntil : DateTime.UtcNow;
+            DateTime from = fromDate.AddDays(-1);
+            DateTime? last = CandleDatabase.LastFundingTime(connection, symbol);
+            if (last.HasValue && last.Value > from)
+                from = last.Value;
+            if (from >= until)
+                return;
+
+            List<CryptoFundingRate> rates = await funding.GetFundingRatesAsync(symbol, from, until, cancellationToken);
+            CandleDatabase.SaveFunding(connection, symbol, rates);
+            GlobalData.AddTextToLogTab($"Fetch funding: {symbol.Name} — {rates.Count} settlement(s) {from:yyyy-MM-dd HH:mm}..{until:yyyy-MM-dd HH:mm}");
+        }
+        catch (Exception ex)
+        {
+            GlobalData.AddTextToLogTab($"Fetch funding: {symbol.Name} — FAILED ({ex.Message})");
         }
     }
 }

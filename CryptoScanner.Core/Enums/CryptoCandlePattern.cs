@@ -27,4 +27,11 @@ public enum CryptoCandlePattern
 
     /// <summary>Two candles that stop at the same price - equal lows, or equal highs.</summary>
     Tweezer,
+
+    /// <summary>
+    /// A continuation, not a reversal: a decisive candle, two to four small candles inside its range,
+    /// and a decisive candle the same way that closes beyond the first one. Rising / falling three
+    /// methods. It reads up to six candles, and the preceding move against the trade does not apply.
+    /// </summary>
+    ThreeMethods,
 }

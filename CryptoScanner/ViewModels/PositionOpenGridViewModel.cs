@@ -21,9 +21,20 @@ public partial class PositionOpenGridViewModel : ObservableObject
     [ObservableProperty]
     private AvaloniaList<PositionViewModel> _positions = [];
 
+    /// <summary>
+    /// What the grid shows: <see cref="Positions"/> through the symbol filter of the main window. The
+    /// filter is only visual, Positions itself keeps every row, so clearing the filter brings all of
+    /// them back.
+    /// </summary>
+    public DataGridCollectionView PositionsView { get; }
+
+    private string _currentFilter = string.Empty;
+
     public PositionOpenGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("PositionOpenGridViewModel constructor called");
+
+        PositionsView = new DataGridCollectionView(Positions) { Filter = MatchesFilter };
 
         WeakReferenceMessenger.Default.Register<PositionDeleteAllMessage>(this, OnPositionDeleteAll);
         WeakReferenceMessenger.Default.Register<PositionIsClosedMessage>(this, OnPositionIsClosed);
@@ -179,6 +190,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
                 position.Invested = string.Empty;
                 position.Returned = string.Empty;
                 position.Commission = string.Empty;
+                position.Funding = string.Empty;
                 position.Open = string.Empty;
 
                 position.Duration = string.Empty;
@@ -202,4 +214,28 @@ public partial class PositionOpenGridViewModel : ObservableObject
         }
     }
 
+
+    private bool MatchesFilter(object item)
+    {
+        if (string.IsNullOrWhiteSpace(_currentFilter))
+            return true;
+        return item is PositionViewModel position
+            && position.Object.Symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void OnFilterTextChanged(object? sender, string filterText)
+    {
+        _currentFilter = filterText;
+
+        try
+        {
+            PositionsView.Refresh();
+        }
+        catch (Exception error)
+        {
+            // The DataGrid can trip over its own index bookkeeping while it rebuilds (see
+            // UserControlWithGrid.ReapplySort). The rows themselves are fine.
+            ScannerLog.Logger.Error(error, "");
+        }
+    }
 }

@@ -762,7 +762,8 @@ public static class EmulatorDb
         "select p.Side as Side, count(*) as Trades, sum(case when p.Side = @longSide " +
         "  then CAST(p.Returned as REAL) + CAST(p.Quantity as REAL) * CAST(a.Price as REAL) - CAST(p.Invested as REAL) - CAST(p.Commission as REAL) " +
         "  else CAST(p.Invested as REAL) - CAST(p.Returned as REAL) - CAST(p.Commission as REAL) - CAST(p.Quantity as REAL) * CAST(a.Price as REAL) " +
-        "  end) as Profit " +
+        // Plus the funding the position received (+) or paid (-) while it was open
+        "  end + coalesce(CAST(p.Funding as REAL), 0)) as Profit " +
         "from position p " +
         "join symbol s on s.Id = p.SymbolId " +
         "join AssetSnapshot a on a.EmulatorRunId = @id and a.Name = s.Base " +

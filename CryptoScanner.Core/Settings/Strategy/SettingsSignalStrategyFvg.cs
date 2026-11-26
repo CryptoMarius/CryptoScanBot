@@ -23,6 +23,15 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
     [SettingCaption("Minimum percentage", Group = GroupSettings)]
     public double MinimumPercentage { get; set; } = 0.25;
 
+    // Minimum volume of the middle (impulse) candle of the gap, as a multiple of the median volume
+    // of the 20 candles before it. 0 = off. A gap made without volume behind it is a weak gap
+    // (measured 24-11-2026, open point I25: in runs 1463/898/1471/483 the gaps whose impulse volume
+    // was in the lowest fifth, about 1.0-1.2 times the median, lost money).
+    [SettingCaption("Minimum impulse volume (x median, 0=off)", Group = GroupSettings, Minimum = 0,
+        Tooltip = "Volume of the middle candle of the gap divided by the median volume of the 20 candles before it. "
+            + "A gap below this value is not made into a zone. 0 = off.")]
+    public double MinimumImpulseVolumeRatio { get; set; } = 0;
+
     // Off: only three candles of the zone's colour make a gap (three green for a long, three red
     // for a short), the "strong" FVG this always was. On: the colours do not matter (red, red,
     // green is fine too), only the gap between the first and the third candle does.

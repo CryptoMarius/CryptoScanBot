@@ -15,7 +15,7 @@ namespace CryptoScanner.Analyzers.Bbma.Chart;
 
 // DEBUG only: BBMA reads CryptoData.Ema50 / Wma05* / Wma10* / Atr14, and those six fields only
 // exist in a Debug build. See CryptoData.Ema50 and BbmaPlugin.Strategies.
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
 
 // Moved from CryptoScanner.Chart (ViewModels/Chart/Bbma.cs) into the Bbma plugin as an
 // IChartOverlay, so the chart host no longer references the BBMA signal classes directly
@@ -633,7 +633,7 @@ public class BbmaChartOverlay : IChartOverlay
         }
 
 
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         //CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         //// Build indicator data ending at maxDate.

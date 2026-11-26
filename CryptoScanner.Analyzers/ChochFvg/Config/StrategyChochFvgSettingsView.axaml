@@ -1,0 +1,113 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="420"
+             xmlns:vm="using:CryptoScanner.Analyzers.ChochFvg.Config"
+             x:DataType="vm:StrategyChochFvgSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.ChochFvg.Config.StrategyChochFvgSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- The structure: swings and the window of the leg before the change of character. -->
+            <TextBlock Text="Structure" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="A swing high needs this many candles with a lower high on each side, a swing low this many with a higher low.">
+                <TextBlock Grid.Column="0" Text="Swing strength (candles):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding SwingStrength, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The lowest low (highest high for a short) of this many candles is the start of the leg that makes the change of character.">
+                <TextBlock Grid.Column="0" Text="Lookback (candles):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding LookbackCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- The entry: a limit on the middle of the gap inside the fib zone of the leg. -->
+            <TextBlock Text="Entry" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The middle of the fair value gap has to lie between these two retracements of the leg, measured from its end back to its start.">
+                <TextBlock Grid.Column="0" Text="Fib zone from %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding FibZoneStart, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The middle of the fair value gap has to lie between these two retracements of the leg, measured from its end back to its start.">
+                <TextBlock Grid.Column="0" Text="Fib zone to %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding FibZoneEnd, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The limit on the middle of the gap is withdrawn when it has not filled within this many candles, or as soon as the price reaches the target without it.">
+                <TextBlock Grid.Column="0" Text="Entry expiry (candles):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding EntryExpiryCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- The exit: stop behind the gap candle, target at a fixed risk/reward, no DCA. -->
+            <TextBlock Text="Exit" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The take profit lies this many times the distance from the entry to the stop beyond the entry. The stop lies behind the candle that made the gap. No DCA.">
+                <TextBlock Grid.Column="0" Text="Risk/reward:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding RiskReward, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="A setup whose stop lies closer to the entry than this percentage is dropped: on such a small stop the fees eat most of the risk. 0 takes every setup.">
+                <TextBlock Grid.Column="0" Text="Minimum stop %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding MinimumStopPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- The session: only a change of character inside the window (New York time). -->
+            <TextBlock Text="Session" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <CheckBox IsChecked="{Binding UseSessionWindow, Mode=TwoWay}"
+                      Content="Only in the session window" FontSize="12"
+                      ToolTip.Tip="Only a change of character on a candle that closes inside this window (New York time) places an order."/>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  IsEnabled="{Binding UseSessionWindow}" Margin="16,0,0,0"
+                  ToolTip.Tip="The start of the window as HH:mm in New York time; the stock market opens at 09:30.">
+                <TextBlock Grid.Column="0" Text="Window from (New York time):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding SessionStart, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  IsEnabled="{Binding UseSessionWindow}" Margin="16,0,0,0"
+                  ToolTip.Tip="The end of the window as HH:mm in New York time.">
+                <TextBlock Grid.Column="0" Text="Window to (New York time):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding SessionEnd, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

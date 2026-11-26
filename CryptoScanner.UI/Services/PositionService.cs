@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.Messaging;
+﻿using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -23,6 +23,10 @@ public class PositionService : IDisposable
     private readonly ApplicationStateService _stateService;
     private List<PositionViewModel> _openPositions = [];
     private List<PositionViewModel> _closedPositions = [];
+
+    // The symbol filter of the main layout is only visual: the lists keep every position, the two
+    // properties below hand out the ones that match, so clearing the filter brings all of them back.
+    private string _filter = string.Empty;
 
     // Mirrors the Avalonia PositionOpenGridViewModel 15-second timer that clears the cached
     // display texts (profit, duration, break-even, invested/returned) so they get recalculated.
@@ -63,7 +67,7 @@ public class PositionService : IDisposable
         get
         {
             lock (_lock)
-                return _openPositions.ToList();
+                return Filtered(_openPositions);
         }
     }
 
@@ -72,8 +76,32 @@ public class PositionService : IDisposable
         get
         {
             lock (_lock)
-                return _closedPositions.ToList();
+                return Filtered(_closedPositions);
         }
+    }
+
+
+    /// <summary>The positions whose symbol matches the filter; all of them without a filter. Called under the lock.</summary>
+    private List<PositionViewModel> Filtered(List<PositionViewModel> positions)
+    {
+        if (string.IsNullOrWhiteSpace(_filter))
+            return positions.ToList();
+        return positions.Where(vm => vm.Object.Symbol.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+
+    /// <summary>
+    /// Filters both position grids on the symbol name, the same way the filter box of the Avalonia
+    /// scanner filters its position grids.
+    /// </summary>
+    public void SetFilter(string filter)
+    {
+        _filter = filter ?? string.Empty;
+        // Rows that are filtered away cannot be clicked, so they leave the selection as well.
+        OpenSelection.Rebind(OpenPositions);
+        ClosedSelection.Rebind(ClosedPositions);
+        OpenPositionsChanged?.Invoke();
+        ClosedPositionsChanged?.Invoke();
     }
 
     public void Start()
@@ -397,6 +425,7 @@ internal class PositionViewModelComparer(PositionColumnEnum sortColumn) : ICompa
             PositionColumnEnum.Invested => a.Invested.CompareTo(b.Invested),
             PositionColumnEnum.Returned => a.Returned.CompareTo(b.Returned),
             PositionColumnEnum.Commission => a.Commission.CompareTo(b.Commission),
+            PositionColumnEnum.Funding => a.Funding.CompareTo(b.Funding),
             PositionColumnEnum.BreakEvenPrice => a.BreakEvenPrice.CompareTo(b.BreakEvenPrice),
             PositionColumnEnum.BreakEvenPercent => a.CurrentBreakEvenPercentage().CompareTo(b.CurrentBreakEvenPercentage()),
             PositionColumnEnum.Quantity => a.Quantity.CompareTo(b.Quantity),

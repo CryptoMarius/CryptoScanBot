@@ -12,10 +12,6 @@ public partial class IndicatorsTabViewModel : ObservableObject
     private IndicatorStochViewModel _indicatorStochViewModel;
     [ObservableProperty]
     private IndicatorBollingerBandViewModel _indicatorBollingerBandViewModel;
-    [ObservableProperty]
-    private IndicatorZigZagViewModel _indicatorPrimaryTrend;
-    [ObservableProperty]
-    private IndicatorZigZagViewModel _indicatorSecondaryTrend;
 
 
     public IndicatorsTabViewModel()
@@ -23,8 +19,6 @@ public partial class IndicatorsTabViewModel : ObservableObject
         _indicatorRsiViewModel = new();
         _indicatorStochViewModel = new();
         _indicatorBollingerBandViewModel = new();
-        _indicatorPrimaryTrend = new();
-        _indicatorSecondaryTrend = new();
     }
 
     internal void LoadConfig(SettingsBasic settings)
@@ -32,8 +26,6 @@ public partial class IndicatorsTabViewModel : ObservableObject
         IndicatorRsiViewModel.LoadConfig(settings.General.SettingsRsi);
         IndicatorStochViewModel.LoadConfig(settings.General.SettingsStoch);
         IndicatorBollingerBandViewModel.LoadConfig(settings.General.SettingsBb);
-        IndicatorPrimaryTrend.LoadConfig(settings.Trend.Primary);
-        IndicatorSecondaryTrend.LoadConfig(settings.Trend.Secondary);
     }
 
     internal void SaveConfig(SettingsBasic settings)
@@ -41,7 +33,5 @@ public partial class IndicatorsTabViewModel : ObservableObject
         IndicatorRsiViewModel.SaveConfig(settings.General.SettingsRsi);
         IndicatorStochViewModel.SaveConfig(settings.General.SettingsStoch);
         IndicatorBollingerBandViewModel.SaveConfig(settings.General.SettingsBb);
-        IndicatorPrimaryTrend.SaveConfig(settings.Trend.Primary);
-        IndicatorSecondaryTrend.SaveConfig(settings.Trend.Secondary);
     }
 }

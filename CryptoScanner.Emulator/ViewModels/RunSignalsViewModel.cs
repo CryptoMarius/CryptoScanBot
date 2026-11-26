@@ -100,7 +100,12 @@ public partial class RunSignalsViewModel : ObservableObject
                 "SELECT s.OpenDate as SignalTime, sym.Name as Symbol, i.Name as Interval, coalesce(zi.Name, i.Name) as ChartInterval, " +
                 "       s.Side, s.Strategy, s.SignalPrice, s.SlPercentage, s.IsInvalid, s.EventText, " +
                 "       p.Id as PositionId, p.CreateTime as PositionCreateTime, p.Status as PositionStatus, " +
-                "       p.Profit, p.Percentage " +
+                //"       p.Profit, p.Percentage " +
+                // Only a closed position has a result: an open one stores its cash flow so far (an open
+                // short read about 200%, an open long about 0%), and an entry that never filled has no
+                // percentage on the 100 = break-even scale (23-11-2026, same rule as the Positions window)
+                "       case when p.CloseTime is null then null else p.Profit end as Profit, " +
+                "       case when p.CloseTime is null or CAST(p.Invested as REAL) <= 0 then null else p.Percentage end as Percentage " +
                 "FROM Signal s " +
                 "inner JOIN Symbol sym ON sym.Id = s.SymbolId " +
                 "inner JOIN Interval i ON i.Id = s.IntervalId " +

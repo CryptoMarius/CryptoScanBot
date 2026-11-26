@@ -33,8 +33,17 @@ public static class EmulatorQueueFolder
     /// </summary>
     public const string DebugOnlySuffix = ".debug.json";
 
+    /// <summary>
+    /// A queue file whose name starts with this goes before every other file, and is also started
+    /// between two entries of a file that is already running: that file waits and goes on with its
+    /// next entry afterwards. The character sorts before digits and letters, so the ordinal order of
+    /// <see cref="PickNext"/> puts these files first as well. The "Run again" choice of the Results
+    /// tab writes its files with it (24-11-2026); a file can also be given it by hand.
+    /// </summary>
+    public const string PriorityPrefix = "!";
+
     /// <summary>Whether this build runs the debug-only queue files.</summary>
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
     public static bool RunsDebugOnlyFiles => true;
 #else
     public static bool RunsDebugOnlyFiles => false;
@@ -61,6 +70,23 @@ public static class EmulatorQueueFolder
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .FirstOrDefault();
     }
+
+
+    /// <summary>
+    /// The next priority file (<see cref="PriorityPrefix"/>) under the same rules as
+    /// <see cref="PickNext"/>, or null when none is waiting.
+    /// </summary>
+    public static string? PickNextPriority(string folder, DateTime utcNow, TimeSpan settleTime,
+        IReadOnlySet<string>? skip = null, bool? includeDebugOnly = null)
+    {
+        string? file = PickNext(folder, utcNow, settleTime, skip, includeDebugOnly);
+        return file != null && IsPriority(file) ? file : null;
+    }
+
+
+    /// <summary>Whether the file is a priority file (<see cref="PriorityPrefix"/>).</summary>
+    public static bool IsPriority(string file)
+        => Path.GetFileName(file).StartsWith(PriorityPrefix, StringComparison.Ordinal);
 
 
     /// <summary>

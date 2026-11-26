@@ -672,7 +672,12 @@ public class ScannerSession : IScannerSession
                         // the network was back, and the next check was at 12:48:30. Binance and
                         // HyperLiquid needed no round at all and were back in 2,5 minutes on their own.
                         // Asking again after 30 seconds costs one extra check and catches exactly this.
-                        if (ExchangeBase.KLineTicker != null && ExchangeBase.KLineTicker.NeedsRestart())
+                        //
+                        // The same when the round left a subscription alone because its connection
+                        // had only just dropped (HasReconnectingSubscriptions is set by the
+                        // NeedsRestart call in front of it).
+                        if (ExchangeBase.KLineTicker != null
+                            && (ExchangeBase.KLineTicker.NeedsRestart() || ExchangeBase.KLineTicker.HasReconnectingSubscriptions))
                             TimerCheckDataStream.InitTimerInterval(30);
                     });
                     return;
@@ -689,9 +694,21 @@ public class ScannerSession : IScannerSession
             {
                 _dataStreamProblemCount = 0;
 
-                // Back to the normal rhythm after a shortened check (see above)
-                if (TimerCheckDataStream.Interval < 5 * 60 * 1000)
-                    TimerCheckDataStream.InitTimerInterval(5 * 60);
+                // A connection that dropped less than a minute ago is left to the package, which
+                // normally has it back within seconds (Subscription.ConnectionLossGracePeriod). It
+                // does not count as a problem, but five minutes is too long to wait for the answer:
+                // look again after 30 seconds until it is either back or old enough to be restarted.
+                if (ExchangeBase.KLineTicker.HasReconnectingSubscriptions)
+                {
+                    if (TimerCheckDataStream.Interval != 30 * 1000)
+                        TimerCheckDataStream.InitTimerInterval(30);
+                }
+                else
+                {
+                    // Back to the normal rhythm after a shortened check (see above)
+                    if (TimerCheckDataStream.Interval < 5 * 60 * 1000)
+                        TimerCheckDataStream.InitTimerInterval(5 * 60);
+                }
 
                 // A single symbol that falls silent inside a living subscription is accepted on
                 // purpose: a minute without a trade is filled flat, LastCandleSynchronized waits at

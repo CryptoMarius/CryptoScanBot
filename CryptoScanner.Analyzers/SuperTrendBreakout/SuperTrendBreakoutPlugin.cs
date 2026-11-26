@@ -15,7 +15,7 @@ public class SuperTrendBreakoutPlugin : IStrategyPlugin
     // so nobody reads this empty list there.
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         new("supertrendbreakout",
             typeof(Signal.SignalSuperTrendBreakoutLong),
             typeof(Signal.SignalSuperTrendBreakoutShort)
@@ -47,7 +47,7 @@ public class SuperTrendBreakoutPlugin : IStrategyPlugin
     // for the same reason. In a production build this list is empty and no SuperTrendHub is created.
     public IReadOnlyList<IndicatorKey> RequiredIndicators { get; } =
     [
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         IndicatorKey.SuperTrend(10, 3.0),
 #endif
     ];

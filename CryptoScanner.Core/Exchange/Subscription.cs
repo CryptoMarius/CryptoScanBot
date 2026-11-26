@@ -62,6 +62,72 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
     /// </summary>
     public bool ConnectionIsLost = false;
 
+    // Moment (UTC ticks) the connection was lost, zero when that moment is not known. Only stamped on
+    // the transition from up to down, see MarkConnectionLost.
+    private long _connectionLostTicks = 0;
+
+    /// <summary>
+    /// How long a lost connection is left to the package before we step in ourselves.
+    /// <para>
+    /// The package reconnects and resubscribes on its own, and in the logs that takes 1 to 41 seconds.
+    /// The check in ScannerSession runs on a timer and knows nothing about that: when it happened to
+    /// fire a second after a drop it started a restart round, the round cut through the recovery that
+    /// was already under way, the check kept seeing a problem, and three checks later the whole
+    /// session was restarted - two minutes without a stream for a hiccup that would have been over in
+    /// seconds. Binance Perpetual did that twice in the night of 19-11-2026 (22:27 and 23:49), while
+    /// eleven other drops that same night recovered untouched; HyperLiquid Perpetual did it on 16-11,
+    /// 18-11 and 20-11. All five rounds in those logs started within 12 seconds of a drop.
+    /// </para>
+    /// <para>
+    /// A minute is above every recovery in those logs and well below the point where waiting costs
+    /// something: a connection that really stays down is picked up by the next check, and ScannerSession
+    /// looks again after 30 seconds as long as a subscription is inside this period.
+    /// </para>
+    /// </summary>
+    public static readonly TimeSpan ConnectionLossGracePeriod = TimeSpan.FromSeconds(60);
+
+    /// <summary>
+    /// How long the connection has been down, or null when it is up or when the moment it went down
+    /// is not known (the flag was set without <see cref="MarkConnectionLost"/>).
+    /// </summary>
+    public TimeSpan? ConnectionLostFor(DateTime utcNow)
+    {
+        if (!ConnectionIsLost)
+            return null;
+        long lostTicks = Interlocked.Read(ref _connectionLostTicks);
+        if (lostTicks == 0)
+            return null;
+        return utcNow - new DateTime(lostTicks, DateTimeKind.Utc);
+    }
+
+    /// <summary>
+    /// Is the connection down so recently that the package is still expected to bring it back by
+    /// itself? Such a subscription is neither a reason for a restart round nor part of one, see
+    /// <see cref="ConnectionLossGracePeriod"/>. A loss of unknown age gets no such benefit.
+    /// </summary>
+    public bool IsReconnecting(DateTime utcNow)
+    {
+        TimeSpan? lostFor = ConnectionLostFor(utcNow);
+        return lostFor != null && lostFor.Value < ConnectionLossGracePeriod;
+    }
+
+    /// <summary>
+    /// The bookkeeping of a lost connection, apart from the log line and the session event in
+    /// <see cref="TickerConnectionLost"/> so a test can call it without a scanner session.
+    /// <para>
+    /// The moment is only taken when the connection was up. A failed resubscribe makes the package
+    /// drop the connection and try again; if that counted as a new loss, a connection that never
+    /// comes back would stay inside the grace period for ever.
+    /// </para>
+    /// </summary>
+    internal void MarkConnectionLost()
+    {
+        ConnectionLostCount++;
+        if (!ConnectionIsLost)
+            Interlocked.Exchange(ref _connectionLostTicks, GlobalData.Clock.UtcNow.Ticks);
+        ConnectionIsLost = true;
+    }
+
     public bool ErrorDuringStartup = false;
 
     // Fixed part of the name, the quote plus a sequence number ("USDT#0"). The SubscriptionBundle it
@@ -278,8 +344,7 @@ public abstract class Subscription(ExchangeOptions exchangeOptions)
 
     internal void TickerConnectionLost()
     {
-        ConnectionLostCount++;
-        ConnectionIsLost = true;
+        MarkConnectionLost();
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} subscription {Name} connection lost");
         IScannerSession _scannerSession = GlobalData.GetService<IScannerSession>()
             ?? throw new InvalidOperationException("IScannerSession not registered in services");

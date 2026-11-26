@@ -283,6 +283,7 @@ public class CandlePatternHelperTests
             [CryptoCandlePattern.PiercingLine] = CryptoCandlePattern.PiercingLine,
             [CryptoCandlePattern.MorningStar] = CryptoCandlePattern.MorningStar,
             [CryptoCandlePattern.Tweezer] = CryptoCandlePattern.Tweezer,
+            [CryptoCandlePattern.ThreeMethods] = CryptoCandlePattern.ThreeMethods,
         };
 
         // A spread of shapes: hammers, engulfings, haramis, stars, tweezers and plain candles, so
@@ -323,7 +324,9 @@ public class CandlePatternHelperTests
             }
         }
 
-        Assert.AreEqual(112, checks, "alle zeven patronen maal twee zijden maal acht candles");
+        // Three methods needs more than three candles, so here it only proves it stays quiet in both
+        // directions alike; ThreeMethods_IsExactlyItsOwnMirrorImage covers it with enough candles.
+        Assert.AreEqual(128, checks, "all eight patterns times two sides times eight candles");
     }
 
 
@@ -430,5 +433,115 @@ public class CandlePatternHelperTests
 
         StringAssert.Contains(thrown.Message, "Hamer");
         StringAssert.Contains(thrown.Message, "Patterns");
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  Three methods
+    // ════════════════════════════════════════════════════════════════════════
+
+    // A rising three methods with two small candles, oldest first: a decisive green candle, two small
+    // candles inside its range, and a green candle closing above the first one's high (106).
+    private static readonly CryptoCandle TmFirst = Candle(open: 100m, high: 106m, low: 99.5m, close: 105.5m);
+    private static readonly CryptoCandle TmSmall1 = Candle(open: 105m, high: 105.5m, low: 103m, close: 103.5m);
+    private static readonly CryptoCandle TmSmall2 = Candle(open: 103.5m, high: 104.5m, low: 102.5m, close: 104m);
+    private static readonly CryptoCandle TmLast = Candle(open: 104m, high: 108m, low: 103.8m, close: 107.5m);
+
+
+    [TestMethod]
+    public void ThreeMethods_WithTwoSmallCandles_Matches()
+    {
+        Assert.IsTrue(CandlePatternHelper.Matches(CryptoCandlePattern.ThreeMethods, CryptoTradeSide.Long,
+            TmLast, TmSmall2, TmSmall1, Settings, [TmFirst]));
+        Assert.AreEqual(4, CandlePatternHelper.PatternLength(CryptoCandlePattern.ThreeMethods, CryptoTradeSide.Long,
+            TmLast, TmSmall2, TmSmall1, Settings, [TmFirst]));
+
+        // The same candles read for a short are no falling three methods.
+        Assert.IsFalse(CandlePatternHelper.Matches(CryptoCandlePattern.ThreeMethods, CryptoTradeSide.Short,
+            TmLast, TmSmall2, TmSmall1, Settings, [TmFirst]));
+    }
+
+
+    /// <summary>Without the candles before the third one the pattern cannot be seen, and must not match.</summary>
+    [TestMethod]
+    public void ThreeMethods_WithoutTheEarlierCandles_DoesNotMatch()
+    {
+        Assert.IsFalse(CandlePatternHelper.Matches(CryptoCandlePattern.ThreeMethods, CryptoTradeSide.Long,
+            TmLast, TmSmall2, TmSmall1, Settings));
+    }
+
+
+    [TestMethod]
+    public void ThreeMethods_ASmallCandleOutsideTheFirstRange_DoesNotMatch()
+    {
+        CryptoCandle poking = Candle(open: 105m, high: 106.5m, low: 103m, close: 103.5m);
+
+        Assert.IsFalse(CandlePatternHelper.Matches(CryptoCandlePattern.ThreeMethods, CryptoTradeSide.Long,
+            TmLast, TmSmall2, poking, Settings, [TmFirst]));
+    }
+
+
+    [TestMethod]
+    public void ThreeMethods_ALastCloseNotAboveTheFirstHigh_DoesNotMatch()
+    {
+        CryptoCandle weak = Candle(open: 104m, high: 106.2m, low: 103.8m, close: 105.9m);
+
+        Assert.IsFalse(CandlePatternHelper.Matches(CryptoCandlePattern.ThreeMethods, CryptoTradeSide.Long,
+            weak, TmSmall2, TmSmall1, Settings, [TmFirst]));
+    }
+
+
+    /// <summary>
+    /// Three small candles: the first candle then sits five back, so the pattern spans five candles.
+    /// The candle four back (the first small one) is red, so the two-candle reading does not fit.
+    /// </summary>
+    [TestMethod]
+    public void ThreeMethods_WithThreeSmallCandles_SpansFiveCandles()
+    {
+        CryptoCandle small3 = Candle(open: 104m, high: 105m, low: 103m, close: 104.5m);
+
+        Assert.AreEqual(5, CandlePatternHelper.PatternLength(CryptoCandlePattern.ThreeMethods, CryptoTradeSide.Long,
+            TmLast, small3, TmSmall2, Settings, [TmSmall1, TmFirst]));
+    }
+
+
+    /// <summary>The stop goes under the first candle, not under the lowest candle of the pattern.</summary>
+    [TestMethod]
+    public void ThreeMethods_StopGoesBeyondTheFirstCandle()
+    {
+        CryptoCandle[] newestFirst = [TmLast, TmSmall2, TmSmall1, TmFirst];
+
+        Assert.AreEqual(99.5m, CandlePatternHelper.PatternStop(CryptoCandlePattern.ThreeMethods,
+            CryptoTradeSide.Long, newestFirst, 4));
+        Assert.IsTrue(CandlePatternHelper.IsContinuation(CryptoCandlePattern.ThreeMethods));
+        CollectionAssert.AreEqual(new[] { 0, 3 }, CandlePatternHelper.DecisiveCandles(CryptoCandlePattern.ThreeMethods, 4));
+    }
+
+
+    [TestMethod]
+    public void ThreeMethods_IsExactlyItsOwnMirrorImage()
+    {
+        Assert.IsTrue(CandlePatternHelper.Matches(CryptoCandlePattern.ThreeMethods, CryptoTradeSide.Short,
+            Mirror(TmLast), Mirror(TmSmall2), Mirror(TmSmall1), Settings, [Mirror(TmFirst)]));
+        Assert.IsFalse(CandlePatternHelper.Matches(CryptoCandlePattern.ThreeMethods, CryptoTradeSide.Long,
+            Mirror(TmLast), Mirror(TmSmall2), Mirror(TmSmall1), Settings, [Mirror(TmFirst)]));
+
+        // Mirrored around 200 the first candle's high becomes 200 - 99.5.
+        CryptoCandle[] newestFirst = [Mirror(TmLast), Mirror(TmSmall2), Mirror(TmSmall1), Mirror(TmFirst)];
+        Assert.AreEqual(100.5m, CandlePatternHelper.PatternStop(CryptoCandlePattern.ThreeMethods,
+            CryptoTradeSide.Short, newestFirst, 4));
+    }
+
+
+    /// <summary>The other shapes keep their stop beyond the extreme of all their candles.</summary>
+    [TestMethod]
+    public void PatternStop_OfAReversal_IsTheExtremeOfItsCandles()
+    {
+        CryptoCandle previous = Candle(open: 105m, high: 106m, low: 100m, close: 102m);
+        CryptoCandle last = Candle(open: 101m, high: 108m, low: 100.5m, close: 107m);
+
+        Assert.AreEqual(100m, CandlePatternHelper.PatternStop(CryptoCandlePattern.Engulfing,
+            CryptoTradeSide.Long, [last, previous], 2));
+        Assert.AreEqual(108m, CandlePatternHelper.PatternStop(CryptoCandlePattern.Engulfing,
+            CryptoTradeSide.Short, [last, previous], 2));
     }
 }

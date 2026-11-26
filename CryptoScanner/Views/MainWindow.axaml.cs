@@ -68,16 +68,6 @@ public partial class MainWindow : Window
         _tradingViewService = tradingViewService;
         InitializeComponent();
 
-        // Does not add anything usefull i'm afraid (for monotoring performance)
-        //#if DEBUG
-        //        this.AttachDevTools(new DevToolsOptions
-        //        {
-        //            StartupScreenIndex = 1, // Start met Performance tab
-        //            ShowAsChildWindow = true
-        //        });
-        //        Debug.WriteLine("DevTools attached");
-        //#endif
-
         DataContext = viewModel;
 
         // Restore window position, size, state and splitter
@@ -248,7 +238,6 @@ public partial class MainWindow : Window
         // Twee possible calls, 1 via windows - close button or via menu->exit
         hasEnded = true;
         Closing -= OnWindowClosing; // observed multiple calls..
-        //e.Cancel = true;  // Blokkeer standaard close tot cleanup klaar
 
         // Always save the expanded width, not the collapsed 28px strip
         if (!_isSymbolPanelCollapsed)
@@ -275,42 +264,6 @@ public partial class MainWindow : Window
 
     private void CreateMenuItems()
     {
-        //if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        //{
-        //    // macOS: Gebruik native title bar en menu bar
-        //    //ExtendClientAreaToDecorationsHint = false;
-        //    //ExtendClientAreaChromeHints = "NoChrome"; // Of "SystemChrome" als je native wilt houden
-        //    //ExtendClientAreaTitleBarHeightHint = -1; // Reset
-
-        //    var titleBarGrid = this.FindControl<Grid>("TitleBarGrid");
-        //    //?? throw new InvalidOperationException("TitleBarGrid not found");
-
-        //    // Verberg custom title bar (geen overlap met native buttons)
-        //    if (titleBarGrid != null)
-        //        titleBarGrid.IsVisible = false;
-
-        //    // Optioneel: Verberg app icon (niet nodig op Mac)
-        //    var appIcon = this.FindControl<Image>("AppIcon"); // Optioneel, voor verbergen op Mac
-        //    if (appIcon != null)
-        //        appIcon.IsVisible = false;
-
-        //    //// Cre�er native menu bar
-        //    //var nativeMenu = new NativeMenu(); // Gebruik NativeMenu voor macOS integration
-        //    //var fileMenuItem = new NativeMenuItem { Header = "_Filex" };
-        //    //var helpMenuItem = new NativeMenuItem { Header = "_Helpx" };
-
-        //    //fileMenuItem.Menu = new NativeMenu();
-        //    //fileMenuItem.Menu.Items.Add(new NativeMenuItem { Header = "Play soundxx" });
-        //    //fileMenuItem.Menu.Items.Add(new NativeMenuItem { Header = "Create signalsxx" });
-        //    //fileMenuItem.Menu.Items.Add(new NativeMenuItem { Header = "Trading bot activexx" });
-        //}
-
-
-        //Type menuItem = NativeMenuItem;
-
-        //MenuItem menuItem;
-        //var MenuFile = this.FindControl<MenuItem>("MenuFile");
-        //if (MenuFile != null)
         // There are already three items bound to the application states (sound, trading and analyzer)
         MenuFile.Items.Add(new MenuItem { Header = "-" });
         MenuFile.Items.Add(new MenuItem { Header = "Scanner configuration", Command = new CommandShowConfiguration(), CommandParameter = this });
@@ -330,12 +283,6 @@ public partial class MainWindow : Window
         MenuTools.Items.Add(new MenuItem { Header = "Paper assets", Command = new CommandShowAssets(), CommandParameter = this });
 
         MenuTools.Items.Add(new MenuItem { Header = "-" });
-#if DEBUG
-        //MenuTools.Items.Add(new MenuItem { Header = "Test - Save Candles", Command.None, TestSaveCandlesClick);
-        //MenuTools.Items.Add(new MenuItem { Header = "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
-        //MenuTools.Items.Add(new MenuItem { Header = "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
-        MenuTools.Items.Add(new MenuItem { Header = "Cleanup candles and old files in data folder", Command = new CommandCleanOrphanCandleFiles(), CommandParameter = this });
-#endif
         //MenuTools.Items.Add(new MenuItem { Header = "Scanner internal restart", Command.ScannerSessionDebug);
         MenuTools.Items.Add(new MenuItem { Header = "Calculate all liquidity zones (slow!)", Command = new CommandCalculateDlzForAll(), CommandParameter = this });
         MenuTools.Items.Add(new MenuItem { Header = "-" });
@@ -353,27 +300,6 @@ public partial class MainWindow : Window
 
     }
 
-    // The browser of the Tradingview tab had to stay visible to keep working, so it was shrunk to one
-    // pixel instead of hidden. Not needed since 08-11-2026: TradingView has a window of its own.
-    private void ManipulateBrowser(bool show)
-    {
-        //if (show)
-        //{
-        //    BrowserViewHost.Width = double.NaN;   // Auto
-        //    BrowserViewHost.Height = double.NaN;  // Auto
-        //    BrowserViewHost.Opacity = 1;
-        //    BrowserViewHost.IsHitTestVisible = true;
-        //    return;
-        //}
-        //else
-        //{
-        //    BrowserViewHost.Width = 1;
-        //    BrowserViewHost.Height = 1;
-        //    BrowserViewHost.Opacity = 0.01;
-        //    BrowserViewHost.IsHitTestVisible = false;
-        //}
-    }
-
     private void OnTabChanged(object? sender, SelectionChangedEventArgs e)
     {
         // Workaround, because the browser needs to be visible to work properly
@@ -383,37 +309,26 @@ public partial class MainWindow : Window
         switch (header)
         {
             case "Signals":
-                ManipulateBrowser(false);
                 MainContent.Content = _signalView;
                 break;
 
-            case "Tradingview":
-                ManipulateBrowser(true);
-                MainContent.Content = null;
-                break;
-
             case "Live Data":
-                ManipulateBrowser(false);
                 MainContent.Content = _liveDataView;
                 break;
 
             case "Dashboard":
-                ManipulateBrowser(false);
                 MainContent.Content = _dashboardView;
                 break;
 
             case "Open positions":
-                ManipulateBrowser(false);
                 MainContent.Content = _openPositionsView;
                 break;
 
             case "Closed positions":
-                ManipulateBrowser(false);
                 MainContent.Content = _closedPositionsView;
                 break;
 
             case "Log":
-                ManipulateBrowser(false);
                 MainContent.Content = _logView;
                 break;
 

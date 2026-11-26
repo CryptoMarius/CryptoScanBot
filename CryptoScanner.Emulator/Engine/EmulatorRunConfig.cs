@@ -147,6 +147,24 @@ public class EmulatorRunConfig
     public bool CalculateBarometer { get; set; } = true;
 
     /// <summary>
+    /// Whether this run books the funding of the perpetuals on its open positions (FundingReplay).
+    /// <para>
+    /// Off by default since 25-11-2026. The settlements sit in the candle database every session of
+    /// the data folder shares, and once they are fetched they would otherwise change every run of
+    /// every strategy from that moment on, so no run would compare with the ones before it. A queue
+    /// entry switches it on (<c>"Funding": true</c>) for a strategy where it matters, such as one that
+    /// holds its positions for a week.
+    /// </para>
+    /// <para>
+    /// Not written while off, so the configuration of a run without funding reads exactly as before
+    /// the setting existed and the duplicate check still recognises the older runs. Like
+    /// <see cref="CalculateBarometer"/> it has no checkbox in the run-config window.
+    /// </para>
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool BookFunding { get; set; }
+
+    /// <summary>
     /// How far back a queue entry is compared against runs that already exist, in days. An entry
     /// whose configuration checksum matches one of them is recorded as a duplicate instead of being
     /// replayed - see <see cref="EmulatorRunFingerprint"/>.

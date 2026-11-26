@@ -1,6 +1,16 @@
 CryptoScanBot release historie:
 
-20-11-2026 2.7.0
+26-11-2026 2.7.0
+- Trader: Funding van perpetuals telt mee in de winst van een positie en in het papersaldo; in de emulator staat het standaard uit en zet je het per wachtrij-regel aan ("Funding": true)
+- Posities: "Position remove stop loss" haalt de stop-loss van één open positie weg; alleen de takeprofit blijft staan
+- Scanner: Een verbinding die even wegvalt krijgt 60 seconden om zelf terug te komen; het hele programma herstartte daardoor twee minuten zonder koersen na een onderbreking van seconden
+- Instellingen: De trend-instellingen (zigzag) zijn vaste waarden geworden; een oud blok in het instellingenbestand wordt genegeerd, daardoor waren bij een veldgebruiker alle trendkolommen leeg
+- Instellingen: "Remove time" heet nu "Entry valid for"; het geldt voor een wachtend signaal én een niet gevulde limit-instap
+- Zones: Een fair value gap kan een minimum aan volume van de middelste candle krijgen, tegenover de mediaan van de 20 candles ervoor (0 = uit)
+- Strategie candlepatroon: Nieuwe vorm ThreeMethods, minimale grootte van de candle, trend-EMA en optioneel een stop-loss voorbij het patroon met takeprofit op een risk/reward-veelvoud
+- Nieuwe strategie XsMom: Elke week de sterkste munten van een quote kopen en de zwakste short, uitstap als ze afvallen
+- Posities: De lijsten met open en gesloten posities volgen het filter op de munt in het hoofdvenster; de kolom Funding is beschikbaar
+- Scanner: Photino crashte soms (HyperLiquid Perpetual, 21-11) door een race in de native bibliotheek; die is gerepareerd
 - Instellingen: "Activate exchange" is weg; het handelsprogramma, TradingView en de beurslinks openen op de beurs van de munt zelf
 - Instellingen: De dubbelklik-actie kan nu ook TradingView (intern of extern) of de pagina van de munt op de beurs openen
 - Altrady: Bij de API-sleutel staat een Test-knop die een testsignaal voor bitcoin stuurt en meteen laat zien of sleutel, bot en beurs kloppen; de testpositie wordt weer gesloten
@@ -9,6 +19,8 @@ CryptoScanBot release historie:
 - Candles: Een kline zonder tijd (Kraken Spot) liet de hele candle-opvraag van die munt mislukken; die ene kline wordt overgeslagen
 - Zones: "Max touches" en "Close zones past the midpoint" zijn één keuze geworden, "Zone closes on": Body through, Body past midpoint of Touches; een fair value gap sluit nu standaard alleen als een candle-body erdoor sluit (was na 2 touches)
 - Chart: Een strategie die alleen een zone vraagt (candlepatroon, failed breakout, supertrend breakout) opent de chart en TradingView op het interval van de geraakte zone
+- Emulator: "Run again" in de resultaten zet de gekozen runs opnieuw klaar met hun eigen instellingen en verwijdert het origineel na afloop
+- Emulator: De digest en het venster met posities tonen de signaalprijs, de afstand tot de stop-loss en de waarde van een positie die aan het eind nog openstaat
 - Emulator: Een regel uit de wachtrij kan opgeven welke run hij herhaalt; verschilt hij daarvan in iets wat niet is toegestaan, dan wordt hij geweigerd
 - Emulator: Elke regel uit de wachtrij begint op de standaardinstellingen van de code in plaats van op de instellingen van de sessie
 

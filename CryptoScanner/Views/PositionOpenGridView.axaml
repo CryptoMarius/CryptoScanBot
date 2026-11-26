@@ -10,7 +10,7 @@
 			 x:DataType="vm:PositionOpenGridViewModel">
 
 	<DataGrid x:Name="PositionOpenGrid"
-			  ItemsSource="{Binding Positions}"
+			  ItemsSource="{Binding PositionsView}"
 			  IsReadOnly="True"
 			  AutoGenerateColumns="False"
 			  SelectionMode="Extended"
@@ -141,6 +141,15 @@
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate x:DataType="vm:PositionViewModel">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Commission}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
+			<!-- Funding (received +, paid -) -->
+			<DataGridTemplateColumn Header="Funding" Width="75" SortMemberPath="Funding" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate x:DataType="vm:PositionViewModel">
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Funding}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>

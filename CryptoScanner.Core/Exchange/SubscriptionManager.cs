@@ -437,7 +437,9 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
 
         int count = 0;
         bool restart = false;
-        DateTime deadline = GlobalData.Clock.UtcNow - ExchangeOptions.MaximumTickerInactivity;
+        bool reconnecting = false;
+        DateTime now = GlobalData.Clock.UtcNow;
+        DateTime deadline = now - ExchangeOptions.MaximumTickerInactivity;
 
         // Over a COPY of both lists. This runs on the timer thread while SynchronizeSymbolsAsync can
         // be removing an emptied subscription or bundle, and an enumerator over a List<T> that is
@@ -450,6 +452,17 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
             foreach (var subscription in bundle.SubscriptionList.ToList())
             {
                 count++;
+
+                // A connection that dropped a moment ago is the package's to bring back, not ours:
+                // see Subscription.ConnectionLossGracePeriod. That goes for the NeedsRestart flag as
+                // well, because a resubscribe attempt that fails during that recovery raises it and
+                // the restore that follows takes it down again. Not a reason for a restart, and not
+                // judged on inactivity either - it cannot deliver while it is down.
+                if (subscription.IsReconnecting(now))
+                {
+                    reconnecting = true;
+                    continue;
+                }
 
                 // Also restart subscriptions that lost their connection (flag set by TickerConnectionLost/TickerException)
                 if (subscription.NeedsRestart || subscription.ConnectionIsLost)
@@ -502,8 +515,17 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
 
         //if (restart)
         //    GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeSymbol} check for restart {count} {TickerType} subscriptions {restart}");
+        HasReconnectingSubscriptions = reconnecting;
         return restart;
     }
+
+    /// <summary>
+    /// Did the last <see cref="NeedsRestart"/> pass over a subscription because its connection dropped
+    /// less than <see cref="Subscription.ConnectionLossGracePeriod"/> ago? ScannerSession then looks
+    /// again after 30 seconds instead of after five minutes, so a connection the package does not
+    /// bring back is noticed shortly after the grace period and not one full check later.
+    /// </summary>
+    public bool HasReconnectingSubscriptions { get; private set; }
 
 
     public virtual async Task CheckSubscriptions()
@@ -531,11 +553,20 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
         // ConnectionLostCount, which only grows until the next restart, so one short hiccup made every
         // refresh cycle after it rebuild that subscription for nothing - and each rebuild costs the
         // cached tickers the 1m candle they were filling at that moment.
+        //
+        // And a connection that went down less than Subscription.ConnectionLossGracePeriod ago is not a
+        // reason yet either: the package is busy bringing it back, and stopping the subscription in the
+        // middle of that is what turned a hiccup of seconds into a restart of the whole session (see
+        // the remarks at that constant). This method is also called from the hourly refresh, without
+        // NeedsRestart in front of it, so the test has to be here as well.
+        DateTime roundStart = GlobalData.Clock.UtcNow;
         List<Subscription> subscriptions = [];
         foreach (var bundle in SubscriptionBundleList)
         {
             foreach (var subscription in bundle.SubscriptionList)
             {
+                if (subscription.IsReconnecting(roundStart))
+                    continue;
                 if (subscription.ConnectionIsLost || subscription.ErrorDuringStartup || subscription.NeedsRestart)
                     subscriptions.Add(subscription);
             }
@@ -557,7 +588,10 @@ public class SubscriptionManager(ExchangeOptions exchangeOptions, Type subscript
             foreach (var subscription in subscriptions)
             {
                 string reason;
-                if (subscription.ConnectionIsLost)
+                if (subscription.ConnectionLostFor(now) is TimeSpan lostFor)
+                    // With the time, so the log shows the package had its chance before we stepped in
+                    reason = $"connection lost {lostFor.TotalSeconds:N0}s ago";
+                else if (subscription.ConnectionIsLost)
                     reason = "connection lost";
                 else if (subscription.ErrorDuringStartup)
                     reason = "error during startup";

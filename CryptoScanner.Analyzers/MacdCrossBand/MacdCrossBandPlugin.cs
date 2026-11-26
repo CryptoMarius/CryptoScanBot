@@ -37,7 +37,7 @@ public class MacdCrossBandPlugin : IStrategyPlugin
     /// </summary>
     public IReadOnlyList<IndicatorKey> RequiredIndicators { get; } =
     [
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         IndicatorKey.Adx(14),
 #endif
     ];

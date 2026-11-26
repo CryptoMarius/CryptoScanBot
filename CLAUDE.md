@@ -3,6 +3,15 @@
 ## Taal in de chat
 - **Praat altijd Nederlands** met de gebruiker in de chat.
 - Schakel nooit over naar Engels in de chat, ongeacht de taal waarin de gebruiker schrijft.
+- Een Engelse vakterm is meestal beter te begrijpen dan een vertaling. Twijfel je aan een Nederlands woord, gebruik dan de Engelse term.
+- Woorden waarop al vaker gecorrigeerd is. Ook als ze in een wachtrij-label, skill of log staan, nooit overnemen:
+  - "buur", "buren", "buurwaarden" → **neighbours** (noem de waarden erbij: 2, 3, 5 en 7%)
+  - "anker" → **referentierun**; "halveringstest" → beschrijven wat er gedraaid is
+  - "gate", "poort", "bewakers", "guards" → **voorwaarde**
+  - "bijkopen", "bijkooplagen", "de trap" → **DCA's**; "doel" → **TP**
+  - "kaars" → **candle**; "abonnement" → **subscription**; "schil" → **applicatie**
+  - zelfbedachte samenstellingen ("ruisvloer", "rooster", "natreffer", "hang"): beschrijven wat er gebeurt, of de Engelse vakterm
+  - afkortingen als PF, SL en sd voluit: Profit Factor, stop-loss, standaarddeviatie
 
 ## Taal in de broncode
 - **Gebruik altijd Engels** voor alle comments, XML-doc-comments, namen van variabelen en alle andere tekst in bronbestanden.

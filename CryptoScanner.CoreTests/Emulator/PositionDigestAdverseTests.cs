@@ -40,7 +40,18 @@ public class PositionDigestAdverseTests
     [TestMethod]
     public void TheColumnIsAppended_SoOlderDigestsKeepTheirLayout()
     {
-        Assert.AreEqual("event", CryptoPositionDigest.Columns[^2]);
-        Assert.AreEqual("adverse", CryptoPositionDigest.Columns[^1]);
+        //Assert.AreEqual("event", CryptoPositionDigest.Columns[^2]);
+        //Assert.AreEqual("adverse", CryptoPositionDigest.Columns[^1]);
+        // "funding" was appended behind it on 24-11-2026
+        //Assert.AreEqual("event", CryptoPositionDigest.Columns[^3]);
+        //Assert.AreEqual("adverse", CryptoPositionDigest.Columns[^2]);
+        //Assert.AreEqual("funding", CryptoPositionDigest.Columns[^1]);
+        // "price", "sl" and "openPnl" were appended behind it on 26-11-2026
+        Assert.AreEqual("event", CryptoPositionDigest.Columns[^6]);
+        Assert.AreEqual("adverse", CryptoPositionDigest.Columns[^5]);
+        Assert.AreEqual("funding", CryptoPositionDigest.Columns[^4]);
+        Assert.AreEqual("price", CryptoPositionDigest.Columns[^3]);
+        Assert.AreEqual("sl", CryptoPositionDigest.Columns[^2]);
+        Assert.AreEqual("openPnl", CryptoPositionDigest.Columns[^1]);
     }
 }

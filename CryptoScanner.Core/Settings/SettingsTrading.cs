@@ -183,6 +183,11 @@ public class SettingsTrading
     // Entry
     public CryptoOrderType EntryOrderType { get; set; } = CryptoOrderType.Market;
     // Verwijder de order indien niet na zoveel candles gevuld
+    // Shown as "Entry valid for" (candles of the signal interval). It has two effects: a signal that waits
+    // for its entry conditions or a free slot is dropped after this many candles from the signal candle's
+    // open (SignalBase.GiveUp, also with a market order), and an unfilled limit entry is cancelled after this
+    // many candles from the moment it was placed (PositionMonitor; Altrady gets the same expiry). With a limit
+    // entry the two add up, so the whole window can last up to twice this value.
     public int EntryRemoveTime { get; set; } = 5;
     // Only for a limit entry: how far better than the signal price the order is placed, 0 = at the
     // signal price. Below it for a long and above it for a short, so the entry waits for a pullback;

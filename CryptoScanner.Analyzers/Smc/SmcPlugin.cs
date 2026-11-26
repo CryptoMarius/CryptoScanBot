@@ -24,7 +24,7 @@ public class SmcPlugin : IStrategyPlugin
         //    typeof(Signal.SignalOrderBlockRejectionShort),
         //    IsZoneStrategy: true
         //),
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         // Back on 06-10-2026, in Debug builds only, to be measured again.
         new("smc.rejection",
             typeof(Signal.SignalOrderBlockRejectionLong),

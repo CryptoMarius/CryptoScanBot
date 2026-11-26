@@ -59,6 +59,54 @@ public class CandlePatternStrategySettings : SettingsSignalStrategyBase
     public decimal PrecedingPercentage { get; set; } = 0m;
 
     /// <summary>
+    /// How large the decisive candle has to be compared with the candles before it: its body at least
+    /// this many times the average body of the <see cref="AverageBodyCandles"/> candles before it. For
+    /// three methods both decisive candles, the first and the last, have to pass. Zero switches it off.
+    /// <para>
+    /// Relative to the coin's own recent candles, so it means the same at any price and in any
+    /// volatility; the shape thresholds only compare a candle with its own range.
+    /// </para>
+    /// </summary>
+    [SettingCaption("Min size vs average", SeparatorBefore = true, SubHeader = "Size and trend", Unit = "x average body",
+        Tooltip = "The body of the decisive candle at least this many times the average body of the "
+            + "20 candles before it. For three methods the first and the last candle both. Zero "
+            + "switches it off.")]
+    public decimal MinSizeFactor { get; set; } = 0m;
+
+    /// <summary>The number of candles the average body of <see cref="MinSizeFactor"/> is taken over.</summary>
+    public const int AverageBodyCandles = 20;
+
+    /// <summary>
+    /// Only fire when the close of the pattern is on the trade's side of an EMA of this length: above
+    /// it for a long, below it for a short. Zero switches it off. Meant for the continuation shapes,
+    /// which follow a move that is already going, but it applies to every pattern in the list.
+    /// </summary>
+    [SettingCaption("Trend EMA length",
+        Tooltip = "Only fire when the close is above an EMA of this length (long) or below it "
+            + "(short). Zero switches it off. Meant for continuation shapes such as three methods.")]
+    public int TrendEmaLength { get; set; } = 0;
+
+    /// <summary>
+    /// Hand the trader a stop-loss beyond the pattern instead of the global one: under the lowest low
+    /// of the pattern candles for a long, above the highest high for a short, and for three methods
+    /// beyond the first candle. Off leaves the stop-loss and the take profit of the trader settings.
+    /// </summary>
+    [SettingCaption("Stop-loss beyond the pattern", SeparatorBefore = true, SubHeader = "Exit",
+        Tooltip = "Hand the trader a stop-loss beyond the pattern: under its lowest low (long) or "
+            + "above its highest high (short); for three methods beyond the first candle. Off keeps "
+            + "the stop-loss and take profit of the trader settings.")]
+    public bool StopBeyondPattern { get; set; } = false;
+
+    /// <summary>
+    /// With <see cref="StopBeyondPattern"/>: the take profit at this many times the stop-loss
+    /// distance. Zero keeps the take profit of the trader settings.
+    /// </summary>
+    [SettingCaption("Risk/reward", Indented = true, EnabledWhen = nameof(StopBeyondPattern), Unit = "x the stop distance",
+        Tooltip = "The take profit at this many times the stop-loss distance. Zero keeps the take "
+            + "profit of the trader settings.")]
+    public decimal RiskReward { get; set; } = 2m;
+
+    /// <summary>
     /// Only fire when the pattern candle sits in a zone of the same side: "dlz", "fvg" and/or "smc".
     /// An empty list switches the requirement off, which is the default.
     /// <para>

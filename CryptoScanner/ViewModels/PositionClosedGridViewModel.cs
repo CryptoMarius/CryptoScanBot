@@ -19,9 +19,20 @@ public partial class PositionClosedGridViewModel : ObservableObject
     [ObservableProperty]
     private AvaloniaList<PositionViewModel> _positions = [];
 
+    /// <summary>
+    /// What the grid shows: <see cref="Positions"/> through the symbol filter of the main window. The
+    /// filter is only visual, Positions itself keeps every row, so clearing the filter brings all of
+    /// them back.
+    /// </summary>
+    public DataGridCollectionView PositionsView { get; }
+
+    private string _currentFilter = string.Empty;
+
     public PositionClosedGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("PositionClosedGridViewModel constructor called");
+
+        PositionsView = new DataGridCollectionView(Positions) { Filter = MatchesFilter };
 
         //_timerUpdatePositions.Tick += TimerUpdatePositionsTick;
         //_timerUpdatePositions.Start();
@@ -139,5 +150,30 @@ public partial class PositionClosedGridViewModel : ObservableObject
     private void OnPositionDeleteAll(object recipient, PositionDeleteAllMessage message)
     {
         Positions.Clear();
+    }
+
+
+    private bool MatchesFilter(object item)
+    {
+        if (string.IsNullOrWhiteSpace(_currentFilter))
+            return true;
+        return item is PositionViewModel position
+            && position.Object.Symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void OnFilterTextChanged(object? sender, string filterText)
+    {
+        _currentFilter = filterText;
+
+        try
+        {
+            PositionsView.Refresh();
+        }
+        catch (Exception error)
+        {
+            // The DataGrid can trip over its own index bookkeeping while it rebuilds (see
+            // UserControlWithGrid.ReapplySort). The rows themselves are fine.
+            ScannerLog.Logger.Error(error, "");
+        }
     }
 }

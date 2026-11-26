@@ -10,6 +10,10 @@ public partial class StrategyFvgSettingsViewModel : ObservableObject
     [ObservableProperty]
     private double _minimumPercentage = 0.25;
 
+    /// <summary>Minimum impulse volume as a multiple of the median of the 20 candles before it; 0 = off.</summary>
+    [ObservableProperty]
+    private double _minimumImpulseVolumeRatio = 0;
+
     /// <summary>The values the touch level ComboBox offers; see CryptoZoneTouchLevel.</summary>
     public static CryptoZoneTouchLevel[] TouchLevels { get; } = Enum.GetValues<CryptoZoneTouchLevel>();
 
@@ -40,6 +44,7 @@ public partial class StrategyFvgSettingsViewModel : ObservableObject
     public void LoadConfig(SettingsSignalStrategyFvg settings)
     {
         MinimumPercentage = settings.MinimumPercentage;
+        MinimumImpulseVolumeRatio = settings.MinimumImpulseVolumeRatio;
         MaxTouches = settings.MaxTouches;
         TouchLevel = settings.TouchLevel;
         CloseRule = settings.CloseRule;
@@ -48,6 +53,7 @@ public partial class StrategyFvgSettingsViewModel : ObservableObject
     public void SaveConfig(SettingsSignalStrategyFvg settings)
     {
         settings.MinimumPercentage = MinimumPercentage;
+        settings.MinimumImpulseVolumeRatio = Math.Max(0, MinimumImpulseVolumeRatio);
         settings.MaxTouches = MaxTouches;
         settings.TouchLevel = TouchLevel;
         settings.CloseRule = CloseRule;

@@ -50,6 +50,10 @@ public partial class CryptoPosition : CryptoData2
     public decimal CommissionQuote { get; set; }
     // Amount in orders
     public decimal Reserved { get; set; }
+    // The funding settled on this position so far, in quote: received positive, paid negative. Booked
+    // by FundingTools at every settlement while the position is open, and part of Profit (see
+    // TradeTools.CalculateProfitAndBreakEvenPrice). It does not move the break-even price.
+    public decimal Funding { get; set; }
     public decimal Profit { get; set; }
     public decimal Percentage { get; set; }
 
@@ -132,6 +136,12 @@ public partial class CryptoPosition : CryptoData2
     // Sticky flag: set once the position reached the SL-protection profit threshold and
     // the stop was pulled to break-even, so CalculateSlPrices keeps it at BE and never loosens it again.
     public bool SlMovedToBreakEven { get; set; }
+
+    // Manual override, set from the "Position remove stop loss" menu item: once true,
+    // PositionMonitor.CalculateSlPrices stops computing a stop/limit for this position
+    // regardless of the strategy or global settings, and the existing exit order is
+    // replaced by a take-profit-only order. The position itself stays open.
+    public bool StopLossDisabled { get; set; }
 
     // The level a trailing profit lock currently sits at, 0 when it has not started (or when the
     // profit lock is not trailing). Persisted for the same reason as SlMovedToBreakEven: without it
@@ -254,7 +264,8 @@ public static class CryptoPositionHelper
         if (!position.Symbol.LastPrice.HasValue)
             return 0m;
         else
-            return position.ProfitFor(position.BreakEvenPrice, position.Symbol.LastPrice.Value, position.Quantity);
+            // The funding is not in the break-even price, so it is added here (received +, paid -)
+            return position.ProfitFor(position.BreakEvenPrice, position.Symbol.LastPrice.Value, position.Quantity) + position.Funding;
     }
 
     public static string PartCountText(this CryptoPosition position)

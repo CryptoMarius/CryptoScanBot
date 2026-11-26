@@ -1,0 +1,99 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="420"
+             xmlns:vm="using:CryptoScanner.Analyzers.ImpulseBox.Config"
+             x:DataType="vm:StrategyImpulseBoxSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.ImpulseBox.Config.StrategyImpulseBoxSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- The impulse: a strong move of at least a number of ATR's without big pullbacks. -->
+            <TextBlock Text="Impulse" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The move from the start of the impulse to its last close must be at least this many times the ATR(14).">
+                <TextBlock Grid.Column="0" Text="Impulse size (x ATR):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ImpulseAtrMultiplier, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The impulse ends at the highest close (lowest for a move down) of this many candles and starts at the lowest body (highest) inside them.">
+                <TextBlock Grid.Column="0" Text="Impulse window (candles):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ImpulseMaxCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Inside the impulse no close may fall back more than this percentage of the impulse height from the best close so far.">
+                <TextBlock Grid.Column="0" Text="Max pullback in the impulse %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ImpulseMaxPullbackPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- The box: built from bodies only, wicks do not count. -->
+            <TextBlock Text="Box" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The box is valid after this many candles after the impulse. It is built from the bodies (open and close); wicks do not count.">
+                <TextBlock Grid.Column="0" Text="Box length (candles):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding BoxCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="A box taller than this percentage of the impulse height is no balance and is dropped.">
+                <TextBlock Grid.Column="0" Text="Max box height %:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding BoxMaxHeightPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="A valid box that has not been broken by a close within this many candles is dropped.">
+                <TextBlock Grid.Column="0" Text="Box expiry (candles):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding BoxExpiryCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <!-- Which events open a position. The exit is the one of the trading settings. -->
+            <TextBlock Text="Trades" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <CheckBox IsChecked="{Binding TradeCounter, Mode=TwoWay}"
+                      Content="Counter trade" FontSize="12"
+                      ToolTip.Tip="The first close outside the box goes against the impulse: short after an impulse up, long after an impulse down."/>
+
+            <CheckBox IsChecked="{Binding TradeFakeBreak, Mode=TwoWay}"
+                      Content="Fake break" FontSize="12"
+                      ToolTip.Tip="The first close outside the box goes with the impulse, but a candle closes back inside the box within the window below: trade against the impulse."/>
+
+            <Grid ColumnDefinitions="200,80,*" RowDefinitions="Auto"
+                  IsEnabled="{Binding TradeFakeBreak}"
+                  ToolTip.Tip="How many candles after a break with the impulse a close back inside the box still counts as a fake break.">
+                <TextBlock Grid.Column="0" Text="Fake break window (candles):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding FakeBreakWindowCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <CheckBox IsChecked="{Binding TradeContinuation, Mode=TwoWay}"
+                      Content="Continuation" FontSize="12"
+                      ToolTip.Tip="Follow the first close outside the box in the direction of the impulse. Off by default: it measured worse than a blind entry."/>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

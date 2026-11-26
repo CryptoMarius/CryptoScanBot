@@ -19,6 +19,21 @@ public static class AnalyzerRegistration
         // The break that did not hold
         PluginManager.Register(new FailedBreakout.FailedBreakoutPlugin());
 
+        // An impulse followed by a box of bodies, in against the impulse when the box breaks the
+        // other way or a break with the impulse fails. Added 21-11-2026 in Release on request to
+        // measure it quickly; back to the #if DEBUG block when the emulator is disappointing.
+        // Unregistered on 24-11-2026 (the code stays). Measured in the emulator (Session2, runs
+        // 2108-2111, 15m, stop 4, take profit 7.5): the long side earns (long only +2845.61 USDT over
+        // 1584 trades), the short fake break loses (-1663.14). See ImpulseBox/ImpulseBox.md.
+        //PluginManager.Register(new ImpulseBox.ImpulseBoxPlugin());
+
+        // Change of character into a fair value gap on 1m: a limit on the middle of the gap inside
+        // its fib zone, stop behind the gap candle, fixed risk/reward. Added 21-11-2026 in Release on
+        // request to measure it quickly; to the #if DEBUG block when the emulator is disappointing.
+        // Unregistered on 24-11-2026 (the code stays): runs 2124-2126 all lost (-74.61, -1052.60 and
+        // -28.67 USDT), the win rate stays below what the risk/reward needs.
+        //PluginManager.Register(new ChochFvg.ChochFvgPlugin());
+
         // The support/resistance flip (open point 46): a broken level retested from the other side
         // Moved to the #if DEBUG block on 05-11-2026: it did not perform well.
         //PluginManager.Register(new SrFlip.SrFlipPlugin());
@@ -42,7 +57,7 @@ public static class AnalyzerRegistration
         PluginManager.Register(new Vbs.VbsPlugin());
 
         // Experimental strategies (not yet fully tested or documented)
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         // ATR based bands, it does not perform well
         PluginManager.Register(new AtrRb.AtrRbPlugin());
 
@@ -86,6 +101,11 @@ public static class AnalyzerRegistration
         // every interval, only 8h with a far fixed take profit made a small profit. Stays in Debug
         // as a reference; the numbers are in VwapMr/VwapMr.md.
         PluginManager.Register(new VwapMr.VwapMrPlugin());
+
+        // Cross-sectional momentum: a weekly ranking of all coins of a quote on their return, long
+        // the strongest and short the weakest, closed when they drop out. Measured offline on
+        // 24-11-2026 (positive), not in the emulator yet. The rules are in XsMom/XsMom.md.
+        PluginManager.Register(new XsMom.XsMomPlugin());
 
 
         // Very disapointing, expected more of this strategy

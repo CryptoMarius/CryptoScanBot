@@ -99,6 +99,7 @@
             <div class="context-menu-item" @onclick="OnMenuPositionDelete">Delete position</div>
             <div class="context-menu-item" @onclick="OnMenuPositionAddDca">Position add additional DCA</div>
             <div class="context-menu-item" @onclick="OnMenuPositionCancelDca">Position cancel open DCA</div>
+            <div class="context-menu-item" @onclick="OnMenuPositionRemoveStopLoss">Position remove stop loss</div>
             <div class="context-menu-item" @onclick="OnMenuPositionClose">Position close (take profit or loss)</div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" @onclick="OnMenuCopySymbolName">Copy symbol name</div>
@@ -215,6 +216,7 @@
         new() { Column = PositionColumnEnum.Invested, Header = "Invested", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 12 },
         new() { Column = PositionColumnEnum.Returned, Header = "Returned", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 13 },
         new() { Column = PositionColumnEnum.Commission, Header = "Commission", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 14 },
+        new() { Column = PositionColumnEnum.Funding, Header = "Funding", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 68 },
         new() { Column = PositionColumnEnum.BreakEvenPrice, Header = "BreakEven", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 15 },
         new() { Column = PositionColumnEnum.Quantity, Header = "Quantity", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = true, DefaultDisplayIndex = 16 },
         new() { Column = PositionColumnEnum.Open, Header = "Open", CssClass = "text-right mono", DefaultWidth = 75, DefaultVisible = false, DefaultDisplayIndex = 17 },
@@ -559,6 +561,14 @@
     {
         if (_contextMenuPosition?.Object != null && _contextMenuPosition.Object.CloseTime == null)
             GridCommandService.PositionCancelDca(_contextMenuPosition.Object);
+        CloseContextMenu();
+    }
+
+    private void OnMenuPositionRemoveStopLoss()
+    {
+        if (_contextMenuPosition?.Object != null && _contextMenuPosition.Object.CloseTime == null
+            && !_contextMenuPosition.Object.StopLossDisabled)
+            GridCommandService.PositionRemoveStopLoss(_contextMenuPosition.Object);
         CloseContextMenu();
     }
 

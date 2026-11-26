@@ -88,7 +88,7 @@ public static class ColumnHints
         ["Parts"] = "Filled parts: the entry counts as 1, every filled DCA part adds one. A trailing + means a DCA order is still pending on an open position.",
         ["Status"] = "Waiting = entry order placed, not filled yet. Trading = open. Ready = closed. Timeout = the entry order never filled. Cancelled = a newer signal invalidated the waiting position.",
         ["Profit"] = "Realised result in the quote currency, fees included. Meaningless while the position is still open (nothing has been returned yet).",
-        ["Percentage"] = "Returned as a percentage of the invested stake, fees included: 100 = break-even, 101.50 = 1.5% profit, 98 = 2% loss. NOT the profit percentage itself — subtract 100.",
+        ["Percentage"] = "Returned as a percentage of the invested stake, fees included: 100 = break-even, 101.50 = 1.5% profit, 98 = 2% loss. NOT the profit percentage itself — subtract 100. A dash while the position is open, and for an entry that never filled.",
         ["Price"] = "The signal price the position was opened on.",
         ["SL %"] = "The stop-loss distance the strategy handed to the trader for this position, as a percentage of the entry. A dash means the global stop-loss percentage of the trading settings was used.",
         ["EventText"] = "The strategy's own text for the signal (the code, the setup, the intervals, the handed-over stop and take profit).",
@@ -110,7 +110,7 @@ public static class ColumnHints
         ["Pos. created"] = "When that position was opened (local time).",
         ["Pos. status"] = "Status of that position at the end of the run: Waiting, Trading, Ready, Timeout or Cancelled. A dash when the signal opened no position.",
         ["Profit"] = "Realised result of that position in the quote currency, fees included. Meaningless while the position is still open.",
-        ["%"] = "Returned as a percentage of the invested stake of that position: 100 = break-even, 101.50 = 1.5% profit, 98 = 2% loss.",
+        ["%"] = "Returned as a percentage of the invested stake of that position: 100 = break-even, 101.50 = 1.5% profit, 98 = 2% loss. A dash while the position is open, and for an entry that never filled.",
         ["EventText"] = "The strategy's own text for the signal (the code, the setup, the intervals, the handed-over stop and take profit).",
     };
 

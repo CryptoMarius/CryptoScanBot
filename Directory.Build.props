@@ -128,4 +128,17 @@
   </Target>
 
 
+  <!--
+    TEMPORARY (21-11-2026): the experimental strategies in every build, so the Release scanner and
+    the Release emulator run them too (the emulator also picks up the .debug.json queue files).
+    Every strategy-related "#if DEBUG" reads "#if DEBUG || EXPERIMENTAL_STRATEGIES": the block in
+    AnalyzerRegistration, the Bbma, MacdCross, MacdCrossBand and SuperTrendBreakout plugins,
+    dlz.near, smc.rejection, the trend expiry in CandleHelpers, the indicator fields in CryptoData
+    and IntervalIndicatorHub, and EmulatorQueueFolder.RunsDebugOnlyFiles.
+    Remove this PropertyGroup to put them back in Debug only.
+  -->
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);EXPERIMENTAL_STRATEGIES</DefineConstants>
+  </PropertyGroup>
+
 </Project>

@@ -53,6 +53,7 @@
                     <MenuItem Header="Show emulator config" Click="OnShowEmulatorConfigClick"/>
                     <MenuItem Header="Export scanner settings…" Click="OnExportSettingsClick"/>
                     <MenuItem Header="Take over these settings…" Click="OnTakeOverSettingsClick" Tag="DisabledWhileBusy"/>
+                    <MenuItem Header="Run again (first in the queue)…" Click="OnRunAgainClick"/>
                     <Separator/>
                     <MenuItem Header="Copy selected rows (for Excel)" Click="OnCopyRowsClick"/>
                     <MenuItem Header="Copy all rows (for Excel)"      Click="OnCopyAllRowsClick"/>

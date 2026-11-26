@@ -17,6 +17,7 @@
 @inject SymbolService SymbolService
 @inject SignalService SignalService
 @inject LiveDataService LiveDataService
+@inject PositionService PositionService
 @inject GridCommandService GridCommandService
 @inject ApplicationStateService StateService
 @inject DashboardService DashboardService
@@ -74,7 +75,6 @@
                     <div class="menu-separator"></div>
                     <span class="menu-action-item" @onclick="OnDumpMemoryInfo">Dump memory info</span>
                     <span class="menu-action-item" @onclick="OpenAssets">Paper assets</span>
-                    <span class="menu-action-item" @onclick="OnCleanupCandles">Cleanup candles and old files</span>
                     <span class="menu-action-item" @onclick="OnCalculateAllDlz">Calculate all liquidity zones</span>
                     <div class="menu-separator"></div>
                     <span class="menu-action-item" @onclick="ToggleTheme">Toggle theme</span>
@@ -629,12 +629,14 @@
     /// <summary>
     /// The filter box drives the symbol panel, the signal grid and the live data grid, the same way
     /// Avalonia wires MainWindowViewModel.FilterTextChanged to those grids.
+    /// The open and closed positions as well (24-11-2026).
     /// </summary>
     private void ApplyFilter()
     {
         SymbolService.SetFilter(_symbolFilter);
         SignalService.SetFilter(_symbolFilter);
         LiveDataService.SetFilter(_symbolFilter);
+        PositionService.SetFilter(_symbolFilter);
     }
 
     private void OnSymbolSort(SymbolColumnEnum column)
@@ -961,24 +963,8 @@
         });
     }
 
-    private void OnCleanupCandles()
-    {
-        Task.Run(async () =>
-        {
-            if (GlobalData.ActiveExchange == null)
-                return;
-            try
-            {
-                await CandleDatabase.CleanCandlesAsync();
-                await DataStore.CleanOrphanCandleFilesAsync();
-                GlobalData.AddTextToLogTab("Cleanup candles completed");
-            }
-            catch (Exception ex)
-            {
-                GlobalData.AddTextToLogTab($"Cleanup candles failed: {ex.Message}");
-            }
-        });
-    }
+    // OnCleanupCandles removed 22-11-2026 together with the Avalonia menu item: the scanner runs the same
+    // cleanup every hour (ScannerSession.TimerSaveCandleData_Tick).
 
     private void OnCalculateAllDlz()
     {

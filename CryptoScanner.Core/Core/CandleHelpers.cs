@@ -20,7 +20,7 @@ public static class Helper
 
     public static DateTime GetExpirationDate(this CryptoSignal signal, CryptoInterval interval)
     {
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         // Keep these longer
         if (signal.Strategy == "trend" || signal.Strategy == "trend.secondary")
             return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 5);

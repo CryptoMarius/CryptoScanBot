@@ -121,7 +121,7 @@
         @* Watch the signal for a while before acting on it — the same row the Avalonia view puts
            under the MA200 block. *@
         <div class="field space-before"
-             title="Candles of the signal's own interval to watch before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below EntryRemoveTime, otherwise the signal expires before the wait is over and nothing is ever entered.">
+             title="Candles of the signal's own interval to watch before stepping in, counted from the signal candle's open. Zero switches the rule off. Keep it below 'Entry valid for' (Trader, Entry), otherwise the signal expires before the wait is over and nothing is ever entered.">
             <label>Wait after signal (candles)</label>
             <span class="field-control">
                 <input type="number" class="input-number" min="0" style="width: 60px;"

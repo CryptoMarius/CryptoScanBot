@@ -68,6 +68,20 @@ public interface ICandle
     public Task<(bool anythingAdded, CandleTime askedUpTo)> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CandleTime unixLoop, CandleTime unixMax);
 }
 
+/// <summary>
+/// The funding history of a perpetual. Only exchanges that settle funding and expose its history
+/// implement it; <see cref="ExchangeBase.Funding"/> is null for the others.
+/// </summary>
+public interface IFunding
+{
+    /// <summary>
+    /// The settlements of <paramref name="symbol"/> after <paramref name="fromTime"/> (exclusive) up to
+    /// <paramref name="toTime"/> (inclusive), oldest first. An empty list when there are none or the
+    /// exchange refused; the refusal is logged.
+    /// </summary>
+    public Task<List<CryptoFundingRate>> GetFundingRatesAsync(CryptoSymbol symbol, DateTime fromTime, DateTime toTime, CancellationToken cancellationToken);
+}
+
 public interface IApi
 {
     //public IAsset Asset { get; set; }
@@ -87,6 +101,9 @@ public abstract class ExchangeBase
     public required ISymbol Symbol { get; set; }
     //public required IOrder Order { get; set; }
     //public required ITrade Trade { get; set; }
+
+    // The funding history, null for an exchange (or market) that has none or does not expose it
+    public IFunding? Funding { get; set; }
 
     public abstract IDisposable GetClient();
     public abstract void ExchangeDefaults();

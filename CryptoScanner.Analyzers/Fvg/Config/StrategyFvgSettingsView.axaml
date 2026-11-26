@@ -20,6 +20,15 @@
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
 
+                <!-- Volume of the middle candle against the median of the 20 candles before it (I25, 24-11-2026) -->
+                <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto">
+                    <TextBlock Grid.Column="0" Text="Minimum impulse volume (x median, 0=off):" VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"
+                               ToolTip.Tip="Volume of the middle candle of the gap divided by the median volume of the 20 candles before it. A gap below this value is not made into a zone. 0 = off."/>
+                    <TextBox Grid.Column="2" Text="{Binding MinimumImpulseVolumeRatio, Mode=TwoWay}"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
             </StackPanel>
         </HeaderedContentControl>
 

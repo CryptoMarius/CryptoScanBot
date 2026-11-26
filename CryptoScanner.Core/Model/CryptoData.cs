@@ -90,7 +90,7 @@ public class CryptoData
     // AnalyzerRegistration is commented out, so a production build would carry six nullable doubles
     // - 96 bytes on every candle - that can never be anything but null. The Ema50 column keeps the
     // values the older signals have in it; new ones leave it empty, as they already do today.
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
     public double? Ema50 { get; set; }
     [Computed]
     public double? Wma05Low { get; set; }
@@ -104,7 +104,7 @@ public class CryptoData
     // ATR(14) — used by BBMA Omni: RejectedEMA50 big-body filter, MHV gap calculation.
     // Not persisted to DB; computed in IndicatorData.CalculateIndicators.
     // ATR 14 is the standard ATR, nothing special
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
     [Computed]
     public double? Atr14 { get; set; }
 #endif
@@ -117,7 +117,7 @@ public class CryptoData
     // well, so in a production build this field would never be anything but null - and a nullable
     // double still costs 16 bytes on EVERY candle, which is the one thing a scanner cannot spend.
     // Switching it on means switching MacdCross on: both sides of this are DEBUG only.
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
     [Computed]
     public double? Adx14 { get; set; }
 #endif
@@ -127,7 +127,7 @@ public class CryptoData
     // DEBUG only, same reason as Adx14 above: the only reader (SuperTrendBreakout) is registered
     // behind #if DEBUG, so in a production build these three would never be anything but null -
     // and three nullable doubles cost 48 bytes on EVERY candle.
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
     [Computed]
     public double? SuperTrend { get; set; }
     [Computed]
@@ -235,7 +235,7 @@ public class CryptoData
 
         // These are only non-null when a registered plugin declared them (see
         // IStrategyPlugin.RequiredIndicators); copying a null costs nothing, so no build-time gate.
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         Ema50 = source.Ema50;
         Wma05Low = source.Wma05Low;
         Wma05High = source.Wma05High;

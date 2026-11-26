@@ -377,7 +377,8 @@ public class TradeTools
             if (position.RemainingDust > 0)
                 invested -= position.RemainingDust * avgPrice;
 
-            position.Profit = position.Returned - invested - position.Commission;
+            // Funding is money the position received (+) or paid (-) while it was open
+            position.Profit = position.Returned - invested - position.Commission + position.Funding;
             position.Percentage = 0m;
             if (invested != 0m)
                 position.Percentage = 100m + (100m * position.Profit / invested);
@@ -395,7 +396,8 @@ public class TradeTools
             if (position.RemainingDust > 0)
                 invested -= position.RemainingDust * avgPrice;
 
-            position.Profit = invested - position.Returned - position.Commission;
+            // Funding is money the position received (+) or paid (-) while it was open
+            position.Profit = invested - position.Returned - position.Commission + position.Funding;
             position.Percentage = 0m;
             if (invested != 0m)
                 position.Percentage = 100m + (100m * position.Profit / invested);

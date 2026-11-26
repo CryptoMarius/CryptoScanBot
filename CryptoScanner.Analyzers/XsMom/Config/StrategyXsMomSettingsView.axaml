@@ -1,0 +1,82 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="380"
+             xmlns:vm="using:CryptoScanner.Analyzers.XsMom.Config"
+             x:DataType="vm:StrategyXsMomSettingsViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.XsMom.Config.StrategyXsMomSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- The ranking: all coins of the quote, the top by volume, ranked on their return. -->
+            <TextBlock Text="Ranking" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The coins are ranked on their return over this many days, measured on the daily closes before the rebalance moment.">
+                <TextBlock Grid.Column="0" Text="Return over (days):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1" Text="{Binding LookbackDays, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Only this many coins with the highest average daily volume (in the quote) take part in the ranking.">
+                <TextBlock Grid.Column="0" Text="Top by volume (coins):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1" Text="{Binding TopByVolume, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The average daily volume that decides the top is taken over this many days before the rebalance moment.">
+                <TextBlock Grid.Column="0" Text="Volume over (days):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1" Text="{Binding VolumeDays, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <CheckBox IsChecked="{Binding SkipTradFi, Mode=TwoWay}"
+                      Content="Skip TradFi contracts" FontSize="12"
+                      ToolTip.Tip="Leave the perpetuals on shares, commodities and indices (product TradFi) out of the ranking."/>
+
+            <Separator Margin="0,4"/>
+
+            <TextBlock Text="Selection" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Long the strongest this many coins of the ranking, short the weakest this many.">
+                <TextBlock Grid.Column="0" Text="Coins per side:" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1" Text="{Binding CoinsPerSide, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="A coin that is held stays while it is within this many times the coins per side of its end of the ranking. 1 = off: a coin that leaves the selection is closed.">
+                <TextBlock Grid.Column="0" Text="Keep within (x coins per side):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1" Text="{Binding KeepWithinFactor, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <Separator Margin="0,4"/>
+
+            <TextBlock Text="Rebalance" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+
+            <Grid ColumnDefinitions="180,120,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The day of the week on which the ranking is made, at 00:00 UTC, on the candles that closed before it.">
+                <TextBlock Grid.Column="0" Text="Rebalance day:" VerticalAlignment="Center" FontSize="12"/>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding RebalanceDays}"
+                          SelectedItem="{Binding RebalanceDay, Mode=TwoWay}"
+                          Height="26" FontSize="12" HorizontalAlignment="Stretch"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="180,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Rebalance every this many weeks. Between two rebalance moments nothing is bought or closed by this strategy.">
+                <TextBlock Grid.Column="0" Text="Every (weeks):" VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="1" Text="{Binding RebalanceEveryWeeks, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

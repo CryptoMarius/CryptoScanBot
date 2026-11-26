@@ -41,6 +41,9 @@ public class SubscriptionManagerTests
             StopCount++;
             return Task.CompletedTask;
         }
+
+        /// <summary>Something arrived from the exchange: counts a ticker and marks the activity.</summary>
+        public void SimulateUpdate() => IncrementTickerCount();
     }
 
 
@@ -495,5 +498,111 @@ public class SubscriptionManagerTests
         {
             GlobalData.Clock = previousClock;
         }
+    }
+
+
+    /// <summary>
+    /// Binance Perpetual, night of 19-11-2026: a connection dropped at 22:26:48, the five minute check
+    /// fired at 22:27:01, the restart round it started cut through the recovery the package was
+    /// already making, and at 22:28:51 the whole session was restarted. Eleven other drops that night
+    /// recovered on their own within 1 to 41 seconds. A connection that has only just dropped is
+    /// therefore neither a reason for a round nor part of one.
+    /// </summary>
+    [TestMethod]
+    public async Task ConnectionThatJustDroppedIsLeftToThePackage()
+    {
+        CryptoQuoteData quoteData = PrepareQuote();
+        AddSymbol(quoteData, "AAA");
+
+        IClock previousClock = GlobalData.Clock;
+        FixedClock clock = new() { UtcNow = new DateTime(2026, 11, 19, 21, 26, 48, DateTimeKind.Utc) };
+        GlobalData.Clock = clock;
+        try
+        {
+            SubscriptionManager manager = CreateManager(symbolsPerSubscription: 10);
+            await manager.StartAsync();
+            FakeSubscription subscription = AllSubscriptions(manager)[0];
+
+            subscription.MarkConnectionLost();
+            clock.UtcNow = clock.UtcNow.AddSeconds(13);
+
+            Assert.IsFalse(manager.NeedsRestart(), "13 seconds after the drop the package is still reconnecting");
+            Assert.IsTrue(manager.HasReconnectingSubscriptions, "the session has to know it should look again soon");
+
+            await manager.CheckSubscriptions();
+            Assert.AreEqual(0, subscription.StopCount, "a round must not stop a subscription that is reconnecting");
+            Assert.AreEqual(1, subscription.StartCount, "and so it is not started a second time either");
+
+            // The package brings it back, as it did eleven times that night
+            subscription.ConnectionIsLost = false;
+            clock.UtcNow = clock.UtcNow.AddSeconds(30);
+            subscription.SimulateUpdate();
+            Assert.IsFalse(manager.NeedsRestart(), "a recovered connection is no reason for a restart");
+            Assert.IsFalse(manager.HasReconnectingSubscriptions, "and nothing is reconnecting any more");
+        }
+        finally
+        {
+            GlobalData.Clock = previousClock;
+        }
+    }
+
+
+    [TestMethod]
+    public async Task ConnectionThatStaysDownIsRestartedAfterTheGracePeriod()
+    {
+        CryptoQuoteData quoteData = PrepareQuote();
+        AddSymbol(quoteData, "AAA");
+
+        IClock previousClock = GlobalData.Clock;
+        FixedClock clock = new() { UtcNow = new DateTime(2026, 11, 19, 21, 26, 48, DateTimeKind.Utc) };
+        GlobalData.Clock = clock;
+        try
+        {
+            SubscriptionManager manager = CreateManager(symbolsPerSubscription: 10);
+            await manager.StartAsync();
+            FakeSubscription subscription = AllSubscriptions(manager)[0];
+
+            subscription.MarkConnectionLost();
+
+            // A failed resubscribe makes the package drop the connection again and report it again.
+            // That must not start the period anew, or a connection that never comes back would be
+            // left alone for ever.
+            clock.UtcNow = clock.UtcNow.AddSeconds(50);
+            subscription.MarkConnectionLost();
+            Assert.IsFalse(manager.NeedsRestart(), "50 seconds is still inside the grace period");
+
+            clock.UtcNow = clock.UtcNow.AddSeconds(11);
+            Assert.IsTrue(manager.NeedsRestart(), "61 seconds after the FIRST report the package has had its chance");
+            Assert.IsFalse(manager.HasReconnectingSubscriptions);
+
+            await manager.CheckSubscriptions();
+            Assert.AreEqual(1, subscription.StopCount, "now the round restarts it");
+            Assert.AreEqual(2, subscription.StartCount);
+        }
+        finally
+        {
+            GlobalData.Clock = previousClock;
+        }
+    }
+
+
+    /// <summary>
+    /// The flag can also be raised without a moment (a subscription class doing its own bookkeeping).
+    /// Such a loss has no known age and gets no grace: it counts at once, as it always did.
+    /// </summary>
+    [TestMethod]
+    public async Task LostConnectionOfUnknownAgeCountsAtOnce()
+    {
+        CryptoQuoteData quoteData = PrepareQuote();
+        AddSymbol(quoteData, "AAA");
+
+        SubscriptionManager manager = CreateManager(symbolsPerSubscription: 10);
+        await manager.StartAsync();
+        FakeSubscription subscription = AllSubscriptions(manager)[0];
+
+        subscription.ConnectionIsLost = true;
+
+        Assert.IsTrue(manager.NeedsRestart());
+        Assert.IsFalse(manager.HasReconnectingSubscriptions);
     }
 }

@@ -131,7 +131,7 @@ public class MacdCrossBase : SignalCreateBase
         // there, so the walks below run on the few candles that get this far. DEBUG only, because
         // CryptoData.Adx14 is DEBUG only - a production build has no ADX to read.
         string trendText = "";
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         if (!TrendStrengthOkay(settings, candles, out trendText))
             return false;
 #endif
@@ -170,7 +170,7 @@ public class MacdCrossBase : SignalCreateBase
     }
 
 
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
     /// <summary>
     /// The ADX filters: a minimum at the signal candle, and the "young trend" test - somewhere in
     /// the last N candles the ADX has to have been under a threshold, so the cross is the start of

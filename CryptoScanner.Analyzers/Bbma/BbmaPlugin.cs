@@ -1,7 +1,7 @@
 // The BBMA signal classes are DEBUG-only (see the #if DEBUG guards in Signal/), so the
 // plugin that registers them is too. In a release build the plugin simply does not exist
 // and no BBMA tab or strategy shows up — same behavior as the old hardcoded registration.
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
 using CryptoScanner.Analyzers.Bbma.Chart;
 using CryptoScanner.Analyzers.Bbma.Signal;
 #endif
@@ -23,7 +23,7 @@ public class BbmaPlugin : IStrategyPlugin
     // are kept in Signal/ for reference.
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         new(
             StrategyInternal.ToLower(),
             typeof(SignalBbmaOmniLong),
@@ -37,7 +37,7 @@ public class BbmaPlugin : IStrategyPlugin
     // its own behind an #if DEBUG that happened to match this plugin's registration.
     public IReadOnlyList<IndicatorKey> RequiredIndicators { get; } =
     [
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
         IndicatorKey.Ema(50),
         IndicatorKey.WmaLow(5),
         IndicatorKey.WmaHigh(5),
@@ -65,7 +65,7 @@ public class BbmaPlugin : IStrategyPlugin
         }
     }
 
-#if DEBUG
+#if DEBUG || EXPERIMENTAL_STRATEGIES
     public IChartOverlay? ChartOverlay { get; } = new BbmaChartOverlay();
 #else
     public IChartOverlay? ChartOverlay { get; } = null;

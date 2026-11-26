@@ -386,6 +386,44 @@ public class GridCommandService
     }
 
     /// <summary>
+    /// Manual override: removes the stop loss of an open position without closing it. Sets
+    /// Position.StopLossDisabled and immediately runs HandlePosition so the current exit order
+    /// (stop + take profit combined on one order) is replaced by a take-profit-only order right
+    /// away, instead of waiting for the next 1m candle.
+    /// </summary>
+    public void PositionRemoveStopLoss(CryptoPosition position)
+    {
+        Task.Run(async () =>
+        {
+            try
+            {
+                using CryptoDatabase db = new();
+                db.Connection.Open();
+                PositionTools.LoadPosition(db, position);
+                await TradeTools.CalculatePositionResultsViaOrders(db, position, forceCalculation: true);
+
+                position.StopLossDisabled = true;
+                db.Connection.Update<CryptoPosition>(position);
+
+                var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+                if (symbolPeriod.CandleList.Count > 0)
+                {
+                    var lastCandle1m = symbolPeriod.CandleList.Values.Last();
+                    using PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
+                    await positionMonitor.HandlePosition(position);
+                }
+
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} manually removed the stop loss (position stays open)");
+            }
+            catch (Exception ex)
+            {
+                ScannerLog.Logger.Error(ex, "");
+                GlobalData.AddTextToLogTab($"Error removing stop loss for {position.Symbol.Name}: {ex.Message}");
+            }
+        });
+    }
+
+    /// <summary>
     /// "Position close": take the profit or the loss right now. The work is in ManualExit, shared with
     /// the Avalonia CommandPositionClose; the confirmation is asked by the page before it gets here.
     /// </summary>

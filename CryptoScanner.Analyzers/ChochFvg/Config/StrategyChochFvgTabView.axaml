@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
+             xmlns:vm="using:CryptoScanner.Analyzers.ChochFvg.Config"
+             xmlns:configviews="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyChochFvgTabViewModel"
+             x:CompileBindings="True"
+             x:Class="CryptoScanner.Analyzers.ChochFvg.Config.StrategyChochFvgTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <StackPanel Orientation="Horizontal" Margin="4,2,4,4" Spacing="8">
+                <TextBlock FontSize="13">
+                    <Run Text="CHOCH.FVG – Change of character into a fair value gap" FontWeight="SemiBold"/>
+                    <Run Text=" — After the first close beyond the last swing against the trend, a limit on the middle of a fair value gap of that leg inside its fib zone, a stop behind the gap candle and a fixed risk/reward target" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                </TextBlock>
+            </StackPanel>
+            <WrapPanel>
+                <configviews:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+                <vm:StrategyChochFvgSettingsView DataContext="{Binding StrategyChochFvgSettingsViewModel}" />
+                <configviews:IntervalView DataContext="{Binding IntervalViewModel}" />
+                <configviews:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

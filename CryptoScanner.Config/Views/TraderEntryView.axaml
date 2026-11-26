@@ -24,8 +24,10 @@
             </Grid>
 
             <!-- Remove Time -->
-            <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="Remove time:"
+            <!-- One setting with two effects: how long a waiting signal stays and how long an unfilled limit entry stays -->
+            <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
+                  ToolTip.Tip="Candles of the signal's own interval the entry stays valid. A signal that waits for its entry conditions or for a free slot is dropped after this many candles, counted from the signal candle's open - also with a market order. An unfilled limit entry order is cancelled after this many candles from the moment it was placed, and Altrady gets the same expiry. With a limit entry the two add up, so the whole window can last up to twice this value.">
+                <TextBlock Grid.Column="0" Text="Entry valid for:"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>
                 <TextBox Grid.Column="2"
@@ -36,7 +38,7 @@
 
             <!-- Limit entry below (long) or above (short) the signal price -->
             <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
-                  ToolTip.Tip="Only for a limit entry: place the order this percentage better than the signal price - below it for a long, above it for a short - so the entry waits for a pullback. 0 places it at the signal price. A pullback that does not come within the remove time cancels the entry.">
+                  ToolTip.Tip="Only for a limit entry: place the order this percentage better than the signal price - below it for a long, above it for a short - so the entry waits for a pullback. 0 places it at the signal price. A pullback that does not come within 'Entry valid for' cancels the entry.">
                 <TextBlock Grid.Column="0" Text="Limit below signal price:"
                            VerticalAlignment="Center"
                            Margin="0,0,12,0" FontSize="12"/>

@@ -37,7 +37,7 @@ public class CandleDatabaseSchemaException(string message) : Exception(message)
 ///   - synchronous = NORMAL       → good performance/durability trade-off for a cache-like DB
 ///   - page_size = 8192           → fits typical batches of inserts more efficiently
 /// </summary>
-public class CandleDatabase : IDisposable
+public partial class CandleDatabase : IDisposable
 {
     //private const string CandleDbFileName = "candles.db";
 
@@ -427,6 +427,9 @@ public class CandleDatabase : IDisposable
             "  Key    TEXT NOT NULL PRIMARY KEY," +
             "  Value  TEXT NOT NULL" +
             ") WITHOUT ROWID");
+
+        // The funding settlements of the perpetuals (CandleDatabaseFunding.cs)
+        EnsureFundingTable(db.Connection);
 
         VerifySchemaVersion(db.Connection, exchange);
         VerifyExchangeName(db.Connection, exchange);

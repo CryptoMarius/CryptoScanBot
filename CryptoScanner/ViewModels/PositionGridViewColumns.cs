@@ -43,6 +43,7 @@ public class PositionColumnComparer : IComparer
                     PositionColumnEnum.Invested => ObjectCompare.Compare(a.Object.Invested, b.Object.Invested),
                     PositionColumnEnum.Returned => ObjectCompare.Compare(a.Object.Returned, b.Object.Returned),
                     PositionColumnEnum.Commission => ObjectCompare.Compare(a.Object.Commission, b.Object.Commission),
+                    PositionColumnEnum.Funding => ObjectCompare.Compare(a.Object.Funding, b.Object.Funding),
                     PositionColumnEnum.BreakEvenPrice => ObjectCompare.Compare(a.Object.BreakEvenPrice, b.Object.BreakEvenPrice),
                     PositionColumnEnum.Quantity => ObjectCompare.Compare(a.Object.Quantity, b.Object.Quantity),
                     PositionColumnEnum.Open => ObjectCompare.Compare(a.Object.Invested - a.Object.Returned - a.Object.Commission, b.Object.Invested - b.Object.Returned - b.Object.Commission),

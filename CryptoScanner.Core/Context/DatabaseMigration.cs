@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class DatabaseMigration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 114;
+    public readonly static int CurrentDatabaseVersion = 116;
 
 
     /// <summary>
@@ -2744,6 +2744,36 @@ public class DatabaseMigration
 
             try { database.Connection.Execute("alter table Signal add ZoneIntervalId INTEGER null", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table Position add ZoneIntervalId INTEGER null", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // Version 115 (20-11-2026): manual "Position remove stop loss" override. Defaults to 0 (false)
+        // for every existing position, so nothing changes until the menu item is used.
+        if (CurrentVersion > version.Version && version.Version == 114)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Position add StopLossDisabled INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // Version 116 (24-11-2026): the funding settled on a position (received positive, paid negative),
+        // part of its profit. Null for every existing position, which reads as zero.
+        if (CurrentVersion > version.Version && version.Version == 115)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Position add Funding TEXT NULL", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

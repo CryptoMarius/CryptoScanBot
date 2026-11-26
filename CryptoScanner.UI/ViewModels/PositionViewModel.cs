@@ -33,6 +33,7 @@ public class PositionViewModel
             PositionColumnEnum.Invested => FormatMoney(Object.Invested),
             PositionColumnEnum.Returned => FormatMoney(Object.Returned),
             PositionColumnEnum.Commission => FormatMoney(Object.Commission),
+            PositionColumnEnum.Funding => FormatMoney(Object.Funding),
             PositionColumnEnum.BreakEvenPrice => Object.BreakEvenPrice.ToString0(Object.Symbol.PriceDisplayFormat),
             PositionColumnEnum.BreakEvenPercent => IsInactiveStatus() ? "" : Object.CurrentBreakEvenPercentage().ToString0("N2"),
             PositionColumnEnum.Quantity => Object.Status == CryptoPositionStatus.Timeout ? "-" : Object.Quantity.ToString0(),

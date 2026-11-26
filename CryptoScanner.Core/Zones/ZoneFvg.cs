@@ -9,7 +9,53 @@ namespace CryptoScanner.Core.Zones;
 
 public class ZoneFvg
 {
-    private static CryptoZone? ScanForLongFvg(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle prev2, CryptoCandle prev, CryptoCandle candle)
+    // How many candles before the impulse candle make up its "normal" volume, and how many of them
+    // have to be there before the ratio is trusted (holes in the series are allowed).
+    private const int ImpulseVolumeLookback = 20;
+    private const int ImpulseVolumeMinimumBaseline = 10;
+
+    /// <summary>
+    /// Volume of the impulse (middle) candle of a gap divided by the median volume of the
+    /// <see cref="ImpulseVolumeLookback"/> candles before it. Null when too few of those candles are
+    /// in memory or their median is zero: then there is nothing to judge the gap by.
+    /// </summary>
+    public static double? ImpulseVolumeRatio(CryptoCandleList candleList, CryptoInterval interval, CryptoCandle impulse)
+    {
+        List<double> volumes = new(ImpulseVolumeLookback);
+        for (int step = 1; step <= ImpulseVolumeLookback; step++)
+        {
+            if (candleList.TryGetValue(impulse.OpenTime - (uint)step * interval.Duration, out CryptoCandle before))
+                volumes.Add((double)before.Volume);
+        }
+        if (volumes.Count < ImpulseVolumeMinimumBaseline)
+            return null;
+
+        volumes.Sort();
+        int middle = volumes.Count / 2;
+        double median = volumes.Count % 2 == 1 ? volumes[middle] : (volumes[middle - 1] + volumes[middle]) / 2;
+        if (median <= 0)
+            return null;
+        return (double)impulse.Volume / median;
+    }
+
+    /// <summary>
+    /// Whether the impulse candle of a gap carried enough volume (ZonesFvg.MinimumImpulseVolumeRatio,
+    /// 0 = off). A gap whose ratio cannot be worked out is kept: no data is not a weak gap.
+    /// </summary>
+    private static bool HasEnoughImpulseVolume(CryptoSymbolInterval symbolInterval, CryptoInterval interval, CryptoCandle impulse)
+    {
+        double minimum = GlobalData.Settings.Signal.ZonesFvg.MinimumImpulseVolumeRatio;
+        if (minimum <= 0)
+            return true;
+        double? ratio = ImpulseVolumeRatio(symbolInterval.CandleList, interval, impulse);
+        if (ratio == null)
+            return true;
+        return ratio.Value >= minimum;
+    }
+
+
+    private static CryptoZone? ScanForLongFvg(CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval,
+        CryptoCandle prev2, CryptoCandle prev, CryptoCandle candle)
     {
         // 3 green candles in a row (only the strong fvg)..
         // unless any mix of colours is allowed (ZonesFvg.AllowMixedColours)
@@ -21,7 +67,8 @@ public class ZoneFvg
             if (candle.Low > prev2.High && prev.Close > prev2.High)
             {
                 double perc = 100 * (double)((candle.Low - prev2.High) / prev2.High);
-                if (perc > GlobalData.Settings.Signal.ZonesFvg.MinimumPercentage)
+                if (perc > GlobalData.Settings.Signal.ZonesFvg.MinimumPercentage
+                    && HasEnoughImpulseVolume(symbolInterval, interval, prev))
                 {
                     CryptoZone zone = new()
                     {
@@ -47,7 +94,8 @@ public class ZoneFvg
         return null;
     }
 
-    private static CryptoZone? ScanForShortFvg(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle prev2, CryptoCandle prev, CryptoCandle candle)
+    private static CryptoZone? ScanForShortFvg(CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval,
+        CryptoCandle prev2, CryptoCandle prev, CryptoCandle candle)
     {
         // 3 red candles in a row (only the strong fvg)..
         // unless any mix of colours is allowed (ZonesFvg.AllowMixedColours)
@@ -59,7 +107,8 @@ public class ZoneFvg
             if (candle.High < prev2.Low && prev.Close < prev2.Low)
             {
                 double perc = 100 * (double)((prev2.Low - candle.High) / candle.High);
-                if (perc > GlobalData.Settings.Signal.ZonesFvg.MinimumPercentage)
+                if (perc > GlobalData.Settings.Signal.ZonesFvg.MinimumPercentage
+                    && HasEnoughImpulseVolume(symbolInterval, interval, prev))
                 {
                     CryptoZone zone = new()
                     {
@@ -108,7 +157,7 @@ public class ZoneFvg
             // scan voor long FVG
             //if (side == CryptoTradeSide.Long)
             {
-                var zone = ScanForLongFvg(symbol, interval, prev2, prev, candle);
+                var zone = ScanForLongFvg(symbol, interval, symbolInterval, prev2, prev, candle);
                 if (zone != null)
                 {
                     //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Long} FVG {prev2.High}..{candle.Low} {zone.Description}");
@@ -121,7 +170,7 @@ public class ZoneFvg
             // scan voor short FVG
             //if (side == CryptoTradeSide.Short)
             {
-                var zone = ScanForShortFvg(symbol, interval, prev2, prev!, candle);
+                var zone = ScanForShortFvg(symbol, interval, symbolInterval, prev2, prev!, candle);
                 if (zone != null)
                 {
                     //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Short} FVG {candle.Low}..{prev2.High} {zone.Description}");
@@ -355,7 +404,7 @@ public class ZoneFvg
                 if (active)
                 {
                     // scan for long FVG
-                    var zone = ScanForLongFvg(symbol, interval, prev2, prev, candle);
+                    var zone = ScanForLongFvg(symbol, interval, symbolInterval, prev2, prev, candle);
                     if (zone != null)
                     {
                         //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Long} FVG {prev2.High}..{candle.Low} {zone.Description}");
@@ -365,7 +414,7 @@ public class ZoneFvg
                     InvalidateLongZones(symbolIntervalData, longZones, candle); // Remove closed fvg
 
                     // scan for short FVG
-                    zone = ScanForShortFvg(symbol, interval, prev2, prev, candle);
+                    zone = ScanForShortFvg(symbol, interval, symbolInterval, prev2, prev, candle);
                     if (zone != null)
                     {
                         //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Short} FVG {candle.Low}..{prev2.High} {zone.Description}");
@@ -430,7 +479,7 @@ public class ZoneFvg
                 && symbolIntervalData.CandleList.TryGetValue(loop - (2 * interval.Duration), out CryptoCandle prev2))
             {
                 gaps.Hit();
-                var longZone = ScanForLongFvg(symbol, interval, prev2, prev, candle);
+                var longZone = ScanForLongFvg(symbol, interval, symbolIntervalData, prev2, prev, candle);
                 if (longZone != null)
                 {
                     zones.LongOpen.Add(longZone);
@@ -438,7 +487,7 @@ public class ZoneFvg
                 }
                 InvalidateRealtimeList(zones.LongOpen, zones.LongClosed, candle, interval);
 
-                var shortZone = ScanForShortFvg(symbol, interval, prev2, prev, candle);
+                var shortZone = ScanForShortFvg(symbol, interval, symbolIntervalData, prev2, prev, candle);
                 if (shortZone != null)
                 {
                     zones.ShortOpen.Add(shortZone);

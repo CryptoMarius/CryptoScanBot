@@ -132,6 +132,10 @@ public sealed class ReplayRunner
     // few coins to measure one). See BarometerReplay.
     private BarometerReplay? barometer;
 
+    // The funding settlements of the run, booked on the open positions as the clock passes them.
+    // Null for an exchange without funding history. See FundingReplay.
+    private FundingReplay? funding;
+
     // The barometer of a replay that ran to the end, kept for CommitBarometerSeries: its marker may
     // only be written once the candles of the run are on disk, which happens after RunAsync.
     private BarometerReplay? completedBarometer;
@@ -418,6 +422,17 @@ public sealed class ReplayRunner
                 GlobalData.AddTextToLogTab("Barometer: switched off for this run");
             }
 
+            // ───── Funding ──────────────────────────────────────────────────────────
+            // The settlements of the perpetuals, booked on the open positions (FundingReplay).
+            // Only when the run asks for it: off by default, see EmulatorRunConfig.BookFunding
+            if (config.BookFunding)
+                funding = FundingReplay.Create(exchange, symbols, replayFrom, replayTo);
+            else
+            {
+                funding = null;
+                GlobalData.AddTextToLogTab("Funding: switched off for this run");
+            }
+
             // ───── Determine chunks ─────────────────────────────────────────────────
             uint chunkMinutes = ChunkDays > 0 ? (uint)ChunkDays * 24 * 60 : 0;
             bool useChunks = chunkMinutes > 0 && (replayTo.Minutes - replayFrom.Minutes) > chunkMinutes;
@@ -508,6 +523,11 @@ public sealed class ReplayRunner
                     CandleTime closeTime = openTime + baseInterval.Duration;
                     if (emulatorClock != null)
                         emulatorClock.UtcNow = closeTime.ToDateTime();
+
+                    // The funding settled up to the end of this minute, before phase A: a position
+                    // closed on this minute still pays it, one opened on it does not (FundingReplay).
+                    // Before the "no ticks" skip, so a quiet minute cannot move a settlement later.
+                    funding?.BookUpTo(closeTime);
 
                     List<(SymbolReplay Replay, CryptoCandle Candle)> ticksThisMinute = [];
                     foreach (var replay in replays)
@@ -681,6 +701,9 @@ public sealed class ReplayRunner
             GlobalData.AnalyzeSignalCreated = null;
             barometer?.LogMeasuredAgain();
             barometer = null;
+            if (funding != null)
+                GlobalData.AddTextToLogTab(funding.SummaryText);
+            funding = null;
             LogPhaseTimings();
             PipelineProfiler.Enabled = false;
         }

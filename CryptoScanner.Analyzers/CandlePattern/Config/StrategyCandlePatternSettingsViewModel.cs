@@ -24,6 +24,18 @@ public partial class StrategyCandlePatternSettingsViewModel : ObservableObject
     [ObservableProperty]
     private decimal _precedingPercentage = 0m;
 
+    [ObservableProperty]
+    private decimal _minSizeFactor = 0m;
+
+    [ObservableProperty]
+    private int _trendEmaLength = 0;
+
+    [ObservableProperty]
+    private bool _stopBeyondPattern = false;
+
+    [ObservableProperty]
+    private decimal _riskReward = 2m;
+
     // The zone sources the pattern candle has to sit in, as one checkbox each. Three fixed boxes
     // rather than a list view: there are exactly three members and they are addressed through
     // nameof, so renaming one in CryptoZoneSource breaks the build instead of drifting apart from
@@ -55,6 +67,11 @@ public partial class StrategyCandlePatternSettingsViewModel : ObservableObject
         PrecedingCandles = settings.PrecedingCandles;
         PrecedingPercentage = settings.PrecedingPercentage;
 
+        MinSizeFactor = settings.MinSizeFactor;
+        TrendEmaLength = settings.TrendEmaLength;
+        StopBeyondPattern = settings.StopBeyondPattern;
+        RiskReward = settings.RiskReward;
+
         // Case-insensitive, because the list can also be typed by hand in the settings file or in
         // the emulator queue - where it is written "dlz" rather than "Dlz".
         static bool Has(List<string> names, CryptoZoneSource source)
@@ -73,6 +90,11 @@ public partial class StrategyCandlePatternSettingsViewModel : ObservableObject
 
         settings.PrecedingCandles = PrecedingCandles;
         settings.PrecedingPercentage = PrecedingPercentage;
+
+        settings.MinSizeFactor = MinSizeFactor;
+        settings.TrendEmaLength = TrendEmaLength;
+        settings.StopBeyondPattern = StopBeyondPattern;
+        settings.RiskReward = RiskReward;
 
         // In the order the enum declares its members, the same order both hosts show them in.
         List<string> zones = [];

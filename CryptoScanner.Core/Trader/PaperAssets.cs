@@ -683,6 +683,43 @@ public class PaperAssets
 
 
     /// <summary>
+    /// Book a funding settlement of an open position on the quote balance: received positive, paid
+    /// negative. It is a result of the position, like a fill, so it is not recorded as an adjustment.
+    /// </summary>
+    public static void BookFunding(Model.CryptoExchange activeExchange, CryptoSymbol symbol, decimal amount, string debugText)
+    {
+        // Same reason as Change and BookCommission: with real trading or Altrady the balances are
+        // kept at the exchange and none of this bookkeeping applies.
+        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)
+            return;
+        if (amount == 0)
+            return;
+
+        activeExchange.Data.AssetListSemaphore.Wait();
+        try
+        {
+            CryptoAsset assetQuote = FindOrCreateAsset(activeExchange, symbol.Quote);
+            assetQuote.Total += amount;
+
+            RecalculateLocked(activeExchange);
+
+            using CryptoDatabase database = new();
+            database.Open();
+            using var transaction = database.BeginTransaction();
+            UpdateAsset(activeExchange, database, transaction, assetQuote);
+            transaction.Commit();
+
+            if (GlobalData.Settings.General.DebugAssetManagement)
+                GlobalData.AddTextToLogTab($"Debug asset funding {symbol.Name} {assetQuote.Name}={amount} {debugText}");
+        }
+        finally
+        {
+            activeExchange.Data.AssetListSemaphore.Release();
+        }
+    }
+
+
+    /// <summary>
     /// Undo what a position did to the balances, as if it had never been opened. For deleting a
     /// position from the database: the row disappears, so the money it moved has to disappear with it.
     ///
@@ -729,6 +766,8 @@ public class PaperAssets
             baseChange = -position.CommissionBase;
             quoteChange = position.Invested - position.Returned - position.Commission;
         }
+        // The funding was booked on the quote balance as well (BookFunding)
+        quoteChange += position.Funding;
 
         if (baseChange == 0 && quoteChange == 0)
             return; // nothing was ever filled
